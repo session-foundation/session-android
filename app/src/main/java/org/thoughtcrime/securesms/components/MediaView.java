@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.components;
 
-
 import android.content.Context;
 import android.net.Uri;
 import android.util.AttributeSet;
@@ -10,11 +9,14 @@ import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.OptIn;
+import androidx.media3.common.util.UnstableApi;
 
 import com.bumptech.glide.RequestManager;
 
 import org.session.libsession.utilities.Stub;
 import org.thoughtcrime.securesms.mms.VideoSlide;
+import org.thoughtcrime.securesms.util.FilenameUtils;
 import org.thoughtcrime.securesms.video.VideoPlayer;
 
 import java.io.IOException;
@@ -25,6 +27,14 @@ public class MediaView extends FrameLayout {
 
   private ZoomingImageView  imageView;
   private Stub<VideoPlayer> videoView;
+
+  public interface FullscreenToggleListener {
+    void toggleFullscreen();
+    void setFullscreen(boolean displayFullscreen);
+  }
+
+  @Nullable
+  private FullscreenToggleListener fullscreenToggleListener = null;
 
   public MediaView(@NonNull Context context) {
     super(context);
@@ -50,43 +60,70 @@ public class MediaView extends FrameLayout {
 
   public void set(@NonNull RequestManager glideRequests,
                   @NonNull Window window,
-                  @NonNull Uri source,
+                  @NonNull Uri sourceUri,
                   @NonNull String mediaType,
                   long size,
                   boolean autoplay)
-      throws IOException
+          throws IOException
   {
     if (mediaType.startsWith("image/")) {
       imageView.setVisibility(View.VISIBLE);
       if (videoView.resolved()) videoView.get().setVisibility(View.GONE);
-      imageView.setImageUri(glideRequests, source, mediaType);
+      imageView.setImageUri(glideRequests, sourceUri, mediaType);
+
+      // handle fullscreen toggle based on image tap
+      imageView.setInteractor(new ZoomingImageView.ZoomImageInteractions() {
+        @Override
+        public void onImageTapped() {
+          if (fullscreenToggleListener != null) fullscreenToggleListener.toggleFullscreen();
+        }
+      });
     } else if (mediaType.startsWith("video/")) {
       imageView.setVisibility(View.GONE);
       videoView.get().setVisibility(View.VISIBLE);
       videoView.get().setWindow(window);
-      videoView.get().setVideoSource(new VideoSlide(getContext(), source, size), autoplay);
+
+      // react to callbacks from video players and pass it on to the fullscreen handling
+      videoView.get().setInteractor(new VideoPlayer.VideoPlayerInteractions() {
+        @Override
+        public void onControllerVisibilityChanged(boolean visible) {
+          // go fullscreen once the controls are hidden
+          if(fullscreenToggleListener != null) fullscreenToggleListener.setFullscreen(!visible);
+        }
+      });
+
+
+      Context context = getContext();
+      String filename = FilenameUtils.getFilenameFromUri(context, sourceUri);
+
+      videoView.get().setVideoSource(new VideoSlide(context, sourceUri, filename, size), autoplay);
     } else {
       throw new IOException("Unsupported media type: " + mediaType);
     }
   }
 
-  public void pause() {
+  public void setControlsYPosition(int yPosition){
     if (this.videoView.resolved()){
-      this.videoView.get().pause();
+      this.videoView.get().setControlsYPosition(yPosition);
     }
   }
 
-  public void hideControls() {
+  public Long pause() {
     if (this.videoView.resolved()){
-      this.videoView.get().hideControls();
+       return this.videoView.get().pause();
+    }
+
+    return 0L;
+  }
+
+  public void seek(Long position){
+    if (this.videoView.resolved()){
+      this.videoView.get().seek(position);
     }
   }
 
-  public @Nullable View getPlaybackControls() {
-    if (this.videoView.resolved()){
-      return this.videoView.get().getControlView();
-    }
-    return null;
+  public void setFullscreenToggleListener(FullscreenToggleListener listener) {
+    this.fullscreenToggleListener = listener;
   }
 
   public void cleanup() {

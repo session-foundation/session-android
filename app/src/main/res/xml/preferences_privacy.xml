@@ -2,6 +2,14 @@
 
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <PreferenceCategory android:title="@string/callsVoiceAndVideoBeta">
+        <org.thoughtcrime.securesms.components.SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="pref_call_notifications_enabled"
+            android:title="@string/callsVoiceAndVideo"
+            android:summary="@string/callsVoiceAndVideoToggleDescription"/>
+    </PreferenceCategory>
+
     <PreferenceCategory
         android:title="@string/screenSecurity">
 
@@ -33,7 +41,7 @@
             android:key="pref_typing_indicators"
             android:title="@string/typingIndicators"
             android:summary="@string/typingIndicatorsDescription" />
-        <!-- TODO ACL: Need to show a live typing indicator here & remove the "(...)" from the above string (if it's there - it might have been removed now) -->
+        <!-- TODO ACL: Need to show a live typing indicator here! -->
 
     </PreferenceCategory>
 
@@ -44,14 +52,6 @@
             android:key="pref_link_previews"
             android:summary="@string/linkPreviewsDescription"
             android:title="@string/linkPreviewsSend" />
-    </PreferenceCategory>
-
-    <PreferenceCategory android:title="@string/callsVoiceAndVideoBeta">
-        <org.thoughtcrime.securesms.components.SwitchPreferenceCompat
-            android:defaultValue="false"
-            android:key="pref_call_notifications_enabled"
-            android:title="@string/callsVoiceAndVideo"
-            android:summary="@string/callsVoiceAndVideoToggleDescription"/>
     </PreferenceCategory>
 
     <!-- <PreferenceCategory android:layout="@layout/preference_divider"/>

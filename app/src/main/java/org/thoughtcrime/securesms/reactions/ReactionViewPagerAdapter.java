@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
+import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.database.model.MessageId;
 import org.thoughtcrime.securesms.util.ContextUtil;
 import org.thoughtcrime.securesms.util.adapter.AlwaysChangedDiffUtil;
@@ -118,6 +119,8 @@ class ReactionViewPagerAdapter extends ListAdapter<EmojiCount, ReactionViewPager
 
   public interface Listener {
     void onRemoveReaction(@NonNull String emoji, @NonNull MessageId messageId, long timestamp);
+
+    void onEmojiReactionUserTapped(@NonNull Recipient recipient);
 
     void onClearAll(@NonNull String emoji, @NonNull MessageId messageId);
   }

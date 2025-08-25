@@ -3,14 +3,21 @@ package org.thoughtcrime.securesms.service
 import android.content.Context
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import network.loki.messenger.libsession_util.util.ExpiryMode.AfterSend
+import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
-import org.session.libsession.messaging.messages.signal.OutgoingExpirationUpdateMessage
+import org.session.libsession.messaging.messages.signal.OutgoingGroupMediaMessage
+import org.session.libsession.messaging.messages.signal.OutgoingSecureMediaMessage
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
+import org.session.libsession.utilities.DistributionTypes
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerProtocol
@@ -21,58 +28,57 @@ import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
+import org.thoughtcrime.securesms.database.DatabaseContentProviders
+import org.thoughtcrime.securesms.database.MessagingDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
-import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.Storage
+import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.mms.MmsException
+import org.thoughtcrime.securesms.util.observeChanges
 import java.io.IOException
-import java.util.TreeSet
-import java.util.concurrent.Executor
-import java.util.concurrent.Executors
 import javax.inject.Inject
 import javax.inject.Singleton
 
 private val TAG = ExpiringMessageManager::class.java.simpleName
 
+/**
+ * A manager that reactively looking into the [MmsDatabase] and [SmsDatabase] for expired messages,
+ * and deleting them. This is done by observing the expiration timestamps of messages and scheduling
+ * the deletion of them when they are expired.
+ *
+ * There is no need (and no way) to ask this manager to schedule a deletion of a message, instead, all you
+ * need to do is set the expiryMills and expiryStarted fields of the message and save to db,
+ * this manager will take care of the rest.
+ */
 @Singleton
 class ExpiringMessageManager @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val smsDatabase: SmsDatabase,
     private val mmsDatabase: MmsDatabase,
-    private val mmsSmsDatabase: MmsSmsDatabase,
     private val clock: SnodeClock,
     private val storage: Lazy<Storage>,
     private val preferences: TextSecurePreferences,
-) : MessageExpirationManagerProtocol {
-    private val expiringMessageReferences = TreeSet<ExpiringMessageReference>()
-    private val executor: Executor = Executors.newSingleThreadExecutor()
+    @ManagerScope scope: CoroutineScope,
+) : MessageExpirationManagerProtocol, OnAppStartupComponent {
 
     init {
-        executor.execute(LoadTask())
-        executor.execute(ProcessTask())
+        scope.launch {
+            listOf(
+                launch { processDatabase(smsDatabase) },
+                launch { processDatabase(mmsDatabase) }
+            ).joinAll()
+        }
     }
 
     private fun getDatabase(mms: Boolean) = if (mms) mmsDatabase else smsDatabase
 
-    fun scheduleDeletion(id: Long, mms: Boolean, startedAtTimestamp: Long, expiresInMillis: Long) {
-        if (startedAtTimestamp <= 0) return
-
-        val expiresAtMillis = startedAtTimestamp + expiresInMillis
-        synchronized(expiringMessageReferences) {
-            expiringMessageReferences += ExpiringMessageReference(id, mms, expiresAtMillis)
-            (expiringMessageReferences as Object).notifyAll()
-        }
-    }
-
-    fun checkSchedule() {
-        synchronized(expiringMessageReferences) { (expiringMessageReferences as Object).notifyAll() }
-    }
-
     private fun insertIncomingExpirationTimerMessage(
         message: ExpirationTimerUpdate,
-        expireStartedAt: Long
-    ) {
+    ): MessageId? {
         val senderPublicKey = message.sender
         val sentTimestamp = message.sentTimestamp
         val groupId = message.groupPublicKey
@@ -82,8 +88,8 @@ class ExpiringMessageManager @Inject constructor(
         var recipient = Recipient.from(context, address, false)
 
         // if the sender is blocked, we don't display the update, except if it's in a closed group
-        if (recipient.isBlocked && groupId == null) return
-        try {
+        if (recipient.isBlocked && groupId == null) return null
+        return try {
             if (groupId != null) {
                 val groupAddress: Address
                 groupInfo = when {
@@ -99,16 +105,18 @@ class ExpiringMessageManager @Inject constructor(
                 }
                 recipient = Recipient.from(context, groupAddress, false)
             }
-            val threadId = storage.get().getThreadId(recipient) ?: return
+            val threadId = storage.get().getThreadId(recipient) ?: return null
             val mediaMessage = IncomingMediaMessage(
                 address, sentTimestamp!!, -1,
-                expiresInMillis, expireStartedAt, true,
-                false,
+                expiresInMillis,
+                0,  // Marking expiryStartedAt as 0 as expiration logic will be universally applied on received messages
+                // We no longer set this to true anymore as it won't be used in the future,
                 false,
                 false,
                 Optional.absent(),
                 groupInfo,
                 Optional.absent(),
+                DisappearingMessageUpdate(message.expiryMode),
                 Optional.absent(),
                 Optional.absent(),
                 Optional.absent(),
@@ -116,17 +124,20 @@ class ExpiringMessageManager @Inject constructor(
             )
             //insert the timer update message
             mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, threadId, runThreadUpdate = true)
+                .orNull()
+                ?.let { MessageId(it.messageId, mms = true) }
         } catch (ioe: IOException) {
             Log.e("Loki", "Failed to insert expiration update message.")
+            null
         } catch (ioe: MmsException) {
             Log.e("Loki", "Failed to insert expiration update message.")
+            null
         }
     }
 
     private fun insertOutgoingExpirationTimerMessage(
         message: ExpirationTimerUpdate,
-        expireStartedAt: Long
-    ) {
+    ): MessageId? {
         val sentTimestamp = message.sentTimestamp
         val groupId = message.groupPublicKey
         val duration = message.expiryMode.expiryMillis
@@ -140,100 +151,120 @@ class ExpiringMessageManager @Inject constructor(
             val recipient = Recipient.from(context, address, false)
 
             message.threadID = storage.get().getOrCreateThreadIdFor(address)
-            val timerUpdateMessage = OutgoingExpirationUpdateMessage(
+            val content = DisappearingMessageUpdate(message.expiryMode)
+            val timerUpdateMessage = if (groupId != null) OutgoingGroupMediaMessage(
                 recipient,
+                "",
+                groupId,
+                null,
                 sentTimestamp!!,
                 duration,
-                expireStartedAt,
-                groupId
+                0, // Marking as 0 as expiration shouldn't start until we send the message
+                false,
+                null,
+                emptyList(),
+                emptyList(),
+                content
+            ) else OutgoingSecureMediaMessage(
+                recipient,
+                "",
+                emptyList(),
+                sentTimestamp!!,
+                DistributionTypes.CONVERSATION,
+                duration,
+                0, // Marking as 0 as expiration shouldn't start until we send the message
+                null,
+                emptyList(),
+                emptyList(),
+                content
             )
-            mmsDatabase.insertSecureDecryptedMessageOutbox(
+
+            return mmsDatabase.insertSecureDecryptedMessageOutbox(
                 timerUpdateMessage,
                 message.threadID!!,
                 sentTimestamp,
                 true
-            )
+            ).orNull()?.messageId?.let { MessageId(it, mms = true) }
         } catch (ioe: MmsException) {
             Log.e("Loki", "Failed to insert expiration update message.", ioe)
+            return null
         } catch (ioe: IOException) {
             Log.e("Loki", "Failed to insert expiration update message.", ioe)
+            return null
         }
     }
 
     override fun insertExpirationTimerMessage(message: ExpirationTimerUpdate) {
-        val expiryMode: ExpiryMode = message.expiryMode
-
         val userPublicKey = preferences.getLocalNumber()
         val senderPublicKey = message.sender
-        val sentTimestamp = message.sentTimestamp ?: 0
-        val expireStartedAt = if ((expiryMode is AfterSend || message.isSenderSelf) && !message.isGroup) sentTimestamp else 0
 
-        // Notify the user
-        if (senderPublicKey == null || userPublicKey == senderPublicKey) {
+        message.id = if (senderPublicKey == null || userPublicKey == senderPublicKey) {
             // sender is self or a linked device
-            insertOutgoingExpirationTimerMessage(message, expireStartedAt)
+            insertOutgoingExpirationTimerMessage(message)
         } else {
-            insertIncomingExpirationTimerMessage(message, expireStartedAt)
-        }
-
-        maybeStartExpiration(message)
-    }
-
-    override fun startAnyExpiration(timestamp: Long, author: String, expireStartedAt: Long) {
-        mmsSmsDatabase.getMessageFor(timestamp, author)?.run {
-            getDatabase(isMms()).markExpireStarted(getId(), expireStartedAt)
-            scheduleDeletion(getId(), isMms(), expireStartedAt, expiresIn)
-        } ?: Log.e(TAG, "no message record!")
-    }
-
-    private inner class LoadTask : Runnable {
-        override fun run() {
-            val smsReader = smsDatabase.readerFor(smsDatabase.getExpirationStartedMessages())
-            val mmsReader = mmsDatabase.expireStartedMessages
-
-            val smsMessages = smsReader.use { generateSequence { it.next }.toList() }
-            val mmsMessages = mmsReader.use { generateSequence { it.next }.toList() }
-
-            (smsMessages + mmsMessages).forEach { messageRecord ->
-                expiringMessageReferences += ExpiringMessageReference(
-                    messageRecord.getId(),
-                    messageRecord.isMms,
-                    messageRecord.expireStarted + messageRecord.expiresIn
-                )
-            }
+            insertIncomingExpirationTimerMessage(message)
         }
     }
 
-    private inner class ProcessTask : Runnable {
-        override fun run() {
-            while (true) {
-                synchronized(expiringMessageReferences) {
+    override fun onMessageSent(message: Message) {
+        // When a message is sent, we'll schedule deletion immediately if we have an expiry mode,
+        // even if the expiry mode is set to AfterRead, as we don't have a reliable way to know
+        // that the recipient has read the message at at all. From our perspective it's better
+        // to disappear the message regardlessly for the safety of ourselves.
+        // As for the receiver, they will be able to disappear the message correctly after
+        // they've done reading it.
+        val messageId = message.id
+        if (message.expiryMode != ExpiryMode.NONE && messageId != null) {
+            getDatabase(messageId.mms)
+                .markExpireStarted(messageId.id, clock.currentTimeMills())
+        }
+    }
+
+    override fun onMessageReceived(message: Message) {
+        // When we receive a message, we'll schedule deletion if it has an expiry mode set to
+        // AfterSend, as the message would be considered sent from the sender's perspective.
+        val messageId = message.id
+        if (message.expiryMode is ExpiryMode.AfterSend && messageId != null) {
+            getDatabase(messageId.mms)
+                .markExpireStarted(messageId.id, clock.currentTimeMills())
+        }
+    }
+
+    private suspend fun processDatabase(db: MessagingDatabase) {
+        while (true) {
+            val expiredMessages = db.getExpiredMessageIDs(clock.currentTimeMills())
+
+            if (expiredMessages.isNotEmpty()) {
+                Log.d(TAG, "Deleting ${expiredMessages.size} expired messages from ${db.javaClass.simpleName}")
+                for (messageId in expiredMessages) {
                     try {
-                        while (expiringMessageReferences.isEmpty()) (expiringMessageReferences as Object).wait()
-                        val nextReference = expiringMessageReferences.first()
-                        val waitTime = nextReference.expiresAtMillis - clock.currentTimeMills()
-                        if (waitTime > 0) {
-                            ExpirationListener.setAlarm(context, waitTime)
-                            (expiringMessageReferences as Object).wait(waitTime)
-                            null
-                        } else {
-                            expiringMessageReferences -= nextReference
-                            nextReference
-                        }
-                    } catch (e: InterruptedException) {
-                        Log.w(TAG, e)
-                        null
+                        db.deleteMessage(messageId)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to delete expired message with ID $messageId", e)
                     }
-                }?.run { getDatabase(mms).deleteMessage(id) }
+                }
+            }
+
+            val nextExpiration = db.nextExpiringTimestamp
+            val now = clock.currentTimeMills()
+
+            if (nextExpiration > 0 && nextExpiration <= now) {
+                continue // Proceed to the next iteration if the next expiration is already or about go to in the past
+            }
+
+            val dbChanges = context.contentResolver.observeChanges(DatabaseContentProviders.Conversation.CONTENT_URI, true)
+
+            if (nextExpiration > 0) {
+                val delayMills = nextExpiration - now
+                Log.d(TAG, "Wait for up to $delayMills ms for next expiration in ${db.javaClass.simpleName}")
+                withTimeoutOrNull(delayMills) {
+                    dbChanges.first()
+                }
+            } else {
+                Log.d(TAG, "No next expiration found, waiting for any change in ${db.javaClass.simpleName}")
+                // If there are no next expiration, just wait for any change in the database
+                dbChanges.first()
             }
         }
-    }
-
-    private data class ExpiringMessageReference(
-        val id: Long,
-        val mms: Boolean,
-        val expiresAtMillis: Long
-    ): Comparable<ExpiringMessageReference> {
-        override fun compareTo(other: ExpiringMessageReference) = compareValuesBy(this, other, { it.expiresAtMillis }, { it.id }, { it.mms })
     }
 }

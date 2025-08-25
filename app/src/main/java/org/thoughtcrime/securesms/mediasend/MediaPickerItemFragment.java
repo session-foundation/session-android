@@ -23,15 +23,18 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import org.session.libsession.utilities.Util;
+import org.thoughtcrime.securesms.util.ViewUtilitiesKt;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import dagger.hilt.android.AndroidEntryPoint;
 import network.loki.messenger.R;
 
 /**
  * Allows the user to select a set of media items from a specified folder.
  */
+@AndroidEntryPoint
 public class MediaPickerItemFragment extends Fragment implements MediaPickerItemAdapter.EventListener {
 
   private static final String KEY_BUCKET_ID     = "bucket_id";
@@ -66,7 +69,7 @@ public class MediaPickerItemFragment extends Fragment implements MediaPickerItem
     bucketId     = getArguments().getString(KEY_BUCKET_ID);
     folderTitle  = getArguments().getString(KEY_FOLDER_TITLE);
     maxSelection = getArguments().getInt(KEY_MAX_SELECTION);
-    viewModel    = new ViewModelProvider(requireActivity(), new MediaSendViewModel.Factory(requireActivity().getApplication(), new MediaRepository())).get(MediaSendViewModel.class);
+    viewModel = new ViewModelProvider(requireActivity()).get(MediaSendViewModel.class);
   }
 
   @Override
@@ -88,6 +91,8 @@ public class MediaPickerItemFragment extends Fragment implements MediaPickerItem
   @Override
   public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
+
+    ViewUtilitiesKt.applySafeInsetsPaddings(view);
 
     RecyclerView imageList = view.findViewById(R.id.mediapicker_item_list);
 
@@ -115,8 +120,6 @@ public class MediaPickerItemFragment extends Fragment implements MediaPickerItem
     super.onResume();
 
     viewModel.onItemPickerStarted();
-    requireActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
-    requireActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
   }
 
   @Override

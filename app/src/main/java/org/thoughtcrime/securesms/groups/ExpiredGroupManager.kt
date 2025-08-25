@@ -1,6 +1,6 @@
 package org.thoughtcrime.securesms.groups
 
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.mapNotNull
@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -22,7 +24,8 @@ import javax.inject.Singleton
 @Singleton
 class ExpiredGroupManager @Inject constructor(
     pollerManager: GroupPollerManager,
-) {
+    @ManagerScope scope: CoroutineScope
+) : OnAppStartupComponent {
     @Suppress("OPT_IN_USAGE")
     val expiredGroups: StateFlow<Set<AccountId>> = pollerManager.watchAllGroupPollingState()
         .mapNotNull { (groupId, state) ->
@@ -52,5 +55,5 @@ class ExpiredGroupManager @Inject constructor(
             }
         }
 
-        .stateIn(GlobalScope, SharingStarted.Eagerly, emptySet())
+        .stateIn(scope, SharingStarted.Eagerly, emptySet())
 }

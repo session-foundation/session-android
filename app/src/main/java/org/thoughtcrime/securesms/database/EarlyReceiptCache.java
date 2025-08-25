@@ -15,7 +15,7 @@ public class EarlyReceiptCache {
 
   public synchronized void increment(long timestamp, Address origin) {
     Log.i(TAG, this+"");
-    Log.i(TAG, String.format("Early receipt: (%d, %s)", timestamp, origin.serialize()));
+    Log.i(TAG, String.format("Early receipt: (%d, %s)", timestamp, origin.toString()));
 
     Map<Address, Long> receipts = cache.get(timestamp);
 

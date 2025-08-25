@@ -5,19 +5,25 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.view.View
 import android.view.ViewTreeObserver
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.fragment.app.Fragment
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.PermissionState
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.shouldShowRationale
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import com.squareup.phrase.Phrase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import org.thoughtcrime.securesms.ui.theme.SessionMaterialTheme
 
 fun Activity.setComposeContent(content: @Composable () -> Unit) {
@@ -52,11 +58,6 @@ fun ComposeView.setThemedContent(content: @Composable () -> Unit) = setContent {
     }
 }
 
-@ExperimentalPermissionsApi
-fun PermissionState.isPermanentlyDenied(): Boolean {
-    return !status.shouldShowRationale && !status.isGranted
-}
-
 fun Context.findActivity(): Activity {
     var context = this
     while (context is ContextWrapper) {
@@ -78,13 +79,40 @@ inline fun <T : View> T.afterMeasured(crossinline block: T.() -> Unit) {
 }
 
 /**
- * This is used to set the test tag that the QA team can use to retrieve an element in appium
- * In order to do so we need to set the testTagsAsResourceId to true, which ideally should be done only once
- * in the root composable, but our app is currently made up of  multiple isolated composables
- * set up in the old activity/fragment view system
- * As such we need to repeat it for every component that wants to use testTag, until such
- * a time as we have one root composable
+ * helper function to observe flows as events properly
+ * Including not losing events when the lifecycle gets destroyed by using Dispatchers.Main.immediate
  */
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun Modifier.qaTag(tag: String) = semantics { testTagsAsResourceId = true }.testTag(tag)
+fun <T> ObserveAsEvents(
+    flow: Flow<T>,
+    key1: Any? = null,
+    key2: Any? = null,
+    onEvent: (T) -> Unit
+) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(key1 = lifecycleOwner.lifecycle, key1, key2) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            withContext(Dispatchers.Main.immediate) {
+                flow.collect(onEvent)
+            }
+        }
+    }
+}
+
+@Composable
+fun AnimateFade(
+    visible: Boolean,
+    modifier: Modifier = Modifier,
+    fadeInAnimationSpec: FiniteAnimationSpec<Float> = spring(stiffness = Spring.StiffnessMediumLow),
+    fadeOutAnimationSpec: FiniteAnimationSpec<Float> = spring(stiffness = Spring.StiffnessMediumLow),
+    content: @Composable() AnimatedVisibilityScope.() -> Unit
+){
+    AnimatedVisibility(
+        modifier = modifier,
+        visible = visible,
+        enter = fadeIn(animationSpec = fadeInAnimationSpec),
+        exit = fadeOut(animationSpec = fadeOutAnimationSpec)
+    ) {
+        content()
+    }
+}

@@ -10,6 +10,7 @@ import android.widget.RelativeLayout
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewProfilePictureBinding
@@ -21,14 +22,20 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.GroupUtil
+import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.GroupDatabase
+import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.util.AvatarUtils
+import org.thoughtcrime.securesms.util.avatarOptions
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class ProfilePictureView @JvmOverloads constructor(
-    context: Context, attrs: AttributeSet? = null
+    context: Context,
+    attrs: AttributeSet? = null
 ) : RelativeLayout(context, attrs) {
     private val TAG = "ProfilePictureView"
 
@@ -48,6 +55,15 @@ class ProfilePictureView @JvmOverloads constructor(
     @Inject
     lateinit var storage: StorageProtocol
 
+    @Inject
+    lateinit var usernameUtils: UsernameUtils
+
+    @Inject
+    lateinit var avatarUtils: AvatarUtils
+
+    @Inject
+    lateinit var proStatusManager: ProStatusManager
+
     private val profilePicturesCache = mutableMapOf<View, Recipient>()
     private val resourcePadding by lazy {
         context.resources.getDimensionPixelSize(R.dimen.normal_padding).toFloat()
@@ -59,9 +75,11 @@ class ProfilePictureView @JvmOverloads constructor(
         update(sender)
     }
 
-    private fun createUnknownRecipientDrawable(): Drawable {
-        return ResourceContactPhoto(R.drawable.ic_profile_default)
-            .asDrawable(context, ContactColors.UNKNOWN_COLOR.toConversationColor(context), false, resourcePadding)
+    private fun createUnknownRecipientDrawable(publicKey: String? = null): Drawable {
+        val color = if(publicKey.isNullOrEmpty()) ContactColors.UNKNOWN_COLOR.toConversationColor(context)
+        else avatarUtils.getColorFromKey(publicKey)
+        return ResourceContactPhoto(R.drawable.ic_user_filled_custom)
+            .asDrawable(context, color, false, resourcePadding)
     }
 
     fun update(recipient: Recipient) {
@@ -69,51 +87,74 @@ class ProfilePictureView @JvmOverloads constructor(
         recipient.run {
             update(
                 address = address,
-                isLegacyGroupRecipient = isLegacyGroupRecipient,
-                isCommunityInboxRecipient = isCommunityInboxRecipient,
-                isGroupsV2Recipient = isGroupV2Recipient
+                profileViewDataType = when {
+                    isGroupV2Recipient -> ProfileViewDataType.GroupvV2(
+                        customGroupImage = profileAvatar
+                    )
+                    isLegacyGroupRecipient -> ProfileViewDataType.LegacyGroup
+                    isCommunityRecipient -> ProfileViewDataType.Community
+                    isCommunityInboxRecipient -> ProfileViewDataType.CommunityInbox
+                    else -> ProfileViewDataType.OneOnOne
+                }
             )
         }
     }
 
     fun update(
         address: Address,
-        isLegacyGroupRecipient: Boolean = false,
-        isCommunityInboxRecipient: Boolean = false,
-        isGroupsV2Recipient: Boolean = false,
+        profileViewDataType: ProfileViewDataType = ProfileViewDataType.OneOnOne
     ) {
         fun getUserDisplayName(publicKey: String): String = prefs.takeIf { userPublicKey == publicKey }?.getProfileName()
-            ?: storage.getContactNameWithAccountID(publicKey)
+            ?: usernameUtils.getContactNameWithAccountID(publicKey)
 
-        if (isLegacyGroupRecipient || isGroupsV2Recipient) {
-            val members = if (isLegacyGroupRecipient) {
-                groupDatabase
-                    .getGroupMemberAddresses(address.toGroupString(), true)
-            } else {
-                storage.getMembers(address.serialize())
-                    .map { Address.fromSerialized(it.accountIdString()) }
-            }.sorted().take(2)
+        // group avatar
+        if (profileViewDataType is ProfileViewDataType.GroupvV2 || profileViewDataType is ProfileViewDataType.LegacyGroup) {
+            // if the group has a custom image, use that
+            // other wise make up a double avatar from the first two members
+            // if there is only one member then use that member + an unknown icon coloured based on the group id
 
-            if (members.size <= 1) {
-                publicKey = ""
+            // first check if we have a custom image
+            if((profileViewDataType as? ProfileViewDataType.GroupvV2)?.customGroupImage != null){
+                publicKey =  address.toString()
                 displayName = ""
-                additionalPublicKey = ""
-                additionalDisplayName = ""
-            } else {
-                val pk = members.getOrNull(0)?.serialize() ?: ""
-                publicKey = pk
-                displayName = getUserDisplayName(pk)
-                val apk = members.getOrNull(1)?.serialize() ?: ""
-                additionalPublicKey = apk
-                additionalDisplayName = getUserDisplayName(apk)
+                additionalPublicKey = null // we don't want a second image when there is a custom image set
+            } else { // otherwise apply the logic based on members
+
+                val members = if (profileViewDataType is ProfileViewDataType.LegacyGroup) {
+                    groupDatabase.getGroupMemberAddresses(address.toGroupString(), true)
+                } else {
+                    storage.getMembers(address.toString())
+                        .map { Address.fromSerialized(it.accountId()) }
+                }.sorted().take(2)
+
+                if (members.isEmpty()) {
+                    publicKey = ""
+                    displayName = ""
+                    additionalPublicKey = ""
+                    additionalDisplayName = ""
+                } else if (members.size == 1) {
+                    val pk = members.getOrNull(0)?.toString() ?: ""
+                    publicKey = pk
+                    displayName = getUserDisplayName(pk)
+                    additionalPublicKey =
+                        address.toString() // use the group address to later generate a colour based on the group id
+                    additionalDisplayName = ""
+                } else {
+                    val pk = members.getOrNull(0)?.toString() ?: ""
+                    publicKey = pk
+                    displayName = getUserDisplayName(pk)
+                    val apk = members.getOrNull(1)?.toString() ?: ""
+                    additionalPublicKey = apk
+                    additionalDisplayName = getUserDisplayName(apk)
+                }
             }
-        } else if(isCommunityInboxRecipient) {
-            val publicKey = GroupUtil.getDecodedOpenGroupInboxAccountId(address.serialize())
+        } else if(profileViewDataType is ProfileViewDataType.CommunityInbox) {
+            val publicKey = GroupUtil.getDecodedOpenGroupInboxAccountId(address.toString())
             this.publicKey = publicKey
             displayName = getUserDisplayName(publicKey)
             additionalPublicKey = null
         } else {
-            val publicKey = address.serialize()
+            val publicKey = address.toString()
             this.publicKey = publicKey
             displayName = getUserDisplayName(publicKey)
             additionalPublicKey = null
@@ -142,13 +183,12 @@ class ProfilePictureView @JvmOverloads constructor(
             glide.clear(binding.doubleModeImageView2)
             binding.doubleModeImageViewContainer.visibility = View.INVISIBLE
         }
-
     }
 
     private fun setProfilePictureIfNeeded(imageView: ImageView, publicKey: String, displayName: String?) {
         if (publicKey.isNotEmpty()) {
             // if we already have a recipient that matches the current key, reuse it
-            val recipient = if(this.recipient != null && this.recipient?.address?.serialize() == publicKey){
+            val recipient = if(this.recipient != null && this.recipient?.address?.toString() == publicKey){
                 this.recipient!!
             }
             else {
@@ -164,26 +204,34 @@ class ProfilePictureView @JvmOverloads constructor(
 
             glide.clear(imageView)
 
-            val placeholder = PlaceholderAvatarPhoto(publicKey, displayName ?: "${publicKey.take(4)}...${publicKey.takeLast(4)}")
+            val placeholder = PlaceholderAvatarPhoto(
+                publicKey,
+                displayName ?: truncateIdForDisplay(publicKey),
+                avatarUtils.generateTextBitmap(128, publicKey, displayName)
+            )
 
             if (signalProfilePicture != null && avatar != "0" && avatar != "") {
+                val maxSizePx = context.resources.getDimensionPixelSize(R.dimen.medium_profile_picture_size)
                 glide.load(signalProfilePicture)
+                    .avatarOptions(
+                        sizePx = maxSizePx,
+                        freezeFrame = proStatusManager.freezeFrameForUser(recipient.address)
+                    )
                     .placeholder(createUnknownRecipientDrawable())
-                    .centerCrop()
                     .error(glide.load(placeholder))
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .circleCrop()
+                    .into(imageView)
+            } else if(recipient.isGroupRecipient) { // for groups, if we have an unknown it needs to display the unknown icon but with a bg colour based on the group's id
+                glide.load(createUnknownRecipientDrawable(publicKey))
+                    .optionalTransform(CenterCrop())
                     .into(imageView)
             } else if (recipient.isCommunityRecipient && recipient.groupAvatarId == null) {
                 glide.load(unknownOpenGroupDrawable)
-                    .centerCrop()
-                    .circleCrop()
+                    .optionalTransform(CenterCrop())
                     .into(imageView)
             } else {
                 glide.load(placeholder)
                     .placeholder(createUnknownRecipientDrawable())
-                    .centerCrop()
-                    .circleCrop()
+                    .optionalTransform(CenterCrop())
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .into(imageView)
             }
@@ -198,4 +246,14 @@ class ProfilePictureView @JvmOverloads constructor(
         profilePicturesCache.clear()
     }
     // endregion
+
+    sealed interface ProfileViewDataType{
+        data object OneOnOne: ProfileViewDataType
+        data object LegacyGroup: ProfileViewDataType
+        data object Community: ProfileViewDataType
+        data object CommunityInbox: ProfileViewDataType
+        data class GroupvV2(
+            val customGroupImage: String? = null
+        ): ProfileViewDataType
+    }
 }

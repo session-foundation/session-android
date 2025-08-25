@@ -1,47 +1,20 @@
 package org.thoughtcrime.securesms.preferences
 
-import android.os.Bundle
-import androidx.activity.viewModels
-import androidx.core.view.isVisible
+import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import network.loki.messenger.R
-import network.loki.messenger.databinding.ActivityBlockedContactsBinding
-import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
-import org.thoughtcrime.securesms.showSessionDialog
+import org.thoughtcrime.securesms.FullComposeScreenLockActivity
 
 @AndroidEntryPoint
-class BlockedContactsActivity: PassphraseRequiredActionBarActivity() {
+class BlockedContactsActivity: FullComposeScreenLockActivity() {
 
-    lateinit var binding: ActivityBlockedContactsBinding
+    @Composable
+    override fun ComposeContent() {
+        val viewModel: BlockedContactsViewModel = hiltViewModel<BlockedContactsViewModel>()
 
-    val viewModel: BlockedContactsViewModel by viewModels()
-
-    val adapter: BlockedContactsAdapter by lazy { BlockedContactsAdapter(viewModel) }
-
-    private fun unblock() {
-        showSessionDialog {
-            title(viewModel.getTitle(this@BlockedContactsActivity))
-            text(viewModel.getText(context, viewModel.state.selectedItems))
-            dangerButton(R.string.blockUnblock, R.string.AccessibilityId_unblockConfirm) { viewModel.unblock() }
-            cancelButton()
-        }
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
-        super.onCreate(savedInstanceState, ready)
-        binding = ActivityBlockedContactsBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        binding.recyclerView.adapter = adapter
-
-        viewModel.subscribe(this)
-            .observe(this) { state ->
-                adapter.submitList(state.items)
-                binding.emptyStateMessageTextView.isVisible = state.emptyStateMessageTextViewVisible
-                binding.nonEmptyStateGroup.isVisible = state.nonEmptyStateGroupVisible
-                binding.unblockButton.isEnabled = state.unblockButtonEnabled
-            }
-
-        binding.unblockButton.setOnClickListener { unblock() }
+        BlockedContactsScreen(
+            viewModel = viewModel,
+            onBack = { finish() },
+        )
     }
 }

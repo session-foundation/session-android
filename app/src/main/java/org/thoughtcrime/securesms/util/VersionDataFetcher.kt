@@ -8,6 +8,7 @@ import kotlinx.coroutines.launch
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.time.Duration.Companion.hours
@@ -18,7 +19,7 @@ private val REFRESH_TIME_MS = 4.hours.inWholeMilliseconds
 @Singleton
 class VersionDataFetcher @Inject constructor(
     private val prefs: TextSecurePreferences
-) {
+) : OnAppStartupComponent {
     private val handler = Handler(Looper.getMainLooper())
     private val fetchVersionData = Runnable {
         scope.launch {
@@ -56,5 +57,9 @@ class VersionDataFetcher @Inject constructor(
 
     fun stopTimedVersionCheck() {
         handler.removeCallbacks(fetchVersionData)
+    }
+
+    override fun onPostAppStarted() {
+        startTimedVersionCheck()
     }
 }

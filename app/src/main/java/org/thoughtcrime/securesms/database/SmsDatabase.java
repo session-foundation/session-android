@@ -24,13 +24,13 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.text.TextUtils;
-import android.util.Pair;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.annimon.stream.Stream;
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
-import net.zetetic.database.sqlcipher.SQLiteStatement;
-import org.apache.commons.lang3.StringUtils;
+
+import org.json.JSONArray;
 import org.session.libsession.messaging.calls.CallMessageType;
 import org.session.libsession.messaging.messages.signal.IncomingGroupMessage;
 import org.session.libsession.messaging.messages.signal.IncomingTextMessage;
@@ -46,18 +46,22 @@ import org.session.libsignal.utilities.JsonUtil;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
+import org.thoughtcrime.securesms.database.model.MessageId;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.database.model.ReactionRecord;
 import org.thoughtcrime.securesms.database.model.SmsMessageRecord;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+
+import javax.inject.Provider;
 
 /**
  * Database for storage of SMS messages.
@@ -108,7 +112,7 @@ public class SmsDatabase extends MessagingDatabase {
       PROTOCOL, READ, STATUS, TYPE,
       REPLY_PATH_PRESENT, SUBJECT, BODY, SERVICE_CENTER, DELIVERY_RECEIPT_COUNT,
       MISMATCHED_IDENTITIES, SUBSCRIPTION_ID, EXPIRES_IN, EXPIRE_STARTED,
-      NOTIFIED, READ_RECEIPT_COUNT, UNIDENTIFIED, HAS_MENTION,
+      NOTIFIED, READ_RECEIPT_COUNT, HAS_MENTION,
       "json_group_array(json_object(" +
               "'" + ReactionDatabase.ROW_ID + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.ROW_ID + ", " +
               "'" + ReactionDatabase.MESSAGE_ID + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.MESSAGE_ID + ", " +
@@ -147,7 +151,7 @@ public class SmsDatabase extends MessagingDatabase {
   private static final EarlyReceiptCache earlyDeliveryReceiptCache = new EarlyReceiptCache();
   private static final EarlyReceiptCache earlyReadReceiptCache     = new EarlyReceiptCache();
 
-  public SmsDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  public SmsDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper) {
     super(context, databaseHelper);
   }
 
@@ -158,7 +162,7 @@ public class SmsDatabase extends MessagingDatabase {
   private void updateTypeBitmask(long id, long maskOff, long maskOn) {
     Log.i("MessageDatabase", "Updating ID: " + id + " to base type: " + maskOn);
 
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.execSQL("UPDATE " + TABLE_NAME +
                " SET " + TYPE + " = (" + TYPE + " & " + (Types.TOTAL_MASK - maskOff) + " | " + maskOn + " )" +
                " WHERE " + ID + " = ?", new String[] {id+""});
@@ -172,7 +176,7 @@ public class SmsDatabase extends MessagingDatabase {
   public long getThreadIdForMessage(long id) {
     String sql        = "SELECT " + THREAD_ID + " FROM " + TABLE_NAME + " WHERE " + ID + " = ?";
     String[] sqlArgs  = new String[] {id+""};
-    SQLiteDatabase db = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db = getReadableDatabase();
 
     Cursor cursor = null;
 
@@ -189,7 +193,7 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   public int getMessageCountForThread(long threadId) {
-    SQLiteDatabase db = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db = getReadableDatabase();
     Cursor cursor     = null;
 
     try {
@@ -211,8 +215,8 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   @Override
-  public void markAsSent(long id, boolean isSecure) {
-    updateTypeBitmask(id, Types.BASE_TYPE_MASK, Types.BASE_SENT_TYPE | (isSecure ? Types.PUSH_MESSAGE_BIT | Types.SECURE_MESSAGE_BIT : 0));
+  public void markAsSent(long id, boolean isSent) {
+    updateTypeBitmask(id, Types.BASE_TYPE_MASK, Types.BASE_SENT_TYPE | (isSent ? Types.PUSH_MESSAGE_BIT | Types.SECURE_MESSAGE_BIT : 0));
   }
 
   public void markAsSending(long id) {
@@ -235,22 +239,14 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   @Override
-  public void markUnidentified(long id, boolean unidentified) {
-    ContentValues contentValues = new ContentValues(1);
-    contentValues.put(UNIDENTIFIED, unidentified ? 1 : 0);
-
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
-    db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {String.valueOf(id)});
-  }
-
-  @Override
   public void markAsDeleted(long messageId, boolean isOutgoing, String displayedMessage) {
-    SQLiteDatabase database     = databaseHelper.getWritableDatabase();
+    SQLiteDatabase database     = getWritableDatabase();
     ContentValues contentValues = new ContentValues();
     contentValues.put(READ, 1);
     contentValues.put(BODY, displayedMessage);
     contentValues.put(HAS_MENTION, 0);
     contentValues.put(STATUS, Status.STATUS_NONE);
+
     database.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {String.valueOf(messageId)});
 
     updateTypeBitmask(messageId, Types.BASE_TYPE_MASK,
@@ -263,13 +259,14 @@ public class SmsDatabase extends MessagingDatabase {
     ContentValues contentValues = new ContentValues();
     contentValues.put(EXPIRE_STARTED, startedAtTimestamp);
 
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
-    db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {String.valueOf(id)});
-
-    long threadId = getThreadIdForMessage(id);
-
-    DatabaseComponent.get(context).threadDatabase().update(threadId, false);
-    notifyConversationListeners(threadId);
+    SQLiteDatabase db = getWritableDatabase();
+    try (final Cursor cursor = db.rawQuery("UPDATE " + TABLE_NAME + " SET " + EXPIRE_STARTED + " = ? " +
+                    "WHERE " + ID + " = ? RETURNING " + THREAD_ID, startedAtTimestamp, id)) {
+      if (cursor.moveToNext()) {
+        long threadId = cursor.getLong(0);
+        DatabaseComponent.get(context).threadDatabase().update(threadId, false);
+      }
+    }
   }
 
   public void markAsSentFailed(long id) {
@@ -277,7 +274,7 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   public void markAsNotified(long id) {
-    SQLiteDatabase database      = databaseHelper.getWritableDatabase();
+    SQLiteDatabase database      = getWritableDatabase();
     ContentValues  contentValues = new ContentValues();
 
     contentValues.put(NOTIFIED, 1);
@@ -285,14 +282,14 @@ public class SmsDatabase extends MessagingDatabase {
     database.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {String.valueOf(id)});
   }
 
-  public boolean isOutgoingMessage(long timestamp) {
-    SQLiteDatabase database     = databaseHelper.getWritableDatabase();
+  public boolean isOutgoingMessage(long id) {
+    SQLiteDatabase database     = getWritableDatabase();
     Cursor         cursor       = null;
     boolean        isOutgoing   = false;
 
     try {
       cursor = database.query(TABLE_NAME, new String[] { ID, THREAD_ID, ADDRESS, TYPE },
-               DATE_SENT + " = ?", new String[] { String.valueOf(timestamp) },
+               ID + " = ?", new String[] { String.valueOf(id) },
                null, null, null, null);
 
       while (cursor.moveToNext()) {
@@ -307,14 +304,14 @@ public class SmsDatabase extends MessagingDatabase {
     return isOutgoing;
   }
 
-  public boolean isDeletedMessage(long timestamp) {
-    SQLiteDatabase database     = databaseHelper.getWritableDatabase();
+  public boolean isDeletedMessage(long id) {
+    SQLiteDatabase database     = getWritableDatabase();
     Cursor         cursor       = null;
     boolean        isDeleted   = false;
 
     try {
       cursor = database.query(TABLE_NAME, new String[] { ID, THREAD_ID, ADDRESS, TYPE },
-              DATE_SENT + " = ?", new String[] { String.valueOf(timestamp) },
+              ID + " = ?", new String[] { String.valueOf(id) },
               null, null, null, null);
 
       while (cursor.moveToNext()) {
@@ -335,7 +332,7 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   public void incrementReceiptCount(SyncMessageId messageId, boolean deliveryReceipt, boolean readReceipt) {
-    SQLiteDatabase database     = databaseHelper.getWritableDatabase();
+    SQLiteDatabase database     = getWritableDatabase();
     Cursor         cursor       = null;
     boolean        foundMessage = false;
 
@@ -377,10 +374,10 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   public List<MarkedMessageInfo> setMessagesRead(long threadId, long beforeTime) {
-    return setMessagesRead(THREAD_ID + " = ? AND (" + READ + " = 0 OR " + REACTIONS_UNREAD + " = 1) AND " + DATE_SENT + " <= ?", new String[]{threadId+"", beforeTime+""});
+    return setMessagesRead(THREAD_ID + " = ? AND (" + READ + " = 0) AND " + DATE_SENT + " <= ?", new String[]{threadId+"", beforeTime+""});
   }
   public List<MarkedMessageInfo> setMessagesRead(long threadId) {
-    return setMessagesRead(THREAD_ID + " = ? AND (" + READ + " = 0 OR " + REACTIONS_UNREAD + " = 1)", new String[] {String.valueOf(threadId)});
+    return setMessagesRead(THREAD_ID + " = ? AND (" + READ + " = 0)", new String[] {String.valueOf(threadId)});
   }
 
   public List<MarkedMessageInfo> setAllMessagesRead() {
@@ -388,7 +385,7 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   private List<MarkedMessageInfo> setMessagesRead(String where, String[] arguments) {
-    SQLiteDatabase          database  = databaseHelper.getWritableDatabase();
+    SQLiteDatabase          database  = getWritableDatabase();
     List<MarkedMessageInfo> results   = new LinkedList<>();
     Cursor                  cursor    = null;
 
@@ -399,7 +396,7 @@ public class SmsDatabase extends MessagingDatabase {
       while (cursor != null && cursor.moveToNext()) {
         long timestamp = cursor.getLong(2);
         SyncMessageId  syncMessageId  = new SyncMessageId(Address.fromSerialized(cursor.getString(1)), timestamp);
-        ExpirationInfo expirationInfo = new ExpirationInfo(cursor.getLong(0), timestamp, cursor.getLong(4), cursor.getLong(5), false);
+        ExpirationInfo expirationInfo = new ExpirationInfo(new MessageId(cursor.getLong(0), false), timestamp, cursor.getLong(4), cursor.getLong(5));
 
         results.add(new MarkedMessageInfo(syncMessageId, expirationInfo));
       }
@@ -418,34 +415,16 @@ public class SmsDatabase extends MessagingDatabase {
     return results;
   }
 
-  public void updateSentTimestamp(long messageId, long newTimestamp, long threadId) {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
-    db.execSQL("UPDATE " + TABLE_NAME + " SET " + DATE_SENT + " = ? " +
-                    "WHERE " + ID + " = ?",
-            new String[] {newTimestamp + "", messageId + ""});
-    notifyConversationListeners(threadId);
+  public void updateSentTimestamp(long messageId, long newTimestamp) {
+    SQLiteDatabase db = getWritableDatabase();
+    try(final Cursor cursor = db.rawQuery("UPDATE " + TABLE_NAME + " SET " + DATE_SENT + " = ? " +
+                    "WHERE " + ID + " = ? RETURNING " + THREAD_ID, newTimestamp, messageId)) {
+      if (cursor.moveToNext()) {
+        notifyConversationListeners(cursor.getLong(0));
+      }
+    }
+
     notifyConversationListListeners();
-  }
-
-  public Pair<Long, Long> updateBundleMessageBody(long messageId, String body) {
-    long type = Types.BASE_INBOX_TYPE | Types.SECURE_MESSAGE_BIT | Types.PUSH_MESSAGE_BIT;
-    return updateMessageBodyAndType(messageId, body, Types.TOTAL_MASK, type);
-  }
-
-  private Pair<Long, Long> updateMessageBodyAndType(long messageId, String body, long maskOff, long maskOn) {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
-    db.execSQL("UPDATE " + TABLE_NAME + " SET " + BODY + " = ?, " +
-                   TYPE + " = (" + TYPE + " & " + (Types.TOTAL_MASK - maskOff) + " | " + maskOn + ") " +
-                   "WHERE " + ID + " = ?",
-               new String[] {body, messageId + ""});
-
-    long threadId = getThreadIdForMessage(messageId);
-
-    DatabaseComponent.get(context).threadDatabase().update(threadId, true);
-    notifyConversationListeners(threadId);
-    notifyConversationListListeners();
-
-    return new Pair<>(messageId, threadId);
   }
 
   protected Optional<InsertResult> insertMessageInbox(IncomingTextMessage message, long type, long serverTimestamp, boolean runThreadUpdate) {
@@ -459,8 +438,7 @@ public class SmsDatabase extends MessagingDatabase {
       groupRecipient = Recipient.from(context, message.getGroupId(), true);
     }
 
-    boolean    unread     = (Util.isDefaultSmsProvider(context) ||
-            message.isSecureMessage() || message.isGroup() || message.isCallInfo());
+    boolean    unread     = (message.isSecureMessage() || message.isGroup() || message.isUnreadCallMessage());
 
     long       threadId;
 
@@ -484,7 +462,7 @@ public class SmsDatabase extends MessagingDatabase {
     }
 
     ContentValues values = new ContentValues(6);
-    values.put(ADDRESS, message.getSender().serialize());
+    values.put(ADDRESS, message.getSender().toString());
     values.put(ADDRESS_DEVICE_ID,  message.getSenderDeviceId());
     // In open groups messages should be sorted by their server timestamp
     long receivedTimestamp = serverTimestamp;
@@ -512,7 +490,7 @@ public class SmsDatabase extends MessagingDatabase {
       Log.w(TAG, "Duplicate message (" + message.getSentTimestampMillis() + "), ignoring...");
       return Optional.absent();
     } else {
-      SQLiteDatabase db        = databaseHelper.getWritableDatabase();
+      SQLiteDatabase db        = getWritableDatabase();
       long           messageId = db.insert(TABLE_NAME, null, values);
 
       if (runThreadUpdate) {
@@ -560,7 +538,7 @@ public class SmsDatabase extends MessagingDatabase {
     if (threadId == -1) {
       threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(message.getRecipient());
     }
-    long messageId = insertMessageOutbox(threadId, message, false, serverTimestamp, null, runThreadUpdate);
+    long messageId = insertMessageOutbox(threadId, message, false, serverTimestamp, runThreadUpdate);
     if (messageId == -1) {
       return Optional.absent();
     }
@@ -569,7 +547,7 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   public long insertMessageOutbox(long threadId, OutgoingTextMessage message,
-                                  boolean forceSms, long date, InsertListener insertListener,
+                                  boolean forceSms, long date,
                                   boolean runThreadUpdate)
   {
     long type = Types.BASE_SENDING_TYPE;
@@ -582,8 +560,8 @@ public class SmsDatabase extends MessagingDatabase {
     Map<Address, Long> earlyDeliveryReceipts = earlyDeliveryReceiptCache.remove(date);
     Map<Address, Long> earlyReadReceipts     = earlyReadReceiptCache.remove(date);
 
-    ContentValues contentValues = new ContentValues(6);
-    contentValues.put(ADDRESS, address.serialize());
+    ContentValues contentValues = new ContentValues();
+    contentValues.put(ADDRESS, address.toString());
     contentValues.put(THREAD_ID, threadId);
     contentValues.put(BODY, message.getMessageBody());
     contentValues.put(DATE_RECEIVED, SnodeAPI.getNowWithOffset());
@@ -601,11 +579,8 @@ public class SmsDatabase extends MessagingDatabase {
       return -1;
     }
 
-    SQLiteDatabase db        = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db        = getWritableDatabase();
     long           messageId = db.insert(TABLE_NAME, ADDRESS, contentValues);
-    if (insertListener != null) {
-      insertListener.onComplete();
-    }
 
     if (runThreadUpdate) {
       DatabaseComponent.get(context).threadDatabase().update(threadId, true);
@@ -624,73 +599,71 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   private Cursor rawQuery(@NonNull String where, @Nullable String[] arguments) {
-    SQLiteDatabase database = databaseHelper.getReadableDatabase();
+    SQLiteDatabase database = getReadableDatabase();
     return database.rawQuery("SELECT " + Util.join(MESSAGE_PROJECTION, ",") +
             " FROM " + SmsDatabase.TABLE_NAME +  " LEFT OUTER JOIN " + ReactionDatabase.TABLE_NAME +
             " ON (" + SmsDatabase.TABLE_NAME + "." + SmsDatabase.ID + " = " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.MESSAGE_ID + " AND " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.IS_MMS + " = 0)" +
             " WHERE " + where + " GROUP BY " + SmsDatabase.TABLE_NAME + "." + SmsDatabase.ID, arguments);
   }
 
-  public Cursor getExpirationStartedMessages() {
-    String         where = EXPIRE_STARTED + " > 0";
-    return rawQuery(where, null);
+  @Override
+  public List<Long> getExpiredMessageIDs(long nowMills) {
+    String query = "SELECT " + ID + " FROM " + TABLE_NAME +
+            " WHERE " + EXPIRES_IN + " > 0 AND " + EXPIRE_STARTED + " > 0 AND " + EXPIRE_STARTED + " + " + EXPIRES_IN + " <= ?";
+
+    try (final Cursor cursor = getReadableDatabase().rawQuery(query, nowMills)) {
+      List<Long> result = new ArrayList<>(cursor.getCount());
+      while (cursor.moveToNext()) {
+          result.add(cursor.getLong(0));
+      }
+
+      return result;
+    }
   }
 
-  public Cursor getExpirationNotStartedMessages() {
-    String         where = EXPIRES_IN + " > 0 AND " + EXPIRE_STARTED + " = 0";
-    return rawQuery(where, null);
+  /**
+   * @return the next expiring timestamp for messages that have started expiring. 0 if no messages are expiring.
+   */
+  @Override
+  public long getNextExpiringTimestamp() {
+    String query = "SELECT MIN(" + EXPIRE_STARTED + " + " + EXPIRES_IN + ") FROM " + TABLE_NAME +
+            " WHERE " + EXPIRES_IN + " > 0 AND " + EXPIRE_STARTED + " > 0";
+
+    try (final Cursor cursor = getReadableDatabase().rawQuery(query)) {
+      if (cursor.moveToFirst()) {
+        return cursor.getLong(0);
+      } else {
+        return 0L;
+      }
+    }
   }
 
+  @NonNull
   public SmsMessageRecord getMessage(long messageId) throws NoSuchMessageException {
-    Cursor         cursor = rawQuery(ID_WHERE, new String[]{messageId + ""});
-    Reader         reader = new Reader(cursor);
-    SmsMessageRecord record = reader.getNext();
-
-    reader.close();
+    final SmsMessageRecord record = getMessageOrNull(messageId);
 
     if (record == null) throw new NoSuchMessageException("No message for ID: " + messageId);
     else                return record;
   }
 
-  public Cursor getMessageCursor(long messageId) {
-    SQLiteDatabase db = databaseHelper.getReadableDatabase();
-    Cursor cursor = db.query(TABLE_NAME, MESSAGE_PROJECTION, ID_WHERE, new String[] {messageId + ""}, null, null, null);
-    setNotifyConversationListeners(cursor, getThreadIdForMessage(messageId));
-    return cursor;
+  @Nullable
+  public SmsMessageRecord getMessageOrNull(long messageId) {
+    try (final Cursor cursor = rawQuery(ID_WHERE, new String[]{String.valueOf(messageId)})) {
+      return new Reader(cursor).getNext();
+    }
   }
 
-  // Caution: The bool returned from `deleteMessage` is NOT "Was the message successfully deleted?"
-  // - it is "Was the thread deleted because removing that message resulted in an empty thread"!
   @Override
   public boolean deleteMessage(long messageId) {
-    Log.i("MessageDatabase", "Deleting: " + messageId);
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
-    long threadId = getThreadIdForMessage(messageId);
-    db.delete(TABLE_NAME, ID_WHERE, new String[] {messageId+""});
-    notifyConversationListeners(threadId);
-    boolean threadDeleted = DatabaseComponent.get(context).threadDatabase().update(threadId, false);
-    return threadDeleted;
+    return doDeleteMessages(true, ID + " = ?", messageId);
   }
 
   @Override
-  public boolean deleteMessages(long[] messageIds, long threadId) {
-    String[] argsArray = new String[messageIds.length];
-    String[] argValues = new String[messageIds.length];
-    Arrays.fill(argsArray, "?");
-
-    for (int i = 0; i < messageIds.length; i++) {
-      argValues[i] = (messageIds[i] + "");
-    }
-
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
-    db.delete(
-      TABLE_NAME,
-      ID + " IN (" + StringUtils.join(argsArray, ',') + ")",
-      argValues
+  public boolean deleteMessages(Collection<Long> messageIds) {
+    return doDeleteMessages(true,
+            ID + " IN (SELECT value FROM json_each(?))",
+            new JSONArray(messageIds).toString()
     );
-    boolean threadDeleted = DatabaseComponent.get(context).threadDatabase().update(threadId, false);
-    notifyConversationListeners(threadId);
-    return threadDeleted;
   }
 
   @Override
@@ -698,7 +671,7 @@ public class SmsDatabase extends MessagingDatabase {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(MmsSmsColumns.THREAD_ID, toId);
 
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.update(TABLE_NAME, contentValues, THREAD_ID + " = ?", new String[] {fromId + ""});
     notifyConversationListeners(toId);
     notifyConversationListListeners();
@@ -710,9 +683,9 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   private boolean isDuplicate(IncomingTextMessage message, long threadId) {
-    SQLiteDatabase database = databaseHelper.getReadableDatabase();
+    SQLiteDatabase database = getReadableDatabase();
     Cursor         cursor   = database.query(TABLE_NAME, null, DATE_SENT + " = ? AND " + ADDRESS + " = ? AND " + THREAD_ID + " = ?",
-                                             new String[]{String.valueOf(message.getSentTimestampMillis()), message.getSender().serialize(), String.valueOf(threadId)},
+                                             new String[]{String.valueOf(message.getSentTimestampMillis()), message.getSender().toString(), String.valueOf(threadId)},
                                              null, null, null, "1");
 
     try {
@@ -723,9 +696,9 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   private boolean isDuplicate(OutgoingTextMessage message, long threadId) {
-    SQLiteDatabase database = databaseHelper.getReadableDatabase();
+    SQLiteDatabase database = getReadableDatabase();
     Cursor         cursor   = database.query(TABLE_NAME, null, DATE_SENT + " = ? AND " + ADDRESS + " = ? AND " + THREAD_ID + " = ?",
-            new String[]{String.valueOf(message.getSentTimestampMillis()), message.getRecipient().getAddress().serialize(), String.valueOf(threadId)},
+            new String[]{String.valueOf(message.getSentTimestampMillis()), message.getRecipient().getAddress().toString(), String.valueOf(threadId)},
             null, null, null, "1");
 
     try {
@@ -735,68 +708,47 @@ public class SmsDatabase extends MessagingDatabase {
     }
   }
 
+  private boolean doDeleteMessages(final boolean updateThread, @NonNull final String where, @Nullable final Object...args) {
+    final String sql = "DELETE FROM " + TABLE_NAME + " WHERE " + where + " RETURNING " + THREAD_ID;
+    final HashSet<Long> deletedMessageThreadIds = new HashSet<>();
+
+    try (final Cursor cursor = getWritableDatabase().rawQuery(sql, args)) {
+        while (cursor.moveToNext()) {
+            final long threadId = cursor.getLong(0);
+            deletedMessageThreadIds.add(threadId);
+        }
+    }
+
+    if (updateThread) {
+      for (final long threadId : deletedMessageThreadIds) {
+        DatabaseComponent.get(context).threadDatabase().update(threadId, false);
+      }
+    }
+
+    return !deletedMessageThreadIds.isEmpty();
+  }
+
   void deleteMessagesFrom(long threadId, String fromUser) {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
-    db.delete(TABLE_NAME, THREAD_ID+" = ? AND "+ADDRESS+" = ?", new String[]{threadId+"", fromUser});
+    doDeleteMessages(
+        true,
+        THREAD_ID + " = ? AND " + ADDRESS + " = ?",
+        threadId, fromUser
+    );
   }
 
   void deleteMessagesInThreadBeforeDate(long threadId, long date) {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
-    String where      = THREAD_ID + " = ? AND " + DATE_SENT + " < " + date;
-
-    db.delete(TABLE_NAME, where, new String[] {threadId + ""});
+    doDeleteMessages(true, THREAD_ID + " = ? AND " + DATE_SENT + " < ?", threadId, date);
   }
 
   void deleteThread(long threadId) {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
-    db.delete(TABLE_NAME, THREAD_ID + " = ?", new String[] {threadId+""});
+    doDeleteMessages(true, THREAD_ID + " = ?", threadId);
   }
 
-  void deleteThreads(Set<Long> threadIds) {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
-    String where      = "";
-
-    for (long threadId : threadIds) {
-      where += THREAD_ID + " = '" + threadId + "' OR ";
-    }
-
-    where = where.substring(0, where.length() - 4); // Remove the final: "' OR "
-
-    db.delete(TABLE_NAME, where, null);
+  void deleteThreads(@NonNull Collection<Long> threadIds) {
+    doDeleteMessages(true, THREAD_ID + " IN (SELECT value FROM json_each(?))",
+            new JSONArray(threadIds).toString());
   }
 
-  void deleteAllThreads() {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
-    db.delete(TABLE_NAME, null, null);
-  }
-
-  SQLiteDatabase beginTransaction() {
-    SQLiteDatabase database = databaseHelper.getWritableDatabase();
-    database.beginTransaction();
-    return database;
-  }
-
-  void endTransaction(SQLiteDatabase database) {
-    database.setTransactionSuccessful();
-    database.endTransaction();
-  }
-
-  /*package*/ SQLiteStatement createInsertStatement(SQLiteDatabase database) {
-    return database.compileStatement("INSERT INTO " + TABLE_NAME + " (" + ADDRESS + ", " +
-                                                                      PERSON + ", " +
-                                                                      DATE_SENT + ", " +
-                                                                      DATE_RECEIVED  + ", " +
-                                                                      PROTOCOL + ", " +
-                                                                      READ + ", " +
-                                                                      STATUS + ", " +
-                                                                      TYPE + ", " +
-                                                                      REPLY_PATH_PRESENT + ", " +
-                                                                      SUBJECT + ", " +
-                                                                      BODY + ", " +
-                                                                      SERVICE_CENTER +
-                                                                      ", " + THREAD_ID + ") " +
-                                     " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-  }
 
   public static class Status {
     public static final int STATUS_NONE     = -1;
@@ -832,7 +784,7 @@ public class SmsDatabase extends MessagingDatabase {
                                   0, message.isSecureMessage() ? MmsSmsColumns.Types.getOutgoingEncryptedMessageType() : MmsSmsColumns.Types.getOutgoingSmsMessageType(),
                                   threadId, 0, new LinkedList<IdentityKeyMismatch>(),
                                   message.getExpiresIn(),
-                                  SnodeAPI.getNowWithOffset(), 0, false, Collections.emptyList(), false);
+                                  SnodeAPI.getNowWithOffset(), 0, Collections.emptyList(), false);
     }
   }
 
@@ -872,7 +824,6 @@ public class SmsDatabase extends MessagingDatabase {
       long    expiresIn            = cursor.getLong(cursor.getColumnIndexOrThrow(SmsDatabase.EXPIRES_IN));
       long    expireStarted        = cursor.getLong(cursor.getColumnIndexOrThrow(SmsDatabase.EXPIRE_STARTED));
       String  body                 = cursor.getString(cursor.getColumnIndexOrThrow(SmsDatabase.BODY));
-      boolean unidentified         = cursor.getInt(cursor.getColumnIndexOrThrow(SmsDatabase.UNIDENTIFIED)) == 1;
       boolean hasMention           = cursor.getInt(cursor.getColumnIndexOrThrow(SmsDatabase.HAS_MENTION)) == 1;
 
       if (!TextSecurePreferences.isReadReceiptsEnabled(context)) {
@@ -887,7 +838,7 @@ public class SmsDatabase extends MessagingDatabase {
                                   recipient,
                                   dateSent, dateReceived, deliveryReceiptCount, type,
                                   threadId, status, mismatches,
-                                  expiresIn, expireStarted, readReceiptCount, unidentified, reactions, hasMention);
+                                  expiresIn, expireStarted, readReceiptCount, reactions, hasMention);
     }
 
     private List<IdentityKeyMismatch> getMismatches(String document) {
@@ -908,10 +859,6 @@ public class SmsDatabase extends MessagingDatabase {
         cursor.close();
       }
     }
-  }
-
-  public interface InsertListener {
-    public void onComplete();
   }
 
 }

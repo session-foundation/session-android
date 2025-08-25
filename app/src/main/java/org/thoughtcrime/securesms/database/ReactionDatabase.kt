@@ -9,13 +9,13 @@ import org.session.libsignal.utilities.JsonUtil.SaneJSONObject
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.util.CursorUtil
+import javax.inject.Provider
 
 /**
  * Store reactions on messages.
  */
-class ReactionDatabase(context: Context, helper: SQLCipherOpenHelper) : Database(context, helper) {
+class ReactionDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) : Database(context, helper) {
 
   companion object {
     const val TABLE_NAME = "reaction"
@@ -72,10 +72,12 @@ class ReactionDatabase(context: Context, helper: SQLCipherOpenHelper) : Database
       """
     )
 
+    @JvmField
+    val CREATE_MESSAGE_ID_MMS_INDEX = arrayOf("CREATE INDEX IF NOT EXISTS reaction_message_id_mms_idx ON $TABLE_NAME ($MESSAGE_ID, $IS_MMS)")
+
     private fun readReaction(cursor: Cursor): ReactionRecord {
       return ReactionRecord(
-        messageId = CursorUtil.requireLong(cursor, MESSAGE_ID),
-        isMms = CursorUtil.requireInt(cursor, IS_MMS) == 1,
+        messageId = MessageId(CursorUtil.requireLong(cursor, MESSAGE_ID), CursorUtil.requireInt(cursor, IS_MMS) == 1),
         emoji = CursorUtil.requireString(cursor, EMOJI),
         author = CursorUtil.requireString(cursor, AUTHOR_ID),
         serverId = CursorUtil.requireString(cursor, SERVER_ID),
@@ -102,29 +104,55 @@ class ReactionDatabase(context: Context, helper: SQLCipherOpenHelper) : Database
     return reactions
   }
 
-  fun addReaction(messageId: MessageId, reaction: ReactionRecord, notifyUnread: Boolean) {
+  fun addReaction(reaction: ReactionRecord) {
+    addReactions(mapOf(reaction.messageId to listOf(reaction)), replaceAll = false)
+  }
+
+  fun addReactions(reactionsByMessageId: Map<MessageId, List<ReactionRecord>>, replaceAll: Boolean) {
+    if (reactionsByMessageId.isEmpty()) return
+
+    val values = ContentValues()
 
     writableDatabase.beginTransaction()
     try {
-      val values = ContentValues().apply {
-        put(MESSAGE_ID, messageId.id)
-        put(IS_MMS, if (messageId.mms) 1 else 0)
-        put(EMOJI, reaction.emoji)
-        put(AUTHOR_ID, reaction.author)
-        put(SERVER_ID, reaction.serverId)
-        put(COUNT, reaction.count)
-        put(SORT_ID, reaction.sortId)
-        put(DATE_SENT, reaction.dateSent)
-        put(DATE_RECEIVED, reaction.dateReceived)
+      // Delete existing reactions for the same message IDs if replaceAll is true
+      if (replaceAll && reactionsByMessageId.isNotEmpty()) {
+        // We don't need to do parameteralized queries here as messageId and isMms are always
+        // integers/boolean, and hence no risk of SQL injection.
+        val whereClause = StringBuilder("($MESSAGE_ID, $IS_MMS) IN (")
+        for ((i, id) in reactionsByMessageId.keys.withIndex()) {
+          if (i > 0) {
+            whereClause.append(", ")
+          }
+
+          whereClause
+            .append('(')
+            .append(id.id).append(',').append(id.mms)
+            .append(')')
+        }
+        whereClause.append(')')
+
+        writableDatabase.delete(TABLE_NAME, whereClause.toString(), null)
       }
 
-      writableDatabase.insert(TABLE_NAME, null, values)
+      reactionsByMessageId
+        .asSequence()
+        .flatMap { it.value.asSequence() }
+        .forEach { reaction ->
+            values.apply {
+              put(MESSAGE_ID, reaction.messageId.id)
+              put(IS_MMS, reaction.messageId.mms)
+              put(EMOJI, reaction.emoji)
+              put(AUTHOR_ID, reaction.author)
+              put(SERVER_ID, reaction.serverId)
+              put(COUNT, reaction.count)
+              put(SORT_ID, reaction.sortId)
+              put(DATE_SENT, reaction.dateSent)
+              put(DATE_RECEIVED, reaction.dateReceived)
+            }
 
-      if (messageId.mms) {
-        DatabaseComponent.get(context).mmsDatabase().updateReactionsUnread(writableDatabase, messageId.id, hasReactions(messageId), false, notifyUnread)
-      } else {
-        DatabaseComponent.get(context).smsDatabase().updateReactionsUnread(writableDatabase, messageId.id, hasReactions(messageId), false, notifyUnread)
-      }
+            writableDatabase.insert(TABLE_NAME, null, values)
+        }
 
       writableDatabase.setTransactionSuccessful()
     } finally {
@@ -132,104 +160,49 @@ class ReactionDatabase(context: Context, helper: SQLCipherOpenHelper) : Database
     }
   }
 
-  fun deleteReaction(emoji: String, messageId: MessageId, author: String, notifyUnread: Boolean) {
+  fun deleteReaction(emoji: String, messageId: MessageId, author: String) {
     deleteReactions(
-      messageId = messageId,
       query = "$MESSAGE_ID = ? AND $IS_MMS = ? AND $EMOJI = ? AND $AUTHOR_ID = ?",
       args = arrayOf("${messageId.id}", "${if (messageId.mms)  1 else 0}", emoji, author),
-      notifyUnread
     )
   }
 
   fun deleteEmojiReactions(emoji: String, messageId: MessageId) {
     deleteReactions(
-      messageId = messageId,
       query = "$MESSAGE_ID = ? AND $IS_MMS = ? AND $EMOJI = ?",
       args = arrayOf("${messageId.id}", "${if (messageId.mms)  1 else 0}", emoji),
-      false
     )
   }
 
   fun deleteMessageReactions(messageId: MessageId) {
     deleteReactions(
-      messageId = messageId,
       query = "$MESSAGE_ID = ? AND $IS_MMS = ?",
       args = arrayOf("${messageId.id}", "${if (messageId.mms)  1 else 0}"),
-      false
     )
   }
 
-    private fun deleteReactions(messageId: MessageId, query: String, args: Array<String>, notifyUnread: Boolean) {
-    writableDatabase.beginTransaction()
-    try {
-      writableDatabase.delete(TABLE_NAME, query, args)
+  fun deleteMessageReactions(messageIds: List<MessageId>) {
+      if (messageIds.isEmpty()) return  // Early exit if the list is empty
 
-      if (messageId.mms) {
-        DatabaseComponent.get(context).mmsDatabase().updateReactionsUnread(writableDatabase, messageId.id, hasReactions(messageId), true, notifyUnread)
-      } else {
-        DatabaseComponent.get(context).smsDatabase().updateReactionsUnread(writableDatabase, messageId.id, hasReactions(messageId), true, notifyUnread)
+      val conditions = mutableListOf<String>()
+      val args = mutableListOf<String>()
+
+      for (messageId in messageIds) {
+          conditions.add("($MESSAGE_ID = ? AND $IS_MMS = ?)")
+          args.add(messageId.id.toString())
+          args.add(if (messageId.mms) "1" else "0")
       }
 
-      writableDatabase.setTransactionSuccessful()
-    } finally {
-      writableDatabase.endTransaction()
-    }
-    }
+      val query = conditions.joinToString(" OR ")
 
-    fun deleteMessageReactions(messageIds: List<MessageId>) {
-        if (messageIds.isEmpty()) return  // Early exit if the list is empty
+      deleteReactions(
+        query = query,
+        args = args.toTypedArray()
+      )
+  }
 
-        val conditions = mutableListOf<String>()
-        val args = mutableListOf<String>()
-
-        for (messageId in messageIds) {
-            conditions.add("($MESSAGE_ID = ? AND $IS_MMS = ?)")
-            args.add(messageId.id.toString())
-            args.add(if (messageId.mms) "1" else "0")
-        }
-
-        val query = conditions.joinToString(" OR ")
-
-        deleteReactions(
-            messageIds = messageIds,
-            query = query,
-            args = args.toTypedArray(),
-            notifyUnread = false
-        )
-    }
-
-    private fun deleteReactions(messageIds: List<MessageId>, query: String, args: Array<String>, notifyUnread: Boolean) {
-        writableDatabase.beginTransaction()
-        try {
-            writableDatabase.delete(TABLE_NAME, query, args)
-
-            // Update unread status for each message
-            for (messageId in messageIds) {
-                val hasReaction = hasReactions(messageId)
-                if (messageId.mms) {
-                    DatabaseComponent.get(context).mmsDatabase().updateReactionsUnread(
-                        writableDatabase, messageId.id, hasReaction, true, notifyUnread
-                    )
-                } else {
-                    DatabaseComponent.get(context).smsDatabase().updateReactionsUnread(
-                        writableDatabase, messageId.id, hasReaction, true, notifyUnread
-                    )
-                }
-            }
-
-            writableDatabase.setTransactionSuccessful()
-        } finally {
-            writableDatabase.endTransaction()
-        }
-    }
-
-  private fun hasReactions(messageId: MessageId): Boolean {
-    val query = "$MESSAGE_ID = ? AND $IS_MMS = ?"
-    val args = arrayOf("${messageId.id}", "${if (messageId.mms) 1 else 0}")
-
-    readableDatabase.query(TABLE_NAME, arrayOf(MESSAGE_ID), query, args, null, null, null).use { cursor ->
-      return cursor.moveToFirst()
-    }
+  private fun deleteReactions(query: String, args: Array<String>) {
+    writableDatabase.delete(TABLE_NAME, query, args)
   }
 
   fun getReactions(cursor: Cursor): List<ReactionRecord> {
@@ -241,20 +214,19 @@ class ReactionDatabase(context: Context, helper: SQLCipherOpenHelper) : Database
         val result = mutableSetOf<ReactionRecord>()
         val array = JSONArray(cursor.getString(cursor.getColumnIndexOrThrow(REACTION_JSON_ALIAS)))
         for (i in 0 until array.length()) {
-          val `object` = SaneJSONObject(array.getJSONObject(i))
-          if (!`object`.isNull(ROW_ID)) {
+          val obj = SaneJSONObject(array.getJSONObject(i))
+          if (!obj.isNull(ROW_ID)) {
             result.add(
               ReactionRecord(
-                `object`.getLong(ROW_ID),
-                `object`.getLong(MESSAGE_ID),
-                `object`.getInt(IS_MMS) == 1,
-                `object`.getString(AUTHOR_ID),
-                `object`.getString(EMOJI),
-                `object`.getString(SERVER_ID),
-                `object`.getLong(COUNT),
-                `object`.getLong(SORT_ID),
-                `object`.getLong(DATE_SENT),
-                `object`.getLong(DATE_RECEIVED)
+                id = obj.getLong(ROW_ID),
+                messageId = MessageId(obj.getLong(MESSAGE_ID), obj.getInt(IS_MMS) == 1),
+                author = obj.getString(AUTHOR_ID),
+                emoji = obj.getString(EMOJI),
+                serverId = obj.getString(SERVER_ID),
+                count = obj.getLong(COUNT),
+                sortId = obj.getLong(SORT_ID),
+                dateSent = obj.getLong(DATE_SENT),
+                dateReceived = obj.getLong(DATE_RECEIVED)
               )
             )
           }
@@ -263,16 +235,15 @@ class ReactionDatabase(context: Context, helper: SQLCipherOpenHelper) : Database
       } else {
         listOf(
           ReactionRecord(
-            cursor.getLong(cursor.getColumnIndexOrThrow(ROW_ID)),
-            cursor.getLong(cursor.getColumnIndexOrThrow(MESSAGE_ID)),
-            cursor.getInt(cursor.getColumnIndexOrThrow(IS_MMS)) == 1,
-            cursor.getString(cursor.getColumnIndexOrThrow(AUTHOR_ID)),
-            cursor.getString(cursor.getColumnIndexOrThrow(EMOJI)),
-            cursor.getString(cursor.getColumnIndexOrThrow(SERVER_ID)),
-            cursor.getLong(cursor.getColumnIndexOrThrow(COUNT)),
-            cursor.getLong(cursor.getColumnIndexOrThrow(SORT_ID)),
-            cursor.getLong(cursor.getColumnIndexOrThrow(DATE_SENT)),
-            cursor.getLong(cursor.getColumnIndexOrThrow(DATE_RECEIVED))
+            id = cursor.getLong(cursor.getColumnIndexOrThrow(ROW_ID)),
+            messageId = MessageId(cursor.getLong(MESSAGE_ID), cursor.getInt(IS_MMS) == 1),
+            author = cursor.getString(cursor.getColumnIndexOrThrow(AUTHOR_ID)),
+            emoji = cursor.getString(cursor.getColumnIndexOrThrow(EMOJI)),
+            serverId = cursor.getString(cursor.getColumnIndexOrThrow(SERVER_ID)),
+            count = cursor.getLong(cursor.getColumnIndexOrThrow(COUNT)),
+            sortId = cursor.getLong(cursor.getColumnIndexOrThrow(SORT_ID)),
+            dateSent = cursor.getLong(cursor.getColumnIndexOrThrow(DATE_SENT)),
+            dateReceived = cursor.getLong(cursor.getColumnIndexOrThrow(DATE_RECEIVED))
           )
         )
       }

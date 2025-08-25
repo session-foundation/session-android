@@ -2,32 +2,26 @@ package org.thoughtcrime.securesms.media
 
 import android.content.Context
 import android.content.Intent
-import android.os.Bundle
 import androidx.activity.viewModels
+import androidx.compose.runtime.Composable
 import androidx.core.content.IntentCompat
+import androidx.hilt.navigation.compose.hiltViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import org.session.libsession.utilities.Address
-import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
-import org.thoughtcrime.securesms.ui.setComposeContent
+import org.thoughtcrime.securesms.FullComposeScreenLockActivity
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MediaOverviewActivity : PassphraseRequiredActionBarActivity() {
-    @Inject
-    lateinit var viewModelFactory: MediaOverviewViewModel.AssistedFactory
-
-    private val viewModel: MediaOverviewViewModel by viewModels {
-        viewModelFactory.create(IntentCompat.getParcelableExtra(intent, EXTRA_ADDRESS, Address::class.java)!!)
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        setComposeContent {
-            MediaOverviewScreen(viewModel, onClose = this::finish)
+class MediaOverviewActivity : FullComposeScreenLockActivity() {
+    @Composable
+    override fun ComposeContent() {
+        val viewModel = hiltViewModel<MediaOverviewViewModel, MediaOverviewViewModel.Factory> { factory ->
+            factory.create(
+                IntentCompat.getParcelableExtra(intent, EXTRA_ADDRESS, Address::class.java)!!
+            )
         }
 
-        supportActionBar?.hide()
+        MediaOverviewScreen(viewModel, onClose = this::finish)
     }
 
     companion object {

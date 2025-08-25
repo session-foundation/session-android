@@ -7,18 +7,20 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -41,15 +43,16 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.AlertDialog
-import org.thoughtcrime.securesms.ui.DialogButtonModel
+import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.components.CircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 
 @OptIn(
-    ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class,
+    ExperimentalMaterial3Api::class,
 )
 @Composable
 fun MediaOverviewScreen(
@@ -58,6 +61,7 @@ fun MediaOverviewScreen(
 ) {
     val selectedItems by viewModel.selectedItemIDs.collectAsState()
     val selectionMode by viewModel.inSelectionMode.collectAsState()
+    val conversationName by viewModel.conversationName.collectAsState()
     val topAppBarState = rememberTopAppBarState()
     var showingDeleteConfirmation by remember { mutableStateOf(false) }
     var showingSaveAttachmentWarning by remember { mutableStateOf(false) }
@@ -124,7 +128,7 @@ fun MediaOverviewScreen(
         topBar = {
             MediaOverviewTopAppBar(
                 selectionMode = selectionMode,
-                title = viewModel.title.collectAsState().value,
+                title = conversationName,
                 onBackClicked = viewModel::onBackClicked,
                 onSaveClicked = { showingSaveAttachmentWarning = true },
                 onDeleteClicked = { showingDeleteConfirmation = true },
@@ -132,7 +136,8 @@ fun MediaOverviewScreen(
                 numSelected = selectedItems.size,
                 appBarScrollBehavior = appBarScrollBehavior
             )
-        }
+        },
+        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal)
     ) { paddings ->
         Column(
             modifier = Modifier
@@ -232,8 +237,8 @@ private fun SaveAttachmentWarningDialog(
         title = context.getString(R.string.warning),
         text = context.resources.getString(R.string.attachmentsWarning),
         buttons = listOf(
-            DialogButtonModel(GetString(R.string.save), color = LocalColors.current.danger, onClick = onAccepted),
-            DialogButtonModel(GetString(android.R.string.cancel), dismissOnClick = true)
+            DialogButtonData(GetString(R.string.save), color = LocalColors.current.danger, onClick = onAccepted),
+            DialogButtonData(GetString(android.R.string.cancel), dismissOnClick = true)
         )
     )
 }
@@ -250,8 +255,8 @@ private fun DeleteConfirmationDialog(
         title = stringResource(R.string.delete),
         text = stringResource(R.string.deleteMessageDeviceOnly),
         buttons = listOf(
-            DialogButtonModel(GetString(R.string.delete), color = LocalColors.current.danger, onClick = onAccepted),
-            DialogButtonModel(GetString(android.R.string.cancel), dismissOnClick = true)
+            DialogButtonData(GetString(R.string.delete), color = LocalColors.current.danger, onClick = onAccepted),
+            DialogButtonData(GetString(android.R.string.cancel), dismissOnClick = true)
         )
     )
 }
@@ -271,7 +276,7 @@ private fun ActionProgressDialog(
             horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            CircularProgressIndicator(color = LocalColors.current.primary)
+            CircularProgressIndicator(color = LocalColors.current.accent)
             Text(
                 text,
                 style = LocalType.current.large,

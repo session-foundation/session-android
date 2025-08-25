@@ -53,13 +53,25 @@ interface ButtonType {
         )
     }
 
-    object PrimaryFill: ButtonType {
+    object AccentFill: ButtonType {
         @Composable
         override fun border(enabled: Boolean) = if (enabled) null else disabledBorder
         @Composable
         override fun buttonColors() = ButtonDefaults.buttonColors(
-            contentColor = LocalColors.current.primaryButtonFillText,
-            containerColor = LocalColors.current.primaryButtonFill,
+            contentColor = LocalColors.current.accentButtonFillText,
+            containerColor = LocalColors.current.accent,
+            disabledContentColor = LocalColors.current.disabled,
+            disabledContainerColor = Color.Transparent
+        )
+    }
+
+    object TertiaryFill: ButtonType {
+        @Composable
+        override fun border(enabled: Boolean) = if (enabled) null else disabledBorder
+        @Composable
+        override fun buttonColors() = ButtonDefaults.buttonColors(
+            contentColor = LocalColors.current.text,
+            containerColor = LocalColors.current.backgroundTertiary,
             disabledContentColor = LocalColors.current.disabled,
             disabledContainerColor = Color.Transparent
         )

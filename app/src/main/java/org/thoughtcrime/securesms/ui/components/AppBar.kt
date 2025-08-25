@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -17,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import network.loki.messenger.R
@@ -29,6 +31,7 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
+import kotlin.math.sin
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
@@ -53,7 +56,7 @@ fun AppBarPreview(
                 actionModeActions = {
                     IconButton(onClick = {}) {
                         Icon(
-                            painter = painterResource(id = R.drawable.check),
+                            painter = painterResource(id = R.drawable.ic_check),
                             contentDescription = "check"
                         )
                     }
@@ -71,6 +74,8 @@ fun AppBarPreview(
 fun BasicAppBar(
     title: String,
     modifier: Modifier = Modifier,
+    singleLine: Boolean = false,
+    windowInsets: WindowInsets = TopAppBarDefaults.windowInsets,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     backgroundColor: Color = LocalColors.current.background,
     navigationIcon: @Composable () -> Unit = {},
@@ -78,8 +83,9 @@ fun BasicAppBar(
 ) {
     CenterAlignedTopAppBar(
         modifier = modifier,
+        windowInsets = windowInsets,
         title = {
-            AppBarText(title = title)
+            AppBarText(title = title, singleLine = singleLine)
         },
         colors = appBarColors(backgroundColor),
         navigationIcon = navigationIcon,
@@ -97,6 +103,7 @@ fun BackAppBar(
     title: String,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    windowInsets: WindowInsets = TopAppBarDefaults.windowInsets,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     backgroundColor: Color = LocalColors.current.background,
     actions: @Composable RowScope.() -> Unit = {},
@@ -104,6 +111,7 @@ fun BackAppBar(
     BasicAppBar(
         modifier = modifier,
         title = title,
+        windowInsets = windowInsets,
         navigationIcon = {
             AppBarBackIcon(onBack = onBack)
         },
@@ -113,11 +121,13 @@ fun BackAppBar(
     )
 }
 
-@ExperimentalMaterial3Api
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActionAppBar(
     title: String,
     modifier: Modifier = Modifier,
+    windowInsets: WindowInsets = TopAppBarDefaults.windowInsets,
+    singleLine: Boolean = false,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     backgroundColor: Color = LocalColors.current.background,
     actionMode: Boolean = false,
@@ -128,9 +138,10 @@ fun ActionAppBar(
 ) {
     CenterAlignedTopAppBar(
         modifier = modifier,
+        windowInsets = windowInsets,
         title = {
             if (!actionMode) {
-                AppBarText(title = title)
+                AppBarText(title = title, singleLine = singleLine)
             }
         },
         navigationIcon = {
@@ -140,7 +151,7 @@ fun ActionAppBar(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     navigationIcon()
-                    AppBarText(title = actionModeTitle)
+                    AppBarText(title = actionModeTitle, singleLine = singleLine)
                 }
             } else {
                 navigationIcon()
@@ -159,19 +170,30 @@ fun ActionAppBar(
 }
 
 @Composable
-fun AppBarText(title: String) {
-    Text(text = title, style = LocalType.current.h4)
+fun AppBarText(
+    title: String,
+    modifier: Modifier = Modifier,
+    singleLine: Boolean = false
+) {
+    Text(
+        modifier = modifier,
+        text = title,
+        style = LocalType.current.h4,
+        maxLines = if(singleLine) 1 else Int.MAX_VALUE,
+        overflow = if(singleLine) TextOverflow.Ellipsis else TextOverflow.Clip
+    )
 }
 
 @Composable
 fun AppBarBackIcon(onBack: () -> Unit) {
     IconButton(
         modifier = Modifier.contentDescription(stringResource(R.string.back))
-            .qaTag(stringResource(R.string.AccessibilityId_navigateBack)),
+            .qaTag(R.string.AccessibilityId_navigateBack),
         onClick = onBack
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.ic_arrow_left),
+            painter = painterResource(id = R.drawable.ic_chevron_left),
+            tint = LocalColors.current.text,
             contentDescription = null
         )
     }

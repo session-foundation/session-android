@@ -19,18 +19,20 @@ import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil
-import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.guava.Optional
+import org.thoughtcrime.securesms.BaseViewModelTest
 import org.thoughtcrime.securesms.MainCoroutineRule
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.ExpiryRadioOption
-import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.OptionsCardData
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.UiState
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.OptionsCardData
+import org.thoughtcrime.securesms.ui.UINavigator
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
@@ -44,19 +46,18 @@ private val GROUP_ADDRESS = Address.fromSerialized(GROUP_NUMBER)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(MockitoJUnitRunner::class)
-class DisappearingMessagesViewModelTest {
+class DisappearingMessagesViewModelTest : BaseViewModelTest() {
 
-    @ExperimentalCoroutinesApi
     @get:Rule
     var mainCoroutineRule = MainCoroutineRule()
 
     @Mock lateinit var application: Application
     @Mock lateinit var textSecurePreferences: TextSecurePreferences
-    @Mock lateinit var messageExpirationManager: SSKEnvironment.MessageExpirationManagerProtocol
     @Mock lateinit var disappearingMessages: DisappearingMessages
     @Mock lateinit var threadDb: ThreadDatabase
     @Mock lateinit var groupDb: GroupDatabase
     @Mock lateinit var storage: Storage
+    @Mock lateinit var navigator: UINavigator<ConversationSettingsDestination>
     @Mock lateinit var recipient: Recipient
     @Mock lateinit var groupRecord: GroupRecord
 
@@ -94,7 +95,9 @@ class DisappearingMessagesViewModelTest {
                     timeOption(ExpiryType.AFTER_SEND, 1.days),
                     timeOption(ExpiryType.AFTER_SEND, 7.days),
                     timeOption(ExpiryType.AFTER_SEND, 14.days)
-                )
+                ),
+                disableSetButton = true,
+                subtitle = GetString(R.string.disappearingMessagesDisappearAfterSendDescription)
             )
         )
     }
@@ -127,14 +130,16 @@ class DisappearingMessagesViewModelTest {
         ).isEqualTo(
             UiState(
                 OptionsCardData(
-                    R.string.disappearingMessagesTimer,
+                    title = R.string.disappearingMessagesTimer,
                     typeOption(ExpiryMode.NONE, selected = true),
                     timeOption(ExpiryType.AFTER_SEND, 12.hours),
                     timeOption(ExpiryType.AFTER_SEND, 1.days),
                     timeOption(ExpiryType.AFTER_SEND, 7.days),
                     timeOption(ExpiryType.AFTER_SEND, 14.days)
                 ),
-                showGroupFooter = true
+                disableSetButton = true,
+                showGroupFooter = true,
+                subtitle = GetString(R.string.disappearingMessagesDisappearAfterSendDescription)
             )
         )
     }
@@ -176,6 +181,8 @@ class DisappearingMessagesViewModelTest {
                 ),
                 showGroupFooter = true,
                 showSetButton = false,
+                disableSetButton = true,
+                subtitle = GetString(R.string.disappearingMessagesDisappearAfterSendDescription)
             )
         )
     }
@@ -213,7 +220,9 @@ class DisappearingMessagesViewModelTest {
                     typeOption(ExpiryMode.NONE, selected = true),
                     typeOption(12.hours, ExpiryType.AFTER_READ),
                     typeOption(1.days, ExpiryType.AFTER_SEND)
-                )
+                ),
+                subtitle = GetString(R.string.disappearingMessagesDescription1),
+                disableSetButton = true,
             )
         )
     }
@@ -259,7 +268,9 @@ class DisappearingMessagesViewModelTest {
                     timeOption(ExpiryType.AFTER_SEND, 1.days),
                     timeOption(ExpiryType.AFTER_SEND, 7.days),
                     timeOption(ExpiryType.AFTER_SEND, 14.days)
-                )
+                ),
+                disableSetButton = true,
+                subtitle = GetString(R.string.disappearingMessagesDescription1)
             )
         )
     }
@@ -305,7 +316,9 @@ class DisappearingMessagesViewModelTest {
                     timeOption(ExpiryType.AFTER_SEND, 1.days, selected = true),
                     timeOption(ExpiryType.AFTER_SEND, 7.days),
                     timeOption(ExpiryType.AFTER_SEND, 14.days)
-                )
+                ),
+                disableSetButton = true,
+                subtitle = GetString(R.string.disappearingMessagesDescription1)
             )
         )
     }
@@ -354,7 +367,9 @@ class DisappearingMessagesViewModelTest {
                     timeOption(ExpiryType.AFTER_READ, 1.days, selected = true),
                     timeOption(ExpiryType.AFTER_READ, 7.days),
                     timeOption(ExpiryType.AFTER_READ, 14.days)
-                )
+                ),
+                disableSetButton = true,
+                subtitle = GetString(R.string.disappearingMessagesDescription1)
             )
         )
     }
@@ -370,7 +385,7 @@ class DisappearingMessagesViewModelTest {
 
         advanceUntilIdle()
 
-        viewModel.setValue(afterSendMode(1.days))
+        viewModel.onOptionSelected(afterSendMode(1.days))
 
         advanceUntilIdle()
 
@@ -405,7 +420,8 @@ class DisappearingMessagesViewModelTest {
                     timeOption(ExpiryType.AFTER_SEND, 1.days, selected = true),
                     timeOption(ExpiryType.AFTER_SEND, 7.days),
                     timeOption(ExpiryType.AFTER_SEND, 14.days)
-                )
+                ),
+                subtitle = GetString(R.string.disappearingMessagesDescription1)
             )
         )
     }
@@ -418,6 +434,7 @@ class DisappearingMessagesViewModelTest {
     ) = ExpiryRadioOption(
         value = type.mode(time),
         title = GetString(time),
+        qaTag = GetString(type.mode(time).duration),
         enabled = enabled,
         selected = selected
     )
@@ -467,14 +484,15 @@ class DisappearingMessagesViewModelTest {
     )
 
     private fun createViewModel(isNewConfigEnabled: Boolean = true) = DisappearingMessagesViewModel(
-        THREAD_ID,
-        application,
-        textSecurePreferences,
-        disappearingMessages,
-        threadDb,
-        groupDb,
-        storage,
-        isNewConfigEnabled,
+        threadId = THREAD_ID,
+        context = application,
+        textSecurePreferences = textSecurePreferences,
+        disappearingMessages = disappearingMessages,
+        threadDb = threadDb,
+        groupDb = groupDb,
+        storage = storage,
+        navigator = navigator,
+        isNewConfigEnabled = isNewConfigEnabled,
         showDebugOptions = false
     )
 }
@@ -484,10 +502,10 @@ fun typeOption(time: Duration, type: ExpiryType, selected: Boolean = false, enab
 
 fun typeOption(mode: ExpiryMode, selected: Boolean = false, enabled: Boolean = true) =
     ExpiryRadioOption(
-        mode,
-        GetString(mode.type.title),
-        mode.type.subtitle?.let(::GetString),
-        GetString(mode.type.contentDescription),
+        value = mode,
+        title = GetString(mode.type.title),
+        subtitle = mode.type.subtitle?.let(::GetString),
+        qaTag = GetString(mode.type.contentDescription),
         selected = selected,
         enabled = enabled
     )

@@ -1,91 +1,119 @@
 <?xml version="1.0" encoding="utf-8"?>
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="org.thoughtcrime.securesms.giph.ui.GiphyActivity">
 
-    <LinearLayout android:layout_width="match_parent"
-                  android:layout_height="match_parent"
-                  android:orientation="horizontal"
-                  tools:layout_height="80dp"
-                  tools:theme="@style/Theme.TextSecure.DayNight.NoActionBar">
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:animateLayoutChanges="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
 
-        <ImageView android:id="@+id/action_icon"
-                   android:layout_width="wrap_content"
-                   android:layout_height="wrap_content"
-                   android:layout_gravity="center_vertical"
-                   android:gravity="center_vertical"
-                   android:clickable="true"
-                   android:background="@drawable/circle_touch_highlight_background"
-                   android:src="@drawable/ic_baseline_search_24" />
+        <LinearLayout
+            android:id="@+id/search_input_parent"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"
+            android:background="@drawable/search_background"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/button_toggle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:minHeight="40dp"
+            android:orientation="horizontal">
 
-        <LinearLayout android:id="@+id/toggle_container"
-                      android:layout_width="match_parent"
-                      android:layout_height="match_parent"
-                      android:orientation="horizontal">
+            <ImageView
+                android:id="@+id/action_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:gravity="center_vertical"
+                android:src="@drawable/ic_search"
+                app:tint="?attr/colorControlNormal" />
 
-            <EditText android:id="@+id/search_view"
-                      android:layout_height="wrap_content"
-                      android:layout_width="0px"
-                      android:layout_weight="1"
-                      android:layout_marginStart="6dp"
-                      android:hint="@string/search"
-                      android:textColor="?android:textColorPrimary"
-                      android:textColorHint="?android:textColorTertiary"
-                      android:textCursorDrawable="@drawable/session_edit_text_cursor"
-                      android:maxLines="1"
-                      android:singleLine="true"
-                      android:ellipsize="end"
-                      android:imeOptions="actionSearch"
-                      android:background="@android:color/transparent"
-                      android:layout_gravity="center_vertical"
-                      android:gravity="center_vertical"/>
+            <LinearLayout
+                android:id="@+id/toggle_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
 
-            <ImageView android:id="@+id/search_clear"
-                       android:layout_width="wrap_content"
-                       android:layout_height="wrap_content"
-                       android:layout_gravity="center_vertical"
-                       android:gravity="center_vertical"
-                       android:clickable="true"
-                       android:focusable="true"
-                       android:visibility="invisible"
-                       android:background="@drawable/circle_touch_highlight_background"
-                       android:src="@drawable/ic_baseline_clear_24" />
+                <EditText
+                    android:id="@+id/search_view"
+                    android:layout_width="0px"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    android:ellipsize="end"
+                    android:gravity="center_vertical"
+                    android:hint="@string/search"
+                    android:imeOptions="actionSearch"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:textColor="?android:textColorPrimary"
+                    android:textColorHint="?android:textColorTertiary"
+                    android:textCursorDrawable="@drawable/session_edit_text_cursor" />
 
-            <org.thoughtcrime.securesms.components.AnimatingToggle
-                    android:id="@+id/button_toggle"
+                <ImageView
+                    android:id="@+id/search_clear"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:paddingStart="10dp"
-                    android:paddingEnd="10dp"
-                    android:gravity="center">
+                    android:layout_gravity="center_vertical"
+                    android:background="@drawable/circle_touch_highlight_background"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:src="@drawable/ic_x"
+                    android:visibility="invisible"
+                    app:tint="?attr/colorControlNormal" />
 
-                <ImageView android:id="@+id/view_grid"
-                           android:layout_width="wrap_content"
-                           android:layout_height="wrap_content"
-                           android:layout_gravity="center_vertical"
-                           android:gravity="center_vertical"
-                           android:clickable="true"
-                           android:visibility="visible"
-                           android:focusable="true"
-                           android:background="@drawable/circle_touch_highlight_background"
-                           android:src="@drawable/ic_baseline_dashboard_24" />
-
-                <ImageView android:id="@+id/view_stream"
-                           android:layout_width="wrap_content"
-                           android:layout_height="wrap_content"
-                           android:layout_gravity="center_vertical"
-                           android:gravity="center_vertical"
-                           android:visibility="gone"
-                           android:clickable="true"
-                           android:focusable="true"
-                           android:background="@drawable/circle_touch_highlight_background"
-                           android:src="@drawable/ic_baseline_view_stream_24" />
-
-            </org.thoughtcrime.securesms.components.AnimatingToggle>
-
+            </LinearLayout>
         </LinearLayout>
 
-    </LinearLayout>
+        <org.thoughtcrime.securesms.components.AnimatingToggle
+            android:id="@+id/button_toggle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:paddingStart="@dimen/medium_spacing"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:background="?selectableItemBackgroundBorderless"
+            android:paddingEnd="@dimen/medium_spacing">
+
+            <ImageView
+                android:id="@+id/view_grid"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:background="@drawable/circle_touch_highlight_background"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:src="@drawable/ic_layout_dashboard"
+                android:visibility="visible"
+                app:tint="?android:textColorPrimary" />
+
+            <ImageView
+                android:id="@+id/view_stream"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:background="@drawable/circle_touch_highlight_background"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:src="@drawable/ic_stretch_horizontal"
+                android:visibility="gone"
+                app:tint="?android:textColorPrimary" />
+
+        </org.thoughtcrime.securesms.components.AnimatingToggle>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </merge>

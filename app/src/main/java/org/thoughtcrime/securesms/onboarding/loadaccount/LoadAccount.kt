@@ -1,9 +1,9 @@
 package org.thoughtcrime.securesms.onboarding.loadaccount
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,6 +14,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,11 +24,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.coroutines.flow.Flow
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.onboarding.ui.ContinuePrimaryOutlineButton
+import org.thoughtcrime.securesms.onboarding.ui.ContinueAccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.QRScannerScreen
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
-import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -45,15 +45,24 @@ internal fun LoadAccountScreen(
 ) {
     val pagerState = rememberPagerState { TITLES.size }
 
-    Column {
-        SessionTabRow(pagerState, TITLES)
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.weight(1f)
-        ) { page ->
-            when (TITLES[page]) {
-                R.string.sessionRecoveryPassword -> RecoveryPassword(state, onChange, onContinue)
-                R.string.qrScan -> QRScannerScreen(qrErrors, onScan = onScan)
+    Scaffold { paddingValues ->
+        Column {
+            SessionTabRow(pagerState, TITLES)
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.weight(1f)
+            ) { page ->
+                when (TITLES[page]) {
+                    R.string.sessionRecoveryPassword -> RecoveryPassword(
+                        modifier = Modifier.padding(bottom = paddingValues.calculateBottomPadding())
+                            .consumeWindowInsets(paddingValues),
+                        state = state,
+                        onChange = onChange,
+                        onContinue = onContinue
+                    )
+
+                    R.string.qrScan -> QRScannerScreen(qrErrors, onScan = onScan)
+                }
             }
         }
     }
@@ -68,9 +77,14 @@ private fun PreviewRecoveryPassword() {
 }
 
 @Composable
-private fun RecoveryPassword(state: State, onChange: (String) -> Unit = {}, onContinue: () -> Unit = {}) {
+private fun RecoveryPassword(
+    state: State,
+    modifier: Modifier = Modifier,
+    onChange: (String) -> Unit = {},
+    onContinue: () -> Unit = {}
+) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
@@ -88,7 +102,7 @@ private fun RecoveryPassword(state: State, onChange: (String) -> Unit = {}, onCo
                 Spacer(Modifier.width(LocalDimensions.current.xxsSpacing))
                 Icon(
                     modifier = Modifier.align(Alignment.CenterVertically),
-                    painter = painterResource(id = R.drawable.ic_shield_outline),
+                    painter = painterResource(id = R.drawable.ic_recovery_password_custom),
                     contentDescription = null,
                 )
             }
@@ -102,7 +116,7 @@ private fun RecoveryPassword(state: State, onChange: (String) -> Unit = {}, onCo
             SessionOutlinedTextField(
                 text = state.recoveryPhrase,
                 modifier = Modifier.fillMaxWidth()
-                    .qaTag(stringResource(R.string.AccessibilityId_recoveryPasswordEnter)),
+                    .qaTag(R.string.AccessibilityId_recoveryPasswordEnter),
                 placeholder = stringResource(R.string.recoveryPasswordEnter),
                 onChange = onChange,
                 onContinue = onContinue,
@@ -114,6 +128,6 @@ private fun RecoveryPassword(state: State, onChange: (String) -> Unit = {}, onCo
         Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
         Spacer(Modifier.weight(2f))
 
-        ContinuePrimaryOutlineButton(modifier = Modifier.align(Alignment.CenterHorizontally), onContinue)
+        ContinueAccentOutlineButton(modifier = Modifier.align(Alignment.CenterHorizontally), onContinue)
     }
 }

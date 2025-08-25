@@ -17,7 +17,7 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="?input_bar_background" />
+            android:background="?backgroundSecondary" />
 
         <!-- The left content (dot view + duration) -->
 
@@ -63,7 +63,7 @@
                 android:id="@+id/inputBarChevronImageView"
                 android:layout_width="12dp"
                 android:layout_height="12dp"
-                android:src="@drawable/ic_arrow_left"
+                android:src="@drawable/ic_chevron_left"
                 android:layout_marginTop="1dp"
                 app:tint="?android:textColorPrimary"
                 android:alpha="0.6" />
@@ -140,12 +140,12 @@
 
         <ImageView
             android:id="@+id/recordButtonOverlayImageView"
-            android:layout_width="16dp"
-            android:layout_height="16dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             app:tint="@color/white"
             android:scaleType="centerInside"
             android:layout_centerInParent="true"
-            android:src="@drawable/ic_microphone" />
+            android:src="@drawable/ic_mic" />
 
     </RelativeLayout>
 
@@ -165,7 +165,7 @@
         <ImageView
             android:layout_width="16dp"
             android:layout_height="16dp"
-            android:src="@drawable/ic_lock"
+            android:src="@drawable/ic_lock_keyhole"
             app:tint="?android:textColorPrimary" />
 
         <ImageView

@@ -1,4 +1,10 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+
+# /// script
+# dependencies = [
+#   "fdroidserver",
+# ]
+# ///
 
 import subprocess
 import json
@@ -12,6 +18,7 @@ import tempfile
 import base64
 import string
 import glob
+import argparse
 
 
 # Number of versions to keep in the fdroid repo. Will remove all the older versions.
@@ -74,7 +81,7 @@ def build_releases(project_root: str, flavor: str, credentials_property_prefix: 
                             apk_paths=apks, 
                             package_id=package_id, 
                             version_name=version_name,
-                            bundle_path=os.path.join(project_root, f'app/build/outputs/bundle/{flavor}Release/session-{version_name}-{flavor}-release.aab'))
+                            bundle_path=os.path.join(project_root, f'app/build/outputs/bundle/{flavor}Release/app-{flavor}-release.aab'))
         
     finally:
         print(f'Cleaning up keystore file: {keystore_file}')
@@ -211,7 +218,15 @@ def update_fdroid(build: BuildResult, fdroid_workspace: str, creds: BuildCredent
                     -R session-foundation/session-fdroid \
                     --body "This is an automated release preparation for Release {build.version_name}. Human beings are still required to approve and merge this PR."\
                     ''', shell=True, check=True, cwd=fdroid_workspace)
-    
+
+parser = argparse.ArgumentParser(
+    prog='build-and-release.py',
+    description='Build and release script for Session Android'
+ )
+
+parser.add_argument('--build-play-only', action='store_true', help='If set, will only build Play releases and skip F-Droid and Huawei releases.')
+
+args = parser.parse_args()
 
 # Make sure gh command is available
 if shutil.which('gh') is None:
@@ -243,8 +258,21 @@ play_build_result = build_releases(
     credentials_property_prefix='SESSION'
     )
 
+if args.build_play_only:
+    print('Skipping F-Droid and Huawei releases as --build-play-only is set.')
+    sys.exit(0)
+
+print("Building fdroid releases...")
+
+fdroid_build_result = build_releases(
+    project_root=project_root,
+    flavor='fdroid',
+    credentials=BuildCredentials(credentials['build']['play']),
+    credentials_property_prefix='SESSION'
+    )
+
 print("Updating fdroid repo...")
-update_fdroid(build=play_build_result, creds=BuildCredentials(credentials['fdroid']), fdroid_workspace=os.path.join(fdroid_repo_path, 'fdroid'))
+update_fdroid(build=fdroid_build_result, creds=BuildCredentials(credentials['fdroid']), fdroid_workspace=os.path.join(fdroid_repo_path, 'fdroid'))
 
 print("Building huawei releases...")
 huawei_build_result = build_releases(

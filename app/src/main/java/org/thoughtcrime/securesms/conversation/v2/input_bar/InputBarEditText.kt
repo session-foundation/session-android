@@ -20,10 +20,8 @@ class InputBarEditText : AppCompatEditText {
     private val screenWidth get() = Resources.getSystem().displayMetrics.widthPixels
     var delegate: InputBarEditTextDelegate? = null
 
-    var showMediaControls: Boolean = true
+    var allowMultimediaInput: Boolean = true
 
-    private val snMinHeight = toPx(40.0f, resources)
-    private val snMaxHeight = toPx(80.0f, resources)
 
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
@@ -37,19 +35,12 @@ class InputBarEditText : AppCompatEditText {
         // edit text.
         val width = (screenWidth - 2 * toPx(64.0f, resources)).roundToInt()
         if (width < 0) { return } // screenWidth initially evaluates to 0
-        val height = TextUtilities.getIntrinsicHeight(text, paint, width).toFloat()
-        val constrainedHeight = min(max(height, snMinHeight), snMaxHeight)
-        if (constrainedHeight.roundToInt() == this.height) { return }
-        val layoutParams = this.layoutParams as? RelativeLayout.LayoutParams ?: return
-        layoutParams.height = constrainedHeight.roundToInt()
-        this.layoutParams = layoutParams
-        delegate?.inputBarEditTextHeightChanged(constrainedHeight.roundToInt())
     }
 
     override fun onCreateInputConnection(editorInfo: EditorInfo): InputConnection? {
         val ic = super.onCreateInputConnection(editorInfo) ?: return null
         EditorInfoCompat.setContentMimeTypes(editorInfo,
-            if (showMediaControls) arrayOf("image/png", "image/gif", "image/jpg") else null
+            if (allowMultimediaInput) arrayOf("image/png", "image/gif", "image/jpg") else null
         )
 
         val callback =
@@ -69,7 +60,7 @@ class InputBarEditText : AppCompatEditText {
                     // read and display inputContentInfo asynchronously.
                     delegate?.commitInputContent(inputContentInfo.contentUri)
 
-                    true  // return true if succeeded
+                    true // return true if succeeded
                 }
         return InputConnectionCompat.createWrapper(ic, editorInfo, callback)
     }
@@ -77,8 +68,6 @@ class InputBarEditText : AppCompatEditText {
 }
 
 interface InputBarEditTextDelegate {
-
     fun inputBarEditTextContentChanged(text: CharSequence)
-    fun inputBarEditTextHeightChanged(newValue: Int)
     fun commitInputContent(contentUri: Uri)
 }

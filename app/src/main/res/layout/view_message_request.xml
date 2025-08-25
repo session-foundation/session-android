@@ -1,11 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:contentDescription="@string/AccessibilityId_messageRequestsNew"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:contentDescription="@string/AccessibilityId_messageRequestsNew"
     android:gravity="center_vertical"
     android:orientation="horizontal">
+
+    <View
+        android:id="@+id/accentView"
+        android:layout_width="@dimen/accent_line_thickness"
+        android:layout_height="match_parent"
+        android:background="?colorAccent" />
+
 
     <org.thoughtcrime.securesms.components.ProfilePictureView
         android:id="@+id/profilePictureView"
@@ -27,25 +35,44 @@
             android:layout_marginEnd="@dimen/medium_spacing"
             android:orientation="vertical">
 
-            <LinearLayout
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:layout_height="wrap_content">
+
+                <androidx.compose.ui.platform.ComposeView
+                    android:id="@+id/displayName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/unreadCountTextView"
+                    app:layout_constraintHorizontal_bias="0"
+                    app:layout_constraintHorizontal_chainStyle="packed"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <TextView
-                    android:id="@+id/displayNameTextView"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:drawablePadding="4dp"
-                    android:layout_weight="1"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:textAlignment="viewStart"
-                    android:textColor="?android:textColorPrimary"
-                    android:textSize="@dimen/medium_font_size"
+                    android:id="@+id/unreadCountTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="20dp"
+                    android:layout_marginStart="@dimen/very_small_spacing"
+                    android:background="@drawable/rounded_rectangle"
+                    android:backgroundTint="?unreadIndicatorBackgroundColor"
+                    android:gravity="center"
+                    android:includeFontPadding="true"
+                    android:maxWidth="40dp"
+                    android:minWidth="20dp"
+                    android:paddingStart="@dimen/very_small_spacing"
+                    android:paddingEnd="@dimen/very_small_spacing"
+                    android:textColor="?unreadIndicatorTextColor"
+                    android:textSize="@dimen/very_small_font_size"
                     android:textStyle="bold"
-                    tools:text="I'm a very long display name. What are you going to do about it?" />
+                    app:layout_constrainedWidth="true"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/timestampTextView"
+                    app:layout_constraintStart_toEndOf="@id/displayName"
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:text="88" />
+
 
                 <TextView
                     android:id="@+id/timestampTextView"
@@ -55,11 +82,15 @@
                     android:alpha="0.4"
                     android:ellipsize="end"
                     android:maxLines="1"
+                    android:paddingStart="@dimen/medium_spacing"
                     android:textColor="?android:textColorPrimary"
                     android:textSize="@dimen/small_font_size"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
                     tools:text="9:41 AM" />
 
-            </LinearLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
             <TextView
                 android:id="@+id/snippetTextView"

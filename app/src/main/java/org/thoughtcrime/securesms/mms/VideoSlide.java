@@ -22,21 +22,19 @@ import android.net.Uri;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
 import network.loki.messenger.R;
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
 import org.session.libsession.utilities.MediaTypes;
 import org.thoughtcrime.securesms.util.MediaUtil;
-import org.thoughtcrime.securesms.util.ResUtil;
 
 public class VideoSlide extends Slide {
 
-  public VideoSlide(Context context, Uri uri, long dataSize) {
-    this(context, uri, dataSize, null);
+  public VideoSlide(Context context, Uri uri, String filename, long dataSize) {
+    this(context, uri, filename, dataSize, null);
   }
 
-  public VideoSlide(Context context, Uri uri, long dataSize, @Nullable String caption) {
-    super(context, constructAttachmentFromUri(context, uri, MediaTypes.VIDEO_UNSPECIFIED, dataSize, 0, 0, MediaUtil.hasVideoThumbnail(uri), null, caption, false, false));
+  public VideoSlide(Context context, Uri uri, String filename, long dataSize, @Nullable String caption) {
+    super(context, constructAttachmentFromUri(context, uri, MediaTypes.VIDEO_UNSPECIFIED, dataSize, 0, 0, MediaUtil.hasVideoThumbnail(uri), filename, caption, false, false));
   }
 
   public VideoSlide(Context context, Attachment attachment) {
@@ -55,7 +53,7 @@ public class VideoSlide extends Slide {
 
   @Override
   public @DrawableRes int getPlaceholderRes(Theme theme) {
-    return ResUtil.getDrawableRes(theme, R.attr.conversation_icon_attach_video);
+    return R.drawable.ic_square_play;
   }
 
   @Override

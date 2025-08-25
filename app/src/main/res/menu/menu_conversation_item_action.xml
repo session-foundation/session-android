@@ -7,18 +7,21 @@
         android:title="@string/reply"
         android:id="@+id/menu_context_reply"
         android:icon="?menu_reply_icon"
+        app:iconTint="?android:textColorPrimary"
         app:showAsAction="always" />
 
     <item
         android:title="@string/save"
         android:id="@+id/menu_context_save_attachment"
-        android:icon="?menu_save_icon"
+        android:icon="@drawable/ic_arrow_down_to_line"
+        app:iconTint="?android:textColorPrimary"
         app:showAsAction="always" />
 
     <item
         android:title="@plurals/deleteMessage"
         android:id="@+id/menu_context_delete_message"
-        android:icon="?menu_trash_icon"
+        android:icon="@drawable/ic_trash_2"
+        app:iconTint="?android:textColorPrimary"
         app:showAsAction="always" />
 
     <item
@@ -30,6 +33,7 @@
         android:title="@string/copy"
         android:id="@+id/menu_context_copy"
         android:icon="?menu_copy_icon"
+        app:iconTint="?android:textColorPrimary"
         app:showAsAction="always" />
 
     <item

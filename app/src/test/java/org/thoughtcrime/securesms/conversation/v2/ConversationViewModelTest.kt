@@ -1,37 +1,69 @@
 package org.thoughtcrime.securesms.conversation.v2
 
 import android.app.Application
-import com.goterl.lazysodium.utils.KeyPair
+import android.content.ContentResolver
+import app.cash.copper.Query
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
+import network.loki.messenger.libsession_util.util.KeyPair
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.notNullValue
 import org.hamcrest.CoreMatchers.nullValue
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mockito
 import org.mockito.Mockito.anyLong
 import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
+import org.mockito.kotlin.anyOrNull
+import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.BaseViewModelTest
+import org.thoughtcrime.securesms.MainCoroutineRule
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.repository.ConversationRepository
+import org.thoughtcrime.securesms.util.AvatarUIData
+import org.thoughtcrime.securesms.util.AvatarUtils
+import org.thoughtcrime.securesms.util.RecipientChangeSource
+import java.time.ZonedDateTime
 
 class ConversationViewModelTest: BaseViewModelTest() {
 
+    @get:Rule
+    val rule = MainCoroutineRule()
+
     private val repository = mock<ConversationRepository>()
     private val storage = mock<Storage>()
-    private val application = mock<Application>()
 
     private val threadId = 123L
     private val edKeyPair = mock<KeyPair>()
     private lateinit var recipient: Recipient
     private lateinit var messageRecord: MessageRecord
+
+    private val testContentResolver = mock<ContentResolver>()
+
+    private val application = mock<Application> {
+        on { getString(any()) } doReturn ""
+        on { contentResolver } doReturn testContentResolver
+        on { getString(any()) } doReturn ""
+    }
+
+    private val avatarUtils = mock<AvatarUtils> {
+        onBlocking { getUIDataFromRecipient(anyOrNull()) }
+            .doReturn(AvatarUIData(elements = emptyList()))
+    }
+
+    object NoopRecipientChangeSource : RecipientChangeSource {
+        override fun changes(): Flow<Query> = emptyFlow()
+    }
 
     private val viewModel: ConversationViewModel by lazy {
         ConversationViewModel(
@@ -39,7 +71,6 @@ class ConversationViewModelTest: BaseViewModelTest() {
             edKeyPair = edKeyPair,
             repository = repository,
             storage = storage,
-            messageDataProvider = mock(),
             groupDb = mock(),
             threadDb = mock(),
             textSecurePreferences = mock(),
@@ -48,8 +79,23 @@ class ConversationViewModelTest: BaseViewModelTest() {
             reactionDb = mock(),
             configFactory = mock(),
             groupManagerV2 = mock(),
-            legacyGroupDeprecationManager = mock(),
-            expiredGroupManager = mock()
+            callManager = mock(),
+            legacyGroupDeprecationManager = mock {
+                on { deprecationState } doReturn MutableStateFlow(LegacyGroupDeprecationManager.DeprecationState.DEPRECATED)
+                on { deprecatedTime } doReturn MutableStateFlow(ZonedDateTime.now())
+            },
+            expiredGroupManager = mock(),
+            usernameUtils = mock(),
+            avatarUtils = avatarUtils,
+            lokiAPIDb = mock(),
+            recipientChangeSource = NoopRecipientChangeSource,
+            dateUtils = mock(),
+            openGroupManager = mock {
+                on { getCommunitiesWriteAccessFlow() } doReturn MutableStateFlow(emptyMap())
+            },
+            proStatusManager = mock(),
+            upmFactory = mock(),
+            attachmentDownloadHandlerFactory = mock(),
         )
     }
 
@@ -64,7 +110,7 @@ class ConversationViewModelTest: BaseViewModelTest() {
     }
 
     @Test
-    fun `should save draft message`() {
+    fun `should save draft message`() = runBlockingTest {
         val draft = "Hi there"
 
         viewModel.saveDraft(draft)
@@ -74,7 +120,7 @@ class ConversationViewModelTest: BaseViewModelTest() {
     }
 
     @Test
-    fun `should retrieve draft message`() {
+    fun `should retrieve draft message`() = runBlockingTest {
         val draft = "Hi there"
         whenever(repository.getDraft(anyLong())).thenReturn(draft)
 
@@ -85,21 +131,12 @@ class ConversationViewModelTest: BaseViewModelTest() {
     }
 
     @Test
-    fun `should invite contacts`() {
-        val contacts = listOf<Recipient>()
-
-        viewModel.inviteContacts(contacts)
-
-        verify(repository).inviteContacts(threadId, contacts)
-    }
-
-    @Test
-    fun `should unblock contact recipient`() {
+    fun `should unblock contact recipient`() = runBlockingTest {
         whenever(recipient.isContactRecipient).thenReturn(true)
 
         viewModel.unblock()
 
-        verify(repository).setBlocked(threadId, recipient, false)
+        verify(repository).setBlocked(recipient, false)
     }
 
     @Test
@@ -165,29 +202,10 @@ class ConversationViewModelTest: BaseViewModelTest() {
     }
 
     @Test
-    fun `open group recipient should have no blinded recipient`() {
+    fun `open group recipient should have no blinded recipient`() = runBlockingTest {
         whenever(recipient.isCommunityRecipient).thenReturn(true)
         whenever(recipient.isCommunityOutboxRecipient).thenReturn(false)
         whenever(recipient.isCommunityInboxRecipient).thenReturn(false)
         assertThat(viewModel.blindedRecipient, nullValue())
     }
-
-    @Test
-    fun `local recipient should have input and no blinded recipient`() {
-        whenever(recipient.isLocalNumber).thenReturn(true)
-        assertThat(viewModel.shouldHideInputBar(), equalTo(false))
-        assertThat(viewModel.blindedRecipient, nullValue())
-    }
-
-    @Test
-    fun `contact recipient should hide input bar if not accepting requests`() {
-        whenever(recipient.isCommunityInboxRecipient).thenReturn(true)
-        val blinded = mock<Recipient> {
-            whenever(it.blocksCommunityMessageRequests).thenReturn(true)
-        }
-        whenever(repository.maybeGetBlindedRecipient(recipient)).thenReturn(blinded)
-        assertThat(viewModel.blindedRecipient, notNullValue())
-        assertThat(viewModel.shouldHideInputBar(), equalTo(true))
-    }
-
 }

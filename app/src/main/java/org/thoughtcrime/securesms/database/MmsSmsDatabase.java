@@ -17,9 +17,10 @@
 package org.thoughtcrime.securesms.database;
 
 import static org.thoughtcrime.securesms.database.MmsDatabase.MESSAGE_BOX;
-import static org.thoughtcrime.securesms.database.MmsSmsColumns.Types.BASE_DELETED_INCOMING_TYPE;
-import static org.thoughtcrime.securesms.database.MmsSmsColumns.Types.BASE_DELETED_OUTGOING_TYPE;
-import static org.thoughtcrime.securesms.database.MmsSmsColumns.Types.BASE_TYPE_MASK;
+import static org.thoughtcrime.securesms.database.MmsSmsColumns.ID;
+import static org.thoughtcrime.securesms.database.MmsSmsColumns.NOTIFIED;
+import static org.thoughtcrime.securesms.database.MmsSmsColumns.READ;
+import static org.thoughtcrime.securesms.database.MmsSmsColumns.UNIQUE_ROW_ID;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -38,6 +39,7 @@ import org.session.libsignal.utilities.AccountId;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.database.MessagingDatabase.SyncMessageId;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
+import org.thoughtcrime.securesms.database.model.MessageId;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 
@@ -46,6 +48,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import javax.inject.Provider;
 
 import kotlin.Pair;
 
@@ -59,14 +63,13 @@ public class MmsSmsDatabase extends Database {
   public static final String SMS_TRANSPORT = "sms";
 
   private static final String[] PROJECTION = {MmsSmsColumns.ID, MmsSmsColumns.UNIQUE_ROW_ID,
-                                              SmsDatabase.BODY, SmsDatabase.TYPE,
+                                              SmsDatabase.BODY, SmsDatabase.TYPE, MmsSmsColumns.MESSAGE_CONTENT,
                                               MmsSmsColumns.THREAD_ID,
                                               SmsDatabase.ADDRESS, SmsDatabase.ADDRESS_DEVICE_ID, SmsDatabase.SUBJECT,
                                               MmsSmsColumns.NORMALIZED_DATE_SENT,
                                               MmsSmsColumns.NORMALIZED_DATE_RECEIVED,
                                               MmsDatabase.MESSAGE_TYPE, MmsDatabase.MESSAGE_BOX,
                                               SmsDatabase.STATUS,
-                                              MmsSmsColumns.UNIDENTIFIED,
                                               MmsDatabase.PART_COUNT,
                                               MmsDatabase.CONTENT_LOCATION, MmsDatabase.TRANSACTION_ID,
                                               MmsDatabase.MESSAGE_SIZE, MmsDatabase.EXPIRY,
@@ -78,7 +81,7 @@ public class MmsSmsDatabase extends Database {
                                               MmsSmsColumns.SUBSCRIPTION_ID,
                                               MmsSmsColumns.EXPIRES_IN,
                                               MmsSmsColumns.EXPIRE_STARTED,
-                                              MmsSmsColumns.NOTIFIED,
+                                              NOTIFIED,
                                               TRANSPORT,
                                               AttachmentDatabase.ATTACHMENT_JSON_ALIAS,
                                               MmsDatabase.QUOTE_ID,
@@ -89,25 +92,32 @@ public class MmsSmsDatabase extends Database {
                                               MmsDatabase.SHARED_CONTACTS,
                                               MmsDatabase.LINK_PREVIEWS,
                                               ReactionDatabase.REACTION_JSON_ALIAS,
-                                              MmsSmsColumns.HAS_MENTION
+                                              MmsSmsColumns.HAS_MENTION,
+                                              MmsSmsColumns.SERVER_HASH
   };
 
-  public MmsSmsDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  public MmsSmsDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper) {
     super(context, databaseHelper);
   }
 
-  public @Nullable MessageRecord getMessageForTimestamp(long timestamp) {
-    try (Cursor cursor = queryTables(PROJECTION, MmsSmsColumns.NORMALIZED_DATE_SENT + " = " + timestamp, null, null)) {
+  public @Nullable MessageRecord getMessageForTimestamp(long threadId, long timestamp) {
+    final String selection = MmsSmsColumns.NORMALIZED_DATE_SENT + " = " + timestamp +
+            " AND " + MmsSmsColumns.THREAD_ID + " = " + threadId;
+
+    try (Cursor cursor = queryTables(PROJECTION, selection, null, null)) {
       MmsSmsDatabase.Reader reader = readerFor(cursor);
       return reader.getNext();
     }
   }
 
-  public @Nullable MessageRecord getNonDeletedMessageForTimestamp(long timestamp) {
-    String selection = MmsSmsColumns.NORMALIZED_DATE_SENT + " = " + timestamp;
-    try (Cursor cursor = queryTables(PROJECTION, selection, null, null)) {
-      MmsSmsDatabase.Reader reader = readerFor(cursor);
-      return reader.getNext();
+  public @Nullable MessageRecord getMessageById(@NonNull MessageId id) {
+    if (id.isMms()) {
+      final MmsDatabase db = DatabaseComponent.get(context).mmsDatabase();
+      try (final Cursor cursor = db.getMessage(id.getId())) {
+        return db.readerFor(cursor, true).getNext();
+      }
+    } else {
+      return DatabaseComponent.get(context).smsDatabase().getMessageOrNull(id.getId());
     }
   }
 
@@ -125,7 +135,7 @@ public class MmsSmsDatabase extends Database {
 
       while ((messageRecord = reader.getNext()) != null) {
         if ((isOwnNumber && messageRecord.isOutgoing()) ||
-                (!isOwnNumber && messageRecord.getIndividualRecipient().getAddress().serialize().equals(serializedAuthor)))
+                (!isOwnNumber && messageRecord.getIndividualRecipient().getAddress().toString().equals(serializedAuthor)))
         {
           return messageRecord;
         }
@@ -182,8 +192,27 @@ public class MmsSmsDatabase extends Database {
     return null;
   }
 
+  @Nullable
+  public MessageId getLastSentMessageID(long threadId) {
+    String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
+    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND NOT " + MmsSmsColumns.IS_DELETED;
+
+    try (final Cursor cursor = queryTables(PROJECTION, selection, order, null)) {
+      try (MmsSmsDatabase.Reader reader = readerFor(cursor)) {
+        MessageRecord messageRecord;
+        while ((messageRecord = reader.getNext()) != null) {
+          if (messageRecord.isOutgoing()) {
+            return new MessageId(messageRecord.getId(), messageRecord.isMms());
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
   public @Nullable MessageRecord getMessageFor(long timestamp, Address author) {
-    return getMessageFor(timestamp, author.serialize());
+    return getMessageFor(timestamp, author.toString());
   }
 
   public long getPreviousPage(long threadId, long fromTime, int limit) {
@@ -266,13 +295,21 @@ public class MmsSmsDatabase extends Database {
     return queryTables(PROJECTION, selection, order, null);
   }
 
-  public long getLastMessageID(long threadId) {
-    String order     = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
+  public List<String> getRecentChatMemberAddresses(long threadId, int limit) {
+    String[] projection = new String[] { "DISTINCT " + MmsSmsColumns.ADDRESS };
     String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
+    String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
+    String limitStr = String.valueOf(limit);
 
-    try (Cursor cursor = queryTables(PROJECTION, selection, order, "1")) {
-      cursor.moveToFirst();
-      return cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.ID));
+    try (Cursor cursor = queryTables(projection, selection, order, limitStr)) {
+      List<String> addresses = new ArrayList<>();
+      while (cursor != null && cursor.moveToNext()) {
+        String address = cursor.getString(0);
+        if (address != null && !address.isEmpty()) {
+          addresses.add(address);
+        }
+      }
+      return addresses;
     }
   }
 
@@ -284,7 +321,7 @@ public class MmsSmsDatabase extends Database {
       Reader reader = readerFor(cursor);
       while (reader.getNext() != null) {
         MessageRecord record = reader.getCurrent();
-        if (record.getIndividualRecipient().getAddress().serialize().equals(sender)) {
+        if (record.getIndividualRecipient().getAddress().toString().equals(sender)) {
           idList.add(record);
         }
       }
@@ -312,68 +349,122 @@ public class MmsSmsDatabase extends Database {
     return identifiedMessages;
   }
 
-  public Set<MessageRecord> getAllMessageRecordsBefore(long threadId, long timestampMills) {
+  public List<Pair<MessageRecord, String>> getAllMessageRecordsBefore(long threadId, long timestampMills) {
     String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND " + MmsSmsColumns.NORMALIZED_DATE_SENT + " < " + timestampMills;
-    Set<MessageRecord> identifiedMessages = new HashSet<>();
+    List<Pair<MessageRecord, String>> identifiedMessages = new ArrayList<>();
 
     // Try everything with resources so that they auto-close on end of scope
     try (Cursor cursor = queryTables(PROJECTION, selection, null, null)) {
       try (MmsSmsDatabase.Reader reader = readerFor(cursor)) {
         MessageRecord messageRecord;
         while ((messageRecord = reader.getNext()) != null) {
-          identifiedMessages.add(messageRecord);
+          @Nullable String hash =
+                  cursor.getString(cursor.getColumnIndexOrThrow(MmsSmsColumns.SERVER_HASH));
+
+          identifiedMessages.add(new Pair<>(messageRecord, hash));
         }
       }
     }
     return identifiedMessages;
   }
 
-  public long getLastOutgoingTimestamp(long threadId) {
-    String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
-    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
+  public List<Pair<MessageRecord, String>> getAllMessagesWithHash(long threadId) {
 
-    // Try everything with resources so that they auto-close on end of scope
-    try (Cursor cursor = queryTables(PROJECTION, selection, order, null)) {
-      try (MmsSmsDatabase.Reader reader = readerFor(cursor)) {
-        MessageRecord messageRecord;
-        long attempts = 0;
-        long maxAttempts = 20;
-        while ((messageRecord = reader.getNext()) != null) {
-          // Note: We rely on the message order to get us the most recent outgoing message - so we
-          // take the first outgoing message we find as the last outgoing message.
-          if (messageRecord.isOutgoing()) return messageRecord.getTimestamp();
-          if (attempts++ > maxAttempts) break;
-        }
+    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
+    List<Pair<MessageRecord, String>> identifiedMessages = new ArrayList<>();
+
+    try (Cursor cursor = queryTables(PROJECTION, selection, null, null);
+         MmsSmsDatabase.Reader reader = readerFor(cursor)) {
+
+      MessageRecord record;
+      while ((record = reader.getNext()) != null) {
+        @Nullable String hash =
+                cursor.getString(cursor.getColumnIndexOrThrow(MmsSmsColumns.SERVER_HASH));
+
+        identifiedMessages.add(new Pair<>(record, hash));
       }
     }
-    Log.i(TAG, "Could not find last sent message from us - returning -1.");
-    return -1;
+    return identifiedMessages;
   }
 
-  public long getLastMessageTimestamp(long threadId) {
+  @Nullable
+  public MessageRecord getLastMessage(long threadId) {
     String order     = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
     // make sure the last message isn't marked as deleted
     String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND " +
             "NOT " + MmsSmsColumns.IS_DELETED;
 
     try (Cursor cursor = queryTables(PROJECTION, selection, order, "1")) {
-      if (cursor.moveToFirst()) {
-        return cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.NORMALIZED_DATE_SENT));
-      }
+      return readerFor(cursor).getNext();
     }
-
-    return -1;
   }
 
-  public Cursor getUnread() {
-    String order           = MmsSmsColumns.NORMALIZED_DATE_SENT + " ASC";
-    String selection       = "(" + MmsSmsColumns.READ + " = 0 OR " + MmsSmsColumns.REACTIONS_UNREAD + " = 1) AND " + MmsSmsColumns.NOTIFIED + " = 0";
+  /**
+   * Get all incoming unread + unnotified messages
+   * or
+   * all outgoing messages with unread reactions
+   */
+  public Cursor getUnreadOrUnseenReactions() {
 
+    // ──────────────────────────────────────────────────────────────
+    // 1) Build “is-outgoing” condition that works for both MMS & SMS
+    // ──────────────────────────────────────────────────────────────
+    //   MMS rows  → use MESSAGE_BOX
+    //   SMS rows  → use TYPE
+    //
+    //   TRANSPORT lets us be sure we’re looking at the right column,
+    //   so an incoming MMS/SMS can never be mistaken for outgoing.
+    //
+    String outgoingCondition =
+            /* MMS */
+            "(" + TRANSPORT + " = '" + MMS_TRANSPORT + "' AND " +
+                    "(" + MESSAGE_BOX + " & " +
+                    MmsSmsColumns.Types.BASE_TYPE_MASK + ") IN (" +
+                    buildOutgoingTypesList() + "))" +
+
+                    " OR " +
+
+                    /* SMS */
+                    "(" + TRANSPORT + " = '" + SMS_TRANSPORT + "' AND " +
+                    "(" + SmsDatabase.TYPE + " & " +
+                    MmsSmsColumns.Types.BASE_TYPE_MASK + ") IN (" +
+                    buildOutgoingTypesList() + "))";
+
+    final String lastSeenQuery = "SELECT " + ThreadDatabase.LAST_SEEN +
+            " FROM " + ThreadDatabase.TABLE_NAME +
+            " WHERE " + ThreadDatabase.ID + " = " + MmsSmsColumns.THREAD_ID;
+
+    // ──────────────────────────────────────────────────────────────
+    // 2) Selection:
+    //    A) incoming  unread+un-notified,      NOT outgoing
+    //    B) outgoing  with unseen reactions,   IS  outgoing
+    // To query unseen reactions, we compare the date received on the reaction with the "last seen timestamp" on this thread
+    // ──────────────────────────────────────────────────────────────
+    String selection =
+            "(" + READ + " = 0 AND " +
+                    NOTIFIED + " = 0 AND NOT (" + outgoingCondition + "))" +   // A
+                    " OR (" +
+                      ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.DATE_SENT + " > (" + lastSeenQuery +") AND (" +
+                      outgoingCondition + "))";             // B
+
+    String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " ASC";
     return queryTables(PROJECTION, selection, order, null);
   }
 
+  /** Builds the comma-separated list of base types that represent
+   *  *outgoing* messages (same helper as before). */
+  private String buildOutgoingTypesList() {
+    long[] types = MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES;
+    StringBuilder sb = new StringBuilder(types.length * 3);
+    for (int i = 0; i < types.length; i++) {
+      if (i > 0) sb.append(',');
+      sb.append(types[i]);
+    }
+    return sb.toString();
+  }
+
   public int getUnreadCount(long threadId) {
-    String selection = MmsSmsColumns.READ + " = 0 AND " + MmsSmsColumns.NOTIFIED + " = 0 AND " + MmsSmsColumns.THREAD_ID + " = " + threadId;
+    String selection = READ + " = 0 AND " + NOTIFIED + " = 0 AND " + MmsSmsColumns.THREAD_ID + " = " + threadId;
     Cursor cursor    = queryTables(PROJECTION, selection, null, null);
 
     try {
@@ -408,34 +499,9 @@ public class MmsSmsDatabase extends Database {
     return count;
   }
 
-  public void incrementDeliveryReceiptCount(SyncMessageId syncMessageId, long timestamp) {
-    DatabaseComponent.get(context).smsDatabase().incrementReceiptCount(syncMessageId, true, false);
-    DatabaseComponent.get(context).mmsDatabase().incrementReceiptCount(syncMessageId, timestamp, true, false);
-  }
-
   public void incrementReadReceiptCount(SyncMessageId syncMessageId, long timestamp) {
     DatabaseComponent.get(context).smsDatabase().incrementReceiptCount(syncMessageId, false, true);
     DatabaseComponent.get(context).mmsDatabase().incrementReceiptCount(syncMessageId, timestamp, false, true);
-  }
-
-  public int getQuotedMessagePosition(long threadId, long quoteId, @NonNull Address address) {
-    String order     = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
-    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
-
-    try (Cursor cursor = queryTables(new String[]{ MmsSmsColumns.NORMALIZED_DATE_SENT, MmsSmsColumns.ADDRESS }, selection, order, null)) {
-      String  serializedAddress = address.serialize();
-      boolean isOwnNumber       = Util.isOwnNumber(context, address.serialize());
-
-      while (cursor != null && cursor.moveToNext()) {
-        boolean quoteIdMatches = cursor.getLong(0) == quoteId;
-        boolean addressMatches = serializedAddress.equals(cursor.getString(1));
-
-        if (quoteIdMatches && (addressMatches || isOwnNumber)) {
-          return cursor.getPosition();
-        }
-      }
-    }
-    return -1;
   }
 
   public int getMessagePositionInConversation(long threadId, long sentTimestamp, @NonNull Address address, boolean reverse) {
@@ -443,8 +509,8 @@ public class MmsSmsDatabase extends Database {
     String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
 
     try (Cursor cursor = queryTables(new String[]{ MmsSmsColumns.NORMALIZED_DATE_SENT, MmsSmsColumns.ADDRESS }, selection, order, null)) {
-      String  serializedAddress = address.serialize();
-      boolean isOwnNumber       = Util.isOwnNumber(context, address.serialize());
+      String  serializedAddress = address.toString();
+      boolean isOwnNumber       = Util.isOwnNumber(context, address.toString());
 
       while (cursor != null && cursor.moveToNext()) {
         boolean timestampMatches = cursor.getLong(0) == sentTimestamp;
@@ -498,19 +564,21 @@ public class MmsSmsDatabase extends Database {
                                   "'" + AttachmentDatabase.CAPTION + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.CAPTION + ", " +
                                   "'" + AttachmentDatabase.STICKER_PACK_ID + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.STICKER_PACK_ID + ", " +
                                   "'" + AttachmentDatabase.STICKER_PACK_KEY + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.STICKER_PACK_KEY + ", " +
+                                  "'" + AttachmentDatabase.AUDIO_DURATION + "', ifnull(" + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.AUDIO_DURATION + ", -1), " +
                                   "'" + AttachmentDatabase.STICKER_ID + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.STICKER_ID +
                                   ")) AS " + AttachmentDatabase.ATTACHMENT_JSON_ALIAS,
                               reactionsColumn,
-                              SmsDatabase.BODY, MmsSmsColumns.READ, MmsSmsColumns.THREAD_ID,
+                              SmsDatabase.BODY,
+                              MmsDatabase.MESSAGE_CONTENT,
+                              READ, MmsSmsColumns.THREAD_ID,
                               SmsDatabase.TYPE, SmsDatabase.ADDRESS, SmsDatabase.ADDRESS_DEVICE_ID, SmsDatabase.SUBJECT, MmsDatabase.MESSAGE_TYPE,
                               MmsDatabase.MESSAGE_BOX, SmsDatabase.STATUS, MmsDatabase.PART_COUNT,
                               MmsDatabase.CONTENT_LOCATION, MmsDatabase.TRANSACTION_ID,
                               MmsDatabase.MESSAGE_SIZE, MmsDatabase.EXPIRY, MmsDatabase.STATUS,
-                              MmsDatabase.UNIDENTIFIED,
                               MmsSmsColumns.DELIVERY_RECEIPT_COUNT, MmsSmsColumns.READ_RECEIPT_COUNT,
                               MmsSmsColumns.MISMATCHED_IDENTITIES,
                               MmsSmsColumns.SUBSCRIPTION_ID, MmsSmsColumns.EXPIRES_IN, MmsSmsColumns.EXPIRE_STARTED,
-                              MmsSmsColumns.NOTIFIED,
+                              NOTIFIED,
                               MmsDatabase.NETWORK_FAILURE, TRANSPORT,
                               MmsDatabase.QUOTE_ID,
                               MmsDatabase.QUOTE_AUTHOR,
@@ -519,7 +587,8 @@ public class MmsSmsDatabase extends Database {
                               MmsDatabase.QUOTE_ATTACHMENT,
                               MmsDatabase.SHARED_CONTACTS,
                               MmsDatabase.LINK_PREVIEWS,
-                              MmsSmsColumns.HAS_MENTION
+                              MmsSmsColumns.HAS_MENTION,
+                              "mms_hash.server_hash AS " + MmsSmsColumns.SERVER_HASH,
     };
 
     String[] smsProjection = {SmsDatabase.DATE_SENT + " AS " + MmsSmsColumns.NORMALIZED_DATE_SENT,
@@ -530,16 +599,17 @@ public class MmsSmsDatabase extends Database {
                                   + " AS " + MmsSmsColumns.UNIQUE_ROW_ID,
                               "NULL AS " + AttachmentDatabase.ATTACHMENT_JSON_ALIAS,
                               reactionsColumn,
-                              SmsDatabase.BODY, MmsSmsColumns.READ, MmsSmsColumns.THREAD_ID,
+                              SmsDatabase.BODY,
+                              MmsSmsColumns.MESSAGE_CONTENT,
+                              READ, MmsSmsColumns.THREAD_ID,
                               SmsDatabase.TYPE, SmsDatabase.ADDRESS, SmsDatabase.ADDRESS_DEVICE_ID, SmsDatabase.SUBJECT, MmsDatabase.MESSAGE_TYPE,
                               MmsDatabase.MESSAGE_BOX, SmsDatabase.STATUS, MmsDatabase.PART_COUNT,
                               MmsDatabase.CONTENT_LOCATION, MmsDatabase.TRANSACTION_ID,
                               MmsDatabase.MESSAGE_SIZE, MmsDatabase.EXPIRY, MmsDatabase.STATUS,
-                              MmsDatabase.UNIDENTIFIED,
                               MmsSmsColumns.DELIVERY_RECEIPT_COUNT, MmsSmsColumns.READ_RECEIPT_COUNT,
                               MmsSmsColumns.MISMATCHED_IDENTITIES,
                               MmsSmsColumns.SUBSCRIPTION_ID, MmsSmsColumns.EXPIRES_IN, MmsSmsColumns.EXPIRE_STARTED,
-                              MmsSmsColumns.NOTIFIED,
+                              NOTIFIED,
                               MmsDatabase.NETWORK_FAILURE, TRANSPORT,
                               MmsDatabase.QUOTE_ID,
                               MmsDatabase.QUOTE_AUTHOR,
@@ -548,7 +618,8 @@ public class MmsSmsDatabase extends Database {
                               MmsDatabase.QUOTE_ATTACHMENT,
                               MmsDatabase.SHARED_CONTACTS,
                               MmsDatabase.LINK_PREVIEWS,
-                              MmsSmsColumns.HAS_MENTION
+                              MmsSmsColumns.HAS_MENTION,
+                              "sms_hash.server_hash AS " + MmsSmsColumns.SERVER_HASH,
     };
 
     SQLiteQueryBuilder mmsQueryBuilder = new SQLiteQueryBuilder();
@@ -559,18 +630,23 @@ public class MmsSmsDatabase extends Database {
 
     smsQueryBuilder.setTables(SmsDatabase.TABLE_NAME +
                               " LEFT OUTER JOIN " + ReactionDatabase.TABLE_NAME +
-                              " ON " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.MESSAGE_ID + " = " + SmsDatabase.TABLE_NAME + "." + SmsDatabase.ID + " AND " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.IS_MMS + " = 0");
+                              " ON " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.MESSAGE_ID + " = " + SmsDatabase.TABLE_NAME + "." + SmsDatabase.ID + " AND " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.IS_MMS + " = 0" +
+                              " LEFT OUTER JOIN " + LokiMessageDatabase.smsHashTable + " AS sms_hash" +
+                              " ON sms_hash.message_id = " + SmsDatabase.TABLE_NAME + "." + SmsDatabase.ID);
     mmsQueryBuilder.setTables(MmsDatabase.TABLE_NAME +
                               " LEFT OUTER JOIN " + AttachmentDatabase.TABLE_NAME +
                               " ON " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.MMS_ID + " = " + MmsDatabase.TABLE_NAME + "." + MmsDatabase.ID +
                               " LEFT OUTER JOIN " + ReactionDatabase.TABLE_NAME +
-                              " ON " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.MESSAGE_ID + " = " + MmsDatabase.TABLE_NAME + "." + MmsDatabase.ID + " AND " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.IS_MMS + " = 1");
+                              " ON " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.MESSAGE_ID + " = " + MmsDatabase.TABLE_NAME + "." + MmsDatabase.ID + " AND " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.IS_MMS + " = 1" +
+                              " LEFT OUTER JOIN " + LokiMessageDatabase.mmsHashTable + " AS mms_hash" +
+                              " ON mms_hash.message_id = " + MmsDatabase.TABLE_NAME + "." + MmsDatabase.ID);
 
 
     Set<String> mmsColumnsPresent = new HashSet<>();
     mmsColumnsPresent.add(MmsSmsColumns.ID);
-    mmsColumnsPresent.add(MmsSmsColumns.READ);
+    mmsColumnsPresent.add(READ);
     mmsColumnsPresent.add(MmsSmsColumns.THREAD_ID);
+    mmsColumnsPresent.add(MmsSmsColumns.MESSAGE_CONTENT);
     mmsColumnsPresent.add(MmsSmsColumns.BODY);
     mmsColumnsPresent.add(MmsSmsColumns.ADDRESS);
     mmsColumnsPresent.add(MmsSmsColumns.ADDRESS_DEVICE_ID);
@@ -589,11 +665,11 @@ public class MmsSmsDatabase extends Database {
     mmsColumnsPresent.add(MmsDatabase.TRANSACTION_ID);
     mmsColumnsPresent.add(MmsDatabase.MESSAGE_SIZE);
     mmsColumnsPresent.add(MmsDatabase.EXPIRY);
-    mmsColumnsPresent.add(MmsDatabase.NOTIFIED);
+    mmsColumnsPresent.add(NOTIFIED);
     mmsColumnsPresent.add(MmsDatabase.STATUS);
-    mmsColumnsPresent.add(MmsDatabase.UNIDENTIFIED);
     mmsColumnsPresent.add(MmsDatabase.NETWORK_FAILURE);
     mmsColumnsPresent.add(MmsSmsColumns.HAS_MENTION);
+    mmsColumnsPresent.add("mms_hash.server_hash AS " + MmsSmsColumns.SERVER_HASH);
 
     mmsColumnsPresent.add(AttachmentDatabase.ROW_ID);
     mmsColumnsPresent.add(AttachmentDatabase.UNIQUE_ID);
@@ -641,7 +717,7 @@ public class MmsSmsDatabase extends Database {
     smsColumnsPresent.add(MmsSmsColumns.BODY);
     smsColumnsPresent.add(MmsSmsColumns.ADDRESS);
     smsColumnsPresent.add(MmsSmsColumns.ADDRESS_DEVICE_ID);
-    smsColumnsPresent.add(MmsSmsColumns.READ);
+    smsColumnsPresent.add(READ);
     smsColumnsPresent.add(MmsSmsColumns.THREAD_ID);
     smsColumnsPresent.add(MmsSmsColumns.DELIVERY_RECEIPT_COUNT);
     smsColumnsPresent.add(MmsSmsColumns.READ_RECEIPT_COUNT);
@@ -649,13 +725,12 @@ public class MmsSmsDatabase extends Database {
     smsColumnsPresent.add(MmsSmsColumns.SUBSCRIPTION_ID);
     smsColumnsPresent.add(MmsSmsColumns.EXPIRES_IN);
     smsColumnsPresent.add(MmsSmsColumns.EXPIRE_STARTED);
-    smsColumnsPresent.add(MmsSmsColumns.NOTIFIED);
+    smsColumnsPresent.add(NOTIFIED);
     smsColumnsPresent.add(SmsDatabase.TYPE);
     smsColumnsPresent.add(SmsDatabase.SUBJECT);
     smsColumnsPresent.add(SmsDatabase.DATE_SENT);
     smsColumnsPresent.add(SmsDatabase.DATE_RECEIVED);
     smsColumnsPresent.add(SmsDatabase.STATUS);
-    smsColumnsPresent.add(SmsDatabase.UNIDENTIFIED);
     smsColumnsPresent.add(MmsSmsColumns.HAS_MENTION);
     smsColumnsPresent.add(ReactionDatabase.ROW_ID);
     smsColumnsPresent.add(ReactionDatabase.MESSAGE_ID);
@@ -668,6 +743,7 @@ public class MmsSmsDatabase extends Database {
     smsColumnsPresent.add(ReactionDatabase.DATE_SENT);
     smsColumnsPresent.add(ReactionDatabase.DATE_RECEIVED);
     smsColumnsPresent.add(ReactionDatabase.REACTION_JSON_ALIAS);
+    smsColumnsPresent.add("sms_hash.server_hash AS " + MmsSmsColumns.SERVER_HASH);
 
     @SuppressWarnings("deprecation")
     String mmsSubQuery = mmsQueryBuilder.buildUnionSubQuery(TRANSPORT, mmsProjection, mmsColumnsPresent, 5, MMS_TRANSPORT, selection, null, MmsDatabase.TABLE_NAME + "." + MmsDatabase.ID, null);
@@ -683,7 +759,7 @@ public class MmsSmsDatabase extends Database {
     @SuppressWarnings("deprecation")
     String query      = outerQueryBuilder.buildQuery(projection, null, null, null, null, null, null);
 
-    SQLiteDatabase db = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db = getReadableDatabase();
     return db.rawQuery(query, null);
   }
 

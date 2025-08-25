@@ -51,18 +51,6 @@ public class ContactAccessor {
     return instance;
   }
 
-  public String getNameFromContact(Context context, Uri uri) {
-    return "Anonymous";
-  }
-
-  public ContactData getContactData(Context context, Uri uri) {
-    return getContactData(context, getNameFromContact(context, uri),  Long.parseLong(uri.getLastPathSegment()));
-  }
-
-  private ContactData getContactData(Context context, String displayName, long id) {
-    return new ContactData(id, displayName);
-  }
-
   public List<String> getNumbersForThreadSearchFilter(Context context, String constraint) {
     LinkedList<String> numberList = new LinkedList<>();
 
@@ -73,17 +61,7 @@ public class ContactAccessor {
       }
     }
 
-//    if (context.getString(R.string.noteToSelf).toLowerCase().contains(constraint.toLowerCase()) &&
-//        !numberList.contains(TextSecurePreferences.getLocalNumber(context)))
-//    {
-//      numberList.add(TextSecurePreferences.getLocalNumber(context));
-//    }
-
     return numberList;
-  }
-
-  public CharSequence phoneTypeToString(Context mContext, int type, CharSequence label) {
-    return label;
   }
 
   public static class NumberData implements Parcelable {
@@ -101,10 +79,6 @@ public class ContactAccessor {
     public final String number;
     public final String type;
 
-    public NumberData(String type, String number) {
-      this.type = type;
-      this.number = number;
-    }
 
     public NumberData(Parcel in) {
       number = in.readString();
@@ -136,12 +110,6 @@ public class ContactAccessor {
     public final long id;
     public final String name;
     public final List<NumberData> numbers;
-
-    public ContactData(long id, String name) {
-      this.id      = id;
-      this.name    = name;
-      this.numbers = new LinkedList<NumberData>();
-    }
 
     public ContactData(Parcel in) {
       id      = in.readLong();

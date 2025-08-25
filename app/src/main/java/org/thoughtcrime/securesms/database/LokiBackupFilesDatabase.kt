@@ -7,13 +7,14 @@ import android.net.Uri
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import java.lang.IllegalArgumentException
 import java.util.*
+import javax.inject.Provider
 import kotlin.collections.ArrayList
 
 /**
  * Keeps track of the backup files saved by the app.
  * Uses [BackupFileRecord] as an entry data projection.
  */
-class LokiBackupFilesDatabase(context: Context, databaseHelper: SQLCipherOpenHelper)
+class LokiBackupFilesDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper>)
     : Database(context, databaseHelper) {
 
     companion object {
@@ -54,7 +55,7 @@ class LokiBackupFilesDatabase(context: Context, databaseHelper: SQLCipherOpenHel
     }
 
     fun getBackupFiles(): List<BackupFileRecord> {
-        databaseHelper.readableDatabase.query(TABLE_NAME, allColumns, null, null, null, null, null).use {
+        readableDatabase.query(TABLE_NAME, allColumns, null, null, null, null, null).use {
             val records = ArrayList<BackupFileRecord>()
             while (it != null && it.moveToNext()) {
                 val record = mapCursorToRecord(it)
@@ -66,13 +67,13 @@ class LokiBackupFilesDatabase(context: Context, databaseHelper: SQLCipherOpenHel
 
     fun insertBackupFile(record: BackupFileRecord): BackupFileRecord {
         val contentValues = mapRecordToValues(record)
-        val id = databaseHelper.writableDatabase.insertOrThrow(TABLE_NAME, null, contentValues)
+        val id = writableDatabase.insertOrThrow(TABLE_NAME, null, contentValues)
         return BackupFileRecord(id, record.uri, record.fileSize, record.timestamp)
     }
 
     fun getLastBackupFileTime(): Date? {
         // SELECT $COLUMN_TIMESTAMP FROM $TABLE_NAME ORDER BY $COLUMN_TIMESTAMP DESC LIMIT 1
-        databaseHelper.readableDatabase.query(
+        readableDatabase.query(
                 TABLE_NAME,
                 arrayOf(COLUMN_TIMESTAMP),
                 null, null, null, null,
@@ -89,7 +90,7 @@ class LokiBackupFilesDatabase(context: Context, databaseHelper: SQLCipherOpenHel
 
     fun getLastBackupFile(): BackupFileRecord? {
         // SELECT * FROM $TABLE_NAME ORDER BY $COLUMN_TIMESTAMP DESC LIMIT 1
-        databaseHelper.readableDatabase.query(
+        readableDatabase.query(
                 TABLE_NAME,
                 allColumns,
                 null, null, null, null,
@@ -112,6 +113,6 @@ class LokiBackupFilesDatabase(context: Context, databaseHelper: SQLCipherOpenHel
         if (id < 0) {
             throw IllegalArgumentException("ID must be zero or a positive number.")
         }
-        return databaseHelper.writableDatabase.delete(TABLE_NAME, "$COLUMN_ID = $id", null) > 0
+        return writableDatabase.delete(TABLE_NAME, "$COLUMN_ID = $id", null) > 0
     }
 }

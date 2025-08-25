@@ -2,22 +2,20 @@ package org.thoughtcrime.securesms.mediasend;
 
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
 import androidx.fragment.app.Fragment;
 import androidx.media3.common.util.UnstableApi;
-
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-
+import java.io.IOException;
 import network.loki.messenger.R;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.mms.VideoSlide;
+import org.thoughtcrime.securesms.util.FilenameUtils;
 import org.thoughtcrime.securesms.video.VideoPlayer;
-
-import java.io.IOException;
 
 @OptIn(markerClass = UnstableApi.class)
 public class MediaSendVideoFragment extends Fragment implements MediaSendPageFragment {
@@ -47,8 +45,15 @@ public class MediaSendVideoFragment extends Fragment implements MediaSendPageFra
   public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
 
-    uri = getArguments().getParcelable(KEY_URI);
-    VideoSlide slide = new VideoSlide(requireContext(), uri, 0);
+    if (getArguments() != null) {
+        uri = getArguments().getParcelable(KEY_URI);
+    } else {
+      Log.w(TAG, "Could not get uri from arguments - bailing.");
+      return;
+    }
+
+    String filename = FilenameUtils.getFilenameFromUri(requireContext(), uri);
+    VideoSlide slide = new VideoSlide(requireContext(), uri, filename, 0);
     try {
       ((VideoPlayer) view).setWindow(requireActivity().getWindow());
       ((VideoPlayer) view).setVideoSource(slide, false);
@@ -60,32 +65,17 @@ public class MediaSendVideoFragment extends Fragment implements MediaSendPageFra
   @Override
   public void onDestroyView() {
     super.onDestroyView();
-
-    if (getView() != null) {
-      ((VideoPlayer) getView()).cleanup();
-    }
+    if (getView() != null) { ((VideoPlayer)getView()).cleanup(); }
   }
 
   @Override
-  public void setUri(@NonNull Uri uri) {
-    this.uri = uri;
-  }
+  public void setUri(@NonNull Uri uri) { this.uri = uri; }
 
   @Override
-  public @NonNull Uri getUri() {
-    return uri;
-  }
+  public @NonNull Uri getUri() { return uri; }
 
   @Override
-  public @Nullable View getPlaybackControls() {
-    VideoPlayer player = (VideoPlayer) getView();
-    return player != null ? player.getControlView() : null;
-  }
-
-  @Override
-  public @Nullable Object saveState() {
-    return null;
-  }
+  public @Nullable Object saveState() { return null; }
 
   @Override
   public void restoreState(@NonNull Object state) { }

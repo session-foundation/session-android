@@ -17,27 +17,34 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.allWithStatus
 import org.session.libsession.messaging.contacts.Contact
-import org.session.libsession.messaging.utilities.SodiumUtilities
+import org.session.libsession.messaging.utilities.UpdateMessageBuilder.usernameUtils
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
+import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.database.DatabaseContentProviders.Conversation
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.GroupMemberDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
+import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.SessionContactDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -57,12 +64,12 @@ class MentionViewModel(
     contentResolver: ContentResolver,
     threadDatabase: ThreadDatabase,
     groupDatabase: GroupDatabase,
-    mmsDatabase: MmsDatabase,
     contactDatabase: SessionContactDatabase,
     memberDatabase: GroupMemberDatabase,
     storage: Storage,
     configFactory: ConfigFactoryProtocol,
     dispatcher: CoroutineDispatcher = Dispatchers.IO,
+    mmsSmsDatabase: MmsSmsDatabase
 ) : ViewModel() {
     private val editable = MentionEditable()
 
@@ -96,15 +103,17 @@ class MentionViewModel(
 
                 val memberIDs = when {
                     recipient.isLegacyGroupRecipient -> {
-                        groupDatabase.getGroupMemberAddresses(recipient.address.toGroupString(), false)
-                            .map { it.serialize() }
+                        groupDatabase.getGroupMemberAddresses(
+                            recipient.address.toGroupString(),
+                            false
+                        )
+                            .map { it.toString() }
                     }
-                    recipient.isGroupV2Recipient -> {
-                        storage.getMembers(recipient.address.serialize()).map { it.accountIdString() }
-                    }
-
-                    recipient.isCommunityRecipient -> mmsDatabase.getRecentChatMemberIDs(threadID, 20)
-                    recipient.isContactRecipient -> listOf(recipient.address.serialize())
+                    recipient.isCommunityRecipient -> mmsSmsDatabase.getRecentChatMemberAddresses(
+                        threadID,
+                        300
+                    )
+                    recipient.isContactRecipient -> listOf(recipient.address.toString())
                     else -> listOf()
                 }
 
@@ -120,15 +129,15 @@ class MentionViewModel(
                         emptySet()
                     } else {
                         memberDatabase.getGroupMembersRoles(groupId, memberIDs)
-                            .mapNotNullTo(hashSetOf()) { (memberId, roles) ->
-                                memberId.takeIf { roles.any { it.isModerator } }
+                            .mapNotNullTo(hashSetOf()) { (memberId, role) ->
+                                memberId.takeIf { role.isModerator }
                             }
                     }
                 } else if (recipient.isGroupV2Recipient) {
-                    configFactory.withGroupConfigs(AccountId(recipient.address.serialize())) {
+                    configFactory.withGroupConfigs(AccountId(recipient.address.toString())) {
                         it.groupMembers.allWithStatus()
                             .filter { (member, status) -> member.isAdminOrBeingPromoted(status) }
-                            .mapTo(hashSetOf()) { (member, _) -> member.accountId.toString() }
+                            .mapTo(hashSetOf()) { (member, _) -> member.accountId() }
                     }
                 } else {
                     emptySet()
@@ -141,37 +150,62 @@ class MentionViewModel(
                 }
 
                 val myId = if (openGroup != null) {
-                    AccountId(IdPrefix.BLINDED,
-                        SodiumUtilities.blindedKeyPair(openGroup.publicKey,
-                            requireNotNull(storage.getUserED25519KeyPair()))!!.publicKey.asBytes)
-                        .hexString
+                    requireNotNull(storage.getUserBlindedAccountId(openGroup.publicKey)).hexString
                 } else {
                     requireNotNull(storage.getUserPublicKey())
                 }
 
-                (sequenceOf(
-                    Member(
-                        publicKey = myId,
-                        name = application.getString(R.string.you),
-                        isModerator = myId in moderatorIDs,
-                        isMe = true
-                    )
-                ) + contactDatabase.getContacts(memberIDs)
-                    .asSequence()
-                    .filter { it.accountID != myId }
-                    .map { contact ->
-                        Member(
-                            publicKey = contact.accountID,
-                            name = contact.displayName(contactContext),
-                            isModerator = contact.accountID in moderatorIDs,
-                            isMe = false
-                        )
-                    })
+                //This is you in the tag list
+                val selfMember = buildMember(
+                    myId,
+                    application.getString(R.string.you),
+                    myId in moderatorIDs,
+                    true
+                )
+
+                // Get other members
+                val otherMembers = if (recipient.isGroupV2Recipient) {
+                    val groupId = AccountId(recipient.address.toString())
+
+                    // Get members of the group from the config
+                    val rawMembers = configFactory.withGroupConfigs(groupId) {
+                        it.groupMembers.allWithStatus()
+                    }
+
+                    rawMembers
+                        .filter { (member, _) -> member.accountId() != myId }
+                        .map { (member) ->
+                            val id = member.accountId()
+                            val name = usernameUtils
+                                .getContactNameWithAccountID(
+                                    id,
+                                    groupId
+                                )  // returns contact name or blank
+                                .takeIf { it.isNotBlank() } ?: id // fallback to id
+                            buildMember(id, name, id in moderatorIDs, false)
+                        }.sortedBy { it.name }
+                } else {
+                    // For communities and one-on-one conversations
+                    val contacts = contactDatabase.getContacts(memberIDs) // Get members from contacts based on memberIDs
+                    val contactMap = contacts.associateBy { it.accountID }
+
+                    // Map using memberIDs to preserve the order of members
+                    memberIDs.asSequence()
+                        .filter { it != myId }
+                        .mapNotNull { contactMap[it] }
+                        .map { contact ->
+                            val id = contact.accountID
+                            val name = contact.displayName(contactContext)
+                                .takeIf { it.isNotBlank() } ?: id
+                            buildMember(id, name, id in moderatorIDs, false)
+                        }
+                }
+
+                (sequenceOf(selfMember) + otherMembers)
                     .toList()
             }
             .flowOn(dispatcher)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(10_000L), null)
-
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val autoCompleteState: StateFlow<AutoCompleteState> = editable
@@ -190,7 +224,12 @@ class MentionViewModel(
                     val filtered = if (query.query.isBlank()) {
                         members.mapTo(mutableListOf()) { Candidate(it, it.name, 0) }
                     } else {
-                        members.mapNotNullTo(mutableListOf()) { searchAndHighlight(it, query.query) }
+                        members.mapNotNullTo(mutableListOf()) {
+                            searchAndHighlight(
+                                it,
+                                query.query
+                            )
+                        }
                     }
 
                     filtered.sortWith(Candidate.MENTION_LIST_COMPARATOR)
@@ -199,6 +238,13 @@ class MentionViewModel(
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), AutoCompleteState.Idle)
+
+    private fun buildMember(
+        id: String,
+        name: String,
+        isModerator: Boolean,
+        isMe: Boolean
+    ) = Member(publicKey = id, name = name, isModerator = isModerator, isMe = isMe)
 
     private fun searchAndHighlight(
         haystack: Member,
@@ -224,11 +270,12 @@ class MentionViewModel(
     fun onCandidateSelected(candidatePublicKey: String) {
         val query = editable.mentionSearchQuery ?: return
         val autoCompleteState = autoCompleteState.value as? AutoCompleteState.Result ?: return
-        val candidate = autoCompleteState.members.find { it.member.publicKey == candidatePublicKey } ?: return
+        val candidate =
+            autoCompleteState.members.find { it.member.publicKey == candidatePublicKey } ?: return
 
         editable.addMention(
             candidate.member,
-            query.mentionSymbolStartAt .. (query.mentionSymbolStartAt + query.query.length + 1)
+            query.mentionSymbolStartAt..(query.mentionSymbolStartAt + query.query.length + 1)
         )
     }
 
@@ -238,6 +285,10 @@ class MentionViewModel(
      * As "@123456" is the standard format for mentioning a user, this method will replace "@Alice" with "@123456"
      */
     fun normalizeMessageBody(): String {
+        return deconstructMessageMentions().trim()
+    }
+
+    fun deconstructMessageMentions(): String {
         val spansWithRanges = editable.getSpans<MentionSpan>()
             .mapTo(mutableListOf()) { span ->
                 span to (editable.getSpanStart(span)..editable.getSpanEnd(span))
@@ -248,22 +299,40 @@ class MentionViewModel(
         val sb = StringBuilder()
         var offset = 0
         for ((span, range) in spansWithRanges) {
-            // Add content before the mention span. There's a possibility of overlapping spans so we need to
-            // safe guard the start offset here to not go over our span's start.
+            // Add content before the mention span
             val thisMentionStart = range.first
             val lastMentionEnd = offset.coerceAtMost(thisMentionStart)
             sb.append(editable, lastMentionEnd, thisMentionStart)
 
             // Replace the mention span with "@public key"
-            sb.append('@').append(span.member.publicKey).append(' ')
+            sb.append('@').append(span.member.publicKey)
 
-            // Safe guard offset to not go over the end of the editable.
+            // Check if the original mention span ended with a space
+            // The span includes the space, so we need to preserve it in the deconstructed version
+            if (range.last < editable.length && editable[range.last] == ' ') {
+                sb.append(' ')
+            }
+
+            // Move offset to after the mention span (including the space)
             offset = (range.last + 1).coerceAtMost(editable.length)
         }
 
         // Add the remaining content
         sb.append(editable, offset, editable.length)
-        return sb.toString().trim()
+        return sb.toString()
+    }
+
+    suspend fun reconstructMentions(raw: String): Editable {
+        editable.replace(0, editable.length, raw)
+
+        val memberList = members.filterNotNull().first()
+
+        MentionUtilities.substituteIdsInPlace(
+            editable,
+            memberList.associateBy { it.publicKey }
+        )
+
+        return editable
     }
 
     data class Member(
@@ -283,7 +352,6 @@ class MentionViewModel(
         companion object {
             val MENTION_LIST_COMPARATOR = compareBy<Candidate> { !it.member.isMe }
                 .thenBy { it.matchScore }
-                .then(compareBy { it.member.name })
         }
     }
 
@@ -304,12 +372,12 @@ class MentionViewModel(
         private val contentResolver: ContentResolver,
         private val threadDatabase: ThreadDatabase,
         private val groupDatabase: GroupDatabase,
-        private val mmsDatabase: MmsDatabase,
         private val contactDatabase: SessionContactDatabase,
         private val storage: Storage,
         private val memberDatabase: GroupMemberDatabase,
         private val configFactory: ConfigFactoryProtocol,
         private val application: Application,
+        private val mmsSmsDatabase : MmsSmsDatabase
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -318,12 +386,12 @@ class MentionViewModel(
                 contentResolver = contentResolver,
                 threadDatabase = threadDatabase,
                 groupDatabase = groupDatabase,
-                mmsDatabase = mmsDatabase,
                 contactDatabase = contactDatabase,
                 memberDatabase = memberDatabase,
                 storage = storage,
                 configFactory = configFactory,
                 application = application,
+                mmsSmsDatabase = mmsSmsDatabase
             ) as T
         }
     }

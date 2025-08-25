@@ -40,12 +40,12 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.thoughtcrime.securesms.ui.AlertDialog
-import org.thoughtcrime.securesms.ui.DialogButtonModel
+import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.components.BorderlessHtmlButton
-import org.thoughtcrime.securesms.ui.components.PrimaryFillButton
-import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
-import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.components.AccentFillButton
+import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -83,11 +83,11 @@ internal fun LandingScreen(
             text = stringResource(R.string.urlOpenBrowser),
             showCloseButton = true, // display the 'x' button
             buttons = listOf(
-                DialogButtonModel(
+                DialogButtonData(
                     text = GetString(R.string.onboardingTos),
                     onClick = openTerms
                 ),
-                DialogButtonModel(
+                DialogButtonData(
                     text = GetString(R.string.onboardingPrivacy),
                     onClick = openPrivacyPolicy
                 )
@@ -164,21 +164,21 @@ internal fun LandingScreen(
         }
 
         Column(modifier = Modifier.padding(horizontal = LocalDimensions.current.xlargeSpacing)) {
-            PrimaryFillButton(
+            AccentFillButton(
                 text = stringResource(R.string.onboardingAccountCreate),
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.CenterHorizontally)
-                    .contentDescription(R.string.AccessibilityId_onboardingAccountCreate),
+                    .qaTag(R.string.AccessibilityId_onboardingAccountCreate),
                 onClick = createAccount
             )
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
-            PrimaryOutlineButton(
+            AccentOutlineButton(
                 stringResource(R.string.onboardingAccountExists),
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.CenterHorizontally)
-                    .contentDescription(R.string.AccessibilityId_onboardingAccountExists),
+                    .qaTag(R.string.AccessibilityId_onboardingAccountExists),
                 onClick = loadAccount
             )
             BorderlessHtmlButton(
@@ -186,7 +186,7 @@ internal fun LandingScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.CenterHorizontally)
-                    .contentDescription(R.string.AccessibilityId_urlOpenBrowser),
+                    .qaTag(R.string.AccessibilityId_urlOpenBrowser),
                 onClick = { isUrlDialogVisible = true }
             )
             Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
@@ -200,7 +200,6 @@ private fun AnimateMessageText(text: String, isOutgoing: Boolean, modifier: Modi
     LaunchedEffect(Unit) { visible = true }
 
     Box {
-        // TODO [SES-2077] Use LazyList itemAnimation when we update to compose 1.7 or so.
         MessageText(text, isOutgoing, Modifier.alpha(0f))
 
         AnimatedVisibility(
@@ -218,7 +217,7 @@ private fun MessageText(text: String, isOutgoing: Boolean, modifier: Modifier) {
     Box(modifier = modifier then Modifier.fillMaxWidth()) {
         MessageText(
             text,
-            color = if (isOutgoing) LocalColors.current.primary else LocalColors.current.backgroundBubbleReceived,
+            color = if (isOutgoing) LocalColors.current.accent else LocalColors.current.backgroundBubbleReceived,
             textColor = if (isOutgoing) LocalColors.current.textBubbleSent else LocalColors.current.textBubbleReceived,
             modifier = Modifier.align(if (isOutgoing) Alignment.TopEnd else Alignment.TopStart)
         )

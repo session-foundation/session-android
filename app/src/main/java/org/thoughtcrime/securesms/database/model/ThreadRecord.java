@@ -27,23 +27,19 @@ import android.content.Context;
 import android.net.Uri;
 import android.text.SpannableString;
 import android.text.TextUtils;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
-import org.session.libsession.messaging.utilities.UpdateMessageBuilder;
-import org.session.libsession.messaging.utilities.UpdateMessageData;
 import com.squareup.phrase.Phrase;
-
-import org.session.libsession.utilities.TextSecurePreferences;
-import org.session.libsession.utilities.recipients.Recipient;
-import org.session.libsignal.utilities.Log;
-import org.thoughtcrime.securesms.database.MmsSmsColumns;
-import org.thoughtcrime.securesms.database.SmsDatabase;
-import org.thoughtcrime.securesms.ui.UtilKt;
-
 import kotlin.Pair;
 import network.loki.messenger.R;
+import org.session.libsession.messaging.utilities.UpdateMessageData;
+import org.session.libsession.utilities.TextSecurePreferences;
+import org.session.libsession.utilities.recipients.Recipient;
+import org.thoughtcrime.securesms.database.MmsSmsColumns;
+import org.thoughtcrime.securesms.database.SmsDatabase;
+import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate;
+import org.thoughtcrime.securesms.database.model.content.MessageContent;
+import org.thoughtcrime.securesms.ui.UtilKt;
 
 /**
  * The message record model which represents thread heading messages.
@@ -73,11 +69,11 @@ public class ThreadRecord extends DisplayRecord {
   public ThreadRecord(@NonNull String body, @Nullable Uri snippetUri,
                       @Nullable MessageRecord lastMessage, @NonNull Recipient recipient, long date, long count, int unreadCount,
                       int unreadMentionCount, long threadId, int deliveryReceiptCount, int status,
-                      long snippetType,  int distributionType, boolean archived, long expiresIn,
+                      long snippetType, int distributionType, boolean archived, long expiresIn,
                       long lastSeen, int readReceiptCount, boolean pinned, String invitingAdminId,
-                      @NonNull GroupThreadStatus groupThreadStatus)
+                      @NonNull GroupThreadStatus groupThreadStatus, @Nullable MessageContent messageContent)
   {
-    super(body, recipient, date, date, threadId, status, deliveryReceiptCount, snippetType, readReceiptCount);
+    super(body, recipient, date, date, threadId, status, deliveryReceiptCount, snippetType, readReceiptCount, messageContent);
     this.snippetUri         = snippetUri;
     this.lastMessage        = lastMessage;
     this.count              = count;
@@ -147,7 +143,7 @@ public class ThreadRecord extends DisplayRecord {
             return Phrase.from(context, R.string.callsMissedCallFrom)
                     .put(NAME_KEY, getName())
                     .format().toString();
-        } else if (SmsDatabase.Types.isExpirationTimerUpdate(type)) {
+        } else if (getMessageContent() instanceof DisappearingMessageUpdate) {
             // Use the same message as we would for displaying on the conversation screen.
             // lastMessage shouldn't be null here, but we'll check just in case.
             if (lastMessage != null) {
@@ -155,7 +151,8 @@ public class ThreadRecord extends DisplayRecord {
             } else {
                 return "";
             }
-        } else if (MmsSmsColumns.Types.isMediaSavedExtraction(type)) {
+        }
+        else if (MmsSmsColumns.Types.isMediaSavedExtraction(type)) {
             return Phrase.from(context, R.string.attachmentsMediaSaved)
                     .put(NAME_KEY, getName())
                     .format().toString();
@@ -167,7 +164,7 @@ public class ThreadRecord extends DisplayRecord {
 
         } else if (MmsSmsColumns.Types.isMessageRequestResponse(type)) {
             try {
-                if (lastMessage.getRecipient().getAddress().serialize().equals(
+                if (lastMessage.getRecipient().getAddress().toString().equals(
                         TextSecurePreferences.getLocalNumber(context))) {
                     return UtilKt.getSubbedCharSequence(
                             context,
@@ -214,7 +211,7 @@ public class ThreadRecord extends DisplayRecord {
                 prefix = context.getString(R.string.you);
             }
             else if(lastMessage != null){
-                prefix = lastMessage.getIndividualRecipient().toShortString();
+                prefix = lastMessage.getIndividualRecipient().getName();
             }
 
             return Phrase.from(context.getString(R.string.messageSnippetGroup))

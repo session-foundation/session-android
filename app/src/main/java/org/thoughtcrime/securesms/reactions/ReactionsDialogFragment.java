@@ -20,6 +20,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
+import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.components.emoji.EmojiImageView;
 import org.thoughtcrime.securesms.database.model.MessageId;
 import org.thoughtcrime.securesms.util.LifecycleDisposable;
@@ -181,8 +182,15 @@ public final class ReactionsDialogFragment extends BottomSheetDialogFragment imp
     dismiss();
   }
 
+  @Override
+  public void onEmojiReactionUserTapped(@NonNull Recipient recipient) {
+    callback.onEmojiReactionUserTapped(recipient);
+  }
+
   public interface Callback {
     void onRemoveReaction(@NonNull String emoji, @NonNull MessageId messageId);
+
+    void onEmojiReactionUserTapped(@NonNull Recipient recipient);
 
     void onClearAll(@NonNull String emoji, @NonNull MessageId messageId);
   }

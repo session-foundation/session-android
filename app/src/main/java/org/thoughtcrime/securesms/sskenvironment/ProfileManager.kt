@@ -11,6 +11,7 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.database.RecipientDatabase
@@ -31,7 +32,7 @@ class ProfileManager @Inject constructor(
 
     override fun setNickname(context: Context, recipient: Recipient, nickname: String?) {
         if (recipient.isLocalNumber) return
-        val accountID = recipient.address.serialize()
+        val accountID = recipient.address.toString()
         var contact = contactDatabase.getContactWithAccountID(accountID)
         if (contact == null) contact = Contact(accountID)
         contact.threadID = storage.get().getThreadId(recipient.address)
@@ -45,7 +46,7 @@ class ProfileManager @Inject constructor(
     override fun setName(context: Context, recipient: Recipient, name: String?) {
         // New API
         if (recipient.isLocalNumber) return
-        val accountID = recipient.address.serialize()
+        val accountID = recipient.address.toString()
         var contact = contactDatabase.getContactWithAccountID(accountID)
         if (contact == null) contact = Contact(accountID)
         contact.threadID = storage.get().getThreadId(recipient.address)
@@ -72,7 +73,7 @@ class ProfileManager @Inject constructor(
 
         recipient.resolve()
 
-        val accountID = recipient.address.serialize()
+        val accountID = recipient.address.toString()
         var contact = contactDatabase.getContactWithAccountID(accountID)
         if (contact == null) contact = Contact(accountID)
         contact.threadID = storage.get().getThreadId(recipient.address)
@@ -88,14 +89,10 @@ class ProfileManager @Inject constructor(
         }
     }
 
-    override fun setUnidentifiedAccessMode(context: Context, recipient: Recipient, unidentifiedAccessMode: Recipient.UnidentifiedAccessMode) {
-        recipientDatabase.setUnidentifiedAccessMode(recipient, unidentifiedAccessMode)
-    }
 
     override fun contactUpdatedInternal(contact: Contact): String? {
         if (contact.accountID == preferences.getLocalNumber()) return null
-        val accountId = AccountId(contact.accountID)
-        if (accountId.prefix != IdPrefix.STANDARD) return null // only internally store standard account IDs
+        if (IdPrefix.fromValue(contact.accountID) != IdPrefix.STANDARD) return null // only internally store standard account IDs
         return configFactory.withMutableUserConfigs {
             val contactConfig = it.contacts
             contactConfig.upsertContact(contact.accountID) {

@@ -9,7 +9,6 @@
     <string name="AccessibilityId_recoveryPasswordHidePermanentlyConfirm">Confirm button</string>
     <string name="AccessibilityId_accountIdCopy">Copy Account ID</string>
     <string name="AccessibilityId_copy">Copy button</string>
-    <string name="AccessibilityId_theError">Error message</string>
     <string name="AccessibilityId_recoveryPasswordHideRecoveryPassword">Hide recovery password button</string>
     <string name="AccessibilityId_qrCode">QR code</string>
     <string name="AccessibilityId_sessionRecoveryPassword">Recovery password</string>
@@ -49,6 +48,10 @@
     <!--Settings Page -->
     <string name="AccessibilityId_conversationsBlockedContacts">Blocked contacts</string>
     <string name="AccessibilityId_shareAccountId">Account ID</string>
+    <string name="AccessibilityId_imageButton">Image button</string>
+    <string name="AccessibilityId_cameraButton">Camera button</string>
+    <string name="qa_settings_dialog_username_save">update-username-confirm-button</string>
+    <string name="qa_settings_dialog_username_cancel">update-username-cancel-button</string>
     <!--Message requests-->
     <string name="AccessibilityId_clearAll">Clear all</string>
     <string name="AccessibilityId_messageRequestsNonePending">No pending message requests</string>
@@ -61,7 +64,8 @@
     <string name="AccessibilityId_messageNew">New direct message</string>
     <!-- Join community pop up -->
     <string name="AccessibilityId_communityEnterUrl">Community input</string>
-    <!-- Conversation options (three dots menu)-->
+    <!-- Conversation -->
+    <string name="qa_conversation_avatar">conversation-options-avatar</string>
     <string name="AccessibilityId_conversationsAddToHome">Add to home screen</string>
     <string name="AccessibilityId_conversationsSettingsAllMedia">All media</string>
     <string name="AccessibilityId_block">Block</string>
@@ -77,6 +81,85 @@
     <string name="AccessibilityId_notificationsMute">Mute notifications</string>
     <string name="AccessibilityId_sessionNotifications">Notification settings</string>
     <string name="AccessibilityId_search">Search</string>
+    <!-- Conversation settings -->
+    <string name="qa_conversation_settings_avatar">profile-picture</string>
+    <string name="qa_conversation_settings_edit_name">edit-profile-icon</string>
+    <string name="qa_conversation_settings_display_name_nts">your-profile-name</string>
+    <string name="qa_conversation_settings_display_name_1on1">preferred-display-name</string>
+    <string name="qa_conversation_settings_display_name_groups">group-name</string>
+    <string name="qa_conversation_settings_display_name_community">community-name</string>
+    <string name="qa_conversation_settings_description_1on1">fallback-display-name</string>
+    <string name="qa_conversation_settings_description_groups">group-description</string>
+    <string name="qa_conversation_settings_description_community">community-description</string>
+    <string name="qa_conversation_settings_account_id">account-id</string>
+    <string name="qa_conversation_settings_copy_account">copy-account-id-menu-option</string>
+    <string name="qa_conversation_settings_search">search-conversation-menu-option</string>
+    <string name="qa_conversation_settings_disappearing">disappearing-messages-menu-option</string>
+    <string name="qa_conversation_settings_disappearing_sub">disappearing-messages-timer-details-menu-option</string>
+    <string name="qa_conversation_settings_pin">pin-conversation-menu-option</string>
+    <string name="qa_conversation_settings_notifications">notifications-menu-option</string>
+    <string name="qa_conversation_settings_notifications_sub">notifications-details-menu-option</string>
+    <string name="qa_conversation_settings_notifications_radio_all">notifications-all-messages-radio-button</string>
+    <string name="qa_conversation_settings_notifications_radio_mentions">notifications-mentions-only-radio-button</string>
+    <string name="qa_conversation_settings_notifications_radio_mute">notifications-mute-radio-button</string>
+    <string name="qa_conversation_settings_notifications_radio_muted_until">notifications-muted-until-radio-button</string>
+    <string name="qa_conversation_settings_notifications_radio_forever">notifications-forever-time-option</string>
+    <string name="qa_conversation_settings_notifications_radio_1m">notifications-one-minute-time-option</string>
+    <string name="qa_conversation_settings_notifications_radio_5m">notifications-five-minute-time-option</string>
+    <string name="qa_conversation_settings_notifications_radio_1h">notifications-one-hour-time-option</string>
+    <string name="qa_conversation_settings_notifications_radio_2h">notifications-two-hours-time-option</string>
+    <string name="qa_conversation_settings_notifications_radio_1d">notifications-one-day-time-option</string>
+    <string name="qa_conversation_settings_notifications_radio_1w">notifications-one-week-time-option</string>
+    <string name="qa_conversation_settings_attachments">attachments-menu-option</string>
+    <string name="qa_conversation_settings_block">block-user-menu-option</string>
+    <string name="qa_conversation_settings_clear_messages">clear-all-messages-menu-option</string>
+    <string name="qa_conversation_settings_delete_conversation">delete-conversation-menu-option</string>
+    <string name="qa_conversation_settings_delete_contact">delete-contact-menu-option</string>
+    <string name="qa_conversation_search_input">search-input</string>
+    <string name="qa_input_clear">clear-input-button</string>
+    <string name="qa_input_clear_name">clear-input-button-name</string>
+    <string name="qa_input_clear_description">clear-input-button-description</string>
+    <string name="qa_conversation_search_cancel">search-cancel-button</string>
+    <string name="qa_conversation_search_up">search-toggle-up-button</string>
+    <string name="qa_conversation_search_down">search-toggle-down-button</string>
+    <string name="qa_conversation_search_loading">search-loading-icon</string>
+    <string name="qa_conversation_settings_hide_nts">hide-nts-menu-option</string>
+    <string name="qa_conversation_settings_copy_community_url">copy-community-url-menu-option</string>
+    <string name="qa_conversation_settings_leave_community">leave-community-menu-option</string>
+    <string name="qa_conversation_settings_manage_members">manage-members-menu-option</string>
+    <string name="qa_conversation_settings_group_members">group-members-menu-option</string>
+    <string name="qa_conversation_settings_invite_contacts">invite-contacts-menu-option</string>
+    <string name="qa_conversation_settings_leave_group">leave-group-menu-option</string>
+    <string name="qa_conversation_settings_delete_group">delete-group-menu-option</string>
+    <string name="qa_conversation_settings_dialog_hide_nts_confirm">hide-nts-confirm-button</string>
+    <string name="qa_conversation_settings_dialog_hide_nts_cancel">hide-nts-cancel-button</string>
+    <string name="qa_conversation_settings_dialog_show_nts_confirm">show-nts-confirm-button</string>
+    <string name="qa_conversation_settings_dialog_show_nts_cancel">show-nts-cancel-button</string>
+    <string name="qa_conversation_settings_dialog_block_confirm">block-user-confirm-button</string>
+    <string name="qa_conversation_settings_dialog_block_cancel">block-user-cancel-button</string>
+    <string name="qa_conversation_settings_dialog_unblock_confirm">unblock-user-confirm-button</string>
+    <string name="qa_conversation_settings_dialog_unblock_cancel">unblock-user-cancel-button</string>
+    <string name="qa_conversation_settings_dialog_delete_contact_confirm">delete-contact-confirm-button</string>
+    <string name="qa_conversation_settings_dialog_delete_contact_cancel">delete-contact-cancel-button</string>
+    <string name="qa_conversation_settings_dialog_delete_conversation_confirm">delete-conversation-confirm-button</string>
+    <string name="qa_conversation_settings_dialog_delete_conversation_cancel">delete-conversation-cancel-button</string>
+    <string name="qa_conversation_settings_dialog_leave_community_confirm">leave-community-confirm-option</string>
+    <string name="qa_conversation_settings_dialog_leave_community_cancel">leave-community-cancel-option</string>
+    <string name="qa_conversation_settings_dialog_delete_group_confirm">delete-group-confirm-button</string>
+    <string name="qa_conversation_settings_dialog_delete_group_cancel">delete-group-cancel-button</string>
+    <string name="qa_conversation_settings_dialog_leave_group_confirm">leave-group-confirm-button</string>
+    <string name="qa_conversation_settings_dialog_leave_group_cancel">leave-group-cancel-button</string>
+    <string name="qa_conversation_settings_dialog_clear_messages_confirm">clear-all-messages-confirm-button</string>
+    <string name="qa_conversation_settings_dialog_clear_messages_cancel">clear-all-messages-cancel-button</string>
+    <string name="qa_conversation_settings_clear_messages_radio_device">clear-device-radio-option</string>
+    <string name="qa_conversation_settings_clear_messages_radio_everyone">clear-everyone-radio-option</string>
+    <string name="qa_conversation_settings_dialog_nickname_input">nickname-input</string>
+    <string name="qa_conversation_settings_dialog_nickname_set">set-nickname-confirm-button</string>
+    <string name="qa_conversation_settings_dialog_nickname_remove">set-nickname-remove-button</string>
+    <string name="qa_conversation_settings_dialog_groupname_input">update-group-info-name-input</string>
+    <string name="qa_conversation_settings_dialog_groupname_description_input">update-group-info-description-input</string>
+    <string name="qa_conversation_settings_dialog_groupname_save">update-group-info-confirm-button</string>
+    <string name="qa_conversation_settings_dialog_groupname_cancel">update-group-info-cancel-button</string>
     <!--  Conversation options for closed group-->
     <string name="AccessibilityId_groupNameNew">Accept name change</string>
     <string name="AccessibilityId_membersInvite">Invite button</string>
@@ -91,6 +174,7 @@
     <string name="AccessibilityId_mentions_list">Mentions list</string>
     <string name="AccessibilityId_outdated_group_banner">Legacy group banner</string>
     <string name="AccessibilityId_empty_conversation">Empty list</string>
+    <string name="AccessibilityId_recreate_legacy_group">Legacy Groups Recreate Button</string>
     <!--  Conversation icons -->
     <string name="AccessibilityId_messageRequestsAccept">Accept message request</string>
     <string name="AccessibilityId_messageRequestsBlock">Block message request</string>
@@ -114,7 +198,8 @@
     <string name="AccessibilityId_removeContact">Remove contact button</string>
     <string name="AccessibilityId_resendInvite">Resend invite button</string>
     <string name="AccessibilityId_versionWarning">Version warning banner</string>
-    <string name="AccessibilityId_selectContactConfirm">Confirm invite button</string>
+    <string name="qa_invite_button">invite-contacts-button</string>
+    <string name="qa_unblock_button">unblock-contacts-button</string>
     <!--Conversation screen -->
     <string name="AccessibilityId_attachmentsButton">Attachments button</string>
     <string name="AccessibilityId_files">Documents folder</string>
@@ -143,10 +228,6 @@
     <!-- Modals -->
     <string name="AccessibilityId_modalTitle">Modal heading</string>
     <string name="AccessibilityId_modalMessage">Modal description</string>
-    <!-- Delete message modal-->
-    <string name="AccessibilityId_deleteMessageCancel">Cancel deletion</string>
-    <string name="AccessibilityId_deleteMessageEveryone">Delete for everyone</string>   <!-- ACL: Perhaps should be "AccessibilityId_clearMessagesForEveryone"? -->
-    <string name="AccessibilityId_deleteMessageDeviceOnly">Delete just for me</string>  <!-- ACL: Perhaps should be "AccessibilityId_clearMessagesForMe"?       -->
     <!--Settings Page-->
     <string name="AccessibilityId_sessionAppearance">Appearance</string>
     <string name="AccessibilityId_apply">Apply</string>
@@ -167,6 +248,17 @@
     <string name="AccessibilityId_sessionPrivacy">Privacy</string>
     <string name="AccessibilityId_setButton">Set button</string>
     <string name="AccessibilityId_displayName">Display name</string>
+    <string name="qa_settings_item_session_network">session-network-menu-item</string>
+    <string name="qa_settings_item_donate">donate-menu-item</string>
+    <string name="qa_settings_item_path">path-menu-item</string>
+    <string name="qa_settings_item_pro">pro-menu-item</string>
+
+    <!-- In app review -->
+    <string name="qa_inapp_review_dialog_button_great">enjoy-session-positive-button</string>
+    <string name="qa_inapp_review_dialog_button_work">enjoy-session-negative-button</string>
+    <string name="qa_inapp_review_dialog_button_rate">rate-app-button</string>
+    <string name="qa_inapp_review_dialog_button_not_now">not-now-button</string>
+    <string name="qa_inapp_review_dialog_button_survey">open-survey-button</string>
 
     <!-- Misc. -->
     <string name="AccessibilityId_navigateBack">Navigate back</string>
@@ -175,5 +267,13 @@
     <string name="AccessibilityId_mediaMessage">Media message</string>
     <string name="AccessibilityId_save">Save</string>
     <string name="AccessibilityId_remove">Remove</string>
+    <string name="qa_input_error">error-message</string>
+    <string name="qa_button_submit">submit-button</string>
+    <string name="qa_blocked_banner">blocked-banner</string>
+    <string name="qa_delete_message_device_only">delete-only-on-this-device</string>
+    <string name="qa_delete_message_everyone">delete-for-everyone</string>
+    <string name="qa_pro_badge_component">pro-badge-component</string>
+    <string name="qa_pro_badge_text">pro-badge-text</string>
+    <string name="qa_pro_badge_icon">pro-badge-icon</string>
 
 </resources>

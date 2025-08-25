@@ -5,11 +5,9 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
-import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewSearchBottomBarBinding
-import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.TOTAL_COUNT_KEY
+import org.thoughtcrime.securesms.conversation.v2.search.SearchViewModel.Companion.MIN_QUERY_SIZE
 
 class SearchBottomBar : LinearLayout {
     private lateinit var binding: ViewSearchBottomBarBinding
@@ -24,8 +22,8 @@ class SearchBottomBar : LinearLayout {
         binding = ViewSearchBottomBarBinding.inflate(LayoutInflater.from(context), this, true)
     }
 
-    fun setData(position: Int, count: Int) = with(binding) {
-        searchProgressWheel.visibility = GONE
+    fun setData(position: Int, count: Int, searchQuery: String?) = with(binding) {
+        binding.loading.visibility = GONE
         searchUp.setOnClickListener { v: View? ->
             if (eventListener != null) {
                 eventListener!!.onSearchMoveUpPressed()
@@ -36,9 +34,15 @@ class SearchBottomBar : LinearLayout {
                 eventListener!!.onSearchMoveDownPressed()
             }
         }
-        if (count > 0) {
+        if (count > 0) { // we have results
             searchPosition.text = resources.getQuantityString(R.plurals.searchMatches, count, position + 1, count)
-        } else {
+        } else if ( // we have a legitimate query but no results
+            searchQuery != null &&
+            searchQuery.length >= MIN_QUERY_SIZE &&
+            count == 0
+        ) {
+            searchPosition.text = resources.getString(R.string.searchMatchesNone)
+        } else { // we have no legitimate query yet
             searchPosition.text = ""
         }
         setViewEnabled(searchUp, position < count - 1)
@@ -46,7 +50,7 @@ class SearchBottomBar : LinearLayout {
     }
 
     fun showLoading() {
-        binding.searchProgressWheel.visibility = VISIBLE
+        binding.loading.visibility = VISIBLE
     }
 
     private fun setViewEnabled(view: View, enabled: Boolean) {

@@ -1,28 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <resources>
     <color name="profile_picture_background">#353535</color>
-    <color name="cell_selected">#0C0C0C</color>
     <color name="action_bar_background">#171717</color>
     <color name="separator">#36383C</color>
     <color name="app_icon_background">#333132</color>
     <color name="compose_view_background">#1B1B1B</color>
     <color name="compose_text_view_background">#141414</color>
     <color name="paths_building">#FFCE3A</color>
-
-    <array name="profile_picture_placeholder_colors">
-        <item>#5ff8b0</item>
-        <item>#26cdb9</item>
-        <item>#f3c615</item>
-        <item>#fcac5a</item>
-    </array>
-
-    <color name="loki_darkest_gray">#0a0a0a</color>
-
-    <color name="signal_primary">@color/accent_green</color>
-    <color name="signal_primary_dark">@color/accent_green</color>
-
-    <color name="textsecure_primary">@color/signal_primary</color>
-    <color name="textsecure_primary_dark">@color/signal_primary_dark</color>
 
     <color name="white">#ffffffff</color>
     <color name="black">#ff000000</color>
@@ -40,25 +24,11 @@
     <color name="transparent_white_aa">#aaffffff</color>
     <color name="transparent_white_bb">#bbffffff</color>
 
-    <color name="action_mode_status_bar">@color/gray65</color>
-
-    <color name="device_link_item_background_dark">#ff333333</color>
-
     <color name="transparent">#00FFFFFF</color>
     <color name="transparent_black">#00000000</color>
 
-    <color name="MediaOverview_Media_selected_overlay">#88000000</color>
-
     <color name="avatar_background">@color/transparent_black_90</color>
 
-    <color name="accent_green">#ff31F196</color>
-    <color name="accent_blue">#ff57C9FA</color>
-    <color name="accent_purple">#ffC993FF</color>
-    <color name="accent_pink">#ffFF95EF</color>
-    <color name="accent_red">#ffFF9C8E</color>
-    <color name="accent_orange">#ffFCB159</color>
-    <color name="accent_yellow">#ffFAD657</color>
 
-    <color name="rust">#A64B00</color>
 
 </resources>

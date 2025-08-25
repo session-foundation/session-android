@@ -1,10 +1,7 @@
 package org.thoughtcrime.securesms.conversation.disappearingmessages
 
 import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import androidx.annotation.StringRes
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.StorageProtocol
@@ -12,7 +9,6 @@ import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ExpirationUtil
@@ -20,13 +16,12 @@ import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerP
 import org.session.libsession.utilities.StringSubstitutionConstants.DISAPPEARING_MESSAGES_TYPE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.getExpirationTypeDisplayValue
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
-import org.thoughtcrime.securesms.database.model.MessageRecord
+import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.getSubbedCharSequence
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.milliseconds
 
 class DisappearingMessages @Inject constructor(
     private val textSecurePreferences: TextSecurePreferences,
@@ -40,13 +35,13 @@ class DisappearingMessages @Inject constructor(
         storage.setExpirationConfiguration(ExpirationConfiguration(threadId, mode, expiryChangeTimestampMs))
 
         if (address.isGroupV2) {
-            groupManagerV2.setExpirationTimer(AccountId(address.serialize()), mode, expiryChangeTimestampMs)
+            groupManagerV2.setExpirationTimer(AccountId(address.toString()), mode, expiryChangeTimestampMs)
         } else {
             val message = ExpirationTimerUpdate(isGroup = isGroup).apply {
                 expiryMode = mode
                 sender = textSecurePreferences.getLocalNumber()
                 isSenderSelf = true
-                recipient = address.serialize()
+                recipient = address.toString()
                 sentTimestamp = expiryChangeTimestampMs
             }
 
@@ -55,26 +50,60 @@ class DisappearingMessages @Inject constructor(
         }
     }
 
-    fun showFollowSettingDialog(context: Context, message: MessageRecord) = context.showSessionDialog {
+    fun showFollowSettingDialog(context: Context,
+                                threadId: Long,
+                                recipient: Recipient,
+                                content: DisappearingMessageUpdate) = context.showSessionDialog {
         title(R.string.disappearingMessagesFollowSetting)
-        text(if (message.expiresIn == 0L) {
-            context.getText(R.string.disappearingMessagesFollowSettingOff)
-        } else {
-            context.getSubbedCharSequence(R.string.disappearingMessagesFollowSettingOn,
-                TIME_KEY to ExpirationUtil.getExpirationDisplayValue(context, message.expiresIn.milliseconds),
-                DISAPPEARING_MESSAGES_TYPE_KEY to context.getExpirationTypeDisplayValue(message.isNotDisappearAfterRead))
-        })
+
+        val bodyText: CharSequence
+        @StringRes
+        val dangerButtonText: Int
+        @StringRes
+        val dangerButtonContentDescription: Int
+
+        when (content.expiryMode) {
+            ExpiryMode.NONE -> {
+                bodyText = context.getText(R.string.disappearingMessagesFollowSettingOff)
+                dangerButtonText = R.string.confirm
+                dangerButtonContentDescription = R.string.AccessibilityId_confirm
+            }
+            is ExpiryMode.AfterSend -> {
+                bodyText = context.getSubbedCharSequence(
+                    R.string.disappearingMessagesFollowSettingOn,
+                    TIME_KEY to ExpirationUtil.getExpirationDisplayValue(
+                        context,
+                        content.expiryMode.duration
+                    ),
+                    DISAPPEARING_MESSAGES_TYPE_KEY to context.getString(R.string.disappearingMessagesTypeSent)
+                )
+
+                dangerButtonText = R.string.set
+                dangerButtonContentDescription = R.string.AccessibilityId_setButton
+            }
+            is ExpiryMode.AfterRead -> {
+                bodyText = context.getSubbedCharSequence(
+                    R.string.disappearingMessagesFollowSettingOn,
+                    TIME_KEY to ExpirationUtil.getExpirationDisplayValue(
+                        context,
+                        content.expiryMode.duration
+                    ),
+                    DISAPPEARING_MESSAGES_TYPE_KEY to context.getString(R.string.disappearingMessagesTypeRead)
+                )
+
+                dangerButtonText = R.string.set
+                dangerButtonContentDescription = R.string.AccessibilityId_setButton
+            }
+        }
+
+        text(bodyText)
 
         dangerButton(
-                text = if (message.expiresIn == 0L) R.string.confirm else R.string.set,
-                contentDescriptionRes = if (message.expiresIn == 0L) R.string.AccessibilityId_confirm else R.string.AccessibilityId_setButton
+                text = dangerButtonText,
+                contentDescriptionRes = dangerButtonContentDescription,
         ) {
-            set(message.threadId, message.recipient.address, message.expiryMode, message.recipient.isGroupRecipient)
+            set(threadId, recipient.address, content.expiryMode, recipient.isGroupRecipient)
         }
         cancelButton()
     }
 }
-
-val MessageRecord.expiryMode get() = if (expiresIn <= 0) ExpiryMode.NONE
-    else if (expireStarted == timestamp) ExpiryMode.AfterSend(expiresIn / 1000)
-    else ExpiryMode.AfterRead(expiresIn / 1000)

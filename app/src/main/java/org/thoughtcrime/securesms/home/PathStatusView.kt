@@ -13,6 +13,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.snode.OnionRequestAPI
 import org.thoughtcrime.securesms.util.toPx
@@ -55,19 +56,22 @@ class PathStatusView : View {
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
 
-        updateJob = GlobalScope.launch(Dispatchers.Main) {
+        updateJob = GlobalScope.launch {
             OnionRequestAPI.hasPath
                 .collectLatest { pathsBuilt ->
-                    if (pathsBuilt) {
-                        setBackgroundResource(R.drawable.accent_dot)
-                        val hasPathsColor = context.getColor(R.color.accent_green)
-                        mainColor = hasPathsColor
-                        sessionShadowColor = hasPathsColor
-                    } else {
-                        setBackgroundResource(R.drawable.paths_building_dot)
-                        val pathsBuildingColor = ContextCompat.getColor(context, R.color.paths_building)
-                        mainColor = pathsBuildingColor
-                        sessionShadowColor = pathsBuildingColor
+                    withContext(Dispatchers.Main) {
+                        if (pathsBuilt) {
+                            setBackgroundResource(R.drawable.accent_dot)
+                            val hasPathsColor = context.getColor(R.color.accent_green)
+                            mainColor = hasPathsColor
+                            sessionShadowColor = hasPathsColor
+                        } else {
+                            setBackgroundResource(R.drawable.paths_building_dot)
+                            val pathsBuildingColor =
+                                ContextCompat.getColor(context, R.color.paths_building)
+                            mainColor = pathsBuildingColor
+                            sessionShadowColor = pathsBuildingColor
+                        }
                     }
                 }
         }

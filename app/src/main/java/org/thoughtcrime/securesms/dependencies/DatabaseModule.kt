@@ -10,7 +10,6 @@ import org.session.libsession.database.MessageDataProvider
 import org.thoughtcrime.securesms.attachments.DatabaseAttachmentProvider
 import org.thoughtcrime.securesms.crypto.AttachmentSecret
 import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider
-import org.thoughtcrime.securesms.crypto.DatabaseSecretProvider
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.BlindedIdMappingDatabase
 import org.thoughtcrime.securesms.database.ConfigDatabase
@@ -26,17 +25,16 @@ import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.LokiUserDatabase
 import org.thoughtcrime.securesms.database.MediaDatabase
-import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.PushDatabase
 import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.SearchDatabase
 import org.thoughtcrime.securesms.database.SessionContactDatabase
-import org.thoughtcrime.securesms.database.SessionJobDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
+import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
+import javax.inject.Provider
 import javax.inject.Singleton
 
 @Module
@@ -54,115 +52,103 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideOpenHelper(@ApplicationContext context: Context): SQLCipherOpenHelper {
-        val dbSecret = DatabaseSecretProvider(context).orCreateDatabaseSecret
-        SQLCipherOpenHelper.migrateSqlCipher3To4IfNeeded(context, dbSecret)
-        return SQLCipherOpenHelper(context, dbSecret)
+    fun provideOpenHelper(manager: DatabaseMigrationManager): SQLCipherOpenHelper {
+        return manager.openHelper
     }
 
     @Provides
     @Singleton
-    fun provideSmsDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = SmsDatabase(context, openHelper)
+    fun provideSmsDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = SmsDatabase(context, openHelper)
 
-    @Provides
-    @Singleton
-    fun provideMmsDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = MmsDatabase(context, openHelper)
 
     @Provides
     @Singleton
     fun provideAttachmentDatabase(@ApplicationContext context: Context,
-                                  openHelper: SQLCipherOpenHelper,
+                                  openHelper: Provider<SQLCipherOpenHelper>,
                                   attachmentSecret: AttachmentSecret) = AttachmentDatabase(context, openHelper, attachmentSecret)
     @Provides
     @Singleton
-    fun provideMediaDatbase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = MediaDatabase(context, openHelper)
+    fun provideMediaDatbase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = MediaDatabase(context, openHelper)
 
     @Provides
     @Singleton
-    fun provideThread(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = ThreadDatabase(context,openHelper)
+    fun provideMmsSms(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = MmsSmsDatabase(context, openHelper)
 
     @Provides
     @Singleton
-    fun provideMmsSms(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = MmsSmsDatabase(context, openHelper)
+    fun provideDraftDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = DraftDatabase(context, openHelper)
 
     @Provides
     @Singleton
-    fun provideDraftDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = DraftDatabase(context, openHelper)
+    fun providePushDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = PushDatabase(context,openHelper)
 
     @Provides
     @Singleton
-    fun providePushDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = PushDatabase(context,openHelper)
+    fun provideGroupDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = GroupDatabase(context,openHelper)
 
     @Provides
     @Singleton
-    fun provideGroupDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = GroupDatabase(context,openHelper)
+    fun provideRecipientDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = RecipientDatabase(context,openHelper)
 
     @Provides
     @Singleton
-    fun provideRecipientDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = RecipientDatabase(context,openHelper)
+    fun provideGroupReceiptDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = GroupReceiptDatabase(context,openHelper)
 
     @Provides
     @Singleton
-    fun provideGroupReceiptDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = GroupReceiptDatabase(context,openHelper)
+    fun searchDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = SearchDatabase(context,openHelper)
 
     @Provides
     @Singleton
-    fun searchDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = SearchDatabase(context,openHelper)
+    fun provideLokiApiDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = LokiAPIDatabase(context,openHelper)
 
     @Provides
     @Singleton
-    fun provideLokiApiDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = LokiAPIDatabase(context,openHelper)
+    fun provideLokiMessageDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = LokiMessageDatabase(context,openHelper)
 
     @Provides
     @Singleton
-    fun provideLokiMessageDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = LokiMessageDatabase(context,openHelper)
+    fun provideLokiThreadDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = LokiThreadDatabase(context,openHelper)
 
     @Provides
     @Singleton
-    fun provideLokiThreadDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = LokiThreadDatabase(context,openHelper)
+    fun provideLokiUserDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = LokiUserDatabase(context,openHelper)
 
     @Provides
     @Singleton
-    fun provideLokiUserDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = LokiUserDatabase(context,openHelper)
+    fun provideLokiBackupFilesDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = LokiBackupFilesDatabase(context,openHelper)
+
 
     @Provides
     @Singleton
-    fun provideLokiBackupFilesDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = LokiBackupFilesDatabase(context,openHelper)
+    fun provideSessionContactDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = SessionContactDatabase(context,openHelper)
 
     @Provides
     @Singleton
-    fun provideSessionJobDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = SessionJobDatabase(context, openHelper)
+    fun provideBlindedIdMappingDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = BlindedIdMappingDatabase(context, openHelper)
 
     @Provides
     @Singleton
-    fun provideSessionContactDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = SessionContactDatabase(context,openHelper)
+    fun provideGroupMemberDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = GroupMemberDatabase(context, openHelper)
 
     @Provides
     @Singleton
-    fun provideBlindedIdMappingDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = BlindedIdMappingDatabase(context, openHelper)
+    fun provideReactionDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = ReactionDatabase(context, openHelper)
 
     @Provides
     @Singleton
-    fun provideGroupMemberDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = GroupMemberDatabase(context, openHelper)
+    fun provideEmojiSearchDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = EmojiSearchDatabase(context, openHelper)
 
     @Provides
     @Singleton
-    fun provideReactionDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = ReactionDatabase(context, openHelper)
+    fun provideExpirationConfigurationDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = ExpirationConfigurationDatabase(context, openHelper)
 
     @Provides
     @Singleton
-    fun provideEmojiSearchDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = EmojiSearchDatabase(context, openHelper)
+    fun provideAttachmentProvider(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>): MessageDataProvider = DatabaseAttachmentProvider(context, openHelper)
 
     @Provides
     @Singleton
-    fun provideExpirationConfigurationDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = ExpirationConfigurationDatabase(context, openHelper)
-
-    @Provides
-    @Singleton
-    fun provideAttachmentProvider(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper): MessageDataProvider = DatabaseAttachmentProvider(context, openHelper)
-
-    @Provides
-    @Singleton
-    fun provideConfigDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper): ConfigDatabase = ConfigDatabase(context, openHelper)
+    fun provideConfigDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>): ConfigDatabase = ConfigDatabase(context, openHelper)
 
 }

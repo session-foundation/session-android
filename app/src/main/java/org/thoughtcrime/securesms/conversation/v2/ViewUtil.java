@@ -180,6 +180,14 @@ public final class ViewUtil {
     }
   }
 
+  public static String safeRTLString(@NonNull Context context, @NonNull String text) {
+    return isLtr(context) ?
+            "\u200E" + text + "\u200E" :
+            "\u200F" + text + "\u200F";
+  }
+
+
+
   public static boolean isLtr(@NonNull View view) {
     return isLtr(view.getContext());
   }

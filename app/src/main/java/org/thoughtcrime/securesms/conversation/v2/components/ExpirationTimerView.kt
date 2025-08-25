@@ -15,19 +15,19 @@ class ExpirationTimerView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : AppCompatImageView(context, attrs, defStyleAttr) {
     private val frames = intArrayOf(
-        R.drawable.timer00,
-        R.drawable.timer05,
-        R.drawable.timer10,
-        R.drawable.timer15,
-        R.drawable.timer20,
-        R.drawable.timer25,
-        R.drawable.timer30,
-        R.drawable.timer35,
-        R.drawable.timer40,
-        R.drawable.timer45,
-        R.drawable.timer50,
-        R.drawable.timer55,
-        R.drawable.timer60
+        R.drawable.ic_clock_0,
+        R.drawable.ic_clock_1,
+        R.drawable.ic_clock_2,
+        R.drawable.ic_clock_3,
+        R.drawable.ic_clock_4,
+        R.drawable.ic_clock_5,
+        R.drawable.ic_clock_6,
+        R.drawable.ic_clock_7,
+        R.drawable.ic_clock_8,
+        R.drawable.ic_clock_9,
+        R.drawable.ic_clock_10,
+        R.drawable.ic_clock_11,
+        R.drawable.ic_clock_12
     )
 
     fun setTimerIcon() {
@@ -36,13 +36,13 @@ class ExpirationTimerView @JvmOverloads constructor(
 
     fun setExpirationTime(startedAt: Long, expiresIn: Long) {
         if (expiresIn == 0L) {
-            setImageResource(R.drawable.timer55)
+            setImageResource(R.drawable.ic_clock_11)
             return
         }
 
         if (startedAt == 0L) {
             // timer has not started
-            setImageResource(R.drawable.timer60)
+            setImageResource(R.drawable.ic_clock_12)
             return
         }
 

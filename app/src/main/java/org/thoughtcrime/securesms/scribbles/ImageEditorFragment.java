@@ -25,6 +25,7 @@ import org.thoughtcrime.securesms.mms.PushMediaConstraints;
 import org.thoughtcrime.securesms.scribbles.widget.VerticalSlideColorPicker;
 import org.thoughtcrime.securesms.util.ParcelUtil;
 import org.session.libsession.utilities.TextSecurePreferences;
+import org.thoughtcrime.securesms.util.ViewUtilitiesKt;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -121,6 +122,8 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
     imageEditorHud  = view.findViewById(R.id.scribble_hud);
     imageEditorView = view.findViewById(R.id.image_editor_view);
 
+    ViewUtilitiesKt.applySafeInsetsMargins(imageEditorHud);
+
     imageEditorHud.setEventListener(this);
 
     imageEditorView.setTapListener(selectionListener);
@@ -132,8 +135,6 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
     if (restoredModel != null) {
       editorModel = restoredModel;
       restoredModel = null;
-    } else if (savedInstanceState != null) {
-      editorModel = new Data(savedInstanceState).readModel();
     }
 
     if (editorModel == null) {
@@ -163,12 +164,6 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
   @Override
   public Uri getUri() {
     return imageUri;
-  }
-
-  @Nullable
-  @Override
-  public View getPlaybackControls() {
-    return null;
   }
 
   @Override

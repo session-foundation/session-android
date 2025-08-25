@@ -11,8 +11,8 @@ import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import androidx.annotation.ColorInt
-import network.loki.messenger.R
 import kotlin.math.roundToInt
+import network.loki.messenger.R
 
 interface GlowView {
     var mainColor: Int
@@ -198,7 +198,8 @@ class InputBarButtonImageViewContainer : RelativeLayout, GlowView {
         val h = height.toFloat()
         c.drawCircle(w / 2, h / 2, w / 2, fillPaint)
         if (strokeColor != 0) {
-            c.drawCircle(w / 2, h / 2, w / 2, strokePaint)
+            // Adjust radius to account for stroke width
+            c.drawCircle(w / 2, h / 2, w / 2 - strokePaint.strokeWidth / 2, strokePaint)
         }
         super.onDraw(c)
     }

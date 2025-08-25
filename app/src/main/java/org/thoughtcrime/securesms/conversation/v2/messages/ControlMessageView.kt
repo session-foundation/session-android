@@ -3,11 +3,15 @@ package org.thoughtcrime.securesms.conversation.v2.messages
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.graphics.drawable.toBitmap
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
@@ -17,15 +21,14 @@ import network.loki.messenger.databinding.ViewControlMessageBinding
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.ExpirationConfiguration
-import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.getColorFromAttr
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessages
-import org.thoughtcrime.securesms.conversation.disappearingmessages.expiryMode
 import org.thoughtcrime.securesms.database.model.MessageRecord
+import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.PrivacySettingsActivity
@@ -33,6 +36,7 @@ import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.findActivity
 import org.thoughtcrime.securesms.ui.getSubbedCharSequence
 import org.thoughtcrime.securesms.ui.getSubbedString
+import org.thoughtcrime.securesms.util.DateUtils
 import javax.inject.Inject
 
 
@@ -43,10 +47,17 @@ class ControlMessageView : LinearLayout {
 
     private val binding = ViewControlMessageBinding.inflate(LayoutInflater.from(context), this, true)
 
-    private val infoDrawable by lazy {
-        val d = ResourcesCompat.getDrawable(resources, R.drawable.ic_info_outline_white_24dp, context.theme)
-        d?.setTint(context.getColorFromAttr(R.attr.message_received_text_color))
-        d
+    val iconSize by lazy {
+        resources.getDimensionPixelSize(R.dimen.medium_spacing)
+    }
+
+    private val infoDrawable: Drawable? by lazy {
+        val icon = ResourcesCompat.getDrawable(resources, R.drawable.ic_info, context.theme)?.toBitmap()
+        if(icon != null) {
+            val d = BitmapDrawable(resources, Bitmap.createScaledBitmap(icon, iconSize, iconSize, true))
+            d.setTint(context.getColorFromAttr(R.attr.message_received_text_color))
+            d
+        } else null
     }
 
     constructor(context: Context) : super(context)
@@ -54,6 +65,7 @@ class ControlMessageView : LinearLayout {
     constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
     @Inject lateinit var disappearingMessages: DisappearingMessages
+    @Inject lateinit var dateUtils: DateUtils
 
     val controlContentView: View get() = binding.controlContentView
 
@@ -62,7 +74,7 @@ class ControlMessageView : LinearLayout {
     }
 
     fun bind(message: MessageRecord, previous: MessageRecord?, longPress: (() -> Unit)? = null) {
-        binding.dateBreakTextView.showDateBreak(message, previous)
+        binding.dateBreakTextView.showDateBreak(message, previous, dateUtils)
         binding.iconImageView.isGone = true
         binding.expirationTimerView.isGone = true
         binding.followSetting.isGone = true
@@ -70,8 +82,9 @@ class ControlMessageView : LinearLayout {
 
         binding.root.contentDescription = null
         binding.textView.text = messageBody
+        val messageContent = message.messageContent
         when {
-            message.isExpirationTimerUpdate -> {
+            messageContent is DisappearingMessageUpdate -> {
                 binding.apply {
                     expirationTimerView.isVisible = true
 
@@ -84,12 +97,14 @@ class ControlMessageView : LinearLayout {
                     }
 
                     followSetting.isVisible = ExpirationConfiguration.isNewConfigEnabled
-                        && !message.isOutgoing
-                        && message.expiryMode != (MessagingModuleConfiguration.shared.storage.getExpirationConfiguration(message.threadId)?.expiryMode ?: ExpiryMode.NONE)
-                        && threadRecipient?.isGroupOrCommunityRecipient != true
+                            && !message.isOutgoing
+                            && messageContent.expiryMode != (MessagingModuleConfiguration.shared.storage.getExpirationConfiguration(message.threadId)?.expiryMode ?: ExpiryMode.NONE)
+                            && threadRecipient?.isGroupOrCommunityRecipient != true
 
                     if (followSetting.isVisible) {
-                        binding.controlContentView.setOnClickListener { disappearingMessages.showFollowSettingDialog(context, message) }
+                        binding.controlContentView.setOnClickListener {
+                            disappearingMessages.showFollowSettingDialog(context, threadId = message.threadId, recipient = message.recipient, messageContent)
+                        }
                     } else {
                         binding.controlContentView.setOnClickListener(null)
                     }
@@ -106,13 +121,13 @@ class ControlMessageView : LinearLayout {
             message.isMediaSavedNotification -> {
                 binding.iconImageView.apply {
                     setImageDrawable(
-                        ResourcesCompat.getDrawable(resources, R.drawable.ic_file_download_white_36dp, context.theme)
+                        ResourcesCompat.getDrawable(resources, R.drawable.ic_arrow_down_to_line, context.theme)
                     )
                     isVisible = true
                 }
             }
             message.isMessageRequestResponse -> {
-                val msgRecipient = message.recipient.address.serialize()
+                val msgRecipient = message.recipient.address.toString()
                 val me = TextSecurePreferences.getLocalNumber(context)
                 binding.textView.text =  if(me == msgRecipient) { // you accepted the user's request
                     val threadRecipient = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(message.threadId)
@@ -127,15 +142,30 @@ class ControlMessageView : LinearLayout {
                 binding.root.contentDescription = context.getString(R.string.AccessibilityId_message_request_config_message)
             }
             message.isCallLog -> {
-                val drawable = when {
-                    message.isIncomingCall -> R.drawable.ic_incoming_call
-                    message.isOutgoingCall -> R.drawable.ic_outgoing_call
-                    else -> R.drawable.ic_missed_call
+                val drawableRes = when {
+                    message.isIncomingCall -> R.drawable.ic_phone_incoming
+                    message.isOutgoingCall -> R.drawable.ic_phone_outgoing
+                    else -> R.drawable.ic_phone_missed
                 }
+
+                // Since this is using text drawable we need to go the long way around to size and style the drawable
+                // We could set the colour and style directly in the drawable's xml but it then makes it non reusable
+                // This will all be simplified  once we turn this all to Compose
+                val icon = ResourcesCompat.getDrawable(resources, drawableRes, context.theme)?.toBitmap()
+                icon?.let{
+                    val drawable = BitmapDrawable(resources, Bitmap.createScaledBitmap(icon, iconSize, iconSize, true));
+                    binding.callTextView.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                        drawable,null, null, null)
+
+                    val iconTint = when {
+                        message.isIncomingCall || message.isOutgoingCall -> R.attr.message_received_text_color
+                        else -> R.attr.danger
+                    }
+
+                    drawable.setTint(context.getColorFromAttr(iconTint))
+                }
+
                 binding.textView.isVisible = false
-                binding.callTextView.setCompoundDrawablesRelativeWithIntrinsicBounds(
-                    ResourcesCompat.getDrawable(resources, drawable, context.theme),
-                    null, null, null)
                 binding.callTextView.text = messageBody
 
                 if (message.expireStarted > 0 && message.expiresIn > 0) {
@@ -171,7 +201,7 @@ class ControlMessageView : LinearLayout {
                                     button(R.string.sessionSettings) {
                                         val intent = Intent(context, PrivacySettingsActivity::class.java)
                                         // allow the screen to auto scroll to the appropriate toggle
-                                        intent.putExtra(PrivacySettingsActivity.SCROLL_KEY, CALL_NOTIFICATIONS_ENABLED)
+                                        intent.putExtra(PrivacySettingsActivity.SCROLL_AND_TOGGLE_KEY, CALL_NOTIFICATIONS_ENABLED)
                                         context.startActivity(intent)
                                     }
                                     cancelButton()

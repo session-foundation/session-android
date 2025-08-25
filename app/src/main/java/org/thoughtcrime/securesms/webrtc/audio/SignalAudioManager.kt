@@ -11,6 +11,7 @@ import network.loki.messenger.R
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils
 import org.thoughtcrime.securesms.webrtc.AudioManagerCommand
+import org.thoughtcrime.securesms.webrtc.audio.SignalBluetoothManager.Companion
 import org.thoughtcrime.securesms.webrtc.audio.SignalBluetoothManager.State as BState
 
 private val TAG = Log.tag(SignalAudioManager::class.java)
@@ -53,9 +54,9 @@ class SignalAudioManager(private val context: Context,
 
     private var audioDevices: MutableSet<AudioDevice> = mutableSetOf()
 
-    private val soundPool: SoundPool = androidAudioManager.createSoundPool()
-    private val connectedSoundId = soundPool.load(context, R.raw.webrtc_completed, 1)
-    private val disconnectedSoundId = soundPool.load(context, R.raw.webrtc_disconnected, 1)
+    private val soundPool: SoundPool by lazy { androidAudioManager.createSoundPool() }
+    private val connectedSoundId by lazy { soundPool.load(context, R.raw.webrtc_completed, 1) }
+    private val disconnectedSoundId by lazy { soundPool.load(context, R.raw.webrtc_disconnected, 1) }
 
     private val incomingRinger = IncomingRinger(context)
     private val outgoingRinger = OutgoingRinger(context)
@@ -289,7 +290,13 @@ class SignalAudioManager(private val context: Context,
     }
 
     private fun selectAudioDevice(device: AudioDevice) {
-        val actualDevice = if (device == AudioDevice.EARPIECE && audioDevices.contains(AudioDevice.WIRED_HEADSET)) AudioDevice.WIRED_HEADSET else device
+        // if we are toggling the speaker button back and forth, the code sets the device to earpiece by default
+        // but really we want to go back to whatever is currently connected, so a wired or blt set if such audio is ready
+        val actualDevice = when {
+            device == AudioDevice.EARPIECE && audioDevices.contains(AudioDevice.WIRED_HEADSET) -> AudioDevice.WIRED_HEADSET
+            device == AudioDevice.EARPIECE && audioDevices.contains(AudioDevice.BLUETOOTH) -> AudioDevice.BLUETOOTH
+            else -> device
+        }
 
         Log.d(TAG, "selectAudioDevice(): device: $device actualDevice: $actualDevice")
         if (!audioDevices.contains(actualDevice)) {

@@ -5,29 +5,39 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceDataStore
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isPasswordDisabled
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setScreenLockEnabled
-import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.components.SwitchPreferenceCompat
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.showSessionDialog
-import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.areNotificationsEnabled
+import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
+import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.areNotificationsEnabled
 import org.thoughtcrime.securesms.util.IntentUtils
 
 @AndroidEntryPoint
 class PrivacySettingsPreferenceFragment : CorrectedPreferenceFragment() {
 
-    @Inject lateinit var configFactory: ConfigFactory
+    @Inject
+    lateinit var configFactory: ConfigFactory
+
+    @Inject
+    lateinit var textSecurePreferences: TextSecurePreferences
+
+    @Inject
+    lateinit var typingStatusRepository: TypingStatusRepository
 
     override fun onCreate(paramBundle: Bundle?) {
         super.onCreate(paramBundle)
@@ -71,6 +81,25 @@ class PrivacySettingsPreferenceFragment : CorrectedPreferenceFragment() {
 
     fun scrollToKey(key: String) {
         scrollToPreference(key)
+    }
+
+    fun scrollAndAutoToggle(key: String){
+        lifecycleScope.launch {
+            scrollToKey(key)
+            delay(500) // slight delay to make the transition less jarring
+            // Find the preference based on the provided key.
+            val pref = findPreference<Preference>(key)
+            // auto toggle for prefs that are switches
+            pref?.let {
+                // Check if it's a switch preference so we can toggle its checked state.
+                if (it is SwitchPreferenceCompat) {
+                    // force set to true here, and call the onPreferenceChangeListener
+                    // defined further up so that custom behaviours are still applied
+                    // Invoke the onPreferenceChangeListener with the new value.
+                    it.onPreferenceChangeListener?.onPreferenceChange(it, true)
+                }
+            }
+        }
     }
 
     private fun setCall(isEnabled: Boolean) {
@@ -117,8 +146,6 @@ class PrivacySettingsPreferenceFragment : CorrectedPreferenceFragment() {
                 requireContext().getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
             if (!keyguardManager.isKeyguardSecure) {
                 findPreference<SwitchPreferenceCompat>(TextSecurePreferences.SCREEN_LOCK)!!.isChecked = false
-
-                // TODO: Ticket SES-2182 raised to investigate & fix app lock / unlock functionality -ACL 2024/06/20
                 findPreference<Preference>(TextSecurePreferences.SCREEN_LOCK)!!.isEnabled = false
             }
         } else {
@@ -142,7 +169,7 @@ class PrivacySettingsPreferenceFragment : CorrectedPreferenceFragment() {
         override fun onPreferenceChange(preference: Preference, newValue: Any): Boolean {
             val enabled = newValue as Boolean
             if (!enabled) {
-                ApplicationContext.getInstance(requireContext()).typingStatusRepository.clear()
+                typingStatusRepository.clear()
             }
             return true
         }

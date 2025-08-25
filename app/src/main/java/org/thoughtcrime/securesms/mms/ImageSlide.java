@@ -22,7 +22,6 @@ import android.net.Uri;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
 import network.loki.messenger.R;
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
 import org.session.libsession.utilities.MediaTypes;
@@ -36,32 +35,20 @@ public class ImageSlide extends Slide {
     super(context, attachment);
   }
 
-  public ImageSlide(Context context, Uri uri, long size, int width, int height) {
-    this(context, uri, size, width, height, null);
-  }
-
-  public ImageSlide(Context context, Uri uri, long size, int width, int height, @Nullable String caption) {
-    super(context, constructAttachmentFromUri(context, uri, MediaTypes.IMAGE_JPEG, size, width, height, true, null, caption, false, false));
+  public ImageSlide(Context context, Uri uri, String filename, long size, int width, int height, @Nullable String caption) {
+    super(context, constructAttachmentFromUri(context, uri, MediaTypes.IMAGE_JPEG, size, width, height, true, filename, caption, false, false));
   }
 
   @Override
-  public @DrawableRes int getPlaceholderRes(Theme theme) {
-    return 0;
-  }
+  public @DrawableRes int getPlaceholderRes(Theme theme) { return 0; }
 
   @Override
-  public @Nullable Uri getThumbnailUri() {
-    return getUri();
-  }
+  public @Nullable Uri getThumbnailUri() { return getUri(); }
 
   @Override
-  public boolean hasImage() {
-    return true;
-  }
+  public boolean hasImage() { return true; }
 
   @NonNull
   @Override
-  public String getContentDescription() {
-    return context.getString(R.string.image);
-  }
+  public String getContentDescription() { return context.getString(R.string.image); }
 }

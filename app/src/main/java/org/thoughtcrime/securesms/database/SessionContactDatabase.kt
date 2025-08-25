@@ -8,9 +8,11 @@ import org.session.libsession.messaging.contacts.Contact
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.IdPrefix
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
+import javax.inject.Provider
 
-class SessionContactDatabase(context: Context, helper: SQLCipherOpenHelper) : Database(context, helper) {
+class SessionContactDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) : Database(context, helper) {
 
     companion object {
         const val sessionContactTable = "session_contact_database"
@@ -35,14 +37,14 @@ class SessionContactDatabase(context: Context, helper: SQLCipherOpenHelper) : Da
     }
 
     fun getContactWithAccountID(accountID: String): Contact? {
-        val database = databaseHelper.readableDatabase
+        val database = readableDatabase
         return database.get(sessionContactTable, "${Companion.accountID} = ?", arrayOf( accountID )) { cursor ->
             contactFromCursor(cursor)
         }
     }
 
     fun getContacts(accountIDs: Collection<String>): List<Contact> {
-        val database = databaseHelper.readableDatabase
+        val database = readableDatabase
         return database.getAll(
             sessionContactTable,
             "$accountID IN (SELECT value FROM json_each(?))",
@@ -51,16 +53,14 @@ class SessionContactDatabase(context: Context, helper: SQLCipherOpenHelper) : Da
     }
 
     fun getAllContacts(): Set<Contact> {
-        val database = databaseHelper.readableDatabase
+        val database = readableDatabase
         return database.getAll(sessionContactTable, null, null) { cursor ->
             contactFromCursor(cursor)
-        }.filter { contact ->
-            contact.accountID.let(::AccountId).prefix == IdPrefix.STANDARD
         }.toSet()
     }
 
     fun setContactIsTrusted(contact: Contact, isTrusted: Boolean, threadID: Long) {
-        val database = databaseHelper.writableDatabase
+        val database = writableDatabase
         val contentValues = ContentValues(1)
         contentValues.put(Companion.isTrusted, if (isTrusted) 1 else 0)
         database.update(sessionContactTable, contentValues, "$accountID = ?", arrayOf( contact.accountID ))
@@ -71,7 +71,7 @@ class SessionContactDatabase(context: Context, helper: SQLCipherOpenHelper) : Da
     }
 
     fun setContact(contact: Contact) {
-        val database = databaseHelper.writableDatabase
+        val database = writableDatabase
         val contentValues = ContentValues(8)
         contentValues.put(accountID, contact.accountID)
         contentValues.put(name, contact.name)
@@ -83,6 +83,15 @@ class SessionContactDatabase(context: Context, helper: SQLCipherOpenHelper) : Da
         }
         contentValues.put(threadID, contact.threadID)
         database.insertOrUpdate(sessionContactTable, contentValues, "$accountID = ?", arrayOf( contact.accountID ))
+        notifyConversationListListeners()
+    }
+
+    fun deleteContact(accountId: String) {
+        val database = writableDatabase
+        val rowsAffected = database.delete(sessionContactTable, "$accountID = ?", arrayOf( accountId ))
+        if (rowsAffected == 0) {
+            Log.w("SessionContactDatabase", "Failed to delete contact with id: $accountId")
+        }
         notifyConversationListListeners()
     }
 
@@ -99,12 +108,23 @@ class SessionContactDatabase(context: Context, helper: SQLCipherOpenHelper) : Da
         return contact
     }
 
-    fun queryContactsByName(constraint: String): Cursor {
-        return databaseHelper.readableDatabase.query(
-            sessionContactTable, null, " $name LIKE ? OR $nickname LIKE ?", arrayOf(
-                "%$constraint%",
-                "%$constraint%"
-            ),
+    fun queryContactsByName(constraint: String, excludeUserAddresses: Set<String> = emptySet()): Cursor {
+        val whereClause = StringBuilder("($name LIKE ? OR $nickname LIKE ?)")
+        val whereArgs = ArrayList<String>()
+        whereArgs.add("%$constraint%")
+        whereArgs.add("%$constraint%")
+
+        // filter out users is the list isn't empty
+        if (excludeUserAddresses.isNotEmpty()) {
+            whereClause.append(" AND $accountID NOT IN (")
+            whereClause.append(excludeUserAddresses.joinToString(", ") { "?" })
+            whereClause.append(")")
+
+            whereArgs.addAll(excludeUserAddresses)
+        }
+
+        return readableDatabase.query(
+            sessionContactTable, null, whereClause.toString(), whereArgs.toTypedArray(),
             null, null, null
         )
     }

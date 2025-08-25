@@ -14,7 +14,7 @@
         android:adjustViewBounds="true"
         android:clickable="false"
         android:longClickable="false"
-        android:scaleType="fitCenter"
+        android:scaleType="center"
         android:contentDescription="@string/AccessibilityId_mediaMessage" />
 
     <org.thoughtcrime.securesms.conversation.v2.utilities.ThumbnailProgressBar
@@ -24,16 +24,6 @@
         android:layout_gravity="bottom"
         android:visibility="gone"
         tools:visibility="visible" />
-
-    <ImageView
-        tools:visibility="visible"
-        android:src="@drawable/ic_download_circle_filled_48"
-        android:id="@+id/thumbnail_download_icon"
-        android:layout_width="@dimen/medium_button_height"
-        android:layout_height="@dimen/medium_button_height"
-        android:layout_gravity="center"
-        android:visibility="gone"
-        />
 
     <FrameLayout
         android:id="@+id/play_overlay"
@@ -54,13 +44,5 @@
             app:srcCompat="@drawable/triangle_right" />
 
     </FrameLayout>
-
-    <ViewStub
-        android:id="@+id/transfer_controls_stub"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout="@layout/transfer_controls_stub"
-        android:visibility="gone" />
 
 </org.thoughtcrime.securesms.conversation.v2.utilities.ThumbnailView>

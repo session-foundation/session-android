@@ -3,22 +3,29 @@ package org.thoughtcrime.securesms.database
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
+import dagger.hilt.android.qualifiers.ApplicationContext
 import org.json.JSONArray
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
 import org.session.libsession.messaging.jobs.AttachmentUploadJob
 import org.session.libsession.messaging.jobs.BackgroundGroupAddJob
 import org.session.libsession.messaging.jobs.GroupAvatarDownloadJob
 import org.session.libsession.messaging.jobs.Job
-import org.session.libsession.messaging.jobs.MessageReceiveJob
 import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.jobs.SessionJobInstantiator
-import org.session.libsession.messaging.jobs.SessionJobManagerFactories
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.jobmanager.impl.JsonDataSerializer
+import javax.inject.Inject
+import javax.inject.Provider
+import javax.inject.Singleton
 
-class SessionJobDatabase(context: Context, helper: SQLCipherOpenHelper) : Database(context, helper) {
+@Singleton
+class SessionJobDatabase @Inject constructor(
+    @ApplicationContext context: Context,
+    helper: Provider<SQLCipherOpenHelper>,
+    private val jobInstantiator: SessionJobInstantiator
+) : Database(context, helper) {
 
     companion object {
         const val sessionJobTable = "session_job_database"
@@ -34,7 +41,7 @@ class SessionJobDatabase(context: Context, helper: SQLCipherOpenHelper) : Databa
     }
 
     fun persistJob(job: Job) {
-        val database = databaseHelper.writableDatabase
+        val database = writableDatabase
         val contentValues = ContentValues(4)
         contentValues.put(jobID, job.id!!)
         contentValues.put(jobType, job.getFactoryKey())
@@ -44,15 +51,15 @@ class SessionJobDatabase(context: Context, helper: SQLCipherOpenHelper) : Databa
     }
 
     fun markJobAsSucceeded(jobID: String) {
-        databaseHelper.writableDatabase.delete(sessionJobTable, "${Companion.jobID} = ?", arrayOf( jobID ))
+        writableDatabase.delete(sessionJobTable, "${Companion.jobID} = ?", arrayOf( jobID ))
     }
 
     fun markJobAsFailedPermanently(jobID: String) {
-        databaseHelper.writableDatabase.delete(sessionJobTable, "${Companion.jobID} = ?", arrayOf( jobID ))
+        writableDatabase.delete(sessionJobTable, "${Companion.jobID} = ?", arrayOf( jobID ))
     }
 
     fun getAllJobs(vararg types: String): Map<String, Job?> {
-        val database = databaseHelper.readableDatabase
+        val database = readableDatabase
         return database.getAll(
             sessionJobTable,
             "$jobType IN (SELECT value FROM json_each(?))", // Use json_each to bypass limitation of SQLite's IN operator binding
@@ -69,7 +76,7 @@ class SessionJobDatabase(context: Context, helper: SQLCipherOpenHelper) : Databa
     }
 
     fun getAttachmentUploadJob(attachmentID: Long): AttachmentUploadJob? {
-        val database = databaseHelper.readableDatabase
+        val database = readableDatabase
         val result = mutableListOf<AttachmentUploadJob>()
         database.getAll(sessionJobTable, "$jobType = ?", arrayOf( AttachmentUploadJob.KEY )) { cursor ->
             val job = jobFromCursor(cursor) as AttachmentUploadJob?
@@ -79,28 +86,22 @@ class SessionJobDatabase(context: Context, helper: SQLCipherOpenHelper) : Databa
     }
 
     fun getMessageSendJob(messageSendJobID: String): MessageSendJob? {
-        val database = databaseHelper.readableDatabase
+        val database = readableDatabase
         return database.get(sessionJobTable, "$jobID = ? AND $jobType = ?", arrayOf( messageSendJobID, MessageSendJob.KEY )) { cursor ->
             jobFromCursor(cursor) as MessageSendJob?
         }
     }
 
-    fun getMessageReceiveJob(messageReceiveJobID: String): MessageReceiveJob? {
-        val database = databaseHelper.readableDatabase
-        return database.get(sessionJobTable, "$jobID = ? AND $jobType = ?", arrayOf( messageReceiveJobID, MessageReceiveJob.KEY )) { cursor ->
-            jobFromCursor(cursor) as MessageReceiveJob?
-        }
-    }
 
     fun getGroupAvatarDownloadJob(server: String, room: String, imageId: String?): GroupAvatarDownloadJob? {
-        val database = databaseHelper.readableDatabase
+        val database = readableDatabase
         return database.getAll(sessionJobTable, "$jobType = ?", arrayOf(GroupAvatarDownloadJob.KEY)) {
             jobFromCursor(it) as GroupAvatarDownloadJob?
         }.filterNotNull().find { it.server == server && it.room == room && (imageId == null || it.imageId == imageId) }
     }
 
     fun cancelPendingMessageSendJobs(threadID: Long) {
-        val database = databaseHelper.writableDatabase
+        val database = writableDatabase
         val attachmentUploadJobKeys = mutableListOf<String>()
         database.beginTransaction()
         database.getAll(sessionJobTable, "$jobType = ?", arrayOf( AttachmentUploadJob.KEY )) { cursor ->
@@ -129,7 +130,7 @@ class SessionJobDatabase(context: Context, helper: SQLCipherOpenHelper) : Databa
     }
 
     fun isJobCanceled(job: Job): Boolean {
-        val database = databaseHelper.readableDatabase
+        val database = readableDatabase
         var cursor: android.database.Cursor? = null
         try {
             cursor = database.rawQuery("SELECT * FROM $sessionJobTable WHERE $jobID = ?", arrayOf( job.id!! ))
@@ -145,14 +146,14 @@ class SessionJobDatabase(context: Context, helper: SQLCipherOpenHelper) : Databa
     private fun jobFromCursor(cursor: Cursor): Job? {
         val type = cursor.getString(jobType)
         val data = SessionJobHelper.dataSerializer.deserialize(cursor.getString(serializedData))
-        val job = SessionJobHelper.sessionJobInstantiator.instantiate(type, data) ?: return null
+        val job = jobInstantiator.instantiate(type, data) ?: return null
         job.id = cursor.getString(jobID)
         job.failureCount = cursor.getInt(failureCount)
         return job
     }
 
     fun hasBackgroundGroupAddJob(groupJoinUrl: String): Boolean {
-        val database = databaseHelper.readableDatabase
+        val database = readableDatabase
         return database.getAll(sessionJobTable, "$jobType = ?", arrayOf(BackgroundGroupAddJob.KEY)) { cursor ->
             jobFromCursor(cursor) as? BackgroundGroupAddJob
         }.filterNotNull().any { it.joinUrl == groupJoinUrl }
@@ -161,5 +162,4 @@ class SessionJobDatabase(context: Context, helper: SQLCipherOpenHelper) : Databa
 
 object SessionJobHelper {
     val dataSerializer: Data.Serializer = JsonDataSerializer()
-    val sessionJobInstantiator: SessionJobInstantiator = SessionJobInstantiator(SessionJobManagerFactories.getSessionJobFactories())
 }

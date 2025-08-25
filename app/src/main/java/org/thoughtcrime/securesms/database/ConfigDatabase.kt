@@ -5,13 +5,13 @@ import androidx.core.content.contentValuesOf
 import androidx.core.database.getBlobOrNull
 import androidx.core.database.getLongOrNull
 import androidx.sqlite.db.transaction
-import org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
+import javax.inject.Provider
 
 typealias ConfigVariant = String
 
-class ConfigDatabase(context: Context, helper: SQLCipherOpenHelper): Database(context, helper) {
+class ConfigDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>): Database(context, helper) {
 
     companion object {
         private const val VARIANT = "variant"
@@ -27,14 +27,14 @@ class ConfigDatabase(context: Context, helper: SQLCipherOpenHelper): Database(co
         private const val VARIANT_AND_PUBKEY_WHERE = "$VARIANT = ? AND $PUBKEY = ?"
         private const val VARIANT_IN_AND_PUBKEY_WHERE = "$VARIANT in (?) AND $PUBKEY = ?"
 
-        val CONTACTS_VARIANT: ConfigVariant = SharedConfigMessage.Kind.CONTACTS.name
-        val USER_GROUPS_VARIANT: ConfigVariant = SharedConfigMessage.Kind.GROUPS.name
-        val USER_PROFILE_VARIANT: ConfigVariant = SharedConfigMessage.Kind.USER_PROFILE.name
-        val CONVO_INFO_VARIANT: ConfigVariant = SharedConfigMessage.Kind.CONVO_INFO_VOLATILE.name
+        const val CONTACTS_VARIANT: ConfigVariant = "CONTACTS"
+        const val USER_GROUPS_VARIANT: ConfigVariant = "GROUPS"
+        const val USER_PROFILE_VARIANT: ConfigVariant = "USER_PROFILE"
+        const val CONVO_INFO_VARIANT: ConfigVariant = "CONVO_INFO_VOLATILE"
 
-        val KEYS_VARIANT: ConfigVariant = SharedConfigMessage.Kind.ENCRYPTION_KEYS.name
-        val INFO_VARIANT: ConfigVariant = SharedConfigMessage.Kind.CLOSED_GROUP_INFO.name
-        val MEMBER_VARIANT: ConfigVariant = SharedConfigMessage.Kind.CLOSED_GROUP_MEMBERS.name
+        const val KEYS_VARIANT: ConfigVariant = "ENCRYPTION_KEYS"
+        const val INFO_VARIANT: ConfigVariant = "CLOSED_GROUP_INFO"
+        const val MEMBER_VARIANT: ConfigVariant = "CLOSED_GROUP_MEMBERS"
     }
 
     fun storeConfig(variant: ConfigVariant, publicKey: String, data: ByteArray, timestamp: Long) {

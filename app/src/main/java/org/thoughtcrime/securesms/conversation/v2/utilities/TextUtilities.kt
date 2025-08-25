@@ -59,4 +59,17 @@ object TextUtilities {
 
     fun String.textSizeInBytes(): Int = this.toByteArray(Charsets.UTF_8).size
 
+    fun String.breakAt(vararg lengths: Int): String {
+        var cursor = 0
+        val out = StringBuilder()
+        for (len in lengths) {
+            val end = (cursor + len).coerceAtMost(length)
+            out.append(substring(cursor, end))
+            if (end < length) out.append('\n')
+            cursor = end
+        }
+        if (cursor < length) out.append('\n').append(substring(cursor))
+        return out.toString()
+    }
+
 }

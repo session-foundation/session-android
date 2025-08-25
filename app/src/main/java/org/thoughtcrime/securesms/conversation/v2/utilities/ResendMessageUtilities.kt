@@ -19,7 +19,7 @@ object ResendMessageUtilities {
     fun resend(context: Context, messageRecord: MessageRecord, userBlindedKey: String?, isResync: Boolean = false) {
         val recipient: Recipient = messageRecord.recipient
         val message = VisibleMessage()
-        message.id = messageRecord.getId()
+        message.id = messageRecord.messageId
         if (messageRecord.isOpenGroupInvitation) {
             val openGroupInvitation = OpenGroupInvitation()
             UpdateMessageData.fromJSON(messageRecord.body)?.let { updateMessageData ->
@@ -37,7 +37,7 @@ object ResendMessageUtilities {
         if (recipient.isGroupOrCommunityRecipient) {
             message.groupPublicKey = recipient.address.toGroupString()
         } else {
-            message.recipient = messageRecord.recipient.address.serialize()
+            message.recipient = messageRecord.recipient.address.toString()
         }
         message.threadID = messageRecord.threadId
         if (messageRecord.isMms && messageRecord is MmsMessageRecord) {
@@ -55,10 +55,10 @@ object ResendMessageUtilities {
         val sender = MessagingModuleConfiguration.shared.storage.getUserPublicKey()
         if (sentTimestamp != null && sender != null) {
             if (isResync) {
-                MessagingModuleConfiguration.shared.storage.markAsResyncing(sentTimestamp, sender)
+                MessagingModuleConfiguration.shared.storage.markAsResyncing(messageRecord.messageId)
                 MessageSender.sendNonDurably(message, Destination.from(recipient.address), isSyncMessage = true)
             } else {
-                MessagingModuleConfiguration.shared.storage.markAsSending(sentTimestamp, sender)
+                MessagingModuleConfiguration.shared.storage.markAsSending(messageRecord.messageId)
                 MessageSender.send(message, recipient.address)
             }
         }

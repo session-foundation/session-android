@@ -24,7 +24,8 @@ import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.sending_receiving.notifications.PushRegistryV1
-import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2
+import org.session.libsession.snode.OwnedSwarmAuth
+import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -32,6 +33,7 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol.Companion.NAME_PADDED_LENGTH
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
+import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
@@ -39,7 +41,6 @@ import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
-import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.groups.ClosedGroupManager
@@ -61,13 +62,12 @@ class ConfigToDatabaseSync @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val storage: StorageProtocol,
     private val threadDatabase: ThreadDatabase,
-    private val recipientDatabase: RecipientDatabase,
     private val clock: SnodeClock,
     private val profileManager: ProfileManager,
     private val preferences: TextSecurePreferences,
     private val conversationRepository: ConversationRepository,
     private val mmsSmsDatabase: MmsSmsDatabase,
-    private val legacyClosedGroupPollerV2: LegacyClosedGroupPollerV2,
+    private val openGroupManager: OpenGroupManager,
 ) {
     init {
         if (!preferences.migratedToGroupV2Config) {
@@ -136,10 +136,10 @@ class ConfigToDatabaseSync @Inject constructor(
         // Update profile picture
         if (userProfile.userPic == UserPic.DEFAULT) {
             storage.clearUserPic(clearConfig = false)
-        } else if (userProfile.userPic.key.isNotEmpty() && userProfile.userPic.url.isNotEmpty()
+        } else if (userProfile.userPic.key.data.isNotEmpty() && userProfile.userPic.url.isNotEmpty()
             && preferences.getProfilePictureURL() != userProfile.userPic.url
         ) {
-            storage.setUserProfilePicture(userProfile.userPic.url, userProfile.userPic.key)
+            storage.setUserProfilePicture(userProfile.userPic.url, userProfile.userPic.key.data)
         }
 
         if (userProfile.ntsPriority == PRIORITY_HIDDEN) {
@@ -172,22 +172,28 @@ class ConfigToDatabaseSync @Inject constructor(
         val name: String?,
         val destroyed: Boolean,
         val deleteBefore: Long?,
-        val deleteAttachmentsBefore: Long?
+        val deleteAttachmentsBefore: Long?,
+        val profilePic: UserPic?
     ) {
         constructor(groupInfoConfig: ReadableGroupInfoConfig) : this(
-            id = groupInfoConfig.id(),
+            id = AccountId(groupInfoConfig.id()),
             name = groupInfoConfig.getName(),
             destroyed = groupInfoConfig.isDestroyed(),
             deleteBefore = groupInfoConfig.getDeleteBefore(),
-            deleteAttachmentsBefore = groupInfoConfig.getDeleteAttachmentsBefore()
+            deleteAttachmentsBefore = groupInfoConfig.getDeleteAttachmentsBefore(),
+            profilePic = groupInfoConfig.getProfilePic()
         )
     }
 
     private fun updateGroup(groupInfoConfig: UpdateGroupInfo) {
         val threadId = storage.getThreadId(fromSerialized(groupInfoConfig.id.hexString)) ?: return
         val recipient = storage.getRecipientForThread(threadId) ?: return
-        recipientDatabase.setProfileName(recipient, groupInfoConfig.name)
         profileManager.setName(context, recipient, groupInfoConfig.name.orEmpty())
+        profileManager.setProfilePicture(
+            context, recipient,
+            profilePictureURL = groupInfoConfig.profilePic?.url,
+            profileKey = groupInfoConfig.profilePic?.key?.data
+        )
 
         // Also update the name in the user groups config
         configFactory.withMutableUserConfigs { configs ->
@@ -201,15 +207,32 @@ class ConfigToDatabaseSync @Inject constructor(
         } else {
             groupInfoConfig.deleteBefore?.let { removeBefore ->
                 val messages = mmsSmsDatabase.getAllMessageRecordsBefore(threadId, TimeUnit.SECONDS.toMillis(removeBefore))
-                val (controlMessages, visibleMessages) = messages.partition { it.isControlMessage }
+                val (controlMessages, visibleMessages) = messages.map { it.first }.partition { it.isControlMessage }
 
                 // Mark visible messages as deleted, and control messages actually deleted.
                 conversationRepository.markAsDeletedLocally(visibleMessages.toSet(), context.getString(R.string.deleteMessageDeletedGlobally))
                 conversationRepository.deleteMessages(controlMessages.toSet(), threadId)
+
+                // if the current user is an admin of this group they should also remove the message from the swarm
+                // as a safety measure
+                val groupAdminAuth = configFactory.getGroup(groupInfoConfig.id)?.adminKey?.data?.let {
+                    OwnedSwarmAuth.ofClosedGroup(groupInfoConfig.id, it)
+                } ?: return
+
+                // remove messages from swarm SnodeAPI.deleteMessage
+                GlobalScope.launch(Dispatchers.Default) {
+                    val cleanedHashes: List<String> =
+                        messages.asSequence().map { it.second }.filter { !it.isNullOrEmpty() }.filterNotNull().toList()
+                    if (cleanedHashes.isNotEmpty()) SnodeAPI.deleteMessage(
+                        groupInfoConfig.id.hexString,
+                        groupAdminAuth,
+                        cleanedHashes
+                    )
+                }
             }
             groupInfoConfig.deleteAttachmentsBefore?.let { removeAttachmentsBefore ->
                 val messagesWithAttachment = mmsSmsDatabase.getAllMessageRecordsBefore(threadId, TimeUnit.SECONDS.toMillis(removeAttachmentsBefore))
-                    .filterTo(mutableSetOf()) { it is MmsMessageRecord && it.containsAttachment }
+                    .map{ it.first}.filterTo(mutableSetOf()) { it is MmsMessageRecord && it.containsAttachment }
 
                 conversationRepository.markAsDeletedLocally(messagesWithAttachment,  context.getString(R.string.deleteMessageDeletedGlobally))
             }
@@ -222,7 +245,7 @@ class ConfigToDatabaseSync @Inject constructor(
     private data class UpdateContacts(val contacts: List<Contact>)
 
     private fun updateContacts(contacts: UpdateContacts, messageTimestamp: Long?) {
-        storage.addLibSessionContacts(contacts.contacts, messageTimestamp)
+        storage.syncLibSessionContacts(contacts.contacts, messageTimestamp)
     }
 
     private data class UpdateUserGroupsInfo(
@@ -259,7 +282,7 @@ class ConfigToDatabaseSync @Inject constructor(
 
         // delete the ones which are not listed in the config
         toDeleteCommunities.values.forEach { openGroup ->
-            OpenGroupManager.delete(openGroup.server, openGroup.room, context)
+            openGroupManager.delete(openGroup.server, openGroup.room, context)
         }
 
         toDeleteLegacyClosedGroups.forEach { deleteGroup ->
@@ -291,7 +314,7 @@ class ConfigToDatabaseSync @Inject constructor(
                 var current = reader.next
                 while (current != null) {
                     if (current.recipient?.isGroupV2Recipient == true) {
-                        put(AccountId(current.recipient.address.serialize()), current.threadId)
+                        put(AccountId(current.recipient.address.toString()), current.threadId)
                     }
 
                     current = reader.next
@@ -302,7 +325,7 @@ class ConfigToDatabaseSync @Inject constructor(
         val groupThreadsToKeep = hashMapOf<AccountId, Long>()
 
         for (closedGroup in userGroups.closedGroupInfo) {
-            val recipient = Recipient.from(context, fromSerialized(closedGroup.groupAccountId.hexString), false)
+            val recipient = Recipient.from(context, fromSerialized(closedGroup.groupAccountId), false)
             storage.setRecipientApprovedMe(recipient, true)
             storage.setRecipientApproved(recipient, !closedGroup.invited)
             profileManager.setName(context, recipient, closedGroup.name)
@@ -316,7 +339,7 @@ class ConfigToDatabaseSync @Inject constructor(
                 )
             }
 
-            groupThreadsToKeep[closedGroup.groupAccountId] = threadId
+            groupThreadsToKeep[AccountId(closedGroup.groupAccountId)] = threadId
 
             storage.setPinned(threadId, closedGroup.priority == PRIORITY_PINNED)
 
@@ -328,7 +351,7 @@ class ConfigToDatabaseSync @Inject constructor(
         val toRemove = existingClosedGroupThreads - groupThreadsToKeep.keys
         Log.d(TAG, "Removing ${toRemove.size} closed groups")
         toRemove.forEach { (_, threadId) ->
-            storage.removeClosedGroupThread(threadId)
+            storage.deleteConversation(threadId)
         }
 
         for (group in userGroups.legacyGroupInfo) {
@@ -355,7 +378,7 @@ class ConfigToDatabaseSync @Inject constructor(
                 // Add the group to the user's set of public keys to poll for
                 storage.addClosedGroupPublicKey(group.accountId)
                 // Store the encryption key pair
-                val keyPair = ECKeyPair(DjbECPublicKey(group.encPubKey), DjbECPrivateKey(group.encSecKey))
+                val keyPair = ECKeyPair(DjbECPublicKey(group.encPubKey.data), DjbECPrivateKey(group.encSecKey.data))
                 storage.addClosedGroupEncryptionKeyPair(keyPair, group.accountId, clock.currentTimeMills())
                 // Notify the PN server
                 PushRegistryV1.subscribeGroup(group.accountId, publicKey = localUserPublicKey)
@@ -366,10 +389,6 @@ class ConfigToDatabaseSync @Inject constructor(
                 // Note: Commenting out this line prevents the timestamp of room creation being added to a new closed group,
                 // which in turn allows us to show the `groupNoMessages` control message text.
                 //insertOutgoingInfoMessage(context, groupId, SignalServiceGroup.Type.CREATION, title, members.map { it.serialize() }, admins.map { it.serialize() }, threadID, formationTimestamp)
-
-                // Don't create config group here, it's from a config update
-                // Start polling
-                legacyClosedGroupPollerV2.startPolling(group.accountId)
             }
 
             if (messageTimestamp != null) {
@@ -399,10 +418,19 @@ class ConfigToDatabaseSync @Inject constructor(
                 is Conversation.LegacyGroup -> storage.getThreadIdFor("", conversation.groupId,null, createThread = false)
                 is Conversation.Community -> storage.getThreadIdFor("",null, "${conversation.baseCommunityInfo.baseUrl.removeSuffix("/")}.${conversation.baseCommunityInfo.room}", createThread = false)
                 is Conversation.ClosedGroup -> storage.getThreadIdFor(conversation.accountId, null, null, createThread = false) // New groups will be managed bia libsession
+                is Conversation.BlindedOneToOne -> {
+                    // Not supported yet
+                    continue
+                }
             }
+
             if (threadId != null) {
                 if (conversation.lastRead > storage.getLastSeen(threadId)) {
-                    storage.markConversationAsRead(threadId, conversation.lastRead, force = true)
+                    storage.markConversationAsRead(
+                        threadId,
+                        conversation.lastRead,
+                        force = true
+                    )
                     storage.updateThread(threadId, false)
                 }
             }

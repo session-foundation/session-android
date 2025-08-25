@@ -133,13 +133,22 @@ class PeerConnectionWrapper(private val context: Context,
     }
 
     fun dispose() {
-        camera.dispose()
+        try {
+            camera.dispose()
+        } catch (e: Exception){ Log.w("", "Camera already disposed")}
 
-        videoSource?.dispose()
+        try {
+            videoSource?.dispose()
+        } catch (e: Exception){ Log.w("", "Video source already disposed")}
 
-        audioSource.dispose()
-        peerConnection?.close()
-        peerConnection?.dispose()
+        try {
+            audioSource.dispose()
+        } catch (e: Exception){ Log.w("", "Audio source already disposed")}
+
+        try {
+            peerConnection?.close()
+            peerConnection?.dispose()
+        } catch (e: Exception){ Log.w("", "Peer connection source already disposed")}
     }
 
     fun setNewRemoteDescription(description: SessionDescription) {

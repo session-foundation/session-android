@@ -1,5 +1,8 @@
 package org.thoughtcrime.securesms.groups
 
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -13,6 +16,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
@@ -29,7 +33,6 @@ import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.getRootCause
@@ -37,14 +40,15 @@ import java.time.Instant
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.days
 
-class GroupPoller(
-    scope: CoroutineScope,
-    private val groupId: AccountId,
+class GroupPoller @AssistedInject constructor(
+    @Assisted scope: CoroutineScope,
+    @Assisted private val groupId: AccountId,
     private val configFactoryProtocol: ConfigFactoryProtocol,
     private val lokiApiDatabase: LokiAPIDatabaseProtocol,
     private val clock: SnodeClock,
     private val appVisibilityManager: AppVisibilityManager,
     private val groupRevokedMessageHandler: GroupRevokedMessageHandler,
+    private val batchMessageReceiveJobFactory: BatchMessageReceiveJob.Factory,
 ) {
     companion object {
         private const val POLL_INTERVAL = 3_000L
@@ -202,9 +206,9 @@ class GroupPoller(
                     configFactoryProtocol.getGroupAuth(groupId) ?: return@supervisorScope
                 val configHashesToExtends = configFactoryProtocol.withGroupConfigs(groupId) {
                     buildSet {
-                        addAll(it.groupKeys.currentHashes())
-                        addAll(it.groupInfo.currentHashes())
-                        addAll(it.groupMembers.currentHashes())
+                        addAll(it.groupKeys.activeHashes())
+                        addAll(it.groupInfo.activeHashes())
+                        addAll(it.groupMembers.activeHashes())
                     }
                 }
 
@@ -429,7 +433,10 @@ class GroupPoller(
                 rawResponse = body,
                 snode = snode,
                 publicKey = groupId.hexString,
-                decrypt = it.groupKeys::decrypt,
+                decrypt = { data ->
+                    val (decrypted, sender) = it.groupKeys.decrypt(data) ?: return@parseRawMessagesResponse null
+                    decrypted to AccountId(sender)
+                },
                 namespace = Namespace.GROUP_MESSAGES(),
             )
         }
@@ -443,8 +450,7 @@ class GroupPoller(
         }
 
         parameters.chunked(BatchMessageReceiveJob.BATCH_DEFAULT_NUMBER).forEach { chunk ->
-            val job = BatchMessageReceiveJob(chunk)
-            JobQueue.shared.add(job)
+            JobQueue.shared.add(batchMessageReceiveJobFactory.create(chunk))
         }
 
         if (messages.isNotEmpty()) {
@@ -457,4 +463,9 @@ class GroupPoller(
      * one token will trigger one poll, as the poller may batch multiple requests together.
      */
     private data class PollOnceToken(val resultCallback: SendChannel<PollResult>)
+
+    @AssistedFactory
+    interface Factory {
+        fun create(scope: CoroutineScope, groupId: AccountId): GroupPoller
+    }
 }

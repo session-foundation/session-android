@@ -201,4 +201,3 @@ public class CursorList<T> implements List<T>, ObservableContent {
     T build(@NonNull Cursor cursor);
   }
 }
-

@@ -5,7 +5,7 @@
     android:id="@+id/searchBottomBarConstraintLayout"
     android:layout_width="match_parent"
     android:layout_height="@dimen/input_bar_height"
-    android:background="?input_bar_background"
+    android:background="?backgroundSecondary"
     android:orientation="vertical">
 
     <View
@@ -29,7 +29,8 @@
                 android:layout_marginStart="16dp"
                 android:padding="4dp"
                 android:background="?selectableItemBackgroundBorderless"
-                android:src="@drawable/ic_baseline_keyboard_arrow_up_24"
+                android:contentDescription="@string/qa_conversation_search_up"
+                android:src="@drawable/ic_chevron_up"
                 android:tint="?colorAccent"
                 tools:ignore="UseAppTint" />
 
@@ -40,7 +41,8 @@
                 android:padding="4dp"
                 android:layout_gravity="center_vertical"
                 android:background="?selectableItemBackgroundBorderless"
-                android:src="@drawable/ic_baseline_keyboard_arrow_down_24"
+                android:contentDescription="@string/qa_conversation_search_down"
+                android:src="@drawable/ic_chevron_down"
                 android:tint="?colorAccent"
                 tools:ignore="UseAppTint" />
 
@@ -55,15 +57,33 @@
             android:text="37 of 73"
             android:textStyle="bold"/>
 
-        <com.github.ybq.android.spinkit.SpinKitView
-            style="@style/SpinKitView.DoubleBounce"
-            android:id="@+id/searchProgressWheel"
-            android:layout_width="match_parent"
+
+        <LinearLayout
+            android:id="@+id/loading"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:padding="8dp"
+            android:gravity="center_vertical"
             android:background="?backgroundSecondary"
-            app:SpinKit_Color="?android:textColorPrimary"
-            android:visibility="gone"/>
+            android:visibility="gone"
+            android:layout_centerInParent="true">
+
+            <TextView
+                android:id="@+id/searching"
+                style="@style/Signal.Text.Body"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/searchSearching"
+                android:textStyle="bold"/>
+
+            <ProgressBar
+                android:id="@+id/searchProgressWheel"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="@dimen/medium_spacing"
+                android:indeterminateTint="?colorAccent"
+                android:indeterminate="true"
+                android:contentDescription="@string/qa_conversation_search_loading" />
+        </LinearLayout>
 
     </RelativeLayout>
 

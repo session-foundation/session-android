@@ -7,7 +7,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-
 fun TextStyle.bold() = copy(
     fontWeight = FontWeight.Bold
 )
@@ -109,6 +108,12 @@ data class SessionTypography(
         fontSize = 14.sp,
         lineHeight = 16.8.sp,
         fontWeight = FontWeight.Bold
+    ),
+
+    val sessionNetworkHeading: TextStyle = TextStyle(
+            fontSize = 15.sp,
+            lineHeight = 18.sp,
+            fontWeight = FontWeight.Normal
     )
 ) {
 

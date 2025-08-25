@@ -63,7 +63,6 @@ public class GroupManager {
 
     long threadID = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(
             groupRecipient, DistributionTypes.CONVERSATION);
-    DatabaseComponent.get(context).threadDatabase().setThreadArchived(threadID);
     return new GroupActionResult(groupRecipient, threadID);
   }
 
@@ -76,7 +75,7 @@ public class GroupManager {
 
     long threadId = threadDatabase.getThreadIdIfExistsFor(groupRecipient);
     if (threadId != -1L) {
-      threadDatabase.deleteConversation(threadId);
+      DatabaseComponent.get(context).storage().deleteConversation(threadId);
     }
 
     return groupDatabase.delete(groupId);

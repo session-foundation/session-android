@@ -25,6 +25,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.takeOrElse
@@ -34,11 +35,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.max
-import androidx.compose.ui.unit.times
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.URL_KEY
@@ -52,13 +50,29 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.bold
 
-
-class DialogButtonModel(
+data class DialogButtonData(
     val text: GetString,
+    val qaTag: String? = null,
     val color: Color = Color.Unspecified,
     val dismissOnClick: Boolean = true,
     val enabled: Boolean = true,
     val onClick: () -> Unit = {},
+)
+
+/**
+ * Data to display a simple dialog
+ */
+data class SimpleDialogData(
+    val title: String,
+    val message: CharSequence,
+    val positiveText: String? = null,
+    val positiveStyleDanger: Boolean = true,
+    val showXIcon: Boolean = false,
+    val negativeText: String? = null,
+    val positiveQaTag: String? = null,
+    val negativeQaTag: String? = null,
+    val onPositive: () -> Unit = {},
+    val onNegative: () -> Unit = {}
 )
 
 @Composable
@@ -68,7 +82,7 @@ fun AlertDialog(
     title: String? = null,
     text: String? = null,
     maxLines:  Int? = null,
-    buttons: List<DialogButtonModel>? = null,
+    buttons: List<DialogButtonData>? = null,
     showCloseButton: Boolean = false,
     content: @Composable () -> Unit = {}
 ) {
@@ -92,7 +106,7 @@ fun AlertDialog(
     title: AnnotatedString? = null,
     text: AnnotatedString? = null,
     maxLines: Int? = null,
-    buttons: List<DialogButtonModel>? = null,
+    buttons: List<DialogButtonData>? = null,
     showCloseButton: Boolean = false,
     content: @Composable () -> Unit = {}
 ) {
@@ -100,86 +114,110 @@ fun AlertDialog(
         modifier = modifier,
         onDismissRequest = onDismissRequest,
         content = {
-            DialogBg {
-                // only show the 'x' button is required
-                if (showCloseButton) {
-                    IconButton(
-                        onClick = onDismissRequest,
-                        modifier = Modifier.align(Alignment.TopEnd)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_dialog_x),
-                            tint = LocalColors.current.text,
-                            contentDescription = "back"
-                        )
-                    }
-                }
-
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = LocalDimensions.current.spacing)
-                            .padding(horizontal = LocalDimensions.current.smallSpacing)
-                    ) {
-                        title?.let {
-                            Text(
-                                text = it,
-                                textAlign = TextAlign.Center,
-                                style = LocalType.current.h7,
-                                modifier = Modifier
-                                    .padding(bottom = LocalDimensions.current.xxsSpacing)
-                                    .qaTag(stringResource(R.string.AccessibilityId_modalTitle))
-                            )
-                        }
-                        text?.let {
-                            val textStyle = LocalType.current.large
-                            var textModifier = Modifier.padding(bottom = LocalDimensions.current.xxsSpacing)
-
-                            // if we have a maxLines, make the text scrollable
-                            if(maxLines != null) {
-                                val textHeight = with(LocalDensity.current) {
-                                    textStyle.lineHeight.toDp()
-                                } * maxLines
-
-                                textModifier = textModifier
-                                    .height(textHeight)
-                                    .verticalScroll(rememberScrollState())
-                            }
-
-                            Text(
-                                text = it,
-                                textAlign = TextAlign.Center,
-                                style = textStyle,
-                                modifier = textModifier
-                                    .qaTag(stringResource(R.string.AccessibilityId_modalMessage))
-                            )
-                        }
-                        content()
-                    }
-                    buttons?.takeIf { it.isNotEmpty() }?.let {
-                        Row(Modifier.height(IntrinsicSize.Min)) {
-                            it.forEach {
-                                DialogButton(
-                                    text = it.text(),
-                                    modifier = Modifier
-                                        .fillMaxHeight()
-                                        .qaTag(it.text.string())
-                                        .weight(1f),
-                                    color = it.color,
-                                    enabled = it.enabled
-                                ) {
-                                    it.onClick()
-                                    if (it.dismissOnClick) onDismissRequest()
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            AlertDialogContent(
+                onDismissRequest = onDismissRequest,
+                title = title,
+                text = text,
+                maxLines = maxLines,
+                buttons = buttons,
+                showCloseButton = showCloseButton,
+                content = content
+            )
         }
     )
+}
+
+@Composable
+fun AlertDialogContent(
+    onDismissRequest: () -> Unit,
+    title: AnnotatedString? = null,
+    text: AnnotatedString? = null,
+    maxLines: Int? = null,
+    buttons: List<DialogButtonData>? = null,
+    showCloseButton: Boolean = false,
+    content: @Composable () -> Unit = {}
+) {
+    DialogBg {
+        // only show the 'x' button is required
+        if (showCloseButton) {
+            IconButton(
+                onClick = onDismissRequest,
+                modifier = Modifier.align(Alignment.TopEnd)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_x),
+                    tint = LocalColors.current.text,
+                    contentDescription = "back"
+                )
+            }
+        }
+
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = LocalDimensions.current.spacing)
+                    .padding(horizontal = LocalDimensions.current.smallSpacing)
+            ) {
+                title?.let {
+                    Text(
+                        text = it,
+                        textAlign = TextAlign.Center,
+                        style = LocalType.current.h7,
+                        modifier = Modifier
+                            .padding(bottom = LocalDimensions.current.xxsSpacing)
+                            .qaTag(R.string.AccessibilityId_modalTitle)
+                    )
+                }
+                text?.let {
+                    val textStyle = LocalType.current.large
+                    var textModifier = Modifier.padding(bottom = LocalDimensions.current.xxsSpacing)
+
+                    // if we have a maxLines, make the text scrollable
+                    if(maxLines != null) {
+                        val textHeight = with(LocalDensity.current) {
+                            textStyle.lineHeight.toDp()
+                        } * maxLines
+
+                        textModifier = textModifier
+                            .height(textHeight)
+                            .verticalScroll(rememberScrollState())
+                    }
+
+                    Text(
+                        text = it,
+                        textAlign = TextAlign.Center,
+                        style = textStyle,
+                        modifier = textModifier
+                            .qaTag(R.string.AccessibilityId_modalMessage)
+                    )
+                }
+                content()
+            }
+            if(buttons?.isNotEmpty() == true) {
+                Row(Modifier.height(IntrinsicSize.Min)) {
+                    buttons.forEach {
+                        DialogButton(
+                            text = it.text(),
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .qaTag(it.qaTag ?: it.text.string())
+                                .weight(1f),
+                            color = it.color,
+                            enabled = it.enabled
+                        ) {
+                            it.onClick()
+                            if (it.dismissOnClick) onDismissRequest()
+                        }
+                    }
+                }
+            } else {
+                Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+            }
+        }
+    }
+
 }
 
 @Composable
@@ -201,12 +239,12 @@ fun OpenURLAlertDialog(
         maxLines = 5,
         showCloseButton = true, // display the 'x' button
         buttons = listOf(
-            DialogButtonModel(
+            DialogButtonData(
                 text = GetString(R.string.open),
                 color = LocalColors.current.danger,
                 onClick = { context.openUrl(url) }
             ),
-            DialogButtonModel(
+            DialogButtonData(
                 text = GetString(android.R.string.copyUrl),
                 onClick = {
                     context.copyURLToClipboard(url)
@@ -266,6 +304,7 @@ fun DialogBg(
                 color = LocalColors.current.borders,
                 shape = MaterialTheme.shapes.small
             )
+            .clip(MaterialTheme.shapes.small)
 
     ) {
         content()
@@ -286,10 +325,7 @@ fun LoadingDialog(
                 Box {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center),
-                        //TODO: Leave this as hardcoded color for now as the dialog background (scrim)
-                        // always seems to be dark. Can can revisit later when we have more control over
-                        // the scrim color.
-                        color = Color.White
+                        color = LocalColors.current.accent
                     )
                 }
             } else {
@@ -309,7 +345,7 @@ fun LoadingDialog(
                             title,
                             modifier = Modifier
                                 .align(Alignment.CenterHorizontally)
-                                .qaTag(stringResource(R.string.AccessibilityId_modalTitle)),
+                                .qaTag(R.string.AccessibilityId_modalTitle),
                             style = LocalType.current.large
                         )
                     }
@@ -328,13 +364,13 @@ fun PreviewSimpleDialog() {
             title = stringResource(R.string.warning),
             text = stringResource(R.string.onboardingBackAccountCreation),
             buttons = listOf(
-                DialogButtonModel(
+                DialogButtonData(
                     GetString(stringResource(R.string.cancel)),
                     color = LocalColors.current.danger,
                     onClick = { }
                 ),
-                DialogButtonModel(
-                    GetString(stringResource(R.string.ok))
+                DialogButtonData(
+                    GetString(stringResource(android.R.string.ok))
                 )
             )
         )
@@ -350,15 +386,28 @@ fun PreviewXCloseDialog() {
             text = stringResource(R.string.urlOpenBrowser),
             showCloseButton = true, // display the 'x' button
             buttons = listOf(
-                DialogButtonModel(
+                DialogButtonData(
                     text = GetString(R.string.onboardingTos),
                     onClick = {}
                 ),
-                DialogButtonModel(
+                DialogButtonData(
                     text = GetString(R.string.onboardingPrivacy),
                     onClick = {}
                 )
             ),
+            onDismissRequest = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewXCloseNoButtonsDialog() {
+    PreviewTheme {
+        AlertDialog(
+            title = stringResource(R.string.urlOpen),
+            text = stringResource(R.string.urlOpenBrowser),
+            showCloseButton = true, // display the 'x' button
             onDismissRequest = {}
         )
     }

@@ -16,18 +16,20 @@ import org.session.libsignal.utilities.JsonUtil;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
-import org.thoughtcrime.securesms.util.SqlUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+
+import javax.inject.Provider;
 
 public abstract class MessagingDatabase extends Database implements MmsSmsColumns {
 
   private static final String TAG = MessagingDatabase.class.getSimpleName();
 
-  public MessagingDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  public MessagingDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper) {
     super(context, databaseHelper);
   }
 
@@ -35,7 +37,7 @@ public abstract class MessagingDatabase extends Database implements MmsSmsColumn
 
   public abstract void markExpireStarted(long messageId, long startTime);
 
-  public abstract void markAsSent(long messageId, boolean secure);
+  public abstract void markAsSent(long messageId, boolean sent);
 
   public abstract void markAsSyncing(long id);
 
@@ -43,12 +45,15 @@ public abstract class MessagingDatabase extends Database implements MmsSmsColumn
 
   public abstract void markAsSyncFailed(long id);
 
-  public abstract void markUnidentified(long messageId, boolean unidentified);
 
   public abstract void markAsDeleted(long messageId, boolean isOutgoing, String displayedMessage);
 
+  public abstract List<Long> getExpiredMessageIDs(long nowMills);
+
+  public abstract long getNextExpiringTimestamp();
+
   public abstract boolean deleteMessage(long messageId);
-  public abstract boolean deleteMessages(long[] messageId, long threadId);
+  public abstract boolean deleteMessages(Collection<Long> messageIds);
 
   public abstract void updateThreadId(long fromId, long toId);
 
@@ -76,36 +81,8 @@ public abstract class MessagingDatabase extends Database implements MmsSmsColumn
     }
   }
 
-  void updateReactionsUnread(SQLiteDatabase db, long messageId, boolean hasReactions, boolean isRemoval, boolean notifyUnread) {
-    try {
-      MessageRecord message    = getMessageRecord(messageId);
-      ContentValues values     = new ContentValues();
-
-      if (notifyUnread) {
-        if (!hasReactions) {
-          values.put(REACTIONS_UNREAD, 0);
-        } else if (!isRemoval) {
-          values.put(REACTIONS_UNREAD, 1);
-        }
-      } else {
-        values.put(REACTIONS_UNREAD, 0);
-      }
-
-      if (message.isOutgoing() && hasReactions) {
-        values.put(NOTIFIED, 0);
-      }
-
-      if (values.size() > 0) {
-        db.update(getTableName(), values, ID_WHERE, SqlUtil.buildArgs(messageId));
-      }
-      notifyConversationListeners(message.getThreadId());
-    } catch (NoSuchMessageException e) {
-      Log.w(TAG, "Failed to find message " + messageId);
-    }
-  }
-
   protected <D extends Document<I>, I> void removeFromDocument(long messageId, String column, I object, Class<D> clazz) throws IOException {
-    SQLiteDatabase database = databaseHelper.getWritableDatabase();
+    SQLiteDatabase database = getWritableDatabase();
     database.beginTransaction();
 
     try {
@@ -137,7 +114,7 @@ public abstract class MessagingDatabase extends Database implements MmsSmsColumn
   }
 
   protected <T extends Document<I>, I> void addToDocument(long messageId, String column, List<I> objects, Class<T> clazz) throws IOException {
-    SQLiteDatabase database = databaseHelper.getWritableDatabase();
+    SQLiteDatabase database = getWritableDatabase();
     database.beginTransaction();
 
     try {
@@ -200,7 +177,7 @@ public abstract class MessagingDatabase extends Database implements MmsSmsColumn
   }
 
   public void migrateThreadId(long oldThreadId, long newThreadId) {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     String where = THREAD_ID+" = ?";
     String[] args = new String[]{oldThreadId+""};
     ContentValues contentValues = new ContentValues();
@@ -209,7 +186,7 @@ public abstract class MessagingDatabase extends Database implements MmsSmsColumn
   }
 
   public boolean isOutgoing(long messageId) {
-    SQLiteDatabase db = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db = getReadableDatabase();
     try(Cursor cursor = db.query(getTableName(), new String[]{getTypeColumn()},
             ID_WHERE, new String[]{String.valueOf(messageId)},
             null, null, null)) {

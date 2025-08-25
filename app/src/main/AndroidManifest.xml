@@ -3,10 +3,10 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-sdk tools:overrideLibrary="com.astuetz.pagerslidingtabstrip,pl.tajchert.waitingdots,com.h6ah4i.android.multiselectlistpreferencecompat,android.support.v13,com.davemorrissey.labs.subscaleview,com.tomergoldst.tooltips,com.klinker.android.send_message,com.takisoft.colorpicker,android.support.v14.preference" />
+    <uses-sdk tools:overrideLibrary="android.support.v13,com.davemorrissey.labs.subscaleview,com.tomergoldst.tooltips,com.klinker.android.send_message,android.support.v14.preference" />
 
     <permission
-        android:name="network.loki.messenger.ACCESS_SESSION_SECRETS"
+        android:name="network.loki.messenger.ACCESS_SESSION_SECRETS${authority_postfix}"
         android:label="Access to Session secrets"
         android:protectionLevel="signature" />
 
@@ -31,23 +31,19 @@
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BROADCAST_STICKY" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" tools:node="remove" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
+
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
     <uses-permission android:name="android.permission.INTERNET" />
-
-    <!-- Google may (potentially) insist we implement `ConnectionService` to request MANAGE_OWN_CALLS - see:
-           - https://developer.android.com/reference/android/Manifest.permission#MANAGE_OWN_CALLS
-           - https://developer.android.com/reference/android/telecom/ConnectionService
-    -->
-    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
 
     <uses-permission android:name="android.app.role.DIALER" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
@@ -57,6 +53,7 @@
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED"/>
     <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -67,7 +64,6 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> <!-- Only used on Android API 29 and lower -->
     <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
-    <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
     <uses-permission android:name="network.loki.messenger.ACCESS_SESSION_SECRETS" />
 
@@ -77,21 +73,19 @@
         </intent>
     </queries>
 
-    <!-- The allowBackup="false" below is important to guard against potential malicious backups -->
-
+    <!-- Note: The allowBackup="false" below is important to guard against potential malicious backups -->
     <application
         android:name="org.thoughtcrime.securesms.ApplicationContext"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
+        android:label="${app_name}"
         android:largeHeap="true"
-        android:networkSecurityConfig="@xml/network_security_configuration"
+        android:networkSecurityConfig="${network_security_config}"
         android:supportsRtl="true"
         android:theme="@style/Theme.Session.DayNight"
-        tools:replace="android:allowBackup,android:label" >
+        tools:replace="android:allowBackup,android:label">
 
         <!-- Disable all analytics -->
-
         <meta-data
             android:name="firebase_analytics_collection_deactivated"
             android:value="true" />
@@ -141,10 +135,16 @@
             android:exported="false"
             android:label="@string/sessionMessageRequests"
             android:screenOrientation="portrait" />
+
         <activity
             android:name="org.thoughtcrime.securesms.preferences.SettingsActivity"
             android:screenOrientation="portrait"
-            android:label="@string/sessionSettings" />
+            android:label="@string/sessionSettings" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="org.thoughtcrime.securesms.home.HomeActivity" />
+        </activity>
+
         <activity
             android:name="org.thoughtcrime.securesms.debugmenu.DebugActivity"
             android:screenOrientation="portrait"
@@ -163,25 +163,16 @@
             android:label="@string/conversationsBlockedContacts"
             />
         <activity
-            android:name="org.thoughtcrime.securesms.groups.legacy.EditLegacyGroupActivity"
-            android:label="@string/groupEdit"
-            android:screenOrientation="portrait" />
-
-        <activity
-            android:name="org.thoughtcrime.securesms.groups.EditGroupActivity"
+            android:name="org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsActivity"
             android:theme="@style/Theme.Session.DayNight.NoActionBar"
-            android:label="@string/groupEdit"
+            android:label="@string/sessionSettings"
             android:screenOrientation="portrait" />
         <activity
-            android:name="org.thoughtcrime.securesms.groups.GroupMembersActivity"
+            android:name="org.thoughtcrime.securesms.preferences.prosettings.ProSettingsActivity"
             android:theme="@style/Theme.Session.DayNight.NoActionBar"
-            android:label="@string/groupEdit"
             android:screenOrientation="portrait" />
         <activity
             android:name="org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name="org.thoughtcrime.securesms.contacts.SelectContactsActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name="org.thoughtcrime.securesms.preferences.PrivacySettingsActivity"
@@ -202,7 +193,12 @@
         <activity android:name="org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Session.DayNight.NoActionBar" />
-
+        <activity android:name="org.thoughtcrime.securesms.groups.GroupMembersActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Session.DayNight.NoActionBar" />
+        <activity android:name="org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Session.DayNight.NoActionBar" />
         <activity
             android:exported="true"
             android:name="org.thoughtcrime.securesms.ShareActivity"
@@ -233,6 +229,7 @@
         <activity-alias
             android:name=".RoutingActivity"
             android:exported="true"
+            android:icon="@mipmap/ic_launcher"
             android:targetActivity="org.thoughtcrime.securesms.home.HomeActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -268,9 +265,9 @@
             android:launchMode="singleTask"
             android:theme="@style/NoAnimation.Theme.AppCompat.Light.DarkActionBar" />
         <activity
-            android:name="org.thoughtcrime.securesms.PassphrasePromptActivity"
+            android:name="org.thoughtcrime.securesms.ScreenLockActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
-            android:launchMode="singleTask"
+            android:launchMode="singleInstancePerTask"
             android:theme="@style/Theme.Session.DayNight.NoActionBar" />
         <activity
             android:name="org.thoughtcrime.securesms.giph.ui.GiphyActivity"
@@ -287,7 +284,6 @@
         <activity
             android:name="org.thoughtcrime.securesms.MediaPreviewActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
-            android:screenOrientation="portrait"
             android:theme="@style/Theme.Session.DayNight.NoActionBar"
             android:launchMode="singleTask"
             android:windowSoftInputMode="stateHidden" />
@@ -311,23 +307,29 @@
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
             android:exported="true"
             android:theme="@style/Theme.Session.DayNight.NoActionBar" />
-        <activity android:name="org.thoughtcrime.securesms.calls.WebRtcCallActivity"
+        <activity android:name="org.thoughtcrime.securesms.webrtc.WebRtcCallActivity"
             android:launchMode="singleTop"
             android:screenOrientation="portrait"
             android:showForAllUsers="true"
             android:parentActivityName="org.thoughtcrime.securesms.home.HomeActivity"
-            android:theme="@style/Theme.Session.CallActivity">
+            android:theme="@style/Theme.Session.DayNight.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="org.thoughtcrime.securesms.home.HomeActivity" />
         </activity>
         <activity android:name="org.thoughtcrime.securesms.media.MediaOverviewActivity" />
+        <activity android:name="org.thoughtcrime.securesms.migration.DatabaseMigrationStateActivity" />
+        <activity android:name="org.thoughtcrime.securesms.preferences.appearance.AppDisguiseSettingsActivity" />
 
-        <service
-            android:enabled="true"
-            android:name="org.thoughtcrime.securesms.service.WebRtcCallService"
-            android:foregroundServiceType="phoneCall"
-            android:exported="false" />
+        <activity
+            android:name="org.thoughtcrime.securesms.tokenpage.TokenPageActivity"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Session.DayNight.NoActionBar" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="org.thoughtcrime.securesms.preferences.SettingsActivity" />
+        </activity>
+
         <service
             android:name="org.thoughtcrime.securesms.service.KeyCachingService"
             android:enabled="true"
@@ -343,6 +345,11 @@
                 <action android:name="android.service.chooser.ChooserTargetService" />
             </intent-filter>
         </service>
+        <service
+            android:name="org.thoughtcrime.securesms.service.CallForegroundService"
+            android:foregroundServiceType="phoneCall|microphone"
+            android:exported="false" />
+
         <receiver
             android:name="org.thoughtcrime.securesms.notifications.MarkReadReceiver"
             android:enabled="true"
@@ -374,15 +381,18 @@
             </intent-filter>
         </receiver>
         <receiver android:name="org.thoughtcrime.securesms.service.ExpirationListener" />
+        <receiver android:name="org.thoughtcrime.securesms.webrtc.EndCallReceiver"
+            android:enabled="true"
+            android:exported="false" />
 
         <provider
-            android:name="org.thoughtcrime.securesms.providers.PartProvider"
-            android:authorities="network.loki.provider.securesms"
+            android:name="org.thoughtcrime.securesms.providers.PartAndBlobProvider"
+            android:authorities="network.loki.provider.securesms${authority_postfix}"
             android:exported="false"
             android:grantUriPermissions="true" />
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="network.loki.securesms.fileprovider"
+            android:authorities="network.loki.securesms.fileprovider${authority_postfix}"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
@@ -391,27 +401,27 @@
         </provider>
         <provider
             android:name="org.thoughtcrime.securesms.database.DatabaseContentProviders$Conversation"
-            android:authorities="network.loki.securesms.database.conversation"
+            android:authorities="network.loki.securesms.database.conversation${authority_postfix}"
             android:exported="false" />
         <provider
             android:name="org.thoughtcrime.securesms.database.DatabaseContentProviders$ConversationList"
-            android:authorities="network.loki.securesms.database.conversationlist"
+            android:authorities="network.loki.securesms.database.conversationlist${authority_postfix}"
             android:exported="false" />
         <provider
             android:name="org.thoughtcrime.securesms.database.DatabaseContentProviders$Attachment"
-            android:authorities="network.loki.securesms.database.attachment"
+            android:authorities="network.loki.securesms.database.attachment${authority_postfix}"
             android:exported="false" />
         <provider
             android:name="org.thoughtcrime.securesms.database.DatabaseContentProviders$Sticker"
-            android:authorities="network.loki.securesms.database.sticker"
+            android:authorities="network.loki.securesms.database.sticker${authority_postfix}"
             android:exported="false" />
         <provider
             android:name="org.thoughtcrime.securesms.database.DatabaseContentProviders$StickerPack"
-            android:authorities="network.loki.securesms.database.stickerpack"
+            android:authorities="network.loki.securesms.database.stickerpack${authority_postfix}"
             android:exported="false" />
         <provider
             android:name="org.thoughtcrime.securesms.database.DatabaseContentProviders$Recipient"
-            android:authorities="network.loki.securesms.database.recipient"
+            android:authorities="network.loki.securesms.database.recipient${authority_postfix}"
             android:exported="false" />
 
         <receiver android:name="org.thoughtcrime.securesms.service.BootReceiver"
@@ -488,7 +498,76 @@
                 tools:node="remove" />
         </provider>
 
+        <!-- Alternative icons -->
+        <activity-alias
+            android:name=".Calculator"
+            android:label="@string/appNameCalculator"
+            android:icon="@mipmap/ic_launcher_calculator"
+            android:targetActivity="org.thoughtcrime.securesms.home.HomeActivity"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
 
+        <activity-alias
+            android:name=".Meetings"
+            android:label="@string/appNameMeetingSE"
+            android:icon="@mipmap/ic_launcher_meetings"
+            android:enabled="false"
+            android:targetActivity="org.thoughtcrime.securesms.home.HomeActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Notes"
+            android:label="@string/appNameNotes"
+            android:icon="@mipmap/ic_launcher_notes"
+            android:enabled="false"
+            android:targetActivity="org.thoughtcrime.securesms.home.HomeActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Stocks"
+            android:label="@string/appNameStocks"
+            android:icon="@mipmap/ic_launcher_stocks"
+            android:enabled="false"
+            android:targetActivity="org.thoughtcrime.securesms.home.HomeActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Weather"
+            android:label="@string/appNameWeather"
+            android:icon="@mipmap/ic_launcher_weather"
+            android:enabled="false"
+            android:targetActivity="org.thoughtcrime.securesms.home.HomeActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
     </application>
 
 </manifest>

@@ -1,5 +1,8 @@
 package org.thoughtcrime.securesms.conversation.v2
 
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -8,13 +11,12 @@ import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.plus
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
 import org.session.libsession.messaging.jobs.AttachmentUploadJob
 import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
+import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.util.flatten
@@ -24,14 +26,14 @@ import org.thoughtcrime.securesms.util.timedBuffer
  * [AttachmentDownloadHandler] is responsible for handling attachment download requests. These
  * requests will go through different level of checking before they are queued for download.
  *
- * To use this handler, call [onAttachmentDownloadRequest] with the attachment that needs to be
- * downloaded. The call to [onAttachmentDownloadRequest] is cheap and can be called multiple times.
+ * To use this handler, call [downloadPendingAttachment] with the attachment that needs to be
+ * downloaded. The call to [downloadPendingAttachment] is cheap and can be called multiple times.
  */
-class AttachmentDownloadHandler(
+class AttachmentDownloadHandler @AssistedInject constructor(
     private val storage: StorageProtocol,
     private val messageDataProvider: MessageDataProvider,
-    jobQueue: JobQueue = JobQueue.shared,
-    scope: CoroutineScope = CoroutineScope(Dispatchers.Default) + SupervisorJob(),
+    @Assisted private val scope: CoroutineScope,
+    private val downloadJobFactory: AttachmentDownloadJob.Factory
 ) {
     companion object {
         private const val BUFFER_TIMEOUT_MILLS = 500L
@@ -40,6 +42,7 @@ class AttachmentDownloadHandler(
     }
 
     private val downloadRequests = Channel<DatabaseAttachment>(UNLIMITED)
+    private val jobQueue: JobQueue = JobQueue.shared
 
     init {
         scope.launch(Dispatchers.Default) {
@@ -50,9 +53,9 @@ class AttachmentDownloadHandler(
                 .flatten()
                 .collect { attachment ->
                     jobQueue.add(
-                        AttachmentDownloadJob(
+                        downloadJobFactory.create(
                             attachmentID = attachment.attachmentId.rowId,
-                            databaseMessageID = attachment.mmsId
+                            mmsMessageId = attachment.mmsId
                         )
                     )
                 }
@@ -101,15 +104,35 @@ class AttachmentDownloadHandler(
     }
 
 
-    fun onAttachmentDownloadRequest(attachment: DatabaseAttachment) {
-        if (attachment.transferState != AttachmentTransferProgress.TRANSFER_PROGRESS_PENDING) {
+    fun downloadPendingAttachment(attachment: DatabaseAttachment) {
+        if (attachment.transferState != AttachmentState.PENDING.value) {
             Log.i(
                 LOG_TAG,
-                "Attachment ${attachment.attachmentId} is not pending, skipping download"
+                "Attachment ${attachment.attachmentId} is not pending nor failed, skipping download (state = ${attachment.transferState})}"
             )
             return
         }
 
         downloadRequests.trySend(attachment)
+    }
+
+    fun retryFailedAttachments(attachments: List<DatabaseAttachment>){
+        attachments.forEach { attachment ->
+            if (attachment.transferState != AttachmentState.FAILED.value){
+                Log.d(
+                    LOG_TAG,
+                    "Attachment ${attachment.attachmentId} is not failed, skipping retry"
+                )
+
+                return@forEach
+            }
+
+            downloadRequests.trySend(attachment)
+        }
+    }
+
+    @AssistedFactory
+    interface Factory {
+        fun create(scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)): AttachmentDownloadHandler
     }
 }

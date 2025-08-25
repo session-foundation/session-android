@@ -7,5 +7,5 @@
     <dimen name="album_3_cell_width_big">167dp</dimen>
     <dimen name="album_3_cell_size_small">83dp</dimen>
     <dimen name="album_5_cell_size_small">83dp</dimen>
-    <dimen name="max_text_width">240dp</dimen>
+    <dimen name="max_bubble_width">240dp</dimen>
 </resources>

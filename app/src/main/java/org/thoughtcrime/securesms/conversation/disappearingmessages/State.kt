@@ -9,10 +9,6 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 
-enum class Event {
-    SUCCESS, FAIL
-}
-
 data class State(
     val isGroup: Boolean = false,
     val isSelfAdmin: Boolean = true,

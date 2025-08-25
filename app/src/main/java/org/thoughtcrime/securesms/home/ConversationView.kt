@@ -1,13 +1,12 @@
 package org.thoughtcrime.securesms.home
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.content.res.Resources
-import android.graphics.Typeface
-import android.graphics.drawable.ColorDrawable
 import android.util.AttributeSet
-import android.util.TypedValue
 import android.view.View
 import android.widget.LinearLayout
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
@@ -21,16 +20,23 @@ import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_ALL
 import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_NONE
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.ui.ProBadgeText
+import org.thoughtcrime.securesms.ui.setThemedContent
+import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.ui.theme.LocalType
+import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.util.DateUtils
-import org.thoughtcrime.securesms.util.getAccentColor
+import org.thoughtcrime.securesms.util.UnreadStylingHelper
 import org.thoughtcrime.securesms.util.getConversationUnread
-import java.util.Locale
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class ConversationView : LinearLayout {
 
     @Inject lateinit var configFactory: ConfigFactory
+    @Inject lateinit var dateUtils: DateUtils
+    @Inject lateinit var proStatusManager: ProStatusManager
 
     private val binding: ViewConversationBinding by lazy { ViewConversationBinding.bind(this) }
     private val screenWidth = Resources.getSystem().displayMetrics.widthPixels
@@ -50,95 +56,100 @@ class ConversationView : LinearLayout {
     // region Updating
     fun bind(thread: ThreadRecord, isTyping: Boolean) {
         this.thread = thread
-        if (thread.isPinned) {
-            binding.conversationViewDisplayNameTextView.setCompoundDrawablesRelativeWithIntrinsicBounds(
-                0,
-                0,
-                R.drawable.ic_pin,
-                0
-            )
-        } else {
-            binding.conversationViewDisplayNameTextView.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, 0, 0)
-        }
-        binding.root.background = if (thread.unreadCount > 0) {
-            ContextCompat.getDrawable(context, R.drawable.conversation_unread_background)
-        } else {
-            ContextCompat.getDrawable(context, R.drawable.conversation_view_background)
-        }
+        binding.iconPinned.isVisible = thread.isPinned
+
+        val isConversationUnread = (configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) })
         val unreadCount = thread.unreadCount
+        val hasUnreadCount = unreadCount > 0
+        val isMarkedUnread = !hasUnreadCount && isConversationUnread
+
+        binding.root.background = UnreadStylingHelper.getUnreadBackground(context,
+            hasUnreadCount || isMarkedUnread)
+
         if (thread.recipient.isBlocked) {
             binding.accentView.setBackgroundColor(ThemeUtil.getThemedColor(context, R.attr.danger))
             binding.accentView.visibility = View.VISIBLE
         } else {
-            val accentColor = context.getAccentColor()
-            val background = ColorDrawable(accentColor)
-            binding.accentView.background = background
+            binding.accentView.background = UnreadStylingHelper.getAccentBackground(context)
             // Using thread.isRead we can determine if the last message was our own, and display it as 'read' even though previous messages may not be
             // This would also not trigger the disappearing message timer which may or may not be desirable
-            binding.accentView.visibility = if (unreadCount > 0 && !thread.isRead) View.VISIBLE else View.INVISIBLE
+            binding.accentView.visibility = if(hasUnreadCount) View.VISIBLE else View.INVISIBLE
         }
-        val formattedUnreadCount = if (unreadCount == 0) {
-            null
-        } else {
-            if (unreadCount < 10000) unreadCount.toString() else "9999+"
+
+        binding.unreadCountTextView.apply{
+            text = UnreadStylingHelper.formatUnreadCount(unreadCount)
+            isVisible = hasUnreadCount
         }
-        binding.unreadCountTextView.text = formattedUnreadCount
-        val textSize = if (unreadCount < 1000) 12.0f else 10.0f
-        binding.unreadCountTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, textSize)
-        binding.unreadCountIndicator.isVisible = (unreadCount != 0 && !thread.isRead)
-                || (configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) })
-        binding.unreadMentionTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, textSize)
-        binding.unreadMentionIndicator.isVisible = (thread.unreadMentionCount != 0 && thread.recipient.address.isGroupOrCommunity)
+
+        binding.unreadMentionBadge.isVisible = thread.unreadMentionCount != 0
+        binding.markedUnreadIndicator.isVisible = isMarkedUnread
+
         val senderDisplayName = getTitle(thread.recipient)
-                ?: thread.recipient.address.toString()
-        binding.conversationViewDisplayNameTextView.text = senderDisplayName
-        binding.timestampTextView.text = thread.date.takeIf { it != 0L }?.let { DateUtils.getDisplayFormattedTimeSpanString(context, Locale.getDefault(), it) }
+
+        // Thread name and pro badge
+        binding.conversationViewDisplayName.text = senderDisplayName
+        binding.iconPro.isVisible = proStatusManager.shouldShowProBadge(thread.recipient.address)
+                && !thread.recipient.isLocalNumber
+
+        binding.timestampTextView.text = thread.date.takeIf { it != 0L }?.let { dateUtils.getDisplayFormattedTimeSpanString(
+            it
+        ) }
+
         val recipient = thread.recipient
         binding.muteIndicatorImageView.isVisible = recipient.isMuted || recipient.notifyType != NOTIFY_TYPE_ALL
+
         val drawableRes = if (recipient.isMuted || recipient.notifyType == NOTIFY_TYPE_NONE) {
-            R.drawable.ic_outline_notifications_off_24
+            R.drawable.ic_volume_off
         } else {
-            R.drawable.ic_notifications_mentions
+            R.drawable.ic_at_sign
         }
+
         binding.muteIndicatorImageView.setImageResource(drawableRes)
 
-        binding.snippetTextView.text = highlightMentions(
+        val snippet =  highlightMentions(
             text = thread.getDisplayBody(context),
             formatOnly = true, // no styling here, only text formatting
             threadID = thread.threadId,
             context = context
         )
 
-        binding.snippetTextView.typeface = if (unreadCount > 0 && !thread.isRead) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
-        binding.snippetTextView.visibility = if (isTyping) View.GONE else View.VISIBLE
+        binding.snippetTextView.apply {
+            text = snippet
+            typeface = UnreadStylingHelper.getUnreadTypeface(hasUnreadCount)
+            visibility = if (isTyping) View.GONE else View.VISIBLE
+        }
+
         if (isTyping) {
             binding.typingIndicatorView.root.startAnimation()
         } else {
             binding.typingIndicatorView.root.stopAnimation()
         }
+
         binding.typingIndicatorView.root.visibility = if (isTyping) View.VISIBLE else View.GONE
         binding.statusIndicatorImageView.visibility = View.VISIBLE
+        binding.statusIndicatorImageView.imageTintList = ColorStateList.valueOf(ThemeUtil.getThemedColor(context, android.R.attr.textColorTertiary)) // tertiary in the current xml styling is actually what figma uses as secondary text color...
+
         when {
-            !thread.isOutgoing -> binding.statusIndicatorImageView.visibility = View.GONE
+            !thread.isOutgoing || thread.lastMessage == null -> binding.statusIndicatorImageView.visibility = View.GONE
+
             thread.isFailed -> {
-                val drawable = ContextCompat.getDrawable(context, R.drawable.ic_error)?.mutate()
-                drawable?.setTint(ThemeUtil.getThemedColor(context, R.attr.danger))
+                val drawable = ContextCompat.getDrawable(context, R.drawable.ic_triangle_alert)?.mutate()
                 binding.statusIndicatorImageView.setImageDrawable(drawable)
+                binding.statusIndicatorImageView.imageTintList = ColorStateList.valueOf(ThemeUtil.getThemedColor(context, R.attr.danger))
             }
-            thread.isPending -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_circle_dot_dot_dot)
-            thread.isRead -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_filled_circle_check)
+            thread.isPending -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_circle_dots_custom)
+            thread.isRead -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_eye)
             else -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_circle_check)
         }
+
         binding.profilePictureView.update(thread.recipient)
     }
 
-    fun recycle() {
-        binding.profilePictureView.recycle()
-    }
+    fun recycle() { binding.profilePictureView.recycle() }
 
-    private fun getTitle(recipient: Recipient): String? = when {
+    private fun getTitle(recipient: Recipient): String = when {
         recipient.isLocalNumber -> context.getString(R.string.noteToSelf)
-        else -> recipient.toShortString() // Internally uses the Contact API
+        else -> recipient.name // Internally uses the Contact API
     }
     // endregion
 }

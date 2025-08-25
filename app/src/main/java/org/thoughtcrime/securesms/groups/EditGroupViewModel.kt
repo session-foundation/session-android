@@ -12,7 +12,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -21,41 +20,30 @@ import network.loki.messenger.libsession_util.getOrNull
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupInviteException
 import org.session.libsession.messaging.groups.GroupManagerV2
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.UsernameUtils
 import org.session.libsignal.utilities.AccountId
-import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
+import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.util.AvatarUtils
 
 
-const val MAX_GROUP_NAME_BYTES = 100
 
 @HiltViewModel(assistedFactory = EditGroupViewModel.Factory::class)
 class EditGroupViewModel @AssistedInject constructor(
     @Assisted private val groupId: AccountId,
     @ApplicationContext private val context: Context,
-    private val storage: StorageProtocol,
+    storage: StorageProtocol,
     private val configFactory: ConfigFactoryProtocol,
     private val groupManager: GroupManagerV2,
-) : BaseGroupMembersViewModel(groupId, context, storage, configFactory) {
-    // Input/Output state
-    private val mutableEditingName = MutableStateFlow<String?>(null)
-
-    // Input/Output: the name that has been written and submitted for change to push to the server,
-    // but not yet confirmed by the server. When this state is present, it takes precedence over
-    // the group name in the group info.
-    private val mutablePendingEditedName = MutableStateFlow<String?>(null)
-
-    // Output: The name of the group being edited. Null if it's not in edit mode, not to be confused
-    // with empty string, where it's a valid editing state.
-    val editingName: StateFlow<String?> get() = mutableEditingName
-
-    // Output: whether the group name can be edited. This is true if the group is loaded successfully.
-    val canEditGroupName: StateFlow<Boolean> = groupInfo
-        .map { it != null }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    private val usernameUtils: UsernameUtils,
+    private val avatarUtils: AvatarUtils,
+    proStatusManager: ProStatusManager
+) : BaseGroupMembersViewModel(groupId, context, storage, usernameUtils, configFactory, avatarUtils, proStatusManager) {
 
     // Output: The name of the group. This is the current name of the group, not the name being edited.
-    val groupName: StateFlow<String> = combine(groupInfo
-        .map { it?.first?.name.orEmpty() }, mutablePendingEditedName) { name, pendingName -> pendingName ?: name }
+    val groupName: StateFlow<String> = groupInfo
+        .map { it?.first?.name.orEmpty() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), "")
 
     // Output: whether we should show the "add members" button
@@ -76,15 +64,15 @@ class EditGroupViewModel @AssistedInject constructor(
     val error: StateFlow<String?> get() = mutableError
 
     // Output:
-    val excludingAccountIDsFromContactSelection: Set<AccountId>
-        get() = groupInfo.value?.second?.mapTo(hashSetOf()) { it.accountId }.orEmpty()
+    val excludingAccountIDsFromContactSelection: Set<String>
+        get() = groupInfo.value?.second?.mapTo(hashSetOf()) { it.accountId.hexString }.orEmpty()
 
-    fun onContactSelected(contacts: Set<AccountId>) {
+    fun onContactSelected(contacts: Set<Address>) {
         performGroupOperation(
             showLoading = false,
             errorMessage = { err ->
                 if (err is GroupInviteException) {
-                    err.format(context, storage).toString()
+                    err.format(context, usernameUtils).toString()
                 } else {
                     null
                 }
@@ -92,7 +80,7 @@ class EditGroupViewModel @AssistedInject constructor(
         ) {
             groupManager.inviteMembers(
                 groupId,
-                contacts.toList(),
+                contacts.map { AccountId(it.toString()) }.toList(),
                 shareHistory = false,
                 isReinvite = false,
             )
@@ -104,7 +92,7 @@ class EditGroupViewModel @AssistedInject constructor(
             showLoading = false,
             errorMessage = { err ->
                 if (err is GroupInviteException) {
-                    err.format(context, storage).toString()
+                    err.format(context, usernameUtils).toString()
                 } else {
                     null
                 }
@@ -142,48 +130,6 @@ class EditGroupViewModel @AssistedInject constructor(
     fun onResendPromotionClicked(memberSessionId: AccountId) {
         performGroupOperation(showLoading = false) {
             groupManager.promoteMember(groupId, listOf(memberSessionId), isRepromote = true)
-        }
-    }
-
-    fun onEditNameClicked() {
-        mutableEditingName.value = groupInfo.value?.first?.name.orEmpty()
-    }
-
-    fun onCancelEditingNameClicked() {
-        mutableEditingName.value = null
-    }
-
-    fun onEditingNameChanged(value: String) {
-        mutableEditingName.value = value
-    }
-
-    fun onEditNameConfirmClicked() {
-        val newName = mutableEditingName.value
-
-        if (newName.isNullOrBlank()) {
-            mutableError.value = context.getString(R.string.groupNameEnterPlease)
-            return
-        }
-
-        // validate name length (needs to be less than 100 bytes)
-        if(newName.textSizeInBytes() > MAX_GROUP_NAME_BYTES){
-            mutableError.value = context.getString(R.string.groupNameEnterShorter)
-            return
-        }
-
-        // Move the edited name into the pending state
-        mutableEditingName.value = null
-        mutablePendingEditedName.value = newName
-
-        performGroupOperation {
-            try {
-                groupManager.setName(groupId, newName)
-            } finally {
-                // As soon as the operation is done, clear the pending state,
-                // no matter if it's successful or not. So that we update the UI to reflect the
-                // real state.
-                mutablePendingEditedName.value = null
-            }
         }
     }
 

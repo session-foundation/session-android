@@ -40,7 +40,7 @@ class MultipleRecipientNotificationBuilder(context: Context, privacy: Notificati
     }
 
     fun setMostRecentSender(recipient: Recipient, threadRecipient: Recipient) {
-        var displayName = recipient.toShortString()
+        var displayName = recipient.name
         if (threadRecipient.isGroupOrCommunityRecipient) {
             displayName = getGroupDisplayName(recipient, threadRecipient.isCommunityRecipient)
         }
@@ -58,7 +58,7 @@ class MultipleRecipientNotificationBuilder(context: Context, privacy: Notificati
 
     fun addActions(markAsReadIntent: PendingIntent?) {
         val markAllAsReadAction = NotificationCompat.Action(
-            R.drawable.check,
+            R.drawable.ic_check,
             context.getString(R.string.messageMarkRead),
             markAsReadIntent
         )
@@ -69,7 +69,7 @@ class MultipleRecipientNotificationBuilder(context: Context, privacy: Notificati
     fun putStringExtra(key: String?, value: String?) { extras.putString(key, value) }
 
     fun addMessageBody(sender: Recipient, threadRecipient: Recipient, body: CharSequence?) {
-        var displayName = sender.toShortString()
+        var displayName = sender.name
         if (threadRecipient.isGroupOrCommunityRecipient) {
             displayName = getGroupDisplayName(sender, threadRecipient.isCommunityRecipient)
         }
@@ -103,8 +103,8 @@ class MultipleRecipientNotificationBuilder(context: Context, privacy: Notificati
      * @param openGroupRecipient whether in an open group context
      */
     private fun getGroupDisplayName(recipient: Recipient, openGroupRecipient: Boolean): String {
-        return MessagingModuleConfiguration.shared.storage.getContactNameWithAccountID(
-            accountID = recipient.address.serialize(),
+        return MessagingModuleConfiguration.shared.usernameUtils.getContactNameWithAccountID(
+            accountID = recipient.address.toString(),
             contactContext = if (openGroupRecipient) Contact.ContactContext.OPEN_GROUP else Contact.ContactContext.REGULAR
         )
     }

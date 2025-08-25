@@ -1,0 +1,165 @@
+package org.thoughtcrime.securesms.disguise
+
+import android.app.Application
+import android.content.ComponentName
+import android.content.Intent
+import android.content.pm.PackageManager
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import network.loki.messenger.R
+import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
+import org.thoughtcrime.securesms.util.CurrentActivityObserver
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/**
+ * Manage the app disguise feature, where you can observe the list of app aliases and selected alias.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+@Singleton
+class AppDisguiseManager @Inject constructor(
+    application: Application,
+    private val prefs: TextSecurePreferences,
+    private val currentActivityObserver: CurrentActivityObserver,
+    @param:ManagerScope private val scope: CoroutineScope,
+) : OnAppStartupComponent {
+    val allAppAliases: Flow<List<AppAlias>> = flow {
+        emit(
+            application.packageManager
+                .queryIntentActivities(
+                    Intent(Intent.ACTION_MAIN)
+                        .setPackage(application.packageName)
+                        .addCategory(Intent.CATEGORY_LAUNCHER),
+                    PackageManager.GET_ACTIVITIES or PackageManager.MATCH_DISABLED_COMPONENTS
+                )
+                .asSequence()
+                .filter {
+                    it.activityInfo.targetActivity != null
+                }
+                .map { info ->
+                    AppAlias(
+                        activityAliasName = info.activityInfo.name,
+                        defaultEnabled = info.activityInfo.enabled,
+                        appName = info.activityInfo.labelRes.takeIf { it != 0 }
+                            ?: info.labelRes.takeIf { it != 0 }
+                            ?: R.string.app_name,
+                        appIcon = info.activityInfo.icon.takeIf { it != 0 }
+                            ?: info.iconResource.takeIf { it != 0 },
+                    )
+                }
+                .toList()
+        )
+    }.flowOn(Dispatchers.Default)
+        .shareIn(scope, started = SharingStarted.Lazily, replay = 1)
+
+    private val prefChangeNotification = MutableSharedFlow<Unit>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+
+    /**
+     * The currently selected app alias name. This doesn't equate to if the app disguise is on or off.
+     */
+    val selectedAppAliasName: StateFlow<String?> = prefChangeNotification
+            .mapLatest { prefs.selectedActivityAliasName }
+            .stateIn(
+                scope = scope,
+                started = SharingStarted.Eagerly,
+                initialValue = prefs.selectedActivityAliasName
+            )
+
+    init {
+        scope.launch {
+            combine(
+                selectedAppAliasName,
+                allAppAliases,
+            ) { selected, all ->
+                val enabledAlias = all.firstOrNull { it.activityAliasName == selected }
+                    ?: all.first { it.defaultEnabled }
+
+                all.map { alias ->
+                    val state = if (alias === enabledAlias) PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+                        else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+
+                    Triple(
+                        ComponentName(application, alias.activityAliasName),
+                        state,
+                        alias.defaultEnabled
+                    )
+                }
+            }.collectLatest { all ->
+                val packageManager = application.packageManager
+                if (android.os.Build.VERSION.SDK_INT >= 33) {
+                    packageManager.setComponentEnabledSettings(
+                        all.map { (name, state) ->
+                            PackageManager.ComponentEnabledSetting(
+                                name, state, PackageManager.DONT_KILL_APP or PackageManager.SYNCHRONOUS
+                            )
+                        }
+                    )
+                } else {
+                    // Query current enable state for each component
+                    val changed = all.filter { (name, desiredState, defaultEnabled) ->
+                        val state = packageManager.getComponentEnabledSetting(name)
+                        val wasEnabled = when (state) {
+                            PackageManager.COMPONENT_ENABLED_STATE_ENABLED -> true
+                            PackageManager.COMPONENT_ENABLED_STATE_DISABLED -> false
+                            else -> defaultEnabled
+                        }
+
+                        val willBeEnabled = (desiredState == PackageManager.COMPONENT_ENABLED_STATE_ENABLED) ||
+                                (desiredState == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT && defaultEnabled)
+                        wasEnabled != willBeEnabled
+                    }
+
+                    changed.forEach { (name, state) ->
+                        packageManager.setComponentEnabledSetting(
+                            name,
+                            state,
+                            PackageManager.DONT_KILL_APP
+                        )
+                    }
+
+                    if (changed.isNotEmpty()) {
+                        // Finish current activity if the disguise is on
+                        currentActivityObserver.currentActivity.value?.finishAffinity()
+                    }
+                }
+            }
+        }
+    }
+
+    fun setSelectedAliasName(name: String?) {
+        Log.d(TAG, "setSelectedAliasName: $name")
+        prefs.selectedActivityAliasName = name
+        prefChangeNotification.tryEmit(Unit)
+    }
+
+    data class AppAlias(
+        val activityAliasName: String,
+        val defaultEnabled: Boolean,
+        @StringRes val appName: Int?,
+        @DrawableRes val appIcon: Int?,
+    )
+}
+
+private const val TAG = "AppDisguiseManager"

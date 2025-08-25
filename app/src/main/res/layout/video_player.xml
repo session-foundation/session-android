@@ -12,6 +12,8 @@
         android:layout_height="match_parent"
         android:layout_gravity="center"
         android:gravity="center"
-        app:player_layout_id="@layout/media_preview_exoplayer_layout"/>
+        app:animation_enabled="false"
+        app:shutter_background_color="?colorPrimary"
+        app:controller_layout_id="@layout/custom_player_controller"/>
 
 </FrameLayout>

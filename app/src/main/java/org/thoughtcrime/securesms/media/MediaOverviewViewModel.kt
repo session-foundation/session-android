@@ -5,11 +5,16 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,32 +46,24 @@ import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
 import org.thoughtcrime.securesms.util.asSequence
 import org.thoughtcrime.securesms.util.observeChanges
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
-class MediaOverviewViewModel(
-    private val address: Address,
+@HiltViewModel(assistedFactory = MediaOverviewViewModel.Factory::class)
+class MediaOverviewViewModel @AssistedInject constructor(
+    @Assisted private val address: Address,
     private val application: Application,
     private val threadDatabase: ThreadDatabase,
-    private val mediaDatabase: MediaDatabase
+    private val mediaDatabase: MediaDatabase,
+    private val dateUtils: DateUtils
 ) : AndroidViewModel(application) {
+
     private val timeBuckets by lazy { FixedTimeBuckets() }
-    private val monthTimeBucketFormatter =
-        DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
+    private val monthTimeBucketFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
 
     private val recipient: SharedFlow<Recipient> = application.contentResolver
         .observeChanges(DatabaseContentProviders.Attachment.CONTENT_URI)
         .onStart { emit(DatabaseContentProviders.Attachment.CONTENT_URI) }
         .map { Recipient.from(application, address, false) }
         .shareIn(viewModelScope, SharingStarted.Eagerly, replay = 1)
-
-    val title: StateFlow<String> = recipient
-        .map { it.toShortString() }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, "")
 
     val mediaListState: StateFlow<MediaOverviewContent?> = recipient
         .map { recipient ->
@@ -93,6 +90,15 @@ class MediaOverviewViewModel(
             }
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    val conversationName: StateFlow<String> = recipient
+        .map { recipient ->
+            when {
+                recipient.isLocalNumber -> application.getString(R.string.noteToSelf)
+                else -> recipient.name
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "")
 
     private val mutableSelectedItemIDs = MutableStateFlow(emptySet<Long>())
     val selectedItemIDs: StateFlow<Set<Long>> get() = mutableSelectedItemIDs
@@ -130,7 +136,7 @@ class MediaOverviewViewModel(
             .groupBy { record ->
                 val time =
                     ZonedDateTime.ofInstant(Instant.ofEpochMilli(record.date), ZoneId.of("UTC"))
-                timeBuckets.getBucketText(application, time)
+                timeBuckets.getBucketText(application, dateUtils, time)
                     ?: time.toLocalDate().withDayOfMonth(1)
             }
             .map { (bucket, records) ->
@@ -154,7 +160,7 @@ class MediaOverviewViewModel(
     private fun Sequence<MediaRecord>.groupRecordsByRelativeTime(): List<Pair<BucketTitle, List<MediaOverviewItem>>> {
         return this
             .groupBy { record ->
-                DateUtils.getRelativeDate(application, Locale.getDefault(), record.date)
+                dateUtils.getRelativeDate(Locale.getDefault(), record.date)
             }
             .map { (bucket, records) ->
                 bucket to records.map { record ->
@@ -167,7 +173,6 @@ class MediaOverviewViewModel(
                 }
             }
     }
-
 
     fun onItemClicked(item: MediaOverviewItem) {
         if (inSelectionMode.value) {
@@ -227,8 +232,7 @@ class MediaOverviewViewModel(
 
     fun onSaveClicked() {
         if (!inSelectionMode.value) {
-            // Not in selection mode, so we should not be able to save
-            return
+            return // Not in selection mode, so we should not be able to save
         }
 
         viewModelScope.launch {
@@ -244,7 +248,7 @@ class MediaOverviewViewModel(
                         uri = uri,
                         contentType = it.mediaRecord.contentType,
                         date = it.mediaRecord.date,
-                        fileName = it.mediaRecord.attachment.fileName,
+                        filename = it.mediaRecord.attachment.filename
                     )
                 }
 
@@ -314,7 +318,7 @@ class MediaOverviewViewModel(
                     }
                 }
 
-                threadDatabase.getThreadIdIfExistsFor(address.serialize())
+                threadDatabase.getThreadIdIfExistsFor(address.toString())
             }
 
             // Notify the content provider that the thread has been updated
@@ -358,24 +362,10 @@ class MediaOverviewViewModel(
     }
 
     @dagger.assisted.AssistedFactory
-    interface AssistedFactory {
-        fun create(address: Address): Factory
+    interface Factory {
+        fun create(address: Address): MediaOverviewViewModel
     }
 
-    class Factory @AssistedInject constructor(
-        @Assisted private val address: Address,
-        private val application: Application,
-        private val threadDatabase: ThreadDatabase,
-        private val mediaDatabase: MediaDatabase
-    ) : ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T = MediaOverviewViewModel(
-            address,
-            application,
-            threadDatabase,
-            mediaDatabase
-        ) as T
-    }
 }
 
 
@@ -414,8 +404,8 @@ data class MediaOverviewItem(
     val hasPlaceholder: Boolean
         get() = slide.hasPlaceholder()
 
-    val fileName: String?
-        get() = slide.fileName.orNull()
+    val filename: String
+        get() = slide.filename
 
     val fileSize: Long
         get() = slide.fileSize

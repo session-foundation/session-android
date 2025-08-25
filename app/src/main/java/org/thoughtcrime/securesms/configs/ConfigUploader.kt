@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.util.ConfigPush
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
@@ -41,9 +42,9 @@ import org.session.libsession.utilities.getGroup
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.retryWithUniformInterval
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import javax.inject.Inject
 
@@ -66,7 +67,7 @@ class ConfigUploader @Inject constructor(
     private val clock: SnodeClock,
     private val networkConnectivity: NetworkConnectivity,
     private val textSecurePreferences: TextSecurePreferences,
-) {
+) : OnAppStartupComponent {
     private var job: Job? = null
 
     /**
@@ -93,7 +94,7 @@ class ConfigUploader @Inject constructor(
 
 
     @OptIn(DelicateCoroutinesApi::class, FlowPreview::class, ExperimentalCoroutinesApi::class)
-    fun start() {
+    override fun onPostAppStarted() {
         require(job == null) { "Already started" }
 
         job = GlobalScope.launch {
@@ -138,7 +139,7 @@ class ConfigUploader @Inject constructor(
                                         configFactory.withUserConfigs { configs -> configs.userGroups.allClosedGroupInfo() }
                                             .asSequence()
                                             .filter { !it.destroyed && !it.kicked }
-                                            .map { it.groupAccountId }
+                                            .map { AccountId(it.groupAccountId) }
                                             .asFlow()
                                     },
 
@@ -177,7 +178,7 @@ class ConfigUploader @Inject constructor(
             return
         }
 
-        pushGroupConfigsChangesIfNeeded(adminKey, groupId) { groupConfigAccess ->
+        pushGroupConfigsChangesIfNeeded(adminKey.data, groupId) { groupConfigAccess ->
             configFactory.withMutableGroupConfigs(groupId) {
                 groupConfigAccess(it)
             }
@@ -208,11 +209,15 @@ class ConfigUploader @Inject constructor(
         // Gather data to push
         groupConfigAccess { configs ->
             if (configs.groupMembers.needsPush()) {
-                membersPush = configs.groupMembers.push()
+                membersPush = runCatching { configs.groupMembers.push() }
+                    .onFailure { Log.w(TAG, "Error generating group members config push", it) }
+                    .getOrNull()
             }
 
             if (configs.groupInfo.needsPush()) {
-                infoPush = configs.groupInfo.push()
+                infoPush = runCatching { configs.groupInfo.push() }
+                    .onFailure { Log.w(TAG, "Error generating group info config push", it) }
+                    .getOrNull()
             }
 
             keysPush = configs.groupKeys.pendingConfig()
@@ -245,7 +250,7 @@ class ConfigUploader @Inject constructor(
                     auth
                 ),
                 responseType = StoreMessageResponse::class.java
-            ).toConfigPushResult()
+            ).let(::listOf).toConfigPushResult()
         }
 
         // Spawn the config pushing concurrently
@@ -272,12 +277,14 @@ class ConfigUploader @Inject constructor(
 
         // Confirm the push
         groupConfigAccess { configs ->
-            memberPushResult?.let { (push, result) -> configs.groupMembers.confirmPushed(push.seqNo, result.hash) }
-            infoPushResult?.let { (push, result) -> configs.groupInfo.confirmPushed(push.seqNo, result.hash) }
-            keysPushResult?.let { (hash, timestamp) ->
+            memberPushResult?.let { (push, result) -> configs.groupMembers.confirmPushed(push.seqNo, result.hashes.toTypedArray()) }
+            infoPushResult?.let { (push, result) -> configs.groupInfo.confirmPushed(push.seqNo, result.hashes.toTypedArray()) }
+            keysPushResult?.let { (hashes, timestamp) ->
                 val pendingConfig = configs.groupKeys.pendingConfig()
                 if (pendingConfig != null) {
-                    configs.groupKeys.loadKey(pendingConfig, hash, timestamp)
+                    for (hash in hashes) {
+                        configs.groupKeys.loadKey(pendingConfig, hash, timestamp)
+                    }
                 }
             }
         }
@@ -297,21 +304,36 @@ class ConfigUploader @Inject constructor(
         push: ConfigPush,
         namespace: Int
     ): ConfigPushResult {
-        val response = SnodeAPI.sendBatchRequest(
-            snode = snode,
-            publicKey = auth.accountId.hexString,
-            request = SnodeAPI.buildAuthenticatedStoreBatchInfo(
-                namespace,
-                SnodeMessage(
-                    auth.accountId.hexString,
-                    Base64.encodeBytes(push.config),
-                    SnodeMessage.CONFIG_TTL,
-                    clock.currentTimeMills(),
-                ),
-                auth,
-            ),
-            responseType = StoreMessageResponse::class.java
-        )
+        // Use a coroutineScope to push all messages concurrently, and if one of them fails the whole
+        // process will be cancelled. This is the requirement of pushing config: all messages have
+        // to be sent successfully for us to consider this process as success
+        val responses = coroutineScope {
+            val timestamp = clock.currentTimeMills()
+
+            Log.d(TAG, "Pushing ${push.messages.size} config messages")
+
+            push.messages
+                .map { message ->
+                    async {
+                        SnodeAPI.sendBatchRequest(
+                            snode = snode,
+                            publicKey = auth.accountId.hexString,
+                            request = SnodeAPI.buildAuthenticatedStoreBatchInfo(
+                                namespace,
+                                SnodeMessage(
+                                    auth.accountId.hexString,
+                                    Base64.encodeBytes(message.data),
+                                    SnodeMessage.CONFIG_TTL,
+                                    timestamp,
+                                ),
+                                auth,
+                            ),
+                            responseType = StoreMessageResponse::class.java
+                        )
+                    }
+                }
+                .awaitAll()
+        }
 
         if (push.obsoleteHashes.isNotEmpty()) {
             SnodeAPI.sendBatchRequest(
@@ -321,7 +343,7 @@ class ConfigUploader @Inject constructor(
             )
         }
 
-        return response.toConfigPushResult()
+        return responses.toConfigPushResult()
     }
 
     private suspend fun pushUserConfigChangesIfNeeded() = coroutineScope {
@@ -338,7 +360,12 @@ class ConfigUploader @Inject constructor(
                         return@mapNotNull null
                     }
 
-                    type to config.push()
+                    val configPush = runCatching { config.push() }
+                        .onFailure { Log.w(TAG, "Error generating $type config", it) }
+                        .getOrNull()
+                        ?: return@mapNotNull null
+
+                    type to configPush
                 }
         }
 
@@ -352,17 +379,17 @@ class ConfigUploader @Inject constructor(
 
         val pushTasks = pushes.map { (configType, configPush) ->
             async {
-                (configType to configPush) to pushConfig(
+                Triple(configType, configPush, pushConfig(
                     userAuth,
                     snode,
                     configPush,
                     configType.namespace
-                )
+                ))
             }
         }
 
         val pushResults =
-            pushTasks.awaitAll().associate { it.first.first to (it.first.second to it.second) }
+            pushTasks.awaitAll().associate { (configType, push, result) -> configType to (push to result) }
 
         Log.d(TAG, "Pushed ${pushResults.size} user configs")
 
@@ -374,7 +401,10 @@ class ConfigUploader @Inject constructor(
         )
     }
 
-    private fun StoreMessageResponse.toConfigPushResult(): ConfigPushResult {
-        return ConfigPushResult(hash, timestamp)
+    private fun List<StoreMessageResponse>.toConfigPushResult(): ConfigPushResult {
+        return ConfigPushResult(
+            hashes = map { it.hash },
+            timestamp = first().timestamp
+        )
     }
 }

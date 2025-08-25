@@ -2,9 +2,9 @@ package org.thoughtcrime.securesms.groups
 
 import android.content.Context
 import network.loki.messenger.libsession_util.ConfigBase
+import network.loki.messenger.libsession_util.util.Bytes
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.sending_receiving.notifications.PushRegistryV1
-import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil
@@ -25,7 +25,6 @@ object ClosedGroupManager {
         // Notify the PN server
         PushRegistryV1.unsubscribeGroup(closedGroupPublicKey = groupPublicKey, publicKey = userPublicKey)
         // Stop polling
-        MessagingModuleConfiguration.shared.legacyClosedGroupPollerV2.stopPolling(groupPublicKey)
         storage.cancelPendingMessageSendJobs(threadId)
         ApplicationContext.getInstance(context).messageNotifier.updateNotification(context)
         if (delete) {
@@ -44,13 +43,13 @@ object ClosedGroupManager {
             val groups = it.userGroups
 
             val legacyInfo = groups.getOrConstructLegacyGroupInfo(groupPublicKey)
-            val latestMemberMap = GroupUtil.createConfigMemberMap(group.members.map(Address::serialize), group.admins.map(Address::serialize))
+            val latestMemberMap = GroupUtil.createConfigMemberMap(group.members.map(Address::toString), group.admins.map(Address::toString))
             val toSet = legacyInfo.copy(
                 members = latestMemberMap,
                 name = group.title,
                 priority = if (storage.isPinned(threadId)) ConfigBase.PRIORITY_PINNED else ConfigBase.PRIORITY_VISIBLE,
-                encPubKey = (latestKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
-                encSecKey = latestKeyPair.privateKey.serialize()
+                encPubKey = Bytes((latestKeyPair.publicKey as DjbECPublicKey).publicKey),  // 'serialize()' inserts an extra byte
+                encSecKey = Bytes(latestKeyPair.privateKey.serialize())
             )
             groups.set(toSet)
         }

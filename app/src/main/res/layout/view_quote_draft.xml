@@ -6,7 +6,7 @@
     android:id="@+id/mainQuoteViewContainer"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?input_bar_background"
+    android:background="?backgroundSecondary"
     android:paddingHorizontal="@dimen/medium_spacing"
     android:paddingVertical="@dimen/small_spacing"
     app:quote_mode="draft">
@@ -42,7 +42,8 @@
             android:layout_height="20dp"
             android:layout_centerInParent="true"
             android:scaleType="centerInside"
-            android:src="@drawable/ic_microphone" />
+            app:tint="?android:textColorPrimary"
+            android:src="@drawable/ic_mic" />
 
         <include layout="@layout/thumbnail_view"
             android:id="@+id/quoteViewAttachmentThumbnailImageView"
@@ -74,17 +75,11 @@
         android:orientation="vertical"
         android:layout_width="0dp"
         android:layout_height="wrap_content">
-        <TextView
-            tools:visibility="gone"
-            android:id="@+id/quoteViewAuthorTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textColor="?android:textColorPrimary"
-            android:textSize="@dimen/small_font_size"
-            android:textStyle="bold"
-            tools:text="Spiderman" />
+
+        <androidx.compose.ui.platform.ComposeView
+            android:id="@+id/quoteAuthor"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
 
         <TextView
             android:id="@+id/quoteViewBodyTextView"
@@ -105,7 +100,7 @@
         android:layout_marginStart="@dimen/small_spacing"
         android:layout_marginEnd="@dimen/small_spacing"
         android:padding="6dp"
-        android:src="@drawable/ic_close_white_48dp"
+        android:src="@drawable/ic_x"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"

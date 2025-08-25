@@ -4,25 +4,39 @@ import android.content.Context
 import android.content.res.ColorStateList
 import android.util.AttributeSet
 import androidx.annotation.ColorInt
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.content.res.use
+import androidx.core.graphics.toColor
 import androidx.core.text.toSpannable
 import androidx.core.view.isVisible
+import com.bumptech.glide.RequestManager
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewQuoteBinding
 import org.session.libsession.messaging.contacts.Contact
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.database.SessionContactDatabase
-import com.bumptech.glide.RequestManager
-import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.mms.SlideDeck
+import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.ui.ProBadgeText
+import org.thoughtcrime.securesms.ui.proBadgeColorOutgoing
+import org.thoughtcrime.securesms.ui.proBadgeColorStandard
+import org.thoughtcrime.securesms.ui.setThemedContent
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.LocalType
+import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.util.MediaUtil
-import org.thoughtcrime.securesms.util.getAccentColor
 import org.thoughtcrime.securesms.util.toPx
 import javax.inject.Inject
 
@@ -36,6 +50,8 @@ import javax.inject.Inject
 class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) : ConstraintLayout(context, attrs) {
 
     @Inject lateinit var contactDb: SessionContactDatabase
+
+    @Inject lateinit var proStatusManager: ProStatusManager
 
     private val binding: ViewQuoteBinding by lazy { ViewQuoteBinding.bind(this) }
     private val vPadding by lazy { toPx(6, resources) }
@@ -67,10 +83,11 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
     // endregion
 
     // region Updating
-    fun bind(authorPublicKey: String, body: String?, attachments: SlideDeck?, thread: Recipient,
+    fun bind(authorRecipient: Recipient, body: String?, attachments: SlideDeck?, thread: Recipient,
         isOutgoingMessage: Boolean, isOpenGroupInvitation: Boolean, threadID: Long,
         isOriginalMissing: Boolean, glide: RequestManager) {
         // Author
+        val authorPublicKey = authorRecipient.address.toString()
         val author = contactDb.getContactWithAccountID(authorPublicKey)
         val localNumber = TextSecurePreferences.getLocalNumber(context)
         val quoteIsLocalUser = localNumber != null && authorPublicKey == localNumber
@@ -78,9 +95,29 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
         val authorDisplayName =
             if (quoteIsLocalUser) context.getString(R.string.you)
             else author?.displayName(Contact.contextForRecipient(thread)) ?: truncateIdForDisplay(authorPublicKey)
-        binding.quoteViewAuthorTextView.text = authorDisplayName
+
         val textColor = getTextColor(isOutgoingMessage)
-        binding.quoteViewAuthorTextView.setTextColor(textColor)
+
+        // set up quote author
+        binding.quoteAuthor.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            var modifier: Modifier = Modifier
+            if(mode == Mode.Regular){
+                modifier = modifier.widthIn(max = 240.dp) // this value is hardcoded in the xml files > when we move to composable messages this will be handled better internally
+            }
+
+            setThemedContent {
+                ProBadgeText(
+                    modifier = modifier,
+                    text = authorDisplayName, //todo badge we need to rework te naming logic to get the name (no account id for blinded here...) - waiting on the Recipient refactor
+                    textStyle = LocalType.current.small.bold().copy(color = Color(textColor)),
+                    showBadge = proStatusManager.shouldShowProBadge(authorRecipient.address),
+                    badgeColors = if(isOutgoingMessage && mode == Mode.Regular) proBadgeColorOutgoing()
+                    else proBadgeColorStandard()
+                )
+            }
+        }
+
         // Body
         binding.quoteViewBodyTextView.text = if (isOpenGroupInvitation)
             resources.getString(R.string.communityInvitation)
@@ -100,35 +137,55 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
             binding.quoteViewAccentLine.setBackgroundColor(getLineColor(isOutgoingMessage))
         } else if (attachments != null) {
             binding.quoteViewAttachmentPreviewImageView.imageTintList = ColorStateList.valueOf(textColor)
-            binding.quoteViewAttachmentPreviewImageView.isVisible = false
+            binding.quoteViewAttachmentPreviewImageView.isVisible = true
             binding.quoteViewAttachmentThumbnailImageView.root.isVisible = false
             when {
                 attachments.audioSlide != null -> {
-                    binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_microphone)
-                    binding.quoteViewAttachmentPreviewImageView.isVisible = true
-
                     val isVoiceNote = attachments.isVoiceNote
-                    binding.quoteViewBodyTextView.text = if (isVoiceNote) {
-                        resources.getString(R.string.messageVoice)
+                    if (isVoiceNote) {
+                        updateQuoteTextIfEmpty(resources.getString(R.string.messageVoice))
+                        binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_mic)
                     } else {
-                        resources.getString(R.string.audio)
+                        updateQuoteTextIfEmpty(resources.getString(R.string.audio))
+                        binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_volume_2)
                     }
                 }
                 attachments.documentSlide != null -> {
-                    binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_document_large_light)
-                    binding.quoteViewAttachmentPreviewImageView.isVisible = true
-                    binding.quoteViewBodyTextView.text = resources.getString(R.string.document)
+                    binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_file)
+                    updateQuoteTextIfEmpty(resources.getString(R.string.document))
                 }
                 attachments.thumbnailSlide != null -> {
                     val slide = attachments.thumbnailSlide!!
-                    // This internally fetches the thumbnail
-                    binding.quoteViewAttachmentThumbnailImageView
-                        .root.setRoundedCorners(toPx(4, resources))
-                    binding.quoteViewAttachmentThumbnailImageView.root.setImageResource(glide, slide, false)
-                    binding.quoteViewAttachmentThumbnailImageView.root.isVisible = true
-                    binding.quoteViewBodyTextView.text = if (MediaUtil.isVideo(slide.asAttachment())) resources.getString(R.string.video) else resources.getString(R.string.image)
+
+                    if (MediaUtil.isVideo(slide.asAttachment())){
+                        updateQuoteTextIfEmpty(resources.getString(R.string.video))
+                        binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_square_play)
+                    } else {
+                        updateQuoteTextIfEmpty(resources.getString(R.string.image))
+                        binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_image)
+                    }
+
+                    // display the image if we are in the appropriate state
+                    if(attachments.asAttachments().all { it.isDone }) {
+                        binding.quoteViewAttachmentThumbnailImageView
+                            .root.setRoundedCorners(toPx(4, resources))
+                        binding.quoteViewAttachmentThumbnailImageView.root.setImageResource(
+                            glide,
+                            slide,
+                            false
+                        )
+                        binding.quoteViewAttachmentThumbnailImageView.root.isVisible = true
+                        binding.quoteViewAttachmentPreviewImageView.isVisible = false
+                    }
+
                 }
             }
+        }
+    }
+
+    private fun updateQuoteTextIfEmpty(text: String){
+        if(binding.quoteViewBodyTextView.text.isNullOrEmpty()){
+            binding.quoteViewBodyTextView.text = text
         }
     }
     // endregion
@@ -155,6 +212,5 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
 }
 
 interface QuoteViewDelegate {
-
     fun cancelQuoteDraft()
 }

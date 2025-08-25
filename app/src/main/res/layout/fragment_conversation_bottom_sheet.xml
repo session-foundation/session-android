@@ -14,7 +14,7 @@
         style="@style/BottomSheetActionItem"
         android:contentDescription="@string/AccessibilityId_contactUserDetails"
         android:text="@string/contactUserDetails"
-        app:drawableStartCompat="@drawable/ic_info_outline_white_24dp"
+        app:drawableStartCompat="@drawable/ic_info"
         app:drawableTint="?attr/colorControlNormal" />
 
     <TextView
@@ -39,7 +39,7 @@
         android:contentDescription="@string/AccessibilityId_pin"
         android:text="@string/pin"
         android:visibility="gone"
-        app:drawableStartCompat="@drawable/ic_outline_pin_24"
+        app:drawableStartCompat="@drawable/ic_pin"
         app:drawableTint="?attr/colorControlNormal"
         tools:visibility="visible" />
 
@@ -48,7 +48,7 @@
         style="@style/BottomSheetActionItem"
         android:text="@string/pinUnpin"
         android:visibility="gone"
-        app:drawableStartCompat="@drawable/ic_outline_pin_off_24"
+        app:drawableStartCompat="@drawable/ic_pin_off"
         app:drawableTint="?attr/colorControlNormal"
         tools:visibility="visible" />
 
@@ -58,7 +58,7 @@
         android:contentDescription="@string/AccessibilityId_block"
         android:text="@string/block"
         android:visibility="gone"
-        app:drawableStartCompat="@drawable/ic_baseline_block_24"
+        app:drawableStartCompat="@drawable/ic_user_round_x"
         app:drawableTint="?attr/colorControlNormal"
         tools:visibility="visible" />
 
@@ -67,37 +67,16 @@
         style="@style/BottomSheetActionItem"
         android:text="@string/blockUnblock"
         android:visibility="gone"
-        app:drawableStartCompat="@drawable/ic_baseline_done_24"
+        app:drawableStartCompat="@drawable/ic_check"
         app:drawableTint="?attr/colorControlNormal"
         tools:visibility="visible" />
-
-    <TextView
-        android:id="@+id/muteNotificationsTextView"
-        style="@style/BottomSheetActionItem"
-        android:contentDescription="@string/AccessibilityId_notificationsMute"
-        android:text="@string/notificationsMute"
-        app:drawableStartCompat="@drawable/ic_outline_notifications_off_24"
-        app:drawableTint="?attr/colorControlNormal"
-        tools:visibility="visible"
-        android:visibility="gone"
-        />
-
-    <TextView
-        android:id="@+id/unMuteNotificationsTextView"
-        style="@style/BottomSheetActionItem"
-        android:text="@string/notificationsMuteUnmute"
-        app:drawableStartCompat="@drawable/ic_outline_notifications_active_24"
-        app:drawableTint="?attr/colorControlNormal"
-        tools:visibility="visible"
-        android:visibility="gone"
-        />
 
     <TextView
         android:id="@+id/notificationsTextView"
         style="@style/BottomSheetActionItem"
         android:text="@string/sessionNotifications"
         app:drawableTint="?attr/colorControlNormal"
-        app:drawableStartCompat="@drawable/ic_outline_notification_important_24"
+        app:drawableStartCompat="@drawable/ic_volume_2"
         tools:visibility="visible"
         android:visibility="gone"
         />
@@ -109,7 +88,16 @@
         android:visibility="gone"
         tools:visibility="visible"
         app:drawableTint="?attr/colorControlNormal"
-        app:drawableStartCompat="@drawable/ic_outline_mark_chat_read_24" />
+        app:drawableStartCompat="@drawable/ic_mail_open" />
+
+    <TextView
+        android:id="@+id/markAsUnreadTextView"
+        style="@style/BottomSheetActionItem"
+        android:text="@string/messageMarkUnread"
+        android:visibility="gone"
+        tools:visibility="visible"
+        app:drawableTint="?attr/colorControlNormal"
+        app:drawableStartCompat="@drawable/ic_mail" />
 
     <TextView
         android:id="@+id/deleteTextView"
@@ -117,6 +105,14 @@
         android:contentDescription="@string/AccessibilityId_delete"
         android:text="@string/delete"
         app:drawableTint="?attr/colorControlNormal"
-        tools:drawableStartCompat="@drawable/ic_baseline_delete_24" />
+        tools:drawableStartCompat="@drawable/ic_trash_2" />
+
+    <TextView
+        android:id="@+id/deleteContactTextView"
+        style="@style/BottomSheetActionItem"
+        android:contentDescription="@string/qa_conversation_settings_delete_contact"
+        android:text="@string/contactDelete"
+        app:drawableTint="?attr/colorControlNormal"
+        app:drawableStartCompat="@drawable/ic_user_round_trash" />
 
 </LinearLayout>

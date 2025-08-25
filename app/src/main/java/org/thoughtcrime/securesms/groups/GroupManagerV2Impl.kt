@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.groups
 
 import android.content.Context
 import com.google.protobuf.ByteString
+import com.squareup.phrase.Phrase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -12,6 +13,9 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.ED25519
+import network.loki.messenger.libsession_util.Namespace
+import network.loki.messenger.libsession_util.util.Bytes.Companion.toBytes
 import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
@@ -32,7 +36,6 @@ import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildDeleteMemberContentSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildInfoChangeSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildMemberChangeSignature
-import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeAPI
@@ -42,6 +45,7 @@ import org.session.libsession.snode.model.BatchResponse
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.SSKEnvironment
+import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.waitUntilGroupConfigsPushed
@@ -54,7 +58,6 @@ import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateM
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.Namespace
 import org.thoughtcrime.securesms.configs.ConfigUploader
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
@@ -95,9 +98,15 @@ class GroupManagerV2Impl @Inject constructor(
         return checkNotNull(
             configFactory.getGroup(group)
                 ?.adminKey
+                ?.data
                 ?.takeIf { it.isNotEmpty() }
         ) { "Only admin is allowed to invite members" }
     }
+
+    // Comparator to sort group members, ensuring a consistent order.
+    // This is more for the benefit of testing rather than correctness.
+    private val groupMemberComparator: GroupMemberComparator get() =
+        GroupMemberComparator(AccountId(requireNotNull(storage.getUserPublicKey()) { "User not logged in"}))
 
     override suspend fun createGroup(
         groupName: String,
@@ -119,8 +128,8 @@ class GroupManagerV2Impl @Inject constructor(
                 )
         }
 
-        val adminKey = checkNotNull(group.adminKey) { "Admin key is null for new group creation." }
-        val groupId = group.groupAccountId
+        val adminKey = checkNotNull(group.adminKey?.data) { "Admin key is null for new group creation." }
+        val groupId = AccountId(group.groupAccountId)
 
         val memberAsRecipients = members.map {
             Recipient.from(application, Address.fromSerialized(it.hexString), false)
@@ -136,7 +145,7 @@ class GroupManagerV2Impl @Inject constructor(
             // Add members
             for (member in memberAsRecipients) {
                 newGroupConfigs.groupMembers.set(
-                    newGroupConfigs.groupMembers.getOrConstruct(member.address.serialize()).apply {
+                    newGroupConfigs.groupMembers.getOrConstruct(member.address.toString()).apply {
                         setName(member.name)
                         setProfilePic(member.profileAvatar?.let { url ->
                             member.profileKey?.let { key -> UserPic(url, key) }
@@ -267,7 +276,7 @@ class GroupManagerV2Impl @Inject constructor(
             }
 
             configs.rekey()
-            newMembers.map { configs.groupKeys.getSubAccountToken(it) }
+            newMembers.map { configs.groupKeys.getSubAccountToken(it.hexString) }
         }
 
         // Call un-revocate API on new members, in case they have been removed before
@@ -298,6 +307,8 @@ class GroupManagerV2Impl @Inject constructor(
 
                 configs.groupInfo.getName().orEmpty()
             }
+
+            Log.w(TAG, "Failed to invite members to group $group", e)
 
             throw GroupInviteException(
                 isPromotion = false,
@@ -330,16 +341,16 @@ class GroupManagerV2Impl @Inject constructor(
         newMembers: Collection<AccountId>,
     ) {
         val timestamp = clock.currentTimeMills()
-        val signature = SodiumUtilities.sign(
-            buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.ADDED, timestamp),
-            adminKey
+        val signature = ED25519.sign(
+            message = buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.ADDED, timestamp),
+            ed25519PrivateKey = adminKey
         )
 
         val updatedMessage = GroupUpdated(
             GroupUpdateMessage.newBuilder()
                 .setMemberChangeMessage(
                     GroupUpdateMemberChangeMessage.newBuilder()
-                        .addAllMemberSessionIds(newMembers.map { it.hexString })
+                        .addAllMemberSessionIds(newMembers.sortedWith(groupMemberComparator).map { it.hexString })
                         .setType(GroupUpdateMemberChangeMessage.Type.ADDED)
                         .setAdminSignature(ByteString.copyFrom(signature))
                 )
@@ -367,18 +378,18 @@ class GroupManagerV2Impl @Inject constructor(
         )
 
         val timestamp = clock.currentTimeMills()
-        val signature = SodiumUtilities.sign(
-            buildMemberChangeSignature(
+        val signature = ED25519.sign(
+            message = buildMemberChangeSignature(
                 GroupUpdateMemberChangeMessage.Type.REMOVED,
                 timestamp
             ),
-            adminKey
+            ed25519PrivateKey = adminKey
         )
 
         val updateMessage = GroupUpdateMessage.newBuilder()
             .setMemberChangeMessage(
                 GroupUpdateMemberChangeMessage.newBuilder()
-                    .addAllMemberSessionIds(removedMembers.map { it.hexString })
+                    .addAllMemberSessionIds(removedMembers.sortedWith(groupMemberComparator).map { it.hexString })
                     .setType(GroupUpdateMemberChangeMessage.Type.REMOVED)
                     .setAdminSignature(ByteString.copyFrom(signature))
             )
@@ -401,7 +412,7 @@ class GroupManagerV2Impl @Inject constructor(
         if (threadId != null) {
             for (member in members) {
                 for (msg in mmsSmsDatabase.getUserMessages(threadId, member.hexString)) {
-                    val serverHash = lokiDatabase.getMessageServerHash(msg.id, msg.isMms)
+                    val serverHash = lokiDatabase.getMessageServerHash(msg.messageId)
                     if (serverHash != null) {
                         messagesToDelete.add(serverHash)
                     }
@@ -415,16 +426,32 @@ class GroupManagerV2Impl @Inject constructor(
             return@launchAndWait
         }
 
-        val groupAdminAuth = configFactory.getGroup(groupAccountId)?.adminKey?.let {
+        val groupAdminAuth = configFactory.getGroup(groupAccountId)?.adminKey?.data?.let {
             OwnedSwarmAuth.ofClosedGroup(groupAccountId, it)
         } ?: return@launchAndWait
 
         SnodeAPI.deleteMessage(groupAccountId.hexString, groupAdminAuth, messagesToDelete)
     }
 
+    override suspend fun clearAllMessagesForEveryone(groupAccountId: AccountId, deletedHashes: List<String?>) {
+        // only admins can perform these tasks
+        val groupAdminAuth = configFactory.getGroup(groupAccountId)?.adminKey?.data?.let {
+            OwnedSwarmAuth.ofClosedGroup(groupAccountId, it)
+        } ?: return
+
+        // change the delete_before
+        configFactory.withMutableGroupConfigs(groupAccountId) { configs ->
+            configs.groupInfo.setDeleteBefore(clock.currentTimeSeconds())
+        }
+
+        // remove messages from swarm SnodeAPI.deleteMessage
+        val cleanedHashes: List<String> = deletedHashes.filter { !it.isNullOrEmpty() }.filterNotNull()
+        if(cleanedHashes.isNotEmpty()) SnodeAPI.deleteMessage(groupAccountId.hexString, groupAdminAuth, cleanedHashes)
+    }
+
     override suspend fun handleMemberLeftMessage(memberId: AccountId, group: AccountId) = scope.launchAndWait(group, "Handle member left message") {
         val closedGroup = configFactory.getGroup(group) ?: return@launchAndWait
-        val groupAdminKey = closedGroup.adminKey
+        val groupAdminKey = closedGroup.adminKey?.data
 
         if (groupAdminKey != null) {
             flagMembersForRemoval(
@@ -437,73 +464,11 @@ class GroupManagerV2Impl @Inject constructor(
     }
 
     override suspend fun leaveGroup(groupId: AccountId) {
-        scope.launchAndWait(groupId, "Leave group") {
-            withContext(SupervisorJob()) {
-                val group = configFactory.getGroup(groupId)
+        // Insert the control message immediately so we can see the leaving message
+        storage.insertGroupInfoLeaving(groupId)
 
-                storage.insertGroupInfoLeaving(groupId)
-
-                try {
-                    if (group?.destroyed != true) {
-                        // Only send the left/left notification group message when we are not kicked and we are not the only admin (only admin has a special treatment)
-                        val weAreTheOnlyAdmin = configFactory.withGroupConfigs(groupId) { config ->
-                            val allMembers = config.groupMembers.all()
-                            allMembers.count { it.admin } == 1 &&
-                                    allMembers.first { it.admin }
-                                        .accountIdString() == storage.getUserPublicKey()
-                        }
-
-                        if (group != null && !group.kicked && !weAreTheOnlyAdmin) {
-                            val address = Address.fromSerialized(groupId.hexString)
-
-                            // Always send a "XXX left" message to the group if we can
-                            MessageSender.send(
-                                GroupUpdated(
-                                    GroupUpdateMessage.newBuilder()
-                                        .setMemberLeftNotificationMessage(DataMessage.GroupUpdateMemberLeftNotificationMessage.getDefaultInstance())
-                                        .build()
-                                ),
-                                address
-                            )
-
-                            // If we are not the only admin, send a left message for other admin to handle the member removal
-                            MessageSender.send(
-                                GroupUpdated(
-                                    GroupUpdateMessage.newBuilder()
-                                        .setMemberLeftMessage(DataMessage.GroupUpdateMemberLeftMessage.getDefaultInstance())
-                                        .build()
-                                ),
-                                address,
-                            )
-                        }
-
-                        // If we are the only admin, leaving this group will destroy the group
-                        if (weAreTheOnlyAdmin) {
-                            configFactory.withMutableGroupConfigs(groupId) { configs ->
-                                configs.groupInfo.destroyGroup()
-                            }
-
-                            // Must wait until the config is pushed, otherwise if we go through the rest
-                            // of the code it will destroy the conversation, destroying the necessary configs
-                            // along the way, we won't be able to push the "destroyed" state anymore.
-                            configFactory.waitUntilGroupConfigsPushed(groupId)
-                        }
-                    }
-
-                    // Delete conversation and group configs
-                    storage.getThreadId(Address.fromSerialized(groupId.hexString))
-                        ?.let(storage::deleteConversation)
-                    configFactory.removeGroup(groupId)
-                    lokiAPIDatabase.clearLastMessageHashes(groupId.hexString)
-                    lokiAPIDatabase.clearReceivedMessageHashValues(groupId.hexString)
-                } catch (e: Exception) {
-                    storage.insertGroupInfoErrorQuit(groupId)
-                    throw e
-                } finally {
-                    storage.deleteGroupInfoMessages(groupId, UpdateMessageData.Kind.GroupLeaving::class.java)
-                }
-            }
-        }
+        // The group leaving work could start or wait depend on the network condition
+        GroupLeavingWorker.schedule(context = application, groupId)
     }
 
     override suspend fun promoteMember(
@@ -525,16 +490,16 @@ class GroupManagerV2Impl @Inject constructor(
 
             // Build a group update message to the group telling members someone has been promoted
             val timestamp = clock.currentTimeMills()
-            val signature = SodiumUtilities.sign(
-                buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.PROMOTED, timestamp),
-                adminKey
+            val signature = ED25519.sign(
+                message = buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.PROMOTED, timestamp),
+                ed25519PrivateKey = adminKey
             )
 
             val message = GroupUpdated(
                 GroupUpdateMessage.newBuilder()
                     .setMemberChangeMessage(
                         GroupUpdateMemberChangeMessage.newBuilder()
-                            .addAllMemberSessionIds(members.map { it.hexString })
+                            .addAllMemberSessionIds(members.sortedWith(groupMemberComparator).map { it.hexString })
                             .setType(GroupUpdateMemberChangeMessage.Type.PROMOTED)
                             .setAdminSignature(ByteString.copyFrom(signature))
                     )
@@ -642,7 +607,10 @@ class GroupManagerV2Impl @Inject constructor(
             if (approved) {
                 approveGroupInvite(group, groupInviteMessageHash)
             } else {
-                configFactory.withMutableUserConfigs { it.userGroups.eraseClosedGroup(groupId.hexString) }
+                configFactory.withMutableUserConfigs {
+                    it.userGroups.eraseClosedGroup(groupId.hexString)
+                    it.convoInfoVolatile.eraseClosedGroup(groupId.hexString)
+                }
                 storage.deleteConversation(threadId)
 
                 if (groupInviteMessageHash != null) {
@@ -678,14 +646,15 @@ class GroupManagerV2Impl @Inject constructor(
         withTimeout(20_000L) {
             // We must tell the poller to poll once, as we could have received this invitation
             // in the background where the poller isn't running
-            groupPollerManager.pollOnce(group.groupAccountId)
+            val groupId = AccountId(group.groupAccountId)
+            groupPollerManager.pollOnce(groupId)
 
-            groupPollerManager.watchGroupPollingState(group.groupAccountId)
+            groupPollerManager.watchGroupPollingState(groupId)
                 .filter { it.hadAtLeastOneSuccessfulPoll }
                 .first()
         }
 
-        val adminKey = group.adminKey
+        val adminKey = group.adminKey?.data
         if (adminKey == null) {
             // Send an invite response to the group if we are invited as a regular member
             val inviteResponse = GroupUpdateInviteResponseMessage.newBuilder()
@@ -696,12 +665,12 @@ class GroupManagerV2Impl @Inject constructor(
             // this will fail the first couple of times :)
             MessageSender.sendNonDurably(
                 responseMessage,
-                Destination.ClosedGroup(group.groupAccountId.hexString),
+                Destination.ClosedGroup(group.groupAccountId),
                 isSyncMessage = false
             )
         } else {
             // If we are invited as admin, we can just update the group info ourselves
-            configFactory.withMutableGroupConfigs(group.groupAccountId) { configs ->
+            configFactory.withMutableGroupConfigs(AccountId(group.groupAccountId)) { configs ->
                 configs.groupKeys.loadAdminKey(adminKey)
 
                 configs.groupMembers.get(key)?.let { member ->
@@ -777,7 +746,7 @@ class GroupManagerV2Impl @Inject constructor(
             val adminKey = GroupInfo.ClosedGroupInfo.adminKeyFromSeed(adminKeySeed)
 
             configFactory.withMutableUserConfigs {
-                it.userGroups.set(group.copy(adminKey = adminKey))
+                it.userGroups.set(group.copy(adminKey = adminKey.toBytes()))
             }
 
             // Update our promote state
@@ -830,9 +799,9 @@ class GroupManagerV2Impl @Inject constructor(
         val shouldAutoApprove =
             storage.getRecipientApproved(Address.fromSerialized(inviter.hexString))
         val closedGroupInfo = GroupInfo.ClosedGroupInfo(
-            groupAccountId = groupId,
-            adminKey = authDataOrAdminSeed.takeIf { fromPromotion }?.let { GroupInfo.ClosedGroupInfo.adminKeyFromSeed(it) },
-            authData = authDataOrAdminSeed.takeIf { !fromPromotion },
+            groupAccountId = groupId.hexString,
+            adminKey = authDataOrAdminSeed.takeIf { fromPromotion }?.let { GroupInfo.ClosedGroupInfo.adminKeyFromSeed(it) }?.toBytes(),
+            authData = authDataOrAdminSeed.takeIf { !fromPromotion }?.toBytes(),
             priority = PRIORITY_VISIBLE,
             invited = !shouldAutoApprove,
             name = groupName,
@@ -885,7 +854,7 @@ class GroupManagerV2Impl @Inject constructor(
         }
 
         val adminKey = configFactory.getGroup(groupId)?.adminKey
-        if (adminKey == null || adminKey.isEmpty()) {
+        if (adminKey == null || adminKey.data.isEmpty()) {
             return@launchAndWait // We don't have the admin key, we can't process the invite response
         }
 
@@ -955,9 +924,9 @@ class GroupManagerV2Impl @Inject constructor(
             }
 
             val timestamp = clock.currentTimeMills()
-            val signature = SodiumUtilities.sign(
-                buildInfoChangeSignature(GroupUpdateInfoChangeMessage.Type.NAME, timestamp),
-                adminKey
+            val signature = ED25519.sign(
+                message = buildInfoChangeSignature(GroupUpdateInfoChangeMessage.Type.NAME, timestamp),
+                ed25519PrivateKey = adminKey
             )
 
             val message = GroupUpdated(
@@ -975,6 +944,17 @@ class GroupManagerV2Impl @Inject constructor(
 
             storage.insertGroupInfoChange(message, groupId)
             MessageSender.sendAndAwait(message, Address.fromSerialized(groupId.hexString))
+        }
+
+    override suspend fun setDescription(groupId: AccountId, newDescription: String): Unit =
+        scope.launchAndWait(groupId, "Set group description") {
+            requireAdminAccess(groupId)
+
+            configFactory.withMutableGroupConfigs(groupId) { configs ->
+                if (configs.groupInfo.getDescription() != newDescription) {
+                    configs.groupInfo.setDescription(newDescription)
+                }
+            }
         }
 
     override suspend fun requestMessageDeletion(
@@ -1006,7 +986,7 @@ class GroupManagerV2Impl @Inject constructor(
         }
 
         // If we are admin, we can delete the messages from the group swarm
-        group.adminKey?.let { adminKey ->
+        group.adminKey?.data?.let { adminKey ->
             SnodeAPI.deleteMessage(
                 publicKey = groupId.hexString,
                 swarmAuth = OwnedSwarmAuth.ofClosedGroup(groupId, adminKey),
@@ -1016,14 +996,14 @@ class GroupManagerV2Impl @Inject constructor(
 
         // Construct a message to ask members to delete the messages, sign if we are admin, then send
         val timestamp = clock.currentTimeMills()
-        val signature = group.adminKey?.let { key ->
-            SodiumUtilities.sign(
-                buildDeleteMemberContentSignature(
+        val signature = group.adminKey?.data?.let { key ->
+            ED25519.sign(
+                message = buildDeleteMemberContentSignature(
                     memberIds = emptyList(),
                     messageHashes,
                     timestamp
                 ),
-                key
+                ed25519PrivateKey = key
             )
         }
         val message = GroupUpdated(
@@ -1093,7 +1073,7 @@ class GroupManagerV2Impl @Inject constructor(
         }
 
         // Delete from swarm if we are admin
-        val adminKey = configFactory.getGroup(groupId)?.adminKey
+        val adminKey = configFactory.getGroup(groupId)?.adminKey?.data
         if (adminKey != null) {
 
             // If hashes are given, these are the messages to delete. To be able to delete these
@@ -1160,9 +1140,9 @@ class GroupManagerV2Impl @Inject constructor(
 
         // Construct a message to notify the group members about the expiration timer change
         val timestamp = clock.currentTimeMills()
-        val signature = SodiumUtilities.sign(
-            buildInfoChangeSignature(GroupUpdateInfoChangeMessage.Type.DISAPPEARING_MESSAGES, timestamp),
-            adminKey
+        val signature = ED25519.sign(
+            message = buildInfoChangeSignature(GroupUpdateInfoChangeMessage.Type.DISAPPEARING_MESSAGES, timestamp),
+            ed25519PrivateKey = adminKey
         )
 
         val message = GroupUpdated(
@@ -1183,6 +1163,47 @@ class GroupManagerV2Impl @Inject constructor(
 
         storage.deleteGroupInfoMessages(groupId, UpdateMessageData.Kind.GroupExpirationUpdated::class.java)
         storage.insertGroupInfoChange(message, groupId)
+    }
+
+    override fun getLeaveGroupConfirmationDialogData(groupId: AccountId, name: String): GroupManagerV2.ConfirmDialogData? {
+        val groupData = configFactory.getGroup(groupId) ?: return null
+
+        var title = R.string.groupDelete
+        var message: CharSequence = ""
+        var positiveButton = R.string.delete
+        var positiveQaTag = R.string.qa_conversation_settings_dialog_delete_group_confirm
+        var negativeQaTag = R.string.qa_conversation_settings_dialog_delete_group_cancel
+
+
+        if(!groupData.shouldPoll){
+            message = Phrase.from(application, R.string.groupDeleteDescriptionMember)
+                .put(GROUP_NAME_KEY, name)
+                .format()
+
+        } else if (groupData.hasAdminKey()) {
+            message = Phrase.from(application, R.string.groupDeleteDescription)
+                .put(GROUP_NAME_KEY, name)
+                .format()
+        } else {
+            message = Phrase.from(application, R.string.groupLeaveDescription)
+                .put(GROUP_NAME_KEY, name)
+                .format()
+
+            title = R.string.groupLeave
+            positiveButton = R.string.leave
+            positiveQaTag = R.string.qa_conversation_settings_dialog_leave_group_confirm
+            negativeQaTag = R.string.qa_conversation_settings_dialog_leave_group_cancel
+        }
+
+
+        return GroupManagerV2.ConfirmDialogData(
+                title = application.getString(title),
+                message = message,
+                positiveText = positiveButton,
+                negativeText = R.string.cancel,
+                positiveQaTag = positiveQaTag,
+                negativeQaTag = negativeQaTag,
+            )
     }
 
     private fun BatchResponse.requireAllRequestsSuccessful(errorMessage: String) {

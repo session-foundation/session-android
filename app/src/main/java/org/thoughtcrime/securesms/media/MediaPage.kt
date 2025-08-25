@@ -10,11 +10,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
@@ -27,7 +29,6 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -98,6 +99,10 @@ fun MediaPage(
                             )
                         }
                     }
+
+                    item {
+                        Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
+                    }
                 }
             }
         }
@@ -153,29 +158,20 @@ private fun ThumbnailRow(
                             it.diskCacheStrategy(DiskCacheStrategy.NONE)
                         }
                     } else {
-                        // The resource given by the placeholder needs tinting according to our theme.
-                        // But the missing thumbnail picture does not.
-                        var (placeholder, shouldTint) = if (item.hasPlaceholder) {
-                            item.placeholder(LocalContext.current) to true
+
+                        val placeholder = if (item.hasPlaceholder) {
+                            item.placeholder(LocalContext.current)
                         } else {
-                            R.drawable.ic_missing_thumbnail_picture to false
+                            R.drawable.ic_triangle_alert
                         }
 
-                        if (placeholder == 0) {
-                            placeholder = R.drawable.ic_missing_thumbnail_picture
-                            shouldTint = false
-                        }
 
                         Image(
                             painter = painterResource(placeholder),
                             contentDescription = null,
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Inside,
-                            colorFilter = if (shouldTint) {
-                                ColorFilter.tint(LocalColors.current.textSecondary)
-                            } else {
-                                null
-                            }
+                            colorFilter = ColorFilter.tint(LocalColors.current.textSecondary)
                         )
                     }
 
@@ -193,7 +189,7 @@ private fun ThumbnailRow(
                                     modifier = Modifier.padding(start = LocalDimensions.current.xxxsSpacing),
                                     painter = painterResource(R.drawable.triangle_right),
                                     contentDescription = null,
-                                    colorFilter = ColorFilter.tint(LocalColors.current.primary)
+                                    colorFilter = ColorFilter.tint(LocalColors.current.accent)
                                 )
                             }
                         }
@@ -211,7 +207,8 @@ private fun ThumbnailRow(
                                     .fillMaxSize()
                                     .background(Color.Black.copy(alpha = 0.4f)),
                                 contentScale = ContentScale.Inside,
-                                painter = painterResource(R.drawable.ic_check_white_48dp),
+                                painter = painterResource(R.drawable.ic_check),
+                                colorFilter = ColorFilter.tint(Color.White),
                                 contentDescription = stringResource(R.string.AccessibilityId_select),
                             )
                         }

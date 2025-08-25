@@ -16,16 +16,13 @@ import org.thoughtcrime.securesms.createSessionDialog
 import org.thoughtcrime.securesms.ui.getSubbedCharSequence
 
 /** Shown upon sending a message to a user that's blocked. */
-class BlockedDialog(private val recipient: Recipient, private val context: Context) : DialogFragment() {
+class BlockedDialog(private val recipient: Recipient, private val contactName: String) : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog = createSessionDialog {
-        val accountID = recipient.address.toString()
-        val name = MessagingModuleConfiguration.shared.storage.getContactNameWithAccountID(accountID)
-
-        val explanationCS = context.getSubbedCharSequence(R.string.blockUnblockName, NAME_KEY to name)
+        val explanationCS = context.getSubbedCharSequence(R.string.blockUnblockName, NAME_KEY to contactName)
         val spannable = SpannableStringBuilder(explanationCS)
-        val startIndex = explanationCS.indexOf(name)
-        spannable.setSpan(StyleSpan(Typeface.BOLD), startIndex, startIndex + name.count(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        val startIndex = explanationCS.indexOf(contactName)
+        spannable.setSpan(StyleSpan(Typeface.BOLD), startIndex, startIndex + contactName.count(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
 
         title(resources.getString(R.string.blockUnblock))
         text(spannable)

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:contentDescription="@string/AccessibilityId_attachmentsClickToDownload"
+    android:orientation="horizontal">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/message_bubble_background"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingHorizontal="@dimen/message_spacing"
+        android:paddingVertical="@dimen/small_spacing">
+
+        <ImageView
+            android:id="@+id/pendingDownloadIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginEnd="8dp"
+            android:src="@drawable/ic_images"
+            app:tint="?android:textColorPrimary" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:textColor="?android:textColorPrimary"
+                android:maxWidth="240dp"
+                android:textSize="@dimen/medium_font_size"
+                tools:text="1.23MB • Failed to download" />
+
+            <TextView
+                android:id="@+id/subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/tapToRetry"
+                android:textColor="?android:textColorTertiary"
+                android:textSize="@dimen/small_font_size" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/errorIcon"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_gravity="center"
+        android:layout_marginStart="8dp"
+        android:visibility="gone"
+        tools:visibility="visible"
+        app:tint="@color/danger_dark"
+        android:src="@drawable/ic_triangle_alert" />
+
+</org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView>

@@ -17,14 +17,15 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 interface ThemeColors {
     // properties to override for each theme
     val isLight: Boolean
-    val primary: Color
-    val onInvertedBackgroundPrimary: Color
+    val accent: Color
+    val onInvertedBackgroundAccent: Color
     val textAlert: Color
     val danger: Color
     val warning: Color
     val disabled: Color
     val background: Color
     val backgroundSecondary: Color
+    val backgroundTertiary: Color
     val text: Color
     val textSecondary: Color
     val borders: Color
@@ -33,15 +34,15 @@ interface ThemeColors {
     val textBubbleReceived: Color
     val qrCodeContent: Color
     val qrCodeBackground: Color
-    val primaryButtonFill: Color
-    val primaryButtonFillText: Color
+    val accentButtonFillText: Color
+    val accentText: Color
 }
 
 // extra functions and properties that work for all themes
 val ThemeColors.textSelectionColors
     get() = TextSelectionColors(
-        handleColor = primary,
-        backgroundColor = primary.copy(alpha = 0.5f)
+        handleColor = accent,
+        backgroundColor = accent.copy(alpha = 0.5f)
     )
 
 fun ThemeColors.text(isError: Boolean): Color = if (isError) danger else text
@@ -95,19 +96,29 @@ fun transparentButtonColors() = ButtonDefaults.buttonColors(
 @Composable
 fun dangerButtonColors() = ButtonDefaults.buttonColors(
     containerColor = Color.Transparent,
-    contentColor = LocalColors.current.danger
+    contentColor = LocalColors.current.danger,
+    disabledContainerColor = Color.Transparent,
+    disabledContentColor = LocalColors.current.disabled
 )
 
+@Composable
+fun accentTextButtonColors() = ButtonDefaults.buttonColors(
+    containerColor = Color.Transparent,
+    contentColor = LocalColors.current.accentText,
+    disabledContainerColor = Color.Transparent,
+    disabledContentColor = LocalColors.current.disabled
+)
 
 // Our themes
-data class ClassicDark(override val primary: Color = primaryGreen) : ThemeColors {
+data class ClassicDark(override val accent: Color = primaryGreen) : ThemeColors {
     override val isLight = false
     override val danger = dangerDark
     override val warning = primaryOrange
     override val disabled = disabledDark
     override val background = classicDark0
     override val backgroundSecondary = classicDark1
-    override val onInvertedBackgroundPrimary = background
+    override val backgroundTertiary = classicDark2
+    override val onInvertedBackgroundAccent = background
     override val text = classicDark6
     override val textSecondary = classicDark5
     override val borders = classicDark3
@@ -116,19 +127,20 @@ data class ClassicDark(override val primary: Color = primaryGreen) : ThemeColors
     override val textBubbleReceived = Color.White
     override val qrCodeContent = background
     override val qrCodeBackground = text
-    override val primaryButtonFill = primary
-    override val primaryButtonFillText = Color.Black
+    override val accentButtonFillText = Color.Black
+    override val accentText = accent
     override val textAlert: Color = classicDark0
 }
 
-data class ClassicLight(override val primary: Color = primaryGreen) : ThemeColors {
+data class ClassicLight(override val accent: Color = primaryGreen) : ThemeColors {
     override val isLight = true
     override val danger = dangerLight
     override val warning = rust
     override val disabled = disabledLight
     override val background = classicLight6
     override val backgroundSecondary = classicLight5
-    override val onInvertedBackgroundPrimary = primary
+    override val backgroundTertiary = classicLight4
+    override val onInvertedBackgroundAccent = accent
     override val text = classicLight0
     override val textSecondary = classicLight1
     override val borders = classicLight3
@@ -137,19 +149,20 @@ data class ClassicLight(override val primary: Color = primaryGreen) : ThemeColor
     override val textBubbleReceived = classicLight4
     override val qrCodeContent = text
     override val qrCodeBackground = backgroundSecondary
-    override val primaryButtonFill = text
-    override val primaryButtonFillText = Color.White
+    override val accentButtonFillText = Color.Black
+    override val accentText = text
     override val textAlert: Color = classicLight0
 }
 
-data class OceanDark(override val primary: Color = primaryBlue) : ThemeColors {
+data class OceanDark(override val accent: Color = primaryBlue) : ThemeColors {
     override val isLight = false
     override val danger = dangerDark
     override val warning = primaryOrange
     override val disabled = disabledDark
     override val background = oceanDark2
     override val backgroundSecondary = oceanDark1
-    override val onInvertedBackgroundPrimary = background
+    override val backgroundTertiary = oceanDark0
+    override val onInvertedBackgroundAccent = background
     override val text = oceanDark7
     override val textSecondary = oceanDark5
     override val borders = oceanDark4
@@ -158,19 +171,20 @@ data class OceanDark(override val primary: Color = primaryBlue) : ThemeColors {
     override val textBubbleReceived = oceanDark4
     override val qrCodeContent = background
     override val qrCodeBackground = text
-    override val primaryButtonFill = primary
-    override val primaryButtonFillText = Color.Black
+    override val accentButtonFillText = Color.Black
+    override val accentText = accent
     override val textAlert: Color = oceanDark0
 }
 
-data class OceanLight(override val primary: Color = primaryBlue) : ThemeColors {
+data class OceanLight(override val accent: Color = primaryBlue) : ThemeColors {
     override val isLight = true
     override val danger = dangerLight
     override val warning = rust
     override val disabled = disabledLight
     override val background = oceanLight7
     override val backgroundSecondary = oceanLight6
-    override val onInvertedBackgroundPrimary = background
+    override val backgroundTertiary = oceanLight5
+    override val onInvertedBackgroundAccent = background
     override val text = oceanLight1
     override val textSecondary = oceanLight2
     override val borders = oceanLight3
@@ -179,8 +193,8 @@ data class OceanLight(override val primary: Color = primaryBlue) : ThemeColors {
     override val textBubbleReceived = oceanLight1
     override val qrCodeContent = text
     override val qrCodeBackground = backgroundSecondary
-    override val primaryButtonFill = text
-    override val primaryButtonFillText = Color.White
+    override val accentButtonFillText = Color.Black
+    override val accentText = text
     override val textAlert: Color = oceanLight0
 }
 
@@ -195,14 +209,20 @@ fun PreviewThemeColors(
 @Composable
 private fun ThemeColors() {
     Column {
-        Box(Modifier.background(LocalColors.current.primary)) {
-            Text("primary", style = LocalType.current.base)
+        Box(Modifier.background(LocalColors.current.accent)) {
+            Text("accent", style = LocalType.current.base)
+        }
+        Box(Modifier.background(LocalColors.current.accentText)) {
+            Text("accentText", style = LocalType.current.base)
         }
         Box(Modifier.background(LocalColors.current.background)) {
             Text("background", style = LocalType.current.base)
         }
         Box(Modifier.background(LocalColors.current.backgroundSecondary)) {
             Text("backgroundSecondary", style = LocalType.current.base)
+        }
+        Box(Modifier.background(LocalColors.current.backgroundTertiary)) {
+            Text("backgroundTertiary", style = LocalType.current.base)
         }
         Box(Modifier.background(LocalColors.current.text)) {
             Text("text", style = LocalType.current.base)

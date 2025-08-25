@@ -1,27 +1,28 @@
 package org.thoughtcrime.securesms.notifications
 
 import android.Manifest
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat.getString
-import com.goterl.lazysodium.interfaces.AEAD
-import com.goterl.lazysodium.utils.Key
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.Namespace
+import network.loki.messenger.libsession_util.SessionEncrypt
+import okio.ByteString.Companion.decodeHex
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.sending_receiving.notifications.PushNotificationMetadata
 import org.session.libsession.messaging.utilities.MessageWrapper
-import org.session.libsession.messaging.utilities.SodiumUtilities
-import org.session.libsession.messaging.utilities.SodiumUtilities.sodium
 import org.session.libsession.utilities.ConfigMessage
 import org.session.libsession.utilities.bencode.Bencode
 import org.session.libsession.utilities.bencode.BencodeList
@@ -31,26 +32,30 @@ import org.session.libsignal.protos.SignalServiceProtos.Envelope
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.Namespace
+import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.GroupRevokedMessageHandler
+import org.thoughtcrime.securesms.home.HomeActivity
+import java.security.SecureRandom
 import javax.inject.Inject
 
 private const val TAG = "PushHandler"
 
 class PushReceiver @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val configFactory: ConfigFactory,
     private val groupRevokedMessageHandler: GroupRevokedMessageHandler,
+    private val json: Json,
+    private val batchJobFactory: BatchMessageReceiveJob.Factory,
 ) {
-    private val json = Json { ignoreUnknownKeys = true }
 
     /**
      * Both push services should hit this method once they receive notification data
      * As long as it is properly formatted
      */
     fun onPushDataReceived(dataMap: Map<String, String>?) {
+        Log.d(TAG, "Push data received: $dataMap")
         addMessageReceiveJob(dataMap?.asPushData())
     }
 
@@ -132,9 +137,12 @@ class PushReceiver @Inject constructor(
                 }
 
                 namespace == Namespace.DEFAULT() || pushData?.metadata == null -> {
-                    // send a generic notification if we have no data
                     if (pushData?.data == null) {
-                        sendGenericNotification()
+                        Log.d(TAG, "Push data is null")
+                        if(pushData?.metadata?.data_too_long != true) {
+                            Log.d(TAG, "Sending a generic notification (data_too_long was false)")
+                            sendGenericNotification()
+                        }
                         return
                     }
 
@@ -152,7 +160,7 @@ class PushReceiver @Inject constructor(
             }
 
             if (params != null) {
-                JobQueue.shared.add(BatchMessageReceiveJob(listOf(params), null))
+                JobQueue.shared.add(batchJobFactory.create(listOf(params)))
             }
         } catch (e: Exception) {
             Log.d(TAG, "Failed to unwrap data for message due to error.", e)
@@ -172,13 +180,11 @@ class PushReceiver @Inject constructor(
         Log.d(TAG, "Successfully decrypted group message from $sender")
         return Envelope.parseFrom(envelopBytes)
             .toBuilder()
-            .setSource(sender.hexString)
+            .setSource(sender)
             .build()
     }
 
     private fun sendGenericNotification() {
-        Log.d(TAG, "Failed to decode data for message.")
-
         // no need to do anything if notification permissions are not granted
         if (ActivityCompat.checkSelfPermission(
                 context,
@@ -198,6 +204,7 @@ class PushReceiver @Inject constructor(
 
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
+            .setContentIntent(PendingIntent.getActivity(context, 0, Intent(context, HomeActivity::class.java), PendingIntent.FLAG_IMMUTABLE))
 
         NotificationManagerCompat.from(context).notify(11111, builder.build())
     }
@@ -221,18 +228,16 @@ class PushReceiver @Inject constructor(
         Log.d(TAG, "decrypt() called")
 
         val encKey = getOrCreateNotificationKey()
-        val nonce = encPayload.sliceArray(0 until AEAD.XCHACHA20POLY1305_IETF_NPUBBYTES)
-        val payload =
-            encPayload.sliceArray(AEAD.XCHACHA20POLY1305_IETF_NPUBBYTES until encPayload.size)
-        val padded = SodiumUtilities.decrypt(payload, encKey.asBytes, nonce)
-            ?: error("Failed to decrypt push notification")
-        val contentEndedAt = padded.indexOfLast { it.toInt() != 0 }
-        val decrypted = if (contentEndedAt >= 0) padded.sliceArray(0..contentEndedAt) else padded
+        val decrypted = SessionEncrypt.decryptPushNotification(
+            message = encPayload,
+            secretKey = encKey
+        ).data
+
         val bencoded = Bencode.Decoder(decrypted)
         val expectedList = (bencoded.decode() as? BencodeList)?.values
             ?: error("Failed to decode bencoded list from payload")
 
-        val metadataJson = (expectedList[0] as? BencodeString)?.value ?: error("no metadata")
+        val metadataJson = (expectedList.getOrNull(0) as? BencodeString)?.value ?: error("no metadata")
         val metadata: PushNotificationMetadata = json.decodeFromString(String(metadataJson))
 
         return PushData(
@@ -245,15 +250,15 @@ class PushReceiver @Inject constructor(
         }
     }
 
-    fun getOrCreateNotificationKey(): Key {
+    fun getOrCreateNotificationKey(): ByteArray {
         val keyHex = IdentityKeyUtil.retrieve(context, IdentityKeyUtil.NOTIFICATION_KEY)
         if (keyHex != null) {
-            return Key.fromHexString(keyHex)
+            return keyHex.decodeHex().toByteArray()
         }
 
         // generate the key and store it
-        val key = sodium.keygen(AEAD.Method.XCHACHA20_POLY1305_IETF)
-        IdentityKeyUtil.save(context, IdentityKeyUtil.NOTIFICATION_KEY, key.asHexString)
+        val key = ByteArray(32).also { SecureRandom().nextBytes(it) }
+        IdentityKeyUtil.save(context, IdentityKeyUtil.NOTIFICATION_KEY, key.toHexString())
         return key
     }
 

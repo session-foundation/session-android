@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -19,20 +19,21 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.squareup.phrase.Phrase
+import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.thoughtcrime.securesms.onboarding.OnboardingBackPressAlertDialog
 import org.thoughtcrime.securesms.onboarding.messagenotifications.MessageNotificationsViewModel.UiState
-import org.thoughtcrime.securesms.onboarding.ui.ContinuePrimaryOutlineButton
+import org.thoughtcrime.securesms.onboarding.ui.ContinueAccentOutlineButton
+import org.thoughtcrime.securesms.ui.components.CircularProgressIndicator
+import org.thoughtcrime.securesms.ui.components.RadioButton
+import org.thoughtcrime.securesms.ui.qaTag
+import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
-import org.thoughtcrime.securesms.ui.theme.LocalColors
-import org.thoughtcrime.securesms.ui.components.CircularProgressIndicator
-import org.thoughtcrime.securesms.ui.components.RadioButton
-import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.theme.LocalType
 
 @Composable
 internal fun MessageNotificationsScreen(
@@ -47,7 +48,7 @@ internal fun MessageNotificationsScreen(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            CircularProgressIndicator(color = LocalColors.current.primary)
+            CircularProgressIndicator(color = LocalColors.current.accent)
         }
 
         return
@@ -76,8 +77,9 @@ internal fun MessageNotificationsScreen(
 
         NotificationRadioButton(
             R.string.notificationsFastMode,
-            R.string.notificationsFastModeDescription,
-            modifier = Modifier.contentDescription(R.string.AccessibilityId_notificationsFastMode),
+            if(BuildConfig.FLAVOR == "huawei") R.string.notificationsFastModeDescriptionHuawei
+            else R.string.notificationsFastModeDescription,
+            modifier = Modifier.qaTag(R.string.AccessibilityId_notificationsFastMode),
             tag = R.string.recommended,
             checked = state.pushEnabled,
             onClick = { setEnabled(true) }
@@ -92,14 +94,14 @@ internal fun MessageNotificationsScreen(
         NotificationRadioButton(
             stringResource(R.string.notificationsSlowMode),
             explanationTxt,
-            modifier = Modifier.contentDescription(R.string.AccessibilityId_notificationsSlowMode),
+            modifier = Modifier.qaTag(R.string.AccessibilityId_notificationsSlowMode),
             checked = state.pushDisabled,
             onClick = { setEnabled(false) }
         )
 
         Spacer(Modifier.weight(1f))
 
-        ContinuePrimaryOutlineButton(Modifier.align(Alignment.CenterHorizontally), onContinue)
+        ContinueAccentOutlineButton(Modifier.align(Alignment.CenterHorizontally), onContinue)
     }
 }
 
@@ -144,7 +146,7 @@ private fun NotificationRadioButton(
                 .border(
                     LocalDimensions.current.borderStroke,
                     LocalColors.current.borders,
-                    RoundedCornerShape(8.dp)
+                    MaterialTheme.shapes.extraSmall
                 ),
         ) {
             Column(
@@ -164,7 +166,7 @@ private fun NotificationRadioButton(
                     Text(
                         stringResource(it),
                         modifier = Modifier.padding(top = LocalDimensions.current.xxsSpacing),
-                        color = LocalColors.current.primary,
+                        color = LocalColors.current.accent,
                         style = LocalType.current.h9
                     )
                 }

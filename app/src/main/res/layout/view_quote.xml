@@ -5,9 +5,8 @@
     android:id="@+id/mainQuoteViewContainer"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:background="#F00"
-    android:paddingTop="12dp"
-    android:paddingHorizontal="12dp"
+    android:paddingHorizontal="@dimen/message_spacing"
+    android:paddingTop="@dimen/message_spacing"
     app:quote_mode="regular">
 
     <View
@@ -39,7 +38,8 @@
             android:layout_height="20dp"
             android:layout_centerInParent="true"
             android:scaleType="centerInside"
-            android:src="@drawable/ic_microphone" />
+            app:tint="?message_sent_text_color"
+            android:src="@drawable/ic_mic" />
 
         <include layout="@layout/thumbnail_view"
             android:id="@+id/quoteViewAttachmentThumbnailImageView"
@@ -58,23 +58,17 @@
         app:barrierDirection="end"
         app:constraint_referenced_ids="quoteViewAttachmentPreviewContainer,quoteViewAccentLine" />
 
-    <TextView
-        android:id="@+id/quoteViewAuthorTextView"
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/quoteAuthor"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/medium_spacing"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:textColor="?android:textColorPrimary"
-        android:textSize="@dimen/small_font_size"
-        android:textStyle="bold"
-        android:maxWidth="240dp"
         app:layout_constraintBottom_toTopOf="@+id/quoteViewBodyTextView"
         app:layout_constraintHorizontal_bias="0"
         app:layout_constraintStart_toEndOf="@+id/quoteStartBarrier"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_chainStyle="packed"
-        tools:text="@tools:sample/full_names" />
+        android:layout_marginStart="@dimen/medium_spacing"/>
+
 
     <TextView
         android:id="@+id/quoteViewBodyTextView"
@@ -88,7 +82,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/quoteStartBarrier"
-        app:layout_constraintTop_toBottomOf="@+id/quoteViewAuthorTextView"
+        app:layout_constraintTop_toBottomOf="@+id/quoteAuthor"
         android:maxWidth="240dp"
         tools:maxLines="1"
         tools:text="@tools:sample/lorem/random" />
@@ -100,7 +94,7 @@
         android:layout_marginStart="@dimen/small_spacing"
         android:layout_marginEnd="@dimen/small_spacing"
         android:padding="6dp"
-        android:src="@drawable/ic_close_white_48dp"
+        android:src="@drawable/ic_x"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"

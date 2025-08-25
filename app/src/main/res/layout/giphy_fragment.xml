@@ -11,15 +11,14 @@
         android:layout_height="match_parent"
         android:scrollbars="vertical"/>
 
-    <com.github.ybq.android.spinkit.SpinKitView
-        style="@style/SpinKitView.Large.ThreeBounce"
+    <ProgressBar
         android:id="@+id/loading_progress"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
         android:layout_gravity="center"
-        android:visibility="visible"
-        app:SpinKit_Color="?android:textColorPrimary" />
+        android:indeterminateTint="?colorAccent"
+        android:indeterminate="true"/>
 
     <TextView
         android:id="@+id/no_results"

@@ -8,11 +8,17 @@ import android.content.Intent;
 
 import org.thoughtcrime.securesms.ApplicationContext;
 
+/**
+ * This is a [BroadcastReceiver] that receives the alarm event from the OS. The
+ * alarm is most likely set off by the disappearing message handling, which only requires the apps
+ * to be alive. So the whole purpose of this receiver is just to bring the app up (or keep it alive)
+ * when the alarm goes off. The disappearing message handling will pick themselves up from the
+ * previous states.
+ */
 public class ExpirationListener extends BroadcastReceiver {
 
   @Override
   public void onReceive(Context context, Intent intent) {
-    ApplicationContext.getInstance(context).getExpiringMessageManager().checkSchedule();
   }
 
   public static void setAlarm(Context context, long waitTimeMillis) {

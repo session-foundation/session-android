@@ -17,6 +17,7 @@ import android.widget.Space
 import android.widget.TextView
 import androidx.annotation.AttrRes
 import androidx.annotation.ColorRes
+import androidx.annotation.DrawableRes
 import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
 import androidx.annotation.StyleRes
@@ -110,8 +111,6 @@ class SessionDialogBuilder(val context: Context) {
     fun view(view: View) = contentView.addView(view)
 
     fun view(@LayoutRes layout: Int): View = LayoutInflater.from(context).inflate(layout, contentView)
-
-    fun iconAttribute(@AttrRes icon: Int): AlertDialog.Builder = dialogBuilder.setIconAttribute(icon)
 
     fun singleChoiceItems(
         options: Collection<String>,

@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.home.search
 
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,12 +12,19 @@ import network.loki.messenger.databinding.ViewGlobalSearchHeaderBinding
 import network.loki.messenger.databinding.ViewGlobalSearchResultBinding
 import network.loki.messenger.databinding.ViewGlobalSearchSubheaderBinding
 import org.session.libsession.utilities.GroupRecord
+import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.util.DateUtils
 import java.security.InvalidParameterException
-import org.session.libsession.messaging.contacts.Contact as ContactModel
 
-class GlobalSearchAdapter(private val modelCallback: (Model)->Unit): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+
+class GlobalSearchAdapter(
+    private val dateUtils: DateUtils,
+    private val onContactClicked: (Model) -> Unit,
+    private val onContactLongPressed: (Model.Contact) -> Unit,
+): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
         const val HEADER_VIEW_TYPE = 0
@@ -30,17 +38,25 @@ class GlobalSearchAdapter(private val modelCallback: (Model)->Unit): RecyclerVie
     fun setNewData(data: Pair<String, List<Model>>) = setNewData(data.first, data.second)
 
     fun setNewData(query: String, newData: List<Model>) {
-        val diffResult = DiffUtil.calculateDiff(GlobalSearchDiff(this.query, query, data, newData))
         this.query = query
-        data = newData
-        diffResult.dispatchUpdatesTo(this)
+
+        if (this.data.size > 500 || newData.size > 500) {
+            // For big data sets, we won't use DiffUtil to calculate the difference as it could be slow
+            this.data = newData
+            notifyDataSetChanged()
+        } else {
+            val diffResult =
+                DiffUtil.calculateDiff(GlobalSearchDiff(this.query, query, data, newData), false)
+            data = newData
+            diffResult.dispatchUpdatesTo(this)
+        }
     }
 
     override fun getItemViewType(position: Int): Int =
-        when(data[position]) {
-             is Model.Header -> HEADER_VIEW_TYPE
-             is Model.SubHeader -> SUB_HEADER_VIEW_TYPE
-             else -> CONTENT_VIEW_TYPE
+        when (data[position]) {
+            is Model.Header -> HEADER_VIEW_TYPE
+            is Model.SubHeader -> SUB_HEADER_VIEW_TYPE
+            else -> CONTENT_VIEW_TYPE
         }
 
     override fun getItemCount(): Int = data.size
@@ -55,7 +71,9 @@ class GlobalSearchAdapter(private val modelCallback: (Model)->Unit): RecyclerVie
             )
             else -> ContentView(
                 LayoutInflater.from(parent.context).inflate(R.layout.view_global_search_result, parent, false),
-                modelCallback
+                dateUtils = dateUtils,
+                onContactClicked = onContactClicked,
+                onContactLongPressed = onContactLongPressed
             )
         }
 
@@ -70,9 +88,9 @@ class GlobalSearchAdapter(private val modelCallback: (Model)->Unit): RecyclerVie
             return
         }
         when (holder) {
-            is HeaderView -> holder.bind(data[position] as Model.Header)
+            is HeaderView    -> holder.bind(data[position] as Model.Header)
             is SubHeaderView -> holder.bind(data[position] as Model.SubHeader)
-            is ContentView -> holder.bind(query.orEmpty(), data[position])
+            is ContentView   -> holder.bind(query.orEmpty(), data[position])
         }
     }
 
@@ -81,18 +99,14 @@ class GlobalSearchAdapter(private val modelCallback: (Model)->Unit): RecyclerVie
     }
 
     class HeaderView(view: View) : RecyclerView.ViewHolder(view) {
-
         val binding = ViewGlobalSearchHeaderBinding.bind(view)
-
         fun bind(header: Model.Header) {
-            binding.searchHeader.setText(header.title.string(binding.root.context))
+            binding.searchHeader.text = header.title.string(binding.root.context)
         }
     }
 
     class SubHeaderView(view: View) : RecyclerView.ViewHolder(view) {
-
         val binding = ViewGlobalSearchSubheaderBinding.bind(view)
-
         fun bind(header: Model.SubHeader) {
             binding.searchHeader.text = header.title.string(binding.root.context)
         }
@@ -104,7 +118,12 @@ class GlobalSearchAdapter(private val modelCallback: (Model)->Unit): RecyclerVie
         }
     }
 
-    class ContentView(view: View, private val modelCallback: (Model) -> Unit) : RecyclerView.ViewHolder(view) {
+    class ContentView(
+        view: View,
+        private val dateUtils: DateUtils,
+        private val onContactClicked: (Model) -> Unit,
+        private val onContactLongPressed: (Model.Contact) -> Unit,
+    ) : RecyclerView.ViewHolder(view) {
 
         val binding = ViewGlobalSearchResultBinding.bind(view)
 
@@ -117,26 +136,59 @@ class GlobalSearchAdapter(private val modelCallback: (Model)->Unit): RecyclerVie
             when (model) {
                 is Model.GroupConversation -> bindModel(query, model)
                 is Model.Contact -> bindModel(query, model)
-                is Model.Message -> bindModel(query, model)
+                is Model.Message -> bindModel(query, model, dateUtils)
                 is Model.SavedMessages -> bindModel(model)
+
                 else -> throw InvalidParameterException("Can't display as ContentView")
             }
-            binding.root.setOnClickListener { modelCallback(model) }
+            binding.root.setOnClickListener { onContactClicked(model) }
+
+            // Display the block / delete popup on long-press of a contact which isn't us
+            if (model is Model.Contact && !model.isSelf) {
+                binding.root.setOnLongClickListener {
+                    onContactLongPressed(model)
+                    true
+                }
+            }
         }
     }
 
-    sealed class Model {
-        data class Header(val title: GetString): Model() {
+    sealed interface Model {
+        data class Header(val title: GetString): Model {
             constructor(@StringRes title: Int): this(GetString(title))
             constructor(title: String): this(GetString(title))
         }
-        data class SubHeader(val title: GetString): Model() {
+        data class SubHeader(val title: GetString): Model {
             constructor(@StringRes title: Int): this(GetString(title))
             constructor(title: String): this(GetString(title))
         }
-        data class SavedMessages(val currentUserPublicKey: String): Model()
-        data class Contact(val contact: ContactModel, val name: String?, val isSelf: Boolean) : Model()
-        data class GroupConversation(val groupRecord: GroupRecord) : Model()
-        data class Message(val messageResult: MessageResult, val unread: Int, val isSelf: Boolean) : Model()
+
+        data class SavedMessages(val currentUserPublicKey: String): Model // Note: "Note to Self" counts as SavedMessages rather than a Contact where `isSelf` is true.
+        data class Contact(val contact: AccountId, val name: String, val isSelf: Boolean, val showProBadge: Boolean) : Model {
+            constructor(contact: org.session.libsession.messaging.contacts.Contact, isSelf: Boolean, showProBadge: Boolean):
+                    this(AccountId(contact.accountID), contact.getSearchName(), isSelf, showProBadge)
+        }
+        data class GroupConversation(
+            val isLegacy: Boolean,
+            val groupId: String,
+            val title: String,
+            val legacyMembersString: String?,
+            val showProBadge: Boolean
+        ) : Model {
+            constructor(context: Context, groupRecord: GroupRecord, showProBadge: Boolean):
+                    this(
+                        isLegacy = groupRecord.isLegacyGroup,
+                        groupId = groupRecord.encodedId,
+                        title = groupRecord.title,
+                        legacyMembersString = if (groupRecord.isLegacyGroup) {
+                            val recipients = groupRecord.members.map { Recipient.from(context, it, false) }
+                            recipients.joinToString(transform = Recipient::getSearchName)
+                        } else {
+                            null
+                        },
+                        showProBadge = showProBadge
+                    )
+        }
+        data class Message(val messageResult: MessageResult, val unread: Int, val isSelf: Boolean, val showProBadge: Boolean) : Model
     }
 }

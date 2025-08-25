@@ -11,7 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
-import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress;
+import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState;
 import org.session.libsession.messaging.sending_receiving.attachments.UriAttachment;
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview;
 import org.session.libsession.utilities.MediaTypes;
@@ -23,7 +23,7 @@ import org.thoughtcrime.securesms.net.CallRequestController;
 import org.thoughtcrime.securesms.net.CompositeRequestController;
 import org.thoughtcrime.securesms.net.ContentProxySafetyInterceptor;
 import org.thoughtcrime.securesms.net.RequestController;
-import org.thoughtcrime.securesms.providers.BlobProvider;
+import org.thoughtcrime.securesms.providers.BlobUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -178,12 +178,12 @@ public class LinkPreviewRepository {
     bitmap.compress(format, 80, baos);
 
     byte[] bytes = baos.toByteArray();
-    Uri    uri   = BlobProvider.getInstance().forData(bytes).createForSingleSessionInMemory();
+    Uri    uri   = BlobUtils.getInstance().forData(bytes).createForSingleSessionInMemory();
 
     return Optional.of(new UriAttachment(uri,
            uri,
            contentType,
-           AttachmentTransferProgress.TRANSFER_PROGRESS_STARTED,
+            AttachmentState.DOWNLOADING.getValue(),
            bytes.length,
            bitmap.getWidth(),
            bitmap.getHeight(),

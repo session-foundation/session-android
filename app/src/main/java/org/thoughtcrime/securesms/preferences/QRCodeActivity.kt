@@ -1,7 +1,7 @@
 package org.thoughtcrime.securesms.preferences
 
 import android.os.Bundle
-import androidx.compose.foundation.ExperimentalFoundationApi
+import android.view.View
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +13,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -22,28 +25,39 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.PublicKeyValidation
-import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
+import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.threadDatabase
 import org.thoughtcrime.securesms.permissions.Permissions
-import org.thoughtcrime.securesms.ui.theme.LocalDimensions
-import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.components.QRScannerScreen
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
-import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.setComposeContent
+import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
+import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.start
 
 private val TITLES = listOf(R.string.view, R.string.scan)
 
-class QRCodeActivity : PassphraseRequiredActionBarActivity() {
+class QRCodeActivity : ScreenLockActionBarActivity() {
+
+    override val applyDefaultWindowInsets: Boolean
+        get() = false
 
     private val errors = MutableSharedFlow<String>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
         super.onCreate(savedInstanceState, isReady)
+
+        // only apply inset padding at the top so that the bottom qr scanning can go all the way
+        findViewById<View>(android.R.id.content).applySafeInsetsPaddings(
+            consumeInsets = false,
+            applyBottom = false,
+        )
+
         supportActionBar!!.title = resources.getString(R.string.qrCode)
 
         setComposeContent {
@@ -76,7 +90,6 @@ class QRCodeActivity : PassphraseRequiredActionBarActivity() {
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun Tabs(accountId: String, errors: Flow<String>, onScan: (String) -> Unit) {
     val pagerState = rememberPagerState { TITLES.size }
@@ -107,7 +120,7 @@ fun QrPage(string: String) {
             string = string,
             modifier = Modifier
                 .padding(top = LocalDimensions.current.mediumSpacing, bottom = LocalDimensions.current.xsSpacing)
-                .contentDescription(R.string.AccessibilityId_qrCode),
+                .qaTag(R.string.AccessibilityId_qrCode),
             icon = R.drawable.session
         )
 

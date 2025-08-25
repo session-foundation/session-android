@@ -3,53 +3,16 @@ package org.thoughtcrime.securesms.webrtc
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.Build
-import android.telephony.PhoneStateListener
-import android.telephony.TelephonyCallback
-import android.telephony.TelephonyManager
-import androidx.annotation.RequiresApi
+import dagger.hilt.android.AndroidEntryPoint
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.service.WebRtcCallService
 import org.thoughtcrime.securesms.webrtc.locks.LockManager
+import javax.inject.Inject
 
 
-class HangUpRtcOnPstnCallAnsweredListener(private val hangupListener: ()->Unit): PhoneStateListener() {
-
-    companion object {
-        private val TAG = Log.tag(HangUpRtcOnPstnCallAnsweredListener::class.java)
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onCallStateChanged(state: Int, phoneNumber: String?) {
-        super.onCallStateChanged(state, phoneNumber)
-        if (state == TelephonyManager.CALL_STATE_OFFHOOK) {
-            hangupListener()
-            Log.i(TAG, "Device phone call ended Session call.")
-        }
-    }
-}
-
-@RequiresApi(Build.VERSION_CODES.S)
-class HangUpRtcTelephonyCallback(private val hangupListener: ()->Unit): TelephonyCallback(), TelephonyCallback.CallStateListener {
-
-    companion object {
-        private val TAG = Log.tag(HangUpRtcTelephonyCallback::class.java)
-    }
-
-    override fun onCallStateChanged(state: Int) {
-        if (state == TelephonyManager.CALL_STATE_OFFHOOK) {
-            hangupListener()
-            Log.i(TAG, "Device phone call ended Session call.")
-        }
-    }
-}
-
-class PowerButtonReceiver : BroadcastReceiver() {
+class PowerButtonReceiver(val onScreenOffChange: ()->Unit) : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (Intent.ACTION_SCREEN_OFF == intent.action) {
-            val serviceIntent = Intent(context,WebRtcCallService::class.java)
-                    .setAction(WebRtcCallService.ACTION_SCREEN_OFF)
-            context.startService(serviceIntent)
+            onScreenOffChange()
         }
     }
 }
@@ -64,13 +27,30 @@ class ProximityLockRelease(private val lockManager: LockManager): Thread.Uncaugh
     }
 }
 
-class WiredHeadsetStateReceiver: BroadcastReceiver() {
+class WiredHeadsetStateReceiver(val onWiredHeadsetChanged: (Boolean)->Unit): BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val state = intent.getIntExtra("state", -1)
-        val serviceIntent = Intent(context, WebRtcCallService::class.java)
-                .setAction(WebRtcCallService.ACTION_WIRED_HEADSET_CHANGE)
-                .putExtra(WebRtcCallService.EXTRA_AVAILABLE, state != 0)
+        onWiredHeadsetChanged(state != 0)
+    }
+}
 
-        context.startService(serviceIntent)
+
+@AndroidEntryPoint
+class EndCallReceiver(): BroadcastReceiver() {
+    @Inject
+    lateinit var webRtcCallBridge: WebRtcCallBridge
+
+    override fun onReceive(context: Context, intent: Intent) {
+        when(intent.action) {
+            WebRtcCallBridge.ACTION_LOCAL_HANGUP -> {
+                webRtcCallBridge.handleLocalHangup(null)
+            }
+
+            WebRtcCallBridge.ACTION_IGNORE_CALL -> {
+                webRtcCallBridge.handleIgnoreCall()
+            }
+
+            else -> webRtcCallBridge.handleDenyCall()
+        }
     }
 }
