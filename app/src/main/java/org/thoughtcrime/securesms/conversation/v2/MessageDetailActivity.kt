@@ -401,8 +401,8 @@ fun MessageProFeatures(
                 padding = PaddingValues(),
                 data = CTAFeature.Icon(
                     text = when(it){
-                        ProStatusManager.MessageProFeature.ProBadge -> Phrase.from(LocalContext.current, R.string.proBadge)
-                            .put(APP_PRO_KEY, NonTranslatableStringConstants.PRO)
+                        ProStatusManager.MessageProFeature.ProBadge -> Phrase.from(LocalContext.current, R.string.appProBadge)
+                            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                             .format()
                             .toString()
                         ProStatusManager.MessageProFeature.LongMessage -> stringResource(id = R.string.proIncreasedMessageLengthFeature)

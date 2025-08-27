@@ -356,7 +356,7 @@ data class MessageDetailsState(
     val proBadgeClickable: Boolean = false,
 ) {
     val fromTitle = GetString(R.string.from)
-    val canReply: Boolean get() = !readOnly && record?.isOpenGroupInvitation != true
+    val canReply: Boolean get() = !readOnly && record?.isOpenGroupInvitation != true && error == null
     val canDelete: Boolean get() = !readOnly
 }
 
