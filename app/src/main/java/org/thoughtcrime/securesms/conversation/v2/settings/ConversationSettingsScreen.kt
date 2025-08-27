@@ -201,7 +201,6 @@ fun ConversationSettings(
                 Text(
                     modifier = Modifier
                         .qaTag(R.string.qa_conversation_settings_account_id)
-                        .safeContentWidth()
                         .pointerInput(Unit) {
                             detectTapGestures(
                                 onLongPress = { onLongPress() }
@@ -215,7 +214,7 @@ fun ConversationSettings(
                         },
                     text = data.displayAccountId,
                     textAlign = TextAlign.Center,
-                    style = LocalType.current.base.monospace(),
+                    style = LocalType.current.xl.monospace(),
                     color = LocalColors.current.text
                 )
             }

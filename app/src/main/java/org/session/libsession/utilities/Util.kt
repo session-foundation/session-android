@@ -271,7 +271,7 @@ object Util {
     }
 
     @JvmStatic
-    fun getSecret(size: Int): String? {
+    fun getSecret(size: Int): String {
         val secret = getSecretBytes(size)
         return Base64.encodeBytes(secret)
     }

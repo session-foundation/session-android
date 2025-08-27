@@ -1,29 +1,17 @@
 package org.thoughtcrime.securesms.database.helpers;
 
-import static org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY;
-
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.Context;
 import android.database.Cursor;
-import androidx.annotation.NonNull;
-import androidx.core.app.NotificationCompat;
 
-import com.google.common.io.Files;
-import com.squareup.phrase.Phrase;
-import java.io.File;
-import java.io.IOException;
+import androidx.annotation.NonNull;
 
 import net.zetetic.database.sqlcipher.SQLiteConnection;
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import net.zetetic.database.sqlcipher.SQLiteDatabaseHook;
 import net.zetetic.database.sqlcipher.SQLiteOpenHelper;
 
-import network.loki.messenger.BuildConfig;
-import network.loki.messenger.R;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsignal.utilities.Log;
-import org.session.libsignal.utilities.guava.Preconditions;
 import org.thoughtcrime.securesms.crypto.DatabaseSecret;
 import org.thoughtcrime.securesms.database.AttachmentDatabase;
 import org.thoughtcrime.securesms.database.BlindedIdMappingDatabase;
@@ -43,6 +31,7 @@ import org.thoughtcrime.securesms.database.MmsDatabase;
 import org.thoughtcrime.securesms.database.PushDatabase;
 import org.thoughtcrime.securesms.database.ReactionDatabase;
 import org.thoughtcrime.securesms.database.RecipientDatabase;
+import org.thoughtcrime.securesms.database.RecipientSettingsDatabase;
 import org.thoughtcrime.securesms.database.SearchDatabase;
 import org.thoughtcrime.securesms.database.SessionContactDatabase;
 import org.thoughtcrime.securesms.database.SessionJobDatabase;
@@ -102,9 +91,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int lokiV49                          = 70;
   private static final int lokiV50                          = 71;
   private static final int lokiV51                          = 72;
+  private static final int lokiV52                          = 73;
 
   // Loki - onUpgrade(...) must be updated to use Loki version numbers if Signal makes any database changes
-  private static final int    DATABASE_VERSION         = lokiV51;
+  private static final int    DATABASE_VERSION         = lokiV52;
   private static final int    MIN_DATABASE_VERSION     = lokiV7;
   public static final String  DATABASE_NAME            = "session.db";
 
@@ -142,6 +132,8 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       // incomplete migrations
       false
     );
+
+    Log.d(TAG, "SQLCipherOpenHelper created with database secret: " + databaseSecret.asString());
   }
 
   @Override
@@ -244,6 +236,14 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(MmsDatabase.ADD_IS_GROUP_UPDATE_COLUMN);
     db.execSQL(MmsDatabase.ADD_MESSAGE_CONTENT_COLUMN);
     db.execSQL(ThreadDatabase.ADD_SNIPPET_CONTENT_COLUMN);
+
+    executeStatements(db, RecipientSettingsDatabase.Companion.getMIGRATION_CREATE_TABLE());
+    db.execSQL(RecipientSettingsDatabase.MIGRATE_DROP_OLD_TABLE);
+    executeStatements(db, ReactionDatabase.MIGRATE_REACTION_TABLE_TO_USE_RECIPIENT_SETTINGS);
+    db.execSQL(BlindedIdMappingDatabase.DROP_TABLE_COMMAND);
+    db.execSQL(ExpirationConfigurationDatabase.DROP_TABLE_COMMAND);
+    db.execSQL(SessionContactDatabase.getDropTableCommand());
+    executeStatements(db, ThreadDatabase.CREATE_ADDRESS_INDEX);
   }
 
   @Override
@@ -546,6 +546,22 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         db.execSQL(MmsDatabase.ADD_MESSAGE_CONTENT_COLUMN);
         db.execSQL(MmsDatabase.MIGRATE_EXPIRY_CONTROL_MESSAGES);
         db.execSQL(ThreadDatabase.ADD_SNIPPET_CONTENT_COLUMN);
+      }
+
+      if (oldVersion < lokiV52) {
+        // The recipient database must be migrated BEFORE the thread db as it contains lookup into
+        // the pre-migrated thread data.
+        RecipientDatabase.migrateOldCommunityAddresses(db);
+        ThreadDatabase.migrateLegacyCommunityAddresses(db);
+
+        executeStatements(db, RecipientSettingsDatabase.Companion.getMIGRATION_CREATE_TABLE());
+        db.execSQL(RecipientSettingsDatabase.MIGRATE_MOVE_DATA_FROM_OLD_TABLE);
+        db.execSQL(RecipientSettingsDatabase.MIGRATE_DROP_OLD_TABLE);
+        executeStatements(db, ReactionDatabase.MIGRATE_REACTION_TABLE_TO_USE_RECIPIENT_SETTINGS);
+        db.execSQL(BlindedIdMappingDatabase.DROP_TABLE_COMMAND);
+        db.execSQL(ExpirationConfigurationDatabase.DROP_TABLE_COMMAND);
+        db.execSQL(SessionContactDatabase.getDropTableCommand());
+        executeStatements(db, ThreadDatabase.CREATE_ADDRESS_INDEX);
       }
 
       db.setTransactionSuccessful();

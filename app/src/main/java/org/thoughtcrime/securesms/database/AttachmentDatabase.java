@@ -53,7 +53,6 @@ import org.thoughtcrime.securesms.crypto.ModernDecryptingPartInputStream;
 import org.thoughtcrime.securesms.crypto.ModernEncryptingPartOutputStream;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.database.model.MmsAttachmentInfo;
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.mms.MediaStream;
 import org.thoughtcrime.securesms.mms.MmsException;
 import org.thoughtcrime.securesms.mms.PartAuthority;
@@ -84,6 +83,10 @@ import java.util.concurrent.ExecutorService;
 import javax.inject.Provider;
 
 import kotlin.jvm.Synchronized;
+import kotlinx.coroutines.channels.BufferOverflow;
+import kotlinx.coroutines.flow.MutableSharedFlow;
+import kotlinx.coroutines.flow.SharedFlow;
+import kotlinx.coroutines.flow.SharedFlowKt;
 
 public class AttachmentDatabase extends Database {
   
@@ -160,9 +163,18 @@ public class AttachmentDatabase extends Database {
 
   private final AttachmentSecret attachmentSecret;
 
+  private final MutableSharedFlow<Object> mutableChangesNotification = SharedFlowKt.MutableSharedFlow(
+          0, 100, BufferOverflow.DROP_OLDEST
+  );
+
   public AttachmentDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper, AttachmentSecret attachmentSecret) {
     super(context, databaseHelper);
     this.attachmentSecret = attachmentSecret;
+  }
+
+  @NonNull
+  public SharedFlow<Object> getChangesNotification() {
+    return mutableChangesNotification;
   }
 
   public @NonNull InputStream getAttachmentStream(AttachmentId attachmentId, long offset)
@@ -286,8 +298,8 @@ public class AttachmentDatabase extends Database {
 
     deleteAttachmentsOnDisk(deletedAttachments);
 
-    if (!deletedAttachments.isEmpty()) {
-      notifyAttachmentListeners();
+    for (final Long mmsId : mmsMessageIDs) {
+      mutableChangesNotification.tryEmit(mmsId);
     }
   }
 
@@ -317,7 +329,7 @@ public class AttachmentDatabase extends Database {
 
       database.delete(TABLE_NAME, PART_ID_WHERE, id.toStrings());
       deleteAttachmentOnDisk(data, thumbnail, contentType);
-      notifyAttachmentListeners();
+      mutableChangesNotification.tryEmit(id);
     }
   }
 
@@ -389,8 +401,7 @@ public class AttachmentDatabase extends Database {
       //noinspection ResultOfMethodCallIgnored
       dataInfo.file.delete();
     } else {
-      notifyConversationListeners(DatabaseComponent.get(context).mmsDatabase().getThreadIdForMessage(mmsId));
-      notifyConversationListListeners();
+      mutableChangesNotification.tryEmit(attachmentId);
     }
 
     thumbnailExecutor.submit(new ThumbnailFetchCallable(attachmentId));
@@ -502,24 +513,14 @@ public class AttachmentDatabase extends Database {
                                   databaseAttachment.getAudioDurationMs());
   }
 
-  public void markAttachmentUploaded(long messageId, Attachment attachment) {
-    ContentValues  values   = new ContentValues(1);
-    SQLiteDatabase database = getWritableDatabase();
-
-    values.put(TRANSFER_STATE, AttachmentState.DONE.getValue());
-    database.update(TABLE_NAME, values, PART_ID_WHERE, ((DatabaseAttachment)attachment).getAttachmentId().toStrings());
-
-    notifyConversationListeners(DatabaseComponent.get(context).mmsDatabase().getThreadIdForMessage(messageId));
-    ((DatabaseAttachment) attachment).setUploaded(true);
-  }
-
-  public void setTransferState(long messageId, @NonNull AttachmentId attachmentId, int transferState) {
+  public void setTransferState(@NonNull AttachmentId attachmentId, int transferState) {
     final ContentValues  values   = new ContentValues(1);
     final SQLiteDatabase database = getWritableDatabase();
 
     values.put(TRANSFER_STATE, transferState);
-    database.update(TABLE_NAME, values, PART_ID_WHERE, attachmentId.toStrings());
-    notifyConversationListeners(DatabaseComponent.get(context).mmsDatabase().getThreadIdForMessage(messageId));
+    if (database.update(TABLE_NAME, values, PART_ID_WHERE, attachmentId.toStrings()) > 0) {
+      mutableChangesNotification.tryEmit(attachmentId);
+    }
   }
 
   @SuppressWarnings("WeakerAccess")
@@ -772,6 +773,8 @@ public class AttachmentDatabase extends Database {
       }
     }
 
+    mutableChangesNotification.tryEmit(attachmentId);
+
     return attachmentId;
   }
 
@@ -793,15 +796,7 @@ public class AttachmentDatabase extends Database {
 
     database.update(TABLE_NAME, values, PART_ID_WHERE, attachmentId.toStrings());
 
-    Cursor cursor = database.query(TABLE_NAME, new String[] {MMS_ID}, PART_ID_WHERE, attachmentId.toStrings(), null, null, null);
-
-    try {
-      if (cursor != null && cursor.moveToFirst()) {
-        notifyConversationListeners(DatabaseComponent.get(context).mmsDatabase().getThreadIdForMessage(cursor.getLong(cursor.getColumnIndexOrThrow(MMS_ID))));
-      }
-    } finally {
-      if (cursor != null) cursor.close();
-    }
+    mutableChangesNotification.tryEmit(attachmentId);
   }
 
   /**
@@ -835,7 +830,7 @@ public class AttachmentDatabase extends Database {
    * @return true if the update operation was successful.
    */
   @Synchronized
-  public boolean setAttachmentAudioExtras(@NonNull DatabaseAttachmentAudioExtras extras, long threadId) {
+  public boolean setAttachmentAudioExtras(@NonNull DatabaseAttachmentAudioExtras extras) {
     ContentValues values = new ContentValues();
     values.put(AUDIO_VISUAL_SAMPLES, extras.getVisualSamples());
     values.put(AUDIO_DURATION, extras.getDurationMs());
@@ -845,8 +840,8 @@ public class AttachmentDatabase extends Database {
       PART_ID_WHERE + " AND " + PART_AUDIO_ONLY_WHERE,
       extras.getAttachmentId().toStrings());
 
-    if (threadId >= 0) {
-      notifyConversationListeners(threadId);
+    if (alteredRows > 0) {
+      mutableChangesNotification.tryEmit(extras.getAttachmentId());
     }
 
     return alteredRows > 0;

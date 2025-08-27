@@ -10,7 +10,7 @@ import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
 
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId;
-import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.Address;
 import org.thoughtcrime.securesms.database.AttachmentDatabase;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.mms.PartAuthority;
@@ -21,11 +21,11 @@ public class PagingMediaLoader extends AsyncLoader<Pair<Cursor, Integer>> {
   @SuppressWarnings("unused")
   private static final String TAG = PagingMediaLoader.class.getSimpleName();
 
-  private final Recipient recipient;
+  private final Address recipient;
   private final Uri       uri;
   private final boolean   leftIsRecent;
 
-  public PagingMediaLoader(@NonNull Context context, @NonNull Recipient recipient, @NonNull Uri uri, boolean leftIsRecent) {
+  public PagingMediaLoader(@NonNull Context context, @NonNull Address recipient, @NonNull Uri uri, boolean leftIsRecent) {
     super(context);
     this.recipient    = recipient;
     this.uri          = uri;

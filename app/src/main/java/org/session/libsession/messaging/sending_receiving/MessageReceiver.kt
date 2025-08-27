@@ -144,12 +144,12 @@ object MessageReceiver {
 
         // Verify the signature timestamp inside the content is the same as in envelope.
         // If the message is from an open group, 6 hours of difference is allowed.
-        if (proto.hasSigTimestamp()) {
+        if (proto.hasSigTimestampMs()) {
             val isCommunityOrCommunityInbox = openGroupServerID != null || otherBlindedPublicKey != null
 
             if (
-                (isCommunityOrCommunityInbox && abs(proto.sigTimestamp - envelope.timestamp) > TimeUnit.HOURS.toMillis(6)) ||
-                (!isCommunityOrCommunityInbox && proto.sigTimestamp != envelope.timestamp)
+                (isCommunityOrCommunityInbox && abs(proto.sigTimestampMs - envelope.timestampMs) > TimeUnit.HOURS.toMillis(6)) ||
+                (!isCommunityOrCommunityInbox && proto.sigTimestampMs != envelope.timestampMs)
             ) {
                 throw Error.InvalidSignature
             }
@@ -189,8 +189,8 @@ object MessageReceiver {
         // Finish parsing
         message.sender = sender
         message.recipient = userPublicKey
-        message.sentTimestamp = envelope.timestamp
-        message.receivedTimestamp = if (envelope.hasServerTimestamp()) envelope.serverTimestamp else SnodeAPI.nowWithOffset
+        message.sentTimestamp = envelope.timestampMs
+        message.receivedTimestamp = if (envelope.hasServerTimestampMs()) envelope.serverTimestampMs else SnodeAPI.nowWithOffset
         message.groupPublicKey = groupPublicKey
         message.openGroupServerMessageID = openGroupServerID
         // Validate
@@ -205,8 +205,8 @@ object MessageReceiver {
         if (groupPublicKey != null && groupPublicKey !in (currentClosedGroups ?: emptySet()) && IdPrefix.fromValue(groupPublicKey) != IdPrefix.GROUP) {
             throw Error.NoGroupThread
         }
-        if (storage.isDuplicateMessage(envelope.timestamp)) { throw Error.DuplicateMessage }
-        storage.addReceivedMessageTimestamp(envelope.timestamp)
+        if (storage.isDuplicateMessage(envelope.timestampMs)) { throw Error.DuplicateMessage }
+        storage.addReceivedMessageTimestamp(envelope.timestampMs)
         // Return
         return Pair(message, proto)
     }

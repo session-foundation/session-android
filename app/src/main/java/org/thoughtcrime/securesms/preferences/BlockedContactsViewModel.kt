@@ -12,7 +12,7 @@ import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
-import org.session.libsession.utilities.recipients.Recipient
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.SelectContactsViewModel
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -22,17 +22,18 @@ import javax.inject.Inject
 @HiltViewModel
 class BlockedContactsViewModel @Inject constructor(
     configFactory: ConfigFactory,
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val storage: StorageProtocol,
     avatarUtils: AvatarUtils,
     proStatusManager: ProStatusManager,
+    recipientRepository: RecipientRepository,
 ): SelectContactsViewModel(
     configFactory = configFactory,
     excludingAccountIDs = emptySet(),
-    contactFiltering = { it.isBlocked },
-    appContext = context,
+    contactFiltering = { it.blocked },
     avatarUtils = avatarUtils,
-    proStatusManager = proStatusManager
+    proStatusManager = proStatusManager,
+    recipientRepository = recipientRepository,
 ) {
     private val _unblockDialog = MutableStateFlow(false)
     val unblockDialog: StateFlow<Boolean> = _unblockDialog
@@ -40,9 +41,7 @@ class BlockedContactsViewModel @Inject constructor(
     fun unblock() {
         viewModelScope.launch {
             storage.setBlocked(
-                recipients = currentSelected.map {
-                    Recipient.from(context, it, false)
-                },
+                recipients = currentSelected,
                 isBlocked = false
             )
 

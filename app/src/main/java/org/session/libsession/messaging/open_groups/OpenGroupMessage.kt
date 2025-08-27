@@ -50,7 +50,7 @@ data class OpenGroupMessage(
         val userEdKeyPair = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair() ?: return null
         val openGroup = MessagingModuleConfiguration.shared.storage.getOpenGroup(room, server) ?: return null
         val serverCapabilities = MessagingModuleConfiguration.shared.storage.getServerCapabilities(server)
-        val signature = if (serverCapabilities.contains(Capability.BLIND.name.lowercase())) {
+        val signature = if (serverCapabilities?.contains(Capability.BLIND.name.lowercase()) == true) {
             runCatching {
                 BlindKeyAPI.blind15Sign(
                     ed25519SecretKey = userEdKeyPair.secretKey.data,

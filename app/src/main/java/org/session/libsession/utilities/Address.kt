@@ -1,146 +1,237 @@
 package org.session.libsession.utilities
 
-import android.content.Context
+import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
-import android.util.Pair
-import androidx.annotation.VisibleForTesting
+import androidx.core.net.toUri
+import kotlinx.serialization.Serializable
+import org.session.libsession.messaging.open_groups.OpenGroup
+import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Util
-import org.session.libsignal.utilities.guava.Optional
 import java.util.LinkedList
-import java.util.concurrent.atomic.AtomicReference
-import java.util.regex.Matcher
-import java.util.regex.Pattern
+import org.session.libsignal.utilities.Log
+import kotlin.text.startsWith
 
-class Address private constructor(address: String) : Parcelable, Comparable<Address?> {
-    private val address: String = address.lowercase()
+@Serializable(with = AddressSerializer::class)
+sealed interface Address : Parcelable, Comparable<Address> {
+    /**
+     * The serialized form of the address.
+     */
+    val address: String
 
-    constructor(`in`: Parcel) : this(`in`.readString()!!) {}
+    /**
+     * A debug string that is safe to log.
+     */
+    val debugString: String
 
-    val isLegacyGroup: Boolean
-        get() = GroupUtil.isLegacyClosedGroup(address)
-    val isGroupV2: Boolean
-        get() = address.startsWith(IdPrefix.GROUP.value)
-    val isCommunity: Boolean
-        get() = GroupUtil.isCommunity(address)
-    val isCommunityInbox: Boolean
-        get() = GroupUtil.isCommunityInbox(address)
-    val isCommunityOutbox: Boolean
-        get() = address.startsWith(IdPrefix.BLINDED.value) || address.startsWith(IdPrefix.BLINDEDV2.value)
-    val isGroupOrCommunity: Boolean
-        get() = isGroup || isCommunity
-    val isGroup: Boolean
-        get() = isLegacyGroup || isGroupV2
-    val isContact: Boolean
-        get() = !(isGroupOrCommunity || isCommunityInbox)
+    override fun compareTo(other: Address) = address.compareTo(other.address)
 
-    fun contactIdentifier(): String {
-        if (!isContact && !isCommunity) {
-            if (isGroupOrCommunity) throw AssertionError("Not e164, is group")
-            throw AssertionError("Not e164, unknown")
-        }
-        return address
-    }
+    @Serializable(with = GroupAddressSerializer::class)
+    data class Group(override val accountId: AccountId) : Conversable, GroupLike, WithAccountId {
+        override val address: String
+            get() = accountId.hexString
 
-    fun toGroupString(): String {
-        if (!isGroupOrCommunity) throw AssertionError("Not group")
-        return address
-    }
-
-    override fun toString(): String = address
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        return if (other == null || other !is Address) false else address == other.address
-    }
-
-    override fun hashCode(): Int = address.hashCode()
-    override fun describeContents(): Int = 0
-    override fun writeToParcel(dest: Parcel, flags: Int) = dest.writeString(address)
-    override fun compareTo(other: Address?): Int = address.compareTo(other?.address!!)
-
-    @VisibleForTesting
-    class ExternalAddressFormatter internal constructor(localCountryCode: String, countryCode: Boolean) {
-        private val localNumber: Optional<PhoneNumber>
-        private val localCountryCode: String
-        private val ALPHA_PATTERN = Pattern.compile("[a-zA-Z]")
-        fun format(number: String?): String {
-            return number ?: "Unknown"
-        }
-
-        private fun parseAreaCode(e164Number: String, countryCode: Int): String? {
-            when (countryCode) {
-                1 -> return e164Number.substring(2, 5)
-                55 -> return e164Number.substring(3, 5)
-            }
-            return null
-        }
-
-        private fun applyAreaCodeRules(localNumber: Optional<PhoneNumber>, testNumber: String): String {
-            if (!localNumber.isPresent || !localNumber.get().areaCode.isPresent) {
-                return testNumber
-            }
-            val matcher: Matcher
-            when (localNumber.get().countryCode) {
-                1 -> {
-                    matcher = US_NO_AREACODE.matcher(testNumber)
-                    if (matcher.matches()) {
-                        return localNumber.get().areaCode.toString() + matcher.group()
-                    }
-                }
-                55 -> {
-                    matcher = BR_NO_AREACODE.matcher(testNumber)
-                    if (matcher.matches()) {
-                        return localNumber.get().areaCode.toString() + matcher.group()
-                    }
-                }
-            }
-            return testNumber
-        }
-
-        private class PhoneNumber internal constructor(val e164Number: String, val countryCode: Int, areaCode: String?) {
-            val areaCode: Optional<String?>
-
-            init {
-                this.areaCode = Optional.fromNullable(areaCode)
-            }
-        }
-
-        companion object {
-            private val TAG = ExternalAddressFormatter::class.java.simpleName
-            private val SHORT_COUNTRIES: HashSet<String?> = object : HashSet<String?>() {
-                init {
-                    add("NU")
-                    add("TK")
-                    add("NC")
-                    add("AC")
-                }
-            }
-            private val US_NO_AREACODE = Pattern.compile("^(\\d{7})$")
-            private val BR_NO_AREACODE = Pattern.compile("^(9?\\d{8})$")
-        }
+        override val debugString: String
+            get() = accountId.toString()
 
         init {
-            localNumber = Optional.absent()
-            this.localCountryCode = localCountryCode
+            check(accountId.prefix == IdPrefix.GROUP) {
+                "AccountId must have a GROUP prefix, but was: ${accountId.prefix}"
+            }
         }
+
+        override fun toString(): String = address
+    }
+
+    @Serializable(with = StandardAddressSerializer::class)
+    data class Standard(override val accountId: AccountId) : Conversable, WithAccountId {
+        override val address: String
+            get() = accountId.hexString
+
+        override val debugString: String
+            get() = accountId.toString()
+
+        init {
+            check(accountId.prefix == IdPrefix.STANDARD) {
+                "AccountId must have a STANDARD prefix, but was: ${accountId.prefix}"
+            }
+        }
+
+        override fun toString(): String = address
+    }
+
+    data class Blinded(val blindedId: AccountId) : Address, WithAccountId {
+        override val accountId: AccountId
+            get() = blindedId
+
+        override val address: String
+            get() = blindedId.hexString
+
+        override val debugString: String
+            get() = blindedId.toString()
+
+        init {
+            check(blindedId.prefix?.isBlinded() == true) {
+                "AccountId must have a BLINDED prefix, but was: ${blindedId.prefix}"
+            }
+        }
+
+        override fun toString(): String = address
+    }
+
+    data class LegacyGroup(val groupPublicKeyHex: String) : Conversable, GroupLike {
+        override val address: String by lazy(LazyThreadSafetyMode.NONE) {
+            GroupUtil.doubleEncodeGroupID(groupPublicKeyHex)
+        }
+
+        override val debugString: String
+            get() = "LegacyGroup(groupPublicKeyHex=${groupPublicKeyHex.substring(0, 8)}...)"
+
+        override fun toString(): String = address
+    }
+
+    data class CommunityBlindedId(val serverUrl: String, val blindedId: Blinded) : Conversable, WithAccountId {
+        init {
+            check(serverUrl.startsWith("http://") || serverUrl.startsWith("https://")) {
+                "Server URL must start with http:// or https://, but was: $serverUrl"
+            }
+        }
+
+        override val accountId: AccountId
+            get() = blindedId.blindedId
+
+        override val address: String by lazy(LazyThreadSafetyMode.NONE) {
+            "${URI_PREFIX}${blindedId.blindedId.hexString}"
+                .toUri()
+                .buildUpon()
+                .appendQueryParameter(URL_QUERY_SERVER, serverUrl)
+                .build()
+                .toString()
+        }
+
+        override val debugString: String
+            get() = "CommunityBlindedId(" +
+                    "serverUrl=${serverUrl.substring(0, 10)}, " +
+                    "blindedId=${blindedId.debugString})"
+
+        override fun toString(): String = address
+
+        companion object {
+            const val URI_PREFIX = "community-blinded://"
+            const val URL_QUERY_SERVER = "server"
+        }
+    }
+
+    data class Community(val serverUrl: String, val room: String) : Conversable, GroupLike {
+        constructor(openGroup: OpenGroup): this(
+            serverUrl = openGroup.server,
+            room = openGroup.room
+        )
+
+        init {
+            check(serverUrl.startsWith("http://") ||
+                    serverUrl.startsWith("https://")) {
+                "Server URL must start with http:// or https://, but was: $serverUrl"
+            }
+        }
+
+        override val address: String by lazy(LazyThreadSafetyMode.NONE) {
+            "${URI_PREFIX}${Uri.encode(serverUrl)}"
+                .toUri()
+                .buildUpon()
+                .appendQueryParameter(URL_QUERY_ROOM, room)
+                .build()
+                .toString()
+        }
+
+        override val debugString: String
+            get() = "Community(serverUrl=${serverUrl.substring(0, 10)}, room=xxxx)"
+
+        override fun toString(): String = address
+
+        companion object {
+            const val URI_PREFIX = "community://"
+            const val URL_QUERY_ROOM = "room"
+        }
+    }
+
+    data class Unknown(val serialized: String) : Address {
+        override val address: String
+            get() = serialized
+
+        override val debugString: String
+            get() = "Unknown(serialized=$serialized)"
+
+        override fun toString(): String = address
+    }
+
+    /**
+     * A marker interface for addresses that can be used to start a conversation
+     */
+    @Serializable(with = ConversableAddressSerializer::class)
+    sealed interface Conversable : Address
+
+    /**
+     * A marker interface for addresses that represent a group-like entity.
+     */
+    sealed interface GroupLike : Address
+
+    sealed interface WithAccountId {
+        val accountId: AccountId
+    }
+
+    override fun describeContents(): Int = 0
+
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeString(address)
     }
 
     companion object {
-        @JvmField val CREATOR: Parcelable.Creator<Address?> = object : Parcelable.Creator<Address?> {
-            override fun createFromParcel(`in`: Parcel): Address = Address(`in`)
-            override fun newArray(size: Int): Array<Address?> = arrayOfNulls(size)
+        @JvmStatic
+        fun fromSerialized(serialized: String): Address {
+            try {
+                if (serialized.startsWith(Community.URI_PREFIX)) {
+                    val uri = serialized.toUri()
+                    val serverUrl = requireNotNull(uri.host?.takeIf { it.isNotBlank() }) {
+                        "Invalid Community address: missing server URL"
+                    }
+
+                    val room = requireNotNull(uri.getQueryParameter(Community.URL_QUERY_ROOM)) {
+                        "Invalid Community address: missing room query parameter"
+                    }
+
+                    // If we have a room, we can create a Community address
+                    return Community(
+                        serverUrl = serverUrl,
+                        room = room
+                    )
+                }
+
+                if (serialized.startsWith(CommunityBlindedId.URI_PREFIX)) {
+                    val uri = serialized.toUri()
+                    val blinded = Blinded(AccountId(uri.host.orEmpty()))
+                    val server = checkNotNull(uri.getQueryParameter(CommunityBlindedId.URL_QUERY_SERVER)) {
+                        "Invalid CommunityBlindedId: missing server URL query parameter"
+                    }
+
+                    return CommunityBlindedId(
+                        serverUrl = server,
+                        blindedId = blinded
+                    )
+                }
+
+                if (serialized.startsWith(GroupUtil.LEGACY_CLOSED_GROUP_PREFIX)) {
+                    val groupId = GroupUtil.doubleDecodeGroupId(serialized)
+                    return LegacyGroup(groupId)
+                }
+
+                return AccountId(serialized).toAddress()
+            } catch (e: Exception) {
+                Log.w("Address", "Failed to parse address: $serialized", e)
+                return Unknown(serialized)
+            }
         }
-        val UNKNOWN = Address("Unknown")
-        private val TAG = Address::class.java.simpleName
-        private val cachedFormatter = AtomicReference<Pair<String, ExternalAddressFormatter>>()
-
-        @JvmStatic
-        fun fromSerialized(serialized: String): Address = Address(serialized)
-
-        @JvmStatic
-        fun fromExternal(context: Context, external: String?): Address = fromSerialized(external!!)
 
         @JvmStatic
         fun fromSerializedList(serialized: String, delimiter: Char): List<Address> {
@@ -162,6 +253,70 @@ class Address private constructor(address: String) : Parcelable, Comparable<Addr
             }
             return Util.join(escapedAddresses, delimiter.toString() + "")
         }
-    }
 
+        fun String.toAddress(): Address {
+            return fromSerialized(this)
+        }
+
+        fun AccountId.toAddress(): Address {
+            return when (prefix) {
+                IdPrefix.GROUP -> Group(this)
+                IdPrefix.STANDARD -> Standard(this)
+                IdPrefix.BLINDED, IdPrefix.BLINDEDV2 -> Blinded(this)
+                else -> throw IllegalArgumentException("Unknown address prefix: $prefix")
+            }
+        }
+        @JvmField
+        val CREATOR: Parcelable.Creator<Address> = object : Parcelable.Creator<Address> {
+            override fun createFromParcel(parcel: Parcel): Address {
+                val address = requireNotNull(parcel.readString()) {
+                    "Invalid address from parcel. Must not be null."
+                }
+
+                return fromSerialized(address)
+            }
+
+            override fun newArray(size: Int): Array<Address?> = arrayOfNulls(size)
+        }
+    }
+}
+
+val Address.isStandard: Boolean
+    get() = this is Address.Standard
+
+val Address.isLegacyGroup: Boolean
+    get() = this is Address.LegacyGroup
+
+val Address.isGroupV2: Boolean
+    get() = this is Address.Group
+
+val Address.isCommunity: Boolean
+    get() = this is Address.Community
+
+val Address.isCommunityInbox: Boolean
+    get() = this is Address.CommunityBlindedId
+
+val Address.isGroup: Boolean
+    get() = this is Address.Group || this is Address.LegacyGroup
+
+val Address.isGroupOrCommunity: Boolean
+    get() = isGroup || isCommunity
+
+val Address.isBlinded: Boolean
+    get() = this is Address.Blinded
+
+/**
+ * Converts this address to a blind [AccountId] if this address contains a blinded ID.
+ */
+fun Address.toBlinded(): Address.Blinded? {
+    return (this as? Address.Blinded)
+        ?: (this as? Address.CommunityBlindedId)?.blindedId
+}
+
+@Deprecated("This is a legacy way of getting a confusing term: groupString. Use the explicit address subclasses to state your intent.")
+fun Address.toGroupString(): String {
+    return when (this) {
+        is Address.LegacyGroup, is Address.Community, is Address.Group -> address
+        else -> throw IllegalArgumentException("Address is not a group: $this")
+    }
 }

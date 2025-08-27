@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.database
 
 import android.content.ContentValues
 import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
@@ -17,7 +18,9 @@ import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import java.util.Date
+import javax.inject.Inject
 import javax.inject.Provider
+import javax.inject.Singleton
 
 class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) : Database(context, helper), LokiAPIDatabaseProtocol {
 
@@ -559,11 +562,11 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
         database.insertOrUpdate(serverCapabilitiesTable, row, "$server = ?", wrap(serverName))
     }
 
-    fun getServerCapabilities(serverName: String): List<String> {
+    fun getServerCapabilities(serverName: String): List<String>? {
         val database = readableDatabase
         return database.get(serverCapabilitiesTable, "$server = ?", wrap(serverName)) { cursor ->
             cursor.getString(capabilities)
-        }?.split(",") ?: emptyList()
+        }?.split(",")
     }
 
     fun setLastInboxMessageId(serverName: String, newValue: Long) {

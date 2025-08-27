@@ -12,7 +12,6 @@ import org.thoughtcrime.securesms.database.model.content.MessageContent;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 

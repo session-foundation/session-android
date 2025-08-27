@@ -16,20 +16,6 @@ import network.loki.messenger.BuildConfig;
  */
 public class DatabaseContentProviders {
 
-  public static class ConversationList extends NoopContentProvider {
-    public static final Uri CONTENT_URI = Uri.parse("content://network.loki.securesms.database.conversationlist" + BuildConfig.AUTHORITY_POSTFIX);
-  }
-
-  public static class Conversation extends NoopContentProvider {
-    public static final Uri CONTENT_URI = Uri.parse("content://network.loki.securesms.database.conversation" + BuildConfig.AUTHORITY_POSTFIX);
-
-    public static Uri getUriForThread(long threadId) {
-      return CONTENT_URI.buildUpon()
-              .appendPath(String.valueOf(threadId))
-              .build();
-    }
-  }
-
   public static class Attachment extends NoopContentProvider {
     public static final Uri CONTENT_URI = Uri.parse("content://network.loki.securesms.database.attachment" + BuildConfig.AUTHORITY_POSTFIX);
   }
@@ -40,10 +26,6 @@ public class DatabaseContentProviders {
 
   public static class StickerPack extends NoopContentProvider {
     public static final Uri CONTENT_URI = Uri.parse("content://network.loki.securesms.database.stickerpack" + BuildConfig.AUTHORITY_POSTFIX);
-  }
-
-  public static class Recipient extends NoopContentProvider {
-    public static final Uri CONTENT_URI = Uri.parse("content://network.loki.securesms.database.recipient" + BuildConfig.AUTHORITY_POSTFIX);
   }
 
   private static abstract class NoopContentProvider extends ContentProvider {

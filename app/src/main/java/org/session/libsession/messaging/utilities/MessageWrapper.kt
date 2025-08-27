@@ -36,7 +36,7 @@ object MessageWrapper {
         try {
             val builder = Envelope.newBuilder()
             builder.type = type
-            builder.timestamp = timestamp
+            builder.timestampMs = timestamp
             builder.source = senderPublicKey
             builder.sourceDevice = 1
             builder.content = ByteString.copyFrom(content)

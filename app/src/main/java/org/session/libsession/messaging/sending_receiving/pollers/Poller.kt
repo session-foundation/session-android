@@ -214,7 +214,10 @@ class Poller @AssistedInject constructor(
             MessageReceiveParameters(envelope.toByteArray(), serverHash = serverHash)
         }
         parameters.chunked(BatchMessageReceiveJob.BATCH_DEFAULT_NUMBER).forEach { chunk ->
-            JobQueue.shared.add(batchMessageReceiveJobFactory.create(chunk))
+            JobQueue.shared.add(batchMessageReceiveJobFactory.create(
+                messages = chunk,
+                fromCommunity = null
+            ))
         }
     }
 

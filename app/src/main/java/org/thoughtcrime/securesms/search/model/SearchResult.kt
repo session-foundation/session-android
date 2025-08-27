@@ -1,8 +1,7 @@
 package org.thoughtcrime.securesms.search.model
 
-import android.database.ContentObserver
-import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.GroupRecord
+import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.database.CursorList
 
 /**
@@ -10,10 +9,10 @@ import org.thoughtcrime.securesms.database.CursorList
  * subcategories.
  */
 class SearchResult(
-    val query: String,
-    val contacts: CursorList<Contact>,
-    val conversations: CursorList<GroupRecord>,
-    val messages: CursorList<MessageResult>
+    val query: String = "",
+    val contacts: List<Recipient> = emptyList(),
+    val conversations: List<GroupRecord> = emptyList(),
+    val messages: CursorList<MessageResult> = CursorList.emptyList<MessageResult>()
 ) {
     fun size(): Int {
         return contacts.size + conversations.size + messages.size
@@ -23,17 +22,6 @@ class SearchResult(
         get() = size() == 0
 
     fun close() {
-        contacts.close()
-        conversations.close()
         messages.close()
-    }
-
-    companion object {
-        val EMPTY: SearchResult = SearchResult(
-            "",
-            CursorList.emptyList<Contact>(),
-            CursorList.emptyList<GroupRecord>(),
-            CursorList.emptyList<MessageResult>()
-        )
     }
 }

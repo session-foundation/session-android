@@ -12,35 +12,34 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.UserPic
-import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.utilities.await
-import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.ProfileKeyUtil
-import org.session.libsession.utilities.ProfilePictureUtilities
-import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.NoExternalStorageException
-import org.session.libsignal.utilities.Util.SECURE_RANDOM
+import org.thoughtcrime.securesms.attachments.AvatarUploadManager
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
@@ -52,48 +51,56 @@ import org.thoughtcrime.securesms.util.BitmapDecodingException
 import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.ClearDataUtils
 import org.thoughtcrime.securesms.util.NetworkConnectivity
+import org.thoughtcrime.securesms.util.mapToStateFlow
 import java.io.File
 import java.io.IOException
+import java.time.Instant
+import java.time.ZonedDateTime
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val prefs: TextSecurePreferences,
     private val configFactory: ConfigFactory,
     private val connectivity: NetworkConnectivity,
-    private val usernameUtils: UsernameUtils,
     private val avatarUtils: AvatarUtils,
+    private val recipientRepository: RecipientRepository,
     private val proStatusManager: ProStatusManager,
     private val clearDataUtils: ClearDataUtils,
     private val storage: StorageProtocol,
-    private val inAppReviewManager: InAppReviewManager
+    private val inAppReviewManager: InAppReviewManager,
+    private val avatarUploadManager: AvatarUploadManager,
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
 
     private var tempFile: File? = null
 
-    val hexEncodedPublicKey: String = prefs.getLocalNumber() ?: ""
-
-    private val userRecipient by lazy {
-        Recipient.from(context, Address.fromSerialized(hexEncodedPublicKey), false)
-    }
+    private val selfRecipient: StateFlow<Recipient> = recipientRepository.observeSelf()
+        .mapToStateFlow(viewModelScope, recipientRepository.getSelf(), valueGetter = { it })
 
     private val _uiState = MutableStateFlow(UIState(
-        username = usernameUtils.getCurrentUsernameWithAccountIdFallback(),
-        accountID = hexEncodedPublicKey,
+        username = "",
+        accountID = selfRecipient.value.address.address,
         hasPath = true,
         version = getVersionNumber(),
         recoveryHidden = prefs.getHidePassword(),
         isPro = proStatusManager.isCurrentUserPro(),
         isPostPro = proStatusManager.isPostPro(),
-        showProBadge = proStatusManager.shouldShowProBadge(userRecipient.address),
+        showProBadge = proStatusManager.shouldShowProBadge(selfRecipient.value.address),
     ))
     val uiState: StateFlow<UIState>
         get() = _uiState
 
     init {
-        updateAvatar()
+        // observe current user
+        viewModelScope.launch {
+            recipientRepository.observeSelf()
+                .collectLatest { recipient ->
+                    _uiState.update { it.copy(username = recipient.displayName(attachesBlindedId = false)) }
+                }
+        }
 
         // set default dialog ui
         viewModelScope.launch {
@@ -123,6 +130,15 @@ class SettingsViewModel @Inject constructor(
                 _uiState.update { it.copy(hasPath = it.hasPath) }
             }
         }
+
+        viewModelScope.launch {
+            selfRecipient
+                .map(avatarUtils::getUIDataFromRecipient)
+                .distinctUntilChanged()
+                .collectLatest { data ->
+                    _uiState.update { it.copy(avatarData = data) }
+                }
+        }
     }
 
     private fun getVersionNumber(): CharSequence {
@@ -132,13 +148,7 @@ class SettingsViewModel @Inject constructor(
         return Phrase.from(context, R.string.updateVersion).put(VERSION_KEY, versionDetails).format()
     }
 
-    private fun updateAvatar(){
-        viewModelScope.launch(Dispatchers.Default) {
-            _uiState.update { it.copy(avatarData = avatarUtils.getUIDataFromRecipient(userRecipient)) }
-        }
-    }
-
-    fun hasAvatar() = prefs.getProfileAvatarId() != 0
+    fun hasAvatar() = selfRecipient.value.avatar != null
 
     fun createTempFile(): File? {
         try {
@@ -227,8 +237,8 @@ class SettingsViewModel @Inject constructor(
             ) } }
     }
 
-    private suspend fun getDefaultAvatarDialogState() = if (hasAvatar()) AvatarDialogState.UserAvatar(
-        avatarUtils.getUIDataFromRecipient(userRecipient)
+    private fun getDefaultAvatarDialogState() = if (hasAvatar()) AvatarDialogState.UserAvatar(
+        avatarUtils.getUIDataFromRecipient(selfRecipient.value)
     )
     else AvatarDialogState.NoAvatar
 
@@ -292,54 +302,34 @@ class SettingsViewModel @Inject constructor(
 
     // Helper method used by updateProfilePicture and removeProfilePicture to sync it online
     private fun syncProfilePicture(profilePicture: ByteArray, onFail: () -> Unit) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             _uiState.update { it.copy(showLoader = true) }
 
             try {
-                // Grab the profile key and kick of the promise to update the profile picture
-                val encodedProfileKey = ProfileKeyUtil.generateEncodedProfileKey(context)
-                val url = ProfilePictureUtilities.upload(profilePicture, encodedProfileKey, context)
-
-                // If the online portion of the update succeeded then update the local state
-                AvatarHelper.setAvatar(
-                    context,
-                    Address.fromSerialized(TextSecurePreferences.getLocalNumber(context)!!),
-                    profilePicture
-                )
-
-                // When removing the profile picture the supplied ByteArray is empty so we'll clear the local data
                 if (profilePicture.isEmpty()) {
-                    MessagingModuleConfiguration.shared.storage.clearUserPic()
+                    configFactory.withMutableUserConfigs {
+                        it.userProfile.setPic(UserPic.DEFAULT)
+                    }
+
+                    prefs.lastProfileUpdated = Instant.now()
 
                     // update dialog state
                     _uiState.update { it.copy(avatarDialogState = AvatarDialogState.NoAvatar) }
                 } else {
-                    prefs.setProfileAvatarId(SECURE_RANDOM.nextInt())
-                    ProfileKeyUtil.setEncodedProfileKey(context, encodedProfileKey)
+                    avatarUploadManager.uploadAvatar(profilePicture)
 
-                    // Attempt to grab the details we require to update the profile picture
-                    val profileKey = ProfileKeyUtil.getProfileKey(context)
-
-                    // If we have a URL and a profile key then set the user's profile picture
-                    if (url.isNotEmpty() && profileKey.isNotEmpty()) {
-                        configFactory.withMutableUserConfigs {
-                            it.userProfile.setPic(UserPic(url, profileKey))
-                        }
-                    }
+                    // We'll have to refetch the recipient to get the new avatar
+                    val selfRecipient = recipientRepository.getSelf()
 
                     // update dialog state
-                    _uiState.update { it.copy(avatarDialogState = AvatarDialogState.UserAvatar(avatarUtils.getUIDataFromRecipient(userRecipient))) }
+                    _uiState.update { it.copy(avatarDialogState = AvatarDialogState.UserAvatar(avatarUtils.getUIDataFromRecipient(selfRecipient))) }
                 }
 
             } catch (e: Exception){ // If the sync failed then inform the user
-                Log.d(TAG, "Error syncing avatar: $e")
-                withContext(Dispatchers.Main) {
-                    onFail()
-                }
+                Log.d(TAG, "Error syncing avatar", e)
+                onFail()
             }
 
-            // Finally update the main avatar
-            updateAvatar()
             // And remove the loader animation after we've waited for the attempt to succeed or fail
             _uiState.update { it.copy(showLoader = false) }
         }
@@ -442,8 +432,11 @@ class SettingsViewModel @Inject constructor(
 
         // save username
         _uiState.update { it.copy(username = name) }
-        prefs.setProfileName(name)
-        usernameUtils.saveCurrentUserName(name)
+        configFactory.withMutableUserConfigs {
+            it.userProfile.setName(name)
+        }
+
+        prefs.lastProfileUpdated = Instant.now()
     }
 
     fun onCommand(command: Commands) {
@@ -529,7 +522,7 @@ class SettingsViewModel @Inject constructor(
                 val trimmedName = command.name.trim()
 
                 val error: String? = when {
-                    trimmedName.textSizeInBytes() >  SSKEnvironment.ProfileManagerProtocol.NAME_PADDED_LENGTH ->
+                    trimmedName.textSizeInBytes() > 100 ->
                         context.getString(R.string.displayNameErrorDescriptionShorter)
 
                     else -> null

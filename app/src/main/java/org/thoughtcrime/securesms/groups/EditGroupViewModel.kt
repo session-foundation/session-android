@@ -22,8 +22,8 @@ import org.session.libsession.messaging.groups.GroupInviteException
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.UsernameUtils
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.AvatarUtils
 
@@ -31,15 +31,16 @@ import org.thoughtcrime.securesms.util.AvatarUtils
 
 @HiltViewModel(assistedFactory = EditGroupViewModel.Factory::class)
 class EditGroupViewModel @AssistedInject constructor(
-    @Assisted private val groupId: AccountId,
-    @ApplicationContext private val context: Context,
+    @Assisted private val groupAddress: Address.Group,
+    @param:ApplicationContext private val context: Context,
     storage: StorageProtocol,
     private val configFactory: ConfigFactoryProtocol,
     private val groupManager: GroupManagerV2,
-    private val usernameUtils: UsernameUtils,
-    private val avatarUtils: AvatarUtils,
-    proStatusManager: ProStatusManager
-) : BaseGroupMembersViewModel(groupId, context, storage, usernameUtils, configFactory, avatarUtils, proStatusManager) {
+    private val recipientRepository: RecipientRepository,
+    avatarUtils: AvatarUtils,
+    proStatusManager: ProStatusManager,
+) : BaseGroupMembersViewModel(groupAddress, context, storage, configFactory, avatarUtils, recipientRepository, proStatusManager) {
+    private val groupId = groupAddress.accountId
 
     // Output: The name of the group. This is the current name of the group, not the name being edited.
     val groupName: StateFlow<String> = groupInfo
@@ -72,7 +73,7 @@ class EditGroupViewModel @AssistedInject constructor(
             showLoading = false,
             errorMessage = { err ->
                 if (err is GroupInviteException) {
-                    err.format(context, usernameUtils).toString()
+                    err.format(context, recipientRepository).toString()
                 } else {
                     null
                 }
@@ -92,7 +93,7 @@ class EditGroupViewModel @AssistedInject constructor(
             showLoading = false,
             errorMessage = { err ->
                 if (err is GroupInviteException) {
-                    err.format(context, usernameUtils).toString()
+                    err.format(context, recipientRepository).toString()
                 } else {
                     null
                 }
@@ -187,6 +188,6 @@ class EditGroupViewModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(groupId: AccountId): EditGroupViewModel
+        fun create(groupAddress: Address.Group): EditGroupViewModel
     }
 }

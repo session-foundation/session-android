@@ -5,9 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Rect
-import android.text.Layout
 import android.text.Spannable
-import android.text.StaticLayout
 import android.text.style.BackgroundColorSpan
 import android.text.style.ForegroundColorSpan
 import android.text.style.URLSpan
@@ -16,7 +14,6 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewTreeObserver
 import android.widget.Toast
 import androidx.annotation.ColorInt
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -24,12 +21,10 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.text.getSpans
 import androidx.core.text.toSpannable
 import androidx.core.view.children
-import androidx.core.view.doOnAttach
-import androidx.core.view.doOnLayout
-import androidx.core.view.doOnPreDraw
 import androidx.core.view.isVisible
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
+import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -49,6 +44,7 @@ import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.ModalURLSpan
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.getIntersectedModalSpans
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
@@ -57,8 +53,10 @@ import org.thoughtcrime.securesms.util.GlowViewUtilities
 import org.thoughtcrime.securesms.util.SearchUtil
 import org.thoughtcrime.securesms.util.getAccentColor
 import java.util.Locale
+import javax.inject.Inject
 import kotlin.math.roundToInt
 
+@AndroidEntryPoint
 class VisibleMessageContentView : ConstraintLayout {
     private val binding: ViewVisibleMessageContentBinding by lazy { ViewVisibleMessageContentBinding.bind(this) }
     var onContentDoubleTap: (() -> Unit)? = null
@@ -66,6 +64,9 @@ class VisibleMessageContentView : ConstraintLayout {
     var indexInAdapter: Int = -1
 
     private val MAX_COLLAPSED_LINE_COUNT = 25
+
+    @Inject
+    lateinit var recipientRepository: RecipientRepository
 
     // region Lifecycle
     constructor(context: Context) : super(context)
@@ -167,7 +168,7 @@ class VisibleMessageContentView : ConstraintLayout {
             } else {
                 quote.text
             }
-            binding.quoteView.root.bind(Recipient.from(context, quote.author, false), quoteText, quote.attachment, thread,
+            binding.quoteView.root.bind(quote.author, quoteText, quote.attachment, thread,
                 message.isOutgoing, message.isOpenGroupInvitation, message.threadId,
                 quote.isOriginalMissing, glide)
             onContentClick.add { event ->
@@ -309,7 +310,7 @@ class VisibleMessageContentView : ConstraintLayout {
                             binding.albumThumbnailView.root.calculateHitObject(
                                 event,
                                 message,
-                                thread,
+                                thread.address,
                                 downloadPendingAttachment
                             )
                         }
@@ -484,46 +485,47 @@ class VisibleMessageContentView : ConstraintLayout {
         binding.contentParent.sessionShadowColor = targetColor
         GlowViewUtilities.animateShadowColorChange(binding.contentParent, startColor, endColor, 1600)
     }
+
+    fun getBodySpans(context: Context, message: MessageRecord, searchQuery: String?): Spannable {
+        var body = message.body.toSpannable()
+
+        body = MentionUtilities.highlightMentions(
+            recipientRepository = recipientRepository,
+            text = body,
+            isOutgoingMessage = message.isOutgoing,
+            context = context
+        )
+        body = SearchUtil.getHighlightedSpan(Locale.getDefault(),
+            {
+                BackgroundColorSpan(context.getColorFromAttr(R.attr.colorPrimary))
+            }, body, searchQuery)
+        body = SearchUtil.getHighlightedSpan(Locale.getDefault(),
+            {
+                ForegroundColorSpan(context.getColorFromAttr(android.R.attr.textColorPrimary))
+            }, body, searchQuery)
+
+        Linkify.addLinks(body, Linkify.WEB_URLS)
+
+        // replace URLSpans with ModalURLSpans
+        body.getSpans<URLSpan>(0, body.length).toList().forEach { urlSpan ->
+            val updatedUrl = urlSpan.url.let { it.toHttpUrlOrNull().toString() }
+            val replacementSpan = ModalURLSpan(updatedUrl) { url ->
+                val activity = context as? ConversationActivityV2
+                activity?.showOpenUrlDialog(url)
+            }
+            val start = body.getSpanStart(urlSpan)
+            val end = body.getSpanEnd(urlSpan)
+            val flags = body.getSpanFlags(urlSpan)
+            body.removeSpan(urlSpan)
+            body.setSpan(replacementSpan, start, end, flags)
+        }
+        return body
+    }
+
     // endregion
 
     // region Convenience
     companion object {
-
-        fun getBodySpans(context: Context, message: MessageRecord, searchQuery: String?): Spannable {
-            var body = message.body.toSpannable()
-
-            body = MentionUtilities.highlightMentions(
-                text = body,
-                isOutgoingMessage = message.isOutgoing,
-                threadID = message.threadId,
-                context = context
-            )
-            body = SearchUtil.getHighlightedSpan(Locale.getDefault(),
-                {
-                    BackgroundColorSpan(context.getColorFromAttr(R.attr.colorPrimary))
-                }, body, searchQuery)
-            body = SearchUtil.getHighlightedSpan(Locale.getDefault(),
-                {
-                    ForegroundColorSpan(context.getColorFromAttr(android.R.attr.textColorPrimary))
-                }, body, searchQuery)
-
-            Linkify.addLinks(body, Linkify.WEB_URLS)
-
-            // replace URLSpans with ModalURLSpans
-            body.getSpans<URLSpan>(0, body.length).toList().forEach { urlSpan ->
-                val updatedUrl = urlSpan.url.let { it.toHttpUrlOrNull().toString() }
-                val replacementSpan = ModalURLSpan(updatedUrl) { url ->
-                    val activity = context as? ConversationActivityV2
-                    activity?.showOpenUrlDialog(url)
-                }
-                val start = body.getSpanStart(urlSpan)
-                val end = body.getSpanEnd(urlSpan)
-                val flags = body.getSpanFlags(urlSpan)
-                body.removeSpan(urlSpan)
-                body.setSpan(replacementSpan, start, end, flags)
-            }
-            return body
-        }
 
         @ColorInt
         fun getTextColor(context: Context, message: MessageRecord): Int = context.getColorFromAttr(

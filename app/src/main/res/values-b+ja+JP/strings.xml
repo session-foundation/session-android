@@ -292,8 +292,7 @@
     <string name="creatingCall">通話を作成中</string>
     <string name="cut">切り取り</string>
     <string name="databaseErrorClearDataWarning">このデバイス上のすべてのメッセージ、添付ファイル、アカウントデータを削除し、新しいアカウントを作成してもよろしいですか？</string>
-    <string name="databaseErrorGeneric">データベースエラーが発生しました。\n\n
-トラブルシューティングのために、アプリのログをエクスポートして共有してください。この操作が失敗した場合は、{app_name} を再インストールし、アカウントを復元してください。</string>
+    <string name="databaseErrorGeneric">データベースエラーが発生しました。\n\nトラブルシューティングのために、アプリのログをエクスポートして共有してください。この操作が失敗した場合は、{app_name} を再インストールし、アカウントを復元してください。</string>
     <string name="databaseErrorRestoreDataWarning">このデバイス上のすべてのメッセージ、添付ファイル、アカウントデータを削除し、ネットワークからアカウントを復元してもよろしいですか？</string>
     <string name="databaseErrorTimeout">{app_name}が起動するのに時間がかかっていることを確認しました。\n\n引き続きお待ちいただくか、トラブルシューティングのためにデバイスログをエクスポートして共有するか、{app_name}を再起動してみてください。</string>
     <string name="databaseErrorUpdate">お使いのアプリデータベースはこのバージョンの {app_name} と互換性がありません。アプリを再インストールしてアカウントを復元し、新しいデータベースを生成して {app_name} を使用し続けてください。\n\n警告: これにより、2週間以上前のすべてのメッセージと添付ファイルが失われます。</string>

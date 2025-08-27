@@ -6,15 +6,18 @@ import android.content.Intent;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import org.session.libsession.utilities.recipients.Recipient.VibrateState;
+
+import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2;
+
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
 
 public class NotificationState {
 
@@ -51,19 +54,10 @@ public class NotificationState {
 
   public @Nullable Uri getRingtone(@NonNull Context context) {
     if (!notifications.isEmpty()) {
-      Recipient recipient = notifications.getFirst().getRecipient();
-      return NotificationChannels.getMessageRingtone(context, recipient);
+      return NotificationChannels.getMessageRingtone(context);
     }
 
     return RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-  }
-
-  public VibrateState getVibrate() {
-    if (!notifications.isEmpty()) {
-      Recipient recipient = notifications.getFirst().getRecipient();
-      return recipient.resolve().getMessageVibrate();
-    }
-    return VibrateState.DEFAULT;
   }
 
   public boolean hasMultipleThreads()              { return threads.size() > 1; }
@@ -169,9 +163,7 @@ public class NotificationState {
   public PendingIntent getQuickReplyIntent(Context context, Recipient recipient) {
     if (threads.size() != 1) throw new AssertionError("We only support replies to single thread notifications! " + threads.size());
 
-    Intent     intent           = new Intent(context, ConversationActivityV2.class);
-    intent.putExtra(ConversationActivityV2.ADDRESS, recipient.getAddress());
-    intent.putExtra(ConversationActivityV2.THREAD_ID, (long)threads.toArray()[0]);
+    final Intent intent = ConversationActivityV2.Companion.createIntent(context, (Address.Conversable) recipient.getAddress());
     intent.setData((Uri.parse("custom://"+System.currentTimeMillis())));
 
     int intentFlags = PendingIntent.FLAG_UPDATE_CURRENT;

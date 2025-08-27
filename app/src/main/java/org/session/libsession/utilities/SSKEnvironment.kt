@@ -2,9 +2,11 @@ package org.session.libsession.utilities
 
 import android.content.Context
 import dagger.Lazy
-import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.messages.Message
+import org.session.libsession.messaging.messages.ProfileUpdateHandler
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
+import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.session.libsession.utilities.recipients.Recipient
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -12,8 +14,8 @@ import javax.inject.Singleton
 @Singleton
 class SSKEnvironment @Inject constructor(
     val typingIndicators: TypingIndicatorsProtocol,
-    val profileManager: ProfileManagerProtocol,
-    val messageExpirationManager: MessageExpirationManagerProtocol
+    val messageExpirationManager: MessageExpirationManagerProtocol,
+    val profileUpdateHandler: ProfileUpdateHandler,
 ) {
 
     interface TypingIndicatorsProtocol {
@@ -33,17 +35,6 @@ class SSKEnvironment @Inject constructor(
             sentTimestamps: List<Long>,
             readTimestamp: Long
         )
-    }
-
-    interface ProfileManagerProtocol {
-        companion object {
-            const val NAME_PADDED_LENGTH = 100
-        }
-
-        fun setNickname(context: Context, recipient: Recipient, nickname: String?)
-        fun setName(context: Context, recipient: Recipient, name: String?)
-        fun setProfilePicture(context: Context, recipient: Recipient, profilePictureURL: String?, profileKey: ByteArray?)
-        fun contactUpdatedInternal(contact: Contact): String?
     }
 
     interface MessageExpirationManagerProtocol {

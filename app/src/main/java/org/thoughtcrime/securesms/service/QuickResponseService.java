@@ -68,7 +68,7 @@ public class QuickResponseService extends IntentService {
         VisibleMessage message = new VisibleMessage();
         message.setText(content);
         message.setSentTimestamp(SnodeAPI.getNowWithOffset());
-        MessageSender.send(message, Address.fromExternal(this, number));
+        MessageSender.send(message, Address.fromSerialized(number));
       }
     } catch (URISyntaxException e) {
       Toast.makeText(this, R.string.errorUnknown, Toast.LENGTH_LONG).show();

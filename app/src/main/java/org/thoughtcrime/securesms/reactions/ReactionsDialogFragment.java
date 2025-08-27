@@ -23,13 +23,19 @@ import com.google.android.material.tabs.TabLayoutMediator;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.components.emoji.EmojiImageView;
 import org.thoughtcrime.securesms.database.model.MessageId;
+import org.thoughtcrime.securesms.util.AvatarUtils;
 import org.thoughtcrime.securesms.util.LifecycleDisposable;
 import org.thoughtcrime.securesms.util.NumberUtil;
 
 import java.util.Objects;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+import dagger.hilt.android.lifecycle.HiltViewModelExtensions;
 import network.loki.messenger.R;
 
+@AndroidEntryPoint
 public final class ReactionsDialogFragment extends BottomSheetDialogFragment implements ReactionViewPagerAdapter.Listener {
 
   private static final String ARGS_MESSAGE_ID = "reactions.args.message.id";
@@ -41,6 +47,9 @@ public final class ReactionsDialogFragment extends BottomSheetDialogFragment imp
   private ViewPager2                recipientPagerView;
   private ReactionViewPagerAdapter  recipientsAdapter;
   private Callback                  callback;
+
+  @Inject
+  AvatarUtils avatarUtils;
 
   private final LifecycleDisposable disposables = new LifecycleDisposable();
 
@@ -139,14 +148,19 @@ public final class ReactionsDialogFragment extends BottomSheetDialogFragment imp
   }
 
   private void setUpRecipientsRecyclerView() {
-    recipientsAdapter = new ReactionViewPagerAdapter(this, requireArguments().getBoolean(ARGS_CAN_REMOVE));
+    recipientsAdapter = new ReactionViewPagerAdapter(this, requireArguments().getBoolean(ARGS_CAN_REMOVE), avatarUtils);
     recipientPagerView.setAdapter(recipientsAdapter);
   }
 
   private void setUpViewModel(@NonNull MessageId messageId) {
-    ReactionsViewModel.Factory factory = new ReactionsViewModel.Factory(messageId);
-
-    ReactionsViewModel viewModel = new ViewModelProvider(this, factory).get(ReactionsViewModel.class);
+    final ReactionsViewModel viewModel = new ViewModelProvider(
+            getViewModelStore(),
+            getDefaultViewModelProviderFactory(),
+            HiltViewModelExtensions.withCreationCallback(
+                    getDefaultViewModelCreationExtras(),
+                    (ReactionsViewModel.Factory factory) -> factory.create(messageId)
+            )
+    ).get(ReactionsViewModel.class);
 
     disposables.add(viewModel.getEmojiCounts().subscribe(emojiCounts -> {
       if (emojiCounts.size() < 1) {

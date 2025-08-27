@@ -6,14 +6,15 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
@@ -21,9 +22,8 @@ import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
 import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.messages.ExpirationConfiguration
-import org.session.libsession.messaging.messages.ExpirationConfiguration.Companion.isNewConfigEnabled
 import org.session.libsession.messaging.messages.Message
+import org.session.libsession.messaging.messages.ProfileUpdateHandler
 import org.session.libsession.messaging.messages.control.CallMessage
 import org.session.libsession.messaging.messages.control.DataExtractionNotification
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
@@ -40,7 +40,6 @@ import org.session.libsession.messaging.sending_receiving.attachments.PointerAtt
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
-import org.session.libsession.messaging.sending_receiving.notifications.PushRegistryV1
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildDeleteMemberContentSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildGroupInviteSignature
@@ -49,12 +48,16 @@ import org.session.libsession.messaging.utilities.MessageAuthentication.buildMem
 import org.session.libsession.messaging.utilities.WebRtcUtils
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
+import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.getType
+import org.session.libsession.utilities.updateContact
+import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
@@ -62,20 +65,22 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.database.ConfigDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.sskenvironment.ReadReceiptManager
-import java.security.MessageDigest
 import java.security.SignatureException
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 import kotlin.math.min
 
 internal fun MessageReceiver.isBlocked(publicKey: String): Boolean {
-    val context = MessagingModuleConfiguration.shared.context
-    val recipient = Recipient.from(context, Address.fromSerialized(publicKey), false)
-    return recipient.isBlocked
+    val recipient = MessagingModuleConfiguration.shared.recipientRepository.getRecipientSync(Address.fromSerialized(publicKey))
+    return recipient?.blocked == true
 }
 
 @Singleton
@@ -89,25 +94,36 @@ class ReceivedMessageHandler @Inject constructor(
     private val notificationManager: MessageNotifier,
     private val groupManagerV2: GroupManagerV2,
     private val proStatusManager: ProStatusManager,
-    private val profileManager: SSKEnvironment.ProfileManagerProtocol,
     private val visibleMessageContextFactory: VisibleMessageHandlerContext.Factory,
-    private val attachmentDownloadJobFactory: AttachmentDownloadJob.Factory
+    private val attachmentDownloadJobFactory: AttachmentDownloadJob.Factory,
+    private val profileUpdateHandler: Provider<ProfileUpdateHandler>,
+    @param:ManagerScope private val scope: CoroutineScope,
+    private val configFactory: ConfigFactoryProtocol,
+    private val conversationRepository: ConversationRepository,
+    private val messageRequestResponseHandler: Provider<MessageRequestResponseHandler>
 ) {
-    fun handle(message: Message, proto: SignalServiceProtos.Content, threadId: Long, openGroupID: String?, groupv2Id: AccountId?) {
+
+    suspend fun handle(
+        message: Message,
+        proto: SignalServiceProtos.Content,
+        threadId: Long,
+        groupv2Id: AccountId?,
+        fromCommunity: Address.Community?,
+    ) {
         // Do nothing if the message was outdated
-        if (messageIsOutdated(message, threadId, openGroupID)) { return }
+        if (messageIsOutdated(message, threadId)) { return }
 
         when (message) {
             is ReadReceipt -> handleReadReceipt(message)
             is TypingIndicator -> handleTypingIndicator(message)
-            is GroupUpdated -> MessageReceiver.handleGroupUpdated(message, groupv2Id)
+            is GroupUpdated -> handleGroupUpdated(message, groupv2Id)
             is ExpirationTimerUpdate -> {
                 // For groupsv2, there are dedicated mechanisms for handling expiration timers, and
                 // we want to avoid the 1-to-1 message format which is unauthenticated in a group settings.
                 if (groupv2Id != null) {
                     Log.d("MessageReceiver", "Ignoring expiration timer update for closed group")
                 } // also ignore it for communities since they do not support disappearing messages
-                else if (openGroupID != null) {
+                else if (fromCommunity != null) {
                     Log.d("MessageReceiver", "Ignoring expiration timer update for communities")
                 } else {
                     handleExpirationTimerUpdate(message)
@@ -115,11 +131,11 @@ class ReceivedMessageHandler @Inject constructor(
             }
             is DataExtractionNotification -> handleDataExtractionNotification(message)
             is UnsendRequest -> handleUnsendRequest(message)
-            is MessageRequestResponse -> handleMessageRequestResponse(message)
+            is MessageRequestResponse -> messageRequestResponseHandler.get().handle(message)
             is VisibleMessage -> handleVisibleMessage(
                 message = message,
                 proto = proto,
-                context = visibleMessageContextFactory.create(threadId, openGroupID),
+                context = visibleMessageContextFactory.create(threadId),
                 runThreadUpdate = true,
                 runProfileUpdate = true
             )
@@ -127,7 +143,7 @@ class ReceivedMessageHandler @Inject constructor(
         }
     }
 
-    private fun messageIsOutdated(message: Message, threadId: Long, openGroupID: String?): Boolean {
+    private fun messageIsOutdated(message: Message, threadId: Long): Boolean {
         when (message) {
             is ReadReceipt -> return false // No visible artifact created so better to keep for more reliable read states
             is UnsendRequest -> return false // We should always process the removal of messages just in case
@@ -136,12 +152,7 @@ class ReceivedMessageHandler @Inject constructor(
         // Determine the state of the conversation and the validity of the message
         val userPublicKey = storage.getUserPublicKey()!!
         val threadRecipient = storage.getRecipientForThread(threadId)
-        val conversationVisibleInConfig = storage.conversationInConfig(
-            if (message.groupPublicKey == null) threadRecipient?.address?.toString() else null,
-            message.groupPublicKey,
-            openGroupID,
-            true
-        )
+        val conversationExists = threadRecipient != null
         val canPerformChange = storage.canPerformConfigChange(
             if (threadRecipient?.address?.toString() == userPublicKey) ConfigDatabase.USER_PROFILE_VARIANT else ConfigDatabase.CONTACTS_VARIANT,
             userPublicKey,
@@ -150,7 +161,7 @@ class ReceivedMessageHandler @Inject constructor(
 
         // If the thread is visible or the message was sent more recently than the last config message (minus
         // buffer period) then we should process the message, if not then the message is outdated
-        return (!conversationVisibleInConfig && !canPerformChange)
+        return (!conversationExists && !canPerformChange)
     }
 
     private fun handleReadReceipt(message: ReadReceipt) {
@@ -195,25 +206,6 @@ class ReceivedMessageHandler @Inject constructor(
         messageExpirationManager.run {
             insertExpirationTimerMessage(message)
             onMessageReceived(message)
-        }
-
-        val isLegacyGroup = message.groupPublicKey != null && message.groupPublicKey?.startsWith(IdPrefix.GROUP.value) == false
-
-        if (isNewConfigEnabled && !isLegacyGroup) return
-
-        try {
-            val threadId = Address.fromSerialized(message.groupPublicKey?.let(::doubleEncodeGroupID) ?: message.sender!!)
-                .let(storage::getOrCreateThreadIdFor)
-
-            storage.setExpirationConfiguration(
-                ExpirationConfiguration(
-                    threadId,
-                    message.expiryMode,
-                    message.sentTimestamp!!
-                )
-            )
-        } catch (e: Exception) {
-            Log.e("Loki", "Failed to update expiration configuration.")
         }
     }
 
@@ -261,7 +253,7 @@ class ReceivedMessageHandler @Inject constructor(
         // send a /delete rquest for 1on1 messages
         if (messageType == MessageType.ONE_ON_ONE) {
             messageDataProvider.getServerHashForMessage(messageIdToDelete)?.let { serverHash ->
-                GlobalScope.launch(Dispatchers.IO) { // using GlobalScope as we are slowly migrating to coroutines but we can't migrate everything at once
+                scope.launch(Dispatchers.IO) { // using scope as we are slowly migrating to coroutines but we can't migrate everything at once
                     try {
                         SnodeAPI.deleteMessage(author, userAuth, listOf(serverHash))
                     } catch (e: Exception) {
@@ -293,10 +285,6 @@ class ReceivedMessageHandler @Inject constructor(
         return messageIdToDelete
     }
 
-    private fun handleMessageRequestResponse(message: MessageRequestResponse) {
-        storage.insertMessageRequestResponseFromContact(message)
-    }
-
     fun handleVisibleMessage(
         message: VisibleMessage,
         proto: SignalServiceProtos.Content,
@@ -305,59 +293,21 @@ class ReceivedMessageHandler @Inject constructor(
         runProfileUpdate: Boolean
     ): MessageId? {
         val userPublicKey = context.storage.getUserPublicKey()
-        val messageSender: String? = message.sender
+        val senderAddress = message.sender!!.toAddress()
 
         // Do nothing if the message was outdated
-        if (messageIsOutdated(message, context.threadId, context.openGroupID)) { return null }
+        if (messageIsOutdated(message, context.threadId)) { return null }
 
-        // Update profile if needed
-        val recipient = Recipient.from(context.context, Address.fromSerialized(messageSender!!), false)
-        if (runProfileUpdate) {
-            val profile = message.profile
-            val isUserBlindedSender = messageSender == context.userBlindedKey
-            if (profile != null && userPublicKey != messageSender && !isUserBlindedSender) {
-                val name = profile.displayName!!
-                if (name.isNotEmpty() && name != recipient.rawName) {
-                    context.profileManager.setName(context.context, recipient, name)
-                }
-                val newProfileKey = profile.profileKey
 
-                val needsProfilePicture = !AvatarHelper.avatarFileExists(context.context, Address.fromSerialized(messageSender))
-                val profileKeyValid = newProfileKey?.isNotEmpty() == true && (newProfileKey.size == 16 || newProfileKey.size == 32) && profile.profilePictureURL?.isNotEmpty() == true
-                val profileKeyChanged = (recipient.profileKey == null || !MessageDigest.isEqual(recipient.profileKey, newProfileKey))
-
-                if ((profileKeyValid && profileKeyChanged) || (profileKeyValid && needsProfilePicture)) {
-                    context.profileManager.setProfilePicture(context.context, recipient, profile.profilePictureURL, newProfileKey)
-                } else if (newProfileKey == null || newProfileKey.isEmpty() || profile.profilePictureURL.isNullOrEmpty()) {
-                    context.profileManager.setProfilePicture(context.context, recipient, null, null)
-                }
-            }
-
-            if (userPublicKey != messageSender && !isUserBlindedSender && message.blocksMessageRequests != recipient.blocksCommunityMessageRequests) {
-                context.storage.setBlocksCommunityMessageRequests(recipient, message.blocksMessageRequests)
-            }
-
-            // update the disappearing / legacy banner for the sender
-            val disappearingState = when {
-                proto.dataMessage.expireTimer > 0 && !proto.hasExpirationType() -> Recipient.DisappearingState.LEGACY
-                else -> Recipient.DisappearingState.UPDATED
-            }
-            if(disappearingState != recipient.disappearingState) {
-                context.storage.updateDisappearingState(
-                    messageSender,
-                    context.threadId,
-                    disappearingState
-                )
-            }
-        }
         // Handle group invite response if new closed group
-        if (context.threadRecipient?.isGroupV2Recipient == true) {
-            GlobalScope.launch {
+        val threadRecipientAddress = context.threadRecipient?.address
+        if (threadRecipientAddress is Address.Group && senderAddress is Address.Standard) {
+            scope.launch {
                 try {
                     groupManagerV2
                         .handleInviteResponse(
-                            AccountId(context.threadRecipient!!.address.toString()),
-                            AccountId(messageSender),
+                            threadRecipientAddress.accountId,
+                            senderAddress.accountId,
                             approved = true
                         )
                 } catch (e: Exception) {
@@ -418,7 +368,7 @@ class ReceivedMessageHandler @Inject constructor(
                 context.storage.addReaction(
                     threadId = context.threadId,
                     reaction = reaction,
-                    messageSender = messageSender,
+                    messageSender = senderAddress.address,
                     notifyUnread = !threadIsGroup
                 )
             } else {
@@ -438,8 +388,7 @@ class ReceivedMessageHandler @Inject constructor(
             val maxChars = proStatusManager.getIncomingMessageMaxLength(message)
             val messageText = message.text?.take(maxChars) // truncate to max char limit for this message
             message.text = messageText
-            message.hasMention = listOf(userPublicKey, context.userBlindedKey)
-                .filterNotNull()
+            message.hasMention = listOfNotNull(userPublicKey, context.userBlindedKey)
                 .any { key ->
                     messageText?.contains("@$key") == true || key == (quoteModel?.author?.toString() ?: "")
                 }
@@ -452,10 +401,63 @@ class ReceivedMessageHandler @Inject constructor(
                 message.expiryMode = ExpiryMode.NONE
             }
 
-            val messageID = context.storage.persist(message, quoteModel, linkPreviews, message.groupPublicKey, context.openGroupID, attachments, runThreadUpdate) ?: return null
+            val messageID = context.storage.persist(
+                message,
+                quoteModel,
+                linkPreviews,
+                fromGroup = context.threadRecipient?.address as? Address.GroupLike,
+                attachments,
+                runThreadUpdate
+            ) ?: return null
+
+            // If we have previously "hidden" the sender, we should flip the flag back to visible
+            if (senderAddress is Address.Standard && senderAddress.address != userPublicKey) {
+                val existingContact =
+                    configFactory.withUserConfigs { it.contacts.get(senderAddress.accountId.hexString) }
+
+                if (existingContact != null && existingContact.priority == PRIORITY_HIDDEN) {
+                    Log.d(TAG, "Flipping thread for ${senderAddress.debugString} to visible")
+                    configFactory.withMutableUserConfigs { configs ->
+                        configs.contacts.updateContact(senderAddress) {
+                            priority = PRIORITY_VISIBLE
+                        }
+                    }
+                } else if (existingContact == null || !existingContact.approvedMe) {
+                    // If we don't have the contact, create a new one with approvedMe = true
+                    Log.d(TAG, "Creating new contact for ${senderAddress.debugString} with approvedMe = true")
+                    configFactory.withMutableUserConfigs { configs ->
+                        configs.contacts.upsertContact(senderAddress) {
+                            approvedMe = true
+                        }
+                    }
+                }
+            }
+
+            // Update profile if needed:
+            // - must be done after the message is persisted)
+            // - must be done after neccessary contact is created
+            if (runProfileUpdate && senderAddress is Address.WithAccountId) {
+                val updates = ProfileUpdateHandler.Updates.create(
+                    name = message.profile?.displayName,
+                    picUrl = message.profile?.profilePictureURL,
+                    picKey = message.profile?.profileKey,
+                    blocksCommunityMessageRequests = message.blocksMessageRequests,
+                    proStatus = null,
+                    profileUpdateTime = null,
+                )
+
+                if (updates != null) {
+                    profileUpdateHandler.get().handleProfileUpdate(
+                        senderId = senderAddress.accountId,
+                        updates = updates,
+                        fromCommunity = context.openGroup?.toCommunityInfo(),
+                    )
+                }
+            }
+
             // Parse & persist attachments
             // Start attachment downloads if needed
-            if (messageID.mms && (context.threadRecipient?.autoDownloadAttachments == true || messageSender == userPublicKey)) {
+            if (messageID.mms && (context.threadRecipient?.autoDownloadAttachments == true || senderAddress.address == userPublicKey)) {
                 context.storage.getAttachmentsForMessage(messageID.id).iterator().forEach { attachment ->
                     attachment.attachmentId?.let { id ->
                         JobQueue.shared.add(attachmentDownloadJobFactory.create(
@@ -479,7 +481,7 @@ class ReceivedMessageHandler @Inject constructor(
         return null
     }
 
-    private fun MessageReceiver.handleGroupUpdated(message: GroupUpdated, closedGroup: AccountId?) {
+    private fun handleGroupUpdated(message: GroupUpdated, closedGroup: AccountId?) {
         val inner = message.inner
         if (closedGroup == null &&
             !inner.hasInviteMessage() && !inner.hasPromoteMessage()) {
@@ -487,15 +489,19 @@ class ReceivedMessageHandler @Inject constructor(
         }
 
         // Update profile if needed
-        if (message.profile != null && !message.isSenderSelf) {
-            val profile = message.profile
-            val recipient = Recipient.from(context, Address.fromSerialized(message.sender!!), false)
-            if (profile.displayName?.isNotEmpty() == true) {
-                profileManager.setName(context, recipient, profile.displayName)
-            }
-            if (profile.profileKey?.isNotEmpty() == true && !profile.profilePictureURL.isNullOrEmpty()) {
-                profileManager.setProfilePicture(context, recipient, profile.profilePictureURL, profile.profileKey)
-            }
+        ProfileUpdateHandler.Updates.create(
+            name = message.profile?.displayName,
+            picUrl = message.profile?.profilePictureURL,
+            picKey = message.profile?.profileKey,
+            blocksCommunityMessageRequests = null,
+            proStatus = null,
+            profileUpdateTime = null
+        )?.let { updates ->
+            profileUpdateHandler.get().handleProfileUpdate(
+                senderId = AccountId(message.sender!!),
+                updates = updates,
+                fromCommunity = null // Groupv2 is not a community
+            )
         }
 
         when {
@@ -526,7 +532,7 @@ class ReceivedMessageHandler @Inject constructor(
             )
         }.isSuccess
 
-        GlobalScope.launch {
+        scope.launch {
             try {
                 groupManagerV2.handleDeleteMemberContent(
                     groupId = closedGroup,
@@ -553,7 +559,7 @@ class ReceivedMessageHandler @Inject constructor(
     }
 
     private fun handleMemberLeft(message: GroupUpdated, closedGroup: AccountId) {
-        GlobalScope.launch(Dispatchers.Default) {
+        scope.launch(Dispatchers.Default) {
             try {
                 groupManagerV2.handleMemberLeftMessage(
                     AccountId(message.sender!!), closedGroup
@@ -585,7 +591,7 @@ class ReceivedMessageHandler @Inject constructor(
         val seed = promotion.groupIdentitySeed.toByteArray()
         val sender = message.sender!!
         val adminId = AccountId(sender)
-        GlobalScope.launch {
+        scope.launch {
             try {
                 groupManagerV2
                     .handlePromotion(
@@ -606,9 +612,8 @@ class ReceivedMessageHandler @Inject constructor(
     private fun handleInviteResponse(message: GroupUpdated, closedGroup: AccountId) {
         val sender = message.sender!!
         // val profile = message // maybe we do need data to be the inner so we can access profile
-        val storage = storage
         val approved = message.inner.inviteResponse.isApproved
-        GlobalScope.launch {
+        scope.launch {
             try {
                 groupManagerV2.handleInviteResponse(closedGroup, AccountId(sender), approved)
             } catch (e: Exception) {
@@ -630,7 +635,7 @@ class ReceivedMessageHandler @Inject constructor(
 
         val sender = message.sender!!
         val adminId = AccountId(sender)
-        GlobalScope.launch {
+        scope.launch {
             try {
                 groupManagerV2
                     .handleInvitation(
@@ -679,23 +684,8 @@ class ReceivedMessageHandler @Inject constructor(
         return true
     }
 
-    fun disableLocalGroupAndUnsubscribe(groupPublicKey: String, groupID: String, userPublicKey: String, delete: Boolean) {
-        val storage = storage
-        storage.removeClosedGroupPublicKey(groupPublicKey)
-        // Remove the key pairs
-        storage.removeAllClosedGroupEncryptionKeyPairs(groupPublicKey)
-        // Mark the group as inactive
-        storage.setActive(groupID, false)
-        storage.removeMember(groupID, Address.fromSerialized(userPublicKey))
-        // Notify the PN server
-        PushRegistryV1.unsubscribeGroup(groupPublicKey, publicKey = userPublicKey)
-
-        if (delete) {
-            storage.getThreadId(Address.fromSerialized(groupID))?.let { threadId ->
-                storage.cancelPendingMessageSendJobs(threadId)
-                storage.deleteConversation(threadId)
-            }
-        }
+    companion object {
+        private const val TAG = "ReceivedMessageHandler"
     }
 
 }
@@ -720,15 +710,14 @@ private fun SignalServiceProtos.Content.ExpirationType.expiryMode(durationSecond
 class VisibleMessageHandlerContext @AssistedInject constructor(
     @param:ApplicationContext val context: Context,
     @Assisted val threadId: Long,
-    @Assisted val openGroupID: String?,
     val storage: StorageProtocol,
-    val profileManager: SSKEnvironment.ProfileManagerProtocol,
     val groupManagerV2: GroupManagerV2,
     val messageExpirationManager: SSKEnvironment.MessageExpirationManagerProtocol,
     val messageDataProvider: MessageDataProvider,
+    val recipientRepository: RecipientRepository,
 ) {
     val openGroup: OpenGroup? by lazy {
-        openGroupID?.let { storage.getOpenGroup(threadId) }
+        storage.getOpenGroup(threadId)
     }
 
     val userBlindedKey: String? by lazy {
@@ -755,10 +744,7 @@ class VisibleMessageHandlerContext @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(
-            threadId: Long,
-            openGroupID: String?
-        ): VisibleMessageHandlerContext
+        fun create(threadId: Long): VisibleMessageHandlerContext
     }
 }
 

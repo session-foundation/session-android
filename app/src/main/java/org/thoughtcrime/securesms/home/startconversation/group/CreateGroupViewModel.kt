@@ -21,6 +21,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
 import org.thoughtcrime.securesms.database.GroupDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.SelectContactsViewModel
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -30,20 +31,21 @@ import org.thoughtcrime.securesms.util.AvatarUtils
 @HiltViewModel(assistedFactory = CreateGroupViewModel.Factory::class)
 class CreateGroupViewModel @AssistedInject constructor(
     configFactory: ConfigFactory,
-    @ApplicationContext private val appContext: Context,
+    @param:ApplicationContext private val appContext: Context,
     private val storage: StorageProtocol,
     private val groupManagerV2: GroupManagerV2,
     avatarUtils: AvatarUtils,
     proStatusManager: ProStatusManager,
     groupDatabase: GroupDatabase,
     @Assisted createFromLegacyGroupId: String?,
+    recipientRepository: RecipientRepository,
 ): SelectContactsViewModel(
     configFactory = configFactory,
+    avatarUtils = avatarUtils,
+    proStatusManager = proStatusManager,
     excludingAccountIDs = emptySet(),
     contactFiltering = SelectContactsViewModel.Factory.defaultFiltering,
-    appContext = appContext,
-    avatarUtils = avatarUtils,
-    proStatusManager = proStatusManager
+    recipientRepository = recipientRepository,
 ) {
     // Child view model to handle contact selection logic
 
@@ -127,8 +129,7 @@ class CreateGroupViewModel @AssistedInject constructor(
 
                 }
                 else -> {
-                    val threadId = withContext(Dispatchers.Default) { storage.getOrCreateThreadIdFor(recipient.address) }
-                    mutableEvents.emit(CreateGroupEvent.NavigateToConversation(threadId))
+                    mutableEvents.emit(CreateGroupEvent.NavigateToConversation(recipient.address as Address.Conversable))
                 }
             }
 
@@ -149,7 +150,7 @@ class CreateGroupViewModel @AssistedInject constructor(
 }
 
 sealed interface CreateGroupEvent {
-    data class NavigateToConversation(val threadID: Long): CreateGroupEvent
+    data class NavigateToConversation(val address: Address.Conversable): CreateGroupEvent
 
     data class Error(val message: String): CreateGroupEvent
 }

@@ -10,7 +10,6 @@ import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPolle
 import org.session.libsession.messaging.sending_receiving.pollers.Poller;
 import org.session.libsession.messaging.sending_receiving.pollers.PollerManager;
 import org.session.libsession.utilities.Debouncer;
-import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.ThreadUtils;
 import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.util.AvatarUtils;
@@ -32,8 +31,11 @@ public class OptimizedMessageNotifier implements MessageNotifier {
   private final PollerManager pollerManager;
 
   @Inject
-  public OptimizedMessageNotifier(AvatarUtils avatarUtils, OpenGroupPollerManager openGroupPollerManager, PollerManager pollerManager) {
-    this.wrapped   = new DefaultMessageNotifier(avatarUtils);
+  public OptimizedMessageNotifier(AvatarUtils avatarUtils,
+                                  OpenGroupPollerManager openGroupPollerManager,
+                                  PollerManager pollerManager,
+                                  DefaultMessageNotifier defaultMessageNotifier) {
+    this.wrapped   = defaultMessageNotifier;
     this.openGroupPollerManager = openGroupPollerManager;
     this.debouncer = new Debouncer(TimeUnit.SECONDS.toMillis(2));
     this.pollerManager = pollerManager;
@@ -50,10 +52,6 @@ public class OptimizedMessageNotifier implements MessageNotifier {
   @Override
   public void setLastDesktopActivityTimestamp(long timestamp) { wrapped.setLastDesktopActivityTimestamp(timestamp);}
 
-  @Override
-  public void notifyMessageDeliveryFailed(Context context, Recipient recipient, long threadId) {
-    wrapped.notifyMessageDeliveryFailed(context, recipient, threadId);
-  }
 
   @Override
   public void cancelDelayedNotifications() { wrapped.cancelDelayedNotifications(); }

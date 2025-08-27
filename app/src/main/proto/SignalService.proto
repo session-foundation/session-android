@@ -17,9 +17,9 @@ message Envelope {
   optional string source          = 2;
   optional uint32 sourceDevice    = 7;
   // @required
-  required uint64 timestamp       = 5;
+  required uint64 timestampMs       = 5;
   optional bytes  content         = 8;
-  optional uint64 serverTimestamp = 10;
+  optional uint64 serverTimestampMs = 10;
 }
 
 message TypingMessage {
@@ -30,14 +30,14 @@ message TypingMessage {
     }
 
     // @required
-    required uint64 timestamp = 1;
+    required uint64 timestampMs = 1;
     // @required
     required Action action    = 2;
 }
 
 message UnsendRequest {
   // @required
-  required uint64 timestamp = 1;
+  required uint64 timestampMs = 1;
   // @required
   required string author    = 2;
 }
@@ -57,8 +57,8 @@ message Content {
   optional UnsendRequest              unsendRequest              = 9;
   optional MessageRequestResponse     messageRequestResponse     = 10;
   optional ExpirationType             expirationType             = 12;
-  optional uint32                     expirationTimer            = 13;
-  optional uint64                     sigTimestamp               = 15;
+  optional uint32                     expirationTimerSeconds     = 13;
+  optional uint64                     sigTimestampMs             = 15;
 
   reserved 14;
   reserved 11; // Used to be a "sharedConfigMessage" but no longer used
@@ -81,7 +81,7 @@ message DataExtractionNotification {
 
   // @required
   required Type   type      = 1;
-  optional uint64 timestamp = 2;
+  optional uint64 timestampMs = 2;
 }
 
 message DataMessage {
@@ -122,6 +122,7 @@ message DataMessage {
   message LokiProfile {
     optional string displayName = 1;
     optional string profilePicture = 2;
+    optional uint64 lastProfileUpdateMs = 3;
   }
 
   message OpenGroupInvitation {
@@ -179,7 +180,7 @@ message DataMessage {
     // @required
     required Type     type              = 1;
     optional string   updatedName       = 2;
-    optional uint32   updatedExpiration = 3;
+    optional uint32   updatedExpirationSeconds = 3;
     // @required
     // "INFO_CHANGE" || type || timestamp
     required bytes adminSignature = 4;
@@ -237,7 +238,7 @@ message DataMessage {
   optional string                    body                           = 1;
   repeated AttachmentPointer         attachments                    = 2;
   optional uint32                    flags                          = 4;
-  optional uint32                    expireTimer                    = 5;
+  optional uint32                    expireTimerSeconds             = 5;
   optional bytes                     profileKey                     = 6;
   optional uint64                    timestamp                      = 7;
   optional Quote                     quote                          = 8;
@@ -290,7 +291,7 @@ message ReceiptMessage {
 
   // @required
   required Type   type      = 1;
-  repeated uint64 timestamp = 2;
+  repeated uint64 timestampMs = 2;
 }
 
 message AttachmentPointer {

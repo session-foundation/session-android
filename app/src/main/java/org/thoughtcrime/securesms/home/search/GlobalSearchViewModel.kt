@@ -19,6 +19,7 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.search.SearchRepository
 import org.thoughtcrime.securesms.search.model.SearchResult
@@ -33,6 +34,7 @@ class GlobalSearchViewModel @Inject constructor(
     private val application: Application,
     private val searchRepository: SearchRepository,
     private val configFactory: ConfigFactory,
+    private val threadDatabase: ThreadDatabase,
 ) : ViewModel() {
 
     // The query text here is not the source of truth due to the limitation of Android view system
@@ -41,7 +43,7 @@ class GlobalSearchViewModel @Inject constructor(
     private val _queryText = MutableStateFlow<String>("")
 
     private fun observeChangesAffectingSearch(): Flow<*> = merge(
-        application.contentResolver.observeChanges(DatabaseContentProviders.ConversationList.CONTENT_URI),
+        threadDatabase.updateNotifications,
         configFactory.configUpdateNotifications
     )
 
@@ -60,7 +62,7 @@ class GlobalSearchViewModel @Inject constructor(
                         // without a nickname/name who haven't approved us.
                         GlobalSearchResult(
                             query,
-                            searchRepository.queryContacts("05").toList()
+                            searchRepository.queryContacts().toList()
                         )
                     }
                 } else {

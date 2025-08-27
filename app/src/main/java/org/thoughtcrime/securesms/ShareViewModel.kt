@@ -3,16 +3,14 @@ package org.thoughtcrime.securesms
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Parcel
 import android.provider.OpenableColumns
+import androidx.core.content.IntentCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -20,27 +18,22 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.ShareActivity.Companion.EXTRA_ADDRESS_MARSHALLED
-import org.thoughtcrime.securesms.ShareActivity.Companion.EXTRA_DISTRIBUTION_TYPE
-import org.thoughtcrime.securesms.ShareActivity.Companion.EXTRA_THREAD_ID
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.database.ThreadDatabase
-import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.home.search.getSearchName
+import org.thoughtcrime.securesms.database.model.ThreadRecord
+import org.thoughtcrime.securesms.home.search.searchName
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.providers.BlobUtils
+import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.MediaUtil
@@ -50,13 +43,11 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ShareViewModel @Inject constructor(
-    configFactory: ConfigFactory,
-    @ApplicationContext private val context: Context,
-    private val storage: StorageProtocol,
-    private val threadDatabase: ThreadDatabase,
+    @param:ApplicationContext private val context: Context,
     private val avatarUtils: AvatarUtils,
     private val proStatusManager: ProStatusManager,
     private val deprecationManager: LegacyGroupDeprecationManager,
+    private val conversationRepository: ConversationRepository,
 ): ViewModel(){
     private val TAG = ShareViewModel::class.java.simpleName
 
@@ -73,13 +64,13 @@ class ShareViewModel @Inject constructor(
     // Output: the contact items to display and select from
     @OptIn(FlowPreview::class)
     val contacts: StateFlow<List<ConversationItem>> = combine(
-        getConversations(),
+        conversationRepository.observeConversationList(),
          mutableSearchQuery.debounce(100L),
          ::filterContacts
     ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     val hasAnyConversations: StateFlow<Boolean> =
-        getConversations()
+        contacts
             .map { it.isNotEmpty() }
             .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
@@ -90,49 +81,46 @@ class ShareViewModel @Inject constructor(
     val uiState: StateFlow<UIState> get() = _uiState
 
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private fun getConversations():Flow<Set<Pair<Recipient, Long>>> = flow {
-        val cursor = threadDatabase.conversationList
-        val result = mutableSetOf<Pair<Recipient, Long>>()
-        threadDatabase.readerFor(cursor).use { reader ->
-            while (reader.next != null) {
-                val thread = reader.current
-                result.add(Pair(thread.recipient, thread.lastMessage?.timestamp ?: 0))
-            }
-        }
 
-        emit(result)
-    }
-
-    private suspend fun filterContacts(
-        contacts: Collection<Pair<Recipient, Long>>,
+    private fun filterContacts(
+        threads: List<ThreadRecord>,
         query: String,
     ): List<ConversationItem> {
-        return contacts.filter {
-            if(it.first.isLegacyGroupRecipient && deprecationManager.isDeprecated) return@filter false // ignore legacy group when deprecated
-            if(it.first.isCommunityRecipient) { // ignore communities without write access
-                val threadId = storage.getThreadId(it.first) ?: return@filter false
-                val openGroup = storage.getOpenGroup(threadId) ?: return@filter false
-                if(!openGroup.canWrite) return@filter false
-            }
-            if(it.first.isBlocked) return@filter false // ignore blocked contacts
+        return threads
+            .asSequence()
+            .filter { thread ->
+                val recipient = thread.recipient
+                when {
+                    // If the recipient is blocked, ignore it
+                    recipient.blocked -> false
 
-            val name = if(it.first.isLocalNumber) context.getString(R.string.noteToSelf)
-            else it.first.getSearchName()
+                    // if the recipient is a legacy group, check if deprecation is enabled
+                    recipient.address is Address.LegacyGroup -> !deprecationManager.isDeprecated
 
-            (query.isBlank() || name.contains(query, ignoreCase = true))
-        }.sortedWith(
-            compareBy<Pair<Recipient, Long>> { !it.first.isLocalNumber } // NTS come first
-                .thenByDescending { it.second } // then order by last message time
-        ).map {
-            ConversationItem(
-                name = if(it.first.isLocalNumber) context.getString(R.string.noteToSelf)
-                        else it.first.getSearchName(),
-                address = it.first.address,
-                avatarUIData = avatarUtils.getUIDataFromRecipient(it.first),
-                showProBadge = proStatusManager.shouldShowProBadge(it.first.address)
-            )
-        }
+                    // if the recipient is a community, check if it can write
+                    recipient.data is RecipientData.Community -> recipient.data.openGroup.canWrite
+
+                    else -> {
+                        val name = if (recipient.isSelf) context.getString(R.string.noteToSelf)
+                        else recipient.searchName
+
+                        (query.isBlank() || name.contains(query, ignoreCase = true))
+                    }
+                }
+            }.sortedWith(
+                compareBy<ThreadRecord> { !it.recipient.isSelf } // NTS come first
+                    .thenByDescending { it.lastMessage?.timestamp } // then order by last message time
+            ).map { thread ->
+                val recipient = thread.recipient
+
+                ConversationItem(
+                    name = if(recipient.isSelf) context.getString(R.string.noteToSelf)
+                            else recipient.searchName,
+                    address = recipient.address,
+                    avatarUIData = avatarUtils.getUIDataFromRecipient(recipient),
+                    showProBadge = proStatusManager.shouldShowProBadge(recipient.address)
+                )
+            }.toList()
     }
 
     fun onSearchQueryChanged(query: String) {
@@ -167,25 +155,12 @@ class ShareViewModel @Inject constructor(
     }
 
     private fun handleResolvedMedia(intent: Intent) {
-        val threadId = intent.getLongExtra(EXTRA_THREAD_ID, -1)
-        val distributionType = intent.getIntExtra(EXTRA_DISTRIBUTION_TYPE, -1)
-        var address: Address? = null
+        val address = IntentCompat.getParcelableExtra(intent, ShareActivity.EXTRA_ADDRESS, Address::class.java)
 
-        if (intent.hasExtra(EXTRA_ADDRESS_MARSHALLED)) {
-            val parcel = Parcel.obtain()
-            val marshalled = intent.getByteArrayExtra(EXTRA_ADDRESS_MARSHALLED)
-            parcel.unmarshall(marshalled!!, 0, marshalled.size)
-            parcel.setDataPosition(0)
-            address = parcel.readParcelable<Address?>(context.classLoader)
-            parcel.recycle()
-        }
-
-        val hasResolvedDestination = threadId != -1L && address != null && distributionType != -1
-
-         if (!hasResolvedDestination) {
-             _uiState.update { it.copy(showLoader = false) }
+        if (address is Address.Conversable) {
+            createConversation(address)
         } else {
-            createConversation(threadId, address)
+            _uiState.update { it.copy(showLoader = false) }
         }
     }
 
@@ -254,35 +229,31 @@ class ShareViewModel @Inject constructor(
     }
 
     fun onContactItemClicked(address: Address) {
-
-        viewModelScope.launch(Dispatchers.Default) {
-            val recipient = Recipient.from(context, address, true)
-            val existingThread = threadDatabase.getThreadIdIfExistsFor(recipient)
-            createConversation(existingThread, recipient.address)
+        if (address is Address.Conversable) {
+            createConversation(address)
         }
     }
 
 
-    private fun createConversation(threadId: Long, address: Address?) {
-        val intent = getBaseShareIntent(ConversationActivityV2::class.java)
-        intent.putExtra(ConversationActivityV2.ADDRESS, address)
-        intent.putExtra(ConversationActivityV2.THREAD_ID, threadId)
+    private fun createConversation(address: Address.Conversable) {
+        val intent = ConversationActivityV2.createIntent(
+            context = context,
+            address = address,
+        )
+
+        intent.applyBaseShare()
 
         isPassingAlongMedia = true
         _uiEvents.tryEmit(ShareUIEvent.GoToScreen(intent))
     }
 
-    private fun getBaseShareIntent(target: Class<*>): Intent {
-        val intent = Intent(context, target)
-
+    private fun Intent.applyBaseShare() {
         if (resolvedExtra != null) {
-            intent.setDataAndType(resolvedExtra, mimeType)
+            setDataAndType(resolvedExtra, mimeType)
         } else if (resolvedPlaintext != null) {
-            intent.putExtra(Intent.EXTRA_TEXT, resolvedPlaintext)
-            intent.setType("text/plain")
+            putExtra(Intent.EXTRA_TEXT, resolvedPlaintext)
+            setType("text/plain")
         }
-
-        return intent
     }
 
     sealed interface ShareUIEvent {

@@ -68,7 +68,6 @@ import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
@@ -335,7 +334,7 @@ fun CellMetadata(
                                         .align(Alignment.CenterVertically),
                                     size = LocalDimensions.current.iconLarge,
                                     data = senderAvatarData,
-                                    badge = if (state.senderIsAdmin) { AvatarBadge.Admin } else AvatarBadge.None
+                                    badge = if (state.senderHasAdminCrown) { AvatarBadge.Admin } else AvatarBadge.None
                                 )
                                 Spacer(modifier = Modifier.width(LocalDimensions.current.smallSpacing))
                             }
@@ -402,8 +401,8 @@ fun MessageProFeatures(
                 padding = PaddingValues(),
                 data = CTAFeature.Icon(
                     text = when(it){
-                        ProStatusManager.MessageProFeature.ProBadge -> Phrase.from(LocalContext.current, R.string.proBadge)
-                            .put(APP_PRO_KEY, NonTranslatableStringConstants.PRO)
+                        ProStatusManager.MessageProFeature.ProBadge -> Phrase.from(LocalContext.current, R.string.appProBadge)
+                            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                             .format()
                             .toString()
                         ProStatusManager.MessageProFeature.LongMessage -> stringResource(id = R.string.proIncreasedMessageLengthFeature)

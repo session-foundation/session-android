@@ -1,6 +1,7 @@
 package org.session.libsignal.utilities
 
 import network.loki.messenger.BuildConfig
+import org.session.libsession.utilities.truncatedForDisplay
 
 
 private val VALID_ACCOUNT_ID_PATTERN = Regex("[0-9]{2}[0-9a-fA-F]{64}")
@@ -28,10 +29,7 @@ data class AccountId(
     }
 
     override fun toString(): String {
-        return StringBuilder(8)
-            .append(hexString, 0, 5)
-            .append("...")
-            .toString()
+        return truncatedForDisplay()
     }
 
     override fun compareTo(other: AccountId): Int {

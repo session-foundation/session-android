@@ -1,20 +1,16 @@
 package org.thoughtcrime.securesms.home.startconversation
 
 import android.annotation.SuppressLint
-import android.content.Intent
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.SheetState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,20 +19,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.fragment.app.viewModels
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.home.startconversation.community.JoinCommunityScreen
 import org.thoughtcrime.securesms.home.startconversation.community.JoinCommunityViewModel
 import org.thoughtcrime.securesms.home.startconversation.group.CreateGroupScreen
@@ -52,8 +42,6 @@ import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
 import org.thoughtcrime.securesms.ui.horizontalSlideComposable
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
-import org.thoughtcrime.securesms.util.push
-import kotlin.getValue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -167,12 +155,10 @@ fun StartConversationNavHost(
                 LaunchedEffect(Unit) {
                     scope.launch {
                         viewModel.success.collect {
-                            val recipient = Recipient.from(context, Address.fromSerialized(it.publicKey), false)
-                            Intent(context, ConversationActivityV2::class.java).apply {
-                                putExtra(ConversationActivityV2.ADDRESS, recipient.address)
-                                setDataAndType(activity?.intent?.data, activity?.intent?.type)
-                                putExtra(ConversationActivityV2.THREAD_ID, DatabaseComponent.get(context).threadDatabase().getThreadIdIfExistsFor(recipient))
-                            }.let(context::startActivity)
+                            context.startActivity(ConversationActivityV2.createIntent(
+                                context,
+                                address = it.address
+                            ))
 
                             onClose()
                         }
@@ -192,10 +178,9 @@ fun StartConversationNavHost(
             // Create Group
             horizontalSlideComposable<StartConversationDestination.CreateGroup> {
                 CreateGroupScreen(
-                    onNavigateToConversationScreen = { threadID ->
+                    onNavigateToConversationScreen = { address ->
                         activity?.startActivity(
-                            Intent(activity, ConversationActivityV2::class.java)
-                                .putExtra(ConversationActivityV2.THREAD_ID, threadID)
+                            ConversationActivityV2.createIntent(activity, address)
                         )
                     },
                     onBack = { scope.launch { navigator.navigateUp() }},
@@ -214,10 +199,8 @@ fun StartConversationNavHost(
                         viewModel.uiEvents.collect {
                             when(it){
                                 is JoinCommunityViewModel.UiEvent.NavigateToConversation -> {
-                                    val intent = Intent(context, ConversationActivityV2::class.java)
-                                    intent.putExtra(ConversationActivityV2.THREAD_ID, it.threadId)
-                                    activity?.startActivity(intent)
                                     onClose()
+                                    activity?.startActivity(ConversationActivityV2.createIntent(activity, it.address))
                                 }
                             }
                         }

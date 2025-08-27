@@ -17,26 +17,30 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import org.session.libsession.database.StorageProtocol
-import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
-import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.utilities.IdPrefix
+import org.session.libsession.utilities.isBlinded
+import org.session.libsession.utilities.isCommunityInbox
+import org.session.libsession.utilities.recipients.RecipientData
+import org.session.libsession.utilities.recipients.displayName
+import org.session.libsession.utilities.toBlinded
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.BlindMappingRepository
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.pro.ProStatusManager
 
 /**
  * Helper class to get the information required for the user profile modal
  */
 class UserProfileUtils @AssistedInject constructor(
-    @ApplicationContext private val context: Context,
-    @Assisted private val recipient: Recipient,
-    @Assisted private val threadId: Long,
+    @param:ApplicationContext private val context: Context,
+    @Assisted private val userAddress: Address,
+    @Assisted private val threadAddress: Address.Conversable,
     @Assisted private val scope: CoroutineScope,
     private val avatarUtils: AvatarUtils,
-    private val configFactory: ConfigFactoryProtocol,
     private val proStatusManager: ProStatusManager,
-    private val storage: StorageProtocol
+    private val blindedIdMappingRepository: BlindMappingRepository,
+    private val recipientRepository: RecipientRepository,
 ) {
     private val _userProfileModalData: MutableStateFlow<UserProfileModalData?> = MutableStateFlow(null)
     val userProfileModalData: StateFlow<UserProfileModalData?>
@@ -51,70 +55,76 @@ class UserProfileUtils @AssistedInject constructor(
     }
 
     private suspend fun getDefaultProfileData(): UserProfileModalData {
-        var address = recipient.address.toString()
-        val configContact = configFactory.withUserConfigs { configs ->
-            configs.contacts.get(address)
-        }
+        // An address that would
+        val resolvedAddress = userAddress.toBlinded()
+            ?.let { blindedIdMappingRepository.findMappings(it).firstOrNull()?.second ?: it }
+            ?: userAddress
 
-        var isResolvedBlinded = false
-
-        var isBlinded = IdPrefix.fromValue(address)?.isBlinded() == true
-
-        // if we have a blinded address, check if it can be resolved
-        if(isBlinded){
-            val openGroup = storage.getOpenGroup(threadId)
-            openGroup?.let {
-                val resolvedAddress = storage.getOrCreateBlindedIdMapping(
-                    address,
-                    it.server,
-                    it.publicKey
-                ).accountId
-
-                if (resolvedAddress != null) {
-                    address = resolvedAddress
-                    isResolvedBlinded = true
-                    isBlinded = false // no longer blinded
-                }
-            }
-        }
+        val recipient = recipientRepository.getRecipient(resolvedAddress)
 
         // we apply the display rules from figma (the numbers being the number of characters):
         // - if the address is blinded (with a tooltip), display as 10...10
         // - if the address is a resolved blinded id (with a tooltip) 23 / 23 / 20
         // - for the rest: non blinded address which aren't from a community, break in 33 / 33
-        val (displayAddress, tooltipText) = when {
-            isBlinded -> {
-                "${address.take(10)}...${address.takeLast(10)}" to
-                        context.getString(R.string.tooltipBlindedIdCommunities)
+        val displayAddress: String
+        val tooltipText: CharSequence?
+
+        when {
+            // Case 1: the resolved address is still blinded...
+            resolvedAddress.isBlinded -> {
+                displayAddress = "${resolvedAddress.address.take(10)}...${resolvedAddress.address.takeLast(10)}"
+                tooltipText = context.getString(R.string.tooltipBlindedIdCommunities)
             }
 
-            isResolvedBlinded -> {
-                "${address.substring(0, 23)}\n${address.substring(23, 46)}\n${address.substring(46)}" to
-                        Phrase.from(context, R.string.tooltipAccountIdVisible)
-                            .put(NAME_KEY, truncateName(recipient.name))
-                            .format()
+            // Case 2: We successfully resolved a blinded id...
+            !resolvedAddress.isBlinded && (userAddress.isBlinded || userAddress.isCommunityInbox) -> {
+                displayAddress = "${resolvedAddress.address.substring(0, 23)}\n${resolvedAddress.address.substring(23, 46)}\n${resolvedAddress.address.substring(46)}"
+                tooltipText = Phrase.from(context, R.string.tooltipAccountIdVisible)
+                    .put(NAME_KEY, truncateName(recipient.displayName()))
+                    .format()
             }
 
+            // Case 3: The address is not blinded at all...
             else -> {
-                "${address.take(33)}\n${address.takeLast(33)}" to null
+                displayAddress = "${userAddress.address.take(33)}\n${userAddress.address.takeLast(33)}"
+                tooltipText = null
             }
         }
 
+        // The conversation screen can not take a pure blinded address, it will have to be a
+        // "Community inbox" address, so we encode it here..
+        val messageAddress: Address.Conversable? = when (resolvedAddress) {
+            is Address.Blinded -> {
+                if (threadAddress is Address.Community) {
+                    Address.CommunityBlindedId(
+                        serverUrl = threadAddress.serverUrl,
+                        blindedId = resolvedAddress
+                    )
+                } else {
+                    null
+                }
+            }
+
+            is Address.Conversable -> resolvedAddress
+            is Address.Unknown -> null
+        }
+
         return UserProfileModalData(
-            name = if(recipient.isLocalNumber) context.getString(R.string.you) else recipient.name,
-            subtitle = if(configContact?.nickname?.isNotEmpty() == true) "(${configContact.name})" else null,
-            avatarUIData = avatarUtils.getUIDataFromAccountId(accountId = address),
+            name = if (recipient.isLocalNumber) context.getString(R.string.you) else recipient.displayName(),
+            subtitle = (recipient.data as? RecipientData.Contact)?.nickname?.takeIf { it.isNotBlank() }?.let { "($it)" },
+            avatarUIData = avatarUtils.getUIDataFromRecipient(recipient),
             showProBadge = proStatusManager.shouldShowProBadge(recipient.address),
             currentUserPro = proStatusManager.isCurrentUserPro(),
-            rawAddress = address,
+            rawAddress = recipient.address.address,
             displayAddress = displayAddress,
-            threadId = threadId,
-            isBlinded = isBlinded,
+            threadAddress = threadAddress,
+            isBlinded = recipient.address.isBlinded,
             tooltipText = tooltipText,
-            enableMessage = !isBlinded || !recipient.blocksCommunityMessageRequests,
+            enableMessage = !recipient.address.isBlinded || recipient.acceptsBlindedCommunityMessageRequests,
             expandedAvatar = false,
             showQR = false,
-            showProCTA = false
+            showProCTA = false,
+            messageAddress = messageAddress,
         )
 
     }
@@ -155,7 +165,7 @@ class UserProfileUtils @AssistedInject constructor(
 
             UserProfileModalCommands.CopyAccountId -> {
                 //todo we do this in a few places, should reuse the logic
-                val accountID = recipient.address.toString()
+                val accountID = userAddress.address
                 val clip = ClipData.newPlainText("Account ID", accountID)
                 val manager = context.getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
                 manager.setPrimaryClip(clip)
@@ -166,7 +176,7 @@ class UserProfileUtils @AssistedInject constructor(
 
     @AssistedFactory
     interface UserProfileUtilsFactory {
-        fun create(recipient: Recipient, threadId: Long, scope: CoroutineScope): UserProfileUtils
+        fun create(userAddress: Address, threadAddress: Address.Conversable, scope: CoroutineScope): UserProfileUtils
     }
 
 }
@@ -178,10 +188,11 @@ data class UserProfileModalData(
     val currentUserPro: Boolean,
     val rawAddress: String,
     val displayAddress: String,
-    val threadId: Long,
+    val threadAddress: Address.Conversable,
     val isBlinded: Boolean,
     val tooltipText: CharSequence?,
     val enableMessage: Boolean,
+    val messageAddress: Address.Conversable?, // The address to send to ConversationActivity
     val expandedAvatar: Boolean,
     val showQR: Boolean,
     val avatarUIData: AvatarUIData,

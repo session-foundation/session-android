@@ -16,6 +16,7 @@ import android.view.View
 import android.view.ViewOutlineProvider
 import android.view.WindowManager
 import androidx.activity.viewModels
+import androidx.compose.runtime.collectAsState
 import androidx.core.content.IntentCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
@@ -23,17 +24,24 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityWebrtcBinding
 import org.apache.commons.lang3.time.DurationFormatUtils
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
+import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.permissions.Permissions
+import org.thoughtcrime.securesms.ui.components.Avatar
+import org.thoughtcrime.securesms.ui.setThemedContent
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_CONNECTED
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.SPEAKER_PHONE
 import java.time.Duration
@@ -168,12 +176,19 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
         clipFloatingInsets()
 
         // set up the user avatar
-        TextSecurePreferences.getLocalNumber(this)?.let{
-            binding.userAvatar.apply {
-                publicKey = it
-                displayName = viewModel.getCurrentUsername()
-                update()
-            }
+        binding.userAvatar.setThemedContent {
+            Avatar(
+                size = LocalDimensions.current.iconXLargeAvatar,
+                data = viewModel.currentUserAvatarData.collectAsState().value
+            )
+        }
+
+        // set up recipient's avatar
+        binding.contactAvatar.setThemedContent {
+            Avatar(
+                size = LocalDimensions.current.iconXLargeAvatar,
+                data = viewModel.recipientAvatarData.collectAsState().value
+            )
         }
 
         handleIntent(intent)
@@ -308,25 +323,17 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
                 }
             }
 
+            // Observing recipient's name
             launch {
-                viewModel.recipient.collect { latestRecipient ->
-                    binding.contactAvatar.recycle()
-
-                    if (latestRecipient.recipient != null) {
-                        val contactPublicKey = latestRecipient.recipient.address.toString()
-                        val contactDisplayName = viewModel.getContactName(contactPublicKey)
-                        supportActionBar?.title = contactDisplayName
-                        binding.remoteRecipientName.text = contactDisplayName
-
-                        // sort out the contact's avatar
-                        binding.contactAvatar.apply {
-                            publicKey = contactPublicKey
-                            displayName = contactDisplayName
-                            update()
-                        }
+                viewModel.recipient
+                    .map { it?.displayName(attachesBlindedId = false).orEmpty() }
+                    .distinctUntilChanged()
+                    .collectLatest { name ->
+                        supportActionBar?.title = name
+                        binding.remoteRecipientName.text = name
                     }
-                }
             }
+
 
             launch {
                 while (isActive) {

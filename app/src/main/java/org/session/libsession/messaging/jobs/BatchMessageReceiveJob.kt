@@ -31,11 +31,14 @@ import org.session.libsession.messaging.sending_receiving.VisibleMessageHandlerC
 import org.session.libsession.messaging.sending_receiving.constructReactionRecords
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.utilities.Data
+import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsignal.protos.UtilProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import kotlin.math.max
@@ -50,13 +53,14 @@ data class MessageReceiveParameters(
 
 class BatchMessageReceiveJob @AssistedInject constructor(
     @Assisted private val messages: List<MessageReceiveParameters>,
-    @Assisted val openGroupID: String?,
+    @Assisted val fromCommunity: Address.Community?, // The community the messages are received in, if any
     private val configFactory: ConfigFactoryProtocol,
     private val storage: StorageProtocol,
     @param:ApplicationContext private val context: Context,
     private val receivedMessageHandler: ReceivedMessageHandler,
     private val visibleMessageHandlerContextFactory: VisibleMessageHandlerContext.Factory,
     private val messageNotifier: MessageNotifier,
+    private val threadDatabase: ThreadDatabase,
 ) : Job {
 
     override var delegate: JobDelegate? = null
@@ -80,8 +84,10 @@ class BatchMessageReceiveJob @AssistedInject constructor(
         private val DATA_KEY = "data"
         private val SERVER_HASH_KEY = "serverHash"
         private val OPEN_GROUP_MESSAGE_SERVER_ID_KEY = "openGroupMessageServerID"
+        @Deprecated("No longer used, keep for backwards compatibility")
         private val OPEN_GROUP_ID_KEY = "open_group_id"
         private val CLOSED_GROUP_DESTINATION_KEY = "closed_group_destination"
+        private val FROM_COMMUNITY_KEY = "from_community"
     }
 
     fun recreateWithNewMessages(
@@ -89,13 +95,14 @@ class BatchMessageReceiveJob @AssistedInject constructor(
     ): BatchMessageReceiveJob {
         return BatchMessageReceiveJob(
             messages = newMessages,
-            openGroupID = openGroupID,
             configFactory = configFactory,
             storage = storage,
             context = context,
             receivedMessageHandler = receivedMessageHandler,
             visibleMessageHandlerContextFactory = visibleMessageHandlerContextFactory,
             messageNotifier = messageNotifier,
+            fromCommunity = fromCommunity,
+            threadDatabase = threadDatabase
         )
     }
 
@@ -141,7 +148,7 @@ class BatchMessageReceiveJob @AssistedInject constructor(
     suspend fun executeAsync(dispatcherName: String) {
         val threadMap = mutableMapOf<Long, MutableList<ParsedMessage>>()
         val localUserPublicKey = storage.getUserPublicKey()
-        val serverPublicKey = openGroupID?.let { storage.getOpenGroupPublicKey(it.split(".").dropLast(1).joinToString(".")) }
+        val serverPublicKey = fromCommunity?.let { storage.getOpenGroupPublicKey(it.serverUrl) }
         val currentClosedGroups = storage.getAllActiveClosedGroupPublicKeys()
 
         // parse and collect IDs
@@ -160,12 +167,17 @@ class BatchMessageReceiveJob @AssistedInject constructor(
 
                 if(isHidden(message)) return@forEach
 
-                val threadID = Message.getThreadId(
-                    message = message,
-                    openGroupID = openGroupID,
-                    storage = storage,
-                    shouldCreateThread = shouldCreateThread(parsedParams)
-                ) ?: NO_THREAD_MAPPING
+                val threadAddress = when {
+                    fromCommunity != null -> fromCommunity
+                    message.groupPublicKey != null -> message.groupPublicKey!!.toAddress()
+                    else -> message.senderOrSync.toAddress()
+                }
+
+                val threadID = if (shouldCreateThread(parsedParams)) {
+                    threadDatabase.getOrCreateThreadIdFor(threadAddress)
+                } else {
+                    threadDatabase.getThreadIdIfExistsFor(threadAddress)
+                }
                 threadMap.getOrPut(threadID) { mutableListOf() } += parsedParams
             } catch (e: Exception) {
                 when (e) {
@@ -197,7 +209,6 @@ class BatchMessageReceiveJob @AssistedInject constructor(
             var updatedLastSeen = myLastSeen.takeUnless { it == -1L } ?: 0
             val handlerContext = visibleMessageHandlerContextFactory.create(
                 threadId = threadId,
-                openGroupID = openGroupID,
             )
 
             val communityReactions = mutableMapOf<MessageId, MutableList<ReactionRecord>>()
@@ -251,8 +262,8 @@ class BatchMessageReceiveJob @AssistedInject constructor(
                             message = message,
                             proto = proto,
                             threadId = threadId,
-                            openGroupID = openGroupID,
-                            groupv2Id = parameters.closedGroup?.publicKey?.let(::AccountId)
+                            groupv2Id = parameters.closedGroup?.publicKey?.let(::AccountId),
+                            fromCommunity = fromCommunity,
                         )
                     }
                 } catch (e: Exception) {
@@ -328,16 +339,23 @@ class BatchMessageReceiveJob @AssistedInject constructor(
         return Data.Builder()
             .putInt(NUM_MESSAGES_KEY, arraySize)
             .putByteArray(DATA_KEY, dataArrays.toByteArray())
-            .putString(OPEN_GROUP_ID_KEY, openGroupID)
             .putLongArray(OPEN_GROUP_MESSAGE_SERVER_ID_KEY, openGroupServerIds.toLongArray())
             .putStringArray(SERVER_HASH_KEY, serverHashes.toTypedArray())
             .putStringArray(CLOSED_GROUP_DESTINATION_KEY, closedGroups.toTypedArray())
+            .putString(FROM_COMMUNITY_KEY, fromCommunity?.address)
             .build()
     }
 
     override fun getFactoryKey(): String = KEY
 
-    class DeserializeFactory(private val factory: Factory) : Job.DeserializeFactory<BatchMessageReceiveJob> {
+
+    @AssistedFactory
+    abstract class Factory : Job.DeserializeFactory<BatchMessageReceiveJob> {
+        abstract fun create(
+            messages: List<MessageReceiveParameters>,
+            fromCommunity: Address.Community?,
+        ): BatchMessageReceiveJob
+
         override fun create(data: Data): BatchMessageReceiveJob {
             val numMessages = data.getInt(NUM_MESSAGES_KEY)
             val dataArrays = data.getByteArray(DATA_KEY)
@@ -364,14 +382,23 @@ class BatchMessageReceiveJob @AssistedInject constructor(
                     closedGroup = closedGroup
                 )
             }
+            var fromCommunity = data.getStringOrDefault(FROM_COMMUNITY_KEY, null)
+                ?.toAddress() as? Address.Community
 
-            return factory.create(messages = parameters, openGroupID = openGroupID)
+            if (fromCommunity == null && openGroupID != null) {
+                // This is the old "server.room" format, which we no longer use but will have
+                // to support for a bit for the persisted data to run through the system.
+                val split = openGroupID.lastIndexOf(".")
+                    .takeIf { it >= 0 && it < openGroupID.length - 1 }
+                    ?.let { openGroupID.substring(0, it) to openGroupID.substring(it + 1) }
+
+                if (split != null) {
+                    fromCommunity = Address.Community(serverUrl = split.first, room = split.second)
+                }
+            }
+
+            return create(messages = parameters, fromCommunity = fromCommunity)
         }
-    }
-
-    @AssistedFactory
-    interface Factory {
-        fun create(messages: List<MessageReceiveParameters>, openGroupID: String? = null): BatchMessageReceiveJob
     }
 
 }

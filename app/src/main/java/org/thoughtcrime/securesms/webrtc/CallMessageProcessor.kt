@@ -14,7 +14,6 @@ import org.session.libsession.messaging.utilities.WebRtcUtils
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.ANSWER
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.END_CALL
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.ICE_CANDIDATES
@@ -22,6 +21,7 @@ import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.OFFER
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.PRE_OFFER
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.PROVISIONAL_ANSWER
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.permissions.Permissions
@@ -35,6 +35,7 @@ class CallMessageProcessor @Inject constructor(
     private val textSecurePreferences: TextSecurePreferences,
     private val storage: StorageProtocol,
     private val webRtcBridge: WebRtcCallBridge,
+    private val recipientRepository: RecipientRepository,
     @ManagerScope scope: CoroutineScope
 ) : OnAppStartupComponent {
 
@@ -49,7 +50,7 @@ class CallMessageProcessor @Inject constructor(
                 val nextMessage = WebRtcUtils.SIGNAL_QUEUE.receive()
                 Log.d("Loki", nextMessage.type?.name ?: "CALL MESSAGE RECEIVED")
                 val sender = nextMessage.sender ?: continue
-                val approvedContact = Recipient.from(context, Address.fromSerialized(sender), false).isApproved
+                val approvedContact = recipientRepository.getRecipient(Address.fromSerialized(sender))?.approved == true
                 Log.i("Loki", "Contact is approved?: $approvedContact")
                 if (!approvedContact && storage.getUserPublicKey() != sender) continue
 

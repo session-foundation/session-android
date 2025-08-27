@@ -2,51 +2,58 @@ package org.thoughtcrime.securesms.configs
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
-import network.loki.messenger.libsession_util.ReadableUserGroupsConfig
-import network.loki.messenger.libsession_util.ReadableUserProfile
-import network.loki.messenger.libsession_util.util.BaseCommunityInfo
-import network.loki.messenger.libsession_util.util.Contact
 import network.loki.messenger.libsession_util.util.Conversation
-import network.loki.messenger.libsession_util.util.ExpiryMode
-import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.UserPic
-import network.loki.messenger.libsession_util.util.afterSend
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.jobs.BackgroundGroupAddJob
-import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.messages.ExpirationConfiguration
-import org.session.libsession.messaging.open_groups.OpenGroup
+import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.sending_receiving.notifications.PushRegistryV1
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.GroupUtil
-import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol.Companion.NAME_PADDED_LENGTH
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.getGroup
-import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.DraftDatabase
+import org.thoughtcrime.securesms.database.GroupDatabase
+import org.thoughtcrime.securesms.database.GroupMemberDatabase
+import org.thoughtcrime.securesms.database.LokiAPIDatabase
+import org.thoughtcrime.securesms.database.LokiMessageDatabase
+import org.thoughtcrime.securesms.database.LokiThreadDatabase
+import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
-import org.thoughtcrime.securesms.groups.ClosedGroupManager
-import org.thoughtcrime.securesms.groups.OpenGroupManager
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.repository.ConversationRepository
-import org.thoughtcrime.securesms.sskenvironment.ProfileManager
+import org.thoughtcrime.securesms.util.SessionMetaProtocol
+import org.thoughtcrime.securesms.util.castAwayType
+import java.util.EnumSet
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -57,28 +64,187 @@ private const val TAG = "ConfigToDatabaseSync"
  *
  * @see ConfigUploader For upload config system data into swarm automagically.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class ConfigToDatabaseSync @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val configFactory: ConfigFactoryProtocol,
     private val storage: StorageProtocol,
     private val threadDatabase: ThreadDatabase,
+    private val smsDatabase: SmsDatabase,
+    private val mmsDatabase: MmsDatabase,
+    private val draftDatabase: DraftDatabase,
+    private val groupDatabase: GroupDatabase,
+    private val groupMemberDatabase: GroupMemberDatabase,
+    private val lokiThreadDatabase: LokiThreadDatabase,
+    private val lokiAPIDatabase: LokiAPIDatabase,
     private val clock: SnodeClock,
-    private val profileManager: ProfileManager,
     private val preferences: TextSecurePreferences,
     private val conversationRepository: ConversationRepository,
     private val mmsSmsDatabase: MmsSmsDatabase,
-    private val openGroupManager: OpenGroupManager,
-) {
+    private val lokiMessageDatabase: LokiMessageDatabase,
+    private val messageNotifier: MessageNotifier,
+    @param:ManagerScope private val scope: CoroutineScope,
+) : OnAppStartupComponent {
     init {
-        if (!preferences.migratedToGroupV2Config) {
-            preferences.migratedToGroupV2Config = true
+        // Sync conversations from config -> database
+        scope.launch {
+            preferences.watchLocalNumber()
+                .filterNotNull()
+                .take(1)
+                .flatMapLatest {
+                    combine(
+                        conversationRepository.conversationListAddressesFlow,
+                        configFactory.userConfigsChanged(EnumSet.of(UserConfigType.CONVO_INFO_VOLATILE))
+                            .castAwayType()
+                            .onStart { emit(Unit) }
+                            .map { _ -> configFactory.withUserConfigs { it.convoInfoVolatile.all() } },
+                        ::Pair
+                    )
+                }
+                .distinctUntilChanged()
+                .collectLatest { (conversations, convoInfo) ->
+                    try {
+                        ensureConversations(conversations)
+                        updateConvoVolatile(convoInfo)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error updating conversations from config", e)
+                    }
+                }
+        }
+    }
 
-            GlobalScope.launch(Dispatchers.Default) {
-                for (configType in UserConfigType.entries) {
-                    syncUserConfigs(configType, null)
+    private fun ensureConversations(addresses: Set<Address.Conversable>) {
+        val result = threadDatabase.ensureThreads(addresses)
+
+        if (result.deletedThreads.isNotEmpty()) {
+            val deletedThreadIDs = result.deletedThreads.values
+            smsDatabase.deleteThreads(deletedThreadIDs, false)
+            mmsDatabase.deleteThreads(deletedThreadIDs, updateThread = false)
+            draftDatabase.clearDrafts(deletedThreadIDs)
+
+            for (threadId in deletedThreadIDs) {
+                lokiMessageDatabase.deleteThread(threadId)
+                // Whether approved or not, delete the invite
+                lokiMessageDatabase.deleteGroupInviteReferrer(threadId)
+            }
+
+            // Not sure why this is here but it was from the original code in Storage.
+            // If you can find out what it does, please remove it.
+            SessionMetaProtocol.clearReceivedMessages()
+
+            // Some type of convo require additional cleanup, we'll go through them here
+            for ((address, threadId) in result.deletedThreads) {
+                storage.cancelPendingMessageSendJobs(threadId)
+
+                when (address) {
+                    is Address.Community -> deleteCommunityData(address, threadId)
+                    is Address.LegacyGroup -> deleteLegacyGroupData(address)
+                    is Address.Group -> deleteGroupData(address)
+                    is Address.Blinded,
+                    is Address.CommunityBlindedId,
+                    is Address.Standard,
+                    is Address.Unknown -> {
+                        // No additional cleanup needed for these types
+                    }
                 }
             }
         }
+
+        // If we created threads, we need to update the thread database with the creation date.
+        // And possibly having to fill in some other data.
+        for ((address, threadId) in result.createdThreads) {
+            when (address) {
+                is Address.Community -> onCommunityAdded(address, threadId)
+                is Address.Group -> onGroupAdded(address, threadId)
+                is Address.LegacyGroup -> onLegacyGroupAdded(address, threadId)
+                is Address.Blinded,
+                is Address.CommunityBlindedId,
+                is Address.Standard,
+                is Address.Unknown -> {
+                    // No additional action needed for these types
+                }
+            }
+        }
+    }
+
+    private fun deleteGroupData(address: Address.Group) {
+        lokiAPIDatabase.clearLastMessageHashes(address.accountId.hexString)
+        lokiAPIDatabase.clearReceivedMessageHashValues(address.accountId.hexString)
+    }
+
+    private fun onLegacyGroupAdded(
+        address: Address.LegacyGroup,
+        threadId: Long
+    ) {
+        val group = configFactory.withUserConfigs { it.userGroups.getLegacyGroupInfo(address.groupPublicKeyHex) }
+            ?: return
+
+        val members = group.members.keys.map { fromSerialized(it) }
+        val admins = group.members.filter { it.value /*admin = true*/ }.keys.map { fromSerialized(it) }
+        val title = group.name
+        val formationTimestamp = (group.joinedAtSecs * 1000L)
+        storage.createGroup(address.address, title, admins + members, null, null, admins, formationTimestamp)
+        // Add the group to the user's set of public keys to poll for
+        storage.addClosedGroupPublicKey(group.accountId)
+        // Store the encryption key pair
+        val keyPair = ECKeyPair(DjbECPublicKey(group.encPubKey.data), DjbECPrivateKey(group.encSecKey.data))
+        storage.addClosedGroupEncryptionKeyPair(keyPair, group.accountId, clock.currentTimeMills())
+        // Notify the PN server
+        PushRegistryV1.subscribeGroup(group.accountId, publicKey = preferences.getLocalNumber()!!)
+        threadDatabase.setCreationDate(threadId, formationTimestamp)
+    }
+
+    private fun onGroupAdded(
+        address: Address.Group,
+        threadId: Long
+    ) {
+        val joined = configFactory.getGroup(address.accountId)?.joinedAtSecs
+        if (joined != null && joined > 0L) {
+            threadDatabase.setCreationDate(threadId, joined * 1000L)
+        }
+    }
+
+    private fun onCommunityAdded(address: Address.Community, threadId: Long) {
+        // Clear any existing data for this community
+        lokiAPIDatabase.removeLastDeletionServerID(room = address.room, server = address.serverUrl)
+        lokiAPIDatabase.removeLastMessageServerID(room = address.room, server = address.serverUrl)
+        lokiAPIDatabase.removeLastInboxMessageId(address.serverUrl)
+        lokiAPIDatabase.removeLastOutboxMessageId(address.serverUrl)
+
+        val community = configFactory.withUserConfigs {
+            it.userGroups.allCommunityInfo()
+        }.firstOrNull { it.community.baseUrl == address.serverUrl }?.community
+
+        if (community != null) {
+            //TODO: This is to save a community public key in the database, but this
+            // data is readily available in the config system, remove this once
+            // we refactor the OpenGroupManager to use the config system directly.
+            lokiAPIDatabase.setOpenGroupPublicKey(address.serverUrl, community.pubKeyHex)
+        }
+    }
+
+    private fun deleteCommunityData(address: Address.Community, threadId: Long) {
+        lokiAPIDatabase.removeLastDeletionServerID(room = address.room, server = address.serverUrl)
+        lokiAPIDatabase.removeLastMessageServerID(room = address.room, server = address.serverUrl)
+        lokiAPIDatabase.removeLastInboxMessageId(address.serverUrl)
+        lokiAPIDatabase.removeLastOutboxMessageId(address.serverUrl)
+        lokiThreadDatabase.removeOpenGroupChat(threadId)
+        groupDatabase.delete(address.address)
+        groupMemberDatabase.delete(address)
+    }
+
+    private fun deleteLegacyGroupData(address: Address.LegacyGroup) {
+        val myAddress = preferences.getLocalNumber()!!
+
+        // Mark the group as inactive
+        storage.setActive(address.address, false)
+        storage.removeClosedGroupPublicKey(address.groupPublicKeyHex)
+        // Remove the key pairs
+        storage.removeAllClosedGroupEncryptionKeyPairs(address.groupPublicKeyHex)
+        storage.removeMember(address.address, Address.fromSerialized(myAddress))
+        // Notify the PN server
+        PushRegistryV1.unsubscribeGroup(closedGroupPublicKey = address.groupPublicKeyHex, publicKey = myAddress)
+        messageNotifier.updateNotification(context)
     }
 
     fun syncGroupConfigs(groupId: AccountId) {
@@ -87,84 +253,6 @@ class ConfigToDatabaseSync @Inject constructor(
         }
 
         updateGroup(info)
-    }
-
-    fun syncUserConfigs(userConfigType: UserConfigType, updateTimestamp: Long?) {
-        val configUpdate = configFactory.withUserConfigs { configs ->
-            when (userConfigType) {
-                UserConfigType.USER_PROFILE -> UpdateUserInfo(configs.userProfile)
-                UserConfigType.USER_GROUPS -> UpdateUserGroupsInfo(configs.userGroups)
-                UserConfigType.CONTACTS -> UpdateContacts(configs.contacts.all())
-                UserConfigType.CONVO_INFO_VOLATILE -> UpdateConvoVolatile(configs.convoInfoVolatile.all())
-            }
-        }
-
-        when (configUpdate) {
-            is UpdateUserInfo -> updateUser(configUpdate, updateTimestamp)
-            is UpdateUserGroupsInfo -> updateUserGroups(configUpdate, updateTimestamp)
-            is UpdateContacts -> updateContacts(configUpdate, updateTimestamp)
-            is UpdateConvoVolatile -> updateConvoVolatile(configUpdate)
-            else -> error("Unknown config update type: $configUpdate")
-        }
-    }
-
-    private data class UpdateUserInfo(
-        val name: String?,
-        val userPic: UserPic,
-        val ntsPriority: Long,
-        val ntsExpiry: ExpiryMode
-    ) {
-        constructor(profile: ReadableUserProfile) : this(
-            name = profile.getName(),
-            userPic = profile.getPic(),
-            ntsPriority = profile.getNtsPriority(),
-            ntsExpiry = profile.getNtsExpiry()
-        )
-    }
-
-    private fun updateUser(userProfile: UpdateUserInfo, messageTimestamp: Long?) {
-        val userPublicKey = storage.getUserPublicKey() ?: return
-        // would love to get rid of recipient and context from this
-        val recipient = Recipient.from(context, fromSerialized(userPublicKey), false)
-
-        // Update profile name
-        userProfile.name?.takeUnless { it.isEmpty() }?.truncate(NAME_PADDED_LENGTH)?.let {
-            preferences.setProfileName(it)
-            profileManager.setName(context, recipient, it)
-        }
-
-        // Update profile picture
-        if (userProfile.userPic == UserPic.DEFAULT) {
-            storage.clearUserPic(clearConfig = false)
-        } else if (userProfile.userPic.key.data.isNotEmpty() && userProfile.userPic.url.isNotEmpty()
-            && preferences.getProfilePictureURL() != userProfile.userPic.url
-        ) {
-            storage.setUserProfilePicture(userProfile.userPic.url, userProfile.userPic.key.data)
-        }
-
-        if (userProfile.ntsPriority == PRIORITY_HIDDEN) {
-            // hide nts thread if needed
-            preferences.setHasHiddenNoteToSelf(true)
-        } else {
-            // create note to self thread if needed (?)
-            val address = recipient.address
-            val ourThread = storage.getThreadId(address) ?: storage.getOrCreateThreadIdFor(address).also {
-                storage.setThreadCreationDate(it, 0)
-            }
-            threadDatabase.setHasSent(ourThread, true)
-            storage.setPinned(ourThread, userProfile.ntsPriority > 0)
-            preferences.setHasHiddenNoteToSelf(false)
-        }
-
-        // Set or reset the shared library to use latest expiration config
-        if (messageTimestamp != null) {
-            storage.getThreadId(recipient)?.let { theadId ->
-                storage.setExpirationConfiguration(
-                    storage.getExpirationConfiguration(theadId)?.takeIf { it.updatedTimestampMs > messageTimestamp } ?:
-                    ExpirationConfiguration(theadId, userProfile.ntsExpiry, messageTimestamp)
-                )
-            }
-        }
     }
 
     private data class UpdateGroupInfo(
@@ -186,14 +274,8 @@ class ConfigToDatabaseSync @Inject constructor(
     }
 
     private fun updateGroup(groupInfoConfig: UpdateGroupInfo) {
-        val threadId = storage.getThreadId(fromSerialized(groupInfoConfig.id.hexString)) ?: return
-        val recipient = storage.getRecipientForThread(threadId) ?: return
-        profileManager.setName(context, recipient, groupInfoConfig.name.orEmpty())
-        profileManager.setProfilePicture(
-            context, recipient,
-            profilePictureURL = groupInfoConfig.profilePic?.url,
-            profileKey = groupInfoConfig.profilePic?.key?.data
-        )
+        val address = fromSerialized(groupInfoConfig.id.hexString)
+        val threadId = storage.getThreadId(address) ?: return
 
         // Also update the name in the user groups config
         configFactory.withMutableUserConfigs { configs ->
@@ -203,7 +285,7 @@ class ConfigToDatabaseSync @Inject constructor(
         }
 
         if (groupInfoConfig.destroyed) {
-            handleDestroyedGroup(threadId = threadId)
+            storage.clearMessages(threadID = threadId)
         } else {
             groupInfoConfig.deleteBefore?.let { removeBefore ->
                 val messages = mmsSmsDatabase.getAllMessageRecordsBefore(threadId, TimeUnit.SECONDS.toMillis(removeBefore))
@@ -211,7 +293,7 @@ class ConfigToDatabaseSync @Inject constructor(
 
                 // Mark visible messages as deleted, and control messages actually deleted.
                 conversationRepository.markAsDeletedLocally(visibleMessages.toSet(), context.getString(R.string.deleteMessageDeletedGlobally))
-                conversationRepository.deleteMessages(controlMessages.toSet(), threadId)
+                conversationRepository.deleteMessages(controlMessages.toSet())
 
                 // if the current user is an admin of this group they should also remove the message from the swarm
                 // as a safety measure
@@ -220,7 +302,7 @@ class ConfigToDatabaseSync @Inject constructor(
                 } ?: return
 
                 // remove messages from swarm SnodeAPI.deleteMessage
-                GlobalScope.launch(Dispatchers.Default) {
+                scope.launch(Dispatchers.Default) {
                     val cleanedHashes: List<String> =
                         messages.asSequence().map { it.second }.filter { !it.isNullOrEmpty() }.filterNotNull().toList()
                     if (cleanedHashes.isNotEmpty()) SnodeAPI.deleteMessage(
@@ -242,189 +324,23 @@ class ConfigToDatabaseSync @Inject constructor(
     private val MmsMessageRecord.containsAttachment: Boolean
         get() = this.slideDeck.slides.isNotEmpty() && !this.slideDeck.isVoiceNote
 
-    private data class UpdateContacts(val contacts: List<Contact>)
 
-    private fun updateContacts(contacts: UpdateContacts, messageTimestamp: Long?) {
-        storage.syncLibSessionContacts(contacts.contacts, messageTimestamp)
-    }
-
-    private data class UpdateUserGroupsInfo(
-        val communityInfo: List<GroupInfo.CommunityGroupInfo>,
-        val legacyGroupInfo: List<GroupInfo.LegacyGroupInfo>,
-        val closedGroupInfo: List<GroupInfo.ClosedGroupInfo>
-    ) {
-        constructor(userGroups: ReadableUserGroupsConfig) : this(
-            communityInfo = userGroups.allCommunityInfo(),
-            legacyGroupInfo = userGroups.allLegacyGroupInfo(),
-            closedGroupInfo = userGroups.allClosedGroupInfo()
-        )
-    }
-
-    private fun updateUserGroups(userGroups: UpdateUserGroupsInfo, messageTimestamp: Long?) {
-        val localUserPublicKey = storage.getUserPublicKey() ?: return Log.w(
-            TAG,
-            "No user public key when trying to update user groups from config"
-        )
-        val allOpenGroups = storage.getAllOpenGroups()
-        val toDeleteCommunities = allOpenGroups.filter {
-            Conversation.Community(BaseCommunityInfo(it.value.server, it.value.room, it.value.publicKey), 0, false).baseCommunityInfo.fullUrl() !in userGroups.communityInfo.map { it.community.fullUrl() }
-        }
-
-        val existingCommunities: Map<Long, OpenGroup> = allOpenGroups.filterKeys { it !in toDeleteCommunities.keys }
-        val toAddCommunities = userGroups.communityInfo.filter { it.community.fullUrl() !in existingCommunities.map { it.value.joinURL } }
-        val existingJoinUrls = existingCommunities.values.map { it.joinURL }
-
-        val existingLegacyClosedGroups = storage.getAllGroups(includeInactive = true).filter { it.isLegacyGroup }
-        val lgcIds = userGroups.legacyGroupInfo.map { it.accountId }
-        val toDeleteLegacyClosedGroups = existingLegacyClosedGroups.filter { group ->
-            GroupUtil.doubleDecodeGroupId(group.encodedId) !in lgcIds
-        }
-
-        // delete the ones which are not listed in the config
-        toDeleteCommunities.values.forEach { openGroup ->
-            openGroupManager.delete(openGroup.server, openGroup.room, context)
-        }
-
-        toDeleteLegacyClosedGroups.forEach { deleteGroup ->
-            val threadId = storage.getThreadId(deleteGroup.encodedId)
-            if (threadId != null) {
-                ClosedGroupManager.silentlyRemoveGroup(context,threadId,
-                    GroupUtil.doubleDecodeGroupId(deleteGroup.encodedId), deleteGroup.encodedId, localUserPublicKey, delete = true)
-            }
-        }
-
-        toAddCommunities.forEach { toAddCommunity ->
-            val joinUrl = toAddCommunity.community.fullUrl()
-            if (!storage.hasBackgroundGroupAddJob(joinUrl)) {
-                JobQueue.shared.add(BackgroundGroupAddJob(joinUrl))
-            }
-        }
-
-        for (groupInfo in userGroups.communityInfo) {
-            val groupBaseCommunity = groupInfo.community
-            if (groupBaseCommunity.fullUrl() in existingJoinUrls) {
-                // add it
-                val (threadId, _) = existingCommunities.entries.first { (_, v) -> v.joinURL == groupInfo.community.fullUrl() }
-                threadDatabase.setPinned(threadId, groupInfo.priority == PRIORITY_PINNED)
-            }
-        }
-
-        val existingClosedGroupThreads: Map<AccountId, Long> = threadDatabase.readerFor(threadDatabase.conversationList).use { reader ->
-            buildMap(reader.count) {
-                var current = reader.next
-                while (current != null) {
-                    if (current.recipient?.isGroupV2Recipient == true) {
-                        put(AccountId(current.recipient.address.toString()), current.threadId)
-                    }
-
-                    current = reader.next
-                }
-            }
-        }
-
-        val groupThreadsToKeep = hashMapOf<AccountId, Long>()
-
-        for (closedGroup in userGroups.closedGroupInfo) {
-            val recipient = Recipient.from(context, fromSerialized(closedGroup.groupAccountId), false)
-            storage.setRecipientApprovedMe(recipient, true)
-            storage.setRecipientApproved(recipient, !closedGroup.invited)
-            profileManager.setName(context, recipient, closedGroup.name)
-            val threadId = storage.getOrCreateThreadIdFor(recipient.address)
-
-            // If we don't already have a date and the config has a date, use it
-            if (closedGroup.joinedAtSecs > 0L && threadDatabase.getLastUpdated(threadId) <= 0L) {
-                threadDatabase.setCreationDate(
-                    threadId,
-                    TimeUnit.SECONDS.toMillis(closedGroup.joinedAtSecs)
-                )
-            }
-
-            groupThreadsToKeep[AccountId(closedGroup.groupAccountId)] = threadId
-
-            storage.setPinned(threadId, closedGroup.priority == PRIORITY_PINNED)
-
-            if (closedGroup.destroyed) {
-                handleDestroyedGroup(threadId = threadId)
-            }
-        }
-
-        val toRemove = existingClosedGroupThreads - groupThreadsToKeep.keys
-        Log.d(TAG, "Removing ${toRemove.size} closed groups")
-        toRemove.forEach { (_, threadId) ->
-            storage.deleteConversation(threadId)
-        }
-
-        for (group in userGroups.legacyGroupInfo) {
-            val groupId = GroupUtil.doubleEncodeGroupID(group.accountId)
-            val existingGroup = existingLegacyClosedGroups.firstOrNull { GroupUtil.doubleDecodeGroupId(it.encodedId) == group.accountId }
-            val existingThread = existingGroup?.let { storage.getThreadId(existingGroup.encodedId) }
-            if (existingGroup != null) {
-                if (group.priority == PRIORITY_HIDDEN && existingThread != null) {
-                    ClosedGroupManager.silentlyRemoveGroup(context,existingThread,
-                        GroupUtil.doubleDecodeGroupId(existingGroup.encodedId), existingGroup.encodedId, localUserPublicKey, delete = true)
-                } else if (existingThread == null) {
-                    Log.w(TAG, "Existing group had no thread to hide")
-                } else {
-                    Log.d(TAG, "Setting existing group pinned status to ${group.priority}")
-                    threadDatabase.setPinned(existingThread, group.priority == PRIORITY_PINNED)
-                }
-            } else {
-                val members = group.members.keys.map { fromSerialized(it) }
-                val admins = group.members.filter { it.value /*admin = true*/ }.keys.map { fromSerialized(it) }
-                val title = group.name
-                val formationTimestamp = (group.joinedAtSecs * 1000L)
-                storage.createGroup(groupId, title, admins + members, null, null, admins, formationTimestamp)
-                storage.setProfileSharing(fromSerialized(groupId), true)
-                // Add the group to the user's set of public keys to poll for
-                storage.addClosedGroupPublicKey(group.accountId)
-                // Store the encryption key pair
-                val keyPair = ECKeyPair(DjbECPublicKey(group.encPubKey.data), DjbECPrivateKey(group.encSecKey.data))
-                storage.addClosedGroupEncryptionKeyPair(keyPair, group.accountId, clock.currentTimeMills())
-                // Notify the PN server
-                PushRegistryV1.subscribeGroup(group.accountId, publicKey = localUserPublicKey)
-                // Notify the user
-                val threadID = storage.getOrCreateThreadIdFor(fromSerialized(groupId))
-                threadDatabase.setCreationDate(threadID, formationTimestamp)
-
-                // Note: Commenting out this line prevents the timestamp of room creation being added to a new closed group,
-                // which in turn allows us to show the `groupNoMessages` control message text.
-                //insertOutgoingInfoMessage(context, groupId, SignalServiceGroup.Type.CREATION, title, members.map { it.serialize() }, admins.map { it.serialize() }, threadID, formationTimestamp)
-            }
-
-            if (messageTimestamp != null) {
-                storage.getThreadId(fromSerialized(groupId))?.let { theadId ->
-                    storage.setExpirationConfiguration(
-                        storage.getExpirationConfiguration(theadId)?.takeIf { it.updatedTimestampMs > messageTimestamp }
-                            ?: ExpirationConfiguration(theadId, afterSend(group.disappearingTimer), messageTimestamp)
-                    )
-                }
-            }
-        }
-    }
-
-    private fun handleDestroyedGroup(
-        threadId: Long,
-    ) {
-        storage.clearMessages(threadId)
-    }
-
-    private data class UpdateConvoVolatile(val convos: List<Conversation?>)
-
-    private fun updateConvoVolatile(convos: UpdateConvoVolatile) {
-        val extracted = convos.convos.filterNotNull()
-        for (conversation in extracted) {
-            val threadId = when (conversation) {
-                is Conversation.OneToOne -> storage.getThreadIdFor(conversation.accountId, null, null, createThread = false)
-                is Conversation.LegacyGroup -> storage.getThreadIdFor("", conversation.groupId,null, createThread = false)
-                is Conversation.Community -> storage.getThreadIdFor("",null, "${conversation.baseCommunityInfo.baseUrl.removeSuffix("/")}.${conversation.baseCommunityInfo.room}", createThread = false)
-                is Conversation.ClosedGroup -> storage.getThreadIdFor(conversation.accountId, null, null, createThread = false) // New groups will be managed bia libsession
+    private fun updateConvoVolatile(convos: List<Conversation?>) {
+        for (conversation in convos.asSequence().filterNotNull()) {
+            val address: Address.Conversable = when (conversation) {
+                is Conversation.OneToOne -> Address.Standard(AccountId(conversation.accountId))
+                is Conversation.LegacyGroup -> Address.LegacyGroup(conversation.groupId)
+                is Conversation.Community -> Address.Community(serverUrl = conversation.baseCommunityInfo.baseUrl, room = conversation.baseCommunityInfo.room)
+                is Conversation.ClosedGroup -> Address.Group(AccountId(conversation.accountId)) // New groups will be managed bia libsession
                 is Conversation.BlindedOneToOne -> {
                     // Not supported yet
                     continue
                 }
             }
 
-            if (threadId != null) {
+            val threadId = threadDatabase.getThreadIdIfExistsFor(address)
+
+            if (threadId != -1L) {
                 if (conversation.lastRead > storage.getLastSeen(threadId)) {
                     storage.markConversationAsRead(
                         threadId,
@@ -437,11 +353,3 @@ class ConfigToDatabaseSync @Inject constructor(
         }
     }
 }
-
-/**
- * Truncate a string to a specified number of bytes
- *
- * This could split multi-byte characters/emojis.
- */
-private fun String.truncate(sizeInBytes: Int): String =
-    toByteArray().takeIf { it.size > sizeInBytes }?.take(sizeInBytes)?.toByteArray()?.let(::String) ?: this

@@ -12,15 +12,10 @@ import androidx.core.content.edit
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
@@ -33,7 +28,6 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONM
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FORCED_SHORT_TTL
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_MESSAGE_REQUESTS
-import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_NOTE_TO_SELF
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HIDE_PASSWORD
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VACUUM_TIME
@@ -52,7 +46,10 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CA
 import org.session.libsession.utilities.TextSecurePreferences.Companion._events
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
+import org.thoughtcrime.securesms.util.DateUtils.Companion.toEpochSeconds
 import java.io.IOException
+import java.time.Instant
 import java.time.ZonedDateTime
 import java.util.Arrays
 import java.util.Date
@@ -101,14 +98,6 @@ interface TextSecurePreferences {
     fun setHasSeenGIFMetaDataWarning()
     fun isGifSearchInGridLayout(): Boolean
     fun setIsGifSearchInGridLayout(isGrid: Boolean)
-    fun getProfileKey(): String?
-    fun setProfileKey(key: String?)
-    fun setProfileName(name: String?)
-    fun getProfileName(): String?
-    fun setProfileAvatarId(id: Int)
-    fun getProfileAvatarId(): Int
-    fun setProfilePictureURL(url: String?)
-    fun getProfilePictureURL(): String?
     fun getNotificationPriority(): Int
     fun getMessageBodyTextSize(): Int
     fun setPreferredCameraDirection(value: CameraSelector)
@@ -171,12 +160,8 @@ interface TextSecurePreferences {
     fun setHasViewedSeed(hasViewedSeed: Boolean)
     fun setRestorationTime(time: Long)
     fun getRestorationTime(): Long
-    fun getLastProfilePictureUpload(): Long
-    fun setLastProfilePictureUpload(newValue: Long)
     fun getLastSnodePoolRefreshDate(): Long
     fun setLastSnodePoolRefreshDate(date: Date)
-    fun shouldUpdateProfile(profileUpdateTime: Long): Boolean
-    fun setLastProfileUpdateTime(profileUpdateTime: Long)
     fun getLastOpenTimeDate(): Long
     fun setLastOpenDate()
     fun hasSeenLinkPreviewSuggestionDialog(): Boolean
@@ -193,8 +178,6 @@ interface TextSecurePreferences {
     fun forcePostPro(): Boolean
     fun setForcePostPro(postPro: Boolean)
     fun watchPostProStatus(): StateFlow<Boolean>
-    fun hasHiddenNoteToSelf(): Boolean
-    fun setHasHiddenNoteToSelf(hidden: Boolean)
     fun setShownCallWarning(): Boolean
     fun setShownCallNotification(): Boolean
     fun isCallNotificationsEnabled(): Boolean
@@ -241,6 +224,8 @@ interface TextSecurePreferences {
 
     var inAppReviewState: String?
 
+    var lastProfileUpdated: Instant?
+
     companion object {
         val TAG = TextSecurePreferences::class.simpleName
 
@@ -286,10 +271,6 @@ interface TextSecurePreferences {
         const val MEDIA_DOWNLOAD_WIFI_PREF = "pref_media_download_wifi"
         const val MEDIA_DOWNLOAD_ROAMING_PREF = "pref_media_download_roaming"
         const val DIRECT_CAPTURE_CAMERA_ID = "pref_direct_capture_camera_id"
-        const val PROFILE_KEY_PREF = "pref_profile_key"
-        const val PROFILE_NAME_PREF = "pref_profile_name"
-        const val PROFILE_AVATAR_ID_PREF = "pref_profile_avatar_id"
-        const val PROFILE_AVATAR_URL_PREF = "pref_profile_avatar_url"
         const val READ_RECEIPTS_PREF = "pref_read_receipts"
         const val INCOGNITO_KEYBORAD_PREF = "pref_incognito_keyboard"
         const val DATABASE_ENCRYPTED_SECRET = "pref_database_encrypted_secret"
@@ -320,7 +301,6 @@ interface TextSecurePreferences {
         const val PROFILE_PIC_EXPIRY = "profile_pic_expiry"
         const val LAST_OPEN_DATE = "pref_last_open_date"
         const val HAS_HIDDEN_MESSAGE_REQUESTS = "pref_message_requests_hidden"
-        const val HAS_HIDDEN_NOTE_TO_SELF = "pref_note_to_self_hidden"
         const val SET_FORCE_CURRENT_USER_PRO = "pref_force_current_user_pro"
         const val SET_FORCE_OTHER_USERS_PRO = "pref_force_other_users_pro"
         const val SET_FORCE_INCOMING_MESSAGE_PRO = "pref_force_incoming_message_pro"
@@ -574,46 +554,6 @@ interface TextSecurePreferences {
         @JvmStatic
         fun setIsGifSearchInGridLayout(context: Context, isGrid: Boolean) {
             setBooleanPreference(context, GIF_GRID_LAYOUT, isGrid)
-        }
-
-        @JvmStatic
-        fun getProfileKey(context: Context): String? {
-            return getStringPreference(context, PROFILE_KEY_PREF, null)
-        }
-
-        @JvmStatic
-        fun setProfileKey(context: Context, key: String?) {
-            setStringPreference(context, PROFILE_KEY_PREF, key)
-        }
-
-        @JvmStatic
-        fun setProfileName(context: Context, name: String?) {
-            setStringPreference(context, PROFILE_NAME_PREF, name)
-            _events.tryEmit(PROFILE_NAME_PREF)
-        }
-
-        @JvmStatic
-        fun getProfileName(context: Context): String? {
-            return getStringPreference(context, PROFILE_NAME_PREF, null)
-        }
-
-        @JvmStatic
-        fun setProfileAvatarId(context: Context, id: Int) {
-            setIntegerPreference(context, PROFILE_AVATAR_ID_PREF, id)
-        }
-
-        @JvmStatic
-        fun getProfileAvatarId(context: Context): Int {
-            return getIntegerPreference(context, PROFILE_AVATAR_ID_PREF, 0)
-        }
-
-        fun setProfilePictureURL(context: Context, url: String?) {
-            setStringPreference(context, PROFILE_AVATAR_URL_PREF, url)
-        }
-
-        @JvmStatic
-        fun getProfilePictureURL(context: Context): String? {
-            return getStringPreference(context, PROFILE_AVATAR_URL_PREF, null)
         }
 
         @JvmStatic
@@ -910,24 +850,10 @@ interface TextSecurePreferences {
             return getLongPreference(context, "restoration_time", 0)
         }
 
-        @JvmStatic
-        fun getLastProfilePictureUpload(context: Context): Long {
-            return getLongPreference(context, "last_profile_picture_upload", 0)
-        }
-
-        @JvmStatic
-        fun setLastProfilePictureUpload(context: Context, newValue: Long) {
-            setLongPreference(context, "last_profile_picture_upload", newValue)
-        }
-
+        @Deprecated("We no longer keep the profile expiry in prefs, we write them in the file instead. Keeping it here for migration purposes")
         @JvmStatic
         fun getProfileExpiry(context: Context): Long{
             return getLongPreference(context, PROFILE_PIC_EXPIRY, 0)
-        }
-
-        @JvmStatic
-        fun setProfileExpiry(context: Context, newValue: Long){
-            setLongPreference(context, PROFILE_PIC_EXPIRY, newValue)
         }
 
         fun getLastSnodePoolRefreshDate(context: Context?): Long {
@@ -1233,39 +1159,6 @@ class AppTextSecurePreferences @Inject constructor(
         setBooleanPreference(TextSecurePreferences.GIF_GRID_LAYOUT, isGrid)
     }
 
-    override fun getProfileKey(): String? {
-        return getStringPreference(TextSecurePreferences.PROFILE_KEY_PREF, null)
-    }
-
-    override fun setProfileKey(key: String?) {
-        setStringPreference(TextSecurePreferences.PROFILE_KEY_PREF, key)
-    }
-
-    override fun setProfileName(name: String?) {
-        setStringPreference(TextSecurePreferences.PROFILE_NAME_PREF, name)
-        _events.tryEmit(TextSecurePreferences.PROFILE_NAME_PREF)
-    }
-
-    override fun getProfileName(): String? {
-        return getStringPreference(TextSecurePreferences.PROFILE_NAME_PREF, null)
-    }
-
-    override fun setProfileAvatarId(id: Int) {
-        setIntegerPreference(TextSecurePreferences.PROFILE_AVATAR_ID_PREF, id)
-    }
-
-    override fun getProfileAvatarId(): Int {
-        return getIntegerPreference(TextSecurePreferences.PROFILE_AVATAR_ID_PREF, 0)
-    }
-
-    override fun setProfilePictureURL(url: String?) {
-        setStringPreference(TextSecurePreferences.PROFILE_AVATAR_URL_PREF, url)
-    }
-
-    override fun getProfilePictureURL(): String? {
-        return getStringPreference(TextSecurePreferences.PROFILE_AVATAR_URL_PREF, null)
-    }
-
     override fun getNotificationPriority(): Int {
         return getStringPreference(
             TextSecurePreferences.NOTIFICATION_PRIORITY_PREF, NotificationCompat.PRIORITY_HIGH.toString())!!.toInt()
@@ -1551,28 +1444,12 @@ class AppTextSecurePreferences @Inject constructor(
         return getLongPreference("restoration_time", 0)
     }
 
-    override fun getLastProfilePictureUpload(): Long {
-        return getLongPreference("last_profile_picture_upload", 0)
-    }
-
-    override fun setLastProfilePictureUpload(newValue: Long) {
-        setLongPreference("last_profile_picture_upload", newValue)
-    }
-
     override fun getLastSnodePoolRefreshDate(): Long {
         return getLongPreference("last_snode_pool_refresh_date", 0)
     }
 
     override fun setLastSnodePoolRefreshDate(date: Date) {
         setLongPreference("last_snode_pool_refresh_date", date.time)
-    }
-
-    override fun shouldUpdateProfile(profileUpdateTime: Long): Boolean {
-        return profileUpdateTime > getLongPreference(TextSecurePreferences.LAST_PROFILE_UPDATE_TIME, 0)
-    }
-
-    override fun setLastProfileUpdateTime(profileUpdateTime: Long) {
-        setLongPreference(TextSecurePreferences.LAST_PROFILE_UPDATE_TIME, profileUpdateTime)
     }
 
     override fun getLastOpenTimeDate(): Long {
@@ -1653,16 +1530,6 @@ class AppTextSecurePreferences @Inject constructor(
         setBooleanPreference(HAS_HIDDEN_MESSAGE_REQUESTS, hidden)
         _events.tryEmit(HAS_HIDDEN_MESSAGE_REQUESTS)
     }
-
-    override fun hasHiddenNoteToSelf(): Boolean {
-        return getBooleanPreference(HAS_HIDDEN_NOTE_TO_SELF, false)
-    }
-
-    override fun setHasHiddenNoteToSelf(hidden: Boolean) {
-        setBooleanPreference(HAS_HIDDEN_NOTE_TO_SELF, hidden)
-        _events.tryEmit(HAS_HIDDEN_NOTE_TO_SELF)
-    }
-
     override fun forceCurrentUserAsPro(): Boolean {
         return getBooleanPreference(SET_FORCE_CURRENT_USER_PRO, false)
     }
@@ -1862,6 +1729,12 @@ class AppTextSecurePreferences @Inject constructor(
             } else {
                 setStringPreference(TextSecurePreferences.DEPRECATING_START_TIME_OVERRIDE, value.toString())
             }
+        }
+
+    override var lastProfileUpdated: Instant?
+        get() = getLongPreference(TextSecurePreferences.LAST_PROFILE_UPDATE_TIME, 0).secondsToInstant()
+        set(value) {
+            setLongPreference(TextSecurePreferences.LAST_PROFILE_UPDATE_TIME, value?.toEpochSeconds() ?: 0L)
         }
 
     override fun getDebugMessageFeatures(): Set<ProStatusManager.MessageProFeature> {

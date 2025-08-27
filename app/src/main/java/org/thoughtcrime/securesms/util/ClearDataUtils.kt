@@ -3,26 +3,27 @@ package org.thoughtcrime.securesms.util
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Intent
+import androidx.core.content.edit
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.ApplicationContext
-import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
-import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.home.HomeActivity
-import javax.inject.Inject
-import androidx.core.content.edit
-import kotlinx.coroutines.CoroutineDispatcher
 import okio.ByteString.Companion.decodeHex
 import org.session.libsession.messaging.notifications.TokenFetcher
+import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.hexEncodedPublicKey
+import org.thoughtcrime.securesms.ApplicationContext
+import org.thoughtcrime.securesms.attachments.RemoteFileDownloadWorker
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities
 import org.thoughtcrime.securesms.database.Storage
+import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.logging.PersistentLogger
 import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
+import javax.inject.Inject
 
 class ClearDataUtils @Inject constructor(
     private val application: Application,
@@ -50,7 +51,11 @@ class ClearDataUtils @Inject constructor(
 
             TextSecurePreferences.clearAll(application)
             application.getSharedPreferences(ApplicationContext.PREFERENCES_NAME, 0).edit(commit = true) { clear() }
+            application.cacheDir.deleteRecursively()
+            application.filesDir.deleteRecursively()
             configFactory.clearAll()
+
+            RemoteFileDownloadWorker.cancelAll(application)
 
             persistentLogger.deleteAllLogs()
 

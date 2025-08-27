@@ -6,29 +6,21 @@ import android.view.ContextThemeWrapper
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
+import androidx.core.view.get
+import androidx.core.view.size
 import network.loki.messenger.R
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
-import org.session.libsignal.utilities.IdPrefix
-import org.session.libsignal.utilities.AccountId
+import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.ConversationAdapter
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageRecord
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
-import org.thoughtcrime.securesms.groups.OpenGroupManager
-import androidx.core.view.size
-import androidx.core.view.get
-import network.loki.messenger.libsession_util.util.BlindKeyAPI
-import org.session.libsignal.utilities.Hex
 
 class ConversationActionModeCallback(
     private val adapter: ConversationAdapter,
-    private val threadID: Long,
+    private val threadRecipient: Recipient,
     private val context: Context,
     private val deprecationManager: LegacyGroupDeprecationManager,
-    private val openGroupManager: OpenGroupManager,
     ) : ActionMode.Callback {
     var delegate: ConversationActionModeCallbackDelegate? = null
 
@@ -56,32 +48,20 @@ class ConversationActionModeCallback(
         val hasText = selectedItems.any { it.body.isNotEmpty() }
         if (selectedItems.isEmpty()) { return }
         val firstMessage = selectedItems.iterator().next()
-        val openGroup = DatabaseComponent.get(context).lokiThreadDatabase().getOpenGroupChat(threadID)
-        val thread = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(threadID)!!
-        val userPublicKey = TextSecurePreferences.getLocalNumber(context)!!
-        val edKeyPair = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()!!
-        val blindedPublicKey = openGroup?.publicKey?.let {
-            BlindKeyAPI.blind15KeyPairOrNull(
-                ed25519SecretKey = edKeyPair.secretKey.data,
-                serverPubKey = Hex.fromStringCondensed(it),
-            )?.pubKey?.data }
-            ?.let { AccountId(IdPrefix.BLINDED, it) }?.hexString
 
-        val isDeprecatedLegacyGroup = thread.isLegacyGroupRecipient &&
+        val isDeprecatedLegacyGroup = threadRecipient.isLegacyGroupRecipient &&
                 deprecationManager.isDeprecated
 
         // Embedded function
         fun userCanBanSelectedUsers(): Boolean {
-            if (openGroup == null) { return false }
             val anySentByCurrentUser = selectedItems.any { it.isOutgoing }
             if (anySentByCurrentUser) { return false } // Users can't ban themselves
             val selectedUsers = selectedItems.map { it.recipient.address.toString() }.toSet()
             if (selectedUsers.size > 1) { return false }
-            return openGroupManager.isUserModerator(
-                openGroup.groupId,
-                userPublicKey,
-                blindedPublicKey
-            )
+            return threadRecipient
+                .takeIf { it.isCommunityRecipient }
+                ?.currentUserRole
+                ?.canModerate == true
         }
 
 
@@ -95,7 +75,7 @@ class ConversationActionModeCallback(
         menu.findItem(R.id.menu_context_copy).isVisible = !containsControlMessage && hasText
         // Copy Account ID
         menu.findItem(R.id.menu_context_copy_public_key).isVisible =
-             (thread.isGroupOrCommunityRecipient && !thread.isCommunityRecipient && selectedItems.size == 1 && firstMessage.individualRecipient.address.toString() != userPublicKey)
+             (threadRecipient.isGroupOrCommunityRecipient && !threadRecipient.isCommunityRecipient && selectedItems.size == 1 && !firstMessage.individualRecipient.isSelf)
         // Message detail
         menu.findItem(R.id.menu_message_details).isVisible = selectedItems.size == 1 && !isDeprecatedLegacyGroup
         // Resend

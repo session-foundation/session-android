@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -24,6 +25,8 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
+import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.upsertContact
@@ -31,11 +34,11 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.hexEncodedPublicKey
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities
 import org.thoughtcrime.securesms.database.AttachmentDatabase
-import org.thoughtcrime.securesms.database.RecipientDatabase
-import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
 import org.thoughtcrime.securesms.util.ClearDataUtils
 import java.time.ZonedDateTime
@@ -51,9 +54,9 @@ class DebugMenuViewModel @Inject constructor(
     private val storage: StorageProtocol,
     private val deprecationManager: LegacyGroupDeprecationManager,
     private val clearDataUtils: ClearDataUtils,
-    private val threadDb: ThreadDatabase,
-    private val recipientDatabase: RecipientDatabase,
+    private val recipientDatabase: RecipientSettingsDatabase,
     private val attachmentDatabase: AttachmentDatabase,
+    private val conversationRepository: ConversationRepository,
     private val databaseInspector: DatabaseInspector,
 ) : ViewModel() {
     private val TAG = "DebugMenu"
@@ -67,7 +70,7 @@ class DebugMenuViewModel @Inject constructor(
             showLoadingDialog = false,
             showDeprecatedStateWarningDialog = false,
             hideMessageRequests = textSecurePreferences.hasHiddenMessageRequests(),
-            hideNoteToSelf = textSecurePreferences.hasHiddenNoteToSelf(),
+            hideNoteToSelf = configFactory.withUserConfigs { it.userProfile.getNtsPriority() == PRIORITY_HIDDEN },
             forceDeprecationState = deprecationManager.deprecationStateOverride.value,
             availableDeprecationState = listOf(null) + LegacyGroupDeprecationManager.DeprecationState.entries.toList(),
             deprecatedTime = deprecationManager.deprecatedTime.value,
@@ -156,7 +159,6 @@ class DebugMenuViewModel @Inject constructor(
             }
 
             is Commands.HideNoteToSelf -> {
-                textSecurePreferences.setHasHiddenNoteToSelf(command.hide)
                 configFactory.withMutableUserConfigs {
                     it.userProfile.setNtsPriority(if(command.hide) PRIORITY_HIDDEN else PRIORITY_VISIBLE)
                 }
@@ -211,7 +213,7 @@ class DebugMenuViewModel @Inject constructor(
                         configFactory.withMutableUserConfigs { configs ->
                             for ((index, key) in keys.withIndex()) {
                                 configs.contacts.upsertContact(
-                                    accountId = key.x25519KeyPair.hexEncodedPublicKey
+                                    key.x25519KeyPair.hexEncodedPublicKey.toAddress() as Address.Standard,
                                 ) {
                                     name = "${command.prefix}$index"
                                     approved = true
@@ -337,17 +339,18 @@ class DebugMenuViewModel @Inject constructor(
 
         // clear trusted downloads for all recipients
         viewModelScope.launch {
-            val conversations: List<ThreadRecord> = threadDb.approvedConversationList.use { openCursor ->
-                threadDb.readerFor(openCursor).run { generateSequence { next }.toList() }
-            }
+            val conversations: List<ThreadRecord> = conversationRepository.observeConversationList()
+                .first()
 
             conversations.filter { !it.recipient.isLocalNumber }.forEach {
-                recipientDatabase.setAutoDownloadAttachments(it.recipient, false)
+                recipientDatabase.save(it.recipient.address) {
+                    it.copy()
+                }
             }
 
             // set all attachments back to pending
             attachmentDatabase.allAttachments.forEach {
-                attachmentDatabase.setTransferState(it.mmsId, it.attachmentId, AttachmentState.PENDING.value)
+                attachmentDatabase.setTransferState(it.attachmentId, AttachmentState.PENDING.value)
             }
 
             Toast.makeText(context, "Cleared!", Toast.LENGTH_LONG).show()

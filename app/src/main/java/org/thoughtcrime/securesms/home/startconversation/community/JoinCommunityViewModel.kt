@@ -17,12 +17,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import nl.komponents.kovenant.functional.map
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.open_groups.OpenGroupApi
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.OpenGroupUrlParser
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.groups.GroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.State
@@ -30,9 +31,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class JoinCommunityViewModel @Inject constructor(
-    @ApplicationContext private val appContext: Context,
+    @param:ApplicationContext private val appContext: Context,
     private val openGroupManager: OpenGroupManager,
-    private val storage: StorageProtocol
 ): ViewModel() {
 
     private val _state = MutableStateFlow(JoinCommunityState(defaultCommunities = State.Loading))
@@ -91,22 +91,15 @@ class JoinCommunityViewModel @Inject constructor(
 
             try {
                 val sanitizedServer = openGroup.server.removeSuffix("/")
-                val openGroupID = "$sanitizedServer.${openGroup.room}"
                 openGroupManager.add(
                     sanitizedServer,
                     openGroup.room,
                     openGroup.serverPublicKey,
-                    appContext
                 )
 
-                storage.onOpenGroupAdded(sanitizedServer, openGroup.room)
-                val threadID = GroupManager.getOpenGroupThreadID(openGroupID, appContext)
-
-                withContext(Dispatchers.Main) {
-                    _uiEvents.emit(UiEvent.NavigateToConversation(
-                        threadId = threadID
-                    ))
-                }
+                _uiEvents.emit(UiEvent.NavigateToConversation(
+                    address = Address.Community(openGroup.server, openGroup.room),
+                ))
             } catch (e: Exception) {
                 Log.e("Loki", "Couldn't join community.", e)
                 withContext(Dispatchers.Main) {
@@ -159,6 +152,6 @@ class JoinCommunityViewModel @Inject constructor(
     }
 
     sealed interface UiEvent {
-        data class NavigateToConversation(val threadId: Long) : UiEvent
+        data class NavigateToConversation(val address: Address.Conversable) : UiEvent
     }
 }

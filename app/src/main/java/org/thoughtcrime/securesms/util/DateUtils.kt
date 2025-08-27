@@ -4,7 +4,6 @@ import android.content.Context
 import android.text.format.DateFormat
 import  android.text.format.DateUtils as AndroidxDateUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -19,6 +18,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.DATE_FORMAT_PREF
 import org.session.libsession.utilities.TextSecurePreferences.Companion.TIME_FORMAT_PREF
 import org.session.libsignal.utilities.Log
+import java.time.ZonedDateTime
 
 enum class RelativeDay { TODAY, YESTERDAY, TOMORROW }
 
@@ -220,4 +220,34 @@ class DateUtils @Inject constructor(
 
     private fun getLocalizedPattern(template: String, locale: Locale): String =
         DateFormat.getBestDateTimePattern(locale, template)
+
+    companion object {
+        fun Long.asEpochSeconds(): ZonedDateTime? {
+            if (this <= 0) return null
+
+            return Instant.ofEpochSecond(this).atZone(ZoneId.of("UTC"))
+        }
+
+        fun Long.secondsToInstant(): Instant? {
+            if (this <= 0) return null
+
+            return Instant.ofEpochSecond(this)
+        }
+
+        fun Long.millsToInstant(): Instant? {
+            if (this <= 0) return null
+
+            return Instant.ofEpochMilli(this)
+        }
+
+        fun Long.asEpochMillis(): ZonedDateTime? {
+            if (this <= 0) return null
+
+            return Instant.ofEpochMilli(this).atZone(ZoneId.of("UTC"))
+        }
+
+        fun Instant.toEpochSeconds(): Long {
+            return this.toEpochMilli() / 1000
+        }
+    }
 }

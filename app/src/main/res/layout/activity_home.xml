@@ -29,7 +29,7 @@
                     android:layout_height="?attr/actionBarSize"
                     android:paddingHorizontal="@dimen/medium_spacing">
 
-                    <org.thoughtcrime.securesms.components.ProfilePictureView
+                    <androidx.compose.ui.platform.ComposeView
                         android:id="@+id/profileButton"
                         android:layout_width="@dimen/very_small_profile_picture_size"
                         android:layout_height="@dimen/very_small_profile_picture_size"

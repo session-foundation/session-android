@@ -1,7 +1,5 @@
 package org.thoughtcrime.securesms.database;
 
-import static org.thoughtcrime.securesms.database.UtilKt.generatePlaceholders;
-
 import android.content.Context;
 import android.database.Cursor;
 
@@ -11,14 +9,13 @@ import com.annimon.stream.Stream;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
+import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.Util;
-
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 import javax.inject.Provider;
 
@@ -66,7 +63,7 @@ public class SearchDatabase extends Database {
                   "END;"
   };
 
-  // Base query definitions with placeholders for blocked contact filtering
+  // Base query definitions with placeholders for thread filtering
   private static final String MESSAGES_QUERY_BASE =
           "SELECT " +
                   ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ADDRESS + " AS " + CONVERSATION_ADDRESS + ", " +
@@ -80,7 +77,7 @@ public class SearchDatabase extends Database {
                   "WHERE " + SMS_FTS_TABLE_NAME + " MATCH ? " +
                   "AND NOT " + MmsSmsColumns.IS_DELETED +
                   " AND NOT " + MmsSmsColumns.IS_GROUP_UPDATE +
-                  " %s " + // placeholder for blocked
+                  " %s " + // placeholder for thread filtering
                   "UNION ALL " +
                   "SELECT " +
                   ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ADDRESS + " AS " + CONVERSATION_ADDRESS + ", " +
@@ -94,11 +91,11 @@ public class SearchDatabase extends Database {
                   "WHERE " + MMS_FTS_TABLE_NAME + " MATCH ? " +
                   "AND NOT " + MmsSmsColumns.IS_DELETED +
                   " AND NOT " + MmsSmsColumns.IS_GROUP_UPDATE +
-                  " %s " + // placeholder for blocked
+                  " %s " + // placeholder for thread filtering
                   "ORDER BY " + MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC " +
                   "LIMIT ?";
 
-  private static final String MESSAGES_FOR_THREAD_QUERY_BASE =
+  private static final String MESSAGES_FOR_THREAD_QUERY =
           "SELECT " +
                   ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ADDRESS + " AS " + CONVERSATION_ADDRESS + ", " +
                   MmsSmsColumns.ADDRESS + " AS " + MESSAGE_ADDRESS + ", " +
@@ -111,8 +108,7 @@ public class SearchDatabase extends Database {
                   "WHERE " + SMS_FTS_TABLE_NAME + " MATCH ? AND " + SmsDatabase.TABLE_NAME + "." + MmsSmsColumns.THREAD_ID + " = ? " +
                   "AND NOT " + MmsSmsColumns.IS_DELETED +
                   " AND NOT " + MmsSmsColumns.IS_GROUP_UPDATE +
-                  " %s " + // placeholder for blocked
-                  "UNION ALL " +
+                  " UNION ALL " +
                   "SELECT " +
                   ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ADDRESS + " AS " + CONVERSATION_ADDRESS + ", " +
                   MmsSmsColumns.ADDRESS + " AS " + MESSAGE_ADDRESS + ", " +
@@ -125,87 +121,64 @@ public class SearchDatabase extends Database {
                   "WHERE " + MMS_FTS_TABLE_NAME + " MATCH ? AND " + MmsDatabase.TABLE_NAME + "." + MmsSmsColumns.THREAD_ID + " = ? " +
                   "AND NOT " + MmsSmsColumns.IS_DELETED +
                   " AND NOT " + MmsSmsColumns.IS_GROUP_UPDATE +
-                  " %s " + // placeholder for blocked
-                  "ORDER BY " + MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC " +
+                  " ORDER BY " + MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC " +
                   "LIMIT 500";
 
   public SearchDatabase(@NonNull Context context, @NonNull Provider<SQLCipherOpenHelper> databaseHelper) {
     super(context, databaseHelper);
   }
 
-  public Cursor queryMessages(@NonNull String query, @NonNull Set<String> blockedContacts) {
+  public Cursor queryMessages(@NonNull String query, @NonNull Collection<Address> searchWithin) {
     SQLiteDatabase db = getReadableDatabase();
     String prefixQuery = adjustQuery(query);
     int queryLimit = Math.min(query.length()*50, 500);
 
-    // Build the blocked contacts filter clause if needed
-    String blockedFilter = "";
-    if (!blockedContacts.isEmpty()) {
-      blockedFilter = " AND " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ADDRESS + " NOT IN (" +
-              generatePlaceholders(blockedContacts.size()) + ")";
-    }
+    // Build the filter for messages
+    final StringBuilder filterBuilder = new StringBuilder(" AND ");
+    filterBuilder.append(ThreadDatabase.TABLE_NAME)
+            .append(".")
+            .append(ThreadDatabase.ADDRESS)
+            .append(" IN (");
+
+    UtilKt.generateSQLPlaceholders(filterBuilder, searchWithin.size())
+            .append(")");
+
+    final String filter = filterBuilder.toString();
 
     // Format the query with the filter placeholders
-    String messagesQuery = String.format(MESSAGES_QUERY_BASE, blockedFilter, blockedFilter);
+    String messagesQuery = String.format(MESSAGES_QUERY_BASE, filter, filter);
 
     // Build the query arguments
     List<String> args = new ArrayList<>();
     args.add(prefixQuery); // For SMS query
 
-    // Add blocked contacts for SMS query if any
-    if (!blockedContacts.isEmpty()) {
-      args.addAll(blockedContacts);
+    // Add filtering addresses for SMS query
+    for (final Address a : searchWithin) {
+      args.add(a.getAddress());
     }
 
     args.add(prefixQuery); // For MMS query
 
-    // Add blocked contacts for MMS query if any
-    if (!blockedContacts.isEmpty()) {
-      args.addAll(blockedContacts);
+    // Add filtering addresses for MMS query
+    for (final Address a : searchWithin) {
+      args.add(a.getAddress());
     }
 
     args.add(String.valueOf(queryLimit));
 
-    Cursor cursor = db.rawQuery(messagesQuery, args.toArray(new String[0]));
-    setNotifyConversationListListeners(cursor);
-    return cursor;
+    return db.rawQuery(messagesQuery, args.toArray(new String[0]));
   }
 
-  public Cursor queryMessages(@NonNull String query, long threadId, @NonNull Set<String> blockedContacts) {
-    SQLiteDatabase db = getReadableDatabase();
+  public Cursor queryMessages(@NonNull String query, long threadId) {
     String prefixQuery = adjustQuery(query);
 
-    // Build the blocked contacts filter clause if needed
-    String blockedFilter = "";
-    if (!blockedContacts.isEmpty()) {
-      blockedFilter = " AND " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ADDRESS + " NOT IN (" +
-              generatePlaceholders(blockedContacts.size()) + ")";
-    }
-
-    // Format the query with the filter placeholders
-    String messagesForThreadQuery = String.format(MESSAGES_FOR_THREAD_QUERY_BASE, blockedFilter, blockedFilter);
-
-    // Build the query arguments
-    List<String> args = new ArrayList<>();
-    args.add(prefixQuery);
-    args.add(String.valueOf(threadId));
-
-    // Add blocked contacts for SMS query if any
-    if (!blockedContacts.isEmpty()) {
-      args.addAll(blockedContacts);
-    }
-
-    args.add(prefixQuery);
-    args.add(String.valueOf(threadId));
-
-    // Add blocked contacts for MMS query if any
-    if (!blockedContacts.isEmpty()) {
-      args.addAll(blockedContacts);
-    }
-
-    Cursor cursor = db.rawQuery(messagesForThreadQuery, args.toArray(new String[0]));
-    setNotifyConversationListListeners(cursor);
-    return cursor;
+    return getReadableDatabase().rawQuery(
+            MESSAGES_FOR_THREAD_QUERY,
+            prefixQuery,
+            threadId,
+            prefixQuery,
+            threadId
+    );
   }
 
   private String adjustQuery(@NonNull String query) {

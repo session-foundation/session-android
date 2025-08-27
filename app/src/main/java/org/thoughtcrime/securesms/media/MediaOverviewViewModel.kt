@@ -21,6 +21,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
@@ -32,11 +34,13 @@ import org.session.libsession.messaging.messages.control.DataExtractionNotificat
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.isGroupOrCommunity
+import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.MediaDatabase
 import org.thoughtcrime.securesms.database.MediaDatabase.MediaRecord
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.mms.Slide
@@ -45,7 +49,6 @@ import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
 import org.thoughtcrime.securesms.util.asSequence
-import org.thoughtcrime.securesms.util.observeChanges
 
 @HiltViewModel(assistedFactory = MediaOverviewViewModel.Factory::class)
 class MediaOverviewViewModel @AssistedInject constructor(
@@ -53,22 +56,20 @@ class MediaOverviewViewModel @AssistedInject constructor(
     private val application: Application,
     private val threadDatabase: ThreadDatabase,
     private val mediaDatabase: MediaDatabase,
-    private val dateUtils: DateUtils
+    private val dateUtils: DateUtils,
+    private val recipientRepository: RecipientRepository,
 ) : AndroidViewModel(application) {
 
     private val timeBuckets by lazy { FixedTimeBuckets() }
     private val monthTimeBucketFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
 
-    private val recipient: SharedFlow<Recipient> = application.contentResolver
-        .observeChanges(DatabaseContentProviders.Attachment.CONTENT_URI)
-        .onStart { emit(DatabaseContentProviders.Attachment.CONTENT_URI) }
-        .map { Recipient.from(application, address, false) }
-        .shareIn(viewModelScope, SharingStarted.Eagerly, replay = 1)
+    private val recipient = recipientRepository.observeRecipient(address)
 
     val mediaListState: StateFlow<MediaOverviewContent?> = recipient
-        .map { recipient ->
+        .distinctUntilChanged()
+        .map {
             withContext(Dispatchers.Default) {
-                val threadId = threadDatabase.getOrCreateThreadIdFor(recipient)
+                val threadId = threadDatabase.getOrCreateThreadIdFor(address)
                 val mediaItems = mediaDatabase.getGalleryMediaForThread(threadId)
                     .use { cursor ->
                         cursor.asSequence()
@@ -92,10 +93,11 @@ class MediaOverviewViewModel @AssistedInject constructor(
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val conversationName: StateFlow<String> = recipient
+        .filterNotNull()
         .map { recipient ->
             when {
                 recipient.isLocalNumber -> application.getString(R.string.noteToSelf)
-                else -> recipient.name
+                else -> recipient.displayName()
             }
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, "")
@@ -323,7 +325,7 @@ class MediaOverviewViewModel @AssistedInject constructor(
 
             // Notify the content provider that the thread has been updated
             if (threadId >= 0) {
-                application.contentResolver.notifyChange(DatabaseContentProviders.Conversation.getUriForThread(threadId), null)
+                threadDatabase.notifyThreadUpdated(threadId)
             }
 
             mutableShowingActionProgress.value = null

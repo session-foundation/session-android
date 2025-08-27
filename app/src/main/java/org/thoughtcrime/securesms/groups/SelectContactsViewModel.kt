@@ -1,13 +1,11 @@
 package org.thoughtcrime.securesms.groups
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -24,8 +22,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.home.search.getSearchName
+import org.thoughtcrime.securesms.home.search.searchName
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
@@ -36,9 +35,9 @@ open class SelectContactsViewModel @AssistedInject constructor(
     private val configFactory: ConfigFactory,
     private val avatarUtils: AvatarUtils,
     private val proStatusManager: ProStatusManager,
-    @ApplicationContext private val appContext: Context,
     @Assisted private val excludingAccountIDs: Set<Address>,
     @Assisted private val contactFiltering: (Recipient) -> Boolean, //  default will filter out blocked and unapproved contacts
+    private val recipientRepository: RecipientRepository,
 ) : ViewModel() {
     // Input: The search query
     private val mutableSearchQuery = MutableStateFlow("")
@@ -82,11 +81,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
                     } else {
                         allContacts.filterNotTo(mutableSetOf()) { it in excludingAccountIDs }
                     }.map {
-                        Recipient.from(
-                            appContext,
-                            it,
-                            false
-                        )
+                        recipientRepository.getRecipient(it)
                     }
 
                     recipientContacts.filter(contactFiltering)
@@ -95,18 +90,18 @@ open class SelectContactsViewModel @AssistedInject constructor(
         }
 
 
-    private suspend fun filterContacts(
+    private fun filterContacts(
         contacts: Collection<Recipient>,
         query: String,
         selectedAccountIDs: Set<Address>
     ): List<ContactItem> {
         val items = mutableListOf<ContactItem>()
         for (contact in contacts) {
-            if (query.isBlank() || contact.getSearchName().contains(query, ignoreCase = true)) {
+            if (query.isBlank() || contact.searchName.contains(query, ignoreCase = true)) {
                 val avatarData = avatarUtils.getUIDataFromRecipient(contact)
                 items.add(
                     ContactItem(
-                        name = contact.getSearchName(),
+                        name = contact.searchName,
                         address = contact.address,
                         avatarUIData = avatarData,
                         selected = selectedAccountIDs.contains(contact.address),
@@ -150,7 +145,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
         ): SelectContactsViewModel
 
         companion object {
-            val defaultFiltering: (Recipient) -> Boolean = { !it.isBlocked && it.isApproved }
+            val defaultFiltering: (Recipient) -> Boolean = { !it.blocked && it.approved }
         }
     }
 }

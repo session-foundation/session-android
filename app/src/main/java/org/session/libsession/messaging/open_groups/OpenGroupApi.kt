@@ -286,8 +286,12 @@ object OpenGroupApi {
         return RequestBody.create("application/json".toMediaType(), parametersAsJSON)
     }
 
-    private fun getResponseBody(request: Request, signRequest: Boolean = true): Promise<ByteArraySlice, Exception> {
-        return send(request, signRequest = signRequest).map { response ->
+    private fun getResponseBody(
+        request: Request,
+        signRequest: Boolean = true,
+        serverPubKeyHex: String? = null
+    ): Promise<ByteArraySlice, Exception> {
+        return send(request, signRequest = signRequest, serverPubKeyHex = serverPubKeyHex).map { response ->
             response.body ?: throw Error.ParsingFailed
         }
     }
@@ -298,7 +302,20 @@ object OpenGroupApi {
         }
     }
 
-    private fun send(request: Request, signRequest: Boolean): Promise<OnionResponse, Exception> {
+    private suspend fun getOrFetchServerCapabilities(server: String): List<String> {
+        val storage = MessagingModuleConfiguration.shared.storage
+        val caps = storage.getServerCapabilities(server)
+
+        if (caps != null) {
+            return caps
+        }
+
+        val fetched = getCapabilities(server).await()
+        storage.setServerCapabilities(server, fetched.capabilities)
+        return fetched.capabilities
+    }
+
+    private fun send(request: Request, signRequest: Boolean, serverPubKeyHex: String? = null): Promise<OnionResponse, Exception> {
         request.server.toHttpUrlOrNull() ?: return Promise.ofFail(Error.InvalidURL)
         val urlBuilder = StringBuilder("${request.server}/${request.endpoint.value}")
         if (request.verb == GET && request.queryParameters.isNotEmpty()) {
@@ -307,17 +324,18 @@ object OpenGroupApi {
                 urlBuilder.append("$key=$value")
             }
         }
-        fun execute(): Promise<OnionResponse, Exception> {
-            val serverPublicKey =
-                MessagingModuleConfiguration.shared.storage.getOpenGroupPublicKey(request.server)
-                    ?: return Promise.ofFail(Error.NoPublicKey)
+
+        suspend fun execute(): OnionResponse {
+            val serverPublicKey = serverPubKeyHex
+                ?: MessagingModuleConfiguration.shared.storage.getOpenGroupPublicKey(request.server)
+                ?: throw Error.NoPublicKey
             val urlRequest = urlBuilder.toString()
 
             val headers = if (signRequest) {
-                val serverCapabilities = MessagingModuleConfiguration.shared.storage.getServerCapabilities(request.server)
+                val serverCapabilities = getOrFetchServerCapabilities(request.server)
 
                 val ed25519KeyPair = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()
-                    ?: return Promise.ofFail(Error.NoEd25519KeyPair)
+                    ?: throw Error.NoEd25519KeyPair
 
                 val headers = request.headers.toMutableMap()
                 val nonce = ByteArray(16).also { SecureRandom().nextBytes(it) }
@@ -398,12 +416,13 @@ object OpenGroupApi {
                         is HTTP.HTTPRequestFailedException -> Log.e("SOGS", "Failed onion request: ${e.message}")
                         else -> Log.e("SOGS", "Failed onion request", e)
                     }
-                }
+                }.await()
             } else {
-                Promise.ofFail(IllegalStateException("It's currently not allowed to send non onion routed requests."))
+                throw IllegalStateException("It's currently not allowed to send non onion routed requests.")
             }
         }
-        return execute()
+
+        return GlobalScope.asyncPromise(block=::execute)
     }
 
     fun downloadOpenGroupProfilePicture(
@@ -422,7 +441,7 @@ object OpenGroupApi {
     }
 
     // region Upload/Download
-    fun upload(file: ByteArray, room: String, server: String): Promise<Long, Exception> {
+    fun upload(file: ByteArray, room: String, server: String): Promise<String, Exception> {
         val request = Request(
             verb = POST,
             room = room,
@@ -435,7 +454,7 @@ object OpenGroupApi {
             )
         )
         return getResponseBodyJson(request, signRequest = true).map { json ->
-            (json["id"] as? Number)?.toLong() ?: throw Error.ParsingFailed
+            json["id"]?.toString() ?: throw Error.ParsingFailed
         }
     }
 
@@ -624,10 +643,10 @@ object OpenGroupApi {
 
     // region General
     @Suppress("UNCHECKED_CAST")
-    fun poll(
+    suspend fun poll(
         rooms: List<String>,
         server: String
-    ): Promise<List<BatchResponse<*>>, Exception> {
+    ): List<BatchResponse<*>> {
         val storage = MessagingModuleConfiguration.shared.storage
         val context = MessagingModuleConfiguration.shared.context
         val timeSinceLastOpen = this.timeSinceLastOpen
@@ -640,16 +659,10 @@ object OpenGroupApi {
         }
         val lastInboxMessageId = storage.getLastInboxMessageId(server)
         val lastOutboxMessageId = storage.getLastOutboxMessageId(server)
-        val requests = mutableListOf<BatchRequestInfo<*>>(
-            BatchRequestInfo(
-                request = BatchRequest(
-                    method = GET,
-                    path = "/capabilities"
-                ),
-                endpoint = Endpoint.Capabilities,
-                responseType = object : TypeReference<Capabilities>(){}
-            )
-        )
+        val requests = mutableListOf<BatchRequestInfo<*>>()
+
+        val serverCapabilities = getOrFetchServerCapabilities(server)
+
         rooms.forEach { room ->
             // we need to make sure communities have their description data, and since we were not
             // tracking that property before (04/20205) we need to force existing communities to
@@ -695,7 +708,6 @@ object OpenGroupApi {
                 }
             )
         }
-        val serverCapabilities = storage.getServerCapabilities(server)
         val isAcceptingCommunityRequests = storage.isCheckingCommunityRequests()
         if (serverCapabilities.contains(Capability.BLIND.name.lowercase()) && isAcceptingCommunityRequests) {
             requests.add(
@@ -741,7 +753,7 @@ object OpenGroupApi {
                 }
             )
         }
-        return parallelBatch(server, requests)
+        return parallelBatch(server, requests).await()
     }
 
     private fun parallelBatch(
@@ -796,13 +808,8 @@ object OpenGroupApi {
         }
     }
 
-    fun getDefaultServerCapabilities(): Promise<Capabilities, Exception> {
-        val storage = MessagingModuleConfiguration.shared.storage
-        storage.setOpenGroupPublicKey(defaultServer, defaultServerPublicKey)
-        return getCapabilities(defaultServer).map { capabilities ->
-            storage.setServerCapabilities(defaultServer, capabilities.capabilities)
-            capabilities
-        }
+    fun getDefaultServerCapabilities(): Promise<List<String>, Exception> {
+        return GlobalScope.asyncPromise { getOrFetchServerCapabilities(defaultServer) }
     }
 
     fun getDefaultRoomsIfNeeded(): Promise<List<DefaultGroup>, Exception> {
@@ -860,9 +867,9 @@ object OpenGroupApi {
         }
     }
 
-    fun getCapabilities(server: String): Promise<Capabilities, Exception> {
+    fun getCapabilities(server: String, serverPubKeyHex: String? = null): Promise<Capabilities, Exception> {
         val request = Request(verb = GET, room = null, server = server, endpoint = Endpoint.Capabilities)
-        return getResponseBody(request, signRequest = false).map { response ->
+        return getResponseBody(request, signRequest = false, serverPubKeyHex).map { response ->
             JsonUtil.fromJson(response, Capabilities::class.java)
         }
     }

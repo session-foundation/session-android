@@ -243,7 +243,7 @@ fun Settings(
                             .padding(LocalDimensions.current.xxxsSpacing)
                             .align(Alignment.BottomEnd)
                         ,
-                        painter = painterResource(id = if(avatarData.elements.first().contactPhoto == null) R.drawable.ic_plus
+                        painter = painterResource(id = if(avatarData.elements.first().remoteFile == null) R.drawable.ic_plus
                         else R.drawable.ic_pencil),
                         contentDescription = null,
                         colorFilter = ColorFilter.tint(Color.Black)

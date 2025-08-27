@@ -9,10 +9,7 @@ import org.session.libsession.messaging.sending_receiving.link_preview.LinkPrevi
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.Contact;
-import org.session.libsession.utilities.GroupUtil;
 import org.session.libsignal.messages.SignalServiceAttachment;
-import org.session.libsignal.messages.SignalServiceGroup;
-import org.session.libsignal.utilities.Hex;
 import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.database.model.content.MessageContent;
 
@@ -23,7 +20,7 @@ import java.util.List;
 public class IncomingMediaMessage {
 
   private final Address       from;
-  private final Address       groupId;
+  private final Address.GroupLike       groupId;
   private final String        body;
   private final boolean       push;
   private final long          sentTimeMillis;
@@ -50,7 +47,7 @@ public class IncomingMediaMessage {
                               boolean messageRequestResponse,
                               boolean hasMention,
                               Optional<String> body,
-                              Optional<SignalServiceGroup> group,
+                              Optional<Address.GroupLike> group,
                               Optional<List<SignalServiceAttachment>> attachments,
                               @Nullable MessageContent messageContent,
                               Optional<QuoteModel> quote,
@@ -70,19 +67,7 @@ public class IncomingMediaMessage {
     this.quote                      = quote.orNull();
     this.messageRequestResponse     = messageRequestResponse;
     this.hasMention                 = hasMention;
-
-    if (group.isPresent()) {
-      SignalServiceGroup groupObject = group.get();
-      if (groupObject.isGroupV2()) {
-        // new groupv2 03..etc..
-        this.groupId = Address.fromSerialized(Hex.toStringCondensed(groupObject.getGroupId()));
-      } else {
-        // legacy group or community
-        this.groupId = Address.fromSerialized(GroupUtil.getEncodedId(group.get()));
-      }
-    } else {
-      this.groupId = null;
-    }
+    this.groupId = group.orNull();
 
     this.attachments.addAll(PointerAttachment.forPointers(attachments));
     this.sharedContacts.addAll(sharedContacts.or(Collections.emptyList()));
@@ -93,7 +78,7 @@ public class IncomingMediaMessage {
                                           Address from,
                                           long expiresIn,
                                           long expireStartedAt,
-                                          Optional<SignalServiceGroup> group,
+                                          Optional<Address.GroupLike> group,
                                           List<SignalServiceAttachment> attachments,
                                           Optional<QuoteModel> quote,
                                           Optional<List<LinkPreview>> linkPreviews)
@@ -119,7 +104,7 @@ public class IncomingMediaMessage {
     return from;
   }
 
-  public Address getGroupId() {
+  public Address.GroupLike getGroupId() {
     return groupId;
   }
 

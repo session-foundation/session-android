@@ -17,12 +17,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import network.loki.messenger.BuildConfig
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.FutureTaskListener
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.notifications.BackgroundPollWorker
 import org.thoughtcrime.securesms.service.CallForegroundService
@@ -64,6 +66,8 @@ class WebRtcCallBridge @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val callManager: CallManager,
     private val networkConnectivity: NetworkConnectivity,
+    private val recipientRepository: RecipientRepository,
+    private val storage: StorageProtocol,
     @ManagerScope scope: CoroutineScope,
 ): CallManager.WebRtcListener, OnAppStartupComponent  {
 
@@ -109,6 +113,9 @@ class WebRtcCallBridge @Inject constructor(
         }
     }
 
+    private val Address.isLocalNumber: Boolean
+        get() = address.equals(storage.getUserPublicKey(), ignoreCase = true)
+
 
     @Synchronized
     private fun terminate() {
@@ -150,14 +157,12 @@ class WebRtcCallBridge @Inject constructor(
     }
 
     private fun handleBusyCall(address: Address) {
-        val recipient = getRecipientFromAddress(address)
-        insertMissedCall(recipient, false)
+        insertMissedCall(address, false)
     }
 
     private fun handleNewOffer(address: Address, sdp: String, callId: UUID) {
         Log.d(TAG, "Handle new offer")
-        val recipient = getRecipientFromAddress(address)
-        callManager.onNewOffer(sdp, callId, recipient).fail {
+        callManager.onNewOffer(sdp, callId, address).fail {
             Log.e("Loki", "Error handling new offer", it)
             callManager.postConnectionError()
             terminate()
@@ -188,17 +193,15 @@ class WebRtcCallBridge @Inject constructor(
                 return@execute
             }
 
-            val recipient = getRecipientFromAddress(address)
-            
             if (isIncomingMessageExpired(callTime)) {
                 Log.d(TAG, "Pre offer expired - message timestamp was deemed expired: ${System.currentTimeMillis() - callTime}s")
-                insertMissedCall(recipient, true)
+                insertMissedCall(address, true)
                 terminate()
                 return@execute
             }
 
-            callManager.onPreOffer(callId, recipient) {
-                setCallNotification(TYPE_INCOMING_PRE_OFFER, recipient)
+            callManager.onPreOffer(callId, address) {
+                setCallNotification(TYPE_INCOMING_PRE_OFFER, address)
                 callManager.postViewModelState(CallViewModel.State.CALL_PRE_OFFER_INCOMING)
                 callManager.initializeAudioForCall()
                 callManager.startIncomingRinger()
@@ -214,16 +217,15 @@ class WebRtcCallBridge @Inject constructor(
 
     private fun handleIncomingPreOffer(address: Address, sdp: String, callId: UUID, callTime: Long) {
         serviceExecutor.execute {
-            val recipient = getRecipientFromAddress(address)
             val preOffer = callManager.preOfferCallData
-            if (callManager.isPreOffer() && (preOffer == null || preOffer.callId != callId || preOffer.recipient.address != recipient.address)) {
+            if (callManager.isPreOffer() && (preOffer == null || preOffer.callId != callId || preOffer.recipient != address)) {
                 Log.d(TAG, "Incoming ring from non-matching pre-offer")
                 return@execute
             }
 
-            callManager.onIncomingRing(sdp, callId, recipient, callTime) {
+            callManager.onIncomingRing(sdp, callId, address, callTime) {
                 if (_hasAcceptedCall.value) {
-                    setCallNotification(TYPE_INCOMING_CONNECTING, recipient)
+                    setCallNotification(TYPE_INCOMING_CONNECTING, address)
                 } else {
                     //No need to do anything here as this case is already taken care of from the pre offer that came before
                 }
@@ -239,7 +241,7 @@ class WebRtcCallBridge @Inject constructor(
         }
     }
 
-    fun handleOutgoingCall(recipient: Recipient) {
+    fun handleOutgoingCall(recipient: Address) {
         serviceExecutor.execute {
             if (!callManager.isIdle()) return@execute
 
@@ -391,7 +393,7 @@ class WebRtcCallBridge @Inject constructor(
         }
     }
 
-    fun handleLocalHangup(recipient: Recipient?) {
+    fun handleLocalHangup(recipient: Address?) {
         serviceExecutor.execute {
             callManager.handleLocalHangup(recipient)
             terminate()
@@ -420,16 +422,15 @@ class WebRtcCallBridge @Inject constructor(
     fun handleAnswerIncoming(address: Address, sdp: String, callId: UUID) {
         serviceExecutor.execute {
             try {
-                val recipient = getRecipientFromAddress(address)
-                if (recipient.isLocalNumber && callManager.currentConnectionState in CallState.CAN_DECLINE_STATES) {
-                    handleLocalHangup(recipient)
+                if (address.isLocalNumber && callManager.currentConnectionState in CallState.CAN_DECLINE_STATES) {
+                    handleLocalHangup(address)
                     return@execute
                 }
 
                 callManager.postViewModelState(CallViewModel.State.CALL_ANSWER_OUTGOING)
 
                 callManager.handleResponseMessage(
-                    recipient,
+                    address,
                     callId,
                     SessionDescription(SessionDescription.Type.ANSWER, sdp)
                 )
@@ -524,7 +525,7 @@ class WebRtcCallBridge @Inject constructor(
      * - Directly sent by the notification manager
      * - Displayed as part of a foreground Service
      */
-    private fun setCallNotification(type: Int, recipient: Recipient?) {
+    private fun setCallNotification(type: Int, recipient: Address?) {
         // send appropriate notification if we have permission
         if (
             ActivityCompat.checkSelfPermission(
@@ -554,10 +555,10 @@ class WebRtcCallBridge @Inject constructor(
     }
 
     @SuppressLint("MissingPermission")
-    private fun sendNotification(type: Int, recipient: Recipient?){
+    private fun sendNotification(type: Int, recipient: Address?){
         NotificationManagerCompat.from(context).notify(
             WEBRTC_NOTIFICATION,
-            CallNotificationBuilder.getCallInProgressNotification(context, type, recipient)
+            CallNotificationBuilder.getCallInProgressNotification(context, type, recipient?.let(recipientRepository::getRecipientSync))
         )
     }
 
@@ -565,7 +566,7 @@ class WebRtcCallBridge @Inject constructor(
      * This will attempt to start a service with an attached notification,
      * if the service fails to start a manual notification will be sent
      */
-    private fun startServiceOrShowNotification(type: Int, recipient: Recipient?){
+    private fun startServiceOrShowNotification(type: Int, recipient: Address?){
         try {
             ContextCompat.startForegroundService(context, CallForegroundService.startIntent(context, type, recipient))
         } catch (e: Exception) {
@@ -574,9 +575,7 @@ class WebRtcCallBridge @Inject constructor(
         }
     }
 
-    private fun getRecipientFromAddress(address: Address): Recipient = Recipient.from(context, address, true)
-
-    private fun insertMissedCall(recipient: Recipient, signal: Boolean) {
+    private fun insertMissedCall(recipient: Address, signal: Boolean) {
         callManager.insertCallMessage(
             threadPublicKey = recipient.address.toString(),
             callMessageType = CallMessageType.CALL_MISSED,

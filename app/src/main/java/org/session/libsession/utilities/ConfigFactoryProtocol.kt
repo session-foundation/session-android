@@ -1,7 +1,9 @@
 package org.session.libsession.utilities
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withTimeoutOrNull
@@ -24,8 +26,8 @@ import network.loki.messenger.libsession_util.ReadableUserGroupsConfig
 import network.loki.messenger.libsession_util.ReadableUserProfile
 import network.loki.messenger.libsession_util.util.ConfigPush
 import network.loki.messenger.libsession_util.util.GroupInfo
+import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.snode.SwarmAuth
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 
 interface ConfigFactoryProtocol {
@@ -56,14 +58,13 @@ interface ConfigFactoryProtocol {
      */
     fun <T> withMutableGroupConfigs(groupId: AccountId, cb: (MutableGroupConfigs) -> T): T
 
-    fun conversationInConfig(publicKey: String?, groupPublicKey: String?, openGroupId: String?, visibleOnly: Boolean): Boolean
     fun canPerformChange(variant: String, publicKey: String, changeTimestampMs: Long): Boolean
 
     fun getConfigTimestamp(userConfigType: UserConfigType, publicKey: String): Long
 
     fun getGroupAuth(groupId: AccountId): SwarmAuth?
     fun removeGroup(groupId: AccountId)
-    fun removeContact(accountId: String)
+    fun removeContactOrBlindedContact(address: Address.WithAccountId)
 
     fun decryptForUser(encoded: ByteArray,
                        domain: String,
@@ -112,6 +113,11 @@ enum class UserConfigType(val namespace: Int) {
     USER_GROUPS(Namespace.USER_GROUPS()),
 }
 
+val ConfigFactoryProtocol.currentUserName: String get() = withUserConfigs { it.userProfile.getName().orEmpty() }
+val ConfigFactoryProtocol.currentUserProfile: UserPic? get() = withUserConfigs { configs ->
+    configs.userProfile.getPic().takeIf { it.url.isNotBlank() }
+}
+
 /**
  * Shortcut to get the group info for a closed group. Equivalent to: `withUserConfigs { it.userGroups.getClosedGroup(groupId) }`
  */
@@ -120,39 +126,31 @@ fun ConfigFactoryProtocol.getGroup(groupId: AccountId): GroupInfo.ClosedGroupInf
 }
 
 /**
- * Shortcut to check if the current user was kicked from a given group V2 (as a Recipient)
- */
-fun ConfigFactoryProtocol.wasKickedFromGroupV2(group: Recipient) =
-    group.isGroupV2Recipient && getGroup(AccountId(group.address.toString()))?.kicked == true
-
-/**
- * Shortcut to check if the a given group is destroyed
- */
-fun ConfigFactoryProtocol.isGroupDestroyed(group: Recipient) =
-    group.isGroupV2Recipient && getGroup(AccountId(group.address.toString()))?.destroyed == true
-
-/**
- * Wait until all user configs are pushed to the server.
+ * Flow that emits when the user configs are modified or merged.
  *
- * This function is not essential to the pushing of the configs, the config push will schedule
- * itself upon changes, so this function is purely observatory.
- *
- * This function will check the user configs immediately, if nothing needs to be pushed, it will return immediately.
- *
- * @return True if all user configs are pushed, false if the timeout is reached.
+ * @param onlyConfigTypes If not null, only emits when the specified config types are updated.
+ * @param debounceMills If greater than 0, debounce the emissions by the specified milliseconds
  */
-suspend fun ConfigFactoryProtocol.waitUntilUserConfigsPushed(timeoutMills: Long = 10_000L): Boolean {
-    fun needsPush() = withUserConfigs { configs ->
-        UserConfigType.entries.any { configs.getConfig(it).needsPush() }
-    }
+fun ConfigFactoryProtocol.userConfigsChanged(
+    onlyConfigTypes: Set<UserConfigType>? = null,
+    debounceMills: Long = 0L,
+): Flow<ConfigUpdateNotification.UserConfigsUpdated> =
+    configUpdateNotifications.filterIsInstance<ConfigUpdateNotification.UserConfigsUpdated>()
+        .let { flow ->
+            if (debounceMills > 0) {
+                flow.debounce(debounceMills)
+            } else {
+                flow
+            }
+        }
+        .let { flow ->
+            if (onlyConfigTypes != null) {
+                flow.filter { updated -> updated.updatedTypes.any { it in onlyConfigTypes } }
+            } else {
+                flow
+            }
+        }
 
-    return withTimeoutOrNull(timeoutMills){
-        configUpdateNotifications
-            .onStart { emit(ConfigUpdateNotification.UserConfigsModified) } // Trigger the filtering immediately
-            .filter { it == ConfigUpdateNotification.UserConfigsModified && !needsPush() }
-            .first()
-    } != null
-}
 
 /**
  * Wait until all configs of given group are pushed to the server.
@@ -230,15 +228,7 @@ interface MutableGroupConfigs : GroupConfigs {
 
 
 sealed interface ConfigUpdateNotification {
-    /**
-     * The user configs have been modified locally.
-     */
-    data object UserConfigsModified : ConfigUpdateNotification
-
-    /**
-     * The user configs have been merged from the server.
-     */
-    data class UserConfigsMerged(val configType: UserConfigType) : ConfigUpdateNotification
+    data class UserConfigsUpdated(val updatedTypes: Set<UserConfigType>, val fromMerge: Boolean) : ConfigUpdateNotification
 
     data class GroupConfigsUpdated(val groupId: AccountId, val fromMerge: Boolean) : ConfigUpdateNotification
 }

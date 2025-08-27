@@ -9,6 +9,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.MessagingModuleConfiguration.Companion.shared
 import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.sending_receiving.MessageSender.send
@@ -17,13 +18,14 @@ import org.session.libsession.snode.SnodeAPI.nowWithOffset
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
 import org.session.libsession.utilities.associateByNotNull
+import org.session.libsession.utilities.isGroupOrCommunity
+import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ExpiryType
 import org.thoughtcrime.securesms.database.MarkedMessageInfo
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
-import org.thoughtcrime.securesms.util.SessionMetaProtocol.shouldSendReadReceipt
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -76,7 +78,7 @@ class MarkReadReceiver : BroadcastReceiver() {
                 .filter { it.expiryType == ExpiryType.AFTER_READ }
                 .filter { mmsSmsDatabase.getMessageById(it.expirationInfo.id)?.run {
                     (messageContent is DisappearingMessageUpdate)
-                            && threadDb.getRecipientForThreadId(threadId)?.isGroupOrCommunityRecipient == true } == false
+                            && threadDb.getRecipientForThreadId(threadId)?.isGroupOrCommunity == true } == false
                 }
                 .forEach {
                     val db = if (it.expirationInfo.id.mms) {
@@ -128,14 +130,23 @@ class MarkReadReceiver : BroadcastReceiver() {
                 }
         }
 
+        private val Recipient.shouldSendReadReceipt: Boolean
+            get() = when (data) {
+                is RecipientData.Contact -> approved && !blocked
+                is RecipientData.Generic -> !isGroupOrCommunityRecipient && !blocked
+                else -> false
+            }
+
         private fun sendReadReceipts(
             context: Context,
             markedReadMessages: List<MarkedMessageInfo>
         ) {
             if (!isReadReceiptsEnabled(context)) return
 
+            val recipientRepository = MessagingModuleConfiguration.shared.recipientRepository
+
             markedReadMessages.map { it.syncMessageId }
-                .filter { shouldSendReadReceipt(Recipient.from(context, it.address, false)) }
+                .filter { recipientRepository.getRecipientSync(it.address)?.shouldSendReadReceipt == true }
                 .groupBy { it.address }
                 .forEach { (address, messages) ->
                     messages.map { it.timetamp }

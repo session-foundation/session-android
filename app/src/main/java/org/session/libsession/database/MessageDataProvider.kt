@@ -9,7 +9,6 @@ import org.session.libsession.messaging.sending_receiving.attachments.SessionSer
 import org.session.libsession.messaging.sending_receiving.attachments.SessionServiceAttachmentStream
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.UploadResult
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.messages.SignalServiceAttachmentStream
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -21,7 +20,7 @@ interface MessageDataProvider {
     fun getMessageIDs(serverIDs: List<Long>, threadID: Long): Pair<List<Long>, List<Long>>
     fun getUserMessageHashes(threadId: Long, userPubKey: String): List<String>
     fun deleteMessage(messageId: MessageId)
-    fun deleteMessages(messageIDs: List<Long>, threadId: Long, isSms: Boolean)
+    fun deleteMessages(messageIDs: List<Long>, isSms: Boolean)
     fun markMessageAsDeleted(messageId: MessageId, displayedMessage: String)
     fun markMessagesAsDeleted(messages: List<MarkAsDeletedMessage>, displayedMessage: String)
     fun markMessagesAsDeleted(threadId: Long, serverHashes: List<String>, displayedMessage: String)
@@ -45,5 +44,4 @@ interface MessageDataProvider {
     fun getMessageBodyFor(timestamp: Long, author: String): String
     fun getAttachmentIDsFor(mmsMessageId: Long): List<Long>
     fun getLinkPreviewAttachmentIDFor(mmsMessageId: Long): Long?
-    fun getIndividualRecipientForMms(mmsId: Long): Recipient?
 }

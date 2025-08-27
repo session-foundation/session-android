@@ -33,6 +33,7 @@ import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.keyboard.emoji.KeyboardPageSearchView;
 import org.thoughtcrime.securesms.util.LifecycleDisposable;
 
+import dagger.hilt.android.lifecycle.HiltViewModelExtensions;
 import network.loki.messenger.R;
 
 public final class ReactWithAnyEmojiDialogFragment extends BottomSheetDialogFragment implements EmojiEventListener,
@@ -149,10 +150,15 @@ public final class ReactWithAnyEmojiDialogFragment extends BottomSheetDialogFrag
 
   private void initializeViewModel() {
     Bundle                             args       = requireArguments();
-    ReactWithAnyEmojiRepository        repository = new ReactWithAnyEmojiRepository(requireContext());
-    ReactWithAnyEmojiViewModel.Factory factory    = new ReactWithAnyEmojiViewModel.Factory(repository, args.getLong(ARG_MESSAGE_ID), args.getBoolean(ARG_IS_MMS));
-
-    viewModel = new ViewModelProvider(this, factory).get(ReactWithAnyEmojiViewModel.class);
+    final MessageId messageId = new MessageId(args.getLong(ARG_MESSAGE_ID), args.getBoolean(ARG_IS_MMS));
+    viewModel = new ViewModelProvider(
+            getViewModelStore(),
+            getDefaultViewModelProviderFactory(),
+            HiltViewModelExtensions.withCreationCallback(
+                    getDefaultViewModelCreationExtras(),
+                    (ReactWithAnyEmojiViewModel.Factory factory) -> factory.create(messageId)
+            )
+    ).get(ReactWithAnyEmojiViewModel.class);
   }
 
   @Override
