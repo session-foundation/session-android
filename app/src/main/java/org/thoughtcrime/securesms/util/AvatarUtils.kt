@@ -15,6 +15,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
 import coil3.decode.BitmapFactoryDecoder
 import coil3.request.ImageRequest
+import coil3.size.Precision
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -230,6 +231,7 @@ fun ImageRequest.Builder.avatarOptions(
     sizePx: Int,
     freezeFrame: Boolean
 ): ImageRequest.Builder = this.size(sizePx, sizePx)
+    .precision(Precision.INEXACT)
     .apply {
         if (freezeFrame) {
             decoderFactory(BitmapFactoryDecoder.Factory())

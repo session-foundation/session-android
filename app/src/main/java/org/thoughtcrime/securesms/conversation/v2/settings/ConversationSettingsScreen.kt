@@ -47,10 +47,11 @@ import org.thoughtcrime.securesms.ui.AvatarQrWidget
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ExpandableText
-import org.thoughtcrime.securesms.ui.LargeItemButton
+import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.components.AnnotatedTextWithIcon
 import org.thoughtcrime.securesms.ui.components.BackAppBar
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.getCellBottomShape
 import org.thoughtcrime.securesms.ui.getCellTopShape
 import org.thoughtcrime.securesms.ui.qaTag
@@ -296,13 +297,13 @@ fun ConversationSettingsSubCategory(
     ) {
         Column {
             data.items.forEachIndexed { index, option ->
-                LargeItemButton(
+                ItemButton(
                     modifier = Modifier.qaTag(option.qaTag),
-                    text = option.name,
+                    text = annotatedStringResource(option.name),
                     subtitle = option.subtitle,
                     subtitleQaTag = option.subtitleQaTag,
                     enabled = option.enabled,
-                    icon = option.icon,
+                    iconRes = option.icon,
                     shape = when (index) {
                         0 -> getCellTopShape()
                         data.items.lastIndex -> getCellBottomShape()

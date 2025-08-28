@@ -356,7 +356,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private val adapter by lazy {
         val adapter = ConversationAdapter(
             this,
-            null,
             storage.getLastSeen(viewModel.threadId),
             false,
             onItemPress = { message, position, view, event ->
@@ -367,7 +366,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             },
             onItemLongPress = { message, position, view ->
                 // long pressing message for blocked users should show unblock dialog
-                if (viewModel.recipient.blocked == true) unblock()
+                if (viewModel.recipient.blocked) unblock()
                 else {
                     if (!viewModel.isMessageRequestThread) {
                         showConversationReaction(message, view)
@@ -384,6 +383,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             downloadPendingAttachment = viewModel::downloadPendingAttachment,
             retryFailedAttachments = viewModel::retryFailedAttachments,
             glide = glide,
+            threadRecipientProvider = viewModel::recipient,
         )
         adapter.visibleMessageViewDelegate = this
         adapter

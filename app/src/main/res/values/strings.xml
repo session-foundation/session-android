@@ -836,8 +836,8 @@
     <string name="passwordSetShortDescription">Require password to unlock {app_name} on startup.</string>
     <string name="passwordStrengthCharLength">Longer than 12 characters</string>
     <string name="passwordStrengthIncludeNumber">Includes a number</string>
-    <string name="passwordStrengthIncludesLetter">Includes a letter</string>
     <string name="passwordStrengthIncludesLowercase">Includes a lowercase letter</string>
+    <string name="passwordStrengthIncludesSymbol">Includes a symbol</string>
     <string name="passwordStrengthIncludesUppercase">Includes a uppercase letter</string>
     <string name="passwordStrengthIndicator">Password Strength Indicator</string>
     <string name="passwordStrengthIndicatorDescription">Setting a strong password helps protect your messages and attachments if your device is ever lost or stolen.</string>
@@ -973,6 +973,8 @@
     <string name="proTosPrivacy">By updating, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
     <string name="proUnlimitedPins">Unlimited Pins</string>
     <string name="proUnlimitedPinsDescription">Organize all your chats with unlimited pinned conversations.</string>
+    <string name="proUpdatePlanDescription">You are currently on the <b>{current_plan} Plan</b>. Are you sure you want to switch to the <b>{selected_plan} Plan</b>?\n\nBy updating, your plan will automatically renew on <b>{date}</b> for an additional {selected_plan} of {pro} access.</string>
+    <string name="proUpdatePlanExpireDescription">Your plan will expire on <b>{date}</b>.\n\nBy updating, your plan will automatically renew on <b>{date}</b> for an additional {selected_plan} of Pro access.</string>
     <string name="proUserProfileModalCallToAction">Want to get more out of {app_name}? Upgrade to {app_pro} for a more powerful messaging experience.</string>
     <string name="processingRefundRequest">{platform_account} is processing your refund request</string>
     <string name="profile">Profile</string>
@@ -1185,4 +1187,25 @@
     <string name="yourRecoveryPassword">Your Recovery Password</string>
     <string name="zoomFactor">Zoom Factor</string>
     <string name="zoomFactorDescription">Adjust the size of text and visual elements.</string>
+
+
+    <!-- TEMP !!!!!!!!!!!!!!! -->
+    <plurals name="temp_pro_stats_groups">
+        <item quantity="one">%1$s Group Upgraded</item>
+        <item quantity="other">%1$s Groups Upgraded</item>
+    </plurals>
+    <plurals name="temp_pro_stats_pins">
+        <item quantity="one">%1$s Pinned Conversation</item>
+        <item quantity="other">%1$s Pinned Conversations</item>
+    </plurals>
+    <plurals name="temp_pro_stats_badges">
+        <item quantity="one">%1$s Pro Badge Sent</item>
+        <item quantity="other">%1$s Pro Badges Sent</item>
+    </plurals>
+    <plurals name="temp_pro_stats_long">
+        <item quantity="one">%1$s Longer Message Sent</item>
+        <item quantity="other">%1$s Longer Messages Sent</item>
+    </plurals>
+    <string name="proAutoRenew">Pro auto-renewing in <b>{relative_time}</b></string>
+    <string name="proExpiring">Pro expiring in <b>{relative_time}</b></string>
 </resources>

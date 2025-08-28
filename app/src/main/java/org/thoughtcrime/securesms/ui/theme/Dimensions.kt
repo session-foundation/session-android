@@ -18,8 +18,8 @@ data class Dimensions(
 
     val appBarHeight: Dp = 64.dp,
     val minSearchInputHeight: Dp = 35.dp,
-    val minItemButtonHeight: Dp = 50.dp,
-    val minLargeItemButtonHeight: Dp = 60.dp,
+    val itemButtonIconSpacing: Dp = 50.dp,
+    val minItemButtonHeight: Dp = 60.dp,
     val minButtonWidth: Dp = 160.dp,
     val minSmallButtonWidth: Dp = 50.dp,
 
@@ -27,11 +27,12 @@ data class Dimensions(
 
     val borderStroke: Dp = 1.dp,
 
-    val iconXXSmall: Dp = 9.dp,
+    val iconXXSmall: Dp = 10.dp,
     val iconXSmall: Dp = 14.dp,
     val iconSmall: Dp = 20.dp,
     val iconMedium: Dp = 24.dp,
     val iconMediumAvatar: Dp = 26.dp,
+    val iconRowItem: Dp = 32.dp,
     val iconLargeAvatar: Dp = 36.dp,
     val iconLarge: Dp = 46.dp,
     val iconXLarge: Dp = 60.dp,

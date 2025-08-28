@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.dangerDark
 
 private val disabledBorder @Composable get() = BorderStroke(
     width = LocalDimensions.current.borderStroke,
@@ -41,13 +42,15 @@ interface ButtonType {
         )
     }
 
-    object Fill: ButtonType {
+    class Fill(
+        private val containerColor: Color,
+    ): ButtonType {
         @Composable
         override fun border(enabled: Boolean) = if (enabled) null else disabledBorder
         @Composable
         override fun buttonColors() = ButtonDefaults.buttonColors(
             contentColor = LocalColors.current.background,
-            containerColor = LocalColors.current.text,
+            containerColor = containerColor,
             disabledContentColor = LocalColors.current.disabled,
             disabledContainerColor = Color.Transparent
         )
@@ -72,6 +75,18 @@ interface ButtonType {
         override fun buttonColors() = ButtonDefaults.buttonColors(
             contentColor = LocalColors.current.text,
             containerColor = LocalColors.current.backgroundTertiary,
+            disabledContentColor = LocalColors.current.disabled,
+            disabledContainerColor = Color.Transparent
+        )
+    }
+
+    object DangerFill: ButtonType {
+        @Composable
+        override fun border(enabled: Boolean) = if (enabled) null else disabledBorder
+        @Composable
+        override fun buttonColors() = ButtonDefaults.buttonColors(
+            contentColor = Color.Black,
+            containerColor = dangerDark,
             disabledContentColor = LocalColors.current.disabled,
             disabledContainerColor = Color.Transparent
         )

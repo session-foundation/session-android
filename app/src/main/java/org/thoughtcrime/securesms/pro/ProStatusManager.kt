@@ -1,5 +1,7 @@
 package org.thoughtcrime.securesms.pro
 
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -9,13 +11,19 @@ import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.isCommunity
+import org.session.libsession.utilities.recipients.ProStatus
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
+import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
+import java.time.Duration
+import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class ProStatusManager @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val prefs: TextSecurePreferences,
 ) : OnAppStartupComponent {
     val MAX_CHARACTER_PRO = 10000 // max characters in a message for pro users
@@ -43,6 +51,9 @@ class ProStatusManager @Inject constructor(
             }
         }
     }
+
+    //todo PRO add "about to expire" CTA logic on app launch
+    //todo PRO add "expired" CTA logic on app launch
 
     fun isCurrentUserPro(): Boolean {
         // if the debug is set, return that
@@ -100,6 +111,31 @@ class ProStatusManager @Inject constructor(
         return if (isCurrentUserPro()) Int.MAX_VALUE else MAX_PIN_REGULAR
     }
 
+    fun getCurrentSubscriptionState(): SubscriptionState {
+        //todo PRO implement properly
+        //todo PRO need a way to differentiate originating store
+
+        val subscriptionState = prefs.getDebugSubscriptionType() ?: DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE
+        return  when(subscriptionState){
+            DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> SubscriptionState.Active.AutoRenewing(
+                proStatus = ProStatus.Pro(
+                    visible = true,
+                    validUntil = Instant.now() + Duration.ofDays(14),
+                ),
+                type = ProSubscriptionDuration.THREE_MONTHS
+            )
+
+            DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> SubscriptionState.Active.Expiring(
+                proStatus = ProStatus.Pro(
+                    visible = true,
+                    validUntil = Instant.now() + Duration.ofDays(2),
+                ),
+                type = ProSubscriptionDuration.TWELVE_MONTHS
+            )
+
+            else -> SubscriptionState.Expired
+        }
+    }
 
     /**
      * This will calculate the pro features of an outgoing message

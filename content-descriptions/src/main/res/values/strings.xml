@@ -260,6 +260,16 @@
     <string name="qa_inapp_review_dialog_button_not_now">not-now-button</string>
     <string name="qa_inapp_review_dialog_button_survey">open-survey-button</string>
 
+    <!-- Pro Settings -->
+    <string name="qa_pro_settings_action_update_plan">pro-settings-update-plan</string>
+    <string name="qa_pro_settings_action_show_badge">pro-settings-show-badge</string>
+    <string name="qa_pro_settings_action_request_refund">pro-settings-request-refund</string>
+    <string name="qa_pro_settings_action_cancel_plan">pro-settings-cancel-plan</string>
+    <string name="qa_pro_settings_action_renew_plan">pro-settings-renew-plan</string>
+    <string name="qa_pro_settings_action_recover_plan">pro-settings-recover-plan</string>
+    <string name="qa_pro_settings_action_faq">pro-settings-faq</string>
+    <string name="qa_pro_settings_action_support">pro-settings-support</string>
+
     <!-- Misc. -->
     <string name="AccessibilityId_navigateBack">Navigate back</string>
     <string name="AccessibilityId_close">Close Dialog</string>
@@ -275,5 +285,8 @@
     <string name="qa_pro_badge_component">pro-badge-component</string>
     <string name="qa_pro_badge_text">pro-badge-text</string>
     <string name="qa_pro_badge_icon">pro-badge-icon</string>
+    <string name="qa_action_item_title">action-item-title</string>
+    <string name="qa_action_item_subtitle">action-item-subtitle</string>
+    <string name="qa_action_item_icon">action-item-icon</string>
 
 </resources>

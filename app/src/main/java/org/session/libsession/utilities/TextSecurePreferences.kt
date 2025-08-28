@@ -45,6 +45,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CA
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_WARNING
 import org.session.libsession.utilities.TextSecurePreferences.Companion._events
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
 import org.thoughtcrime.securesms.util.DateUtils.Companion.toEpochSeconds
@@ -211,6 +212,12 @@ interface TextSecurePreferences {
     fun  getDebugMessageFeatures(): Set<ProStatusManager.MessageProFeature>
     fun  setDebugMessageFeatures(features: Set<ProStatusManager.MessageProFeature>)
 
+    fun getDebugSubscriptionType(): DebugMenuViewModel.DebugSubscriptionStatus?
+    fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?)
+
+    fun setSubscriptionProvider(provider: String)
+    fun getSubscriptionProvider(): String?
+
     var deprecationStateOverride: String?
     var deprecatedTimeOverride: ZonedDateTime?
     var deprecatingStartTimeOverride: ZonedDateTime?
@@ -367,6 +374,9 @@ interface TextSecurePreferences {
         const val IN_APP_REVIEW_STATE = "in_app_review_state"
 
         const val DEBUG_MESSAGE_FEATURES = "debug_message_features"
+        const val DEBUG_SUBSCRIPTION_STATUS = "debug_subscription_status"
+
+        const val SUBSCRIPTION_PROVIDER = "session_subscription_provider"
 
         @JvmStatic
         fun getConfigurationMessageSynced(context: Context): Boolean {
@@ -1744,5 +1754,23 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setDebugMessageFeatures(features: Set<ProStatusManager.MessageProFeature>) {
         setStringSetPreference(TextSecurePreferences.DEBUG_MESSAGE_FEATURES, features.map { it.name }.toSet())
+    }
+
+    override fun getDebugSubscriptionType(): DebugMenuViewModel.DebugSubscriptionStatus? {
+        return getStringPreference(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS, null)?.let {
+            DebugMenuViewModel.DebugSubscriptionStatus.valueOf(it)
+        }
+    }
+
+    override fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?) {
+        setStringPreference(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS, status?.name)
+    }
+
+    override fun getSubscriptionProvider(): String? {
+        return getStringPreference(TextSecurePreferences.SUBSCRIPTION_PROVIDER, null)
+    }
+
+    override fun setSubscriptionProvider(provider: String) {
+        setStringPreference(TextSecurePreferences.SUBSCRIPTION_PROVIDER, provider)
     }
 }

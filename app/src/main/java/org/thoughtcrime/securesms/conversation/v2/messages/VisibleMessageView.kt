@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
+import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
@@ -39,27 +40,19 @@ import network.loki.messenger.databinding.ViewstubVisibleMessageMarkerContainerB
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ThemeUtil.getThemedColor
 import org.session.libsession.utilities.ViewUtil
 import org.session.libsession.utilities.getColorFromAttr
-import org.session.libsession.utilities.isBlinded
 import org.session.libsession.utilities.modifyLayoutParams
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.truncatedForDisplay
-import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
-import org.thoughtcrime.securesms.database.MmsDatabase
-import org.thoughtcrime.securesms.database.MmsSmsDatabase
-import org.thoughtcrime.securesms.database.RecipientRepository
-import org.thoughtcrime.securesms.database.SmsDatabase
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
-import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.components.Avatar
@@ -80,22 +73,11 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
-private const val TAG = "VisibleMessageView"
-
 @AndroidEntryPoint
 class VisibleMessageView : FrameLayout {
     private var replyDisabled: Boolean = false
-    @Inject lateinit var threadDb: ThreadDatabase
-    @Inject lateinit var lokiThreadDb: LokiThreadDatabase
-    @Inject lateinit var groupDb: GroupDatabase // for legacy groups only
     @Inject lateinit var lokiApiDb: LokiAPIDatabase
-    @Inject lateinit var mmsSmsDb: MmsSmsDatabase
-    @Inject lateinit var smsDb: SmsDatabase
-    @Inject lateinit var mmsDb: MmsDatabase
     @Inject lateinit var dateUtils: DateUtils
-    @Inject lateinit var configFactory: ConfigFactoryProtocol
-    @Inject lateinit var openGroupManager: OpenGroupManager
-    @Inject lateinit var recipientRepository: RecipientRepository
     @Inject lateinit var proStatusManager: ProStatusManager
     @Inject lateinit var avatarUtils: AvatarUtils
 
@@ -162,6 +144,9 @@ class VisibleMessageView : FrameLayout {
 
         // Default layout params
         layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+
+        binding.profilePictureView.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindowOrReleasedFromPool)
+        binding.senderName.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindowOrReleasedFromPool)
     }
 
     // endregion
@@ -169,6 +154,7 @@ class VisibleMessageView : FrameLayout {
     // region Updating
     fun bind(
         message: MessageRecord,
+        threadRecipient: Recipient,
         previous: MessageRecord? = null,
         next: MessageRecord? = null,
         glide: RequestManager = Glide.with(this),
@@ -186,11 +172,6 @@ class VisibleMessageView : FrameLayout {
 
         isOutgoing = message.isOutgoing
         replyDisabled = message.isOpenGroupInvitation
-        val threadID = message.threadId
-        val threadRecipient = threadDb.getRecipientForThreadId(threadID)?.let {
-            recipientRepository.getRecipientSync(it) ?: RecipientRepository.empty(it)
-        } ?: return
-
         val isGroupThread = threadRecipient.isGroupOrCommunityRecipient
         val isStartOfMessageCluster = isStartOfMessageCluster(message, previous, isGroupThread)
         val isEndOfMessageCluster = isEndOfMessageCluster(message, next, isGroupThread)
@@ -207,7 +188,7 @@ class VisibleMessageView : FrameLayout {
         val bottomMargin = if (isEndOfMessageCluster) resources.getDimensionPixelSize(R.dimen.small_spacing)
         else ViewUtil.dpToPx(context,2)
 
-        if (binding.profilePictureView.visibility == View.GONE) {
+        if (binding.profilePictureView.isGone) {
             val expirationParams = binding.messageInnerContainer.layoutParams as MarginLayoutParams
             expirationParams.bottomMargin = bottomMargin
             binding.messageInnerContainer.layoutParams = expirationParams
@@ -243,28 +224,28 @@ class VisibleMessageView : FrameLayout {
             }
 
             // set up message author
-            binding.senderName.apply {
-                setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-                setThemedContent {
-                    Row {
-                        ProBadgeText(
-                            text = sender.displayName(),
-                            textStyle = LocalType.current.base.bold()
-                                .copy(color = LocalColors.current.text),
-                            showBadge = proStatusManager.shouldShowProBadge(message.recipient.address),
+            binding.senderName.setThemedContent {
+                Row {
+                    ProBadgeText(
+                        modifier = Modifier.weight(1f, fill = false),
+                        text = sender.displayName(),
+                        textStyle = LocalType.current.base.bold()
+                            .copy(color = LocalColors.current.text),
+                        showBadge = proStatusManager.shouldShowProBadge(message.recipient.address),
+                    )
+
+                    if (sender.address is Address.Blinded) {
+                        Spacer(Modifier.width(LocalDimensions.current.xxxsSpacing))
+
+                        Text(
+                            text = "(${sender.address.blindedId.truncatedForDisplay()})",
+                            maxLines = 1,
+                            style = LocalType.current.base
                         )
-
-                        if (sender.address is Address.Blinded) {
-                            Spacer(Modifier.width(LocalDimensions.current.xxxsSpacing))
-
-                            Text(
-                                text = "(${sender.address.blindedId.truncatedForDisplay()})",
-                                style = LocalType.current.base
-                            )
-                        }
                     }
                 }
             }
+
 
             binding.senderName.isVisible = true
         } else {
@@ -292,7 +273,7 @@ class VisibleMessageView : FrameLayout {
 
         // Emoji Reactions
         if (!message.isDeleted && message.reactions.isNotEmpty()) {
-            val capabilities = lokiThreadDb.getOpenGroupChat(message.threadId)?.server?.let { lokiApiDb.getServerCapabilities(it) }
+            val capabilities = (threadRecipient.address as? Address.Community)?.serverUrl?.let { lokiApiDb.getServerCapabilities(it) }
             if (capabilities.isNullOrEmpty() || capabilities.contains(OpenGroupApi.Capability.REACTIONS.name.lowercase())) {
                 emojiReactionsBinding.value.root.let { root ->
                     root.setReactions(message.messageId, message.reactions, message.isOutgoing, delegate)

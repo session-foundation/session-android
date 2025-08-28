@@ -250,7 +250,10 @@ private fun appendAnnotatedTextSegment(
 val iconExternalLink = "[external-icon]"
 
 // Add any additional mappings between a given tag and an icon or image here.
-fun inlineContentMap(textSize: TextUnit = 15.sp) = mapOf(
+fun inlineContentMap(
+    textSize: TextUnit = 15.sp,
+    imageColor: Color? = null
+) = mapOf(
     iconExternalLink to InlineTextContent(
         Placeholder(
             width = textSize,
@@ -260,7 +263,7 @@ fun inlineContentMap(textSize: TextUnit = 15.sp) = mapOf(
     ) {
         Image(
             painter = painterResource(id = R.drawable.ic_square_arrow_up_right),
-            colorFilter = ColorFilter.tint(LocalColors.current.accentText),
+            colorFilter = ColorFilter.tint(imageColor ?: LocalColors.current.accentText),
             contentDescription = null,
             modifier = Modifier.fillMaxSize()
         )

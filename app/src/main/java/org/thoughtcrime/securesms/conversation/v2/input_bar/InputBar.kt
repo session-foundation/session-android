@@ -16,6 +16,7 @@ import android.widget.TextView
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import com.bumptech.glide.RequestManager
+import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewInputBarBinding
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
@@ -49,6 +50,7 @@ enum class VoiceRecorderState {
     ShuttingDownAfterRecord
 }
 
+@AndroidEntryPoint
 @SuppressLint("ClickableViewAccessibility")
 class InputBar @JvmOverloads constructor(
     context: Context,

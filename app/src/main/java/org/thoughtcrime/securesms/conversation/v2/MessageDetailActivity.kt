@@ -69,6 +69,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -83,13 +84,14 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GenericProCTA
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.HorizontalPagerIndicator
-import org.thoughtcrime.securesms.ui.LargeItemButton
+import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.LongMessageProCTA
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.ProCTAFeature
 import org.thoughtcrime.securesms.ui.TitledText
 import org.thoughtcrime.securesms.ui.UserProfileModal
 import org.thoughtcrime.securesms.ui.components.Avatar
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -441,8 +443,8 @@ fun CellButtons(
     Cell(modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)) {
         Column {
             onReply?.let {
-                LargeItemButton(
-                    R.string.reply,
+                ItemButton(
+                    annotatedStringResource(R.string.reply),
                     R.drawable.ic_reply,
                     onClick = it
                 )
@@ -450,24 +452,24 @@ fun CellButtons(
             }
 
             onResend?.let {
-                LargeItemButton(
-                    R.string.resend,
+                ItemButton(
+                    annotatedStringResource(R.string.resend),
                     R.drawable.ic_repeat_2,
                     onClick = it
                 )
                 Divider()
             }
 
-            LargeItemButton(
-                R.string.messageCopy,
+            ItemButton(
+                annotatedStringResource(R.string.messageCopy),
                 R.drawable.ic_copy,
                 onClick = onCopy
             )
             Divider()
 
             onSave?.let {
-                LargeItemButton(
-                    R.string.save,
+                ItemButton(
+                    annotatedStringResource(R.string.save),
                     R.drawable.ic_arrow_down_to_line,
                     onClick = it
                 )
@@ -475,8 +477,8 @@ fun CellButtons(
             }
 
             onDelete?.let {
-                LargeItemButton(
-                    R.string.delete,
+                ItemButton(
+                    annotatedStringResource(R.string.delete),
                     R.drawable.ic_trash_2,
                     colors = dangerButtonColors(),
                     onClick = it
