@@ -39,8 +39,8 @@ data class Recipient(
     val currentUserRole: GroupMemberRole get() = when (data) {
         is RecipientData.Group -> if (data.partial.isAdmin) GroupMemberRole.ADMIN else GroupMemberRole.STANDARD
         is RecipientData.Community -> when {
-            data.openGroup.isAdmin -> GroupMemberRole.ADMIN
-            data.openGroup.isModerator -> GroupMemberRole.MODERATOR
+            data.pollInfo.admin -> GroupMemberRole.ADMIN
+            data.pollInfo.moderator -> GroupMemberRole.MODERATOR
             else -> GroupMemberRole.STANDARD
         }
         is RecipientData.LegacyGroup -> if (data.isCurrentUserAdmin) GroupMemberRole.ADMIN else GroupMemberRole.STANDARD

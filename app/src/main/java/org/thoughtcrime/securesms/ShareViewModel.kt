@@ -98,7 +98,7 @@ class ShareViewModel @Inject constructor(
                     recipient.address is Address.LegacyGroup -> !deprecationManager.isDeprecated
 
                     // if the recipient is a community, check if it can write
-                    recipient.data is RecipientData.Community -> recipient.data.openGroup.canWrite
+                    recipient.data is RecipientData.Community -> recipient.data.pollInfo.write
 
                     else -> {
                         val name = if (recipient.isSelf) context.getString(R.string.noteToSelf)

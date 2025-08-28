@@ -4,8 +4,9 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISI
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupMember
 import network.loki.messenger.libsession_util.util.UserPic
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.session.libsession.messaging.open_groups.GroupMemberRole
-import org.session.libsession.messaging.open_groups.OpenGroup
+import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
 import java.time.Instant
@@ -63,12 +64,25 @@ sealed interface RecipientData {
     ) : ConfigBased, RecipientData
 
     data class Community(
-        val openGroup: OpenGroup,
+        val serverUrl: String,
+        val serverPubKey: String,
+        val pollInfo: OpenGroupApi.RoomPollInfo,
         override val priority: Long,
-        val roles: Map<AccountId, GroupMemberRole>,
     ) : RecipientData, GroupLike {
         override val avatar: RemoteFile?
-            get() = openGroup.imageId?.let { RemoteFile.Community(openGroup.server, openGroup.room, it) }
+            get() = pollInfo.details.imageId?.let { RemoteFile.Community(
+                communityServerBaseUrl = serverUrl,
+                roomId = pollInfo.token,
+                fileId = it)
+            }
+
+        val joinURL: String
+            get() = serverUrl.toHttpUrl()
+                .newBuilder()
+                .addPathSegment(pollInfo.token)
+                .addQueryParameter("pubkey", serverPubKey)
+                .build()
+                .toString()
 
         override val firstMember: Recipient?
             get() = null
@@ -80,11 +94,15 @@ sealed interface RecipientData {
             get() = null
 
         override fun hasAdmin(user: AccountId): Boolean {
-            return roles[user]?.canModerate == true
+            return pollInfo.details.admins.contains(user.hexString) ||
+                    pollInfo.details.moderators.contains(user.hexString) ||
+                    pollInfo.details.hiddenAdmins.contains(user.hexString) ||
+                    pollInfo.details.hiddenModerators.contains(user.hexString)
         }
 
         override fun shouldShowAdminCrown(user: AccountId): Boolean {
-            return roles[user]?.shouldShowAdminCrown == true
+            return pollInfo.details.admins.contains(user.hexString) ||
+                    pollInfo.details.moderators.contains(user.hexString)
         }
 
         override val proStatus: ProStatus

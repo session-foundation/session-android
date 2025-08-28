@@ -1127,23 +1127,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // React to placeholder related changes
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                data class PlaceholderData(
-                    val recipient: Recipient,
-                    val openGroup: OpenGroup?,
-                    val groupThreadStatus: GroupThreadStatus,
-                )
-
                 combine(
                     viewModel.recipientFlow,
                     viewModel.openGroupFlow,
                     viewModel.groupV2ThreadState,
-                    lastCursorLoaded
+                    lastCursorLoaded,
                 ) { r, og, groupState, _ ->
-                    PlaceholderData(
-                        recipient = r,
-                        openGroup = og,
-                        groupThreadStatus = groupState,
-                    )
+                    Triple(r, og, groupState)
                 } .collectLatest { (r, og, groupState) ->
                     updatePlaceholder(
                         recipient = r,
@@ -1388,7 +1378,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     // Update placeholder / control messages in a conversation
     private fun updatePlaceholder(recipient: Recipient,
-                                  openGroup: OpenGroup?,
+                                  openGroup: OpenGroupApi.RoomPollInfo?,
                                   groupThreadStatus: GroupThreadStatus,
                                   adapterItemCount: Int) {
         // Special state handling for kicked/destroyed groups
@@ -1417,9 +1407,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             recipient.isLocalNumber -> getString(R.string.noteToSelfEmpty)
 
             // If this is a community which we cannot write to
-            openGroup != null && !openGroup.canWrite -> {
+            openGroup != null && !openGroup.write -> {
                 Phrase.from(applicationContext, R.string.conversationsEmpty)
-                    .put(CONVERSATION_NAME_KEY, openGroup.name)
+                    .put(CONVERSATION_NAME_KEY, openGroup.details.name)
                     .format()
             }
 
@@ -1742,14 +1732,16 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
             // Send it
             reactionMessage.reaction = Reaction.from(originalMessage.timestamp, originalAuthor.toString(), emoji, true)
-            if (recipient.isCommunityRecipient) {
+            if (recipient.address is Address.Community) {
 
                 val messageServerId = lokiMessageDb.getServerID(originalMessage.messageId) ?:
                     return Log.w(TAG, "Failed to find message server ID when adding emoji reaction")
 
-                viewModel.openGroup?.let {
-                    OpenGroupApi.addReaction(it.room, it.server, messageServerId, emoji)
-                }
+                OpenGroupApi.addReaction(
+                    room = recipient.address.room,
+                    server = recipient.address.serverUrl,
+                    messageId = messageServerId,
+                    emoji = emoji)
             } else {
                 MessageSender.send(reactionMessage, recipient.address)
             }
@@ -1782,14 +1774,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             } else originalMessage.individualRecipient.address
 
             message.reaction = Reaction.from(originalMessage.timestamp, originalAuthor.toString(), emoji, false)
-            if (recipient.isCommunityRecipient) {
+            if (recipient.address is Address.Community) {
 
                 val messageServerId = lokiMessageDb.getServerID(originalMessage.messageId) ?:
                     return Log.w(TAG, "Failed to find message server ID when removing emoji reaction")
 
-                viewModel.openGroup?.let {
-                    OpenGroupApi.deleteReaction(it.room, it.server, messageServerId, emoji)
-                }
+                OpenGroupApi.deleteReaction(recipient.address.room, recipient.address.serverUrl, messageServerId, emoji)
             } else {
                 MessageSender.send(message, recipient.address)
             }
@@ -2048,7 +2038,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val sentTimestamp = SnodeAPI.nowWithOffset
         viewModel.implicitlyApproveRecipient()?.let { conversationApprovalJob = it }
         val text = getMessageBody()
-        val userPublicKey = textSecurePreferences.getLocalNumber()
         val isNoteToSelf = recipient.isLocalNumber
         if (seed in text && !isNoteToSelf && !hasPermissionToSendSeed) {
             showSessionDialog {

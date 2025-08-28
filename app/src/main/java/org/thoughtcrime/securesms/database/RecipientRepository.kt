@@ -27,7 +27,7 @@ import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.open_groups.GroupMemberRole
-import org.session.libsession.messaging.open_groups.OpenGroup
+import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -76,6 +76,7 @@ class RecipientRepository @Inject constructor(
     private val storage: Lazy<StorageProtocol>,
     private val blindedIdMappingRepository: BlindMappingRepository,
     private val proStatusManager: ProStatusManager,
+    private val communityDatabase: CommunityDatabase,
     @param:ManagerScope private val managerScope: CoroutineScope,
 ) {
     private val recipientFlowCache = LruCache<Address, WeakReference<SharedFlow<Recipient>>>(512)
@@ -115,8 +116,8 @@ class RecipientRepository @Inject constructor(
                     settingsFetcher = {
                         withContext(Dispatchers.Default) { recipientSettingsDatabase.getSettings(it) }
                     },
-                    openGroupFetcher = {
-                        withContext(Dispatchers.Default) { storage.get().getOpenGroup(it) }
+                    communityFetcher = {
+                        withContext(Dispatchers.Default) { communityDatabase.getRoomInfo(it) }
                     },
                     fetchGroupMemberRoles = { groupId ->
                         withContext(Dispatchers.Default) { groupMemberDatabase.getGroupMembers(groupId) }
@@ -144,7 +145,7 @@ class RecipientRepository @Inject constructor(
     private inline fun fetchRecipient(
         address: Address,
         settingsFetcher: (Address) -> RecipientSettings,
-        openGroupFetcher: (Address.Community) -> OpenGroup?,
+        communityFetcher: (Address.Community) -> OpenGroupApi.RoomPollInfo?,
         fetchGroupMemberRoles: (Address.Community) -> Map<AccountId, GroupMemberRole>,
     ): Pair<Recipient, Flow<*>> {
         val recipientData =
@@ -237,19 +238,18 @@ class RecipientRepository @Inject constructor(
                     }
 
                     is Address.Community -> {
-                        value = openGroupFetcher(address)
-                            ?.let { openGroup ->
-                                val groupConfig = configFactory.withUserConfigs {
-                                    it.userGroups.getCommunityInfo(openGroup.server, openGroup.room)
+                        value = communityFetcher(address)
+                            ?.let { pollInfo ->
+                                configFactory.withUserConfigs {
+                                    it.userGroups.getCommunityInfo(address.serverUrl, address.room)
+                                }?.let { groupConfig ->
+                                    createCommunityRecipient(
+                                        address = address,
+                                        config = groupConfig,
+                                        community = pollInfo,
+                                        settings = settings
+                                    )
                                 }
-
-                                createCommunityRecipient(
-                                    address = address,
-                                    config = groupConfig,
-                                    roles = fetchGroupMemberRoles(address),
-                                    community = openGroup,
-                                    settings = settings
-                                )
                             }
                             ?: createGenericRecipient(address, settings)
 
@@ -372,7 +372,7 @@ class RecipientRepository @Inject constructor(
         return fetchRecipient(
             address = address,
             settingsFetcher = recipientSettingsDatabase::getSettings,
-            openGroupFetcher = storage.get()::getOpenGroup,
+            communityFetcher = communityDatabase::getRoomInfo,
             fetchGroupMemberRoles = groupMemberDatabase::getGroupMembers
         ).first
     }
@@ -604,18 +604,18 @@ class RecipientRepository @Inject constructor(
         }
 
         private fun createCommunityRecipient(
-            address: Address,
-            config: GroupInfo.CommunityGroupInfo?,
-            roles: Map<AccountId, GroupMemberRole>,
-            community: OpenGroup,
+            address: Address.Community,
+            config: GroupInfo.CommunityGroupInfo,
+            community: OpenGroupApi.RoomPollInfo,
             settings: RecipientSettings?,
         ): Recipient {
             return Recipient(
                 address = address,
                 data = RecipientData.Community(
-                    openGroup = community,
-                    priority = config?.priority ?: PRIORITY_VISIBLE,
-                    roles = roles,
+                    pollInfo = community,
+                    priority = config.priority,
+                    serverUrl = address.serverUrl,
+                    serverPubKey = config.community.pubKeyHex,
                 ),
                 mutedUntil = settings?.muteUntil,
                 autoDownloadAttachments = settings?.autoDownloadAttachments,

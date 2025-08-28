@@ -596,7 +596,7 @@ class ConversationReactionOverlay : FrameLayout {
         val containsControlMessage = message.isControlMessage
         
         val hasText = !message.body.isEmpty()
-        val openGroup = (threadRecipient.data as? RecipientData.Community)?.openGroup
+        val openGroup = (threadRecipient.data as? RecipientData.Community)?.pollInfo
 
         val isDeprecatedLegacyGroup = recipient.isLegacyGroup &&
                 deprecationManager.isDeprecated
@@ -615,7 +615,7 @@ class ConversationReactionOverlay : FrameLayout {
         }
 
         // Reply
-        val canWrite = openGroup == null || openGroup.canWrite
+        val canWrite = openGroup == null || openGroup.write
         if (canWrite && !message.isPending && !message.isFailed && !message.isOpenGroupInvitation && !isDeleteOnly
             && !isDeprecatedLegacyGroup) {
             items += ActionItem(R.attr.menu_reply_icon, R.string.reply, { handleActionItemClicked(Action.REPLY) }, R.string.AccessibilityId_reply)

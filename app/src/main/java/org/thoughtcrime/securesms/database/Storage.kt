@@ -243,9 +243,9 @@ open class Storage @Inject constructor(
             is Address.Community -> {
                 val og = recipient.data as? RecipientData.Community ?: return null
                 config.getOrConstructCommunity(
-                    baseUrl = og.openGroup.server,
-                    room = og.openGroup.room,
-                    pubKeyHex = og.openGroup.publicKey,
+                    baseUrl = recipient.address.serverUrl,
+                    room = recipient.address.room,
+                    pubKeyHex = og.serverPubKey,
                 )
             }
             is Address.CommunityBlindedId -> {
@@ -452,10 +452,6 @@ open class Storage @Inject constructor(
 
     override fun setLastDeletionServerID(room: String, server: String, newValue: Long) {
         lokiAPIDatabase.setLastDeletionServerID(room, server, newValue)
-    }
-
-    override fun setUserCount(room: String, server: String, newValue: Int) {
-        lokiAPIDatabase.setUserCount(room, server, newValue)
     }
 
     override fun setOpenGroupServerMessageID(messageID: MessageId, serverID: Long, threadID: Long) {

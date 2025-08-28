@@ -570,7 +570,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
             }
             else if (threadRecipient.data is RecipientData.Community) {
-                val clip = ClipData.newPlainText("Community URL", threadRecipient.data.openGroup.joinURL)
+                val clip = ClipData.newPlainText("Community URL", threadRecipient.data.joinURL)
                 val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
                 manager.setPrimaryClip(clip)
                 Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()

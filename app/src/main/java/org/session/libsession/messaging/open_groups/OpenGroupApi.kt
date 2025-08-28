@@ -133,12 +133,11 @@ object OpenGroupApi {
         val pinnedBy: String = ""
     )
 
-    @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy::class)
     data class BatchRequestInfo<T>(
         val request: BatchRequest,
         val endpoint: Endpoint,
         val queryParameters: Map<String, String> = mapOf(),
-        val responseType: TypeReference<T>
+        val responseType: TypeReference<T>?
     )
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -182,7 +181,7 @@ object OpenGroupApi {
         val defaultWrite: Boolean = false,
         val upload: Boolean = false,
         val defaultUpload: Boolean = false,
-        val details: RoomInfo? = null
+        val details: RoomInfo = RoomInfo()
     )
 
     @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy::class)
@@ -302,7 +301,7 @@ object OpenGroupApi {
         }
     }
 
-    private suspend fun getOrFetchServerCapabilities(server: String): List<String> {
+    suspend fun getOrFetchServerCapabilities(server: String): List<String> {
         val storage = MessagingModuleConfiguration.shared.storage
         val caps = storage.getServerCapabilities(server)
 
@@ -642,121 +641,8 @@ object OpenGroupApi {
     // endregion
 
     // region General
-    @Suppress("UNCHECKED_CAST")
-    suspend fun poll(
-        rooms: List<String>,
-        server: String
-    ): List<BatchResponse<*>> {
-        val storage = MessagingModuleConfiguration.shared.storage
-        val context = MessagingModuleConfiguration.shared.context
-        val timeSinceLastOpen = this.timeSinceLastOpen
-        val shouldRetrieveRecentMessages = (hasPerformedInitialPoll[server] != true
-                && timeSinceLastOpen > MAX_INACTIVITIY_PERIOD_MILLS)
-        hasPerformedInitialPoll[server] = true
-        if (!hasUpdatedLastOpenDate) {
-            hasUpdatedLastOpenDate = true
-            TextSecurePreferences.setLastOpenDate(context)
-        }
-        val lastInboxMessageId = storage.getLastInboxMessageId(server)
-        val lastOutboxMessageId = storage.getLastOutboxMessageId(server)
-        val requests = mutableListOf<BatchRequestInfo<*>>()
 
-        val serverCapabilities = getOrFetchServerCapabilities(server)
-
-        rooms.forEach { room ->
-            // we need to make sure communities have their description data, and since we were not
-            // tracking that property before (04/20205) we need to force existing communities to
-            // request their info data
-            val forcedDescriptionPoll = if(TextSecurePreferences.forcedCommunityDescriptionPoll(context, server+room)){
-                true
-            } else {
-                TextSecurePreferences.setForcedCommunityDescriptionPoll(context, server+room, true)
-                false
-            }
-
-            val infoUpdates = if(!forcedDescriptionPoll) 0 else storage.getOpenGroup(room, server)?.infoUpdates ?: 0
-            val lastMessageServerId = storage.getLastMessageServerID(room, server) ?: 0L
-            requests.add(
-                BatchRequestInfo(
-                    request = BatchRequest(
-                        method = GET,
-                        path = "/room/$room/pollInfo/$infoUpdates"
-                    ),
-                    endpoint = Endpoint.RoomPollInfo(room, infoUpdates),
-                    responseType = object : TypeReference<RoomPollInfo>(){}
-                )
-            )
-            requests.add(
-                if (shouldRetrieveRecentMessages || lastMessageServerId == 0L) {
-                    BatchRequestInfo(
-                        request = BatchRequest(
-                            method = GET,
-                            path = "/room/$room/messages/recent?t=r&reactors=5"
-                        ),
-                        endpoint = Endpoint.RoomMessagesRecent(room),
-                        responseType = object : TypeReference<List<Message>>(){}
-                    )
-                } else {
-                    BatchRequestInfo(
-                        request = BatchRequest(
-                            method = GET,
-                            path = "/room/$room/messages/since/$lastMessageServerId?t=r&reactors=5"
-                        ),
-                        endpoint = Endpoint.RoomMessagesSince(room, lastMessageServerId),
-                        responseType = object : TypeReference<List<Message>>(){}
-                    )
-                }
-            )
-        }
-        val isAcceptingCommunityRequests = storage.isCheckingCommunityRequests()
-        if (serverCapabilities.contains(Capability.BLIND.name.lowercase()) && isAcceptingCommunityRequests) {
-            requests.add(
-                if (lastInboxMessageId == null) {
-                    BatchRequestInfo(
-                        request = BatchRequest(
-                            method = GET,
-                            path = "/inbox"
-                        ),
-                        endpoint = Endpoint.Inbox,
-                        responseType = object : TypeReference<List<DirectMessage>>() {}
-                    )
-                } else {
-                    BatchRequestInfo(
-                        request = BatchRequest(
-                            method = GET,
-                            path = "/inbox/since/$lastInboxMessageId"
-                        ),
-                        endpoint = Endpoint.InboxSince(lastInboxMessageId),
-                        responseType = object : TypeReference<List<DirectMessage>>() {}
-                    )
-                }
-            )
-            requests.add(
-                if (lastOutboxMessageId == null) {
-                    BatchRequestInfo(
-                        request = BatchRequest(
-                            method = GET,
-                            path = "/outbox"
-                        ),
-                        endpoint = Endpoint.Outbox,
-                        responseType = object : TypeReference<List<DirectMessage>>() {}
-                    )
-                } else {
-                    BatchRequestInfo(
-                        request = BatchRequest(
-                            method = GET,
-                            path = "/outbox/since/$lastOutboxMessageId"
-                        ),
-                        endpoint = Endpoint.OutboxSince(lastOutboxMessageId),
-                        responseType = object : TypeReference<List<DirectMessage>>() {}
-                    )
-                }
-            )
-        }
-        return parallelBatch(server, requests).await()
-    }
-
-    private fun parallelBatch(
+    fun parallelBatch(
         server: String,
         requests: MutableList<BatchRequestInfo<*>>
     ): Promise<List<BatchResponse<*>>, Exception> {
@@ -799,9 +685,12 @@ object OpenGroupApi {
                     code = code,
                     headers = response["headers"] as Map<String, String>,
                     body = if (code in 200..299) {
-                        JsonUtil.toJson(response["body"]).takeIf { it != "[]" }?.let {
-                            JsonUtil.fromJson(it, requests[idx].responseType)
+                        requests[idx].responseType?.let { respType ->
+                            JsonUtil.toJson(response["body"]).takeIf { it != "[]" }?.let {
+                                JsonUtil.fromJson(it, respType)
+                            } ?: response["body"]
                         }
+
                     } else null
                 )
             }

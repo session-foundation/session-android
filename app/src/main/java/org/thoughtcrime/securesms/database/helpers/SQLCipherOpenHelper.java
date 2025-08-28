@@ -15,6 +15,7 @@ import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.crypto.DatabaseSecret;
 import org.thoughtcrime.securesms.database.AttachmentDatabase;
 import org.thoughtcrime.securesms.database.BlindedIdMappingDatabase;
+import org.thoughtcrime.securesms.database.CommunityDatabase;
 import org.thoughtcrime.securesms.database.ConfigDatabase;
 import org.thoughtcrime.securesms.database.DraftDatabase;
 import org.thoughtcrime.securesms.database.EmojiSearchDatabase;
@@ -92,9 +93,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int lokiV50                          = 71;
   private static final int lokiV51                          = 72;
   private static final int lokiV52                          = 73;
+  private static final int lokiV53                          = 74;
 
   // Loki - onUpgrade(...) must be updated to use Loki version numbers if Signal makes any database changes
-  private static final int    DATABASE_VERSION         = lokiV52;
+  private static final int    DATABASE_VERSION         = lokiV53;
   private static final int    MIN_DATABASE_VERSION     = lokiV7;
   public static final String  DATABASE_NAME            = "session.db";
 
@@ -244,6 +246,8 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(ExpirationConfigurationDatabase.DROP_TABLE_COMMAND);
     db.execSQL(SessionContactDatabase.getDropTableCommand());
     executeStatements(db, ThreadDatabase.CREATE_ADDRESS_INDEX);
+
+    db.execSQL(CommunityDatabase.MIGRATE_CREATE_TABLE);
   }
 
   @Override
@@ -562,6 +566,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         db.execSQL(ExpirationConfigurationDatabase.DROP_TABLE_COMMAND);
         db.execSQL(SessionContactDatabase.getDropTableCommand());
         executeStatements(db, ThreadDatabase.CREATE_ADDRESS_INDEX);
+      }
+
+      if (oldVersion < lokiV53) {
+        db.execSQL(CommunityDatabase.MIGRATE_CREATE_TABLE);
       }
 
       db.setTransactionSuccessful();

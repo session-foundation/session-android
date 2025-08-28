@@ -5,19 +5,11 @@ import android.content.Context
 import android.database.Cursor
 import androidx.collection.LruCache
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.takeWhile
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.session.libsession.messaging.open_groups.OpenGroup
+import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import javax.inject.Inject
@@ -77,6 +69,17 @@ class LokiThreadDatabase @Inject constructor(
         return result
     }
 
+    fun getOpenGroupChat(address: Address.Community): OpenGroup? {
+        return readableDatabase.rawQuery("SELECT $publicChat FROM $publicChatTable WHERE $publicChat ->> '$.server' = ? AND $publicChat ->> '$.room' = ?",
+            address.serverUrl, address.room).use { cursor ->
+                if (cursor.moveToNext()) {
+                    cursor.getString(0)?.let { text -> json.decodeFromString<OpenGroup>(text) }
+                } else {
+                    null
+                }
+        }
+    }
+
     fun getOpenGroupChat(threadID: Long): OpenGroup? {
         if (threadID < 0) {
             return null
@@ -124,23 +127,6 @@ class LokiThreadDatabase @Inject constructor(
 
         cacheByThreadId.remove(threadID)
         mutableChangeNotification.tryEmit(threadID)
-    }
-
-    /**
-     * Retrieves the OpenGroup for the given threadID and observes changes to it.
-     *
-     * If in the beginning the OpenGroup is not available, it returns null.
-     * If in the middle of the flow the OpenGroup is deleted, it will stop emitting updates.
-     */
-    fun retrieveAndObserveOpenGroup(scope: CoroutineScope, threadID: Long): StateFlow<OpenGroup>? {
-        val initialOpenGroup = getOpenGroupChat(threadID) ?: return null
-
-        return mutableChangeNotification
-            .filter { it == threadID }
-            .map { getOpenGroupChat(threadID)  }
-            .takeWhile { it != null }
-            .filterNotNull()
-            .stateIn(scope, SharingStarted.Eagerly, initialOpenGroup)
     }
 
 }
