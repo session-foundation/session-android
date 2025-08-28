@@ -254,9 +254,8 @@ class RecipientRepository @Inject constructor(
                             ?: createGenericRecipient(address, settings)
 
                         changeSource = merge(
-                            lokiThreadDatabase.changeNotification,
                             recipientSettingsDatabase.changeNotification.filter { it == address },
-                            groupMemberDatabase.changeNotification.filter { it == address },
+                            communityDatabase.changeNotification.filter { it == address },
                             configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_GROUPS)),
                         )
                     }
