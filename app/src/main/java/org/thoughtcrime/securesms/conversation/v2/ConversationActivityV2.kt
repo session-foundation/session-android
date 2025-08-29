@@ -561,7 +561,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         restoreDraftIfNeeded()
         setUpUiStateObserver()
 
-        binding.conversationRecyclerView.applyImeBottomPadding()
         binding.scrollToBottomButton.setOnClickListener {
             binding.conversationRecyclerView.handleScrollToBottom()
         }
@@ -800,7 +799,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     // If there are new data updated, we'll try to stay scrolled at the bottom (if we were at the bottom).
                     // scrolled to bottom has a leniency of 50dp, so if we are within the 50dp but not fully at the bottom, scroll down
                     if (binding.conversationRecyclerView.isNearBottom && !binding.conversationRecyclerView.isFullyScrolled) {
-                        binding.conversationRecyclerView.smoothScrollToPosition(adapter.itemCount)
+                        val last = (adapter.itemCount - 1).coerceAtLeast(0)
+                        binding.conversationRecyclerView.smoothScrollToPosition(last)
                     }
                 }
 
@@ -821,6 +821,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     // called from onCreate
     private fun setUpRecyclerView() {
+        binding.conversationRecyclerView.applyImeBottomPadding()
         binding.conversationRecyclerView.adapter = adapter
         val layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
         binding.conversationRecyclerView.layoutManager = layoutManager
