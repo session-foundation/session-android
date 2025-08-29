@@ -301,7 +301,7 @@ class ReceivedMessageHandler @Inject constructor(
 
 
         // Handle group invite response if new closed group
-        val threadRecipientAddress = context.threadRecipient?.address
+        val threadRecipientAddress = context.threadAddress
         if (threadRecipientAddress is Address.Group && senderAddress is Address.Standard) {
             scope.launch {
                 try {
@@ -360,7 +360,7 @@ class ReceivedMessageHandler @Inject constructor(
         cancelTypingIndicatorsIfNeeded(message.sender!!)
 
         // Parse reaction if needed
-        val threadIsGroup = context.threadRecipient?.isGroupOrCommunityRecipient == true
+        val threadIsGroup = context.threadRecipient.isGroupOrCommunityRecipient
         message.reaction?.let { reaction ->
             if (reaction.react == true) {
                 reaction.serverId = message.openGroupServerMessageID?.toString() ?: message.serverHash.orEmpty()

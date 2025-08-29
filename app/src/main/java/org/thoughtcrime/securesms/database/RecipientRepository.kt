@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.database
 
 import androidx.collection.LruCache
-import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -25,7 +24,6 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISI
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
-import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.utilities.Address
@@ -114,12 +112,7 @@ class RecipientRepository @Inject constructor(
                     settingsFetcher = {
                         withContext(Dispatchers.Default) { recipientSettingsDatabase.getSettings(it) }
                     },
-                    communityFetcher = {
-                        withContext(Dispatchers.Default) { communityDatabase.getRoomInfo(it) }
-                    },
-                    fetchGroupMemberRoles = { groupId ->
-                        withContext(Dispatchers.Default) { groupMemberDatabase.getGroupMembers(groupId) }
-                    }
+                    communityFetcher = { withContext(Dispatchers.Default) { communityDatabase.getRoomInfo(it) } }
                 )
 
                 emit(value)
@@ -144,7 +137,6 @@ class RecipientRepository @Inject constructor(
         address: Address,
         settingsFetcher: (Address) -> RecipientSettings,
         communityFetcher: (Address.Community) -> OpenGroupApi.RoomInfo?,
-        fetchGroupMemberRoles: (Address.Community) -> Map<AccountId, GroupMemberRole>,
     ): Pair<Recipient, Flow<*>> {
         val recipientData =
             address.toBlinded()?.let { blindedIdMappingRepository.findMappings(it).firstOrNull()?.second }
@@ -365,8 +357,7 @@ class RecipientRepository @Inject constructor(
         return fetchRecipient(
             address = address,
             settingsFetcher = recipientSettingsDatabase::getSettings,
-            communityFetcher = communityDatabase::getRoomInfo,
-            fetchGroupMemberRoles = groupMemberDatabase::getGroupMembers
+            communityFetcher = communityDatabase::getRoomInfo
         ).first
     }
 

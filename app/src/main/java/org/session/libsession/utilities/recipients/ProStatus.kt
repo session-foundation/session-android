@@ -1,6 +1,7 @@
 package org.session.libsession.utilities.recipients
 
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonClassDiscriminator
 import org.session.libsession.utilities.serializable.InstantAsMillisSerializer
@@ -11,6 +12,7 @@ import java.time.Instant
 @JsonClassDiscriminator("status")
 sealed interface ProStatus {
     @Serializable
+    @SerialName("pro")
     data class Pro(
         /**
          * Whether the Pro badge should be visible or not.
@@ -25,6 +27,7 @@ sealed interface ProStatus {
     ) : ProStatus
 
     @Serializable
+    @SerialName("none")
     data object None : ProStatus
 }
 

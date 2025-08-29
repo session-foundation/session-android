@@ -352,7 +352,12 @@ class OpenGroupPoller @AssistedInject constructor(
                         message.syncTarget = syncTarget
                     }
                 }
-                val threadAddress = message.senderOrSync.toAddress() as Address.Conversable
+                val threadAddress = when (val addr = message.senderOrSync.toAddress()) {
+                    is Address.Blinded -> Address.CommunityBlindedId(serverUrl = server, blindedId = addr)
+                    is Address.Conversable -> addr
+                    else -> throw IllegalArgumentException("Unsupported address type: ${addr.debugString}")
+                }
+
                 val threadId = threadDatabase.getThreadIdIfExistsFor(threadAddress)
                 receivedMessageHandler.handle(
                     message = message,
