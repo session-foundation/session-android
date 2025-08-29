@@ -20,8 +20,8 @@ import static org.thoughtcrime.securesms.database.MmsDatabase.MESSAGE_BOX;
 import static org.thoughtcrime.securesms.database.MmsSmsColumns.ID;
 import static org.thoughtcrime.securesms.database.MmsSmsColumns.NOTIFIED;
 import static org.thoughtcrime.securesms.database.MmsSmsColumns.READ;
-import static org.thoughtcrime.securesms.database.MmsSmsColumns.UNIQUE_ROW_ID;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 
@@ -34,6 +34,7 @@ import net.zetetic.database.sqlcipher.SQLiteQueryBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.session.libsession.messaging.utilities.UpdateMessageData;
 import org.session.libsession.utilities.Address;
+import org.session.libsession.utilities.GroupUtil;
 import org.session.libsession.utilities.Util;
 import org.session.libsignal.utilities.AccountId;
 import org.session.libsignal.utilities.Log;
@@ -52,6 +53,7 @@ import java.util.Set;
 import javax.inject.Provider;
 
 import kotlin.Pair;
+import kotlin.Triple;
 
 public class MmsSmsDatabase extends Database {
 
@@ -540,6 +542,64 @@ public class MmsSmsDatabase extends Database {
       }
     }
     return -1;
+  }
+
+  private static void migrateLegacyCommunityAddresses(final SQLiteDatabase db, final String tableName) {
+    final String query = "SELECT " + ID + ", " + MmsSmsColumns.ADDRESS + " FROM " + tableName;
+    try (final Cursor cursor = db.rawQuery(query)) {
+      while (cursor.moveToNext()) {
+        final long threadId = cursor.getLong(0);
+        final String address = cursor.getString(1);
+        final String newAddress;
+
+        try {
+          if (address.startsWith(GroupUtil.COMMUNITY_PREFIX)) {
+            // Fill out the real community address from the database
+            final String communityQuery = "SELECT public_chat ->>'$.server', public_chat ->> '$.room' FROM loki_public_chat_database WHERE thread_id = ?";
+
+            try (final Cursor communityCursor = db.rawQuery(communityQuery, threadId)) {
+              if (communityCursor.moveToNext()) {
+                newAddress = new Address.Community(
+                        communityCursor.getString(0),
+                        communityCursor.getString(1)
+                ).toString();
+              } else {
+                Log.d(TAG, "Unable to find open group for " + address);
+                continue;
+              }
+            }
+          } else if (address.startsWith(GroupUtil.COMMUNITY_INBOX_PREFIX)) {
+            Triple<String, String, AccountId> triple = GroupUtil.getDecodedOpenGroupInboxID(address);
+            if (triple == null) {
+              Log.w(TAG, "Unable to decode open group inbox address: " + address);
+              continue;
+            } else {
+              newAddress = new Address.CommunityBlindedId(
+                      triple.getFirst(),
+                      new Address.Blinded(triple.getThird())
+              ).toString();
+            }
+          } else {
+            continue;
+          }
+        } catch (Throwable e) {
+          Log.e(TAG, "Error while migrating address " + address, e);
+          continue;
+        }
+
+        if (!newAddress.equals(address)) {
+          Log.i(TAG, "Migrating thread ID=" + threadId);
+          ContentValues contentValues = new ContentValues(1);
+          contentValues.put(MmsSmsColumns.ADDRESS, newAddress);
+          db.update(tableName, contentValues, ID + " = ?", new String[]{String.valueOf(threadId)});
+        }
+      }
+    }
+  }
+
+  public static void migrateLegacyCommunityAddresses(final SQLiteDatabase db) {
+    migrateLegacyCommunityAddresses(db, SmsDatabase.TABLE_NAME);
+    migrateLegacyCommunityAddresses(db, MmsDatabase.TABLE_NAME);
   }
 
   private Cursor queryTables(String[] projection, String selection, String order, String limit) {
