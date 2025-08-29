@@ -705,7 +705,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">شاردنەوەی وشەی نهێنیکردنەوە</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">وشەی تێپەڕەوشەی گەرانەوە بە چینەوەی هەمیشەیی لەم ئامێرەیە.</string>
     <string name="recoveryPasswordRestoreDescription">وشەی تێپەڕی Recovery بنووسە تا ئەژمێری خۆت بار بکرێ. ئەگەر نەتوانیت پارستنی پێی بکەیت، دەتوانیت لە ڕێکخستنەکانی بەرنامەیەکەتدا بدۆزیتەوە.</string>
-    <string name="recoveryPasswordView">بینینی وشەی نهێنی</string>
     <string name="recoveryPasswordWarningSendDescription">ئەمە رمزە هێنانی هەژمارەکەتە. ئەگەر تەقسیم بکەیت، ئێوە دەستنیشانیەکانی هەژمارەکەت دادەنەوە.</string>
     <string name="redo">کردنەوەی نوێتەوە</string>
     <string name="remove">لابردن</string>

@@ -731,7 +731,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Slėpti Recovery Password</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Visam laikui paslėpti atkūrimo slaptažodį šiame įrenginyje.</string>
     <string name="recoveryPasswordRestoreDescription">Įveskite savo atkūrimo slaptažodį, norėdami įkelti savo paskyrą. Jei jo neišsaugojote, galite jį rasti savo programėlės nustatymuose.</string>
-    <string name="recoveryPasswordView">Rodyti slaptažodį</string>
     <string name="recoveryPasswordWarningSendDescription">Tai yra jūsų atkūrimo slaptažodis. Jei jį išsiųsite kam nors, jie turės pilną prieigą prie jūsų paskyros.</string>
     <string name="redo">Grąžinti</string>
     <string name="remove">Šalinti</string>

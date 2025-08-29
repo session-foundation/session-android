@@ -890,7 +890,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Ocultar Clave de Recuperación</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Ocultar permanentemente tu clave de recuperación en este dispositivo.</string>
     <string name="recoveryPasswordRestoreDescription">Ingrese su clave de recuperación para cargar su cuenta. Si no la ha guardado, puede encontrarla en la configuración de su aplicación.</string>
-    <string name="recoveryPasswordView">Ver contraseña</string>
     <string name="recoveryPasswordWarningSendDescription">Esta es tu recovery password. Si la envías a alguien, tendrá acceso completo a tu cuenta.</string>
     <string name="recreateGroup">Volver a crear grupo</string>
     <string name="redo">Rehacer</string>

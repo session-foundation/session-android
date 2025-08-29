@@ -705,7 +705,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Fihla Iphasiwedi yokubuyisela</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Fihla upangisiwe wakho wokubuyisela esisigxina kwesi sixhobo.</string>
     <string name="recoveryPasswordRestoreDescription">Ngenisa i-password yakho yokubuyisela ukuze ulayishe iakhawunti yakho. Ukuba awuyigcinanga, ungayifumana kwisethingi zohlelo lwakho.</string>
-    <string name="recoveryPasswordView">Jonga Iphasiwedi</string>
     <string name="recoveryPasswordWarningSendDescription">Le yi-Password yakho yokubuyisela. Ukuba uyithumela kumntu othile baya kuba nelungelo lokufikelela kwi-akhawunti yakho ngokupheleleyo.</string>
     <string name="redo">Phinda</string>
     <string name="remove">Susa</string>

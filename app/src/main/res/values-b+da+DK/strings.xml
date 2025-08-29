@@ -829,7 +829,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Skjul Recovery Password</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Permanent skjul din gendannelsessætning på denne enhed.</string>
     <string name="recoveryPasswordRestoreDescription">Indtast din gendannelsesadgangskode for at indlæse din konto. Hvis du ikke har gemt den, kan du finde den i dine app-indstillinger.</string>
-    <string name="recoveryPasswordView">Vis adgangskode</string>
     <string name="recoveryPasswordWarningSendDescription">Det her er din gendannelsessætning. Hvis du sender den til nogen vil de have fuld adgang til din konto.</string>
     <string name="recreateGroup">Genskab gruppe</string>
     <string name="redo">Gentag</string>

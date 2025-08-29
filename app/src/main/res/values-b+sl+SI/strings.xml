@@ -728,7 +728,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Skrij Recovery Password</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Trajno skrij geslo za obnovitev na tej napravi.</string>
     <string name="recoveryPasswordRestoreDescription">Vnesite vaše obnovitveno geslo, da naložite vaš račun. Če ga niste shranili, ga lahko najdete v nastavitvah aplikacije.</string>
-    <string name="recoveryPasswordView">Ogled gesla</string>
     <string name="recoveryPasswordWarningSendDescription">To je vaše geslo za obnovitev. Če ga pošljete nekomu, bo imel popoln dostop do vašega računa.</string>
     <string name="redo">Ponovno uveljavi</string>
     <string name="remove">Odstrani</string>

@@ -728,7 +728,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Схаваць Recovery Password</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Схавайце ваш пароль для аднаўлення на гэтай прыладзе назаўжды.</string>
     <string name="recoveryPasswordRestoreDescription">Увядзіце recovery password для загрузкі Вашага ўліковага запісу. Калі вы не захавалі гэта, то можаце знайсці ў наладах праграмы.</string>
-    <string name="recoveryPasswordView">Паказаць пароль</string>
     <string name="recoveryPasswordWarningSendDescription">This is your recovery password. If you send it to someone they\'ll have full access to your account.</string>
     <string name="redo">Паўтарыць</string>
     <string name="remove">Выдаліць</string>

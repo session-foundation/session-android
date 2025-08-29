@@ -449,6 +449,26 @@ public class MmsSmsDatabase extends Database {
     return queryTables(PROJECTION, selection, order, null);
   }
 
+  public Set<Address> getAllReferencedAddresses() {
+    final String[] projection = new String[] { "DISTINCT " + MmsSmsColumns.ADDRESS };
+    final String selection = MmsSmsColumns.ADDRESS + " IS NOT NULL" +
+                    " AND " + MmsSmsColumns.ADDRESS + " != ''";
+
+    Set<Address> out = new HashSet<>();
+    try (Cursor cursor = queryTables(projection, selection, null, null)) {
+      while (cursor != null && cursor.moveToNext()) {
+        String serialized = cursor.getString(0);
+        try {
+          out.add(Address.fromSerialized(serialized));
+        } catch (Exception e) {
+          // If parsing fails, skip this row
+          Log.w(TAG, "Skipping unparsable address: " + serialized, e);
+        }
+      }
+    }
+    return out;
+  }
+
   /** Builds the comma-separated list of base types that represent
    *  *outgoing* messages (same helper as before). */
   private String buildOutgoingTypesList() {

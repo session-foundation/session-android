@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.RecipientData
@@ -70,7 +71,7 @@ class ShareViewModel @Inject constructor(
     ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     val hasAnyConversations: StateFlow<Boolean> =
-        contacts
+        conversationRepository.observeConversationList()
             .map { it.isNotEmpty() }
             .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
@@ -91,6 +92,9 @@ class ShareViewModel @Inject constructor(
             .filter { thread ->
                 val recipient = thread.recipient
                 when {
+                    // if the recipient is hidden or not approved, ignore it
+                    recipient.priority == PRIORITY_HIDDEN || !recipient.approved -> false
+
                     // If the recipient is blocked, ignore it
                     recipient.blocked -> false
 
@@ -98,7 +102,7 @@ class ShareViewModel @Inject constructor(
                     recipient.address is Address.LegacyGroup -> !deprecationManager.isDeprecated
 
                     // if the recipient is a community, check if it can write
-                    recipient.data is RecipientData.Community -> recipient.data.roomInfo?.write == true
+                    recipient.data is RecipientData.Community && recipient.data.roomInfo?.canWrite != true -> false
 
                     else -> {
                         val name = if (recipient.isSelf) context.getString(R.string.noteToSelf)

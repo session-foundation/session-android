@@ -705,7 +705,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Recovery password దాచండి</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">మీ ఈ పరికరంలో రికవరీ పాస్‌వర్డ్‌ను శాశ్వతంగా దాచండి.</string>
     <string name="recoveryPasswordRestoreDescription">మీ ఖాతాను లోడ్ చేయడానికి మీ మరుపు తిరిగి పొందుపాస్వర్డ్ ఎంటర్ చేయండి. మీరు దాన్ని సేవ్ చేయకపోతే, దాన్ని మీ యాప్ సెట్టింగ్‌లలో కనుగొనవచ్చు.</string>
-    <string name="recoveryPasswordView">పాస్‌వర్డ్ చూడండి</string>
     <string name="recoveryPasswordWarningSendDescription">ఇది మీ రికవరీ పాస్వర్డ్. మీరు దానిని ఎవరితోనైనా పంపిస్తే వారు మీ ఖాతాకు పూర్తి ప్రాప్యత కలిగి ఉంటారు.</string>
     <string name="redo">మళ్లీ ప్రయత్నించండి</string>
     <string name="remove">తొలగించు</string>

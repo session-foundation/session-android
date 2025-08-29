@@ -716,7 +716,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Recovery Password چھپائیں</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">اپنے ریکوری پاس ورڈ کو اس ڈیوائس پر مستقل طور پر چھپائیں۔</string>
     <string name="recoveryPasswordRestoreDescription">اپنے اکاؤنٹ کو لوڈ کرنے کے لیے اپنا بازیابی پاس ورڈ درج کریں۔ اگر آپ نے اسے محفوظ نہیں کیا ہے، تو آپ اسے اپنے ایپ سیٹنگز میں دیکھ سکتے ہیں۔</string>
-    <string name="recoveryPasswordView">پاس ورڈ دیکھیں</string>
     <string name="recoveryPasswordWarningSendDescription">یہ آپ کا بازیابی پاس ورڈ ہے۔ اگر آپ اسے کسی کو بھیجتے ہیں تو ان کے پاس آپ کے اکاؤنٹ تک مکمل رسائی ہوگی۔</string>
     <string name="redo">دوبارہ کریں</string>
     <string name="remove">حذف کریں</string>

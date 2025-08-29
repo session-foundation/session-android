@@ -714,7 +714,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Skjul Recovery Password</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Skjul gjenopprettingspassord permanent på denne enheten.</string>
     <string name="recoveryPasswordRestoreDescription">Skriv inn ditt gjenopprettingspassord for å laste kontoen din. Hvis du ikke har lagret det, kan du finne det i app-innstillingene dine.</string>
-    <string name="recoveryPasswordView">Vis Password</string>
     <string name="recoveryPasswordWarningSendDescription">Dette er din gjenopprettingsfrase. Hvis du sender den til noen vil de ha full tilgang til din konto.</string>
     <string name="redo">Gjenta</string>
     <string name="remove">Fjern</string>

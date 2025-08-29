@@ -858,7 +858,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Visszaállítási jelszó elrejtése</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">A visszaállítási jelszó végleges elrejtése ezen az eszközön.</string>
     <string name="recoveryPasswordRestoreDescription">Írd be a visszaállítási jelszavad a fiókod betöltéséhez. Ha nem mentetted el, az alkalmazás beállításai között találhatod meg.</string>
-    <string name="recoveryPasswordView">Jelszó megtekintése</string>
     <string name="recoveryPasswordWarningSendDescription">Ez a visszaállítási jelszavad. Ha elküldöd valakinek, teljes hozzáférést kap a fiókodhoz.</string>
     <string name="recreateGroup">Csoport újra-létrehozása</string>
     <string name="redo">Újra</string>

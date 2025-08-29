@@ -721,7 +721,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Нууц үгийг нуух</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Танай сэргээх нууц үгийг энэ төхөөрөмж дээр бүрмөсөн нуух.</string>
     <string name="recoveryPasswordRestoreDescription">Аккаунтаа сэргээхэд сэргээх нууц үгээ оруулах. Хэрвээ хадгалаагүй бол, аппынхаа тохиргооноос олж болно.</string>
-    <string name="recoveryPasswordView">Нууц үгийг харах</string>
     <string name="recoveryPasswordWarningSendDescription">Энэ таны нууц үг юм. Хэрэв та үүнийг хүнд илгээвэл таны аккаунтанд бүрэн нэвтрэх боломжтой болно.</string>
     <string name="redo">Дахин хийх</string>
     <string name="remove">Устгах</string>

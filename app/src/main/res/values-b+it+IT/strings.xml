@@ -890,7 +890,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Nascondi password di recupero</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Nascondi permanentemente la tua password di recupero su questo dispositivo.</string>
     <string name="recoveryPasswordRestoreDescription">Inserisci la tua password di recupero per caricare il tuo account. Se non l\'hai salvata, puoi trovarla nelle impostazioni dell\'app.</string>
-    <string name="recoveryPasswordView">Visualizza password</string>
     <string name="recoveryPasswordWarningSendDescription">Questa è la tua password di recupero. Se la dovessi inviare a qualcuno, avrà pieno accesso al tuo account.</string>
     <string name="recreateGroup">Ricrea gruppo</string>
     <string name="redo">Ripeti</string>

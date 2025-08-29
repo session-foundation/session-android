@@ -704,7 +704,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Kweka Recovery Password</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Kwekweka permanenti akasumulizo ko ku kkumyamu kino.</string>
     <string name="recoveryPasswordRestoreDescription">Yingiza Recovery password yo okulongoosa akawunti yo. Bw\'oba tewegasse, ojja kusobola okubiraba mu mateeka g\'ekigambo munda mu pulogulamu yo</string>
-    <string name="recoveryPasswordView">Laba Password</string>
     <string name="recoveryPasswordWarningSendDescription">Kino kiri akazambi k\'ofoyo k\'omukubuukyeerako akabaka kena ku akawunti.</string>
     <string name="redo">Zaaminika</string>
     <string name="remove">Ggyaawo</string>

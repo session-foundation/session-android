@@ -151,6 +151,52 @@ fun ConfigFactoryProtocol.userConfigsChanged(
             }
         }
 
+/** All addresses that exist in config and therefore must be kept. */
+fun ConfigFactoryProtocol.allConfigAddresses(): Set<Address> {
+    val (contacts, blinded, groups) = withUserConfigs { config ->
+        Triple(config.contacts.all(), config.contacts.allBlinded(), config.userGroups.all())
+    }
+
+    val contactsAddress : Set<Address> =
+        contacts.asSequence().map { Address.fromSerialized(it.id) }.toSet()
+    val blindedAddress : Set<Address> =
+        blinded.asSequence().map { Address.fromSerialized(it.id) }.toSet()
+
+    val closedIds = mutableListOf<AccountId>()
+    val groupAddresses: Set<Address> = buildSet {
+        groups.forEach { groupInfo ->
+            when (groupInfo) {
+                is GroupInfo.LegacyGroupInfo -> {
+                    add(Address.LegacyGroup(groupInfo.accountId))
+                    groupInfo.members.keys.forEach { add(Address.fromSerialized(it)) }
+                }
+                is GroupInfo.ClosedGroupInfo -> {
+                    val groupId = AccountId(groupInfo.groupAccountId)
+                    closedIds += groupId
+                    add(Address.Group(groupId))
+                }
+                is GroupInfo.CommunityGroupInfo -> {
+                    add(Address.Community(groupInfo.community.baseUrl, groupInfo.community.room))
+                }
+            }
+        }
+    }
+
+    val closedMemberAddresses: Set<Address> = buildSet {
+        closedIds.forEach { groupId ->
+            withGroupConfigs(groupId) { config ->
+                config.groupMembers.all().forEach { add(Address.fromSerialized(it.accountId())) }
+            }
+        }
+    }
+
+    return buildSet {
+        addAll(contactsAddress)
+        addAll(blindedAddress)
+        addAll(groupAddresses)
+        addAll(closedMemberAddresses)
+    }
+}
 
 /**
  * Wait until all configs of given group are pushed to the server.

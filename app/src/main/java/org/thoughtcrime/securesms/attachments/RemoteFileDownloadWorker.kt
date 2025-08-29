@@ -261,6 +261,8 @@ class RemoteFileDownloadWorker @AssistedInject constructor(
         private const val ARG_COMMUNITY_ROOM_ID = "community_room_id"
         private const val ARG_COMMUNITY_FILE_ID = "community_file_id"
 
+        private const val SUBDIRECTORY = "remote_files"
+
         private fun RemoteFile.sha256Hash(): String {
             val hash = MessageDigest.getInstance("SHA-256")
             when (this) {
@@ -278,9 +280,12 @@ class RemoteFileDownloadWorker @AssistedInject constructor(
             return hash.digest().toHexString()
         }
 
+        private fun downloadsDirectory(context: Context): File =
+            File(context.cacheDir, SUBDIRECTORY)
+
         // Deterministically get the file path for the given remote file.
         fun computeFileName(context: Context, remote: RemoteFile): File {
-            return File(context.cacheDir, "remote_files/${remote.sha256Hash()}")
+            return File(downloadsDirectory(context), remote.sha256Hash())
         }
 
         fun cancelAll(context: Context) {
@@ -295,6 +300,12 @@ class RemoteFileDownloadWorker @AssistedInject constructor(
             return WorkManager.getInstance(context).cancelUniqueWork(
                 uniqueWorkName(file)
             )
+        }
+
+        /** Returns all currently downloaded files (may be empty). */
+        fun listDownloadedFiles(context: Context): List<File> {
+            val directory = downloadsDirectory(context)
+            return directory.listFiles()?.toList().orEmpty()
         }
 
         /**

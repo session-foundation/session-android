@@ -709,7 +709,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">گذرواژه بازیابی خود را مخفی کنید</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">بازیابی رمز عبور خود را در این دستگاه برای همیشه پنهان کنید.</string>
     <string name="recoveryPasswordRestoreDescription">برای بارگذاری حساب خود، رمز بازیابی خود را وارد کنید. اگر آن را ذخیره نکرده‌اید، می‌توانید آن را در تنظیمات برنامه خود پیدا کنید.</string>
-    <string name="recoveryPasswordView">نمایش گذرواژه</string>
     <string name="recoveryPasswordWarningSendDescription">این رمز بازیابی شماست. اگر آن را برای کسی ارسال کنید، آن‌ها به حساب شما دستری کامل خواهند داشت.</string>
     <string name="redo">انجام دوباره</string>
     <string name="remove">حذف</string>

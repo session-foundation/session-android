@@ -704,7 +704,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">بیرته راګرځېدونکي رمز پټ کړئ</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">پخپله وسیله کې د خپل بیا رغونې پاسورډ تل لپاره پټ کړئ.</string>
     <string name="recoveryPasswordRestoreDescription">ستاسو recovery password ولیکئ څو خپل حساب پورته کړئ. که تاسو دا نه دی ساتلی، تاسو کولی شئ دا په خپل ایپ تنظیماتو کې ومومئ.</string>
-    <string name="recoveryPasswordView">پاسورډ وګورئ</string>
     <string name="recoveryPasswordWarningSendDescription">دا ستاسو د بیا رغونې پاسورډ دی. که تاسو دا چاته واستوئ دوی به ستاسو حساب ته بشپړ لاسرسی ولري.</string>
     <string name="redo">بیا کول</string>
     <string name="remove">لرې کول</string>

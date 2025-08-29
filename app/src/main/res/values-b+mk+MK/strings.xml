@@ -704,7 +704,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Сокриј Лозинка за обновување</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Трајно сокриј ја вашата лозинка за обновување на овој уред.</string>
     <string name="recoveryPasswordRestoreDescription">Внесете ја вашата лозинка за враќање за да ја вчитате вашата сметка. Ако не ја имате зачувано, можете да ја најдете во поставките на вашата апликација.</string>
-    <string name="recoveryPasswordView">Преглед на лозинка</string>
     <string name="recoveryPasswordWarningSendDescription">Ова е вашата лозинка за опоравка. Ако ја испратите на некого, ќе имаат целосен пристап до вашата сметка.</string>
     <string name="redo">Повтори</string>
     <string name="remove">Отстрани</string>

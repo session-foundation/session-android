@@ -863,7 +863,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">隐藏恢复密码</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">在此设备上永久隐藏您的恢复密码。</string>
     <string name="recoveryPasswordRestoreDescription">输入您的恢复密码以加载您的账户。如果您没有保存它，您可以在应用设置中找到该恢复密码。</string>
-    <string name="recoveryPasswordView">查看密码</string>
     <string name="recoveryPasswordWarningSendDescription">这是您的恢复密码。如果您发送给他人，他们将能够完全访问您的账户。</string>
     <string name="recreateGroup">重新创建群组</string>
     <string name="redo">重做</string>

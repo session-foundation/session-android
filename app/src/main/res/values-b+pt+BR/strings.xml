@@ -725,7 +725,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Ocultar Senha de Recuperação</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Permanentemente esconda sua senha de recuperação neste dispositivo.</string>
     <string name="recoveryPasswordRestoreDescription">Digite sua senha de recuperação para carregar sua conta. Se você não a salvou, você pode encontrá-la nas configurações do aplicativo.</string>
-    <string name="recoveryPasswordView">Ver Senha</string>
     <string name="recoveryPasswordWarningSendDescription">Essa é sua senha de recuperação. Se você mandá-la para alguem, essa pessoa terá acesso completo a sua conta.</string>
     <string name="redo">Refazer</string>
     <string name="remove">Remover</string>

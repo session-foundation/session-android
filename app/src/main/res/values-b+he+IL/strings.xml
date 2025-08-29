@@ -728,7 +728,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">הסתר את Recovery Password</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">להסתיר את סיסמת השחזור במכשיר זה לצמיתות.</string>
     <string name="recoveryPasswordRestoreDescription">Enter your recovery password to load your account. If you haven\'t saved it, you can find it in your app settings.</string>
-    <string name="recoveryPasswordView">הצג סיסמא</string>
     <string name="recoveryPasswordWarningSendDescription">זו סיסמת ההחלמה שלך. אם תשלח אותה למישהו, תהיה לו גישה מלאה לחשבון שלך.</string>
     <string name="redo">עשה מחדש</string>
     <string name="remove">הסר</string>

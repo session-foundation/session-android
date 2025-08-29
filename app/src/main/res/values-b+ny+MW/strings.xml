@@ -704,7 +704,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Bisa Chibisobisobwe cha Ndondomeko</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Kubisa chinsinsi chobwezera pa chipangizochi.</string>
     <string name="recoveryPasswordRestoreDescription">Lemberani mawu achinsinsi a kubwereranso kuti mulowe muakaunti yanu. Ngati simunazisunge, mutha kuzipeza muzoikamo za pulogalamu yanu.</string>
-    <string name="recoveryPasswordView">Onani Chinsinsi</string>
     <string name="recoveryPasswordWarningSendDescription">Iyi ndiyo password yanu yobwezeretsa. Ngati mutumiza kwa wina, adzakhala ndi mwayi wathunthu pa akaunti yanu.</string>
     <string name="redo">Kubwezeretsanso</string>
     <string name="remove">Chotsani</string>

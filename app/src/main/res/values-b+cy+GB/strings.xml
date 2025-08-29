@@ -777,7 +777,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Cuddio Cyfrinair Adfer</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Cuddio eich cyfrinair adfer yn barhaol ar y ddyfais hon.</string>
     <string name="recoveryPasswordRestoreDescription">Rhowch eich cyfrinair adfer i lwytho eich cyfrif. Os nad ydych wedi\'i gadw, gallwch ddod o hyd iddo yn eich gosodiadau app.</string>
-    <string name="recoveryPasswordView">Gweld Cyfrinair</string>
     <string name="recoveryPasswordWarningSendDescription">Dyma eich cyfrinair adfer. Os byddwch yn ei anfon at rywun, bydd ganddynt fynediad llawn i\'ch cyfrif.</string>
     <string name="redo">Ailbennu</string>
     <string name="remove">Tynnu</string>

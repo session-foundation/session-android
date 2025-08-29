@@ -705,7 +705,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Qayta tiklash parolini yashirish</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Qayta tiklash parolini ushbu qurilmadan doimiy yashirish.</string>
     <string name="recoveryPasswordRestoreDescription">Hisobingizni yuklash uchun qayta tiklash parolingizni kiriting. Agar siz uni saqlamagan bo\'lsangiz, uni dastur sozlamalarida topishingiz mumkin.</string>
-    <string name="recoveryPasswordView">Parolni ko‘rish</string>
     <string name="recoveryPasswordWarningSendDescription">Bu sizning Recovery Password qismingiz. Agar biror kimsaga yuborsangiz, u sizning akkauntingizga to\'liq kirish imkoniyatiga ega bo\'ladi.</string>
     <string name="redo">Qayta bajarish</string>
     <string name="remove">Olib tashlash</string>

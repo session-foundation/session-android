@@ -729,7 +729,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Skryť frázu pre obnovenie</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Natrvalo skryť frázu na obnovenie na tomto zariadení.</string>
     <string name="recoveryPasswordRestoreDescription">Zadajte frázu pre obnovenie na načítanie účtu. Ak ste ju neuložili, nájdete ju v nastaveniach aplikácie.</string>
-    <string name="recoveryPasswordView">Zobraziť heslo</string>
     <string name="recoveryPasswordWarningSendDescription">Toto je vaše heslo na obnovenie. Ak ho niekomu pošlete, získa plný prístup do vášho účtu.</string>
     <string name="redo">Znova</string>
     <string name="remove">Odstrániť</string>

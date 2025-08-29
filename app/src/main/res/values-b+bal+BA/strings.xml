@@ -704,7 +704,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">ریکوری پاسورڈ ۏرپڑانی پاہ</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">شُمسا بازیابی رمز نا ایی دستگاهء بازگہد ثبت دائمی گماہ بکنیں.</string>
     <string name="recoveryPasswordRestoreDescription">اپنا اکاؤنٹ لوڈ کرنے کیلئے اپنا ریکوری پاسورڈ درج بکنا۔ اگر آپ نے اسے محفوظ نہیں کیا ہے، تو آپ اسے اپنی ایپ کی سیٹنگز میں پا سکتے ہیں۔</string>
-    <string name="recoveryPasswordView">پاس ورڈ دیکھیں</string>
     <string name="recoveryPasswordWarningSendDescription">یہ آپ کا ریکوری پاسورڈ ہی۔ اگے آپ اسے کسی کو بھیجتے ہوت، تو انہیں آپکے حساب تک پورا رسائی ہووستی.</string>
     <string name="redo">دوبارہ ک</string>
     <string name="remove">برس ک</string>

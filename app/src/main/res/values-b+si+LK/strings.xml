@@ -704,7 +704,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Recovery Password සඟවන්න</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">මෙම උපාංගයේ ඔබගේ ප්‍රතිසාධන මුරපදය ස්ථිරවම සඟවන්න.</string>
     <string name="recoveryPasswordRestoreDescription">ඔබගේ ගිණුම පූරණය කිරීමට ඔබේ ප්‍රතිසාධන මුරපදය ඇතුළත් කරන්න. ඔබ එය සුරක්ෂිත කර නැත්නම්, ඔබගේ යෙදුමේ සැකසුම්වලින් එය සොයා ගත හැකිය.</string>
-    <string name="recoveryPasswordView">මුරපදය පෙන්වන්න</string>
     <string name="recoveryPasswordWarningSendDescription">මෙය ඔබගේ ප්‍රතිසාධන මුරපදයයි. ඔබ එය යමෙක්ට යැවුවහොත් ඔවුන්ට ඔබේ ගිණුමට සම්පූර්ණ ප්‍රවේශය ඇත.</string>
     <string name="redo">පසුසේ</string>
     <string name="remove">ඉවත් කරන්න</string>

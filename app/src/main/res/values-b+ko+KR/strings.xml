@@ -819,7 +819,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">복구 비밀번호 숨기기</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">이 기기에서 복구 비밀번호를 영구적으로 숨깁니다.</string>
     <string name="recoveryPasswordRestoreDescription">계정을 로드하려면 복구 비밀번호를 입력하세요. 저장되지 않았다면, 앱 설정에서 찾을 수 있습니다.</string>
-    <string name="recoveryPasswordView">비밀번호 보기</string>
     <string name="recoveryPasswordWarningSendDescription">이것은 당신의 복구 비밀번호입니다. 다른 사람에게 보내면 그들이 당신의 계정에 완전히 접근할 수 있게 됩니다.</string>
     <string name="recreateGroup">그룹 다시 만들기</string>
     <string name="redo">다시 실행</string>

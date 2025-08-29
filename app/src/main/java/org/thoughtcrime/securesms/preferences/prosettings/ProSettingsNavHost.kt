@@ -25,6 +25,9 @@ sealed interface ProSettingsDestination {
 
     @Serializable
     data object UpdatePlan: ProSettingsDestination
+
+    @Serializable
+    data object PlanConfirmation: ProSettingsDestination
 }
 
 @SuppressLint("RestrictedApi")
@@ -61,7 +64,7 @@ fun ProSettingsNavHost(
             }
         }
 
-        NavHost(navController = navController, startDestination = Home) {
+        NavHost(navController = navController, startDestination = PlanConfirmation) {
             // Home
             horizontalSlideComposable<Home> {
                 ProSettingsHomeScreen(
@@ -73,6 +76,14 @@ fun ProSettingsNavHost(
             // Subscription plan selection
             horizontalSlideComposable<UpdatePlan> {
                 UpdatePlanScreen(
+                    viewModel = viewModel,
+                    onBack = { scope.launch { navigator.navigateUp() }},
+                )
+            }
+
+            // Subscription plan confirmation
+            horizontalSlideComposable<PlanConfirmation> {
+                PlanConfirmationScreen(
                     viewModel = viewModel,
                     onBack = { scope.launch { navigator.navigateUp() }},
                 )

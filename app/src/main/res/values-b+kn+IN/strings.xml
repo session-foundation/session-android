@@ -704,7 +704,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">ಪುನಃಪಡೆಯಲು ಪಾಸ್ವರ್ಡ್ ಮರೆಮಾಡಿ</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">ನೀವು ನಿಮ್ಮ ಪುನಃಪ್ರಾಪ್ತಿ ಪಾಸ್ವರ್ಡನ್ನು ಈ ಸಾಧನದ ಮೇಲೆ ಶಾಶ್ವತವಾಗಿ ಮರೆಯಾಗಿಸಲು ಇಚ್ಛಿಸುತ್ತೀರಾ.</string>
     <string name="recoveryPasswordRestoreDescription">ನಿಮ್ಮ ಖಾತೆಯನ್ನು ಲೋಡ್ ಮಾಡಲು ನಿಮ್ಮ ಮರುಪಡೆಯುವ ಗುಪ್ತಪದವನ್ನು ನಮೂದಿಸಿ. ನೀವು ಅದನ್ನು ಉಳಿಸಿಕೊಂಡಿರುವುದಿಲ್ಲವಾದರೆ, ನೀವು ನಿಮ್ಮ ಆಪ್ ಸೆಟಿಂಗ್‌ಗಳಲ್ಲಿ ಅದನ್ನು ಹುಡುಕಬಹುದು.</string>
-    <string name="recoveryPasswordView">ಹುಡುಕಿ ನೋಡಿ ಪಾಸ್ವರ್ಡ್</string>
     <string name="recoveryPasswordWarningSendDescription">ಇದು ನಿಮ್ಮ ರಿಕವರಿ ಪಾಸ್ವರ್ಡ್. ನೀವು ಇದನ್ನು ಯಾರಿಗಾದರೂ ಕಳುಹಿಸಿದರೆ ಅವರಿಗೆ ನಿಮ್ಮ ಅಕೌಂಟ್‌ಗೆ ಸಂಪೂರ್ಣ ಪ್ರವೆಶವಿರುತ್ತದೆ.</string>
     <string name="redo">ಮತ್ತೆ ಮಾಡು</string>
     <string name="remove">ತೆಗೆದುಹಾಕು</string>

@@ -692,7 +692,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">លាក់ Recovery Password</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">លាក់ពាក្យសម្ងាត់ស្តាររបស់អ្នកនៅលើឧបករណ៍នេះជាអចិន្រ្តៃយ៍។</string>
     <string name="recoveryPasswordRestoreDescription">បញ្ចូល Recovery password របស់អ្នកដើម្បីផ្ទុកគណនីរបស់អ្នក។ ប្រសិនបើអ្នកមិនបានរក្សាទុកវាទេ អ្នកអាចរកវាបានឯក្នុងការកំណត់កម្មវិធីរបស់អ្នក។</string>
-    <string name="recoveryPasswordView">មើលពាក្យសម្ងាត់</string>
     <string name="recoveryPasswordWarningSendDescription">This is your recovery password. If you send it to someone they\'ll have full access to your account.</string>
     <string name="redo">ធ្វើឡើងវិញ</string>
     <string name="remove">លុបចេញ</string>
