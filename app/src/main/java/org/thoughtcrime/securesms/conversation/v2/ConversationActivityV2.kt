@@ -90,7 +90,6 @@ import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.Reaction
 import org.session.libsession.messaging.messages.visible.VisibleMessage
-import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
@@ -160,7 +159,6 @@ import org.thoughtcrime.securesms.crypto.MnemonicUtilities
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
-import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.ReactionDatabase
@@ -247,7 +245,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var textSecurePreferences: TextSecurePreferences
     @Inject lateinit var threadDb: ThreadDatabase
     @Inject lateinit var mmsSmsDb: MmsSmsDatabase
-    @Inject lateinit var lokiThreadDb: LokiThreadDatabase
     @Inject lateinit var groupDb: GroupDatabase
     @Inject lateinit var smsDb: SmsDatabase
     @Inject lateinit var mmsDb: MmsDatabase
@@ -1378,7 +1375,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     // Update placeholder / control messages in a conversation
     private fun updatePlaceholder(recipient: Recipient,
-                                  openGroup: OpenGroupApi.RoomPollInfo?,
+                                  openGroup: OpenGroupApi.RoomInfo?,
                                   groupThreadStatus: GroupThreadStatus,
                                   adapterItemCount: Int) {
         // Special state handling for kicked/destroyed groups

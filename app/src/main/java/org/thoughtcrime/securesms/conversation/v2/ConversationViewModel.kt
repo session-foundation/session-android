@@ -210,12 +210,12 @@ class ConversationViewModel @AssistedInject constructor(
         (r.acceptsBlindedCommunityMessageRequests || r.isStandardRecipient) && !r.isLocalNumber && !r.approvedMe
     }
 
-    val openGroupFlow: StateFlow<OpenGroupApi.RoomPollInfo?> = recipientFlow
-        .map { (it.data as? RecipientData.Community)?.pollInfo }
+    val openGroupFlow: StateFlow<OpenGroupApi.RoomInfo?> = recipientFlow
+        .map { (it.data as? RecipientData.Community)?.roomInfo }
         .distinctUntilChanged()
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    val openGroup: OpenGroupApi.RoomPollInfo?
+    val openGroup: OpenGroupApi.RoomInfo?
         get() = openGroupFlow.value
 
     val isAdmin: StateFlow<Boolean> = recipientFlow.mapStateFlow(viewModelScope) {
@@ -447,7 +447,7 @@ class ConversationViewModel @AssistedInject constructor(
             )
 
             // the user does not have write access in the community
-            (recipient.data as? RecipientData.Community)?.pollInfo?.write == false -> InputBarState(
+            (recipient.data as? RecipientData.Community)?.roomInfo?.write == false -> InputBarState(
                 contentState = InputBarContentState.Disabled(
                     text = application.getString(R.string.permissionsWriteCommunity),
                 ),
@@ -506,7 +506,7 @@ class ConversationViewModel @AssistedInject constructor(
 
         if (conversation.isGroupOrCommunityRecipient && conversation.approved) {
             val title = if (conversation.address is Address.Community) {
-                val userCount = (conversation.data as? RecipientData.Community)?.pollInfo?.activeUsers
+                val userCount = (conversation.data as? RecipientData.Community)?.roomInfo?.activeUsers
                     ?: 0
                 application.resources.getQuantityString(R.plurals.membersActive, userCount, userCount)
             } else {
@@ -586,7 +586,7 @@ class ConversationViewModel @AssistedInject constructor(
 
         // - For communities you must have write access to the community
         val allowedForCommunity = (recipient.isCommunityRecipient &&
-                (recipient.data as? RecipientData.Community)?.pollInfo?.write == true)
+                (recipient.data as? RecipientData.Community)?.roomInfo?.write == true)
 
         // - For blinded recipients you must be a contact of the recipient - without which you CAN
         // send them SMS messages - but they will not get through if the recipient does not have

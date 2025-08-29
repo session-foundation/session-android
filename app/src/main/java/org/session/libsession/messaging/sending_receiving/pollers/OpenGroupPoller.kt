@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
@@ -26,8 +25,6 @@ import org.session.libsession.messaging.messages.Message.Companion.senderOrSync
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.Endpoint
-import org.session.libsession.messaging.open_groups.GroupMemberRole
-import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.open_groups.OpenGroupApi.BatchRequest
 import org.session.libsession.messaging.open_groups.OpenGroupApi.BatchRequestInfo
@@ -35,7 +32,6 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi.BatchResponse
 import org.session.libsession.messaging.open_groups.OpenGroupApi.Capability
 import org.session.libsession.messaging.open_groups.OpenGroupApi.DirectMessage
 import org.session.libsession.messaging.open_groups.OpenGroupApi.Message
-import org.session.libsession.messaging.open_groups.OpenGroupApi.RoomPollInfo
 import org.session.libsession.messaging.open_groups.OpenGroupApi.getOrFetchServerCapabilities
 import org.session.libsession.messaging.open_groups.OpenGroupApi.parallelBatch
 import org.session.libsession.messaging.open_groups.OpenGroupMessage
@@ -45,7 +41,6 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
@@ -54,8 +49,6 @@ import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.CommunityDatabase
-import org.thoughtcrime.securesms.database.GroupMemberDatabase
-import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import java.util.concurrent.TimeUnit
@@ -76,8 +69,6 @@ class OpenGroupPoller @AssistedInject constructor(
     private val blindMappingRepository: BlindMappingRepository,
     private val receivedMessageHandler: ReceivedMessageHandler,
     private val batchMessageJobFactory: BatchMessageReceiveJob.Factory,
-    private val groupMemberDatabase: GroupMemberDatabase,
-    private val lokiThreadDatabase: LokiThreadDatabase,
     private val configFactory: ConfigFactoryProtocol,
     private val threadDatabase: ThreadDatabase,
     private val trimThreadJobFactory: TrimThreadJob.Factory,
@@ -361,13 +352,13 @@ class OpenGroupPoller @AssistedInject constructor(
                         message.syncTarget = syncTarget
                     }
                 }
-                val threadId = threadDatabase.getThreadIdIfExistsFor(message.senderOrSync.toAddress())
+                val threadAddress = message.senderOrSync.toAddress() as Address.Conversable
+                val threadId = threadDatabase.getThreadIdIfExistsFor(threadAddress)
                 receivedMessageHandler.handle(
                     message = message,
                     proto = proto,
                     threadId = threadId,
-                    groupv2Id = null,
-                    fromCommunity = null
+                    threadAddress = threadAddress,
                 )
             } catch (e: Exception) {
                 Log.e(TAG, "Couldn't handle direct message", e)

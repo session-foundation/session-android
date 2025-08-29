@@ -318,10 +318,10 @@ object MessageSender {
         when(destination) {
             is Destination.OpenGroup -> {
                 serverCapabilities = storage.getServerCapabilities(destination.server).orEmpty()
-                storage.getOpenGroup(destination.roomToken, destination.server)?.let {
+                storage.getOpenGroupPublicKey(destination.server)?.let {
                     blindedPublicKey = BlindKeyAPI.blind15KeyPairOrNull(
                         ed25519SecretKey = userEdKeyPair.secretKey.data,
-                        serverPubKey = Hex.fromStringCondensed(it.publicKey),
+                        serverPubKey = Hex.fromStringCondensed(it),
                     )?.pubKey?.data
                 }
             }
@@ -334,10 +334,10 @@ object MessageSender {
             }
             is Destination.LegacyOpenGroup -> {
                 serverCapabilities = storage.getServerCapabilities(destination.server).orEmpty()
-                storage.getOpenGroup(destination.roomToken, destination.server)?.let {
+                storage.getOpenGroupPublicKey(destination.server)?.let {
                     blindedPublicKey = BlindKeyAPI.blind15KeyPairOrNull(
                         ed25519SecretKey = userEdKeyPair.secretKey.data,
-                        serverPubKey = Hex.fromStringCondensed(it.publicKey),
+                        serverPubKey = Hex.fromStringCondensed(it),
                     )?.pubKey?.data
                 }
             }

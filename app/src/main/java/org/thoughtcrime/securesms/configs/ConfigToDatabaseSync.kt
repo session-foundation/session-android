@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -37,12 +36,12 @@ import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.CommunityDatabase
 import org.thoughtcrime.securesms.database.DraftDatabase
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.GroupMemberDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
-import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
@@ -75,7 +74,7 @@ class ConfigToDatabaseSync @Inject constructor(
     private val draftDatabase: DraftDatabase,
     private val groupDatabase: GroupDatabase,
     private val groupMemberDatabase: GroupMemberDatabase,
-    private val lokiThreadDatabase: LokiThreadDatabase,
+    private val communityDatabase: CommunityDatabase,
     private val lokiAPIDatabase: LokiAPIDatabase,
     private val clock: SnodeClock,
     private val preferences: TextSecurePreferences,
@@ -228,9 +227,9 @@ class ConfigToDatabaseSync @Inject constructor(
         lokiAPIDatabase.removeLastMessageServerID(room = address.room, server = address.serverUrl)
         lokiAPIDatabase.removeLastInboxMessageId(address.serverUrl)
         lokiAPIDatabase.removeLastOutboxMessageId(address.serverUrl)
-        lokiThreadDatabase.removeOpenGroupChat(threadId)
         groupDatabase.delete(address.address)
         groupMemberDatabase.delete(address)
+        communityDatabase.deleteRoomInfo(address)
     }
 
     private fun deleteLegacyGroupData(address: Address.LegacyGroup) {

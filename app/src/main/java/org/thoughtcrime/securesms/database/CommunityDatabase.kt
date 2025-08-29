@@ -6,9 +6,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.serialization.json.Json
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.utilities.Address
-import org.session.libsignal.utilities.JsonUtil
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import java.util.Optional
 import javax.inject.Inject
@@ -20,9 +20,10 @@ import kotlin.jvm.optionals.getOrNull
 class CommunityDatabase @Inject constructor(
     @ApplicationContext context: Context,
     helper: Provider<SQLCipherOpenHelper>,
+    private val json: Json,
 ) : Database(context, helper) {
 
-    private val cache = LruCache<Address.Community, Optional<OpenGroupApi.RoomPollInfo>>(24)
+    private val cache = LruCache<Address.Community, Optional<OpenGroupApi.RoomInfo>>(24)
 
     private val mutableChangeNotification = MutableSharedFlow<Address.Community>(
         extraBufferCapacity = 24,
@@ -31,7 +32,7 @@ class CommunityDatabase @Inject constructor(
 
     val changeNotification: SharedFlow<Address.Community> get() = mutableChangeNotification
 
-    fun getRoomInfo(address: Address.Community): OpenGroupApi.RoomPollInfo? {
+    fun getRoomInfo(address: Address.Community): OpenGroupApi.RoomInfo? {
         val existing = cache[address]
 
         if (existing != null) {
@@ -41,7 +42,7 @@ class CommunityDatabase @Inject constructor(
         return readableDatabase.rawQuery("SELECT $COL_ROOM_INFO FROM $TABLE_NAME WHERE $COL_ADDRESS = ?", address)
             .use { cursor ->
                 if (cursor.moveToNext()) {
-                    cursor.getString(0)?.let { text -> JsonUtil.fromJson(text, OpenGroupApi.RoomPollInfo::class.java) }
+                    cursor.getString(0)?.let { text -> json.decodeFromString<OpenGroupApi.RoomInfo>(text) }
                 } else {
                     null
                 }
@@ -52,20 +53,18 @@ class CommunityDatabase @Inject constructor(
     }
 
 
-    fun patchRoomInfo(address: Address.Community, json: String) {
+    fun patchRoomInfo(address: Address.Community, jsonText: String) {
         val sql = """
             INSERT OR REPLACE INTO $TABLE_NAME ($COL_ADDRESS, $COL_ROOM_INFO) 
                 VALUES (
                     ?, 
-                    json_patch(ifnull((SELECT $COL_ROOM_INFO FROM $TABLE_NAME WHERE $COL_ADDRESS = ?), "{}"), ?)
+                    json_patch(ifnull((SELECT $COL_ROOM_INFO FROM $TABLE_NAME WHERE $COL_ADDRESS = ?), json_object()), ?)
                 )
             RETURNING $COL_ROOM_INFO"""
 
-        writableDatabase.rawQuery(sql, address, address, json).use { cursor ->
-            check(cursor.moveToNext()) {
-                "Unable to patch room info"
-            }
-            JsonUtil.fromJson(cursor.getString(0), OpenGroupApi.RoomPollInfo::class.java)
+        writableDatabase.rawQuery(sql, address, address, jsonText).use { cursor ->
+            check(cursor.moveToNext()) { "Unable to patch room info" }
+            json.decodeFromString<OpenGroupApi.RoomInfo>(cursor.getString(0))
         }.also {
             if (cache[address] != it) {
                 cache.put(address, Optional.of(it))

@@ -27,8 +27,6 @@ import androidx.core.view.isVisible
 import androidx.vectordrawable.graphics.drawable.AnimatorInflaterCompat
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -53,7 +51,6 @@ import org.session.libsession.utilities.recipients.RecipientData
 import org.thoughtcrime.securesms.components.emoji.EmojiImageView
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
 import org.thoughtcrime.securesms.components.menu.ActionItem
-import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
@@ -64,6 +61,8 @@ import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.AnimationCompleteListener
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
+import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 
 @AndroidEntryPoint
 class ConversationReactionOverlay : FrameLayout {
@@ -106,7 +105,6 @@ class ConversationReactionOverlay : FrameLayout {
     @Inject lateinit var mmsSmsDatabase: MmsSmsDatabase
     @Inject lateinit var repository: ConversationRepository
     @Inject lateinit var dateUtils: DateUtils
-    @Inject lateinit var lokiThreadDatabase: LokiThreadDatabase
     @Inject lateinit var threadDatabase: ThreadDatabase
     @Inject lateinit var textSecurePreferences: TextSecurePreferences
     @Inject lateinit var deprecationManager: LegacyGroupDeprecationManager
@@ -596,7 +594,7 @@ class ConversationReactionOverlay : FrameLayout {
         val containsControlMessage = message.isControlMessage
         
         val hasText = !message.body.isEmpty()
-        val openGroup = (threadRecipient.data as? RecipientData.Community)?.pollInfo
+        val openGroup = (threadRecipient.data as? RecipientData.Community)?.roomInfo
 
         val isDeprecatedLegacyGroup = recipient.isLegacyGroup &&
                 deprecationManager.isDeprecated

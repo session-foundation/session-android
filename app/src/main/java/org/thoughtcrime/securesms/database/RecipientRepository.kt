@@ -72,8 +72,6 @@ class RecipientRepository @Inject constructor(
     private val groupMemberDatabase: GroupMemberDatabase,
     private val recipientSettingsDatabase: RecipientSettingsDatabase,
     private val preferences: TextSecurePreferences,
-    private val lokiThreadDatabase: LokiThreadDatabase,
-    private val storage: Lazy<StorageProtocol>,
     private val blindedIdMappingRepository: BlindMappingRepository,
     private val proStatusManager: ProStatusManager,
     private val communityDatabase: CommunityDatabase,
@@ -145,7 +143,7 @@ class RecipientRepository @Inject constructor(
     private inline fun fetchRecipient(
         address: Address,
         settingsFetcher: (Address) -> RecipientSettings,
-        communityFetcher: (Address.Community) -> OpenGroupApi.RoomPollInfo?,
+        communityFetcher: (Address.Community) -> OpenGroupApi.RoomInfo?,
         fetchGroupMemberRoles: (Address.Community) -> Map<AccountId, GroupMemberRole>,
     ): Pair<Recipient, Flow<*>> {
         val recipientData =
@@ -238,20 +236,16 @@ class RecipientRepository @Inject constructor(
                     }
 
                     is Address.Community -> {
-                        value = communityFetcher(address)
-                            ?.let { pollInfo ->
-                                configFactory.withUserConfigs {
-                                    it.userGroups.getCommunityInfo(address.serverUrl, address.room)
-                                }?.let { groupConfig ->
-                                    createCommunityRecipient(
-                                        address = address,
-                                        config = groupConfig,
-                                        community = pollInfo,
-                                        settings = settings
-                                    )
-                                }
-                            }
-                            ?: createGenericRecipient(address, settings)
+                        value = configFactory.withUserConfigs {
+                            it.userGroups.getCommunityInfo(address.serverUrl, address.room)
+                        }?.let { groupConfig ->
+                            createCommunityRecipient(
+                                address = address,
+                                config = groupConfig,
+                                roomInfo = communityFetcher(address),
+                                settings = settings
+                            )
+                        } ?: createGenericRecipient(address, settings)
 
                         changeSource = merge(
                             recipientSettingsDatabase.changeNotification.filter { it == address },
@@ -428,19 +422,16 @@ class RecipientRepository @Inject constructor(
                         avatar = configs.groupInfo.getProfilePic().toRemoteFile(),
                         expiryMode = configs.groupInfo.expiryMode,
                         name = configs.groupInfo.getName() ?: groupInfo.name,
-                        approved = !groupInfo.invited,
-                        priority = groupInfo.priority,
-                        isAdmin = groupInfo.adminKey != null,
-                        kicked = groupInfo.kicked,
-                        destroyed = groupInfo.destroyed,
                         proStatus = if (proStatusManager.isUserPro(address)) ProStatus.Pro() else ProStatus.None,
+                        description = configs.groupInfo.getDescription(),
                         members = configs.groupMembers.all()
                             .asSequence()
                             .map(RecipientData::GroupMemberInfo)
                             .sortedWith { o1, o2 ->
                                 groupMemberComparator.compare(o1.address.accountId, o2.address.accountId)
                             }
-                            .toList()
+                            .toList(),
+                        groupInfo = groupInfo,
                     )
                 }
             }
@@ -605,15 +596,16 @@ class RecipientRepository @Inject constructor(
         private fun createCommunityRecipient(
             address: Address.Community,
             config: GroupInfo.CommunityGroupInfo,
-            community: OpenGroupApi.RoomPollInfo,
+            roomInfo: OpenGroupApi.RoomInfo?,
             settings: RecipientSettings?,
         ): Recipient {
             return Recipient(
                 address = address,
                 data = RecipientData.Community(
-                    pollInfo = community,
+                    roomInfo = roomInfo,
                     priority = config.priority,
                     serverUrl = address.serverUrl,
+                    room = address.room,
                     serverPubKey = config.community.pubKeyHex,
                 ),
                 mutedUntil = settings?.muteUntil,

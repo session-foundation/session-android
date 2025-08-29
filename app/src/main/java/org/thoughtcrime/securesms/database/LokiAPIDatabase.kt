@@ -70,6 +70,7 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
         private val lastDeletionServerID = "last_deletion_server_id"
         @JvmStatic val createLastDeletionServerIDTableCommand = "CREATE TABLE $lastDeletionServerIDTable ($lastDeletionServerIDTableIndex STRING PRIMARY KEY, $lastDeletionServerID INTEGER DEFAULT 0);"
         // User counts
+        @Deprecated("This table is no longer used")
         private val userCountTable = "loki_user_count_cache"
         private val publicChatID = "public_chat_id"
         private val userCount = "user_count"
