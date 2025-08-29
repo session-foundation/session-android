@@ -9,6 +9,7 @@ import org.session.libsession.messaging.open_groups.OpenGroup.Companion.toAddres
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 
+@Deprecated("This class is no longer used except in migration. Use RoomInfo instead")
 @Serializable
 data class OpenGroup(
     val server: String,
