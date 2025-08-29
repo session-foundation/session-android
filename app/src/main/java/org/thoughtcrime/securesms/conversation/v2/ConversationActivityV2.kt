@@ -642,7 +642,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     // when showing the keyboard, we should auto scroll the conversation recyclerview
                     // if we are near the bottom (within 50dp of bottom)
                     if (binding.conversationRecyclerView.isNearBottom) {
-                        binding.conversationRecyclerView.smoothScrollToPosition(adapter.itemCount)
+                        binding.conversationRecyclerView.handleScrollToBottom()
                     }
                 }
             }
@@ -800,7 +800,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     // scrolled to bottom has a leniency of 50dp, so if we are within the 50dp but not fully at the bottom, scroll down
                     if (binding.conversationRecyclerView.isNearBottom && !binding.conversationRecyclerView.isFullyScrolled) {
                         val last = (adapter.itemCount - 1).coerceAtLeast(0)
-                        binding.conversationRecyclerView.smoothScrollToPosition(last)
+                        binding.conversationRecyclerView.handleScrollToBottom()
                     }
                 }
 
