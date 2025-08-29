@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
 import net.zetetic.database.sqlcipher.SQLiteConnection
 import net.zetetic.database.sqlcipher.SQLiteDatabase
 import net.zetetic.database.sqlcipher.SQLiteDatabaseHook
@@ -21,6 +22,7 @@ import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 
 @Singleton
@@ -28,6 +30,7 @@ class DatabaseMigrationManager @Inject constructor(
     private val application: Application,
     private val prefs: TextSecurePreferences,
     private val databaseSecretProvider: DatabaseSecretProvider,
+    jsonProvider: Provider<Json>,
     @param:ManagerScope private val scope: CoroutineScope,
 ) : OnAppStartupComponent {
     private val dbSecret by lazy {
@@ -49,7 +52,7 @@ class DatabaseMigrationManager @Inject constructor(
             }
         }
 
-        SQLCipherOpenHelper(application, dbSecret)
+        SQLCipherOpenHelper(application, dbSecret, jsonProvider)
     }
 
     private val mutableMigrationState = MutableStateFlow<MigrationState>(MigrationState.Idle)

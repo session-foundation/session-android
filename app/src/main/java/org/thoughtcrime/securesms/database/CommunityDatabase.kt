@@ -7,6 +7,8 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.serialization.json.Json
+import net.zetetic.database.sqlcipher.SQLiteDatabase
+import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
@@ -92,5 +94,44 @@ class CommunityDatabase @Inject constructor(
                 $COL_ROOM_INFO TEXT
             ) WITHOUT ROWID
         """
+
+        val MIGRATE_DROP_OLD_TABLES: Array<String>
+            get() = arrayOf(
+                "DROP TABLE ${LokiThreadDatabase.publicChatTable}",
+                "DROP TABLE ${LokiAPIDatabase.userCountTable}",
+            )
+
+        fun migrateFromOldTables(json: Json, db: SQLiteDatabase) {
+            val allOpenGroups = db.rawQuery("SELECT ${LokiThreadDatabase.publicChat} FROM ${LokiThreadDatabase.publicChatTable}").use { cursor ->
+                buildMap {
+                    while (cursor.moveToNext()) {
+                        val og = json.decodeFromString<OpenGroup>(cursor.getString(0))
+                        put(Address.Community(og), og)
+                    }
+                }
+            }
+
+            for ((address, og) in allOpenGroups) {
+                db.rawExecSQL("""
+                    INSERT INTO $TABLE_NAME($COL_ADDRESS, $COL_ROOM_INFO) VALUES (?, 
+                        json_object(
+                            "token", ?,
+                            "write", json(?),
+                            "details", json_object(
+                                "token", ?,
+                                "name", ?,
+                                "image_id", ?
+                            )
+                        )
+                    )
+                """, address.address,
+                    address.room, //token
+                    og.canWrite.toString(), //write
+                    address.room, //token
+                    og.name, //name
+                    og.imageId?.toLongOrNull() ?: og.imageId, //image_id
+                )
+            }
+        }
     }
 }
