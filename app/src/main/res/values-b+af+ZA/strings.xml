@@ -705,7 +705,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Versteek Herstel Wagwoord</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Versteek jou herstel wagwoord permanent op hierdie toestel.</string>
     <string name="recoveryPasswordRestoreDescription">Voer jou herstel wagwoord in om jou rekening te laai. As jy dit nie gestoor het nie, kan jy dit in jou app-instellings kry.</string>
-    <string name="recoveryPasswordView">Kyk Wagwoord</string>
     <string name="recoveryPasswordWarningSendDescription">Hierdie is jou Herwinningswagwoord. As jy dit aan iemand stuur, sal hulle volle toegang tot jou rekening hê.</string>
     <string name="redo">Herdoen</string>
     <string name="remove">Verwyder</string>

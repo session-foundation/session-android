@@ -750,7 +750,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Şîfreya veşartîyê veşêre</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Şîfreya vegerê xwe ya herî encam hêle îdi vê amûreyê.</string>
     <string name="recoveryPasswordRestoreDescription">Ji bo barkirina hesabê xwe, şîfreya xwe ya rizgarkirinê binivîse. Ger te qeyd nekiribe, tu dikarî wê di mîhengên aplîkasyona xwe de bibînî.</string>
-    <string name="recoveryPasswordView">Vaziniya Password</string>
     <string name="recoveryPasswordWarningSendDescription">Ev şîfreya paqij bişînî ya te ye. Eğer tu wekî bina bikî tu şîfreya te yekî maf e ku li ser tomara te hişyaritin giştiyê dike.</string>
     <string name="redo">Dîsa bike</string>
     <string name="remove">Rake</string>

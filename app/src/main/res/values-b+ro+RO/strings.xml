@@ -914,7 +914,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Ascunde Parolă de recuperare</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Ascunde definitiv parola de recuperare pe acest dispozitiv.</string>
     <string name="recoveryPasswordRestoreDescription">Introduceți parola de recuperare pentru a încărca contul dvs. Dacă nu ați salvat-o, o puteți găsi în setările aplicației.</string>
-    <string name="recoveryPasswordView">Vizualizați parola</string>
     <string name="recoveryPasswordWarningSendDescription">Aceasta este parola ta de recuperare. Dacă o trimiți cuiva, acea persoană va avea acces complet la contul tău.</string>
     <string name="recreateGroup">Recreează grup</string>
     <string name="redo">Repetă</string>

@@ -696,7 +696,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Recovery Password लुकाउनुहोस्</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">यस उपकरणमा तपाइँको पुनर्प्राप्ति पासवर्ड स्थायी रूपमा लुकाउनुहोस्।</string>
     <string name="recoveryPasswordRestoreDescription">तपाईंको खाता लोड गर्न पुनर्प्राप्ति पासवर्ड प्रविष्ट गर्नुहोस्। यदि तपाईंले यसलाई सुरक्षित गर्नुभएको छैन भने, तपाईं यो आफ्नो अनुप्रयोगको सेटिङहरूमा पाउन सक्नुहुन्छ।</string>
-    <string name="recoveryPasswordView">पासवर्ड हेर्नुहोस्</string>
     <string name="recoveryPasswordWarningSendDescription">यो तपाईंको रिकभरी पासवर्ड हो। यदि तपाईंले यसलाई कसैलाई पठाउनु भयो भने उनीहरूको तपाईंको खातामा पूर्ण पहुँच हुनेछ।</string>
     <string name="redo">पुन: गर्नुहोस</string>
     <string name="remove">हटाउनुहोस्</string>

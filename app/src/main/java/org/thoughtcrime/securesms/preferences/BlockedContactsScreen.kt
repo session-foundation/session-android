@@ -47,8 +47,10 @@ fun BlockedContactsScreen(
     viewModel: BlockedContactsViewModel,
     onBack: () -> Unit,
 ) {
+    val hasContacts by viewModel.hasContacts.collectAsState()
     BlockedContacts(
         contacts = viewModel.contacts.collectAsState().value,
+        hasContacts = hasContacts,
         onContactItemClicked = viewModel::onContactItemClicked,
         searchQuery = viewModel.searchQuery.collectAsState().value,
         onSearchQueryChanged = viewModel::onSearchQueryChanged,
@@ -81,6 +83,7 @@ fun BlockedContactsScreen(
 @Composable
 fun BlockedContacts(
     contacts: List<ContactItem>,
+    hasContacts: Boolean,
     onContactItemClicked: (address: Address) -> Unit,
     searchQuery: String,
     onSearchQueryChanged: (String) -> Unit,
@@ -119,7 +122,7 @@ fun BlockedContacts(
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
             BottomFadingEdgeBox(modifier = Modifier.weight(1f)) { bottomContentPadding ->
-                if(contacts.isEmpty() && searchQuery.isEmpty()){
+                if(!hasContacts){
                     Text(
                         text = stringResource(id = R.string.blockBlockedNone),
                         modifier = Modifier.padding(top = LocalDimensions.current.spacing)
@@ -187,6 +190,7 @@ private fun PreviewSelectContacts() {
     PreviewTheme {
         BlockedContacts(
             contacts = contacts,
+            hasContacts = true,
             onContactItemClicked = {},
             searchQuery = "",
             onSearchQueryChanged = {},
@@ -205,6 +209,7 @@ private fun PreviewSelectEmptyContacts() {
     PreviewTheme {
         BlockedContacts(
             contacts = contacts,
+            hasContacts = false,
             onContactItemClicked = {},
             searchQuery = "",
             onSearchQueryChanged = {},
@@ -215,21 +220,4 @@ private fun PreviewSelectEmptyContacts() {
     }
 }
 
-@Preview
-@Composable
-private fun PreviewSelectEmptyContactsWithSearch() {
-    val contacts = emptyList<ContactItem>()
-
-    PreviewTheme {
-        BlockedContacts(
-            contacts = contacts,
-            onContactItemClicked = {},
-            searchQuery = "Test",
-            onSearchQueryChanged = {},
-            onSearchQueryClear = {},
-            onDoneClicked = {},
-            onBack = {},
-        )
-    }
-}
 

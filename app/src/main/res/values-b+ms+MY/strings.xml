@@ -707,7 +707,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Sembunyi Kata Laluan Pemulihan</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Sembunyikan kata laluan pemulihan anda secara kekal pada peranti ini.</string>
     <string name="recoveryPasswordRestoreDescription">Masukkan kata laluan pemulihan untuk memuatkan akaun anda. Jika anda belum menyimpannya, anda boleh menemukannya dalam tetapan aplikasi anda.</string>
-    <string name="recoveryPasswordView">Lihat Kata Laluan</string>
     <string name="recoveryPasswordWarningSendDescription">Ini adalah kata laluan pemulihan anda. Jika anda menghantarnya kepada seseorang, mereka akan mempunyai akses penuh ke akaun anda.</string>
     <string name="redo">Buat Semula</string>
     <string name="remove">Alih Keluar</string>

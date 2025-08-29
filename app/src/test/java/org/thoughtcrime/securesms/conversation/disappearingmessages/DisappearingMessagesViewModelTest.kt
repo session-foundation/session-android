@@ -6,7 +6,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.ExpiryMode
+import network.loki.messenger.libsession_util.util.GroupInfo
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -96,13 +98,20 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                     name = "Group Name",
                     avatar = null,
                     expiryMode = ExpiryMode.NONE,
-                    approved = true,
-                    priority = 1,
-                    isAdmin = true,
-                    destroyed = false,
-                    kicked = false,
+                    groupInfo = GroupInfo.ClosedGroupInfo(
+                        groupAccountId = GROUP_ADDRESS.address,
+                        adminKey = Bytes(ByteArray(32)),
+                        authData = Bytes(ByteArray(32)),
+                        priority = 1,
+                        invited = false,
+                        name = "Group Name",
+                        kicked = false,
+                        destroyed = false,
+                        joinedAtSecs = System.currentTimeMillis() / 1000L,
+                    ),
                     proStatus = ProStatus.None,
-                    members = listOf()
+                    members = listOf(),
+                    description = null,
                 ),
                 firstMember = Recipient(
                     address = STANDARD_ADDRESS,
@@ -166,13 +175,20 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                     name = "Group Name",
                     avatar = null,
                     expiryMode = ExpiryMode.NONE,
-                    approved = true,
-                    priority = 1,
-                    isAdmin = false,
-                    destroyed = false,
-                    kicked = false,
+                    groupInfo = GroupInfo.ClosedGroupInfo(
+                        groupAccountId = GROUP_ADDRESS.address,
+                        adminKey = null,
+                        authData = Bytes(ByteArray(32)),
+                        priority = 1,
+                        invited = false,
+                        name = "Group Name",
+                        kicked = false,
+                        destroyed = false,
+                        joinedAtSecs = System.currentTimeMillis() / 1000L,
+                    ),
                     proStatus = ProStatus.None,
-                    members = listOf()
+                    members = listOf(),
+                    description = null,
                 ),
                 firstMember = Recipient(
                     address = STANDARD_ADDRESS,

@@ -21,7 +21,6 @@ import org.session.libsession.messaging.jobs.Job
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.messages.Message
-import org.session.libsession.messaging.messages.ProfileUpdateHandler
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.messages.signal.IncomingEncryptedMessage
 import org.session.libsession.messaging.messages.signal.IncomingGroupMessage
@@ -34,7 +33,6 @@ import org.session.libsession.messaging.messages.visible.Attachment
 import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsession.messaging.messages.visible.Reaction
 import org.session.libsession.messaging.messages.visible.VisibleMessage
-import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
@@ -97,16 +95,13 @@ open class Storage @Inject constructor(
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val mmsDatabase: MmsDatabase,
     private val smsDatabase: SmsDatabase,
-    private val groupMemberDatabase: GroupMemberDatabase,
     private val reactionDatabase: ReactionDatabase,
-    private val lokiThreadDatabase: LokiThreadDatabase,
     private val notificationManager: MessageNotifier,
     private val messageDataProvider: MessageDataProvider,
     private val clock: SnodeClock,
     private val preferences: TextSecurePreferences,
     private val openGroupManager: Lazy<OpenGroupManager>,
     private val recipientRepository: RecipientRepository,
-    private val profileUpdateHandler: ProfileUpdateHandler,
 ) : Database(context, helper), StorageProtocol {
 
     override fun getUserPublicKey(): String? { return preferences.getLocalNumber() }
@@ -243,9 +238,9 @@ open class Storage @Inject constructor(
             is Address.Community -> {
                 val og = recipient.data as? RecipientData.Community ?: return null
                 config.getOrConstructCommunity(
-                    baseUrl = og.openGroup.server,
-                    room = og.openGroup.room,
-                    pubKeyHex = og.openGroup.publicKey,
+                    baseUrl = recipient.address.serverUrl,
+                    room = recipient.address.room,
+                    pubKeyHex = og.serverPubKey,
                 )
             }
             is Address.CommunityBlindedId -> {
@@ -265,17 +260,18 @@ open class Storage @Inject constructor(
     }
 
     override fun persist(
+        threadRecipient: Recipient,
         message: VisibleMessage,
         quotes: QuoteModel?,
         linkPreview: List<LinkPreview?>,
-        fromGroup: Address.GroupLike?,
         attachments: List<Attachment>,
         runThreadUpdate: Boolean
     ): MessageId? {
         val messageID: MessageId?
         val senderAddress = fromSerialized(message.sender!!)
         val isUserSender = (message.sender!! == getUserPublicKey())
-        val isUserBlindedSender = message.threadID?.takeIf { it >= 0 }?.let(::getOpenGroup)?.publicKey
+        val isUserBlindedSender = (threadRecipient.data as? RecipientData.Community)
+            ?.serverPubKey
             ?.let {
                 BlindKeyAPI.sessionIdMatchesBlindedId(
                     sessionId = getUserPublicKey()!!,
@@ -286,7 +282,7 @@ open class Storage @Inject constructor(
 
         val targetAddress = if ((isUserSender || isUserBlindedSender) && !message.syncTarget.isNullOrEmpty()) {
             message.syncTarget!!.toAddress()
-        } else fromGroup ?: senderAddress
+        } else (threadRecipient.address as? Address.Group) ?: senderAddress
 
         if (message.threadID == null && !targetAddress.isCommunity) {
             // open group recipients should explicitly create threads
@@ -331,7 +327,7 @@ open class Storage @Inject constructor(
                 val signalServiceAttachments = attachments.mapNotNull {
                     it.toSignalPointer()
                 }
-                val mediaMessage = IncomingMediaMessage.from(message, senderAddress, expiresInMillis, expireStartedAt, Optional.fromNullable(fromGroup), signalServiceAttachments, quote, linkPreviews)
+                val mediaMessage = IncomingMediaMessage.from(message, senderAddress, expiresInMillis, expireStartedAt, Optional.fromNullable(threadRecipient.address as? Address.GroupLike), signalServiceAttachments, quote, linkPreviews)
                 mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, message.threadID!!, message.receivedTimestamp ?: 0, runThreadUpdate)
             }
 
@@ -346,7 +342,7 @@ open class Storage @Inject constructor(
                 smsDatabase.insertMessageOutbox(message.threadID ?: -1, textMessage, message.sentTimestamp!!, runThreadUpdate)
             } else {
                 val textMessage = if (isOpenGroupInvitation) IncomingTextMessage.fromOpenGroupInvitation(message.openGroupInvitation, senderAddress, message.sentTimestamp, expiresInMillis, expireStartedAt)
-                else IncomingTextMessage.from(message, senderAddress, Optional.fromNullable(fromGroup), expiresInMillis, expireStartedAt)
+                else IncomingTextMessage.from(message, senderAddress, Optional.fromNullable(threadRecipient.address as? Address.GroupLike), expiresInMillis, expireStartedAt)
                 val encrypted = IncomingEncryptedMessage(textMessage, textMessage.messageBody)
                 smsDatabase.insertMessageInbox(encrypted, message.receivedTimestamp ?: 0, runThreadUpdate)
             }
@@ -423,14 +419,6 @@ open class Storage @Inject constructor(
         lokiAPIDatabase.setAuthToken(id, null)
     }
 
-    override fun getOpenGroup(threadId: Long): OpenGroup? {
-        return lokiThreadDatabase.getOpenGroupChat(threadId)
-    }
-
-    override fun getOpenGroup(address: Address): OpenGroup? {
-        return getThreadId(address)?.let(lokiThreadDatabase::getOpenGroupChat)
-    }
-
     override fun getOpenGroupPublicKey(server: String): String? {
         return configFactory.withUserConfigs { it.userGroups.allCommunityInfo() }
             .firstOrNull { it.community.baseUrl == server }
@@ -454,17 +442,9 @@ open class Storage @Inject constructor(
         lokiAPIDatabase.setLastDeletionServerID(room, server, newValue)
     }
 
-    override fun setUserCount(room: String, server: String, newValue: Int) {
-        lokiAPIDatabase.setUserCount(room, server, newValue)
-    }
-
     override fun setOpenGroupServerMessageID(messageID: MessageId, serverID: Long, threadID: Long) {
         lokiMessageDatabase.setServerID(messageID, serverID)
         lokiMessageDatabase.setOriginalThreadID(messageID.id, serverID, threadID)
-    }
-
-    override fun getOpenGroup(room: String, server: String): OpenGroup? {
-        return getAllOpenGroups().values.firstOrNull { it.server == server && it.room == room }
     }
 
     override fun isDuplicateMessage(timestamp: Long): Boolean {
@@ -841,10 +821,6 @@ open class Storage @Inject constructor(
         return lokiAPIDatabase.getServerCapabilities(server)
     }
 
-    override fun getAllOpenGroups(): Map<Long, OpenGroup> {
-        return lokiThreadDatabase.getAllOpenGroups()
-    }
-
     override fun getAllGroups(includeInactive: Boolean): List<GroupRecord> {
         return groupDatabase.getAllGroups(includeInactive)
     }
@@ -970,13 +946,10 @@ open class Storage @Inject constructor(
                 }
 
                 is Address.Community -> {
-                    val openGroup = getOpenGroup(address) ?: return@withMutableUserConfigs
-                    val newGroupInfo = configs.userGroups.getOrConstructCommunityInfo(
-                        baseUrl = openGroup.server,
-                        room = openGroup.room,
-                        pubKeyHex = openGroup.publicKey,
-                    ).copy(priority = pinPriority)
-                    configs.userGroups.set(newGroupInfo)
+                    configs.userGroups.getCommunityInfo(baseUrl = address.serverUrl, room = address.room)
+                        ?.let {
+                            configs.userGroups.set(it.copy(priority = pinPriority))
+                        }
                 }
 
                 else -> {}

@@ -19,7 +19,6 @@ import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.util.flatten
 import org.thoughtcrime.securesms.util.timedBuffer
 
@@ -33,7 +32,6 @@ import org.thoughtcrime.securesms.util.timedBuffer
 class AttachmentDownloadHandler @AssistedInject constructor(
     private val storage: StorageProtocol,
     private val messageDataProvider: MessageDataProvider,
-    private val recipientRepository: RecipientRepository,
     @Assisted private val scope: CoroutineScope,
     private val downloadJobFactory: AttachmentDownloadJob.Factory
 ) {
@@ -103,7 +101,6 @@ class AttachmentDownloadHandler @AssistedInject constructor(
         return AttachmentDownloadJob.eligibleForDownload(
             threadID = threadID,
             storage = storage,
-            recipientRepository = recipientRepository,
             messageDataProvider = messageDataProvider,
             mmsId = attachment.mmsId,
         )

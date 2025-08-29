@@ -866,7 +866,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">リカバリパスワードを隠す</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">このデバイスでリカバリーパスワードを永久に非表示にします</string>
     <string name="recoveryPasswordRestoreDescription">アカウントを読み込むためにリカバリーフレーズを入力してください。 保存していない場合は、アプリの設定で確認できます。</string>
-    <string name="recoveryPasswordView">パスワードを見る</string>
     <string name="recoveryPasswordWarningSendDescription">これはあなたのリカバリーパスワードです。誰かに送信すると、その人はあなたのアカウントにフルアクセスできます。</string>
     <string name="recreateGroup">グループを再作成</string>
     <string name="redo">やり直す</string>

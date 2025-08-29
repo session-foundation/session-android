@@ -938,7 +938,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Ukryj hasło odzyskiwania</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Na stałe ukryj na tym urządzeniu hasło odzyskiwania konta.</string>
     <string name="recoveryPasswordRestoreDescription">Aby wczytać konto, wprowadź hasło odzyskiwania. Jeśli nie zostało ono zapisane, można je znaleźć w ustawieniach aplikacji.</string>
-    <string name="recoveryPasswordView">Zobacz hasło</string>
     <string name="recoveryPasswordWarningSendDescription">To jest Twoje hasło odzyskiwania. Jeśli je komuś wyślesz, osoba ta będzie miała pełny dostęp do Twojego konta.</string>
     <string name="recreateGroup">Odtwórz Grupę</string>
     <string name="redo">Ponów</string>

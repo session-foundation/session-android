@@ -692,7 +692,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Recovery Password ကို ဖျောက်ပါ</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">ဤကိရိယာတွင် သင်၏ပြန်လည်ရယူရန် စကားဝှက်ကို အပြီးတိုင် ဖျက်ပစ်ရန်</string>
     <string name="recoveryPasswordRestoreDescription">သင့်အကောင့်ကို load ပြုလုပ်ရန် Recovery စကားဝှက်ကို ထည့်ပါ။ သိမ်းထားမှုပြစ်သည်မှာ app ဆက်တင် တွင် ရှာဖွေကြည့်ပါ။</string>
-    <string name="recoveryPasswordView">Password ကြည့်ပါ</string>
     <string name="recoveryPasswordWarningSendDescription">ဤသည် သင့်၏ Recovery Password ဖြစ်သည်။ ၎င်းကို တစ်စုံတစ်ဉီး အವರಿಗೆပေးပို့ပါက သူတို့သည် သင့်အကောင့် အပြည့်အဝ အသုံးပြုနိုင်ပါသည်။</string>
     <string name="redo">ပြန်ပြင်လုပ်ခြင်း</string>
     <string name="remove">ဖယ်ရှားရန်</string>

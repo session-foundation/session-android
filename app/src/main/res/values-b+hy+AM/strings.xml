@@ -704,7 +704,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Թաքցնել Recovery գաղտնաբառը</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Ընդմիշտ թաքցնել վերականգնման գաղտնաբառը այս սարքում:</string>
     <string name="recoveryPasswordRestoreDescription">Մուտքագրեք ձեր վերականգնման գաղտնաբառը Ձեր հաշիվը բեռնելու համար։ Եթե չեք պահել այն, կարող եք գտնել ձեր հավելվածի պարամետրերում։</string>
-    <string name="recoveryPasswordView">Դիտել Գաղտնաբառը</string>
     <string name="recoveryPasswordWarningSendDescription">Սա ձեր վերականգնման գաղտնաբառն է։ Եթե այն ուղարկեք ինչ-որ մեկին, նա կունենա ձեր հաշիվը լիարժեք մուտք գործելու հնարավորություն։</string>
     <string name="redo">Կրկնել</string>
     <string name="remove">Հեռացնել</string>

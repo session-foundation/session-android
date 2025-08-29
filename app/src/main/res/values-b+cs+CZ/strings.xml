@@ -938,7 +938,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Skrýt heslo pro obnovení</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Trvale skrýt moje heslo pro obnovení v tomto zařízení.</string>
     <string name="recoveryPasswordRestoreDescription">Zadejte heslo pro obnovení k načtení účtu. Pokud ho nemáte uložené, naleznete ho v nastavení aplikace.</string>
-    <string name="recoveryPasswordView">Zobrazit heslo</string>
     <string name="recoveryPasswordWarningSendDescription">Toto je vaše heslo pro obnovení. Pokud ho někomu pošlete, bude mít plný přístup k vašemu účtu.</string>
     <string name="recreateGroup">Znovu vytvořit skupinu</string>
     <string name="redo">Znovu</string>

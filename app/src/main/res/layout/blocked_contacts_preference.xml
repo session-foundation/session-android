@@ -5,6 +5,7 @@
     android:background="?android:attr/selectableItemBackground"
     android:orientation="horizontal"
     android:gravity="center_vertical"
+    android:contentDescription="@string/qa_conversations_blocked_contact_item"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
@@ -25,8 +26,8 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="?android:textColorPrimary"
-            android:textSize="@dimen/very_small_font_size"
+            android:textColor="?android:textColorTertiary"
+            android:textSize="@dimen/medium_font_size"
             android:text="@string/blockedContactsManageDescription" />
     </LinearLayout>
 

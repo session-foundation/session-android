@@ -716,7 +716,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Сакриј лозинку за обнову</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Неопозиво сакријте вашу Recovery Password на овом уређају.</string>
     <string name="recoveryPasswordRestoreDescription">Унесите вашe recovery password да учитате налог. Ако га нисте сачували, можете га пронаћи у подешавањима апликације.</string>
-    <string name="recoveryPasswordView">Погледај лозинку</string>
     <string name="recoveryPasswordWarningSendDescription">Ово је ваша фраза за опоравак. Уколико је пошаљете неком, имаће комплетан приступ вашем налогу.</string>
     <string name="redo">Понови</string>
     <string name="remove">Уклони</string>

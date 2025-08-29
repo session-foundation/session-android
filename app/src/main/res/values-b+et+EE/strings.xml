@@ -704,7 +704,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Peida Recovery Password</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Päriselt peida taastamisparool sellel seadmel.</string>
     <string name="recoveryPasswordRestoreDescription">Sisestage oma taastamise parool, et laadida oma konto. Kui te ei ole seda salvestanud, leiate selle oma rakenduse seadetest.</string>
-    <string name="recoveryPasswordView">Näita parooli</string>
     <string name="recoveryPasswordWarningSendDescription">See on teie taastamislause. Kui saadate selle kellelegi, on tal täielik juurdepääs teie kontole.</string>
     <string name="redo">Tee uuesti</string>
     <string name="remove">Eemalda</string>

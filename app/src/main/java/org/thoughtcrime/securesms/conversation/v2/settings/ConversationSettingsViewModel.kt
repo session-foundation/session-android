@@ -30,10 +30,9 @@ import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
-import org.session.libsession.messaging.open_groups.OpenGroup
+import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ExpirationUtil
@@ -41,10 +40,9 @@ import org.session.libsession.utilities.StringSubstitutionConstants.COMMUNITY_NA
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
-import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.upsertContact
@@ -52,7 +50,6 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
-import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_GROUP_DESCRIPTION_BYTES
@@ -78,11 +75,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val storage: StorageProtocol,
     private val conversationRepository: ConversationRepository,
-    private val textSecurePreferences: TextSecurePreferences,
     private val navigator: UINavigator<ConversationSettingsDestination>,
     private val groupManagerV2: GroupManagerV2,
-    private val prefs: TextSecurePreferences,
-    private val lokiThreadDatabase: LokiThreadDatabase,
     private val groupManager: GroupManagerV2,
     private val openGroupManager: OpenGroupManager,
     private val recipientRepository: RecipientRepository,
@@ -106,12 +100,6 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     val dialogState: StateFlow<DialogsState> = _dialogState
 
     private var recipient: Recipient? = null
-
-    private var groupV2: GroupInfo.ClosedGroupInfo? = null
-
-    private val community: OpenGroup? by lazy {
-        storage.getOpenGroup(threadId)
-    }
 
     private val optionCopyAccountId: OptionsItem by lazy{
         OptionsItem(
@@ -257,10 +245,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             icon = R.drawable.ic_users_round,
             qaTag = R.string.qa_conversation_settings_group_members,
             onClick = {
-                groupV2?.let {
-                    navigateTo(ConversationSettingsDestination.RouteGroupMembers(
-                        Address.Group(AccountId(it.groupAccountId))
-                    ))
+                (address as? Address.Group)?.let {
+                    navigateTo(ConversationSettingsDestination.RouteGroupMembers(it))
                 }
             }
         )
@@ -273,7 +259,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             qaTag = R.string.qa_conversation_settings_invite_contacts,
             onClick = {
                 navigateTo(ConversationSettingsDestination.RouteInviteToCommunity(
-                    communityUrl = community?.joinURL ?: ""
+                    communityUrl = (recipient?.data as? RecipientData.Community)?.joinURL.orEmpty()
                 ))
             }
         )
@@ -285,10 +271,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             icon = R.drawable.ic_user_round_pen,
             qaTag = R.string.qa_conversation_settings_manage_members,
             onClick = {
-                groupV2?.let {
-                    navigateTo(ConversationSettingsDestination.RouteManageMembers(
-                        Address.Group(AccountId(it.groupAccountId))
-                    ))
+                (address as? Address.Group)?.let {
+                    navigateTo(ConversationSettingsDestination.RouteManageMembers(it))
                 }
             }
         )
@@ -385,13 +369,6 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun getStateFromRecipient(conversation: Recipient){
-        val configContact = configFactory.withUserConfigs { configs ->
-            configs.contacts.get(conversation.address.toString())
-        }
-
-        groupV2 = if(conversation.isGroupV2Recipient) configFactory.getGroup(AccountId(conversation.address.toString()))
-        else null
-
         // admin
         val isAdmin: Boolean = conversation.takeIf { it.isGroupV2Recipient || it.isCommunityRecipient }
             ?.currentUserRole?.canModerate == true
@@ -404,33 +381,22 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
 
         // description / display name with QA tags
-        val (description: String?, descriptionQaTag: String?) = when{
+        val (description: String?, descriptionQaTag: String?) = when {
             // for 1on1, if the user has a nickname it should be displayed as the
             // main name, and the description should show the real name in parentheses
-            conversation.is1on1 -> {
-                if(configContact?.nickname?.isNotEmpty() == true && configContact.name.isNotEmpty()) {
-                    (
-                        "(${configContact.name})" to // description
+            conversation.data is RecipientData.Contact && !conversation.data.nickname.isNullOrBlank() -> {
+                "(${conversation.data.name})" to // description
                         context.getString(R.string.qa_conversation_settings_description_1on1) // description qa tag
-                    )
-                } else (null to null)
             }
 
-            conversation.isGroupV2Recipient -> {
-                if(groupV2 == null) (null to null)
-                else {
-                    (
-                        configFactory.withGroupConfigs(AccountId(groupV2!!.groupAccountId)){
-                            it.groupInfo.getDescription()
-                        } to // description
+            conversation.data is RecipientData.Group -> {
+                conversation.data.partial.description to // description
                         context.getString(R.string.qa_conversation_settings_description_groups) // description qa tag
-                    )
-                }
             }
 
-            conversation.isCommunityRecipient -> {
+            conversation.data is RecipientData.Community -> {
                 (
-                    community?.description to // description
+                    conversation.data.roomInfo?.details?.description to // description
                     context.getString(R.string.qa_conversation_settings_description_community) // description qa tag
                 )
             }
@@ -455,7 +421,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         // QR Account ID
         val qrAddress = when {
             conversation.is1on1 -> conversation.address.toString()
-            conversation.isCommunityRecipient -> community?.joinURL
+            conversation.data is RecipientData.Community -> conversation.data.joinURL
             else -> null
         }
 
@@ -558,9 +524,9 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 )
             }
 
-            conversation.isGroupV2Recipient -> {
+            conversation.data is RecipientData.Group -> {
                 // if the user is kicked or the group destroyed, only show "Delete Group"
-                if(groupV2 != null && groupV2?.shouldPoll == false){
+                if (!conversation.data.partial.shouldPoll){
                     listOf(
                             OptionsCategory(
                                 items = listOf(
@@ -735,7 +701,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun copyCommunityUrl(){
-        val url = community?.joinURL ?: return
+        val url = (recipient?.data as? RecipientData.Community)?.joinURL ?: return
         val clip = ClipData.newPlainText(context.getString(R.string.communityUrl), url)
         val manager = context.getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         manager.setPrimaryClip(clip)
@@ -969,7 +935,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
         when{
             conversation.isGroupV2Recipient -> {
-                if(groupV2?.hasAdminKey() == true){
+                if (conversation.currentUserRole == GroupMemberRole.ADMIN){
                     // group admin clearing messages have a dedicated custom dialog
                     _dialogState.update { it.copy(groupAdminClearMessagesDialog = GroupAdminClearMessageDialog(conversation.displayName())) }
                     return
@@ -1015,7 +981,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 withContext(Dispatchers.Default) {
                     conversationRepository.clearAllMessages(
                         threadId,
-                        if (clearForEveryoneGroupsV2 && groupV2 != null) AccountId(groupV2!!.groupAccountId) else null
+                        if (clearForEveryoneGroupsV2 && address is Address.Group) address.accountId else null
                     )
                 }
 
@@ -1037,10 +1003,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun confirmLeaveGroup(){
-        val groupData = groupV2 ?: return
+        val groupV2Id = (address as? Address.Group)?.accountId ?: return
         _dialogState.update { state ->
             val dialogData = groupManager.getLeaveGroupConfirmationDialogData(
-                AccountId(groupData.groupAccountId),
+                groupV2Id,
                 _uiState.value.name
             ) ?: return
 
@@ -1225,7 +1191,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             }
 
             is Commands.SetGroupText -> {
-                val groupData = groupV2 ?: return
+                val groupV2Id = (address as? Address.Group)?.accountId ?: return
                 val dialogData = _dialogState.value.groupEditDialog ?: return
 
                 showLoading()
@@ -1234,7 +1200,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     // save name if needed
                     if(dialogData.inputName != dialogData.currentName) {
                         groupManager.setName(
-                            AccountId(groupData.groupAccountId),
+                            groupV2Id,
                             dialogData.inputName ?: dialogData.currentName
                         )
                     }
@@ -1242,7 +1208,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     // save description if needed
                     if(dialogData.inputtedDescription != dialogData.currentDescription) {
                         groupManager.setDescription(
-                            AccountId(groupData.groupAccountId),
+                            groupV2Id,
                             dialogData.inputtedDescription ?: ""
                         )
                     }
@@ -1360,11 +1326,12 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     fun inviteContactsToCommunity(contacts: Set<Address>) {
+        val recipient = recipient?.takeIf { it.isCommunityRecipient } ?: return
         showLoading()
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.Default) {
-                    repository.inviteContactsToCommunity(threadId, contacts)
+                    repository.inviteContactsToCommunity(recipient, contacts)
                 }
 
                 hideLoading()

@@ -890,7 +890,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Verberg Herstel Wachtwoord</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Uw herstelwachtwoord op dit apparaat permanent verbergen.</string>
     <string name="recoveryPasswordRestoreDescription">Voer je herstel wachtwoord in om je account te laden. Als je het niet hebt opgeslagen, kun je het vinden in je app-instellingen.</string>
-    <string name="recoveryPasswordView">Bekijk wachtwoord</string>
     <string name="recoveryPasswordWarningSendDescription">Dit is uw herstelwachtwoord. Als u het naar iemand stuurt hebben ze volledige toegang tot uw account.</string>
     <string name="recreateGroup">Groep opnieuw aanmaken</string>
     <string name="redo">Opnieuw doen</string>

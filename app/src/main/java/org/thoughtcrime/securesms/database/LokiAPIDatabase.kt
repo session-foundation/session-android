@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.database
 
 import android.content.ContentValues
 import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
@@ -18,9 +17,7 @@ import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import java.util.Date
-import javax.inject.Inject
 import javax.inject.Provider
-import javax.inject.Singleton
 
 class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) : Database(context, helper), LokiAPIDatabaseProtocol {
 
@@ -73,7 +70,8 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
         private val lastDeletionServerID = "last_deletion_server_id"
         @JvmStatic val createLastDeletionServerIDTableCommand = "CREATE TABLE $lastDeletionServerIDTable ($lastDeletionServerIDTableIndex STRING PRIMARY KEY, $lastDeletionServerID INTEGER DEFAULT 0);"
         // User counts
-        private val userCountTable = "loki_user_count_cache"
+        @Deprecated("This table is no longer used")
+        val userCountTable = "loki_user_count_cache"
         private val publicChatID = "public_chat_id"
         private val userCount = "user_count"
         @JvmStatic val createUserCountTableCommand = "CREATE TABLE $userCountTable ($publicChatID STRING PRIMARY KEY, $userCount INTEGER DEFAULT 0);"
@@ -457,21 +455,6 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
             )
             database.insertOrUpdate(LAST_LEGACY_MESSAGE_TABLE, values, LEGACY_THREAD_RECIPIENT_QUERY, wrap(threadRecipientAddress))
         }
-    }
-
-    fun getUserCount(room: String, server: String): Int? {
-        val database = readableDatabase
-        val index = "$server.$room"
-        return database.get(userCountTable, "$publicChatID = ?", wrap(index)) { cursor ->
-            cursor.getInt(userCount)
-        }?.toInt()
-    }
-
-    override fun setUserCount(room: String, server: String, newValue: Int) {
-        val database = writableDatabase
-        val index = "$server.$room"
-        val row = wrap(mapOf( publicChatID to index, userCount to newValue.toString() ))
-        database.insertOrUpdate(userCountTable, row, "$publicChatID = ?", wrap(index))
     }
 
     override fun getOpenGroupPublicKey(server: String): String? {

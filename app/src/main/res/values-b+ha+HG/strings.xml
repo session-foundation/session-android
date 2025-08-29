@@ -704,7 +704,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Ɓoye Kalmar Warke</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Kwashe kalmar maidowa a wannan na\'ura dindindin.</string>
     <string name="recoveryPasswordRestoreDescription">Shigar da kalmar sirrin dawo da ku don lodin asusunku. Idan ba ku ajiye shi ba, za ku iya samun shi a cikin saitunan aikinku.</string>
-    <string name="recoveryPasswordView">Duba kalmar wucewa</string>
     <string name="recoveryPasswordWarningSendDescription">Wannan shine kalmar wucewarka ta mayar da hankali. Idan ka aika shi ga wani zasu sami cikakken damar zuwa asusunka.</string>
     <string name="redo">Sanya sabo</string>
     <string name="remove">Cire</string>
