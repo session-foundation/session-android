@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
+import nl.komponents.kovenant.all
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.groups.GroupManagerV2
@@ -46,6 +47,7 @@ import org.session.libsession.utilities.upsertContact
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.CommunityDatabase
 import org.thoughtcrime.securesms.database.DraftDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
@@ -132,6 +134,7 @@ class DefaultConversationRepository @Inject constructor(
     private val textSecurePreferences: TextSecurePreferences,
     private val messageDataProvider: MessageDataProvider,
     private val threadDb: ThreadDatabase,
+    private val communityDatabase: CommunityDatabase,
     private val draftDb: DraftDatabase,
     private val smsDb: SmsDatabase,
     private val mmsSmsDb: MmsSmsDatabase,
@@ -214,7 +217,8 @@ class DefaultConversationRepository @Inject constructor(
             .flatMapLatest { allAddresses ->
                 merge(
                     configFactory.configUpdateNotifications,
-                    recipientDatabase.changeNotification,
+                    recipientDatabase.changeNotification.filter { it in allAddresses },
+                    communityDatabase.changeNotification.filter { it in allAddresses },
                     threadDb.updateNotifications
                 ).debounce(500)
                     .onStart { emit(Unit) }
