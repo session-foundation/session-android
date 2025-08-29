@@ -205,6 +205,8 @@ import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.PaddedImageSpan
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
+import org.thoughtcrime.securesms.util.adapter.applyImeBottomPadding
+import org.thoughtcrime.securesms.util.adapter.handleScrollToBottom
 import org.thoughtcrime.securesms.util.drawToBitmap
 import org.thoughtcrime.securesms.util.fadeIn
 import org.thoughtcrime.securesms.util.fadeOut
@@ -559,18 +561,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         restoreDraftIfNeeded()
         setUpUiStateObserver()
 
+        binding.conversationRecyclerView.applyImeBottomPadding()
         binding.scrollToBottomButton.setOnClickListener {
-            val layoutManager = binding.conversationRecyclerView.layoutManager as LinearLayoutManager
-            val targetPosition = adapter.itemCount - 1
-
-            if (layoutManager.isSmoothScrolling) {
-                // Tapping while smooth scrolling is in progress will instantly jump to the bottom.
-                binding.conversationRecyclerView.scrollToPosition(targetPosition)
-            } else {
-                // First tap: smooth scroll
-                linearSmoothScroller.targetPosition = targetPosition
-                layoutManager.startSmoothScroll(linearSmoothScroller)
-            }
+            binding.conversationRecyclerView.handleScrollToBottom()
         }
 
         // in case a phone call is in progress, this banner is visible and should bring the user back to the call
