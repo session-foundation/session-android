@@ -160,8 +160,8 @@ internal fun LandingScreen(
                 createAccount = createAccount,
                 loadAccount = loadAccount,
                 openDialog = { isUrlDialogVisible = true },
-                maxWidth = 360.dp,
-                modifier = Modifier.align(Alignment.CenterVertically)
+//                maxWidth = 360.dp,
+                modifier = Modifier.align(Alignment.CenterVertically).weight(1f)
             )
         }
     } else {
@@ -351,8 +351,13 @@ private fun resolveBubbleText(@StringRes id: Int): String {
 
 // landscape/wide switch logic using the real platform Configuration
 private fun shouldUseTwoPane(configuration: Configuration): Boolean {
+//    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+//    val widthDp = configuration.screenWidthDp
+//    // Favor two-pane when landscape AND reasonably wide, or whenever width >= 600dp.
+//    return widthDp >= 600 || (isLandscape && widthDp >= 480)
+
+    val w = configuration.screenWidthDp
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-    val widthDp = configuration.screenWidthDp
-    // Favor two-pane when landscape AND reasonably wide, or whenever width >= 600dp.
-    return widthDp >= 600 || (isLandscape && widthDp >= 480)
+    // Two-pane when: landscape & ≥480dp (phones/flip), or portrait but truly wide (≥840dp)
+    return (isLandscape && w >= 480) || (w >= 840)
 }
