@@ -221,7 +221,6 @@
     <string name="onionRoutingPathDestination">ຈຸດໝາຍ</string>
     <string name="onionRoutingPathEntryNode">ເນົດເຂົ້າ</string>
     <string name="passwordChange">ປ່ຽນລະຫັດຜ່ານ</string>
-    <string name="passwordChangeDescription">ປ່ຽນລະຫັດຕົກທາງທີ່ຈະເຜີດ {app_name}.</string>
     <string name="passwordConfirm">ຢັນໄຮ</string>
     <string name="passwordEnter">ປ້ອນລະຫັດຜ່ານ</string>
     <string name="permissionsAppleMusic">{app_name} ຕ້ອງໃຊ້ Apple Music ເພື່ອປ່ອຍແນບສື່ມວນຊົນ.</string>

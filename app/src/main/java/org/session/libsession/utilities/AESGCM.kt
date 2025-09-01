@@ -4,6 +4,8 @@ import androidx.annotation.WorkerThread
 import network.loki.messenger.libsession_util.Curve25519
 import network.loki.messenger.libsession_util.SessionEncrypt
 import org.session.libsignal.crypto.CipherUtil.CIPHER_LOCK
+import org.session.libsignal.utilities.ByteArraySlice
+import org.session.libsignal.utilities.ByteArraySlice.Companion.view
 import org.session.libsignal.utilities.ByteUtil
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.Util
@@ -53,14 +55,17 @@ internal object AESGCM {
     /**
      * Sync. Don't call from the main thread.
      */
-    internal fun encrypt(plaintext: ByteArray, symmetricKey: ByteArray): ByteArray {
+    fun encrypt(plaintext: ByteArraySlice, symmetricKey: ByteArray): ByteArray {
         val iv = Util.getSecretBytes(ivSize)
         synchronized(CIPHER_LOCK) {
             val cipher = Cipher.getInstance("AES/GCM/NoPadding")
             cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(symmetricKey, "AES"), GCMParameterSpec(gcmTagSize, iv))
-            return ByteUtil.combine(iv, cipher.doFinal(plaintext))
+            return ByteUtil.combine(iv, cipher.doFinal(plaintext.data, plaintext.offset, plaintext.len))
         }
     }
+
+    internal fun encrypt(plaintext: ByteArray, symmetricKey: ByteArray): ByteArray =
+        encrypt(plaintext.view(), symmetricKey)
 
     /**
      * Sync. Don't call from the main thread.

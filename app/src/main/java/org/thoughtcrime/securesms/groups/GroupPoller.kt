@@ -450,7 +450,10 @@ class GroupPoller @AssistedInject constructor(
         }
 
         parameters.chunked(BatchMessageReceiveJob.BATCH_DEFAULT_NUMBER).forEach { chunk ->
-            JobQueue.shared.add(batchMessageReceiveJobFactory.create(chunk))
+            JobQueue.shared.add(batchMessageReceiveJobFactory.create(
+                messages = chunk,
+                fromCommunity = null
+            ))
         }
 
         if (messages.isNotEmpty()) {

@@ -183,7 +183,6 @@
     <string name="callsSettings">语音通话 (测试版)</string>
     <string name="callsVoiceAndVideo">语音和视频通话</string>
     <string name="callsVoiceAndVideoBeta">语音和视频通话(测试版)</string>
-    <string name="callsVoiceAndVideoModalDescription">在使用测试版通话时，您的IP会暴露给您的通话对象和Oxen Foundation服务器。</string>
     <string name="callsVoiceAndVideoToggleDescription">允许来自其它用户的语音和视频通话。</string>
     <string name="callsYouCalled">您呼叫了{name}</string>
     <string name="callsYouMissedCallPermissions">您未在隐私设置中启用<b>语音和视频通话</b>，因此错过了来自<b>{name}</b>的通话。</string>
@@ -745,8 +744,6 @@
     <string name="openSurvey">打开调查问卷</string>
     <string name="other">其它</string>
     <string name="passwordChange">更改密码</string>
-    <string name="passwordChangeDescription">更改{app_name}的解锁密码</string>
-    <string name="passwordChangedDescription">您的密码已经设定。请妥善保管。</string>
     <string name="passwordConfirm">确认密码</string>
     <string name="passwordCurrentIncorrect">您当前的密码不正确。</string>
     <string name="passwordEnter">请输入密码</string>
@@ -758,7 +755,6 @@
     <string name="passwordFailed">设置密码失败</string>
     <string name="passwordIncorrect">密码不正确</string>
     <string name="passwordRemove">移除密码</string>
-    <string name="passwordRemovedDescription">您的密码已被移除。</string>
     <string name="passwordSet">设置密码</string>
     <string name="paste">粘贴</string>
     <string name="permissionChange">授权变更</string>
@@ -806,7 +802,6 @@
     <string name="proAnimatedDisplayPictureFeature">动画头像</string>
     <string name="proAnimatedDisplayPictureModalDescription">用户可上传 GIF</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">使用 PRO 上传 GIF</string>
-    <string name="proBadge">{app_pro} 徽章</string>
     <string name="proCallToActionLongerMessages">想发送更长的消息？使用 {app_pro} 发送更多文本并解锁高级功能</string>
     <string name="proCallToActionPinnedConversations">想要固定更多对话？使用 {app_pro} 整理你的聊天并解锁高级功能</string>
     <string name="proCallToActionPinnedConversationsMoreThan">想要固定超过 5 个对话？使用 {app_pro} 整理你的聊天并解锁高级功能</string>

@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.home.startconversation.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.height
@@ -22,7 +23,9 @@ import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.times
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.home.startconversation.StartConversationDestination
 import org.thoughtcrime.securesms.ui.Divider
@@ -30,6 +33,7 @@ import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.components.AppBarCloseIcon
 import org.thoughtcrime.securesms.ui.components.BasicAppBar
 import org.thoughtcrime.securesms.ui.components.QrImage
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -64,38 +68,58 @@ internal fun StartConversationScreen(
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState())
             ) {
+                val dividerIndent: Dp = LocalDimensions.current.itemButtonIconSpacing + 2*LocalDimensions.current.smallSpacing
                 val newMessageTitleTxt:String = context.resources.getQuantityString(R.plurals.messageNew, 1, 1)
                 ItemButton(
-                    text = newMessageTitleTxt,
-                    icon = R.drawable.ic_message_square,
+                    text = annotatedStringResource(newMessageTitleTxt),
+                    textStyle = LocalType.current.xl,
+                    iconRes = R.drawable.ic_message_square,
                     modifier = Modifier.qaTag(R.string.AccessibilityId_messageNew),
                     onClick = {
-                       navigateTo(StartConversationDestination.NewMessage)
+                        navigateTo(StartConversationDestination.NewMessage)
                     }
                 )
-                Divider(startIndent = LocalDimensions.current.minItemButtonHeight)
+                Divider(
+                    paddingValues = PaddingValues(
+                        start = dividerIndent,
+                        end = LocalDimensions.current.smallSpacing
+                    )
+                )
                 ItemButton(
-                    textId = R.string.groupCreate,
-                    icon = R.drawable.ic_users_group_custom,
+                    text = annotatedStringResource(R.string.groupCreate),
+                    textStyle = LocalType.current.xl,
+                    iconRes = R.drawable.ic_users_group_custom,
                     modifier = Modifier.qaTag(R.string.AccessibilityId_groupCreate),
                     onClick = {
                         navigateTo(StartConversationDestination.CreateGroup)
                     }
                 )
-                Divider(startIndent = LocalDimensions.current.minItemButtonHeight)
+                Divider(
+                    paddingValues = PaddingValues(
+                        start = dividerIndent,
+                        end = LocalDimensions.current.smallSpacing
+                    )
+                )
                 ItemButton(
-                    textId = R.string.communityJoin,
-                    icon = R.drawable.ic_globe,
+                    text = annotatedStringResource(R.string.communityJoin),
+                    textStyle = LocalType.current.xl,
+                    iconRes = R.drawable.ic_globe,
                     modifier = Modifier.qaTag(R.string.AccessibilityId_communityJoin),
                     onClick = {
                         navigateTo(StartConversationDestination.JoinCommunity)
                     }
                 )
-                Divider(startIndent = LocalDimensions.current.minItemButtonHeight)
+                Divider(
+                    paddingValues = PaddingValues(
+                        start = dividerIndent,
+                        end = LocalDimensions.current.smallSpacing
+                    )
+                )
                 ItemButton(
-                    textId = R.string.sessionInviteAFriend,
-                    icon = R.drawable.ic_user_round_plus,
-                    Modifier.qaTag(R.string.AccessibilityId_sessionInviteAFriendButton),
+                    text = annotatedStringResource(R.string.sessionInviteAFriend),
+                    textStyle = LocalType.current.xl,
+                    iconRes = R.drawable.ic_user_round_plus,
+                    modifier = Modifier.qaTag(R.string.AccessibilityId_sessionInviteAFriendButton),
                     onClick = {
                         navigateTo(StartConversationDestination.InviteFriend)
                     }

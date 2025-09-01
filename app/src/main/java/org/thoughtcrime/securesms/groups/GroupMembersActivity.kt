@@ -1,9 +1,12 @@
 package org.thoughtcrime.securesms.groups
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.runtime.Composable
+import androidx.core.content.IntentCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import org.session.libsignal.utilities.AccountId
+import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.FullComposeScreenLockActivity
 import org.thoughtcrime.securesms.groups.compose.GroupMembersScreen
 
@@ -15,15 +18,11 @@ import org.thoughtcrime.securesms.groups.compose.GroupMembersScreen
 @AndroidEntryPoint
 class GroupMembersActivity: FullComposeScreenLockActivity() {
 
-    private val groupId: String by lazy {
-        intent.getStringExtra(GROUP_ID) ?: ""
-    }
-
     @Composable
     override fun ComposeContent() {
         val viewModel: GroupMembersViewModel =
             hiltViewModel<GroupMembersViewModel, GroupMembersViewModel.Factory> { factory ->
-                factory.create(AccountId(groupId))
+                factory.create(IntentCompat.getParcelableExtra(intent, GROUP_ADDRESS, Address.Group::class.java)!!)
             }
 
         GroupMembersScreen(
@@ -33,6 +32,12 @@ class GroupMembersActivity: FullComposeScreenLockActivity() {
     }
 
     companion object {
-        const val GROUP_ID = "group_id"
+        fun createIntent(context: Context, address: Address.Group): Intent {
+            return Intent(context, GroupMembersActivity::class.java).apply {
+                putExtra(GROUP_ADDRESS, address)
+            }
+        }
+
+        private const val GROUP_ADDRESS = "group_address"
     }
 }

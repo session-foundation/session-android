@@ -151,7 +151,6 @@
     <string name="callsSettings">שיחות (בטא)</string>
     <string name="callsVoiceAndVideo">שיחות קוליות ווידיאו</string>
     <string name="callsVoiceAndVideoBeta">שיחות קוליות ווידיאו (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">כתובת ה-IP שלך גלויה לשותפת השיחה שלך ולשרת קרן Oxen בעת שימוש בשיחות בטא.</string>
     <string name="callsVoiceAndVideoToggleDescription">מאפשר שיחות קוליות ווידאו אל משתמשים אחרים ומאתם.</string>
     <string name="callsYouCalled">התקשרת אל {name}</string>
     <string name="callsYouMissedCallPermissions">פספסת שיחה מ<b>{name}</b> כי לא הפעלת <b>שיחות שמע ווידאו</b> בהגדרות פרטיות.</string>
@@ -659,8 +658,6 @@
     <string name="open">פתח</string>
     <string name="other">אחר</string>
     <string name="passwordChange">שנה סיסמה</string>
-    <string name="passwordChangeDescription">שנה את הסיסמה הנדרשת לפתיחת {app_name}.</string>
-    <string name="passwordChangedDescription">הסיסמה שלך השתנתה. שמור עליה בבטחה.</string>
     <string name="passwordConfirm">אשר סיסמה</string>
     <string name="passwordCurrentIncorrect">הסיסמה הנוכחית שלך לא נכונה.</string>
     <string name="passwordEnter">הזן סיסמה</string>
@@ -671,7 +668,6 @@
     <string name="passwordFailed">נכשל לקבוע סיסמה</string>
     <string name="passwordIncorrect">סיסמה שגויה</string>
     <string name="passwordRemove">הסר סיסמה</string>
-    <string name="passwordRemovedDescription">הסיסמה שלך הוסרה.</string>
     <string name="passwordSet">הגדר סיסמה</string>
     <string name="paste">הדבק</string>
     <string name="permissionMusicAudioDenied">{app_name} זקוק לגישה למוזיקה ואודיו על מנת לשלוח קבצים, מוזיקה ואודיו, אבל היא נדחתה לצמיתות. Tap Settings → Permissions, and turn \"Music and audio\" on.</string>

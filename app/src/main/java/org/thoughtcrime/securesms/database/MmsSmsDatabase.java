@@ -279,8 +279,6 @@ public class MmsSmsDatabase extends Database {
     String limitStr  = limit > 0 || offset > 0 ? offset + ", " + limit : null;
 
     Cursor cursor = queryTables(PROJECTION, selection, order, limitStr);
-    setNotifyConversationListeners(cursor, threadId);
-
     return cursor;
   }
 
@@ -449,6 +447,26 @@ public class MmsSmsDatabase extends Database {
 
     String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " ASC";
     return queryTables(PROJECTION, selection, order, null);
+  }
+
+  public Set<Address> getAllReferencedAddresses() {
+    final String[] projection = new String[] { "DISTINCT " + MmsSmsColumns.ADDRESS };
+    final String selection = MmsSmsColumns.ADDRESS + " IS NOT NULL" +
+                    " AND " + MmsSmsColumns.ADDRESS + " != ''";
+
+    Set<Address> out = new HashSet<>();
+    try (Cursor cursor = queryTables(projection, selection, null, null)) {
+      while (cursor != null && cursor.moveToNext()) {
+        String serialized = cursor.getString(0);
+        try {
+          out.add(Address.fromSerialized(serialized));
+        } catch (Exception e) {
+          // If parsing fails, skip this row
+          Log.w(TAG, "Skipping unparsable address: " + serialized, e);
+        }
+      }
+    }
+    return out;
   }
 
   /**

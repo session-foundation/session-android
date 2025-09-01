@@ -183,7 +183,6 @@
     <string name="callsSettings">Hívások (béta)</string>
     <string name="callsVoiceAndVideo">Hang és videó hívások</string>
     <string name="callsVoiceAndVideoBeta">Hang és videó hívások (béta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Az IP címed látható a hívópartner és egy Oxen Foundation szerver számára a béta hívások használata közben.</string>
     <string name="callsVoiceAndVideoToggleDescription">Lehetővé teszi a hang- és videohívásokat más felhasználókkal.</string>
     <string name="callsYouCalled">Felhívtad őt: {name}</string>
     <string name="callsYouMissedCallPermissions">Elmulasztottad <b>{name}</b> hívását, mert a <b>hang- és videó hívások</b> funkció nincs engedélyezve az adatvédelmi beállításokban.</string>
@@ -759,8 +758,6 @@
     <string name="open">Megnyitás</string>
     <string name="other">Egyéb</string>
     <string name="passwordChange">Jelszó megváltoztatása</string>
-    <string name="passwordChangeDescription">{app_name} alkalmazás jelszavának megváltoztatása.</string>
-    <string name="passwordChangedDescription">A jelszó megváltozott. Tartsd biztonságos helyen!</string>
     <string name="passwordConfirm">Jelszó megerősítése</string>
     <string name="passwordCurrentIncorrect">Az aktuális jelszavad helytelen.</string>
     <string name="passwordEnter">Jelszó megadása</string>
@@ -771,7 +768,6 @@
     <string name="passwordFailed">Jelszó frissítése sikertelen</string>
     <string name="passwordIncorrect">Hibás jelszó</string>
     <string name="passwordRemove">Jelszó eltávolítása</string>
-    <string name="passwordRemovedDescription">A jelszavadat eltávolítottuk.</string>
     <string name="passwordSet">Jelszó beállítása</string>
     <string name="paste">Beillesztés</string>
     <string name="permissionChange">Engedélyváltozás</string>

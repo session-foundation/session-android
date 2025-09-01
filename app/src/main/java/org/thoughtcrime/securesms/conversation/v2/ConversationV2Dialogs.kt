@@ -48,7 +48,8 @@ fun ConversationV2Dialogs(
     dialogsState: ConversationViewModel.DialogsState,
     inputBarDialogsState: InputbarViewModel.InputBarDialogsState,
     sendCommand: (ConversationViewModel.Commands) -> Unit,
-    sendInputBarCommand: (InputbarViewModel.Commands) -> Unit
+    sendInputBarCommand: (InputbarViewModel.Commands) -> Unit,
+    onPostUserProfileModalAction: () -> Unit // a function called in the User Profile Modal once an action has been taken
 ){
     SessionMaterialTheme {
         // inputbar dialogs
@@ -233,6 +234,7 @@ fun ConversationV2Dialogs(
                 sendCommand = {
                     sendCommand(ConversationViewModel.Commands.HandleUserProfileCommand(it))
                 },
+                onPostAction = onPostUserProfileModalAction
             )
         }
     }
@@ -248,7 +250,8 @@ fun PreviewURLDialog(){
             ),
             inputBarDialogsState = InputbarViewModel.InputBarDialogsState(),
             sendCommand = {},
-            sendInputBarCommand = {}
+            sendInputBarCommand = {},
+            onPostUserProfileModalAction = {}
         )
     }
 }

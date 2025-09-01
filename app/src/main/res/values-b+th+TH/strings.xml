@@ -152,7 +152,6 @@
     <string name="callsSettings">การโทร (เบต้า)</string>
     <string name="callsVoiceAndVideo">การโทรด้วยเสียงและวิดีโอ.</string>
     <string name="callsVoiceAndVideoBeta">การโทรด้วยเสียงและวิดีโอ (Beta).</string>
-    <string name="callsVoiceAndVideoModalDescription">IP ของคุณจะสามารถมองเห็นได้โดยคู่สายของคุณและเซิร์ฟเวอร์ของ Oxen Foundation ในขณะที่ใช้เบต้าการโทร</string>
     <string name="callsVoiceAndVideoToggleDescription">เปิดการโทรด้วยเสียงและวิดีโอไปยังและจากผู้ใช้รายอื่น</string>
     <string name="callsYouCalled">คุณได้โทรหา {name}</string>
     <string name="callsYouMissedCallPermissions">คุณพลาดสายจาก <b>{name}​</b> เพราะคุณไม่ได้เปิดใช้งาน <b>การโทรด้วยเสียงและวิดีโอ</b> ในการตั้งค่าความเป็นส่วนตัว</string>
@@ -624,8 +623,6 @@
     <string name="open">เปิด</string>
     <string name="other">ที่อื่น</string>
     <string name="passwordChange">เปลี่ยนรหัสผ่าน</string>
-    <string name="passwordChangeDescription">เปลี่ยนรหัสผ่านที่ใช้ปลดล็อก {app_name}</string>
-    <string name="passwordChangedDescription">รหัสผ่านของคุณได้รับการเปลี่ยนแปลงแล้ว กรุณารักษาเอาไว้ให้ปลอดภัย</string>
     <string name="passwordConfirm">Confirm password</string>
     <string name="passwordCurrentIncorrect">รหัสผ่านปัจจุบันของคุณไม่ถูกต้อง</string>
     <string name="passwordEnter">ป้อนรหัสผ่าน</string>
@@ -636,7 +633,6 @@
     <string name="passwordFailed">การตั้งรหัสผ่านล้มเหลว</string>
     <string name="passwordIncorrect">รหัสผ่านไม่ถูกต้อง</string>
     <string name="passwordRemove">ลบรหัสผ่าน</string>
-    <string name="passwordRemovedDescription">รหัสผ่านของคุณถูกลบแล้ว</string>
     <string name="passwordSet">ตั้งรหัสผ่าน</string>
     <string name="paste">วาง</string>
     <string name="permissionMusicAudioDenied">{app_name} ต้องการเข้าถึงเพลงและเสียงเพื่อส่งไฟล์, เพลง และเสียง แต่คำขอนั้นถูกปฏิเสธอย่างถาวร กรุณาไปที่เมนูตั้งค่า → การอนุญาต และเปิดใช้งาน \"เพลงและเสียง\"</string>

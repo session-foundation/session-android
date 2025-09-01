@@ -1,10 +1,10 @@
 package org.thoughtcrime.securesms.ui
 
-import android.content.Intent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -36,8 +36,8 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2.Companion.ADDRESS
 import org.thoughtcrime.securesms.ui.components.SlimAccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
@@ -62,6 +62,7 @@ fun UserProfileModal(
     data: UserProfileModalData,
     sendCommand: (UserProfileModalCommands) -> Unit,
     onDismissRequest: () -> Unit,
+    onPostAction: (() -> Unit)? = null // a function for optional code once an action has been taken
 ){
     // the user profile modal
     val context = LocalContext.current
@@ -104,7 +105,12 @@ fun UserProfileModal(
 
             // account ID
             AccountIdHeader(
-                text = if(data.isBlinded) stringResource(R.string.blindedId) else stringResource(R.string.accountId)
+                text = if(data.isBlinded) stringResource(R.string.blindedId) else stringResource(R.string.accountId),
+                textStyle = LocalType.current.small,
+                textPaddingValues = PaddingValues(
+                    horizontal = LocalDimensions.current.smallSpacing,
+                    vertical = LocalDimensions.current.xxxsSpacing
+                )
             )
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
@@ -182,14 +188,19 @@ fun UserProfileModal(
                 SlimAccentOutlineButton(
                     modifier = buttonModifier,
                     text = stringResource(R.string.message),
-                    enabled = data.enableMessage,
+                    enabled = data.enableMessage && data.messageAddress != null,
                     onClick = {
                         // close dialog
                         onDismissRequest()
 
+                        // optional action
+                        onPostAction?.invoke()
+
                         // open conversation with user
-                        context.startActivity(Intent(context, ConversationActivityV2::class.java)
-                            .putExtra(ADDRESS, Address.fromSerialized(data.rawAddress))
+                        context.startActivity(
+                            ConversationActivityV2.createIntent(
+                                context = context, address = data.messageAddress!!
+                            )
                         )
                     }
                 )
@@ -235,7 +246,7 @@ private fun PreviewUPM(
                     tooltipText = null,
                     rawAddress = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
                     displayAddress = "123456789112345678911234567891123\n123456789112345678911234567891123",
-                    threadId = 0L,
+                    threadAddress = Address.Standard(AccountId("053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144")),
                     enableMessage = true,
                     expandedAvatar = false,
                     showQR = false,
@@ -247,7 +258,8 @@ private fun PreviewUPM(
                                 color = primaryRed
                             )
                         )
-                    )
+                    ),
+                    messageAddress = Address.Standard(AccountId("053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144"))
                 )
             )
         }
@@ -294,7 +306,7 @@ private fun PreviewUPMResolved(
                     tooltipText = "Some tooltip text that is long and should break into multiple line if necessary",
                     rawAddress = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
                     displayAddress = "12345678911234567891123\n45678911231234567891123\n45678911234567891123",
-                    threadId = 0L,
+                    threadAddress = Address.Standard(AccountId("053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144")),
                     enableMessage = true,
                     expandedAvatar = false,
                     showQR = true,
@@ -306,7 +318,8 @@ private fun PreviewUPMResolved(
                                 color = primaryRed
                             )
                         )
-                    )
+                    ),
+                    messageAddress = Address.Standard(AccountId("053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144"))
                 )
             )
         }
@@ -354,7 +367,7 @@ private fun PreviewUPMQR(
                     tooltipText = "Some tooltip",
                     rawAddress = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
                     displayAddress = "1111111111...1111111111",
-                    threadId = 0L,
+                    threadAddress = Address.Standard(AccountId("053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144")),
                     enableMessage = false,
                     expandedAvatar = false,
                     showQR = false,
@@ -366,7 +379,8 @@ private fun PreviewUPMQR(
                                 color = primaryRed
                             )
                         )
-                    )
+                    ),
+                    messageAddress = Address.Standard(AccountId("053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144"))
                 )
             )
         }
@@ -395,7 +409,7 @@ private fun PreviewUPMCTA(
                 tooltipText = "Some tooltip",
                 rawAddress = "158342146b...c6ed734na5",
                 displayAddress = "158342146b...c6ed734na5",
-                threadId = 0L,
+                threadAddress = Address.Standard(AccountId("053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144")),
                 enableMessage = false,
                 expandedAvatar = true,
                 showQR = false,
@@ -407,7 +421,8 @@ private fun PreviewUPMCTA(
                             color = primaryRed
                         )
                     )
-                )
+                ),
+                messageAddress = Address.Standard(AccountId("053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144"))
             ),
             onDismissRequest = {},
             sendCommand = {}

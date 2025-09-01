@@ -352,6 +352,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.interpolator)
 
     // Add firebase dependencies to specific variants
     for (variant in firebaseEnabledVariants) {
@@ -378,14 +379,12 @@ dependencies {
     implementation(libs.android)
     implementation(libs.photoview)
     implementation(libs.glide)
-    implementation(libs.compose)
-    implementation(libs.eventbus)
+    implementation(libs.glide.compose)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.gif)
     implementation(libs.android.image.cropper)
     implementation(libs.subsampling.scale.image.view) {
         exclude(group = "com.android.support", module = "support-annotations")
-    }
-    implementation(libs.tooltips) {
-        exclude(group = "com.android.support", module = "appcompat-v7")
     }
     implementation(libs.stream)
     implementation(libs.androidx.sqlite.ktx)

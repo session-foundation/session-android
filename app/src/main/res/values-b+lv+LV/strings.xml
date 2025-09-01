@@ -145,7 +145,6 @@
     <string name="callsSettings">Zvani (Beta)</string>
     <string name="callsVoiceAndVideo">Balss un video zvani</string>
     <string name="callsVoiceAndVideoBeta">Balss un video zvani (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Izmantojot beta zvanus, jūsu IP ir redzams jūsu zvana partnerim un Oxen Foundation serverim.</string>
     <string name="callsVoiceAndVideoToggleDescription">Iespējot balss un video zvanus uz un no citiem lietotājiem.</string>
     <string name="callsYouCalled">Jūs zvanījāt {name}</string>
     <string name="callsYouMissedCallPermissions">Jūs nokavējāt zvanu no <b>{name}</b>, jo jums nav iespējoti <b>Balss un video zvani</b> privātuma iestatījumos.</string>
@@ -586,8 +585,6 @@
     <string name="open">Atvērt</string>
     <string name="other">Cits</string>
     <string name="passwordChange">Mainīt paroli</string>
-    <string name="passwordChangeDescription">Mainīt paroli, kas nepieciešama {app_name} atbloķēšanai.</string>
-    <string name="passwordChangedDescription">Jūsu parole tika nomainīta. Lūdzu, saglabājiet to drošībā.</string>
     <string name="passwordConfirm">Apstipriniet paroli</string>
     <string name="passwordCurrentIncorrect">Jūsu pašreizējā parole ir nepareiza.</string>
     <string name="passwordEnter">Ievadiet paroli</string>
@@ -598,7 +595,6 @@
     <string name="passwordFailed">Neizdevās iestatīt paroli</string>
     <string name="passwordIncorrect">Nepareiza parole</string>
     <string name="passwordRemove">Noņemt paroli</string>
-    <string name="passwordRemovedDescription">Jūsu parole tika noņemta.</string>
     <string name="passwordSet">Iestatīt Paroli</string>
     <string name="paste">Ielīmēt</string>
     <string name="permissionsAppleMusic">{app_name} nepieciešams izmantot Apple Music, lai atskaņotu multivides pielikumus.</string>

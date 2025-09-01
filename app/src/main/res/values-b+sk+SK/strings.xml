@@ -152,7 +152,6 @@
     <string name="callsSettings">Hovory (Beta)</string>
     <string name="callsVoiceAndVideo">Hlasové a video hovory</string>
     <string name="callsVoiceAndVideoBeta">Hlasové a video hovory (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Vaša IP adresa je viditeľná vášmu volajúcemu partnerovi a serveru Oxen Foundation pri používaní beta hovory.</string>
     <string name="callsVoiceAndVideoToggleDescription">Umožňuje hlasové a video hovory s inými používateľmi a od nich.</string>
     <string name="callsYouCalled">Volali ste {name}</string>
     <string name="callsYouMissedCallPermissions">Zmeškali ste hovor od <b>{name}</b>, pretože ste nepovolili <b>Hlasové a video hovory</b> v nastaveniach súkromia.</string>
@@ -660,8 +659,6 @@
     <string name="open">Otvoriť</string>
     <string name="other">Iné</string>
     <string name="passwordChange">Zmeniť heslo</string>
-    <string name="passwordChangeDescription">Zmeňte heslo potrebné na odomknutie {app_name}.</string>
-    <string name="passwordChangedDescription">Vaše heslo bolo zmenené. Uchovajte ho prosím v bezpečí.</string>
     <string name="passwordConfirm">Potvrdiť heslo</string>
     <string name="passwordCurrentIncorrect">Vaše aktuálne heslo je nesprávne.</string>
     <string name="passwordEnter">Zadajte heslo</string>
@@ -672,7 +669,6 @@
     <string name="passwordFailed">Nepodarilo sa nastaviť heslo</string>
     <string name="passwordIncorrect">Nesprávne heslo</string>
     <string name="passwordRemove">Odstrániť heslo</string>
-    <string name="passwordRemovedDescription">Vaše heslo bolo odstránené.</string>
     <string name="passwordSet">Nastaviť heslo</string>
     <string name="paste">Vložiť</string>
     <string name="permissionMusicAudioDenied">{app_name} potrebuje prístup k hudbe a zvukom na odosielanie súborov, hudby a zvukov, ale bol natrvalo odmietnutý. Tap Settings → Permissions, and turn \"Music and audio\" on.</string>

@@ -151,7 +151,6 @@
     <string name="callsSettings">Званкі (бэта)</string>
     <string name="callsVoiceAndVideo">Галасавыя і відэазванкі</string>
     <string name="callsVoiceAndVideoBeta">Галасавыя і відэазванкі (бэта)</string>
-    <string name="callsVoiceAndVideoModalDescription">Ваш IP будзе бачныя вашаму партнёру па званках і серверу Oxen Foundation падчас выкарыстання бэта-званкоў.</string>
     <string name="callsVoiceAndVideoToggleDescription">Дазваляе рабіць галасавыя і відэазванкі іншым карыстальнікам.</string>
     <string name="callsYouCalled">Вы патэлефанавалі {name}</string>
     <string name="callsYouMissedCallPermissions">Вы прапусцілі званок ад <b>{name}</b>, таму што не ўключылі <b>Галасавыя і відэазванкі</b> у наладах прыватнасці.</string>
@@ -659,8 +658,6 @@
     <string name="open">Адкрыць</string>
     <string name="other">Іншае</string>
     <string name="passwordChange">Змяніць пароль</string>
-    <string name="passwordChangeDescription">Змяніць пароль для разблакоўкі {app_name}.</string>
-    <string name="passwordChangedDescription">Ваш пароль быў зменены. Захавайце яго ў бяспецы.</string>
     <string name="passwordConfirm">Пацвердзіць пароль</string>
     <string name="passwordCurrentIncorrect">Ваш бягучы пароль няправільны.</string>
     <string name="passwordEnter">Увядзіце пароль</string>
@@ -671,7 +668,6 @@
     <string name="passwordFailed">Не атрымалася ўсталяваць пароль</string>
     <string name="passwordIncorrect">Няправільны пароль</string>
     <string name="passwordRemove">Выдаліць пароль</string>
-    <string name="passwordRemovedDescription">Ваш пароль быў выдалены.</string>
     <string name="passwordSet">Задаць пароль</string>
     <string name="paste">Уставіць</string>
     <string name="permissionMusicAudioDenied">{app_name} патрабуе доступу да музыкі і аўдыё для адпраўкі файлаў, музыкі і аўдыё, але доступ быў пастаянна забаронены. Націсніце «Налады» → «Дазволы» і актывуйце «Музыка і аўдыё».</string>

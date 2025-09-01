@@ -184,7 +184,6 @@
     <string name="callsSettings">Appels (Bêta)</string>
     <string name="callsVoiceAndVideo">Appels vocaux et vidéos</string>
     <string name="callsVoiceAndVideoBeta">Appels vocaux et vidéos (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Votre adresse IP est visible par votre interlocuteur et un serveur d\'Oxen Foundation pendant que vous utilisez des appels beta.</string>
     <string name="callsVoiceAndVideoToggleDescription">Active les appels vocaux et vidéo vers et depuis d\'autres utilisateurs.</string>
     <string name="callsYouCalled">Vous avez appelé {name}</string>
     <string name="callsYouMissedCallPermissions">Vous avez manqué un appel de <b>{name}</b> car vous n\'avez pas activé <b>Appels vocaux et vidéo</b> dans les Paramètres de confidentialité.</string>
@@ -770,8 +769,6 @@
     <string name="openSurvey">Ouvrir le questionnaire</string>
     <string name="other">Autre</string>
     <string name="passwordChange">Changer le mot de passe</string>
-    <string name="passwordChangeDescription">Modifier le mot de passe requis pour déverrouiller {app_name}</string>
-    <string name="passwordChangedDescription">Votre mot de passe a été changé. Veuillez le conserver en sécurité.</string>
     <string name="passwordConfirm">Confirmez le mot de passe</string>
     <string name="passwordCurrentIncorrect">Votre mot de passe actuel est incorrect.</string>
     <string name="passwordEnter">Entrez le mot de passe</string>
@@ -783,7 +780,6 @@
     <string name="passwordFailed">Échec de la définition du mot de passe</string>
     <string name="passwordIncorrect">Mot de passe incorrect</string>
     <string name="passwordRemove">Supprimer le mot de passe</string>
-    <string name="passwordRemovedDescription">Votre mot de passe a été supprimé.</string>
     <string name="passwordSet">Définir un mot de passe</string>
     <string name="paste">Coller</string>
     <string name="permissionChange">Changement de permission</string>
@@ -831,7 +827,6 @@
     <string name="proAnimatedDisplayPictureFeature">Photo de profil animée</string>
     <string name="proAnimatedDisplayPictureModalDescription">les utilisateurs peuvent télécharger des GIFs</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Téléversez des GIF avec</string>
-    <string name="proBadge">Badge {app_pro}</string>
     <string name="proCallToActionLongerMessages">Vous voulez envoyer des messages plus longs ? Envoyez plus de messages et débloqué les fonctionnalités premium avec {app_pro}</string>
     <string name="proCallToActionPinnedConversations">Vous voulez plus de messages épinglés ? Organisez vos chats et débloquez les fonctionnalités premium avec {app_pro}</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Vous voulez plus que 5 messages épinglés ? Organisez vos chats et débloquez les fonctionnalités premium avec {app_pro}</string>

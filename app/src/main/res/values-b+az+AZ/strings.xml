@@ -184,7 +184,6 @@
     <string name="callsSettings">Zənglər (Beta)</string>
     <string name="callsVoiceAndVideo">Səsli və görüntülü zənglər</string>
     <string name="callsVoiceAndVideoBeta">Səsli və görüntülü zənglər (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Beta zənglərini istifadə edərkən IP ünvanınız zəng tərəfdaşınıza və Oxen Foundation serverinə görünür.</string>
     <string name="callsVoiceAndVideoToggleDescription">Digər istifadəçilərlə səsli və görüntülü zəngləri təmin edir.</string>
     <string name="callsYouCalled">{name} istifadəçisinə zəng etdiniz</string>
     <string name="callsYouMissedCallPermissions">Gizlilik Ayarlarında <b>Səsli və görüntülü zənglər</b> seçimini fəallaşdırmadığınız üçün <b>{name}</b> etdiyi bir zəngi buraxdınız.</string>
@@ -770,8 +769,6 @@
     <string name="openSurvey">Anketi aç</string>
     <string name="other">Digər</string>
     <string name="passwordChange">Parolu dəyişdir</string>
-    <string name="passwordChangeDescription">{app_name} kilidini açmaq üçün tələb olunan parolu dəyişdir.</string>
-    <string name="passwordChangedDescription">Parolunuz dəyişdirildi. Lütfən, onu güvəndə saxlayın.</string>
     <string name="passwordConfirm">Parolu təsdiqlə</string>
     <string name="passwordCurrentIncorrect">Hazırkı parolunuz yanlışdır.</string>
     <string name="passwordEnter">Parolu daxil edin</string>
@@ -783,7 +780,6 @@
     <string name="passwordFailed">Parol təyin etmə uğursuz oldu</string>
     <string name="passwordIncorrect">Yanlış parol</string>
     <string name="passwordRemove">Parolu sil</string>
-    <string name="passwordRemovedDescription">Parolunuz silindi.</string>
     <string name="passwordSet">Parol təyin et</string>
     <string name="paste">Yapışdır</string>
     <string name="permissionChange">İcazəni dəyişdir</string>
@@ -831,7 +827,6 @@
     <string name="proAnimatedDisplayPictureFeature">Animasiyalı profil şəkli</string>
     <string name="proAnimatedDisplayPictureModalDescription">istifadəçiləri GIF-ləri yükləyə bilər</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">GIF-ləri yükləyin</string>
-    <string name="proBadge">{app_pro} Nişanı</string>
     <string name="proCallToActionLongerMessages">Daha uzun mesajlar göndərmək istəyirsiniz? {app_pro} ilə daha çox mətn göndərin və premium özəlliklərin kilidini açın</string>
     <string name="proCallToActionPinnedConversations">Daha çoxunu sancmaq istəyirsiniz? {app_pro} ilə söhbətlərinizi təşkil edin və premium özəlliklərin kilidini açın</string>
     <string name="proCallToActionPinnedConversationsMoreThan">5-dən çoxunu sancmaq istəyirsiniz? {app_pro} ilə söhbətlərinizi təşkil edin və premium özəlliklərin kilidini açın</string>

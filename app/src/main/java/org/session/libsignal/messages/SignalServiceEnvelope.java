@@ -32,8 +32,8 @@ public class SignalServiceEnvelope {
     if (proto.getSourceDevice() > 0) {
       builder.setSourceDevice(proto.getSourceDevice());
     }
-    builder.setTimestamp(proto.getTimestamp());
-    builder.setServerTimestamp(proto.getServerTimestamp());
+    builder.setTimestampMs(proto.getTimestampMs());
+    builder.setServerTimestampMs(proto.getServerTimestampMs());
     if (proto.getContent() != null) {
       builder.setContent(ByteString.copyFrom(proto.getContent().toByteArray()));
     }
@@ -45,8 +45,8 @@ public class SignalServiceEnvelope {
                                        .setType(Envelope.Type.valueOf(type))
                                        .setSource(sender)
                                        .setSourceDevice(senderDevice)
-                                       .setTimestamp(timestamp)
-                                       .setServerTimestamp(serverTimestamp);
+                                       .setTimestampMs(timestamp)
+                                       .setServerTimestampMs(serverTimestamp);
 
     if (content != null)       builder.setContent(ByteString.copyFrom(content));
 
@@ -93,11 +93,11 @@ public class SignalServiceEnvelope {
    * @return The timestamp this envelope was sent.
    */
   public long getTimestamp() {
-    return envelope.getTimestamp();
+    return envelope.getTimestampMs();
   }
 
   public long getServerTimestamp() {
-    return envelope.getServerTimestamp();
+    return envelope.getServerTimestampMs();
   }
 
   /**

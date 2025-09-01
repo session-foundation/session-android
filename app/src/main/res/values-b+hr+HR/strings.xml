@@ -151,7 +151,6 @@
     <string name="callsSettings">Pozivi (Beta)</string>
     <string name="callsVoiceAndVideo">Audio i video pozivi</string>
     <string name="callsVoiceAndVideoBeta">Audio i video pozivi (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Vaš IP je vidljiv vašem sugovorniku i poslužitelju Oxen Foundation dok koristite beta pozive.</string>
     <string name="callsVoiceAndVideoToggleDescription">Omogućava glasovne i video pozive prema i od drugih korisnika.</string>
     <string name="callsYouCalled">Zvali ste {name}</string>
     <string name="callsYouMissedCallPermissions">Propustili ste poziv od <b>{name}</b> jer niste omogućili <b>Glasovne i Video pozive</b> u Postavkama privatnosti.</string>
@@ -647,8 +646,6 @@
     <string name="open">Otvori</string>
     <string name="other">Ostalo</string>
     <string name="passwordChange">Promijeni lozinku</string>
-    <string name="passwordChangeDescription">Promijenite lozinku potrebnu za otključavanje {app_name}.</string>
-    <string name="passwordChangedDescription">Vaša lozinka je promijenjena. Molimo, čuvajte je na sigurnom.</string>
     <string name="passwordConfirm">Potvrdi lozinku</string>
     <string name="passwordCurrentIncorrect">Vaša trenutna lozinka je netočna.</string>
     <string name="passwordEnter">Unesite lozinku</string>
@@ -659,7 +656,6 @@
     <string name="passwordFailed">Postavljanje lozinke nije uspjelo</string>
     <string name="passwordIncorrect">Neispravna lozinka</string>
     <string name="passwordRemove">Ukloni lozinku</string>
-    <string name="passwordRemovedDescription">Vaša lozinka je uklonjena.</string>
     <string name="passwordSet">Postavi lozinku</string>
     <string name="paste">Zalijepi</string>
     <string name="permissionMusicAudioDenied">{app_name} treba pristup glazbi i zvuku kako bi mogao slati datoteke, glazbu i zvuk, no to je sada trajno onemogućeno. Tap Settings → Permissions, i uključite \"Glazba i zvuk\".</string>

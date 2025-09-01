@@ -152,7 +152,6 @@
     <string name="callsSettings">Mga Tawag (Beta)</string>
     <string name="callsVoiceAndVideo">Mga Voice at Video Call</string>
     <string name="callsVoiceAndVideoBeta">Mga Voice at Video Call (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Nakikita ang iyong IP sa iyong kasama sa tawag at sa server ng Oxen Foundation habang gumagamit ng beta calls.</string>
     <string name="callsVoiceAndVideoToggleDescription">Ini-enable ang mga voice at video call papunta at mula sa iba pang mga user.</string>
     <string name="callsYouCalled">Tinawagan mo si {name}</string>
     <string name="callsYouMissedCallPermissions">Namiss mo ang tawag mula kay <b>{name}</b> dahil hindi mo pinagana ang <b>Mga Tawag sa Boses at Video</b> sa Privacy Settings.</string>
@@ -636,8 +635,6 @@
     <string name="open">Buksan</string>
     <string name="other">Iba pa</string>
     <string name="passwordChange">Palitan ang Password</string>
-    <string name="passwordChangeDescription">Palitan ang password na kailangan para i-unlock ang {app_name}.</string>
-    <string name="passwordChangedDescription">Ang iyong password ay nabago na. Mangyaring itago ito ng ligtas.</string>
     <string name="passwordConfirm">Kumpirmahin ang password</string>
     <string name="passwordCurrentIncorrect">Mali ang iyong kasalukuyang password.</string>
     <string name="passwordEnter">Ilagay ang password</string>
@@ -648,7 +645,6 @@
     <string name="passwordFailed">Nabigong mag-set ng password</string>
     <string name="passwordIncorrect">Maling password</string>
     <string name="passwordRemove">Tanggalin ang Password</string>
-    <string name="passwordRemovedDescription">Tinanggal ang iyong password.</string>
     <string name="passwordSet">Itakda ang Password</string>
     <string name="paste">Idikit</string>
     <string name="permissionMusicAudioDenied">Kailangan ng {app_name} ng access sa musika at audio upang makapagpadala ng mga file, musika at audio, ngunit ito ay permanenteng tinanggihan. Pindutin ang Settings → Permissions, at i-on ang \"Musika at audio\".</string>

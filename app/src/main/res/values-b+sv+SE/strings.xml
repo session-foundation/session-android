@@ -184,7 +184,6 @@
     <string name="callsSettings">Samtal (Beta)</string>
     <string name="callsVoiceAndVideo">Röst- och videosamtal</string>
     <string name="callsVoiceAndVideoBeta">Röst- och videosamtal (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Din IP är synlig för din samtalspartner och en Oxen Foundation server när du använder beta-samtal.</string>
     <string name="callsVoiceAndVideoToggleDescription">Möjliggör röst- och videosamtal till och från andra användare.</string>
     <string name="callsYouCalled">Du ringde {name}</string>
     <string name="callsYouMissedCallPermissions">Du missade ett samtal från <b>{name}</b> eftersom du inte har aktiverat <b>Röst- och videosamtal</b> i Sekretessinställningar.</string>
@@ -770,8 +769,6 @@
     <string name="openSurvey">Öppna undersökning</string>
     <string name="other">Övrigt</string>
     <string name="passwordChange">Ändra lösenord</string>
-    <string name="passwordChangeDescription">Ändra lösenordet som krävs för att låsa upp {app_name}.</string>
-    <string name="passwordChangedDescription">Ditt lösenord har ändrats. Håll det säkert.</string>
     <string name="passwordConfirm">Bekräfta lösenord</string>
     <string name="passwordCurrentIncorrect">Ditt nuvarande lösenord är felaktigt.</string>
     <string name="passwordEnter">Ange lösenord</string>
@@ -783,7 +780,6 @@
     <string name="passwordFailed">Misslyckades att uppdatera lösenordet</string>
     <string name="passwordIncorrect">Felaktigt lösenord</string>
     <string name="passwordRemove">Ta bort lösenord</string>
-    <string name="passwordRemovedDescription">Ditt lösenord har tagits bort.</string>
     <string name="passwordSet">Ange lösenord</string>
     <string name="paste">Klistra in</string>
     <string name="permissionChange">Ändra tillåtelse</string>
@@ -831,7 +827,6 @@
     <string name="proAnimatedDisplayPictureFeature">Animerad visningsbild</string>
     <string name="proAnimatedDisplayPictureModalDescription">användare kan ladda upp GIF:ar</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Ladda upp GIF:ar med</string>
-    <string name="proBadge">{app_pro}-märke</string>
     <string name="proCallToActionLongerMessages">Vill du skicka längre meddelanden? Skicka mer text och lås upp premiumfunktioner med {app_pro}</string>
     <string name="proCallToActionPinnedConversations">Vill du ha fler fästen? Organisera dina chattar och lås upp premiumfunktioner med {app_pro}</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Vill du ha mer än 5 fästisar? Organisera dina chattar och lås upp premiumfunktioner med {app_pro}</string>

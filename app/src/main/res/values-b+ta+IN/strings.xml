@@ -153,7 +153,6 @@
     <string name="callsSettings">அழைப்புகள் (பீட்டா)</string>
     <string name="callsVoiceAndVideo">குரல் மற்றும் காணொளி அழைப்புகள்</string>
     <string name="callsVoiceAndVideoBeta">குரல் மற்றும் காணொளி அழைப்புகள் (பீட்டா)</string>
-    <string name="callsVoiceAndVideoModalDescription">அழைப்பு பிறையாளர் மற்றும் Oxen Foundation சர்வரில் உங்கள் ஐபி காட்டப்படவும் செய்தி சேவையின்போது.</string>
     <string name="callsVoiceAndVideoToggleDescription">பயனீர்களுக்கிடையே குரல் மற்றும் காணொளி அழைப்புகளை செயல்படுத்துகிறது.</string>
     <string name="callsYouCalled">நீங்கள் {name} ஐ அழைத்துள்ளீர்கள்</string>
     <string name="callsYouMissedCallPermissions">நீங்கள் <b>{name}</b> -ன் அழைப்பை (call) நீங்கள் <b>குரல் மற்றும் வீடியோ அழைப்புகளை</b> பொறிமுறையில் இயல்த்தவில்லை என்பதனால் தவற விட்டீர்கள்.</string>
@@ -640,8 +639,6 @@
     <string name="open">திற</string>
     <string name="other">பிற</string>
     <string name="passwordChange">கடவுச்சொல்லை மாற்றவும்</string>
-    <string name="passwordChangeDescription">{app_name} ேத்தUnlock ச்சபட செய்ய வேண்டிய கடவுச்சொல்லை மாற்றவும்.</string>
-    <string name="passwordChangedDescription">உங்களின் கடவுச்சொல் மாற்றப்பட்டுள்ளது. தயவுசெய்து அதை பாதுகாப்பாக வைத்திருங்கள்.</string>
     <string name="passwordConfirm">கடவுச்சொல்லை உறுதி செய்தல்</string>
     <string name="passwordCurrentIncorrect">உங்கள் நடப்புக் கடவுச்சொல் தவறாக உள்ளது.</string>
     <string name="passwordEnter">கடவுச்சொல்லை உள்ளிடவும்</string>
@@ -652,7 +649,6 @@
     <string name="passwordFailed">கடவுச்சொல்லை அமைப்பதில் தோல்வி</string>
     <string name="passwordIncorrect">தவறான கடவுச்சொல்</string>
     <string name="passwordRemove">கடவுச்சொல்லை அகற்றவும்</string>
-    <string name="passwordRemovedDescription">உங்களின் கடவுச்சொல் நீக்கப்பட்டது.</string>
     <string name="passwordSet">கடவுச்சொல்லை அமை</string>
     <string name="paste">ஒட்டவும்</string>
     <string name="permissionMusicAudioDenied">{app_name} கோப்புகளை, இசையை மற்றும் ஆடியோவின் அனுமதி கிடைக்க வேண்டியது அவசியம், ஆனால் இது நிரந்தரமாக நரம்பாகியிருக்கின்றது. அமைப்புகள்-க்கு தட்டவும் → அனுமதிகள், மற்றும் \"இசை மற்றும் ஆடியோ\" இயலுமைப்படுத்தவும்.</string>

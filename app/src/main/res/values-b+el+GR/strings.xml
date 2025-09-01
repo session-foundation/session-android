@@ -153,7 +153,6 @@
     <string name="callsSettings">Κλήσεις (Beta)</string>
     <string name="callsVoiceAndVideo">Κλήσεις Φωνής και Βίντεο</string>
     <string name="callsVoiceAndVideoBeta">Κλήσεις Φωνής και Βίντεο (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Η διεύθυνση IP σας είναι ορατή στον συνομιλητή σας και σε έναν διακομιστή του Oxen Foundation κατά τη χρήση κλήσεων beta.</string>
     <string name="callsVoiceAndVideoToggleDescription">Επιτρέπει κλήσεις φωνής και βίντεο από και προς άλλους χρήστες.</string>
     <string name="callsYouCalled">Καλέσατε {name}</string>
     <string name="callsYouMissedCallPermissions">Χάσατε μια κλήση από <b>{name}</b> επειδή δεν έχετε ενεργοποιήσει τις <b>Κλήσεις Φωνής και Βίντεο</b> στις Ρυθμίσεις Απορρήτου.</string>
@@ -652,8 +651,6 @@
     <string name="open">Άνοιγμα</string>
     <string name="other">Άλλο</string>
     <string name="passwordChange">Αλλαγή Κωδικού Πρόσβασης</string>
-    <string name="passwordChangeDescription">Αλλαγή του κωδικού πρόσβασης που απαιτείται για το ξεκλείδωμα του {app_name}.</string>
-    <string name="passwordChangedDescription">Ο κωδικός πρόσβασής σας έχει αλλάξει. Παρακαλώ κρατήστε τον ασφαλή.</string>
     <string name="passwordConfirm">Επιβεβαίωση κωδικού πρόσβασης</string>
     <string name="passwordCurrentIncorrect">Ο τρέχων κωδικός πρόσβασής σας είναι λανθασμένος.</string>
     <string name="passwordEnter">Εισαγάγετε τον Κωδικό Πρόσβασης</string>
@@ -664,7 +661,6 @@
     <string name="passwordFailed">Αποτυχία ορισμού κωδικού πρόσβασης</string>
     <string name="passwordIncorrect">Λάθος κωδικός πρόσβασης</string>
     <string name="passwordRemove">Αφαίρεση Κωδικού Πρόσβασης</string>
-    <string name="passwordRemovedDescription">Ο κωδικός πρόσβασής σας έχει αφαιρεθεί.</string>
     <string name="passwordSet">Ορισμός Κωδικού Πρόσβασης</string>
     <string name="paste">Επικόλληση</string>
     <string name="permissionMusicAudioDenied">{app_name} χρειάζεται πρόσβαση στη μουσική και τον ήχο για να στείλει αρχεία, μουσική και ήχο, αλλά η πρόσβαση έχει απορριφθεί μόνιμα. Πατήστε Ρυθμίσεις → Δικαιώματα, και ενεργοποιήστε το \"Μουσική και ήχος\".</string>

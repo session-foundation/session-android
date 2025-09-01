@@ -28,7 +28,7 @@ data class ExpirationTimerUpdate(var syncTarget: String? = null, val isGroup: Bo
     override fun toProto(): SignalServiceProtos.Content? {
         val dataMessageProto = SignalServiceProtos.DataMessage.newBuilder().apply {
             flags = EXPIRATION_TIMER_UPDATE_VALUE
-            expireTimer = expiryMode.expirySeconds.toInt()
+            expireTimerSeconds = expiryMode.expirySeconds.toInt()
         }
         // Sync target
         syncTarget?.let { dataMessageProto.syncTarget = it }

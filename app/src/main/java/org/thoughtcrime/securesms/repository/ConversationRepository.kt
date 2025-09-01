@@ -1,16 +1,25 @@
 package org.thoughtcrime.securesms.repository
 
-import android.content.ContentResolver
-import android.content.Context
-import app.cash.copper.Query
-import app.cash.copper.flow.observeQuery
-import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.util.ExpiryMode
+import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.groups.GroupManagerV2
@@ -26,18 +35,22 @@ import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.UserConfigType
+import org.session.libsession.utilities.isGroupV2
+import org.session.libsession.utilities.isLegacyGroup
+import org.session.libsession.utilities.isStandard
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.upsertContact
+import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.DraftDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
-import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
-import org.thoughtcrime.securesms.database.SessionJobDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -45,53 +58,63 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.util.observeChanges
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.util.castAwayType
+import java.util.EnumSet
 import javax.inject.Inject
+import javax.inject.Singleton
 
 interface ConversationRepository {
-    fun maybeGetRecipientForThreadId(threadId: Long): Recipient?
-    fun maybeGetBlindedRecipient(recipient: Recipient): Recipient?
-    fun changes(threadId: Long): Flow<Query>
-    fun recipientUpdateFlow(threadId: Long): Flow<Recipient?>
+    fun observeConversationList(): Flow<List<ThreadRecord>>
+
+    /**
+     * Returns a list of threads that are visible to the user. Note that this
+     * list includes both approved and unapproved threads.
+     */
+
+    fun getConversationList(): List<ThreadRecord>
+
+
+    val conversationListAddressesFlow: StateFlow<Set<Address.Conversable>>
+
     fun saveDraft(threadId: Long, text: String)
     fun getDraft(threadId: Long): String?
     fun clearDrafts(threadId: Long)
-    fun inviteContactsToCommunity(threadId: Long, contacts: List<Recipient>)
-    fun setBlocked(recipient: Recipient, blocked: Boolean)
+    fun inviteContactsToCommunity(threadId: Long, contacts: Collection<Address>)
+    fun setBlocked(recipient: Address, blocked: Boolean)
     fun markAsDeletedLocally(messages: Set<MessageRecord>, displayedMessage: String)
-    fun deleteMessages(messages: Set<MessageRecord>, threadId: Long)
+    fun deleteMessages(messages: Set<MessageRecord>)
     fun deleteAllLocalMessagesInThreadFromSenderOfMessage(messageRecord: MessageRecord)
-    fun setApproved(recipient: Recipient, isApproved: Boolean)
     fun isGroupReadOnly(recipient: Recipient): Boolean
     fun getLastSentMessageID(threadId: Long): Flow<MessageId?>
 
-    suspend fun deleteCommunityMessagesRemotely(threadId: Long, messages: Set<MessageRecord>)
+    suspend fun deleteCommunityMessagesRemotely(
+        community: Address.Community,
+        messages: Set<MessageRecord>
+    )
     suspend fun delete1on1MessagesRemotely(
-        threadId: Long,
-        recipient: Recipient,
+        recipient: Address,
         messages: Set<MessageRecord>
     )
     suspend fun deleteNoteToSelfMessagesRemotely(
-        threadId: Long,
-        recipient: Recipient,
+        recipient: Address,
         messages: Set<MessageRecord>
     )
     suspend fun deleteLegacyGroupMessagesRemotely(
-        recipient: Recipient,
+        recipient: Address,
         messages: Set<MessageRecord>
     )
 
-    suspend fun deleteGroupV2MessagesRemotely(recipient: Recipient, messages: Set<MessageRecord>)
+    suspend fun deleteGroupV2MessagesRemotely(recipient: Address, messages: Set<MessageRecord>)
 
-    suspend fun banUser(threadId: Long, recipient: Recipient): Result<Unit>
-    suspend fun banAndDeleteAll(threadId: Long, recipient: Recipient): Result<Unit>
-    suspend fun deleteThread(threadId: Long): Result<Unit>
+    suspend fun banUser(community: Address.Community, userId: AccountId): Result<Unit>
+    suspend fun banAndDeleteAll(community: Address.Community, userId: AccountId): Result<Unit>
     suspend fun deleteMessageRequest(thread: ThreadRecord): Result<Unit>
-    suspend fun clearAllMessageRequests(block: Boolean): Result<Unit>
-    suspend fun acceptMessageRequest(threadId: Long, recipient: Recipient): Result<Unit>
-    suspend fun declineMessageRequest(threadId: Long, recipient: Recipient): Result<Unit>
+    suspend fun clearAllMessageRequests(): Result<Unit>
+    suspend fun acceptMessageRequest(recipient: Address.Conversable): Result<Unit>
+    suspend fun declineMessageRequest(recipient: Address.Conversable): Result<Unit>
     fun hasReceived(threadId: Long): Boolean
-    fun getInvitingAdmin(threadId: Long): Recipient?
+    fun getInvitingAdmin(threadId: Long): Address?
 
     /**
      * This will delete all messages from the database.
@@ -104,45 +127,108 @@ interface ConversationRepository {
     suspend fun clearAllMessages(threadId: Long, groupId: AccountId?): Int
 }
 
+@Singleton
 class DefaultConversationRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val textSecurePreferences: TextSecurePreferences,
     private val messageDataProvider: MessageDataProvider,
     private val threadDb: ThreadDatabase,
     private val draftDb: DraftDatabase,
     private val lokiThreadDb: LokiThreadDatabase,
     private val smsDb: SmsDatabase,
-    private val mmsDb: MmsDatabase,
     private val mmsSmsDb: MmsSmsDatabase,
     private val storage: Storage,
     private val lokiMessageDb: LokiMessageDatabase,
-    private val sessionJobDb: SessionJobDatabase,
     private val configFactory: ConfigFactory,
-    private val contentResolver: ContentResolver,
     private val groupManager: GroupManagerV2,
     private val clock: SnodeClock,
+    private val recipientDatabase: RecipientSettingsDatabase,
+    private val recipientRepository: RecipientRepository,
+    @param:ManagerScope private val scope: CoroutineScope,
 ) : ConversationRepository {
 
-    override fun maybeGetRecipientForThreadId(threadId: Long): Recipient? {
-        return threadDb.getRecipientForThreadId(threadId)
-    }
+    override val conversationListAddressesFlow = configFactory
+        .userConfigsChanged(EnumSet.of(
+            UserConfigType.CONTACTS,
+            UserConfigType.USER_PROFILE,
+            UserConfigType.USER_GROUPS
+        ))
+        .castAwayType()
+        .onStart {
+            // Only start when we have a local number
+            textSecurePreferences.watchLocalNumber().filterNotNull().first()
 
-    override fun maybeGetBlindedRecipient(recipient: Recipient): Recipient? {
-        if (!recipient.isCommunityInboxRecipient) return null
-        return Recipient.from(
-            context,
-            Address.fromSerialized(GroupUtil.getDecodedOpenGroupInboxAccountId(recipient.address.toString())),
-            false
-        )
-    }
-
-    override fun changes(threadId: Long): Flow<Query> =
-        contentResolver.observeQuery(DatabaseContentProviders.Conversation.getUriForThread(threadId))
-
-    override fun recipientUpdateFlow(threadId: Long): Flow<Recipient?> {
-        return contentResolver.observeQuery(DatabaseContentProviders.Conversation.getUriForThread(threadId)).map {
-            maybeGetRecipientForThreadId(threadId)
+            emit(Unit)
         }
+        .map { getConversationListAddresses() }
+        .stateIn(scope, SharingStarted.Eagerly, getConversationListAddresses())
+
+    private fun getConversationListAddresses() = buildSet {
+        val myAddress = Address.Standard(AccountId(textSecurePreferences.getLocalNumber() ?: return@buildSet ))
+
+        // Always have NTS - we should only "hide" them on home screen - the convo should never be deleted
+        add(myAddress)
+
+        configFactory.withUserConfigs { configs ->
+            // Contacts
+            for (contact in configs.contacts.all()) {
+                if (contact.priority >= 0 && (!contact.blocked || contact.approved)) {
+                    add(Address.Standard(AccountId(contact.id)))
+                }
+            }
+
+            // Blinded Contacts
+            for (blindedContact in configs.contacts.allBlinded()) {
+                if (blindedContact.priority >= 0) {
+                    add(Address.CommunityBlindedId(
+                        serverUrl = blindedContact.communityServer,
+                        blindedId = Address.Blinded(AccountId(blindedContact.id))
+                    ))
+                }
+            }
+
+            // Groups
+            for (group in configs.userGroups.all()) {
+                when (group) {
+                    is GroupInfo.ClosedGroupInfo -> {
+                        add(Address.Group(AccountId(group.groupAccountId)))
+                    }
+
+                    is GroupInfo.LegacyGroupInfo -> {
+                        add(Address.LegacyGroup(group.accountId))
+                    }
+
+                    is GroupInfo.CommunityGroupInfo -> {
+                        add(Address.Community(
+                            serverUrl = group.community.baseUrl,
+                            room = group.community.room
+                        ))
+                    }
+                }
+            }
+        }
+    }
+
+
+    @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
+    override fun observeConversationList(): Flow<List<ThreadRecord>> {
+        return conversationListAddressesFlow
+            .flatMapLatest { allAddresses ->
+                merge(
+                    configFactory.configUpdateNotifications,
+                    recipientDatabase.changeNotification,
+                    threadDb.updateNotifications
+                ).debounce(500)
+                    .onStart { emit(Unit) }
+                    .mapLatest {
+                        withContext(Dispatchers.Default) {
+                            threadDb.getThreads(allAddresses)
+                        }
+                    }
+            }
+    }
+
+    override fun getConversationList(): List<ThreadRecord> {
+        return threadDb.getThreads(getConversationListAddresses())
     }
 
     override fun saveDraft(threadId: Long, text: String) {
@@ -161,7 +247,7 @@ class DefaultConversationRepository @Inject constructor(
         draftDb.clearDrafts(threadId)
     }
 
-    override fun inviteContactsToCommunity(threadId: Long, contacts: List<Recipient>) {
+    override fun inviteContactsToCommunity(threadId: Long, contacts: Collection<Address>) {
         val openGroup = lokiThreadDb.getOpenGroupChat(threadId) ?: return
         for (contact in contacts) {
             val message = VisibleMessage()
@@ -172,14 +258,13 @@ class DefaultConversationRepository @Inject constructor(
             }
             message.openGroupInvitation = openGroupInvitation
             val contactThreadId = threadDb.getOrCreateThreadIdFor(contact)
-            val expirationConfig = contactThreadId.let(storage::getExpirationConfiguration)
-            val expiresInMillis = expirationConfig?.expiryMode?.expiryMillis ?: 0
-            val expireStartedAt = if (expirationConfig?.expiryMode is ExpiryMode.AfterSend) message.sentTimestamp!! else 0
+            val expirationConfig = recipientRepository.getRecipientSync(contact).expiryMode
+            val expireStartedAt = if (expirationConfig is ExpiryMode.AfterSend) message.sentTimestamp!! else 0
             val outgoingTextMessage = OutgoingTextMessage.fromOpenGroupInvitation(
                 openGroupInvitation,
                 contact,
                 message.sentTimestamp,
-                expiresInMillis,
+                expirationConfig.expiryMillis,
                 expireStartedAt
             )
 
@@ -188,7 +273,7 @@ class DefaultConversationRepository @Inject constructor(
                 false
             )
 
-            MessageSender.send(message, contact.address)
+            MessageSender.send(message, contact)
         }
     }
 
@@ -205,7 +290,7 @@ class DefaultConversationRepository @Inject constructor(
     }
 
     override fun getLastSentMessageID(threadId: Long): Flow<MessageId?> {
-        return (contentResolver.observeChanges(DatabaseContentProviders.Conversation.getUriForThread(threadId)) as Flow<*>)
+        return (threadDb.updateNotifications.filter { it == threadId } as Flow<*>)
             .onStart { emit(Unit) }
             .map {
                 withContext(Dispatchers.Default) {
@@ -215,8 +300,8 @@ class DefaultConversationRepository @Inject constructor(
     }
 
     // This assumes that recipient.isContactRecipient is true
-    override fun setBlocked(recipient: Recipient, blocked: Boolean) {
-        if (recipient.isContactRecipient) {
+    override fun setBlocked(recipient: Address, blocked: Boolean) {
+        if (recipient.isStandard) {
             storage.setBlocked(listOf(recipient), blocked)
         }
     }
@@ -225,16 +310,16 @@ class DefaultConversationRepository @Inject constructor(
      * This will delete these messages from the db
      * Not to be confused with 'marking messages as deleted'
      */
-    override fun deleteMessages(messages: Set<MessageRecord>, threadId: Long) {
+    override fun deleteMessages(messages: Set<MessageRecord>) {
         // split the messages into mms and sms
         val (mms, sms) = messages.partition { it.isMms }
 
         if(mms.isNotEmpty()){
-            messageDataProvider.deleteMessages(mms.map { it.id }, threadId, isSms = false)
+            messageDataProvider.deleteMessages(mms.map { it.id }, isSms = false)
         }
 
         if(sms.isNotEmpty()){
-            messageDataProvider.deleteMessages(sms.map { it.id }, threadId, isSms = true)
+            messageDataProvider.deleteMessages(sms.map { it.id }, isSms = true)
         }
     }
 
@@ -276,37 +361,29 @@ class DefaultConversationRepository @Inject constructor(
 
     override fun deleteAllLocalMessagesInThreadFromSenderOfMessage(messageRecord: MessageRecord) {
         val threadId = messageRecord.threadId
-        val senderId = messageRecord.recipient.address.contactIdentifier()
+        val senderId = messageRecord.recipient.address.address
         val messageRecordsToRemoveFromLocalStorage = mmsSmsDb.getAllMessageRecordsFromSenderInThread(threadId, senderId)
         for (message in messageRecordsToRemoveFromLocalStorage) {
             messageDataProvider.deleteMessage(messageId = message.messageId)
         }
     }
 
-    override fun setApproved(recipient: Recipient, isApproved: Boolean) {
-        storage.setRecipientApproved(recipient, isApproved)
-    }
-
     override suspend fun deleteCommunityMessagesRemotely(
-        threadId: Long,
+        community: Address.Community,
         messages: Set<MessageRecord>
     ) {
-        val community = checkNotNull(lokiThreadDb.getOpenGroupChat(threadId)) { "Not a community" }
-
         messages.forEach { message ->
             lokiMessageDb.getServerID(message.messageId)?.let { messageServerID ->
-                OpenGroupApi.deleteMessage(messageServerID, community.room, community.server).await()
+                OpenGroupApi.deleteMessage(messageServerID, community.room, community.serverUrl).await()
             }
         }
     }
 
     override suspend fun delete1on1MessagesRemotely(
-        threadId: Long,
-        recipient: Recipient,
+        recipient: Address,
         messages: Set<MessageRecord>
     ) {
         // delete the messages remotely
-        val publicKey = recipient.address.toString()
         val userAddress: Address? =  textSecurePreferences.getLocalNumber()?.let { Address.fromSerialized(it) }
         val userAuth = requireNotNull(storage.userAuth) {
             "User auth is required to delete messages remotely"
@@ -316,7 +393,7 @@ class DefaultConversationRepository @Inject constructor(
             // delete from swarm
             messageDataProvider.getServerHashForMessage(message.messageId)
                 ?.let { serverHash ->
-                    SnodeAPI.deleteMessage(publicKey, userAuth, listOf(serverHash))
+                    SnodeAPI.deleteMessage(recipient.address, userAuth, listOf(serverHash))
                 }
 
             // send an UnsendRequest to user's swarm
@@ -326,34 +403,32 @@ class DefaultConversationRepository @Inject constructor(
 
             // send an UnsendRequest to recipient's swarm
             buildUnsendRequest(message).let { unsendRequest ->
-                MessageSender.send(unsendRequest, recipient.address)
+                MessageSender.send(unsendRequest, recipient)
             }
         }
     }
 
     override suspend fun deleteLegacyGroupMessagesRemotely(
-        recipient: Recipient,
+        recipient: Address,
         messages: Set<MessageRecord>
     ) {
-        if (recipient.isLegacyGroupRecipient) {
-            val publicKey = recipient.address
-
+        if (recipient.isLegacyGroup) {
             messages.forEach { message ->
                 // send an UnsendRequest to group's swarm
                 buildUnsendRequest(message).let { unsendRequest ->
-                    MessageSender.send(unsendRequest, publicKey)
+                    MessageSender.send(unsendRequest, recipient)
                 }
             }
         }
     }
 
     override suspend fun deleteGroupV2MessagesRemotely(
-        recipient: Recipient,
+        recipient: Address,
         messages: Set<MessageRecord>
     ) {
-        require(recipient.isGroupV2Recipient) { "Recipient is not a group v2 recipient" }
+        require(recipient.isGroupV2) { "Recipient is not a group v2 recipient" }
 
-        val groupId = AccountId(recipient.address.toString())
+        val groupId = AccountId(recipient.address)
         val hashes = messages.mapNotNullTo(mutableSetOf()) { msg ->
             messageDataProvider.getServerHashForMessage(msg.messageId)
         }
@@ -362,12 +437,10 @@ class DefaultConversationRepository @Inject constructor(
     }
 
     override suspend fun deleteNoteToSelfMessagesRemotely(
-        threadId: Long,
-        recipient: Recipient,
+        recipient: Address,
         messages: Set<MessageRecord>
     ) {
         // delete the messages remotely
-        val publicKey = recipient.address.toString()
         val userAddress: Address? =  textSecurePreferences.getLocalNumber()?.let { Address.fromSerialized(it) }
         val userAuth = requireNotNull(storage.userAuth) {
             "User auth is required to delete messages remotely"
@@ -377,7 +450,7 @@ class DefaultConversationRepository @Inject constructor(
             // delete from swarm
             messageDataProvider.getServerHashForMessage(message.messageId)
                 ?.let { serverHash ->
-                    SnodeAPI.deleteMessage(publicKey, userAuth, listOf(serverHash))
+                    SnodeAPI.deleteMessage(recipient.address, userAuth, listOf(serverHash))
                 }
 
             // send an UnsendRequest to user's swarm
@@ -389,46 +462,55 @@ class DefaultConversationRepository @Inject constructor(
 
     private fun buildUnsendRequest(message: MessageRecord): UnsendRequest {
         return UnsendRequest(
-            author = message.takeUnless { it.isOutgoing }?.run { individualRecipient.address.contactIdentifier() } ?: textSecurePreferences.getLocalNumber(),
+            author = message.takeUnless { it.isOutgoing }?.run { individualRecipient.address.address } ?: textSecurePreferences.getLocalNumber(),
             timestamp = message.timestamp
         )
     }
 
-    override suspend fun banUser(threadId: Long, recipient: Recipient): Result<Unit> = runCatching {
-        val accountID = recipient.address.toString()
-        val openGroup = lokiThreadDb.getOpenGroupChat(threadId)!!
-        OpenGroupApi.ban(accountID, openGroup.room, openGroup.server).await()
+    override suspend fun banUser(community: Address.Community, userId: AccountId): Result<Unit> = runCatching {
+        OpenGroupApi.ban(
+            publicKey = userId.hexString,
+            room = community.room,
+            server = community.serverUrl,
+        ).await()
     }
 
-    override suspend fun banAndDeleteAll(threadId: Long, recipient: Recipient) = runCatching {
+    override suspend fun banAndDeleteAll(community: Address.Community, userId: AccountId) = runCatching {
         // Note: This accountId could be the blinded Id
-        val accountID = recipient.address.toString()
-        val openGroup = lokiThreadDb.getOpenGroupChat(threadId)!!
-
-        OpenGroupApi.banAndDeleteAll(accountID, openGroup.room, openGroup.server).await()
+        OpenGroupApi.banAndDeleteAll(
+            publicKey = userId.hexString,
+            room = community.room,
+            server = community.serverUrl
+        ).await()
     }
 
-    override suspend fun deleteThread(threadId: Long) = runCatching {
-        withContext(Dispatchers.Default) {
-            sessionJobDb.cancelPendingMessageSendJobs(threadId)
-            storage.deleteConversation(threadId)
-        }
+    override suspend fun deleteMessageRequest(thread: ThreadRecord): Result<Unit> {
+        val address = thread.recipient.address as? Address.Conversable ?: return Result.success(Unit)
+
+        return declineMessageRequest(
+            address
+        )
     }
 
-    override suspend fun deleteMessageRequest(thread: ThreadRecord)
-        = declineMessageRequest(thread.threadId, thread.recipient)
+    override suspend fun clearAllMessageRequests() = runCatching {
 
-    override suspend fun clearAllMessageRequests(block: Boolean) = runCatching {
-        withContext(Dispatchers.Default) {
-            threadDb.readerFor(threadDb.unapprovedConversationList).use { reader ->
-                while (reader.next != null) {
-                    deleteMessageRequest(reader.current)
-                    val recipient = reader.current.recipient
-                    if (block && !recipient.isGroupV2Recipient) {
-                        setBlocked(recipient, true)
-                    }
+        configFactory.withMutableUserConfigs { configs ->
+            // Go through all contacts
+            configs.contacts.all()
+                .asSequence()
+                .filter { !it.approved }
+                .forEach {
+                    configs.contacts.erase(it.id)
                 }
-            }
+
+
+            // Go through all invited groups
+            configs.userGroups.allClosedGroupInfo()
+                .asSequence()
+                .filter { it.invited }
+                .forEach { g ->
+                    configs.userGroups.eraseClosedGroup(g.groupAccountId)
+                }
         }
     }
 
@@ -447,37 +529,57 @@ class DefaultConversationRepository @Inject constructor(
         }
     }
 
-    override suspend fun acceptMessageRequest(threadId: Long, recipient: Recipient) = runCatching {
-        withContext(Dispatchers.Default) {
-            storage.setRecipientApproved(recipient, true)
-            if (recipient.isGroupV2Recipient) {
-                groupManager.respondToInvitation(
-                    AccountId(recipient.address.toString()),
-                    approved = true
-                )
-            } else {
-                val message = MessageRequestResponse(true)
+    override suspend fun acceptMessageRequest(recipient: Address.Conversable) = runCatching {
+        when (recipient) {
+            is Address.Standard -> {
+                configFactory.withMutableUserConfigs { configs ->
+                    configs.contacts.upsertContact(recipient) {
+                        approved = true
+                    }
+                }
 
-                MessageSender.send(message = message, address = recipient.address)
+                withContext(Dispatchers.Default) {
+                    MessageSender.send(message = MessageRequestResponse(true), address = recipient)
 
-                // add a control message for our user
-                storage.insertMessageRequestResponseFromYou(threadId)
+                    // add a control message for our user
+                    storage.insertMessageRequestResponseFromYou(threadDb.getOrCreateThreadIdFor(recipient))
+                }
             }
 
-            threadDb.setHasSent(threadId, true)
+            is Address.Group -> {
+                groupManager.respondToInvitation(
+                    recipient.accountId,
+                    approved = true
+                )
+            }
+
+            is Address.Community,
+            is Address.CommunityBlindedId,
+            is Address.LegacyGroup -> {
+                // These addresses are not supported for message requests
+            }
         }
+
+        Unit
     }
 
-    override suspend fun declineMessageRequest(threadId: Long, recipient: Recipient): Result<Unit> = runCatching {
-        withContext(Dispatchers.Default) {
-            sessionJobDb.cancelPendingMessageSendJobs(threadId)
-            if (recipient.isGroupV2Recipient) {
+    override suspend fun declineMessageRequest(recipient: Address.Conversable): Result<Unit> = runCatching {
+        when (recipient) {
+            is Address.Standard -> {
+                configFactory.removeContactOrBlindedContact(recipient)
+            }
+
+            is Address.Group -> {
                 groupManager.respondToInvitation(
-                    AccountId(recipient.address.toString()),
+                    recipient.accountId,
                     approved = false
                 )
-            } else {
-                storage.deleteContactAndSyncConfig(recipient.address.toString())
+            }
+
+            is Address.Community,
+            is Address.CommunityBlindedId,
+            is Address.LegacyGroup -> {
+                // These addresses are not supported for message requests
             }
         }
     }
@@ -493,9 +595,7 @@ class DefaultConversationRepository @Inject constructor(
     }
 
     // Only call this with a closed group thread ID
-    override fun getInvitingAdmin(threadId: Long): Recipient? {
-        return lokiMessageDb.groupInviteReferrer(threadId)?.let { id ->
-            Recipient.from(context, Address.fromSerialized(id), false)
-        }
+    override fun getInvitingAdmin(threadId: Long): Address? {
+        return lokiMessageDb.groupInviteReferrer(threadId)?.let(Address::fromSerialized)
     }
 }

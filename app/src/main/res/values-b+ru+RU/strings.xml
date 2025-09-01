@@ -186,7 +186,6 @@
     <string name="callsSettings">Звонки (бета)</string>
     <string name="callsVoiceAndVideo">Голосовые и видеозвонки</string>
     <string name="callsVoiceAndVideoBeta">Голосовые и видеозвонки (бета)</string>
-    <string name="callsVoiceAndVideoModalDescription">Ваш IP виден вашему собеседнику и серверу Oxen Foundation при использовании бета-вызовов.</string>
     <string name="callsVoiceAndVideoToggleDescription">Включает голосовые и видеозвонки для общения с другими пользователями.</string>
     <string name="callsYouCalled">Вы позвонили {name}</string>
     <string name="callsYouMissedCallPermissions">Вы пропустили звонок от <b>{name}</b>, потому что не включили <b>Голосовые и видеозвонки</b> в настройках конфиденциальности.</string>
@@ -811,8 +810,6 @@
     <string name="openSurvey">Открытый опрос</string>
     <string name="other">Другое</string>
     <string name="passwordChange">Изменить пароль</string>
-    <string name="passwordChangeDescription">Измените пароль, необходимый для разблокировки {app_name}.</string>
-    <string name="passwordChangedDescription">Ваш пароль был изменен. Пожалуйста, храните его в безопасном месте.</string>
     <string name="passwordConfirm">Подтвердить пароль</string>
     <string name="passwordCurrentIncorrect">Ваш пароль неверен.</string>
     <string name="passwordEnter">Введите пароль</string>
@@ -823,7 +820,6 @@
     <string name="passwordFailed">Не удалось установить пароль</string>
     <string name="passwordIncorrect">Неверный пароль</string>
     <string name="passwordRemove">Удалить пароль</string>
-    <string name="passwordRemovedDescription">Ваш пароль удален.</string>
     <string name="passwordSet">Установить пароль</string>
     <string name="paste">Вставить</string>
     <string name="permissionChange">Изменение разрешений</string>

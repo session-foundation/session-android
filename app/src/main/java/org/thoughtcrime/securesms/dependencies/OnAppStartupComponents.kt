@@ -4,6 +4,8 @@ import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager
 import org.session.libsession.messaging.sending_receiving.pollers.PollerManager
 import org.session.libsession.snode.SnodeClock
+import org.thoughtcrime.securesms.attachments.AvatarUploadManager
+import org.thoughtcrime.securesms.configs.ConfigToDatabaseSync
 import org.thoughtcrime.securesms.configs.ConfigUploader
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.disguise.AppDisguiseManager
@@ -19,6 +21,7 @@ import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
 import org.thoughtcrime.securesms.notifications.BackgroundPollManager
 import org.thoughtcrime.securesms.notifications.PushRegistrationHandler
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.subscription.SubscriptionCoordinator
 import org.thoughtcrime.securesms.service.ExpiringMessageManager
 import org.thoughtcrime.securesms.tokenpage.TokenDataManager
 import org.thoughtcrime.securesms.util.AppVisibilityManager
@@ -62,6 +65,9 @@ class OnAppStartupComponents private constructor(
         versionDataFetcher: VersionDataFetcher,
         threadDatabase: ThreadDatabase,
         emojiIndexLoader: EmojiIndexLoader,
+        subscriptionCoordinator: SubscriptionCoordinator,
+        avatarUploadManager: AvatarUploadManager,
+        configToDatabaseSync: ConfigToDatabaseSync,
     ): this(
         components = listOf(
             configUploader,
@@ -90,6 +96,9 @@ class OnAppStartupComponents private constructor(
             versionDataFetcher,
             threadDatabase,
             emojiIndexLoader,
+            subscriptionCoordinator,
+            avatarUploadManager,
+            configToDatabaseSync,
         )
     )
 }

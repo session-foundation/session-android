@@ -184,7 +184,6 @@
     <string name="callsSettings">Chamadas (Beta)</string>
     <string name="callsVoiceAndVideo">Chamadas de Voz/Vídeo</string>
     <string name="callsVoiceAndVideoBeta">Chamadas de Voz/Vídeo (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">O seu IP está visível para seu parceiro de chamada e para um servidor Oxen Foundation enquanto usa chamadas beta.</string>
     <string name="callsVoiceAndVideoToggleDescription">Permitir chamadas de voz e vídeo para e a partir de outros utilizadores.</string>
     <string name="callsYouCalled">Ligou para {name}</string>
     <string name="callsYouMissedCallPermissions">Perdeu uma chamada de <b>{name}</b> porque não ativou <b>Chamadas de Voz e Vídeo</b> nas Configurações de Privacidade.</string>
@@ -770,8 +769,6 @@
     <string name="openSurvey">Abrir questionário</string>
     <string name="other">Outro</string>
     <string name="passwordChange">Alterar Palavra-passe</string>
-    <string name="passwordChangeDescription">Altere a palavra-passe, necessária para desbloquear {app_name}.</string>
-    <string name="passwordChangedDescription">A sua palavra-passe foi alterada. Por favor, mantenha-a segura.</string>
     <string name="passwordConfirm">Confirmar palavra-passe</string>
     <string name="passwordCurrentIncorrect">A sua palavra-passe atual está incorreta.</string>
     <string name="passwordEnter">Introduza a palavra-passe</string>
@@ -783,7 +780,6 @@
     <string name="passwordFailed">Falha ao definir palavra-passe</string>
     <string name="passwordIncorrect">Palavra-passe Incorreta</string>
     <string name="passwordRemove">Remover Palavra-passe</string>
-    <string name="passwordRemovedDescription">A sua palavra-passe foi removida.</string>
     <string name="passwordSet">Configurar palavra-passe</string>
     <string name="paste">Colar</string>
     <string name="permissionChange">Alteração de permissão</string>
@@ -831,7 +827,6 @@
     <string name="proAnimatedDisplayPictureFeature">Imagem de exibição animada</string>
     <string name="proAnimatedDisplayPictureModalDescription">os utilizadores podem carregar GIFs</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Carregue GIFs com</string>
-    <string name="proBadge">Distintivo {app_pro}</string>
     <string name="proCallToActionLongerMessages">Quer enviar mensagens mais longas? Envie mais texto e desbloqueie funcionalidades premium com {app_pro}</string>
     <string name="proCallToActionPinnedConversations">Quer fixar mais conversas? Organize os seus chats e desbloqueie funcionalidades premium com o {app_pro}</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Quer fixar mais de 5 conversas? Organize os seus chats e desbloqueie funcionalidades premium com {app_pro}</string>

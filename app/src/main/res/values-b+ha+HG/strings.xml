@@ -151,7 +151,6 @@
     <string name="callsSettings">Kira (Beta)</string>
     <string name="callsVoiceAndVideo">Kiran Muryar da Bidiyo</string>
     <string name="callsVoiceAndVideoBeta">Kiran Muryar da Bidiyo (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">IP ɗinku yana bayyane ga abokin kiran ku da sabar Oxen Foundation yayin amfani da ƙiran beta.</string>
     <string name="callsVoiceAndVideoToggleDescription">Yana ba da kiran murya da bidiyo zuwa da daga wasu masu amfani.</string>
     <string name="callsYouCalled">Ka kira {name}</string>
     <string name="callsYouMissedCallPermissions">Kun rasa kira daga <b>{name}</b> saboda ba ku kunna <b>kiran murya da bidiyo</b> a Saitunan Sirrin ba.</string>
@@ -635,8 +634,6 @@
     <string name="open">Bude</string>
     <string name="other">Sauran</string>
     <string name="passwordChange">Canza Kalmar Sirri</string>
-    <string name="passwordChangeDescription">Canza kalmar sirrin da ake bukata don buɗe {app_name}.</string>
-    <string name="passwordChangedDescription">An canza kalmar sirrinku. Da fatan za a kiyaye shi lafiya.</string>
     <string name="passwordConfirm">Tabbatar da kalmar sirri</string>
     <string name="passwordCurrentIncorrect">Kalmar sirrinka na yanzu ba daidai bane.</string>
     <string name="passwordEnter">Shigar da kalmar sirri</string>
@@ -647,7 +644,6 @@
     <string name="passwordFailed">An kasa saita kalmar sirri</string>
     <string name="passwordIncorrect">Kalmar wucewa da aka shigar ba daidai ba ce</string>
     <string name="passwordRemove">Cire Kalmar sirri</string>
-    <string name="passwordRemovedDescription">An cire kalmar sirrinku.</string>
     <string name="passwordSet">Saita Kalmar Sirri</string>
     <string name="paste">Manna</string>
     <string name="permissionMusicAudioDenied">{app_name} yana buƙatar samun damar amfani da kiɗi da sauti don aika fayiloli, kiɗi da sauti, amma an haramta shi dindindin. Danna Saituna → Izini, kuma kunna \"Kiɗi da sauti\".</string>

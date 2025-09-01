@@ -170,7 +170,6 @@
     <string name="callsSettings">Cuộc gọi (Beta)</string>
     <string name="callsVoiceAndVideo">Cuộc gọi thoại và video</string>
     <string name="callsVoiceAndVideoBeta">Các cuộc gọi giọng nói và video (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Địa chỉ IP của bạn hiển thị với đối tác cuộc gọi và máy chủ Oxen Foundation trong khi sử dụng cuộc gọi beta.</string>
     <string name="callsVoiceAndVideoToggleDescription">Cho phép thực hiện cuộc gọi giọng nói và video với người dùng khác.</string>
     <string name="callsYouCalled">Bạn đã gọi {name}</string>
     <string name="callsYouMissedCallPermissions">Bạn đã bỏ lỡ cuộc gọi từ <b>{name}</b> vì bạn chưa bật <b>Cuộc gọi Điện thoại và Video</b> trong Cài đặt Quyền riêng tư.</string>
@@ -696,8 +695,6 @@
     <string name="open">Mở</string>
     <string name="other">Khác</string>
     <string name="passwordChange">Đổi mật khẩu</string>
-    <string name="passwordChangeDescription">Đổi mật khẩu cần thiết để mở khóa {app_name}.</string>
-    <string name="passwordChangedDescription">Mật khẩu của bạn đã được đổi. Hãy giữ nó cẩn thận.</string>
     <string name="passwordConfirm">Xác nhận mật khẩu</string>
     <string name="passwordCurrentIncorrect">Mật khẩu hiện tại của bạn không chính xác.</string>
     <string name="passwordEnter">Nhập mật khẩu</string>
@@ -708,7 +705,6 @@
     <string name="passwordFailed">Đặt mật khẩu thất bại</string>
     <string name="passwordIncorrect">Mật khẩu không chính xác</string>
     <string name="passwordRemove">Xóa mật khẩu</string>
-    <string name="passwordRemovedDescription">Mật khẩu của bạn đã được gỡ bỏ.</string>
     <string name="passwordSet">Đặt Mật khẩu</string>
     <string name="paste">Dán</string>
     <string name="permissionChange">Thay đổi quyền hạn</string>

@@ -7,7 +7,6 @@ import nl.komponents.kovenant.functional.map
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody
 import org.session.libsession.messaging.MessagingModuleConfiguration
@@ -18,6 +17,11 @@ import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
+import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochSeconds
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.regex.Pattern
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 object FileServerApi {
@@ -27,6 +31,10 @@ object FileServerApi {
     const val MAX_FILE_SIZE = 10_000_000 // 10 MB
 
     val fileServerUrl: HttpUrl by lazy { FILE_SERVER_URL.toHttpUrl() }
+
+    val FILE_SERVER_FILE_URL_PATTERN: Pattern by lazy {
+        Pattern.compile("^https?://filev2\\.getsession\\.org/files?/(.+)$", Pattern.CASE_INSENSITIVE)
+    }
 
     sealed class Error(message: String) : Exception(message) {
         object ParsingFailed    : Error("Invalid response.")
@@ -47,6 +55,15 @@ object FileServerApi {
          */
         val useOnionRouting: Boolean = true
     )
+
+    fun getFileIdFromUrl(url: String): String? {
+        val matcher = FILE_SERVER_FILE_URL_PATTERN.matcher(url)
+        return if (matcher.matches()) {
+            matcher.group(1)
+        } else {
+            null
+        }
+    }
 
     private fun createBody(body: ByteArray?, parameters: Any?): RequestBody? {
         if (body != null) return RequestBody.create("application/octet-stream".toMediaType(), body)
@@ -94,28 +111,35 @@ object FileServerApi {
         }
     }
 
-    fun upload(file: ByteArray, customHeaders: Map<String, String> = mapOf()): Promise<UploadResult, Exception> {
+    fun upload(
+        file: ByteArray,
+        customExpiresDuration: Duration? = null
+    ): Promise<UploadResult, Exception> {
         val request = Request(
             verb = HTTP.Verb.POST,
             endpoint = "file",
             body = file,
-            headers = mapOf(
-                "Content-Disposition" to "attachment",
-                "Content-Type" to "application/octet-stream"
-            ) + customHeaders
+            headers = buildMap {
+                put("Content-Disposition", "attachment")
+                put("Content-Type", "application/octet-stream")
+                if (customExpiresDuration != null) {
+                    put("X-FS-TTL", customExpiresDuration.inWholeSeconds.toString())
+                }
+            }
         )
         return send(request).map { response ->
             val json = JsonUtil.fromJson(response.body, Map::class.java)
-            val hasId = json.containsKey("id")
-            val id = json.getOrDefault("id", null)
-            Log.d("Loki-FS", "File Upload Response hasId: $hasId of type: ${id?.javaClass}")
-            val idLong = (id as? String)?.toLong() ?: throw Error.ParsingFailed
-            val ttl = json.getOrDefault("expires", null) as? Number
-            Log.d("Loki-FS", "File Upload Response expires (timestamp in milli): ${ttl?.let{ it.toLong() * 1000 }}")
+            val id = json["id"]!!.toString()
+            val expiresEpochSeconds = (json.getOrDefault("expires", null) as? Number)?.toLong()
 
             UploadResult(
-                id = idLong,
-                ttlTimestamp = ttl?.let{ (it.toDouble() * 1000).toLong() } // from seconds to milliseconds
+                fileId = id,
+                fileUrl = fileServerUrl.newBuilder()
+                    .addPathSegment("file")
+                    .addPathSegments(id)
+                    .build()
+                    .toString(),
+                expires = expiresEpochSeconds?.asEpochSeconds()
             )
         }
     }
@@ -172,12 +196,22 @@ object FileServerApi {
     }
 
     data class UploadResult(
-        val id: Long,
-        val ttlTimestamp: Long?
+        val fileId: String,
+        val fileUrl: String,
+        val expires: ZonedDateTime?
     )
 
     data class SendResponse(
         val body: ByteArraySlice,
         val headers: Map<String, String>?
-    )
+    ) {
+        /**
+         * The "expires" header's value if any
+         */
+        val expires: ZonedDateTime? by lazy {
+            headers?.get("expires")?.let {
+                 ZonedDateTime.parse(it, DateTimeFormatter.RFC_1123_DATE_TIME)
+            }
+        }
+    }
 }

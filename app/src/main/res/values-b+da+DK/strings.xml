@@ -177,7 +177,6 @@
     <string name="callsSettings">Opkald (Beta)</string>
     <string name="callsVoiceAndVideo">Lyd- og videoopkald</string>
     <string name="callsVoiceAndVideoBeta">Lyd- og videoopkald (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Din IP synlig for din opkaldspartner og en Oxen Foundation-server, mens du bruger betaopkald.</string>
     <string name="callsVoiceAndVideoToggleDescription">Aktiverer lyd- og videoopkald til og fra andre brugere.</string>
     <string name="callsYouCalled">Du ringede til {name}</string>
     <string name="callsYouMissedCallPermissions">Du gik glip af et opkald fra <b>{name}</b>, fordi du ikke har aktiveret <b>Stemmen- og videoopkald</b> i privatindstillinger.</string>
@@ -736,8 +735,6 @@
     <string name="open">Åben</string>
     <string name="other">Andet</string>
     <string name="passwordChange">Skift adgangskode</string>
-    <string name="passwordChangeDescription">Skift adgangskoden, der kræves for at låse {app_name} op.</string>
-    <string name="passwordChangedDescription">Din adgangskode er blevet ændret. Venligst hold den sikker.</string>
     <string name="passwordConfirm">Bekræft kodeord</string>
     <string name="passwordCurrentIncorrect">Din nuværende adgangskode er forkert.</string>
     <string name="passwordEnter">Indtast adgangskode</string>
@@ -748,7 +745,6 @@
     <string name="passwordFailed">Opdatering af adgangskode mislykkedes</string>
     <string name="passwordIncorrect">Forkert adgangskode</string>
     <string name="passwordRemove">Fjern adgangskode</string>
-    <string name="passwordRemovedDescription">Din adgangskode er blevet fjernet.</string>
     <string name="passwordSet">Indstil adgangskode</string>
     <string name="paste">Indsæt</string>
     <string name="permissionChange">Ændring af adgange</string>

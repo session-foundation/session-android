@@ -48,7 +48,7 @@ val rust = Color(0xFFA64B00)
 
 val dangerDark = Color(0xFFFF3A3A)
 val dangerLight = Color(0xFFE12D19)
-val disabledDark = Color(0xFFA1A2A1)
-val disabledLight = Color(0xFF6D6D6D)
+val disabledLight = Color(0xFFA1A2A1)
+val disabledDark = Color(0xFF6D6D6D)
 
 val blackAlpha40 = Color.Black.copy(alpha = 0.4f)

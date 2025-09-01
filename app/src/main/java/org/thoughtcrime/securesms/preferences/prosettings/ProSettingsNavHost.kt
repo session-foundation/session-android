@@ -4,9 +4,13 @@ import android.annotation.SuppressLint
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination.*
 import org.thoughtcrime.securesms.ui.NavigationAction
@@ -20,7 +24,7 @@ sealed interface ProSettingsDestination {
     data object Home: ProSettingsDestination
 
     @Serializable
-    data object ChooseSubscriptionPlan: ProSettingsDestination
+    data object UpdatePlan: ProSettingsDestination
 }
 
 @SuppressLint("RestrictedApi")
@@ -32,6 +36,12 @@ fun ProSettingsNavHost(
 ){
     SharedTransitionLayout {
         val navController = rememberNavController()
+        val scope = rememberCoroutineScope()
+
+        // all screens within the Pro Flow can share the same VM
+        val viewModel = hiltViewModel<ProSettingsViewModel>()
+
+        val dialogsState by viewModel.dialogState.collectAsState()
 
         ObserveAsEvents(flow = navigator.navigationActions) { action ->
             when (action) {
@@ -54,8 +64,6 @@ fun ProSettingsNavHost(
         NavHost(navController = navController, startDestination = Home) {
             // Home
             horizontalSlideComposable<Home> {
-                val viewModel = hiltViewModel<ProSettingsViewModel>()
-
                 ProSettingsHomeScreen(
                     viewModel = viewModel,
                     onBack = onBack,
@@ -63,9 +71,18 @@ fun ProSettingsNavHost(
             }
 
             // Subscription plan selection
-            horizontalSlideComposable<ChooseSubscriptionPlan> {
-
+            horizontalSlideComposable<UpdatePlan> {
+                UpdatePlanScreen(
+                    viewModel = viewModel,
+                    onBack = { scope.launch { navigator.navigateUp() }},
+                )
             }
         }
+
+        // Dialogs
+        ProSettingsDialogs(
+            dialogsState = dialogsState,
+            sendCommand = viewModel::onCommand,
+        )
     }
 }

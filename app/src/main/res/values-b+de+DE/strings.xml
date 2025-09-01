@@ -184,7 +184,6 @@
     <string name="callsSettings">Anrufe (Beta)</string>
     <string name="callsVoiceAndVideo">Sprach- und Videoanrufe</string>
     <string name="callsVoiceAndVideoBeta">Sprach- und Videoanrufe (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Deine IP ist für deinen Gesprächspartner und einen Oxen Foundation Server sichtbar, während du Beta-Anrufe nutzt.</string>
     <string name="callsVoiceAndVideoToggleDescription">Aktiviert Sprach- und Videoanrufe an und von anderen Benutzern.</string>
     <string name="callsYouCalled">Du hast {name} angerufen</string>
     <string name="callsYouMissedCallPermissions">Du hast einen Anruf von <b>{name}</b> verpasst, weil du <b>Sprach- und Videoanrufe</b> in den Datenschutzeinstellungen nicht aktiviert hast.</string>
@@ -770,8 +769,6 @@
     <string name="openSurvey">Umfrage starten</string>
     <string name="other">Sonstiges</string>
     <string name="passwordChange">Passwort ändern</string>
-    <string name="passwordChangeDescription">Das Passwort zum Entsperren von {app_name} ändern.</string>
-    <string name="passwordChangedDescription">Dein Passwort wurde geändert. Bitte bewahre es sicher auf.</string>
     <string name="passwordConfirm">Passwort bestätigen</string>
     <string name="passwordCurrentIncorrect">Dein aktuelles Passwort ist nicht korrekt.</string>
     <string name="passwordEnter">Passwort eingeben</string>
@@ -783,7 +780,6 @@
     <string name="passwordFailed">Passwort konnte nicht gesetzt werden</string>
     <string name="passwordIncorrect">Falsches Passwort</string>
     <string name="passwordRemove">Passwort entfernen</string>
-    <string name="passwordRemovedDescription">Dein Passwort wurde entfernt.</string>
     <string name="passwordSet">Passwort festlegen</string>
     <string name="paste">Einfügen</string>
     <string name="permissionChange">Berechtigungsänderung</string>
@@ -831,7 +827,6 @@
     <string name="proAnimatedDisplayPictureFeature">Animiertes Profilbild</string>
     <string name="proAnimatedDisplayPictureModalDescription">Nutzer können GIFs hochladen</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">GIFs hochladen mit</string>
-    <string name="proBadge">{app_pro}-Abzeichen</string>
     <string name="proCallToActionLongerMessages">Du möchtest längere Nachrichten senden? Sende mehr Text und schalte Premium-Funktionen mit {app_pro} frei</string>
     <string name="proCallToActionPinnedConversations">Mehr Anheftungen gewünscht? Organisiere deine Chats und schalte Premium-Funktionen mit {app_pro} frei</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Mehr als 5 Anheftungen gewünscht? Organisiere deine Chats und schalte Premium-Funktionen mit {app_pro} frei</string>

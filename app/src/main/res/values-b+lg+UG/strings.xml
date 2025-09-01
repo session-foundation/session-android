@@ -151,7 +151,6 @@
     <string name="callsSettings">Calls (Beta)</string>
     <string name="callsVoiceAndVideo">Emmboozi ne Bidiyo Bye Werezebwa</string>
     <string name="callsVoiceAndVideoBeta">Emmboozi ne Bidiyo Bye Werezebwa (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">IP yo efulugettaka mu mateeka ne server ya Oxen Foundation nga okozeza omitting ekikugya ekiriotto.</string>
     <string name="callsVoiceAndVideoToggleDescription">Emidduka n’ebitambise okubira no okuva eri abakozesa abalala.</string>
     <string name="callsYouCalled">Weegambye {name}</string>
     <string name="callsYouMissedCallPermissions">Wanakuba omulilwana <b>{name}</b> kubanga tomeka meka <b>Okubagaane Kw\'amakowala n\'amacapa</b> mu Settings za Privacy.</string>
@@ -635,8 +634,6 @@
     <string name="open">Bikkule</string>
     <string name="other">Ebirala</string>
     <string name="passwordChange">Change Password</string>
-    <string name="passwordChangeDescription">Change the password required to unlock {app_name}.</string>
-    <string name="passwordChangedDescription">Password yo ekabatiddwa. Kaakasa nti bagutemye mu kifo ekitalemerera.</string>
     <string name="passwordConfirm">Kakasa akakufulu</string>
     <string name="passwordCurrentIncorrect">Password Kyo kiri mu nsobi.</string>
     <string name="passwordEnter">Yingiza akawunti</string>
@@ -647,7 +644,6 @@
     <string name="passwordFailed">Ensobi okuzaako okwongeza ekigambo</string>
     <string name="passwordIncorrect">Recovery Password y\'ekiino si kituufu</string>
     <string name="passwordRemove">Ggyawo Password</string>
-    <string name="passwordRemovedDescription">Password yo ekatutuzzibwa.</string>
     <string name="passwordSet">Tereka Akasumuluzo</string>
     <string name="paste">Ddiba</string>
     <string name="permissionMusicAudioDenied">{app_name} yeetaaga ssensa y\'amakudiira ne ddoboozi okusobola okusindika abayimba n’eddobbozi, naye kyaganye dda. Nnyonnyola mu Settings → Permissions, lalu \"Music and audio\" okubigya.</string>

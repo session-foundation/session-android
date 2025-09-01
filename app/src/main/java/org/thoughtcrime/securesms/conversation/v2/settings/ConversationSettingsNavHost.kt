@@ -44,20 +44,33 @@ sealed interface ConversationSettingsDestination {
     data object RouteConversationSettings: ConversationSettingsDestination
 
     @Serializable
-    data class RouteGroupMembers(
-        val groupId: String
-    ): ConversationSettingsDestination
+    data class RouteGroupMembers private constructor(
+        private val address: String
+    ): ConversationSettingsDestination {
+        constructor(groupAddress: Address.Group): this(groupAddress.address)
+
+        val groupAddress: Address.Group get() = Address.Group(AccountId(address))
+    }
 
     @Serializable
-    data class RouteManageMembers(
-        val groupId: String
-    ): ConversationSettingsDestination
+    data class RouteManageMembers private constructor(
+        private val address: String
+    ): ConversationSettingsDestination {
+        constructor(groupAddress: Address.Group): this(groupAddress.address)
+
+        val groupAddress: Address.Group get() = Address.Group(AccountId(address))
+    }
 
     @Serializable
-    data class RouteInviteToGroup(
-        val groupId: String,
+    data class RouteInviteToGroup private constructor(
+        private val address: String,
         val excludingAccountIDs: List<String>
-    ): ConversationSettingsDestination
+    ): ConversationSettingsDestination {
+        constructor(groupAddress: Address.Group, excludingAccountIDs: List<String>)
+            : this(groupAddress.address, excludingAccountIDs)
+
+        val groupAddress: Address.Group get() = Address.Group(AccountId(address))
+    }
 
     @Serializable
     data object RouteDisappearingMessages: ConversationSettingsDestination
@@ -78,8 +91,7 @@ sealed interface ConversationSettingsDestination {
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ConversationSettingsNavHost(
-    threadId: Long,
-    threadAddress: Address?,
+    address: Address.Conversable,
     navigator: UINavigator<ConversationSettingsDestination>,
     returnResult: (String, Boolean) -> Unit,
     onBack: () -> Unit
@@ -112,7 +124,7 @@ fun ConversationSettingsNavHost(
             horizontalSlideComposable<RouteConversationSettings> {
                 val viewModel =
                     hiltViewModel<ConversationSettingsViewModel, ConversationSettingsViewModel.Factory> { factory ->
-                        factory.create(threadId)
+                        factory.create(address)
                     }
 
                 val lifecycleOwner = LocalLifecycleOwner.current
@@ -136,7 +148,7 @@ fun ConversationSettingsNavHost(
 
                 val viewModel =
                     hiltViewModel<GroupMembersViewModel, GroupMembersViewModel.Factory> { factory ->
-                        factory.create(AccountId(data.groupId))
+                        factory.create(data.groupAddress)
                     }
 
                 GroupMembersScreen(
@@ -152,7 +164,7 @@ fun ConversationSettingsNavHost(
 
                 val viewModel =
                     hiltViewModel<EditGroupViewModel, EditGroupViewModel.Factory> { factory ->
-                        factory.create(AccountId(data.groupId))
+                        factory.create(data.groupAddress)
                     }
 
                 EditGroupScreen(
@@ -160,7 +172,7 @@ fun ConversationSettingsNavHost(
                     navigateToInviteContact = {
                         navController.navigate(
                             RouteInviteToGroup(
-                                groupId = data.groupId,
+                                groupAddress = data.groupAddress,
                                 excludingAccountIDs = viewModel.excludingAccountIDsFromContactSelection.toList()
                             )
                         )
@@ -185,7 +197,7 @@ fun ConversationSettingsNavHost(
                 // grab a hold of manage group's VM
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry(
-                        RouteManageMembers(data.groupId)
+                        RouteManageMembers(data.groupAddress)
                     )
                 }
                 val editGroupViewModel: EditGroupViewModel = hiltViewModel(parentEntry)
@@ -242,7 +254,7 @@ fun ConversationSettingsNavHost(
                 val viewModel: DisappearingMessagesViewModel =
                     hiltViewModel<DisappearingMessagesViewModel, DisappearingMessagesViewModel.Factory> { factory ->
                         factory.create(
-                            threadId = threadId,
+                            address = address,
                             isNewConfigEnabled = ExpirationConfiguration.isNewConfigEnabled,
                             showDebugOptions = BuildConfig.BUILD_TYPE != "release"
                         )
@@ -258,14 +270,9 @@ fun ConversationSettingsNavHost(
 
             // All Media
             horizontalSlideComposable<RouteAllMedia> {
-                if (threadAddress == null) {
-                    navController.popBackStack()
-                    return@horizontalSlideComposable
-                }
-
                 val viewModel =
                     hiltViewModel<MediaOverviewViewModel, MediaOverviewViewModel.Factory> { factory ->
-                        factory.create(threadAddress)
+                        factory.create(address)
                     }
 
                 MediaOverviewScreen(
@@ -280,7 +287,7 @@ fun ConversationSettingsNavHost(
             horizontalSlideComposable<RouteNotifications> {
                 val viewModel =
                     hiltViewModel<NotificationSettingsViewModel, NotificationSettingsViewModel.Factory> { factory ->
-                        factory.create(threadId)
+                        factory.create(address)
                     }
 
                 NotificationSettingsScreen(

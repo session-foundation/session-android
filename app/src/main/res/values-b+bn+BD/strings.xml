@@ -151,7 +151,6 @@
     <string name="callsSettings">কলস (বেটা)</string>
     <string name="callsVoiceAndVideo">ভয়েস এবং ভিডিও কল</string>
     <string name="callsVoiceAndVideoBeta">ভয়েস এবং ভিডিও কল (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">বেটা কলগুলি ব্যবহার করার সময় আপনার আইপি আপনার কল পার্টনার এবং একটি Oxen Foundation সার্ভারের কাছে দৃশ্যমান হবে।</string>
     <string name="callsVoiceAndVideoToggleDescription">অন্য ব্যবহারকারীদের সাথে এবং তাদের থেকে ভয়েস এবং ভিডিও কল সক্রিয় করুন।</string>
     <string name="callsYouCalled">You called {name}</string>
     <string name="callsYouMissedCallPermissions">আপনি <b>{name}</b> এর একটি কল মিস করেছেন কারণ আপনি প্রাইভেসি সেটিংসে <b>ভয়েস এবং ভিডিও কল</b> সক্ষম করেননি।</string>
@@ -635,8 +634,6 @@
     <string name="open">ওপেন</string>
     <string name="other">অন্যান্য</string>
     <string name="passwordChange">পাসওয়ার্ড পরিবর্তন করুন</string>
-    <string name="passwordChangeDescription">{app_name} আনলক করতে প্রয়োজনীয় পাসওয়ার্ড পরিবর্তন করুন।</string>
-    <string name="passwordChangedDescription">আপনার পাসওয়ার্ড পরিবর্তন করা হয়েছে। দয়া করে এটি নিরাপদ রাখুন।</string>
     <string name="passwordConfirm">পাসওয়ার্ড নিশ্চিত করুন</string>
     <string name="passwordCurrentIncorrect">আপনার বর্তমান পাসওয়ার্ডটি ভুল।</string>
     <string name="passwordEnter">পাসওয়ার্ড লিখুন</string>
@@ -647,7 +644,6 @@
     <string name="passwordFailed">পাসওয়ার্ড সেট করতে ব্যর্থ হয়েছে</string>
     <string name="passwordIncorrect">পাসওয়ার্ড ভুল হয়েছে</string>
     <string name="passwordRemove">পাসওয়ার্ড সরান</string>
-    <string name="passwordRemovedDescription">আপনার পাসওয়ার্ড সরানো হয়েছে।</string>
     <string name="passwordSet">পাসওয়ার্ড সেট করুন</string>
     <string name="paste">পেস্ট</string>
     <string name="permissionMusicAudioDenied">{app_name} এর ফাইল, সঙ্গীত এবং অডিও পাঠানোর জন্য সঙ্গীত ও অডিও অ্যাক্সেস প্রয়োজন, কিন্তু এটি স্থায়ীভাবে প্রত্যাখ্যান করা হয়েছে। Tap Settings → Permissions, and turn \"Music and audio\" on.</string>

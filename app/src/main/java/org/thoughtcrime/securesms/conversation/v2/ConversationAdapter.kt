@@ -5,35 +5,25 @@ import android.database.Cursor
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import androidx.annotation.WorkerThread
-import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.bumptech.glide.RequestManager
-import java.util.concurrent.atomic.AtomicLong
-import kotlin.math.min
-import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.messages.ControlMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDelegate
 import org.thoughtcrime.securesms.database.CursorRecyclerViewAdapter
+import org.thoughtcrime.securesms.database.MmsSmsColumns
+import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.max
+import kotlin.math.min
 
 class ConversationAdapter(
     context: Context,
-    cursor: Cursor?,
-    conversation: Recipient?,
     originalLastSeen: Long,
     private val isReversed: Boolean,
     private val onItemPress: (MessageRecord, Int, VisibleMessageView, MotionEvent) -> Unit,
@@ -43,18 +33,14 @@ class ConversationAdapter(
     private val downloadPendingAttachment: (DatabaseAttachment) -> Unit,
     private val retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
     private val glide: RequestManager,
-    lifecycleCoroutineScope: LifecycleCoroutineScope
-) : CursorRecyclerViewAdapter<ViewHolder>(context, cursor) {
+    private val threadRecipientProvider: () -> Recipient,
+) : CursorRecyclerViewAdapter<ViewHolder>(context) {
     private val messageDB by lazy { DatabaseComponent.get(context).mmsSmsDatabase() }
-    private val contactDB by lazy { DatabaseComponent.get(context).sessionContactDatabase() }
     var selectedItems = mutableSetOf<MessageRecord>()
     var isAdmin: Boolean = false
     private var searchQuery: String? = null
     var visibleMessageViewDelegate: VisibleMessageViewDelegate? = null
 
-    private val updateQueue = Channel<String>(1024, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    private val contactCache = ConcurrentHashMap<String, Contact>(100)
-    private val contactLoadedCache = ConcurrentHashMap<String, Boolean>(100)
     private val lastSeen = AtomicLong(originalLastSeen)
 
     var lastSentMessageId: MessageId? = null
@@ -65,37 +51,10 @@ class ConversationAdapter(
             }
         }
 
-    private val groupId = if(conversation?.isGroupV2Recipient == true)
-        AccountId(conversation.address.toString())
-    else null
-
     private val expandedMessageIds = mutableSetOf<MessageId>()
 
     init {
-        lifecycleCoroutineScope.launch(IO) {
-            while (isActive) {
-                val item = updateQueue.receive()
-                val contact = getSenderInfo(item) ?: continue
-                contactCache[item] = contact
-                contactLoadedCache[item] = true
-            }
-        }
-    }
-
-    @WorkerThread
-    private fun getSenderInfo(sender: String): Contact? = contactDB.getContactWithAccountID(sender)
-
-    sealed class ViewType(val rawValue: Int) {
-        object Visible : ViewType(0)
-        object Control : ViewType(1)
-
-        companion object {
-
-            val allValues: Map<Int, ViewType> get() = mapOf(
-                Visible.rawValue to Visible,
-                Control.rawValue to Control
-            )
-        }
+        setHasStableIds(true)
     }
 
     class VisibleMessageViewHolder(val view: VisibleMessageView) : ViewHolder(view)
@@ -103,23 +62,31 @@ class ConversationAdapter(
 
     override fun getItemViewType(cursor: Cursor): Int {
         val message = getMessage(cursor)!!
-        if (message.isControlMessage) { return ViewType.Control.rawValue }
-        return ViewType.Visible.rawValue
+        if (message.isControlMessage) { return VIEW_TYPE_CONTROL }
+        return VIEW_TYPE_VISIBLE
     }
 
-    override fun onCreateItemViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        @Suppress("NAME_SHADOWING")
-        val viewType = ViewType.allValues[viewType]
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int
+    ): ViewHolder {
         return when (viewType) {
-            ViewType.Visible -> VisibleMessageViewHolder(VisibleMessageView(context))
-            ViewType.Control -> ControlMessageViewHolder(ControlMessageView(context))
+            VIEW_TYPE_VISIBLE -> VisibleMessageViewHolder(VisibleMessageView(context))
+            VIEW_TYPE_CONTROL -> ControlMessageViewHolder(ControlMessageView(context))
             else -> throw IllegalStateException("Unexpected view type: $viewType.")
         }
     }
 
-    override fun onBindItemViewHolder(viewHolder: ViewHolder, cursor: Cursor) {
+    override fun getItemId(cursor: Cursor): Long {
+        // Try to make a unique id out of the real message id, which is a composite structure: (id, is_mms)
+        // It assumes that the id won't exceed a signed long, which is not the most correct but it's good enough.
+        val id = cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.ID))
+        val isMms = cursor.getString(cursor.getColumnIndexOrThrow(MmsSmsDatabase.TRANSPORT)) == MmsSmsDatabase.SMS_TRANSPORT
+        return if (isMms) id else -id
+    }
+
+    override fun onBindItemViewHolder(viewHolder: ViewHolder, cursor: Cursor, position: Int) {
         val message = getMessage(cursor)!!
-        val position = viewHolder.adapterPosition
         val messageBefore = getMessageBefore(position, cursor)
         when (viewHolder) {
             is VisibleMessageViewHolder -> {
@@ -127,30 +94,15 @@ class ConversationAdapter(
                 val isSelected = selectedItems.contains(message)
                 visibleMessageView.isMessageSelected = isSelected
                 visibleMessageView.indexInAdapter = position
-                val senderId = message.individualRecipient.address.toString()
-                updateQueue.trySend(senderId)
-                if (contactCache[senderId] == null && !contactLoadedCache.getOrDefault(
-                        senderId,
-                        false
-                    )
-                ) {
-                    getSenderInfo(senderId)?.let { contact ->
-                        contactCache[senderId] = contact
-                    }
-                }
-                val contact = contactCache[senderId]
                 val isExpanded = expandedMessageIds.contains(message.messageId)
 
                 visibleMessageView.bind(
                     message = message,
+                    threadRecipient = threadRecipientProvider(),
                     previous = messageBefore,
                     next = getMessageAfter(position, cursor),
                     glide = glide,
                     searchQuery = searchQuery,
-                    contact = contact,
-                    // we pass in the groupId for groupV2 to use for determining the name of the members
-                    groupId = groupId,
-                    senderAccountID = senderId,
                     lastSeen = lastSeen.get(),
                     lastSentMessageId = lastSentMessageId,
                     delegate = visibleMessageViewDelegate,
@@ -247,7 +199,11 @@ class ConversationAdapter(
             if (position == null || position == -1) {
                 toRemove += selected
             } else {
-                val item = getMessage(getCursorAtPositionOrThrow(position))
+                val item = cursor?.let {
+                    it.moveToPosition(position)
+                    getMessage(it)
+                }
+
                 if (item == null || item.isDeleted) {
                     toDeselect += selected
                 }
@@ -317,5 +273,10 @@ class ConversationAdapter(
         // Otherwise, we will need to take the reaction timestamp into account
         val maxReactionTimestamp = message.reactions.maxOf { it.dateReceived }
         return max(message.timestamp, maxReactionTimestamp)
+    }
+
+    companion object {
+        private const val VIEW_TYPE_VISIBLE = 1
+        private const val VIEW_TYPE_CONTROL = 2
     }
 }

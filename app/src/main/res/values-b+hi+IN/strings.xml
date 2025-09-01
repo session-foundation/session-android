@@ -184,7 +184,6 @@
     <string name="callsSettings">कॉल्स (बेटा)</string>
     <string name="callsVoiceAndVideo">वॉइस और वीडियो कॉल</string>
     <string name="callsVoiceAndVideoBeta">वॉइस और वीडियो कॉल (बीटा)</string>
-    <string name="callsVoiceAndVideoModalDescription">अपने खाते में एन्क्रिप्टेड संदेश भेजते समय आपका IP आपके कॉल पार्टनर और Oxen Foundation सर्वर को दिखाई देगा।</string>
     <string name="callsVoiceAndVideoToggleDescription">अन्य उपयोगकर्ताओं से वॉयस और वीडियो कॉल सक्षम करता है।</string>
     <string name="callsYouCalled">आपने {name} को कॉल किया</string>
     <string name="callsYouMissedCallPermissions">आपको <b>प्राइवेसी सेटिंग्स</b> में <b>वॉइस और वीडियो कॉल्स</b> सक्षम नहीं करने के कारण <b>{name}</b> से कॉल छूट गया।</string>
@@ -770,8 +769,6 @@
     <string name="openSurvey">सर्वेक्षण खोलें</string>
     <string name="other">अन्य</string>
     <string name="passwordChange">पासवर्ड बदलें</string>
-    <string name="passwordChangeDescription">{app_name} को अनलॉक करने के लिए आवश्यक पासवर्ड बदलें।</string>
-    <string name="passwordChangedDescription">आपका पासवर्ड बदल दिया गया है। कृपया इसे सुरक्षित रखें।</string>
     <string name="passwordConfirm">पासवर्ड की पुष्टि करें</string>
     <string name="passwordCurrentIncorrect">आपका वर्तमान पासवर्ड गलत है।</string>
     <string name="passwordEnter">पासवर्ड दर्ज करें</string>
@@ -783,7 +780,6 @@
     <string name="passwordFailed">पासवर्ड सेट करने में विफल</string>
     <string name="passwordIncorrect">गलत पासवर्ड</string>
     <string name="passwordRemove">पासवर्ड हटाएं</string>
-    <string name="passwordRemovedDescription">आपका पासवर्ड हटा दिया गया है।</string>
     <string name="passwordSet">पासवर्ड सेट करें</string>
     <string name="paste">पेस्ट करें</string>
     <string name="permissionChange">अनुमति परिवर्तन</string>
@@ -831,7 +827,6 @@
     <string name="proAnimatedDisplayPictureFeature">एनिमेटेड डिस्प्ले तस्वीर</string>
     <string name="proAnimatedDisplayPictureModalDescription">उपयोगकर्ता GIF अपलोड कर सकते हैं</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">GIF अपलोड करें</string>
-    <string name="proBadge">{app_pro} बैज</string>
     <string name="proCallToActionLongerMessages">लंबे संदेश भेजना चाहते हैं? अधिक टेक्स्ट भेजें और {app_pro} के साथ प्रीमियम सुविधाओं का अनलॉक करें</string>
     <string name="proCallToActionPinnedConversations">अधिक पिन करना चाहते हैं? अपनी चैट व्यवस्थित करें और {app_pro} के साथ प्रीमियम सुविधाओं का अनलॉक करें</string>
     <string name="proCallToActionPinnedConversationsMoreThan">5 से अधिक पिन करना चाहते हैं? अपनी चैट व्यवस्थित करें और {app_pro} के साथ प्रीमियम सुविधाओं का अनलॉक करें</string>

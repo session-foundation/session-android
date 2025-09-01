@@ -143,7 +143,6 @@
     <string name="callsSettings">Chamadas (Beta)</string>
     <string name="callsVoiceAndVideo">Chamadas de voz e vídeo</string>
     <string name="callsVoiceAndVideoBeta">Chamadas de voz e vídeo (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">O teu IP é visible para o teu compañeire de chamada e un servidor da Oxen Foundation mentres utilizas chamadas beta.</string>
     <string name="callsYouCalled">Chamaches a {name}</string>
     <string name="callsYouMissedCallPermissions">Perdiches unha chamada de <b>{name}</b> porque non tes activadas as <b>Chamadas de Voz e Vídeo</b> nos Axustes de Privacidade.</string>
     <string name="cameraErrorNotFound">Non se atopou cámara</string>
@@ -559,8 +558,6 @@
     <string name="open">Abrir</string>
     <string name="other">Outra</string>
     <string name="passwordChange">Cambiar o contrasinal</string>
-    <string name="passwordChangeDescription">Cambia o contrasinal necesario para desbloquear {app_name}.</string>
-    <string name="passwordChangedDescription">O teu contrasinal foi cambiado. Por favor, mantéñeo seguro.</string>
     <string name="passwordConfirm">Confirmar contrasinal</string>
     <string name="passwordCurrentIncorrect">O teu contrasinal actual é incorrecto.</string>
     <string name="passwordEnter">Introduza o contrasinal</string>
@@ -570,7 +567,6 @@
     <string name="passwordFailed">Non se puido establecer o contrasinal</string>
     <string name="passwordIncorrect">Contrasinal incorrecto</string>
     <string name="passwordRemove">Eliminar contrasinal</string>
-    <string name="passwordRemovedDescription">O teu contrasinal foi eliminado.</string>
     <string name="passwordSet">Establecer Contrasinal</string>
     <string name="paste">Pegar</string>
     <string name="permissionsAppleMusic">{app_name} necesita usar Apple Music para reproducir anexos multimedia.</string>

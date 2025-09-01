@@ -153,7 +153,6 @@
     <string name="callsSettings">Puhelut (beta)</string>
     <string name="callsVoiceAndVideo">Ääni- ja videopuhelut</string>
     <string name="callsVoiceAndVideoBeta">Ääni- ja videopuhelut (beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">IP-osoitteesi on näkyvissä puhelun aikana vastaanottajalle ja Oxen Foundation palvelimelle, kun käytät beta-puheluita.</string>
     <string name="callsVoiceAndVideoToggleDescription">Mahdollistaa ääni- ja videopuheluiden soiton ja vastaanoton.</string>
     <string name="callsYouCalled">Soitit käyttäjälle {name}</string>
     <string name="callsYouMissedCallPermissions">Missasit puhelun käyttäjältä <b>{name}</b>, koska et ole ottanut käyttöön <b>Ääni ja videopuheluita</b> tietosuoja-asetuksissa.</string>
@@ -656,8 +655,6 @@
     <string name="open">Avaa</string>
     <string name="other">Muu</string>
     <string name="passwordChange">Vaihda salasana</string>
-    <string name="passwordChangeDescription">Vaihda {app_name} in avaukseen käytettävä salasana.</string>
-    <string name="passwordChangedDescription">Salasanasi on vaihdettu. Pidä se turvassa.</string>
     <string name="passwordConfirm">Vahvista salasana</string>
     <string name="passwordCurrentIncorrect">Nykyinen salasanasi on virheellinen.</string>
     <string name="passwordEnter">Syötä salasana</string>
@@ -668,7 +665,6 @@
     <string name="passwordFailed">Salasanan asetus epäonnistui</string>
     <string name="passwordIncorrect">Virheellinen salasana</string>
     <string name="passwordRemove">Poista salasana</string>
-    <string name="passwordRemovedDescription">Salasanasi on on poistettu.</string>
     <string name="passwordSet">Aseta salasana</string>
     <string name="paste">Liitä</string>
     <string name="permissionMusicAudioDenied">{app_name} tarvitsee pääsyn musiikkiin ja ääniin, jotta se voi lähettää tiedostoja, musiikkia ja ääntä, mutta pääsy on pysyvästi estetty. Napauta Asetukset → Luvat ja salli \"Musiikki ja äänet\".</string>

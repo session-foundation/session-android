@@ -151,7 +151,6 @@
     <string name="callsSettings">کالونه (بیټا)</string>
     <string name="callsVoiceAndVideo">د زوګ او ویډیو زنګونه</string>
     <string name="callsVoiceAndVideoBeta">زوګ او ویډیو زنګونه (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">ستاسو IP ستاسو د زنګ ملګري او یو Oxen Foundation سرور ته ښکاره کیږي کله چې بیتا زنګونه کاروئ.</string>
     <string name="callsVoiceAndVideoToggleDescription">د نورو کاروونکو سره غږ او ویدیو زنګونه فعالوي.</string>
     <string name="callsYouCalled">تاسو{name}. ته زنګ ووهلو</string>
     <string name="callsYouMissedCallPermissions">تاسو له <b>{name}</b> څخه یو زنګ له لاسه ورکړی ځکه چې تاسو په محرمیت تنظیماتو کې <b>د غږ او ویډیو زنګونه</b> فعال نکړي.</string>
@@ -635,8 +634,6 @@
     <string name="open">خلاص</string>
     <string name="other">نور</string>
     <string name="passwordChange">پاسورډ بدل کړئ</string>
-    <string name="passwordChangeDescription">د {app_name} خلاصولو لپاره اړین پاسورډ بدل کړئ.</string>
-    <string name="passwordChangedDescription">ستاسو پاسورډ بدل شوی. مهرباني وکړۍ، دا خوندي وساتئ.</string>
     <string name="passwordConfirm">نښلول...</string>
     <string name="passwordCurrentIncorrect">ستاسو اوسنی پاسورډ غلط دی.</string>
     <string name="passwordEnter">پټنوم ولیکئ</string>
@@ -647,7 +644,6 @@
     <string name="passwordFailed">پټنوم تنظیم کې ناکام</string>
     <string name="passwordIncorrect">ناسم رمز</string>
     <string name="passwordRemove">پټنوم لرې کړئ</string>
-    <string name="passwordRemovedDescription">ستاسو پاسورډ لرې شوی دی.</string>
     <string name="passwordSet">پټنوم تنظیمول</string>
     <string name="paste">پیست</string>
     <string name="permissionMusicAudioDenied">{app_name} ته د موسیقۍ او غږ لاسرسي اړتیا لري ترڅو فایلونه، موسیقۍ او غږ واستوئ، مګر دا په دائمي ډول رد شوی. تنظیماتو باندې ټپ وکړئ → اجازې، او \"موسیقي او غږ\" روښانه کړئ.</string>

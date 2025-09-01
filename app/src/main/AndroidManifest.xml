@@ -400,14 +400,6 @@
                 android:resource="@xml/file_provider_paths" />
         </provider>
         <provider
-            android:name="org.thoughtcrime.securesms.database.DatabaseContentProviders$Conversation"
-            android:authorities="network.loki.securesms.database.conversation${authority_postfix}"
-            android:exported="false" />
-        <provider
-            android:name="org.thoughtcrime.securesms.database.DatabaseContentProviders$ConversationList"
-            android:authorities="network.loki.securesms.database.conversationlist${authority_postfix}"
-            android:exported="false" />
-        <provider
             android:name="org.thoughtcrime.securesms.database.DatabaseContentProviders$Attachment"
             android:authorities="network.loki.securesms.database.attachment${authority_postfix}"
             android:exported="false" />
@@ -418,10 +410,6 @@
         <provider
             android:name="org.thoughtcrime.securesms.database.DatabaseContentProviders$StickerPack"
             android:authorities="network.loki.securesms.database.stickerpack${authority_postfix}"
-            android:exported="false" />
-        <provider
-            android:name="org.thoughtcrime.securesms.database.DatabaseContentProviders$Recipient"
-            android:authorities="network.loki.securesms.database.recipient${authority_postfix}"
             android:exported="false" />
 
         <receiver android:name="org.thoughtcrime.securesms.service.BootReceiver"

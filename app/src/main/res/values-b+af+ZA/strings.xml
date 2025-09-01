@@ -152,7 +152,6 @@
     <string name="callsSettings">Oproepe (Beta)</string>
     <string name="callsVoiceAndVideo">Stem- en video-oproepe</string>
     <string name="callsVoiceAndVideoBeta">Stem- en video-oproepe (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Jou IP is sigbaar vir jou oproepmaat en \'n Oxen Foundation-bediener terwyl beta-oproepe gebruik word.</string>
     <string name="callsVoiceAndVideoToggleDescription">Aktiveer stem- en videoklank aanroep na en van ander gebruikers.</string>
     <string name="callsYouCalled">Jy het {name} gebel</string>
     <string name="callsYouMissedCallPermissions">Jy het \'n oproep gemis van <b>{name}</b> omdat jy nie <b>Stem- en Video-oproepe</b> in Privaatheid-instellings aangeskakel het nie.</string>
@@ -636,8 +635,6 @@
     <string name="open">Oop</string>
     <string name="other">Ander</string>
     <string name="passwordChange">Wysig Wagwoord</string>
-    <string name="passwordChangeDescription">Verander die wagwoord wat benodig word om {app_name} te ontsluit.</string>
-    <string name="passwordChangedDescription">Jou wagwoord is verander. Hou dit asseblief veilig.</string>
     <string name="passwordConfirm">Bevestig wagwoord</string>
     <string name="passwordCurrentIncorrect">Jou huidige wagwoord is verkeerd.</string>
     <string name="passwordEnter">Voer wagwoord in</string>
@@ -648,7 +645,6 @@
     <string name="passwordFailed">Kon nie wagwoord stel nie</string>
     <string name="passwordIncorrect">Verkeerde wagwoord</string>
     <string name="passwordRemove">Verwyder wagwoord</string>
-    <string name="passwordRemovedDescription">Jou wagwoord is verwyder.</string>
     <string name="passwordSet">Stel Wagwoord</string>
     <string name="paste">Plak</string>
     <string name="permissionMusicAudioDenied">{app_name} benodig musiek en oudio toegang om lêers, musiek en oudio te stuur, maar dit is permanent geweier. Tik Instellings → Toestemmings, en skakel \"Musiek en oudio\" aan.</string>

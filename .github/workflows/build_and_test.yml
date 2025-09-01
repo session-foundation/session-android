@@ -38,14 +38,14 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle.properties') }}-${{ matrix.variant }}
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '21'
 
       - name: Build with gradle
         id: build
-        run: ./gradlew assemble${{ matrix.variant }}${{ matrix.build_type }} ${{ matrix.extra_build_command_options }}
+        run: ./gradlew assemble${{ matrix.variant }}${{ matrix.build_type }} ${{ matrix.extra_build_command_options }} --stacktrace
 
       - name: Run unit tests
         if: ${{ matrix.run_test == true }}

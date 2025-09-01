@@ -151,7 +151,6 @@
     <string name="callsSettings">कलहरू (बीटा)</string>
     <string name="callsVoiceAndVideo">भ्वाइस र भिडियो कलहरू</string>
     <string name="callsVoiceAndVideoBeta">भ्वाइस र भिडियो कलहरू (बीटा)</string>
-    <string name="callsVoiceAndVideoModalDescription">तपाईंको आइपी तपाईको कल पार्टनर र ओक्सन फाउन्डेसन सर्भरलाई बेटा कलहरू प्रयोग गर्दा देखिनेछ।</string>
     <string name="callsVoiceAndVideoToggleDescription">भ्वाइस र भिडियो कलहरू सक्षम गर्नुहोस् र अरू प्रयोगकर्ताहरूको लागि सक्षम गर्नुहोस्।</string>
     <string name="callsYouCalled">तपाईंले कल गर्नुभयो {name}</string>
     <string name="callsYouMissedCallPermissions">तपाईंले गोपनीयता सेटिङ्समा <b>भ्वाइस र भिडियो कलहरू</b> सक्षम नगर्दा <b>{name}</b> बाट आउने कल छुट्नुभयो।</string>
@@ -627,8 +626,6 @@
     <string name="open">खोल्नुहोस्</string>
     <string name="other">अन्य</string>
     <string name="passwordChange">पासवर्ड परिवर्तन गर्नुहोस्</string>
-    <string name="passwordChangeDescription">{app_name} अनलक गर्न आवश्यक पासवर्ड परिवर्तन गर्नुहोस्।</string>
-    <string name="passwordChangedDescription">तपाईँको पासवर्ड परिवर्तन भयो। कृपया यसलाई सुरक्षित राख्नुहोस्।</string>
     <string name="passwordConfirm">पासवर्ड निश्चित गर्नुहोस्</string>
     <string name="passwordCurrentIncorrect">तपाईंको हालको पासवर्ड सही छैन।</string>
     <string name="passwordEnter">पासवर्ड प्रविष्ट गर्नुहोस्</string>
@@ -639,7 +636,6 @@
     <string name="passwordFailed">पासवर्ड सेट गर्न असफल</string>
     <string name="passwordIncorrect">गलत पासवर्ड</string>
     <string name="passwordRemove">पासवर्ड हटाउनुहोस्</string>
-    <string name="passwordRemovedDescription">तपाईँको पासवर्ड हटाइएको छ।</string>
     <string name="passwordSet">पासवर्ड सेट गर्नुहोस्</string>
     <string name="paste">टाँस्नुहोस्</string>
     <string name="permissionMusicAudioDenied">{app_name} लाई संगीत र अडियो पहुँच आवश्यक छ फाइलहरू, संगीत र अडियो पठाउनका लागि, तर यो स्थायी रूपमा अस्वीकृत गरिएको छ। सेटिङहरू → अनुमतिहरूमा थिच्नुहोस्, र \"संगीत र अडियो\" अन गर्नुहोस्।</string>

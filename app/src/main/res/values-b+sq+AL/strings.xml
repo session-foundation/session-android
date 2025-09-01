@@ -151,7 +151,6 @@
     <string name="callsSettings">Thirrje (Beta)</string>
     <string name="callsVoiceAndVideo">Thirrje me Zë dhe Video</string>
     <string name="callsVoiceAndVideoBeta">Thirrje me Zë dhe Video (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">IP-ja juaj është e dukshme për partnerin tuaj të thirrjes dhe një server të Fondacionit Oxen gjatë përdorimit të thirrjeve beta.</string>
     <string name="callsVoiceAndVideoToggleDescription">Aktivizon thirrjet me zë dhe video drejt dhe nga përdorues të tjerë.</string>
     <string name="callsYouCalled">Ju thirrët {name}</string>
     <string name="callsYouMissedCallPermissions">Ju keni humbur një telefonatë nga <b>{name}</b> sepse nuk keni aktivizuar <b>Thirrjet me Zë dhe Video</b> në Cilësimet e Privatësisë.</string>
@@ -634,8 +633,6 @@
     <string name="open">Hap</string>
     <string name="other">Tjetër</string>
     <string name="passwordChange">Ndrysho Fjalëkalimin</string>
-    <string name="passwordChangeDescription">Ndryshoni fjalëkalimin e kërkuar për të zhbllokuar {app_name}.</string>
-    <string name="passwordChangedDescription">Fjalëkalimi juaj është ndryshuar. Ju lutemi ta mbani të sigurt.</string>
     <string name="passwordConfirm">Konfirmo fjalëkalimin</string>
     <string name="passwordCurrentIncorrect">Fjalëkalimi juaj aktual është i pasaktë.</string>
     <string name="passwordEnter">Jepni fjalëkalimin</string>
@@ -646,7 +643,6 @@
     <string name="passwordFailed">Dështoi vendosja e fjalëkalimit</string>
     <string name="passwordIncorrect">Fjalëkalim i pasaktë</string>
     <string name="passwordRemove">Hiqe Fjalëkalimin</string>
-    <string name="passwordRemovedDescription">Fjalëkalimi juaj është hequr.</string>
     <string name="passwordSet">Vendos Fjalëkalimin</string>
     <string name="paste">Ngjite</string>
     <string name="permissionMusicAudioDenied">{app_name} ka nevojë për qasje në muzikë dhe audio për të dërguar skedarë, muzikë dhe audio, por kjo i është mohuar. Shtypni Settings → Permissions dhe aktivizoni \"Music and audio\".</string>

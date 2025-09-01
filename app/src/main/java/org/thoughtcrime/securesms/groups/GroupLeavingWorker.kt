@@ -12,6 +12,7 @@ import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.channels.Channel
 import org.session.libsession.messaging.groups.GroupScope
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.sending_receiving.MessageSender
@@ -24,7 +25,6 @@ import org.session.libsignal.protos.SignalServiceProtos.DataMessage
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMessage
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 
@@ -35,7 +35,6 @@ class GroupLeavingWorker @AssistedInject constructor(
     private val storage: Storage,
     private val configFactory: ConfigFactory,
     private val groupScope: GroupScope,
-    private val lokiAPIDatabase: LokiAPIDatabase,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val groupId = requireNotNull(inputData.getString(KEY_GROUP_ID)) {
@@ -75,6 +74,8 @@ class GroupLeavingWorker @AssistedInject constructor(
                         )
 
                         // If we are not the only admin, send a left message for other admin to handle the member removal
+                        // We'll have to wait for this message to be sent before going ahead to delete the group
+                        val statusChannel = Channel<kotlin.Result<Unit>>()
                         MessageSender.send(
                             GroupUpdated(
                                 GroupUpdateMessage.newBuilder()
@@ -82,7 +83,10 @@ class GroupLeavingWorker @AssistedInject constructor(
                                     .build()
                             ),
                             address,
+                            statusCallback = statusChannel
                         )
+
+                        statusChannel.receive().getOrThrow()
                     }
 
                     // If we are the only admin, leaving this group will destroy the group
@@ -99,11 +103,7 @@ class GroupLeavingWorker @AssistedInject constructor(
                 }
 
                 // Delete conversation and group configs
-                storage.getThreadId(Address.fromSerialized(groupId.hexString))
-                    ?.let(storage::deleteConversation)
                 configFactory.removeGroup(groupId)
-                lokiAPIDatabase.clearLastMessageHashes(groupId.hexString)
-                lokiAPIDatabase.clearReceivedMessageHashValues(groupId.hexString)
                 Log.d(TAG, "Group $groupId left successfully")
                 Result.success()
             } catch (e: CancellationException) {

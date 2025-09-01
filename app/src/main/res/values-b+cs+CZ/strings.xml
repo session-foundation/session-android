@@ -186,7 +186,6 @@
     <string name="callsSettings">Hovory (Beta)</string>
     <string name="callsVoiceAndVideo">Hlasové a video hovory</string>
     <string name="callsVoiceAndVideoBeta">Hlasové a video hovory (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Vaše IP adresa je při používání beta hovorů viditelná pro vašeho volacího partnera a server Oxen Foundation.</string>
     <string name="callsVoiceAndVideoToggleDescription">Povolí hlasové a video hovory k ostatním uživatelům i od nich.</string>
     <string name="callsYouCalled">Volali jste {name}</string>
     <string name="callsYouMissedCallPermissions">Zmeškali jste hovor od <b>{name}</b>, protože jste neměli povoleny <b>Hlasové a video hovory</b> v nastavení ochrany soukromí.</string>
@@ -814,8 +813,6 @@
     <string name="openSurvey">Otevřít dotazník</string>
     <string name="other">Ostatní</string>
     <string name="passwordChange">Změnit heslo</string>
-    <string name="passwordChangeDescription">Změňte heslo pro odemykání {app_name}.</string>
-    <string name="passwordChangedDescription">Tvé heslo bylo změněno. Pečlivě si ho odlož.</string>
     <string name="passwordConfirm">Potvrďte heslo</string>
     <string name="passwordCurrentIncorrect">Vaše aktuální heslo je nesprávné.</string>
     <string name="passwordEnter">Zadejte heslo</string>
@@ -827,7 +824,6 @@
     <string name="passwordFailed">Nepodařilo se nastavit heslo</string>
     <string name="passwordIncorrect">Nesprávné heslo</string>
     <string name="passwordRemove">Odstranit heslo</string>
-    <string name="passwordRemovedDescription">Vaše heslo bylo odstraněno.</string>
     <string name="passwordSet">Nastavit heslo</string>
     <string name="paste">Vložit</string>
     <string name="permissionChange">Změna oprávnění</string>
@@ -875,7 +871,6 @@
     <string name="proAnimatedDisplayPictureFeature">Animovaný zobrazovaný obrázek</string>
     <string name="proAnimatedDisplayPictureModalDescription">uživatelé mohou nahrávat GIFy</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Nahrajte GIFy se</string>
-    <string name="proBadge">Odznak {app_pro}</string>
     <string name="proCallToActionLongerMessages">Chcete posílat delší zprávy? Posílejte více textu odemknutím prémiových funkcí Session Pro</string>
     <string name="proCallToActionPinnedConversations">Chcete více připnutí? Organizujte své chaty a odemkněte prémiové funkce pomocí Session Pro</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Chcete více než 5 připnutí? Organizujte své chaty a odemkněte prémiové funkce pomocí Session Pro</string>

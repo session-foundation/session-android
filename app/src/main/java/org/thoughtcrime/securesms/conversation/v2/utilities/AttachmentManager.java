@@ -41,7 +41,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import network.loki.messenger.R;
-import org.session.libsession.utilities.recipients.Recipient;
+
+import org.session.libsession.utilities.Address;
 import org.session.libsignal.utilities.ListenableFuture;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.SettableFuture;
@@ -264,7 +265,7 @@ public class AttachmentManager {
                 .execute();
     }
 
-    public static void selectGallery(Activity activity, int requestCode, @NonNull Recipient recipient, @NonNull long threadId, @NonNull String body) {
+    public static void selectGallery(Activity activity, int requestCode, @NonNull Address recipient, @NonNull String body) {
 
         Context c = activity.getApplicationContext();
 
@@ -296,7 +297,7 @@ public class AttachmentManager {
                     );
         }
 
-        builder.onAllGranted(() -> activity.startActivityForResult(MediaSendActivity.buildGalleryIntent(activity, recipient, threadId, body), requestCode))
+        builder.onAllGranted(() -> activity.startActivityForResult(MediaSendActivity.buildGalleryIntent(activity, recipient, body), requestCode))
                 .execute();
     }
 
@@ -318,7 +319,7 @@ public class AttachmentManager {
         return captureUri;
     }
 
-    public void capturePhoto(Activity activity, int requestCode, Recipient recipient, @NonNull long threadId, @NonNull String body) {
+    public void capturePhoto(Activity activity, int requestCode, Address recipient, @NonNull String body) {
 
         String cameraPermissionDeniedTxt = Phrase.from(context, R.string.permissionsCameraDenied)
                 .put(APP_NAME_KEY, context.getString(R.string.app_name))
@@ -328,7 +329,7 @@ public class AttachmentManager {
                 .request(Manifest.permission.CAMERA)
                 .withPermanentDenialDialog(cameraPermissionDeniedTxt)
                 .onAllGranted(() -> {
-                    Intent captureIntent = MediaSendActivity.buildCameraIntent(activity, recipient, threadId, body);
+                    Intent captureIntent = MediaSendActivity.buildCameraIntent(activity, recipient, body);
                     if (captureIntent.resolveActivity(activity.getPackageManager()) != null) {
                         activity.startActivityForResult(captureIntent, requestCode);
                     }

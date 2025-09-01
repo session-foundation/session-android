@@ -32,11 +32,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.squareup.phrase.Phrase
-import java.util.concurrent.Executor
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.concurrent.Volatile
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
@@ -48,7 +43,6 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.getNotif
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getRepeatAlertsCount
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isNotificationsEnabled
 import org.session.libsession.utilities.TextSecurePreferences.Companion.removeHasHiddenMessageRequests
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
@@ -57,18 +51,28 @@ import org.session.libsignal.utilities.Util
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities.getUserED25519KeyPair
+import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsSmsColumns.NOTIFIED
-import org.thoughtcrime.securesms.database.RecipientDatabase
+import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
+import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.util.AvatarUtils
-import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.WEBRTC_NOTIFICATION
 import org.thoughtcrime.securesms.util.SessionMetaProtocol.canUserReplyToNotification
 import org.thoughtcrime.securesms.util.SpanUtil
+import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.WEBRTC_NOTIFICATION
+import java.util.concurrent.Executor
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import javax.inject.Inject
+import kotlin.concurrent.Volatile
 
 /**
  * Handles posting system notifications for new messages.
@@ -77,8 +81,13 @@ import org.thoughtcrime.securesms.util.SpanUtil
  * @author Moxie Marlinspike
  */
 private const val CONTENT_SIGNATURE = "content_signature"
-class DefaultMessageNotifier(
-    val avatarUtils: AvatarUtils
+
+class DefaultMessageNotifier @Inject constructor(
+    val avatarUtils: AvatarUtils,
+    private val threadDatabase: ThreadDatabase,
+    private val recipientRepository: RecipientRepository,
+    private val mmsSmsDatabase: MmsSmsDatabase,
+    private val lokiThreadDatabase: LokiThreadDatabase,
 ) : MessageNotifier {
     override fun setVisibleThread(threadId: Long) {
         visibleThread = threadId
@@ -90,10 +99,6 @@ class DefaultMessageNotifier(
 
     override fun setLastDesktopActivityTimestamp(timestamp: Long) {
         lastDesktopActivityTimestamp = timestamp
-    }
-
-    override fun notifyMessageDeliveryFailed(context: Context?, recipient: Recipient?, threadId: Long) {
-        // We do not provide notifications for message delivery failure.
     }
 
     override fun cancelDelayedNotifications() {
@@ -138,8 +143,7 @@ class DefaultMessageNotifier(
 
             // If there are *any* unread requests in DB, keep the requests summary visible
             // even if our current NotificationState has no request items (due to <= 1 rule, etc.).
-            val keepRequests =
-                get(context).threadDatabase().unapprovedUnreadConversationCount > 0L
+            val keepRequests = true // threadDatabase.unapprovedUnreadConversationCount > 0L
 
             // Match the “skip the lone approved message child
             val suppressLoneApprovedChild = approvedThreadItems.size == 1 && unapprovedThreadItems.isNotEmpty()
@@ -189,17 +193,16 @@ class DefaultMessageNotifier(
     override fun updateNotification(context: Context, threadId: Long, signal: Boolean) {
         val isVisible = visibleThread == threadId
 
-        val threads = get(context).threadDatabase()
-        val recipient = threads.getRecipientForThreadId(threadId)
+        val recipient = threadDatabase.getRecipientForThreadId(threadId)?.let(recipientRepository::getRecipientSync)
 
-        if (recipient != null && !recipient.isGroupOrCommunityRecipient && threads.getMessageCount(threadId) == 1 &&
-            !(recipient.isApproved || threads.getLastSeenAndHasSent(threadId).second())
+        if (recipient != null && !recipient.isGroupOrCommunityRecipient && threadDatabase.getMessageCount(threadId) == 1 &&
+            !(recipient.approved || threadDatabase.getLastSeenAndHasSent(threadId).second())
         ) {
             removeHasHiddenMessageRequests(context)
         }
 
         if (!isNotificationsEnabled(context) ||
-            (recipient != null && recipient.isMuted)
+            (recipient != null && recipient.isMuted())
         ) {
             return
         }
@@ -302,7 +305,8 @@ class DefaultMessageNotifier(
 
                 // If nothing survived filters, keep the old “maybe cancel” behavior
                 if (approvedItems.isEmpty() && unapprovedItems.isEmpty()) {
-                    if (get(context).threadDatabase().unapprovedUnreadConversationCount == 0L) {
+                    //threadDatabase.unapprovedUnreadConversationCount == 0L
+                    if (false) {
                         cancelActiveNotifications(context)
                     }
                     cancelOrphanedNotifications(context, notificationState)
@@ -470,12 +474,12 @@ class DefaultMessageNotifier(
 
         val builderCS = notificationText ?: ""
         val ss = highlightMentions(
-            builderCS,
-            false,
-            false,
-            true,
-            if (bundled) notifications[0].threadId else 0,
-            context
+            recipientRepository = recipientRepository,
+            text = builderCS,
+            isOutgoingMessage = false,
+            isQuote = false,
+            formatOnly = true,
+            context = context
         )
 
         builder.setPrimaryMessageBody(
@@ -520,7 +524,7 @@ class DefaultMessageNotifier(
         }
 
         if (signal) {
-            builder.setAlarms(notificationState.getRingtone(context), notificationState.vibrate)
+            builder.setAlarms(notificationState.getRingtone(context))
             builder.setTicker(
                 notifications[0].individualRecipient,
                 notifications[0].text
@@ -589,13 +593,12 @@ class DefaultMessageNotifier(
         builder.putStringExtra(CONTENT_SIGNATURE, contentSignature)
 
         builder.setMessageCount(notificationState.notificationCount, notificationState.threadCount)
-        builder.setMostRecentSender(notifications[0].individualRecipient, notifications[0].recipient)
+        builder.setMostRecentSender(notifications[0].individualRecipient)
         builder.setGroup(if (isMessageRequest) REQUESTS_GROUP else NOTIFICATION_GROUP)
         builder.setDeleteIntent(notificationState.getDeleteIntent(context))
         builder.setOnlyAlertOnce(!signal)
         builder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
         builder.setAutoCancel(true)
-
 
         val messageIdTag = notifications[0].timestamp.toString()
 
@@ -615,30 +618,29 @@ class DefaultMessageNotifier(
         while (iterator.hasPrevious()) {
             val item = iterator.previous()
             builder.addMessageBody(
-                item.individualRecipient, item.recipient,
-                highlightMentions(
-                    (if (item.text != null) item.text else "")!!,
-                    false,
-                    false,
-                    true,  // no styling here, only text formatting
-                    item.threadId,
-                    context
+                item.individualRecipient, highlightMentions(
+                    recipientRepository = recipientRepository,
+                    text = (if (item.text != null) item.text else "")!!,
+                    isOutgoingMessage = false,
+                    isQuote = false,
+                    formatOnly = true,  // no styling here, only text formatting
+                    context = context
                 )
             )
         }
 
         if (signal) {
-            builder.setAlarms(notificationState.getRingtone(context), notificationState.vibrate)
+            builder.setAlarms(notificationState.getRingtone(context))
             val text = notifications[0].text
             builder.setTicker(
                 notifications[0].individualRecipient,
                 highlightMentions(
-                    text ?: "",
-                    false,
-                    false,
-                    true,  // no styling here, only text formatting
-                    notifications[0].threadId,
-                    context
+                    recipientRepository = recipientRepository,
+                    text = text ?: "",
+                    isOutgoingMessage = false,
+                    isQuote = false,
+                    formatOnly = true,  // no styling here, only text formatting
+                    context = context
                 )
             )
         }
@@ -673,33 +675,32 @@ class DefaultMessageNotifier(
         reactionsCursor: Cursor
     ): NotificationState {
         val notificationState = NotificationState()
-        val threadDatabase = get(context).threadDatabase()
-        val readerDb = get(context).mmsSmsDatabase()
+
         val cache: MutableMap<Long, String?> = HashMap()
         val userPublicKey = getLocalNumber(context)
 
         // Helper that runs the exact same logic on either cursor
         fun readCursor(cursor: Cursor) {
-            val reader = readerDb.readerFor(cursor) ?: return
+            val reader = mmsSmsDatabase.readerFor(cursor) ?: return
             var record: MessageRecord?
 
             do {
                 record = reader.next
                 if (record == null) break
 
-                val threadId = record.threadId
-                val threadRecipients = if (threadId != -1L)
-                    threadDatabase.getRecipientForThreadId(threadId)
-                else null
+            val threadId = record.threadId
+            val threadRecipients = if (threadId != -1L) {
+                threadDatabase.getRecipientForThreadId(threadId)?.let(recipientRepository::getRecipientSync)
+            } else null
 
                 // SKIP IF MUTED OR CALLS
-                if (threadRecipients?.isMuted == true) continue
+                if (threadRecipients?.isMuted() == true) continue
                 if (record.isIncomingCall || record.isOutgoingCall) continue
 
                 // MESSAGE-REQUESTS (unapproved)
                 val isMessageRequest = threadRecipients != null &&
                         !threadRecipients.isGroupOrCommunityRecipient &&
-                        !threadRecipients.isApproved &&
+                        !threadRecipients.approved &&
                         !threadDatabase.getLastSeenAndHasSent(threadId).second()
 
                 val hasExistingMessages = threadDatabase.getMessageCount(threadId) >= 1
@@ -708,24 +709,26 @@ class DefaultMessageNotifier(
                     continue
                 }
 
-                // SKIP IF NOTIFICATIONS DISABLED FOR THIS THREAD
-                if (threadRecipients?.notifyType == RecipientDatabase.NOTIFY_TYPE_NONE) continue
+            // Check notification settings
+            if (threadRecipients?.notifyType == NotifyType.NONE) continue
 
-                // MENTIONS-ONLY SETTING
-                if (threadRecipients?.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS) {
-                    var blinded = cache[threadId]
-                    if (blinded == null) {
-                        blinded = generateBlindedId(threadId, context)
-                        cache[threadId] = blinded
-                    }
+            val userPublicKey = getLocalNumber(context)
+
+            // Check mentions-only setting
+            if (threadRecipients?.notifyType == NotifyType.MENTIONS) {
+                var blindedPublicKey = cache[threadId]
+                if (blindedPublicKey == null) {
+                    blindedPublicKey = generateBlindedId(threadId, context)
+                    cache[threadId] = blindedPublicKey
+                }
 
                     val bodyStr = record.getDisplayBody(context).toString()
                     val mentioned = bodyStr.contains("@$userPublicKey") ||
-                            (blinded != null && bodyStr.contains("@$blinded")) ||
+                            (blindedPublicKey != null && bodyStr.contains("@$blindedPublicKey")) ||
                             (record is MmsMessageRecord).let {
                                 val quote = (record as? MmsMessageRecord)?.quote
                                 val qa = quote?.author?.toString()
-                                qa == userPublicKey || qa == blinded
+                                qa == userPublicKey || qa == blindedPublicKey
                             }
 
                     if (!mentioned) continue
@@ -801,18 +804,14 @@ class DefaultMessageNotifier(
                     }
 
                     if (others.isNotEmpty()) {
-                        val latest = others.maxByOrNull { it.dateSent }!!
-                        val reactor = Recipient.from(
-                            context,
-                            fromSerialized(latest.author),
-                            false
-                        )
+                        val latestReaction = others.maxByOrNull { it.dateSent }!!
+                        val reactor = recipientRepository.getRecipientSync(fromSerialized(latestReaction.author))
                         val emoji = Phrase.from(context, R.string.emojiReactsNotification)
-                            .put(EMOJI_KEY, latest.emoji)
+                            .put(EMOJI_KEY, latestReaction.emoji)
                             .format()
                             .toString()
                         val reactionId =
-                            "reaction_${record.getId()}_${latest.emoji}_${latest.author}"
+                            "reaction_${record.getId()}_${latestReaction.emoji}_${latestReaction.author}"
                                 .hashCode()
                                 .toLong()
 
@@ -825,7 +824,7 @@ class DefaultMessageNotifier(
                                 threadRecipients,
                                 threadId,
                                 emoji,
-                                latest.dateSent,
+                                latestReaction.dateSent,
                                 null,
                                 isMessageRequest
                             )
@@ -849,9 +848,7 @@ class DefaultMessageNotifier(
         return notificationState
     }
 
-
     private fun generateBlindedId(threadId: Long, context: Context): String? {
-        val lokiThreadDatabase = get(context).lokiThreadDatabase()
         val openGroup = lokiThreadDatabase.getOpenGroupChat(threadId)
         val edKeyPair = getUserED25519KeyPair(context)
         if (openGroup != null && edKeyPair != null) {

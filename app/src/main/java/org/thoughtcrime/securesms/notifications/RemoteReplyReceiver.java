@@ -26,7 +26,6 @@ import android.os.Bundle;
 
 import androidx.core.app.RemoteInput;
 
-import org.session.libsession.messaging.messages.ExpirationConfiguration;
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage;
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage;
 import org.session.libsession.messaging.messages.visible.VisibleMessage;
@@ -34,10 +33,10 @@ import org.session.libsession.messaging.sending_receiving.MessageSender;
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
 import org.session.libsession.snode.SnodeClock;
 import org.session.libsession.utilities.Address;
-import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.database.MarkedMessageInfo;
 import org.thoughtcrime.securesms.database.MmsDatabase;
+import org.thoughtcrime.securesms.database.RecipientRepository;
 import org.thoughtcrime.securesms.database.SmsDatabase;
 import org.thoughtcrime.securesms.database.Storage;
 import org.thoughtcrime.securesms.database.ThreadDatabase;
@@ -75,6 +74,8 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
   MessageNotifier messageNotifier;
   @Inject
   SnodeClock clock;
+  @Inject
+  RecipientRepository recipientRepository;
 
   @SuppressLint("StaticFieldLeak")
   @Override
@@ -96,19 +97,17 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
       new AsyncTask<Void, Void, Void>() {
         @Override
         protected Void doInBackground(Void... params) {
-          Recipient recipient = Recipient.from(context, address, false);
-          long threadId = threadDatabase.getOrCreateThreadIdFor(recipient);
+          long threadId = threadDatabase.getOrCreateThreadIdFor(address);
           VisibleMessage message = new VisibleMessage();
           message.setSentTimestamp(clock.currentTimeMills());
           message.setText(responseText.toString());
-          ExpirationConfiguration config = storage.getExpirationConfiguration(threadId);
-          ExpiryMode expiryMode = config == null ? null : config.getExpiryMode();
+          ExpiryMode expiryMode = recipientRepository.getRecipientSync(address).getExpiryMode();
 
-          long expiresInMillis = expiryMode == null ? 0 : expiryMode.getExpiryMillis();
+          long expiresInMillis = expiryMode.getExpiryMillis();
           long expireStartedAt = expiryMode instanceof ExpiryMode.AfterSend ? message.getSentTimestamp() : 0L;
           switch (replyMethod) {
             case GroupMessage: {
-              OutgoingMediaMessage reply = OutgoingMediaMessage.from(message, recipient, Collections.emptyList(), null, null, expiresInMillis, 0);
+              OutgoingMediaMessage reply = OutgoingMediaMessage.from(message, address, Collections.emptyList(), null, null, expiresInMillis, 0);
               try {
                 message.setId(new MessageId(mmsDatabase.insertMessageOutbox(reply, threadId, false, true), true));
                 MessageSender.send(message, address);
@@ -118,7 +117,7 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
               break;
             }
             case SecureMessage: {
-              OutgoingTextMessage reply = OutgoingTextMessage.from(message, recipient, expiresInMillis, expireStartedAt);
+              OutgoingTextMessage reply = OutgoingTextMessage.from(message, address, expiresInMillis, expireStartedAt);
               message.setId(new MessageId(smsDatabase.insertMessageOutbox(threadId, reply, false, System.currentTimeMillis(), true), false));
               MessageSender.send(message, address);
               break;

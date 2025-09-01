@@ -151,7 +151,6 @@
     <string name="callsSettings">ಕಾಲುಗಳು (ಬೀಟಾ)</string>
     <string name="callsVoiceAndVideo">ವಾಯ್ಸ್ ಮತ್ತು ವೀಡಿಯೋ ಕರೆಗಳು</string>
     <string name="callsVoiceAndVideoBeta">ವಾಯ್ಸ್ ಮತ್ತು ವೀಡಿಯೋ ಕರೆಗಳು (ಬೀಟಾ)</string>
-    <string name="callsVoiceAndVideoModalDescription">ಬೇಟ ಕಾಲ್ಲನ್ನು ಬಳಸಿದಾಗ ನಿಮ್ಮ IP ಕರೆ ಸಹವಾಸಿಗೂ ಮತ್ತು Oxen Foundation ಸರ್ವರ್‌ಗೆ ಗೋಚರುತ್ತದೆ.</string>
     <string name="callsVoiceAndVideoToggleDescription">ಇತರ ಬಳಕೆದಾರರಿಂದ ಮತ್ತು ಇತರ ಬಳಕೆದಾರರಿಗೆ ಧ್ವನಿ ಮತ್ತು ವೀಡಿಯೊ ಕರೆಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸುತ್ತದೆ.</string>
     <string name="callsYouCalled">ನೀವು {name} ಗೆ ಕರೆ ಮಾಡಿದ್ದೀರಿ</string>
     <string name="callsYouMissedCallPermissions">ನೀವು <b>{name}</b> ನಿಂದ ಕರೆ ಕಳೆದುಕೊಂಡಿದ್ದೀರಿ ಏಕೆಂದರೆ ನೀವು ಪ್ರೈವೆಸಿ ಸೆಟ್ಟಿಂಗ್ಗಳಲ್ಲಿ <b>ವಾಯ್ಸ್ ಮತ್ತು ವಿಡಿಯೋ ಕಾಲ್‌ಗಳು</b> ನ್ನು ಅನುಮತಿಸಿದಿಲ್ಲ.</string>
@@ -635,8 +634,6 @@
     <string name="open">ತೆರೆ</string>
     <string name="other">ಇತರೆ</string>
     <string name="passwordChange">ಪಾಸ್ವರ್ಡ್ ಬದಲಾಯಿಸಲು</string>
-    <string name="passwordChangeDescription">{app_name} ತೆಗೆಯಲು ಬೇಕಾದ ಪಾಸ್ವರ್ಡ್ ಬದಲಾಯಿಸಿ.</string>
-    <string name="passwordChangedDescription">ನಿಮ್ಮ ಗುಪ್ತಪದವನ್ನು ಬದಲಾಯಿಸಲಾಗಿದೆ. ಅದು ಸುರಕ್ಷಿತವಾಗಿರಿಸಿ.</string>
     <string name="passwordConfirm">ಪಾಸ್ವರ್ಡ್ ದೃಡಪಡಿಸಿ</string>
     <string name="passwordCurrentIncorrect">ನಿಮ್ಮ ಪ್ರಸ್ತುತ ಪಾಸ್ಪಾಡ್ ತಪ್ಪಾಗಿದೆ.</string>
     <string name="passwordEnter">ಗುಪ್ತಪದ ನಮೂದಿಸಿ</string>
@@ -647,7 +644,6 @@
     <string name="passwordFailed">ಪಾಸ್‌ವರ್ಡ್ ಸೆಟ್ ಮಾಡಲು ವಿಫಲವಾಗಿದೆ</string>
     <string name="passwordIncorrect">ಪಾಸ್ವರ್ಡ್ ತಪ್ಪಾಗಿದೆ</string>
     <string name="passwordRemove">ಪಾಸ್ವರ್ಡ್ ತೆಗೆದುಹಾಕಿ</string>
-    <string name="passwordRemovedDescription">ನಿಮ್ಮ ಗುಪ್ತಪದವನ್ನು ತೆಗೆದುಹಾಕಲಾಗಿದೆ.</string>
     <string name="passwordSet">ಗುಪ್ತಪದವನ್ನು ಸೆಟ್ ಮಾಡಿ</string>
     <string name="paste">ಅಂಟಿಸಿ</string>
     <string name="permissionMusicAudioDenied">{app_name} ಗೆ ಫೈಲುಗಳನ್ನು, ಸಂಗೀತ ಮತ್ತು ಶಬ್ದವನ್ನು ಕಳುಹಿಸಲು ಸಂಗೀತ ಮತ್ತು ಶಬ್ದ ಪ್ರವೇಶದ ಅಗತ್ಯವಿದೆ, ಆದರೆ ಅದು ಶಾಶ್ವತವಾಗಿ ನಿರಾಕರಿಸಲಾಗಿದೆ. ಸೆಟ್ಟಿಂಗ್ಗಳು ಟ್ಯಾಪ್ ಮಾಡಿ → ಅನುಮತಿಗಳು, ಮತ್ತು \"ಸಂಗೀತ ಮತ್ತು ಶಬ್ದ\" ಅನ್ನು ಆನ್ ಮಾಡಿ.</string>

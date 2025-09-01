@@ -151,7 +151,6 @@
     <string name="callsSettings">Повици (Бета)</string>
     <string name="callsVoiceAndVideo">Гласовни и видео повици</string>
     <string name="callsVoiceAndVideoBeta">Гласовни и видео повици (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Вашето IP е видливо за вашиот партнер за повик и серверот на Oxen Foundation додека користите бета повици.</string>
     <string name="callsVoiceAndVideoToggleDescription">Овозможува гласовни и видео повици до и од други корисници.</string>
     <string name="callsYouCalled">Го повикавте {name}</string>
     <string name="callsYouMissedCallPermissions">Пропуштивте повик од <b>{name}</b> бидејќи немате овозможено <b>Гласовни и Видео повици</b> во Поставки на приватност.</string>
@@ -635,8 +634,6 @@
     <string name="open">Отвори</string>
     <string name="other">Други</string>
     <string name="passwordChange">Смени лозинка</string>
-    <string name="passwordChangeDescription">Смени ја лозинката што е потребна за отклучување {app_name}.</string>
-    <string name="passwordChangedDescription">Вашата лозинка е променета. Ве молиме чувајте ја безбедно.</string>
     <string name="passwordConfirm">Потврди лозинка</string>
     <string name="passwordCurrentIncorrect">Вашата тековна лозинка е неточна.</string>
     <string name="passwordEnter">Внесете лозинка</string>
@@ -647,7 +644,6 @@
     <string name="passwordFailed">Неуспешно поставување лозинка</string>
     <string name="passwordIncorrect">Неправилна лозинка</string>
     <string name="passwordRemove">Отстрани лозинка</string>
-    <string name="passwordRemovedDescription">Вашата лозинка е отстранета.</string>
     <string name="passwordSet">Постави Лозинка</string>
     <string name="paste">Залепи</string>
     <string name="permissionMusicAudioDenied">{app_name} има потреба од пристап до музика и аудио за да може да испраќа датотеки, музика и аудио, но пристапот е трајно одбиен. Допрете Поставки → Дозволи, и вклучете \"Музика и аудио\".</string>

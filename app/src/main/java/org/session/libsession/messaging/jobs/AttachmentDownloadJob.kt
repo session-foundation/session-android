@@ -22,6 +22,7 @@ import org.session.libsignal.streams.AttachmentCipherInputStream
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageId
 import java.io.File
 import java.io.FileInputStream
@@ -33,7 +34,8 @@ class AttachmentDownloadJob @AssistedInject constructor(
     @Assisted val mmsMessageId: Long,
     @param:ApplicationContext private val context: Context,
     private val storage: StorageProtocol,
-    private val messageDataProvider: MessageDataProvider
+    private val messageDataProvider: MessageDataProvider,
+    private val recipientRepository: RecipientRepository,
 ) : Job {
     override var delegate: JobDelegate? = null
     override var id: String? = null
@@ -66,6 +68,7 @@ class AttachmentDownloadJob @AssistedInject constructor(
          */
         fun eligibleForDownload(threadID: Long,
                                 storage: StorageProtocol,
+                                recipientRepository: RecipientRepository,
                                 messageDataProvider: MessageDataProvider,
                                 mmsId: Long): Boolean {
             val threadRecipient = storage.getRecipientForThread(threadID) ?: return false
@@ -76,7 +79,7 @@ class AttachmentDownloadJob @AssistedInject constructor(
                 return true
             }
 
-            return storage.shouldAutoDownloadAttachments(threadRecipient)
+            return threadRecipient.autoDownloadAttachments == true
         }
     }
 
@@ -132,7 +135,13 @@ class AttachmentDownloadJob @AssistedInject constructor(
             return
         }
 
-        if (!eligibleForDownload(threadID, storage, messageDataProvider, mmsMessageId)) {
+        if (!eligibleForDownload(
+                threadID = threadID,
+                storage = storage,
+                recipientRepository = recipientRepository,
+                messageDataProvider = messageDataProvider,
+                mmsId = mmsMessageId
+            )) {
             handleFailure(Error.NoSender, null)
             return
         }

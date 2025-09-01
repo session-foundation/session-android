@@ -19,14 +19,12 @@ import com.bumptech.glide.RequestManager
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewQuoteBinding
-import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.truncateIdForDisplay
+import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
-import org.thoughtcrime.securesms.database.SessionContactDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.ProBadgeText
@@ -49,7 +47,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) : ConstraintLayout(context, attrs) {
 
-    @Inject lateinit var contactDb: SessionContactDatabase
+    @Inject lateinit var recipientRepository: RecipientRepository
 
     @Inject lateinit var proStatusManager: ProStatusManager
 
@@ -84,17 +82,12 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
 
     // region Updating
     fun bind(authorRecipient: Recipient, body: String?, attachments: SlideDeck?, thread: Recipient,
-        isOutgoingMessage: Boolean, isOpenGroupInvitation: Boolean, threadID: Long,
-        isOriginalMissing: Boolean, glide: RequestManager) {
+             isOutgoingMessage: Boolean, isOpenGroupInvitation: Boolean, threadID: Long,
+             isOriginalMissing: Boolean, glide: RequestManager) {
         // Author
-        val authorPublicKey = authorRecipient.address.toString()
-        val author = contactDb.getContactWithAccountID(authorPublicKey)
-        val localNumber = TextSecurePreferences.getLocalNumber(context)
-        val quoteIsLocalUser = localNumber != null && authorPublicKey == localNumber
-
         val authorDisplayName =
-            if (quoteIsLocalUser) context.getString(R.string.you)
-            else author?.displayName(Contact.contextForRecipient(thread)) ?: truncateIdForDisplay(authorPublicKey)
+            if (authorRecipient.isLocalNumber) context.getString(R.string.you)
+            else authorRecipient.displayName(attachesBlindedId = false)
 
         val textColor = getTextColor(isOutgoingMessage)
 
@@ -109,7 +102,7 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
             setThemedContent {
                 ProBadgeText(
                     modifier = modifier,
-                    text = authorDisplayName, //todo badge we need to rework te naming logic to get the name (no account id for blinded here...) - waiting on the Recipient refactor
+                    text = authorDisplayName,
                     textStyle = LocalType.current.small.bold().copy(color = Color(textColor)),
                     showBadge = proStatusManager.shouldShowProBadge(authorRecipient.address),
                     badgeColors = if(isOutgoingMessage && mode == Mode.Regular) proBadgeColorOutgoing()
@@ -122,10 +115,10 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
         binding.quoteViewBodyTextView.text = if (isOpenGroupInvitation)
             resources.getString(R.string.communityInvitation)
         else MentionUtilities.highlightMentions(
+            recipientRepository = recipientRepository,
             text = (body ?: "").toSpannable(),
             isOutgoingMessage = isOutgoingMessage,
             isQuote = true,
-            threadID = threadID,
             context = context
         )
         binding.quoteViewBodyTextView.setTextColor(textColor)

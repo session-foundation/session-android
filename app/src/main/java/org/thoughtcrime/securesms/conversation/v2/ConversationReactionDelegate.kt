@@ -4,6 +4,7 @@ import android.app.Activity
 import android.graphics.PointF
 import android.view.MotionEvent
 import org.session.libsession.utilities.Stub
+import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnHideListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnReactionSelectedListener
@@ -26,16 +27,16 @@ internal class ConversationReactionDelegate(private val overlayStub: Stub<Conver
 
     fun show(
         activity: Activity,
+        threadRecipient: Recipient,
         messageRecord: MessageRecord,
         selectedConversationModel: SelectedConversationModel,
-        blindedPublicKey: String?
     ) {
         resolveOverlay().show(
             activity,
+            threadRecipient,
             messageRecord,
             lastSeenDownPoint,
             selectedConversationModel,
-            blindedPublicKey
         )
     }
 

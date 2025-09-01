@@ -153,7 +153,6 @@
     <string name="callsSettings">ზარები (Beta)</string>
     <string name="callsVoiceAndVideo">ხმოვანი და ვიდეო ზარები</string>
     <string name="callsVoiceAndVideoBeta">ხმოვანი და ვიდეო ზარები (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">თქვენი IP გააშკარავდება თქვენი ზარის პარტნიორს და Oxen Foundation-ის სერვერს, ბეტა ზარების გამოყენებისას.</string>
     <string name="callsVoiceAndVideoToggleDescription">ჩართავს ხმის და ვიდეო ზარებს სხვა მომხმარებლებისთვის დამატებით.</string>
     <string name="callsYouCalled">თქვენ დარეკეთ {name}-ს</string>
     <string name="callsYouMissedCallPermissions">თქვენ გამოტოვეთ ზარი <b>{name}</b>-ისგან რადგან თქვენ არ ჩართეთ <b>ხმა და ვიდეო ზარები</b> კონფიდენციალურობის პარამეტრებში.</string>
@@ -671,8 +670,6 @@
     <string name="open">გახსენით</string>
     <string name="other">სხვა</string>
     <string name="passwordChange">პაროლის შეცვლა</string>
-    <string name="passwordChangeDescription">პაროლის შეცვლა აუცილებელია {app_name}-ის გახსნისთვის.</string>
-    <string name="passwordChangedDescription">თქვენი პაროლი შეცვლილია. გთხოვთ, შეინახეთ იგი უსაფრთხოდ.</string>
     <string name="passwordConfirm">პაროლის დადასტურება</string>
     <string name="passwordCurrentIncorrect">თქვენი ახლანდელი პაროლი არასწორია.</string>
     <string name="passwordEnter">შეიყვანეთ პაროლი</string>
@@ -683,7 +680,6 @@
     <string name="passwordFailed">ვერ შევძელიში პაროლის დაწესება</string>
     <string name="passwordIncorrect">არასწორი პაროლი</string>
     <string name="passwordRemove">პაროლის წაშლა</string>
-    <string name="passwordRemovedDescription">თქვენი პაროლი წაშლილია.</string>
     <string name="passwordSet">პაროლის მითითება</string>
     <string name="paste">ჩასმა</string>
     <string name="permissionMusicAudioDenied">{app_name} needs music and audio access in order to send files, music and audio, but it has been permanently denied. Tap Settings → Permissions, and turn \"Music and audio\" on.</string>

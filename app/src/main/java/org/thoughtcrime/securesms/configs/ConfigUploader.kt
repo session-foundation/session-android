@@ -39,6 +39,7 @@ import org.session.libsession.utilities.MutableGroupConfigs
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.getGroup
+import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
@@ -109,8 +110,8 @@ class ConfigUploader @Inject constructor(
                             if (loggedIn) {
                                 merge(
                                     pathBecomesAvailable(),
-                                    configFactory.configUpdateNotifications
-                                        .filterIsInstance<ConfigUpdateNotification.UserConfigsModified>()
+                                    configFactory.userConfigsChanged()
+                                        .filter { !it.fromMerge }
                                         .debounce(1000L)
                                 )
                             } else {

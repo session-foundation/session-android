@@ -2,8 +2,6 @@ package org.session.libsession.messaging.messages
 
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.GroupUtil
-import org.session.libsignal.utilities.toHexString
 
 sealed class Destination {
 
@@ -37,32 +35,37 @@ sealed class Destination {
     companion object {
 
         fun from(address: Address, fileIds: List<String> = emptyList()): Destination {
-            return when {
-                address.isContact -> {
-                    Contact(address.contactIdentifier())
+            return when (address) {
+                is Address.Standard -> {
+                    Contact(address.address)
                 }
-                address.isLegacyGroup -> {
-                    val groupID = address.toGroupString()
-                    val groupPublicKey = GroupUtil.doubleDecodeGroupID(groupID).toHexString()
-                    LegacyClosedGroup(groupPublicKey)
+                is Address.LegacyGroup -> {
+                    LegacyClosedGroup(address.groupPublicKeyHex)
                 }
-                address.isCommunity -> {
+                is Address.Community -> {
                     val storage = MessagingModuleConfiguration.shared.storage
                     val threadID = storage.getThreadId(address)!!
                     storage.getOpenGroup(threadID)?.let {
                         OpenGroup(roomToken = it.room, server = it.server, fileIds = fileIds)
                     } ?: throw Exception("Missing open group for thread with ID: $threadID.")
                 }
-                address.isCommunityInbox -> {
-                    val groupInboxId = GroupUtil.getDecodedGroupID(address.toString()).split("!")
+                is Address.CommunityBlindedId -> {
+                    val serverPublicKey = MessagingModuleConfiguration.shared.configFactory
+                        .withUserConfigs { configs ->
+                            configs.userGroups.allCommunityInfo()
+                                .first { it.community.baseUrl == address.serverUrl.toString() }
+                                .community
+                                .pubKeyHex
+                        }
+
                     OpenGroupInbox(
-                        groupInboxId.dropLast(2).joinToString("!"),
-                        groupInboxId.dropLast(1).last(),
-                        groupInboxId.last()
+                        server = address.serverUrl.toString(),
+                        serverPublicKey = serverPublicKey,
+                        blindedPublicKey = address.blindedId.blindedId.hexString,
                     )
                 }
-                address.isGroupV2 -> {
-                    ClosedGroup(address.toString())
+                is Address.Group -> {
+                    ClosedGroup(address.accountId.hexString)
                 }
                 else -> {
                     throw Exception("TODO: Handle legacy closed groups.")

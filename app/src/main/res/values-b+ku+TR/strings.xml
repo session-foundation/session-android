@@ -152,7 +152,6 @@
     <string name="callsSettings">پەیوەندیدانەکان (بهێڵه‌ی نوێ)</string>
     <string name="callsVoiceAndVideo">پەیوەندیە دەنگی و ڤیدیۆکان</string>
     <string name="callsVoiceAndVideoBeta">پەیوەندیە دەنگی و ڤیدیۆ (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">پته‌ی IP ی تۆ بۆ شەریکەکەی تیپە و سێروێری Oxen Foundation پشت بە پشت ڕەنگە بونی بوو بێت کاتێک بەکارهێنانی بەتاکوڵ بوون بوزیەکان.</string>
     <string name="callsVoiceAndVideoToggleDescription">کێیشە دەنگی و ڤیدیۆ ئەو کارانە وەکدی بزانی بۆ وەڵامی دیکە بەکارهێنەران.</string>
     <string name="callsYouCalled">تۆ تێڵەی تەلەفۆنی کردی بۆ {name}</string>
     <string name="callsYouMissedCallPermissions">تۆ تێڵەیەک لە <b>{name}</b>ێت هەڵوتە چونکە دەسەڵاتی <b>پەیوەندی دەنگی و ڤیدیۆ</b> لە رێکخستنی تایبەتی دان نەبەیت.</string>
@@ -636,8 +635,6 @@
     <string name="open">کردنەوە</string>
     <string name="other">ئەوی تر</string>
     <string name="passwordChange">وشەی نهێنی بگۆڕە</string>
-    <string name="passwordChangeDescription">{app_name} وشە نهێنی بگۆڕە بۆ کردنەوەی</string>
-    <string name="passwordChangedDescription">وشەی پەرەسەدت گۆڕدرا. تکایە ئەوە بەندەن پارێزەر بێت.</string>
     <string name="passwordConfirm">پشتڕاستکردنەوەی تێپەڕوشە</string>
     <string name="passwordCurrentIncorrect">تێپەڕەوەی ڕاستە پەیوەندە نەدرێت.</string>
     <string name="passwordEnter">وشەی تێپەڕ بنووسە</string>
@@ -648,7 +645,6 @@
     <string name="passwordFailed">شکستی دانانی وشەی نهێنی</string>
     <string name="passwordIncorrect">وشەی نهێنیکردنەوەی نەگونجاو</string>
     <string name="passwordRemove">لابردنی پەیامێکی پاراستوو</string>
-    <string name="passwordRemovedDescription">وشەی پەرەسەدت وەکبێژاند.</string>
     <string name="passwordSet">دانشتنی تێپەڕ ئەو ناو</string>
     <string name="paste">پەیامەکان تەنها دەبێ قەبارە بنووسە</string>
     <string name="permissionMusicAudioDenied">بەرنامەی {app_name} پێویستی بە ڕێزەنامەی موسیقا و ئاواز بەدەستەکان بۆ ناردن پەیوەندەکان، موسیقا و ئاواز، بەڵام ئەمەدا دیاری کراوە. تکایە ئیش بکە لە ڕێکەوتەکان → ڕێگەدانەکان، و \"موسیقا و ئاواز\" بەرە چاودێر بکە.</string>

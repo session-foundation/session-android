@@ -60,7 +60,7 @@ class TypingIndicator() : ControlMessage() {
         }
         return try {
             SignalServiceProtos.Content.newBuilder()
-                .setTypingMessage(SignalServiceProtos.TypingMessage.newBuilder().setTimestamp(timestamp).setAction(kind.toProto()).build())
+                .setTypingMessage(SignalServiceProtos.TypingMessage.newBuilder().setTimestampMs(timestamp).setAction(kind.toProto()).build())
                 .applyExpiryMode()
                 .build()
         } catch (e: Exception) {

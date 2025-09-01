@@ -151,7 +151,6 @@
     <string name="callsSettings">Skambučiai (Beta)</string>
     <string name="callsVoiceAndVideo">Balso ir vaizdo skambučiai</string>
     <string name="callsVoiceAndVideoBeta">Balso ir vaizdo skambučiai (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Naudojant beta skambučius, jūsų IP adresas matomas jūsų pašnekovui ir Oxen Foundation serveriui.</string>
     <string name="callsVoiceAndVideoToggleDescription">Įgalina balso ir vaizdo skambučius į ir iš kitų vartotojų.</string>
     <string name="callsYouCalled">Jūs skambinote {name}</string>
     <string name="callsYouMissedCallPermissions">Praleidote skambutį iš <b>{name}</b>, nes Privatumo nustatymuose neįjungėte <b>Balso ir Vaizdo Skambučių</b>.</string>
@@ -662,8 +661,6 @@
     <string name="open">Atverti</string>
     <string name="other">Kitas</string>
     <string name="passwordChange">Keisti slaptažodį</string>
-    <string name="passwordChangeDescription">Pakeisti slaptažodį, reikalingą atrakinti {app_name}.</string>
-    <string name="passwordChangedDescription">Jūsų slaptažodis buvo pakeistas. Prašome saugoti jį saugiai.</string>
     <string name="passwordConfirm">Patvirtinkite slaptažodį</string>
     <string name="passwordCurrentIncorrect">Jūsų dabartinis slaptažodis yra neteisingas.</string>
     <string name="passwordEnter">Įveskite slaptažodį</string>
@@ -674,7 +671,6 @@
     <string name="passwordFailed">Nepavyko nustatyti slaptažodžio</string>
     <string name="passwordIncorrect">Neteisingas slaptažodis</string>
     <string name="passwordRemove">Šalinti slaptažodį</string>
-    <string name="passwordRemovedDescription">Jūsų slaptažodis buvo pašalintas.</string>
     <string name="passwordSet">Nustatyti slaptažodį</string>
     <string name="paste">Įdėti</string>
     <string name="permissionMusicAudioDenied">{app_name} reikia prieigos prie muzikos ir garso, kad galėtumėte siųsti failus, muziką ir garsą, bet ji buvo visam laikui uždrausta. Bakstelėkite Nustatymai → Leidimai ir įjunkite \"Muziką ir garsą\".</string>

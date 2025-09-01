@@ -25,28 +25,31 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.GroupDisplayInfo
-import org.session.libsession.utilities.UsernameUtils
+import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import java.util.EnumSet
 
-abstract class BaseGroupMembersViewModel (
-    private val groupId: AccountId,
-    @ApplicationContext private val context: Context,
+abstract class BaseGroupMembersViewModel(
+    groupAddress: Address.Group,
+    @param:ApplicationContext private val context: Context,
     private val storage: StorageProtocol,
-    private val usernameUtils: UsernameUtils,
     private val configFactory: ConfigFactoryProtocol,
     private val avatarUtils: AvatarUtils,
+    private val recipientRepository: RecipientRepository,
     private val proStatusManager: ProStatusManager,
 ) : ViewModel() {
+    private val groupId = groupAddress.accountId
+
     // Output: the source-of-truth group information. Other states are derived from this.
     protected val groupInfo: StateFlow<Pair<GroupDisplayInfo, List<GroupMemberState>>?> =
         (configFactory.configUpdateNotifications
             .filter {
                 it is ConfigUpdateNotification.GroupConfigsUpdated && it.groupId == groupId ||
-                        it is ConfigUpdateNotification.UserConfigsMerged
+                        it is ConfigUpdateNotification.UserConfigsUpdated
             } as Flow<*>)
             .onStart { emit(Unit) }
             .map { _ ->
@@ -103,7 +106,8 @@ abstract class BaseGroupMembersViewModel (
         val name = if (isMyself) {
             context.getString(R.string.you)
         } else {
-            usernameUtils.getContactNameWithAccountID(memberAccountId.hexString, groupId)
+            recipientRepository.getRecipient(Address.fromSerialized(memberAccountId.hexString))
+                .displayName()
         }
 
         val highlightStatus = status in EnumSet.of(

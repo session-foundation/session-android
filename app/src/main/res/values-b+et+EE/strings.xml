@@ -151,7 +151,6 @@
     <string name="callsSettings">Kõned (beta)</string>
     <string name="callsVoiceAndVideo">Hääl- ja videokõned</string>
     <string name="callsVoiceAndVideoBeta">Hääl- ja videokõned (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Teie IP on nähtav teie kõnepartnerile ja Oxen Foundation serverile beetakõnede ajal.</string>
     <string name="callsVoiceAndVideoToggleDescription">Võimaldab hääl- ja videokõned teistele kasutajatele ja teistelt kasutajatelt.</string>
     <string name="callsYouCalled">Häälestasite {name}le</string>
     <string name="callsYouMissedCallPermissions">Te ei vastanud kõnele <b>{name}</b>, kuna te ei ole lubanud <b>Voice and Video Calls</b> Privaatsusseadetes.</string>
@@ -635,8 +634,6 @@
     <string name="open">Ava</string>
     <string name="other">Muu</string>
     <string name="passwordChange">Muuda parool</string>
-    <string name="passwordChangeDescription">Muuda parooli, mida on vaja {app_name} avamiseks.</string>
-    <string name="passwordChangedDescription">Teie parool on muudetud. Hoidke seda turvaliselt.</string>
     <string name="passwordConfirm">Kinnita parool</string>
     <string name="passwordCurrentIncorrect">Teie praegune parool on vale.</string>
     <string name="passwordEnter">Sisesta parool</string>
@@ -647,7 +644,6 @@
     <string name="passwordFailed">Salasõna määramine ebaõnnestus</string>
     <string name="passwordIncorrect">Vale parool</string>
     <string name="passwordRemove">Eemalda parool</string>
-    <string name="passwordRemovedDescription">Teie parool on eemaldatud.</string>
     <string name="passwordSet">Määra parool</string>
     <string name="paste">Aseta</string>
     <string name="permissionMusicAudioDenied">{app_name} vajab muusika ja audio juurdepääsu failide, muusika ja audio saatmiseks, kuid see on jäädavalt keelatud. Puudutage Seaded → Load, ja lülitage \"Muusika ja audio\" sisse.</string>

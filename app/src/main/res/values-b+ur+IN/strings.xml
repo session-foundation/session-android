@@ -149,7 +149,6 @@
     <string name="callsSettings">کالز (بیٹا)</string>
     <string name="callsVoiceAndVideo">وائس اور ویڈیو کالز</string>
     <string name="callsVoiceAndVideoBeta">وائس اور ویڈیو کالز (بیٹا)</string>
-    <string name="callsVoiceAndVideoModalDescription">بیٹا کالز استعمال کرتے وقت آپ کا آئی پی آپ کے کال پارٹنر اور ایک اوکسن فاؤنڈیشن سرور کو نظر آئے گا۔</string>
     <string name="callsVoiceAndVideoToggleDescription">دیگر صارفین کے ساتھ وائس اور ویڈیو کالز کو فعال کریں.</string>
     <string name="callsYouCalled">آپ نے {name} کو کال کی</string>
     <string name="callsYouMissedCallPermissions">آپ نے ایک کال یاد کر دی <b>{name}</b> کی وجہ سے کیونکہ آپ نے <b>وائس اور ویڈیو کالز</b> کو پرائیویسی سیٹنگز میں فعال نہیں کیا ہے۔</string>
@@ -647,8 +646,6 @@
     <string name="open">کھولیں</string>
     <string name="other">دیگر</string>
     <string name="passwordChange">پاس ورڈ تبدیل کریں</string>
-    <string name="passwordChangeDescription">{app_name} کو ان لاک کرنے کے لیے مطلوبہ پاس ورڈ تبدیل کریں۔</string>
-    <string name="passwordChangedDescription">آپ کا پاس ورڈ تبدیل ہو گیا ہے۔ براہ کرم اسے محفوظ رکھیں۔</string>
     <string name="passwordConfirm">پاس ورڈ کی تصدیق کریں</string>
     <string name="passwordCurrentIncorrect">آپ کا موجودہ پاس ورڈ غلط ہے۔</string>
     <string name="passwordEnter">پاس ورڈ درج کریں</string>
@@ -659,7 +656,6 @@
     <string name="passwordFailed">پاس ورڈ سیٹ کرنے میں ناکامی</string>
     <string name="passwordIncorrect">غلط پاس ورڈ</string>
     <string name="passwordRemove">پاس ورڈ ہٹا دیں</string>
-    <string name="passwordRemovedDescription">آپ کا پاس ورڈ ہٹا دیا گیا ہے۔</string>
     <string name="passwordSet">پاس ورڈ سیٹ کریں</string>
     <string name="paste">چسپاں کریں</string>
     <string name="permissionMusicAudioDenied">{app_name} کو فائلز، میوزک، اور آڈیو بھیجنے کے لیے میوزک اور آڈیو کی رسائی کی ضرورت ہے، مگر اسے مستقل طور پر انکار کر دیا گیا ہے۔ سیٹنگز پر ٹیپ کریں → اجازتیں، اور \"موسیقی اور آڈیو\" کو آن کریں۔</string>

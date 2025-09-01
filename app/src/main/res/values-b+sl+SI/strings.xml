@@ -151,7 +151,6 @@
     <string name="callsSettings">Klici (Beta)</string>
     <string name="callsVoiceAndVideo">Glasvni in video klici</string>
     <string name="callsVoiceAndVideoBeta">Glasvni in video klici (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Vaš IP je viden vašemu partnerskemu klicatelju in strežniku Oxen Foundation med uporabo beta klicev.</string>
     <string name="callsVoiceAndVideoToggleDescription">Omogoča glasovne in video klice od in do drugih uporabnikov.</string>
     <string name="callsYouCalled">Klicali ste osebo {name}</string>
     <string name="callsYouMissedCallPermissions">Zmanjkalo je lahko klic iz <b>{name},</b> ker niste omogočili <b>glasovnih in video klicev</b> v nastavitvah zasebnosti.</string>
@@ -659,8 +658,6 @@
     <string name="open">Odpri</string>
     <string name="other">Drugo</string>
     <string name="passwordChange">Spremeni geslo</string>
-    <string name="passwordChangeDescription">Spremeni geslo potrebno za odklepanje {app_name}.</string>
-    <string name="passwordChangedDescription">Vaše geslo je bilo spremenjeno. Prosim, hranite ga na varnem mestu.</string>
     <string name="passwordConfirm">Potrdi geslo</string>
     <string name="passwordCurrentIncorrect">Vaše trenutno geslo je napačno.</string>
     <string name="passwordEnter">Vnesite geslo</string>
@@ -671,7 +668,6 @@
     <string name="passwordFailed">Ni uspelo nastaviti gesla</string>
     <string name="passwordIncorrect">Napačno geslo</string>
     <string name="passwordRemove">Odstrani geslo</string>
-    <string name="passwordRemovedDescription">Vaše geslo je bilo odstranjeno.</string>
     <string name="passwordSet">Nastavi geslo</string>
     <string name="paste">Prilepi</string>
     <string name="permissionMusicAudioDenied">{app_name} potrebuje dostop do glasbe in zvoka za pošiljanje datotek, glasbe in zvoka, vendar je bil ta trajno zavrnjen. Tapnite Nastavitve → Dovoljenja in vklopite \"Glasba in zvok\".</string>

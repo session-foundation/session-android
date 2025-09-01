@@ -151,7 +151,6 @@
     <string name="callsSettings">ခေါ်ဆိုမှု(Beta)</string>
     <string name="callsVoiceAndVideo">အသံနှင့်ဗီဒီယိုကော</string>
     <string name="callsVoiceAndVideoBeta">အသံနှင့်ဗီဒီယိုကော (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">သင့် IP ကို ဖုန်းခေါ်စဉ်တွင် သင်၏ ချိန်းညွှန်းပါတနာများနှင့် Oxen Foundation ဆာဗာကို မြင်ရပါသည်။</string>
     <string name="callsVoiceAndVideoToggleDescription">အသုံးပြုသူများနှင့် အလွယ်တကူ အသံ ဖွင့်ခြင်းနှင့် ဗီဒီယိုခေါ်သည်</string>
     <string name="callsYouCalled">You called {name}</string>
     <string name="callsYouMissedCallPermissions">သင်သည် <b>{name}</b> ၏ ဖုန်းခေါ်ဆိုမှုကို လက်မခံနိုင်ပါနှင့်၊ သို့သော် သင် နှင့် ဖုန်းခေါ်မှု ဖွင့်ထားသော <b>Voice and Video Calls</b> ကို စနစ်ပြင်ဆင်မှုများတွင် ဖွင့်ထားလိုက်ပါ။</string>
@@ -623,8 +622,6 @@
     <string name="open">ဖွင့်</string>
     <string name="other">အခြား</string>
     <string name="passwordChange">လျှို့ဝှက် စကားဝှက် ပြောင်းပါ</string>
-    <string name="passwordChangeDescription">{app_name} ဖြင့် လော့ခ်ဖွင့်ရန် လျှို့ဝှက် စကားဝှက် ပြောင်းပါ</string>
-    <string name="passwordChangedDescription">သင်၏ စကားဝှက် ပြောင်းလဲ ပြီးပါပြီ။ ထိန်းသိမ်းပါ။</string>
     <string name="passwordConfirm">စကားဝှက်ကို အတည်ပြုပါ</string>
     <string name="passwordCurrentIncorrect">သင့်လက်ရှိ စကားဝှက် မှား နေပါသည်။</string>
     <string name="passwordEnter">စကားဝှက်ထည့်ပါ</string>
@@ -635,7 +632,6 @@
     <string name="passwordFailed">စကားဝှက်တင်သွင်းမှု မအောင်မြင်ပါ</string>
     <string name="passwordIncorrect">စကားဝှက်မှားနေသည်</string>
     <string name="passwordRemove">စကားဝှက်ကို ဖယ်ရှားမည်</string>
-    <string name="passwordRemovedDescription">သင်၏ စကားဝှက် ဖယ်ရှားပြီးပါပြီ။</string>
     <string name="passwordSet">စကားဝှက်သတ်မှတ်မည်</string>
     <string name="paste">ကူးယူမည်</string>
     <string name="permissionMusicAudioDenied">{app_name} သည် ဂီတနှင့်အသံဖိုင်များ ပို့ရန် လိုအပ်ပါသည်၊ ပြသနာ မရရှိရှိအောင် နိုင်ပါတယ်၊ ကြော့ကာရှာဖွေခြင်းစင့်ခဲ့ရပါသည်။ မနည်းနည်းတော့ ကောဖောက်နွိုင့်ဆက်နွှင့်နွေးကူဆိုင်ရာ \'ပို့\'ထဲသို့သော \'ဂီတနှင့်အသံများ\' ကိုဖွင့်ပါ။</string>

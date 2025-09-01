@@ -9,9 +9,10 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import network.loki.messenger.R
-import org.session.libsession.messaging.contacts.Contact
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.ContentView
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.GroupConversation
@@ -20,8 +21,10 @@ import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.Message
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.SavedMessages
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.SubHeader
 import org.thoughtcrime.securesms.ui.ProBadgeText
+import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.util.DateUtils
@@ -63,7 +66,7 @@ fun ContentView.bindQuery(query: String, model: GlobalSearchAdapter.Model) {
             val textSpannable = SpannableStringBuilder()
             if (model.messageResult.conversationRecipient != model.messageResult.messageRecipient) {
                 // group chat, bind
-                val text = "${model.messageResult.messageRecipient.getSearchName()}: "
+                val text = "${model.messageResult.messageRecipient.searchName}: "
                 textSpannable.append(text)
             }
             textSpannable.append(getHighlight(
@@ -73,7 +76,7 @@ fun ContentView.bindQuery(query: String, model: GlobalSearchAdapter.Model) {
             binding.searchResultSubtitle.text = textSpannable
             binding.searchResultSubtitle.isVisible = true
             binding.resultTitle.setupTitleWithBadge(
-                title =  model.messageResult.conversationRecipient.getSearchName(),
+                title =  model.messageResult.conversationRecipient.searchName,
                 showProBadge = model.showProBadge
             )
         }
@@ -110,8 +113,17 @@ fun ContentView.bindModel(query: String?, model: GroupConversation) {
     binding.searchResultProfilePicture.isVisible = true
     binding.searchResultSubtitle.isVisible = model.isLegacy
     binding.searchResultTimestamp.isVisible = false
-    val threadRecipient = Recipient.from(binding.root.context, Address.fromSerialized(model.groupId), false)
-    binding.searchResultProfilePicture.update(threadRecipient)
+    val threadRecipient = MessagingModuleConfiguration.shared.recipientRepository.getRecipientSync(
+        Address.fromSerialized(model.groupId)
+    )
+
+    binding.searchResultProfilePicture.setThemedContent {
+        Avatar(
+            size = LocalDimensions.current.iconLarge,
+            data = MessagingModuleConfiguration.shared.avatarUtils.getUIDataFromRecipient(threadRecipient)
+        )
+    }
+
     binding.resultTitle.setupTitleWithBadge(
         title =  model.title,
         showProBadge = model.showProBadge
@@ -127,8 +139,16 @@ fun ContentView.bindModel(query: String?, model: ContactModel) = binding.run {
     searchResultSubtitle.isVisible = false
     searchResultTimestamp.isVisible = false
     searchResultSubtitle.text = null
-    val recipient = Recipient.from(root.context, Address.fromSerialized(model.contact.hexString), false)
-    searchResultProfilePicture.update(recipient)
+    val recipient = MessagingModuleConfiguration.shared.recipientRepository.getRecipientSync(
+        Address.fromSerialized(model.contact.hexString)
+    )
+    searchResultProfilePicture.setThemedContent {
+        Avatar(
+            size = LocalDimensions.current.iconLarge,
+            data = MessagingModuleConfiguration.shared.avatarUtils.getUIDataFromRecipient(recipient)
+        )
+    }
+
     val nameString = if (model.isSelf) root.context.getString(R.string.noteToSelf)
         else model.name
 
@@ -145,7 +165,15 @@ fun ContentView.bindModel(model: SavedMessages) {
         title = binding.root.context.getString(R.string.noteToSelf),
         showProBadge = false
     )
-    binding.searchResultProfilePicture.update(Address.fromSerialized(model.currentUserPublicKey))
+
+    val recipient = MessagingModuleConfiguration.shared.recipientRepository.getSelf()
+
+    binding.searchResultProfilePicture.setThemedContent {
+        Avatar(
+            size = LocalDimensions.current.iconLarge,
+            data = MessagingModuleConfiguration.shared.avatarUtils.getUIDataFromRecipient(recipient)
+        )
+    }
     binding.searchResultProfilePicture.isVisible = true
 }
 
@@ -157,11 +185,16 @@ fun ContentView.bindModel(query: String?, model: Message, dateUtils: DateUtils) 
         model.messageResult.sentTimestampMs
     )
 
-    searchResultProfilePicture.update(model.messageResult.conversationRecipient)
+    searchResultProfilePicture.setThemedContent {
+        Avatar(
+            size = LocalDimensions.current.iconLarge,
+            data = MessagingModuleConfiguration.shared.avatarUtils.getUIDataFromRecipient(model.messageResult.conversationRecipient)
+        )
+    }
     val textSpannable = SpannableStringBuilder()
     if (model.messageResult.conversationRecipient != model.messageResult.messageRecipient) {
         // group chat, bind
-        val text = "${model.messageResult.messageRecipient.name}: "
+        val text = "${model.messageResult.messageRecipient.displayName()}: "
         textSpannable.append(text)
     }
     textSpannable.append(getHighlight(
@@ -170,7 +203,7 @@ fun ContentView.bindModel(query: String?, model: Message, dateUtils: DateUtils) 
     ))
     searchResultSubtitle.text = textSpannable
     val title = if (model.isSelf) root.context.getString(R.string.noteToSelf)
-        else model.messageResult.conversationRecipient.getSearchName()
+        else model.messageResult.conversationRecipient.searchName
 
     binding.resultTitle.setupTitleWithBadge(
         title =  title,
@@ -179,13 +212,8 @@ fun ContentView.bindModel(query: String?, model: Message, dateUtils: DateUtils) 
     searchResultSubtitle.isVisible = true
 }
 
-fun Recipient.getSearchName(): String =
-    name.takeIf { it.isNotEmpty() && !it.looksLikeAccountId }
-    ?: address.toString().let(::truncateIdForDisplay)
-
-fun Contact.getSearchName(): String =
-    nickname?.takeIf { it.isNotEmpty() && !it.looksLikeAccountId }
-    ?: name?.takeIf { it.isNotEmpty() && !it.looksLikeAccountId }
-    ?: truncateIdForDisplay(accountID)
+val Recipient.searchName: String
+    get() = displayName().takeIf { it.isNotBlank() && !it.looksLikeAccountId }
+        ?: address.toString().let(::truncateIdForDisplay)
 
 private val String.looksLikeAccountId: Boolean get() = length > 60 && all { it.isDigit() || it.isLetter() }

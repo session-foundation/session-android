@@ -6,6 +6,7 @@ import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.snode.SnodeMessage
+import org.session.libsession.utilities.Address
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -33,9 +34,6 @@ abstract class Message {
     open val isSelfSendValid: Boolean = false
 
     companion object {
-        fun getThreadId(message: Message, openGroupID: String?, storage: StorageProtocol, shouldCreateThread: Boolean): Long? {
-            return storage.getThreadIdFor(message.senderOrSync, message.groupPublicKey, openGroupID, createThread = shouldCreateThread)
-        }
 
         val Message.senderOrSync get() = when(this)  {
             is VisibleMessage -> syncTarget ?: sender!!
@@ -55,7 +53,7 @@ abstract class Message {
     abstract fun shouldDiscardIfBlocked(): Boolean
 
     fun SignalServiceProtos.Content.Builder.applyExpiryMode() = apply {
-        expirationTimer = expiryMode.expirySeconds.toInt()
+        expirationTimerSeconds = expiryMode.expirySeconds.toInt()
         expirationType = when (expiryMode) {
             is ExpiryMode.AfterSend -> ExpirationType.DELETE_AFTER_SEND
             is ExpiryMode.AfterRead -> ExpirationType.DELETE_AFTER_READ
@@ -65,7 +63,7 @@ abstract class Message {
 }
 
 inline fun <reified M: Message> M.copyExpiration(proto: SignalServiceProtos.Content): M = apply {
-    (proto.takeIf { it.hasExpirationTimer() }?.expirationTimer ?: proto.dataMessage?.expireTimer)?.let { duration ->
+    (proto.takeIf { it.hasExpirationTimerSeconds() }?.expirationTimerSeconds ?: proto.dataMessage?.expireTimerSeconds)?.let { duration ->
         expiryMode = when (proto.expirationType.takeIf { duration > 0 }) {
             ExpirationType.DELETE_AFTER_SEND -> ExpiryMode.AfterSend(duration.toLong())
             ExpirationType.DELETE_AFTER_READ -> ExpiryMode.AfterRead(duration.toLong())
@@ -75,7 +73,7 @@ inline fun <reified M: Message> M.copyExpiration(proto: SignalServiceProtos.Cont
 }
 
 fun SignalServiceProtos.Content.expiryMode(): ExpiryMode =
-    (takeIf { it.hasExpirationTimer() }?.expirationTimer ?: dataMessage?.expireTimer)?.let { duration ->
+    (takeIf { it.hasExpirationTimerSeconds() }?.expirationTimerSeconds ?: dataMessage?.expireTimerSeconds)?.let { duration ->
         when (expirationType.takeIf { duration > 0 }) {
             ExpirationType.DELETE_AFTER_SEND -> ExpiryMode.AfterSend(duration.toLong())
             ExpirationType.DELETE_AFTER_READ -> ExpiryMode.AfterRead(duration.toLong())
@@ -86,7 +84,8 @@ fun SignalServiceProtos.Content.expiryMode(): ExpiryMode =
 /**
  * Apply ExpiryMode from the current setting.
  */
-inline fun <reified M: Message> M.applyExpiryMode(thread: Long): M = apply {
-    val storage = MessagingModuleConfiguration.shared.storage
-    expiryMode = storage.getExpirationConfiguration(thread)?.expiryMode?.coerceSendToRead(coerceDisappearAfterSendToRead) ?: ExpiryMode.NONE
+inline fun <reified M: Message> M.applyExpiryMode(recipientAddress: Address): M = apply {
+    expiryMode = MessagingModuleConfiguration.shared.recipientRepository.getRecipientSync(recipientAddress)
+        ?.expiryMode?.coerceSendToRead(coerceDisappearAfterSendToRead)
+        ?: ExpiryMode.NONE
 }

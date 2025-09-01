@@ -149,7 +149,6 @@
     <string name="callsSettings">تماس‌ها (بتا)</string>
     <string name="callsVoiceAndVideo">تماس‌های صوتی و تصویری</string>
     <string name="callsVoiceAndVideoBeta">تماس‌های صوتی و تصویری (بتا)</string>
-    <string name="callsVoiceAndVideoModalDescription">آدرس IP شما برای مخاطب تماس شما و همچنین سرور Oxen Foundation در هنگام استفاده از تماس آزمایشی مشخص خواهد بود.</string>
     <string name="callsVoiceAndVideoToggleDescription">دریافت و ارسال تماس های صوتی و تصویری به سایر کاربران را فعال کنید.</string>
     <string name="callsYouCalled">تماس شما با {name}</string>
     <string name="callsYouMissedCallPermissions">شما تماسی را از <b>{name}</b> از دست دادید زیرا <b>تماس‌های صوتی و تصویری</b> را در تنظیمات حریم خصوصی فعال نکرده‌اید.</string>
@@ -640,8 +639,6 @@
     <string name="open">باز کن</string>
     <string name="other">دیگر</string>
     <string name="passwordChange">تغییر گذرواژه</string>
-    <string name="passwordChangeDescription">رمز عبور مورد نیاز برای باز کردن {app_name} را تغییر بده.</string>
-    <string name="passwordChangedDescription">رمز عبور شما تغییر کرد. لطفا آن را در جای امنی نگهداری کنید.</string>
     <string name="passwordConfirm">تأیید کلمه‌ی عبور</string>
     <string name="passwordCurrentIncorrect">رمز عبور فعلی شما نادرست است.</string>
     <string name="passwordEnter">رمز عبور را وارد کنید</string>
@@ -652,7 +649,6 @@
     <string name="passwordFailed">تنظیم رمز عبور شکست خورد</string>
     <string name="passwordIncorrect">رمز عبور نادرست است</string>
     <string name="passwordRemove">حذف رمز عبور</string>
-    <string name="passwordRemovedDescription">گذرواژه شما حذف شده است.</string>
     <string name="passwordSet">تنظیم رمز عبور</string>
     <string name="paste">پیست</string>
     <string name="permissionMusicAudioDenied">{app_name} برای فرستادن فایل، آهنگ و صوت نیاز به دسترسی به آهنگ و صدا دارد، اما این دسترسی به طور دائم رد شده است. به تنظیمات → مجوز‌ها رفته و «صدا و آهنگ» را فعال کنید.</string>

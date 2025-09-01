@@ -152,7 +152,6 @@
     <string name="callsSettings">Qo\'ng\'iroqlar (Beta)</string>
     <string name="callsVoiceAndVideo">Ovozli va video qo\'ng\'iroqlar</string>
     <string name="callsVoiceAndVideoBeta">Ovozli va video qo\'ng\'iroqlar (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Hozirgi parolingiz noto\'g\'ri.</string>
     <string name="callsVoiceAndVideoToggleDescription">Boshqa foydalanuvchilar bilan ovozli va video qo\'ng\'iroqlarni amalga oshirish imkonini beradi.</string>
     <string name="callsYouCalled">Siz {name}ga qo\'ng\'iroq qildingiz</string>
     <string name="callsYouMissedCallPermissions">Sizdan <b>{name}</b> dan qo\'ng\'iroqni o\'tkazib yubordingiz, chunki Xavfsizlik sozlamalarida <b>Ovozli va video qo\'ng\'iroqlar</b> ni yoqmagansiz.</string>
@@ -636,8 +635,6 @@
     <string name="open">Ochish</string>
     <string name="other">Boshqa</string>
     <string name="passwordChange">Parolni o\'zgartirish</string>
-    <string name="passwordChangeDescription">O\'zingizga {app_name}ni ochish uchun zarur parolni o\'zgartiring.</string>
-    <string name="passwordChangedDescription">Xabar so\'rovingiz hozirda kutilmoqda.</string>
     <string name="passwordConfirm">Parolni tasdiqlash</string>
     <string name="passwordCurrentIncorrect">Sizning joriy parolingiz noto\'g\'ri.</string>
     <string name="passwordEnter">Parolni kiritish</string>
@@ -648,7 +645,6 @@
     <string name="passwordFailed">Parolni o\'rnatishda muammo chiqdi</string>
     <string name="passwordIncorrect">Xato parol</string>
     <string name="passwordRemove">Parolni olib tashlash</string>
-    <string name="passwordRemovedDescription">Parolingiz saqlandi. Iltimos, uni xavfsiz joyda saqlang.</string>
     <string name="passwordSet">Parol oʻrnatish</string>
     <string name="paste">Qo\'yish</string>
     <string name="permissionMusicAudioDenied">{app_name} fayllar, musiqa va audioni jo\'natish uchun musiqa va audio kirishiga ehtiyoj bor, ammo bu abadiy rad etilgan. Sozlamalar → Ruxsatlar, va \"Musiqa va audio\"ni yoqing.</string>

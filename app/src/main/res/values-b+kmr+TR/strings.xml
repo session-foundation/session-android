@@ -157,7 +157,6 @@
     <string name="callsSettings">Bangên (Beta)</string>
     <string name="callsVoiceAndVideo">Lêgerînên Dengî û Vîdeoyî</string>
     <string name="callsVoiceAndVideoBeta">Lêgerînên Dengî û Vîdeoyî (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Adresa IP̧ya te bi dirising ti paşinspectek an hîn ya Fundaceya Oxen bêyê dîtin.</string>
     <string name="callsVoiceAndVideoToggleDescription">Lêgerînên dengî û vîdeoyî yên li kesên din û ji kesên din aktîv dike.</string>
     <string name="callsYouCalled">Te li {name} geriya</string>
     <string name="callsYouMissedCallPermissions">Ji ber ku te <b>Hest û Têketin</b> li Mîhengekên Peyamezanê neskine, ji <b>{name}ê</b> bangeke hilnasî!</string>
@@ -673,8 +672,6 @@
     <string name="open">Veke</string>
     <string name="other">Yên din</string>
     <string name="passwordChange">Şîfreyê Biguherîne</string>
-    <string name="passwordChangeDescription">şîfreyê ku ji bo vekirina {app_name} lazim e biguherîne.</string>
-    <string name="passwordChangedDescription">Te jîrêbandeya we yê danîn Muhafize mane sihîn bike.</string>
     <string name="passwordConfirm">Şîfreyê tesdîq bike</string>
     <string name="passwordCurrentIncorrect">Şîfreyê te çewt e.</string>
     <string name="passwordEnter">Şîfreyê têkeve</string>
@@ -685,7 +682,6 @@
     <string name="passwordFailed">Bi ser neket ku şîfre deyne</string>
     <string name="passwordIncorrect">Şîfreya nerast</string>
     <string name="passwordRemove">Şîfreyê Rake</string>
-    <string name="passwordRemovedDescription">Zoom</string>
     <string name="passwordSet">Şîfre çêkirin</string>
     <string name="paste">Pêve bike</string>
     <string name="permissionMusicAudioDenied">{app_name} hewl dibe da ku bikarhênina muzîk û dengwêje bike ji bo senden dosyayan, muzîk û dengwêje, lê permîsiya wî daîmen hewce ye. Bibînin Mîhengên → Permîsyan, û \"Muzîk û dengwêje\" bike.</string>

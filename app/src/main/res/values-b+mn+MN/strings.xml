@@ -153,7 +153,6 @@
     <string name="callsSettings">Дуудлага (Beta)</string>
     <string name="callsVoiceAndVideo">Дуу болон видео дуудлага</string>
     <string name="callsVoiceAndVideoBeta">Дуу болон видео дуудлага (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Таны IP хаягийг ярианы хамтрагч болон Oxen Foundation сервер харагдана.</string>
     <string name="callsVoiceAndVideoToggleDescription">Бусад хэрэглэгчдэд дуу хоолой болон видео дуудлага хийхийг идэвхжүүлнэ.</string>
     <string name="callsYouCalled">Та {name}-р дуудсан</string>
     <string name="callsYouMissedCallPermissions">Та <b>{name}</b>-ээс дуудлага алдаж байна, учир нь та <b>Дуу хоолой болон видео дуудлага</b>г Нууцлалын Тохиргоонд идэвхжүүлээгүй байна.</string>
@@ -652,8 +651,6 @@
     <string name="open">Нээх</string>
     <string name="other">Бусад</string>
     <string name="passwordChange">Нууц үг өөрчлөх</string>
-    <string name="passwordChangeDescription">{app_name} -г нээхийн тулд шаардлагатай нууц үгийг өөрчлөх.</string>
-    <string name="passwordChangedDescription">Таны нууц үг солигдож байна. Нууц үгээ хамгаалж байгаарай.</string>
     <string name="passwordConfirm">Нууц үгийг баталгаажуулах</string>
     <string name="passwordCurrentIncorrect">Таны одоогийн нууц үг буруу байна.</string>
     <string name="passwordEnter">Нууц үг оруулна уу</string>
@@ -664,7 +661,6 @@
     <string name="passwordFailed">Нууц үгийг тогтоохдоо алдаа гарлаа</string>
     <string name="passwordIncorrect">Зөв нууц үг биш</string>
     <string name="passwordRemove">Нууц үг устгах</string>
-    <string name="passwordRemovedDescription">Таны нууц үг устгагдсан.</string>
     <string name="passwordSet">Нууц үгээ тохируулах</string>
     <string name="paste">Буулгах</string>
     <string name="permissionMusicAudioDenied">{app_name}-д файлууд, хөгжим, аудиог илгээхийн тулд хөгжмийн болон аудионы хандалт шаардлагатай байгаа боловч энэ нь байнга зөвшөөрөхөөс татгалзсан байна. Тохиргоо → Зөвшөөрөл хэсэгрүү ороод, \"Хөгжим болон аудио\"-г асаана уу.</string>

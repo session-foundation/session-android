@@ -151,7 +151,6 @@
     <string name="callsSettings">ការហៅ (បេតា)</string>
     <string name="callsVoiceAndVideo">ការហៅជាសំឡេង និងជា​វីដេអូ</string>
     <string name="callsVoiceAndVideoBeta">ការហៅជាសំឡេង និងជា​វីដេអូ (បេតា)</string>
-    <string name="callsVoiceAndVideoModalDescription">IP អ្នក​ត្រូវបាន​លេចឮ​ច្បាស់នៅពេល​អ្នក​ប្រើកិច្ចប្រជុំ Beta ក្នុង Oxen Foundation។</string>
     <string name="callsVoiceAndVideoToggleDescription">បើកការហៅជាសំឡេង និងជាវីដេអូទៅកាន់ និងមកពីអ្នកប្រើផ្សេងទៀត។</string>
     <string name="callsYouCalled">អ្នកបានហៅ {name}</string>
     <string name="callsYouMissedCallPermissions">អ្នក​ធ្វើ​រំលងការហៅពី <b>{name}</b> ដោយសារ​អ្នកមិន​បានបើក <b>ការហៅសំឡេង និងវីដេអូ</b> នៅក្នុងការកំណត់ភាពឯកជន។</string>
@@ -623,8 +622,6 @@
     <string name="open">បើក</string>
     <string name="other">ផ្សេងៗ</string>
     <string name="passwordChange">ប្តូរពាក្យសម្ងាត់</string>
-    <string name="passwordChangeDescription">ប្ដូរពាក្យសម្ងាត់ដែលបានតម្រូវឲ្យមានដើម្បីឈប់ទប់ស្កាត់ {app_name}។</string>
-    <string name="passwordChangedDescription">ពាក្យសម្ងាត់ របស់អ្នកត្រូវ​បាន​ប្តូរ។ សូមរក្សា​វា​ឲ្យ​មាន​សុវត្ថិភាព។</string>
     <string name="passwordConfirm">បញ្ជាក់ពាក្យសម្ងាត់</string>
     <string name="passwordCurrentIncorrect">ពាក្យសម្ងាត់​បច្ចុប្បន្នរបស់អ្នក មិនត្រឹមត្រូវទេ។</string>
     <string name="passwordEnter">បញ្ចូលពាក្យសម្ងាត់</string>
@@ -635,7 +632,6 @@
     <string name="passwordFailed">ការកំណត់ពាក្យសម្ងាត់មិនបានសម្រេច</string>
     <string name="passwordIncorrect">ពាក្យសម្ងាត់មិនត្រឹមត្រូវ</string>
     <string name="passwordRemove">លុបពាក្យសម្ងាត់</string>
-    <string name="passwordRemovedDescription">ពាក្យសម្ងាត់ របស់អ្នកត្រូវបានលុបចេញ។</string>
     <string name="passwordSet">កំណត់ពាក្យសម្ងាត់</string>
     <string name="paste">បិទភ្ជាប់</string>
     <string name="permissionMusicAudioDenied">{app_name} ត្រូវការការចូលប្រើតន្ត្រី និងសម្លេង ដើម្បីផ្ញើឯកសារ តន្ត្រី និងសម្លេង ប៉ុន្តែវាត្រូវបានបដិសេធរហូត។ ចុច ការកំណត់ → សិទ្ធិ និងបើក \"តន្ត្រី និងសម្លេង\"។</string>

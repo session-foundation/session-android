@@ -153,7 +153,6 @@
     <string name="callsSettings">Panggilan (Beta)</string>
     <string name="callsVoiceAndVideo">Panggilan Suara dan Video</string>
     <string name="callsVoiceAndVideoBeta">Panggilan Suara dan Video (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Alamat IP anda boleh dilihat oleh rakan panggilan anda dan pelayan Oxen Foundation semasa menggunakan panggilan beta.</string>
     <string name="callsVoiceAndVideoToggleDescription">Membolehkan panggilan suara dan video ke dan dari pengguna lain.</string>
     <string name="callsYouCalled">Anda memanggil {name}</string>
     <string name="callsYouMissedCallPermissions">Anda terlepas panggilan daripada <b>{name}</b> kerana anda belum mengaktifkan <b>Panggilan Suara dan Video</b> dalam Tetapan Privasi.</string>
@@ -638,8 +637,6 @@
     <string name="open">Buka</string>
     <string name="other">Lain-lain</string>
     <string name="passwordChange">Tukar Kata Laluan</string>
-    <string name="passwordChangeDescription">Tukar kata laluan yang diperlukan untuk membuka kunci {app_name}.</string>
-    <string name="passwordChangedDescription">Kata laluan anda telah ditukar. Sila simpan dengan selamat.</string>
     <string name="passwordConfirm">Sahkan kata laluan</string>
     <string name="passwordCurrentIncorrect">Kata laluan semasa anda tidak betul.</string>
     <string name="passwordEnter">Masukkan kata laluan</string>
@@ -650,7 +647,6 @@
     <string name="passwordFailed">Gagal menetapkan kata laluan</string>
     <string name="passwordIncorrect">Kata laluan tidak betul</string>
     <string name="passwordRemove">Alih Keluar Kata Laluan</string>
-    <string name="passwordRemovedDescription">Kata laluan anda telah dibuang.</string>
     <string name="passwordSet">Tetapkan Kata Laluan</string>
     <string name="paste">Tampal</string>
     <string name="permissionMusicAudioDenied">{app_name} memerlukan akses muzik dan audio untuk menghantar fail, muzik dan audio, tetapi ia telah ditolak secara kekal. Ketik Tetapan → Kebenaran, dan hidupkan \"Muzik dan audio\".</string>

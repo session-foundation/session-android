@@ -184,7 +184,6 @@
     <string name="callsSettings">Aramalar (Beta)</string>
     <string name="callsVoiceAndVideo">Sesli ve Görüntülü Aramalar</string>
     <string name="callsVoiceAndVideoBeta">Sesli ve Görüntülü Aramalar (Deneme Aşamasında)</string>
-    <string name="callsVoiceAndVideoModalDescription">Deneme aramaları sırasında IP adresiniz arama ortağınıza ve Oxen Foundation sunucusuna görünür olacaktır.</string>
     <string name="callsVoiceAndVideoToggleDescription">Diğer kullanıcılara ve diğer kullanıcılardan sesli ve görüntülü arama yapılmasını sağlar.</string>
     <string name="callsYouCalled">{name} kullanıcısını aradınız</string>
     <string name="callsYouMissedCallPermissions"><b>{name}</b> kişisinden gelen bir çağrıyı, <b>Ses ve Video Görüşmeleri</b> özelliğini Gizlilik Ayarlarında etkinleştirmediğiniz için kaçırdınız.</string>
@@ -760,8 +759,6 @@
     <string name="open">Aç</string>
     <string name="other">Diğer</string>
     <string name="passwordChange">Parolayı Değiştir</string>
-    <string name="passwordChangeDescription">{app_name} kilidini açmak için gereken parolayı değiştirin.</string>
-    <string name="passwordChangedDescription">Şifreniz değiştirildi. Lütfen güvende tutunuz.</string>
     <string name="passwordConfirm">Şifreyi Doğrula</string>
     <string name="passwordCurrentIncorrect">Mevcut şifreniz yanlış.</string>
     <string name="passwordEnter">Parolayı girin</string>
@@ -772,7 +769,6 @@
     <string name="passwordFailed">Parolayı ayarlama başarısız oldu</string>
     <string name="passwordIncorrect">Yanlış şifre</string>
     <string name="passwordRemove">Parolayı Kaldır</string>
-    <string name="passwordRemovedDescription">Parolanız kaldırıldı.</string>
     <string name="passwordSet">Şifre Belirle</string>
     <string name="paste">Yapıştır</string>
     <string name="permissionChange">İzin Değişimi</string>

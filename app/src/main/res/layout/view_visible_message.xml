@@ -33,7 +33,7 @@
         android:gravity="bottom"
         android:paddingBottom="@dimen/small_spacing">
 
-        <org.thoughtcrime.securesms.components.ProfilePictureView
+        <androidx.compose.ui.platform.ComposeView
             android:id="@+id/profilePictureView"
             android:layout_marginBottom="@dimen/small_spacing"
             android:layout_marginEnd="@dimen/small_spacing"

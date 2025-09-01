@@ -153,7 +153,6 @@
     <string name="callsSettings">Chamadas (Beta)</string>
     <string name="callsVoiceAndVideo">Chamadas de voz e vídeo</string>
     <string name="callsVoiceAndVideoBeta">Chamadas de voz e vídeo (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Seu IP estará visível para seu parceiro de chamada e para um servidor da Oxen Foundation enquanto usa chamadas beta.</string>
     <string name="callsVoiceAndVideoToggleDescription">Permite chamadas de voz e vídeo para e de outros usuários.</string>
     <string name="callsYouCalled">Você ligou para {name}</string>
     <string name="callsYouMissedCallPermissions">Você perdeu uma chamada de <b>{name}</b> porque você não ativou <b>Chamadas de Voz e Vídeo</b> nas Configurações de Privacidade.</string>
@@ -656,8 +655,6 @@
     <string name="open">Abrir</string>
     <string name="other">Outro</string>
     <string name="passwordChange">Alterar Senha</string>
-    <string name="passwordChangeDescription">Altere a senha necessária para desbloquear {app_name}.</string>
-    <string name="passwordChangedDescription">Sua senha foi alterada. Por favor, mantenha-a segura.</string>
     <string name="passwordConfirm">Confirmar senha</string>
     <string name="passwordCurrentIncorrect">Sua senha atual está incorreta.</string>
     <string name="passwordEnter">Digite sua senha</string>
@@ -668,7 +665,6 @@
     <string name="passwordFailed">Falha ao definir a senha</string>
     <string name="passwordIncorrect">Senha incorreta</string>
     <string name="passwordRemove">Remover Senha</string>
-    <string name="passwordRemovedDescription">Sua senha foi removida.</string>
     <string name="passwordSet">Definir Senha</string>
     <string name="paste">Colar</string>
     <string name="permissionMusicAudioDenied">{app_name} precisa de acesso a música e áudio para enviar arquivos, músicas e áudio, mas o acesso foi permanentemente negado. Toque em Configurações → Permissões e ative \"Música e áudio\".</string>

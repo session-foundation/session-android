@@ -186,7 +186,6 @@
     <string name="callsSettings">Połączenia (Beta)</string>
     <string name="callsVoiceAndVideo">Połączenia głosowe i wideo</string>
     <string name="callsVoiceAndVideoBeta">Połączenia głosowe i wideo (beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Podczas korzystania z połączeń w wersji beta Twój adres IP jest widoczny dla partnera rozmowy i serwera Oxen Foundation.</string>
     <string name="callsVoiceAndVideoToggleDescription">Umożliwia wykonywanie połączeń głosowych i wideo do i od innych użytkowników.</string>
     <string name="callsYouCalled">Zadzwoniono do {name}</string>
     <string name="callsYouMissedCallPermissions">Nie odebrano połączenia od użytkownika <b>{name}</b>, ponieważ nie włączono funkcji <b>„Połączenia głosowe i wideo”</b> w ustawieniach prywatności.</string>
@@ -814,8 +813,6 @@
     <string name="openSurvey">Otwórz ankietę</string>
     <string name="other">Inne</string>
     <string name="passwordChange">Zmień hasło</string>
-    <string name="passwordChangeDescription">Zmień hasło wymagane do odblokowania aplikacji {app_name}.</string>
-    <string name="passwordChangedDescription">Zmieniono hasło. Zachowaj je w bezpiecznym miejscu.</string>
     <string name="passwordConfirm">Potwierdź hasło</string>
     <string name="passwordCurrentIncorrect">Twoje obecne hasło jest nieprawidłowe.</string>
     <string name="passwordEnter">Wprowadź hasło</string>
@@ -827,7 +824,6 @@
     <string name="passwordFailed">Nie udało się ustawić hasła</string>
     <string name="passwordIncorrect">Nieprawidłowe hasło</string>
     <string name="passwordRemove">Usuń hasło</string>
-    <string name="passwordRemovedDescription">Usunięto hasło</string>
     <string name="passwordSet">Ustaw hasło</string>
     <string name="paste">Wklej</string>
     <string name="permissionChange">Zmiana uprawnień</string>
@@ -875,7 +871,6 @@
     <string name="proAnimatedDisplayPictureFeature">Animowany obraz profilowy</string>
     <string name="proAnimatedDisplayPictureModalDescription">użytkownicy mogą przesyłać GIF-y</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Przesyłaj GIF-y z</string>
-    <string name="proBadge">Odznaka {app_pro}</string>
     <string name="proCallToActionLongerMessages">Chcesz wysyłać dłuższe wiadomości? Wyślij więcej tekstu i odblokuj funkcje premium dzięki {app_pro}</string>
     <string name="proCallToActionPinnedConversations">Chcesz przypinać więcej czatów? Zorganizuj konwersacje i odblokuj funkcje premium dzięki {app_pro}</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Chcesz przypiąć więcej niż 5 czatów? Zorganizuj konwersacje i odblokuj funkcje premium dzięki {app_pro}</string>

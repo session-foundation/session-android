@@ -152,7 +152,6 @@
     <string name="callsSettings">Simu (Beta)</string>
     <string name="callsVoiceAndVideo">Sauti na Simu za Video</string>
     <string name="callsVoiceAndVideoBeta">Sauti na Simu za Video (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">IP yako inaonekana kwa mshirika wako wa simu na seva ya Oxen Foundation wakati unatumia simu za beta.</string>
     <string name="callsVoiceAndVideoToggleDescription">Kuwezesha simu za sauti na video kwa watumiaji wengine.</string>
     <string name="callsYouCalled">Ulimpiga simu {name}</string>
     <string name="callsYouMissedCallPermissions">Ulikosa simu kutoka <b>{name} </b> kwa sababu hujawezesha <b>Sauti na Simu za Video</b> katika Mipangilio ya Faragha.</string>
@@ -636,8 +635,6 @@
     <string name="open">Fungua</string>
     <string name="other">ingine</string>
     <string name="passwordChange">Badilisha Nywila</string>
-    <string name="passwordChangeDescription">Badilisha nywila inayohitajika kufungua {app_name}.</string>
-    <string name="passwordChangedDescription">Nenosiri lako limebadilishwa. Tafadhali lihifadhi salama.</string>
     <string name="passwordConfirm">Thibitisha nenosiri</string>
     <string name="passwordCurrentIncorrect">Nenosiri lako la sasa sio sahihi.</string>
     <string name="passwordEnter">Weka nenosiri</string>
@@ -648,7 +645,6 @@
     <string name="passwordFailed">Imeshindikana kuweka nenosiri</string>
     <string name="passwordIncorrect">Nywila sio sahihi</string>
     <string name="passwordRemove">Ondoa Nywila</string>
-    <string name="passwordRemovedDescription">Nenosiri lako limeondolewa.</string>
     <string name="passwordSet">Weka Nywila</string>
     <string name="paste">Bandika</string>
     <string name="permissionMusicAudioDenied">{app_name} inahitaji ruhusa ya muziki na sauti ili kutuma faili, muziki na sauti, lakini imekataliwa kabisa. Gusa Mipangilio → Ruhusa, na washa \"Muziki na sauti\".</string>

@@ -47,10 +47,12 @@ fun ShareScreen(
     onBack: () -> Unit,
 ) {
     val state by viewModel.uiState.collectAsState()
+    val hasConversations by viewModel.hasAnyConversations.collectAsState()
 
     ShareList(
         state = state,
         contacts = viewModel.contacts.collectAsState().value,
+        hasConversations = hasConversations,
         onContactItemClicked = viewModel::onContactItemClicked,
         searchQuery = viewModel.searchQuery.collectAsState().value,
         onSearchQueryChanged = viewModel::onSearchQueryChanged,
@@ -64,6 +66,7 @@ fun ShareScreen(
 fun ShareList(
     state: ShareViewModel.UIState,
     contacts: List<ConversationItem>,
+    hasConversations: Boolean,
     onContactItemClicked: (address: Address) -> Unit,
     searchQuery: String,
     onSearchQueryChanged: (String) -> Unit,
@@ -102,7 +105,7 @@ fun ShareList(
                         query = searchQuery,
                         onValueChanged = onSearchQueryChanged,
                         onClear = onSearchQueryClear,
-                        placeholder = stringResource(R.string.searchContacts),
+                        placeholder = stringResource(R.string.search),
                         modifier = Modifier
                             .padding(horizontal = LocalDimensions.current.smallSpacing)
                             .qaTag(R.string.AccessibilityId_groupNameSearch),
@@ -113,7 +116,7 @@ fun ShareList(
 
                     Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
-                    if (contacts.isEmpty() && searchQuery.isEmpty()) {
+                    if (!hasConversations) {
                         Text(
                             text = stringResource(id = R.string.conversationsNone),
                             modifier = Modifier.padding(top = LocalDimensions.current.spacing)
@@ -169,6 +172,7 @@ private fun PreviewSelectContacts() {
         ShareList(
             state = ShareViewModel.UIState(false),
             contacts = contacts,
+            hasConversations = true,
             onContactItemClicked = {},
             searchQuery = "",
             onSearchQueryChanged = {},
@@ -187,6 +191,7 @@ private fun PreviewSelectEmptyContacts() {
         ShareList(
             state = ShareViewModel.UIState(false),
             contacts = contacts,
+            hasConversations = false,
             onContactItemClicked = {},
             searchQuery = "",
             onSearchQueryChanged = {},
@@ -205,6 +210,7 @@ private fun PreviewSelectEmptyContactsWithSearch() {
         ShareList(
             state = ShareViewModel.UIState(true),
             contacts = contacts,
+            hasConversations = false,
             onContactItemClicked = {},
             searchQuery = "Test",
             onSearchQueryChanged = {},

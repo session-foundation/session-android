@@ -153,7 +153,6 @@
     <string name="callsSettings">Galwadau (Beta)</string>
     <string name="callsVoiceAndVideo">Galwadau Llais a Fideo</string>
     <string name="callsVoiceAndVideoBeta">Galwadau Llais a Fideo (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Mae eich GPS yn weladwy i\'ch partner galwad ac i Wasanaeth Node Foundation Oxen wrth ddefnyddio galwadau beta.</string>
     <string name="callsVoiceAndVideoToggleDescription">Yn caniatáu galwadau llais a fideo i ac o ddefnyddwyr eraill.</string>
     <string name="callsYouCalled">Wedi galw {name}</string>
     <string name="callsYouMissedCallPermissions">Buoch yn methu alwad gan <b>{name}</b> oherwydd nad ydych wedi galluogi <b>Galwadau Llais a Fideo</b> yn Gosodiadau Preifatrwydd.</string>
@@ -708,8 +707,6 @@
     <string name="open">Agor</string>
     <string name="other">Arall</string>
     <string name="passwordChange">Newid Cyfrinair</string>
-    <string name="passwordChangeDescription">Newid y cyfrinair sy\'n angenrheidiol i ddatgloi {app_name}.</string>
-    <string name="passwordChangedDescription">Mae eich cyfrinair wedi\'i newid. Cadwch ef yn ddiogel.</string>
     <string name="passwordConfirm">Cadarnhau cyfrinair</string>
     <string name="passwordCurrentIncorrect">Mae eich cyfrinair cyfredol yn anghywir.</string>
     <string name="passwordEnter">Rhowch cyfrinair</string>
@@ -720,7 +717,6 @@
     <string name="passwordFailed">Methwyd gosod cyfrinair</string>
     <string name="passwordIncorrect">Cyfrinair anghywir</string>
     <string name="passwordRemove">Tynnu\'r Cyfrinair</string>
-    <string name="passwordRemovedDescription">Mae eich cyfrinair wedi\'i dynnu.</string>
     <string name="passwordSet">Gosod Cyfrinair</string>
     <string name="paste">Gludo</string>
     <string name="permissionMusicAudioDenied">{app_name} angen mynediad at gerddoriaeth ac sain er mwyn anfon ffeiliau, cerddoriaeth a sain, ond mae wedi\'i wrthod yn barhaol. Tapiwch Gosodiadau → Trwyddedau, a throi \"Cerddoriaeth a sain\" ymlaen.</string>

@@ -179,7 +179,6 @@
     <string name="callsSettings">المكالمات (نسخة تجريبية)</string>
     <string name="callsVoiceAndVideo">المكالمات الصوتية و المرئية</string>
     <string name="callsVoiceAndVideoBeta">المكالمات الصوتية والمرئية (تجريبي)</string>
-    <string name="callsVoiceAndVideoModalDescription">عنوان IP الخاص بك مرئي لشريك الاتصال وخادم Oxen Foundation أثناء استخدام المكالمات التجريبية.</string>
     <string name="callsVoiceAndVideoToggleDescription">تفعيل المكالمات الصوتية والمرئية من وإلى المستخدمين الآخرين.</string>
     <string name="callsYouCalled">لقد اتصلت بـ {name}</string>
     <string name="callsYouMissedCallPermissions">لقد فاتتك مكالمة من <b>{name}</b> لأنك لم تقم بتمكين <b>المكالمات الصوتية والمرئية</b> في إعدادات الخصوصية.</string>
@@ -777,8 +776,6 @@
     <string name="open">فتح</string>
     <string name="other">أخرى</string>
     <string name="passwordChange">تغيير كلمة السر</string>
-    <string name="passwordChangeDescription">تغيير كلمة السر المطلوبة لفتح {app_name}.</string>
-    <string name="passwordChangedDescription">تم تغيير كلمة المرور الخاصة بك. احفظها في مامن.</string>
     <string name="passwordConfirm">أَكِد كلمة المرور</string>
     <string name="passwordCurrentIncorrect">كلمة المرور الحالية غير صحيحة.</string>
     <string name="passwordEnter">أدخل كلمة السر</string>
@@ -789,7 +786,6 @@
     <string name="passwordFailed">فشل تعيين كلمة المرور</string>
     <string name="passwordIncorrect">كلمة المرور خاطئة</string>
     <string name="passwordRemove">إزالة كلمة السر</string>
-    <string name="passwordRemovedDescription">تمت إزالة كلمة السر الخاصة بك.</string>
     <string name="passwordSet">تعيين كلمة المرور</string>
     <string name="paste">لصق</string>
     <string name="permissionChange">تغيير الصَّلاحِيَة</string>

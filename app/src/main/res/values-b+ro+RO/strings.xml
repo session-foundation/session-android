@@ -185,7 +185,6 @@
     <string name="callsSettings">Apeluri (Beta)</string>
     <string name="callsVoiceAndVideo">Apeluri vocale și video</string>
     <string name="callsVoiceAndVideoBeta">Apeluri vocale și video (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">IP-ul dumneavoastră este vizibil către partenerul de apel și către un server al Oxen Foundation atunci când utilizați apeluri beta.</string>
     <string name="callsVoiceAndVideoToggleDescription">Activează apelurile vocale și video către și de la alți utilizatori.</string>
     <string name="callsYouCalled">Ai apelat pe {name}</string>
     <string name="callsYouMissedCallPermissions">Ai ratat un apel de la <b>{name}</b> pentru că nu ai activat <b>Apeluri vocale și video</b> în setările de confidențialitate.</string>
@@ -792,8 +791,6 @@
     <string name="openSurvey">Deschide sondajul</string>
     <string name="other">Altele</string>
     <string name="passwordChange">Schimbã Parola</string>
-    <string name="passwordChangeDescription">Schimbați parola necesară pentru a debloca {app_name}.</string>
-    <string name="passwordChangedDescription">Parola ta a fost schimbată. Te rugăm să o păstrezi în siguranță.</string>
     <string name="passwordConfirm">Confirmă parola</string>
     <string name="passwordCurrentIncorrect">Parola actuală este incorectă.</string>
     <string name="passwordEnter">Introduceți parola</string>
@@ -805,7 +802,6 @@
     <string name="passwordFailed">Eroare la setarea parolei</string>
     <string name="passwordIncorrect">Parolă incorectă</string>
     <string name="passwordRemove">Elimină parolă</string>
-    <string name="passwordRemovedDescription">Parola ta a fost eliminată.</string>
     <string name="passwordSet">Setează parola</string>
     <string name="paste">Lipire</string>
     <string name="permissionChange">Modificare permisiune</string>
@@ -853,7 +849,6 @@
     <string name="proAnimatedDisplayPictureFeature">Poză de profil animată</string>
     <string name="proAnimatedDisplayPictureModalDescription">utilizatorii pot încărca GIF-uri</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Încarcă GIF-uri cu</string>
-    <string name="proBadge">Insigna {app_pro}</string>
     <string name="proCallToActionLongerMessages">Vrei să trimiți mesaje mai lungi? Trimite mai mult text și deblochează funcții premium cu {app_pro}</string>
     <string name="proCallToActionPinnedConversations">Vrei mai multe fixări? Organizează-ți conversațiile și deblochează funcționalități premium cu {app_pro}</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Vrei mai mult de 5 fixări? Organizează-ți conversațiile și deblochează funcționalități premium cu {app_pro}</string>

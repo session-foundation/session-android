@@ -138,7 +138,7 @@ object MessageSender {
         }
 
         // Set the timestamp on the content so it can be verified against envelope timestamp
-        proto.setSigTimestamp(message.sentTimestamp!!)
+        proto.setSigTimestampMs(message.sentTimestamp!!)
 
         // Serialize the protobuf
         val plaintext = PushTransportDetails.getPaddedMessageBody(proto.build().toByteArray())
@@ -288,15 +288,14 @@ object MessageSender {
 
         // Otherwise the expiration configuration applies
         return message.run {
-            threadID ?: (if (isSyncMessage && this is VisibleMessage) syncTarget else recipient)
-                ?.let(Address.Companion::fromSerialized)
-                ?.let(MessagingModuleConfiguration.shared.storage::getThreadId)
+            (if (isSyncMessage && this is VisibleMessage) syncTarget else recipient)
+                ?.let(Address::fromSerialized)
+                ?.let(MessagingModuleConfiguration.shared.recipientRepository::getRecipientSync)
+                ?.expiryMode
+                ?.takeIf { it is ExpiryMode.AfterSend || isSyncMessage }
+                ?.expiryMillis
+                ?.takeIf { it > 0 }
         }
-            ?.let(MessagingModuleConfiguration.shared.storage::getExpirationConfiguration)
-            ?.takeIf { it.isEnabled }
-            ?.expiryMode
-            ?.takeIf { it is ExpiryMode.AfterSend || isSyncMessage }
-            ?.expiryMillis
     }
 
     // Open Groups
@@ -318,7 +317,7 @@ object MessageSender {
         var blindedPublicKey: ByteArray? = null
         when(destination) {
             is Destination.OpenGroup -> {
-                serverCapabilities = storage.getServerCapabilities(destination.server)
+                serverCapabilities = storage.getServerCapabilities(destination.server).orEmpty()
                 storage.getOpenGroup(destination.roomToken, destination.server)?.let {
                     blindedPublicKey = BlindKeyAPI.blind15KeyPairOrNull(
                         ed25519SecretKey = userEdKeyPair.secretKey.data,
@@ -327,14 +326,14 @@ object MessageSender {
                 }
             }
             is Destination.OpenGroupInbox -> {
-                serverCapabilities = storage.getServerCapabilities(destination.server)
+                serverCapabilities = storage.getServerCapabilities(destination.server).orEmpty()
                 blindedPublicKey = BlindKeyAPI.blind15KeyPairOrNull(
                     ed25519SecretKey = userEdKeyPair.secretKey.data,
                     serverPubKey = Hex.fromStringCondensed(destination.serverPublicKey),
                 )?.pubKey?.data
             }
             is Destination.LegacyOpenGroup -> {
-                serverCapabilities = storage.getServerCapabilities(destination.server)
+                serverCapabilities = storage.getServerCapabilities(destination.server).orEmpty()
                 storage.getOpenGroup(destination.roomToken, destination.server)?.let {
                     blindedPublicKey = BlindKeyAPI.blind15KeyPairOrNull(
                         ed25519SecretKey = userEdKeyPair.secretKey.data,
@@ -345,7 +344,7 @@ object MessageSender {
             else -> {}
         }
         val messageSender = if (serverCapabilities.contains(Capability.BLIND.name.lowercase()) && blindedPublicKey != null) {
-            AccountId(IdPrefix.BLINDED, blindedPublicKey!!).hexString
+            AccountId(IdPrefix.BLINDED, blindedPublicKey).hexString
         } else {
             AccountId(IdPrefix.UN_BLINDED, userEdKeyPair.pubKey.data).hexString
         }
@@ -361,7 +360,7 @@ object MessageSender {
                 message.profile = storage.getUserProfile()
             }
             val content = message.toProto()!!.toBuilder()
-                .setSigTimestamp(message.sentTimestamp!!)
+                .setSigTimestampMs(message.sentTimestamp!!)
                 .build()
 
             when (destination) {
@@ -442,23 +441,20 @@ object MessageSender {
             // Track the open group server message ID
             val messageIsAddressedToCommunity = message.openGroupServerMessageID != null && (destination is Destination.LegacyOpenGroup || destination is Destination.OpenGroup)
             if (messageIsAddressedToCommunity) {
-                val server: String
-                val room: String
-                when (destination) {
+                val address = when (destination) {
                     is Destination.LegacyOpenGroup -> {
-                        server = destination.server
-                        room = destination.roomToken
+                        Address.Community(destination.server, destination.roomToken)
                     }
+
                     is Destination.OpenGroup -> {
-                        server = destination.server
-                        room = destination.roomToken
+                        Address.Community(destination.server, destination.roomToken)
                     }
+
                     else -> {
                         throw Exception("Destination was a different destination than we were expecting")
                     }
                 }
-                val encoded = GroupUtil.getEncodedOpenGroupID("$server.$room".toByteArray())
-                val communityThreadID = storage.getThreadId(Address.fromSerialized(encoded))
+                val communityThreadID = storage.getThreadId(address)
                 if (communityThreadID != null && communityThreadID >= 0) {
                     storage.setOpenGroupServerMessageID(
                         messageID = messageId,
@@ -537,7 +533,7 @@ object MessageSender {
     @JvmOverloads
     fun send(message: Message, address: Address, statusCallback: SendChannel<Result<Unit>>? = null) {
         val threadID = MessagingModuleConfiguration.shared.storage.getThreadId(address)
-        threadID?.let(message::applyExpiryMode)
+        message.applyExpiryMode(address)
         message.threadID = threadID
         val destination = Destination.from(address)
         val job = MessagingModuleConfiguration.shared.messageSendJobFactory.create(message, destination, statusCallback)
@@ -549,8 +545,6 @@ object MessageSender {
             // only show the NTS if it is currently marked as hidden
             MessagingModuleConfiguration.shared.configFactory.withUserConfigs { it.userProfile.getNtsPriority() == PRIORITY_HIDDEN }
         ){
-            // make sure note to self is not hidden
-            MessagingModuleConfiguration.shared.preferences.setHasHiddenNoteToSelf(false)
             // update config in case it was marked as hidden there
             MessagingModuleConfiguration.shared.configFactory.withMutableUserConfigs {
                 it.userProfile.setNtsPriority(PRIORITY_VISIBLE)

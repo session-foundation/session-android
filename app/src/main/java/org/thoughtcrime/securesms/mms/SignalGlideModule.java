@@ -22,15 +22,14 @@ import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.load.resource.gif.StreamGifDecoder;
 import com.bumptech.glide.module.AppGlideModule;
 
-import org.session.libsession.avatars.ContactPhoto;
-import org.session.libsession.avatars.PlaceholderAvatarPhoto;
+import org.session.libsession.utilities.recipients.RemoteFile;
+import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.crypto.AttachmentSecret;
 import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider;
 import org.thoughtcrime.securesms.giph.model.ChunkedImageUrl;
 import org.thoughtcrime.securesms.glide.ChunkedImageUrlLoader;
-import org.thoughtcrime.securesms.glide.ContactPhotoLoader;
 import org.thoughtcrime.securesms.glide.OkHttpUrlLoader;
-import org.thoughtcrime.securesms.glide.PlaceholderAvatarLoader;
+import org.thoughtcrime.securesms.glide.RemoteFileLoader;
 import org.thoughtcrime.securesms.glide.cache.EncryptedBitmapCacheDecoder;
 import org.thoughtcrime.securesms.glide.cache.EncryptedBitmapResourceEncoder;
 import org.thoughtcrime.securesms.glide.cache.EncryptedCacheEncoder;
@@ -69,11 +68,12 @@ public class SignalGlideModule extends AppGlideModule {
     registry.prepend(Bitmap.class, new EncryptedBitmapResourceEncoder(secret));
     registry.prepend(GifDrawable.class, new EncryptedGifDrawableResourceEncoder(secret));
 
-    registry.append(ContactPhoto.class, InputStream.class, new ContactPhotoLoader.Factory(context));
+    registry.append(RemoteFile.class, InputStream.class, new RemoteFileLoader.Factory(
+            ((ApplicationContext) (context.getApplicationContext())).getRemoteFileLoader()
+    ));
     registry.append(DecryptableUri.class, InputStream.class, new DecryptableStreamUriLoader.Factory(context));
     registry.append(AttachmentModel.class, InputStream.class, new AttachmentStreamUriLoader.Factory());
     registry.append(ChunkedImageUrl.class, InputStream.class, new ChunkedImageUrlLoader.Factory());
-    registry.append(PlaceholderAvatarPhoto.class, BitmapDrawable.class, new PlaceholderAvatarLoader.Factory());
     registry.replace(GlideUrl.class, InputStream.class, new OkHttpUrlLoader.Factory());
   }
 

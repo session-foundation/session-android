@@ -152,7 +152,6 @@
     <string name="callsSettings">Samtaler (Beta)</string>
     <string name="callsVoiceAndVideo">Lyd- og videosamtaler</string>
     <string name="callsVoiceAndVideoBeta">Lyd- og videosamtaler (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">IP-adressa di er synlig for samtalepartnaren din og ein Oxen Foundation-server mens du bruker beta-samtaler.</string>
     <string name="callsVoiceAndVideoToggleDescription">Aktiverer tale- og videosamtaler til og frå andre brukarar.</string>
     <string name="callsYouCalled">Du ringte {name}</string>
     <string name="callsYouMissedCallPermissions">Du missa ein samtale frå <b>{name}</b> fordi du ikkje har aktivert <b>tale- og videosamtalar</b> i personverninnstillingane.</string>
@@ -640,8 +639,6 @@
     <string name="open">Åpne</string>
     <string name="other">Annan</string>
     <string name="passwordChange">Endre passord</string>
-    <string name="passwordChangeDescription">Endre passordet som krevst for å låsa opp {app_name}.</string>
-    <string name="passwordChangedDescription">Passordet ditt er blitt endra. Vennligst oppbevar det trygt.</string>
     <string name="passwordConfirm">Bekreft passordet</string>
     <string name="passwordCurrentIncorrect">Ditt nåværande passord er feil.</string>
     <string name="passwordEnter">Skriv inn passord</string>
@@ -652,7 +649,6 @@
     <string name="passwordFailed">Kunne ikkje stilla passordet</string>
     <string name="passwordIncorrect">Galt passord</string>
     <string name="passwordRemove">Fjern passord</string>
-    <string name="passwordRemovedDescription">Passordet ditt er blitt fjerna.</string>
     <string name="passwordSet">Set Password</string>
     <string name="paste">Lim inn</string>
     <string name="permissionMusicAudioDenied">{app_name} trenger musikk- og lydtilgang for å sende filer, musikk og lyd, men tilgangen er permanent avslått. Trykk Innstillinger → Tillatelser, og slå på \"Musikk og lyd\".</string>

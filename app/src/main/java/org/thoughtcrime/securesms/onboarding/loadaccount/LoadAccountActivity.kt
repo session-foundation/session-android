@@ -5,13 +5,8 @@ import android.view.View
 import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
@@ -22,6 +17,7 @@ import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.start
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class LoadAccountActivity : BaseActionBarActivity() {
@@ -48,7 +44,6 @@ class LoadAccountActivity : BaseActionBarActivity() {
         supportActionBar?.setTitle(R.string.loadAccount)
         prefs.setConfigurationMessageSynced(false)
         prefs.setRestorationTime(System.currentTimeMillis())
-        prefs.setLastProfileUpdateTime(0)
 
         lifecycleScope.launch {
             viewModel.events.collect {

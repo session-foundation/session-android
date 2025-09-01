@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -27,13 +26,11 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DatePickerState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TimePickerState
 import androidx.compose.material3.rememberDatePickerState
@@ -49,13 +46,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.min
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
@@ -83,7 +78,6 @@ import org.thoughtcrime.securesms.ui.components.DropDown
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionSwitch
 import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
-import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -248,6 +242,29 @@ fun DebugMenu(
                         sendCommand(DebugMenuViewModel.Commands.ForceCurrentUserAsPro(it))
                     }
                 )
+
+                AnimatedVisibility(uiState.forceCurrentUserAsPro) {
+                    Column {
+                        Text(
+                            modifier = Modifier.padding(top = LocalDimensions.current.xxsSpacing),
+                            text = "Debug Subscription Status",
+                            style = LocalType.current.base
+                        )
+                        DropDown(
+                            modifier = Modifier.fillMaxWidth()
+                                .padding(top = LocalDimensions.current.xxsSpacing),
+                            selectedText = uiState.selectedDebugSubscriptionStatus.label,
+                            values = uiState.debugSubscriptionStatuses.map { it.label },
+                            onValueSelected = { selection ->
+                                sendCommand(
+                                    DebugMenuViewModel.Commands.SetDebugSubscriptionStatus(
+                                        uiState.debugSubscriptionStatuses.first { it.label == selection }
+                                    )
+                                )
+                            }
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
                 DebugSwitchRow(
@@ -599,7 +616,7 @@ private val LegacyGroupDeprecationManager.DeprecationState?.displayName: String
 private fun DebugRow(
     title: String,
     modifier: Modifier = Modifier,
-    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
+    minHeight: Dp = LocalDimensions.current.itemButtonIconSpacing,
     content: @Composable RowScope.() -> Unit
 ) {
     Row(
@@ -644,7 +661,7 @@ fun DebugCheckboxRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
+    minHeight: Dp = LocalDimensions.current.itemButtonIconSpacing,
 ) {
     DebugRow(
         title = text,
@@ -710,13 +727,15 @@ fun PreviewDebugMenu() {
                 deprecatedTime = ZonedDateTime.now(),
                 availableDeprecationState = emptyList(),
                 deprecatingStartTime = ZonedDateTime.now(),
-                forceCurrentUserAsPro = false,
+                forceCurrentUserAsPro = true,
                 forceIncomingMessagesAsPro = true,
                 forceOtherUsersAsPro = false,
                 forcePostPro = false,
                 forceShortTTl = false,
                 messageProFeature = setOf(ProStatusManager.MessageProFeature.AnimatedAvatar),
                 dbInspectorState = DebugMenuViewModel.DatabaseInspectorState.STARTED,
+                debugSubscriptionStatuses = setOf(DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE),
+                selectedDebugSubscriptionStatus = DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE
             ),
             sendCommand = {},
             onClose = {}

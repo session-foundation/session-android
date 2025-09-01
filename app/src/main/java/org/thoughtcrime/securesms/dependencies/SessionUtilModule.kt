@@ -8,13 +8,9 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import org.session.libsession.messaging.groups.GroupScope
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.UsernameUtils
-import org.thoughtcrime.securesms.database.SessionContactDatabase
-import org.thoughtcrime.securesms.util.UsernameUtilsImpl
 import javax.inject.Named
 import javax.inject.Singleton
 
@@ -29,7 +25,6 @@ object SessionUtilModule {
     @Named(POLLER_SCOPE)
     fun providePollerScope(): CoroutineScope = GlobalScope
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Provides
     @Named(POLLER_SCOPE)
     fun provideExecutor(): CoroutineDispatcher = Dispatchers.IO.limitedParallelism(1)
@@ -37,17 +32,4 @@ object SessionUtilModule {
     @Provides
     @Singleton
     fun provideGroupScope() = GroupScope()
-
-
-    @Provides
-    @Singleton
-    fun provideUsernameUtils(
-        prefs: TextSecurePreferences,
-        configFactory: ConfigFactory,
-        sessionContactDatabase: SessionContactDatabase,
-    ): UsernameUtils = UsernameUtilsImpl(
-        prefs = prefs,
-        configFactory = configFactory,
-        sessionContactDatabase = sessionContactDatabase,
-    )
 }

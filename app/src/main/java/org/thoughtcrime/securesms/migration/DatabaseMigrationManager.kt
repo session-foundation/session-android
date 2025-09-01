@@ -213,13 +213,7 @@ class DatabaseMigrationManager @Inject constructor(
     }
 
     fun requestMigration(fromRetry: Boolean) {
-        val dispatcher = if (fromRetry) {
-            Dispatchers.IO
-        } else {
-            Dispatchers.Default
-        }
-
-        scope.launch(dispatcher) {
+        scope.launch(Dispatchers.IO) {
             migrateDatabaseIfNeeded(fromRetry)
         }
     }

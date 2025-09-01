@@ -151,7 +151,6 @@
     <string name="callsSettings">Calls (Beta)</string>
     <string name="callsVoiceAndVideo">Mayankho a Mawu ndi Makanema</string>
     <string name="callsVoiceAndVideoBeta">Mayankho a Mawu ndi Makanema (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">IP yanu ikuwoneka kwa mnzake wanu ndi seva ya Oxen Foundation mukamagwiritsa ntchito mayitanidwe ozungulira.</string>
     <string name="callsVoiceAndVideoToggleDescription">Yambitsani mafoni amawu ndi makanema komanso kuchokera kwa ogwiritsa ntchito ena.</string>
     <string name="callsYouCalled">Mwawona {name}</string>
     <string name="callsYouMissedCallPermissions">Munaphonya kuyimbitsa kuchokera kwa <b>{name}.</b> chifukwa simunathandize <b>Mayitidwe ndi Mavidiyo</b> mu Zokonda Zachinsinsi.</string>
@@ -635,8 +634,6 @@
     <string name="open">Amkati</string>
     <string name="other">Zina</string>
     <string name="passwordChange">Change Password</string>
-    <string name="passwordChangeDescription">Change the password required to unlock {app_name}.</string>
-    <string name="passwordChangedDescription">Password yanu yasinthidwa. Chonde sungani mosamala.</string>
     <string name="passwordConfirm">Tsimikizani mawu achinsinsi</string>
     <string name="passwordCurrentIncorrect">Chinsinsi chanu chokhazikika sichili bwino.</string>
     <string name="passwordEnter">Lemberani mawu achinsinsi</string>
@@ -647,7 +644,6 @@
     <string name="passwordFailed">Zalephera kukhazikitsa mawu achinsinsi</string>
     <string name="passwordIncorrect">Mawekerede wosalakwika</string>
     <string name="passwordRemove">Chotsani Achinsinsi</string>
-    <string name="passwordRemovedDescription">Password yanu yachotsedwa.</string>
     <string name="passwordSet">Set Password</string>
     <string name="paste">Matulani</string>
     <string name="permissionMusicAudioDenied">{app_name} needs music and audio access in order to send files, music and audio, but it has been permanently denied. Tap Settings → Permissions, and turn \"Music and audio\" on.</string>

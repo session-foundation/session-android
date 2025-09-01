@@ -161,7 +161,7 @@ private fun CommunityScreen(
                             CommunityChip(
                                 group = it,
                                 onClick = {
-                                    sendCommand(JoinCommunityViewModel.Commands.OnUrlChanged(it.joinURL))
+                                    sendCommand(JoinCommunityViewModel.Commands.JoinCommunity(it.joinURL))
                                 }
                             )
                         }

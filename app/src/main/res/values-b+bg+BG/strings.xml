@@ -151,7 +151,6 @@
     <string name="callsSettings">Обаждания (Beta)</string>
     <string name="callsVoiceAndVideo">Гласови и видео разговори</string>
     <string name="callsVoiceAndVideoBeta">Гласови и видеозаписи (Бета)</string>
-    <string name="callsVoiceAndVideoModalDescription">Вашият IP е видим за вашият партньор по време нослужване на beta обаждания и Oxen Foundation сървър.</string>
     <string name="callsVoiceAndVideoToggleDescription">Активира гласови и видеообаждания към и от други потребители.</string>
     <string name="callsYouCalled">Извикахте {name}</string>
     <string name="callsYouMissedCallPermissions">Пропуснахте обаждане от <b>{name}</b> защото не сте активирали <b>Гласови и видео разговори</b> в Настройки за поверителност.</string>
@@ -635,8 +634,6 @@
     <string name="open">Отвори</string>
     <string name="other">Друг</string>
     <string name="passwordChange">Смяна на парола</string>
-    <string name="passwordChangeDescription">Сменете паролата, изисквана за отключване на {app_name}.</string>
-    <string name="passwordChangedDescription">Вашата парола беше променена. Моля, пазете я безопасно.</string>
     <string name="passwordConfirm">Потвърди парола</string>
     <string name="passwordCurrentIncorrect">Вашата текуща парола е неправилна.</string>
     <string name="passwordEnter">Въведете парола</string>
@@ -647,7 +644,6 @@
     <string name="passwordFailed">Неуспешно задаване на паролата</string>
     <string name="passwordIncorrect">Грешна парола</string>
     <string name="passwordRemove">Премахване на парола</string>
-    <string name="passwordRemovedDescription">Вашата парола беше премахната.</string>
     <string name="passwordSet">Задаване на парола</string>
     <string name="paste">Поставяне</string>
     <string name="permissionMusicAudioDenied">{app_name} се нуждае от достъп до музика и аудио, за да може да изпращате файлове, музика и аудио, но достъпът е бил отказан постоянен. Отидете в Настройки → Разрешения и включете \"Музика и аудио\".</string>

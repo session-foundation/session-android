@@ -184,7 +184,6 @@
     <string name="callsSettings">Gesprekken (Beta)</string>
     <string name="callsVoiceAndVideo">Spraak- en video-oproepen</string>
     <string name="callsVoiceAndVideoBeta">Spraak- en video-oproepen (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Uw IP is zichtbaar voor uw oproep partner en een Oxen Foundation server tijdens het gebruik van bètagesprekken.</string>
     <string name="callsVoiceAndVideoToggleDescription">Inschakelen van spraak- en video-oproepen naar en van andere gebruikers.</string>
     <string name="callsYouCalled">U belde {name}</string>
     <string name="callsYouMissedCallPermissions">U heeft een gemiste oproep van <b>{name}</b> omdat u <b>Geluid- en Video-oproepen</b> niet heeft ingeschakeld in Privacy-instellingen.</string>
@@ -770,8 +769,6 @@
     <string name="openSurvey">Enquête openen</string>
     <string name="other">Overige</string>
     <string name="passwordChange">Wachtwoord wijzigen</string>
-    <string name="passwordChangeDescription">Wijzig het wachtwoord dat nodig is om {app_name} te ontgrendelen.</string>
-    <string name="passwordChangedDescription">Uw wachtwoord is gewijzigd. Hou het veilig.</string>
     <string name="passwordConfirm">Bevestig wachtwoord</string>
     <string name="passwordCurrentIncorrect">Uw huidige wachtwoord is onjuist.</string>
     <string name="passwordEnter">Voer wachtwoord in</string>
@@ -783,7 +780,6 @@
     <string name="passwordFailed">Instellen van wachtwoord mislukt</string>
     <string name="passwordIncorrect">Onjuist wachtwoord</string>
     <string name="passwordRemove">Wachtwoord verwijderen</string>
-    <string name="passwordRemovedDescription">Uw wachtwoord is verwijderd.</string>
     <string name="passwordSet">Wachtwoord instellen</string>
     <string name="paste">Plakken</string>
     <string name="permissionChange">Machtiging wijzigen</string>
@@ -831,7 +827,6 @@
     <string name="proAnimatedDisplayPictureFeature">Geanimeerde profielfoto</string>
     <string name="proAnimatedDisplayPictureModalDescription">gebruikers kunnen GIF\'s uploaden</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Upload GIF\'s met</string>
-    <string name="proBadge">{app_pro}-badge</string>
     <string name="proCallToActionLongerMessages">Wil je langere berichten versturen? Verstuur meer tekst en ontgrendel premiumfuncties met {app_pro}</string>
     <string name="proCallToActionPinnedConversations">Wil je meer vastzetten? Organiseer je chats en ontgrendel premiumfuncties met {app_pro}</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Wil je meer dan 5 vastgezette gesprekken? Organiseer je chats en ontgrendel premiumfuncties met {app_pro}</string>

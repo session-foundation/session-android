@@ -151,7 +151,6 @@
     <string name="callsSettings">Զանգեր (Բետա)</string>
     <string name="callsVoiceAndVideo">Ձայնային և տեսազանգեր</string>
     <string name="callsVoiceAndVideoBeta">Ձայնային և տեսազանգեր (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Ձեր IP հասցեն տեսանելի է ձեր զանգի գործընկերոջը և մի \'Oxen Foundation\' սերվերին ծիծլած օգտագործման ժամանակ։</string>
     <string name="callsVoiceAndVideoToggleDescription">Միացնում է ձայնային և տեսազանգերը դեպի և այլ օգտվողների հետ:</string>
     <string name="callsYouCalled">Դուք զանգահարել եք {name}</string>
     <string name="callsYouMissedCallPermissions">Դուք բաց եք թողել զանգը <b>{name}</b>֊ից, քանի որ չեք միացել <b>ձայնային և տեսազանգեր</b> գաղտնիության կարգավորումներում։</string>
@@ -635,8 +634,6 @@
     <string name="open">Բացել</string>
     <string name="other">Այլ</string>
     <string name="passwordChange">Փոխել գաղտնաբառը</string>
-    <string name="passwordChangeDescription">Փոխեք {app_name}-ն ապակողպելու համար պահանջվող գաղտնաբառը:</string>
-    <string name="passwordChangedDescription">Ձեր գաղտնաբառը փոխվել է։ Խնդրում ենք անվտանգ պահել։</string>
     <string name="passwordConfirm">Հաստատել գաղտնաբառը</string>
     <string name="passwordCurrentIncorrect">Ձեր ներկա գաղտնաբառը սխալ է։</string>
     <string name="passwordEnter">Մուտքագրել գաղտնաբառը</string>
@@ -647,7 +644,6 @@
     <string name="passwordFailed">Չհաջողվեց սահմանել գաղտնաբառը</string>
     <string name="passwordIncorrect">Սխալ գաղտնաբառ</string>
     <string name="passwordRemove">Հեռացնել գաղտնաբառը</string>
-    <string name="passwordRemovedDescription">Ձեր գաղտնաբառը հեռացվել է։</string>
     <string name="passwordSet">Սահմանել գաղտնաբառը</string>
     <string name="paste">Տեղադրել</string>
     <string name="permissionMusicAudioDenied">{app_name}-ը պահանջում է երաժշտության և աուդիո հասանելիությունը ֆայլեր, երաժշտություն և աուդիո ուղարկելու համար, սակայն թույլտվությունը մշտապես մերժված է: Սեղմեք Կարգավորումներ → Թույլտվություններ և միացրեք \"Երաժշտություն և աուդիո\" կարգավորումը:</string>

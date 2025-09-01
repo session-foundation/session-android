@@ -132,7 +132,7 @@ class UpdateMessageData () {
                         GroupUpdateInfoChangeMessage.Type.NAME -> Kind.GroupNameChange(infoChange.updatedName)
                         GroupUpdateInfoChangeMessage.Type.AVATAR -> Kind.GroupAvatarUpdated
                         GroupUpdateInfoChangeMessage.Type.DISAPPEARING_MESSAGES -> Kind.GroupExpirationUpdated(
-                            updatedExpiration = infoChange.updatedExpiration.toLong(),
+                            updatedExpiration = infoChange.updatedExpirationSeconds.toLong(),
                             updatingAdmin = groupUpdated.sender.orEmpty()
                         )
                         else -> null

@@ -5,7 +5,6 @@ import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.core.app.NotificationCompat
@@ -14,6 +13,7 @@ import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.notifications.NotificationChannels
 import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge.Companion.ACTION_DENY_CALL
 import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge.Companion.ACTION_IGNORE_CALL
@@ -48,7 +48,7 @@ class CallNotificationBuilder {
                     .setOngoing(true)
 
             var recipName = "Unknown"
-            recipient?.name?.let { name ->
+            recipient?.displayName()?.let { name ->
                 recipName = name
             }
 

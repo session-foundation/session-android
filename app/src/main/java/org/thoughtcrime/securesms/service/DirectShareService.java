@@ -3,30 +3,48 @@ package org.thoughtcrime.securesms.service;
 
 import android.content.ComponentName;
 import android.content.IntentFilter;
-import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Icon;
 import android.os.Bundle;
-import android.os.Parcel;
 import android.service.chooser.ChooserTarget;
 import android.service.chooser.ChooserTargetService;
 
-import androidx.annotation.NonNull;
+import com.bumptech.glide.Glide;
 
+import org.session.libsession.database.StorageProtocol;
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager;
 import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.recipients.RecipientNamesKt;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.ShareActivity;
-import org.thoughtcrime.securesms.database.ThreadDatabase;
+import org.thoughtcrime.securesms.database.RecipientRepository;
 import org.thoughtcrime.securesms.database.model.ThreadRecord;
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
-import com.bumptech.glide.Glide;
+import org.thoughtcrime.securesms.repository.ConversationRepository;
 import org.thoughtcrime.securesms.util.BitmapUtil;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class DirectShareService extends ChooserTargetService {
+  @Inject
+  RecipientRepository recipientRepository;
+
+  @Inject
+  LegacyGroupDeprecationManager legacyGroupDeprecationManager;
+
+  @Inject
+  StorageProtocol storage;
+
+  @Inject
+  ConversationRepository conversationRepository;
 
   private static final String TAG = DirectShareService.class.getSimpleName();
 
@@ -34,57 +52,44 @@ public class DirectShareService extends ChooserTargetService {
   public List<ChooserTarget> onGetChooserTargets(ComponentName targetActivityName,
                                                  IntentFilter matchedFilter)
   {
-    List<ChooserTarget> results        = new LinkedList<>();
+    List<ChooserTarget> results        = new ArrayList<>();
     ComponentName       componentName  = new ComponentName(this, ShareActivity.class);
-    ThreadDatabase      threadDatabase = DatabaseComponent.get(this).threadDatabase();
 
-      try (Cursor cursor = threadDatabase.getDirectShareList()) {
-          ThreadDatabase.Reader reader = threadDatabase.readerFor(cursor);
-          ThreadRecord record;
+    List<ThreadRecord> records = conversationRepository.getConversationList();
 
-          while ((record = reader.getNext()) != null && results.size() < 10) {
-              Recipient recipient = Recipient.from(this, record.getRecipient().getAddress(), false);
-              String name = recipient.getName();
+    for (final ThreadRecord thread : records) {
+        final Recipient recipient = thread.getRecipient();
+        Bitmap avatar;
 
-              Bitmap avatar;
+        if (recipient.getAvatar() != null) {
+            try {
+                avatar = Glide.with(this)
+                        .asBitmap()
+                        .load(recipient.getAvatar())
+                        .circleCrop()
+                        .submit(getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_width),
+                                getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_width))
+                        .get();
+            } catch (InterruptedException | ExecutionException e) {
+                Log.w(TAG, e);
+                avatar = getFallbackDrawable();
+            }
+        } else {
+            avatar = getFallbackDrawable();
+        }
 
-              if (recipient.getContactPhoto() != null) {
-                  try {
-                      avatar = Glide.with(this)
-                              .asBitmap()
-                              .load(recipient.getContactPhoto())
-                              .circleCrop()
-                              .submit(getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_width),
-                                      getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_width))
-                              .get();
-                  } catch (InterruptedException | ExecutionException e) {
-                      Log.w(TAG, e);
-                      avatar = getFallbackDrawable(recipient);
-                  }
-              } else {
-                  avatar = getFallbackDrawable(recipient);
-              }
+        Bundle bundle = new Bundle(1);
+        bundle.putParcelable(ShareActivity.EXTRA_ADDRESS, recipient.getAddress());
+        bundle.setClassLoader(getClassLoader());
 
-              Parcel parcel = Parcel.obtain();
-              parcel.writeParcelable(recipient.getAddress(), 0);
+        results.add(new ChooserTarget(RecipientNamesKt.displayName(recipient), Icon.createWithBitmap(avatar), 1.0f, componentName, bundle));
+    }
 
-              Bundle bundle = new Bundle();
-              bundle.putLong(ShareActivity.EXTRA_THREAD_ID, record.getThreadId());
-              bundle.putByteArray(ShareActivity.EXTRA_ADDRESS_MARSHALLED, parcel.marshall());
-              bundle.putInt(ShareActivity.EXTRA_DISTRIBUTION_TYPE, record.getDistributionType());
-              bundle.setClassLoader(getClassLoader());
-
-              results.add(new ChooserTarget(name, Icon.createWithBitmap(avatar), 1.0f, componentName, bundle));
-              parcel.recycle();
-
-          }
-
-          return results;
-      }
+    return results;
   }
 
-  private Bitmap getFallbackDrawable(@NonNull Recipient recipient) {
-    return BitmapUtil.createFromDrawable(recipient.getFallbackContactPhotoDrawable(this, false),
+  private Bitmap getFallbackDrawable() {
+    return BitmapUtil.createFromDrawable(new ColorDrawable(Color.TRANSPARENT),
                                          getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_width),
                                          getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_height));
   }

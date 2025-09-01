@@ -151,7 +151,6 @@
     <string name="callsSettings">کالز (بیٹا)</string>
     <string name="callsVoiceAndVideo">وائس اور ویڈیو کالز</string>
     <string name="callsVoiceAndVideoBeta">وائس اور ویڈیو کالز (بیٹا)</string>
-    <string name="callsVoiceAndVideoModalDescription">ما گپ درخواست قبول کردی آپ کہ آئیں طرفه IP پدنی Oxen Foundation کہ سرورے ہ مغامیگیا.</string>
     <string name="callsVoiceAndVideoToggleDescription">دوسرے صارفین کو وائس اور ویڈیو کالز فعال کرتا ہے.</string>
     <string name="callsYouCalled">شمے {name} کال کد</string>
     <string name="callsYouMissedCallPermissions">ما گپ درخواست قبول کردی <b>{name}</b> سے کیونکہ تُ باقیneje <b>ویس اینڈ ویڈیو کوالیں</b> پرائیویسی تنظیمات میں فعال نہ کردی.</string>
@@ -635,8 +634,6 @@
     <string name="open">گِس</string>
     <string name="other">دیگر</string>
     <string name="passwordChange">پاس ورڈ تبدیل کریں</string>
-    <string name="passwordChangeDescription">{app_name} کو ان لاک کرنے کے لئے درکار پاس ورڈ تبدیل کریں۔</string>
-    <string name="passwordChangedDescription">ما گپ درخواست قبول کردی بیک اپلیکیشن پاسکوڈ ناقض کردی. براہپس محفوظے کہ.</string>
     <string name="passwordConfirm">رمز اے تصدیق کر</string>
     <string name="passwordCurrentIncorrect">تُں حالء پاسکوڈ نادرستیت.</string>
     <string name="passwordEnter">پاسورڈ درج بکنا</string>
@@ -647,7 +644,6 @@
     <string name="passwordFailed">پاسورڈ مقرر کرنے میں ناکامی</string>
     <string name="passwordIncorrect">غلط پاس ورڈ</string>
     <string name="passwordRemove">پاسورڈ برس ک</string>
-    <string name="passwordRemovedDescription">ما گپ درخواست قبول کردی بیک پاسکوڈ ہٹاٹی.</string>
     <string name="passwordSet">رمز مقرر کـــــــن</string>
     <string name="paste">چسپاء</string>
     <string name="permissionMusicAudioDenied">{app_name} کی موسیقی اور آڈیو تک رسائی ضروری ہے تاکہ آپ فائلیں، موسیقی اور آڈیو بھیج سکیں، لیکن اسے مستقل طور پر ممنوع کر دیا گیا ہے۔ سیٹنگز ٹیپ کریں → اجازتیں، اور \"موسیقی اور آڈیو\" کو آن کریں۔</string>

@@ -152,7 +152,6 @@
     <string name="callsSettings">కాల్స్ (బీటా)</string>
     <string name="callsVoiceAndVideo">వాయిస్ మరియు వీడియో కాల్స్</string>
     <string name="callsVoiceAndVideoBeta">వాయిస్ మరియు వీడియో కాల్స్ (బీటా)</string>
-    <string name="callsVoiceAndVideoModalDescription">బీటా కాల్‌లను ఉపయోగిస్తున్నప్పుడు మీ ఐపి మీ కాల్ భాగస్వామికి మరియు ఒక Oxen Foundation సర్వర్‌కు కనిపిస్తుంది.</string>
     <string name="callsVoiceAndVideoToggleDescription">ఇతర వినియోగదారులకు మరియు వినియోగదారుల నుండి వాయిస్ మరియు వీడియో కాల్స్.</string>
     <string name="callsYouCalled">మీరు {name} కాల్ చేశారు</string>
     <string name="callsYouMissedCallPermissions">మీరు <b>వాయిస్ మరియు వీడియో కాల్స్</b>ను ప్రైవసీ సెట్టింగ్స్‌లో నేడు చెయ్యకపోవడంతో మీరు <b>{name}</b> నుండి కాల్ మిస్ చేశారు.</string>
@@ -636,8 +635,6 @@
     <string name="open">తెరవండి</string>
     <string name="other">ఇతరులు</string>
     <string name="passwordChange">పాస్వర్డ్ మార్చు</string>
-    <string name="passwordChangeDescription">{app_name} ని అన్‌లాక్ చేయడానికి అవసరమైన పాస్‌వర్డ్ మార్చండి.</string>
-    <string name="passwordChangedDescription">మీ పాస్‌వర్డ్ మార్పు జరిగింది. దయచేసి దాన్ని సురక్షితంగా ఉంచండి.</string>
     <string name="passwordConfirm">పాస్‌వర్డ్‌ని నిర్ధారించండి</string>
     <string name="passwordCurrentIncorrect">మీ ప్రస్తుత పాస్‌వర్డ్ తప్పు.</string>
     <string name="passwordEnter">పాస్‌వర్డ్ ఎంటర్ చేయండి</string>
@@ -648,7 +645,6 @@
     <string name="passwordFailed">పాస్‌వర్డ్ సెట్ చేయడంలో విఫలమైంది</string>
     <string name="passwordIncorrect">సరికాని పాస్వర్డ్</string>
     <string name="passwordRemove">పాస్వర్డ్ తొలగించు</string>
-    <string name="passwordRemovedDescription">మీ పాస్‌వర్డ్ తొలగించబడింది.</string>
     <string name="passwordSet">పాస్‌వర్డ్ సెట్ చేయి</string>
     <string name="paste">పేస్ట్</string>
     <string name="permissionMusicAudioDenied">{app_name} ఫైళ్లు, సంగీతం మరియు ఆడియోను పంపించడానికి మరియు ఆడియో యాక్సెస్ కావాలి, కానీ ఇది శాశ్వతంగా తిరస్కరించబడింది. సెట్టింగులు → అనుమతులు ని తట్టి, \"మ్యూజిక్ మరియు ఆడియో\"ని ఆన్ చేయండి.</string>

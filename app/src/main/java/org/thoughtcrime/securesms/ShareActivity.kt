@@ -32,9 +32,7 @@ class ShareActivity : FullComposeScreenLockActivity() {
     private val viewModel: ShareViewModel by viewModels()
 
     companion object {
-        const val EXTRA_THREAD_ID          = "thread_id"
-        const val EXTRA_ADDRESS_MARSHALLED = "address_marshalled"
-        const val EXTRA_DISTRIBUTION_TYPE  = "distribution_type"
+        const val EXTRA_ADDRESS = "address"
     }
 
 

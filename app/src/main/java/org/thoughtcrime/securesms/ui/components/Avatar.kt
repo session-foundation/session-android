@@ -11,6 +11,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,6 +22,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
@@ -26,12 +32,16 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
-import com.bumptech.glide.integration.compose.placeholder
+import coil3.compose.AsyncImagePainter
+import coil3.compose.SubcomposeAsyncImage
+import coil3.compose.SubcomposeAsyncImageContent
+import coil3.request.ImageRequest
+import coil3.request.allowRgb565
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transform
 import network.loki.messenger.R
-import org.session.libsession.avatars.ProfileContactPhoto
-import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
@@ -134,7 +144,6 @@ fun Avatar(
     )
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 private fun AvatarElement(
     size: Dp,
@@ -143,36 +152,90 @@ private fun AvatarElement(
     clip: Shape = CircleShape,
     maxSizeLoad: Dp = LocalDimensions.current.iconLarge,
 ){
+    // first attempt to display the custom image if there is one
+    if (data.remoteFile != null){
+        val maxSizePx = with(LocalDensity.current) {
+            maxSizeLoad.toPx().toInt().coerceAtLeast(size.toPx().toInt())
+        }
+
+        SubcomposeAsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(data.remoteFile)
+                .allowRgb565(true)
+                .avatarOptions(maxSizePx, freezeFrame = data.freezeFrame)
+                .build(),
+            modifier = modifier.size(size).clip(clip),
+            contentDescription = null,
+            contentScale = ContentScale.Crop
+        ) {
+            val scope = rememberCoroutineScope()
+
+            val painterState = remember(painter.state) {
+                painter.state
+                    .transform { value ->
+                        if (value is AsyncImagePainter.State.Loading) {
+                            delay(200L) // Delay to avoid flickering when loading
+                        }
+
+                        emit(value)
+                    }
+                    .stateIn(scope, SharingStarted.Eagerly, painter.state.value)
+            }
+
+            val state by painterState.collectAsState()
+
+            when (state) {
+                is AsyncImagePainter.State.Success -> {
+                    SubcomposeAsyncImageContent()
+                }
+
+                AsyncImagePainter.State.Empty -> {
+                    // We should not show the fallback just in case we can
+                    // load the image very soon so we don't need to see the fallback
+                }
+
+                is AsyncImagePainter.State.Error,
+                is AsyncImagePainter.State.Loading -> {
+                    FallbackIcon(modifier = Modifier.fillMaxSize(), clip = clip, size = size, data = data)
+                }
+            }
+        }
+    } else { // second attempt to use the custom icon if there is one
+        FallbackIcon(modifier = modifier, clip = clip, size = size, data = data)
+
+    }
+}
+
+/**
+ * Fallback image for teh avatar in case there is no custom file for it
+ */
+@Composable
+private fun FallbackIcon(
+    modifier: Modifier,
+    size: Dp,
+    clip: Shape,
+    data: AvatarUIElement,
+) {
     Box(
-        modifier = modifier.size(size)
+        modifier = modifier
+            .size(size)
             .background(
                 color = data.color ?: classicDark3,
                 shape = clip,
             )
             .clip(clip),
     ) {
-        // first attempt to display the custom image if there is one
-        if(data.contactPhoto != null){
-            val maxSizePx = with(LocalDensity.current) { maxSizeLoad.toPx().toInt() }
-            GlideImage(
-                model = data.contactPhoto,
-                modifier = Modifier.fillMaxSize(),
-                contentDescription = null,
-                loading = placeholder(R.drawable.ic_user_filled_custom_padded),
-                requestBuilderTransform = {
-                    it.avatarOptions(sizePx = maxSizePx, freezeFrame = data.freezeFrame)
-                }
-            )
-        } // second attempt to use the custom icon if there is one
-        else if(data.icon != null){
+        if (data.icon != null) {
             Image(
-                modifier = Modifier.fillMaxSize().padding(size * 0.2f),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(size * 0.2f),
                 painter = painterResource(id = data.icon),
                 colorFilter = ColorFilter.tint(Color.White),
                 contentDescription = null,
             )
         } // third, try to use the name if there is one
-        else if(!data.name.isNullOrEmpty()){
+        else if (!data.name.isNullOrEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -192,7 +255,9 @@ private fun AvatarElement(
             }
         } else { // no name nor image data > show the default unknown icon
             Image(
-                modifier = Modifier.fillMaxSize().padding(size * 0.2f),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(size * 0.2f),
                 painter = painterResource(id = R.drawable.ic_user_filled_custom),
                 contentDescription = null,
             )
@@ -211,7 +276,7 @@ fun PreviewAvatarElement(
             data = AvatarUIElement(
                 name = "TO",
                 color = primaryGreen,
-                contactPhoto = null
+                remoteFile = null
             )
         )
     }
@@ -227,7 +292,7 @@ fun PreviewAvatarSingleAdmin(){
                 listOf(AvatarUIElement(
                 name = "AT",
                 color = primaryGreen,
-                contactPhoto = null
+                remoteFile = null
             ))),
             badge = AvatarBadge.Admin
         )
@@ -244,12 +309,12 @@ fun PreviewAvatarDouble(){
                 listOf(AvatarUIElement(
                     name = "FR",
                     color = primaryGreen,
-                    contactPhoto = null
+                    remoteFile = null
                 ),
                 AvatarUIElement(
                     name = "AT",
                     color = primaryBlue,
-                    contactPhoto = null
+                    remoteFile = null
                 )
             ))
         )
@@ -266,7 +331,7 @@ fun PreviewAvatarSingleUnknown(){
                 listOf(AvatarUIElement(
                 name = "",
                 color = null,
-                contactPhoto = null
+                remoteFile = null
             )))
         )
     }
@@ -283,7 +348,7 @@ fun PreviewAvatarIconNoName(){
                     name = "",
                     icon = R.drawable.session_logo,
                     color = null,
-                    contactPhoto = null
+                    remoteFile = null
                 )))
         )
     }
@@ -300,7 +365,7 @@ fun PreviewAvatarIconWithName(){
                     name = "TO",
                     icon = R.drawable.session_logo,
                     color = null,
-                    contactPhoto = null
+                    remoteFile = null
                 )))
         )
     }
@@ -316,10 +381,7 @@ fun PreviewAvatarSinglePhoto(){
                 listOf(AvatarUIElement(
                 name = "AT",
                 color = primaryGreen,
-                contactPhoto = ProfileContactPhoto(
-                    Address.fromSerialized("05c0d6db0f2d400c392a745105dc93b666642b9dd43993e97c2c4d7440c453b620"),
-                    "305422957"
-                )
+                remoteFile = null
             )))
         )
     }
@@ -334,7 +396,7 @@ fun PreviewAvatarElementUnclipped(){
             data = AvatarUIElement(
                 name = "TO",
                 color = primaryGreen,
-                contactPhoto = null
+                remoteFile = null
             ),
             clip = RectangleShape
         )

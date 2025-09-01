@@ -44,9 +44,9 @@ import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.model.BatchResponse
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.getGroup
+import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.waitUntilGroupConfigsPushed
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage
@@ -62,6 +62,7 @@ import org.thoughtcrime.securesms.configs.ConfigUploader
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
@@ -78,14 +79,14 @@ class GroupManagerV2Impl @Inject constructor(
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val lokiDatabase: LokiMessageDatabase,
     private val threadDatabase: ThreadDatabase,
-    private val profileManager: SSKEnvironment.ProfileManagerProtocol,
-    @ApplicationContext val application: Context,
+    @param:ApplicationContext val application: Context,
     private val clock: SnodeClock,
     private val messageDataProvider: MessageDataProvider,
     private val lokiAPIDatabase: LokiAPIDatabase,
     private val configUploader: ConfigUploader,
     private val scope: GroupScope,
     private val groupPollerManager: GroupPollerManager,
+    private val recipientRepository: RecipientRepository,
 ) : GroupManagerV2 {
     private val dispatcher = Dispatchers.Default
 
@@ -131,8 +132,8 @@ class GroupManagerV2Impl @Inject constructor(
         val adminKey = checkNotNull(group.adminKey?.data) { "Admin key is null for new group creation." }
         val groupId = AccountId(group.groupAccountId)
 
-        val memberAsRecipients = members.map {
-            Recipient.from(application, Address.fromSerialized(it.hexString), false)
+        val memberAsRecipients = members.mapNotNull {
+            recipientRepository.getRecipient(Address.fromSerialized(it.hexString))
         }
 
         try {
@@ -146,10 +147,10 @@ class GroupManagerV2Impl @Inject constructor(
             for (member in memberAsRecipients) {
                 newGroupConfigs.groupMembers.set(
                     newGroupConfigs.groupMembers.getOrConstruct(member.address.toString()).apply {
-                        setName(member.name)
-                        setProfilePic(member.profileAvatar?.let { url ->
-                            member.profileKey?.let { key -> UserPic(url, key) }
-                        } ?: UserPic.DEFAULT)
+                        // Must use the contact's original name because we are setting this info
+                        // for other gorup members to see.
+                        setName((member.data as? RecipientData.Contact)?.name.orEmpty())
+                        setProfilePic(member.avatar?.toUserPic() ?: UserPic.DEFAULT)
                     }
                 )
             }
@@ -195,13 +196,7 @@ class GroupManagerV2Impl @Inject constructor(
                 "Failed to create a thread for the group"
             }
 
-            val recipient =
-                Recipient.from(application, Address.fromSerialized(groupId.hexString), false)
-
-            // Apply various data locally
-            profileManager.setName(application, recipient, groupName)
-            storage.setRecipientApprovedMe(recipient, true)
-            storage.setRecipientApproved(recipient, true)
+            val recipient = recipientRepository.getRecipient(Address.fromSerialized(groupId.hexString))!!
 
             // Invite members
             JobQueue.shared.add(
@@ -611,7 +606,6 @@ class GroupManagerV2Impl @Inject constructor(
                     it.userGroups.eraseClosedGroup(groupId.hexString)
                     it.convoInfoVolatile.eraseClosedGroup(groupId.hexString)
                 }
-                storage.deleteConversation(threadId)
 
                 if (groupInviteMessageHash != null) {
                     val auth = requireNotNull(storage.userAuth)
@@ -793,11 +787,10 @@ class GroupManagerV2Impl @Inject constructor(
         inviteMessageTimestamp: Long,
         inviteMessageHash: String,
     ) {
-        val recipient =
-            Recipient.from(application, Address.fromSerialized(groupId.hexString), false)
+        val address = Address.fromSerialized(groupId.hexString)
+        val inviterRecipient = recipientRepository.getRecipient(Address.fromSerialized(inviter.hexString))
 
-        val shouldAutoApprove =
-            storage.getRecipientApproved(Address.fromSerialized(inviter.hexString))
+        val shouldAutoApprove = inviterRecipient.approved
         val closedGroupInfo = GroupInfo.ClosedGroupInfo(
             groupAccountId = groupId.hexString,
             adminKey = authDataOrAdminSeed.takeIf { fromPromotion }?.let { GroupInfo.ClosedGroupInfo.adminKeyFromSeed(it) }?.toBytes(),
@@ -814,25 +807,12 @@ class GroupManagerV2Impl @Inject constructor(
             it.userGroups.set(closedGroupInfo)
         }
 
-        profileManager.setName(application, recipient, groupName)
-        val groupThreadId = storage.getOrCreateThreadIdFor(recipient.address)
-        storage.setRecipientApprovedMe(recipient, true)
-        storage.setRecipientApproved(recipient, shouldAutoApprove)
+        val groupThreadId = storage.getOrCreateThreadIdFor(address)
 
         if (shouldAutoApprove) {
             approveGroupInvite(closedGroupInfo, inviteMessageHash)
         } else {
             lokiDatabase.addGroupInviteReferrer(groupThreadId, inviter.hexString, inviteMessageHash)
-            // Clear existing message in the thread whenever we receive an invitation that we can't
-            // auto approve
-            storage.clearMessages(groupThreadId)
-
-            // In most cases, when we receive invitation, the thread has just been created,
-            // and "has_sent" is set to false. But there are cases that we could be "re-invited"
-            // to a group, where we need to go through approval process again.
-            // For a conversation to be in a unapproved list, "has_sent" must be false, hence
-            // setting here explicitly. Details to be seen on ticket SES-2967.
-            threadDatabase.setHasSent(groupThreadId, false)
             storage.insertGroupInviteControlMessage(
                 sentTimestamp = inviteMessageTimestamp,
                 senderPublicKey = inviter.hexString,
@@ -1111,7 +1091,7 @@ class GroupManagerV2Impl @Inject constructor(
     }
 
     override fun handleGroupInfoChange(message: GroupUpdated, groupId: AccountId) {
-        if (message.inner.hasInfoChangeMessage() && message.inner.infoChangeMessage.hasUpdatedExpiration()) {
+        if (message.inner.hasInfoChangeMessage() && message.inner.infoChangeMessage.hasUpdatedExpirationSeconds()) {
             // If we receive a disappearing message update, we need to remove the existing timer control message
             storage.deleteGroupInfoMessages(
                 groupId,
@@ -1133,8 +1113,7 @@ class GroupManagerV2Impl @Inject constructor(
 
     override fun setExpirationTimer(
         groupId: AccountId,
-        mode: ExpiryMode,
-        expiryChangeTimestampMs: Long
+        mode: ExpiryMode
     ) {
         val adminKey = requireAdminAccess(groupId)
 
@@ -1150,7 +1129,7 @@ class GroupManagerV2Impl @Inject constructor(
                 .setInfoChangeMessage(
                     GroupUpdateInfoChangeMessage.newBuilder()
                         .setType(GroupUpdateInfoChangeMessage.Type.DISAPPEARING_MESSAGES)
-                        .setUpdatedExpiration(mode.expirySeconds.toInt())
+                        .setUpdatedExpirationSeconds(mode.expirySeconds.toInt())
                         .setAdminSignature(ByteString.copyFrom(signature))
 
                 )

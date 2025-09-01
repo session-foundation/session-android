@@ -182,7 +182,6 @@
     <string name="callsSettings">통화 (베타)</string>
     <string name="callsVoiceAndVideo">음성 및 영상 통화</string>
     <string name="callsVoiceAndVideoBeta">음성 및 영상 통화 (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">베타 통화를 사용하는 동안 IP가 호출 파트너와 Oxen Foundation 서버에 보입니다.</string>
     <string name="callsVoiceAndVideoToggleDescription">다른 사용자와 음성 및 영상 통화를 할 수 있습니다.</string>
     <string name="callsYouCalled">{name}님에게 전화함</string>
     <string name="callsYouMissedCallPermissions"><b>{name}</b>님으로부터 받은 전화를 놓쳤습니다. 개인 정보 설정에서 <b>음성 및 화상 통화</b>를 활성화하지 않았기 때문입니다.</string>
@@ -727,8 +726,6 @@
     <string name="open">열기</string>
     <string name="other">기타</string>
     <string name="passwordChange">비밀번호 변경</string>
-    <string name="passwordChangeDescription">{app_name} 잠금 해제 시 사용되는 비밀번호를 변경합니다.</string>
-    <string name="passwordChangedDescription">비밀번호 변경이 완료되었습니다. 안전히 관리하시기 바랍니다.</string>
     <string name="passwordConfirm">비밀번호 확인</string>
     <string name="passwordCurrentIncorrect">현재 비밀번호가 잘못되었습니다.</string>
     <string name="passwordEnter">비밀번호 입력</string>
@@ -739,7 +736,6 @@
     <string name="passwordFailed">비밀번호 설정 실패</string>
     <string name="passwordIncorrect">잘못된 비밀번호</string>
     <string name="passwordRemove">비밀번호 제거</string>
-    <string name="passwordRemovedDescription">당신의 비밀번호가 제거되었습니다.</string>
     <string name="passwordSet">비밀번호 설정</string>
     <string name="paste">붙여넣기</string>
     <string name="permissionChange">권한 변경</string>

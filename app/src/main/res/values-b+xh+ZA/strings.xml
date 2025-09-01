@@ -152,7 +152,6 @@
     <string name="callsSettings">Iitsalela (Beta)</string>
     <string name="callsVoiceAndVideo">Iifowuni zeSandi neeVidiyo</string>
     <string name="callsVoiceAndVideoBeta">Iifowuni zeSandi neeVidiyo (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">I-IP yakho iyabonakala komnxibelele wakho nakwiOxen Foundation Server ngelixa usebenzisa i-beta calls.</string>
     <string name="callsVoiceAndVideoToggleDescription">Vumela i-voice ne-video calls ukuba zithumeletyayanayo nabanye abasebenzisi.</string>
     <string name="callsYouCalled">Wakubidde {name}</string>
     <string name="callsYouMissedCallPermissions">Uphoswe ngumnxeba ovela ku <b>{name}</b> kuba awuvulanga i<b>Voice and Video Calls</b> kuSeto loBukeko Olwahlukileyo.</string>
@@ -636,8 +635,6 @@
     <string name="open">Vula</string>
     <string name="other">Okunye</string>
     <string name="passwordChange">Tshintsha Ipassword</string>
-    <string name="passwordChangeDescription">Tshintsha i-password efunekayo ukusikhulula {app_name}.</string>
-    <string name="passwordChangedDescription">Iphasiwedi yakho itshintshiwe. Nceda uyigcine ikhuselekile.</string>
     <string name="passwordConfirm">Qinisekisa iphasiwedi</string>
     <string name="passwordCurrentIncorrect">Iphasiwedi yakho yangoku ayichaneki.</string>
     <string name="passwordEnter">Ngenisa i-password</string>
@@ -648,7 +645,6 @@
     <string name="passwordFailed">Koyekile ukumisela i-password</string>
     <string name="passwordIncorrect">Iphasiwedi echanekileyo</string>
     <string name="passwordRemove">Susa iphasiwedi</string>
-    <string name="passwordRemovedDescription">Iphasiwedi yakho isusiwe.</string>
     <string name="passwordSet">Set Password</string>
     <string name="paste">Ncamathisela</string>
     <string name="permissionMusicAudioDenied">{app_name} ifuna ukufikelela kumculo kunye noaudio ukuze ukwazi ukuthumela iifayili, umculo kunye noaudio, kodwa oku kuthintelwe ngokusisigxina. Thepha ku-Settings → Permissions, kwaye uvule \'Umculo kunye noaudio\'.</string>

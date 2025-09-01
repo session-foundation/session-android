@@ -151,7 +151,6 @@
     <string name="callsSettings">Calls (Beta)</string>
     <string name="callsVoiceAndVideo">Ahots eta Bideo Deiak</string>
     <string name="callsVoiceAndVideoBeta">Ahots eta Bideo Deiak (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Zure IPa ikusgai egongo da zure dei-bikotekidearentzako eta Oxen Foundation zerbitzari batentzako, beta-deiak egiten ari bazara.</string>
     <string name="callsVoiceAndVideoToggleDescription">Beste erabiltzaile batzuekin ahots-eta bideo-deiak egiteko aukera ematen du.</string>
     <string name="callsYouCalled">{name} deitu duzu</string>
     <string name="callsYouMissedCallPermissions"><b>{name}</b>-(r)en dei bat galdu duzu, Pribatutasun Ezarpenetan <b>Ahots eta Bideo Deiak</b> ez gaituta dituzulako.</string>
@@ -635,8 +634,6 @@
     <string name="open">Ireki</string>
     <string name="other">Bestea</string>
     <string name="passwordChange">Change Password</string>
-    <string name="passwordChangeDescription">Change the password required to unlock {app_name}.</string>
-    <string name="passwordChangedDescription">Zure pasahitza aldatu da. Gorde seguru batean.</string>
     <string name="passwordConfirm">Pasahitza berretsi</string>
     <string name="passwordCurrentIncorrect">Zure oraingo pasahitza ez da zuzena.</string>
     <string name="passwordEnter">Sartu pasahitza</string>
@@ -647,7 +644,6 @@
     <string name="passwordFailed">Pasahitza ezartzea huts egin da</string>
     <string name="passwordIncorrect">Pasahitz okerra</string>
     <string name="passwordRemove">Pasahitza kendu</string>
-    <string name="passwordRemovedDescription">Zure pasahitza kendu da.</string>
     <string name="passwordSet">Pasahitza ezarri</string>
     <string name="paste">Itsatsi</string>
     <string name="permissionMusicAudioDenied">{app_name}(e)k musika eta audio sarbidea behar du fitxategiak, musika eta audioak bidaltzeko, baina behin betiko ukatu da. Ezarpenak ukitu → Baimenak, eta aktibatu \"Musika eta audioak\".</string>

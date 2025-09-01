@@ -173,7 +173,6 @@
     <string name="callsSettings">Panggilan (Beta)</string>
     <string name="callsVoiceAndVideo">Panggilan Suara dan Video</string>
     <string name="callsVoiceAndVideoBeta">Panggilan Suara dan Video (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">IP Anda terlihat oleh mitra panggilan Anda dan server Oxen Foundation saat menggunakan panggilan beta.</string>
     <string name="callsVoiceAndVideoToggleDescription">Aktifkan panggilan suara dan video ke atau dari pengguna lain.</string>
     <string name="callsYouCalled">Anda memanggil {name}</string>
     <string name="callsYouMissedCallPermissions">Anda melewatkan panggilan dari <b>{name}</b> karena Anda belum mengaktifkan <b>Panggilan Suara dan Video</b> di Pengaturan Privasi.</string>
@@ -701,8 +700,6 @@
     <string name="open">Buka</string>
     <string name="other">Lainnya</string>
     <string name="passwordChange">Ubah Kata Sandi</string>
-    <string name="passwordChangeDescription">Ubah kata sandi yang diperlukan untuk membuka kunci {app_name}.</string>
-    <string name="passwordChangedDescription">Kata sandi anda telah diubah. Harap untuk menjaganya.</string>
     <string name="passwordConfirm">Konfirmasi kata sandi</string>
     <string name="passwordCurrentIncorrect">Kata sandi anda saat ini salah.</string>
     <string name="passwordEnter">Masukkan Kata Sandi</string>
@@ -713,7 +710,6 @@
     <string name="passwordFailed">Gagal memperbarui kata sandi</string>
     <string name="passwordIncorrect">Kata sandi salah</string>
     <string name="passwordRemove">Hapus Kata Sandi</string>
-    <string name="passwordRemovedDescription">Kata sandi Anda telah dihapus.</string>
     <string name="passwordSet">Atur Kata Sandi</string>
     <string name="paste">Tempel</string>
     <string name="permissionChange">Persetujuan Diubah</string>

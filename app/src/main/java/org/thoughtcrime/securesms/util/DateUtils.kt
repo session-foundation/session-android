@@ -1,24 +1,30 @@
 package org.thoughtcrime.securesms.util
 
 import android.content.Context
+import android.icu.text.MeasureFormat
+import android.icu.util.Measure
+import android.icu.util.MeasureUnit
 import android.text.format.DateFormat
-import  android.text.format.DateUtils as AndroidxDateUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.text.SimpleDateFormat
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.*
-import java.util.concurrent.TimeUnit
-import javax.inject.Inject
-import javax.inject.Singleton
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.DATE_FORMAT_PREF
 import org.session.libsession.utilities.TextSecurePreferences.Companion.TIME_FORMAT_PREF
 import org.session.libsignal.utilities.Log
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.Period
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.math.max
+import android.text.format.DateUtils as AndroidxDateUtils
 
 enum class RelativeDay { TODAY, YESTERDAY, TOMORROW }
 
@@ -202,6 +208,35 @@ class DateUtils @Inject constructor(
                 date1.hour == date2.hour
     }
 
+    fun getExpiryString(instant: Instant?): String {
+        val now = Instant.now()
+        val timeRemaining = Duration.between(now, instant)
+
+        // Instant has passed
+        if (timeRemaining.isNegative || timeRemaining.isZero) {
+            return context.getString(R.string.proExpired)
+        }
+
+        val totalHours = max(timeRemaining.toHours(), 1)
+        val locale = context.resources.configuration.locales[0]
+        val format = MeasureFormat.getInstance(locale, MeasureFormat.FormatWidth.WIDE)
+
+        return if (totalHours >= 24) {
+            // More than one full day remaining - show days
+            val days = timeRemaining.toDays()
+            format.format(Measure(days, MeasureUnit.DAY))
+        } else {
+            // Less than 24 hours remaining - show hours
+            format.format(Measure(totalHours, MeasureUnit.HOUR))
+        }
+    }
+
+    fun getLocalisedTimeDuration(amount: Int, unit: MeasureUnit): String {
+        val locale = context.resources.configuration.locales[0]
+        val format = MeasureFormat.getInstance(locale, MeasureFormat.FormatWidth.WIDE)
+        return format.format(Measure(amount, unit))
+    }
+
     // Helper methods
     private fun toLocalDate(timestamp: Long): LocalDate =
         Instant.ofEpochMilli(timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
@@ -220,4 +255,34 @@ class DateUtils @Inject constructor(
 
     private fun getLocalizedPattern(template: String, locale: Locale): String =
         DateFormat.getBestDateTimePattern(locale, template)
+
+    companion object {
+        fun Long.asEpochSeconds(): ZonedDateTime? {
+            if (this <= 0) return null
+
+            return Instant.ofEpochSecond(this).atZone(ZoneId.of("UTC"))
+        }
+
+        fun Long.secondsToInstant(): Instant? {
+            if (this <= 0) return null
+
+            return Instant.ofEpochSecond(this)
+        }
+
+        fun Long.millsToInstant(): Instant? {
+            if (this <= 0) return null
+
+            return Instant.ofEpochMilli(this)
+        }
+
+        fun Long.asEpochMillis(): ZonedDateTime? {
+            if (this <= 0) return null
+
+            return Instant.ofEpochMilli(this).atZone(ZoneId.of("UTC"))
+        }
+
+        fun Instant.toEpochSeconds(): Long {
+            return this.toEpochMilli() / 1000
+        }
+    }
 }
