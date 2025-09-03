@@ -32,7 +32,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.squareup.phrase.Phrase
-import kotlinx.coroutines.NonCancellable.isActive
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
@@ -42,7 +41,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getNotificationPrivacy
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getRepeatAlertsCount
-import org.session.libsession.utilities.TextSecurePreferences.Companion.hasHiddenMessageRequests
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isNotificationsEnabled
 import org.session.libsession.utilities.TextSecurePreferences.Companion.removeHasHiddenMessageRequests
 import org.session.libsignal.utilities.AccountId
@@ -127,47 +125,46 @@ class DefaultMessageNotifier @Inject constructor(
         return hasNotifications
     }
 
-    @Deprecated("Will delete after testing")
+//    "Will delete after testing"
+//    private fun cancelOrphanedNotifications(
+//        context: Context,
+//        notificationState: NotificationState
+//    ) {
+//        try {
+//            val notifications = ServiceUtil.getNotificationManager(context)
+//            val activeNotifications = notifications.activeNotifications
+//
+//            for (notification in activeNotifications) {
+//                var validNotification = false
+//
+//                if (notification.id != SUMMARY_NOTIFICATION_ID && notification.id != KeyCachingService.SERVICE_RUNNING_ID && notification.id != FOREGROUND_ID && notification.id != PENDING_MESSAGES_ID) {
+//                    for (item in notificationState.notifications) {
+//                        if (notification.id.toLong() == (SUMMARY_NOTIFICATION_ID + item.threadId)) {
+//                            validNotification = true
+//                            break
+//                        }
+//                    }
+//
+//                    if (!validNotification) {
+//                        if (notification.id != WEBRTC_NOTIFICATION) {
+//                            notifications.cancel(notification.id)
+//                        }
+//                    }
+//                }
+//            }
+//        } catch (e: Throwable) {
+//            // XXX Android ROM Bug, see #6043
+//            Log.w(TAG, e)
+//        }
+//    }
+
     private fun cancelOrphanedNotifications(
         context: Context,
-        notificationState: NotificationState
+        normal: NotificationState
     ) {
         try {
-            val notifications = ServiceUtil.getNotificationManager(context)
-            val activeNotifications = notifications.activeNotifications
-
-            for (notification in activeNotifications) {
-                var validNotification = false
-
-                if (notification.id != SUMMARY_NOTIFICATION_ID && notification.id != KeyCachingService.SERVICE_RUNNING_ID && notification.id != FOREGROUND_ID && notification.id != PENDING_MESSAGES_ID) {
-                    for (item in notificationState.notifications) {
-                        if (notification.id.toLong() == (SUMMARY_NOTIFICATION_ID + item.threadId)) {
-                            validNotification = true
-                            break
-                        }
-                    }
-
-                    if (!validNotification) {
-                        if (notification.id != WEBRTC_NOTIFICATION) {
-                            notifications.cancel(notification.id)
-                        }
-                    }
-                }
-            }
-        } catch (e: Throwable) {
-            // XXX Android ROM Bug, see #6043
-            Log.w(TAG, e)
-        }
-    }
-
-    private fun cancelOrphanedNotifications(
-        context: Context,
-        normal: NotificationState,
-        requests: NotificationState
-    ) {
-        try {
-            val nm = ServiceUtil.getNotificationManager(context)
-            val active = nm.activeNotifications
+            val notificationManager = ServiceUtil.getNotificationManager(context)
+            val activeNotifications = notificationManager.activeNotifications
 
             // IDs that are always valid
             val allowed = hashSetOf(
@@ -183,21 +180,17 @@ class DefaultMessageNotifier @Inject constructor(
                 allowed += (SUMMARY_NOTIFICATION_ID + threadId).toInt()
             }
 
-            // Allow all *newly* computed request per-thread ids
-            for (threadId in requests.threads) {
-                allowed += requestNotificationIdFor(threadId)
-            }
+            // Request notifs: we SKIP canceling anything tagged/grouped as a request.
+            // (Their IDs happen to be SUMMARY + threadId, but we don't rely on that here.)
+            activeNotifications.forEach { statusBarNotification ->
+                val isRequestNotif =
+                    statusBarNotification.tag == REQUEST_TAG ||
+                            statusBarNotification.notification.group == REQUESTS_GROUP
 
-            for (sb in active) {
-                val n = sb.notification
+                if (isRequestNotif) return@forEach
 
-                // Never cancel notifications that belong to the request group.
-                // We intentionally keep the original request notification visible, even if we
-                // didn’t include it in this pass (e.g., thread message count > 1).
-                if (n.group == REQUESTS_GROUP) continue
-
-                if (!allowed.contains(sb.id)) {
-                    nm.cancel(sb.id)
+                if (!allowed.contains(statusBarNotification.id)) {
+                    notificationManager.cancel(statusBarNotification.id)
                 }
             }
         } catch (e: Throwable) {
@@ -307,13 +300,11 @@ class DefaultMessageNotifier @Inject constructor(
 
                 // If nothing to display at all, clear everything (including reminders)
                 if (normalItems.notificationCount == 0 && requestItems.notificationCount == 0) {
-                    cancelActiveNotifications(context)
+                    // Request-aware cleanup (keeps active request notifs alive)
+                    cancelOrphanedNotifications(context, normalItems)
                     clearReminder(context)
                     return
                 }
-
-                // Request-aware cleanup (keeps active request notifs alive)
-                cancelOrphanedNotifications(context, normalItems, requestItems)
 
                 if (playNotificationAudio) {
                     scheduleReminder(context, reminderCount)
@@ -349,7 +340,8 @@ class DefaultMessageNotifier @Inject constructor(
         // Use dedicated id + group for request notifications
         val isRequest = notifications.firstOrNull()?.isMessageRequest == true
         val notificationId = if (isRequest) {
-            requestNotificationIdFor(notifications[0].threadId)
+//            requestNotificationIdFor(notifications[0].threadId)
+            (SUMMARY_NOTIFICATION_ID + notifications[0].threadId).toInt()
         } else {
             (SUMMARY_NOTIFICATION_ID + (if (bundled) notifications[0].threadId else 0)).toInt()
         }
@@ -359,10 +351,22 @@ class DefaultMessageNotifier @Inject constructor(
         }.sorted().joinToString("|")
 
         val existingNotifications = ServiceUtil.getNotificationManager(context).activeNotifications
-        val existingSignature =
-            existingNotifications.find { it.id == notificationId }?.notification?.extras?.getString(
-                CONTENT_SIGNATURE
-            )
+
+//        val existingSignature =
+//            existingNotifications.find { it.id == notificationId }?.notification?.extras?.getString(
+//                CONTENT_SIGNATURE
+//            )
+
+        val existingSignature = if (isRequest) {
+            // For requests: match BOTH id and tag to detect duplicates correctly
+            existingNotifications
+                .firstOrNull { it.id == notificationId && REQUEST_TAG == it.tag }
+                ?.notification?.extras?.getString(CONTENT_SIGNATURE)
+        } else {
+            existingNotifications
+                .firstOrNull { it.id == notificationId }
+                ?.notification?.extras?.getString(CONTENT_SIGNATURE)
+        }
 
         if (existingSignature == contentSignature) {
             Log.i(TAG, "Skipping duplicate single thread notification for ID $notificationId")
@@ -489,7 +493,14 @@ class DefaultMessageNotifier @Inject constructor(
             return
         }
 
-        NotificationManagerCompat.from(context).notify(notificationId, notification)
+//        NotificationManagerCompat.from(context).notify(notificationId, notification)
+
+        if (isRequest) {
+            NotificationManagerCompat.from(context).notify(REQUEST_TAG, notificationId, notification)
+        } else {
+            NotificationManagerCompat.from(context).notify(notificationId, notification)
+        }
+
         Log.i(TAG, "Posted notification. $notification")
     }
 
@@ -982,12 +993,7 @@ class DefaultMessageNotifier @Inject constructor(
 
         // Separate group & id-space for request notifications
         private const val REQUESTS_GROUP = "message_requests"
-        private const val REQUEST_NOTIFICATION_BASE = 1_000_000
-        private const val REQUEST_ID_RANGE = 1_000_000
-        private fun requestNotificationIdFor(threadId: Long): Int {
-            val mixed = (threadId xor (threadId ushr 32)).toInt() and Int.MAX_VALUE
-            return REQUEST_NOTIFICATION_BASE + (mixed % REQUEST_ID_RANGE)
-        }
+        private const val REQUEST_TAG    = "message_request"
 
         private val MIN_AUDIBLE_PERIOD_MILLIS = TimeUnit.SECONDS.toMillis(5)
         private val DESKTOP_ACTIVITY_PERIOD = TimeUnit.MINUTES.toMillis(1)
