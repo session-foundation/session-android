@@ -25,6 +25,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.database.Cursor
+import android.graphics.Bitmap
 import android.os.AsyncTask
 import android.text.TextUtils
 import androidx.core.app.ActivityCompat
@@ -299,10 +300,10 @@ class DefaultMessageNotifier @Inject constructor(
                     sendSingleThreadNotification(context, normalItems, playNotificationAudio, false)
                 }
 
-                // *** REQUESTS FIX: post request notifications per thread (no sound, not bundled)
+                // Post request notifications per thread (no sound, not bundled)
                 for (threadId in requestItems.threads) {
                     val perThread = NotificationState(requestItems.getNotificationsForThread(threadId))
-                    sendSingleThreadNotification(context, perThread, /*signal*/ false, /*bundled*/ false)
+                    sendSingleThreadNotification(context, perThread,false,false)
                 }
 
                 // If nothing to display at all, clear everything (including reminders)
@@ -376,19 +377,27 @@ class DefaultMessageNotifier @Inject constructor(
         )
         builder.putStringExtra(CONTENT_SIGNATURE, contentSignature)
 
-        val messageOriginator = notifications[0].recipient
-        val messageIdTag = notifications[0].timestamp.toString()
+        val notificationItem = notifications.first()
+        val messageOriginator = notificationItem.recipient
+        val messageIdTag = notificationItem.timestamp.toString()
 
-        val timestamp = notifications[0].timestamp
+        val timestamp = notificationItem.timestamp
         if (timestamp != 0L) builder.setWhen(timestamp)
 
         builder.putStringExtra(LATEST_MESSAGE_ID_TAG, messageIdTag)
         builder.putStringExtra(EXTRA_THREAD_ID, notifications[0].threadId.toString())
 
-        val notificationText = notifications[0].text
+        val notificationText = notificationItem.text
 
-        builder.setThread(notifications[0].recipient)
+        builder.setThread(notificationItem.recipient)
         builder.setMessageCount(notificationState.notificationCount)
+
+
+        if(notificationItem.isMessageRequest){
+            // Set the notification title to App Name
+            builder.setContentTitle(context.getString(R.string.app_name))
+            builder.setLargeIcon(null as Bitmap?)
+        }
 
         val builderCS = notificationText ?: ""
         val ss = highlightMentions(
@@ -402,12 +411,12 @@ class DefaultMessageNotifier @Inject constructor(
 
         builder.setPrimaryMessageBody(
             messageOriginator,
-            notifications[0].individualRecipient,
+            notificationItem.individualRecipient,
             ss,
-            notifications[0].slideDeck
+            notificationItem.slideDeck
         )
 
-        builder.setContentIntent(notifications[0].getPendingIntent(context))
+        builder.setContentIntent(notificationItem.getPendingIntent(context))
         builder.setDeleteIntent(notificationState.getDeleteIntent(context))
         builder.setOnlyAlertOnce(!signal)
         builder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
@@ -438,7 +447,7 @@ class DefaultMessageNotifier @Inject constructor(
             builder.addAndroidAutoAction(
                 notificationState.getAndroidAutoReplyIntent(context, messageOriginator),
                 notificationState.getAndroidAutoHeardIntent(context, notificationId),
-                notifications[0].timestamp
+                notificationItem.timestamp
             )
         }
 
@@ -452,12 +461,12 @@ class DefaultMessageNotifier @Inject constructor(
         if (signal) {
             builder.setAlarms(notificationState.getRingtone(context))
             builder.setTicker(
-                notifications[0].individualRecipient,
-                notifications[0].text
+                notificationItem.individualRecipient,
+                notificationItem.text
             )
         }
 
-        // *** REQUESTS FIX: requests go to a separate group; normal keeps existing behavior
+        // requests go to a separate group; normal keeps existing behavior
         if (bundled || isRequest) {
             builder.setGroup(if (isRequest) REQUESTS_GROUP else NOTIFICATION_GROUP)
             builder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
