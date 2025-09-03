@@ -127,6 +127,7 @@ class DefaultMessageNotifier @Inject constructor(
         return hasNotifications
     }
 
+    @Deprecated("Will delete after testing")
     private fun cancelOrphanedNotifications(
         context: Context,
         notificationState: NotificationState
@@ -159,8 +160,6 @@ class DefaultMessageNotifier @Inject constructor(
         }
     }
 
-
-    // *** REQUESTS FIX: request-aware cleanup that *keeps* active request notifications alive
     private fun cancelOrphanedNotifications(
         context: Context,
         normal: NotificationState,
@@ -192,7 +191,7 @@ class DefaultMessageNotifier @Inject constructor(
             for (sb in active) {
                 val n = sb.notification
 
-                // *** REQUESTS FIX: never cancel notifications that belong to the request group.
+                // Never cancel notifications that belong to the request group.
                 // We intentionally keep the original request notification visible, even if we
                 // didn’t include it in this pass (e.g., thread message count > 1).
                 if (n.group == REQUESTS_GROUP) continue
@@ -275,7 +274,7 @@ class DefaultMessageNotifier @Inject constructor(
             try {
                 val notificationState = constructNotificationState(context, telcoCursor)
 
-                // --- split into normal vs request without touching NotificationState class
+                // split into normal vs request without touching NotificationState class
                 val requestItems = NotificationState().apply {
                     notificationState.notifications.filter { it.isMessageRequest }.forEach { addNotification(it) }
                 }
@@ -289,7 +288,7 @@ class DefaultMessageNotifier @Inject constructor(
                     lastAudibleNotification = System.currentTimeMillis()
                 }
 
-                // --- NORMAL notifications (unchanged behavior, but uses normalItems) ---
+                // Normal notifications (unchanged behavior, but uses normalItems)
                 if (normalItems.hasMultipleThreads()) {
                     for (threadId in normalItems.threads) {
                         val perThread = NotificationState(normalItems.getNotificationsForThread(threadId))
@@ -313,7 +312,7 @@ class DefaultMessageNotifier @Inject constructor(
                     return
                 }
 
-                // *** REQUESTS FIX: request-aware cleanup (keeps active request notifs alive)
+                // Request-aware cleanup (keeps active request notifs alive)
                 cancelOrphanedNotifications(context, normalItems, requestItems)
 
                 if (playNotificationAudio) {
@@ -347,7 +346,7 @@ class DefaultMessageNotifier @Inject constructor(
 
         // Bail early if the existing displayed notification has the same content as what we are trying to send now
         val notifications = notificationState.notifications
-        // *** REQUESTS FIX: use dedicated id + group for request notifications
+        // Use dedicated id + group for request notifications
         val isRequest = notifications.firstOrNull()?.isMessageRequest == true
         val notificationId = if (isRequest) {
             requestNotificationIdFor(notifications[0].threadId)
@@ -616,9 +615,8 @@ class DefaultMessageNotifier @Inject constructor(
         val cache: MutableMap<Long, String?> = HashMap()
         val messageCountCache = mutableMapOf<Long, Int>()
 
-        // *** REQUESTS DEDUPE: track which request threads we've already added
+        // track which request threads we've already added
         val requestThreadsDedup = hashSetOf<Long>()
-        // *** END
 
         var record: MessageRecord? = null
         do {
@@ -706,11 +704,10 @@ class DefaultMessageNotifier @Inject constructor(
             // CASE 1: TRULY NEW UNREAD INCOMING MESSAGE
             // Only show message notification if it's incoming, unread AND not yet notified
             if (isUnreadIncoming) {
-                // *** REQUESTS DEDUPE: if this is a request and we already added this thread, skip
+                // If this is a request and we already added this thread, skip
                 if (isMessageRequest && !requestThreadsDedup.add(threadId)) {
                     continue
                 }
-                // *** END
 
                 // Prepare message body
                 var body: CharSequence = record.getDisplayBody(context)
@@ -976,7 +973,6 @@ class DefaultMessageNotifier @Inject constructor(
         const val EXTRA_REMOTE_REPLY: String = "extra_remote_reply"
         const val LATEST_MESSAGE_ID_TAG: String = "extra_latest_message_id"
 
-        // *** REQUESTS FIX: we also store thread id on each request notification
         const val EXTRA_THREAD_ID: String = "extra_thread_id"
 
         private const val FOREGROUND_ID = 313399
@@ -984,7 +980,7 @@ class DefaultMessageNotifier @Inject constructor(
         private const val PENDING_MESSAGES_ID = 1111
         private const val NOTIFICATION_GROUP = "messages"
 
-        // *** REQUESTS FIX: separate group & id-space for request notifications
+        // Separate group & id-space for request notifications
         private const val REQUESTS_GROUP = "message_requests"
         private const val REQUEST_NOTIFICATION_BASE = 1_000_000
         private const val REQUEST_ID_RANGE = 1_000_000
@@ -992,7 +988,6 @@ class DefaultMessageNotifier @Inject constructor(
             val mixed = (threadId xor (threadId ushr 32)).toInt() and Int.MAX_VALUE
             return REQUEST_NOTIFICATION_BASE + (mixed % REQUEST_ID_RANGE)
         }
-        // *** END
 
         private val MIN_AUDIBLE_PERIOD_MILLIS = TimeUnit.SECONDS.toMillis(5)
         private val DESKTOP_ACTIVITY_PERIOD = TimeUnit.MINUTES.toMillis(1)
