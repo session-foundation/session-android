@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
 import kotlin.math.max
 
+// Makes sure that the recyclerView is scrolled to the bottom
 fun RecyclerView.applyImeBottomPadding() {
     clipToPadding = false
     ViewCompat.setOnApplyWindowInsetsListener(this) { v, insets ->
@@ -18,6 +19,7 @@ fun RecyclerView.applyImeBottomPadding() {
     }
 }
 
+// Handle scroll logic
 fun RecyclerView.handleScrollToBottom(){
     val layoutManager = this.layoutManager as LinearLayoutManager
     val last = this.adapter?.itemCount?.minus(1) ?: return
