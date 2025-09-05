@@ -2114,6 +2114,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // Reset attachments button if needed
         if (isShowingAttachmentOptions) { toggleAttachmentOptions() }
 
+        // Keep it fixed on the bottom right away
+        binding.conversationRecyclerView.handleScrollToBottom()
+
         // do the heavy work in the bg
         lifecycleScope.launch(Dispatchers.Default) {
             runCatching {
@@ -2133,6 +2136,17 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         .mapNotNull { a -> a.dataUri?.takeIf { it.scheme == "file" }?.path?.let(::File) }
                         .filter { it.exists() }
                         .forEach { it.delete() }
+                }
+
+                message.id?.let {
+                    val insertedTs = mmsDb.getMessageRecord(it.id).dateSent
+                    withContext(Dispatchers.Main) {
+                        messageToScrollAuthor.set(recipient.address)
+                        messageToScrollTimestamp.set(insertedTs)
+                        // Ensure onLoadFinished runs and performs the jump
+                        LoaderManager.getInstance(this@ConversationActivityV2)
+                            .restartLoader(0, null, this@ConversationActivityV2)
+                    }
                 }
 
                 waitForApprovalJobToBeSubmitted()
