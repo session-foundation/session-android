@@ -73,5 +73,5 @@ fun TextView.needsCollapsing(
     builder.setJustificationMode(justificationMode)
 
     val layout = builder.build()
-    return layout.lineCount > maxLines
+    return layout.lineCount >= maxLines // make sure to count truncated last line (line after the max)
 }
