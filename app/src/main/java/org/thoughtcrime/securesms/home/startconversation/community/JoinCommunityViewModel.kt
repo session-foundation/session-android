@@ -51,6 +51,10 @@ class JoinCommunityViewModel @Inject constructor(
 
         viewModelScope.launch(Dispatchers.Default) {
             OpenGroupApi.defaultRooms.collect { defaultCommunities ->
+
+
+                Log.d("OpenGroupDebug", "VM received default rooms: ${defaultCommunities.size}")
+
                 _state.update { it.copy(defaultCommunities = State.Success(defaultCommunities)) }
             }
         }

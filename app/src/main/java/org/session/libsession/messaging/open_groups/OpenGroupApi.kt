@@ -332,9 +332,14 @@ object OpenGroupApi {
         }
 
         suspend fun execute(): OnionResponse {
-            val serverPublicKey = serverPubKeyHex
-                ?: MessagingModuleConfiguration.shared.storage.getOpenGroupPublicKey(request.server)
-                ?: throw Error.NoPublicKey
+            val serverPublicKey = resolveServerPubKey(request.server, signRequest, serverPubKeyHex)
+                ?: run {
+                    Log.e("OpenGroupDebug", "NoPublicKey for ${request.server}, sign=$signRequest, path=${request.endpoint.value}")
+                    throw Error.NoPublicKey
+                }
+
+            Log.d("OpenGroupDebug", "SEND ${request.verb} ${request.server}/${request.endpoint.value} sign=$signRequest")
+
             val urlRequest = urlBuilder.toString()
 
             val headers = if (signRequest) {
@@ -822,6 +827,26 @@ object OpenGroupApi {
         return getResponseBody(request).map { response ->
             JsonUtil.fromJson(response, Map::class.java)
         }
+    }
+
+    private fun resolveServerPubKey(
+        server: String,
+        signRequest: Boolean,
+        serverPubKeyHex: String?
+    ): String? {
+        // 1) explicit override
+        if (serverPubKeyHex != null) return serverPubKeyHex
+
+        // 2) storage cache
+        MessagingModuleConfiguration.shared.storage
+            .getOpenGroupPublicKey(server)
+            ?.let { return it }
+
+        // 3) fallback for unsigned calls to the known default server
+        if (!signRequest && server == defaultServer) return defaultServerPublicKey
+
+        // 4) no key
+        return null
     }
 
     // endregion
