@@ -150,18 +150,18 @@ public final class ReactWithAnyEmojiDialogFragment extends BottomSheetDialogFrag
     callback.onReactWithAnyEmojiDialogDismissed();
   }
 
-    private void initializeViewModel() {
-        Bundle args = requireArguments();
-        final MessageId messageId = new MessageId(args.getLong(ARG_MESSAGE_ID), args.getBoolean(ARG_IS_MMS));
-        viewModel = new ViewModelProvider(
-                getViewModelStore(),
-                getDefaultViewModelProviderFactory(),
-                HiltViewModelExtensions.withCreationCallback(
-                        getDefaultViewModelCreationExtras(),
-                        (ReactWithAnyEmojiViewModel.Factory factory) -> factory.create(messageId)
-                )
-        ).get(ReactWithAnyEmojiViewModel.class);
-    }
+  private void initializeViewModel() {
+    Bundle args = requireArguments();
+    final MessageId messageId = new MessageId(args.getLong(ARG_MESSAGE_ID), args.getBoolean(ARG_IS_MMS));
+    viewModel = new ViewModelProvider(
+            getViewModelStore(),
+            getDefaultViewModelProviderFactory(),
+            HiltViewModelExtensions.withCreationCallback(
+                    getDefaultViewModelCreationExtras(),
+                    (ReactWithAnyEmojiViewModel.Factory factory) -> factory.create(messageId)
+            )
+    ).get(ReactWithAnyEmojiViewModel.class);
+  }
 
   @Override
   public void onEmojiSelected(String emoji) {
