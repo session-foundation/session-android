@@ -104,6 +104,7 @@ import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.PathDot
 import org.thoughtcrime.securesms.ui.ProBadgeText
+import org.thoughtcrime.securesms.ui.ProBadgeTextInline
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.components.AcccentOutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
@@ -252,7 +253,7 @@ fun Settings(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             // name
-            ProBadgeText(
+            ProBadgeTextInline(
                 modifier = Modifier.qaTag(R.string.AccessibilityId_displayName)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },

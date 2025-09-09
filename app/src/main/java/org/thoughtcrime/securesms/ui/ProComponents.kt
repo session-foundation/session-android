@@ -30,6 +30,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -53,7 +55,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -140,7 +145,8 @@ fun ProBadgeText(
     showBadge: Boolean = true,
     badgeColors: ProBadgeColors = proBadgeColorStandard(),
     badgeAtStart: Boolean = false,
-    onBadgeClick: (() -> Unit)? = null
+    onBadgeClick: (() -> Unit)? = null,
+    maxLines: Int = Int.MAX_VALUE
 ) {
     Row(
         modifier = modifier.qaTag(stringResource(R.string.qa_pro_badge_component)),
@@ -156,7 +162,8 @@ fun ProBadgeText(
                     }
                 }
                 ProBadge(
-                    modifier = proBadgeModifier.height(textStyle.lineHeight.value.dp * 0.8f)
+                    modifier = proBadgeModifier
+                        .height(textStyle.lineHeight.value.dp * 0.8f)
                         .qaTag(stringResource(R.string.qa_pro_badge_icon)),
                     colors = badgeColors
                 )
@@ -165,7 +172,8 @@ fun ProBadgeText(
 
         val textContent = @Composable {
             Text(
-                modifier = Modifier.weight(1f, fill = false)
+                modifier = Modifier
+                    .weight(1f, fill = false)
                     .qaTag(stringResource(R.string.qa_pro_badge_text)),
                 text = text,
                 style = textStyle,
@@ -184,6 +192,61 @@ fun ProBadgeText(
     }
 }
 
+@Composable
+fun ProBadgeTextInline(
+    text: String,
+    modifier: Modifier = Modifier,
+    textStyle: TextStyle = LocalType.current.h5,
+    showBadge: Boolean = true,
+    badgeColors: ProBadgeColors = proBadgeColorStandard(),
+    onBadgeClick: (() -> Unit)? = null,
+    maxLines: Int = Int.MAX_VALUE
+) {
+    val badgeId = "proBadge"
+
+    val annotatedText = buildAnnotatedString {
+        append(text)
+        if (showBadge) {
+            appendInlineContent(badgeId, "[pro]") // placeholder
+        }
+    }
+
+    val inlineContent = mapOf(
+        badgeId to InlineTextContent(
+            Placeholder(
+                width = textStyle.fontSize * 1.8,
+                height = textStyle.fontSize * 1.8,
+                placeholderVerticalAlign = PlaceholderVerticalAlign.Center
+            )
+        ) {
+            var badgeModifier: Modifier = Modifier
+            if (onBadgeClick != null) {
+                badgeModifier = badgeModifier.clickable { onBadgeClick() }
+            }
+
+            ProBadge(
+                modifier = badgeModifier
+                    .padding(start = 4.dp)
+                    .height(textStyle.fontSize.value.dp * 1.8f)
+                    .qaTag(stringResource(R.string.qa_pro_badge_icon)),
+                colors = badgeColors
+            )
+        }
+    )
+
+    Text(
+        modifier = modifier
+            .fillMaxWidth()
+            .qaTag(stringResource(R.string.qa_pro_badge_text)),
+        text = annotatedText,
+        textAlign = TextAlign.Center,
+        style = textStyle,
+        inlineContent = inlineContent,
+        maxLines = maxLines,
+        overflow = TextOverflow.Ellipsis
+    )
+}
+
 @Preview
 @Composable
 private fun PreviewProBadgeText(
@@ -191,7 +254,9 @@ private fun PreviewProBadgeText(
 ) {
     PreviewTheme(colors) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(LocalDimensions.current.smallSpacing),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(LocalDimensions.current.smallSpacing),
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing)
         ) {
             ProBadgeText(text = "Hello Pro", textStyle = LocalType.current.base)
@@ -270,7 +335,9 @@ fun SessionProCTA(
                             horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing),
                         ) {
                             AccentFillButtonRect(
-                                modifier = Modifier.weight(1f).shimmerOverlay(),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .shimmerOverlay(),
                                 text = stringResource(R.string.theContinue),
                                 onClick = onUpgrade
                             )
@@ -943,7 +1010,10 @@ fun SessionProSettingsHeader(
                             .background(
                                 Brush.radialGradient(
                                     // Gradient runs from our washed-out accent colour in the center to the background colour at the edges
-                                    colors = listOf(accentColourWithLowAlpha, LocalColors.current.background),
+                                    colors = listOf(
+                                        accentColourWithLowAlpha,
+                                        LocalColors.current.background
+                                    ),
                                 )
                             )
                     )
@@ -957,7 +1027,7 @@ fun SessionProSettingsHeader(
                     .onSizeChanged { newSizeDp ->
                         headerSize = newSizeDp
                     }
-                    .clearAndSetSemantics{
+                    .clearAndSetSemantics {
                         contentDescription = NonTranslatableStringConstants.APP_PRO
                     },
                 horizontalAlignment = Alignment.CenterHorizontally
