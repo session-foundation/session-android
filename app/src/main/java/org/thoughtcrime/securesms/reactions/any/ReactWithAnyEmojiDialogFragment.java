@@ -33,9 +33,11 @@ import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.keyboard.emoji.KeyboardPageSearchView;
 import org.thoughtcrime.securesms.util.LifecycleDisposable;
 
+import dagger.hilt.android.AndroidEntryPoint;
 import dagger.hilt.android.lifecycle.HiltViewModelExtensions;
 import network.loki.messenger.R;
 
+@AndroidEntryPoint
 public final class ReactWithAnyEmojiDialogFragment extends BottomSheetDialogFragment implements EmojiEventListener,
                                                                                                            EmojiPageViewGridAdapter.VariationSelectorListener
 {
@@ -148,18 +150,18 @@ public final class ReactWithAnyEmojiDialogFragment extends BottomSheetDialogFrag
     callback.onReactWithAnyEmojiDialogDismissed();
   }
 
-  private void initializeViewModel() {
-    Bundle                             args       = requireArguments();
-    final MessageId messageId = new MessageId(args.getLong(ARG_MESSAGE_ID), args.getBoolean(ARG_IS_MMS));
-    viewModel = new ViewModelProvider(
-            getViewModelStore(),
-            getDefaultViewModelProviderFactory(),
-            HiltViewModelExtensions.withCreationCallback(
-                    getDefaultViewModelCreationExtras(),
-                    (ReactWithAnyEmojiViewModel.Factory factory) -> factory.create(messageId)
-            )
-    ).get(ReactWithAnyEmojiViewModel.class);
-  }
+    private void initializeViewModel() {
+        Bundle args = requireArguments();
+        final MessageId messageId = new MessageId(args.getLong(ARG_MESSAGE_ID), args.getBoolean(ARG_IS_MMS));
+        viewModel = new ViewModelProvider(
+                getViewModelStore(),
+                getDefaultViewModelProviderFactory(),
+                HiltViewModelExtensions.withCreationCallback(
+                        getDefaultViewModelCreationExtras(),
+                        (ReactWithAnyEmojiViewModel.Factory factory) -> factory.create(messageId)
+                )
+        ).get(ReactWithAnyEmojiViewModel.class);
+    }
 
   @Override
   public void onEmojiSelected(String emoji) {
