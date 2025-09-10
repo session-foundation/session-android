@@ -1056,7 +1056,7 @@ open class Storage @Inject constructor(
             Optional.absent(),
             Optional.absent()
         )
-        mmsDatabase.insertSecureDecryptedMessageInbox(message, threadId, runThreadUpdate = false)
+        mmsDatabase.insertSecureDecryptedMessageInbox(message, threadId, runThreadUpdate = true)
     }
 
     override fun insertCallMessage(senderPublicKey: String, callMessageType: CallMessageType, sentTimestamp: Long) {
