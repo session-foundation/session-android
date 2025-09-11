@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.home.startconversation.home
 
-import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -26,7 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.stringResource
@@ -39,6 +37,7 @@ import network.loki.messenger.R
 import org.thoughtcrime.securesms.home.startconversation.StartConversationDestination
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ItemButton
+import org.thoughtcrime.securesms.ui.adaptive.rememberTwoPane
 import org.thoughtcrime.securesms.ui.components.AppBarCloseIcon
 import org.thoughtcrime.securesms.ui.components.BasicAppBar
 import org.thoughtcrime.securesms.ui.components.QrImage
@@ -58,8 +57,7 @@ internal fun StartConversationScreen(
     navigateTo: (StartConversationDestination) -> Unit,
     onClose: () -> Unit,
 ) {
-    val cfg = LocalConfiguration.current
-    val isTwoPane = shouldUseTwoPane(cfg)
+    val isTwoPane = rememberTwoPane()
 
     Column(modifier = Modifier.background(
         LocalColors.current.backgroundSecondary,
@@ -241,12 +239,4 @@ private fun PreviewStartConversationScreen(
             navigateTo = {}
         )
     }
-}
-
-// TODO: make util or helper for this
-private fun shouldUseTwoPane(cfg: Configuration): Boolean {
-    val w = cfg.screenWidthDp
-    val isLandscape = cfg.orientation == Configuration.ORIENTATION_LANDSCAPE
-    // Two-pane only when: landscape & ≥480dp, or portrait but truly wide (≥840dp)
-    return (isLandscape && w >= 480) || (w >= 840)
 }

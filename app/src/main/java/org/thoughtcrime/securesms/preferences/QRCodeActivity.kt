@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.preferences
 
 import android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP
-import android.content.res.Configuration
 import android.os.Bundle
 import android.view.View
 import androidx.compose.foundation.background
@@ -12,14 +11,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -35,6 +32,7 @@ import org.session.libsignal.utilities.PublicKeyValidation
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.permissions.Permissions
+import org.thoughtcrime.securesms.ui.adaptive.rememberTwoPane
 import org.thoughtcrime.securesms.ui.components.QRScannerScreen
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
@@ -122,8 +120,7 @@ private fun Tabs(accountId: String, errors: Flow<String>, onScan: (String) -> Un
 
 @Composable
 fun QrPage(string: String) {
-    val cfg = LocalConfiguration.current
-    val isTwoPane = shouldUseTwoPane(cfg)
+    val isTwoPane = rememberTwoPane()
 
     if(isTwoPane){
         BoxWithConstraints(
@@ -139,7 +136,6 @@ fun QrPage(string: String) {
             Column(
                 modifier = Modifier
                     .align(Alignment.Center), // vertical + horizontal centering
-//                .widthIn(max = 640.dp),  // this is optional. Maybe we can use for tablets.
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
             ) {
@@ -185,12 +181,4 @@ fun QrPage(string: String) {
             )
         }
     }
-}
-
-// TODO: make util or helper for this
-private fun shouldUseTwoPane(cfg: Configuration): Boolean {
-    val w = cfg.screenWidthDp
-    val isLandscape = cfg.orientation == Configuration.ORIENTATION_LANDSCAPE
-    // Two-pane only when: landscape & ≥480dp, or portrait but truly wide (≥840dp)
-    return (isLandscape && w >= 480) || (w >= 840)
 }
