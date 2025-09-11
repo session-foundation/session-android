@@ -21,6 +21,7 @@ import org.mockito.kotlin.mock
 import org.robolectric.RobolectricTestRunner
 import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.messaging.open_groups.OpenGroup
+import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.recipients.ProStatus
@@ -64,20 +65,22 @@ class MentionViewModelTest : BaseViewModelTest() {
         MemberInfo("李云海", "151234567890123456789012345678901234567890123456789012345678901240", GroupMemberRole.ZOOMBIE, isMe = false),
     )
 
-    private val openGroup = OpenGroup(
-        server = "http://url",
-        room = "room",
-        name = "Open Group",
-        publicKey = "",
-        imageId = null,
-        infoUpdates = 0,
-        canWrite = true,
-        description = ""
-    )
 
     private val communityRecipient = Recipient(
-        address = Address.Community(openGroup),
-        data = RecipientData.Community(openGroup = openGroup, priority = PRIORITY_VISIBLE, roles = threadMembers.associate { AccountId(it.pubKey) to it.role })
+        address = Address.Community(serverUrl = "http://link", room = "room"),
+        data = RecipientData.Community(roomInfo = OpenGroupApi.RoomInfo(
+            details = OpenGroupApi.RoomInfoDetails(
+                moderators = threadMembers.filter { it.role == GroupMemberRole.MODERATOR }.map { it.pubKey },
+                admins = threadMembers.filter { it.role == GroupMemberRole.ADMIN }.map { it.pubKey },
+                hiddenAdmins = threadMembers.filter { it.role == GroupMemberRole.HIDDEN_ADMIN }.map { it.pubKey },
+                hiddenModerators = threadMembers.filter { it.role == GroupMemberRole.HIDDEN_MODERATOR }.map { it.pubKey },
+            )
+        ),
+            serverUrl = "http://link",
+            room = "room",
+            serverPubKey = "a1b2",
+            priority = PRIORITY_VISIBLE
+        )
     )
 
     @Before
@@ -91,7 +94,6 @@ class MentionViewModelTest : BaseViewModelTest() {
             groupDatabase = mock {
             },
             storage = mock {
-                on { getOpenGroup(threadID) } doReturn openGroup
                 on { getUserBlindedAccountId(any()) } doReturn myId
                 on { getUserPublicKey() } doReturn myId.hexString
             },

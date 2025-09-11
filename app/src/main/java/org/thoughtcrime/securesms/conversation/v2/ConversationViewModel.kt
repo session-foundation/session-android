@@ -53,7 +53,6 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.open_groups.GroupMemberRole
-import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
@@ -211,12 +210,12 @@ class ConversationViewModel @AssistedInject constructor(
         (r.acceptsBlindedCommunityMessageRequests || r.isStandardRecipient) && !r.isLocalNumber && !r.approvedMe
     }
 
-    val openGroupFlow: StateFlow<OpenGroup?> = recipientFlow
-        .map { (it.data as? RecipientData.Community)?.openGroup }
+    val openGroupFlow: StateFlow<OpenGroupApi.RoomInfo?> = recipientFlow
+        .map { (it.data as? RecipientData.Community)?.roomInfo }
         .distinctUntilChanged()
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    val openGroup: OpenGroup?
+    val openGroup: OpenGroupApi.RoomInfo?
         get() = openGroupFlow.value
 
     val isAdmin: StateFlow<Boolean> = recipientFlow.mapStateFlow(viewModelScope) {
@@ -275,13 +274,17 @@ class ConversationViewModel @AssistedInject constructor(
     }
 
     val serverCapabilities: List<String>
-        get() = openGroup?.let { storage.getServerCapabilities(it.server) } ?: listOf()
+        get() = when (address) {
+            is Address.Community -> address.serverUrl
+            is Address.CommunityBlindedId -> address.serverUrl
+            else -> null
+        } ?.let { storage.getServerCapabilities(it) } ?: listOf()
 
     val blindedPublicKey: String?
-        get() = if (openGroup == null || edKeyPair == null || !serverCapabilities.contains(OpenGroupApi.Capability.BLIND.name.lowercase())) null else {
+        get() = if (recipient.data !is RecipientData.Community || edKeyPair == null || !serverCapabilities.contains(OpenGroupApi.Capability.BLIND.name.lowercase())) null else {
             BlindKeyAPI.blind15KeyPairOrNull(
                 ed25519SecretKey = edKeyPair!!.secretKey.data,
-                serverPubKey = Hex.fromStringCondensed(openGroup!!.publicKey),
+                serverPubKey = Hex.fromStringCondensed((recipient.data as RecipientData.Community).serverPubKey),
             )?.pubKey?.data
                 ?.let { AccountId(IdPrefix.BLINDED, it) }?.hexString
         }
@@ -444,7 +447,7 @@ class ConversationViewModel @AssistedInject constructor(
             )
 
             // the user does not have write access in the community
-            (recipient.data as? RecipientData.Community)?.openGroup?.canWrite == false -> InputBarState(
+            (recipient.data as? RecipientData.Community)?.roomInfo?.write == false -> InputBarState(
                 contentState = InputBarContentState.Disabled(
                     text = application.getString(R.string.permissionsWriteCommunity),
                 ),
@@ -503,14 +506,12 @@ class ConversationViewModel @AssistedInject constructor(
 
         if (conversation.isGroupOrCommunityRecipient && conversation.approved) {
             val title = if (conversation.address is Address.Community) {
-                val userCount = lokiAPIDb.getUserCount(
-                    room = conversation.address.room,
-                    server = conversation.address.serverUrl
-                ) ?: 0
+                val userCount = (conversation.data as? RecipientData.Community)?.roomInfo?.activeUsers
+                    ?: 0
                 application.resources.getQuantityString(R.plurals.membersActive, userCount, userCount)
             } else {
-                val userCount = if (conversation.isGroupV2Recipient) {
-                    storage.getMembers(conversation.address.toString()).size
+                val userCount = if (conversation.data is RecipientData.Group) {
+                    conversation.data.partial.members.size
                 } else { // legacy closed groups
                     groupDb.getGroupMemberAddresses(conversation.address.toGroupString(), true).size
                 }
@@ -585,7 +586,7 @@ class ConversationViewModel @AssistedInject constructor(
 
         // - For communities you must have write access to the community
         val allowedForCommunity = (recipient.isCommunityRecipient &&
-                (recipient.data as? RecipientData.Community)?.openGroup?.canWrite == true)
+                (recipient.data as? RecipientData.Community)?.roomInfo?.write == true)
 
         // - For blinded recipients you must be a contact of the recipient - without which you CAN
         // send them SMS messages - but they will not get through if the recipient does not have
@@ -1243,11 +1244,11 @@ class ConversationViewModel @AssistedInject constructor(
     private fun clearEmoji(emoji: String, messageId: MessageId){
         viewModelScope.launch(Dispatchers.Default) {
             reactionDb.deleteEmojiReactions(emoji, messageId)
-            openGroup?.let { openGroup ->
+            (address as? Address.Community)?.let { openGroup ->
                 lokiMessageDb.getServerID(messageId)?.let { serverId ->
                     OpenGroupApi.deleteAllReactions(
                         openGroup.room,
-                        openGroup.server,
+                        openGroup.serverUrl,
                         serverId,
                         emoji
                     )

@@ -704,7 +704,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Recovery Password গোপন করুন</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">এই ডিভাইসে আপনার পুনরুদ্ধার পাসওয়ার্ড স্থায়ীভাবে লুকিয়ে রাখুন।</string>
     <string name="recoveryPasswordRestoreDescription">আপনার একাউন্ট লোড করার জন্য আপনার recovery password লিখুন। যদি আপনি এটি সংরক্ষণ না করে থাকেন, আপনি এটি আপনার অ্যাপ সেটিংসে খুঁজে পেতে পারেন।</string>
-    <string name="recoveryPasswordView">পাসওয়ার্ড দেখুন</string>
     <string name="recoveryPasswordWarningSendDescription">এটি আপনার রিকভারি পাসওয়ার্ড। আপনি যদি এটি কাউকে পাঠান তবে তাদের কাছে আপনার অ্যাকাউন্টের সম্পূর্ণ অ্যাক্সেস থাকবে।</string>
     <string name="redo">রিডো</string>
     <string name="remove">অপসারণ</string>

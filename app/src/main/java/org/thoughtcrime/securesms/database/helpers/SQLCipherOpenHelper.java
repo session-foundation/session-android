@@ -15,6 +15,7 @@ import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.crypto.DatabaseSecret;
 import org.thoughtcrime.securesms.database.AttachmentDatabase;
 import org.thoughtcrime.securesms.database.BlindedIdMappingDatabase;
+import org.thoughtcrime.securesms.database.CommunityDatabase;
 import org.thoughtcrime.securesms.database.ConfigDatabase;
 import org.thoughtcrime.securesms.database.DraftDatabase;
 import org.thoughtcrime.securesms.database.EmojiSearchDatabase;
@@ -28,6 +29,7 @@ import org.thoughtcrime.securesms.database.LokiMessageDatabase;
 import org.thoughtcrime.securesms.database.LokiThreadDatabase;
 import org.thoughtcrime.securesms.database.LokiUserDatabase;
 import org.thoughtcrime.securesms.database.MmsDatabase;
+import org.thoughtcrime.securesms.database.MmsSmsDatabase;
 import org.thoughtcrime.securesms.database.PushDatabase;
 import org.thoughtcrime.securesms.database.ReactionDatabase;
 import org.thoughtcrime.securesms.database.RecipientDatabase;
@@ -38,6 +40,10 @@ import org.thoughtcrime.securesms.database.SessionJobDatabase;
 import org.thoughtcrime.securesms.database.SmsDatabase;
 import org.thoughtcrime.securesms.database.ThreadDatabase;
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities;
+
+import javax.inject.Provider;
+
+import kotlinx.serialization.json.Json;
 
 public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
@@ -98,7 +104,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int    MIN_DATABASE_VERSION     = lokiV7;
   public static final String  DATABASE_NAME            = "session.db";
 
-  public SQLCipherOpenHelper(@NonNull Context context, @NonNull DatabaseSecret databaseSecret) {
+  private final Provider<Json> jsonProvider;
+
+  public SQLCipherOpenHelper(@NonNull Context context, @NonNull DatabaseSecret databaseSecret, Provider<Json> jsonProvider) {
     super(
       context,
       DATABASE_NAME,
@@ -132,6 +140,8 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       // incomplete migrations
       false
     );
+
+    this.jsonProvider = jsonProvider;
 
     Log.d(TAG, "SQLCipherOpenHelper created with database secret: " + databaseSecret.asString());
   }
@@ -244,6 +254,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(ExpirationConfigurationDatabase.DROP_TABLE_COMMAND);
     db.execSQL(SessionContactDatabase.getDropTableCommand());
     executeStatements(db, ThreadDatabase.CREATE_ADDRESS_INDEX);
+
+    db.execSQL(CommunityDatabase.MIGRATE_CREATE_TABLE);
+    executeStatements(db, CommunityDatabase.Companion.getMIGRATE_DROP_OLD_TABLES());
   }
 
   @Override
@@ -553,6 +566,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         // the pre-migrated thread data.
         RecipientDatabase.migrateOldCommunityAddresses(db);
         ThreadDatabase.migrateLegacyCommunityAddresses(db);
+        MmsSmsDatabase.migrateLegacyCommunityAddresses(db);
 
         executeStatements(db, RecipientSettingsDatabase.Companion.getMIGRATION_CREATE_TABLE());
         db.execSQL(RecipientSettingsDatabase.MIGRATE_MOVE_DATA_FROM_OLD_TABLE);
@@ -562,6 +576,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         db.execSQL(ExpirationConfigurationDatabase.DROP_TABLE_COMMAND);
         db.execSQL(SessionContactDatabase.getDropTableCommand());
         executeStatements(db, ThreadDatabase.CREATE_ADDRESS_INDEX);
+
+        db.execSQL(CommunityDatabase.MIGRATE_CREATE_TABLE);
+        CommunityDatabase.Companion.migrateFromOldTables(jsonProvider.get(), db);
+        executeStatements(db, CommunityDatabase.Companion.getMIGRATE_DROP_OLD_TABLES());
       }
 
       db.setTransactionSuccessful();

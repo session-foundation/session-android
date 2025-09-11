@@ -11,11 +11,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import nl.komponents.kovenant.Promise
 import org.session.libsession.LocalisedTimeUtil.toShortSinglePartString
 import org.session.libsession.snode.OnionRequestAPI
@@ -37,6 +40,7 @@ import org.thoughtcrime.securesms.util.NumberUtil.formatAbbreviated
 import org.thoughtcrime.securesms.util.NumberUtil.formatWithDecimalPlaces
 import javax.inject.Inject
 import kotlin.math.min
+import kotlin.sequences.filter
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 
@@ -255,7 +259,11 @@ class TokenPageViewModel @Inject constructor(
             var numGroupV2Convos = 0
 
             // Grab the database and reader details we need to count the conversations / groups
-            val convoList = conversationRepository.observeConversationList().first()
+            val convoList = conversationRepository.observeConversationList()
+                .map{ convo ->
+                    convo.filter { it.recipient.approved }
+                }
+                .first()
             val result = mutableSetOf<Recipient>()
 
             // Look through the database to build up our conversation & group counts (still on Dispatchers.IO not the main thread)

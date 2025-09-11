@@ -866,7 +866,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">隱藏恢復密碼</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">在此設備上永久隱藏您的恢復密碼。</string>
     <string name="recoveryPasswordRestoreDescription">輸入您的恢復密碼以載入您的帳戶。如果您尚未保存它，可以在應用設置中找到。</string>
-    <string name="recoveryPasswordView">檢視密碼</string>
     <string name="recoveryPasswordWarningSendDescription">這是你的恢復密碼。獲得這段復密碼的任何人都可以全權存取你的帳戶。</string>
     <string name="recreateGroup">重新建立群組</string>
     <string name="redo">重做</string>

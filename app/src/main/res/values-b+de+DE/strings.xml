@@ -890,7 +890,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Wiederherstellungspasswort ausblenden</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Blende dein Wiederherstellungspasswort auf diesem Gerät dauerhaft aus.</string>
     <string name="recoveryPasswordRestoreDescription">Gib dein Wiederherstellungspasswort ein, um deinen Account zu laden. Wenn du es nicht gespeichert hast, findest du es in deinen App-Einstellungen.</string>
-    <string name="recoveryPasswordView">Passwort anzeigen</string>
     <string name="recoveryPasswordWarningSendDescription">Dies ist dein Wiederherstellungspasswort. Wenn du es jemandem sendest, wird diese Person vollen Zugriff auf deinen Account haben.</string>
     <string name="recreateGroup">Gruppe neu erstellen</string>
     <string name="redo">Wiederholen</string>

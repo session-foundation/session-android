@@ -725,7 +725,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Piilota Recovery Password</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Piilota palautuslause pysyvästi tällä laitteella.</string>
     <string name="recoveryPasswordRestoreDescription">Syötä palautussalasanasi ladataksesi tilisi. Jos et ole tallentanut sitä, löydät sen sovelluksen asetuksista.</string>
-    <string name="recoveryPasswordView">Näytä salasana</string>
     <string name="recoveryPasswordWarningSendDescription">Tämä on palautussalasanasi. Jos lähetät sen jollekulle, he saavat täyden pääsyn tilillesi.</string>
     <string name="redo">Tee uudelleen</string>
     <string name="remove">Poista</string>

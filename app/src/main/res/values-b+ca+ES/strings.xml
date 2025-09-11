@@ -886,7 +886,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Amaga la contrasenya de recuperació</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Oculta permanentment la teva contrasenya de recuperació en aquest dispositiu.</string>
     <string name="recoveryPasswordRestoreDescription">Introdueix la teva contrasenya de recuperació per carregar el teu compte. Si no l\'has guardat, la pots trobar a la configuració de l\'aplicació.</string>
-    <string name="recoveryPasswordView">Mostra la contrasenya</string>
     <string name="recoveryPasswordWarningSendDescription">Aquesta és la vostra contrasenya de recuperació. Si l\'envieu a algú, tindrà accés complet al vostre compte.</string>
     <string name="recreateGroup">Recrea grup</string>
     <string name="redo">Refés</string>

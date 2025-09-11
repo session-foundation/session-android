@@ -36,8 +36,8 @@ import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsignal.protos.UtilProtos
-import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
@@ -61,6 +61,7 @@ class BatchMessageReceiveJob @AssistedInject constructor(
     private val visibleMessageHandlerContextFactory: VisibleMessageHandlerContext.Factory,
     private val messageNotifier: MessageNotifier,
     private val threadDatabase: ThreadDatabase,
+    private val recipientRepository: RecipientRepository,
 ) : Job {
 
     override var delegate: JobDelegate? = null
@@ -102,7 +103,8 @@ class BatchMessageReceiveJob @AssistedInject constructor(
             visibleMessageHandlerContextFactory = visibleMessageHandlerContextFactory,
             messageNotifier = messageNotifier,
             fromCommunity = fromCommunity,
-            threadDatabase = threadDatabase
+            threadDatabase = threadDatabase,
+            recipientRepository = recipientRepository,
         )
     }
 
@@ -146,7 +148,7 @@ class BatchMessageReceiveJob @AssistedInject constructor(
     }
 
     suspend fun executeAsync(dispatcherName: String) {
-        val threadMap = mutableMapOf<Long, MutableList<ParsedMessage>>()
+        val threadMap = mutableMapOf<Long, Pair<Address.Conversable, MutableList<ParsedMessage>>>()
         val localUserPublicKey = storage.getUserPublicKey()
         val serverPublicKey = fromCommunity?.let { storage.getOpenGroupPublicKey(it.serverUrl) }
         val currentClosedGroups = storage.getAllActiveClosedGroupPublicKeys()
@@ -171,14 +173,14 @@ class BatchMessageReceiveJob @AssistedInject constructor(
                     fromCommunity != null -> fromCommunity
                     message.groupPublicKey != null -> message.groupPublicKey!!.toAddress()
                     else -> message.senderOrSync.toAddress()
-                }
+                } as Address.Conversable
 
                 val threadID = if (shouldCreateThread(parsedParams)) {
                     threadDatabase.getOrCreateThreadIdFor(threadAddress)
                 } else {
                     threadDatabase.getThreadIdIfExistsFor(threadAddress)
                 }
-                threadMap.getOrPut(threadID) { mutableListOf() } += parsedParams
+                threadMap.getOrPut(threadID) { threadAddress to mutableListOf() }.second += parsedParams
             } catch (e: Exception) {
                 when (e) {
                     is MessageReceiver.Error.DuplicateMessage, MessageReceiver.Error.SelfSend -> {
@@ -202,13 +204,14 @@ class BatchMessageReceiveJob @AssistedInject constructor(
         }
 
         // iterate over threads and persist them (persistence is the longest constant in the batch process operation)
-        suspend fun processMessages(threadId: Long, messages: List<ParsedMessage>) {
+        suspend fun processMessages(threadId: Long, threadAddress: Address.Conversable, messages: List<ParsedMessage>) {
             // The LinkedHashMap should preserve insertion order
             val messageIds = linkedMapOf<MessageId, Pair<Boolean, Boolean>>()
             val myLastSeen = storage.getLastSeen(threadId)
             var updatedLastSeen = myLastSeen.takeUnless { it == -1L } ?: 0
             val handlerContext = visibleMessageHandlerContextFactory.create(
                 threadId = threadId,
+                threadAddress,
             )
 
             val communityReactions = mutableMapOf<MessageId, MutableList<ReactionRecord>>()
@@ -262,8 +265,7 @@ class BatchMessageReceiveJob @AssistedInject constructor(
                             message = message,
                             proto = proto,
                             threadId = threadId,
-                            groupv2Id = parameters.closedGroup?.publicKey?.let(::AccountId),
-                            fromCommunity = fromCommunity,
+                            threadAddress = threadAddress
                         )
                     }
                 } catch (e: Exception) {
@@ -297,18 +299,23 @@ class BatchMessageReceiveJob @AssistedInject constructor(
 
         coroutineScope {
             val withoutDefault = threadMap.entries.filter { it.key != NO_THREAD_MAPPING }
-            val deferredThreadMap = withoutDefault.map { (threadId, messages) ->
+            val deferredThreadMap = withoutDefault.map { (threadId, data) ->
+                val (threadAddress, messages) = data
                 async(Dispatchers.Default) {
-                    processMessages(threadId, messages)
+                    processMessages(
+                        threadId = threadId,
+                        threadAddress = threadAddress,
+                        messages = messages
+                    )
                 }
             }
             // await all thread processing
             deferredThreadMap.awaitAll()
         }
 
-        val noThreadMessages = threadMap[NO_THREAD_MAPPING] ?: listOf()
-        if (noThreadMessages.isNotEmpty()) {
-            processMessages(NO_THREAD_MAPPING, noThreadMessages)
+        val noThreadMessages = threadMap[NO_THREAD_MAPPING]
+        if (noThreadMessages != null && noThreadMessages.second.isNotEmpty()) {
+            processMessages(NO_THREAD_MAPPING, noThreadMessages.first, noThreadMessages.second)
         }
 
         if (failures.isEmpty()) {

@@ -619,7 +619,6 @@
     <string name="recoveryPasswordHidePermanentlyDescription1">Sen o teu contrasinal de recuperación, non poderás cargar a túa conta en dispositivos novos. \n\nRecoméndase encarecidamente gardar o contrasinal de recuperación nun lugar seguro antes de continuar.</string>
     <string name="recoveryPasswordHideRecoveryPassword">Ocultar Recovery Password</string>
     <string name="recoveryPasswordRestoreDescription">Introduza o seu contrasinal de recuperación para cargar a súa conta. Se non o gardou, pode atopalo na configuración da súa aplicación.</string>
-    <string name="recoveryPasswordView">Ver contrasinal</string>
     <string name="recoveryPasswordWarningSendDescription">Este é o teu contrasinal de recuperación. Se llo envías a alguén, terá acceso completo á túa conta.</string>
     <string name="redo">Refacer</string>
     <string name="remove">Eliminar</string>

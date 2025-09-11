@@ -869,7 +869,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Kurtarma Şifresini Gizle</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Kurtarma parolanızı bu cihazda kalıcı olarak gizleyin.</string>
     <string name="recoveryPasswordRestoreDescription">Hesabınızı yüklemek için kurtarma parolanızı girin. Kaydetmediyseniz, uygulama ayarlarınızda bulabilirsiniz.</string>
-    <string name="recoveryPasswordView">Şifreyi Görüntüle</string>
     <string name="recoveryPasswordWarningSendDescription">Bu sizin kurtarma ifadenizdir. Birine gönderirseniz, hesabınızda tam erişime sahip olurlar.</string>
     <string name="recreateGroup">Grubu Yeniden Oluştur</string>
     <string name="redo">Yinele</string>

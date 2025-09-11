@@ -890,7 +890,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Cacher le mot de passe de récupération</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Masquer définitivement votre mot de passe de récupération sur cet appareil.</string>
     <string name="recoveryPasswordRestoreDescription">Entrez votre mot de passe de récupération pour charger votre compte. Si vous ne l\'avez pas enregistré, vous pouvez le trouver dans les paramètres de l\'application.</string>
-    <string name="recoveryPasswordView">Afficher le mot de passe</string>
     <string name="recoveryPasswordWarningSendDescription">Voici votre mot de passe de récupération. Si vous l\'envoyez à quelqu\'un, il aura un accès complet à votre compte.</string>
     <string name="recreateGroup">Recréer le groupe</string>
     <string name="redo">Rétablir</string>

@@ -36,6 +36,7 @@ class AppModule {
     fun provideJson(modules: Set<@JvmSuppressWildcards SerializersModule>): Json {
         return Json {
             ignoreUnknownKeys = true
+            isLenient = true
             serializersModule += SerializersModule {
                 modules.forEach { include(it) }
             }

@@ -858,7 +858,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">إخفاء كلمة مرور الاسترداد</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">قم بإخفاء كلمة مرور الاسترداد بشكل دائم على هذا الجهاز.</string>
     <string name="recoveryPasswordRestoreDescription">أدخل كلمة مرور الاسترجاع لتحميل حسابك. إذا لم تقم بحفظها، يمكنك العثور عليها في إعدادات التطبيق.</string>
-    <string name="recoveryPasswordView">عرض كلمة المرور</string>
     <string name="recoveryPasswordWarningSendDescription">هذه هي عبارة الاسترداد الخاصة بك. إذا قمت بإرساله إلى شخص ما ، فسيكون لديه حق الوصول الكامل إلى حسابك.</string>
     <string name="recreateGroup">إعادة إنشاء المجموعة</string>
     <string name="redo">إعادة</string>

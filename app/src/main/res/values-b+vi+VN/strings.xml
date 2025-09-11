@@ -777,7 +777,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Ẩn Recovery Password</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Ẩn mật khẩu khôi phục trên thiết bị này vĩnh viễn.</string>
     <string name="recoveryPasswordRestoreDescription">Nhập mật khẩu khôi phục của bạn để nạp tài khoản. Nếu chưa lưu, bạn có thể tìm thấy nó trong cài đặt của ứng dụng.</string>
-    <string name="recoveryPasswordView">Xem Mật khẩu</string>
     <string name="recoveryPasswordWarningSendDescription">Đây là Mật khẩu Khôi phục của bạn. Nếu bạn gửi nó cho ai đó, họ sẽ có toàn quyền truy cập vào tài khoản của bạn.</string>
     <string name="recreateGroup">Tạo lại nhóm</string>
     <string name="redo">Hoàn tác</string>

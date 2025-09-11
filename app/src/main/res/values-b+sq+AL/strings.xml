@@ -703,7 +703,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Fshi Recovery Password</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Fshi përgjithmonë fjalëkalimin e rikuperimit në këtë pajisje.</string>
     <string name="recoveryPasswordRestoreDescription">Jepni fjalëkalimin e rikthimit tuaj për të ngarkuar llogarinë tuaj. Nëse nuk e keni ruajtur, mund ta gjeni në cilësimet e aplikacionit tuaj.</string>
-    <string name="recoveryPasswordView">Shihni Fjalëkalimin</string>
     <string name="recoveryPasswordWarningSendDescription">Ky është fjalëkalimi juaj i rimëkëmbjes. Nëse ia dërgoni dikujt, ata do të kenë qasje të plotë në llogarinë tuaj.</string>
     <string name="redo">Ribëje</string>
     <string name="remove">Hiqe</string>

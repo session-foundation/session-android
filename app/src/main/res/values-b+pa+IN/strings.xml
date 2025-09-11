@@ -704,7 +704,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">ਹਤਿਆਰ ਲੁਕਾਓ</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">ਇਸ ਜੰਤਰ \'ਤੇ ਆਪਣਾ ਸੰਨਜੀਵਨ ਪਾਸਵਰਡ ਸਥਾਈ ਤੌਰ \'ਤੇ ਛੁਪਾਓ।</string>
     <string name="recoveryPasswordRestoreDescription">ਆਪਣਾ ਖਾਤਾ ਲੋਡ ਕਰਨ ਲਈ ਆਪਣਾ ਰਿਕਵਰੀ ਪਾਸਵਰਡ ਦਰਜ ਕਰੋ। ਜੇ ਤੁਸੀਂ ਇਸਨੂੰ ਸੰਭਾਲ ਕੇ ਨਹੀਂ ਰੱਖਿਆ, ਤਾਂ ਤੁਸੀਂ ਇਸਨੂੰ ਆਪਣੇ ਐਪ ਦੀਆਂ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਲੱਭ ਸਕਦੇ ਹੋ।</string>
-    <string name="recoveryPasswordView">ਪਾਸਵਰਡ ਵੇਖੋ</string>
     <string name="recoveryPasswordWarningSendDescription">ਇਹ ਤੁਹਾਡਾ ਰਿਕਵਰੀ ਪਾਸਵਰਡ ਹੈ। ਜੇ ਤੁਸੀਂ ਇਸਨੂੰ ਕਿਸੇ ਨੂੰ ਭੇਜਦੇ ਹੋ ਤਾਂ ਉਹ ਤੁਹਾਡੇ ਖਾਤੇ ਵਿੱਚ ਪੂਰੀ ਪਹੁੰਚ ਪ੍ਰਾਪਤ ਕਰ ਸਕਣਗੇ।</string>
     <string name="redo">ਰੀ-ਕਰੋ</string>
     <string name="remove">ਹਟਾਓ</string>

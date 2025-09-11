@@ -811,7 +811,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Kaŝi la riparan pasvorton</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Porĉiame kaŝi vian riparan pasvorton en ĉi tiu aparato.</string>
     <string name="recoveryPasswordRestoreDescription">Enigu vian riparan pasvorton por ŝargi vian konton. Se vi ne konservis ĝin, vi povas trovi ĝin en viaj aplikaĵa agordoj.</string>
-    <string name="recoveryPasswordView">Vidi Pasvorton</string>
     <string name="recoveryPasswordWarningSendDescription">Ĉi tio estas via ripara pasvorto. Se vi sendas ĝin al iu, tiam tiu havos tutan aliron al via konto.</string>
     <string name="recreateGroup">Rekrei grupon</string>
     <string name="redo">Refari</string>

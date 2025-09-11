@@ -721,7 +721,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Απόκρυψη Κωδικού Ανάκτησης</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Μόνιμη απόκρυψη του κωδικού ανάκτησης σε αυτή τη συσκευή.</string>
     <string name="recoveryPasswordRestoreDescription">Εισαγάγετε τον κωδικό σας ανάκτησης για να φορτώσετε τον λογαριασμό σας. Αν δεν τον έχετε αποθηκεύσει, μπορείτε να τον βρείτε στις ρυθμίσεις της εφαρμογής.</string>
-    <string name="recoveryPasswordView">Προβολή Κωδικού</string>
     <string name="recoveryPasswordWarningSendDescription">Αυτός είναι ο κωδικός ανάκτησής σας. Αν τον στείλετε σε κάποιον, θα έχει πλήρη πρόσβαση στον λογαριασμό σας.</string>
     <string name="redo">Επανάληψη</string>
     <string name="remove">Αφαίρεση</string>

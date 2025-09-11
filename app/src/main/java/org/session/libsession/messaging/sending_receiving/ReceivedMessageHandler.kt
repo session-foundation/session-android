@@ -13,6 +13,7 @@ import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.ED25519
+import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.MessageDataProvider
@@ -34,7 +35,6 @@ import org.session.libsession.messaging.messages.control.TypingIndicator
 import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.Attachment
 import org.session.libsession.messaging.messages.visible.VisibleMessage
-import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.attachments.PointerAttachment
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
@@ -55,6 +55,7 @@ import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.getType
 import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.upsertContact
@@ -100,15 +101,15 @@ class ReceivedMessageHandler @Inject constructor(
     @param:ManagerScope private val scope: CoroutineScope,
     private val configFactory: ConfigFactoryProtocol,
     private val conversationRepository: ConversationRepository,
-    private val messageRequestResponseHandler: Provider<MessageRequestResponseHandler>
+    private val messageRequestResponseHandler: Provider<MessageRequestResponseHandler>,
+    private val recipientRepository: RecipientRepository,
 ) {
 
     suspend fun handle(
         message: Message,
         proto: SignalServiceProtos.Content,
         threadId: Long,
-        groupv2Id: AccountId?,
-        fromCommunity: Address.Community?,
+        threadAddress: Address.Conversable,
     ) {
         // Do nothing if the message was outdated
         if (messageIsOutdated(message, threadId)) { return }
@@ -116,14 +117,14 @@ class ReceivedMessageHandler @Inject constructor(
         when (message) {
             is ReadReceipt -> handleReadReceipt(message)
             is TypingIndicator -> handleTypingIndicator(message)
-            is GroupUpdated -> handleGroupUpdated(message, groupv2Id)
+            is GroupUpdated -> handleGroupUpdated(message, (threadAddress as? Address.Group)?.accountId)
             is ExpirationTimerUpdate -> {
                 // For groupsv2, there are dedicated mechanisms for handling expiration timers, and
                 // we want to avoid the 1-to-1 message format which is unauthenticated in a group settings.
-                if (groupv2Id != null) {
+                if (threadAddress is Address.Group) {
                     Log.d("MessageReceiver", "Ignoring expiration timer update for closed group")
                 } // also ignore it for communities since they do not support disappearing messages
-                else if (fromCommunity != null) {
+                else if (threadAddress is Address.Community) {
                     Log.d("MessageReceiver", "Ignoring expiration timer update for communities")
                 } else {
                     handleExpirationTimerUpdate(message)
@@ -135,7 +136,7 @@ class ReceivedMessageHandler @Inject constructor(
             is VisibleMessage -> handleVisibleMessage(
                 message = message,
                 proto = proto,
-                context = visibleMessageContextFactory.create(threadId),
+                context = visibleMessageContextFactory.create(threadId, threadAddress),
                 runThreadUpdate = true,
                 runProfileUpdate = true
             )
@@ -300,7 +301,7 @@ class ReceivedMessageHandler @Inject constructor(
 
 
         // Handle group invite response if new closed group
-        val threadRecipientAddress = context.threadRecipient?.address
+        val threadRecipientAddress = context.threadAddress
         if (threadRecipientAddress is Address.Group && senderAddress is Address.Standard) {
             scope.launch {
                 try {
@@ -359,7 +360,7 @@ class ReceivedMessageHandler @Inject constructor(
         cancelTypingIndicatorsIfNeeded(message.sender!!)
 
         // Parse reaction if needed
-        val threadIsGroup = context.threadRecipient?.isGroupOrCommunityRecipient == true
+        val threadIsGroup = context.threadRecipient.isGroupOrCommunityRecipient
         message.reaction?.let { reaction ->
             if (reaction.react == true) {
                 reaction.serverId = message.openGroupServerMessageID?.toString() ?: message.serverHash.orEmpty()
@@ -402,12 +403,12 @@ class ReceivedMessageHandler @Inject constructor(
             }
 
             val messageID = context.storage.persist(
-                message,
-                quoteModel,
-                linkPreviews,
-                fromGroup = context.threadRecipient?.address as? Address.GroupLike,
-                attachments,
-                runThreadUpdate
+                threadRecipient = context.threadRecipient,
+                message = message,
+                quotes = quoteModel,
+                linkPreview = linkPreviews,
+                attachments = attachments,
+                runThreadUpdate = runThreadUpdate
             ) ?: return null
 
             // If we have previously "hidden" the sender, we should flip the flag back to visible
@@ -450,14 +451,16 @@ class ReceivedMessageHandler @Inject constructor(
                     profileUpdateHandler.get().handleProfileUpdate(
                         senderId = senderAddress.accountId,
                         updates = updates,
-                        fromCommunity = context.openGroup?.toCommunityInfo(),
+                        fromCommunity = (context.threadRecipient.data as? RecipientData.Community)?.let { data ->
+                            BaseCommunityInfo(baseUrl = data.serverUrl, room = data.room, pubKeyHex = data.serverPubKey)
+                        },
                     )
                 }
             }
 
             // Parse & persist attachments
             // Start attachment downloads if needed
-            if (messageID.mms && (context.threadRecipient?.autoDownloadAttachments == true || senderAddress.address == userPublicKey)) {
+            if (messageID.mms && (context.threadRecipient.autoDownloadAttachments == true || senderAddress.address == userPublicKey)) {
                 context.storage.getAttachmentsForMessage(messageID.id).iterator().forEach { attachment ->
                     attachment.attachmentId?.let { id ->
                         JobQueue.shared.add(attachmentDownloadJobFactory.create(
@@ -709,6 +712,7 @@ private fun SignalServiceProtos.Content.ExpirationType.expiryMode(durationSecond
 
 class VisibleMessageHandlerContext @AssistedInject constructor(
     @param:ApplicationContext val context: Context,
+    @Assisted val threadAddress: Address.Conversable,
     @Assisted val threadId: Long,
     val storage: StorageProtocol,
     val groupManagerV2: GroupManagerV2,
@@ -716,15 +720,11 @@ class VisibleMessageHandlerContext @AssistedInject constructor(
     val messageDataProvider: MessageDataProvider,
     val recipientRepository: RecipientRepository,
 ) {
-    val openGroup: OpenGroup? by lazy {
-        storage.getOpenGroup(threadId)
-    }
-
     val userBlindedKey: String? by lazy {
-        openGroup?.let {
+        (threadRecipient.data as? RecipientData.Community)?.let {
             val blindedKey = BlindKeyAPI.blind15KeyPairOrNull(
                 ed25519SecretKey = storage.getUserED25519KeyPair()!!.secretKey.data,
-                serverPubKey = Hex.fromStringCondensed(it.publicKey),
+                serverPubKey = Hex.fromStringCondensed(it.serverPubKey),
             ) ?: return@let null
 
             AccountId(
@@ -733,18 +733,18 @@ class VisibleMessageHandlerContext @AssistedInject constructor(
         }
     }
 
-    val userPublicKey: String? by lazy {
-        storage.getUserPublicKey()
+    val threadRecipient: Recipient by lazy {
+        recipientRepository.getRecipientSync(threadAddress)
     }
 
-    val threadRecipient: Recipient? by lazy {
-        storage.getRecipientForThread(threadId)
+    val userPublicKey: String? by lazy {
+        storage.getUserPublicKey()
     }
 
 
     @AssistedFactory
     interface Factory {
-        fun create(threadId: Long): VisibleMessageHandlerContext
+        fun create(threadId: Long, threadAddress: Address.Conversable): VisibleMessageHandlerContext
     }
 }
 
@@ -771,13 +771,14 @@ fun constructReactionRecords(
     out: MutableMap<MessageId, MutableList<ReactionRecord>>
 ) {
     if (reactions.isNullOrEmpty()) return
+    val communityAddress = context.threadAddress as? Address.Community ?: return
     val messageId = context.messageDataProvider.getMessageID(openGroupMessageServerID, context.threadId) ?: return
 
     val outList = out.getOrPut(messageId) { arrayListOf() }
 
     for ((emoji, reaction) in reactions) {
         val pendingUserReaction = OpenGroupApi.pendingReactions
-            .filter { it.server == context.openGroup?.server && it.room == context.openGroup?.room && it.messageId == openGroupMessageServerID && it.add }
+            .filter { it.server == communityAddress.serverUrl && it.room == communityAddress.room && it.messageId == openGroupMessageServerID && it.add }
             .sortedByDescending { it.seqNo }
             .any { it.emoji == emoji }
         val shouldAddUserReaction = pendingUserReaction || reaction.you || reaction.reactors.contains(context.userPublicKey)

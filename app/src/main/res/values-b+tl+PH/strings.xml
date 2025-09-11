@@ -705,7 +705,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Itago ang Recovery Password</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Permanente ang pag-tago ng iyong recovery password sa device na ito.</string>
     <string name="recoveryPasswordRestoreDescription">Ilagay ang recovery password mo para i-load ang account mo. Kung hindi mo ito nai-save, mahahanap mo ito sa mga settings ng app mo.</string>
-    <string name="recoveryPasswordView">Tingnan ang Password</string>
     <string name="recoveryPasswordWarningSendDescription">Ito ang recovery password mo. Kung ise-send mo ito sa ibang tao, magkakaroon sila ng buong access sa iyong account.</string>
     <string name="redo">Gawin muli</string>
     <string name="remove">Tanggalin</string>

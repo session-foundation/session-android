@@ -927,7 +927,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Скрыть Пароль Восстановления</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Постоянно скрывать ваш пароль восстановления на этом устройстве.</string>
     <string name="recoveryPasswordRestoreDescription">Введите ваш пароль восстановления для загрузки вашей учетной записи. Если вы не сохранили его, вы можете найти его в настройках приложения.</string>
-    <string name="recoveryPasswordView">Посмотреть пароль</string>
     <string name="recoveryPasswordWarningSendDescription">Это ваш Пароль Восстановления. Если вы отправите его кому-либо, у них будет полный доступ к вашей учетной записи.</string>
     <string name="recreateGroup">Пересоздать группу</string>
     <string name="redo">Вернуть</string>

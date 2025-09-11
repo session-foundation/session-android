@@ -15,6 +15,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.utilities.await
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.DecodedAudio
 import org.session.libsession.utilities.DownloadUtilities
 import org.session.libsession.utilities.InputStreamMediaDataSource
@@ -66,11 +67,12 @@ class AttachmentDownloadJob @AssistedInject constructor(
          * of whether the download is allowed, it does not check if the download has already taken
          * place.
          */
-        fun eligibleForDownload(threadID: Long,
-                                storage: StorageProtocol,
-                                recipientRepository: RecipientRepository,
-                                messageDataProvider: MessageDataProvider,
-                                mmsId: Long): Boolean {
+        fun eligibleForDownload(
+            threadID: Long,
+            storage: StorageProtocol,
+            messageDataProvider: MessageDataProvider,
+            mmsId: Long
+        ): Boolean {
             val threadRecipient = storage.getRecipientForThread(threadID) ?: return false
 
             // if we are the sender we are always eligible
@@ -138,13 +140,14 @@ class AttachmentDownloadJob @AssistedInject constructor(
         if (!eligibleForDownload(
                 threadID = threadID,
                 storage = storage,
-                recipientRepository = recipientRepository,
                 messageDataProvider = messageDataProvider,
                 mmsId = mmsMessageId
             )) {
             handleFailure(Error.NoSender, null)
             return
         }
+
+        val threadRecipient = storage.getRecipientForThread(threadID)
 
         var tempFile: File? = null
         var attachment: DatabaseAttachment? = null
@@ -157,15 +160,14 @@ class AttachmentDownloadJob @AssistedInject constructor(
                 return
             }
             messageDataProvider.setAttachmentState(AttachmentState.DOWNLOADING, attachment.attachmentId, this.mmsMessageId)
-            val openGroup = storage.getOpenGroup(threadID)
-            val downloadedData = if (openGroup == null) {
+            val downloadedData = if (threadRecipient?.address !is Address.Community) {
                 Log.d("AttachmentDownloadJob", "downloading normal attachment")
                 DownloadUtilities.downloadFromFileServer(attachment.url).body
             } else {
                 Log.d("AttachmentDownloadJob", "downloading open group attachment")
                 val url = attachment.url.toHttpUrlOrNull()!!
                 val fileID = url.pathSegments.last()
-                OpenGroupApi.download(fileID, openGroup.room, openGroup.server).await()
+                OpenGroupApi.download(fileID, room = threadRecipient.address.room, server = threadRecipient.address.serverUrl).await()
             }
 
             tempFile = createTempFile().also { file ->

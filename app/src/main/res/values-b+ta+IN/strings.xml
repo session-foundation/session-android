@@ -709,7 +709,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">பதிவெடுப்பு கடவுச்சொல்லை மறை</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">இந்த சாதனத்தில் மறைந்துகாணும் கடவுச்சொல்லை நிரந்தரமாக மறைக்கவும்.</string>
     <string name="recoveryPasswordRestoreDescription">உங்கள் கணக்கை ஏற்ற, உங்கள் recovery password ஐ உள்ளிடவும். நீங்கள் அதை சேமிக்கவில்லை என்றால், நீங்கள் அதை உங்கள் பயன்பாட்டு அமைப்புகளில் காணலாம்.</string>
-    <string name="recoveryPasswordView">கடவுச்சொல்லைக் காண்பிக்கவும்</string>
     <string name="recoveryPasswordWarningSendDescription">இது உங்கள் மீட்பு கடவுச்சொல். நீங்கள் இதை யாருக்கும் அனுப்பினால், அவர்களுக்கு உங்கள் கணக்கிற்கு முழு அணுகல் கிடைக்கும்.</string>
     <string name="recreateGroup">குழுவை மீண்டும் உருவாக்கவும்</string>
     <string name="redo">மீண்டும் செய்</string>

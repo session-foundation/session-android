@@ -741,7 +741,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Recovery Password-ის დამალვა</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">მუდმივად დამალეთ აღდგენის პაროლი ამ მოწყობილობაზე.</string>
     <string name="recoveryPasswordRestoreDescription">შეიყვანეთ თქვენი ქსელის პაროლი თქვენი ანგარიშის ჩამოსატვირთად. თუ ის არ აქვს შენახული, შეგიძლიათ იპოვოთ მისი აპლიკაციის პარამეტრებში.</string>
-    <string name="recoveryPasswordView">პაროლის პარამეტრების ჩვენება</string>
     <string name="recoveryPasswordWarningSendDescription">ეს არის თქვენი აღდგენის პაროლი. თუ ვინმეს ამას გაგზავნით, მისი ექნება სრული წვდომა თქვენს ანგარიშზე.</string>
     <string name="redo">აღდგენა</string>
     <string name="remove">წაშლა</string>

@@ -705,7 +705,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Ficha Nywila ya Urejeshaji</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Futa nyila ya kurejesha kwa kudumu kwenye kifaa hiki.</string>
     <string name="recoveryPasswordRestoreDescription">Weka nenosiri lako la kurejeshea akaunti ili kubeba akaunti yako. Kama hujahifadhi, unaweza kulikuta kwenye mipangilio ya programu yako.</string>
-    <string name="recoveryPasswordView">Tazama Nywila</string>
     <string name="recoveryPasswordWarningSendDescription">Hii ni nywila yako ya urejeshaji. Ukiituma kwa mtu atapata ufikiaji kamili wa akaunti yako.</string>
     <string name="redo">Rudia</string>
     <string name="remove">Ondoa</string>

@@ -704,7 +704,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Ezkutatu Recovery Password</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Berreskuratu pasahitza gailu honetan betiko ezkutatu.</string>
     <string name="recoveryPasswordRestoreDescription">Sartu zure berreskuratze pasahitza zure kontua kargatzeko. Gorde ez baduzu, aurki dezakezu aplikazioaren ezarpenetan.</string>
-    <string name="recoveryPasswordView">Ikusi pasahitza</string>
     <string name="recoveryPasswordWarningSendDescription">Hau zure kontuaren berreskuratze pasahitza da. Norbaiti bidaltzen badiozu, zure kontura sartzeko aukera osoarekin izango dute.</string>
     <string name="redo">Berriro egin</string>
     <string name="remove">Kendu</string>

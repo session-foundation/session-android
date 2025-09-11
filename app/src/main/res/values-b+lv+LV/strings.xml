@@ -650,7 +650,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Slēpt atgūšanas paroli</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Neatgriezeniski paslēpt savu atkopšanas paroli šajā ierīcē.</string>
     <string name="recoveryPasswordRestoreDescription">Ievadiet savu atjaunošanas paroli, lai ielādētu savu kontu. Ja jūsu atjaunošanas parole nav saglabāta, jūs varat atrast to lietotnes iestatījumos.</string>
-    <string name="recoveryPasswordView">Parādīt paroli</string>
     <string name="recoveryPasswordWarningSendDescription">Šī ir tava atjaunošanas parole. Ja kādam to nosūtīsi, tad viņš iegūs pilnas piekļuves tiesības tavam kontam.</string>
     <string name="redo">Atkārtot</string>
     <string name="remove">Noņemt</string>

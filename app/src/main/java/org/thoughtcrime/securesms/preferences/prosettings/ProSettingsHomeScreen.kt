@@ -123,7 +123,7 @@ fun ProSettingsHome(
             Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
             ProSettings(
                 data = data.subscriptionState,
-                expiry = data.proExpiryLabel,
+                expiry = data.subscriptionExpiryLabel,
                 sendCommand = sendCommand,
             )
         }
@@ -260,7 +260,7 @@ fun ProStats(
                 ProStatItem(
                     modifier = Modifier.weight(1f),
                     title = pluralStringResource(
-                        R.plurals.temp_pro_stats_groups,
+                        R.plurals.proGroupsUpgraded,
                         data.groupsUpdated,
                         NumberUtil.getFormattedNumber(data.groupsUpdated.toLong())
                     ),
@@ -272,7 +272,7 @@ fun ProStats(
                 ProStatItem(
                     modifier = Modifier.weight(1f),
                     title = pluralStringResource(
-                        R.plurals.temp_pro_stats_pins,
+                        R.plurals.proPinnedConversations,
                         data.pinnedConversations,
                         NumberUtil.getFormattedNumber(data.pinnedConversations.toLong())
                     ),
@@ -287,7 +287,7 @@ fun ProStats(
                 ProStatItem(
                     modifier = Modifier.weight(1f),
                     title = pluralStringResource(
-                        R.plurals.temp_pro_stats_badges,
+                        R.plurals.proBadgesSent,
                         data.proBadges,
                         NumberUtil.getFormattedNumber(data.proBadges.toLong())
                     ),
@@ -299,7 +299,7 @@ fun ProStats(
                 ProStatItem(
                     modifier = Modifier.weight(1f),
                     title = pluralStringResource(
-                        R.plurals.temp_pro_stats_long,
+                        R.plurals.proLongerMessagesSent,
                         data.longMessages,
                         NumberUtil.getFormattedNumber(data.longMessages.toLong())
                     ),

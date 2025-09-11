@@ -59,7 +59,6 @@ import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsActivity
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.GroupDatabase
-import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.Storage
@@ -83,8 +82,8 @@ import org.thoughtcrime.securesms.reviews.ui.InAppReview
 import org.thoughtcrime.securesms.reviews.ui.InAppReviewViewModel
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
-import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.UINavigator
+import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.util.AvatarUtils
@@ -123,7 +122,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var tokenPageNotificationManager: TokenPageNotificationManager
     @Inject lateinit var groupManagerV2: GroupManagerV2
     @Inject lateinit var deprecationManager: LegacyGroupDeprecationManager
-    @Inject lateinit var lokiThreadDatabase: LokiThreadDatabase
     @Inject lateinit var clock: SnodeClock
     @Inject lateinit var messageNotifier: MessageNotifier
     @Inject lateinit var dateUtils: DateUtils
@@ -570,7 +568,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
             }
             else if (threadRecipient.data is RecipientData.Community) {
-                val clip = ClipData.newPlainText("Community URL", threadRecipient.data.openGroup.joinURL)
+                val clip = ClipData.newPlainText("Community URL", threadRecipient.data.joinURL)
                 val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
                 manager.setPrimaryClip(clip)
                 Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()

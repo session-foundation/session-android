@@ -784,7 +784,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Sembunyikan Kata Sandi Pemulihan</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Sembunyikan kata sandi Pemulihan Anda secara permanen di perangkat ini.</string>
     <string name="recoveryPasswordRestoreDescription">Masukkan kata sandi pemulihan Anda untuk memuat akun Anda. Jika Anda belum menyimpannya, Anda dapat menemukannya di pengaturan aplikasi Anda.</string>
-    <string name="recoveryPasswordView">Lihat Kata Sandi</string>
     <string name="recoveryPasswordWarningSendDescription">Ini adalah kata sandi pemulihan Anda. Jika Anda mengirimkannya ke seseorang, mereka akan memiliki akses penuh ke akun Anda.</string>
     <string name="recreateGroup">Buat Ulang Grup</string>
     <string name="redo">mengulang</string>

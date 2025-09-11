@@ -43,6 +43,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.getRepea
 import org.session.libsession.utilities.TextSecurePreferences.Companion.hasHiddenMessageRequests
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isNotificationsEnabled
 import org.session.libsession.utilities.TextSecurePreferences.Companion.removeHasHiddenMessageRequests
+import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
@@ -51,7 +52,6 @@ import org.session.libsignal.utilities.Util
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities.getUserED25519KeyPair
-import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsSmsColumns.NOTIFIED
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
@@ -86,7 +86,6 @@ class DefaultMessageNotifier @Inject constructor(
     private val threadDatabase: ThreadDatabase,
     private val recipientRepository: RecipientRepository,
     private val mmsSmsDatabase: MmsSmsDatabase,
-    private val lokiThreadDatabase: LokiThreadDatabase,
 ) : MessageNotifier {
     override fun setVisibleThread(threadId: Long) {
         visibleThread = threadId
@@ -669,12 +668,13 @@ class DefaultMessageNotifier @Inject constructor(
     }
 
     private fun generateBlindedId(threadId: Long, context: Context): String? {
-        val openGroup = lokiThreadDatabase.getOpenGroupChat(threadId)
+        val threadRecipient = recipientRepository.getRecipientSync(threadDatabase.getRecipientForThreadId(threadId) ?: return null)
+        val serverPubKey = (threadRecipient.data as? RecipientData.Community)?.serverPubKey
         val edKeyPair = getUserED25519KeyPair(context)
-        if (openGroup != null && edKeyPair != null) {
+        if (serverPubKey != null && edKeyPair != null) {
             val blindedKeyPair = BlindKeyAPI.blind15KeyPairOrNull(
                 ed25519SecretKey = edKeyPair.secretKey.data,
-                serverPubKey = Hex.fromStringCondensed(openGroup.publicKey),
+                serverPubKey = Hex.fromStringCondensed(serverPubKey),
             )
             if (blindedKeyPair != null) {
                 return AccountId(IdPrefix.BLINDED, blindedKeyPair.pubKey.data).hexString

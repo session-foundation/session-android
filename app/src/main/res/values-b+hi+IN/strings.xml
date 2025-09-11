@@ -890,7 +890,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Recovery Password छुपाएं</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">इस डिवाइस पर अपने पुनर्प्राप्ति पासवर्ड को स्थायी रूप से छिपाएँ।</string>
     <string name="recoveryPasswordRestoreDescription">अपना खाता लोड करने के लिए अपना पुनर्प्राप्ति पासवर्ड दर्ज करें। यदि आपने इसे सहेजा नहीं है, तो आप इसे अपनी ऐप सेटिंग में पा सकते हैं।</string>
-    <string name="recoveryPasswordView">पासवर्ड देखें</string>
     <string name="recoveryPasswordWarningSendDescription">यह आपका पुनर्प्राप्ति वाक्यांश है। अगर आप इसे किसी को भेजते हैं तो उनके पास आपके खाते की पूरी पहुंच होगी।</string>
     <string name="recreateGroup">समूह पुनः बनाएँ</string>
     <string name="redo">फिर से करें</string>

@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
+import nl.komponents.kovenant.all
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.groups.GroupManagerV2
@@ -41,13 +42,14 @@ import org.session.libsession.utilities.isGroupV2
 import org.session.libsession.utilities.isLegacyGroup
 import org.session.libsession.utilities.isStandard
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.upsertContact
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.CommunityDatabase
 import org.thoughtcrime.securesms.database.DraftDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
-import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
@@ -80,7 +82,7 @@ interface ConversationRepository {
     fun saveDraft(threadId: Long, text: String)
     fun getDraft(threadId: Long): String?
     fun clearDrafts(threadId: Long)
-    fun inviteContactsToCommunity(threadId: Long, contacts: Collection<Address>)
+    fun inviteContactsToCommunity(communityRecipient: Recipient, contacts: Collection<Address>)
     fun setBlocked(recipient: Address, blocked: Boolean)
     fun markAsDeletedLocally(messages: Set<MessageRecord>, displayedMessage: String)
     fun deleteMessages(messages: Set<MessageRecord>)
@@ -132,8 +134,8 @@ class DefaultConversationRepository @Inject constructor(
     private val textSecurePreferences: TextSecurePreferences,
     private val messageDataProvider: MessageDataProvider,
     private val threadDb: ThreadDatabase,
+    private val communityDatabase: CommunityDatabase,
     private val draftDb: DraftDatabase,
-    private val lokiThreadDb: LokiThreadDatabase,
     private val smsDb: SmsDatabase,
     private val mmsSmsDb: MmsSmsDatabase,
     private val storage: Storage,
@@ -215,7 +217,8 @@ class DefaultConversationRepository @Inject constructor(
             .flatMapLatest { allAddresses ->
                 merge(
                     configFactory.configUpdateNotifications,
-                    recipientDatabase.changeNotification,
+                    recipientDatabase.changeNotification.filter { it in allAddresses },
+                    communityDatabase.changeNotification.filter { it in allAddresses },
                     threadDb.updateNotifications
                 ).debounce(500)
                     .onStart { emit(Unit) }
@@ -247,14 +250,18 @@ class DefaultConversationRepository @Inject constructor(
         draftDb.clearDrafts(threadId)
     }
 
-    override fun inviteContactsToCommunity(threadId: Long, contacts: Collection<Address>) {
-        val openGroup = lokiThreadDb.getOpenGroupChat(threadId) ?: return
+    override fun inviteContactsToCommunity(
+        communityRecipient: Recipient,
+        contacts: Collection<Address>
+    ) {
+        val community = communityRecipient.data as? RecipientData.Community
+        val info = community?.roomInfo ?: return
         for (contact in contacts) {
             val message = VisibleMessage()
             message.sentTimestamp = clock.currentTimeMills()
             val openGroupInvitation = OpenGroupInvitation().apply {
-                name = openGroup.name
-                url = openGroup.joinURL
+                name = info.details.name
+                url = community.joinURL
             }
             message.openGroupInvitation = openGroupInvitation
             val contactThreadId = threadDb.getOrCreateThreadIdFor(contact)

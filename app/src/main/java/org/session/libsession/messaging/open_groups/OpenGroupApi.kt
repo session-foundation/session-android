@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.databind.type.TypeFactory
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.Hash
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
@@ -18,7 +20,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody
 import org.session.libsession.messaging.MessagingModuleConfiguration
-import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPoller.Companion.MAX_INACTIVITIY_PERIOD_MILLS
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.OnionResponse
 import org.session.libsession.snode.SnodeAPI
@@ -80,65 +81,63 @@ object OpenGroupApi {
         val joinURL: String get() = "$defaultServer/$id?public_key=$defaultServerPublicKey"
     }
 
-    @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy::class)
-    data class RoomInfo(
+    @Serializable
+    data class RoomInfoDetails(
         val token: String = "",
         val name: String = "",
         val description: String = "",
+        @SerialName("info_updates")
         val infoUpdates: Int = 0,
+        @SerialName("message_sequence")
         val messageSequence: Long = 0,
-        val created: Long = 0,
+        val created: Double = 0.0,
+        @SerialName("active_users")
         val activeUsers: Int = 0,
+        @SerialName("active_users_cutoff")
         val activeUsersCutoff: Int = 0,
+        @SerialName("image_id")
         val imageId: String? = null,
+        @SerialName("pinned_messages")
         val pinnedMessages: List<PinnedMessage> = emptyList(),
         val admin: Boolean = false,
+        @SerialName("global_admin")
         val globalAdmin: Boolean = false,
         val admins: List<String> = emptyList(),
+        @SerialName("hidden_admins")
         val hiddenAdmins: List<String> = emptyList(),
         val moderator: Boolean = false,
+        @SerialName("global_moderator")
         val globalModerator: Boolean = false,
         val moderators: List<String> = emptyList(),
+        @SerialName("hidden_moderators")
         val hiddenModerators: List<String> = emptyList(),
         val read: Boolean = false,
+        @SerialName("default_read")
         val defaultRead: Boolean = false,
+        @SerialName("default_accessible")
         val defaultAccessible: Boolean = false,
         val write: Boolean = false,
+        @SerialName("default_write")
         val defaultWrite: Boolean = false,
         val upload: Boolean = false,
+        @SerialName("default_upload")
         val defaultUpload: Boolean = false,
-    ) {
-        fun toPollInfo() = RoomPollInfo(
-            token = token,
-            activeUsers = activeUsers,
-            admin = admin,
-            globalAdmin = globalAdmin,
-            moderator = moderator,
-            globalModerator = globalModerator,
-            read = read,
-            defaultRead = defaultRead,
-            defaultAccessible = defaultAccessible,
-            write = write,
-            defaultWrite = defaultWrite,
-            upload = upload,
-            defaultUpload = defaultUpload,
-            details = this
-        )
-    }
+    )
 
-    @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy::class)
+    @Serializable
     data class PinnedMessage(
         val id: Long = 0,
+        @SerialName("pinned_at")
         val pinnedAt: Long = 0,
+        @SerialName("pinned_by")
         val pinnedBy: String = ""
     )
 
-    @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy::class)
     data class BatchRequestInfo<T>(
         val request: BatchRequest,
         val endpoint: Endpoint,
         val queryParameters: Map<String, String> = mapOf(),
-        val responseType: TypeReference<T>
+        val responseType: TypeReference<T>?
     )
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -167,22 +166,29 @@ object OpenGroupApi {
         SOGS, BLIND, REACTIONS
     }
 
-    @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy::class)
-    data class RoomPollInfo(
+    @Serializable
+    data class RoomInfo(
         val token: String = "",
+        @SerialName("active_users")
         val activeUsers: Int = 0,
         val admin: Boolean = false,
+        @SerialName("global_admin")
         val globalAdmin: Boolean = false,
         val moderator: Boolean = false,
+        @SerialName("global_moderator")
         val globalModerator: Boolean = false,
         val read: Boolean = false,
+        @SerialName("default_read")
         val defaultRead: Boolean = false,
+        @SerialName("default_accessible")
         val defaultAccessible: Boolean = false,
         val write: Boolean = false,
+        @SerialName("default_write")
         val defaultWrite: Boolean = false,
         val upload: Boolean = false,
+        @SerialName("default_upload")
         val defaultUpload: Boolean = false,
-        val details: RoomInfo? = null
+        val details: RoomInfoDetails = RoomInfoDetails()
     )
 
     @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy::class)
@@ -302,7 +308,7 @@ object OpenGroupApi {
         }
     }
 
-    private suspend fun getOrFetchServerCapabilities(server: String): List<String> {
+    suspend fun getOrFetchServerCapabilities(server: String): List<String> {
         val storage = MessagingModuleConfiguration.shared.storage
         val caps = storage.getServerCapabilities(server)
 
@@ -478,7 +484,7 @@ object OpenGroupApi {
         whisperMods: Boolean? = null,
         fileIds: List<String>? = null
     ): Promise<OpenGroupMessage, Exception> {
-        val signedMessage = message.sign(room, server) ?: return Promise.ofFail(Error.SigningFailed)
+        val signedMessage = message.sign(server) ?: return Promise.ofFail(Error.SigningFailed)
         val parameters = signedMessage.toJSON().toMutableMap()
 
         // add file IDs if there are any (from attachments)
@@ -642,121 +648,8 @@ object OpenGroupApi {
     // endregion
 
     // region General
-    @Suppress("UNCHECKED_CAST")
-    suspend fun poll(
-        rooms: List<String>,
-        server: String
-    ): List<BatchResponse<*>> {
-        val storage = MessagingModuleConfiguration.shared.storage
-        val context = MessagingModuleConfiguration.shared.context
-        val timeSinceLastOpen = this.timeSinceLastOpen
-        val shouldRetrieveRecentMessages = (hasPerformedInitialPoll[server] != true
-                && timeSinceLastOpen > MAX_INACTIVITIY_PERIOD_MILLS)
-        hasPerformedInitialPoll[server] = true
-        if (!hasUpdatedLastOpenDate) {
-            hasUpdatedLastOpenDate = true
-            TextSecurePreferences.setLastOpenDate(context)
-        }
-        val lastInboxMessageId = storage.getLastInboxMessageId(server)
-        val lastOutboxMessageId = storage.getLastOutboxMessageId(server)
-        val requests = mutableListOf<BatchRequestInfo<*>>()
 
-        val serverCapabilities = getOrFetchServerCapabilities(server)
-
-        rooms.forEach { room ->
-            // we need to make sure communities have their description data, and since we were not
-            // tracking that property before (04/20205) we need to force existing communities to
-            // request their info data
-            val forcedDescriptionPoll = if(TextSecurePreferences.forcedCommunityDescriptionPoll(context, server+room)){
-                true
-            } else {
-                TextSecurePreferences.setForcedCommunityDescriptionPoll(context, server+room, true)
-                false
-            }
-
-            val infoUpdates = if(!forcedDescriptionPoll) 0 else storage.getOpenGroup(room, server)?.infoUpdates ?: 0
-            val lastMessageServerId = storage.getLastMessageServerID(room, server) ?: 0L
-            requests.add(
-                BatchRequestInfo(
-                    request = BatchRequest(
-                        method = GET,
-                        path = "/room/$room/pollInfo/$infoUpdates"
-                    ),
-                    endpoint = Endpoint.RoomPollInfo(room, infoUpdates),
-                    responseType = object : TypeReference<RoomPollInfo>(){}
-                )
-            )
-            requests.add(
-                if (shouldRetrieveRecentMessages || lastMessageServerId == 0L) {
-                    BatchRequestInfo(
-                        request = BatchRequest(
-                            method = GET,
-                            path = "/room/$room/messages/recent?t=r&reactors=5"
-                        ),
-                        endpoint = Endpoint.RoomMessagesRecent(room),
-                        responseType = object : TypeReference<List<Message>>(){}
-                    )
-                } else {
-                    BatchRequestInfo(
-                        request = BatchRequest(
-                            method = GET,
-                            path = "/room/$room/messages/since/$lastMessageServerId?t=r&reactors=5"
-                        ),
-                        endpoint = Endpoint.RoomMessagesSince(room, lastMessageServerId),
-                        responseType = object : TypeReference<List<Message>>(){}
-                    )
-                }
-            )
-        }
-        val isAcceptingCommunityRequests = storage.isCheckingCommunityRequests()
-        if (serverCapabilities.contains(Capability.BLIND.name.lowercase()) && isAcceptingCommunityRequests) {
-            requests.add(
-                if (lastInboxMessageId == null) {
-                    BatchRequestInfo(
-                        request = BatchRequest(
-                            method = GET,
-                            path = "/inbox"
-                        ),
-                        endpoint = Endpoint.Inbox,
-                        responseType = object : TypeReference<List<DirectMessage>>() {}
-                    )
-                } else {
-                    BatchRequestInfo(
-                        request = BatchRequest(
-                            method = GET,
-                            path = "/inbox/since/$lastInboxMessageId"
-                        ),
-                        endpoint = Endpoint.InboxSince(lastInboxMessageId),
-                        responseType = object : TypeReference<List<DirectMessage>>() {}
-                    )
-                }
-            )
-            requests.add(
-                if (lastOutboxMessageId == null) {
-                    BatchRequestInfo(
-                        request = BatchRequest(
-                            method = GET,
-                            path = "/outbox"
-                        ),
-                        endpoint = Endpoint.Outbox,
-                        responseType = object : TypeReference<List<DirectMessage>>() {}
-                    )
-                } else {
-                    BatchRequestInfo(
-                        request = BatchRequest(
-                            method = GET,
-                            path = "/outbox/since/$lastOutboxMessageId"
-                        ),
-                        endpoint = Endpoint.OutboxSince(lastOutboxMessageId),
-                        responseType = object : TypeReference<List<DirectMessage>>() {}
-                    )
-                }
-            )
-        }
-        return parallelBatch(server, requests).await()
-    }
-
-    private fun parallelBatch(
+    fun parallelBatch(
         server: String,
         requests: MutableList<BatchRequestInfo<*>>
     ): Promise<List<BatchResponse<*>>, Exception> {
@@ -799,9 +692,12 @@ object OpenGroupApi {
                     code = code,
                     headers = response["headers"] as Map<String, String>,
                     body = if (code in 200..299) {
-                        JsonUtil.toJson(response["body"]).takeIf { it != "[]" }?.let {
-                            JsonUtil.fromJson(it, requests[idx].responseType)
+                        requests[idx].responseType?.let { respType ->
+                            JsonUtil.toJson(response["body"]).takeIf { it != "[]" }?.let {
+                                JsonUtil.fromJson(it, respType)
+                            } ?: response["body"]
                         }
+
                     } else null
                 )
             }
@@ -840,7 +736,7 @@ object OpenGroupApi {
         }
     }
 
-    fun getRoomInfo(roomToken: String, server: String): Promise<RoomInfo, Exception> {
+    fun getRoomInfo(roomToken: String, server: String): Promise<RoomInfoDetails, Exception> {
         val request = Request(
             verb = GET,
             room = null,
@@ -848,11 +744,11 @@ object OpenGroupApi {
             endpoint = Endpoint.Room(roomToken)
         )
         return getResponseBody(request).map { response ->
-            JsonUtil.fromJson(response, RoomInfo::class.java)
+            JsonUtil.fromJson(response, RoomInfoDetails::class.java)
         }
     }
 
-    private fun getAllRooms(): Promise<List<RoomInfo>, Exception> {
+    private fun getAllRooms(): Promise<List<RoomInfoDetails>, Exception> {
         val request = Request(
             verb = GET,
             room = null,
@@ -862,7 +758,7 @@ object OpenGroupApi {
         return getResponseBody(request, signRequest = false).map { response ->
             val rawRooms = JsonUtil.fromJson(response, List::class.java) ?: throw Error.ParsingFailed
             rawRooms.mapNotNull {
-                JsonUtil.fromJson(JsonUtil.toJson(it), RoomInfo::class.java)
+                JsonUtil.fromJson(JsonUtil.toJson(it), RoomInfoDetails::class.java)
             }
         }
     }
@@ -877,7 +773,7 @@ object OpenGroupApi {
     fun getCapabilitiesAndRoomInfo(
         room: String,
         server: String
-    ): Promise<Pair<Capabilities, RoomInfo>, Exception> {
+    ): Promise<Pair<Capabilities, RoomInfoDetails>, Exception> {
         val requests = mutableListOf<BatchRequestInfo<*>>(
             BatchRequestInfo(
                 request = BatchRequest(
@@ -893,12 +789,12 @@ object OpenGroupApi {
                     path = "/room/$room"
                 ),
                 endpoint = Endpoint.Room(room),
-                responseType = object : TypeReference<RoomInfo>(){}
+                responseType = object : TypeReference<RoomInfoDetails>(){}
             )
         )
         return sequentialBatch(server, requests).map {
             val capabilities = it.firstOrNull()?.body as? Capabilities ?: throw Error.ParsingFailed
-            val roomInfo = it.lastOrNull()?.body as? RoomInfo ?: throw Error.ParsingFailed
+            val roomInfo = it.lastOrNull()?.body as? RoomInfoDetails ?: throw Error.ParsingFailed
             capabilities to roomInfo
         }
     }

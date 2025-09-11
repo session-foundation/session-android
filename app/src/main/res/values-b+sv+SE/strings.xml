@@ -889,7 +889,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Dölj Recovery Password</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Dölj återställningslösenordet permanent på denna enhet.</string>
     <string name="recoveryPasswordRestoreDescription">Ange ditt recovery password för att ladda ditt konto. Om du inte har sparat det kan du hitta det i dina appinställningar.</string>
-    <string name="recoveryPasswordView">Visa lösenord</string>
     <string name="recoveryPasswordWarningSendDescription">Detta är ditt återställningslösenord. Om du skickar det till någon kommer de att ha full tillgång till ditt konto.</string>
     <string name="recreateGroup">Skapa gruppen igen</string>
     <string name="redo">Gör om</string>

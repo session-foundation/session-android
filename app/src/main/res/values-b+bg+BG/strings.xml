@@ -704,7 +704,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Скрыть Пароль за Восстановление</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Перманентно скриване на възстановителната парола на това устройство.</string>
     <string name="recoveryPasswordRestoreDescription">Въведете паролата за възстановяване, за да заредите своя профил. Ако не сте я запазили, може да я намерите в настройките на приложението.</string>
-    <string name="recoveryPasswordView">Преглед на паролата</string>
     <string name="recoveryPasswordWarningSendDescription">Това е вашата възстановителна парола. Ако я изпратите на някого, той ще има пълен достъп до вашия акаунт.</string>
     <string name="redo">Вернуть</string>
     <string name="remove">Премахни</string>

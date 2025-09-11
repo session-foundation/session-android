@@ -890,7 +890,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Geri qaytarma parolunu gizlət</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Geri qaytarma parolunuzu bu cihazda həmişəlik gizlədin.</string>
     <string name="recoveryPasswordRestoreDescription">Hesabınızı yükləmək üçün geri qaytarma parolunuzu daxil edin. Saxlamamısınızsa, onu tətbiq ayarlarınızda tapa bilərsiniz.</string>
-    <string name="recoveryPasswordView">Parolu göstər</string>
     <string name="recoveryPasswordWarningSendDescription">Bu, sizin geri qaytarma parolunuzdur. Kiməsə göndərsəniz, hesabınıza tam erişə bilər.</string>
     <string name="recreateGroup">Qrupu yenidən yarat</string>
     <string name="redo">Təkrar et</string>
