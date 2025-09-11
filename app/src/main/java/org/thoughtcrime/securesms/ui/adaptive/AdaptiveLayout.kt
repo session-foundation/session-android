@@ -12,7 +12,7 @@ object AdaptiveBreakpoints {
     const val TWO_PANE_PORTRAIT_MIN_WIDTH_DP = 840
 }
 
-fun shouldUseTwoPane(widthDp: Int, isLandscape: Boolean): Boolean {
+private fun shouldUseTwoPane(widthDp: Int, isLandscape: Boolean): Boolean {
     return (isLandscape && widthDp >= AdaptiveBreakpoints.TWO_PANE_LANDSCAPE_MIN_WIDTH_DP) ||
             (widthDp >= AdaptiveBreakpoints.TWO_PANE_PORTRAIT_MIN_WIDTH_DP)
 }
