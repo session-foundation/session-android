@@ -1,19 +1,29 @@
 package org.thoughtcrime.securesms.preferences
 
 import android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.View
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -43,6 +53,7 @@ class QRCodeActivity : ScreenLockActionBarActivity() {
         get() = false
 
     private val errors = MutableSharedFlow<String>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
 
     override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
         super.onCreate(savedInstanceState, isReady)
@@ -89,11 +100,17 @@ class QRCodeActivity : ScreenLockActionBarActivity() {
 private fun Tabs(accountId: String, errors: Flow<String>, onScan: (String) -> Unit) {
     val pagerState = rememberPagerState { TITLES.size }
 
-    Column {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(LocalColors.current.background)
+    ) {
         SessionTabRow(pagerState, TITLES)
         HorizontalPager(
             state = pagerState,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
         ) { page ->
             when (TITLES[page]) {
                 R.string.view -> QrPage(accountId)
@@ -105,25 +122,75 @@ private fun Tabs(accountId: String, errors: Flow<String>, onScan: (String) -> Un
 
 @Composable
 fun QrPage(string: String) {
-    Column(
-        modifier = Modifier
-            .background(LocalColors.current.background)
-            .padding(horizontal = LocalDimensions.current.mediumSpacing)
-            .fillMaxSize()
-    ) {
-        QrImage(
-            string = string,
-            modifier = Modifier
-                .padding(top = LocalDimensions.current.mediumSpacing, bottom = LocalDimensions.current.xsSpacing)
-                .qaTag(R.string.AccessibilityId_qrCode),
-            icon = R.drawable.session
-        )
+    val cfg = LocalConfiguration.current
+    val isTwoPane = shouldUseTwoPane(cfg)
 
-        Text(
-            text = stringResource(R.string.accountIdYoursDescription),
-            color = LocalColors.current.textSecondary,
-            textAlign = TextAlign.Center,
-            style = LocalType.current.small
-        )
+    if(isTwoPane){
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(LocalColors.current.background)
+                .padding(horizontal = LocalDimensions.current.mediumSpacing)
+        ) {
+            // Scale QR to the shorter side to avoid overflow in landscape. Clamp for sanity
+            val shortest: Dp = if (maxWidth < maxHeight) maxWidth else maxHeight
+            val qrSide = (shortest * 0.72f).coerceIn(160.dp, 520.dp)
+
+            Column(
+                modifier = Modifier
+                    .align(Alignment.Center), // vertical + horizontal centering
+//                .widthIn(max = 640.dp),  // this is optional. Maybe we can use for tablets.
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
+            ) {
+                QrImage(
+                    string = string,
+                    modifier = Modifier
+                        .size(qrSide)
+                        .qaTag(R.string.AccessibilityId_qrCode),
+                    icon = R.drawable.session
+                )
+
+                Text(
+                    text = stringResource(R.string.accountIdYoursDescription),
+                    color = LocalColors.current.textSecondary,
+                    textAlign = TextAlign.Center,
+                    style = LocalType.current.small
+                )
+            }
+        }
+    }else{
+        Column(
+            modifier = Modifier
+                .background(LocalColors.current.background)
+                .padding(horizontal = LocalDimensions.current.mediumSpacing)
+                .fillMaxSize()
+        ) {
+            QrImage(
+                string = string,
+                modifier = Modifier
+                    .padding(
+                        top = LocalDimensions.current.mediumSpacing,
+                        bottom = LocalDimensions.current.xsSpacing
+                    )
+                    .qaTag(R.string.AccessibilityId_qrCode),
+                icon = R.drawable.session
+            )
+
+            Text(
+                text = stringResource(R.string.accountIdYoursDescription),
+                color = LocalColors.current.textSecondary,
+                textAlign = TextAlign.Center,
+                style = LocalType.current.small
+            )
+        }
     }
+}
+
+// TODO: make util or helper for this
+private fun shouldUseTwoPane(cfg: Configuration): Boolean {
+    val w = cfg.screenWidthDp
+    val isLandscape = cfg.orientation == Configuration.ORIENTATION_LANDSCAPE
+    // Two-pane only when: landscape & ≥480dp, or portrait but truly wide (≥840dp)
+    return (isLandscape && w >= 480) || (w >= 840)
 }
