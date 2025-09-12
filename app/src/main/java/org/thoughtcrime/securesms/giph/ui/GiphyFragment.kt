@@ -51,7 +51,6 @@ abstract class GiphyFragment :
         container: ViewGroup?, // nullable per Fragment API
         savedInstanceState: Bundle?
     ): View {
-        // ViewUtil.inflate expects a non-null parent: assert non-null like Java did.
         val root = inflater.inflate(R.layout.giphy_fragment, container, false) as ViewGroup
 
         // Todo: Make compose
@@ -62,7 +61,6 @@ abstract class GiphyFragment :
         setGiphyLoading(loadingProgress)
         setGiphyNoResults(noResultsView, R.string.searchMatchesNone)
 
-        // Apply search (if already set) and default/pending layout
         applySearchStringToUI()
 
         pendingGridLayout?.let {
@@ -79,12 +77,11 @@ abstract class GiphyFragment :
         super.onViewCreated(view, savedInstanceState)
 
         giphyAdapter = GiphyAdapter(requireActivity(), Glide.with(this), LinkedList())
-        // IMPORTANT: Set listener via anonymous object to avoid exposing package-private ViewHolder type.
-        giphyAdapter.setListener(object : GiphyAdapter.OnItemClickListener {
-            override fun onClick(viewHolder: GiphyAdapter.GiphyViewHolder) {
-                (activity as? GiphyAdapter.OnItemClickListener)?.onClick(viewHolder)
-            }
-        })
+        giphyAdapter.setListener { viewHolder ->
+            (activity as? GiphyAdapter.OnItemClickListener)?.onClick(
+                viewHolder
+            )
+        }
 
         recyclerView.itemAnimator = DefaultItemAnimator()
         recyclerView.adapter = giphyAdapter
@@ -114,7 +111,6 @@ abstract class GiphyFragment :
         giphyAdapter.setImages(mutableListOf())
     }
 
-    // ---- Public API used by the Activity ----
     fun setLayoutManager(gridLayout: Boolean) {
         if (this::recyclerView.isInitialized) {
             recyclerView.layoutManager = createLayoutManager(gridLayout)
@@ -130,11 +126,12 @@ abstract class GiphyFragment :
         }
     }
 
-    // ---- UI helpers ----
     private fun createLayoutManager(gridLayout: Boolean): RecyclerView.LayoutManager {
         return if (gridLayout) {
-            // Keep the same default span (2). If you added a resource override, read it here.
-            StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL).apply {
+            StaggeredGridLayoutManager(
+                2,
+                StaggeredGridLayoutManager.VERTICAL
+            ).apply {
                 gapStrategy = StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS
             }
         } else {
@@ -147,7 +144,7 @@ abstract class GiphyFragment :
         LoaderManager.getInstance(this).restartLoader(0, null, this)
     }
 
-    // ---- Infinite scroll ----
+    // Infinite scroll
     private inner class GiphyScrollListener : InfiniteScrollListener() {
         @SuppressLint("StaticFieldLeak")
         override fun onLoadMore(currentPage: Int) {
