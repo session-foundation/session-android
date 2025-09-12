@@ -1,4 +1,3 @@
-@file:JvmName("GiphyFragmentCompose") // lets Java call GiphyFragmentCompose.setGiphyLoading(...)
 package org.thoughtcrime.securesms.giph.ui.compose
 
 import androidx.annotation.StringRes

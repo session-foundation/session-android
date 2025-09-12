@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.Loader
@@ -20,6 +21,8 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.ViewUtil
 import org.thoughtcrime.securesms.giph.model.GiphyImage
 import org.thoughtcrime.securesms.giph.net.GiphyLoader
+import org.thoughtcrime.securesms.giph.ui.compose.setGiphyLoading
+import org.thoughtcrime.securesms.giph.ui.compose.setGiphyNoResults
 import org.thoughtcrime.securesms.giph.util.InfiniteScrollListener
 import java.util.LinkedList
 import java.util.List
@@ -34,8 +37,8 @@ abstract class GiphyFragment :
 
     private lateinit var giphyAdapter: GiphyAdapter
     private lateinit var recyclerView: RecyclerView
-    private lateinit var loadingProgress: View
-    private lateinit var noResultsView: View
+    private lateinit var loadingProgress: ComposeView
+    private lateinit var noResultsView: ComposeView
 
     // Set by toolbar filter via Activity
     var searchString: String? = null
@@ -49,11 +52,15 @@ abstract class GiphyFragment :
         savedInstanceState: Bundle?
     ): View {
         // ViewUtil.inflate expects a non-null parent: assert non-null like Java did.
-        val root = inflater.inflate(R.layout.giphy_fragment, container,false) as ViewGroup
+        val root = inflater.inflate(R.layout.giphy_fragment, container, false) as ViewGroup
 
-        recyclerView = ViewUtil.findById(root, R.id.giphy_list)
-        loadingProgress = ViewUtil.findById(root, R.id.loading_progress)
-        noResultsView = ViewUtil.findById(root, R.id.no_results)
+        // Todo: Make compose
+        recyclerView = root.findViewById(R.id.giphy_list)
+        loadingProgress = root.findViewById(R.id.loading_progress)
+        noResultsView = root.findViewById(R.id.no_results)
+
+        setGiphyLoading(loadingProgress)
+        setGiphyNoResults(noResultsView, R.string.searchMatchesNone)
 
         // Apply search (if already set) and default/pending layout
         applySearchStringToUI()
