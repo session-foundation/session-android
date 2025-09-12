@@ -4,6 +4,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.compose.ui.platform.ComposeView;
 import androidx.fragment.app.Fragment;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
@@ -14,10 +15,10 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import org.thoughtcrime.securesms.giph.model.GiphyImage;
 import org.thoughtcrime.securesms.giph.net.GiphyLoader;
+import org.thoughtcrime.securesms.giph.ui.compose.GiphyFragmentCompose;
 import org.thoughtcrime.securesms.giph.util.InfiniteScrollListener;
 import com.bumptech.glide.Glide;
 import org.session.libsession.utilities.TextSecurePreferences;
@@ -32,10 +33,10 @@ public abstract class GiphyFragment extends Fragment implements LoaderManager.Lo
 
   private static final String TAG = GiphyFragment.class.getSimpleName();
 
-  private GiphyAdapter                     giphyAdapter;
-  private RecyclerView                     recyclerView;
-  private View                             loadingProgress;
-  private TextView                         noResultsView;
+  private GiphyAdapter giphyAdapter;
+  private RecyclerView recyclerView;
+  private ComposeView loadingProgress;
+  private ComposeView noResultsView;
 
   protected String searchString;
   private Boolean pendingGridLayout = null;
@@ -46,6 +47,13 @@ public abstract class GiphyFragment extends Fragment implements LoaderManager.Lo
     this.recyclerView    = ViewUtil.findById(container, R.id.giphy_list);
     this.loadingProgress = ViewUtil.findById(container, R.id.loading_progress);
     this.noResultsView   = ViewUtil.findById(container, R.id.no_results);
+
+    if (loadingProgress != null) {
+      GiphyFragmentCompose.setGiphyLoading(loadingProgress);
+    }
+    if (noResultsView != null) {
+      GiphyFragmentCompose.setGiphyNoResults(noResultsView, R.string.searchMatchesNone);
+    }
 
     // Now that views are ready, apply the searchString if it's set
     applySearchStringToUI();
