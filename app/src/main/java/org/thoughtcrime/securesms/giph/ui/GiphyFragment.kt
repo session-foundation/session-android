@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.Loader
 import androidx.recyclerview.widget.DefaultItemAnimator
@@ -16,6 +17,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.bumptech.glide.Glide
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.ViewUtil
@@ -146,21 +150,17 @@ abstract class GiphyFragment :
 
     // Infinite scroll
     private inner class GiphyScrollListener : InfiniteScrollListener() {
-        @SuppressLint("StaticFieldLeak")
         override fun onLoadMore(currentPage: Int) {
             @Suppress("UNCHECKED_CAST")
             val loader = LoaderManager.getInstance(this@GiphyFragment)
                 .getLoader<List<GiphyImage>>(0) as? GiphyLoader ?: return
 
-            object : AsyncTask<Void, Void, List<GiphyImage>>() {
-                override fun doInBackground(vararg p: Void?): List<GiphyImage> {
-                    return loader.loadPage(currentPage * GiphyLoader.PAGE_SIZE) as List<GiphyImage>
+            viewLifecycleOwner.lifecycleScope.launch {
+                val images = withContext(Dispatchers.IO) {
+                    loader.loadPage(currentPage * GiphyLoader.PAGE_SIZE)
                 }
-
-                override fun onPostExecute(images: List<GiphyImage>) {
-                    giphyAdapter.addImages(images.toMutableList())
-                }
-            }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR)
+                giphyAdapter.addImages(images.toMutableList())
+            }
         }
     }
 }
