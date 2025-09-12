@@ -13,6 +13,6 @@ import java.util.List;
 public class GiphyStickerFragment extends GiphyFragment {
   @Override
   public @NonNull Loader<List<GiphyImage>> onCreateLoader(int id, Bundle args) {
-    return new GiphyStickerLoader(getActivity(), searchString);
+    return new GiphyStickerLoader(getActivity(), getSearchString());
   }
 }

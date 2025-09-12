@@ -96,8 +96,8 @@ public class GiphyActivity extends ScreenLockActionBarActivity
 
   @Override
   public void onFilterChanged(String filter) {
-    this.gifFragment.setSearchString(filter);
-    this.stickerFragment.setSearchString(filter);
+    this.gifFragment.setNewSearchString(filter);
+    this.stickerFragment.setNewSearchString(filter);
   }
 
   @Override
