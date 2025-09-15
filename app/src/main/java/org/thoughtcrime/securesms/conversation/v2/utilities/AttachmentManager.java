@@ -266,6 +266,7 @@ public class AttachmentManager {
     }
 
     public static void selectGallery(Activity activity, int requestCode, @NonNull Address recipient, @NonNull String body) {
+        Context c = activity.getApplicationContext();
         Runnable openGallery = () ->
                 activity.startActivityForResult(
                         MediaSendActivity.buildGalleryIntent(activity, recipient, body),
@@ -293,7 +294,7 @@ public class AttachmentManager {
                         }
                     })
                     .withPermanentDenialDialog(
-                            Phrase.from(activity.getApplicationContext(), R.string.permissionsStorageDenied)
+                            Phrase.from(c, R.string.permissionsStorageDenied)
                                     .put(APP_NAME_KEY, activity.getString(R.string.app_name))
                                     .format().toString()
                     )
@@ -312,7 +313,7 @@ public class AttachmentManager {
                     .request(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO)
                     .onAllGranted(openGallery)
                     .withPermanentDenialDialog(
-                            Phrase.from(activity.getApplicationContext(), R.string.permissionsStorageDenied)
+                            Phrase.from(c, R.string.permissionsStorageDenied)
                                     .put(APP_NAME_KEY, activity.getString(R.string.app_name))
                                     .format().toString()
                     )
@@ -330,7 +331,7 @@ public class AttachmentManager {
                 .request(Manifest.permission.READ_EXTERNAL_STORAGE)
                 .onAllGranted(openGallery)
                 .withPermanentDenialDialog(
-                        Phrase.from(activity.getApplicationContext(), R.string.permissionsStorageDeniedLegacy)
+                        Phrase.from(c, R.string.permissionsStorageDeniedLegacy)
                                 .put(APP_NAME_KEY, activity.getString(R.string.app_name))
                                 .format().toString()
                 )
