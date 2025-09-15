@@ -145,6 +145,7 @@
     <string name="banUserBanned">Uzanto forigita</string>
     <string name="banUserDescription">Enigu ID de la konto de la uzanto, kiun vi blokas</string>
     <string name="block">Bloki</string>
+    <string name="blockBlockedDescription">Malbloki tiun kontakton por sendi mesaĝon</string>
     <string name="blockBlockedNone">Neniu blokata kontakto</string>
     <string name="blockBlockedUser">Blokis {name}</string>
     <string name="blockDescription">Ĉu vi certas, ke vi volas bloki <b>{name}</b>? Blokitaj uzantoj ne povas sendi al vi mesaĝpetojn, grupinvitadojn aŭ telefonvokojn.</string>
@@ -260,7 +261,6 @@
     <string name="conversationsDeleted">Konversacio forviŝite</string>
     <string name="conversationsEmpty">Ne estas mesaĝoj en {conversation_name}.</string>
     <string name="conversationsEnter">Eniri ŝlosilon</string>
-    <string name="conversationsEnterDescription">Funkcio de la eniga klavo dum tajpado en konversacio.</string>
     <string name="conversationsGroups">Grupoj</string>
     <string name="conversationsMessageTrimming">Tondeto de mesaĝoj</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Oblikvi Komunumojn</string>
@@ -867,6 +867,7 @@
     <string name="set">Fiksu</string>
     <string name="setCommunityDisplayPicture">Agordi bildon de la komunumo</string>
     <string name="settingsRestartDescription">Vi devas rekomenci {app_name} por apliki viajn novajn agordojn.</string>
+    <string name="settingsScreenSecurityDesktop">Ekrana sekurigo</string>
     <string name="share">Kunhavigi</string>
     <string name="shareAccountIdDescription">Invitu vian amikon babili kun vi en {app_name} dividante vian Konta Identigilo kun ili.</string>
     <string name="shareAccountIdDescriptionCopied">Kunhavigu kun viaj amikoj kien ajn vi kutime parolas kun ili — tiam movu la konversacion ĉi tie.</string>

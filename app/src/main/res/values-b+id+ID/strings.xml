@@ -257,7 +257,6 @@
     <string name="conversationsDeleted">Percakapan dihapus</string>
     <string name="conversationsEmpty">Tak ada pesan di {conversation_name}.</string>
     <string name="conversationsEnter">Masukkan Kunci</string>
-    <string name="conversationsEnterDescription">Fungsi tombol enter saat mengetik dalam percakapan.</string>
     <string name="conversationsGroups">Grup</string>
     <string name="conversationsMessageTrimming">Pemangkasan Pesan</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Pangkas Komunitas</string>
@@ -839,6 +838,7 @@
     <string name="set">Atur</string>
     <string name="setCommunityDisplayPicture">Atur Tampilan Gambar Komunitas</string>
     <string name="settingsRestartDescription">Anda harus memulai ulang {app_name} untuk menerapkan setelan baru.</string>
+    <string name="settingsScreenSecurityDesktop">Keamanan Layar</string>
     <string name="share">Bagikan</string>
     <string name="shareAccountIdDescription">Undang teman Anda untuk mengobrol dengan Anda di {app_name} dengan membagikan ID Akun Anda kepada mereka.</string>
     <string name="shareAccountIdDescriptionCopied">Bagikan dengan teman Anda di mana pun Anda biasa berbicara dengan mereka — lalu pindahkan percakapan ke sini.</string>

@@ -121,6 +121,7 @@
     <string name="banUser">کاروونکی بند کړئ</string>
     <string name="banUserBanned">کارن بندیز شو</string>
     <string name="block">بلاک</string>
+    <string name="blockBlockedDescription">د پیغام استولو لپاره له دې اړیکې بې بندیز وکړئ</string>
     <string name="blockBlockedNone">هیڅ بند شوي اړیکې نشته</string>
     <string name="blockBlockedUser">{name} بلاک کړ</string>
     <string name="blockDescription">آیا تاسې ډاډه یاست چې غواړئ <b>{name}‌</b> بلاک کړئ؟ بلاک شوي کاروونکي تاسو ته د پیغام غوښتنې، د ډلې بلنې یا زنګ وهلو وړتیا نه لري.</string>
@@ -232,7 +233,6 @@
     <string name="conversationsDeleted">خبرتیا</string>
     <string name="conversationsEmpty">په {conversation_name} کې هیڅ پیغام نشته.</string>
     <string name="conversationsEnter">کیلي ولیکئ</string>
-    <string name="conversationsEnterDescription">د خبرو اترو په دوران کې د انټر کیلي دنده.</string>
     <string name="conversationsGroups">ډلې</string>
     <string name="conversationsMessageTrimming">پیغام تراشې</string>
     <string name="conversationsMessageTrimmingTrimCommunities">ټرم ټولنه</string>
@@ -753,6 +753,7 @@
     <string name="sessionSettings">تنظیمات</string>
     <string name="set">تنظیمول</string>
     <string name="settingsRestartDescription">تاسو باید خپل {app_name} بیا پیل کړئ ترڅو ستاسو نوي تنظیمات وکاریږي.</string>
+    <string name="settingsScreenSecurityDesktop">د سکرین امنیت</string>
     <string name="share">شریکول</string>
     <string name="shareAccountIdDescription">خپل ملګری ته بلنه وړاندې کړئ چې ستاسو سره {app_name} کې چیټ وکړي د هغه سره ستاسو حساب ID شریکولو له لارې.</string>
     <string name="shareAccountIdDescriptionCopied">خپلو ملګرو ته چیرته چې تاسو معمولا ورسره خبرې کوئ شریک کړئ - بیا خبرې دلته راولی.</string>

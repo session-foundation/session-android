@@ -281,7 +281,6 @@
     <string name="conversationsDeleted">Rozmowa usunięta</string>
     <string name="conversationsEmpty">W {conversation_name} nie ma żadnych wiadomości.</string>
     <string name="conversationsEnter">Klawisz Enter</string>
-    <string name="conversationsEnterDescription">Funkcja klawisza Enter podczas pisania wiadomości w konwersacji.</string>
     <string name="conversationsGroups">Grupy</string>
     <string name="conversationsMessageTrimming">Przycinanie wiadomości</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Przytnij społeczności</string>
@@ -1013,6 +1012,7 @@
     <string name="set">Ustawiono</string>
     <string name="setCommunityDisplayPicture">Ustaw zdjęcie profilowe grupy</string>
     <string name="settingsRestartDescription">Aby zastosować nowe ustawienia, należy ponownie uruchomić aplikację {app_name}.</string>
+    <string name="settingsScreenSecurityDesktop">Ochrona ekranu</string>
     <string name="share">Udostępnij</string>
     <string name="shareAccountIdDescription">Zaproś znajomego do rozmowy w aplikacji {app_name}, udostępniając mu swój identyfikator konta.</string>
     <string name="shareAccountIdDescriptionCopied">Udostępnij znajomym tam, gdzie zwykle z nimi rozmawiasz, a następnie przenieś rozmowę tutaj.</string>

@@ -114,6 +114,7 @@
     <string name="banUser">Bloquear usuario</string>
     <string name="banUserBanned">Usuario bloqueado</string>
     <string name="block">Bloquear</string>
+    <string name="blockBlockedDescription">Desbloquea este contacto para enviar unha mensaxe</string>
     <string name="blockBlockedNone">Ningún contacto bloqueado</string>
     <string name="blockBlockedUser">Bloqueouse a {name}</string>
     <string name="blockDescription">Tes a certeza de querer bloquear a <b>{name}?</b> Os usuarios bloqueados non poderán enviar solicitudes de mensaxes, invitacións a grupos nin chamarte.</string>
@@ -219,7 +220,6 @@
     <string name="conversationsDeleted">Conversa borrada</string>
     <string name="conversationsEmpty">Non hai mensaxes en {conversation_name}.</string>
     <string name="conversationsEnter">Introduza a clave</string>
-    <string name="conversationsEnterDescription">Función da tecla Enter ao escribir nunha conversa.</string>
     <string name="conversationsGroups">Grupos</string>
     <string name="conversationsMessageTrimming">Recorte das mensaxes</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Recortar Comunidades</string>
@@ -664,6 +664,7 @@
     <string name="sessionSettings">Axustes</string>
     <string name="set">Establecer</string>
     <string name="settingsRestartDescription">Debes reiniciar {app_name} para aplicar a túa nova configuración.</string>
+    <string name="settingsScreenSecurityDesktop">Seguranza da pantalla</string>
     <string name="share">Partillar</string>
     <string name="shareAccountIdDescriptionCopied">Partilla con teus amigos onde normalmente falas con eles, logo move a conversa aquí.</string>
     <string name="shareExtensionDatabaseError">Hai un problema ao abrir a base de datos. Por favor, reinicia a aplicación e tenta de novo.</string>

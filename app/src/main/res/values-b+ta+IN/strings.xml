@@ -234,7 +234,6 @@
     <string name="conversationsDeleted">உரையாடல் அழிக்கப்பட்டது</string>
     <string name="conversationsEmpty">{conversation_name} இல் எந்த செய்தியும் இல்லை.</string>
     <string name="conversationsEnter">Key உள்ளிடவும்</string>
-    <string name="conversationsEnterDescription">உரையாடலில் தட்டச்சு செய்வதற்கான எந்திரக் கை நுட்பம்.</string>
     <string name="conversationsGroups">குழுக்கள்</string>
     <string name="conversationsMessageTrimming">செய்தி மேராசூக்கம்</string>
     <string name="conversationsMessageTrimmingTrimCommunities">சமூகங்களை சுருக்கு</string>
@@ -759,6 +758,7 @@
     <string name="sessionSettings">அமைப்புகள்</string>
     <string name="set">அமை</string>
     <string name="settingsRestartDescription">உங்கள் புதிய அமைப்புகளை புதுப்பிக்க {app_name} -ஐ மறுதொடக்கம் செய்யவேண்டி உள்ளது.</string>
+    <string name="settingsScreenSecurityDesktop">திரை பாதுகாப்பு</string>
     <string name="share">பகிர்</string>
     <string name="shareAccountIdDescription">{app_name} இல் தங்கள் கணக்கு ஐடியைப் பகிர்வதன் மூலம் நண்பரை உரையாட விசைப்பதிவு செய்ய அழைக்கவும்.</string>
     <string name="shareAccountIdDescriptionCopied">உங்கள் நண்பர்களுடன் எங்குச் சென்று பேசுவது உங்களுக்குத் தெரியும் — பின்னர் உரையாடலை இங்கு நகர்த்தவும்.</string>

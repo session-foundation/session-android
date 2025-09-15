@@ -232,7 +232,6 @@
     <string name="conversationsDeleted">Conversation deleted</string>
     <string name="conversationsEmpty">ไม่มีข้อความใน {conversation_name}</string>
     <string name="conversationsEnter">ป้อน Key</string>
-    <string name="conversationsEnterDescription">ฟังก์ชันของปุ่ม Enter เมื่อพิมพ์ในบทสนทนา</string>
     <string name="conversationsGroups">กลุ่ม</string>
     <string name="conversationsMessageTrimming">ตัดข้อความให้สั้นลง</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Trim Communities</string>
@@ -741,6 +740,7 @@
     <string name="sessionSettings">การตั้งค่า</string>
     <string name="set">ตั้งค่า</string>
     <string name="settingsRestartDescription">คุณต้องรีสตาร์ท {app_name} เพื่อใช้งานการตั้งค่าใหม่ของคุณ</string>
+    <string name="settingsScreenSecurityDesktop">ความปลอดภัยหน้าจอ</string>
     <string name="share">แบ่งปัน</string>
     <string name="shareAccountIdDescription">เชิญเพื่อนของคุณมาแชทกับคุณใน {app_name} ด้วยการแชร์ Account ID ของคุณกับพวกเขา</string>
     <string name="shareAccountIdDescriptionCopied">แบ่งปันกับเพื่อน ๆ ของคุณไม่ว่าพวกเขาจะอยู่ที่ไหนแล้วจึงย้ายการสนทนามาที่นี่</string>

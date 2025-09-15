@@ -238,7 +238,6 @@
     <string name="conversationsDeleted">Sgwrs wedi\'i dileu</string>
     <string name="conversationsEmpty">Nid oes negeseuon yn {conversation_name}.</string>
     <string name="conversationsEnter">Rhowch Allwedd</string>
-    <string name="conversationsEnterDescription">Swyddogaeth allwedd enter wrth deipio mewn sgwrs.</string>
     <string name="conversationsGroups">Grwpiau</string>
     <string name="conversationsMessageTrimming">Tocio Negeseuon</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Trimio Cymunedau</string>
@@ -830,6 +829,7 @@
     <string name="sessionSettings">Gosodiadau</string>
     <string name="set">Gosod</string>
     <string name="settingsRestartDescription">Mae’n rhaid i chi ailgychwyn {app_name} i gymhwyso\'r gosodiadau newydd.</string>
+    <string name="settingsScreenSecurityDesktop">Diogelu\'r sgrin</string>
     <string name="share">Rhannu</string>
     <string name="shareAccountIdDescription">Gwahodd dy ffrind i sgwrsio gyda ti ar {app_name} drwy rannu dy ID Cyfrif gyda nhw.</string>
     <string name="shareAccountIdDescriptionCopied">Rhannwch gyda\'ch ffrindiau ble bynnag yr ydych chi fel arfer yn siarad gyda nhw — yna symudwch y sgwrs yma.</string>

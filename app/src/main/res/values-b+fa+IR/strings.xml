@@ -121,6 +121,7 @@
     <string name="banUser">مسدود کردن کاربر</string>
     <string name="banUserBanned">کاربر ممنوع شد</string>
     <string name="block">مسدود کردن</string>
+    <string name="blockBlockedDescription">برای ارسال پیام،‌ ابتدا این مخاطب را از مسدود بودن درآورید!</string>
     <string name="blockBlockedNone">هیج مخاطبی مسدود نشده</string>
     <string name="blockBlockedUser">مسدود شد {name}</string>
     <string name="blockDescription">آیا مطمئنید می‌خواهید <b>{name} را مسدود کنید؟</b> کاربران مسدود شده نمی‌توانند درخواست پیام، دعوت گروهی یا تماس ارسال کنند.</string>
@@ -230,7 +231,6 @@
     <string name="conversationsDeleted">مکالمه حذف شد</string>
     <string name="conversationsEmpty">هیچ پیامی در {conversation_name} وجود ندارد.</string>
     <string name="conversationsEnter">کلید را وارد کنید</string>
-    <string name="conversationsEnterDescription">ویژگی کلید Enter در هنگام تایپ در یک مکالمه.</string>
     <string name="conversationsGroups">گروه‌ها</string>
     <string name="conversationsMessageTrimming">پیرایش پیام</string>
     <string name="conversationsMessageTrimmingTrimCommunities">کوتاه‌سازی انجمن‌ها</string>
@@ -283,6 +283,10 @@
     <plurals name="deleteMessageFailed">
         <item quantity="one">خطا در حذف پیام</item>
         <item quantity="other">خطا در حذف پیام ها</item>
+    </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">پرشین</item>
+        <item quantity="other">برخی از پیام‌هایی که انتخاب کرده‌اید، نمی‌توانند از همهٔ دستگاه‌های شما پاک شوند</item>
     </plurals>
     <plurals name="deleteMessageWarning">
         <item quantity="one">این پیام قابل حذف برای همه نیست</item>
@@ -758,6 +762,7 @@
     <string name="sessionSettings">تنظیمات</string>
     <string name="set">تنظیم</string>
     <string name="settingsRestartDescription">برای اعمال تنظیمات جدید نیاز است {app_name} را دوباره راه‌اندازی کنید.</string>
+    <string name="settingsScreenSecurityDesktop">امنیت صفحه نمایش</string>
     <string name="share">به اشتراک گذاری</string>
     <string name="shareAccountIdDescription">از دوست ات دعوت کن تا با تو در {app_name} با اشتراک گذاری شناسه کاربری ات چت کند.</string>
     <string name="shareAccountIdDescriptionCopied">با دوستان خود به اشتراک بگذارید هرجا که معمولاً با آنها صحبت می‌کنید — سپس مکالمه را به اینجا منتقل کنید.</string>

@@ -233,7 +233,6 @@
     <string name="conversationsDeleted">Perbualan dipadam</string>
     <string name="conversationsEmpty">Tiada mesej di dalam {conversation_name}.</string>
     <string name="conversationsEnter">Masukkan Key</string>
-    <string name="conversationsEnterDescription">Fungsi kekunci enter semasa menaip dalam perbualan.</string>
     <string name="conversationsGroups">Kumpulan</string>
     <string name="conversationsMessageTrimming">Pemangkasan Mesej</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Trim Komuniti</string>
@@ -755,6 +754,7 @@
     <string name="sessionSettings">Tetapan</string>
     <string name="set">Tetapkan</string>
     <string name="settingsRestartDescription">Anda mesti memulakan semula {app_name} untuk menerapkan tetapan baru anda.</string>
+    <string name="settingsScreenSecurityDesktop">Keselamatan Skrin</string>
     <string name="share">Kongsi</string>
     <string name="shareAccountIdDescription">Jemput rakan anda untuk berbual dengan anda di {app_name} dengan berkongsi ID Akaun anda dengan mereka.</string>
     <string name="shareAccountIdDescriptionCopied">Kongsi dengan rakan-rakan anda di mana sahaja anda biasanya bercakap dengan mereka — kemudian pindahkan perbualan ke sini.</string>

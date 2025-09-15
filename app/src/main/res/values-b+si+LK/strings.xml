@@ -121,6 +121,7 @@
     <string name="banUser">පරිශීලක තහනම් කරන්න</string>
     <string name="banUserBanned">පරිශීලක තහනම් කර ඇත.</string>
     <string name="block">අවහිර</string>
+    <string name="blockBlockedDescription">පණිවිඩය යැවීමට මෙම සබඳතාවය අනවහිර කරන්න</string>
     <string name="blockBlockedNone">අවහිර කළ සබඳතා නැත</string>
     <string name="blockBlockedUser">අවහිර කළා {name}</string>
     <string name="blockDescription">ඔබට <b>{name}</b> ඔවුන් අවහිර කිරීමට අවශ්‍ය බව විශ්වාසද? අවහිර කළ පරිශීලකයින්ට ඔබට පණිවිඩ ඉල්ලීම්, සමූහ ආරාධනා හෝ ඇමතුම් යැවිය නොහැක.</string>
@@ -232,7 +233,6 @@
     <string name="conversationsDeleted">සංවාදය මකා දමන ලදී</string>
     <string name="conversationsEmpty">{conversation_name}හි පණිවිඩ නැත.</string>
     <string name="conversationsEnter">ඇතුල්වීමේ යතුර</string>
-    <string name="conversationsEnterDescription">සංවාදයේ, Enter යතුරේ ක්‍රියාකාරිත්වය.</string>
     <string name="conversationsGroups">සමූහ</string>
     <string name="conversationsMessageTrimming">පණිවිඩ කැපීම</string>
     <string name="conversationsMessageTrimmingTrimCommunities">ප්‍රජා ශිෂ්ටීකිරීම</string>
@@ -753,6 +753,7 @@
     <string name="sessionSettings">සැකසුම්</string>
     <string name="set">සකසන්න</string>
     <string name="settingsRestartDescription">ඔබේ නව සැකසුම් අදාළ කිරීමට {app_name} නැවත ආරම්භ කළ යුතුය.</string>
+    <string name="settingsScreenSecurityDesktop">තිර ආරක්ෂාව</string>
     <string name="share">බෙදාගන්න</string>
     <string name="shareAccountIdDescription">ඔබේ ගිණුම් හැඳුනුම් අංකය බෙදා මෙම {app_name} සමඟ කතාබස් කිරීමට ඔබේ මිතුරාට ආරාධනා කරන්න.</string>
     <string name="shareAccountIdDescriptionCopied">ඔබ ප්‍රයෝජනයේ පවතින ස්ථාන වල පිරිසුවල් සමඟ බෙදාගන්න — පසුව සංවාදය මෙහි ක්‍රමවේදය කරන්න.</string>

@@ -121,6 +121,7 @@
     <string name="banUser">သုံးစွဲသူကို ပိတ်ဆို့မည်</string>
     <string name="banUserBanned">အသုံးပြုသူကို ပိတ်မည်</string>
     <string name="block">ဘလော့ပါ</string>
+    <string name="blockBlockedDescription">မက်ဆေ့ချ် ပို့ရန်အတွက်ဤဆက်သွယ်မှုသို့ ဘလော့ကိုဖြေပါ။</string>
     <string name="blockBlockedNone">ဘလော့လုပ်ထားသော ဆက်သွယ်မှုမရှိ</string>
     <string name="blockBlockedUser">{name} မှ ဘလော့ ခံထားသည်</string>
     <string name="blockDescription">သင် <b>{name} </b> ကို ဘလော့ခ်ချင်တာ သေချာရဲ ့လား? ဘလော့ခ်ထားတဲ့ လူတွေက မက်ဆေ့ချ်လာပို့ခွင့်၊အဖွဲ့ခေါ်ခံရခွင့် နဲ့ဖုန်းခေါ်ရခွင့် ရနိုင်မှာမဟုတ်ပါဘူး။</string>
@@ -231,7 +232,6 @@
     <string name="conversationsDeleted">စကားပြောဆိုမှု ဖျက်ပြီးပါပြီ</string>
     <string name="conversationsEmpty">{conversation_name} တွင် မက်ဆေ့ချ် မရှိပါ။</string>
     <string name="conversationsEnter">ခြေလှမ်းရွေးချယ်ပါ</string>
-    <string name="conversationsEnterDescription">စကားပြောမှာ enter key ရဲ့လုပ်ဆောင်ချက်</string>
     <string name="conversationsGroups">အုပ်စုများ</string>
     <string name="conversationsMessageTrimming">မဇ်ဆေ့ဂ ှ</string>
     <string name="conversationsMessageTrimmingTrimCommunities">ဖြတ်တောက်မှု အသိုင်းအဝိုင်းများ</string>
@@ -740,6 +740,7 @@
     <string name="sessionSettings">ဆက်တင်များ</string>
     <string name="set">သတ်မှတ်မည်</string>
     <string name="settingsRestartDescription">သင့် အဆင်ပြေမှုကို အသုံးချရန် {app_name} ကို ပြန်စပြီး ကိရိယာများကို အသုံးပြုပြီးနောက် ပြန်လည်တင်ဆက်ထားပါ။</string>
+    <string name="settingsScreenSecurityDesktop">မျက်နှာပြင် လုံခြုံရေး</string>
     <string name="share">မျှဝေမည်</string>
     <string name="shareAccountIdDescription">သင့် သူငယ်ချင်းကို {app_name} တွင် ဆွေးနွေးရန် သင့် Account ID ကို ဝေမျှပြီး ဖိတ်ကြားပါ။</string>
     <string name="shareAccountIdDescriptionCopied">သင့်သူငယ်ခ်င်းကို မေးမြန်းရာမှာ စသည်မျှဝေ လောလောဆယ်တော့ ဒီနေရာတွင်စာဆက်ပြောပါ</string>

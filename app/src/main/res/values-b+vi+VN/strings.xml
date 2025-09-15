@@ -138,6 +138,7 @@
     <string name="banUser">Cấm người dùng</string>
     <string name="banUserBanned">Người dùng bị cấm</string>
     <string name="block">Chặn</string>
+    <string name="blockBlockedDescription">Mở khóa người (liên lạc) này để gởi thông báo</string>
     <string name="blockBlockedNone">Không có liên lạc bị chặn</string>
     <string name="blockBlockedUser">Đã chặn {name}</string>
     <string name="blockDescription">Bạn có chắc chắn rằng bạn muốn chặn <b>{name}?</b> Người dùng bị chặn không thể gửi yêu cầu tin nhắn, lời mời nhóm hoặc gọi cho bạn.</string>
@@ -252,7 +253,6 @@
     <string name="conversationsDeleted">Cuộc hội thoại đã được xoá</string>
     <string name="conversationsEmpty">Không có tin nhắn nào trong {conversation_name}.</string>
     <string name="conversationsEnter">Nhập Key</string>
-    <string name="conversationsEnterDescription">Chức năng của phím enter khi nhập nội dung trong cuộc trò chuyện.</string>
     <string name="conversationsGroups">Nhóm</string>
     <string name="conversationsMessageTrimming">Thu gọn tin nhắn</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Cắt bớt Communities</string>
@@ -827,6 +827,7 @@
     <string name="sessionSettings">Cài Đặt</string>
     <string name="set">Thiết Lập</string>
     <string name="settingsRestartDescription">Bạn phải khởi động lại {app_name} để áp dụng các cài đặt mới của mình.</string>
+    <string name="settingsScreenSecurityDesktop">An ninh màn hình</string>
     <string name="share">Chia sẻ</string>
     <string name="shareAccountIdDescription">Mời bạn bè để trò chuyện với bạn trên {app_name} bằng cách chia sẻ Account ID của bạn với họ.</string>
     <string name="shareAccountIdDescriptionCopied">Chia sẻ với bạn bè của bạn bất cứ nơi nào bạn thường nói chuyện với họ — sau đó chuyển cuộc trò chuyện đến đây.</string>

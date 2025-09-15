@@ -233,7 +233,6 @@
     <string name="conversationsDeleted">Samtalen slettet</string>
     <string name="conversationsEmpty">Det er ingen meldinger i {conversation_name}.</string>
     <string name="conversationsEnter">Skriv inn nøkkel</string>
-    <string name="conversationsEnterDescription">Funksjon av enter-tasten når du skriver i en samtale.</string>
     <string name="conversationsGroups">Grupper</string>
     <string name="conversationsMessageTrimming">Meldingsbeskjæring</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Trim Samfunn</string>
@@ -759,6 +758,7 @@
     <string name="sessionSettings">Innstillinger</string>
     <string name="set">Bli med i nettsamfunn</string>
     <string name="settingsRestartDescription">Du må starte {app_name} på nytt for at dine nye innstillinger skal tre i kraft.</string>
+    <string name="settingsScreenSecurityDesktop">Skjermsikkerhet</string>
     <string name="share">Del</string>
     <string name="shareAccountIdDescription">Inviter vennen din til å chatte med deg på {app_name} ved å dele din Account ID med dem.</string>
     <string name="shareAccountIdDescriptionCopied">Del med vennene dine der du vanligvis snakker med dem — og flytt deretter samtalen hit.</string>

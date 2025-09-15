@@ -121,6 +121,7 @@
     <string name="banUser">Блокирај корисника</string>
     <string name="banUserBanned">Корисник блокиран.</string>
     <string name="block">Блокирај</string>
+    <string name="blockBlockedDescription">Одблокирајте дописника да би послали поруку</string>
     <string name="blockBlockedNone">Нема блокираних контаката</string>
     <string name="blockBlockedUser">Блокирао/ла {name}</string>
     <string name="blockDescription">Да ли сте сигурни да желите да блокирате <b>{name}</b>? Блокирани корисници не могу да вам шаљу захтеве за поруке, позивнице за групе или позиве.</string>
@@ -233,7 +234,6 @@
     <string name="conversationsDeleted">Преписка је избрисана</string>
     <string name="conversationsEmpty">Нема порука у {conversation_name}.</string>
     <string name="conversationsEnter">Унесите кључ</string>
-    <string name="conversationsEnterDescription">Функција тастера ентер при куцању у разговору.</string>
     <string name="conversationsGroups">Групе</string>
     <string name="conversationsMessageTrimming">Скраћивање порука</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Скрати Заједницу</string>
@@ -766,6 +766,7 @@
     <string name="sessionSettings">Подешавања</string>
     <string name="set">Потврди</string>
     <string name="settingsRestartDescription">Морате рестартовати {app_name} да примените нова подешавања.</string>
+    <string name="settingsScreenSecurityDesktop">Безбедност екрана</string>
     <string name="share">Дели</string>
     <string name="shareAccountIdDescription">Позовите пријатеља на ћаскање на {app_name} тако што ћете делити свој Account ID са њима.</string>
     <string name="shareAccountIdDescriptionCopied">Дели са својим пријатељима где год је уобичајено – затим настави разговор овде.</string>

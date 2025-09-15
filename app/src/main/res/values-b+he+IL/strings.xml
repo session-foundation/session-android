@@ -121,6 +121,7 @@
     <string name="banUser">חסום משתמש</string>
     <string name="banUserBanned">משתמש נחסם</string>
     <string name="block">חסום</string>
+    <string name="blockBlockedDescription">בטל חסימה של איש קשר זה כדי לשלוח הודעה</string>
     <string name="blockBlockedNone">אין אנשי קשר חסומים</string>
     <string name="blockBlockedUser">נחסם {name}</string>
     <string name="blockDescription">האם אתה בטוח שברצונך לחסום את <b>{name}?</b> משתמשים חסומים אינם יכולים לשלוח לך בקשות הודעות, הזמנות לקבוצות או להתקשר אליך.</string>
@@ -234,7 +235,6 @@
     <string name="conversationsDeleted">השיחה נמחקה</string>
     <string name="conversationsEmpty">אין הודעות ב-{conversation_name}.</string>
     <string name="conversationsEnter">הזן מקש</string>
-    <string name="conversationsEnterDescription">פונקציה של מקש ה-Enter בעת הקלדה בשיחה.</string>
     <string name="conversationsGroups">קבוצות</string>
     <string name="conversationsMessageTrimming">קיצוץ הודעה</string>
     <string name="conversationsMessageTrimmingTrimCommunities">חתוך Communities</string>
@@ -779,6 +779,7 @@
     <string name="sessionSettings">הגדרות</string>
     <string name="set">הגדר</string>
     <string name="settingsRestartDescription">עליך להפעיל מחדש את {app_name} כדי להחיל את ההגדרות החדשות שלך.</string>
+    <string name="settingsScreenSecurityDesktop">אבטחת מסך</string>
     <string name="share">שיתוף</string>
     <string name="shareAccountIdDescription">הזמן את חברך לשוחח איתך על {app_name} על ידי שיתוף מספר הזיהוי שלך איתו.</string>
     <string name="shareAccountIdDescriptionCopied">שתף עם חבריך היכן שאתה מדבר איתם בדרך כלל - ואז העבר את השיחה לכאן.</string>
