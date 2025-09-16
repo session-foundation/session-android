@@ -165,8 +165,9 @@ object MessageReceiver {
             CallMessage.fromProto(proto) ?:
             GroupUpdated.fromProto(proto) ?:
             VisibleMessage.fromProto(proto) ?: throw Error.UnknownMessage
-        // Don't process the envelope any further if the sender is blocked
-        if (isBlocked(sender!!) && message.shouldDiscardIfBlocked()) {
+
+        // Don't process the envelope any further if the sender is blocked (still visible in community chats)
+        if (!isOpenGroupMessage && isBlocked(sender!!) && message.shouldDiscardIfBlocked()) {
             throw Error.SenderBlocked
         }
         val isUserBlindedSender = sender == openGroupPublicKey?.let {
