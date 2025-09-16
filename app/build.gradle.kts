@@ -473,6 +473,9 @@ dependencies {
 
     implementation(libs.androidx.biometric)
 
+    playImplementation(libs.android.billing)
+    playImplementation(libs.android.billing.ktx)
+
     debugImplementation(libs.sqlite.web.viewer)
 }
 
