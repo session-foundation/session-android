@@ -26,7 +26,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="?android:textColorTertiary"
+            android:textColor="?android:textColorSecondary"
             android:textSize="@dimen/medium_font_size"
             android:text="@string/blockedContactsManageDescription" />
     </LinearLayout>
