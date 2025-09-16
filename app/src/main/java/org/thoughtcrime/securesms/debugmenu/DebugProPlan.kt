@@ -7,5 +7,5 @@ data class DebugProPlan(
     val manager: SubscriptionManager,
     val plan: ProSubscriptionDuration
 ) {
-    val label: String get() = "${manager.displayName} - ${plan.name}"
+    val label: String get() = "${manager.id}-${plan.name}"
 }
