@@ -145,6 +145,7 @@
     <string name="banUserBanned">Bruger bandlyst</string>
     <string name="banUserDescription">Indtast konto-ID\'et for den bruger, du vil blokere</string>
     <string name="block">Bloker</string>
+    <string name="blockBlockedDescription">Fjern blokering af denne kontakt for at sende en besked</string>
     <string name="blockBlockedNone">Ingen blokerede kontakter</string>
     <string name="blockBlockedUser">Blokeret {name}</string>
     <string name="blockDescription">Er du sikker på, at du vil blokere <b>{name}?</b> Blokerede brugere kan ikke sende dig beskedanmodninger, gruppeinvitationer eller ringe til dig.</string>
@@ -266,7 +267,6 @@
     <string name="conversationsDeleted">Samtale slettet</string>
     <string name="conversationsEmpty">Der er ingen beskeder i {conversation_name}.</string>
     <string name="conversationsEnter">Indtast nøgle</string>
-    <string name="conversationsEnterDescription">Funktion af enter-tasten, når du skriver i en samtale.</string>
     <string name="conversationsGroups">Grupper</string>
     <string name="conversationsMessageTrimming">Trimning af beskeder</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Trim Communities</string>
@@ -882,6 +882,7 @@
     <string name="set">Indstil</string>
     <string name="setCommunityDisplayPicture">Vælg billede til fællesskabet</string>
     <string name="settingsRestartDescription">Du skal genstarte {app_name} for at anvende dine nye indstillinger.</string>
+    <string name="settingsScreenSecurityDesktop">Skærmsikkerhed</string>
     <string name="share">Del</string>
     <string name="shareAccountIdDescription">Invite din ven til at chatte med dig på {app_name} ved at dele din Account ID med dem.</string>
     <string name="shareAccountIdDescriptionCopied">Del med dine venner, uanset hvor du normalt taler med dem — og fortsæt samtalen her.</string>

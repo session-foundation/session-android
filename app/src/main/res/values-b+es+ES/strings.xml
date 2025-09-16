@@ -277,12 +277,13 @@
     <string name="conversationsDeleted">Conversación eliminada</string>
     <string name="conversationsEmpty">No hay mensajes en {conversation_name}.</string>
     <string name="conversationsEnter">Introducir Clave</string>
-    <string name="conversationsEnterDescription">Función de la tecla Enter al escribir en una conversación.</string>
+    <string name="conversationsEnterSends">ENTER envía un mensaje, SHIFT + ENTER inicia una nueva línea.</string>
     <string name="conversationsGroups">Grupos</string>
     <string name="conversationsMessageTrimming">Recorte de mensajes en chats</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Recortar Comunidades</string>
     <string name="conversationsNew">Nueva conversación</string>
     <string name="conversationsNone">Aún no tienes conversaciones</string>
+    <string name="conversationsSendWithEnterKey">Enter para enviar</string>
     <string name="conversationsSendWithEnterKeyDescription">Pulsar la tecla Intro enviará el mensaje en lugar de empezar una nueva línea.</string>
     <string name="conversationsSettingsAllMedia">Adjuntos</string>
     <string name="conversationsSpellCheck">Revisión ortográfica</string>
@@ -769,6 +770,7 @@
     <string name="openSurvey">Abrir encuesta</string>
     <string name="other">Otro</string>
     <string name="passwordChange">Cambiar Contraseña</string>
+    <string name="passwordChangedDescriptionToast">Tu contraseña ha sido cambiada. Por favor, guárdala en un lugar seguro.</string>
     <string name="passwordConfirm">Confirmar contraseña</string>
     <string name="passwordCurrentIncorrect">Tu contraseña actual es incorrecta.</string>
     <string name="passwordEnter">Introducir contraseña</string>
@@ -819,6 +821,7 @@
     <string name="pinConversation">Anclar conversación</string>
     <string name="pinUnpin">Desfijar</string>
     <string name="pinUnpinConversation">Desanclar conversación</string>
+    <string name="preferences">Preferencias</string>
     <string name="preview">Previsualizar</string>
     <string name="proActivated">Activado</string>
     <string name="proAlreadyPurchased">Ya tienes</string>
@@ -961,6 +964,7 @@
     <string name="set">Definir</string>
     <string name="setCommunityDisplayPicture">Establecer imagen de perfil de la Comunidad</string>
     <string name="settingsRestartDescription">Debes reiniciar {app_name} para aplicar las nuevas configuraciones.</string>
+    <string name="settingsScreenSecurityDesktop">Seguridad de pantalla</string>
     <string name="share">Compartir</string>
     <string name="shareAccountIdDescription">Invita a tu amigo a hablar contigo en {app_name} compartiendo tu ID de Cuenta con él.</string>
     <string name="shareAccountIdDescriptionCopied">Comparte con tus amigos dondequiera que hables con ellos — luego mueve la conversación aquí.</string>
@@ -1001,6 +1005,7 @@
     <string name="updateGroupInformationEnterShorterDescription">Por favor, ingresa una descripción del grupo más corta</string>
     <string name="updateNewVersion">Hay una nueva versión de {app_name} disponible, toca para actualizar</string>
     <string name="updateNewVersionDescription">Hay disponible una nueva versión ({version}) de {app_name}.</string>
+    <string name="updateProfileInformation">Actualizar información de perfil</string>
     <string name="updateReleaseNotes">Ir a las notas de versión</string>
     <string name="updateSession">Actualización de {app_name}</string>
     <string name="updateVersion">Versión {version}</string>

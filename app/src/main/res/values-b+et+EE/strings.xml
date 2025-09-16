@@ -121,6 +121,7 @@
     <string name="banUser">Blokeeri kasutaja</string>
     <string name="banUserBanned">Kasutaja blokeerimine</string>
     <string name="block">Blokeeri</string>
+    <string name="blockBlockedDescription">Sõnumi saatmiseks eemalda selle kontakti blokeering</string>
     <string name="blockBlockedNone">Blokeeritud kontakte pole</string>
     <string name="blockBlockedUser">Blokeeritud {name}</string>
     <string name="blockDescription">Kas olete kindel, et soovite blokeerida <b>{name}</b>? Blokeeritud kasutajad ei saa teile saata sõnumitaotlusi, grupikutseid ega helistada.</string>
@@ -232,7 +233,6 @@
     <string name="conversationsDeleted">Vestlus kustutatud</string>
     <string name="conversationsEmpty">{conversation_name} ei ole sõnumeid.</string>
     <string name="conversationsEnter">Sisesta Key</string>
-    <string name="conversationsEnterDescription">Enter-klahvi funktsioon vestluse ajal tippimisel.</string>
     <string name="conversationsGroups">Grupid</string>
     <string name="conversationsMessageTrimming">Sõnumi piiramine</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Lähenda kogukonnad</string>
@@ -753,6 +753,7 @@
     <string name="sessionSettings">Seaded</string>
     <string name="set">Määra</string>
     <string name="settingsRestartDescription">Uute seadete rakendamiseks peate taaskäivitama {app_name}.</string>
+    <string name="settingsScreenSecurityDesktop">Ekraani turvalisus</string>
     <string name="share">Jaga</string>
     <string name="shareAccountIdDescription">Kutsu oma sõber endaga vestlema {app_name} rakenduses jagades enda Account ID nendega.</string>
     <string name="shareAccountIdDescriptionCopied">Jaga oma sõpradega seal, kus te tavaliselt suhtlete — seejärel liikuge siia vestlema.</string>

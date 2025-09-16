@@ -20,9 +20,10 @@ fun RecyclerView.applyImeBottomPadding() {
 }
 
 // Handle scroll logic
-fun RecyclerView.handleScrollToBottom(){
+fun RecyclerView.handleScrollToBottom() {
     val layoutManager = this.layoutManager as LinearLayoutManager
-    val last = this.adapter?.itemCount?.minus(1) ?: return
+    val last = this.adapter?.itemCount?.minus(1)?.coerceAtLeast(0) ?: return
+
     val bottomOffset = this.paddingBottom
 
     if (layoutManager.isSmoothScrolling) {

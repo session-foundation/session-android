@@ -121,6 +121,7 @@
     <string name="banUser">صارف کو پابندی لگائیں</string>
     <string name="banUserBanned">صارف پر پابندی عائد کر دی گئی</string>
     <string name="block">رکاوٹ</string>
+    <string name="blockBlockedDescription">پیغام بھیجنے کے لئے اس رابطہ کو غیر بلاک کریں۔</string>
     <string name="blockBlockedNone">هیچں بندکرتگ امدیدبونه یافت نه بیت</string>
     <string name="blockBlockedUser">{name} کو روکا گیا</string>
     <string name="blockDescription">کیا آپ یقیناً <b>{name}</b> کو بلاک کرنا چاہتے ہیں؟ بلاک شدہ صارفین آپ کو پیغام کی درخواستیں، گروپ دعوتیں نہیں بھیجیں گے یا آپ کو کال نہیں کریں گے۔</string>
@@ -232,7 +233,6 @@
     <string name="conversationsDeleted">گپ وڑی</string>
     <string name="conversationsEmpty">{conversation_name} میں کوئی پیغام نہیں.</string>
     <string name="conversationsEnter">کنجی درج بکنا</string>
-    <string name="conversationsEnterDescription">واژئے کُنجیء کارکردگی ہدباتءَ نیںّ گفتگوئے شتگ.</string>
     <string name="conversationsGroups">گروپاں</string>
     <string name="conversationsMessageTrimming">Message Trimming</string>
     <string name="conversationsMessageTrimmingTrimCommunities">کمیونٹیز کو تراشیں</string>
@@ -753,6 +753,7 @@
     <string name="sessionSettings">مدیریـــــــت</string>
     <string name="set">سیٹ</string>
     <string name="settingsRestartDescription">ما گپ درخواست قبول کردی {app_name} شروعین کار کنت کہ نویں تنظیماتاں اپنا بیوت.</string>
+    <string name="settingsScreenSecurityDesktop">سکرین سیکورٹی</string>
     <string name="share">پھریبندو</string>
     <string name="shareAccountIdDescription">{app_name} ءَ شُم تکگفتوں دیمانت سہراج بک عاليةکیک شُمسا اکاونٹ ID آئنتے.</string>
     <string name="shareAccountIdDescriptionCopied">لیستی گپتاری ککیانتو انتظام کھیت</string>

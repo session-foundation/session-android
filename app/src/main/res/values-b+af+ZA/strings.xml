@@ -233,7 +233,6 @@
     <string name="conversationsDeleted">Gesprek geskrap</string>
     <string name="conversationsEmpty">Daar is geen boodskappe in {conversation_name} nie.</string>
     <string name="conversationsEnter">Voer sleutel in</string>
-    <string name="conversationsEnterDescription">Funksie van die Enter-sleutel wanneer u \'n gesprek tik.</string>
     <string name="conversationsGroups">Groepe</string>
     <string name="conversationsMessageTrimming">Boodskap Snoei</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Trim Gemeenskappe</string>
@@ -754,6 +753,7 @@
     <string name="sessionSettings">Instellings</string>
     <string name="set">Stel</string>
     <string name="settingsRestartDescription">Jy moet {app_name} herbegin om jou nuwe instellings toe te pas.</string>
+    <string name="settingsScreenSecurityDesktop">Skermveiligheid</string>
     <string name="share">Deel</string>
     <string name="shareAccountIdDescription">Nooi jou vriend om op {app_name} met jou te gesels deur jou Rekening ID met hulle te deel.</string>
     <string name="shareAccountIdDescriptionCopied">Deel met jou vriende waar jy gewoonlik met hulle praat - en skuif die gesprek hier.</string>

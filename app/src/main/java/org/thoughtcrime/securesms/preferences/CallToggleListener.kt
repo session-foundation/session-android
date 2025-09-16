@@ -5,7 +5,9 @@ import androidx.fragment.app.Fragment
 import androidx.preference.Preference
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
+import org.session.libsession.utilities.NonTranslatableStringConstants.SESSION_FOUNDATION
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.SESSION_FOUNDATION_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setBooleanPreference
 import org.thoughtcrime.securesms.permissions.Permissions
@@ -20,10 +22,15 @@ internal class CallToggleListener(
     override fun onPreferenceChange(preference: Preference, newValue: Any): Boolean {
         if (newValue == false) return true
 
+
+        val text = Phrase.from(context.requireContext(), R.string.callsVoiceAndVideoModalDescription)
+            .put(SESSION_FOUNDATION_KEY, SESSION_FOUNDATION)
+            .format()
+
         // check if we've shown the info dialog and check for microphone permissions
         context.showSessionDialog {
             title(R.string.callsVoiceAndVideoBeta)
-            text(R.string.callsVoiceAndVideoModalDescription)
+            text(text)
             button(R.string.enable, R.string.AccessibilityId_enable) { requestMicrophonePermission() }
             cancelButton()
         }

@@ -234,7 +234,6 @@
     <string name="conversationsDeleted">Keskustelu poistettu</string>
     <string name="conversationsEmpty">Keskustelussa {conversation_name} ei ole viestejä.</string>
     <string name="conversationsEnter">Syötä avain</string>
-    <string name="conversationsEnterDescription">Enter-näppäimen toiminto keskustelussa kirjoittaessa.</string>
     <string name="conversationsGroups">Ryhmät</string>
     <string name="conversationsMessageTrimming">Keskustelujen tiivistys</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Tiivistä yhteisöt</string>
@@ -774,6 +773,7 @@
     <string name="sessionSettings">Asetukset</string>
     <string name="set">Aseta</string>
     <string name="settingsRestartDescription">Sinun on käynnistettävä {app_name} uudelleen, jotta uudet asetuksesi tulevat voimaan.</string>
+    <string name="settingsScreenSecurityDesktop">Näytön suojaus</string>
     <string name="share">Jaa</string>
     <string name="shareAccountIdDescription">Kutsu ystäväsi keskustelemaan kanssasi {app_name}-sovelluksessa jakamalla heille tilisi ID:n.</string>
     <string name="shareAccountIdDescriptionCopied">Jaa ystävien kanssa missä yleensä puhut heidän kanssaan - siirrä sitten keskustelu tänne.</string>

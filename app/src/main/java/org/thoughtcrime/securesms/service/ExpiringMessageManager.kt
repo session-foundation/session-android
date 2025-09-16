@@ -211,10 +211,14 @@ class ExpiringMessageManager @Inject constructor(
     }
 
     override fun onMessageReceived(message: Message) {
+        val messageId = message.id ?: return
+
         // When we receive a message, we'll schedule deletion if it has an expiry mode set to
         // AfterSend, as the message would be considered sent from the sender's perspective.
-        val messageId = message.id
-        if (message.expiryMode is ExpiryMode.AfterSend && messageId != null) {
+        // If we receive a message that is sent from ourselves (aka the sync message), we
+        // will start the expiry timer regardless
+        if (message.expiryMode is ExpiryMode.AfterSend ||
+            (message.expiryMode != ExpiryMode.NONE && message.isSenderSelf)) {
             getDatabase(messageId.mms)
                 .markExpireStarted(messageId.id, clock.currentTimeMills())
         }

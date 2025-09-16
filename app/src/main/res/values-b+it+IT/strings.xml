@@ -277,7 +277,6 @@
     <string name="conversationsDeleted">Conversazione eliminata</string>
     <string name="conversationsEmpty">Non ci sono messaggi in {conversation_name}.</string>
     <string name="conversationsEnter">Inserisci chiave</string>
-    <string name="conversationsEnterDescription">Funzione del tasto invio quando si digita in una chat.</string>
     <string name="conversationsGroups">Gruppi</string>
     <string name="conversationsMessageTrimming">Sfoltitura dei messaggi</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Sfoltisci Comunità</string>
@@ -961,6 +960,7 @@
     <string name="set">Imposta</string>
     <string name="setCommunityDisplayPicture">Imposta immagine della Community</string>
     <string name="settingsRestartDescription">È necessario riavviare {app_name} per applicare le modifiche.</string>
+    <string name="settingsScreenSecurityDesktop">Sicurezza Schermo</string>
     <string name="share">Condividi</string>
     <string name="shareAccountIdDescription">Invita i tuoi amici su {app_name} condividendo con loro il tuo codice utente.</string>
     <string name="shareAccountIdDescriptionCopied">Condividi l\'ID utente con i tuoi amici in qualsiasi app di messaggistica utilizziate per comunicare — successivamente potrete spostare qui la conversazione.</string>
