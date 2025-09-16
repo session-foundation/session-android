@@ -221,15 +221,11 @@ class DefaultMessageNotifier @Inject constructor(
 
     override fun updateNotification(context: Context, signal: Boolean, reminderCount: Int) {
         var playNotificationAudio = signal // Local copy of the argument so we can modify it
-//        var telcoCursor: Cursor? = null
 
         var incomingCursor: Cursor? = null
         var reactionsCursor: Cursor? = null
 
         try {
-//            telcoCursor =
-//                mmsSmsDatabase.unreadOrUnseenReactions // TODO: add a notification specific lighter query here
-
             incomingCursor  = mmsSmsDatabase.getUnreadIncomingForNotifications(MAX_ROWS)
             reactionsCursor = mmsSmsDatabase.getOutgoingWithUnseenReactionsForNotifications(MAX_ROWS)
 
