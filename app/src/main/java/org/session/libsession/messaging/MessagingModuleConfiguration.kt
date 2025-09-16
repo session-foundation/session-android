@@ -2,6 +2,7 @@ package org.session.libsession.messaging
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.serialization.json.Json
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
@@ -34,6 +35,7 @@ class MessagingModuleConfiguration @Inject constructor(
     val avatarUtils: AvatarUtils,
     val proStatusManager: ProStatusManager,
     val messageSendJobFactory: MessageSendJob.Factory,
+    val json: Json,
 ) {
 
     companion object {
