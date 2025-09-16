@@ -62,10 +62,10 @@ def build_releases(project_root: str, flavor: str, credentials_property_prefix: 
             gradle_commands += ' -Phuawei '
 
         subprocess.run(f"""{gradle_commands} \
-                    assemble{flavor.capitalize()}Release \
-                    bundle{flavor.capitalize()}Release --stacktrace""", shell=True, check=True, cwd=project_root)
+                    assemble{flavor.capitalize()}ReleaseWithDebugMenu \
+                    bundle{flavor.capitalize()}ReleaseWithDebugMenu --stacktrace""", shell=True, check=True, cwd=project_root)
 
-        apk_output_dir = os.path.join(project_root, f'app/build/outputs/apk/{flavor}/release')
+        apk_output_dir = os.path.join(project_root, f'app/build/outputs/apk/{flavor}/releaseWithDebugMenu')
 
         with open(os.path.join(apk_output_dir, 'output-metadata.json')) as f:
             play_outputs = json.load(f)
@@ -81,7 +81,7 @@ def build_releases(project_root: str, flavor: str, credentials_property_prefix: 
                             apk_paths=apks, 
                             package_id=package_id, 
                             version_name=version_name,
-                            bundle_path=os.path.join(project_root, f'app/build/outputs/bundle/{flavor}Release/app-{flavor}-release.aab'))
+                            bundle_path=os.path.join(project_root, f'app/build/outputs/bundle/{flavor}Release/app-{flavor}-releaseWithDebugMenu.aab'))
         
     finally:
         print(f'Cleaning up keystore file: {keystore_file}')

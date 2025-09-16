@@ -27,7 +27,7 @@ configurations.configureEach {
 }
 
 val canonicalVersionCode = 420
-val canonicalVersionName = "1.27.0"
+val canonicalVersionName = "1.27.0-billing"
 
 val postFixSize = 10
 val abiPostFix = mapOf(
@@ -48,7 +48,7 @@ val getGitHash = providers
 
 val firebaseEnabledVariants = listOf("play", "fdroid")
 val nonPlayVariants = listOf("fdroid", "website") + if (huaweiEnabled) listOf("huawei") else emptyList()
-val nonDebugBuildTypes = listOf("release", "qa", "automaticQa")
+val nonDebugBuildTypes = listOf("release", "releaseWithDebugMenu", "qa", "automaticQa")
 
 fun VariantDimension.devNetDefaultOn(defaultOn: Boolean) {
     val fqEnumClass = "org.session.libsession.utilities.Environment"
@@ -167,6 +167,12 @@ android {
             enablePermissiveNetworkSecurityConfig(false)
             setAlternativeAppName(null)
             setAuthorityPostfix("")
+        }
+
+        create("releaseWithDebugMenu") {
+            initWith(getByName("release"))
+
+            matchingFallbacks += "release"
         }
 
         create("qa") {
