@@ -984,7 +984,7 @@ class DefaultMessageNotifier @Inject constructor(
 
         const val EXTRA_THREAD_ID: String = "extra_thread_id"
 
-        const val MAX_ROWS = 100 // tune as you like
+        const val MAX_ROWS = 100 // We can change this
 
         private const val FOREGROUND_ID = 313399
         private const val SUMMARY_NOTIFICATION_ID = 1338
