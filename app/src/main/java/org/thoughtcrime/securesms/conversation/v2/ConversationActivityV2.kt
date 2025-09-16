@@ -2138,17 +2138,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         .forEach { it.delete() }
                 }
 
-                message.id?.let {
-                    val insertedTs = mmsDb.getMessageRecord(it.id).dateSent
-                    withContext(Dispatchers.Main) {
-                        messageToScrollAuthor.set(recipient.address)
-                        messageToScrollTimestamp.set(insertedTs)
-                        // Ensure onLoadFinished runs and performs the jump
-                        LoaderManager.getInstance(this@ConversationActivityV2)
-                            .restartLoader(0, null, this@ConversationActivityV2)
-                    }
-                }
-
                 waitForApprovalJobToBeSubmitted()
 
                 MessageSender.send(message, recipient.address, quote, linkPreview)
