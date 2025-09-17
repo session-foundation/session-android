@@ -62,7 +62,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
                         .setProductList(
                             listOf(
                                 QueryProductDetailsParams.Product.newBuilder()
-                                    .setProductId(subscriptionDuration.playProductId)
+                                    .setProductId("session_pro")
                                     .setProductType(BillingClient.ProductType.SUBS)
                                     .build()
                             )
@@ -78,9 +78,11 @@ class PlayStoreSubscriptionManager @Inject constructor(
                     "Unable to get the product: product for given id is null"
                 }
 
-                val offerDetails =
-                    checkNotNull(productDetails.subscriptionOfferDetails?.firstOrNull()) {
-                        "Expected to get an offer details for the subscription but got none"
+                val planId = subscriptionDuration.planId
+
+                val offerDetails = checkNotNull(productDetails.subscriptionOfferDetails
+                    ?.firstOrNull { it.basePlanId == planId }) {
+                        "Unable to find a plan with id $planId"
                     }
 
                 val billingResult = billingClient.launchBillingFlow(
@@ -112,7 +114,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
         }
     }
 
-    private val ProSubscriptionDuration.playProductId: String
+    private val ProSubscriptionDuration.planId: String
         get() = when (this) {
             ProSubscriptionDuration.ONE_MONTH -> "session-pro-1-month"
             ProSubscriptionDuration.THREE_MONTHS -> "session-pro-3-months"
