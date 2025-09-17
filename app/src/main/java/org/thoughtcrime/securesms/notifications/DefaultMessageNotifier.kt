@@ -250,10 +250,10 @@ class DefaultMessageNotifier @Inject constructor(
 
                 // split into normal vs request without touching NotificationState class
                 val requestItems = NotificationState().apply {
-                    notificationState.notifications.filter { it.isMessageRequest }.forEach { addNotification(it) }
+                    notificationState.notifications.asSequence().filter { it.isMessageRequest }.forEach { addNotification(it) }
                 }
                 val normalItems = NotificationState().apply {
-                    notificationState.notifications.filter { !it.isMessageRequest }.forEach { addNotification(it) }
+                    notificationState.notifications.asSequence().filter { !it.isMessageRequest }.forEach { addNotification(it) }
                 }
 
                 if (playNotificationAudio && (System.currentTimeMillis() - lastAudibleNotification) < MIN_AUDIBLE_PERIOD_MILLIS) {
