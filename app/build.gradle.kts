@@ -161,12 +161,16 @@ android {
 
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
-
+            isMinifyEnabled = true
             devNetDefaultOn(false)
             enablePermissiveNetworkSecurityConfig(false)
             setAlternativeAppName(null)
             setAuthorityPostfix("")
+
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                file("proguard-rules.pro")
+            )
         }
 
         create("qa") {
