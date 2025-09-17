@@ -63,6 +63,24 @@
 -keep class org.jni_zero.** { *; }
 -keepnames class org.jni_zero.**
 
+# Conversation.* inner types constructed reflectively/JNI:
+# keep the (String, long, boolean) ctor so GetMethodID/newInstance can find it
+-keepclassmembers class network.loki.messenger.libsession_util.util.Conversation$OneToOne {
+    public <init>(java.lang.String, long, boolean);
+}
+# if other Conversation nested types do the same, cover them too:
+-keepclassmembers class network.loki.messenger.libsession_util.util.Conversation$* {
+    public <init>(java.lang.String, long, boolean);
+}
+
+# --- Emoji search (Jackson polymorphic) ---
+# If @JsonTypeInfo uses CLASS or MINIMAL_CLASS, keep class NAMES for the model package.
+-keepnames class org.thoughtcrime.securesms.database.model.**
+
+# Keep the abstract base + its nested types and members so property/creator names stay intact.
+-keep class org.thoughtcrime.securesms.database.model.EmojiSearchData { *; }
+-keep class org.thoughtcrime.securesms.database.model.EmojiSearchData$* { *; }
+
 ########## (OPTIONAL) easier stack traces while iterating ##########
 # -keepattributes SourceFile,LineNumberTable
 # This is generated automatically by the Android Gradle plugin.
