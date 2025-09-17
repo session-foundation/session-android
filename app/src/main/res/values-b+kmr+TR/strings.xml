@@ -44,6 +44,8 @@
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> û <b>{other_name}</b> wekî admîn hatin xwepêşandin.</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonîm</string>
+    <string name="appIcon">ئایکۆنی ئەپ</string>
+    <string name="appIconSelect">ئایکۆن ئەپی جێگرەوە هەڵبژێرە</string>
     <string name="appearanceHideMenuBar">Darikê Menuyê Biveşêre</string>
     <string name="appearanceLanguage">Ziman</string>
     <string name="appearanceLanguageDescription">Hilbijartina zimanê xwe ya bo {app_name} bijêre. {app_name} di nava biguherîne leyenda zimanê nava.</string>
@@ -125,7 +127,7 @@
     <string name="banUser">Bikarhênerê Asteng bike</string>
     <string name="banUserBanned">Bikarhênker astengî bû</string>
     <string name="block">Blok bike</string>
-    <string name="blockBlockedDescription">ئەم پەیوەندە لابردن بۆ بریتیە لە ناردنی پەیامێک.</string>
+    <string name="blockBlockedDescription">Ji bo şandina peyamê vê bloka vî kontaktê rake</string>
     <string name="blockBlockedNone">Kontaktên astengkirî nehatin dîtin</string>
     <string name="blockBlockedUser">{name} asteng kir</string>
     <string name="blockDescription">Tu piştrast î ku tu dixwazî <b>{name}</b> blok bikî? Bikarhênerên blokkirî nikarin daxwazên peyamê bişînin, dawetên li grûban bişînin an telefona te bikin.</string>
@@ -238,7 +240,6 @@
     <string name="conversationsDeleted">Sohbet hate jêbirin</string>
     <string name="conversationsEmpty">Ti peyam nîne di {conversation_name} de.</string>
     <string name="conversationsEnter">Bişkoka Enterê</string>
-    <string name="conversationsEnterDescription">Karwilaşa tuşî zimanê gava niqaşe.</string>
     <string name="conversationsGroups">Kom</string>
     <string name="conversationsMessageTrimming">Kesixîna Peyamê</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Evya gelek di jorîn rereken di ke vestîn destke.</string>
@@ -469,6 +470,7 @@
     <string name="groupSetDisplayPicture">Rismê Koma Danîn</string>
     <string name="groupUnknown">Koma bê Navê</string>
     <string name="groupUpdated">Kom hat rojanekirin</string>
+    <string name="handlingConnectionCandidates">مامەڵەکردن لەگەڵ کاندیدەکانی پەیوەندی</string>
     <string name="helpFAQ">PPP</string>
     <string name="helpHelpUsTranslateSession">{app_name} ji me alîkarî bike ku bi cîh bike</string>
     <string name="helpReportABugDescription">Hin hûrdahalan binêrin ku hûn diyarî karê xwe bikaribinên. Logên xwe berriṇ, paşê pelê bi riya Pêşniyara Alîkarî ya {app_name} bicikin.</string>
@@ -736,6 +738,8 @@
     <string name="readReceipts">Agahiyên Xwendinê</string>
     <string name="readReceiptsDescription">Ji van peyamên ku hûn dişînin û diqewmînin re nûbarên xwendinê nîşan bide.</string>
     <string name="received">Hatiye wergirtin:</string>
+    <string name="receivedAnswer">وەڵامی وەرگیراو</string>
+    <string name="receivingCallOffer">پێشنیاری پەیوەندی بنێرە</string>
     <string name="recommended">Pêşniyar</string>
     <string name="recoveryPasswordBannerDescription">Ji bo piştrastkirina ku hûn nikaribin hesabê xwe winda bikin, şîfreya vegerê xwe qeyd bike.</string>
     <string name="recoveryPasswordBannerTitle">Şîfreya vegerê xwe qeyd bike</string>
@@ -786,6 +790,7 @@
     <string name="send">ناردن</string>
     <string name="sending">Bi şandin</string>
     <string name="sendingCallOffer">پێشنیاری پەیوەندی بنێرە</string>
+    <string name="sendingConnectionCandidates">ناردنی کاندیدەکانی پەیوەندی</string>
     <string name="sent">Hate şandin:</string>
     <string name="sessionAppearance">Xuyang</string>
     <string name="sessionClearData">Daneyê paqij bike</string>
@@ -800,6 +805,7 @@
     <string name="sessionSettings">Mîheng</string>
     <string name="set">Danîn</string>
     <string name="settingsRestartDescription">Ji bo bi aliyekî kirina mîhengekên xwe yên nû, {app_name}ê ji nû ve vekin.</string>
+    <string name="settingsScreenSecurityDesktop">Parastina Ekranê</string>
     <string name="share">Par</string>
     <string name="shareAccountIdDescription">Hevalê xwe dawet bike ku bi te li ser {app_name} sohbet bike bi şêrnînasî Nasnameya Kontê xwe re.</string>
     <string name="shareAccountIdDescriptionCopied">Bi hevalên xwe bi hû zekê qeseyê bikin û niha baye birre deri zanînuwe.</string>

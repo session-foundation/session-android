@@ -36,10 +36,16 @@
     <string name="adminRemovedUser"><b>{name}</b> لە بەڕێوەبەری لابرا.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> و <b>{count} کەس دیکە</b> وەرگیندران وەک بەڕێوەبەر.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> و <b>{other_name}</b> وەرگیندران وەک بەڕێوەبەر.</string>
+    <plurals name="adminSendingPromotion">
+        <item quantity="one">ناردنی پرۆمۆشنی ئەدمین</item>
+        <item quantity="other">ناردنی پرۆمۆشنی ئەدمین</item>
+    </plurals>
     <string name="adminSettings">ڕێکخستنەکانی بەڕێوەبەر</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> و <b>{other_name}</b> بە بەڕێوەبەر هەڵبژێردران.</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">بێناونیشان</string>
+    <string name="appIcon">ئایکۆنی ئەپ</string>
+    <string name="appIconSelect">ئایکۆن ئەپی جێگرەوە هەڵبژێرە</string>
     <string name="appearanceHideMenuBar">شارەوەی منیووبار</string>
     <string name="appearanceLanguage">زمان</string>
     <string name="appearanceLanguageDescription">{app_name} ئەنجومەنی دەبیو بە کراوەکردنی {app_name} بگۆڕە</string>
@@ -233,7 +239,6 @@
     <string name="conversationsDeleted">گفتوگۆ سڕایەوە</string>
     <string name="conversationsEmpty">هیچ پەیامێک نیە لە {conversation_name}.</string>
     <string name="conversationsEnter">کلیدەکە بنووسە</string>
-    <string name="conversationsEnterDescription">فەرمیۆنی لەگەڵ داخستنی کلیلەکەرە</string>
     <string name="conversationsGroups">گروپەکان</string>
     <string name="conversationsMessageTrimming">بڕینی نامە</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Trim Communities</string>
@@ -273,12 +278,20 @@
         <item quantity="one">سڕینەوەی پەیام</item>
         <item quantity="other">سڕینەوەی پەیامەکان</item>
     </plurals>
+    <plurals name="deleteMessageConfirm">
+        <item quantity="one">دڵنیایت دەتەوێت ئەم پەیامە بسڕیتەوە؟</item>
+        <item quantity="other">دڵنیایت دەتەوێت ئەم پەیامانە بسڕیتەوە؟</item>
+    </plurals>
     <plurals name="deleteMessageDeleted">
         <item quantity="one">نامە سڕا</item>
         <item quantity="other">نامەکان بسڕانەوە</item>
     </plurals>
     <string name="deleteMessageDeletedGlobally">ئەم پەیامە سڕاوە</string>
     <string name="deleteMessageDeletedLocally">ئەم پەیامە سڕاوە لەسەر ئەم ئامێرەیە</string>
+    <plurals name="deleteMessageDescriptionDevice">
+        <item quantity="one">ئایا دڵنیای کە دەتەوێت ئەم پەیامە تەنها لەم ئامێرە بسڕیتەوە؟</item>
+        <item quantity="other">ئایا دڵنیای کە دەتەوێت ئەم پەیامە تەنها لەم ئامێرە بسڕیتەوە؟</item>
+    </plurals>
     <string name="deleteMessageDescriptionEveryone">دڵنیایت دەتەوێت ئەم پەیامە بسڕیتەوە بۆ هەموو کەسان؟</string>
     <string name="deleteMessageDeviceOnly">تەنها لەسەر ئەم ئامێرەدا سڕینەوە</string>
     <string name="deleteMessageDevicesAll">سڕینەوە لە هەموو ئاڵاتەکانم</string>
@@ -286,6 +299,14 @@
     <plurals name="deleteMessageFailed">
         <item quantity="one">شکستی هەندەڵکردنی پەیام</item>
         <item quantity="other">شکستی هەندەڵکردنی پەیامەکان</item>
+    </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">ئەم پەیامە ناتوانرێت لە هەموو ئامێرەکانت بسڕدرێتەوە</item>
+        <item quantity="other">هەندێک لەو نامانەی کە هەڵتبژاردووە ناتوانرێت لە هەموو ئامێرەکانت بسڕدرێنەوە</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="one">ئەم پەیامە بۆ هەموو کەسێک ناسڕدرێتەوە</item>
+        <item quantity="other">هەندێک لەو نامانەی کە هەڵتبژاردووە ناتوانرێت بۆ هەموو کەسێک بسڕدرێتەوە</item>
     </plurals>
     <string name="deleteMessagesDescriptionEveryone">دڵنیایت بۆ سڕینەوەی ئەم پەیامەکان بۆ هەموو ؟</string>
     <string name="deleting">سڕینەوە</string>
@@ -391,6 +412,10 @@
     <string name="groupInviteFailedMultiple">{name} و {count} هاڕاوەکانت و هاووپەیوانەت بۆ {group_name} بانگخستند شکستی هێنا</string>
     <string name="groupInviteFailedTwo">{name} و {other_name} بۆ {group_name} بانگخستند شکستی هێنا</string>
     <string name="groupInviteFailedUser">{name} بۆ {group_name} بانگخستند شکستی هێنا</string>
+    <plurals name="groupInviteSending">
+        <item quantity="one">ناردنی بانگ</item>
+        <item quantity="other">ناردنی بانگه کان</item>
+    </plurals>
     <string name="groupInviteSent">بانێ ناردکراوە</string>
     <string name="groupInviteSuccessful">دعوتنامەی گروپ سەرکەوتوو بوو</string>
     <string name="groupInviteVersion">بەکارهێنەران پێویستە نوێترین وەشانی بەکار بیهنە بۆ وەرگرتنی بانگەشەکان</string>
@@ -444,6 +469,7 @@
     <string name="groupSetDisplayPicture">دانانی وێنەی پیشانده‌رەوی گروپ</string>
     <string name="groupUnknown">گروپی نەناسراو</string>
     <string name="groupUpdated">گروپ نوێکرایەوە</string>
+    <string name="handlingConnectionCandidates">مامەڵەکردن لەگەڵ کاندیدەکانی پەیوەندی</string>
     <string name="helpFAQ">پرسەکان</string>
     <string name="helpHelpUsTranslateSession">یارمەتی پێ بدە بۆ وەرگێڕان {app_name}</string>
     <string name="helpReportABugDescription">کورتە بازەشەکان هاوبەش بەرز بن و چاره‌که‌کن ئاڵۆزی کانتانە داده‌مێ. پارەگەڕەکانی گەیاندنەوە بە ناوی {app_name} بەیاری نوو و ئاڵۆزی گودان.</string>
@@ -459,6 +485,14 @@
     <string name="incognitoKeyboardDescription">داواکاری کردن بۆ ڕێژیمی Incognito ئەگەر بەردەست بێت. پێویستە ھەموو جلەکان ڕێگە بدەن.</string>
     <string name="info">زانیاری</string>
     <string name="invalidShortcut">شارتی ناکرێنەکان</string>
+    <plurals name="inviteFailed">
+        <item quantity="one">بانگهێشتکردن شکستی هێنا</item>
+        <item quantity="other">بانگهێشتەکان شکستی هێنا</item>
+    </plurals>
+    <plurals name="inviteFailedDescription">
+        <item quantity="one">بانگهێشتنامەکە نەتوانرا بنێردرێت. حەز دەکەیت هەوڵی دووبارە بدەیتەوە؟</item>
+        <item quantity="other">بانگهێشتنامەکان نەتوانرا بنێردرێت. حەز دەکەیت هەوڵی دووبارە بدەیتەوە؟</item>
+    </plurals>
     <string name="join">به‌ kidllax</string>
     <string name="later">له ڕاستەدەی</string>
     <string name="learnMore">فوکی لە زانیاری</string>
@@ -691,6 +725,8 @@
     <string name="readReceipts">وەڵامە خوێندراوەکان</string>
     <string name="readReceiptsDescription">خوان پارەقە بۆ هەمو پەیامەکانی.</string>
     <string name="received">وەردەگریت:</string>
+    <string name="receivedAnswer">وەڵامی وەرگیراو</string>
+    <string name="receivingCallOffer">پێشنیاری پەیوەندی بنێرە</string>
     <string name="recommended">پێشنیارەکان</string>
     <string name="recoveryPasswordBannerDescription">تێپەڕەوشەی گەڕانەوەی خۆت پاشەکەوت بکە بۆ دڵنیایی نەکردنی دەستی پەیوەندیکردنەوە بەرزەکاڵ.</string>
     <string name="recoveryPasswordBannerTitle">پاشەکەوتی تێپەڕەوشەی گەڕانەوە</string>
@@ -741,6 +777,7 @@
     <string name="send">ناردن</string>
     <string name="sending">ناردن دەکات</string>
     <string name="sendingCallOffer">پێشنیاری پەیوەندی بنێرە</string>
+    <string name="sendingConnectionCandidates">ناردنی کاندیدەکانی پەیوەندی</string>
     <string name="sent">نارد:</string>
     <string name="sessionAppearance">نماوە</string>
     <string name="sessionClearData">سڕینەوەی داتا</string>
@@ -755,6 +792,7 @@
     <string name="sessionSettings">کانف.*?) دابنێ. هاوکێشە ، دان بە کۆنفرمەکردنی بەکوپی دەنێ. تەرکیبەکانی داپەش-پلانە دێ بەرز بتە. süstee دانە بەرەڤداستور ئەپە دییانە ^ کانسەش.</string>
     <string name="set">دان راوکردن</string>
     <string name="settingsRestartDescription">پێویستە {app_name} پڕۆگرام بکەیتەوە بۆ بەکاربردنی ڕێکخستنی نووەت.</string>
+    <string name="settingsScreenSecurityDesktop">پاراستنی پردە</string>
     <string name="share">هاوبەشی زاد</string>
     <string name="shareAccountIdDescription">دوستەکانت بگەرێنە چات کردن لە {app_name} بە بەشکردنی ناسنامەی ئەژماریت.</string>
     <string name="shareAccountIdDescriptionCopied">هاوبەشەكە وەكFAB وێبی هرێ ئاڵۆزە.</string>

@@ -121,6 +121,7 @@
     <string name="banUser">Dëboni përdorues</string>
     <string name="banUserBanned">Përdoruesi u dëbua</string>
     <string name="block">Bllokoni</string>
+    <string name="blockBlockedDescription">Që t’i dërgohet një mesazh, zhbllokojeni këtë kontakt</string>
     <string name="blockBlockedNone">S’ka kontakte të bllokuara</string>
     <string name="blockBlockedUser">Të bllokohet {name}</string>
     <string name="blockDescription">A jeni të sigurt që doni ta bllokoni <b>{name}</b>? Përdoruesit e bllokuar nuk mund t\'ju dërgojnë kërkesa për mesazhe, ftesa grupi apo t’ju telefonojnë.</string>
@@ -232,7 +233,6 @@
     <string name="conversationsDeleted">Biseda u fshi</string>
     <string name="conversationsEmpty">Nuk ka mesazhe në {conversation_name}.</string>
     <string name="conversationsEnter">Jepni çelësin</string>
-    <string name="conversationsEnterDescription">Funksioni i tastit enter kur shkrini mesazhe.</string>
     <string name="conversationsGroups">Grupe</string>
     <string name="conversationsMessageTrimming">Shkurtim mesazhesh</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Pastro Communities</string>
@@ -752,6 +752,7 @@
     <string name="sessionSettings">Rregullime</string>
     <string name="set">Vendos</string>
     <string name="settingsRestartDescription">Duhet të rifilloni {app_name} për të zbatuar cilësimet e reja.</string>
+    <string name="settingsScreenSecurityDesktop">Siguri ekrani</string>
     <string name="share">Shpërndaje</string>
     <string name="shareAccountIdDescription">Ftoni shokët tuaj të bisedojnë me ju në {app_name} duke ndarë Account ID tuaj me ta.</string>
     <string name="shareAccountIdDescriptionCopied">Shpërndani me miqtë tuaj kudo që flisni zakonisht me ta — pastaj zhvendosni bisedën këtu.</string>

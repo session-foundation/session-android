@@ -121,6 +121,7 @@
     <string name="banUser">ಬಳಕೆದಾರರನ್ನು ವಿಲಂಬಿಸಿ</string>
     <string name="banUserBanned">ಬಳಕೆದಾರನನ್ನು ಬ್ಯಾನ್ ಮಾಡಲಾಗಿದೆ</string>
     <string name="block">ತಡೆಯುವ ಸಹಿತ</string>
+    <string name="blockBlockedDescription">ಸಂದೇಶವೊಂದನ್ನು ಕಳುಹಿಸಲು ಈ ಸಂಪರ್ಕವನ್ನು ಬ್ಲಾಕ್ ಮಾಡಿ</string>
     <string name="blockBlockedNone">ತಡೆಗಟ್ಟಿದ ಸಂಪರ್ಕಗಳು ಎಂಥಹುದೂ ಇಲ್ಲ</string>
     <string name="blockBlockedUser">{name} ತಡೆ ಮಾಡಲಾಗಿದೆ</string>
     <string name="blockDescription">ನೀವು ಖಚಿತವಾಗಿ <b>{name}</b>ನ್ನು ತಡೆಯಲು ಬಯಸುವಿರಾ? ತಡೆಮಾಡಿದ ಬಳಕೆದಾರರು ನಿಮಗೆ ಸಂದೇಶ ವಿನಂತಿಗಳನ್ನು, ಗುಂಪು ಆಹ್ವಾನವನ್ನು ಕಳುಹಿಸಲು ಅಥವಾ ನಿಮಗೆ ಕರೆಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ.</string>
@@ -232,7 +233,6 @@
     <string name="conversationsDeleted">ಸಂಭಾಷಣೆಯನ್ನು ಅಳಿಸಲಾಗಿದೆ</string>
     <string name="conversationsEmpty">{conversation_name} ನಲ್ಲಿ ಯಾವುದೇ ಸಂದೇಶಗಳಿಲ್ಲ.</string>
     <string name="conversationsEnter">ಎಂಟರ್ ಕೀ</string>
-    <string name="conversationsEnterDescription">ಸಂಭಾಷಣೆಯಲ್ಲಿ ಟೈಪಿಂಗ್‌ನಲ್ಲಿ ಎಂಟರ್ ಕೀಯ ತಂತ್ರಜ್ಞಾನ.</string>
     <string name="conversationsGroups">ಗುಂಪುಗಳು</string>
     <string name="conversationsMessageTrimming">ಸಂದೇಶಗಳ ಕತ್ತರಿಸಿ ಹಾಕುವಿಕೆ</string>
     <string name="conversationsMessageTrimmingTrimCommunities">ಸಮುದಾಯಗಳನ್ನು ಟ್ರಿಮ್ ಮಾಡಿ</string>
@@ -753,6 +753,7 @@
     <string name="sessionSettings">ಸಂಯೋಜನೆಗಳು</string>
     <string name="set">ಸೆಟ್</string>
     <string name="settingsRestartDescription">ನಿಮ್ಮ ಹೊಸ ಸೆಟ್ಟಿಂಗ್ಗಳನ್ನು ಅನ್ವಯಿಸಲು ನೀವು {app_name} ಅನ್ನು ಪುನರಾರಂಭಿಸಬೇಕು.</string>
+    <string name="settingsScreenSecurityDesktop">ಪರದೆಯ ಭದ್ರತೆ</string>
     <string name="share">ಹಂಚು</string>
     <string name="shareAccountIdDescription">ನಿಮ್ಮ ಖಾತೆ ID ಹಂಚಿಕೊಂಡು ನಿಮ್ಮ ಸ್ನೇಹಿತನನ್ನು {app_name} ನೊಂದಿಗೆ ಚಾಟ್ ಮಾಡಲು ಆಹ್ವಾನಿಸಿ.</string>
     <string name="shareAccountIdDescriptionCopied">ನೀವು ಸಾಮಾನ್ಯವಾಗಿ ಜೊತೆಗೆ ಮಾತನಾಡುವ ನಿಮ್ಮ ಸ್ನೇಹಿತರೊಂದಿಗೆ ಹಂಚಿಕೊಳ್ಳಿ ಮತ್ತು ನಂತರ ಸಂಭಾಷಣೆಯನ್ನು ಇಲ್ಲಿ ಪ್ರಾರಂಭಿಸಿ.</string>

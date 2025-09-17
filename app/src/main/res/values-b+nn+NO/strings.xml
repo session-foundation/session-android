@@ -121,7 +121,7 @@
     <string name="banUser">Bannlys brukar</string>
     <string name="banUserBanned">Bruker utestengt</string>
     <string name="block">Blokker</string>
-    <string name="blockBlockedDescription">Opphev blokkeringen på denne kontakten for å sende en melding.</string>
+    <string name="blockBlockedDescription">Opphev blokkeringen på denne kontakten for å sende en melding</string>
     <string name="blockBlockedNone">Ingen blokkerte kontakter</string>
     <string name="blockBlockedUser">Blokkert {name}</string>
     <string name="blockDescription">Er du sikker på at du vil blokkera <b>{name}</b>? Blokkerte brukere kan ikkje senda deg meldingsforespørsler, gruppeinvitasjonar eller ringa deg.</string>
@@ -233,7 +233,6 @@
     <string name="conversationsDeleted">Konversasjonen sletta</string>
     <string name="conversationsEmpty">Det er ingen meldinger i {conversation_name}.</string>
     <string name="conversationsEnter">Skriv inn Tast</string>
-    <string name="conversationsEnterDescription">Funksjon for enter-tasten ved skriving i samtale.</string>
     <string name="conversationsGroups">Grupper</string>
     <string name="conversationsMessageTrimming">Meldingsbeskjæring</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Trim Samfunn</string>
@@ -759,6 +758,7 @@
     <string name="sessionSettings">Innstillingar</string>
     <string name="set">Set</string>
     <string name="settingsRestartDescription">Du må starte {app_name} på nytt for å bruke dei nye innstillingane dine.</string>
+    <string name="settingsScreenSecurityDesktop">Skjermtryggleik</string>
     <string name="share">Del</string>
     <string name="shareAccountIdDescription">Inviter vennen din til å chatte med deg på {app_name} ved å dele din Account ID med dei.</string>
     <string name="shareAccountIdDescriptionCopied">Del med vennane dine der du vanlegvis pratar med dei — så flyttar du samtalen hit.</string>

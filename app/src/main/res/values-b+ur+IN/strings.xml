@@ -121,6 +121,7 @@
     <string name="banUser">صارف کو بین کریں</string>
     <string name="banUserBanned">صارف بین کیا گیا</string>
     <string name="block">بلاک کریں</string>
+    <string name="blockBlockedDescription">پیغام بھیجنے کے لیے اس رابطے کو ان بلاک کریں</string>
     <string name="blockBlockedNone">کوئی بلاک شدہ رابطہ نہیں ہے</string>
     <string name="blockBlockedUser">{name} کو بلاک کر دیا گیا</string>
     <string name="blockDescription">کیا آپ واقعی <b>{name}</b> کو بلاک کرنا چاہتے ہیں؟ بلاک کئے گئے صارفین آپ کو میسیج کی درخواستیں، گروپ دعوتیں یا کال نہیں بھیج سکتے۔</string>
@@ -230,7 +231,6 @@
     <string name="conversationsDeleted">مکالمہ حذف کردیا گیا</string>
     <string name="conversationsEmpty">{conversation_name} میں کوئی پیغامات نہیں ہیں۔</string>
     <string name="conversationsEnter">کلید درج کریں</string>
-    <string name="conversationsEnterDescription">گفتگو میں ٹائپ کرتے وقت انٹر کی کلید کا فنکشن</string>
     <string name="conversationsGroups">گروپس</string>
     <string name="conversationsMessageTrimming">پیغام کی کانٹ چھانٹ</string>
     <string name="conversationsMessageTrimmingTrimCommunities">کمیونٹیز  ٹرم کریں</string>
@@ -765,6 +765,7 @@
     <string name="sessionSettings">سیٹنگز</string>
     <string name="set">سیٹ</string>
     <string name="settingsRestartDescription">آپ کو نئی سیٹنگز کے اطلاق کے لئے {app_name} کو دوبارہ شروع کرنا ضروری ہے۔</string>
+    <string name="settingsScreenSecurityDesktop">سکرین سیکیورٹی</string>
     <string name="share">شیئر</string>
     <string name="shareAccountIdDescription">اپنے دوست کو اپنی Account ID شئیر کر کے {app_name} پر آپ کے ساتھ بات چیت کرنے کی دعوت دیں۔</string>
     <string name="shareAccountIdDescriptionCopied">اپنے دوستوں کے ساتھ جہاں آپ معمول کے مطابق بات کرتے ہیں شیئر کریں — پھر یہاں گفتگو کو منتقل کریں۔</string>

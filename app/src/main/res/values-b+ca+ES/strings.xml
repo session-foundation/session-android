@@ -277,7 +277,6 @@
     <string name="conversationsDeleted">S\'ha suprimit la conversa</string>
     <string name="conversationsEmpty">No hi ha missatges a {conversation_name}.</string>
     <string name="conversationsEnter">Introdueix clau</string>
-    <string name="conversationsEnterDescription">Funció de la tecla d\'introducció durant l\'escriptura en una conversa.</string>
     <string name="conversationsGroups">Grups</string>
     <string name="conversationsMessageTrimming">Escapçament de missatges</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Limiteu comunitats</string>
@@ -957,6 +956,7 @@
     <string name="set">Definir</string>
     <string name="setCommunityDisplayPicture">Definiu la imatge de la comunitat</string>
     <string name="settingsRestartDescription">Heu de reiniciar {app_name} per aplicar la vostra nova configuració.</string>
+    <string name="settingsScreenSecurityDesktop">Seguretat de pantalla</string>
     <string name="share">Compartir</string>
     <string name="shareAccountIdDescription">Convideu el vostre amic a xatejar a {app_name} compartint el vostre ID de compte amb ell.</string>
     <string name="shareAccountIdDescriptionCopied">Compartiu amb els vostres amics allà on acostumeu a parlar-hi; després, traslladeu la conversa aquí.</string>

@@ -121,6 +121,7 @@
     <string name="banUser">Ban User</string>
     <string name="banUserBanned">Omukozesa asazibwaamu</string>
     <string name="block">Block</string>
+    <string name="blockBlockedDescription">Sazaamu omukozesa kuno okusindika obubaka</string>
     <string name="blockBlockedNone">Tolina mikutu</string>
     <string name="blockBlockedUser">Blocked {name}</string>
     <string name="blockDescription">Oli mbanankubye <b>{name} </b>? Abanankubize tebayinza kusindikidde obubaka, obubaka bw\'ekibinja oba okubakubira simu.</string>
@@ -232,7 +233,6 @@
     <string name="conversationsDeleted">Okuggya okwekeneenya</string>
     <string name="conversationsEmpty">Tewali bubaka mu {conversation_name}.</string>
     <string name="conversationsEnter">Yingiza Key</string>
-    <string name="conversationsEnterDescription">Enkola ya ki Enter okunyiga kulwokola message nga wandikira mu kwogereza.</string>
     <string name="conversationsGroups">Ebibinja</string>
     <string name="conversationsMessageTrimming">Tikka olubaka olwa teriiko ly’oteereza</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Fengereza Community</string>
@@ -753,6 +753,7 @@
     <string name="sessionSettings">Ebyokutereeza</string>
     <string name="set">Tereka</string>
     <string name="settingsRestartDescription">Olina okukozizza {app_name} okusobozesa settings empya.</string>
+    <string name="settingsScreenSecurityDesktop">Obukuumi bwa ekikola ekiriko akabonero</string>
     <string name="share">Gabana</string>
     <string name="shareAccountIdDescription">Yingira enjuuyi ku {app_name} ng\'ogabana nabo Account ID.</string>
     <string name="shareAccountIdDescriptionCopied">Gabana n\'emikwano gyo gy\'oba ogiyogera nabo bulijjo — lwezo mulange eno okutandika okunyumya.</string>
