@@ -37,7 +37,6 @@ interface DatabaseComponent {
     fun searchDatabase(): SearchDatabase
     fun lokiAPIDatabase(): LokiAPIDatabase
     fun lokiMessageDatabase(): LokiMessageDatabase
-    fun lokiThreadDatabase(): LokiThreadDatabase
     fun lokiUserDatabase(): LokiUserDatabase
     fun lokiBackupFilesDatabase(): LokiBackupFilesDatabase
     fun sessionJobDatabase(): SessionJobDatabase

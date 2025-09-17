@@ -27,7 +27,6 @@ interface LokiAPIDatabaseProtocol {
     fun clearReceivedMessageHashValuesByNamespaces(vararg namespaces: Int)
     fun getAuthToken(server: String): String?
     fun setAuthToken(server: String, newValue: String?)
-    fun setUserCount(room: String, server: String, newValue: Int)
     fun getLastMessageServerID(room: String, server: String): Long?
     fun setLastMessageServerID(room: String, server: String, newValue: Long)
     fun getLastDeletionServerID(room: String, server: String): Long?

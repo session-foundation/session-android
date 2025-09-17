@@ -288,5 +288,6 @@
     <string name="qa_action_item_title">action-item-title</string>
     <string name="qa_action_item_subtitle">action-item-subtitle</string>
     <string name="qa_action_item_icon">action-item-icon</string>
+    <string name="qa_conversations_blocked_contact_item">qa-blocked-contacts-settings-item</string>
 
 </resources>

@@ -14,7 +14,6 @@ import org.session.libsession.messaging.messages.visible.Attachment
 import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsession.messaging.messages.visible.Reaction
 import org.session.libsession.messaging.messages.visible.VisibleMessage
-import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
@@ -67,12 +66,8 @@ interface StorageProtocol {
     fun getServerCapabilities(server: String): List<String>?
 
     // Open Groups
-    fun getAllOpenGroups(): Map<Long, OpenGroup>
-    fun getOpenGroup(threadId: Long): OpenGroup?
-    fun getOpenGroup(address: Address): OpenGroup?
     suspend fun addOpenGroup(urlAsString: String)
     fun setOpenGroupServerMessageID(messageID: MessageId, serverID: Long, threadID: Long)
-    fun getOpenGroup(room: String, server: String): OpenGroup?
 
     // Open Group Public Keys
     fun getOpenGroupPublicKey(server: String): String?
@@ -82,7 +77,6 @@ interface StorageProtocol {
     fun updateProfilePicture(groupID: String, newValue: ByteArray)
     fun removeProfilePicture(groupID: String)
     fun hasDownloadedProfilePicture(groupID: String): Boolean
-    fun setUserCount(room: String, server: String, newValue: Int)
 
     // Last Message Server ID
     fun getLastMessageServerID(room: String, server: String): Long?
@@ -179,7 +173,14 @@ interface StorageProtocol {
     /**
      * Returns the ID of the `TSIncomingMessage` that was constructed.
      */
-    fun persist(message: VisibleMessage, quotes: QuoteModel?, linkPreview: List<LinkPreview?>, fromGroup: Address.GroupLike?, attachments: List<Attachment>, runThreadUpdate: Boolean): MessageId?
+    fun persist(
+        threadRecipient: Recipient,
+        message: VisibleMessage,
+        quotes: QuoteModel?,
+        linkPreview: List<LinkPreview?>,
+        attachments: List<Attachment>,
+        runThreadUpdate: Boolean
+    ): MessageId?
     fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean = false)
     fun markConversationAsUnread(threadId: Long)
     fun getLastSeen(threadId: Long): Long

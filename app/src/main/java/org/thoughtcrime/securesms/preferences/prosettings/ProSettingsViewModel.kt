@@ -4,6 +4,7 @@ import android.content.Context
 import android.icu.util.MeasureUnit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.media3.common.Label
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -24,6 +25,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
@@ -69,16 +71,30 @@ class ProSettingsViewModel @Inject constructor(
                 subscriptionState = if(proStatusManager.isCurrentUserPro())
                     subscriptionState
                 else SubscriptionState.NeverSubscribed,
-                proExpiryLabel = when(subscriptionState){
+                subscriptionExpiryLabel = when(subscriptionState){
                     is SubscriptionState.Active.AutoRenewing ->
-                        Phrase.from(context, R.string.proAutoRenew)
-                        .put(RELATIVE_TIME_KEY, dateUtils.getExpiryString(subscriptionState.proStatus.validUntil))
-                        .format()
+                        Phrase.from(context, R.string.proAutoRenewTime)
+                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                            .put(TIME_KEY, dateUtils.getExpiryString(subscriptionState.proStatus.validUntil))
+                            .format()
 
                     is SubscriptionState.Active.Expiring ->
-                        Phrase.from(context, R.string.proExpiring)
-                        .put(RELATIVE_TIME_KEY, dateUtils.getExpiryString(subscriptionState.proStatus.validUntil))
-                        .format()
+                        Phrase.from(context, R.string.proExpiringTime)
+                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                            .put(TIME_KEY, dateUtils.getExpiryString(subscriptionState.proStatus.validUntil))
+                            .format()
+
+                    else -> ""
+                },
+                subscriptionExpiryDate = when(subscriptionState){
+                    is SubscriptionState.Active -> {
+                        val newSubscriptionExpiryDate = ZonedDateTime.now()
+                            .plus(subscriptionState.type.duration)
+                            .toInstant()
+                            .toEpochMilli()
+
+                        dateUtils.getLocaleFormattedDate(newSubscriptionExpiryDate, proSettingsDateFormat)
+                    }
 
                     else -> ""
                 }
@@ -335,7 +351,8 @@ class ProSettingsViewModel @Inject constructor(
     data class ProSettingsUIState(
         val subscriptionState: SubscriptionState = SubscriptionState.NeverSubscribed,
         val proStats: ProStats = ProStats(),
-        val proExpiryLabel: CharSequence = ""
+        val subscriptionExpiryLabel: CharSequence = "", // eg: "Pro auto renewing in 3 days"
+        val subscriptionExpiryDate: CharSequence = "" // eg: "May 21st, 2025"
     )
 
     data class ProStats(

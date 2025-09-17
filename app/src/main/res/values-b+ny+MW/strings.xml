@@ -121,6 +121,7 @@
     <string name="banUser">Ban User</string>
     <string name="banUserBanned">Munthu wotsalira atachotsedwa</string>
     <string name="block">Block</string>
+    <string name="blockBlockedDescription">Pokankha Lamulo Llitsa lemba uthenga</string>
     <string name="blockBlockedNone">Palibe Zilumikizana Zotsekedwa</string>
     <string name="blockBlockedUser">Blocked {name}</string>
     <string name="blockDescription">Mukutsimikiza kuti mukufuna kuletsa <b>{name}?</b>? Ogwiritsa omwe aletsedwa sangathe kukutumizirani mauthenga ofunira, kukupemphani mu mgulu kapena kukuyimbirani.</string>
@@ -232,7 +233,6 @@
     <string name="conversationsDeleted">Rikani Kukambirana</string>
     <string name="conversationsEmpty">Palibe mauthenga mu {conversation_name}.</string>
     <string name="conversationsEnter">Lemberani kiyi</string>
-    <string name="conversationsEnterDescription">Ntchito ya kiyi ya enter mukalemba mu kukambirana.</string>
     <string name="conversationsGroups">Magulu</string>
     <string name="conversationsMessageTrimming">Kusandulika mauthenga</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Chepetsani Community</string>
@@ -704,7 +704,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Bisa Chibisobisobwe cha Ndondomeko</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Kubisa chinsinsi chobwezera pa chipangizochi.</string>
     <string name="recoveryPasswordRestoreDescription">Lemberani mawu achinsinsi a kubwereranso kuti mulowe muakaunti yanu. Ngati simunazisunge, mutha kuzipeza muzoikamo za pulogalamu yanu.</string>
-    <string name="recoveryPasswordView">Onani Chinsinsi</string>
     <string name="recoveryPasswordWarningSendDescription">Iyi ndiyo password yanu yobwezeretsa. Ngati mutumiza kwa wina, adzakhala ndi mwayi wathunthu pa akaunti yanu.</string>
     <string name="redo">Kubwezeretsanso</string>
     <string name="remove">Chotsani</string>
@@ -754,6 +753,7 @@
     <string name="sessionSettings">Munashka</string>
     <string name="set">Set</string>
     <string name="settingsRestartDescription">Muyenera kuyambiranso {app_name} kuti mutseke zosintha zanu zatsopano.</string>
+    <string name="settingsScreenSecurityDesktop">Rikuripa pakallayachina</string>
     <string name="share">Yallichirina</string>
     <string name="shareAccountIdDescription">Kayachina mnzanu woti azilankhula nanu pa {app_name} powatumizirani Account ID yanu.</string>
     <string name="shareAccountIdDescriptionCopied">Share with your friends wherever you usually speak with them — then move the conversation here.</string>

@@ -13,12 +13,14 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.BuildConfig
@@ -55,7 +57,6 @@ import org.thoughtcrime.securesms.util.mapToStateFlow
 import java.io.File
 import java.io.IOException
 import java.time.Instant
-import java.time.ZonedDateTime
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -401,10 +402,18 @@ class SettingsViewModel @Inject constructor(
 
     private suspend fun clearDataDeviceAndNetwork() {
         val deletionResultMap: Map<String, Boolean>? = try {
-            val openGroups = storage.getAllOpenGroups()
-            openGroups.map { it.value.server }.toSet().forEach { server ->
-                OpenGroupApi.deleteAllInboxMessages(server).await()
+            val allCommunityServers = configFactory.withUserConfigs { it.userGroups.allCommunityInfo() }
+                .mapTo(hashSetOf()) {  it.community.baseUrl }
+
+            coroutineScope {
+                allCommunityServers.map { server ->
+                    launch {
+                        runCatching { OpenGroupApi.deleteAllInboxMessages(server).await() }
+                            .onFailure { Log.e(TAG, "Error deleting messages for $server", it) }
+                    }
+                }.joinAll()
             }
+
             SnodeAPI.deleteAllMessages(checkNotNull(storage.userAuth)).await()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to delete network messages - offering user option to delete local data only.", e)

@@ -18,6 +18,7 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.snode.utilities.await
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.DecodedAudio
 import org.session.libsession.utilities.InputStreamMediaDataSource
 import org.session.libsession.utilities.UploadResult
@@ -30,6 +31,7 @@ import org.session.libsignal.streams.PlaintextOutputStreamFactory
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.PushAttachmentData
 import org.session.libsignal.utilities.Util
+import org.thoughtcrime.securesms.database.ThreadDatabase
 
 class AttachmentUploadJob @AssistedInject constructor(
     @Assisted val attachmentID: Long,
@@ -39,6 +41,7 @@ class AttachmentUploadJob @AssistedInject constructor(
     private val storage: StorageProtocol,
     private val messageDataProvider: MessageDataProvider,
     private val messageSendJobFactory: MessageSendJob.Factory,
+    private val threadDatabase: ThreadDatabase,
 ) : Job {
     override var delegate: JobDelegate? = null
     override var id: String? = null
@@ -67,11 +70,13 @@ class AttachmentUploadJob @AssistedInject constructor(
         try {
             val attachment = messageDataProvider.getScaledSignalAttachmentStream(attachmentID)
                 ?: return handleFailure(dispatcherName, Error.NoAttachment)
-            val openGroup = storage.getOpenGroup(threadID.toLong())
 
-            if (openGroup != null) {
-                val keyAndResult = upload(attachment, openGroup.server, false) {
-                    OpenGroupApi.upload(it, openGroup.room, openGroup.server)
+            val threadAddress = threadDatabase.getRecipientForThreadId(threadID.toLong()) ?: return handlePermanentFailure(dispatcherName,
+                RuntimeException("Thread doesn't exist"))
+
+            if (threadAddress is Address.Community) {
+                val keyAndResult = upload(attachment, threadAddress.serverUrl, false) {
+                    OpenGroupApi.upload(it, threadAddress.room, threadAddress.serverUrl)
                 }
                 handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second)
             } else {

@@ -234,7 +234,6 @@
     <string name="conversationsDeleted">Conversa excluída</string>
     <string name="conversationsEmpty">Não há mensagens em {conversation_name}.</string>
     <string name="conversationsEnter">Insira a tecla Enter</string>
-    <string name="conversationsEnterDescription">Função da tecla Enter ao digitar em uma conversa.</string>
     <string name="conversationsGroups">Grupos</string>
     <string name="conversationsMessageTrimming">Corte de Mensagens</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Cortar Comunidades</string>
@@ -725,7 +724,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Ocultar Senha de Recuperação</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Permanentemente esconda sua senha de recuperação neste dispositivo.</string>
     <string name="recoveryPasswordRestoreDescription">Digite sua senha de recuperação para carregar sua conta. Se você não a salvou, você pode encontrá-la nas configurações do aplicativo.</string>
-    <string name="recoveryPasswordView">Ver Senha</string>
     <string name="recoveryPasswordWarningSendDescription">Essa é sua senha de recuperação. Se você mandá-la para alguem, essa pessoa terá acesso completo a sua conta.</string>
     <string name="redo">Refazer</string>
     <string name="remove">Remover</string>
@@ -775,6 +773,7 @@
     <string name="sessionSettings">Configurações</string>
     <string name="set">Aplicar</string>
     <string name="settingsRestartDescription">Você precisa reiniciar o {app_name} para aplicar as novas configurações.</string>
+    <string name="settingsScreenSecurityDesktop">Segurança de Tela</string>
     <string name="share">Compartilhar</string>
     <string name="shareAccountIdDescription">Convide seu amigo para conversar com você no {app_name} compartilhando seu ID de Conta com ele.</string>
     <string name="shareAccountIdDescriptionCopied">Compartilhe com seus amigos onde quer que você costuma falar com eles — então mova a conversa para cá.</string>

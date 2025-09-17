@@ -275,7 +275,6 @@
     <string name="conversationsDeleted">会话已删除</string>
     <string name="conversationsEmpty">{conversation_name}中没有消息</string>
     <string name="conversationsEnter">回车键</string>
-    <string name="conversationsEnterDescription">在对话中输入回车键时的功能。</string>
     <string name="conversationsGroups">群组</string>
     <string name="conversationsMessageTrimming">消息整理</string>
     <string name="conversationsMessageTrimmingTrimCommunities">清理群组旧消息</string>
@@ -863,7 +862,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">隐藏恢复密码</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">在此设备上永久隐藏您的恢复密码。</string>
     <string name="recoveryPasswordRestoreDescription">输入您的恢复密码以加载您的账户。如果您没有保存它，您可以在应用设置中找到该恢复密码。</string>
-    <string name="recoveryPasswordView">查看密码</string>
     <string name="recoveryPasswordWarningSendDescription">这是您的恢复密码。如果您发送给他人，他们将能够完全访问您的账户。</string>
     <string name="recreateGroup">重新创建群组</string>
     <string name="redo">重做</string>
@@ -933,6 +931,7 @@
     <string name="set">设置</string>
     <string name="setCommunityDisplayPicture">设置社群头像</string>
     <string name="settingsRestartDescription">您必须重新启动{app_name}以应用您的新设置。</string>
+    <string name="settingsScreenSecurityDesktop">屏幕安全性</string>
     <string name="share">分享</string>
     <string name="shareAccountIdDescription">通过与好友分享您的账号ID来邀请他们与您在{app_name}上聊天</string>
     <string name="shareAccountIdDescriptionCopied">随时随地和朋友分享，并将会话移到此处。</string>

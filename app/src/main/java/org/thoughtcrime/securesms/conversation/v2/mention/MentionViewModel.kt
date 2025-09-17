@@ -105,10 +105,10 @@ class MentionViewModel @AssistedInject constructor(
                     else -> listOf(address.address)
                 }
 
-                val openGroup = (recipient.data as? RecipientData.Community)?.openGroup
+                val openGroup = (recipient.data as? RecipientData.Community)
 
                 val myId = if (openGroup != null) {
-                    requireNotNull(storage.getUserBlindedAccountId(openGroup.publicKey)).hexString
+                    requireNotNull(storage.getUserBlindedAccountId(openGroup.serverPubKey)).hexString
                 } else {
                     requireNotNull(storage.getUserPublicKey())
                 }

@@ -2,10 +2,12 @@ package org.session.libsession.utilities.recipients
 
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.ExpiryMode
+import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.GroupMember
 import network.loki.messenger.libsession_util.util.UserPic
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.session.libsession.messaging.open_groups.GroupMemberRole
-import org.session.libsession.messaging.open_groups.OpenGroup
+import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
 import java.time.Instant
@@ -63,12 +65,26 @@ sealed interface RecipientData {
     ) : ConfigBased, RecipientData
 
     data class Community(
-        val openGroup: OpenGroup,
+        val serverUrl: String,
+        val serverPubKey: String,
+        val room: String,
+        val roomInfo: OpenGroupApi.RoomInfo?,
         override val priority: Long,
-        val roles: Map<AccountId, GroupMemberRole>,
     ) : RecipientData, GroupLike {
         override val avatar: RemoteFile?
-            get() = openGroup.imageId?.let { RemoteFile.Community(openGroup.server, openGroup.room, it) }
+            get() = roomInfo?.details?.imageId?.let { RemoteFile.Community(
+                communityServerBaseUrl = serverUrl,
+                roomId = room,
+                fileId = it)
+            }
+
+        val joinURL: String
+            get() = serverUrl.toHttpUrl()
+                .newBuilder()
+                .addPathSegment(room)
+                .addQueryParameter("public_key", serverPubKey)
+                .build()
+                .toString()
 
         override val firstMember: Recipient?
             get() = null
@@ -80,11 +96,15 @@ sealed interface RecipientData {
             get() = null
 
         override fun hasAdmin(user: AccountId): Boolean {
-            return roles[user]?.canModerate == true
+            return roomInfo != null && (roomInfo.details.admins.contains(user.hexString) ||
+                    roomInfo.details.moderators.contains(user.hexString) ||
+                    roomInfo.details.hiddenAdmins.contains(user.hexString) ||
+                    roomInfo.details.hiddenModerators.contains(user.hexString))
         }
 
         override fun shouldShowAdminCrown(user: AccountId): Boolean {
-            return roles[user]?.shouldShowAdminCrown == true
+            return roomInfo != null && (roomInfo.details.admins.contains(user.hexString) ||
+                    roomInfo.details.moderators.contains(user.hexString))
         }
 
         override val proStatus: ProStatus
@@ -143,16 +163,20 @@ sealed interface RecipientData {
      */
     data class PartialGroup(
         val name: String,
+        private val groupInfo: GroupInfo.ClosedGroupInfo,
         val avatar: RemoteFile.Encrypted?,
         val expiryMode: ExpiryMode,
-        val approved: Boolean,
-        val priority: Long,
-        val isAdmin: Boolean,
-        val kicked: Boolean,
-        val destroyed: Boolean,
         val proStatus: ProStatus,
         val members: List<GroupMemberInfo>,
-    ) : ConfigBased
+        val description: String?,
+    ) : ConfigBased {
+        val approved: Boolean get() = !groupInfo.invited
+        val priority: Long get() = groupInfo.priority
+        val isAdmin: Boolean get() = groupInfo.hasAdminKey()
+        val kicked: Boolean get() = groupInfo.kicked
+        val destroyed: Boolean get() = groupInfo.destroyed
+        val shouldPoll: Boolean get() = groupInfo.shouldPoll
+    }
 
     /**
      * Full group data that includes additional information that may not be present in the config.

@@ -234,7 +234,6 @@
     <string name="conversationsDeleted">Η συνομιλία διαγράφηκε</string>
     <string name="conversationsEmpty">Δεν υπάρχουν μηνύματα σε {conversation_name}.</string>
     <string name="conversationsEnter">Εισαγάγετε Key</string>
-    <string name="conversationsEnterDescription">Λειτουργία του πλήκτρου εισαγωγής κατά την πληκτρολόγηση σε συνομιλία.</string>
     <string name="conversationsGroups">Ομάδες</string>
     <string name="conversationsMessageTrimming">Περικοπή μηνυμάτων</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Περικοπή Κοινοτήτων</string>
@@ -721,7 +720,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Απόκρυψη Κωδικού Ανάκτησης</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Μόνιμη απόκρυψη του κωδικού ανάκτησης σε αυτή τη συσκευή.</string>
     <string name="recoveryPasswordRestoreDescription">Εισαγάγετε τον κωδικό σας ανάκτησης για να φορτώσετε τον λογαριασμό σας. Αν δεν τον έχετε αποθηκεύσει, μπορείτε να τον βρείτε στις ρυθμίσεις της εφαρμογής.</string>
-    <string name="recoveryPasswordView">Προβολή Κωδικού</string>
     <string name="recoveryPasswordWarningSendDescription">Αυτός είναι ο κωδικός ανάκτησής σας. Αν τον στείλετε σε κάποιον, θα έχει πλήρη πρόσβαση στον λογαριασμό σας.</string>
     <string name="redo">Επανάληψη</string>
     <string name="remove">Αφαίρεση</string>
@@ -771,6 +769,7 @@
     <string name="sessionSettings">Ρυθμίσεις</string>
     <string name="set">Ορισμός</string>
     <string name="settingsRestartDescription">Πρέπει να επανεκκινήσετε το {app_name} για να εφαρμόσετε τις νέες ρυθμίσεις σας.</string>
+    <string name="settingsScreenSecurityDesktop">Ασφάλεια Οθόνης</string>
     <string name="share">Κοινοποίηση</string>
     <string name="shareAccountIdDescription">Προσκαλέστε τον φίλο σας να συνομιλήσει μαζί σας στο {app_name} μοιράζοντας το Account ID σας με αυτόν.</string>
     <string name="shareAccountIdDescriptionCopied">Μοιραστείτε με τους φίλους σας όπου και αν μιλάτε συνήθως μαζί τους — στη συνέχεια μετακινήστε τη συζήτηση εδώ.</string>

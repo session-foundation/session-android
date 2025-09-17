@@ -43,23 +43,19 @@ sealed class Destination {
                     LegacyClosedGroup(address.groupPublicKeyHex)
                 }
                 is Address.Community -> {
-                    val storage = MessagingModuleConfiguration.shared.storage
-                    val threadID = storage.getThreadId(address)!!
-                    storage.getOpenGroup(threadID)?.let {
-                        OpenGroup(roomToken = it.room, server = it.server, fileIds = fileIds)
-                    } ?: throw Exception("Missing open group for thread with ID: $threadID.")
+                    OpenGroup(roomToken = address.room, server = address.serverUrl, fileIds = fileIds)
                 }
                 is Address.CommunityBlindedId -> {
                     val serverPublicKey = MessagingModuleConfiguration.shared.configFactory
                         .withUserConfigs { configs ->
                             configs.userGroups.allCommunityInfo()
-                                .first { it.community.baseUrl == address.serverUrl.toString() }
+                                .first { it.community.baseUrl == address.serverUrl }
                                 .community
                                 .pubKeyHex
                         }
 
                     OpenGroupInbox(
-                        server = address.serverUrl.toString(),
+                        server = address.serverUrl,
                         serverPublicKey = serverPublicKey,
                         blindedPublicKey = address.blindedId.blindedId.hexString,
                     )

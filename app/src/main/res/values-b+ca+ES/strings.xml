@@ -277,7 +277,6 @@
     <string name="conversationsDeleted">S\'ha suprimit la conversa</string>
     <string name="conversationsEmpty">No hi ha missatges a {conversation_name}.</string>
     <string name="conversationsEnter">Introdueix clau</string>
-    <string name="conversationsEnterDescription">Funció de la tecla d\'introducció durant l\'escriptura en una conversa.</string>
     <string name="conversationsGroups">Grups</string>
     <string name="conversationsMessageTrimming">Escapçament de missatges</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Limiteu comunitats</string>
@@ -886,7 +885,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Amaga la contrasenya de recuperació</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Oculta permanentment la teva contrasenya de recuperació en aquest dispositiu.</string>
     <string name="recoveryPasswordRestoreDescription">Introdueix la teva contrasenya de recuperació per carregar el teu compte. Si no l\'has guardat, la pots trobar a la configuració de l\'aplicació.</string>
-    <string name="recoveryPasswordView">Mostra la contrasenya</string>
     <string name="recoveryPasswordWarningSendDescription">Aquesta és la vostra contrasenya de recuperació. Si l\'envieu a algú, tindrà accés complet al vostre compte.</string>
     <string name="recreateGroup">Recrea grup</string>
     <string name="redo">Refés</string>
@@ -958,6 +956,7 @@
     <string name="set">Definir</string>
     <string name="setCommunityDisplayPicture">Definiu la imatge de la comunitat</string>
     <string name="settingsRestartDescription">Heu de reiniciar {app_name} per aplicar la vostra nova configuració.</string>
+    <string name="settingsScreenSecurityDesktop">Seguretat de pantalla</string>
     <string name="share">Compartir</string>
     <string name="shareAccountIdDescription">Convideu el vostre amic a xatejar a {app_name} compartint el vostre ID de compte amb ell.</string>
     <string name="shareAccountIdDescriptionCopied">Compartiu amb els vostres amics allà on acostumeu a parlar-hi; després, traslladeu la conversa aquí.</string>

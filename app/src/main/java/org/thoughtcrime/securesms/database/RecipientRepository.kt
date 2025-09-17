@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.database
 
 import androidx.collection.LruCache
-import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -25,9 +24,8 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISI
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
-import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.open_groups.GroupMemberRole
-import org.session.libsession.messaging.open_groups.OpenGroup
+import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -72,10 +70,9 @@ class RecipientRepository @Inject constructor(
     private val groupMemberDatabase: GroupMemberDatabase,
     private val recipientSettingsDatabase: RecipientSettingsDatabase,
     private val preferences: TextSecurePreferences,
-    private val lokiThreadDatabase: LokiThreadDatabase,
-    private val storage: Lazy<StorageProtocol>,
     private val blindedIdMappingRepository: BlindMappingRepository,
     private val proStatusManager: ProStatusManager,
+    private val communityDatabase: CommunityDatabase,
     @param:ManagerScope private val managerScope: CoroutineScope,
 ) {
     private val recipientFlowCache = LruCache<Address, WeakReference<SharedFlow<Recipient>>>(512)
@@ -115,12 +112,7 @@ class RecipientRepository @Inject constructor(
                     settingsFetcher = {
                         withContext(Dispatchers.Default) { recipientSettingsDatabase.getSettings(it) }
                     },
-                    openGroupFetcher = {
-                        withContext(Dispatchers.Default) { storage.get().getOpenGroup(it) }
-                    },
-                    fetchGroupMemberRoles = { groupId ->
-                        withContext(Dispatchers.Default) { groupMemberDatabase.getGroupMembers(groupId) }
-                    }
+                    communityFetcher = { withContext(Dispatchers.Default) { communityDatabase.getRoomInfo(it) } }
                 )
 
                 emit(value)
@@ -144,8 +136,7 @@ class RecipientRepository @Inject constructor(
     private inline fun fetchRecipient(
         address: Address,
         settingsFetcher: (Address) -> RecipientSettings,
-        openGroupFetcher: (Address.Community) -> OpenGroup?,
-        fetchGroupMemberRoles: (Address.Community) -> Map<AccountId, GroupMemberRole>,
+        communityFetcher: (Address.Community) -> OpenGroupApi.RoomInfo?,
     ): Pair<Recipient, Flow<*>> {
         val recipientData =
             address.toBlinded()?.let { blindedIdMappingRepository.findMappings(it).firstOrNull()?.second }
@@ -237,26 +228,20 @@ class RecipientRepository @Inject constructor(
                     }
 
                     is Address.Community -> {
-                        value = openGroupFetcher(address)
-                            ?.let { openGroup ->
-                                val groupConfig = configFactory.withUserConfigs {
-                                    it.userGroups.getCommunityInfo(openGroup.server, openGroup.room)
-                                }
-
-                                createCommunityRecipient(
-                                    address = address,
-                                    config = groupConfig,
-                                    roles = fetchGroupMemberRoles(address),
-                                    community = openGroup,
-                                    settings = settings
-                                )
-                            }
-                            ?: createGenericRecipient(address, settings)
+                        value = configFactory.withUserConfigs {
+                            it.userGroups.getCommunityInfo(address.serverUrl, address.room)
+                        }?.let { groupConfig ->
+                            createCommunityRecipient(
+                                address = address,
+                                config = groupConfig,
+                                roomInfo = communityFetcher(address),
+                                settings = settings
+                            )
+                        } ?: createGenericRecipient(address, settings)
 
                         changeSource = merge(
-                            lokiThreadDatabase.changeNotification,
                             recipientSettingsDatabase.changeNotification.filter { it == address },
-                            groupMemberDatabase.changeNotification.filter { it == address },
+                            communityDatabase.changeNotification.filter { it == address },
                             configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_GROUPS)),
                         )
                     }
@@ -372,8 +357,7 @@ class RecipientRepository @Inject constructor(
         return fetchRecipient(
             address = address,
             settingsFetcher = recipientSettingsDatabase::getSettings,
-            openGroupFetcher = storage.get()::getOpenGroup,
-            fetchGroupMemberRoles = groupMemberDatabase::getGroupMembers
+            communityFetcher = communityDatabase::getRoomInfo
         ).first
     }
 
@@ -429,19 +413,16 @@ class RecipientRepository @Inject constructor(
                         avatar = configs.groupInfo.getProfilePic().toRemoteFile(),
                         expiryMode = configs.groupInfo.expiryMode,
                         name = configs.groupInfo.getName() ?: groupInfo.name,
-                        approved = !groupInfo.invited,
-                        priority = groupInfo.priority,
-                        isAdmin = groupInfo.adminKey != null,
-                        kicked = groupInfo.kicked,
-                        destroyed = groupInfo.destroyed,
                         proStatus = if (proStatusManager.isUserPro(address)) ProStatus.Pro() else ProStatus.None,
+                        description = configs.groupInfo.getDescription(),
                         members = configs.groupMembers.all()
                             .asSequence()
                             .map(RecipientData::GroupMemberInfo)
                             .sortedWith { o1, o2 ->
                                 groupMemberComparator.compare(o1.address.accountId, o2.address.accountId)
                             }
-                            .toList()
+                            .toList(),
+                        groupInfo = groupInfo,
                     )
                 }
             }
@@ -604,18 +585,19 @@ class RecipientRepository @Inject constructor(
         }
 
         private fun createCommunityRecipient(
-            address: Address,
-            config: GroupInfo.CommunityGroupInfo?,
-            roles: Map<AccountId, GroupMemberRole>,
-            community: OpenGroup,
+            address: Address.Community,
+            config: GroupInfo.CommunityGroupInfo,
+            roomInfo: OpenGroupApi.RoomInfo?,
             settings: RecipientSettings?,
         ): Recipient {
             return Recipient(
                 address = address,
                 data = RecipientData.Community(
-                    openGroup = community,
-                    priority = config?.priority ?: PRIORITY_VISIBLE,
-                    roles = roles,
+                    roomInfo = roomInfo,
+                    priority = config.priority,
+                    serverUrl = address.serverUrl,
+                    room = address.room,
+                    serverPubKey = config.community.pubKeyHex,
                 ),
                 mutedUntil = settings?.muteUntil,
                 autoDownloadAttachments = settings?.autoDownloadAttachments,

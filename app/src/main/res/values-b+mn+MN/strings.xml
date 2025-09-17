@@ -234,7 +234,6 @@
     <string name="conversationsDeleted">Харилцан яриа устгагдсан</string>
     <string name="conversationsEmpty">{conversation_name}-нд мессеж байхгүй байна.</string>
     <string name="conversationsEnter">Түлхүүр оруулна уу</string>
-    <string name="conversationsEnterDescription">Товчилсон түлхүүрийн үүрэг нь харилцан ярианы үед.</string>
     <string name="conversationsGroups">Бүлгүүд</string>
     <string name="conversationsMessageTrimming">Мессеж хасалт</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Community хасах</string>
@@ -721,7 +720,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Нууц үгийг нуух</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Танай сэргээх нууц үгийг энэ төхөөрөмж дээр бүрмөсөн нуух.</string>
     <string name="recoveryPasswordRestoreDescription">Аккаунтаа сэргээхэд сэргээх нууц үгээ оруулах. Хэрвээ хадгалаагүй бол, аппынхаа тохиргооноос олж болно.</string>
-    <string name="recoveryPasswordView">Нууц үгийг харах</string>
     <string name="recoveryPasswordWarningSendDescription">Энэ таны нууц үг юм. Хэрэв та үүнийг хүнд илгээвэл таны аккаунтанд бүрэн нэвтрэх боломжтой болно.</string>
     <string name="redo">Дахин хийх</string>
     <string name="remove">Устгах</string>
@@ -771,6 +769,7 @@
     <string name="sessionSettings">Тохиргоо</string>
     <string name="set">Тохируулах</string>
     <string name="settingsRestartDescription">Шинэ тохиргоог хэрэгжүүлэхийн тулд {app_name}-ийг дахин эхлүүлнэ үү.</string>
+    <string name="settingsScreenSecurityDesktop">Дэлгэцийн аюулгүй байдал</string>
     <string name="share">Хуваалцах</string>
     <string name="shareAccountIdDescription">Найзаа урьж, {app_name} дээр чатлах боломжтой. Account ID-г найздаа хуваалцана уу.</string>
     <string name="shareAccountIdDescriptionCopied">Найзуудтайгаа хаана ч байгаа яриагаа энд шилжүүлээрэй.</string>

@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.sending_receiving.pollers
 
+import com.fasterxml.jackson.core.type.TypeReference
 import com.google.protobuf.ByteString
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -24,22 +25,30 @@ import org.session.libsession.messaging.messages.Message.Companion.senderOrSync
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.Endpoint
-import org.session.libsession.messaging.open_groups.GroupMemberRole
-import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
+import org.session.libsession.messaging.open_groups.OpenGroupApi.BatchRequest
+import org.session.libsession.messaging.open_groups.OpenGroupApi.BatchRequestInfo
+import org.session.libsession.messaging.open_groups.OpenGroupApi.BatchResponse
+import org.session.libsession.messaging.open_groups.OpenGroupApi.Capability
+import org.session.libsession.messaging.open_groups.OpenGroupApi.DirectMessage
+import org.session.libsession.messaging.open_groups.OpenGroupApi.Message
+import org.session.libsession.messaging.open_groups.OpenGroupApi.getOrFetchServerCapabilities
+import org.session.libsession.messaging.open_groups.OpenGroupApi.parallelBatch
 import org.session.libsession.messaging.open_groups.OpenGroupMessage
 import org.session.libsession.messaging.sending_receiving.MessageReceiver
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageHandler
+import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
+import org.session.libsignal.utilities.HTTP.Verb.GET
+import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.BlindMappingRepository
-import org.thoughtcrime.securesms.database.GroupMemberDatabase
-import org.thoughtcrime.securesms.database.LokiThreadDatabase
+import org.thoughtcrime.securesms.database.CommunityDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import java.util.concurrent.TimeUnit
@@ -60,12 +69,11 @@ class OpenGroupPoller @AssistedInject constructor(
     private val blindMappingRepository: BlindMappingRepository,
     private val receivedMessageHandler: ReceivedMessageHandler,
     private val batchMessageJobFactory: BatchMessageReceiveJob.Factory,
-    private val groupMemberDatabase: GroupMemberDatabase,
-    private val lokiThreadDatabase: LokiThreadDatabase,
     private val configFactory: ConfigFactoryProtocol,
     private val threadDatabase: ThreadDatabase,
     private val trimThreadJobFactory: TrimThreadJob.Factory,
     private val openGroupDeleteJobFactory: OpenGroupDeleteJob.Factory,
+    private val communityDatabase: CommunityDatabase,
     @Assisted private val server: String,
     @Assisted private val scope: CoroutineScope,
 ) {
@@ -132,63 +140,10 @@ class OpenGroupPoller @AssistedInject constructor(
     }
 
     private fun handleRoomPollInfo(
-        roomToken: String,
-        pollInfo: OpenGroupApi.RoomPollInfo,
-        publicKey: String
+        address: Address.Community,
+        pollInfoJson: Map<*, *>,
     ) {
-        val existingOpenGroup = storage.getOpenGroup(roomToken, server)
-
-        // If we don't have an existing group and don't have a 'createGroupIfMissingWithPublicKey'
-        // value then don't process the poll info
-        val publicKey = existingOpenGroup?.publicKey ?: publicKey
-        val name = pollInfo.details?.name ?: existingOpenGroup?.name
-        val infoUpdates = pollInfo.details?.infoUpdates ?: existingOpenGroup?.infoUpdates
-
-        val openGroup = OpenGroup(
-            server = server,
-            room = pollInfo.token,
-            name = name ?: "",
-            description = (pollInfo.details?.description ?: existingOpenGroup?.description),
-            publicKey = publicKey,
-            imageId = (pollInfo.details?.imageId ?: existingOpenGroup?.imageId),
-            canWrite = pollInfo.write,
-            infoUpdates = infoUpdates ?: 0,
-            isAdmin = pollInfo.admin,
-            isModerator = pollInfo.moderator,
-        )
-        // - Open Group changes
-        lokiThreadDatabase.setOpenGroupChat(
-            openGroup = openGroup,
-            threadID = threadDatabase.getThreadIdIfExistsFor(Address.Community(server, roomToken))
-        )
-
-        // - User Count
-        storage.setUserCount(roomToken, server, pollInfo.activeUsers)
-
-        val community = Address.Community(openGroup)
-
-        // - Moderators
-        pollInfo.details?.moderators?.let { list ->
-            groupMemberDatabase.updateGroupMembers(
-                community, GroupMemberRole.MODERATOR, list.map(::AccountId)
-            )
-        }
-        pollInfo.details?.hiddenModerators?.let { list ->
-            groupMemberDatabase.updateGroupMembers(
-                community, GroupMemberRole.HIDDEN_MODERATOR, list.map(::AccountId)
-            )
-        }
-        // - Admins
-        pollInfo.details?.admins?.let { list ->
-            groupMemberDatabase.updateGroupMembers(
-                community, GroupMemberRole.ADMIN, list.map(::AccountId)
-            )
-        }
-        pollInfo.details?.hiddenAdmins?.let { list ->
-            groupMemberDatabase.updateGroupMembers(
-                community, GroupMemberRole.HIDDEN_ADMIN, list.map(::AccountId)
-            )
-        }
+        communityDatabase.patchRoomInfo(address, JsonUtil.toJson(pollInfoJson))
     }
 
 
@@ -209,14 +164,13 @@ class OpenGroupPoller @AssistedInject constructor(
 
         val publicKey = allCommunities.first { it.community.baseUrl == server }.community.pubKeyHex
 
-        OpenGroupApi
-            .poll(rooms, server)
+        poll(rooms)
             .asSequence()
             .filterNot { it.body == null }
             .forEach { response ->
                 when (response.endpoint) {
                     is Endpoint.RoomPollInfo -> {
-                        handleRoomPollInfo(  response.endpoint.roomToken, response.body as OpenGroupApi.RoomPollInfo, publicKey)
+                        handleRoomPollInfo(Address.Community(server, response.endpoint.roomToken), response.body as Map<*, *>)
                     }
                     is Endpoint.RoomMessagesRecent -> {
                         handleMessages(server, response.endpoint.roomToken, response.body as List<OpenGroupApi.Message>)
@@ -236,6 +190,100 @@ class OpenGroupPoller @AssistedInject constructor(
 
         return rooms
     }
+
+    @Suppress("UNCHECKED_CAST")
+    suspend fun poll(rooms: List<String>): List<BatchResponse<*>> {
+        val lastInboxMessageId = storage.getLastInboxMessageId(server)
+        val lastOutboxMessageId = storage.getLastOutboxMessageId(server)
+        val requests = mutableListOf<BatchRequestInfo<*>>()
+
+        val serverCapabilities = getOrFetchServerCapabilities(server)
+
+        rooms.forEach { room ->
+            val address = Address.Community(serverUrl = server, room = room)
+            val latestRoomPollInfo = communityDatabase.getRoomInfo(address)
+            val infoUpdates = latestRoomPollInfo?.details?.infoUpdates ?: 0
+            val lastMessageServerId = storage.getLastMessageServerID(room, server) ?: 0L
+            requests.add(
+                BatchRequestInfo(
+                    request = BatchRequest(
+                        method = GET,
+                        path = "/room/$room/pollInfo/$infoUpdates"
+                    ),
+                    endpoint = Endpoint.RoomPollInfo(room, infoUpdates),
+                    responseType = object : TypeReference<Map<*, *>>(){}
+                )
+            )
+            requests.add(
+                if (lastMessageServerId == 0L) {
+                    BatchRequestInfo(
+                        request = BatchRequest(
+                            method = GET,
+                            path = "/room/$room/messages/recent?t=r&reactors=5"
+                        ),
+                        endpoint = Endpoint.RoomMessagesRecent(room),
+                        responseType = object : TypeReference<List<Message>>(){}
+                    )
+                } else {
+                    BatchRequestInfo(
+                        request = BatchRequest(
+                            method = GET,
+                            path = "/room/$room/messages/since/$lastMessageServerId?t=r&reactors=5"
+                        ),
+                        endpoint = Endpoint.RoomMessagesSince(room, lastMessageServerId),
+                        responseType = object : TypeReference<List<Message>>(){}
+                    )
+                }
+            )
+        }
+        val isAcceptingCommunityRequests = storage.isCheckingCommunityRequests()
+        if (serverCapabilities.contains(Capability.BLIND.name.lowercase()) && isAcceptingCommunityRequests) {
+            requests.add(
+                if (lastInboxMessageId == null) {
+                    BatchRequestInfo(
+                        request = BatchRequest(
+                            method = GET,
+                            path = "/inbox"
+                        ),
+                        endpoint = Endpoint.Inbox,
+                        responseType = object : TypeReference<List<DirectMessage>>() {}
+                    )
+                } else {
+                    BatchRequestInfo(
+                        request = BatchRequest(
+                            method = GET,
+                            path = "/inbox/since/$lastInboxMessageId"
+                        ),
+                        endpoint = Endpoint.InboxSince(lastInboxMessageId),
+                        responseType = object : TypeReference<List<DirectMessage>>() {}
+                    )
+                }
+            )
+            requests.add(
+                if (lastOutboxMessageId == null) {
+                    BatchRequestInfo(
+                        request = BatchRequest(
+                            method = GET,
+                            path = "/outbox"
+                        ),
+                        endpoint = Endpoint.Outbox,
+                        responseType = object : TypeReference<List<DirectMessage>>() {}
+                    )
+                } else {
+                    BatchRequestInfo(
+                        request = BatchRequest(
+                            method = GET,
+                            path = "/outbox/since/$lastOutboxMessageId"
+                        ),
+                        endpoint = Endpoint.OutboxSince(lastOutboxMessageId),
+                        responseType = object : TypeReference<List<DirectMessage>>() {}
+                    )
+                }
+            )
+        }
+        return parallelBatch(server, requests).await()
+    }
+
 
     private fun handleMessages(
         server: String,
@@ -304,13 +352,18 @@ class OpenGroupPoller @AssistedInject constructor(
                         message.syncTarget = syncTarget
                     }
                 }
-                val threadId = threadDatabase.getThreadIdIfExistsFor(message.senderOrSync.toAddress())
+                val threadAddress = when (val addr = message.senderOrSync.toAddress()) {
+                    is Address.Blinded -> Address.CommunityBlindedId(serverUrl = server, blindedId = addr)
+                    is Address.Conversable -> addr
+                    else -> throw IllegalArgumentException("Unsupported address type: ${addr.debugString}")
+                }
+
+                val threadId = threadDatabase.getThreadIdIfExistsFor(threadAddress)
                 receivedMessageHandler.handle(
                     message = message,
                     proto = proto,
                     threadId = threadId,
-                    groupv2Id = null,
-                    fromCommunity = null
+                    threadAddress = threadAddress,
                 )
             } catch (e: Exception) {
                 Log.e(TAG, "Couldn't handle direct message", e)

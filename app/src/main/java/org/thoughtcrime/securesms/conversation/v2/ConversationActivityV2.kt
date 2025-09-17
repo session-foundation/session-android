@@ -90,7 +90,6 @@ import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.Reaction
 import org.session.libsession.messaging.messages.visible.VisibleMessage
-import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
@@ -160,7 +159,6 @@ import org.thoughtcrime.securesms.crypto.MnemonicUtilities
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
-import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.ReactionDatabase
@@ -205,6 +203,8 @@ import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.PaddedImageSpan
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
+import org.thoughtcrime.securesms.util.adapter.applyImeBottomPadding
+import org.thoughtcrime.securesms.util.adapter.handleScrollToBottom
 import org.thoughtcrime.securesms.util.drawToBitmap
 import org.thoughtcrime.securesms.util.fadeIn
 import org.thoughtcrime.securesms.util.fadeOut
@@ -247,7 +247,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var textSecurePreferences: TextSecurePreferences
     @Inject lateinit var threadDb: ThreadDatabase
     @Inject lateinit var mmsSmsDb: MmsSmsDatabase
-    @Inject lateinit var lokiThreadDb: LokiThreadDatabase
     @Inject lateinit var groupDb: GroupDatabase
     @Inject lateinit var smsDb: SmsDatabase
     @Inject lateinit var mmsDb: MmsDatabase
@@ -560,17 +559,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         setUpUiStateObserver()
 
         binding.scrollToBottomButton.setOnClickListener {
-            val layoutManager = binding.conversationRecyclerView.layoutManager as LinearLayoutManager
-            val targetPosition = adapter.itemCount - 1
-
-            if (layoutManager.isSmoothScrolling) {
-                // Tapping while smooth scrolling is in progress will instantly jump to the bottom.
-                binding.conversationRecyclerView.scrollToPosition(targetPosition)
-            } else {
-                // First tap: smooth scroll
-                linearSmoothScroller.targetPosition = targetPosition
-                layoutManager.startSmoothScroll(linearSmoothScroller)
-            }
+            binding.conversationRecyclerView.handleScrollToBottom()
         }
 
         // in case a phone call is in progress, this banner is visible and should bring the user back to the call
@@ -650,7 +639,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     // when showing the keyboard, we should auto scroll the conversation recyclerview
                     // if we are near the bottom (within 50dp of bottom)
                     if (binding.conversationRecyclerView.isNearBottom) {
-                        binding.conversationRecyclerView.smoothScrollToPosition(adapter.itemCount)
+                        binding.conversationRecyclerView.handleScrollToBottom()
                     }
                 }
             }
@@ -807,7 +796,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     // If there are new data updated, we'll try to stay scrolled at the bottom (if we were at the bottom).
                     // scrolled to bottom has a leniency of 50dp, so if we are within the 50dp but not fully at the bottom, scroll down
                     if (binding.conversationRecyclerView.isNearBottom && !binding.conversationRecyclerView.isFullyScrolled) {
-                        binding.conversationRecyclerView.smoothScrollToPosition(adapter.itemCount)
+                        binding.conversationRecyclerView.handleScrollToBottom()
                     }
                 }
 
@@ -828,6 +817,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     // called from onCreate
     private fun setUpRecyclerView() {
+        binding.conversationRecyclerView.applyImeBottomPadding()
         binding.conversationRecyclerView.adapter = adapter
         val layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
         binding.conversationRecyclerView.layoutManager = layoutManager
@@ -1127,23 +1117,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // React to placeholder related changes
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                data class PlaceholderData(
-                    val recipient: Recipient,
-                    val openGroup: OpenGroup?,
-                    val groupThreadStatus: GroupThreadStatus,
-                )
-
                 combine(
                     viewModel.recipientFlow,
                     viewModel.openGroupFlow,
                     viewModel.groupV2ThreadState,
-                    lastCursorLoaded
+                    lastCursorLoaded,
                 ) { r, og, groupState, _ ->
-                    PlaceholderData(
-                        recipient = r,
-                        openGroup = og,
-                        groupThreadStatus = groupState,
-                    )
+                    Triple(r, og, groupState)
                 } .collectLatest { (r, og, groupState) ->
                     updatePlaceholder(
                         recipient = r,
@@ -1388,7 +1368,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     // Update placeholder / control messages in a conversation
     private fun updatePlaceholder(recipient: Recipient,
-                                  openGroup: OpenGroup?,
+                                  openGroup: OpenGroupApi.RoomInfo?,
                                   groupThreadStatus: GroupThreadStatus,
                                   adapterItemCount: Int) {
         // Special state handling for kicked/destroyed groups
@@ -1417,9 +1397,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             recipient.isLocalNumber -> getString(R.string.noteToSelfEmpty)
 
             // If this is a community which we cannot write to
-            openGroup != null && !openGroup.canWrite -> {
+            openGroup != null && !openGroup.write -> {
                 Phrase.from(applicationContext, R.string.conversationsEmpty)
-                    .put(CONVERSATION_NAME_KEY, openGroup.name)
+                    .put(CONVERSATION_NAME_KEY, openGroup.details.name)
                     .format()
             }
 
@@ -1742,14 +1722,16 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
             // Send it
             reactionMessage.reaction = Reaction.from(originalMessage.timestamp, originalAuthor.toString(), emoji, true)
-            if (recipient.isCommunityRecipient) {
+            if (recipient.address is Address.Community) {
 
                 val messageServerId = lokiMessageDb.getServerID(originalMessage.messageId) ?:
                     return Log.w(TAG, "Failed to find message server ID when adding emoji reaction")
 
-                viewModel.openGroup?.let {
-                    OpenGroupApi.addReaction(it.room, it.server, messageServerId, emoji)
-                }
+                OpenGroupApi.addReaction(
+                    room = recipient.address.room,
+                    server = recipient.address.serverUrl,
+                    messageId = messageServerId,
+                    emoji = emoji)
             } else {
                 MessageSender.send(reactionMessage, recipient.address)
             }
@@ -1782,14 +1764,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             } else originalMessage.individualRecipient.address
 
             message.reaction = Reaction.from(originalMessage.timestamp, originalAuthor.toString(), emoji, false)
-            if (recipient.isCommunityRecipient) {
+            if (recipient.address is Address.Community) {
 
                 val messageServerId = lokiMessageDb.getServerID(originalMessage.messageId) ?:
                     return Log.w(TAG, "Failed to find message server ID when removing emoji reaction")
 
-                viewModel.openGroup?.let {
-                    OpenGroupApi.deleteReaction(it.room, it.server, messageServerId, emoji)
-                }
+                OpenGroupApi.deleteReaction(recipient.address.room, recipient.address.serverUrl, messageServerId, emoji)
             } else {
                 MessageSender.send(message, recipient.address)
             }
@@ -2048,7 +2028,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val sentTimestamp = SnodeAPI.nowWithOffset
         viewModel.implicitlyApproveRecipient()?.let { conversationApprovalJob = it }
         val text = getMessageBody()
-        val userPublicKey = textSecurePreferences.getLocalNumber()
         val isNoteToSelf = recipient.isLocalNumber
         if (seed in text && !isNoteToSelf && !hasPermissionToSendSeed) {
             showSessionDialog {
