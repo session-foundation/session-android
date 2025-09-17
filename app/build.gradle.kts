@@ -162,15 +162,15 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true
-            devNetDefaultOn(false)
-            enablePermissiveNetworkSecurityConfig(false)
-            setAlternativeAppName(null)
-            setAuthorityPostfix("")
-
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 file("proguard-rules.pro")
             )
+            devNetDefaultOn(false)
+            enablePermissiveNetworkSecurityConfig(false)
+            setAlternativeAppName(null)
+            setAuthorityPostfix("")
         }
 
         create("qa") {
@@ -197,7 +197,13 @@ android {
 
         getByName("debug") {
             isDefault = true
-            isMinifyEnabled = false
+//            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                file("proguard-rules.pro")
+            )
             enableUnitTestCoverage = false
             signingConfig = signingConfigs.getByName("debug")
 

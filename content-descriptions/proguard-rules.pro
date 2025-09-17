@@ -19,14 +19,3 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
-
-#Start rules
-
-### General: keep annotation/param/meta info that serializers and DI sometimes need
--keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod,MethodParameters,Record
-
-### Honor @Keep (used in MessageId.kt)
--keep @androidx.annotation.Keep class * { *; }
--keepclasseswithmembers class * { @androidx.annotation.Keep *; }
-
--include build/outputs/mapping/playDebug/missing_rules.txt
