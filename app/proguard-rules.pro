@@ -97,7 +97,7 @@
 -keep class org.thoughtcrime.securesms.database.model.EmojiSearchData { *; }
 -keep class org.thoughtcrime.securesms.database.model.EmojiSearchData$* { *; }
 
-# Kryo needs real no-arg ctors at runtime
+# Kryo needs real no-arg constructors at runtime
 -keepclassmembers class org.session.libsession.messaging.messages.Destination$Contact { <init>(); }
 -keepclassmembers class org.session.libsession.messaging.messages.Destination$LegacyClosedGroup { <init>(); }
 -keepclassmembers class org.session.libsession.messaging.messages.Destination$LegacyOpenGroup { <init>(); }
