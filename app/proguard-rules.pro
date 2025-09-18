@@ -58,6 +58,22 @@
     native <methods>;
 }
 
+# JNI: Config push constructor(s) must stay exactly as-is
+-keepnames class network.loki.messenger.libsession_util.util.ConfigPush
+
+-keepclassmembers class network.loki.messenger.libsession_util.util.ConfigPush {
+    # The one JNI is calling:
+    public <init>(java.util.List, long, java.util.List);
+    # Keep the Kotlin default-params ctor too (harmless if absent):
+    public <init>(java.util.List, long, java.util.List, int, kotlin.jvm.internal.DefaultConstructorMarker);
+}
+
+# JNI: preserve the exact getter used from native
+-keepnames class network.loki.messenger.libsession_util.util.UserPic
+-keepclassmembers class network.loki.messenger.libsession_util.util.UserPic {
+    public byte[] getKeyAsByteArray();
+}
+
 ########## WebRTC/Chromium jni_zero ##########
 # Keep the jni_zero Java side so JNI_OnLoad can FindClass it.
 -keep class org.jni_zero.** { *; }
