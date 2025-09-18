@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
-import nl.komponents.kovenant.all
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.groups.GroupManagerV2

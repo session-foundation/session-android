@@ -17,11 +17,9 @@ import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.GroupDatabase
-import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.util.getConversationUnread
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -195,7 +193,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         val hasUnreadMessages = thread.unreadCount > 0
 
         // case 2
-        val isMarkedAsUnread = configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread)}
+        val isMarkedAsUnread = thread.isUnread
 
         val showMarkAsReadButton = hasUnreadMessages || isMarkedAsUnread
 
