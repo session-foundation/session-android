@@ -97,6 +97,17 @@
 -keep class org.thoughtcrime.securesms.database.model.EmojiSearchData { *; }
 -keep class org.thoughtcrime.securesms.database.model.EmojiSearchData$* { *; }
 
+# Kryo needs real no-arg ctors at runtime
+-keepclassmembers class org.session.libsession.messaging.messages.Destination$Contact { <init>(); }
+-keepclassmembers class org.session.libsession.messaging.messages.Destination$LegacyClosedGroup { <init>(); }
+-keepclassmembers class org.session.libsession.messaging.messages.Destination$LegacyOpenGroup { <init>(); }
+-keepclassmembers class org.session.libsession.messaging.messages.Destination$ClosedGroup { <init>(); }
+-keepclassmembers class org.session.libsession.messaging.messages.Destination$OpenGroup { <init>(); }
+-keepclassmembers class org.session.libsession.messaging.messages.Destination$OpenGroupInbox { <init>(); }
+
+# Optional: preserve class names so Kryo’s writeClassAndObject stays stable across app updates
+-keepnames class org.session.libsession.messaging.messages.Destination$**
+
 ########## (OPTIONAL) easier stack traces while iterating ##########
 # -keepattributes SourceFile,LineNumberTable
 # This is generated automatically by the Android Gradle plugin.
