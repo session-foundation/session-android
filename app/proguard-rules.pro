@@ -89,7 +89,7 @@
     public <init>(java.lang.String, long, boolean);
 }
 
-# --- Emoji search (Jackson polymorphic) ---
+# Emoji search (Jackson polymorphic)
 # If @JsonTypeInfo uses CLASS or MINIMAL_CLASS, keep class NAMES for the model package.
 -keepnames class org.thoughtcrime.securesms.database.model.**
 
@@ -102,3 +102,8 @@
 # This is generated automatically by the Android Gradle plugin.
 -dontwarn java.lang.management.ManagementFactory
 -dontwarn java.lang.management.RuntimeMXBean
+-dontwarn java.beans.BeanInfo
+-dontwarn java.beans.IntrospectionException
+-dontwarn java.beans.Introspector
+-dontwarn java.beans.PropertyDescriptor
+-dontwarn sun.nio.ch.DirectBuffer
