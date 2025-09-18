@@ -2,12 +2,7 @@ package org.thoughtcrime.securesms.util
 
 import network.loki.messenger.libsession_util.ReadableConversationVolatileConfig
 import org.session.libsession.utilities.Address
-import org.thoughtcrime.securesms.database.model.ThreadRecord
 
-fun ReadableConversationVolatileConfig.getConversationUnread(thread: ThreadRecord): Boolean {
-    val address = thread.recipient.address as? Address.Conversable ?: return false
-    return getConversationUnread(address)
-}
 
 fun ReadableConversationVolatileConfig.getConversationUnread(recipientAddress: Address.Conversable): Boolean {
     return when (recipientAddress) {
