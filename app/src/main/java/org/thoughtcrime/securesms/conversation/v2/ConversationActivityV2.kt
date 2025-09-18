@@ -2114,6 +2114,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // Reset attachments button if needed
         if (isShowingAttachmentOptions) { toggleAttachmentOptions() }
 
+        // Keep it fixed on the bottom right away
+        binding.conversationRecyclerView.handleScrollToBottom()
+
         // do the heavy work in the bg
         lifecycleScope.launch(Dispatchers.Default) {
             runCatching {
