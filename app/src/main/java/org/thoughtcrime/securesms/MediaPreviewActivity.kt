@@ -333,10 +333,8 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
             return
         }
 
-        val sameThread = (targetAddress == this.conversationAddress)
-
         val adapter = this.adapter
-        if (sameThread && adapter != null) {
+        if (adapter != null) {
             val pos = adapter.findAdapterIndexByUri(targetUri)
             if (pos != -1) {
                 binding.mediaPager.setCurrentItem(pos, false)
