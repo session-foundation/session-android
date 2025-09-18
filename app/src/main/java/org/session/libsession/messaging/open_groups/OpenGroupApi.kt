@@ -293,8 +293,12 @@ object OpenGroupApi {
         }
     }
 
-    private fun getResponseBodyJson(request: Request, signRequest: Boolean = true): Promise<Map<*, *>, Exception> {
-        return send(request, signRequest = signRequest).map {
+    private fun getResponseBodyJson(
+        request: Request,
+        signRequest: Boolean = true,
+        serverPubKeyHex: String? = null
+    ): Promise<Map<*, *>, Exception> {
+        return send(request, signRequest = signRequest, serverPubKeyHex = serverPubKeyHex).map {
             JsonUtil.fromJson(it.body, Map::class.java)
         }
     }
@@ -307,7 +311,10 @@ object OpenGroupApi {
             return caps
         }
 
-        val fetched = getCapabilities(server).await()
+        val fetched = getCapabilities(server,
+            serverPubKeyHex = defaultServerPublicKey.takeIf { server == defaultServer }
+        ).await()
+
         storage.setServerCapabilities(server, fetched.capabilities)
         return fetched.capabilities
     }
@@ -427,6 +434,7 @@ object OpenGroupApi {
         roomID: String,
         imageId: String,
         signRequest: Boolean = true,
+        serverPubKeyHex: String? = null,
     ): Promise<ByteArraySlice, Exception> {
         val request = Request(
             verb = GET,
@@ -434,7 +442,7 @@ object OpenGroupApi {
             server = server,
             endpoint = Endpoint.RoomFileIndividual(roomID, imageId)
         )
-        return getResponseBody(request, signRequest = signRequest)
+        return getResponseBody(request, signRequest = signRequest, serverPubKeyHex = serverPubKeyHex)
     }
 
     // region Upload/Download
@@ -713,7 +721,13 @@ object OpenGroupApi {
                 }
             }
             val images = groups.associate { group ->
-                group.token to group.imageId?.let { downloadOpenGroupProfilePicture(defaultServer, group.token, it, signRequest = false) }
+                group.token to group.imageId?.let { downloadOpenGroupProfilePicture(
+                    server = defaultServer,
+                    roomID = group.token,
+                    imageId = it,
+                    signRequest = false,
+                    serverPubKeyHex = defaultServerPublicKey,
+                ) }
             }
             groups.map { group ->
                 val image = try {
@@ -734,7 +748,11 @@ object OpenGroupApi {
             server = defaultServer,
             endpoint = Endpoint.Rooms
         )
-        return getResponseBody(request, signRequest = false).map { response ->
+        return getResponseBody(
+            request = request,
+            signRequest = false,
+            serverPubKeyHex = defaultServerPublicKey
+        ).map { response ->
             MessagingModuleConfiguration.shared.json
                 .decodeFromStream<Array<RoomInfoDetails>>(response.inputStream())
                 .toList()
