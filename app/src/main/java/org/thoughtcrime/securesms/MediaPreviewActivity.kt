@@ -320,6 +320,32 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
         super.onNewIntent(intent)
         setIntent(intent)
         initializeResources()
+        handleNewPreviewTargetOrReload()
+    }
+
+    private fun handleNewPreviewTargetOrReload() {
+        val targetUri = initialMediaUri
+        val targetType = initialMediaType
+        val targetAddress = conversationAddress
+
+        if (!isContentTypeSupported(targetType) || targetUri == null || targetAddress == null) {
+            initializeMedia()
+            return
+        }
+
+        val adapter = this.adapter
+        if (adapter != null) {
+            val pos = adapter.findAdapterIndexByUri(targetUri)
+            if (pos != -1) {
+                binding.mediaPager.setCurrentItem(pos, false)
+                viewModel.setActiveAlbumRailItem(this, pos)
+                currentSelectedRecipient.value = adapter.getMediaItemFor(pos).recipientAddress
+                return
+            }
+        }
+
+        // Fallback: reload (new thread or item not currently in cursor)
+        initializeMedia()
     }
 
     fun onMediaPaused(videoUri: Uri, position: Long){
@@ -801,6 +827,18 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
             mediaViews.values.forEach { mediaView ->
                 mediaView.setControlsYPosition(position)
             }
+        }
+
+        fun findAdapterIndexByUri(target: Uri): Int {
+            val cursorCount = itemCount
+            for (i in 0 until cursorCount) {
+                val cursorPosition = getCursorPosition(i)
+                cursor.moveToPosition(cursorPosition)
+                val record = MediaRecord.from(context, cursor)
+                val uri = record.attachment.dataUri
+                if (uri != null && uri == target) return i
+            }
+            return -1
         }
     }
 
