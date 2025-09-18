@@ -15,13 +15,11 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
-import nl.komponents.kovenant.all
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.groups.GroupManagerV2
@@ -223,7 +221,6 @@ class DefaultConversationRepository @Inject constructor(
                     threadDb.updateNotifications
                 ).debounce(500)
                     .onStart { emit(Unit) }
-                    .onEach { Log.d("ConversationRepository", "Update due to $it") }
                     .mapLatest {
                         withContext(Dispatchers.Default) {
                             threadDb.getThreads(allAddresses)
