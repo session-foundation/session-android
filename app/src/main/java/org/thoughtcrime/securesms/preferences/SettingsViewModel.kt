@@ -56,7 +56,6 @@ import org.thoughtcrime.securesms.util.NetworkConnectivity
 import org.thoughtcrime.securesms.util.mapToStateFlow
 import java.io.File
 import java.io.IOException
-import java.time.Instant
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -312,12 +311,10 @@ class SettingsViewModel @Inject constructor(
                         it.userProfile.setPic(UserPic.DEFAULT)
                     }
 
-                    prefs.lastProfileUpdated = Instant.now()
-
                     // update dialog state
                     _uiState.update { it.copy(avatarDialogState = AvatarDialogState.NoAvatar) }
                 } else {
-                    avatarUploadManager.uploadAvatar(profilePicture)
+                    avatarUploadManager.uploadAvatar(profilePicture, isReupload = false)
 
                     // We'll have to refetch the recipient to get the new avatar
                     val selfRecipient = recipientRepository.getSelf()
@@ -444,8 +441,6 @@ class SettingsViewModel @Inject constructor(
         configFactory.withMutableUserConfigs {
             it.userProfile.setName(name)
         }
-
-        prefs.lastProfileUpdated = Instant.now()
     }
 
     fun onCommand(command: Commands) {
