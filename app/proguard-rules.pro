@@ -8,6 +8,7 @@
 # Optional Google bits you excluded
 -dontwarn com.google.android.gms.common.annotation.**
 -dontwarn com.google.firebase.analytics.connector.**
+-dontwarn com.google.firebase.analytics.connector.**
 
 ########## ANDROID / DI ##########
 # Workers constructed by class name
@@ -29,11 +30,37 @@
 }
 -dontwarn com.fasterxml.jackson.databind.**
 
+# Jackson DTO used by OpenGroupApi
+-keep class org.session.libsession.messaging.open_groups.OpenGroupApi$Capabilities { *; }
+-keepclassmembers class org.session.libsession.messaging.open_groups.OpenGroupApi$Capabilities { <init>(); }
+-keepnames class org.session.libsession.messaging.open_groups.OpenGroupApi$Capabilities
+
 # Project models used via Jackson (from your crashes)
 -keep class org.thoughtcrime.securesms.crypto.KeyStoreHelper$SealedData { *; }
 -keep class org.thoughtcrime.securesms.crypto.KeyStoreHelper$SealedData$* { *; }
 -keep class org.thoughtcrime.securesms.crypto.AttachmentSecret { *; }
 -keep class org.thoughtcrime.securesms.crypto.AttachmentSecret$* { *; }
+
+-keepnames class org.session.libsession.messaging.open_groups.**
+-keepclassmembers class org.session.libsession.messaging.open_groups.** {
+    <fields>;
+    *** get*();
+    void set*(***);
+}
+
+-keepnames class org.session.libsession.snode.**
+-keepclassmembers class org.session.libsession.snode.** {
+    <fields>;
+    *** get*();
+    void set*(***);
+}
+
+-keepattributes Signature,InnerClasses,EnclosingMethod
+-keep class ** extends com.fasterxml.jackson.core.type.TypeReference { *; }
+-keepclassmembers class * {
+    @com.fasterxml.jackson.annotation.JsonCreator <init>(...);
+    @com.fasterxml.jackson.annotation.JsonProperty *;
+}
 
 ########## JNI LOGGER ##########
 # Keep the interface + all implementors (incl. anonymous/lambdas) and the exact method JNI looks up
@@ -41,21 +68,6 @@
 -keepnames class * implements network.loki.messenger.libsession_util.util.Logger
 -keepclassmembers class * implements network.loki.messenger.libsession_util.util.Logger {
     public void log(java.lang.String, java.lang.String, int);
-}
-
-########## WEBRTC / CHROMIUM JNI ##########
-# Keep WebRTC Java APIs fully to satisfy JNI_OnLoad registration
--keep class org.webrtc.** { *; }
-
-# Some builds ship Chromium base helpers; harmless if absent
--keep class org.chromium.** { *; }
--keep class org.chromium.base.** { *; }
--keep class org.chromium.net.** { *; }
--keep class org.chromium.media.** { *; }
-
-# Keep all JNI bridges everywhere (prevents stripping/renaming of native methods)
--keepclasseswithmembers,includedescriptorclasses class * {
-    native <methods>;
 }
 
 # JNI: Config push constructor(s) must stay exactly as-is
@@ -72,6 +84,22 @@
 -keepnames class network.loki.messenger.libsession_util.util.UserPic
 -keepclassmembers class network.loki.messenger.libsession_util.util.UserPic {
     public byte[] getKeyAsByteArray();
+}
+
+
+########## WEBRTC / CHROMIUM JNI ##########
+# Keep WebRTC Java APIs fully to satisfy JNI_OnLoad registration
+-keep class org.webrtc.** { *; }
+
+# Some builds ship Chromium base helpers; harmless if absent
+-keep class org.chromium.** { *; }
+-keep class org.chromium.base.** { *; }
+-keep class org.chromium.net.** { *; }
+-keep class org.chromium.media.** { *; }
+
+# Keep all JNI bridges everywhere (prevents stripping/renaming of native methods)
+-keepclasseswithmembers,includedescriptorclasses class * {
+    native <methods>;
 }
 
 ########## WebRTC/Chromium jni_zero ##########
@@ -107,6 +135,14 @@
 
 # Optional: preserve class names so Kryo’s writeClassAndObject stays stable across app updates
 -keepnames class org.session.libsession.messaging.messages.Destination$**
+
+-keep class org.session.libsession.messaging.open_groups.OpenGroupApi$Message { *; }
+-keepclassmembers class org.session.libsession.messaging.open_groups.OpenGroupApi$Message { <init>(); }
+-keepnames class org.session.libsession.messaging.open_groups.OpenGroupApi$Message
+-keepclassmembers class org.session.libsession.messaging.open_groups.OpenGroupApi$Message {
+    *** get*();
+    void set*(***);
+}
 
 ########## (OPTIONAL) easier stack traces while iterating ##########
 # -keepattributes SourceFile,LineNumberTable
