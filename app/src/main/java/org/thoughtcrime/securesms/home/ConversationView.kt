@@ -6,7 +6,6 @@ import android.content.res.Resources
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
@@ -14,7 +13,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewConversationBinding
 import org.session.libsession.utilities.ThemeUtil
-import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
@@ -23,23 +21,17 @@ import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.setThemedContent
-import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
-import org.thoughtcrime.securesms.ui.theme.LocalType
-import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.UnreadStylingHelper
-import org.thoughtcrime.securesms.util.getConversationUnread
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class ConversationView : LinearLayout {
 
-    @Inject lateinit var configFactory: ConfigFactory
     @Inject lateinit var dateUtils: DateUtils
     @Inject lateinit var proStatusManager: ProStatusManager
     @Inject lateinit var avatarUtils: AvatarUtils
@@ -65,7 +57,7 @@ class ConversationView : LinearLayout {
         this.thread = thread
         binding.iconPinned.isVisible = thread.isPinned
 
-        val isConversationUnread = (configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) })
+        val isConversationUnread = thread.isUnread
         val unreadCount = thread.unreadCount
         val hasUnreadCount = unreadCount > 0
         val isMarkedUnread = !hasUnreadCount && isConversationUnread
