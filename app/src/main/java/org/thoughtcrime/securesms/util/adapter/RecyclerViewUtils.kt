@@ -10,13 +10,12 @@ import kotlin.math.max
 
 // Makes sure that the recyclerView is scrolled to the bottom
 fun RecyclerView.applyImeBottomPadding() {
-    clipToPadding = false
-    ViewCompat.setOnApplyWindowInsetsListener(this) { v, insets ->
-        val system = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom
-        val ime = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
-        v.updatePadding(bottom = max(system, ime))
-        insets
-    }
+    this.setPadding(
+        this.paddingLeft,
+        this.paddingTop,
+        this.paddingRight,
+        0
+    )
 }
 
 // Handle scroll logic

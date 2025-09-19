@@ -627,11 +627,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private fun setupWindowInsets() {
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, windowInsets ->
-            val systemBarsInsets =
-                windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.ime())
+            val navInsets = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            val imeInsets = windowInsets.getInsets(WindowInsetsCompat.Type.ime())
 
-            val imeHeight = windowInsets.getInsets(WindowInsetsCompat.Type.ime()).bottom
-            val keyboardVisible = imeHeight > 0
+            val keyboardVisible = imeInsets.bottom > 0
 
             if (keyboardVisible != isKeyboardVisible) {
                 isKeyboardVisible = keyboardVisible
@@ -645,10 +644,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
 
             binding.bottomSpacer.updateLayoutParams<LayoutParams> {
-                height = systemBarsInsets.bottom
+                height = if (keyboardVisible) imeInsets.bottom else navInsets.bottom
             }
 
-            windowInsets.inset(systemBarsInsets)
+            windowInsets
         }
     }
 
