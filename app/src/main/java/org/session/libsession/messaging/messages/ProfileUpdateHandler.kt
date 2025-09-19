@@ -140,8 +140,8 @@ class ProfileUpdateHandler @Inject constructor(
         lastUpdated: Instant?,
         newUpdateTime: Instant?
     ): Boolean {
-        return (lastUpdated == null && newUpdateTime != null) ||
-                (newUpdateTime != null && newUpdateTime > lastUpdated)
+        return (lastUpdated == null && newUpdateTime == null) ||
+                (newUpdateTime != null && lastUpdated != null && newUpdateTime > lastUpdated)
     }
 
     class Updates private constructor(
