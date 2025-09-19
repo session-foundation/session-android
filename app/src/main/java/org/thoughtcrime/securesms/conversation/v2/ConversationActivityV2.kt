@@ -795,7 +795,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 } else {
                     // If there are new data updated, we'll try to stay scrolled at the bottom (if we were at the bottom).
                     // scrolled to bottom has a leniency of 50dp, so if we are within the 50dp but not fully at the bottom, scroll down
-                    if (binding.conversationRecyclerView.isNearBottom && !binding.conversationRecyclerView.isFullyScrolled) {
+                    if (binding.conversationRecyclerView.isNearBottom &&
+                        !binding.conversationRecyclerView.isFullyScrolled) {
                         binding.conversationRecyclerView.handleScrollToBottom()
                     }
                 }
@@ -2115,7 +2116,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         if (isShowingAttachmentOptions) { toggleAttachmentOptions() }
 
         // Keep it fixed on the bottom right away
-        binding.conversationRecyclerView.handleScrollToBottom()
+        binding.conversationRecyclerView.handleScrollToBottom(true)
 
         // do the heavy work in the bg
         lifecycleScope.launch(Dispatchers.Default) {
@@ -2719,10 +2720,17 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         if (position >= 0) {
             binding.conversationRecyclerView.scrollToPosition(position)
 
-            if (highlight) {
-                runOnUiThread {
-                    highlightViewAtPosition(position)
-                }
+            val lastIndex = adapter.itemCount - 1
+            if (position >= lastIndex) {
+                // If the target is the last message, anchor bottom instead of snap-to-top
+                binding.conversationRecyclerView.handleScrollToBottom()
+                if (highlight) highlightViewAtPosition(position)
+            } else {
+                pendingHighlightMessagePosition = position
+                currentTargetedScrollOffsetPx = if (position > 0) nonFirstMessageOffsetPx else 0
+                linearSmoothScroller.targetPosition = position
+                (binding.conversationRecyclerView.layoutManager as? LinearLayoutManager)
+                    ?.startSmoothScroll(linearSmoothScroller)
             }
         } else {
             onMessageNotFound?.run()
