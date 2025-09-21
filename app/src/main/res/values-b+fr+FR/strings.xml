@@ -66,6 +66,7 @@
     <string name="appNameNotes">Notes</string>
     <string name="appNameStocks">Bourse</string>
     <string name="appNameWeather">Météo</string>
+    <string name="appearanceAutoDarkMode">Mode sombre automatique</string>
     <string name="appearanceHideMenuBar">Cacher la barre de menu</string>
     <string name="appearanceLanguage">Langue</string>
     <string name="appearanceLanguageDescription">Choisissez les paramètres de langue pour {app_name}. {app_name} redémarrera lorsque vous changerez les paramètres de langue.</string>
@@ -277,7 +278,6 @@
     <string name="conversationsDeleted">Conversation supprimée</string>
     <string name="conversationsEmpty">Il n\'y a aucun message dans {conversation_name}.</string>
     <string name="conversationsEnter">Entrer une clé</string>
-    <string name="conversationsEnterDescription">Fonction de la touche Entrée lors de la saisie dans une conversation.</string>
     <string name="conversationsGroups">Groupes</string>
     <string name="conversationsMessageTrimming">Élagage des messages</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Purger les groupes</string>
@@ -769,7 +769,9 @@
     <string name="openSurvey">Ouvrir le questionnaire</string>
     <string name="other">Autre</string>
     <string name="passwordChange">Changer le mot de passe</string>
+    <string name="passwordChangeShortDescription">Obligation de changer le mot de passe pour déverrouiller {app_name}.</string>
     <string name="passwordConfirm">Confirmez le mot de passe</string>
+    <string name="passwordCreate">Créer un mot de passe</string>
     <string name="passwordCurrentIncorrect">Votre mot de passe actuel est incorrect.</string>
     <string name="passwordEnter">Entrez le mot de passe</string>
     <string name="passwordEnterCurrent">Veuillez entrer votre mot de passe actuel</string>
@@ -793,6 +795,7 @@
     <string name="permissionsCameraDescriptionIos">Autoriser l\'accès à la caméra pour les appels vidéo.</string>
     <string name="permissionsFaceId">La fonctionnalité de verrouillage d\'écran sur {app_name} utilise Face ID.</string>
     <string name="permissionsKeepInSystemTray">Garder dans la barre d\'état du système</string>
+    <string name="permissionsKeepInSystemTrayDescription">{app_name} continue à fonctionner en arrière-plan lorsque vous fermez la fenêtre.</string>
     <string name="permissionsLibrary">{app_name} a besoin d\'accéder aux photos pour continuer. Vous pouvez activer l\'accès dans les paramètres iOS.</string>
     <string name="permissionsLocalNetworkAccessRequiredCallsIos">L\'accès au réseau local est nécessaire pour faciliter les appels. Activez l\'autorisation \"Réseau local\" dans les paramètres pour continuer.</string>
     <string name="permissionsLocalNetworkAccessRequiredIos">{app_name} a besoin d\'accéder au réseau local pour passer des appels vocaux et vidéo.</string>
@@ -887,6 +890,7 @@
     <string name="recoveryPasswordExplanation">Pour charger votre compte, entrez votre mot de passe de récupération.</string>
     <string name="recoveryPasswordHidePermanently">Cacher définitivement le mot de passe de récupération</string>
     <string name="recoveryPasswordHidePermanentlyDescription1">Sans votre mot de passe de récupération, vous ne pouvez pas charger votre compte sur de nouveaux appareils. \n\nNous vous recommandons fortement de sauvegarder votre mot de passe de récupération dans un endroit sûr et sécurisé avant de continuer.</string>
+    <string name="recoveryPasswordHidePermanentlyDescription2">Êtes-vous sûr de vouloir cacher définitivement votre mot de passe de récupération sur cet appareil ?\n\nCette action est irréversible.</string>
     <string name="recoveryPasswordHideRecoveryPassword">Cacher le mot de passe de récupération</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Masquer définitivement votre mot de passe de récupération sur cet appareil.</string>
     <string name="recoveryPasswordRestoreDescription">Entrez votre mot de passe de récupération pour charger votre compte. Si vous ne l\'avez pas enregistré, vous pouvez le trouver dans les paramètres de l\'application.</string>
@@ -961,6 +965,7 @@
     <string name="set">Appliquer</string>
     <string name="setCommunityDisplayPicture">Définir la photo de la communauté</string>
     <string name="settingsRestartDescription">Vous devez redémarrer {app_name} pour appliquer ces changements.</string>
+    <string name="settingsScreenSecurityDesktop">Sécurité d\'écran</string>
     <string name="share">Partager</string>
     <string name="shareAccountIdDescription">Invitez votre ami à discuter avec vous sur {app_name} en partageant votre ID de compte avec lui.</string>
     <string name="shareAccountIdDescriptionCopied">Partagez avec vos amis où vous communiquez habituellement avec eux - puis déplacez la conversation ici.</string>

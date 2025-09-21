@@ -234,7 +234,6 @@
     <string name="conversationsDeleted">საუბარი წაშლილია</string>
     <string name="conversationsEmpty">{conversation_name}-ში არ არის შეტყობინებები.</string>
     <string name="conversationsEnter">შეიყვანეთ გასაღები</string>
-    <string name="conversationsEnterDescription">ფუნქცია, როცა კლავიატურაზე იყენებთ Enter ღილაკს საუბრის დროს.</string>
     <string name="conversationsGroups">ჯგუფები</string>
     <string name="conversationsMessageTrimming">deleteAfterGroupPR1MessageSound</string>
     <string name="conversationsMessageTrimmingTrimCommunities">თემების შემცირება</string>
@@ -790,6 +789,7 @@
     <string name="sessionSettings">პარამეტრები</string>
     <string name="set">მითითება</string>
     <string name="settingsRestartDescription">თქვენ უნდა გადატვირთოთ {app_name} თქვენი ახალი პარამეტრებისთვის.</string>
+    <string name="settingsScreenSecurityDesktop">ეკრანის დაცვა</string>
     <string name="share">გაზიარება</string>
     <string name="shareAccountIdDescription">მოუწვიე შენი მეგობარი ჩატის დასაწყებად {app_name}-ში გაუზიარეთ მათ თქვენი Account ID.</string>
     <string name="shareAccountIdDescriptionCopied">გაზიარეთ თქვენი მეგობრებთან, სადაც მათთან საუბრობთ, შემდეგ გადადით საუბარში აქ.</string>

@@ -185,6 +185,7 @@ fun CreateGroup(
 
             AccentOutlineButton(
                 onClick = onCreateClicked,
+                enabled = !showLoading,
                 modifier = Modifier
                     .padding(horizontal = LocalDimensions.current.spacing)
                     .qaTag(R.string.AccessibilityId_groupCreate)

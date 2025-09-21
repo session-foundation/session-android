@@ -271,7 +271,6 @@
     <string name="conversationsDeleted">대화를 삭제함</string>
     <string name="conversationsEmpty">{conversation_name}에는 메시지가 없습니다.</string>
     <string name="conversationsEnter">키 입력</string>
-    <string name="conversationsEnterDescription">대화에서 Enter 키 기능.</string>
     <string name="conversationsGroups">그룹</string>
     <string name="conversationsMessageTrimming">대화 줄이기</string>
     <string name="conversationsMessageTrimmingTrimCommunities">커뮤니티 정돈</string>
@@ -479,6 +478,7 @@
     <string name="groupMemberNewMultiple"><b>{name}님</b>과 <b>{count}명</b>이 그룹에 초대되었습니다.</string>
     <string name="groupMemberNewTwo"><b>{name}님</b>과 <b>{other_name}</b>님이 그룹 초대를 받았습니다.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>당신</b>과 <b>{count} 명의 사람들이</b> 그룹으로 초대받았습니다. 대화 내역이 공개됩니다.</string>
+    <string name="groupMemberNewYouHistoryTwo"><b>당신</b>과 <b>{other_name}</b>이 그룹에 초대 되었습니다. 대화 내용이 공유 되었습니다.</string>
     <string name="groupMemberYouLeft"><b>당신</b>이 그룹을 나갔습니다.</string>
     <string name="groupMembers">그룹 멤버</string>
     <string name="groupMembersNone">이 그룹에 다른 멤버가 없습니다.</string>
@@ -883,6 +883,7 @@
     <string name="set">설정</string>
     <string name="setCommunityDisplayPicture">커뮤니티 프로필 사진 설정</string>
     <string name="settingsRestartDescription">새 설정을 적용하려면 {app_name}을 재시작해야 합니다.</string>
+    <string name="settingsScreenSecurityDesktop">화면 보안</string>
     <string name="share">공유</string>
     <string name="shareAccountIdDescription">친구에게 계정 ID를 공유하고 {app_name} 에서 친구들과 대화하세요.</string>
     <string name="shareAccountIdDescriptionCopied">친구들이 자주 사용하는 곳에서 공유해 주세요 — 그러면 여기로 대화를 이동하십시오.</string>

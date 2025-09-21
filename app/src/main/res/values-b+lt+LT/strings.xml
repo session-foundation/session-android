@@ -121,6 +121,7 @@
     <string name="banUser">Drausti naudotoją</string>
     <string name="banUserBanned">Vartotojas užblokuotas</string>
     <string name="block">Užblokuoti</string>
+    <string name="blockBlockedDescription">Atblokuokite šį kontaktą, kad išsiųstumėte žinutę</string>
     <string name="blockBlockedNone">Nėra užblokuotų adresatų</string>
     <string name="blockBlockedUser">Užblokuotas {name}</string>
     <string name="blockDescription">Ar tikrai norite užblokuoti <b>{name}</b>? Užblokuoti naudotojai negali siųsti žinučių užklausų, grupių kvietimų ar skambinti jums.</string>
@@ -234,7 +235,6 @@
     <string name="conversationsDeleted">Pokalbis ištrintas</string>
     <string name="conversationsEmpty">Nėra žinučių {conversation_name}.</string>
     <string name="conversationsEnter">Enter Key</string>
-    <string name="conversationsEnterDescription">Įveskite pokalbio metu naudojamo enter klavišo funkciją.</string>
     <string name="conversationsGroups">Grupės</string>
     <string name="conversationsMessageTrimming">Žinučių išvalymas</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Apkarpyti Communities</string>
@@ -782,6 +782,7 @@
     <string name="sessionSettings">Nustatymai</string>
     <string name="set">Nustatyti</string>
     <string name="settingsRestartDescription">Norėdami taikyti naujus nustatymus, privalote paleisti iš naujo {app_name}.</string>
+    <string name="settingsScreenSecurityDesktop">Ekrano saugumas</string>
     <string name="share">Bendrinti</string>
     <string name="shareAccountIdDescription">Pakvieskite savo draugą į pokalbį {app_name} dalindamiesi su jais savo Account ID.</string>
     <string name="shareAccountIdDescriptionCopied">Pasidalinkite su draugais ten, kur jie kalbasi — tada perkelkite pokalbį čia.</string>

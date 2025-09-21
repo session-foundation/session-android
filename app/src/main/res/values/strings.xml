@@ -286,7 +286,7 @@
     <string name="conversationsDeleted">Conversation deleted</string>
     <string name="conversationsEmpty">There are no messages in {conversation_name}.</string>
     <string name="conversationsEnter">Enter Key</string>
-    <string name="conversationsEnterDescription">Function of the enter key when typing in a conversation.</string>
+    <string name="conversationsEnterDescription">Define how the Enter and Shift+Enter keys function in conversations.</string>
     <string name="conversationsEnterNewLine">SHIFT + ENTER sends a message, ENTER starts a new line.</string>
     <string name="conversationsEnterSends">ENTER sends a message, SHIFT + ENTER starts a new line.</string>
     <string name="conversationsGroups">Groups</string>
@@ -596,9 +596,9 @@
     </plurals>
     <string name="join">Join</string>
     <string name="later">Later</string>
-    <string name="launchOnStartDescriptionDesktop">Launch Session automatically when your computer starts up.</string>
+    <string name="launchOnStartDescriptionDesktop">Launch {app_name} automatically when your computer starts up.</string>
     <string name="launchOnStartDesktop">Launch on Startup</string>
-    <string name="launchOnStartupDisabledDesktop">This setting is managed by your system on Linux. To enable automatic startup, add Session to your startup applications in system settings.</string>
+    <string name="launchOnStartupDisabledDesktop">This setting is managed by your system on Linux. To enable automatic startup, add {app_name} to your startup applications in system settings.</string>
     <string name="learnMore">Learn More</string>
     <string name="leave">Leave</string>
     <string name="leaving">Leaving...</string>
@@ -906,8 +906,8 @@
     <string name="proBadges">Badges</string>
     <string name="proBadgesDescription">Show your support for {app_name} with an exclusive badge next to your display name.</string>
     <plurals name="proBadgesSent">
-        <item quantity="one">%1$d %2$s Badge Sent</item>
-        <item quantity="other">%1$d %2$s Badges Sent</item>
+        <item quantity="one">%1$s %2$s Badge Sent</item>
+        <item quantity="other">%1$s %2$s Badges Sent</item>
     </plurals>
     <string name="proBilledAnnually">{price} Billed Annually</string>
     <string name="proBilledMonthly">{price} Billed Monthly</string>
@@ -932,8 +932,8 @@
     <string name="proGroupActivated">Group Activated</string>
     <string name="proGroupActivatedDescription">This group has expanded capacity! It can support up to 300 members because a group admin has</string>
     <plurals name="proGroupsUpgraded">
-        <item quantity="one">%1$d Group Upgraded</item>
-        <item quantity="other">%1$d Groups Upgraded</item>
+        <item quantity="one">%1$s Group Upgraded</item>
+        <item quantity="other">%1$s Groups Upgraded</item>
     </plurals>
     <string name="proImportantDescription">Requesting a refund is final. If approved, your {pro} plan will be canceled immediately and you will lose access to all {pro} features.</string>
     <string name="proIncreasedAttachmentSizeFeature">Increased Attachment Size</string>
@@ -943,14 +943,14 @@
     <string name="proLongerMessages">Longer Messages</string>
     <string name="proLongerMessagesDescription">You can send messages up to 10,000 characters in all conversations.</string>
     <plurals name="proLongerMessagesSent">
-        <item quantity="one">%1$d Longer Message Sent</item>
-        <item quantity="other">%1$d Longer Messages Sent</item>
+        <item quantity="one">%1$s Longer Message Sent</item>
+        <item quantity="other">%1$s Longer Messages Sent</item>
     </plurals>
     <string name="proMessageInfoFeatures">This message used the following {app_pro} features:</string>
     <string name="proPercentOff">{percent}% Off</string>
     <plurals name="proPinnedConversations">
-        <item quantity="one">%1$d Pinned Conversation</item>
-        <item quantity="other">%1$d Pinned Conversations</item>
+        <item quantity="one">%1$s Pinned Conversation</item>
+        <item quantity="other">%1$s Pinned Conversations</item>
     </plurals>
     <string name="proPlanActivatedAuto">Your {app_pro} plan is active!\n\nYour plan will automatically renew for another <b>{current_plan}</b> on <b>{date}</b>. Updates to your plan take effect when {pro} is next renewed.</string>
     <string name="proPlanActivatedAutoShort">Your {app_pro} plan is active!\n\nYour plan will automatically renew for another <b>{current_plan}</b> on <b>{date}</b>.</string>
@@ -965,11 +965,11 @@
     <string name="proPlanRenewDesktop">Currently, {pro} plans can only be purchased and renewed via the {platform_store} or {platform_store} Stores. Because you are using {app_name} Desktop, you\'re not able to renew your plan here.\n\n{app_pro} developers are working hard on alternative payment options to allow users to purchase {pro} plans outside of the {platform_store} and {platform_store} Stores. <b>{pro} Roadmap</b></string>
     <string name="proPlanRenewDesktopLinked">Renew your plan in the {app_pro} settings on a linked device with {app_name} installed via the {platform_store} or {platform_store} Store.</string>
     <string name="proPlanRenewDesktopStore">Renew your plan on the {platform_store} website using the {platform_account} you signed up for {pro} with.</string>
-    <string name="proPlanRenewStart">Renew your {app_pro} plan to start using powerful {app_pro} features again.</string>
+    <string name="proPlanRenewStart">Renew your {app_pro} plan to start using powerful {app_pro} Beta features again.</string>
     <string name="proPlanRenewSupport">Your {app_pro} plan has been renewed! Thank you for supporting the {network_name}.</string>
     <string name="proPlanRestored">{pro} Plan Restored</string>
     <string name="proPlanRestoredDescription">A valid plan for {app_pro} was detected and your {pro} status has been restored!</string>
-    <string name="proPlanSignUp">Because you originally signed up for {app_pro} via the {platform_store} Store, you\'ll need to use your {platform_account} to update your plan.</string>
+    <string name="proPlanSignUp">Because you originally signed up for {app_pro} via the <b>{platform_store}</b> Store, you\'ll need to use your {platform_account} to update your plan.</string>
     <string name="proPriceOneMonth">1 Month - {monthly_price} / Month</string>
     <string name="proPriceThreeMonths">3 Months - {monthly_price} / Month</string>
     <string name="proPriceTwelveMonths">12 Months - {monthly_price} / Month</string>
@@ -1075,6 +1075,8 @@
     <string name="screenSecurity">Screen Security</string>
     <string name="screenshotNotifications">Screenshot Notifications</string>
     <string name="screenshotNotificationsDescription">Require a notification when a contact takes a screenshot of a one-to-one chat.</string>
+    <string name="screenshotProtectionDescriptionDesktop">Conceal the {app_name} window in screenshots taken on this device.</string>
+    <string name="screenshotProtectionDesktop">Screenshot Protection</string>
     <string name="screenshotTaken"><b>{name}</b> took a screenshot.</string>
     <string name="search">Search</string>
     <string name="searchContacts">Search Contacts</string>
@@ -1123,6 +1125,7 @@
     <string name="setPasswordModalDescription">Set a password for {app_name}. Locally stored data will be encrypted with this password. You will be asked to enter this password each time {app_name} starts.</string>
     <string name="settingsCannotChangeDesktop">Cannot Update Setting</string>
     <string name="settingsRestartDescription">You must restart {app_name} to apply your new settings.</string>
+    <string name="settingsScreenSecurityDesktop">Screen Security</string>
     <string name="settingsStartCategoryDesktop">Startup</string>
     <string name="share">Share</string>
     <string name="shareAccountIdDescription">Invite your friend to chat with you on {app_name} by sharing your Account ID with them.</string>

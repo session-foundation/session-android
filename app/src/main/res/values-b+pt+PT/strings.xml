@@ -277,7 +277,6 @@
     <string name="conversationsDeleted">Conversa excluída</string>
     <string name="conversationsEmpty">Não existem mensagens em {conversation_name}.</string>
     <string name="conversationsEnter">Inserir ENTER</string>
-    <string name="conversationsEnterDescription">Função da tecla Enter numa conversa.</string>
     <string name="conversationsGroups">Grupos</string>
     <string name="conversationsMessageTrimming">Redução do tamanho de mensagem</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Aparar Comunidades</string>
@@ -961,6 +960,7 @@
     <string name="set">Configurar</string>
     <string name="setCommunityDisplayPicture">Definir imagem de exibição da Comunidade</string>
     <string name="settingsRestartDescription">Tem que reiniciar o {app_name} de modo a aplicar as novas definições.</string>
+    <string name="settingsScreenSecurityDesktop">Segurança de ecrã</string>
     <string name="share">Partilhar</string>
     <string name="shareAccountIdDescription">Convide os seus amigos para conversarem consigo no {app_name} partilhando o ID da sua Conta com eles.</string>
     <string name="shareAccountIdDescriptionCopied">Partilhe com seus amigos onde você geralmente conversa com eles — depois mova a conversa para cá.</string>

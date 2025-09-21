@@ -66,6 +66,8 @@
     <string name="appNameNotes">Notizen</string>
     <string name="appNameStocks">Aktien</string>
     <string name="appNameWeather">Wetterbericht</string>
+    <string name="appProBadge">{app_pro} Abzeichen</string>
+    <string name="appearanceAutoDarkMode">Automatischer Dunkler Modus</string>
     <string name="appearanceHideMenuBar">Menüleiste ausblenden</string>
     <string name="appearanceLanguage">Sprache</string>
     <string name="appearanceLanguageDescription">Wähle deine Spracheinstellung für {app_name}. {app_name} wird neu gestartet, wenn du deine Spracheinstellung änderst.</string>
@@ -160,6 +162,7 @@
     <string name="blockUnblockNameMultiple">Bist du sicher, dass du <b>{name}</b> und <b>{count} andere entblocken möchtest</b>?</string>
     <string name="blockUnblockNameTwo">Bist du sicher, dass du <b>{name}</b> und eine weitere Person entblocken möchtest?</string>
     <string name="blockUnblockedUser">{name} entsperrt</string>
+    <string name="blockedContactsManageDescription">Blockierte Kontakte anzeigen und verwalten.</string>
     <string name="call">Anrufen</string>
     <string name="callsCalledYou">{name} hat angerufen</string>
     <string name="callsCannotStart">Du kannst keinen neuen Anruf starten. Beende zuerst deinen aktuellen Anruf.</string>
@@ -194,6 +197,7 @@
     <string name="cameraGrantAccessDescription">{app_name} benötigt die Berechtigung »Kamera«, um Fotos oder Videos aufzunehmen oder QR-Codes zu scannen.</string>
     <string name="cameraGrantAccessQr">{app_name} benötigt Kamera-Zugriff um QR-Codes zu scannen</string>
     <string name="cancel">Abbrechen</string>
+    <string name="change">Ändern</string>
     <string name="changePasswordFail">Passwortänderung fehlgeschlagen</string>
     <string name="clear">Löschen</string>
     <string name="clearAll">Alles löschen</string>
@@ -277,13 +281,16 @@
     <string name="conversationsDeleted">Die Unterhaltung wurde gelöscht.</string>
     <string name="conversationsEmpty">Es sind keine Nachrichten in {conversation_name}.</string>
     <string name="conversationsEnter">Eingabetaste</string>
-    <string name="conversationsEnterDescription">Funktion der Eingabetaste beim Tippen in einer Unterhaltung.</string>
+    <string name="conversationsEnterDescription">Definiere, wie Eingabe- und Umschalttaste in Konversationen funktionieren.</string>
     <string name="conversationsGroups">Gruppen</string>
     <string name="conversationsMessageTrimming">Nachrichtenkürzung</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Communities kürzen</string>
+    <string name="conversationsMessageTrimmingTrimCommunitiesDescription">Nachrichten älter als 6 Monate in Communities mit mehr als 2000 Nachrichten automatisch löschen.</string>
     <string name="conversationsNew">Neue Unterhaltung</string>
     <string name="conversationsNone">Du hast noch keine Unterhaltungen</string>
+    <string name="conversationsSendWithEnterKey">Mit Eingabetaste senden</string>
     <string name="conversationsSendWithEnterKeyDescription">Durch Tippen auf die Eingabetaste wird eine Nachricht gesendet, anstatt eine neue Zeile zu beginnen.</string>
+    <string name="conversationsSendWithShiftEnter">Mit Umschalt- und Eingabetaste senden</string>
     <string name="conversationsSettingsAllMedia">Alle Medieninhalte</string>
     <string name="conversationsSpellCheck">Rechtschreibprüfung</string>
     <string name="conversationsSpellCheckDescription">Rechtschreibprüfung bei der Eingabe von Nachrichten aktivieren.</string>
@@ -293,6 +300,7 @@
     <string name="create">Erstellen</string>
     <string name="creatingCall">Anruf wird erstellt</string>
     <string name="cut">Ausschneiden</string>
+    <string name="darkMode">Dunkelmodus</string>
     <string name="databaseErrorClearDataWarning">Möchtest du wirklich alle Nachrichten, Anhänge und Kontodaten von diesem Gerät löschen und ein neues Konto erstellen?</string>
     <string name="databaseErrorGeneric">Ein Datenbankfehler ist aufgetreten.\n\n Exportiere deine App-Logs, um diese für eine Fehleranalyse zu teilen. Wenn dies nicht erfolgreich ist, installiere die {app_name}  neu und stelle deinen Account wieder her.</string>
     <string name="databaseErrorRestoreDataWarning">Möchtest du wirklich alle Nachrichten, Anhänge und Kontodaten von diesem Gerät löschen und dein Konto aus dem Netzwerk wiederherstellen?</string>
@@ -391,6 +399,7 @@
     <string name="disappearingMessagesUpdated"><b>{admin_name}</b> hat die Einstellungen für verschwindende Nachrichten aktualisiert.</string>
     <string name="disappearingMessagesUpdatedYou"><b>Du</b> hast die Einstellungen für verschwindende Nachrichten aktualisiert.</string>
     <string name="dismiss">Verwerfen</string>
+    <string name="display">Display</string>
     <string name="displayNameDescription">Dies kann dein richtiger Name, ein Alias oder irgendetwas anderes sein — und du kannst ihn jederzeit ändern.</string>
     <string name="displayNameEnter">Gib deinen Anzeigenamen ein</string>
     <string name="displayNameErrorDescription">Bitte gib einen Anzeigenamen ein</string>
@@ -431,10 +440,12 @@
     <string name="emojiReactsHoverYouNameTwoDesktop">Du und {name} haben mit {emoji_name} reagiert</string>
     <string name="emojiReactsNotification">Hat auf deine Nachricht mit {emoji} reagiert</string>
     <string name="enable">Aktivieren</string>
+    <string name="enableNotifications">Benachrichtigungen anzeigen, wenn du neue Nachrichten erhältst.</string>
     <string name="enjoyingSession">Gefällt dir {app_name}?</string>
     <string name="enjoyingSessionButtonNegative">Verbesserungswürdig {emoji}</string>
     <string name="enjoyingSessionButtonPositive">Großartig {emoji}</string>
     <string name="enjoyingSessionDescription">Du nutzt {app_name} jetzt schon eine Weile – wie läuft’s? Wir würden uns sehr über dein Feedback freuen.</string>
+    <string name="enter">Bestätigen</string>
     <string name="errorConnection">Bitte überprüfe deine Internetverbindung und versuche es erneut.</string>
     <string name="errorCopyAndQuit">Fehler kopieren und beenden</string>
     <string name="errorDatabase">Datenbankfehler</string>
@@ -442,8 +453,11 @@
     <string name="errorUnknown">Ein unbekannter Fehler ist aufgetreten.</string>
     <string name="failedToDownload">Herunterladen fehlgeschlagen</string>
     <string name="failures">Fehler</string>
+    <string name="feedback">Feedback</string>
+    <string name="feedbackDescription">Teile deine Erfahrungen mit {app_name}, indem du eine kurze Umfrage ausfüllst.</string>
     <string name="file">Datei</string>
     <string name="files">Dateien</string>
+    <string name="followSystemSettings">Systemeinstellungen übernehmen.</string>
     <string name="forever">Für immer</string>
     <string name="from">Von:</string>
     <string name="fullScreenToggle">Vollbildanzeige</string>
@@ -541,12 +555,16 @@
     <string name="groupUpdated">Gruppe aktualisiert</string>
     <string name="handlingConnectionCandidates">Verbindungskandidaten werden verarbeitet</string>
     <string name="helpFAQ">Häufig gestellte Fragen (FAQ)</string>
+    <string name="helpFAQDescription">Sieh dir die {app_name}-FAQ an, um Antworten auf häufig gestellte Fragen zu erhalten.</string>
     <string name="helpHelpUsTranslateSession">Hilf uns {app_name} zu übersetzen</string>
+    <string name="helpReportABug">Einen Fehler melden</string>
     <string name="helpReportABugDescription">Teile uns einige Details mit, um dein Problem zu lösen. Exportiere deine Protokolle und lade die Datei dann über den Helpdesk von {app_name} hoch.</string>
     <string name="helpReportABugExportLogs">Protokolle exportieren</string>
     <string name="helpReportABugExportLogsDescription">Exportiere deine Protokolle und lade die Datei über den {app_name} Helpdesk hoch.</string>
     <string name="helpReportABugExportLogsSaveToDesktop">Auf dem Desktop speichern</string>
+    <string name="helpReportABugExportLogsSaveToDesktopDescription">Speichere diese Datei und teile sie dann mit den {app_name} Entwicklern.</string>
     <string name="helpSupport">Helpdesk</string>
+    <string name="helpTranslateSessionDescription">Hilf mit, {app_name} in über 80 Sprachen zu übersetzen!</string>
     <string name="helpWedLoveYourFeedback">Wir würden uns über dein Feedback freuen</string>
     <string name="hide">Ausblenden</string>
     <string name="hideNoteToSelfDescription">Möchtest du <b>Notiz an mich</b> wirklich aus deiner Unterhaltungsliste ausblenden?</string>
@@ -626,8 +644,10 @@
     <string name="membersInviteShareMessageHistory">Nachrichtenverlauf teilen</string>
     <string name="membersInviteShareNewMessagesOnly">Nur neue Nachrichten teilen</string>
     <string name="membersInviteTitle">Einladen</string>
+    <string name="menuBar">Menüleiste</string>
     <string name="message">Nachricht</string>
     <string name="messageBubbleReadMore">Weiterlesen</string>
+    <string name="messageCopy">Nachricht kopieren</string>
     <string name="messageEmpty">Diese Nachricht ist leer.</string>
     <string name="messageErrorDelivery">Diese Nachricht konnte nicht zugestellt werden</string>
     <string name="messageErrorLimit">Nachrichtenlimit erreicht</string>
@@ -704,6 +724,7 @@
     <string name="noteToSelfEmpty">Du hast keine Nachrichten in »Notiz an mich«.</string>
     <string name="noteToSelfHide">»Notiz an mich« ausblenden</string>
     <string name="noteToSelfHideDescription">Bist du sicher, dass du »Notiz an mich« ausblenden möchtest?</string>
+    <string name="notificationSenderNameAndPreview">Zeigt den Namen des Absenders und eine Vorschau des Nachrichteninhalts an.</string>
     <string name="notificationsAllMessages">Alle Nachrichten</string>
     <string name="notificationsContent">Benachrichtigungsinhalt</string>
     <string name="notificationsContentDescription">Der Inhalt, der in den Benachrichtigungen angezeigt wird.</string>
@@ -714,6 +735,7 @@
     <string name="notificationsFastModeDescription">Über die Benachrichtigungsserver von Google wirst du sofort und zuverlässig über neue Nachrichten benachrichtigt.</string>
     <string name="notificationsFastModeDescriptionHuawei">Du wirst zuverlässig und sofort über neue Nachrichten benachrichtigt, unter Verwendung der Benachrichtigungsserver von Huawei.</string>
     <string name="notificationsFastModeDescriptionIos">Über Apples Push-Mitteilungsdienst wirst du sofort und zuverlässig über neue Nachrichten benachrichtigt.</string>
+    <string name="notificationsGenericOnly">Zeige eine allgemeine {app_name}-Benachrichtigung ohne Namen des Absenders oder Nachrichteninhalt an.</string>
     <string name="notificationsGoToDevice">Zu den Benachrichtigungseinstellungen des Geräts gehen</string>
     <string name="notificationsHeaderAllMessages">Benachrichtigungen - Alle</string>
     <string name="notificationsHeaderMentionsOnly">Benachrichtigungen - Nur für Erwähnungen</string>
@@ -721,6 +743,7 @@
     <string name="notificationsIosGroup">{name} an {conversation_name}</string>
     <string name="notificationsIosRestart">Du hast eventuell Nachrichten erhalten, während dein {device} neu gestartet wurde.</string>
     <string name="notificationsLedColor">LED-Farbe</string>
+    <string name="notificationsMakeSound">Einen Ton abspielen, wenn neue Nachrichten empfangen werden.</string>
     <string name="notificationsMentionsOnly">Nur Erwähnungen</string>
     <string name="notificationsMessage">Benachrichtigungen für Mitteilungen</string>
     <string name="notificationsMostRecent">Neueste von: {name}</string>
@@ -768,8 +791,11 @@
     <string name="open">Öffnen</string>
     <string name="openSurvey">Umfrage starten</string>
     <string name="other">Sonstiges</string>
+    <string name="password">Passwort</string>
     <string name="passwordChange">Passwort ändern</string>
+    <string name="passwordChangedDescriptionToast">Dein Passwort wurde geändert. Bitte bewahre es sicher auf.</string>
     <string name="passwordConfirm">Passwort bestätigen</string>
+    <string name="passwordCreate">Passwort erstellen</string>
     <string name="passwordCurrentIncorrect">Dein aktuelles Passwort ist nicht korrekt.</string>
     <string name="passwordEnter">Passwort eingeben</string>
     <string name="passwordEnterCurrent">Bitte gib dein aktuelles Passwort ein</string>
@@ -779,8 +805,17 @@
     <string name="passwordErrorMatch">Die Passwörter stimmen nicht überein</string>
     <string name="passwordFailed">Passwort konnte nicht gesetzt werden</string>
     <string name="passwordIncorrect">Falsches Passwort</string>
+    <string name="passwordNewConfirm">Neues Passwort wiederholen</string>
     <string name="passwordRemove">Passwort entfernen</string>
+    <string name="passwordRemovedDescriptionToast">Dein Passwort wurde entfernt.</string>
     <string name="passwordSet">Passwort festlegen</string>
+    <string name="passwordSetDescriptionToast">Dein Passwort wurde festgelegt. Bitte bewahre es sicher auf.</string>
+    <string name="passwordStrengthCharLength">Länger als 12 Zeichen</string>
+    <string name="passwordStrengthIncludeNumber">Enthält eine Zahl</string>
+    <string name="passwordStrengthIncludesLowercase">Enthält einen Kleinbuchstaben</string>
+    <string name="passwordStrengthIncludesUppercase">Enthält einen Großbuchstaben</string>
+    <string name="passwordStrengthIndicator">Passwortstärke-Anzeige</string>
+    <string name="passwords">Passwörter</string>
     <string name="paste">Einfügen</string>
     <string name="permissionChange">Berechtigungsänderung</string>
     <string name="permissionMusicAudioDenied">{app_name} benötigt Musik- und Audiozugriff, um Dateien, Musik und Audio zu senden, aber der Zugriff wurde dauerhaft verweigert. Bitte öffne die Einstellungen, wähle »Berechtigungen« und aktiviere »Musik und Audio«.</string>
@@ -793,6 +828,7 @@
     <string name="permissionsCameraDescriptionIos">Erlaube Zugriff auf die Kamera für Videoanrufe.</string>
     <string name="permissionsFaceId">Die Bildschirmsperrfunktion von {app_name} verwendet Face ID.</string>
     <string name="permissionsKeepInSystemTray">In der Systemleiste behalten</string>
+    <string name="permissionsKeepInSystemTrayDescription">{app_name} läuft im Hintergrund weiter, wenn du das Fenster schließt.</string>
     <string name="permissionsLibrary">{app_name} benötigt Zugriff auf deine Fotomediathek, um fortzufahren. Du kannst den Zugriff in den iOS-Einstellungen aktivieren.</string>
     <string name="permissionsLocalNetworkAccessRequiredCallsIos">Zugriff auf lokales Netzwerk ist für Anrufe erforderlich. Aktiviere die \"Lokales Netzwerk\"-Berechtigung in den Einstellungen, um fortzufahren.</string>
     <string name="permissionsLocalNetworkAccessRequiredIos">{app_name} benötigt Zugriff auf lokales Netzwerk, um Sprachanrufe und Videoanrufe zu tätigen.</string>
@@ -819,7 +855,9 @@
     <string name="pinConversation">Unterhaltung anheften</string>
     <string name="pinUnpin">Lösen</string>
     <string name="pinUnpinConversation">Unterhaltung lösen</string>
+    <string name="preferences">Einstellungen</string>
     <string name="preview">Vorschau</string>
+    <string name="previewNotification">Benachrichtigungsvorschau</string>
     <string name="proActivated">Aktiviert</string>
     <string name="proAlreadyPurchased">Du hast bereits</string>
     <string name="proAnimatedDisplayPicture">Lade GIF- und animierte WebP-Bilder als Profilbild hoch!</string>
@@ -878,6 +916,7 @@
     <string name="recommended">Empfohlen</string>
     <string name="recoveryPasswordBannerDescription">Speichere dein Wiederherstellungspasswort, damit du den Zugriff auf deinen Account nicht verlierst.</string>
     <string name="recoveryPasswordBannerTitle">Speichere dein Wiederherstellungspasswort</string>
+    <string name="recoveryPasswordDescription">Verwende dein Wiederherstellungspasswort, um deinen Account auf neue Geräten zu laden.\n\nDein Account kann ohne dein Wiederherstellungspasswort nicht wiederhergestellt werden. Stelle sicher, dass es an einem sicheren Ort aufbewahrt ist – und <b>teile es niemandem mit</b>.</string>
     <string name="recoveryPasswordEnter">Gib dein Wiederherstellungspasswort ein</string>
     <string name="recoveryPasswordErrorLoad">Beim Laden des Wiederherstellungspassworts ist ein Fehler aufgetreten.\n\nBitte exportiere die Logs und lade dann die Datei über den {app_name} Helpdesk hoch, um das Problem zu beheben.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Bitte überprüfe dein Wiederherstellungspasswort und versuche es erneut.</string>
@@ -887,9 +926,12 @@
     <string name="recoveryPasswordExplanation">Um deinen Account zu laden, gib dein Wiederherstellungspasswort ein.</string>
     <string name="recoveryPasswordHidePermanently">Wiederherstellungspasswort dauerhaft ausblenden</string>
     <string name="recoveryPasswordHidePermanentlyDescription1">Du kannst dein Account nicht ohne dein Wiederherstellungspasswort auf neuen Geräten laden.\n\nWir empfehlen dringend, dein Wiederherstellungspasswort an einem sicheren Ort aufzubewahren, bevor Du fortfährst.</string>
+    <string name="recoveryPasswordHidePermanentlyDescription2">Bist du sicher, dass du dein Wiederherstellungspasswort auf diesem Gerät dauerhaft ausblenden möchtest?\n\nDies kann nicht mehr rückgängig gemacht werden.</string>
     <string name="recoveryPasswordHideRecoveryPassword">Wiederherstellungspasswort ausblenden</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Blende dein Wiederherstellungspasswort auf diesem Gerät dauerhaft aus.</string>
     <string name="recoveryPasswordRestoreDescription">Gib dein Wiederherstellungspasswort ein, um deinen Account zu laden. Wenn du es nicht gespeichert hast, findest du es in deinen App-Einstellungen.</string>
+    <string name="recoveryPasswordView">Wiederherstellungspasswort anzeigen</string>
+    <string name="recoveryPasswordVisibility">Sichtbarkeit des Wiederherstellungspassworts</string>
     <string name="recoveryPasswordWarningSendDescription">Dies ist dein Wiederherstellungspasswort. Wenn du es jemandem sendest, wird diese Person vollen Zugriff auf deinen Account haben.</string>
     <string name="recreateGroup">Gruppe neu erstellen</string>
     <string name="redo">Wiederholen</string>
@@ -900,6 +942,7 @@
     </plurals>
     <string name="remove">Entfernen</string>
     <string name="removePasswordFail">Fehler beim Entfernen des Passworts</string>
+    <string name="removePasswordModalDescription">Entferne dein aktuelles Passwort für {app_name}. Lokal gespeicherte Daten werden mit einem zufällig generierten Schlüssel, der auf deinem Gerät gespeichert wird, erneut verschlüsselt.</string>
     <string name="reply">Antworten</string>
     <string name="resend">Erneut senden</string>
     <string name="resolving">Länder werden geladen ...</string>
@@ -961,6 +1004,7 @@
     <string name="set">Speichern</string>
     <string name="setCommunityDisplayPicture">Community-Anzeigebild festlegen</string>
     <string name="settingsRestartDescription">Du musst {app_name} neu starten, um die neuen Einstellungen zu übernehmen.</string>
+    <string name="settingsScreenSecurityDesktop">Bildschirmschutz</string>
     <string name="share">Teilen</string>
     <string name="shareAccountIdDescription">Lade deine Kontakte ein, mit dir auf {app_name} zu chatten, indem du deine Account-ID mit ihnen teilst.</string>
     <string name="shareAccountIdDescriptionCopied">Teile deine Account-ID mit Freunden und verlegt das Gespräch dann hierher.</string>
@@ -972,15 +1016,20 @@
     <string name="showLess">Weniger anzeigen</string>
     <string name="showNoteToSelf">»Notiz an mich« anzeigen</string>
     <string name="showNoteToSelfDescription">Möchtest du <b>Notiz an mich</b> wirklich in deiner Unterhaltungsliste anzeigen?</string>
+    <string name="spellChecker">Rechtschreibprüfung</string>
     <string name="stickers">Sticker</string>
+    <string name="strength">Passwortstärke</string>
+    <string name="supportDescription">Probleme? Erkunde die Hilfeartikel oder öffne ein Ticket bei dem {app_name} Support.</string>
     <string name="supportGoTo">Zum Helpdesk gehen</string>
     <string name="systemInformationDesktop">Systeminformation: {information}</string>
     <string name="tapToRetry">Zum Wiederholen tippen</string>
     <string name="theContinue">Weiter</string>
     <string name="theDefault">Standard</string>
     <string name="theError">Fehler</string>
+    <string name="themePreview">Design-Vorschau</string>
     <string name="tooltipAccountIdVisible">Die Account-ID von <b>{name}</b> ist basierend auf deinen vorherigen Interaktionen sichtbar</string>
     <string name="tooltipBlindedIdCommunities">Verschleierte IDs werden in Communities verwendet, um Spam zu reduzieren und die Privatsphäre zu erhöhen</string>
+    <string name="translate">Übersetzen</string>
     <string name="tryAgain">Erneut versuchen</string>
     <string name="typingIndicators">Tipp-Indikatoren</string>
     <string name="typingIndicatorsDescription">Sehe und teile Tippindikatoren.</string>
@@ -1001,10 +1050,14 @@
     <string name="updateGroupInformationEnterShorterDescription">Bitte gib eine kürzere Gruppenbeschreibung ein</string>
     <string name="updateNewVersion">Eine neue Version von {app_name} ist verfügbar. Tippe, um zu aktualisieren</string>
     <string name="updateNewVersionDescription">Eine neue Version ({version}) von {app_name} ist verfügbar.</string>
+    <string name="updateProfileInformation">Profilinformationen aktualisieren</string>
+    <string name="updateProfileInformationDescription">Dein Anzeigename und Profilbild sind in allen Unterhaltungen sichtbar.</string>
     <string name="updateReleaseNotes">Zu den Release-Notes gehen</string>
     <string name="updateSession">{app_name}-Update</string>
     <string name="updateVersion">Version {version}</string>
     <string name="updated">Zuletzt aktualisiert vor {relative_time}</string>
+    <string name="updates">Aktualisierungen</string>
+    <string name="updating">Wird aktualisiert...</string>
     <string name="upgradeTo">Upgrade auf</string>
     <string name="uploading">Wird hochgeladen</string>
     <string name="urlCopy">Link kopieren</string>
@@ -1023,4 +1076,7 @@
     <string name="window">Fenster</string>
     <string name="yes">Ja</string>
     <string name="you">Du</string>
+    <string name="yourRecoveryPassword">Dein Wiederherstellungspasswort</string>
+    <string name="zoomFactor">Vergrößerungsfaktor</string>
+    <string name="zoomFactorDescription">Passe die Größe von Text und visuellen Elementen an.</string>
 </resources>

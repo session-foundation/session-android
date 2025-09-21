@@ -444,7 +444,7 @@ class ReceivedMessageHandler @Inject constructor(
                     picKey = message.profile?.profileKey,
                     blocksCommunityMessageRequests = message.blocksMessageRequests,
                     proStatus = null,
-                    profileUpdateTime = null,
+                    profileUpdateTime = message.profile?.profileUpdated,
                 )
 
                 if (updates != null) {

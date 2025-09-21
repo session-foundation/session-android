@@ -69,7 +69,7 @@ class HomeDiffUtil(
                 oldItem.isSent == newItem.isSent &&
                 oldItem.isPending == newItem.isPending &&
                 oldItem.lastSeen == newItem.lastSeen &&
-                !configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(newItem) } &&
+                oldItem.isUnread == newItem.isUnread &&
                 old.isTyping == new.isTyping
             )
         }

@@ -15,9 +15,11 @@ import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class NotificationState {
 
@@ -65,6 +67,48 @@ public class NotificationState {
   public int getThreadCount()                      { return threads.size();     }
   public int getNotificationCount()                { return notificationCount;  }
   public List<NotificationItem> getNotifications() { return notifications;      }
+
+  public boolean hasMessageRequests() {
+    for (NotificationItem item : notifications) {
+      if (item.isMessageRequest()) return true;
+    }
+    return false;
+  }
+
+  public Set<Long> getRequestThreads() {
+    LinkedHashSet<Long> result = new LinkedHashSet<>();
+    for (NotificationItem item : notifications) {
+      if (item.isMessageRequest()) result.add(item.getThreadId());
+    }
+    return result;
+  }
+
+  public Set<Long> getNormalThreads() {
+    LinkedHashSet<Long> result = new LinkedHashSet<>();
+    for (NotificationItem item : notifications) {
+      if (!item.isMessageRequest()) result.add(item.getThreadId());
+    }
+    return result;
+  }
+
+  public List<NotificationItem> getNotificationsForThread(long threadId, @Nullable Boolean requestsOnly) {
+    ArrayList<NotificationItem> out = new ArrayList<>();
+    for (NotificationItem item : notifications) {
+      if (item.getThreadId() != threadId) continue;
+      if (requestsOnly == null || item.isMessageRequest() == requestsOnly) {
+        out.add(item);
+      }
+    }
+    return out;
+  }
+
+  // (Optional) if you want to avoid enqueueing >1 request item for a thread in this pass:
+  public boolean hasRequestItemForThread(long threadId) {
+    for (NotificationItem item : notifications) {
+      if (item.getThreadId() == threadId && item.isMessageRequest()) return true;
+    }
+    return false;
+  }
 
   public List<NotificationItem> getNotificationsForThread(long threadId) {
     LinkedList<NotificationItem> notificationsInThread = new LinkedList<>();

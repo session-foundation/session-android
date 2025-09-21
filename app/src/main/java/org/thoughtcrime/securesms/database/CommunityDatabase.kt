@@ -68,7 +68,7 @@ class CommunityDatabase @Inject constructor(
             check(cursor.moveToNext()) { "Unable to patch room info" }
             json.decodeFromString<OpenGroupApi.RoomInfo>(cursor.getString(0))
         }.also {
-            if (cache[address] != it) {
+            if (cache[address]?.getOrNull() != it) {
                 cache.put(address, Optional.of(it))
                 mutableChangeNotification.tryEmit(address)
             }
