@@ -119,6 +119,9 @@ class ProfileUpdateHandler @Inject constructor(
                             profilePic = updates.pic ?: r.profilePic,
                             blocksCommunityMessagesRequests = updates.blocksCommunityMessageRequests ?: r.blocksCommunityMessagesRequests
                         )
+                    } else if (updates.blocksCommunityMessageRequests != null &&
+                            r.blocksCommunityMessagesRequests != updates.blocksCommunityMessageRequests) {
+                        r.copy(blocksCommunityMessagesRequests = updates.blocksCommunityMessageRequests)
                     } else {
                         r
                     }
