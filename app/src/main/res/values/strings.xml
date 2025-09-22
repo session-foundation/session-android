@@ -203,6 +203,9 @@
     <string name="change">Change</string>
     <string name="changePasswordFail">Failed to change password</string>
     <string name="changePasswordModalDescription">Change your password for {app_name}. Locally stored data will be re-encrypted with your new password.</string>
+    <string name="checkingProStatus">Checking {pro} Status</string>
+    <string name="checkingProStatusDescription">Checking your {pro} details. Some information on this page may be inaccurate until this check is complete.</string>
+    <string name="checkingProStatusUpgradeDescription">Checking your {pro} status. You\'ll be able to upgrade to {pro} once this check is complete.</string>
     <string name="clear">Clear</string>
     <string name="clearAll">Clear All</string>
     <string name="clearDataAll">Clear All Data</string>
@@ -455,10 +458,12 @@
     <string name="enjoyingSessionButtonPositive">It\'s Great {emoji}</string>
     <string name="enjoyingSessionDescription">You\'ve been using {app_name} for a little while, how’s it going? We’d really appreciate hearing your thoughts.</string>
     <string name="enter">Enter</string>
+    <string name="errorCheckingProStatus">Error checking {pro} status.</string>
     <string name="errorConnection">Please check your internet connection and try again.</string>
     <string name="errorCopyAndQuit">Copy Error and Quit</string>
     <string name="errorDatabase">Database Error</string>
     <string name="errorGeneric">Something went wrong. Please try again later.</string>
+    <string name="errorLoadingProPlan">Error loading {pro} plan.</string>
     <string name="errorUnknown">An unknown error occurred.</string>
     <string name="failedToDownload">Failed to download</string>
     <string name="failures">Failures</string>
@@ -916,6 +921,7 @@
     <string name="proCallToActionPinnedConversations">Want more pins? Organize your chats and unlock premium features with {app_pro}</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Want more than 5 pins? Organize your chats and unlock premium features with {app_pro}</string>
     <string name="proDiscountTooltip">Your current plan is already discounted by {percent}% of the full {app_pro} price.</string>
+    <string name="proErrorRefreshingStatus">Error refreshing {pro} status</string>
     <string name="proExpired">Expired</string>
     <string name="proExpiredDescription">Unfortunately, your {pro} plan has expired. Renew to keep accessing the exclusive perks and features of {app_pro}.</string>
     <string name="proExpiringSoon">Expiring Soon</string>
@@ -955,7 +961,12 @@
     <string name="proPlanActivatedAuto">Your {app_pro} plan is active!\n\nYour plan will automatically renew for another <b>{current_plan}</b> on <b>{date}</b>. Updates to your plan take effect when {pro} is next renewed.</string>
     <string name="proPlanActivatedAutoShort">Your {app_pro} plan is active!\n\nYour plan will automatically renew for another <b>{current_plan}</b> on <b>{date}</b>.</string>
     <string name="proPlanActivatedNotAuto">Your {app_pro} plan will expire on {date}.\n\nUpdate your plan now to ensure uninterrupted access to exclusive Pro features.</string>
+    <string name="proPlanError">{pro} Plan Error</string>
     <string name="proPlanExpireDate">Your {app_pro} plan will expire on {date}.</string>
+    <string name="proPlanLoading">{pro} Plan Loading</string>
+    <string name="proPlanLoadingDescription">Information about your {pro} plan is still being loaded. You cannot update your plan until this process is complete.</string>
+    <string name="proPlanLoadingEllipsis">{pro} plan loading...</string>
+    <string name="proPlanNetworkLoadError">Unable to connect to the network to load your current plan. Updating your plan via {app_name} will be disabled until connectivity is restored.\n\nPlease check your network connection and retry.</string>
     <string name="proPlanNotFound">{pro} Plan Not Found</string>
     <string name="proPlanNotFoundDescription">No active plan was found for your account. If you believe this is a mistake, please reach out to {app_name} support for assistance.</string>
     <string name="proPlanPlatformRefund">Because you originally signed up for {app_pro} via the <b><font color="0">{platform_store} Store</font></b>, you\'ll need to use the same {platform_account} to request a refund.</string>
@@ -984,7 +995,16 @@
     <string name="proSendMore">Send more with</string>
     <string name="proSettings">{pro} Settings</string>
     <string name="proStats">Your {pro} Stats</string>
+    <string name="proStatsLoading">{pro} Stats Loading</string>
+    <string name="proStatsLoadingDescription">Your {pro} stats are loading, please wait.</string>
     <string name="proStatsTooltip">{pro} stats reflect usage on this device and may appear differently on linked devices</string>
+    <string name="proStatusError">{pro} Status Error</string>
+    <string name="proStatusInfoInaccurateNetworkError">Unable to connect to the network to check your {pro} status. Information displayed on this page may be inaccurate until connectivity is restored.\n\nPlease check your network connection and retry.</string>
+    <string name="proStatusLoading">{pro} Status Loading</string>
+    <string name="proStatusLoadingDescription">Your {pro} information is being loaded. Some actions on this page may be unavailable until loading is complete.</string>
+    <string name="proStatusLoadingSubtitle">{pro} status loading</string>
+    <string name="proStatusNetworkErrorDescription">Unable to connect to the network to check your {pro} status. You cannot upgrade to {pro} until connectivity is restored.\n\nPlease check your network connection and retry.</string>
+    <string name="proStatusRefreshNetworkError">Unable to connect to the network to refresh your {pro} status. Some actions on this page will be disabled until connectivity is restored.\n\nPlease check your network connection and retry.</string>
     <string name="proSupportDescription">Need help with your {pro} plan? Submit a request to the support team.</string>
     <string name="proTosPrivacy">By updating, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
     <string name="proUnlimitedPins">Unlimited Pins</string>
@@ -1160,6 +1180,7 @@
     <string name="unavailable">Unavailable</string>
     <string name="undo">Undo</string>
     <string name="unknown">Unknown</string>
+    <string name="unsupportedCpu">Unsupported CPU</string>
     <string name="updateApp">App updates</string>
     <string name="updateCommunityInformation">Update Community Information</string>
     <string name="updateCommunityInformationDescription">Community name and description are visible to all community members</string>
@@ -1205,6 +1226,7 @@
     <string name="window">Window</string>
     <string name="yes">Yes</string>
     <string name="you">You</string>
+    <string name="yourCpuIsUnsupportedSSE42">Your CPU does not support SSE 4.2 instructions, which are required by Session on Linux x64 operating systems to process images. Please upgrade to a compatible CPU or use a different operating system.</string>
     <string name="yourRecoveryPassword">Your Recovery Password</string>
     <string name="zoomFactor">Zoom Factor</string>
     <string name="zoomFactorDescription">Adjust the size of text and visual elements.</string>

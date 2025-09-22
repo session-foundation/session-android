@@ -17,6 +17,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.util.castAwayType
@@ -64,13 +65,17 @@ class BlindMappingRepository @Inject constructor(
                 .associate { community ->
                     community.baseUrl to allContacts.asSequence()
                         .flatMap { contactAddress ->
-                            val allBlindIDs = BlindKeyAPI.blind15Ids(
-                                sessionId = contactAddress.accountId.hexString,
-                                serverPubKey = community.pubKeyHex
-                            ).asSequence() + BlindKeyAPI.blind25Id(
-                                sessionId = contactAddress.accountId.hexString,
-                                serverPubKey = community.pubKeyHex
-                            )
+                            val allBlindIDs = runCatching {
+                                BlindKeyAPI.blind15Ids(
+                                    sessionId = contactAddress.accountId.hexString,
+                                    serverPubKey = community.pubKeyHex
+                                ).asSequence() + BlindKeyAPI.blind25Id(
+                                    sessionId = contactAddress.accountId.hexString,
+                                    serverPubKey = community.pubKeyHex
+                                )
+                            }.onFailure { Log.e("BlindMappingRepository", "Error computing blinded IDs", it) }
+                                .getOrNull()
+                                .orEmpty()
 
                             allBlindIDs.map { blindId ->
                                 Address.Blinded(AccountId(blindId)) to contactAddress

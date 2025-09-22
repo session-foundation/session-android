@@ -47,10 +47,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion._events
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
-import org.thoughtcrime.securesms.util.DateUtils.Companion.toEpochSeconds
 import java.io.IOException
-import java.time.Instant
 import java.time.ZonedDateTime
 import java.util.Arrays
 import java.util.Date
@@ -231,7 +228,6 @@ interface TextSecurePreferences {
 
     var inAppReviewState: String?
 
-    var lastProfileUpdated: Instant?
 
     companion object {
         val TAG = TextSecurePreferences::class.simpleName
@@ -304,7 +300,6 @@ interface TextSecurePreferences {
         const val GIF_GRID_LAYOUT = "pref_gif_grid_layout"
         val IS_PUSH_ENABLED get() = "pref_is_using_fcm$pushSuffix"
         const val CONFIGURATION_SYNCED = "pref_configuration_synced"
-        const val LAST_PROFILE_UPDATE_TIME = "pref_last_profile_update_time"
         const val PROFILE_PIC_EXPIRY = "profile_pic_expiry"
         const val LAST_OPEN_DATE = "pref_last_open_date"
         const val HAS_HIDDEN_MESSAGE_REQUESTS = "pref_message_requests_hidden"
@@ -873,17 +868,6 @@ interface TextSecurePreferences {
         fun setLastSnodePoolRefreshDate(context: Context?, date: Date) {
             setLongPreference(context!!, "last_snode_pool_refresh_date", date.time)
         }
-
-        @JvmStatic
-        fun shouldUpdateProfile(context: Context, profileUpdateTime: Long): Boolean {
-            return profileUpdateTime > getLongPreference(context, LAST_PROFILE_UPDATE_TIME, 0)
-        }
-
-        @JvmStatic
-        fun setLastProfileUpdateTime(context: Context, profileUpdateTime: Long) {
-            setLongPreference(context, LAST_PROFILE_UPDATE_TIME, profileUpdateTime)
-        }
-
         fun getLastOpenTimeDate(context: Context): Long {
             return getLongPreference(context, LAST_OPEN_DATE, 0)
         }
@@ -1740,13 +1724,6 @@ class AppTextSecurePreferences @Inject constructor(
                 setStringPreference(TextSecurePreferences.DEPRECATING_START_TIME_OVERRIDE, value.toString())
             }
         }
-
-    override var lastProfileUpdated: Instant?
-        get() = getLongPreference(TextSecurePreferences.LAST_PROFILE_UPDATE_TIME, 0).secondsToInstant()
-        set(value) {
-            setLongPreference(TextSecurePreferences.LAST_PROFILE_UPDATE_TIME, value?.toEpochSeconds() ?: 0L)
-        }
-
     override fun getDebugMessageFeatures(): Set<ProStatusManager.MessageProFeature> {
         return getStringSetPreference( TextSecurePreferences.DEBUG_MESSAGE_FEATURES, emptySet())
             ?.map { ProStatusManager.MessageProFeature.valueOf(it) }?.toSet() ?: emptySet()

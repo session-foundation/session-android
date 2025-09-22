@@ -26,13 +26,14 @@ public class NotificationItem {
   private final @Nullable CharSequence      text;
   private final long                        timestamp;
   private final @Nullable SlideDeck         slideDeck;
+  private final boolean isMessageRequest;
 
   public NotificationItem(long id, boolean mms,
                           @NonNull Recipient individualRecipient,
                           @NonNull Recipient conversationRecipient,
                           @Nullable Recipient threadRecipient,
                           long threadId, @Nullable CharSequence text, long timestamp,
-                          @Nullable SlideDeck slideDeck)
+                          @Nullable SlideDeck slideDeck, boolean isMessageRequest)
   {
     this.id                    = id;
     this.mms                   = mms;
@@ -43,6 +44,7 @@ public class NotificationItem {
     this.threadId              = threadId;
     this.timestamp             = timestamp;
     this.slideDeck             = slideDeck;
+    this.isMessageRequest = isMessageRequest;
   }
 
   public @NonNull Recipient getRecipient() {
@@ -91,5 +93,9 @@ public class NotificationItem {
 
   public boolean isMms() {
     return mms;
+  }
+
+  public boolean isMessageRequest() {
+    return isMessageRequest;
   }
 }

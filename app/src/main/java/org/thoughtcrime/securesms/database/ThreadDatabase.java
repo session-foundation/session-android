@@ -57,6 +57,7 @@ import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
+import org.thoughtcrime.securesms.util.SharedConfigUtilsKt;
 
 import java.io.Closeable;
 import java.time.ZonedDateTime;
@@ -878,6 +879,11 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
         groupThreadStatus = GroupThreadStatus.None;
       }
 
+      final boolean isUnread = address instanceof Address.Conversable &&
+              configFactory.get().withUserConfigs(configs ->
+                SharedConfigUtilsKt.getConversationUnread(
+                        configs.getConvoInfoVolatile(), (Address.Conversable) address));
+
       MessageContent messageContent;
       try {
           messageContent = (messageContentJson == null || messageContentJson.isEmpty()) ? null : json.decodeFromString(
@@ -891,7 +897,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
 
       return new ThreadRecord(body, lastMessage, recipient, date, count,
                               unreadCount, unreadMentionCount, threadId, deliveryReceiptCount, status, type,
-              lastSeen, readReceiptCount, invitingAdmin, groupThreadStatus, messageContent);
+              lastSeen, readReceiptCount, invitingAdmin, groupThreadStatus, messageContent, isUnread);
     }
 
     @Override
