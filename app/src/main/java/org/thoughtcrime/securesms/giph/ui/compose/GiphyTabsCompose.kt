@@ -41,7 +41,9 @@ fun attachComposeTabs(
         // Keep pager -> tabs selection in sync.
         DisposableEffect(pager) {
             val cb = object : ViewPager2.OnPageChangeCallback() {
-                override fun onPageSelected(position: Int) { selectedIndex = position }
+                override fun onPageSelected(position: Int) {
+                    selectedIndex = position
+                }
             }
             pager.registerOnPageChangeCallback(cb)
             onDispose { pager.unregisterOnPageChangeCallback(cb) }
@@ -104,7 +106,7 @@ private fun TabsRow(
 private fun colorFromAttrOr(@AttrRes attrResId: Int, fallback: Color): Color {
     val context = LocalContext.current
     val tv = TypedValue()
-    val resolved = context.theme.resolveAttribute(attrResId, tv, /* resolveRefs = */ true)
+    val resolved = context.theme.resolveAttribute(attrResId, tv, true)
     if (!resolved) return fallback
     return if (tv.resourceId != 0) {
         Color(ContextCompat.getColor(context, tv.resourceId))
