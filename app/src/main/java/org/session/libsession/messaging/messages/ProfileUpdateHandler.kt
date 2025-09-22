@@ -143,8 +143,11 @@ class ProfileUpdateHandler @Inject constructor(
         lastUpdated: Instant?,
         newUpdateTime: Instant?
     ): Boolean {
-        return (lastUpdated == null && newUpdateTime == null) ||
-                (newUpdateTime != null && lastUpdated != null && newUpdateTime > lastUpdated)
+        val lastUpdatedTimestamp = lastUpdated?.toEpochSeconds() ?: 0L
+        val newUpdateTimestamp = newUpdateTime?.toEpochSeconds() ?: 0L
+
+        return (lastUpdatedTimestamp == 0L && newUpdateTimestamp == 0L) ||
+                (newUpdateTimestamp > lastUpdatedTimestamp)
     }
 
     class Updates private constructor(
