@@ -1,12 +1,16 @@
 package org.session.libsession.messaging.messages.visible
 
 import com.google.protobuf.ByteString
-import network.loki.messenger.libsession_util.util.UserPic
-import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.protos.SignalServiceProtos
+import org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile
+import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochMillis
+import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochSeconds
+import org.thoughtcrime.securesms.util.DateUtils.Companion.millsToInstant
 import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
 import org.thoughtcrime.securesms.util.DateUtils.Companion.toEpochSeconds
 import java.time.Instant
+import java.time.ZonedDateTime
 
 class Profile(
     var displayName: String? = null,
@@ -14,12 +18,6 @@ class Profile(
     var profilePictureURL: String? = null,
     var profileUpdated: Instant? = null
 ) {
-
-    val userPic: UserPic? get() = profilePictureURL?.let { url ->
-        profileKey?.let { key ->
-            UserPic(url = url, key = key)
-        }
-    }
 
     companion object {
         const val TAG = "Profile"
