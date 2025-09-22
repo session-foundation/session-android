@@ -20,10 +20,12 @@ import org.session.libsession.utilities.MediaTypes;
 import org.session.libsession.utilities.NonTranslatableStringConstants;
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity;
 import org.session.libsignal.utilities.Log;
+import org.thoughtcrime.securesms.giph.ui.compose.GiphyTabsCompose;
 import org.thoughtcrime.securesms.providers.BlobUtils;
 import org.session.libsession.utilities.ViewUtil;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 
 import network.loki.messenger.R;
@@ -77,15 +79,25 @@ public class GiphyActivity extends ScreenLockActionBarActivity
 
     binding.giphyPager.setAdapter(new GiphyFragmentPagerAdapter(this));
 
-    new TabLayoutMediator(binding.tabLayout, binding.giphyPager, (tab, position) -> {
-      tab.setText(position == 0 ? NonTranslatableStringConstants.GIF : getString(R.string.stickers));
-    }).attach();
+//    new TabLayoutMediator(binding.tabLayout, binding.giphyPager, (tab, position) -> {
+//      tab.setText(position == 0 ? NonTranslatableStringConstants.GIF : getString(R.string.stickers));
+//    }).attach();
+
+    // NEW: Compose tabs controlling existing ViewPager2
+    GiphyTabsCompose.attachComposeTabs(
+            binding.composeTabs,
+            binding.giphyPager,
+            Arrays.asList(
+                    org.session.libsession.utilities.NonTranslatableStringConstants.GIF,
+                    getString(network.loki.messenger.R.string.stickers)
+            )
+    );
   }
 
   @Override
   public void onFilterChanged(String filter) {
-    this.gifFragment.setSearchString(filter);
-    this.stickerFragment.setSearchString(filter);
+    this.gifFragment.setNewSearchString(filter);
+    this.stickerFragment.setNewSearchString(filter);
   }
 
   @Override
