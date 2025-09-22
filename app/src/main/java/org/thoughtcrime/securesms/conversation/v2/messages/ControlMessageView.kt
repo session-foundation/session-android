@@ -25,6 +25,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
+import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.isGroup
 import org.session.libsession.utilities.isGroupOrCommunity
@@ -83,6 +84,12 @@ class ControlMessageView : LinearLayout {
         binding.iconImageView.isGone = true
         binding.expirationTimerView.isGone = true
         binding.followSetting.isGone = true
+
+        val isLight = ThemeUtil.isLightTheme(context)
+        if(isLight){
+            binding.followSetting.setTextColor(context.getColorFromAttr(android.R.attr.textColorPrimary))
+        }
+
         var messageBody: CharSequence = message.getDisplayBody(context)
 
         binding.root.contentDescription = null
