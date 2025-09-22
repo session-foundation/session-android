@@ -16,6 +16,7 @@ import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
+import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
@@ -73,6 +74,7 @@ import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.sskenvironment.ReadReceiptManager
+import org.thoughtcrime.securesms.util.DateUtils.Companion.toEpochSeconds
 import java.security.SignatureException
 import javax.inject.Inject
 import javax.inject.Provider
@@ -429,6 +431,15 @@ class ReceivedMessageHandler @Inject constructor(
                     configFactory.withMutableUserConfigs { configs ->
                         configs.contacts.upsertContact(senderAddress) {
                             approvedMe = true
+
+                            // If it's the first time we create this contact, we'll take all the
+                            // profile data into the config. The profile update handler's logic
+                            // can still run without problem later.
+                            if (existingContact == null) {
+                                name = message.profile?.displayName ?: name
+                                profilePicture = message.profile?.userPic ?: UserPic.DEFAULT
+                                profileUpdatedEpochSeconds = message.profile?.profileUpdated?.toEpochSeconds() ?: 0L
+                            }
                         }
                     }
                 }
