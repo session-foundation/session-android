@@ -121,6 +121,7 @@
     <string name="banUser">వినియోగదారుని నిషేధించు</string>
     <string name="banUserBanned">వాడుకరి నిషేధించబడినారు</string>
     <string name="block">నిరోధించు</string>
+    <string name="blockBlockedDescription">సందేశాన్ని పంపడానికి ఈ పరిచయాన్ని అనుమతించు</string>
     <string name="blockBlockedNone">నిరోధించిన పరిచయాలు లేవు</string>
     <string name="blockBlockedUser">{name} నిరోధించబడింది</string>
     <string name="blockDescription">మీరు <b>{name}</b>ని బ్లాక్ చేయాలనుకుంటున్నారా? బ్లాక్ చేసిన వినియోగదారులు మీకు సందేశ వివరణలను పంపలేరు, సమూహ ఆహ్వానాలు లేదా మీకు కాల్ చేయలేరు.</string>
@@ -233,7 +234,6 @@
     <string name="conversationsDeleted">సంభాషణ తొలగించబడింది</string>
     <string name="conversationsEmpty">{conversation_name} లో ఎలాంటి సందేశాలు లేవు.</string>
     <string name="conversationsEnter">కీని ఎంటర్ చేయండి</string>
-    <string name="conversationsEnterDescription">సంభాషణలో టైపింగ్ చేస్తున్నప్పుడు ఎంటర్ కీ యొక్క విధానం.</string>
     <string name="conversationsGroups">సమూహాలు</string>
     <string name="conversationsMessageTrimming">సందేశం కత్తిరించి సరి చేయుట</string>
     <string name="conversationsMessageTrimmingTrimCommunities">కమ్యూనిటీలను ట్రిమ్ చేయండి</string>
@@ -754,6 +754,7 @@
     <string name="sessionSettings">అమరికలు</string>
     <string name="set">సెట్</string>
     <string name="settingsRestartDescription">మీ కొత్త సెట్టింగ్స్‌ని ఉపయోగించాలంటే, మీరు {app_name}ను రీస్టార్ట్ చేయాలి.</string>
+    <string name="settingsScreenSecurityDesktop">స్క్రీన్ భద్రత</string>
     <string name="share">పంచుకోండి</string>
     <string name="shareAccountIdDescription">మీ స్నేహితునితో చాట్ చేయడానికి మీ ఖాతా ID ని పంచడం ద్వారా మీ స్నేహితున్ని {app_name} లో ఆహ్వానించండి.</string>
     <string name="shareAccountIdDescriptionCopied">మీ స్నేహితులతో ఎక్కడైనా మీరు సాధారణంగా మాట్లాడే చోట కలుసుకోండి - తరువాత సంభాషణను ఇక్కడకు తరలించండి.</string>

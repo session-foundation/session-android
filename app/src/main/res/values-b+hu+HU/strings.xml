@@ -273,7 +273,6 @@
     <string name="conversationsDeleted">Beszélgetés törölve</string>
     <string name="conversationsEmpty">A {conversation_name} beszélgetésben nincsenek további üzenetek.</string>
     <string name="conversationsEnter">Enter billentyű</string>
-    <string name="conversationsEnterDescription">Az Enter billentyű funkciója beszélgetés közben.</string>
     <string name="conversationsGroups">Csoportok</string>
     <string name="conversationsMessageTrimming">Üzenetek rövidítése</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Közösségek rövidítése</string>
@@ -927,6 +926,7 @@
     <string name="set">Beállít</string>
     <string name="setCommunityDisplayPicture">Közösség megjelenítendő képének beállítása</string>
     <string name="settingsRestartDescription">Újra kell indítanod a {app_name}-t a beállítások érvényesítéséhez.</string>
+    <string name="settingsScreenSecurityDesktop">Képernyőbiztonság</string>
     <string name="share">Megosztás</string>
     <string name="shareAccountIdDescription">Oszd meg a Felhasználó ID-dat ismerőseiddel, hogy a {app_name} alkalmazáson csevegjetek.</string>
     <string name="shareAccountIdDescriptionCopied">Ossza meg barátaival ott, ahol általában beszélgetni szokott velük - majd helyezze át a beszélgetést ide.</string>

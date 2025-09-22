@@ -265,7 +265,6 @@
     <string name="conversationsDeleted">تم حذف المحادثة</string>
     <string name="conversationsEmpty">لا توجد رسائل في {conversation_name}.</string>
     <string name="conversationsEnter">أدخل المفتاح</string>
-    <string name="conversationsEnterDescription">وظيفة مفتاح الإدخال عند الكتابة في محادثة.</string>
     <string name="conversationsGroups">مجموعات</string>
     <string name="conversationsMessageTrimming">تقليم الرسالة</string>
     <string name="conversationsMessageTrimmingTrimCommunities">تقليم المجتمعات</string>
@@ -915,6 +914,7 @@
     <string name="sessionSettings">التعديلات</string>
     <string name="set">تعيين</string>
     <string name="settingsRestartDescription">يجب عليك إعادة تشغيل {app_name} لتطبيق الإعدادات الجديدة.</string>
+    <string name="settingsScreenSecurityDesktop">أمان الشاشة</string>
     <string name="share">مشاركة</string>
     <string name="shareAccountIdDescription">ادعُ صديقك للدردشة معك على {app_name} بمشاركة معرف حسابك معهم.</string>
     <string name="shareAccountIdDescriptionCopied">شارك مع أصدقائك حيثما تتحدث معهم عادةً — ثم نقل المحادثة هنا.</string>

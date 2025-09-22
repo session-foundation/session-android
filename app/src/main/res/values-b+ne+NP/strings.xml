@@ -121,6 +121,7 @@
     <string name="banUser">प्रयोगकर्ता प्रतिबन्ध गर्नुहोस्</string>
     <string name="banUserBanned">प्रयोगकर्ता प्रतिबन्धित</string>
     <string name="block">ब्लक गर्नुहोस्</string>
+    <string name="blockBlockedDescription">सन्देश पठाउन यो सम्पर्क अनब्लक गर्नुहोस्।</string>
     <string name="blockBlockedNone">कुनै ब्लक गरिएका सम्पर्कहरू छैनन्</string>
     <string name="blockBlockedUser">{name} ब्लक गरिएको छ</string>
     <string name="blockDescription">के तपाईंलाई <b>{name}</b> بادुकाउनुभो? Block गरिएका प्रयोगकर्ताहरूले तपाईलाई सन्देश अनुरोधहरू, समूह आमन्त्रण वा कल दिन सक्दैनन्।.</string>
@@ -232,7 +233,6 @@
     <string name="conversationsDeleted">वार्ता मेटियो</string>
     <string name="conversationsEmpty">{conversation_name} मा कुनै संदेशहरू छैनन्।</string>
     <string name="conversationsEnter">कुञ्जी प्रविष्ट गर्नुहोस्</string>
-    <string name="conversationsEnterDescription">समूह निमन्त्रणा सफल</string>
     <string name="conversationsGroups">समूहहरू</string>
     <string name="conversationsMessageTrimming">सन्देश ट्रिमिंग</string>
     <string name="conversationsMessageTrimmingTrimCommunities">समुदायहरू ट्रिम गर्नुहोस्</string>
@@ -745,6 +745,7 @@
     <string name="sessionSettings">सेटिङहरू</string>
     <string name="set">सेट</string>
     <string name="settingsRestartDescription">आफ्नो नयाँ सेटिङहरू लागू गर्न {app_name} पुनः सुरु गर्नुहोस्।</string>
+    <string name="settingsScreenSecurityDesktop">स्क्रीन सुरक्षा</string>
     <string name="share">साझा गर्नुहोस्</string>
     <string name="shareAccountIdDescription">तपाईंको मित्रलाई तपाईंसँग च्याट गर्न {app_name} मा सम्मिलित गराउन आफ्नो खाता आईडी साझा गर्नुहोस्।</string>
     <string name="shareAccountIdDescriptionCopied">जहाँ तपाईंले प्राय: तिनीहरूसँग कुरा गर्नुहुन्छ, त्यहाँ आफ्ना साथीहरूसँग साझा गर्नुहोस् — अनि कुराकानीलाई यहाँ सार्नुहोस्।</string>

@@ -121,6 +121,7 @@
     <string name="banUser">Hana Mai Amfani</string>
     <string name="banUserBanned">Mai amfani ya kulle</string>
     <string name="block">To\'she</string>
+    <string name="blockBlockedDescription">Cire katanga wannan saduwa don aika saƙo</string>
     <string name="blockBlockedNone">Babu an toshe lambobin sadarwa</string>
     <string name="blockBlockedUser">{name} an toshe</string>
     <string name="blockDescription">Kana tabbata kana so ka toshe <b>{name}?</b>? Ba za su iya aiko maka da roƙon saƙonni, gayyatar rukuni ko kira ba idan an toshe su.</string>
@@ -232,7 +233,6 @@
     <string name="conversationsDeleted">Tattaunawa an share</string>
     <string name="conversationsEmpty">Babu saƙonni a cikin {conversation_name}.</string>
     <string name="conversationsEnter">Shigar da Maɓalli</string>
-    <string name="conversationsEnterDescription">Aikin maɓallin shigar yayin rubutu a cikin tattaunawa.</string>
     <string name="conversationsGroups">Rukuni</string>
     <string name="conversationsMessageTrimming">Rage Saƙo</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Datse Communities</string>
@@ -753,6 +753,7 @@
     <string name="sessionSettings">Saituna</string>
     <string name="set">Saita</string>
     <string name="settingsRestartDescription">Dole ne ku sake farawa {app_name} don aiwatar da sabbin saitunan ku.</string>
+    <string name="settingsScreenSecurityDesktop">Tsaron Allo</string>
     <string name="share">Parve bike</string>
     <string name="shareAccountIdDescription">Gayyaci abokinka don hira da kai a {app_name} ta hanyar raba Account ID ɗinka tare da su.</string>
     <string name="shareAccountIdDescriptionCopied">Raba tare da abokan ku a duk inda kuka saba magana da su — sai ku koma nan ku ci gaba da magana.</string>

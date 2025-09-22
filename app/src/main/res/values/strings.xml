@@ -203,6 +203,9 @@
     <string name="change">Change</string>
     <string name="changePasswordFail">Failed to change password</string>
     <string name="changePasswordModalDescription">Change your password for {app_name}. Locally stored data will be re-encrypted with your new password.</string>
+    <string name="checkingProStatus">Checking {pro} Status</string>
+    <string name="checkingProStatusDescription">Checking your {pro} details. Some information on this page may be inaccurate until this check is complete.</string>
+    <string name="checkingProStatusUpgradeDescription">Checking your {pro} status. You\'ll be able to upgrade to {pro} once this check is complete.</string>
     <string name="clear">Clear</string>
     <string name="clearAll">Clear All</string>
     <string name="clearDataAll">Clear All Data</string>
@@ -286,7 +289,7 @@
     <string name="conversationsDeleted">Conversation deleted</string>
     <string name="conversationsEmpty">There are no messages in {conversation_name}.</string>
     <string name="conversationsEnter">Enter Key</string>
-    <string name="conversationsEnterDescription">Function of the enter key when typing in a conversation.</string>
+    <string name="conversationsEnterDescription">Define how the Enter and Shift+Enter keys function in conversations.</string>
     <string name="conversationsEnterNewLine">SHIFT + ENTER sends a message, ENTER starts a new line.</string>
     <string name="conversationsEnterSends">ENTER sends a message, SHIFT + ENTER starts a new line.</string>
     <string name="conversationsGroups">Groups</string>
@@ -455,10 +458,12 @@
     <string name="enjoyingSessionButtonPositive">It\'s Great {emoji}</string>
     <string name="enjoyingSessionDescription">You\'ve been using {app_name} for a little while, how’s it going? We’d really appreciate hearing your thoughts.</string>
     <string name="enter">Enter</string>
+    <string name="errorCheckingProStatus">Error checking {pro} status.</string>
     <string name="errorConnection">Please check your internet connection and try again.</string>
     <string name="errorCopyAndQuit">Copy Error and Quit</string>
     <string name="errorDatabase">Database Error</string>
     <string name="errorGeneric">Something went wrong. Please try again later.</string>
+    <string name="errorLoadingProPlan">Error loading {pro} plan.</string>
     <string name="errorUnknown">An unknown error occurred.</string>
     <string name="failedToDownload">Failed to download</string>
     <string name="failures">Failures</string>
@@ -596,9 +601,9 @@
     </plurals>
     <string name="join">Join</string>
     <string name="later">Later</string>
-    <string name="launchOnStartDescriptionDesktop">Launch Session automatically when your computer starts up.</string>
+    <string name="launchOnStartDescriptionDesktop">Launch {app_name} automatically when your computer starts up.</string>
     <string name="launchOnStartDesktop">Launch on Startup</string>
-    <string name="launchOnStartupDisabledDesktop">This setting is managed by your system on Linux. To enable automatic startup, add Session to your startup applications in system settings.</string>
+    <string name="launchOnStartupDisabledDesktop">This setting is managed by your system on Linux. To enable automatic startup, add {app_name} to your startup applications in system settings.</string>
     <string name="learnMore">Learn More</string>
     <string name="leave">Leave</string>
     <string name="leaving">Leaving...</string>
@@ -906,8 +911,8 @@
     <string name="proBadges">Badges</string>
     <string name="proBadgesDescription">Show your support for {app_name} with an exclusive badge next to your display name.</string>
     <plurals name="proBadgesSent">
-        <item quantity="one">%1$d %2$s Badge Sent</item>
-        <item quantity="other">%1$d %2$s Badges Sent</item>
+        <item quantity="one">%1$s %2$s Badge Sent</item>
+        <item quantity="other">%1$s %2$s Badges Sent</item>
     </plurals>
     <string name="proBilledAnnually">{price} Billed Annually</string>
     <string name="proBilledMonthly">{price} Billed Monthly</string>
@@ -916,6 +921,7 @@
     <string name="proCallToActionPinnedConversations">Want more pins? Organize your chats and unlock premium features with {app_pro}</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Want more than 5 pins? Organize your chats and unlock premium features with {app_pro}</string>
     <string name="proDiscountTooltip">Your current plan is already discounted by {percent}% of the full {app_pro} price.</string>
+    <string name="proErrorRefreshingStatus">Error refreshing {pro} status</string>
     <string name="proExpired">Expired</string>
     <string name="proExpiredDescription">Unfortunately, your {pro} plan has expired. Renew to keep accessing the exclusive perks and features of {app_pro}.</string>
     <string name="proExpiringSoon">Expiring Soon</string>
@@ -932,8 +938,8 @@
     <string name="proGroupActivated">Group Activated</string>
     <string name="proGroupActivatedDescription">This group has expanded capacity! It can support up to 300 members because a group admin has</string>
     <plurals name="proGroupsUpgraded">
-        <item quantity="one">%1$d Group Upgraded</item>
-        <item quantity="other">%1$d Groups Upgraded</item>
+        <item quantity="one">%1$s Group Upgraded</item>
+        <item quantity="other">%1$s Groups Upgraded</item>
     </plurals>
     <string name="proImportantDescription">Requesting a refund is final. If approved, your {pro} plan will be canceled immediately and you will lose access to all {pro} features.</string>
     <string name="proIncreasedAttachmentSizeFeature">Increased Attachment Size</string>
@@ -943,19 +949,24 @@
     <string name="proLongerMessages">Longer Messages</string>
     <string name="proLongerMessagesDescription">You can send messages up to 10,000 characters in all conversations.</string>
     <plurals name="proLongerMessagesSent">
-        <item quantity="one">%1$d Longer Message Sent</item>
-        <item quantity="other">%1$d Longer Messages Sent</item>
+        <item quantity="one">%1$s Longer Message Sent</item>
+        <item quantity="other">%1$s Longer Messages Sent</item>
     </plurals>
     <string name="proMessageInfoFeatures">This message used the following {app_pro} features:</string>
     <string name="proPercentOff">{percent}% Off</string>
     <plurals name="proPinnedConversations">
-        <item quantity="one">%1$d Pinned Conversation</item>
-        <item quantity="other">%1$d Pinned Conversations</item>
+        <item quantity="one">%1$s Pinned Conversation</item>
+        <item quantity="other">%1$s Pinned Conversations</item>
     </plurals>
     <string name="proPlanActivatedAuto">Your {app_pro} plan is active!\n\nYour plan will automatically renew for another <b>{current_plan}</b> on <b>{date}</b>. Updates to your plan take effect when {pro} is next renewed.</string>
     <string name="proPlanActivatedAutoShort">Your {app_pro} plan is active!\n\nYour plan will automatically renew for another <b>{current_plan}</b> on <b>{date}</b>.</string>
     <string name="proPlanActivatedNotAuto">Your {app_pro} plan will expire on {date}.\n\nUpdate your plan now to ensure uninterrupted access to exclusive Pro features.</string>
+    <string name="proPlanError">{pro} Plan Error</string>
     <string name="proPlanExpireDate">Your {app_pro} plan will expire on {date}.</string>
+    <string name="proPlanLoading">{pro} Plan Loading</string>
+    <string name="proPlanLoadingDescription">Information about your {pro} plan is still being loaded. You cannot update your plan until this process is complete.</string>
+    <string name="proPlanLoadingEllipsis">{pro} plan loading...</string>
+    <string name="proPlanNetworkLoadError">Unable to connect to the network to load your current plan. Updating your plan via {app_name} will be disabled until connectivity is restored.\n\nPlease check your network connection and retry.</string>
     <string name="proPlanNotFound">{pro} Plan Not Found</string>
     <string name="proPlanNotFoundDescription">No active plan was found for your account. If you believe this is a mistake, please reach out to {app_name} support for assistance.</string>
     <string name="proPlanPlatformRefund">Because you originally signed up for {app_pro} via the <b><font color="0">{platform_store} Store</font></b>, you\'ll need to use the same {platform_account} to request a refund.</string>
@@ -965,11 +976,11 @@
     <string name="proPlanRenewDesktop">Currently, {pro} plans can only be purchased and renewed via the {platform_store} or {platform_store} Stores. Because you are using {app_name} Desktop, you\'re not able to renew your plan here.\n\n{app_pro} developers are working hard on alternative payment options to allow users to purchase {pro} plans outside of the {platform_store} and {platform_store} Stores. <b>{pro} Roadmap</b></string>
     <string name="proPlanRenewDesktopLinked">Renew your plan in the {app_pro} settings on a linked device with {app_name} installed via the {platform_store} or {platform_store} Store.</string>
     <string name="proPlanRenewDesktopStore">Renew your plan on the {platform_store} website using the {platform_account} you signed up for {pro} with.</string>
-    <string name="proPlanRenewStart">Renew your {app_pro} plan to start using powerful {app_pro} features again.</string>
+    <string name="proPlanRenewStart">Renew your {app_pro} plan to start using powerful {app_pro} Beta features again.</string>
     <string name="proPlanRenewSupport">Your {app_pro} plan has been renewed! Thank you for supporting the {network_name}.</string>
     <string name="proPlanRestored">{pro} Plan Restored</string>
     <string name="proPlanRestoredDescription">A valid plan for {app_pro} was detected and your {pro} status has been restored!</string>
-    <string name="proPlanSignUp">Because you originally signed up for {app_pro} via the {platform_store} Store, you\'ll need to use your {platform_account} to update your plan.</string>
+    <string name="proPlanSignUp">Because you originally signed up for {app_pro} via the <b>{platform_store}</b> Store, you\'ll need to use your {platform_account} to update your plan.</string>
     <string name="proPriceOneMonth">1 Month - {monthly_price} / Month</string>
     <string name="proPriceThreeMonths">3 Months - {monthly_price} / Month</string>
     <string name="proPriceTwelveMonths">12 Months - {monthly_price} / Month</string>
@@ -984,7 +995,16 @@
     <string name="proSendMore">Send more with</string>
     <string name="proSettings">{pro} Settings</string>
     <string name="proStats">Your {pro} Stats</string>
+    <string name="proStatsLoading">{pro} Stats Loading</string>
+    <string name="proStatsLoadingDescription">Your {pro} stats are loading, please wait.</string>
     <string name="proStatsTooltip">{pro} stats reflect usage on this device and may appear differently on linked devices</string>
+    <string name="proStatusError">{pro} Status Error</string>
+    <string name="proStatusInfoInaccurateNetworkError">Unable to connect to the network to check your {pro} status. Information displayed on this page may be inaccurate until connectivity is restored.\n\nPlease check your network connection and retry.</string>
+    <string name="proStatusLoading">{pro} Status Loading</string>
+    <string name="proStatusLoadingDescription">Your {pro} information is being loaded. Some actions on this page may be unavailable until loading is complete.</string>
+    <string name="proStatusLoadingSubtitle">{pro} status loading</string>
+    <string name="proStatusNetworkErrorDescription">Unable to connect to the network to check your {pro} status. You cannot upgrade to {pro} until connectivity is restored.\n\nPlease check your network connection and retry.</string>
+    <string name="proStatusRefreshNetworkError">Unable to connect to the network to refresh your {pro} status. Some actions on this page will be disabled until connectivity is restored.\n\nPlease check your network connection and retry.</string>
     <string name="proSupportDescription">Need help with your {pro} plan? Submit a request to the support team.</string>
     <string name="proTosPrivacy">By updating, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
     <string name="proUnlimitedPins">Unlimited Pins</string>
@@ -1075,6 +1095,8 @@
     <string name="screenSecurity">Screen Security</string>
     <string name="screenshotNotifications">Screenshot Notifications</string>
     <string name="screenshotNotificationsDescription">Require a notification when a contact takes a screenshot of a one-to-one chat.</string>
+    <string name="screenshotProtectionDescriptionDesktop">Conceal the {app_name} window in screenshots taken on this device.</string>
+    <string name="screenshotProtectionDesktop">Screenshot Protection</string>
     <string name="screenshotTaken"><b>{name}</b> took a screenshot.</string>
     <string name="search">Search</string>
     <string name="searchContacts">Search Contacts</string>
@@ -1123,6 +1145,7 @@
     <string name="setPasswordModalDescription">Set a password for {app_name}. Locally stored data will be encrypted with this password. You will be asked to enter this password each time {app_name} starts.</string>
     <string name="settingsCannotChangeDesktop">Cannot Update Setting</string>
     <string name="settingsRestartDescription">You must restart {app_name} to apply your new settings.</string>
+    <string name="settingsScreenSecurityDesktop">Screen Security</string>
     <string name="settingsStartCategoryDesktop">Startup</string>
     <string name="share">Share</string>
     <string name="shareAccountIdDescription">Invite your friend to chat with you on {app_name} by sharing your Account ID with them.</string>
@@ -1157,6 +1180,7 @@
     <string name="unavailable">Unavailable</string>
     <string name="undo">Undo</string>
     <string name="unknown">Unknown</string>
+    <string name="unsupportedCpu">Unsupported CPU</string>
     <string name="updateApp">App updates</string>
     <string name="updateCommunityInformation">Update Community Information</string>
     <string name="updateCommunityInformationDescription">Community name and description are visible to all community members</string>
@@ -1202,6 +1226,7 @@
     <string name="window">Window</string>
     <string name="yes">Yes</string>
     <string name="you">You</string>
+    <string name="yourCpuIsUnsupportedSSE42">Your CPU does not support SSE 4.2 instructions, which are required by Session on Linux x64 operating systems to process images. Please upgrade to a compatible CPU or use a different operating system.</string>
     <string name="yourRecoveryPassword">Your Recovery Password</string>
     <string name="zoomFactor">Zoom Factor</string>
     <string name="zoomFactorDescription">Adjust the size of text and visual elements.</string>

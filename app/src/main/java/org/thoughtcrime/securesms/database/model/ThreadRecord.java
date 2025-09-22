@@ -60,6 +60,7 @@ public class ThreadRecord extends DisplayRecord {
   private           final int     unreadMentionCount;
   private           final long    lastSeen;
   private           final String invitingAdminId;
+  private           final boolean isUnread;
 
   @NonNull
   private           final GroupThreadStatus groupThreadStatus;
@@ -70,7 +71,8 @@ public class ThreadRecord extends DisplayRecord {
                       long snippetType,
                       long lastSeen, int readReceiptCount, String invitingAdminId,
                       @NonNull GroupThreadStatus groupThreadStatus,
-                      @Nullable MessageContent messageContent)
+                      @Nullable MessageContent messageContent,
+                      boolean isUnread)
   {
     super(body, recipient, date, date, threadId, status, deliveryReceiptCount, snippetType, readReceiptCount, messageContent);
     this.lastMessage        = lastMessage;
@@ -80,6 +82,7 @@ public class ThreadRecord extends DisplayRecord {
     this.lastSeen           = lastSeen;
     this.invitingAdminId    = invitingAdminId;
     this.groupThreadStatus  = groupThreadStatus;
+    this.isUnread = isUnread;
   }
 
     private String getName() {
@@ -231,5 +234,9 @@ public class ThreadRecord extends DisplayRecord {
 
     public String getInvitingAdminId() {
         return invitingAdminId;
+    }
+
+    public boolean isUnread() {
+        return isUnread;
     }
 }

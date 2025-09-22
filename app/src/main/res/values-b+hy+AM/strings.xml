@@ -121,6 +121,7 @@
     <string name="banUser">Արգելել օգտատիրոջը</string>
     <string name="banUserBanned">Օգտատեր արգելափակվել է</string>
     <string name="block">Արգելափակել</string>
+    <string name="blockBlockedDescription">Արգելաբացել այս կոնտակտը հաղորդագրություն ուղարկելու համար</string>
     <string name="blockBlockedNone">Արգելափակված կոնտակտներ չկան</string>
     <string name="blockBlockedUser">Արգելափակվել է {name}֊ը</string>
     <string name="blockDescription">Վստա՞հ եք, որ ցանկանում եք արգելափակել <b>{name}?</b> Արգելափակված օգտատերերը չեն կարող հաղորդագրության հարցումներ, խմբի հրավերներ կամ զանգեր ուղարկել ձեզ։</string>
@@ -232,7 +233,6 @@
     <string name="conversationsDeleted">Ջնջված է</string>
     <string name="conversationsEmpty">{conversation_name}-ում հաղորդագրություններ չկան.</string>
     <string name="conversationsEnter">Մուտքագրել Key</string>
-    <string name="conversationsEnterDescription">Enter ստեղնի գործառույթը զրույցի ժամանակ:</string>
     <string name="conversationsGroups">Խմբեր</string>
     <string name="conversationsMessageTrimming">Նամակների կարճեցում</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Կարճացրեք համայնքները</string>
@@ -753,6 +753,7 @@
     <string name="sessionSettings">Կարգավորումներ</string>
     <string name="set">Սահմանել</string>
     <string name="settingsRestartDescription">Ձեր նոր կարգավորումներն կիրառելու համար դուք պետք է վերագործարկեք {app_name}։</string>
+    <string name="settingsScreenSecurityDesktop">Էկրանի անվտանգություն</string>
     <string name="share">Կիսվել</string>
     <string name="shareAccountIdDescription">Հրավիրե՛ք ձեր ընկերոջը զրուցելու ձեզ հետ {app_name}-ում՝ կիսվելով ձեր Account ID-ով.</string>
     <string name="shareAccountIdDescriptionCopied">Կիսվեք ձեր ընկերների հետ որտեղ սովորաբար խոսում եք նրանց հետ - ապա տեղափոխեք զրույցը այստեղ։</string>

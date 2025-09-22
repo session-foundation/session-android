@@ -121,6 +121,7 @@
     <string name="banUser">I-ban ang user</string>
     <string name="banUserBanned">Na-ban ang user</string>
     <string name="block">I-block</string>
+    <string name="blockBlockedDescription">I-unblock ang contact na ito upang magpadala ng mensahe</string>
     <string name="blockBlockedNone">Walang naka-block na contact</string>
     <string name="blockBlockedUser">Naka-block {name}</string>
     <string name="blockDescription">Sigurado ka bang gusto mong i-block si <b>{name}?</b> Ang mga na-block na gumagamit ay hindi maaaring magpadala sa iyo ng mga kahilingan sa mensahe, mga paanyaya sa grupo, o tumawag sa iyo.</string>
@@ -233,7 +234,6 @@
     <string name="conversationsDeleted">Na-delete na ang usapan</string>
     <string name="conversationsEmpty">Walang mensahe sa {conversation_name}.</string>
     <string name="conversationsEnter">Ilagay ang Key</string>
-    <string name="conversationsEnterDescription">Gamit ang Enter Key kapag nagta-type sa isang usapan.</string>
     <string name="conversationsGroups">Mga grupo</string>
     <string name="conversationsMessageTrimming">Pag-trim ng Mensahe</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Burahin ang Mga Mensaheng Nagtagal ng Higit sa 6 (na) Buwan</string>
@@ -754,6 +754,7 @@
     <string name="sessionSettings">Mga Settings</string>
     <string name="set">Itakda</string>
     <string name="settingsRestartDescription">Dapat mong i-restart ang {app_name} upang ipatupad ang iyong mga bagong setting.</string>
+    <string name="settingsScreenSecurityDesktop">Seguridad ng Screen</string>
     <string name="share">I-share</string>
     <string name="shareAccountIdDescription">Imbitahan ang kaibigan mo na makipag-chat sa iyo sa {app_name} sa pamamagitan ng pagbabahagi ng iyong Account ID.</string>
     <string name="shareAccountIdDescriptionCopied">I-share sa iyong mga kaibigan kahit saan mo sila karaniwang kinakausap — pagkatapos ay ilipat ang pag-uusap dito.</string>

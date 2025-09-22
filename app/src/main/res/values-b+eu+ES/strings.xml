@@ -121,6 +121,7 @@
     <string name="banUser">Ban User</string>
     <string name="banUserBanned">Erabiltzailea debekatu da</string>
     <string name="block">Block</string>
+    <string name="blockBlockedDescription">Kontaktu hau desblokeatu mezu bat bidaltzeko</string>
     <string name="blockBlockedNone">Ez dago blokeatutako kontakturik</string>
     <string name="blockBlockedUser">Blocked {name}</string>
     <string name="blockDescription">Ziur zaude <b>{name}</b> blokeatu nahi duzula? Erabiltzaile blokeatuek ezin dizkizute mezu-eskaerak, talde-gonbidapenak bidali edo deiak egin.</string>
@@ -232,7 +233,6 @@
     <string name="conversationsDeleted">Elkarrizketa ezabatuta</string>
     <string name="conversationsEmpty">Ez dago mezurik {conversation_name} barruan.</string>
     <string name="conversationsEnter">Sartu Tekla</string>
-    <string name="conversationsEnterDescription">Sartu tekla funtzioa elkarrizketan idazten ari zarenean.</string>
     <string name="conversationsGroups">Taldeak</string>
     <string name="conversationsMessageTrimming">Mezuen ebaketa</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Komunitateen Ebaketak</string>
@@ -753,6 +753,7 @@
     <string name="sessionSettings">Ezarpenak</string>
     <string name="set">Ezarri</string>
     <string name="settingsRestartDescription">{app_name} berrabiarazi behar duzu zure ezarpen berriak aplikatzeko.</string>
+    <string name="settingsScreenSecurityDesktop">Pantailaren Segurtasuna</string>
     <string name="share">Partekatu</string>
     <string name="shareAccountIdDescription">Gonbida ezazu zure laguna zure Kontu IDa partekatuz {app_name}-en zurekin txateatzeko.</string>
     <string name="shareAccountIdDescriptionCopied">Partekatu zure lagunekin non normalean hitz egiten duzun — gero ekarri elkarrizketa hona.</string>

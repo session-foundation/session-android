@@ -121,6 +121,7 @@
     <string name="banUser">Iflosni surgun qilish</string>
     <string name="banUserBanned">Foydalanuvchi surgun qilindi</string>
     <string name="block">Bloklash</string>
+    <string name="blockBlockedDescription">Xabar yuborish uchun ushbu kontaktni blokdan chiqaring</string>
     <string name="blockBlockedNone">Bloklangan kontaktlar yoʻq</string>
     <string name="blockBlockedUser">Foydalanuvchi {name} bloklandi</string>
     <string name="blockDescription">Haqiqatan shu <b>{name}</b>ni bloklashni xohlaysizmi? Bloklangan foydalanuvchilar sizga xabar so\'rovlarini, guruh takliflarini yubora olmaydi yoki sizni chaqira olmaydi.</string>
@@ -233,7 +234,6 @@
     <string name="conversationsDeleted">Suhbat o\'chirildi</string>
     <string name="conversationsEmpty">{conversation_name} nomli suhbatda xabarlar yo\'q.</string>
     <string name="conversationsEnter">Tugmani kiritish</string>
-    <string name="conversationsEnterDescription">Suhbatda enter tugmasining vazifasi.</string>
     <string name="conversationsGroups">Guruhlar</string>
     <string name="conversationsMessageTrimming">Xabarni chetlatish</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Jamiyatlarni qisqartiring</string>
@@ -754,6 +754,7 @@
     <string name="sessionSettings">Tamir</string>
     <string name="set">Belgilash</string>
     <string name="settingsRestartDescription">Yangi sozlamalarni qo\'llash uchun {app_name} ni qayta ishga tushirishingiz shart.</string>
+    <string name="settingsScreenSecurityDesktop">Ekran xavfsizligi</string>
     <string name="share">Bo\'lishish</string>
     <string name="shareAccountIdDescription">Hisob ID ni ulashish orqali {app_name} da suhbatlashishi uchun do\'stingizni taklif qiling.</string>
     <string name="shareAccountIdDescriptionCopied">Do\'stlaringiz bilan odatda gaplashayotgan joyingizda bo\'lishing - keyin suhbatni bu yerga o\'tkazing.</string>

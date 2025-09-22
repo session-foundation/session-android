@@ -234,7 +234,6 @@
     <string name="conversationsDeleted">Харилцан яриа устгагдсан</string>
     <string name="conversationsEmpty">{conversation_name}-нд мессеж байхгүй байна.</string>
     <string name="conversationsEnter">Түлхүүр оруулна уу</string>
-    <string name="conversationsEnterDescription">Товчилсон түлхүүрийн үүрэг нь харилцан ярианы үед.</string>
     <string name="conversationsGroups">Бүлгүүд</string>
     <string name="conversationsMessageTrimming">Мессеж хасалт</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Community хасах</string>
@@ -770,6 +769,7 @@
     <string name="sessionSettings">Тохиргоо</string>
     <string name="set">Тохируулах</string>
     <string name="settingsRestartDescription">Шинэ тохиргоог хэрэгжүүлэхийн тулд {app_name}-ийг дахин эхлүүлнэ үү.</string>
+    <string name="settingsScreenSecurityDesktop">Дэлгэцийн аюулгүй байдал</string>
     <string name="share">Хуваалцах</string>
     <string name="shareAccountIdDescription">Найзаа урьж, {app_name} дээр чатлах боломжтой. Account ID-г найздаа хуваалцана уу.</string>
     <string name="shareAccountIdDescriptionCopied">Найзуудтайгаа хаана ч байгаа яриагаа энд шилжүүлээрэй.</string>

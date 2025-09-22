@@ -275,7 +275,6 @@
     <string name="conversationsDeleted">對話已刪除</string>
     <string name="conversationsEmpty">{conversation_name} 中沒有訊息。</string>
     <string name="conversationsEnter">回車鍵</string>
-    <string name="conversationsEnterDescription">在對話中鍵入時回車鍵的功能。</string>
     <string name="conversationsGroups">群組</string>
     <string name="conversationsMessageTrimming">訊息清理</string>
     <string name="conversationsMessageTrimmingTrimCommunities">刪裁社群舊訊息</string>
@@ -935,6 +934,7 @@
     <string name="set">設定</string>
     <string name="setCommunityDisplayPicture">設定社群顯示圖片</string>
     <string name="settingsRestartDescription">您必須重新啓動 {app_name} 以應用您的新設定。</string>
+    <string name="settingsScreenSecurityDesktop">螢幕安全性</string>
     <string name="share">分享</string>
     <string name="shareAccountIdDescription">分享您的帳號 ID 來邀請好友在 {app_name} 上聊天。</string>
     <string name="shareAccountIdDescriptionCopied">在任何與朋友連線的地方與他們分享, 然後將你們的對話轉移至此。</string>
