@@ -912,8 +912,7 @@
     <string name="proCallToActionLongerMessages">Daha uzun mesajlar göndərmək istəyirsiniz? {app_pro} ilə daha çox mətn göndərin və premium özəlliklərin kilidini açın</string>
     <string name="proCallToActionPinnedConversations">Daha çoxunu sancmaq istəyirsiniz? {app_pro} ilə söhbətlərinizi təşkil edin və premium özəlliklərin kilidini açın</string>
     <string name="proCallToActionPinnedConversationsMoreThan">5-dən çoxunu sancmaq istəyirsiniz? {app_pro} ilə söhbətlərinizi təşkil edin və premium özəlliklərin kilidini açın</string>
-    <string name="proDiscountTooltip">Hazırkı planınızda artıq&amp;#13;
-tam {app_pro} qiymətinin {percent}% endirimi mövcuddur.</string>
+    <string name="proDiscountTooltip">Hazırkı planınızda artıq tam {app_pro} qiymətinin {percent}% endirimi mövcuddur.</string>
     <string name="proExpired">Müddəti bitib</string>
     <string name="proExpiredDescription">Təəssüf ki, {pro} planınızın müddəti bitib. {app_pro} tətbiqinin eksklüziv imtiyazlarına və özəlliklərinə erişimi davam etdirmək üçün yeniləyin.</string>
     <string name="proExpiringSoon">Tezliklə bitir</string>
