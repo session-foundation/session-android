@@ -137,7 +137,7 @@ fun QrPage(string: String) {
 }
 
 @Composable
-fun PortraitContent(string: String) {
+private fun PortraitContent(string: String) {
     Column(
         modifier = Modifier
             .background(LocalColors.current.background)
@@ -165,7 +165,7 @@ fun PortraitContent(string: String) {
 }
 
 @Composable
-fun TwoPaneContent(string: String) {
+private fun TwoPaneContent(string: String) {
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()

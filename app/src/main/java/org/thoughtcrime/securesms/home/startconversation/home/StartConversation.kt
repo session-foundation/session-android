@@ -59,10 +59,15 @@ internal fun StartConversationScreen(
 ) {
     val isTwoPane = rememberTwoPane()
 
-    Column(modifier = Modifier.background(
-        LocalColors.current.backgroundSecondary,
-        shape = MaterialTheme.shapes.small.copy(bottomStart = CornerSize(0.dp), bottomEnd = CornerSize(0.dp))
-    )) {
+    Column(
+        modifier = Modifier.background(
+            LocalColors.current.backgroundSecondary,
+            shape = MaterialTheme.shapes.small.copy(
+                bottomStart = CornerSize(0.dp),
+                bottomEnd = CornerSize(0.dp)
+            )
+        )
+    ) {
         BasicAppBar(
             title = stringResource(R.string.conversationsStart),
             backgroundColor = Color.Transparent, // transparent to show the rounded shape of the container
@@ -73,59 +78,74 @@ internal fun StartConversationScreen(
             modifier = Modifier.nestedScroll(rememberNestedScrollInteropConnection()),
             color = LocalColors.current.backgroundSecondary
         ) {
-
-            if(isTwoPane){
-               Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = LocalDimensions.current.spacing),
-                    horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.spacing)
-                ) {
-                    // Left: independently scrollable actions list
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .verticalScroll(rememberScrollState())
-                    ) {
-                        ActionList(navigateTo = navigateTo)
-                    }
-
-                    // Right: QR panel, vertically centered, with square sizing
-                    QrPanel(
-                        accountId = accountId,
-                        modifier = Modifier
-                            .widthIn(max = 420.dp)
-                            .align(Alignment.CenterVertically)
-                    )
-                }
+            if (isTwoPane) {
+                TwoPaneContent(accountId, navigateTo)
             } else {
-                Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState())
-                ) {
-                    ActionList(navigateTo = navigateTo)
-                    Column(
-                        modifier = Modifier
-                            .padding(horizontal = LocalDimensions.current.spacing)
-                            .padding(top = LocalDimensions.current.spacing)
-                            .padding(bottom = LocalDimensions.current.spacing)
-                    ) {
-                        Text(stringResource(R.string.accountIdYours), style = LocalType.current.xl)
-                        Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
-                        Text(
-                            text = stringResource(R.string.qrYoursDescription),
-                            color = LocalColors.current.textSecondary,
-                            style = LocalType.current.small
-                        )
-                        Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
-                        QrImage(
-                            string = accountId,
-                            Modifier.qaTag(R.string.AccessibilityId_qrCode),
-                            icon = R.drawable.session
-                        )
-                    }
-                }
+                PortraitContent(accountId, navigateTo)
             }
         }
+    }
+}
+
+@Composable
+private fun PortraitContent(
+    accountId: String,
+    navigateTo: (StartConversationDestination) -> Unit
+) {
+    Column(
+        modifier = Modifier.verticalScroll(rememberScrollState())
+    ) {
+        ActionList(navigateTo = navigateTo)
+        Column(
+            modifier = Modifier
+                .padding(horizontal = LocalDimensions.current.spacing)
+                .padding(top = LocalDimensions.current.spacing)
+                .padding(bottom = LocalDimensions.current.spacing)
+        ) {
+            Text(stringResource(R.string.accountIdYours), style = LocalType.current.xl)
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
+            Text(
+                text = stringResource(R.string.qrYoursDescription),
+                color = LocalColors.current.textSecondary,
+                style = LocalType.current.small
+            )
+            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
+            QrImage(
+                string = accountId,
+                Modifier.qaTag(R.string.AccessibilityId_qrCode),
+                icon = R.drawable.session
+            )
+        }
+    }
+}
+
+@Composable
+private fun TwoPaneContent(
+    accountId: String,
+    navigateTo: (StartConversationDestination) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = LocalDimensions.current.spacing),
+        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.spacing)
+    ) {
+        // Left: independently scrollable actions list
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+        ) {
+            ActionList(navigateTo = navigateTo)
+        }
+
+        // Right: QR panel, vertically centered, with square sizing
+        QrPanel(
+            accountId = accountId,
+            modifier = Modifier
+                .widthIn(max = 420.dp)
+                .align(Alignment.CenterVertically)
+        )
     }
 }
 
@@ -168,8 +188,9 @@ private fun QrPanel(
 private fun ActionList(navigateTo: (StartConversationDestination) -> Unit) {
     val context = LocalContext.current
 
-    val dividerIndent: Dp = LocalDimensions.current.itemButtonIconSpacing + 2*LocalDimensions.current.smallSpacing
-    val newMessageTitleTxt:String = context.resources.getQuantityString(R.plurals.messageNew, 1, 1)
+    val dividerIndent: Dp =
+        LocalDimensions.current.itemButtonIconSpacing + 2 * LocalDimensions.current.smallSpacing
+    val newMessageTitleTxt: String = context.resources.getQuantityString(R.plurals.messageNew, 1, 1)
     ItemButton(
         text = annotatedStringResource(newMessageTitleTxt),
         textStyle = LocalType.current.xl,
