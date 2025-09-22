@@ -128,27 +128,23 @@ class MessageRequestResponseHandler @Inject constructor(
                         moveConversation(fromThreadId = blindedThreadId, toThreadId = threadId)
                     }
 
-                // If we ever have any blinded conversations with this sender, we should make
-                // sure we have set "approved" to true for them, because when we started the blinded
-                // conversation, we didn't know their real standard addresses, so we didn't say
-                // we have approved them, but now that we do, we need to approve them.
-                if (existingBlindedThreadIDs.isNotEmpty()) {
-                    configFactory.withMutableUserConfigs { configs ->
+                configFactory.withMutableUserConfigs { configs ->
+                    // If we ever have any blinded conversations with this sender, we should make
+                    // sure we have set "approved" to true for them, because when we started the blinded
+                    // conversation, we didn't know their real standard addresses, so we didn't say
+                    // we have approved them, but now that we do, we need to approve them.
+                    if (existingBlindedThreadIDs.isNotEmpty()) {
                         configs.contacts.updateContact(messageSender.address) {
                             approved = true
                         }
                     }
-                }
 
-                // Also remove all blinded contacts
-                if (blindedConversationAddresses.isNotEmpty()) {
-                    configFactory.withMutableUserConfigs { configs ->
-                        for (address in blindedConversationAddresses) {
-                            configs.contacts.eraseBlinded(
-                                communityServerUrl = address.serverUrl,
-                                blindedId = address.blindedId.address
-                            )
-                        }
+                    // Also remove all blinded contacts
+                    for (address in blindedConversationAddresses) {
+                        configs.contacts.eraseBlinded(
+                            communityServerUrl = address.serverUrl,
+                            blindedId = address.blindedId.address
+                        )
                     }
                 }
             }
