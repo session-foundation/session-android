@@ -50,7 +50,10 @@ class QRCodeActivity : ScreenLockActionBarActivity() {
     override val applyDefaultWindowInsets: Boolean
         get() = false
 
-    private val errors = MutableSharedFlow<String>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val errors = MutableSharedFlow<String>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
 
 
     override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
@@ -88,7 +91,11 @@ class QRCodeActivity : ScreenLockActionBarActivity() {
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults)
     }
@@ -122,53 +129,63 @@ private fun Tabs(accountId: String, errors: Flow<String>, onScan: (String) -> Un
 fun QrPage(string: String) {
     val isTwoPane = rememberTwoPane()
 
-    if(isTwoPane){
-        BoxWithConstraints(
+    if (isTwoPane) {
+        TwoPaneContent(string)
+    } else {
+        PortraitContent(string)
+    }
+}
+
+@Composable
+fun PortraitContent(string: String) {
+    Column(
+        modifier = Modifier
+            .background(LocalColors.current.background)
+            .padding(horizontal = LocalDimensions.current.mediumSpacing)
+            .fillMaxSize()
+    ) {
+        QrImage(
+            string = string,
             modifier = Modifier
-                .fillMaxSize()
-                .background(LocalColors.current.background)
-                .padding(horizontal = LocalDimensions.current.mediumSpacing)
-        ) {
-            // Scale QR to the shorter side to avoid overflow in landscape. Clamp for sanity
-            val shortest: Dp = if (maxWidth < maxHeight) maxWidth else maxHeight
-            val qrSide = (shortest * 0.72f).coerceIn(160.dp, 520.dp)
-
-            Column(
-                modifier = Modifier
-                    .align(Alignment.Center), // vertical + horizontal centering
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
-            ) {
-                QrImage(
-                    string = string,
-                    modifier = Modifier
-                        .size(qrSide)
-                        .qaTag(R.string.AccessibilityId_qrCode),
-                    icon = R.drawable.session
+                .padding(
+                    top = LocalDimensions.current.mediumSpacing,
+                    bottom = LocalDimensions.current.xsSpacing
                 )
+                .qaTag(R.string.AccessibilityId_qrCode),
+            icon = R.drawable.session
+        )
 
-                Text(
-                    text = stringResource(R.string.accountIdYoursDescription),
-                    color = LocalColors.current.textSecondary,
-                    textAlign = TextAlign.Center,
-                    style = LocalType.current.small
-                )
-            }
-        }
-    }else{
+        Text(
+            text = stringResource(R.string.accountIdYoursDescription),
+            color = LocalColors.current.textSecondary,
+            textAlign = TextAlign.Center,
+            style = LocalType.current.small
+        )
+    }
+}
+
+@Composable
+fun TwoPaneContent(string: String) {
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(LocalColors.current.background)
+            .padding(horizontal = LocalDimensions.current.mediumSpacing)
+    ) {
+        // Scale QR to the shorter side to avoid overflow in landscape. Clamp for sanity
+        val shortest: Dp = if (maxWidth < maxHeight) maxWidth else maxHeight
+        val qrSide = (shortest * 0.72f).coerceIn(160.dp, 520.dp)
+
         Column(
             modifier = Modifier
-                .background(LocalColors.current.background)
-                .padding(horizontal = LocalDimensions.current.mediumSpacing)
-                .fillMaxSize()
+                .align(Alignment.Center), // vertical + horizontal centering
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
         ) {
             QrImage(
                 string = string,
                 modifier = Modifier
-                    .padding(
-                        top = LocalDimensions.current.mediumSpacing,
-                        bottom = LocalDimensions.current.xsSpacing
-                    )
+                    .size(qrSide)
                     .qaTag(R.string.AccessibilityId_qrCode),
                 icon = R.drawable.session
             )
