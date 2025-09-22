@@ -139,6 +139,18 @@ class MessageRequestResponseHandler @Inject constructor(
                         }
                     }
                 }
+
+                // Also remove all blinded contacts
+                if (blindedConversationAddresses.isNotEmpty()) {
+                    configFactory.withMutableUserConfigs { configs ->
+                        for (address in blindedConversationAddresses) {
+                            configs.contacts.eraseBlinded(
+                                communityServerUrl = address.serverUrl,
+                                blindedId = address.blindedId.address
+                            )
+                        }
+                    }
+                }
             }
 
             else -> {
