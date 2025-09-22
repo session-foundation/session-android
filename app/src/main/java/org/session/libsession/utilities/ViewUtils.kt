@@ -34,14 +34,7 @@ fun TextView.needsCollapsing(
     availableWidthPx: Int,
     maxLines: Int
 ): Boolean {
-    // Pick the width the TextView will actually respect before draw
-    val rawWidth = when {
-        measuredWidth > 0 -> measuredWidth
-        // if maxWidth is set, we check it
-        maxWidth in 1 until Int.MAX_VALUE -> minOf(availableWidthPx, maxWidth)
-        else -> availableWidthPx
-    }
-    val contentWidth = (rawWidth - paddingLeft - paddingRight).coerceAtLeast(0)
+    val contentWidth = (availableWidthPx - paddingLeft - paddingRight).coerceAtLeast(0)
     if (contentWidth <= 0 || text.isNullOrEmpty()) return false
 
     val textForLayout = transformationMethod?.getTransformation(text, this) ?: text
@@ -67,7 +60,7 @@ fun TextView.needsCollapsing(
         .setAlignment(alignment)
         .setTextDirection(direction)
         .setMaxLines(maxLines)                                   // cap at maxLines
-        .setEllipsize(ellipsize ?: TextUtils.TruncateAt.END)     // compute ellipsis
+        .setEllipsize(ellipsize)     // compute ellipsis
 
     builder.setJustificationMode(justificationMode)
 
