@@ -60,6 +60,18 @@ class MessageRequestResponseHandler @Inject constructor(
             !messageSender.isSelf && messageReceiver.isSelf -> {
                 // We received a request response from another user.
 
+                // Mark the sender as "approvedMe".
+                // This process MUST be done before trying to update the profile,
+                // as profile updating requires the contact to exist
+                val didApproveMe = configFactory.withMutableUserConfigs { configs ->
+                    configs.contacts.upsertContact(messageSender.address) {
+                        val oldApproveMe = approvedMe
+                        approvedMe = true
+                        oldApproveMe
+                    }
+                }
+
+
                 // Process the profile update if any
                 message.profile?.toUpdates()?.let { updates ->
                     profileUpdateHandler.get().handleProfileUpdate(
@@ -69,14 +81,6 @@ class MessageRequestResponseHandler @Inject constructor(
                     )
                 }
 
-                // Mark the sender as "approvedMe"
-                val didApproveMe = configFactory.withMutableUserConfigs { configs ->
-                    configs.contacts.upsertContact(messageSender.address) {
-                        val oldApproveMe = approvedMe
-                        approvedMe = true
-                        oldApproveMe
-                    }
-                }
 
                 val threadId by lazy {
                     threadDatabase.getOrCreateThreadIdFor(messageSender.address)
