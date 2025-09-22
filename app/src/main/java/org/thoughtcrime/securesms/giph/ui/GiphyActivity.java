@@ -83,7 +83,7 @@ public class GiphyActivity extends ScreenLockActionBarActivity
 //      tab.setText(position == 0 ? NonTranslatableStringConstants.GIF : getString(R.string.stickers));
 //    }).attach();
 
-    // NEW: Compose tabs controlling existing ViewPager2
+    // Compose tabs controlling existing ViewPager2
     GiphyTabsCompose.attachComposeTabs(
             binding.composeTabs,
             binding.giphyPager,

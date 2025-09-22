@@ -68,7 +68,7 @@ private fun TabsRow(
         R.attr.colorAccent,
         MaterialTheme.colorScheme.secondary
     )
-    // NEW: text color that matches your toolbar’s foreground
+    // text color that matches your toolbar’s foreground
     val appBarTextColor = colorFromAttrOr(
         android.R.attr.textColorPrimary,
         MaterialTheme.colorScheme.onPrimary
