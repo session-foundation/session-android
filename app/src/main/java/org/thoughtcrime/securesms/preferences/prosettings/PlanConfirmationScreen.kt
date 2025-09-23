@@ -96,7 +96,7 @@ fun PlanConfirmationScreen(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun PlanConfirmation(
-    proData: ProSettingsViewModel.ProSettingsUIState,
+    proData: ProSettingsViewModel.ProSettingsState,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -149,7 +149,7 @@ fun PlanConfirmation(
                 color = LocalColors.current.text,
             )
 
-            Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+            Spacer(Modifier.height(LocalDimensions.current.spacing))
 
             //todo PRO the button text can change if the user was renewing vs expiring and/or/auto-renew
             AccentFillButtonRect(
@@ -172,13 +172,14 @@ private fun PreviewPlanConfirmation(
 ) {
     PreviewTheme(colors) {
         PlanConfirmation(
-            proData = ProSettingsViewModel.ProSettingsUIState(
+            proData = ProSettingsViewModel.ProSettingsState(
                 subscriptionState = SubscriptionState.Active.AutoRenewing(
                     proStatus = ProStatus.Pro(
                         visible = true,
                         validUntil = Instant.now() + Duration.ofDays(14),
                     ),
-                    type = ProSubscriptionDuration.THREE_MONTHS
+                    type = ProSubscriptionDuration.THREE_MONTHS,
+                    nonOriginatingSubscription = null
                 ),
             ),
             sendCommand = {},

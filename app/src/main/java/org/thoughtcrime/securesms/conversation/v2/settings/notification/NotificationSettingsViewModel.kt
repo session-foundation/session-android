@@ -195,7 +195,7 @@ class NotificationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun formatTime(timestamp: Long): String{
-        return dateUtils.formatTime(timestamp, "HH:mm dd/MM/yy")
+        return DateUtils.formatTime(timestamp, "HH:mm dd/MM/yy")
     }
 
     private fun shouldEnableSetButton(): Boolean {
