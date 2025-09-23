@@ -85,10 +85,9 @@ class DebugMenuViewModel @Inject constructor(
             debugSubscriptionStatuses = setOf(
                 DebugSubscriptionStatus.AUTO_GOOGLE,
                 DebugSubscriptionStatus.EXPIRING_GOOGLE,
-                DebugSubscriptionStatus.EXPIRED_GOOGLE, //todo PRO uncomment below once we know how to differentiate store providers
-//                DebugSubscriptionStatus.AUTO_APPLE,
-//                DebugSubscriptionStatus.EXPIRING_APPLE,
-//                DebugSubscriptionStatus.EXPIRED_APPLE,
+                DebugSubscriptionStatus.AUTO_APPLE,
+                DebugSubscriptionStatus.EXPIRING_APPLE,
+                DebugSubscriptionStatus.EXPIRED,
             ),
             selectedDebugSubscriptionStatus = textSecurePreferences.getDebugSubscriptionType() ?: DebugSubscriptionStatus.AUTO_GOOGLE,
         )
@@ -412,10 +411,9 @@ class DebugMenuViewModel @Inject constructor(
     enum class DebugSubscriptionStatus(val label: String) {
         AUTO_GOOGLE("Auto Renewing (Google, 3 months)"),
         EXPIRING_GOOGLE("Expiring/Cancelled (Google, 12 months)"),
-        EXPIRED_GOOGLE("Expired (Google)"),
         AUTO_APPLE("Auto Renewing (Apple, 1 months)"),
         EXPIRING_APPLE("Expiring/Cancelled (Apple, 1 months)"),
-        EXPIRED_APPLE("Expired (Apple)")
+        EXPIRED("Expired"),
     }
 
     sealed class Commands {
