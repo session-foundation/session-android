@@ -967,7 +967,6 @@
     <string name="proExpiringSoonDescription">Váš tarif {pro} vyprší za {time}. Aktualizujte si tarif, abyste i nadále měli přístup k exkluzivním výhodám a funkcím {app_pro}.</string>
     <string name="proExpiringTime">{pro} vyprší za <b>{time}</b></string>
     <string name="proFaq">{pro} FAQ</string>
-    <string name="proFaqDescription">Najděte odpovědi na časté dotazy v nápovědě {app_name}.</string>
     <string name="proFeatureListAnimatedDisplayPicture">Nahrajte GIF a WebP jako zobrazovaný obrázek</string>
     <string name="proFeatureListLargerGroups">Větší soukromé skupiny až 300 členů</string>
     <string name="proFeatureListLoadsMore">A další exkluzivních funkce</string>

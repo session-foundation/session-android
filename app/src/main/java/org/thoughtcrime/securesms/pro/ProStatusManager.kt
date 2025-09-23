@@ -122,7 +122,8 @@ class ProStatusManager @Inject constructor(
                     visible = true,
                     validUntil = Instant.now() + Duration.ofDays(14),
                 ),
-                type = ProSubscriptionDuration.THREE_MONTHS
+                type = ProSubscriptionDuration.THREE_MONTHS,
+                nonOriginatingSubscription = null
             )
 
             DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> SubscriptionState.Active.Expiring(
@@ -130,10 +131,41 @@ class ProStatusManager @Inject constructor(
                     visible = true,
                     validUntil = Instant.now() + Duration.ofDays(2),
                 ),
-                type = ProSubscriptionDuration.TWELVE_MONTHS
+                type = ProSubscriptionDuration.TWELVE_MONTHS,
+                nonOriginatingSubscription = null
             )
 
-            else -> SubscriptionState.Expired
+            DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> SubscriptionState.Active.AutoRenewing(
+                proStatus = ProStatus.Pro(
+                    visible = true,
+                    validUntil = Instant.now() + Duration.ofDays(14),
+                ),
+                type = ProSubscriptionDuration.ONE_MONTH,
+                nonOriginatingSubscription = SubscriptionState.Active.NonOriginatingSubscription(
+                    device = "iPhone",
+                    store = "Apple App Store",
+                    platform = "Apple",
+                    platformAccount = "Apple Account",
+                    urlSubscription = "https://www.apple.com/account/subscriptions",
+                )
+            )
+
+            DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_APPLE -> SubscriptionState.Active.Expiring(
+                proStatus = ProStatus.Pro(
+                    visible = true,
+                    validUntil = Instant.now() + Duration.ofDays(2),
+                ),
+                type = ProSubscriptionDuration.ONE_MONTH,
+                nonOriginatingSubscription = SubscriptionState.Active.NonOriginatingSubscription(
+                    device = "iPhone",
+                    store = "Apple App Store",
+                    platform = "Apple",
+                    platformAccount = "Apple Account",
+                    urlSubscription = "https://www.apple.com/account/subscriptions",
+                )
+            )
+
+            DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> SubscriptionState.Expired
         }
     }
 

@@ -957,7 +957,6 @@
     <string name="proExpiringSoonDescription">Підписка {pro} спливе {time}. Онови підписку задля збереження переваг і можливостей {app_pro}.</string>
     <string name="proExpiringTime">{pro} спливає за <b>{time}</b></string>
     <string name="proFaq">{pro} ЧАП</string>
-    <string name="proFaqDescription">Відповіді на загальні запитання знайдеш у ЧаПи {app_name}.</string>
     <string name="proFeatureListAnimatedDisplayPicture">Завантажуйте GIF та WebP аватари</string>
     <string name="proFeatureListLargerGroups">Більша кількість — до 300 учасників — групових чатів</string>
     <string name="proFeatureListLoadsMore">Та велика кількість ексклюзивних можливостей</string>

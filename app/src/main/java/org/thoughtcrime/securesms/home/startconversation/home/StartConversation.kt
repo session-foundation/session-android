@@ -74,6 +74,7 @@ internal fun StartConversationScreen(
                     text = annotatedStringResource(newMessageTitleTxt),
                     textStyle = LocalType.current.xl,
                     iconRes = R.drawable.ic_message_square,
+                    iconSize = LocalDimensions.current.iconMedium2,
                     modifier = Modifier.qaTag(R.string.AccessibilityId_messageNew),
                     onClick = {
                         navigateTo(StartConversationDestination.NewMessage)
@@ -89,6 +90,7 @@ internal fun StartConversationScreen(
                     text = annotatedStringResource(R.string.groupCreate),
                     textStyle = LocalType.current.xl,
                     iconRes = R.drawable.ic_users_group_custom,
+                    iconSize = LocalDimensions.current.iconMedium2,
                     modifier = Modifier.qaTag(R.string.AccessibilityId_groupCreate),
                     onClick = {
                         navigateTo(StartConversationDestination.CreateGroup)
@@ -104,6 +106,7 @@ internal fun StartConversationScreen(
                     text = annotatedStringResource(R.string.communityJoin),
                     textStyle = LocalType.current.xl,
                     iconRes = R.drawable.ic_globe,
+                    iconSize = LocalDimensions.current.iconMedium2,
                     modifier = Modifier.qaTag(R.string.AccessibilityId_communityJoin),
                     onClick = {
                         navigateTo(StartConversationDestination.JoinCommunity)
@@ -119,6 +122,7 @@ internal fun StartConversationScreen(
                     text = annotatedStringResource(R.string.sessionInviteAFriend),
                     textStyle = LocalType.current.xl,
                     iconRes = R.drawable.ic_user_round_plus,
+                    iconSize = LocalDimensions.current.iconMedium2,
                     modifier = Modifier.qaTag(R.string.AccessibilityId_sessionInviteAFriendButton),
                     onClick = {
                         navigateTo(StartConversationDestination.InviteFriend)
