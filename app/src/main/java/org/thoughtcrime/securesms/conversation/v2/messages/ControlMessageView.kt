@@ -85,11 +85,6 @@ class ControlMessageView : LinearLayout {
         binding.expirationTimerView.isGone = true
         binding.followSetting.isGone = true
 
-        val isLight = ThemeUtil.isLightTheme(context)
-        if(isLight){
-            binding.followSetting.setTextColor(context.getColorFromAttr(android.R.attr.textColorPrimary))
-        }
-
         var messageBody: CharSequence = message.getDisplayBody(context)
 
         binding.root.contentDescription = null
