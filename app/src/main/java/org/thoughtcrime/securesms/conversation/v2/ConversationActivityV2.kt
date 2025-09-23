@@ -1999,6 +1999,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             messageToScrollAuthor.set(sentMessageInfo.first)
             messageToScrollTimestamp.set(sentMessageInfo.second)
         }
+        binding.conversationRecyclerView.handleScrollToBottom(true)
     }
 
     override fun commitInputContent(contentUri: Uri) {
@@ -2678,29 +2679,17 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     fun onSearchOpened() {
         viewModel.onSearchOpened()
         searchViewModel.onSearchOpened()
-        binding.searchBottomBar.apply {
-            visibility = View.VISIBLE
-            setOnTouchListener { _, _ -> true }// workaround for android 9
-        }
+        binding.searchBottomBar.visibility = View.VISIBLE
         binding.searchBottomBar.setData(0, 0, searchViewModel.searchQuery.value)
-        binding.inputBar.apply {
-            visibility = View.GONE
-            layoutParams = layoutParams.also { it.height = 0 } // workaround for android 9
-        }
+        binding.inputBar.visibility = View.GONE
         binding.root.requestApplyInsets()
     }
 
     fun onSearchClosed() {
         viewModel.onSearchClosed()
         searchViewModel.onSearchClosed()
-        binding.searchBottomBar.apply {
-            visibility = View.GONE
-            setOnTouchListener(null)
-        }
-        binding.inputBar.apply {
-            visibility = View.VISIBLE
-            layoutParams.also { it.height = ViewGroup.LayoutParams.WRAP_CONTENT }
-        }
+        binding.searchBottomBar.visibility = View.GONE
+        binding.inputBar.visibility = View.VISIBLE
         binding.root.requestApplyInsets()
         adapter.onSearchQueryUpdated(null)
         invalidateOptionsMenu()
@@ -2729,12 +2718,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private fun moveToMessagePosition(position: Int, highlight: Boolean, onMessageNotFound: Runnable?) {
         if (position >= 0) {
             binding.conversationRecyclerView.scrollToPosition(position)
-
-            val lastIndex = adapter.itemCount - 1
-            if (position >= lastIndex) {
-                // If the target is the last message, anchor bottom instead of snap-to-top
-                binding.conversationRecyclerView.handleScrollToBottom()
-            }
 
             if (highlight) {
                 runOnUiThread { highlightViewAtPosition(position) }
