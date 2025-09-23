@@ -36,10 +36,14 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.mms.PartUriParser;
 import org.thoughtcrime.securesms.service.KeyCachingService;
 
+import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
 
 import network.loki.messenger.BuildConfig;
 
@@ -198,28 +202,24 @@ public class PartAndBlobProvider extends ContentProvider {
 
   private ParcelFileDescriptor getStreamingParcelFileDescriptor(InputStreamProvider provider) throws IOException {
     try {
-      ParcelFileDescriptor[] pipe = ParcelFileDescriptor.createPipe();
-      ParcelFileDescriptor readSide = pipe[0];
-      ParcelFileDescriptor writeSide = pipe[1];
+      final File tmpFile = Files.createTempFile("attachment", ".part").toFile();
 
-      new Thread(() -> {
-        try (InputStream inputStream = provider.getInputStream();
-             OutputStream outputStream = new ParcelFileDescriptor.AutoCloseOutputStream(writeSide)) {
-
-          Util.copy(inputStream, outputStream);
-
-        } catch (IOException e) {
-          Log.w(TAG, "Error streaming data", e);
-          try {
-            writeSide.closeWithError("Error streaming data: " + e.getMessage());
-          } catch (IOException closeException) {
-            Log.w(TAG, "Error closing write side of pipe", closeException);
-          }
+      // Write decrypted file into a temporary file
+      try (final InputStream inputStream = provider.getInputStream()) {
+        try (final FileOutputStream os = new FileOutputStream(tmpFile)) {
+          final long copied = Util.copy(inputStream, os);
+          Log.d(TAG, "Copied " + copied + " bytes to " + tmpFile);
         }
-      }).start();
+      }
 
-      return readSide;
+      ParcelFileDescriptor descriptor = ParcelFileDescriptor.open(tmpFile, ParcelFileDescriptor.MODE_READ_ONLY);
 
+      // We can actually delete the tmp file now - Linux will keep the file because we opened it before.
+      // Once that file description is closed, the file will be removed automatically.
+      if (!tmpFile.delete()) {
+        Log.w(TAG, "Unable to delete temp file " + tmpFile);
+      }
+      return descriptor;
     } catch (IOException e) {
       Log.w(TAG, "Error creating streaming pipe", e);
       throw new FileNotFoundException("Error creating streaming pipe: " + e.getMessage());
