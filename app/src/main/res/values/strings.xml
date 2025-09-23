@@ -928,7 +928,7 @@
     <string name="proExpiringSoonDescription">Your {pro} plan is expiring in {time}. Update your plan to keep accessing the exclusive perks and features of {app_pro}.</string>
     <string name="proExpiringTime">{pro} expiring in <b>{time}</b></string>
     <string name="proFaq">{pro} FAQ</string>
-    <string name="proFaqDescription">Find answers to common questions in the {app_name} FAQ.</string>
+    <string name="proFaqDescription">Find answers to common questions in the {app_pro} FAQ.</string>
     <string name="proFeatureListAnimatedDisplayPicture">Upload GIF and WebP display pictures</string>
     <string name="proFeatureListLargerGroups">Larger group chats up to 300 members</string>
     <string name="proFeatureListLoadsMore">Plus loads more exclusive features</string>
@@ -946,6 +946,7 @@
     <string name="proIncreasedMessageLengthFeature">Increased Message Length</string>
     <string name="proLargerGroups">Larger Groups</string>
     <string name="proLargerGroupsDescription">Groups you are an admin in are automatically upgraded to support 300 members.</string>
+    <string name="proLargerGroupsTooltip">Larger group chats (up to 300 members) are coming soon for all Pro Beta users!</string>
     <string name="proLongerMessages">Longer Messages</string>
     <string name="proLongerMessagesDescription">You can send messages up to 10,000 characters in all conversations.</string>
     <plurals name="proLongerMessagesSent">
@@ -991,6 +992,7 @@
     <string name="proRefundSupport">Please contact {platform_account} for further updates on your refund request. Due to {platform_account} refund policies, {app_name} developers have no ability to influence the outcome of refund requests.\n\n<font color="0">{platform_store} Refund Support</font></string>
     <string name="proRefunding">Refunding {pro}</string>
     <string name="proRefundingDescription">Refunds for {app_pro} plans are handled exclusively by {platform_account} through the {platform_store} Store.\n\nDue to {platform_account} refund policies, {app_name} developers have no ability to influence the outcome of refund requests. This includes whether the request is approved or denied, as well as whether a full or partial refund is issued.</string>
+    <string name="proRenewBeta">Renew {pro} Beta</string>
     <string name="proRequestedRefund">Refund Requested</string>
     <string name="proSendMore">Send more with</string>
     <string name="proSettings">{pro} Settings</string>

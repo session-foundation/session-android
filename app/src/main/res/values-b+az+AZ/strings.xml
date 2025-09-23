@@ -919,7 +919,6 @@
     <string name="proExpiringSoonDescription">{pro} planınızın müddəti {time} vaxtında bitir. {app_pro} tətbiqinin eksklüziv imtiyazlarına və özəlliklərinə erişimi davam etdirmək üçün planınızı güncəlləyin.</string>
     <string name="proExpiringTime">{pro}, <b>{time}</b> vaxtında başa çatır</string>
     <string name="proFaq">{pro} TVS</string>
-    <string name="proFaqDescription">{app_name} TVS-da tez-tez verilən suallara cavab tapın.</string>
     <string name="proFeatureListAnimatedDisplayPicture">GIF və WebP ekran şəkilləri yüklə</string>
     <string name="proFeatureListLargerGroups">300 üzvə qədər daha da böyük qrup söhbətləri</string>
     <string name="proFeatureListLoadsMore">Üstəgəl, daha çox eksklüziv özəlliklər</string>

@@ -71,6 +71,7 @@ zxingVersion = "3.5.3"
 huaweiPushVersion = "6.13.0.300"
 googlePlayReviewVersion = "2.0.2"
 coilVersion = "3.3.0"
+billingVersion = "8.0.0"
 
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissionsVersion" }
@@ -171,6 +172,8 @@ sqlite-web-viewer = { module = "io.github.simophin:sqlite-web-viewer", version =
 protoc = { module = "com.google.protobuf:protoc", version = "4.31.1" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilVersion" }
 coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coilVersion" }
+android-billing = { module = "com.android.billingclient:billing", version.ref = "billingVersion" }
+android-billing-ktx = { module = "com.android.billingclient:billing-ktx", version.ref = "billingVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "gradlePluginVersion" }

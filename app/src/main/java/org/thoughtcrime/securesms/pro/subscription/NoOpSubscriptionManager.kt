@@ -12,6 +12,8 @@ class NoOpSubscriptionManager @Inject constructor() : SubscriptionManager {
     override val iconRes = null
 
     override fun purchasePlan(subscriptionDuration: ProSubscriptionDuration) {}
+    override val availablePlans: List<ProSubscriptionDuration>
+        get() = emptyList()
 
     //todo PRO test out build type with no subscription providers available - What do we show on the Pro Settings page?
 }

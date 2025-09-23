@@ -38,6 +38,7 @@ import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
 import org.thoughtcrime.securesms.util.ClearDataUtils
@@ -58,6 +59,7 @@ class DebugMenuViewModel @Inject constructor(
     private val attachmentDatabase: AttachmentDatabase,
     private val conversationRepository: ConversationRepository,
     private val databaseInspector: DatabaseInspector,
+    subscriptionManagers: Set<@JvmSuppressWildcards SubscriptionManager>,
 ) : ViewModel() {
     private val TAG = "DebugMenu"
 
@@ -90,6 +92,9 @@ class DebugMenuViewModel @Inject constructor(
                 DebugSubscriptionStatus.EXPIRED,
             ),
             selectedDebugSubscriptionStatus = textSecurePreferences.getDebugSubscriptionType() ?: DebugSubscriptionStatus.AUTO_GOOGLE,
+            debugProPlans = subscriptionManagers.asSequence()
+                .flatMap { it.availablePlans.asSequence().map { plan -> DebugProPlan(it, plan) } }
+                .toList(),
         )
     )
     val uiState: StateFlow<UIState>
@@ -295,6 +300,10 @@ class DebugMenuViewModel @Inject constructor(
                     it.copy(selectedDebugSubscriptionStatus = command.status)
                 }
             }
+
+            is Commands.PurchaseDebugPlan -> {
+                command.plan.apply { manager.purchasePlan(plan) }
+            }
         }
     }
 
@@ -400,6 +409,7 @@ class DebugMenuViewModel @Inject constructor(
         val dbInspectorState: DatabaseInspectorState,
         val debugSubscriptionStatuses: Set<DebugSubscriptionStatus>,
         val selectedDebugSubscriptionStatus: DebugSubscriptionStatus,
+        val debugProPlans: List<DebugProPlan>,
     )
 
     enum class DatabaseInspectorState {
@@ -440,5 +450,6 @@ class DebugMenuViewModel @Inject constructor(
         data class GenerateContacts(val prefix: String, val count: Int): Commands()
         data object ToggleDatabaseInspector : Commands()
         data class SetDebugSubscriptionStatus(val status: DebugSubscriptionStatus) : Commands()
+        data class PurchaseDebugPlan(val plan: DebugProPlan) : Commands()
     }
 }

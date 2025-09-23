@@ -48,7 +48,7 @@ val getGitHash = providers
 
 val firebaseEnabledVariants = listOf("play", "fdroid")
 val nonPlayVariants = listOf("fdroid", "website") + if (huaweiEnabled) listOf("huawei") else emptyList()
-val nonDebugBuildTypes = listOf("release", "qa", "automaticQa")
+val nonDebugBuildTypes = listOf("release", "releaseWithDebugMenu", "qa", "automaticQa")
 
 fun VariantDimension.devNetDefaultOn(defaultOn: Boolean) {
     val fqEnumClass = "org.session.libsession.utilities.Environment"
@@ -167,6 +167,12 @@ android {
             enablePermissiveNetworkSecurityConfig(false)
             setAlternativeAppName(null)
             setAuthorityPostfix("")
+        }
+
+        create("releaseWithDebugMenu") {
+            initWith(getByName("release"))
+
+            matchingFallbacks += "release"
         }
 
         create("qa") {
@@ -472,6 +478,9 @@ dependencies {
     implementation(libs.zxing.core)
 
     implementation(libs.androidx.biometric)
+
+    playImplementation(libs.android.billing)
+    playImplementation(libs.android.billing.ktx)
 
     debugImplementation(libs.sqlite.web.viewer)
 }
