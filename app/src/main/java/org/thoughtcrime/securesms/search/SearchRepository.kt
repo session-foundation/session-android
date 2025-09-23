@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.search
 import android.content.Context
 import android.database.Cursor
 import dagger.hilt.android.qualifiers.ApplicationContext
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -12,6 +13,7 @@ import org.session.libsession.utilities.concurrent.SignalExecutors
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.toGroupString
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.contacts.ContactAccessor
 import org.thoughtcrime.securesms.database.CursorList
 import org.thoughtcrime.securesms.database.GroupDatabase
@@ -89,10 +91,20 @@ class SearchRepository @Inject constructor(
 
     fun queryContacts(searchName: String? = null): List<Recipient> {
         return configFactory.withUserConfigs { configs ->
-            configs.contacts.all()
-        }.asSequence()
-            .filter { !it.blocked && it.approved }
-            .map { it.id.toAddress() }
+            (configs.contacts.all().asSequence()
+                .filter { !it.blocked &&
+                        // If we are searching for contacts - we will include the unapproved ones
+                        (!searchName.isNullOrBlank() || it.approved)
+                }
+                .map { it.id.toAddress() }) +
+                    configs.contacts.allBlinded().asSequence()
+                        .map {
+                            Address.CommunityBlindedId(
+                                serverUrl = it.communityServer,
+                                blindedId = Address.Blinded(AccountId(it.id))
+                            )
+                        }
+        }
             .map(recipientRepository::getRecipientSync)
             .filterNot { it.isSelf } // It is possible to have self in the contacts list so we need to weed it out
             .filter {
@@ -102,6 +114,10 @@ class SearchRepository @Inject constructor(
                         is RecipientData.Contact -> {
                             it.data.nickname?.contains(searchName, ignoreCase = true) == true ||
                                     it.data.name.contains(searchName, ignoreCase = true)
+                        }
+
+                        is RecipientData.BlindedContact -> {
+                            it.data.displayName.contains(searchName, ignoreCase = true)
                         }
 
                         else -> error("We should only get contacts data here but got ${it.data.javaClass}")

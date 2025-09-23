@@ -9,10 +9,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.core.os.BundleCompat
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.components.ActionSheetItem
@@ -21,19 +23,19 @@ import org.thoughtcrime.securesms.ui.createThemedComposeView
 @AndroidEntryPoint
 class SearchContactActionBottomSheet : BottomSheetDialogFragment() {
 
-    private var accountId: String? = null
+    private var address: Address? = null
     private var contactName: String? = null
 
     interface Callbacks {
-        fun onBlockContact(accountId: String)
-        fun onDeleteContact(accountId: String)
+        fun onBlockContact(address: Address)
+        fun onDeleteContact(address: Address)
     }
 
     private var callbacks: Callbacks? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        accountId = arguments?.getString(ARG_ACCOUNT_ID)
+        address = arguments?.let { BundleCompat.getParcelable(it, ARG_ADDRESS, Address::class.java) }
         contactName = arguments?.getString(ARG_CONTACT_NAME)
     }
 
@@ -52,15 +54,18 @@ class SearchContactActionBottomSheet : BottomSheetDialogFragment() {
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            ActionSheetItem(
-                text = stringResource(R.string.block),
-                leadingIcon = R.drawable.ic_user_round_x,
-                qaTag = stringResource(R.string.AccessibilityId_block),
-                onClick = {
-                    showBlockConfirmation()
-                    dismiss()
-                }
-            )
+            // Only standard address can be blocked
+            if (address is Address.Standard) {
+                ActionSheetItem(
+                    text = stringResource(R.string.block),
+                    leadingIcon = R.drawable.ic_user_round_x,
+                    qaTag = stringResource(R.string.AccessibilityId_block),
+                    onClick = {
+                        showBlockConfirmation()
+                        dismiss()
+                    }
+                )
+            }
 
             ActionSheetItem(
                 text = stringResource(R.string.contactDelete),
@@ -75,7 +80,7 @@ class SearchContactActionBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun showBlockConfirmation() {
-        val accountId = accountId ?: return
+        val address = this@SearchContactActionBottomSheet.address ?: return
         val contactName = contactName ?: return
 
         showSessionDialog {
@@ -85,7 +90,7 @@ class SearchContactActionBottomSheet : BottomSheetDialogFragment() {
                     .put(NAME_KEY, contactName)
                     .format())
             dangerButton(R.string.block, R.string.AccessibilityId_blockConfirm) {
-                callbacks?.onBlockContact(accountId)
+                callbacks?.onBlockContact(address)
                 callbacks = null
             }
             cancelButton()
@@ -93,7 +98,7 @@ class SearchContactActionBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun showDeleteConfirmation() {
-        val accountId = accountId ?: return
+        val address = this@SearchContactActionBottomSheet.address ?: return
         val contactName = contactName ?: return
 
         showSessionDialog {
@@ -104,7 +109,7 @@ class SearchContactActionBottomSheet : BottomSheetDialogFragment() {
                     .put(NAME_KEY, contactName)
                     .format())
             dangerButton(R.string.delete, R.string.AccessibilityId_delete) {
-                callbacks?.onDeleteContact(accountId)
+                callbacks?.onDeleteContact(address)
                 callbacks = null
             }
             cancelButton()
@@ -112,13 +117,13 @@ class SearchContactActionBottomSheet : BottomSheetDialogFragment() {
     }
 
     companion object {
-        private const val ARG_ACCOUNT_ID = "arg_account_id"
+        private const val ARG_ADDRESS = "arg_address"
         private const val ARG_CONTACT_NAME = "arg_contact_name"
 
-        fun newInstance(accountId: String, contactName: String): SearchContactActionBottomSheet {
+        fun newInstance(address: Address, contactName: String): SearchContactActionBottomSheet {
             return SearchContactActionBottomSheet().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_ACCOUNT_ID, accountId)
+                arguments = Bundle(2).apply {
+                    putParcelable(ARG_ADDRESS, address)
                     putString(ARG_CONTACT_NAME, contactName)
                 }
             }
