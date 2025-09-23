@@ -54,7 +54,7 @@ class ProfileUpdateHandler @Inject constructor(
         // If the sender has standard address (either as unblinded, or as is), we will check if
         // they are a contact and update their contact information accordingly.
         val standardSender = unblinded ?: (senderAddress as? Address.Standard)
-        if (standardSender != null && (updates.name != null || updates.pic != null || updates.profileUpdateTime != null)) {
+        if (standardSender != null && (!updates.name.isNullOrBlank() || updates.pic != null)) {
             configFactory.withMutableUserConfigs { configs ->
                 configs.contacts.updateContact(standardSender) {
                     if (shouldUpdateProfile(
@@ -94,6 +94,10 @@ class ProfileUpdateHandler @Inject constructor(
 
                         if (updates.name != null) {
                             c.name = updates.name
+                        }
+
+                        if (updates.profileUpdateTime != null) {
+                            c.profileUpdatedEpochSeconds = updates.profileUpdateTime.toEpochSeconds()
                         }
 
                         configs.contacts.setBlinded(c)
@@ -136,7 +140,8 @@ class ProfileUpdateHandler @Inject constructor(
         lastUpdated: Instant?,
         newUpdateTime: Instant?
     ): Boolean {
-        return (lastUpdated == null || newUpdateTime == null) || (newUpdateTime > lastUpdated)
+        return (lastUpdated == null && newUpdateTime == null) ||
+                (newUpdateTime != null && lastUpdated != null && newUpdateTime > lastUpdated)
     }
 
     class Updates private constructor(
