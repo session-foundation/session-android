@@ -29,6 +29,7 @@ import android.util.TypedValue
 import android.view.ActionMode
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams
 import android.view.WindowManager
 import android.widget.Toast
@@ -2677,18 +2678,29 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     fun onSearchOpened() {
         viewModel.onSearchOpened()
         searchViewModel.onSearchOpened()
-        binding.searchBottomBar.visibility = View.VISIBLE
+        binding.searchBottomBar.apply {
+            visibility = View.VISIBLE
+            setOnTouchListener { _, _ -> true } // workaround for android 9
+        }
         binding.searchBottomBar.setData(0, 0, searchViewModel.searchQuery.value)
-        binding.inputBar.visibility = View.GONE
+        binding.inputBar.apply {
+            visibility = View.GONE
+            layoutParams = layoutParams.also { it.height = 0 } // workaround for android 9
+        }
         binding.root.requestApplyInsets()
-
     }
 
     fun onSearchClosed() {
         viewModel.onSearchClosed()
         searchViewModel.onSearchClosed()
-        binding.searchBottomBar.visibility = View.GONE
-        binding.inputBar.visibility = View.VISIBLE
+        binding.searchBottomBar.apply {
+            visibility = View.GONE
+            setOnTouchListener(null)
+        }
+        binding.inputBar.apply {
+            visibility = View.VISIBLE
+            layoutParams.also { it.height = ViewGroup.LayoutParams.WRAP_CONTENT }
+        }
         binding.root.requestApplyInsets()
         adapter.onSearchQueryUpdated(null)
         invalidateOptionsMenu()
