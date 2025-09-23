@@ -2680,7 +2680,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         searchViewModel.onSearchOpened()
         binding.searchBottomBar.apply {
             visibility = View.VISIBLE
-            setOnTouchListener { _, _ -> true } // workaround for android 9
+            setOnTouchListener { _, _ -> true }// workaround for android 9
         }
         binding.searchBottomBar.setData(0, 0, searchViewModel.searchQuery.value)
         binding.inputBar.apply {
@@ -2734,13 +2734,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             if (position >= lastIndex) {
                 // If the target is the last message, anchor bottom instead of snap-to-top
                 binding.conversationRecyclerView.handleScrollToBottom()
-                if (highlight) highlightViewAtPosition(position)
-            } else {
-                pendingHighlightMessagePosition = position
-                currentTargetedScrollOffsetPx = if (position > 0) nonFirstMessageOffsetPx else 0
-                linearSmoothScroller.targetPosition = position
-                (binding.conversationRecyclerView.layoutManager as? LinearLayoutManager)
-                    ?.startSmoothScroll(linearSmoothScroller)
+            }
+
+            if (highlight) {
+                runOnUiThread { highlightViewAtPosition(position) }
             }
         } else {
             onMessageNotFound?.run()
