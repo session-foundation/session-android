@@ -46,7 +46,7 @@ class BuildCredentials:
         self.key_alias = credentials['key_alias']
         self.key_password = credentials['key_password']
 
-def build_releases(project_root: str, flavor: str, credentials_property_prefix: str, credentials: BuildCredentials, huawei: bool=False) -> BuildResult:
+def build_releases(project_root: str, flavor: str, credentials_property_prefix: str, credentials: BuildCredentials, huawei: bool=False, build_type: string = 'release') -> BuildResult:
     (keystore_fd, keystore_file) = tempfile.mkstemp(prefix='keystore_', suffix='.jks', dir=build_dir)
     try:
         with os.fdopen(keystore_fd, 'wb') as f:
@@ -62,10 +62,10 @@ def build_releases(project_root: str, flavor: str, credentials_property_prefix: 
             gradle_commands += ' -Phuawei '
 
         subprocess.run(f"""{gradle_commands} \
-                    assemble{flavor.capitalize()}Release \
-                    bundle{flavor.capitalize()}Release --stacktrace""", shell=True, check=True, cwd=project_root)
+                    assemble{flavor.capitalize()}{build_type.capitalize()} \
+                    bundle{flavor.capitalize()}{build_type.capitalize()} --stacktrace""", shell=True, check=True, cwd=project_root)
 
-        apk_output_dir = os.path.join(project_root, f'app/build/outputs/apk/{flavor}/release')
+        apk_output_dir = os.path.join(project_root, f'app/build/outputs/apk/{flavor}/{build_type}')
 
         with open(os.path.join(apk_output_dir, 'output-metadata.json')) as f:
             play_outputs = json.load(f)
@@ -81,7 +81,7 @@ def build_releases(project_root: str, flavor: str, credentials_property_prefix: 
                             apk_paths=apks, 
                             package_id=package_id, 
                             version_name=version_name,
-                            bundle_path=os.path.join(project_root, f'app/build/outputs/bundle/{flavor}Release/app-{flavor}-release.aab'))
+                            bundle_path=os.path.join(project_root, f'app/build/outputs/bundle/{flavor}{build_type.capitalize()}/app-{flavor}-{build_type}.aab'))
         
     finally:
         print(f'Cleaning up keystore file: {keystore_file}')
@@ -225,6 +225,7 @@ parser = argparse.ArgumentParser(
  )
 
 parser.add_argument('--build-play-only', action='store_true', help='If set, will only build Play releases and skip F-Droid and Huawei releases.')
+parser.add_argument('--build-type', help='Build with specified build type. Default: release', default = 'release')
 
 args = parser.parse_args()
 
@@ -255,7 +256,8 @@ play_build_result = build_releases(
     project_root=project_root, 
     flavor='play',
     credentials=BuildCredentials(credentials['build']['play']),
-    credentials_property_prefix='SESSION'
+    credentials_property_prefix='SESSION',
+    build_type=args.build_type,
     )
 
 if args.build_play_only:
@@ -263,12 +265,12 @@ if args.build_play_only:
     sys.exit(0)
 
 print("Building fdroid releases...")
-
 fdroid_build_result = build_releases(
     project_root=project_root,
     flavor='fdroid',
     credentials=BuildCredentials(credentials['build']['play']),
-    credentials_property_prefix='SESSION'
+    credentials_property_prefix='SESSION',
+    build_type=args.build_type,
     )
 
 print("Updating fdroid repo...")
@@ -280,7 +282,8 @@ huawei_build_result = build_releases(
     flavor='huawei',
     credentials=BuildCredentials(credentials['build']['huawei']),
     credentials_property_prefix='SESSION_HUAWEI',
-    huawei=True
+    huawei=True,
+    build_type=args.build_type
     )
 
 # If the a github release draft exists, upload the apks to the release

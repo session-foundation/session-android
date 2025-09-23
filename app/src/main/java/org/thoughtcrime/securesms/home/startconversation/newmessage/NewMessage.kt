@@ -139,6 +139,7 @@ private fun EnterAccountId(
                     .fillMaxWidth()
                     .qaTag(R.string.next),
                 enabled = state.isNextButtonEnabled,
+                disabledColor = LocalColors.current.textSecondary,
                 onClick = callbacks::onContinue
             ) {
                 LoadingArcOr(state.loading) {

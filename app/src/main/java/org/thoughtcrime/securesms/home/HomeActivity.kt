@@ -12,8 +12,10 @@ import android.view.ViewGroup.MarginLayoutParams
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.view.isVisible
@@ -216,7 +218,11 @@ class HomeActivity : ScreenLockActionBarActivity(),
             Avatar(
                 size = LocalDimensions.current.iconMediumAvatar,
                 data = avatarUtils.getUIDataFromRecipient(recipient),
-                modifier = Modifier.clickable(onClick = ::openSettings)
+                modifier = Modifier.clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = ::openSettings
+                )
             )
         }
 
