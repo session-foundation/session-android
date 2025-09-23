@@ -259,7 +259,7 @@ fun AnnotatedTextWithIcon(
     style: TextStyle = LocalType.current.base,
     color: Color = Color.Unspecified,
     iconSize: Pair<TextUnit, TextUnit> = 12.sp to 12.sp,
-    iconPaddingValues: PaddingValues = PaddingValues(1.dp),
+    iconPaddingValues: PaddingValues = PaddingValues(start = style.lineHeight.value.dp * 0.2f),
     onIconClick: (() -> Unit)? = null
 ) {
     var inlineContent: Map<String, InlineTextContent> = mapOf()

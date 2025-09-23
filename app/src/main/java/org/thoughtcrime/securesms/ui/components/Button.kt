@@ -162,8 +162,13 @@ fun Button(
     Button(text, onClick, ButtonType.Outline(LocalColors.current.accentText), modifier, enabled, minWidth = minWidth)
 }
 
-@Composable fun AccentOutlineButton(modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit, content: @Composable RowScope.() -> Unit) {
-    Button(onClick, ButtonType.Outline(LocalColors.current.accentText), modifier, enabled, content = content)
+@Composable fun AccentOutlineButton(modifier: Modifier = Modifier, enabled: Boolean = true,
+                                    disabledColor: Color = LocalColors.current.disabled,
+                                    onClick: () -> Unit, content: @Composable RowScope.() -> Unit) {
+    Button(onClick, ButtonType.Outline(
+        contentColor = LocalColors.current.accentText,
+        disabledColor = disabledColor
+    ), modifier, enabled, content = content)
 }
 
 @Composable fun SlimOutlineButton(modifier: Modifier = Modifier, color: Color = LocalColors.current.text, enabled: Boolean = true, onClick: () -> Unit, content: @Composable RowScope.() -> Unit) {
