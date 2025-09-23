@@ -24,7 +24,7 @@ class FirebasePushService : FirebaseMessagingService() {
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
-        Log.d(TAG, "Received a firebase push notification: $message - Priority received: ${message.priority} (Priority expected: ${message.originalPriority}) - Sent time: ${dateUtils.getLocaleFormattedDate(message.sentTime, "HH:mm:ss.SSS")}")
+        Log.d(TAG, "Received a firebase push notification: $message - Priority received: ${message.priority} (Priority expected: ${message.originalPriority}) - Sent time: ${DateUtils.getLocaleFormattedDate(message.sentTime, "HH:mm:ss.SSS")}")
         pushReceiver.onPushDataReceived(message.data)
     }
 }

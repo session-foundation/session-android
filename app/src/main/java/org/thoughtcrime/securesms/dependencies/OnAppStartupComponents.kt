@@ -22,6 +22,7 @@ import org.thoughtcrime.securesms.notifications.BackgroundPollManager
 import org.thoughtcrime.securesms.notifications.PushRegistrationHandler
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionCoordinator
+import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
 import org.thoughtcrime.securesms.service.ExpiringMessageManager
 import org.thoughtcrime.securesms.tokenpage.TokenDataManager
 import org.thoughtcrime.securesms.util.AppVisibilityManager
@@ -68,6 +69,7 @@ class OnAppStartupComponents private constructor(
         subscriptionCoordinator: SubscriptionCoordinator,
         avatarUploadManager: AvatarUploadManager,
         configToDatabaseSync: ConfigToDatabaseSync,
+        subscriptionManagers: Set<@JvmSuppressWildcards SubscriptionManager>,
     ): this(
         components = listOf(
             configUploader,
@@ -99,6 +101,6 @@ class OnAppStartupComponents private constructor(
             subscriptionCoordinator,
             avatarUploadManager,
             configToDatabaseSync,
-        )
+        ) + subscriptionManagers
     )
 }
