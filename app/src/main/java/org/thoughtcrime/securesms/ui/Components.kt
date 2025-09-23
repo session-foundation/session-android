@@ -268,6 +268,7 @@ fun ItemButton(
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
     enabled: Boolean = true,
+    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -278,6 +279,7 @@ fun ItemButton(
         subtitle = subtitle,
         subtitleQaTag = subtitleQaTag,
         enabled = enabled,
+        minHeight = minHeight,
         icon = {
             Icon(
                 painter = painterResource(id = iconRes),
