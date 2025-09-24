@@ -7,6 +7,9 @@ import android.content.res.Configuration;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -15,7 +18,10 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.MenuHost;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -26,6 +32,7 @@ import com.squareup.phrase.Phrase;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsession.utilities.recipients.RecipientNamesKt;
 import org.session.libsignal.utilities.Log;
+import org.thoughtcrime.securesms.conversation.v2.utilities.AttachmentManager;
 import org.thoughtcrime.securesms.util.ViewUtilitiesKt;
 
 import dagger.hilt.android.AndroidEntryPoint;
@@ -44,6 +51,9 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
   private Controller         controller;
   private GridLayoutManager  layoutManager;
 
+  MediaPickerFolderAdapter adapter;
+
+
   public static @NonNull MediaPickerFolderFragment newInstance(@NonNull Recipient recipient) {
     Bundle args = new Bundle();
     args.putString(KEY_RECIPIENT_NAME, RecipientNamesKt.displayName(recipient));
@@ -59,6 +69,7 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
     super.onCreate(savedInstanceState);
     recipientName = getArguments().getString(KEY_RECIPIENT_NAME);
     viewModel = new ViewModelProvider(requireActivity()).get(MediaSendViewModel.class);
+    setHasOptionsMenu(true);
   }
 
   @Override
@@ -84,7 +95,7 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
     ViewUtilitiesKt.applySafeInsetsPaddings(view);
 
     RecyclerView             list    = view.findViewById(R.id.mediapicker_folder_list);
-    MediaPickerFolderAdapter adapter = new MediaPickerFolderAdapter(Glide.with(this), this);
+    adapter = new MediaPickerFolderAdapter(Glide.with(this), this);
 
     layoutManager = new GridLayoutManager(requireContext(), 2);
     onScreenWidthChanged(getScreenWidth());
@@ -121,6 +132,29 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
       actionBar.setDisplayHomeAsUpEnabled(true);
       actionBar.setHomeButtonEnabled(true);
       toolbar.setNavigationOnClickListener(v -> requireActivity().onBackPressed());
+    }
+
+    if(AttachmentManager.hasPartialAccess(requireActivity())){
+      MenuHost menuHost = (MenuHost) requireActivity();
+      menuHost.addMenuProvider(new MenuProvider() {
+        @Override
+        public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+          inflater.inflate(R.menu.menu_media_add, menu);
+        }
+
+        @Override
+        public boolean onMenuItemSelected(@NonNull MenuItem item) {
+          if (item.getItemId() == R.id.mediapicker_menu_add) {
+            AttachmentManager.managePhotoAccess(requireActivity(), () -> {
+              if (!isAdded()) return;
+              viewModel.getFolders(requireContext())
+                      .observe(getViewLifecycleOwner(), adapter::setFolders);
+            });
+            return true;
+          }
+          return false;
+        }
+      }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
     }
   }
 

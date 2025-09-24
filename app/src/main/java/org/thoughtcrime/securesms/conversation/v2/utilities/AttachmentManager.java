@@ -349,6 +349,12 @@ public class AttachmentManager {
                 .execute();
     }
 
+    public static boolean hasPartialAccess(Activity activity) {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
+                Permissions.hasAll(activity,
+                        Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED);
+    }
+
     public static void managePhotoAccess(@NonNull Activity activity, @Nullable Runnable onAnyResult) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { // API 34+
             Permissions.with(activity)
