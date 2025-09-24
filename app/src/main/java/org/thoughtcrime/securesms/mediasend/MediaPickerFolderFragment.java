@@ -153,7 +153,7 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
           }
           return false;
         }
-      }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+      }, getViewLifecycleOwner(), Lifecycle.State.STARTED);
     }
   }
 
