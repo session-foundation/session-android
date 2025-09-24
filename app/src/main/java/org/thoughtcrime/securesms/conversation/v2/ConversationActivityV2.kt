@@ -627,11 +627,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private fun setupWindowInsets() {
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, windowInsets ->
-            val systemBarsInsets =
-                windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.ime())
+            val navInsets = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            val imeInsets = windowInsets.getInsets(WindowInsetsCompat.Type.ime())
 
-            val imeHeight = windowInsets.getInsets(WindowInsetsCompat.Type.ime()).bottom
-            val keyboardVisible = imeHeight > 0
+            val keyboardVisible = imeInsets.bottom > 0
 
             if (keyboardVisible != isKeyboardVisible) {
                 isKeyboardVisible = keyboardVisible
@@ -645,10 +644,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
 
             binding.bottomSpacer.updateLayoutParams<LayoutParams> {
-                height = systemBarsInsets.bottom
+                height = if (keyboardVisible) imeInsets.bottom else navInsets.bottom
             }
 
-            windowInsets.inset(systemBarsInsets)
+            windowInsets
         }
     }
 
@@ -795,7 +794,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 } else {
                     // If there are new data updated, we'll try to stay scrolled at the bottom (if we were at the bottom).
                     // scrolled to bottom has a leniency of 50dp, so if we are within the 50dp but not fully at the bottom, scroll down
-                    if (binding.conversationRecyclerView.isNearBottom && !binding.conversationRecyclerView.isFullyScrolled) {
+                    if (binding.conversationRecyclerView.isNearBottom &&
+                        !binding.conversationRecyclerView.isFullyScrolled) {
                         binding.conversationRecyclerView.handleScrollToBottom()
                     }
                 }
@@ -817,7 +817,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     // called from onCreate
     private fun setUpRecyclerView() {
-        binding.conversationRecyclerView.applyImeBottomPadding()
         binding.conversationRecyclerView.adapter = adapter
         val layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
         binding.conversationRecyclerView.layoutManager = layoutManager
@@ -1998,6 +1997,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         if (sentMessageInfo != null) {
             messageToScrollAuthor.set(sentMessageInfo.first)
             messageToScrollTimestamp.set(sentMessageInfo.second)
+            binding.conversationRecyclerView.postDelayed({
+                binding.conversationRecyclerView.handleScrollToBottom()
+            }, 500L)
         }
     }
 
@@ -2115,7 +2117,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         if (isShowingAttachmentOptions) { toggleAttachmentOptions() }
 
         // Keep it fixed on the bottom right away
-        binding.conversationRecyclerView.handleScrollToBottom()
+        binding.conversationRecyclerView.handleScrollToBottom(true)
 
         // do the heavy work in the bg
         lifecycleScope.launch(Dispatchers.Default) {
@@ -2680,7 +2682,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         searchViewModel.onSearchOpened()
         binding.searchBottomBar.visibility = View.VISIBLE
         binding.searchBottomBar.setData(0, 0, searchViewModel.searchQuery.value)
-        binding.inputBar.visibility = View.GONE
         binding.root.requestApplyInsets()
 
     }
@@ -2689,7 +2690,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         viewModel.onSearchClosed()
         searchViewModel.onSearchClosed()
         binding.searchBottomBar.visibility = View.GONE
-        binding.inputBar.visibility = View.VISIBLE
         binding.root.requestApplyInsets()
         adapter.onSearchQueryUpdated(null)
         invalidateOptionsMenu()
@@ -2720,9 +2720,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             binding.conversationRecyclerView.scrollToPosition(position)
 
             if (highlight) {
-                runOnUiThread {
-                    highlightViewAtPosition(position)
-                }
+                runOnUiThread { highlightViewAtPosition(position) }
             }
         } else {
             onMessageNotFound?.run()

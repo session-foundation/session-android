@@ -334,11 +334,11 @@ class ConversationViewModel @AssistedInject constructor(
 
     init {
         viewModelScope.launch {
-            combine(
-                recipientFlow,
+            combine(recipientFlow,
                 legacyGroupDeprecationManager.deprecationState,
-                ::getInputBarState
-            ).collectLatest {
+                _searchOpened) { r, dep, searchOpen ->
+                getInputBarState(r, dep, searchOpen)
+            }.collectLatest {
                 _inputBarState.value = it
             }
         }
@@ -430,12 +430,13 @@ class ConversationViewModel @AssistedInject constructor(
 
     private fun getInputBarState(
         recipient: Recipient,
-        deprecationState: LegacyGroupDeprecationManager.DeprecationState
+        deprecationState: LegacyGroupDeprecationManager.DeprecationState,
+        searchOpen: Boolean
     ): InputBarState {
         val currentCharLimitState = _inputBarState.value.charLimitState
         return when {
             // prioritise cases that demand the input to be hidden
-            !shouldShowInput(recipient, deprecationState) -> InputBarState(
+            searchOpen || !shouldShowInput(recipient, deprecationState) -> InputBarState(
                 contentState = InputBarContentState.Hidden,
                 enableAttachMediaControls = false,
                 charLimitState = currentCharLimitState
