@@ -2683,7 +2683,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         searchViewModel.onSearchOpened()
         binding.searchBottomBar.visibility = View.VISIBLE
         binding.searchBottomBar.setData(0, 0, searchViewModel.searchQuery.value)
-        binding.inputBar.visibility = View.GONE
         binding.root.requestApplyInsets()
     }
 
@@ -2691,7 +2690,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         viewModel.onSearchClosed()
         searchViewModel.onSearchClosed()
         binding.searchBottomBar.visibility = View.GONE
-        binding.inputBar.visibility = View.VISIBLE
         binding.root.requestApplyInsets()
         adapter.onSearchQueryUpdated(null)
         invalidateOptionsMenu()
