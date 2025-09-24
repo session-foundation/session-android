@@ -913,7 +913,6 @@
     <string name="proExpiringSoon">Verloopt binnenkort</string>
     <string name="proExpiringSoonDescription">Je {pro} abonnement verloopt over {time}. Werk je abonnement bij om toegang te blijven houden tot de exclusieve voordelen en functies van {app_pro}.</string>
     <string name="proFaq">{pro} FAQ</string>
-    <string name="proFaqDescription">Vind antwoorden op veelgestelde vragen in de {app_name} FAQ.</string>
     <string name="proFeatureListAnimatedDisplayPicture">Upload GIF- en WebP-profielfoto\'s</string>
     <string name="proFeatureListLargerGroups">Groepsgesprekken tot wel 300 leden</string>
     <string name="proFeatureListLoadsMore">En nog veel meer exclusieve functies</string>
