@@ -393,9 +393,10 @@ fun ProFeatures(
 ) {
     CategoryCell(
         modifier = modifier,
-        title = Phrase.from(LocalContext.current, R.string.proFeatures)
+        title = "TEMP!!!!!!!"
+        /*title = Phrase.from(LocalContext.current, R.string.proFeatures)
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-            .format().toString(),
+            .format().toString(),*/
     ) {
         // Cell content
         Column(
