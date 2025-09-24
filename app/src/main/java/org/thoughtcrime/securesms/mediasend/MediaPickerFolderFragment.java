@@ -69,7 +69,6 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
     super.onCreate(savedInstanceState);
     recipientName = getArguments().getString(KEY_RECIPIENT_NAME);
     viewModel = new ViewModelProvider(requireActivity()).get(MediaSendViewModel.class);
-    setHasOptionsMenu(true);
   }
 
   @Override
@@ -107,7 +106,7 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
 
     initToolbar(view.findViewById(R.id.mediapicker_toolbar));
   }
-
+  
   @Override
   public void onResume() {
     super.onResume();
