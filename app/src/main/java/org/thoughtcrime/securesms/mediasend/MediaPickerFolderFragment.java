@@ -134,7 +134,7 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
       toolbar.setNavigationOnClickListener(v -> requireActivity().onBackPressed());
     }
 
-    if(AttachmentManager.hasPartialAccess(requireActivity())){
+    if(!AttachmentManager.hasFullAccess(requireActivity())){
       MenuHost menuHost = (MenuHost) requireActivity();
       menuHost.addMenuProvider(new MenuProvider() {
         @Override
