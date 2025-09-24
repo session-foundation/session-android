@@ -657,9 +657,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             viewModel.uiEvents.collect { event ->
                 when (event) {
                     is ConversationUiEvent.NavigateToConversation -> {
-                        finish()
                         startActivity(
                             createIntent(this@ConversationActivityV2, event.address)
+                                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NO_ANIMATION)
                         )
                     }
 
@@ -1075,13 +1075,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             // Wait for exit signal
             viewModel.shouldExit.first()
 
-            Toast.makeText(
-                this@ConversationActivityV2,
-                getString(R.string.conversationsDeleted),
-                Toast.LENGTH_LONG
-            ).show()
-
             if (!isFinishing) {
+                Toast.makeText(
+                    this@ConversationActivityV2,
+                    getString(R.string.conversationsDeleted),
+                    Toast.LENGTH_LONG
+                ).show()
+
                 finish()
             }
         }

@@ -33,73 +33,72 @@ class MessageRequestResponseHandler @Inject constructor(
     private val blindMappingRepository: BlindMappingRepository,
 ) {
 
-    suspend fun handle(message: Message) {
-        val fetchSenderAndReceiver = suspend {
-            val messageSender = recipientRepository.getRecipient(
-                requireNotNull(message.sender) {
-                    "MessageRequestResponse must have a sender"
-                }.toAddress()
-            )
+    suspend fun handleVisibleMessage(message: VisibleMessage) {
+        val (sender, receiver) = fetchSenderAndReceiver(message) ?: return
 
-            if (messageSender.address !is Address.Standard) {
-                Log.e(TAG, "MessageRequestResponse sender must be a standard address, but got: ${messageSender.address.debugString}")
-                null
-            } else {
-                messageSender to recipientRepository.getRecipient(
-                    requireNotNull(message.recipient) {
-                        "MessageRequestResponse must have a receiver"
-                    }.toAddress()
-                )
+        val allBlindedAddresses = blindMappingRepository.calculateReverseMappings(
+            contactAddress = sender.address as Address.Standard
+        )
+
+        // Do we have an existing message request (including blinded requests)?
+        val hasMessageRequest = configFactory.withUserConfigs { configs ->
+            val existingContact = configs.contacts.get(sender.address.accountId.hexString)
+            if (existingContact != null && existingContact.approved && !existingContact.approvedMe) {
+                return@withUserConfigs true
+            }
+
+            allBlindedAddresses.any { (_, blindedId) ->
+                configs.contacts.getBlinded(blindedId.blindedId.hexString) != null
             }
         }
 
-        if (message is MessageRequestResponse) {
-            val (sender, receiver) = fetchSenderAndReceiver() ?: return
-            // Always handle explicit request response
+        if (hasMessageRequest) {
             handleRequestResponse(
                 messageSender = sender,
                 messageReceiver = receiver,
                 messageTimestampMs = message.sentTimestamp!!,
             )
-
-            // Always process the profile update if any. We don't need
-            // to process profile for other kind of messages as they should be handled elsewhere
-            message.profile?.toUpdates()?.let { updates ->
-                profileUpdateHandler.get().handleProfileUpdate(
-                    senderId = (sender.address as Address.Standard).accountId,
-                    updates = updates,
-                    fromCommunity = null
-                )
-            }
-        } else if (message is VisibleMessage) {
-            val (sender, receiver) = fetchSenderAndReceiver() ?: return
-
-            val allBlindedAddresses = blindMappingRepository.calculateReverseMappings(
-                contactAddress = sender.address as Address.Standard
-            )
-
-            // Do we have an existing message request (including blinded requests)?
-            val hasMessageRequest = configFactory.withUserConfigs { configs ->
-                val existingContact = configs.contacts.get(sender.address.accountId.hexString)
-                if (existingContact != null && existingContact.approved && !existingContact.approvedMe) {
-                    return@withUserConfigs true
-                }
-
-                allBlindedAddresses.any { (_, blindedId) ->
-                    configs.contacts.getBlinded(blindedId.blindedId.hexString) != null
-                }
-            }
-
-            if (hasMessageRequest) {
-                handleRequestResponse(
-                    messageSender = sender,
-                    messageReceiver = receiver,
-                    messageTimestampMs = message.sentTimestamp!!,
-                )
-            }
         }
     }
 
+    suspend fun handleExplicitRequestResponseMessage(message: MessageRequestResponse) {
+        val (sender, receiver) = fetchSenderAndReceiver(message) ?: return
+        // Always handle explicit request response
+        handleRequestResponse(
+            messageSender = sender,
+            messageReceiver = receiver,
+            messageTimestampMs = message.sentTimestamp!!,
+        )
+
+        // Always process the profile update if any. We don't need
+        // to process profile for other kind of messages as they should be handled elsewhere
+        message.profile?.toUpdates()?.let { updates ->
+            profileUpdateHandler.get().handleProfileUpdate(
+                senderId = (sender.address as Address.Standard).accountId,
+                updates = updates,
+                fromCommunity = null
+            )
+        }
+    }
+
+    private suspend fun fetchSenderAndReceiver(message: Message): Pair<Recipient, Recipient>? {
+        val messageSender = recipientRepository.getRecipient(
+            requireNotNull(message.sender) {
+                "MessageRequestResponse must have a sender"
+            }.toAddress()
+        )
+
+        return if (messageSender.address !is Address.Standard) {
+            Log.e(TAG, "MessageRequestResponse sender must be a standard address, but got: ${messageSender.address.debugString}")
+            null
+        } else {
+            messageSender to recipientRepository.getRecipient(
+                requireNotNull(message.recipient) {
+                    "MessageRequestResponse must have a receiver"
+                }.toAddress()
+            )
+        }
+    }
 
     private fun handleRequestResponse(
         messageSender: Recipient,

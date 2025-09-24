@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -308,6 +309,13 @@ class ConversationViewModel @AssistedInject constructor(
 
         // then wait until it is removed
         repository.conversationListAddressesFlow.first { !it.contains(address) }
+
+        // Wait for a bit so the unblinding navigation could take place first (basically
+        // when a unblinding occurs, i.e. a blinded request has been accepted, the
+        // blinded thread will be deleted. It would have come through here and we show "conversation
+        // deleted" then quit, which is not ideal - so there's another coroutine that
+        // try to navigate to the new conversation and we will make sure that coroutine goes first.
+        delay(500L)
         emit(Unit)
     }
 
