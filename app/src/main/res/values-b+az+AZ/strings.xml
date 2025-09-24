@@ -916,16 +916,13 @@
     <string name="proExpired">Müddəti bitib</string>
     <string name="proExpiredDescription">Təəssüf ki, {pro} planınızın müddəti bitib. {app_pro} tətbiqinin eksklüziv imtiyazlarına və özəlliklərinə erişimi davam etdirmək üçün yeniləyin.</string>
     <string name="proExpiringSoon">Tezliklə bitir</string>
-    <string name="proExpiringSoonDescription">{pro} planınızın müddəti {time} vaxtında bitir. {app_pro} tətbiqinin eksklüziv imtiyazlarına və özəlliklərinə erişimi davam etdirmək üçün planınızı güncəlləyin.</string>
     <string name="proExpiringTime">{pro}, <b>{time}</b> vaxtında başa çatır</string>
     <string name="proFaq">{pro} TVS</string>
-    <string name="proFaqDescription">{app_name} TVS-da tez-tez verilən suallara cavab tapın.</string>
     <string name="proFeatureListAnimatedDisplayPicture">GIF və WebP ekran şəkilləri yüklə</string>
     <string name="proFeatureListLargerGroups">300 üzvə qədər daha da böyük qrup söhbətləri</string>
     <string name="proFeatureListLoadsMore">Üstəgəl, daha çox eksklüziv özəlliklər</string>
     <string name="proFeatureListLongerMessages">10,000 xarakterə qədər mesajlar</string>
     <string name="proFeatureListPinnedConversations">Limitsiz danışığı sancın</string>
-    <string name="proFeatures">{pro} özəllikləri</string>
     <string name="proGroupActivated">Qrup aktivləşdirildi</string>
     <string name="proGroupActivatedDescription">Bu qurun tutumu artıb! Qrup admininin sayəsində artıq 300 nəfərə qədər üzvü dəstəkləyə bilər</string>
     <plurals name="proGroupsUpgraded">
@@ -951,15 +948,12 @@
     </plurals>
     <string name="proPlanActivatedAuto">{app_pro} planınız aktivdir!\n\nPlanınız avtomatik olaraq <b>{date}</b> tarixində başqa bir <b>{current_plan}</b> üçün yenilənəcək. Planınıza edilən güncəlləmələr növbəti {pro} yenilənməsi zamanı qüvvəyə minəcək.</string>
     <string name="proPlanActivatedAutoShort">{app_pro} planınız aktivdir!\n\nPlanınız avtomatik olaraq <b>{date}</b> tarixində başqa bir <b>{current_plan}</b> üçün yenilənəcək.</string>
-    <string name="proPlanActivatedNotAuto">{app_pro} planınızın müddəti {date} tarixində bitir.\n\nEksklüziv Pro özəlliklərinə kəsintisiz erişimi təmin etmək üçün planınızı indi güncəlləyin.</string>
-    <string name="proPlanExpireDate">{app_pro} planınızın müddəti {date} tarixində bitir.</string>
     <string name="proPlanNotFound">{pro} planı tapılmadı</string>
     <string name="proPlanNotFoundDescription">Hesabınız üçün heç bir aktiv plan tapılmadı. Bunun bir səhv olduğunu düşünürsünüzsə, lütfən kömək üçün {app_name} dəstəyi ilə əlaqə saxlayın.</string>
     <string name="proPlanPlatformRefund">Başda <b><font color="0">{platform_store} Mağazası</font></b> üzərindən {app_pro} üçün qeydiyyatdan keçdiyinizə görə, geri ödəmə tələbini göndərmək üçün eyni {platform_account} hesabını istifadə etməlisiniz.</string>
     <string name="proPlanPlatformRefundLong">Başda <b><font color="0">{platform_store} Mağazası</font></b> üzərindən {app_pro} üçün qeydiyyatdan keçdiyinizə görə, geri qaytarma tələbiniz {app_name} Dəstək komandası tərəfindən icra olunacaq.\n\nAşağıdakı düyməyə basaraq və geri ödəniş formunu dolduraraq geri ödəmə tələbinizi göndərin.\n\n{app_name} Dəstək komandası, geri ödəmə tələblərini adətən 24-72 saat ərzində emal edir, yüksək tələb həcminə görə bu proses daha uzun çəkə bilər.</string>
     <string name="proPlanRecover">{pro} planını geri qaytar</string>
     <string name="proPlanRenew">{pro} planını yenilə</string>
-    <string name="proPlanRenewDesktop">Hazırda, {pro} planları, yalnızca {platform_store} və {platform_store} Mağazaları vasitəsilə satın alına və yenilənə bilər. {app_name} Masaüstü istifadə etdiyinizə görə planınızı burada yeniləyə bilməzsiniz.\n\n{app_pro} gəlişdiriciləri, istifadəçilərin {pro} planlarını {platform_store} və {platform_store} Mağazalarından kənarda almağına imkan verəcək alternativ ödəniş variantları üzərində ciddi şəkildə çalışırlar. <b>{pro} Yol Xəritəsi</b></string>
     <string name="proPlanRenewDesktopLinked">{platform_store} və ya {platform_store} Mağazaları vasitəsilə planınızı {app_name} quraşdırılmış və əlaqələndirilmiş cihazda {app_pro} ayarlarında yeniləyin.</string>
     <string name="proPlanRenewDesktopStore">{pro} üçün qeydiyyatdan keçdiyiniz {platform_account} hesabınızla {platform_store} veb saytında planınızı yeniləyin.</string>
     <string name="proPlanRenewSupport">{app_pro} planınız yeniləndi! {network_name} dəstək verdiyiniz üçün təşəkkürlər.</string>
@@ -972,7 +966,6 @@
     <string name="proRefundDescription">Getməyinizə məyus olduq. Geri ödəmə tələb etməzdən əvvəl bilməli olduğunuz şeylər.</string>
     <string name="proRefundNextSteps">{platform_account} hazırda geri ödəniş tələbinizi emal edir. Bu, adətən 24-48 saat çəkir. Onların qərarından asılı olaraq, {app_name} tətbiqində {pro} statusunuzun dəyişdiyini görə bilərsiniz.</string>
     <string name="proRefundRequestSessionSupport">Geri qaytarma tələbiniz {app_name} Dəstək komandası tərəfindən icra olunacaq.\n\nAşağıdakı düyməyə basaraq və geri ödəniş formunu dolduraraq geri ödəniş tələbinizi göndərin.\n\n{app_name} Dəstək komandası, geri ödəniş tələblərini adətən 24-72 saat ərzində emal edir, yüksək tələb həcminə görə bu proses daha uzun çəkə bilər.</string>
-    <string name="proRefundRequestStorePolicies">Geri ödəniş tələbiniz yalnız {platform_account} veb saytında {platform_account} hesabı üzərindən icra olunacaq.\n\n{platform_account} geri ödəniş siyasətlərinə əsasən, {app_name} gəlişdiriciləri, geri ödəniş tələblərinin nəticəsinə təsir edə bilməz. Bu, tələbin qəbul olunub-olunmaması ilə yanaşı, tam və ya qismən geri ödənişin verilib-verilməməsini də əhatə edir.</string>
     <string name="proRefundSupport">Geri ödəmə tələbinizlə bağlı daha çox güncəlləmə üçün lütfən {platform_account} ilə əlaqə saxlayın. {platform_account} geri ödəniş siyasətlərinə əsasən, {app_name} gəlişdiriciləri, geri ödəniş tələblərinin nəticəsinə təsir edə bilməz.\n\n<font color="0">{platform_store} Geri ödəmə dəstəyi</font></string>
     <string name="proRefunding">{pro} geri ödəməsi</string>
     <string name="proRefundingDescription">{app_pro} planları üçün geri ödəmələr yalnız {platform_store} Mağazası vasitəsilə {platform_account} tərəfindən həyata keçirilir.\n\n{platform_account} geri ödəniş siyasətlərinə əsasən, {app_name} gəlişdiriciləri, geri ödəniş tələblərinin nəticəsinə təsir edə bilməz. Bu, tələbin qəbul olunub-olunmaması ilə yanaşı, tam və ya qismən geri ödənişin verilib-verilməməsini də əhatə edir.</string>

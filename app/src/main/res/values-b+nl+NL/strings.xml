@@ -911,15 +911,12 @@
     <string name="proExpired">Verlopen</string>
     <string name="proExpiredDescription">Helaas is je {pro} abonnement verlopen. Verleng om toegang te blijven houden tot de exclusieve voordelen en functies van {app_pro}.</string>
     <string name="proExpiringSoon">Verloopt binnenkort</string>
-    <string name="proExpiringSoonDescription">Je {pro} abonnement verloopt over {time}. Werk je abonnement bij om toegang te blijven houden tot de exclusieve voordelen en functies van {app_pro}.</string>
     <string name="proFaq">{pro} FAQ</string>
-    <string name="proFaqDescription">Vind antwoorden op veelgestelde vragen in de {app_name} FAQ.</string>
     <string name="proFeatureListAnimatedDisplayPicture">Upload GIF- en WebP-profielfoto\'s</string>
     <string name="proFeatureListLargerGroups">Groepsgesprekken tot wel 300 leden</string>
     <string name="proFeatureListLoadsMore">En nog veel meer exclusieve functies</string>
     <string name="proFeatureListLongerMessages">Berichten tot 10.000 tekens</string>
     <string name="proFeatureListPinnedConversations">Onbeperkt gesprekken vastzetten</string>
-    <string name="proFeatures">{pro} functies</string>
     <string name="proGroupActivated">Groep geactiveerd</string>
     <string name="proGroupActivatedDescription">Deze groep heeft een grotere capaciteit! Er kunnen nu tot 300 leden deelnemen omdat een groepsbeheerder een</string>
     <string name="proImportantDescription">Het aanvragen van een terugbetaling is definitief. Indien goedgekeurd, wordt je {pro} abonnement onmiddellijk geannuleerd en verlies je de toegang tot alle {pro} functies.</string>
@@ -933,15 +930,12 @@
     <string name="proPercentOff">{percent}% korting</string>
     <string name="proPlanActivatedAuto">Je {app_pro} abonnement is actief!\n\nJe abonnement wordt automatisch verlengd voor een nieuw <b>{current_plan}</b> op <b>{date}</b>. Wijzigingen aan je abonnement gaan in wanneer {pro} de volgende keer wordt verlengd.</string>
     <string name="proPlanActivatedAutoShort">Je {app_pro} abonnement is actief!\n\nJe abonnement wordt automatisch verlengd met een <b>{current_plan}</b> op <b>{date}</b>.</string>
-    <string name="proPlanActivatedNotAuto">Je {app_pro} abonnement verloopt op {date}.\n\nWerk je abonnement nu bij om ononderbroken toegang te behouden tot exclusieve Pro functies.</string>
-    <string name="proPlanExpireDate">Je {app_pro} abonnement verloopt op {date}.</string>
     <string name="proPlanNotFound">{pro} abonnement niet gevonden</string>
     <string name="proPlanNotFoundDescription">Er is geen actief abonnement gevonden voor je account. Als je denkt dat dit een vergissing is, neem dan contact op met de ondersteuning van {app_name} voor hulp.</string>
     <string name="proPlanPlatformRefund">Omdat je je oorspronkelijk hebt aangemeld voor {app_pro} via de <b><font color="0">{platform_store} winkel</font></b>, moet je hetzelfde {platform_account} gebruiken om een terugbetaling aan te vragen.</string>
     <string name="proPlanPlatformRefundLong">Omdat je je oorspronkelijk hebt aangemeld voor {app_pro} via de <b><font color="0">{platform_store} winkel</font></b>, wordt je restitutieverzoek afgehandeld door {app_name} Support.\n\nVraag een restitutie aan door op de knop hieronder te drukken en het restitutieformulier in te vullen.\n\nHoewel {app_name} Support ernaar streeft om restitutieverzoeken binnen 24-72 uur te verwerken, kan het tijdens drukte langer duren</string>
     <string name="proPlanRecover">{pro} abonnement herstellen</string>
     <string name="proPlanRenew">{pro} abonnement verlengen</string>
-    <string name="proPlanRenewDesktop">Momenteel kunnen {pro} abonnementen alleen worden gekocht en verlengd via de {platform_store}- of {platform_store} winkels. Omdat je {app_name} Desktop gebruikt, kun je je abonnement hier niet verlengen.\n\nDe ontwikkelaars van {app_pro} werken hard aan alternatieve betaalmogelijkheden, zodat gebruikers {pro} abonnementen buiten de {platform_store}- en {platform_store} winkels kunnen aanschaffen. <b>{pro} Routekaart</b></string>
     <string name="proPlanRenewDesktopLinked">Verleng je abonnement in de {app_pro} instellingen op een gekoppeld apparaat met {app_name} geïnstalleerd via de {platform_store} of {platform_store} winkel.</string>
     <string name="proPlanRenewDesktopStore">Verleng je abonnement op de {platform_store} website met het {platform_account} waarmee je je voor {pro} hebt aangemeld.</string>
     <string name="proPlanRenewSupport">Je {app_pro} abonnement is verlengd! Bedankt voor je steun aan de {network_name}.</string>
@@ -954,7 +948,6 @@
     <string name="proRefundDescription">Het spijt ons dat je vertrekt. Dit moet je weten voordat je een terugbetaling aanvraagt.</string>
     <string name="proRefundNextSteps">{platform_account} verwerkt nu je terugbetalingsverzoek. Dit duurt meestal 24-48 uur. Afhankelijk van hun beslissing kan je {pro} status wijzigen in {app_name}.</string>
     <string name="proRefundRequestSessionSupport">Je restitutieverzoek wordt afgehandeld door {app_name} Support.\n\nVraag een restitutie aan door op de knop hieronder te drukken en het restitutieformulier in te vullen.\n\nHoewel {app_name} Support ernaar streeft om restitutieverzoeken binnen 24-72 uur te verwerken, kan het tijdens drukte langer duren.</string>
-    <string name="proRefundRequestStorePolicies">Je terugbetalingsverzoek wordt uitsluitend afgehandeld door {platform_account} via de website van {platform_account}.\n\nVanwege het restitutiebeleid van {platform_account} hebben ontwikkelaars van {app_name} geen invloed op de uitkomst van terugbetalingsverzoeken. Dit geldt zowel voor de goedkeuring of afwijzing van het verzoek als voor het wel of niet toekennen van een volledige of gedeeltelijke terugbetaling.</string>
     <string name="proRefundSupport">Neem contact op met {platform_account} voor verdere updates over je restitutieverzoek. Vanwege het restitutiebeleid van {platform_account} hebben de ontwikkelaars van {app_name} geen invloed op de uitkomst van restitutieverzoeken.\n\n<font color="0">{platform_store} Terugbetalingsondersteuning</font></string>
     <string name="proRefunding">Terugbetalen {pro}</string>
     <string name="proRefundingDescription">Terugbetalingen voor {app_pro} abonnementen worden uitsluitend afgehandeld door {platform_account} via de {platform_store} Store.\n\nVanwege het restitutiebeleid van {platform_account} hebben ontwikkelaars van {app_name} geen invloed op de uitkomst van terugbetalingsverzoeken. Dit geldt zowel voor de goedkeuring of afwijzing van het verzoek als voor het wel of niet toekennen van een volledige of gedeeltelijke terugbetaling.</string>

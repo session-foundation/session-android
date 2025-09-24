@@ -16,8 +16,8 @@
        <item name="colorDividerBackground">@color/gray50</item>
        <item name="colorPrimaryVariant">?colorPrimary</item>
        <item name="bottomSheetDialogTheme">@style/Theme.Session.BottomSheet</item>
-       <item name="android:backgroundDimEnabled">true</item>
-       <item name="android:backgroundDimAmount">0.6</item>
+       <item name="android:backgroundDimEnabled">false</item>
+       <item name="android:backgroundDimAmount">0</item>
        <item name="dialogCornerRadius">@dimen/dialog_corner_radius</item>
        <item name="android:alertDialogTheme">@style/ThemeOverlay.Session.AlertDialog</item>
        <item name="alertDialogTheme">@style/ThemeOverlay.Session.AlertDialog</item>

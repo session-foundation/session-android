@@ -914,27 +914,31 @@
         <item quantity="one">%1$s %2$s Badge Sent</item>
         <item quantity="other">%1$s %2$s Badges Sent</item>
     </plurals>
+    <string name="proBetaFeatures">{pro} Beta Features</string>
     <string name="proBilledAnnually">{price} Billed Annually</string>
     <string name="proBilledMonthly">{price} Billed Monthly</string>
     <string name="proBilledQuarterly">{price} Billed Quarterly</string>
     <string name="proCallToActionLongerMessages">Want to send longer messages? Send more text and unlock premium features with {app_pro}</string>
     <string name="proCallToActionPinnedConversations">Want more pins? Organize your chats and unlock premium features with {app_pro}</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Want more than 5 pins? Organize your chats and unlock premium features with {app_pro}</string>
+    <string name="proCancellation">Cancellation</string>
+    <string name="proCancellationDescription">Canceling your {app_pro} plan will prevent your plan from automatically renewing before your {pro} plan expires. Canceling {pro} does <b>not</b> result in a refund. You will continue to be able to use {app_pro} features until your plan expires.\n\n
+Because you originally signed up for {app_pro} via a <b>{platform_account}</b>, you\'ll need to use the same {platform_account} to cancel your plan.</string>
+    <string name="proCancellationOptions">Two ways to cancel your plan:</string>
     <string name="proDiscountTooltip">Your current plan is already discounted by {percent}% of the full {app_pro} price.</string>
     <string name="proErrorRefreshingStatus">Error refreshing {pro} status</string>
     <string name="proExpired">Expired</string>
     <string name="proExpiredDescription">Unfortunately, your {pro} plan has expired. Renew to keep accessing the exclusive perks and features of {app_pro}.</string>
     <string name="proExpiringSoon">Expiring Soon</string>
-    <string name="proExpiringSoonDescription">Your {pro} plan is expiring in {time}. Update your plan to keep accessing the exclusive perks and features of {app_pro}.</string>
+    <string name="proExpiringSoonDescription">Your {pro} plan is expiring in <b>{time}</b>. Update your plan to keep accessing the exclusive perks and features of {app_pro}.</string>
     <string name="proExpiringTime">{pro} expiring in <b>{time}</b></string>
     <string name="proFaq">{pro} FAQ</string>
-    <string name="proFaqDescription">Find answers to common questions in the {app_name} FAQ.</string>
+    <string name="proFaqDescription">Find answers to common questions in the {app_pro} FAQ.</string>
     <string name="proFeatureListAnimatedDisplayPicture">Upload GIF and WebP display pictures</string>
     <string name="proFeatureListLargerGroups">Larger group chats up to 300 members</string>
     <string name="proFeatureListLoadsMore">Plus loads more exclusive features</string>
     <string name="proFeatureListLongerMessages">Messages up to 10,000 characters</string>
     <string name="proFeatureListPinnedConversations">Pin unlimited conversations</string>
-    <string name="proFeatures">{pro} Features</string>
     <string name="proGroupActivated">Group Activated</string>
     <string name="proGroupActivatedDescription">This group has expanded capacity! It can support up to 300 members because a group admin has</string>
     <plurals name="proGroupsUpgraded">
@@ -946,6 +950,7 @@
     <string name="proIncreasedMessageLengthFeature">Increased Message Length</string>
     <string name="proLargerGroups">Larger Groups</string>
     <string name="proLargerGroupsDescription">Groups you are an admin in are automatically upgraded to support 300 members.</string>
+    <string name="proLargerGroupsTooltip">Larger group chats (up to 300 members) are coming soon for all Pro Beta users!</string>
     <string name="proLongerMessages">Longer Messages</string>
     <string name="proLongerMessagesDescription">You can send messages up to 10,000 characters in all conversations.</string>
     <plurals name="proLongerMessagesSent">
@@ -953,6 +958,7 @@
         <item quantity="other">%1$s Longer Messages Sent</item>
     </plurals>
     <string name="proMessageInfoFeatures">This message used the following {app_pro} features:</string>
+    <string name="proOptionsRenewalSubtitle">Currently, there are three ways to renew:</string>
     <string name="proPercentOff">{percent}% Off</string>
     <plurals name="proPinnedConversations">
         <item quantity="one">%1$s Pinned Conversation</item>
@@ -960,9 +966,9 @@
     </plurals>
     <string name="proPlanActivatedAuto">Your {app_pro} plan is active!\n\nYour plan will automatically renew for another <b>{current_plan}</b> on <b>{date}</b>. Updates to your plan take effect when {pro} is next renewed.</string>
     <string name="proPlanActivatedAutoShort">Your {app_pro} plan is active!\n\nYour plan will automatically renew for another <b>{current_plan}</b> on <b>{date}</b>.</string>
-    <string name="proPlanActivatedNotAuto">Your {app_pro} plan will expire on {date}.\n\nUpdate your plan now to ensure uninterrupted access to exclusive Pro features.</string>
+    <string name="proPlanActivatedNotAuto">Your {app_pro} plan will expire on <b>{date}</b>.\n\nUpdate your plan now to ensure uninterrupted access to exclusive Pro features.</string>
     <string name="proPlanError">{pro} Plan Error</string>
-    <string name="proPlanExpireDate">Your {app_pro} plan will expire on {date}.</string>
+    <string name="proPlanExpireDate">Your {app_pro} plan will expire on <b>{date}</b>.</string>
     <string name="proPlanLoading">{pro} Plan Loading</string>
     <string name="proPlanLoadingDescription">Information about your {pro} plan is still being loaded. You cannot update your plan until this process is complete.</string>
     <string name="proPlanLoadingEllipsis">{pro} plan loading...</string>
@@ -973,7 +979,7 @@
     <string name="proPlanPlatformRefundLong">Because you originally signed up for {app_pro} via the <b><font color="0">{platform_store} Store</font></b>, your refund request will be processed by {app_name} Support.\n\nRequest a refund by hitting the button below and completing the refund request form.\n\nWhile {app_name} Support strives to process refund requests within 24-72 hours, processing may take longer during times of high request volume.</string>
     <string name="proPlanRecover">Recover {pro} Plan</string>
     <string name="proPlanRenew">Renew {pro} Plan</string>
-    <string name="proPlanRenewDesktop">Currently, {pro} plans can only be purchased and renewed via the {platform_store} or {platform_store} Stores. Because you are using {app_name} Desktop, you\'re not able to renew your plan here.\n\n{app_pro} developers are working hard on alternative payment options to allow users to purchase {pro} plans outside of the {platform_store} and {platform_store} Stores. <b>{pro} Roadmap</b></string>
+    <string name="proPlanRenewDesktop">Currently, {pro} plans can only be purchased and renewed via the {platform_store} or {platform_store} Stores. Because you are using {app_name} Desktop, you\'re not able to renew your plan here.\n\n{app_pro} developers are working hard on alternative payment options to allow users to purchase {pro} plans outside of the {platform_store} and {platform_store} Stores. <b>{pro} Roadmap</b> {icon}</string>
     <string name="proPlanRenewDesktopLinked">Renew your plan in the {app_pro} settings on a linked device with {app_name} installed via the {platform_store} or {platform_store} Store.</string>
     <string name="proPlanRenewDesktopStore">Renew your plan on the {platform_store} website using the {platform_account} you signed up for {pro} with.</string>
     <string name="proPlanRenewStart">Renew your {app_pro} plan to start using powerful {app_pro} Beta features again.</string>
@@ -987,10 +993,12 @@
     <string name="proRefundDescription">We’re sorry to see you go. Here\'s what you need to know before requesting a refund.</string>
     <string name="proRefundNextSteps">{platform_account} is now processing your refund request. This typically takes 24-48 hours. Depending on their decision, you may see your {pro} status change in {app_name}.</string>
     <string name="proRefundRequestSessionSupport">Your refund request will be handled by {app_name} Support.\n\nRequest a refund by hitting the button below and completing the refund request form.\n\nWhile {app_name} Support strives to process refund requests within 24-72 hours, processing may take longer during times of high request volume.</string>
-    <string name="proRefundRequestStorePolicies">Your refund request will be handled exclusively by {platform_account} through the {platform_account} website.\n\nDue to {platform_account} refund policies, {app_name} developers have no ability to influence the outcome of refund requests. This includes whether the request is approved or denied, as well as whether a full or partial refund is issued.</string>
+    <string name="proRefundRequestStorePolicies">Your refund request will be handled exclusively by {platform_account} through the <b>{platform_account} website</b>.\n\nDue to {platform_account} refund policies, {app_name} developers have no ability to influence the outcome of refund requests. This includes whether the request is approved or denied, as well as whether a full or partial refund is issued.</string>
     <string name="proRefundSupport">Please contact {platform_account} for further updates on your refund request. Due to {platform_account} refund policies, {app_name} developers have no ability to influence the outcome of refund requests.\n\n<font color="0">{platform_store} Refund Support</font></string>
     <string name="proRefunding">Refunding {pro}</string>
     <string name="proRefundingDescription">Refunds for {app_pro} plans are handled exclusively by {platform_account} through the {platform_store} Store.\n\nDue to {platform_account} refund policies, {app_name} developers have no ability to influence the outcome of refund requests. This includes whether the request is approved or denied, as well as whether a full or partial refund is issued.</string>
+    <string name="proRenewBeta">Renew {pro} Beta</string>
+    <string name="proRenewingNoAccessBilling">Currently, {pro} plans can only be purchased and renewed via the {platform_store} or {platform_store} Stores. Because you installed {app_name} using the {buildVariant}, you\'re not able to renew your plan here.\n\n{app_pro} developers are working hard on alternative payment options to allow users to purchase {pro} plans outside of the {platform_store} and {platform_store} Stores.<b> {pro} Roadmap</b> {icon}</string>
     <string name="proRequestedRefund">Refund Requested</string>
     <string name="proSendMore">Send more with</string>
     <string name="proSettings">{pro} Settings</string>
@@ -1078,6 +1086,7 @@
     <string name="removePasswordFail">Failed to remove password</string>
     <string name="removePasswordModalDescription">Remove your current password for {app_name}. Locally stored data will be re-encrypted with a randomly generated key, stored on your device.</string>
     <string name="renew">Renew</string>
+    <string name="renewingPro">Renewing Pro</string>
     <string name="reply">Reply</string>
     <string name="requestRefund">Request Refund</string>
     <string name="resend">Resend</string>
@@ -1205,6 +1214,7 @@
     <string name="updated">Last updated {relative_time} ago</string>
     <string name="updates">Updates</string>
     <string name="updating">Updating...</string>
+    <string name="upgradeSession">Upgrade {app_name}</string>
     <string name="upgradeTo">Upgrade to</string>
     <string name="uploading">Uploading</string>
     <string name="urlCopy">Copy URL</string>
