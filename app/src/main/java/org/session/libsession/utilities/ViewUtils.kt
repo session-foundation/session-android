@@ -79,7 +79,7 @@ fun TextView.needsCollapsing(
 
 fun TextView.applyCollapsedEllipsisMinWidth(
     widthCapPx: Int,
-    maxCharsBeforeEllipsis: Int = 10, // will truncate after this many characters for short texts
+    maxCharsBeforeEllipsis: Int = 5, // will truncate after this many characters for short texts
     sampleGlyph: Char = '0'
 ) {
     if (widthCapPx <= 0) return
