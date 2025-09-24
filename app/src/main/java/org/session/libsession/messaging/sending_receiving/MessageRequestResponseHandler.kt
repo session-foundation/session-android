@@ -1,12 +1,15 @@
 package org.session.libsession.messaging.sending_receiving
 
+import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.ProfileUpdateHandler
 import org.session.libsession.messaging.messages.ProfileUpdateHandler.Updates.Companion.toUpdates
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
+import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.utilities.Log
@@ -30,23 +33,82 @@ class MessageRequestResponseHandler @Inject constructor(
     private val blindMappingRepository: BlindMappingRepository,
 ) {
 
-    suspend fun handle(message: MessageRequestResponse) {
-        val messageSender = recipientRepository.getRecipient(
-            requireNotNull(message.sender) {
-                "MessageRequestResponse must have a sender"
-            }.toAddress()
-        )
+    suspend fun handle(message: Message) {
+        val fetchSenderAndReceiver = suspend {
+            val messageSender = recipientRepository.getRecipient(
+                requireNotNull(message.sender) {
+                    "MessageRequestResponse must have a sender"
+                }.toAddress()
+            )
 
-        if (messageSender.address !is Address.Standard) {
-            Log.e(TAG, "MessageRequestResponse sender must be a standard address, but got: ${messageSender.address.debugString}")
-            return
+            if (messageSender.address !is Address.Standard) {
+                Log.e(TAG, "MessageRequestResponse sender must be a standard address, but got: ${messageSender.address.debugString}")
+                null
+            } else {
+                messageSender to recipientRepository.getRecipient(
+                    requireNotNull(message.recipient) {
+                        "MessageRequestResponse must have a receiver"
+                    }.toAddress()
+                )
+            }
         }
 
-        val messageReceiver = recipientRepository.getRecipient(
-            requireNotNull(message.recipient) {
-                "MessageRequestResponse must have a receiver"
-            }.toAddress()
-        )
+        if (message is MessageRequestResponse) {
+            val (sender, receiver) = fetchSenderAndReceiver() ?: return
+            // Always handle explicit request response
+            handleRequestResponse(
+                messageSender = sender,
+                messageReceiver = receiver,
+                messageTimestampMs = message.sentTimestamp!!,
+            )
+
+            // Always process the profile update if any. We don't need
+            // to process profile for other kind of messages as they should be handled elsewhere
+            message.profile?.toUpdates()?.let { updates ->
+                profileUpdateHandler.get().handleProfileUpdate(
+                    senderId = (sender.address as Address.Standard).accountId,
+                    updates = updates,
+                    fromCommunity = null
+                )
+            }
+        } else if (message is VisibleMessage) {
+            val (sender, receiver) = fetchSenderAndReceiver() ?: return
+
+            val allBlindedAddresses = blindMappingRepository.calculateReverseMappings(
+                contactAddress = sender.address as Address.Standard
+            )
+
+            // Do we have an existing message request (including blinded requests)?
+            val hasMessageRequest = configFactory.withUserConfigs { configs ->
+                val existingContact = configs.contacts.get(sender.address.accountId.hexString)
+                if (existingContact != null && existingContact.approved && !existingContact.approvedMe) {
+                    return@withUserConfigs true
+                }
+
+                allBlindedAddresses.any { (_, blindedId) ->
+                    configs.contacts.getBlinded(blindedId.blindedId.hexString) != null
+                }
+            }
+
+            if (hasMessageRequest) {
+                handleRequestResponse(
+                    messageSender = sender,
+                    messageReceiver = receiver,
+                    messageTimestampMs = message.sentTimestamp!!,
+                )
+            }
+        }
+    }
+
+
+    private fun handleRequestResponse(
+        messageSender: Recipient,
+        messageReceiver: Recipient,
+        messageTimestampMs: Long,
+    ) {
+        check(messageSender.address is Address.Standard) {
+            "The sender address must be a standard address"
+        }
 
         Log.d(TAG, "Handling MessageRequestResponse from " +
                 "${messageSender.address.debugString} to ${messageReceiver.address.debugString}")
@@ -71,17 +133,6 @@ class MessageRequestResponseHandler @Inject constructor(
                     }
                 }
 
-
-                // Process the profile update if any
-                message.profile?.toUpdates()?.let { updates ->
-                    profileUpdateHandler.get().handleProfileUpdate(
-                        senderId = messageSender.address.accountId,
-                        updates = updates,
-                        fromCommunity = null
-                    )
-                }
-
-
                 val threadId by lazy {
                     threadDatabase.getOrCreateThreadIdFor(messageSender.address)
                 }
@@ -92,7 +143,7 @@ class MessageRequestResponseHandler @Inject constructor(
                     mmsDatabase.insertSecureDecryptedMessageInbox(
                         retrieved = IncomingMediaMessage(
                             messageSender.address,
-                            message.sentTimestamp!!,
+                            messageTimestampMs,
                             -1,
                             0L,
                             0L,
@@ -153,7 +204,6 @@ class MessageRequestResponseHandler @Inject constructor(
 
             }
         }
-
     }
 
     private fun moveConversation(fromThreadId: Long, toThreadId: Long) {
