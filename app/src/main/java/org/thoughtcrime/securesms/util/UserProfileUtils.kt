@@ -23,11 +23,12 @@ import org.session.libsession.utilities.isBlinded
 import org.session.libsession.utilities.isCommunityInbox
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
+import org.session.libsession.utilities.recipients.isPro
+import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsession.utilities.toBlinded
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
-import org.thoughtcrime.securesms.pro.ProStatusManager
 
 /**
  * Helper class to get the information required for the user profile modal
@@ -38,7 +39,6 @@ class UserProfileUtils @AssistedInject constructor(
     @Assisted private val threadAddress: Address.Conversable,
     @Assisted private val scope: CoroutineScope,
     private val avatarUtils: AvatarUtils,
-    private val proStatusManager: ProStatusManager,
     private val blindedIdMappingRepository: BlindMappingRepository,
     private val recipientRepository: RecipientRepository,
 ) {
@@ -113,8 +113,8 @@ class UserProfileUtils @AssistedInject constructor(
             name = if (recipient.isLocalNumber) context.getString(R.string.you) else recipient.displayName(),
             subtitle = (recipient.data as? RecipientData.Contact)?.nickname?.takeIf { it.isNotBlank() }?.let { "($it)" },
             avatarUIData = avatarUtils.getUIDataFromRecipient(recipient),
-            showProBadge = proStatusManager.shouldShowProBadge(recipient.address),
-            currentUserPro = proStatusManager.isCurrentUserPro(),
+            showProBadge = recipient.proStatus.shouldShowProBadge(),
+            currentUserPro = recipientRepository.getSelf().proStatus.isPro(),
             rawAddress = recipient.address.address,
             displayAddress = displayAddress,
             threadAddress = threadAddress,

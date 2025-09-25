@@ -53,6 +53,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
+import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsession.utilities.updateContact
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
@@ -230,7 +231,14 @@ class HomeActivity : ScreenLockActionBarActivity(),
             homeViewModel.onSearchClicked()
         }
         binding.sessionToolbar.disableClipping()
-        binding.sessionHeaderProBadge.isVisible = homeViewModel.shouldShowCurrentUserProBadge()
+
+        lifecycleScope.launch {
+            homeViewModel.shouldShowCurrentUserProBadge
+                .collectLatest {
+                    binding.sessionHeaderProBadge.isVisible = it
+                }
+        }
+
         // Set up seed reminder view
         lifecycleScope.launchWhenStarted {
             binding.seedReminderView.setThemedContent {
@@ -458,7 +466,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                         GlobalSearchAdapter.Model.Contact(
                             contact = it.value,
                             isSelf = it.value.address.address == publicKey,
-                            showProBadge = proStatusManager.shouldShowProBadge(it.value.address)
+                            showProBadge = it.value.proStatus.shouldShowProBadge()
                         )
                     }
             }
@@ -466,11 +474,12 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     private val GlobalSearchResult.contactAndGroupList: List<GlobalSearchAdapter.Model> get() =
         contacts.map { GlobalSearchAdapter.Model.Contact(
-            it,
-            it.address.address == publicKey,
-            showProBadge = proStatusManager.shouldShowProBadge(it.address)) } +
+            contact = it,
+            isSelf = it.isSelf,
+            showProBadge = it.proStatus.shouldShowProBadge()
+        ) } +
             threads.map {
-                GlobalSearchAdapter.Model.GroupConversation(it, showProBadge = proStatusManager.shouldShowProBadge(it.encodedId.toAddress()))
+                GlobalSearchAdapter.Model.GroupConversation(it, showProBadge = recipientRepository.getRecipientSync(it.encodedId.toAddress()).proStatus.shouldShowProBadge())
             }
 
     private val GlobalSearchResult.messageResults: List<GlobalSearchAdapter.Model> get() {
@@ -483,7 +492,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 messageResult = it,
                 unread = unreadThreadMap[it.threadId] ?: 0,
                 isSelf = it.conversationRecipient.isLocalNumber,
-                showProBadge = proStatusManager.shouldShowProBadge(it.conversationRecipient.address)
+                showProBadge = it.conversationRecipient.proStatus.shouldShowProBadge()
             )
         }
     }

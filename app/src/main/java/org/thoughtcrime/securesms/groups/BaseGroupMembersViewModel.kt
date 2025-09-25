@@ -22,13 +22,15 @@ import network.loki.messenger.libsession_util.allWithStatus
 import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.GroupDisplayInfo
+import org.session.libsession.utilities.recipients.ProStatus
 import org.session.libsession.utilities.recipients.displayName
+import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.RecipientRepository
-import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import java.util.EnumSet
@@ -40,7 +42,6 @@ abstract class BaseGroupMembersViewModel(
     private val configFactory: ConfigFactoryProtocol,
     private val avatarUtils: AvatarUtils,
     private val recipientRepository: RecipientRepository,
-    private val proStatusManager: ProStatusManager,
 ) : ViewModel() {
     private val groupId = groupAddress.accountId
 
@@ -65,7 +66,12 @@ abstract class BaseGroupMembersViewModel(
 
                     val memberState = mutableListOf<GroupMemberState>()
                     for ((member, status) in rawMembers) {
-                        memberState.add(createGroupMember(member, status, currentUserId, displayInfo.isUserAdmin))
+                        memberState.add(createGroupMember(
+                            member = member, status = status,
+                            proStatus = recipientRepository.getRecipient(member.accountId().toAddress()).proStatus,
+                            myAccountId = currentUserId,
+                            amIAdmin = displayInfo.isUserAdmin
+                        ))
                     }
 
                     displayInfo to sortMembers(memberState, currentUserId)
@@ -98,6 +104,7 @@ abstract class BaseGroupMembersViewModel(
     private suspend fun createGroupMember(
         member: GroupMember,
         status: GroupMember.Status,
+        proStatus: ProStatus,
         myAccountId: AccountId,
         amIAdmin: Boolean,
     ): GroupMemberState {
@@ -130,7 +137,7 @@ abstract class BaseGroupMembersViewModel(
             status = status.takeIf { !isMyself }, // Status is only meant for other members
             highlightStatus = highlightStatus,
             showAsAdmin = member.isAdminOrBeingPromoted(status),
-            showProBadge = proStatusManager.shouldShowProBadge(Address.fromSerialized(member.accountId())),
+            showProBadge = proStatus.shouldShowProBadge(),
             avatarUIData = avatarUtils.getUIDataFromAccountId(memberAccountId.hexString),
             clickable = !isMyself,
             statusLabel = getMemberLabel(status, context, amIAdmin),

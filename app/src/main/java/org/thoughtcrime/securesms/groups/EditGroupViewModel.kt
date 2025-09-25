@@ -24,9 +24,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.RecipientRepository
-import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.AvatarUtils
-
 
 
 @HiltViewModel(assistedFactory = EditGroupViewModel.Factory::class)
@@ -38,8 +36,7 @@ class EditGroupViewModel @AssistedInject constructor(
     private val groupManager: GroupManagerV2,
     private val recipientRepository: RecipientRepository,
     avatarUtils: AvatarUtils,
-    proStatusManager: ProStatusManager,
-) : BaseGroupMembersViewModel(groupAddress, context, storage, configFactory, avatarUtils, recipientRepository, proStatusManager) {
+) : BaseGroupMembersViewModel(groupAddress, context, storage, configFactory, avatarUtils, recipientRepository) {
     private val groupId = groupAddress.accountId
 
     // Output: The name of the group. This is the current name of the group, not the name being edited.

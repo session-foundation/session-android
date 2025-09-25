@@ -72,6 +72,7 @@ import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.recipients.effectiveNotifyType
 import org.session.libsession.utilities.recipients.getType
 import org.session.libsession.utilities.recipients.repeatedWithEffectiveNotifyTypeChange
+import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsession.utilities.toGroupString
 import org.session.libsession.utilities.upsertContact
 import org.session.libsession.utilities.userConfigsChanged
@@ -149,7 +150,8 @@ class ConversationViewModel @AssistedInject constructor(
     attachmentDownloadHandlerFactory: AttachmentDownloadHandler.Factory,
 ) : InputbarViewModel(
     application = application,
-    proStatusManager = proStatusManager
+    proStatusManager = proStatusManager,
+    recipientRepository = recipientRepository,
 ) {
     private val edKeyPair by lazy {
         storage.getUserED25519KeyPair()
@@ -538,7 +540,7 @@ class ConversationViewModel @AssistedInject constructor(
             showSearch = showSearch,
             avatarUIData = avatarData,
             // show the pro badge when a conversation/user is pro, except for communities
-            showProBadge = proStatusManager.shouldShowProBadge(conversation.address) && !conversation.isLocalNumber // do not show for note to self
+            showProBadge = conversation.proStatus.shouldShowProBadge() && !conversation.isLocalNumber // do not show for note to self
         ).also {
             // also preload the larger version of the avatar in case the user goes to the settings
             avatarData.elements.mapNotNull { it.remoteFile }.forEach {

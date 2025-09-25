@@ -167,7 +167,6 @@ interface TextSecurePreferences {
     fun hasHiddenMessageRequests(): Boolean
     fun setHasHiddenMessageRequests(hidden: Boolean)
     fun forceCurrentUserAsPro(): Boolean
-    fun watchProStatus(): StateFlow<Boolean>
     fun setForceCurrentUserAsPro(isPro: Boolean)
     fun forceOtherUsersAsPro(): Boolean
     fun setForceOtherUsersAsPro(isPro: Boolean)
@@ -971,7 +970,6 @@ class AppTextSecurePreferences @Inject constructor(
     @ApplicationContext private val context: Context
 ): TextSecurePreferences {
     private val localNumberState = MutableStateFlow(getStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, null))
-    private val proState = MutableStateFlow(getBooleanPreference(SET_FORCE_CURRENT_USER_PRO, false))
     private val postProLaunchState = MutableStateFlow(getBooleanPreference(SET_FORCE_POST_PRO, false))
     private val hiddenPasswordState = MutableStateFlow(getBooleanPreference(HIDE_PASSWORD, false))
 
@@ -1530,11 +1528,7 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setForceCurrentUserAsPro(isPro: Boolean) {
         setBooleanPreference(SET_FORCE_CURRENT_USER_PRO, isPro)
-        proState.update { isPro }
-    }
-
-    override fun watchProStatus(): StateFlow<Boolean> {
-        return proState
+        _events.tryEmit(SET_FORCE_CURRENT_USER_PRO)
     }
 
     override fun forceOtherUsersAsPro(): Boolean {
@@ -1543,6 +1537,7 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setForceOtherUsersAsPro(isPro: Boolean) {
         setBooleanPreference(SET_FORCE_OTHER_USERS_PRO, isPro)
+        _events.tryEmit(SET_FORCE_OTHER_USERS_PRO)
     }
 
     override fun forceIncomingMessagesAsPro(): Boolean {
@@ -1560,6 +1555,7 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setForcePostPro(postPro: Boolean) {
         setBooleanPreference(SET_FORCE_POST_PRO, postPro)
         postProLaunchState.update { postPro }
+        _events.tryEmit(SET_FORCE_POST_PRO)
     }
 
     override fun watchPostProStatus(): StateFlow<Boolean> {

@@ -113,7 +113,7 @@ class AvatarUtils @Inject constructor(
             color = color,
             icon = customIcon,
             remoteFile = remoteFile,
-            freezeFrame = proStatusManager.freezeFrameForUser(recipient.address)
+            freezeFrame = proStatusManager.freezeFrameForUser(recipient)
         )
     }
 

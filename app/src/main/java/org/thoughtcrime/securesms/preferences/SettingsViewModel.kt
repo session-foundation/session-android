@@ -36,6 +36,8 @@ import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
+import org.session.libsession.utilities.recipients.isPro
+import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.NoExternalStorageException
@@ -86,9 +88,9 @@ class SettingsViewModel @Inject constructor(
         hasPath = true,
         version = getVersionNumber(),
         recoveryHidden = prefs.getHidePassword(),
-        isPro = proStatusManager.isCurrentUserPro(),
+        isPro = selfRecipient.value.proStatus.isPro(),
         isPostPro = proStatusManager.isPostPro(),
-        showProBadge = proStatusManager.shouldShowProBadge(selfRecipient.value.address),
+        showProBadge = selfRecipient.value.proStatus.shouldShowProBadge(),
     ))
     val uiState: StateFlow<UIState>
         get() = _uiState
@@ -96,9 +98,15 @@ class SettingsViewModel @Inject constructor(
     init {
         // observe current user
         viewModelScope.launch {
-            recipientRepository.observeSelf()
+            selfRecipient
                 .collectLatest { recipient ->
-                    _uiState.update { it.copy(username = recipient.displayName(attachesBlindedId = false)) }
+                    _uiState.update {
+                        it.copy(
+                            username = recipient.displayName(attachesBlindedId = false),
+                            isPro = recipient.proStatus.isPro(),
+                            showProBadge = recipient.proStatus.shouldShowProBadge()
+                        )
+                    }
                 }
         }
 
@@ -107,11 +115,6 @@ class SettingsViewModel @Inject constructor(
             _uiState.update { it.copy(avatarDialogState = getDefaultAvatarDialogState()) }
         }
 
-        viewModelScope.launch {
-            proStatusManager.proStatus.collect { isPro ->
-                _uiState.update { it.copy(isPro = isPro) }
-            }
-        }
 
         viewModelScope.launch {
             proStatusManager.postProLaunchStatus.collect { postPro ->
@@ -247,7 +250,7 @@ class SettingsViewModel @Inject constructor(
             ?: return Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
 
         // if the selected avatar is animated but the user isn't pro, show the animated pro CTA
-        if (tempAvatar.isAnimated && !proStatusManager.isCurrentUserPro() && proStatusManager.isPostPro()) {
+        if (tempAvatar.isAnimated && !selfRecipient.value.proStatus.isPro() && proStatusManager.isPostPro()) {
             showAnimatedProCTA()
             return
         }

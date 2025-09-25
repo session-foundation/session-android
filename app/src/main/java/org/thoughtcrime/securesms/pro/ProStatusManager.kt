@@ -12,6 +12,9 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.isCommunity
 import org.session.libsession.utilities.recipients.ProStatus
+import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.isPro
+import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
@@ -26,25 +29,12 @@ class ProStatusManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val prefs: TextSecurePreferences,
 ) : OnAppStartupComponent {
-    val MAX_CHARACTER_PRO = 10000 // max characters in a message for pro users
-    private val MAX_CHARACTER_REGULAR = 2000 // max characters in a message for non pro users
-    private val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
 
-    // live state of the Pro status
-    private val _proStatus = MutableStateFlow(isCurrentUserPro())
-    val proStatus: StateFlow<Boolean> = _proStatus
 
-    // live state for the pre vs post pro launch status
     private val _postProLaunchStatus = MutableStateFlow(isPostPro())
     val postProLaunchStatus: StateFlow<Boolean> = _postProLaunchStatus
 
     init {
-        GlobalScope.launch {
-            prefs.watchProStatus().collect {
-                _proStatus.update { isCurrentUserPro() }
-            }
-        }
-
         GlobalScope.launch {
             prefs.watchPostProStatus().collect {
                 _postProLaunchStatus.update { isPostPro() }
@@ -55,30 +45,12 @@ class ProStatusManager @Inject constructor(
     //todo PRO add "about to expire" CTA logic on app launch
     //todo PRO add "expired" CTA logic on app launch
 
-    fun isCurrentUserPro(): Boolean {
-        // if the debug is set, return that
-        if (prefs.forceCurrentUserAsPro()) return true
-
-        // otherwise return the true value
-        return false //todo PRO implement real logic once it's in
-    }
-
-    fun isUserPro(address: Address?): Boolean{
-        //todo PRO implement real logic once it's in - including the specifics for a groupsV2
-        if(address == null) return false
-
-        if(address.isCommunity) return false
-        else if(address.toString() == prefs.getLocalNumber()) return isCurrentUserPro()
-        else if(prefs.forceOtherUsersAsPro()) return true
-
-        return false
-    }
 
     /**
      * Logic to determine if we should animate the avatar for a user or freeze it on the first frame
      */
-    fun freezeFrameForUser(address: Address?): Boolean{
-        return if(!isPostPro() || address?.isCommunity == true) false else !isUserPro(address)
+    fun freezeFrameForUser(recipient: Recipient): Boolean{
+        return if(!isPostPro() || recipient.isCommunityRecipient) false else !recipient.proStatus.isPro()
     }
 
     /**
@@ -97,18 +69,14 @@ class ProStatusManager @Inject constructor(
         return prefs.forcePostPro()
     }
 
-    fun shouldShowProBadge(address: Address?): Boolean {
-        return isPostPro() && isUserPro(address) //todo PRO also check flag to see if user wants to hide their badge here
+    fun getCharacterLimit(status: ProStatus): Int {
+        return if (status.isPro()) MAX_CHARACTER_PRO else MAX_CHARACTER_REGULAR
     }
 
-    fun getCharacterLimit(): Int {
-        return if (isCurrentUserPro()) MAX_CHARACTER_PRO else MAX_CHARACTER_REGULAR
-    }
-
-    fun getPinnedConversationLimit(): Int {
+    fun getPinnedConversationLimit(status: ProStatus): Int {
         if(!isPostPro()) return Int.MAX_VALUE // allow infinite pins while not in post Pro
 
-        return if (isCurrentUserPro()) Int.MAX_VALUE else MAX_PIN_REGULAR
+        return if (status.isPro()) Int.MAX_VALUE else MAX_PIN_REGULAR
     }
 
     fun getCurrentSubscriptionState(): SubscriptionState {
@@ -172,14 +140,11 @@ class ProStatusManager @Inject constructor(
     /**
      * This will calculate the pro features of an outgoing message
      */
-    fun calculateMessageProFeatures(message: String): List<MessageProFeature>{
-        val userAddress = prefs.getLocalNumber()
-        if(!isCurrentUserPro() || userAddress == null) return emptyList()
-
+    fun calculateMessageProFeatures(status: ProStatus, message: String): List<MessageProFeature>{
         val features = mutableListOf<MessageProFeature>()
 
         // check for pro badge display
-        if(shouldShowProBadge(Address.fromSerialized(userAddress))){
+        if (status.shouldShowProBadge()){
             features.add(MessageProFeature.ProBadge)
         }
 
@@ -211,5 +176,11 @@ class ProStatusManager @Inject constructor(
 
     enum class MessageProFeature {
         ProBadge, LongMessage, AnimatedAvatar
+    }
+
+    companion object {
+        const val MAX_CHARACTER_PRO = 10000 // max characters in a message for pro users
+        private const val MAX_CHARACTER_REGULAR = 2000 // max characters in a message for non pro users
+        private const val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
     }
 }

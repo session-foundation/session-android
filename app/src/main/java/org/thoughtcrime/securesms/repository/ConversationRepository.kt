@@ -218,7 +218,13 @@ class DefaultConversationRepository @Inject constructor(
                     configFactory.configUpdateNotifications,
                     recipientDatabase.changeNotification.filter { it in allAddresses },
                     communityDatabase.changeNotification.filter { it in allAddresses },
-                    threadDb.updateNotifications
+                    threadDb.updateNotifications,
+                    // If pro status pref changes, the convo is likely needing changes too
+                    TextSecurePreferences.events.filter {
+                        it == TextSecurePreferences.SET_FORCE_OTHER_USERS_PRO ||
+                                it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO
+                                it == TextSecurePreferences.SET_FORCE_POST_PRO
+                    }
                 ).debounce(500)
                     .onStart { emit(Unit) }
                     .mapLatest {

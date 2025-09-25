@@ -27,6 +27,7 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDD
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.RecipientData
+import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.model.ThreadRecord
@@ -122,7 +123,7 @@ class ShareViewModel @Inject constructor(
                             else recipient.searchName,
                     address = recipient.address,
                     avatarUIData = avatarUtils.getUIDataFromRecipient(recipient),
-                    showProBadge = proStatusManager.shouldShowProBadge(recipient.address)
+                    showProBadge = recipient.proStatus.shouldShowProBadge()
                 )
             }.toList()
     }

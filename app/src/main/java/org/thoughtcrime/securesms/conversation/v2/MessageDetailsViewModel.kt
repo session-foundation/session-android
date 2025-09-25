@@ -33,6 +33,8 @@ import org.session.libsession.utilities.isLegacyGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
+import org.session.libsession.utilities.recipients.isPro
+import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.MediaPreviewArgs
@@ -197,13 +199,13 @@ class MessageDetailsViewModel @AssistedInject constructor(
                         )
                     },
                     senderAvatarData = avatarUtils.getUIDataFromRecipient(sender),
-                    senderShowProBadge = proStatusManager.shouldShowProBadge(sender.address),
+                    senderShowProBadge = sender.proStatus.shouldShowProBadge(),
                     senderHasAdminCrown = shouldShowAdminCrown,
                     senderIsBlinded = IdPrefix.fromValue(sender.address.toString())?.isBlinded() ?: false,
                     thread = conversation,
                     readOnly = isDeprecatedLegacyGroup,
                     proFeatures = proStatusManager.getMessageProFeatures(messageRecord.messageId),
-                    proBadgeClickable = !proStatusManager.isCurrentUserPro() // no badge click if the current user is pro
+                    proBadgeClickable = !recipientRepository.getSelf().proStatus.isPro() // no badge click if the current user is pro
                 )
             }
         }
