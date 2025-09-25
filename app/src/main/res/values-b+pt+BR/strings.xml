@@ -234,7 +234,6 @@
     <string name="conversationsDeleted">Conversa excluída</string>
     <string name="conversationsEmpty">Não há mensagens em {conversation_name}.</string>
     <string name="conversationsEnter">Insira a tecla Enter</string>
-    <string name="conversationsEnterDescription">Função da tecla Enter ao digitar em uma conversa.</string>
     <string name="conversationsGroups">Grupos</string>
     <string name="conversationsMessageTrimming">Corte de Mensagens</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Cortar Comunidades</string>
@@ -774,6 +773,7 @@
     <string name="sessionSettings">Configurações</string>
     <string name="set">Aplicar</string>
     <string name="settingsRestartDescription">Você precisa reiniciar o {app_name} para aplicar as novas configurações.</string>
+    <string name="settingsScreenSecurityDesktop">Segurança de Tela</string>
     <string name="share">Compartilhar</string>
     <string name="shareAccountIdDescription">Convide seu amigo para conversar com você no {app_name} compartilhando seu ID de Conta com ele.</string>
     <string name="shareAccountIdDescriptionCopied">Compartilhe com seus amigos onde quer que você costuma falar com eles — então mova a conversa para cá.</string>

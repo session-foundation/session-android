@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.preferences.prosettings
 
+import android.icu.util.MeasureUnit
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -36,13 +37,18 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlan
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlanBadge
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.*
+import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
+import org.thoughtcrime.securesms.pro.subscription.expiryFromNow
 import org.thoughtcrime.securesms.ui.SpeechBubbleTooltip
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.RadioButtonIndicator
@@ -58,27 +64,42 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.bold
+import org.thoughtcrime.securesms.util.DateUtils
 
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun UpdatePlanScreen(
+fun ChoosePlanScreen(
     viewModel: ProSettingsViewModel,
     onBack: () -> Unit,
 ) {
-    val planData by viewModel.proPlanUIState.collectAsState()
+    val planData by viewModel.choosePlanState.collectAsState()
 
-    UpdatePlan(
-        planData = planData,
-        sendCommand = viewModel::onCommand,
-        onBack = onBack,
-    )
+    // there are different UI depending on the state
+    when {
+       // there is an active subscription but from a different platform
+        (planData.subscriptionState as? SubscriptionState.Active)?.nonOriginatingSubscription != null ->
+            ChoosePlanNonOriginating(
+                subscription = planData.subscriptionState as SubscriptionState.Active,
+                sendCommand = viewModel::onCommand,
+                onBack = onBack,
+            )
+
+        //todo PRO handle the case here when there are no SubscriptionManager available (for example fdroid builds)
+
+        // default plan chooser
+        else -> ChoosePlan(
+            planData = planData,
+            sendCommand = viewModel::onCommand,
+            onBack = onBack,
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
-fun UpdatePlan(
-    planData: ProSettingsViewModel.ProPlanUIState,
+fun ChoosePlan(
+    planData: ProSettingsViewModel.ChoosePlanState,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -93,9 +114,36 @@ fun UpdatePlan(
 
         Spacer(Modifier.height(LocalDimensions.current.spacing))
 
+        val context = LocalContext.current
+        val title = when(planData.subscriptionState) {
+            is SubscriptionState.Expired ->
+                Phrase.from(context.getText(R.string.proPlanRenewStart))
+                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                    .format()
+
+            is SubscriptionState.Active.Expiring -> Phrase.from(context.getText(R.string.proPlanActivatedNotAuto))
+                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                .put(DATE_KEY, planData.subscriptionState.type.expiryFromNow())
+                .format()
+
+            is SubscriptionState.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proPlanActivatedAuto))
+                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                .put(CURRENT_PLAN_KEY, DateUtils.getLocalisedTimeDuration(
+                    context = context,
+                    amount = planData.subscriptionState.type.duration.months,
+                    unit = MeasureUnit.MONTH
+                ))
+                .put(DATE_KEY, planData.subscriptionState.type.expiryFromNow())
+                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                .format()
+
+            else -> ""
+        }
+
         Text(
             modifier = Modifier.fillMaxWidth(),
-            text = annotatedStringResource(planData.title),
+            text = annotatedStringResource(title),
             textAlign = TextAlign.Center,
             style = LocalType.current.base,
             color = LocalColors.current.text,
@@ -123,10 +171,16 @@ fun UpdatePlan(
 
         Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
 
+        val buttonLabel = when(planData.subscriptionState) {
+            is SubscriptionState.Expired -> context.getString(R.string.renew)
+            is SubscriptionState.Active.Expiring -> context.getString(R.string.updatePlan)
+            else -> context.getString(R.string.updatePlan)
+        }
+
         AccentFillButtonRect(
             modifier = Modifier.fillMaxWidth()
                 .widthIn(max = LocalDimensions.current.maxContentWidth),
-            text = planData.buttonLabel,
+            text = buttonLabel,
             enabled = planData.enableButton,
             onClick = {
                 sendCommand(GetProPlan)
@@ -377,9 +431,8 @@ private fun PreviewUpdatePlan(
 ) {
     PreviewTheme(colors) {
         val context = LocalContext.current
-        UpdatePlan(
-            planData = ProSettingsViewModel.ProPlanUIState(
-                title = "This is a title",
+        ChoosePlan(
+            planData = ProSettingsViewModel.ChoosePlanState(
                 enableButton = true,
                 plans = listOf(
                     ProPlan(

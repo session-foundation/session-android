@@ -32,7 +32,6 @@ import org.session.libsession.messaging.open_groups.OpenGroupMessage
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeAPI.nowWithOffset
 import org.session.libsession.snode.SnodeMessage
-import org.session.libsession.snode.SnodeModule
 import org.session.libsession.snode.utilities.asyncPromise
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.SSKEnvironment
@@ -196,9 +195,6 @@ object MessageSender {
         // Set the failure handler (need it here already for precondition failure handling)
         fun handleFailure(error: Exception) {
             handleFailedMessageSend(message, error, isSyncMessage)
-            if (destination is Destination.Contact && message is VisibleMessage && !isSelfSend()) {
-                SnodeModule.shared.broadcaster.broadcast("messageFailed", message.sentTimestamp!!)
-            }
         }
 
         try {

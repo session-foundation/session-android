@@ -1,9 +1,7 @@
 package org.thoughtcrime.securesms.home
 
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.net.Uri
 import android.os.Bundle
 import android.util.AttributeSet
@@ -21,7 +19,6 @@ import androidx.core.view.doOnLayout
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -58,7 +55,6 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class PathActivity : ScreenLockActionBarActivity() {
     private lateinit var binding: ActivityPathBinding
-    private val broadcastReceivers = mutableListOf<BroadcastReceiver>()
 
     @Inject
     lateinit var inAppReviewManager: InAppReviewManager
@@ -113,21 +109,11 @@ class PathActivity : ScreenLockActionBarActivity() {
     }
 
     private fun registerObservers() {
-        val onionRequestPathCountriesLoadedReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-
-            override fun onReceive(context: Context, intent: Intent) {
-                handleOnionRequestPathCountriesLoaded()
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                IP2Country.countriesReady.collect { if (it) handleOnionRequestPathCountriesLoaded() }
             }
         }
-        broadcastReceivers.add(onionRequestPathCountriesLoadedReceiver)
-        LocalBroadcastManager.getInstance(this).registerReceiver(onionRequestPathCountriesLoadedReceiver, IntentFilter("onionRequestPathCountriesLoaded"))
-    }
-
-    override fun onDestroy() {
-        for (receiver in broadcastReceivers) {
-            LocalBroadcastManager.getInstance(this).unregisterReceiver(receiver)
-        }
-        super.onDestroy()
     }
     // endregion
 

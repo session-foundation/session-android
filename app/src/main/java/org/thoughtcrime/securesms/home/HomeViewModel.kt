@@ -31,8 +31,10 @@ import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.displayName
+import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -57,6 +59,7 @@ class HomeViewModel @Inject constructor(
     private val conversationRepository: ConversationRepository,
     private val proStatusManager: ProStatusManager,
     private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
+    private val recipientRepository: RecipientRepository,
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
@@ -131,6 +134,11 @@ class HomeViewModel @Inject constructor(
         emit(null)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+    val shouldShowCurrentUserProBadge: StateFlow<Boolean> = recipientRepository
+        .observeSelf()
+        .map { it.proStatus.shouldShowProBadge() }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     private var userProfileModalJob: Job? = null
     private var userProfileModalUtils: UserProfileUtils? = null
 
@@ -193,7 +201,7 @@ class HomeViewModel @Inject constructor(
     fun setPinned(address: Address, pinned: Boolean) {
         // check the pin limit before continuing
         val totalPins = storage.getTotalPinned()
-        val maxPins = proStatusManager.getPinnedConversationLimit()
+        val maxPins = proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().proStatus)
         if (pinned && totalPins >= maxPins) {
             // the user has reached the pin limit, show the CTA
             _dialogsState.update {
@@ -251,10 +259,6 @@ class HomeViewModel @Inject constructor(
                 _dialogsState.update { it.copy(userProfileModal = upmData) }
             }
         }
-    }
-
-    fun shouldShowCurrentUserProBadge() : Boolean {
-        return proStatusManager.shouldShowProBadge(Address.fromSerialized(prefs.getLocalNumber()!!))
     }
 
     data class DialogsState(

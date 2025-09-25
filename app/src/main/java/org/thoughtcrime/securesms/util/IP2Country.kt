@@ -1,18 +1,15 @@
 package org.thoughtcrime.securesms.util
 
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.opencsv.CSVReader
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.ThreadUtils
 import java.io.DataInputStream
 import java.io.InputStream
 import java.io.InputStreamReader
@@ -65,6 +62,8 @@ class IP2Country internal constructor(
 
     // region Initialization
     companion object {
+        private val _countriesReady = MutableStateFlow(false)
+        val countriesReady: StateFlow<Boolean> = _countriesReady
 
         lateinit var shared: IP2Country
 
@@ -111,7 +110,7 @@ class IP2Country internal constructor(
             }
         }
         Log.d("Loki","IP2Country cache populated in ${System.currentTimeMillis() - start}ms")
-        Broadcaster(context).broadcast("onionRequestPathCountriesLoaded")
+        _countriesReady.value = true
     }
     // endregion
 }

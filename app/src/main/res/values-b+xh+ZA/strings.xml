@@ -233,7 +233,6 @@
     <string name="conversationsDeleted">Incoko icinyiwe</string>
     <string name="conversationsEmpty">Akukho myalezo kwi-{conversation_name}.</string>
     <string name="conversationsEnter">Ngenisa iqhosha</string>
-    <string name="conversationsEnterDescription">Umsebenzi weqhosha loku ngenisa xa uchwetheza kwincoko.</string>
     <string name="conversationsGroups">Amaqela</string>
     <string name="conversationsMessageTrimming">Ukuskrowa umyalezo</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Coca i-Community</string>
@@ -754,6 +753,7 @@
     <string name="sessionSettings">Settings</string>
     <string name="set">Miselani</string>
     <string name="settingsRestartDescription">Kufuneka uqale kwakhona {app_name} ukufaka isicelo setshedulo sakho esitsha.</string>
+    <string name="settingsScreenSecurityDesktop">Ukhuseleko lweSikrini</string>
     <string name="share">Share</string>
     <string name="shareAccountIdDescription">Mema umhlobo wakho ukuba ancokole nawe ku- {app_name} ngokwabelana nge-ID yeAkhawunti yakho kunye naye.</string>
     <string name="shareAccountIdDescriptionCopied">Share with your friends wherever you usually speak with them — then move the conversation here.</string>

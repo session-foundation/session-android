@@ -5,12 +5,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.time.delay
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
@@ -47,9 +49,10 @@ import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.RecipientSettings
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.groups.GroupMemberComparator
-import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
 import java.lang.ref.WeakReference
+import java.time.Duration
+import java.time.Instant
 import java.util.EnumSet
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -67,11 +70,9 @@ import javax.inject.Singleton
 class RecipientRepository @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val groupDatabase: GroupDatabase,
-    private val groupMemberDatabase: GroupMemberDatabase,
     private val recipientSettingsDatabase: RecipientSettingsDatabase,
     private val preferences: TextSecurePreferences,
     private val blindedIdMappingRepository: BlindMappingRepository,
-    private val proStatusManager: ProStatusManager,
     private val communityDatabase: CommunityDatabase,
     @param:ManagerScope private val managerScope: CoroutineScope,
 ) {
@@ -116,12 +117,7 @@ class RecipientRepository @Inject constructor(
                 )
 
                 emit(value)
-                val evt = merge(changeSource,
-                    proStatusManager.proStatus.drop(1),
-                    proStatusManager.postProLaunchStatus.drop(1)
-                )
-                    .debounce(200) // Debounce to avoid too frequent updates
-                    .first()
+                val evt = changeSource.debounce(200).first()
                 Log.d(TAG, "Recipient changed for ${address.debugString}, triggering event: $evt")
             }
 
@@ -149,7 +145,10 @@ class RecipientRepository @Inject constructor(
         when (recipientData) {
             is RecipientData.Self -> {
                 value = createLocalRecipient(address, recipientData)
-                changeSource = configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_PROFILE))
+                changeSource = merge(
+                    configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_PROFILE)),
+                    TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO }
+                )
             }
 
             is RecipientData.BlindedContact -> {
@@ -158,7 +157,10 @@ class RecipientRepository @Inject constructor(
                     data = recipientData,
                 )
 
-                changeSource = configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.CONTACTS))
+                changeSource = merge(
+                    configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.CONTACTS)),
+                    TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_OTHER_USERS_PRO }
+                )
             }
 
             is RecipientData.Contact -> {
@@ -170,7 +172,8 @@ class RecipientRepository @Inject constructor(
 
                 changeSource = merge(
                     configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.CONTACTS)),
-                    recipientSettingsDatabase.changeNotification.filter { it == address }
+                    recipientSettingsDatabase.changeNotification.filter { it == address },
+                    TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_OTHER_USERS_PRO }
                 )
             }
 
@@ -189,7 +192,8 @@ class RecipientRepository @Inject constructor(
                     configFactory.configUpdateNotifications
                         .filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
                         .filter { it.groupId.hexString == address.address },
-                    recipientSettingsDatabase.changeNotification.filter { it == address || memberAddresses.contains(it) }
+                    recipientSettingsDatabase.changeNotification.filter { it == address || memberAddresses.contains(it) },
+                    TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_OTHER_USERS_PRO }
                 )
             }
 
@@ -266,19 +270,43 @@ class RecipientRepository @Inject constructor(
                             configFactory.configUpdateNotifications.filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
                                 .filter { it.groupId == address.accountId },
                             configFactory.userConfigsChanged(),
-                            recipientSettingsDatabase.changeNotification.filter { it == address }
+                            recipientSettingsDatabase.changeNotification.filter { it == address },
+                            TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_OTHER_USERS_PRO }
                         )
                     }
 
                     else -> {
                         value = createGenericRecipient(address, settings)
-                        changeSource = recipientSettingsDatabase.changeNotification.filter { it == address }
+                        changeSource = merge(
+                            recipientSettingsDatabase.changeNotification.filter { it == address },
+                            TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_OTHER_USERS_PRO }
+                        )
                     }
                 }
             }
         }
 
-        return value to changeSource
+        val updatedChangeSource = (value.proStatus as? ProStatus.Pro)
+            ?.validUntil
+            ?.let { validUntil ->
+                val now = Instant.now()
+                if (validUntil >= now) {
+                    return@let merge(
+                        changeSource,
+                        flow {
+                            delay(Duration.between(now, validUntil))
+
+                            // Emit anything to trigger a recipient update
+                            emit("ProStatus validity change")
+                        }
+                    )
+                }
+
+                changeSource
+            }
+            ?: changeSource
+
+        return value to updatedChangeSource
     }
 
     /**
@@ -378,7 +406,12 @@ class RecipientRepository @Inject constructor(
                             avatar = configs.userProfile.getPic().toRemoteFile(),
                             expiryMode = configs.userProfile.getNtsExpiry(),
                             priority = configs.userProfile.getNtsPriority(),
-                            proStatus = if (proStatusManager.isCurrentUserPro()) ProStatus.Pro() else ProStatus.None,
+                            proStatus = if (preferences.forceCurrentUserAsPro()) {
+                                ProStatus.Pro()
+                            } else {
+                                // TODO: Get pro status from config
+                                ProStatus.None
+                            },
                             profileUpdatedAt = null
                         )
                     }
@@ -396,7 +429,12 @@ class RecipientRepository @Inject constructor(
                             blocked = contact.blocked,
                             expiryMode = contact.expiryMode,
                             priority = contact.priority,
-                            proStatus = if (proStatusManager.isUserPro(address)) ProStatus.Pro() else ProStatus.None,
+                            proStatus = if (preferences.forceOtherUsersAsPro()) {
+                                ProStatus.Pro()
+                            } else {
+                                //TODO: Get contact's pro status from config
+                                ProStatus.None
+                            },
                             profileUpdatedAt = contact.profileUpdatedEpochSeconds.secondsToInstant(),
                         )
                     }
@@ -413,7 +451,10 @@ class RecipientRepository @Inject constructor(
                         avatar = configs.groupInfo.getProfilePic().toRemoteFile(),
                         expiryMode = configs.groupInfo.expiryMode,
                         name = configs.groupInfo.getName() ?: groupInfo.name,
-                        proStatus = if (proStatusManager.isUserPro(address)) ProStatus.Pro() else ProStatus.None,
+                        proStatus = if (preferences.forceOtherUsersAsPro()) ProStatus.Pro() else {
+                            // TODO: Get group's pro status from config?
+                            ProStatus.None
+                        },
                         description = configs.groupInfo.getDescription(),
                         members = configs.groupMembers.all()
                             .asSequence()
@@ -437,7 +478,12 @@ class RecipientRepository @Inject constructor(
                     displayName = contact.name,
                     avatar = contact.profilePic.toRemoteFile(),
                     priority = contact.priority,
-                    proStatus = if (proStatusManager.isUserPro(address)) ProStatus.Pro() else ProStatus.None,
+                    proStatus = if (preferences.forceOtherUsersAsPro()) {
+                        ProStatus.Pro()
+                    } else {
+                        //TODO: Get blinded contact's pro status from?
+                        ProStatus.None
+                    },
 
                     // This information is not available in the config but we infer that
                     // if you already have this person as blinded contact, you would have been
@@ -471,7 +517,11 @@ class RecipientRepository @Inject constructor(
             data = RecipientData.Generic(
                 displayName = settings.name?.takeIf { it.isNotBlank() } ?: groupMemberInfo?.name.orEmpty(),
                 avatar = settings.profilePic?.toRemoteFile() ?: groupMemberInfo?.profilePic?.toRemoteFile(),
-                proStatus = settings.proStatus,
+                proStatus = if (preferences.forceOtherUsersAsPro()) {
+                    ProStatus.Pro()
+                } else {
+                    settings.proStatus
+                },
                 acceptsBlindedCommunityMessageRequests = !settings.blocksCommunityMessagesRequests,
             ),
             mutedUntil = settings.muteUntil,

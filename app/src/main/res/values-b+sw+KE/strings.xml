@@ -121,6 +121,7 @@
     <string name="banUser">Piga marufuku mtumiaji</string>
     <string name="banUserBanned">Mtumiaji amepigwa marufuku</string>
     <string name="block">Zuia</string>
+    <string name="blockBlockedDescription">Ondolea kizuizi kwa mawasiliano haya kutuma ujumbe</string>
     <string name="blockBlockedNone">Hakuna mawasiliano yaliyofungiwa</string>
     <string name="blockBlockedUser">Amezuiliwa {name}</string>
     <string name="blockDescription">Una uhakika unataka kumzuia <b>{name}?</b> Watumiaji waliodhamiriwa hawawezi kukutumia maombi ya ujumbe, mialiko ya kikundi au kukupigia simu.</string>
@@ -233,7 +234,6 @@
     <string name="conversationsDeleted">Mazungumzo yamefutwa</string>
     <string name="conversationsEmpty">Hakuna jumbe kwenye {conversation_name}.</string>
     <string name="conversationsEnter">Ingiza Kitufe</string>
-    <string name="conversationsEnterDescription">Kazi ya kitufe cha kuingiza wakati wa kuandika katika mazungumzo.</string>
     <string name="conversationsGroups">Makundi</string>
     <string name="conversationsMessageTrimming">Ujumbe unapunguza</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Kata Community</string>
@@ -754,6 +754,7 @@
     <string name="sessionSettings">Mipangilio</string>
     <string name="set">Weka</string>
     <string name="settingsRestartDescription">Lazima uanzishe tena {app_name} ili kutumia mipangilio yako mipya.</string>
+    <string name="settingsScreenSecurityDesktop">Usalama wa Skrini</string>
     <string name="share">Shiriki</string>
     <string name="shareAccountIdDescription">Mwalike rafiki yako azungumze nawe kwenye {app_name} kwa kushirikisha Kitambulisho chako cha Akaunti.</string>
     <string name="shareAccountIdDescriptionCopied">Shiriki na marafiki zako popote unapo kawaida kuzungumza nao — kisha hamishiana mazungumzo hapa.</string>

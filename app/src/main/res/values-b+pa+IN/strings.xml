@@ -121,6 +121,7 @@
     <string name="banUser">ਉਪਭੋਗਤਾ ਨੂੰ ਬੈਨ ਕਰੋ</string>
     <string name="banUserBanned">ਉਪਭੋਗਤਾ ਨੂੰ ਬੈਨ ਕੀਤਾ ਗਿਆ ਹੈ</string>
     <string name="block">ਬਲੌਕ</string>
+    <string name="blockBlockedDescription">ਸੁਨੇਹਾ ਭੇਜਣ ਲਈ ਇਸ ਸੰਪਰਕ ਨੂੰ ਅਨਬਲੌਕ ਕਰੋ।</string>
     <string name="blockBlockedNone">ਕੋਈ ਬਲਾਕ ਕੀਤੇ ਹੋਏ ਸੰਪਰਕ ਨਹੀਂ</string>
     <string name="blockBlockedUser">{name} ਨੂੰ ਬਲੌਕ ਕੀਤਾ ਗਿਆ</string>
     <string name="blockDescription">ਕੀ ਤੁਸੀਂ ਯਕੀਨਨ <b>{name}</b> ਨੂੰ ਰੋਕਣਾ ਚਾਹੁੰਦੇ ਹੋ? ਰੋਕੇ ਹੋਏ ਯੂਜ਼ਰ ਤੁਹਾਨੂੰ ਸੁਨੇਹੇ ਦੀਆਂ ਬੇਨਤੀਆਂ ਨਹੀਂ ਭੇਜ ਸਕਦੇ, ਗਰੁੱਪ ਨਿਮੰਤ੍ਰਣ ਨਹੀਂ ਦੇ ਸਕਦੇ ਜਾਂ ਕਾਲ ਨਹੀਂ ਕਰ ਸਕਦੇ।</string>
@@ -232,7 +233,6 @@
     <string name="conversationsDeleted">ਗੱਲਬਾਤ ਮਿਟਾ ਦਿੱਤੀ ਗਈ</string>
     <string name="conversationsEmpty">{conversation_name} ਵਿੱਚ ਕੋਈ ਸੁਨੇਹੇ ਨਹੀਂ ਹਨ।</string>
     <string name="conversationsEnter">ਕੁੰਜੀ ਦਰਜ ਕਰੋ</string>
-    <string name="conversationsEnterDescription">ਗੱਲਬਾਤ ਵਿੱਚ ਲਿਖਣ ਵੇਲੇ ਐਂਟਰ ਕੀ ਦਾ ਫੰਕਸ਼ਨ।</string>
     <string name="conversationsGroups">ਗਰੁੱਪ</string>
     <string name="conversationsMessageTrimming">ਸੁਨੇਹਾ ਕਟਾਈ</string>
     <string name="conversationsMessageTrimmingTrimCommunities">ਕਮਿਊਨਿਟੀਆਂ ਟਰਿਮ ਕਰੋ</string>
@@ -753,6 +753,7 @@
     <string name="sessionSettings">ਸੈਟਿੰਗਸ</string>
     <string name="set">ਸੈੱਟ ਕਰੋ</string>
     <string name="settingsRestartDescription">ਤੁਹਾਨੂੰ ਆਪਣੇ ਨਵੇਂ ਸੈਟਿੰਗਾਂ ਲਾਗੂ ਕਰਨ ਲਈ {app_name} ਨੂੰ ਦੁਬਾਰਾ ਚਾਲੂ ਕਰਨਾ ਪਵੇਗਾ।</string>
+    <string name="settingsScreenSecurityDesktop">ਸਕ੍ਰੀਨ ਸੁਰੱਖਿਆ</string>
     <string name="share">ਸਾਡੇ ਨਾਲ ਸਾਂਝਾ ਕਰੋ</string>
     <string name="shareAccountIdDescription">ਆਪਣੇ ਦੋਸਤਾਂ ਨਾਲ ਗੱਲਬਾਤ ਕਰਨ ਲਈ ਉਹਨਾਂ ਨੂੰ ਆਪਣੇ {app_name} ਤੇ ਸੇਸ਼ਨ ਮਧਿਅਮ ਪਾਸ, ਆਪਣੇ ਅਕਾਊਂਟ ਆਈਡੀ ਨੂੰ ਸਾਂਝਾ ਕਰ ਕੇ ਸੱਦੋ।</string>
     <string name="shareAccountIdDescriptionCopied">ਜਿੱਥੇ ਤੁਸੀਂ ਆਮ ਤੌਰ \'ਤੇ ਉਹਨਾਂ ਨਾਲ ਗੱਲ ਕਰਦੇ ਹੋ, ਉਨਾਂ ਨਾਲ ਆਪਣੇ ਦੋਸਤਾਂ ਨਾਲ ਸਾਂਝਾ ਕਰੋ – ਫਿਰ ਗੱਲਬਾਤ ਇੱਥੇ ਲਿਆਓ।</string>

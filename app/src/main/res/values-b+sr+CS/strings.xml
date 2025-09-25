@@ -121,6 +121,7 @@
     <string name="banUser">Zabrani korisnika</string>
     <string name="banUserBanned">Korisnik zabranjen</string>
     <string name="block">Blokiraj korisnika</string>
+    <string name="blockBlockedDescription">Одблокирајте дописника да би послали поруку</string>
     <string name="blockBlockedNone">Nema blokiranih kontakata</string>
     <string name="blockBlockedUser">Blokiran {name}</string>
     <string name="blockDescription">Da li ste sigurni da želite da blokirate <b>{name}?</b> Blokirani korisnici ne mogu vam slati zahteve za porukama, pozivnice za grupu ili vas pozivati.</string>
@@ -233,7 +234,6 @@
     <string name="conversationsDeleted">Konverzacija je obrisana</string>
     <string name="conversationsEmpty">Nema poruka u {conversation_name}.</string>
     <string name="conversationsEnter">Unesite Key</string>
-    <string name="conversationsEnterDescription">Funkcija tastera enter prilikom kucanja poruke.</string>
     <string name="conversationsGroups">Grupe</string>
     <string name="conversationsMessageTrimming">Skraćivanje poruka</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Trim Communities</string>
@@ -766,6 +766,7 @@
     <string name="sessionSettings">Podešavanja</string>
     <string name="set">Postavi</string>
     <string name="settingsRestartDescription">Morate ponovo pokrenuti {app_name} da biste primenili nova podešavanja.</string>
+    <string name="settingsScreenSecurityDesktop">Bezbednost ekrana</string>
     <string name="share">Podeli</string>
     <string name="shareAccountIdDescription">Pozovite prijatelja da razgovara s vama na {app_name} tako što ćete mu podeliti vaš Account ID.</string>
     <string name="shareAccountIdDescriptionCopied">Podelite sa svojim prijateljima gde god obično komunicirate sa njima — zatim prebacite razgovor ovde.</string>

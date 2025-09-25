@@ -7,6 +7,8 @@ import org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile
 import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochMillis
 import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochSeconds
 import org.thoughtcrime.securesms.util.DateUtils.Companion.millsToInstant
+import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
+import org.thoughtcrime.securesms.util.DateUtils.Companion.toEpochSeconds
 import java.time.Instant
 import java.time.ZonedDateTime
 
@@ -25,9 +27,9 @@ class Profile(
             val displayName = profileProto.displayName ?: return null
             val profileKey = proto.profileKey
             val profilePictureURL = profileProto.profilePicture
-            val profileUpdated = profileProto.lastProfileUpdateMs.takeIf {
-                profileProto.hasLastProfileUpdateMs()
-            }?.millsToInstant()
+            val profileUpdated = profileProto.lastProfileUpdateSeconds
+                .takeIf { profileProto.hasLastProfileUpdateSeconds() }
+                ?.secondsToInstant()
 
             if (profileKey != null && profilePictureURL != null) {
                 return Profile(displayName, profileKey.toByteArray(), profilePictureURL, profileUpdated = profileUpdated)
@@ -48,7 +50,7 @@ class Profile(
         profileProto.displayName = displayName
         profileKey?.let { dataMessageProto.profileKey = ByteString.copyFrom(it) }
         profilePictureURL?.let { profileProto.profilePicture = it }
-        profileUpdated?.let { profileProto.lastProfileUpdateMs = it.toEpochMilli() }
+        profileUpdated?.let { profileProto.lastProfileUpdateSeconds = it.toEpochSeconds() }
         // Build
         try {
             dataMessageProto.profile = profileProto.build()

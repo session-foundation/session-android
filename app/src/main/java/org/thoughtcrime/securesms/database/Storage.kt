@@ -70,8 +70,10 @@ import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.PartAuthority
+import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
 import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
+import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -122,7 +124,7 @@ open class Storage @Inject constructor(
                 displayName = configs.userProfile.getName(),
                 profilePictureURL = pic.url.takeIf { it.isNotBlank() },
                 profileKey = pic.key.data.takeIf { pic.url.isNotBlank() },
-                profileUpdated = preferences.lastProfileUpdated,
+                profileUpdated = configs.userProfile.getProfileUpdatedSeconds().secondsToInstant(),
             )
         }
     }
@@ -1056,7 +1058,7 @@ open class Storage @Inject constructor(
             Optional.absent(),
             Optional.absent()
         )
-        mmsDatabase.insertSecureDecryptedMessageInbox(message, threadId, runThreadUpdate = false)
+        mmsDatabase.insertSecureDecryptedMessageInbox(message, threadId, runThreadUpdate = true)
     }
 
     override fun insertCallMessage(senderPublicKey: String, callMessageType: CallMessageType, sentTimestamp: Long) {

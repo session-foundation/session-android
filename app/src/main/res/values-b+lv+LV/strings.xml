@@ -115,6 +115,7 @@
     <string name="banUser">Aizliegt lietotāju</string>
     <string name="banUserBanned">Lietotājs bloķēts</string>
     <string name="block">Bloķēt</string>
+    <string name="blockBlockedDescription">Atbloķējiet šo kontaktu, lai nosūtītu ziņojumu</string>
     <string name="blockBlockedNone">Nav bloķētu kontaktu</string>
     <string name="blockBlockedUser">Bloķēts {name}</string>
     <string name="blockDescription">Vai esat pārliecināts, ka vēlaties bloķēt <b>{name}?</b> Bloķētie lietotāji nevarēs jums nosūtīt ziņojumu pieprasījumus, grupu uzaicinājumus vai zvanīt jums.</string>
@@ -224,7 +225,6 @@
     <string name="conversationsDeleted">Saruna izdzēsta</string>
     <string name="conversationsEmpty">Nav ziņojumu {conversation_name}.</string>
     <string name="conversationsEnter">Ievadiet atslēgu</string>
-    <string name="conversationsEnterDescription">Enter taustiņa funkcija, rakstot sarunā.</string>
     <string name="conversationsGroups">Grupas</string>
     <string name="conversationsMessageTrimming">Ziņu apgriešana</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Apgriezt kopienas</string>
@@ -700,6 +700,7 @@
     <string name="sessionSettings">Iestatījumi</string>
     <string name="set">Iestatīt</string>
     <string name="settingsRestartDescription">Lai lietotu jaunus iestatījumus, jums jārestartē {app_name}.</string>
+    <string name="settingsScreenSecurityDesktop">Ekrāna drošība</string>
     <string name="share">Dalīties</string>
     <string name="shareAccountIdDescription">Uzaiciniet savu draugu tērzēt ar jums {app_name}, daloties ar savu konta ID ar viņiem.</string>
     <string name="shareAccountIdDescriptionCopied">Dalies ar saviem draugiem, kur tu parasti saraksties ar viņiem — pēc tam pārcel sarunu šeit.</string>

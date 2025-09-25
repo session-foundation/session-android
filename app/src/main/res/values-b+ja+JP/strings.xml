@@ -275,7 +275,6 @@
     <string name="conversationsDeleted">会話を削除しました</string>
     <string name="conversationsEmpty">{conversation_name} にはメッセージがありません。</string>
     <string name="conversationsEnter">キーを入力</string>
-    <string name="conversationsEnterDescription">会話中のEnterキーの機能</string>
     <string name="conversationsGroups">グループ</string>
     <string name="conversationsMessageTrimming">メッセージの削減</string>
     <string name="conversationsMessageTrimmingTrimCommunities">コミュニティをトリムする</string>
@@ -935,6 +934,7 @@
     <string name="set">セット</string>
     <string name="setCommunityDisplayPicture">コミュニティのプロフィール写真を設定</string>
     <string name="settingsRestartDescription">新しい設定を適用するために {app_name} を再起動する必要があります.</string>
+    <string name="settingsScreenSecurityDesktop">スクリーンセキュリティ</string>
     <string name="share">共有</string>
     <string name="shareAccountIdDescription">友達を{app_name} に招待して、チャットを始めましょう。アカウントIDを共有して招待できます。</string>
     <string name="shareAccountIdDescriptionCopied">いつでもどこでも友達と共有 — ここで会話を始めましょう</string>

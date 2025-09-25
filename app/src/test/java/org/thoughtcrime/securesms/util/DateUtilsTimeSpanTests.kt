@@ -111,7 +111,7 @@ class DateUtilsTest {
         assertEquals("02/04/2021", result)
 
         // Test with specific format
-        val customResult = dateUtils.getLocaleFormattedDate(testTimestamp, "yyyy.MM.dd")
+        val customResult = DateUtils.getLocaleFormattedDate(testTimestamp, "yyyy.MM.dd")
         assertEquals("2021.04.02", customResult)
     }
 

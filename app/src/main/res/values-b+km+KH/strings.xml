@@ -121,6 +121,7 @@
     <string name="banUser">ហាមឃាត់អ្នកប្រើ</string>
     <string name="banUserBanned">បានហាមឃាត់អ្នកប្រើ</string>
     <string name="block">ទប់ស្កាត់</string>
+    <string name="blockBlockedDescription">ដោះការហាមឃាត់លេខទំនាក់ទំនងនេះ ដើម្បីផ្ញើសារ</string>
     <string name="blockBlockedNone">ពុំមានលេខដែលបានបិទ</string>
     <string name="blockBlockedUser">បានទប់ស្កាត់ {name}</string>
     <string name="blockDescription">តើអ្នកប្រាកដទេថាអ្នកចង់រារាំង <b>{name}?</b> អ្នកប្រើប្រាស់ដែលត្រូវបានរារាំងមិនអាចផ្ញើសំណើសារ ការអញ្ជើញក្រុម ឬហៅអ្នកបានទេ។</string>
@@ -231,7 +232,6 @@
     <string name="conversationsDeleted">ការសន្ទនាត្រូវបានលុប</string>
     <string name="conversationsEmpty">គ្មានសារណាមួយនៅក្នុង {conversation_name} ឡើយ។</string>
     <string name="conversationsEnter">បញ្ចូល Key</string>
-    <string name="conversationsEnterDescription">មុខងាររបស់ឃី enter នៅពេលវាយក្នុងការសន្ទនា។</string>
     <string name="conversationsGroups">ក្រុម</string>
     <string name="conversationsMessageTrimming">តម្រឹមសារ</string>
     <string name="conversationsMessageTrimmingTrimCommunities">បង្រួមសហគមន៍</string>
@@ -740,6 +740,7 @@
     <string name="sessionSettings">ការកំណត់</string>
     <string name="set">កំណត់</string>
     <string name="settingsRestartDescription">អ្នក​ត្រូវចាប់ផ្តើម {app_name} ឡើងਵੀញ ដើម្បីអនុវត្តការកំណត់ថ្មីរបស់អ្នក។</string>
+    <string name="settingsScreenSecurityDesktop">សុវត្ថិភាពអេក្រង់</string>
     <string name="share">ចែករំលែក</string>
     <string name="shareAccountIdDescription">អញ្ជើញមិត្តរបស់អ្នកមកជជែកជាមួយអ្នកនៅលើ {app_name} ដោយចែករំលែក Account ID របស់អ្នកទៅពួកគេ។</string>
     <string name="shareAccountIdDescriptionCopied">ចែករំលែកជាមួយមិត្តភក្តិរបស់អ្នកនៅទីកន្លែងដែលអ្នកភាគច្រើននិយាយជាមួយពួកគេនិងបន្ទាប់មកផ្លាស់ប្តូរប្រសាសន៍មកទីនេះ។</string>

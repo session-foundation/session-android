@@ -203,6 +203,8 @@ import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.PaddedImageSpan
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
+import org.thoughtcrime.securesms.util.adapter.applyImeBottomPadding
+import org.thoughtcrime.securesms.util.adapter.handleScrollToBottom
 import org.thoughtcrime.securesms.util.drawToBitmap
 import org.thoughtcrime.securesms.util.fadeIn
 import org.thoughtcrime.securesms.util.fadeOut
@@ -557,17 +559,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         setUpUiStateObserver()
 
         binding.scrollToBottomButton.setOnClickListener {
-            val layoutManager = binding.conversationRecyclerView.layoutManager as LinearLayoutManager
-            val targetPosition = adapter.itemCount - 1
-
-            if (layoutManager.isSmoothScrolling) {
-                // Tapping while smooth scrolling is in progress will instantly jump to the bottom.
-                binding.conversationRecyclerView.scrollToPosition(targetPosition)
-            } else {
-                // First tap: smooth scroll
-                linearSmoothScroller.targetPosition = targetPosition
-                layoutManager.startSmoothScroll(linearSmoothScroller)
-            }
+            binding.conversationRecyclerView.handleScrollToBottom()
         }
 
         // in case a phone call is in progress, this banner is visible and should bring the user back to the call
@@ -647,7 +639,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     // when showing the keyboard, we should auto scroll the conversation recyclerview
                     // if we are near the bottom (within 50dp of bottom)
                     if (binding.conversationRecyclerView.isNearBottom) {
-                        binding.conversationRecyclerView.smoothScrollToPosition(adapter.itemCount)
+                        binding.conversationRecyclerView.handleScrollToBottom()
                     }
                 }
             }
@@ -804,7 +796,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     // If there are new data updated, we'll try to stay scrolled at the bottom (if we were at the bottom).
                     // scrolled to bottom has a leniency of 50dp, so if we are within the 50dp but not fully at the bottom, scroll down
                     if (binding.conversationRecyclerView.isNearBottom && !binding.conversationRecyclerView.isFullyScrolled) {
-                        binding.conversationRecyclerView.smoothScrollToPosition(adapter.itemCount)
+                        binding.conversationRecyclerView.handleScrollToBottom()
                     }
                 }
 
@@ -825,6 +817,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     // called from onCreate
     private fun setUpRecyclerView() {
+        binding.conversationRecyclerView.applyImeBottomPadding()
         binding.conversationRecyclerView.adapter = adapter
         val layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
         binding.conversationRecyclerView.layoutManager = layoutManager
@@ -2120,6 +2113,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         // Reset attachments button if needed
         if (isShowingAttachmentOptions) { toggleAttachmentOptions() }
+
+        // Keep it fixed on the bottom right away
+        binding.conversationRecyclerView.handleScrollToBottom()
 
         // do the heavy work in the bg
         lifecycleScope.launch(Dispatchers.Default) {

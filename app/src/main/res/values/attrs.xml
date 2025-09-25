@@ -170,4 +170,5 @@
         <attr name="sendOnly" format="boolean" />
     </declare-styleable>
 
+    <attr name="accentText" format="reference|color"/>
 </resources>

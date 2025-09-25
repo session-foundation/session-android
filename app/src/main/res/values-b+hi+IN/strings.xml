@@ -277,7 +277,6 @@
     <string name="conversationsDeleted">बातचीत हटाई गई</string>
     <string name="conversationsEmpty">{conversation_name} में कोई संदेश नहीं हैं।</string>
     <string name="conversationsEnter">कुंजी दर्ज करें</string>
-    <string name="conversationsEnterDescription">बातचीत में टाइप करते समय एंटर कुंजी का कार्य।</string>
     <string name="conversationsGroups">समूह</string>
     <string name="conversationsMessageTrimming">संदेश ट्रिमिंग</string>
     <string name="conversationsMessageTrimmingTrimCommunities">समुदायों को ट्रिम करें</string>
@@ -961,6 +960,7 @@
     <string name="set">सेट करें</string>
     <string name="setCommunityDisplayPicture">Community की डिस्प्ले तस्वीर सेट करें</string>
     <string name="settingsRestartDescription">अपनी नई सेटिंग्स लागू करने के लिए आपको {app_name} पुनः प्रारंभ करना होगा।</string>
+    <string name="settingsScreenSecurityDesktop">स्क्रीन सुरक्षा</string>
     <string name="share">शेयर करें</string>
     <string name="shareAccountIdDescription">अपने मित्र को अपने साथ {app_name} पर चैट करने के लिए Account ID साझा करके आमंत्रित करें।</string>
     <string name="shareAccountIdDescriptionCopied">अपने दोस्तों के साथ वहां साझा करें जहां आप आमतौर पर उनसे बात करते हैं - फिर यहां बातचीत को स्थानांतरित करें।</string>

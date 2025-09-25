@@ -13,6 +13,7 @@ import org.session.libsession.utilities.Util.runOnMain
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.InputbarViewModel
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.mms.MediaConstraints
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.providers.BlobUtils
@@ -28,10 +29,12 @@ import javax.inject.Inject
 @HiltViewModel
 internal class MediaSendViewModel @Inject constructor(
     private val application: Application,
-    private val proStatusManager: ProStatusManager,
+    proStatusManager: ProStatusManager,
+    recipientRepository: RecipientRepository,
 ) : InputbarViewModel(
     application = application,
-    proStatusManager = proStatusManager
+    proStatusManager = proStatusManager,
+    recipientRepository = recipientRepository,
 ) {
     private val selectedMedia: MutableLiveData<List<Media>?>
     private val bucketMedia: MutableLiveData<List<Media>>

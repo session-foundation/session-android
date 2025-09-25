@@ -358,7 +358,7 @@ class VisibleMessageContentView : ConstraintLayout {
 
             // if the text was already manually expanded, we can skip this logic
             if(!isTextExpanded && binding.bodyTextView.needsCollapsing(
-                    availableWidthPx = context.resources.getDimensionPixelSize(R.dimen.max_bubble_width),
+                    availableWidthPx = binding.bodyTextView.maxWidth,
                     maxLines = MAX_COLLAPSED_LINE_COUNT)
             ){
                 // show the "Read mode" button

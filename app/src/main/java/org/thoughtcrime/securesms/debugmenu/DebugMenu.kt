@@ -235,6 +235,20 @@ fun DebugMenu(
                 "Session Pro",
                 verticalArrangement = Arrangement.spacedBy(0.dp)) {
                 Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+
+                Text(text = "Purchase a plan")
+                Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
+
+                DropDown(
+                    selected = null,
+                    modifier = modifier,
+                    values = uiState.debugProPlans,
+                    onValueSelected = { sendCommand(DebugMenuViewModel.Commands.PurchaseDebugPlan(it)) },
+                    labeler = { it?.label ?: "Select a plan to buy" }
+                )
+
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+
                 DebugSwitchRow(
                     text = "Set current user as Pro",
                     checked = uiState.forceCurrentUserAsPro,
@@ -735,7 +749,8 @@ fun PreviewDebugMenu() {
                 messageProFeature = setOf(ProStatusManager.MessageProFeature.AnimatedAvatar),
                 dbInspectorState = DebugMenuViewModel.DatabaseInspectorState.STARTED,
                 debugSubscriptionStatuses = setOf(DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE),
-                selectedDebugSubscriptionStatus = DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE
+                selectedDebugSubscriptionStatus = DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE,
+                debugProPlans = emptyList(),
             ),
             sendCommand = {},
             onClose = {}

@@ -264,7 +264,7 @@ fun ItemButton(
     modifier: Modifier = Modifier,
     textStyle: TextStyle = LocalType.current.h8,
     iconTint: Color? = null,
-    iconSize: Dp = LocalDimensions.current.iconRowItem,
+    iconSize: Dp = LocalDimensions.current.iconMedium,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
     enabled: Boolean = true,
@@ -1058,7 +1058,7 @@ fun IconActionRowItem(
     textStyle: TextStyle = LocalType.current.h8,
     subtitleStyle: TextStyle = LocalType.current.small,
     iconColor: Color = LocalColors.current.text,
-    iconSize: Dp = LocalDimensions.current.iconRowItem,
+    iconSize: Dp = LocalDimensions.current.iconMedium,
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     paddingValues: PaddingValues = PaddingValues(horizontal = LocalDimensions.current.smallSpacing),
 ){

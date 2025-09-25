@@ -10,6 +10,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.decodeFromStream
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.Hash
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
@@ -25,7 +26,6 @@ import org.session.libsession.snode.OnionResponse
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.utilities.asyncPromise
 import org.session.libsession.snode.utilities.await
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64.encodeBytes
 import org.session.libsignal.utilities.ByteArraySlice
@@ -46,15 +46,6 @@ import kotlin.collections.set
 
 object OpenGroupApi {
     val defaultRooms = MutableSharedFlow<List<DefaultGroup>>(replay = 1)
-    private val hasPerformedInitialPoll = mutableMapOf<String, Boolean>()
-    private var hasUpdatedLastOpenDate = false
-    private val timeSinceLastOpen by lazy {
-        val context = MessagingModuleConfiguration.shared.context
-        val lastOpenDate = TextSecurePreferences.getLastOpenTimeDate(context)
-        val now = System.currentTimeMillis()
-        now - lastOpenDate
-    }
-
     const val defaultServerPublicKey = "a03c383cf63c3c4efe67acc52112a6dd734b3a946b9545f488aaa93da7991238"
     const val legacyServerIP = "116.203.70.33"
     const val legacyDefaultServer = "http://116.203.70.33" // TODO: migrate all references to use new value
@@ -302,8 +293,12 @@ object OpenGroupApi {
         }
     }
 
-    private fun getResponseBodyJson(request: Request, signRequest: Boolean = true): Promise<Map<*, *>, Exception> {
-        return send(request, signRequest = signRequest).map {
+    private fun getResponseBodyJson(
+        request: Request,
+        signRequest: Boolean = true,
+        serverPubKeyHex: String? = null
+    ): Promise<Map<*, *>, Exception> {
+        return send(request, signRequest = signRequest, serverPubKeyHex = serverPubKeyHex).map {
             JsonUtil.fromJson(it.body, Map::class.java)
         }
     }
@@ -316,7 +311,10 @@ object OpenGroupApi {
             return caps
         }
 
-        val fetched = getCapabilities(server).await()
+        val fetched = getCapabilities(server,
+            serverPubKeyHex = defaultServerPublicKey.takeIf { server == defaultServer }
+        ).await()
+
         storage.setServerCapabilities(server, fetched.capabilities)
         return fetched.capabilities
     }
@@ -436,6 +434,7 @@ object OpenGroupApi {
         roomID: String,
         imageId: String,
         signRequest: Boolean = true,
+        serverPubKeyHex: String? = null,
     ): Promise<ByteArraySlice, Exception> {
         val request = Request(
             verb = GET,
@@ -443,7 +442,7 @@ object OpenGroupApi {
             server = server,
             endpoint = Endpoint.RoomFileIndividual(roomID, imageId)
         )
-        return getResponseBody(request, signRequest = signRequest)
+        return getResponseBody(request, signRequest = signRequest, serverPubKeyHex = serverPubKeyHex)
     }
 
     // region Upload/Download
@@ -722,7 +721,13 @@ object OpenGroupApi {
                 }
             }
             val images = groups.associate { group ->
-                group.token to group.imageId?.let { downloadOpenGroupProfilePicture(defaultServer, group.token, it, signRequest = false) }
+                group.token to group.imageId?.let { downloadOpenGroupProfilePicture(
+                    server = defaultServer,
+                    roomID = group.token,
+                    imageId = it,
+                    signRequest = false,
+                    serverPubKeyHex = defaultServerPublicKey,
+                ) }
             }
             groups.map { group ->
                 val image = try {
@@ -736,18 +741,6 @@ object OpenGroupApi {
         }
     }
 
-    fun getRoomInfo(roomToken: String, server: String): Promise<RoomInfoDetails, Exception> {
-        val request = Request(
-            verb = GET,
-            room = null,
-            server = server,
-            endpoint = Endpoint.Room(roomToken)
-        )
-        return getResponseBody(request).map { response ->
-            JsonUtil.fromJson(response, RoomInfoDetails::class.java)
-        }
-    }
-
     private fun getAllRooms(): Promise<List<RoomInfoDetails>, Exception> {
         val request = Request(
             verb = GET,
@@ -755,11 +748,14 @@ object OpenGroupApi {
             server = defaultServer,
             endpoint = Endpoint.Rooms
         )
-        return getResponseBody(request, signRequest = false).map { response ->
-            val rawRooms = JsonUtil.fromJson(response, List::class.java) ?: throw Error.ParsingFailed
-            rawRooms.mapNotNull {
-                JsonUtil.fromJson(JsonUtil.toJson(it), RoomInfoDetails::class.java)
-            }
+        return getResponseBody(
+            request = request,
+            signRequest = false,
+            serverPubKeyHex = defaultServerPublicKey
+        ).map { response ->
+            MessagingModuleConfiguration.shared.json
+                .decodeFromStream<Array<RoomInfoDetails>>(response.inputStream())
+                .toList()
         }
     }
 
@@ -767,35 +763,6 @@ object OpenGroupApi {
         val request = Request(verb = GET, room = null, server = server, endpoint = Endpoint.Capabilities)
         return getResponseBody(request, signRequest = false, serverPubKeyHex).map { response ->
             JsonUtil.fromJson(response, Capabilities::class.java)
-        }
-    }
-
-    fun getCapabilitiesAndRoomInfo(
-        room: String,
-        server: String
-    ): Promise<Pair<Capabilities, RoomInfoDetails>, Exception> {
-        val requests = mutableListOf<BatchRequestInfo<*>>(
-            BatchRequestInfo(
-                request = BatchRequest(
-                    method = GET,
-                    path = "/capabilities"
-                ),
-                endpoint = Endpoint.Capabilities,
-                responseType = object : TypeReference<Capabilities>(){}
-            ),
-            BatchRequestInfo(
-                request = BatchRequest(
-                    method = GET,
-                    path = "/room/$room"
-                ),
-                endpoint = Endpoint.Room(room),
-                responseType = object : TypeReference<RoomInfoDetails>(){}
-            )
-        )
-        return sequentialBatch(server, requests).map {
-            val capabilities = it.firstOrNull()?.body as? Capabilities ?: throw Error.ParsingFailed
-            val roomInfo = it.lastOrNull()?.body as? RoomInfoDetails ?: throw Error.ParsingFailed
-            capabilities to roomInfo
         }
     }
 
