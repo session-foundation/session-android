@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.util.adapter
 
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.doOnPreDraw
 import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSmoothScroller
@@ -43,4 +44,12 @@ fun RecyclerView.handleScrollToBottom() {
     }
     scroller.targetPosition = last
     layoutManager.startSmoothScroll(scroller)
+}
+
+fun RecyclerView.runWhenLaidOut(block: () -> Unit) {
+    if (isLaidOut && !isLayoutRequested) {
+        post(block)
+    } else {
+        doOnPreDraw { post(block) }
+    }
 }
