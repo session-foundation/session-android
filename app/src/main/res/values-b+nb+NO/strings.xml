@@ -476,6 +476,7 @@
     <string name="helpReportABugExportLogs">Eksportlogger</string>
     <string name="helpReportABugExportLogsDescription">Eksporter logger, deretter last opp filen gjennom {app_name}\'s Help Desk.</string>
     <string name="helpReportABugExportLogsSaveToDesktop">Lagre til skrivebordet</string>
+    <string name="helpReportABugExportLogsSaveToDesktopDescription">Lagre denne filen, så del den med {app_name}-utviklerne.</string>
     <string name="helpSupport">Brukerstøtte</string>
     <string name="helpWedLoveYourFeedback">Vi ønsker gjerne dine tilbakemeldinger</string>
     <string name="hide">Skjul</string>
@@ -763,6 +764,7 @@
     <string name="recoveryPasswordBannerDescription">Lagre ditt gjenopprettingspassord for å sikre at du ikke mister tilgang til kontoen din.</string>
     <string name="recoveryPasswordBannerTitle">Lagre ditt gjenopprettingspassord</string>
     <string name="recoveryPasswordEnter">Angi ditt gjenopprettingspassord</string>
+    <string name="recoveryPasswordErrorLoad">En feil oppstod når ditt gjenopprettingspassord forsøkte å laste.\n\nVennligst eksporter loggene dine, så opplast filen gjennom Hjelpesenteret til {app_name}.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Sjekk gjenopprettingspassordet ditt og prøv igjen.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Noen av ordene i gjenopprettingspassordet ditt er feil. Vennligst sjekk og prøv igjen.</string>
     <string name="recoveryPasswordErrorMessageShort">Gjenopprettingspassordet du oppga er ikke langt nok. Vennligst sjekk og prøv igjen.</string>

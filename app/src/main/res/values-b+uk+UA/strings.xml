@@ -829,6 +829,7 @@
     <string name="off">Вимкнено</string>
     <string name="okay">Добре</string>
     <string name="on">Увімк.</string>
+    <string name="onDevice">На вашому пристрої {device_type}</string>
     <string name="onboardingAccountCreate">Створити обліковий запис</string>
     <string name="onboardingAccountCreated">Обліковий запис створено</string>
     <string name="onboardingAccountExists">Я маю обліковий запис</string>
@@ -853,6 +854,7 @@
     <string name="onsErrorNotRecognized">Не вдалося розпізнати цей ONS. Будь ласка, перевірте його та спробуйте ще раз.</string>
     <string name="onsErrorUnableToSearch">Не вдалося виконати пошук цього ONS. Спробуйте пізніше.</string>
     <string name="open">Відкрити</string>
+    <string name="openStoreWebsite">Відкрити {platform_store} вебсайт</string>
     <string name="openSurvey">Пройти опитування</string>
     <string name="other">Інші</string>
     <string name="password">Пароль</string>
@@ -880,6 +882,7 @@
     <string name="passwordStrengthCharLength">Довший 12 символів</string>
     <string name="passwordStrengthIncludeNumber">Містить цифру</string>
     <string name="passwordStrengthIncludesLowercase">Містить літеру нижнього регістру</string>
+    <string name="passwordStrengthIncludesSymbol">Містить символ</string>
     <string name="passwordStrengthIncludesUppercase">Містить літеру верхнього регістру</string>
     <string name="passwordStrengthIndicator">Індикатор надійності паролю</string>
     <string name="passwordStrengthIndicatorDescription">Встановлення надійного пароля допомагає захистити ваші повідомлення та вкладення у разі втрати або крадіжки пристрою.</string>
@@ -944,6 +947,7 @@
     <string name="proBadgeVisible">Показувати значок {app_pro} іншим користувачам</string>
     <string name="proBadges">Позначки</string>
     <string name="proBadgesDescription">Продемонструйте свою підтримку {app_name} з ексклюзивним значком поруч з власним іменем.</string>
+    <string name="proBetaFeatures">Можливості {pro}</string>
     <string name="proBilledAnnually">{price} сплата щорічно</string>
     <string name="proBilledMonthly">{price} сплата щомісячно</string>
     <string name="proBilledQuarterly">{price} сплата щоквартально</string>
@@ -954,8 +958,10 @@
     <string name="proExpired">Підписка сплила</string>
     <string name="proExpiredDescription">На жаль, підписка {pro} сплила. Онови її задля збереження переваг і можливостей {app_pro}.</string>
     <string name="proExpiringSoon">Невдовзі спливе підписка</string>
+    <string name="proExpiringSoonDescription">Підписка {pro} спливе <b>{time}</b>. Онови підписку задля збереження переваг і можливостей {app_pro}.</string>
     <string name="proExpiringTime">{pro} спливає за <b>{time}</b></string>
     <string name="proFaq">{pro} ЧАП</string>
+    <string name="proFaqDescription">Відповіді на загальні запитання знайдеш у ЧаПи {app_pro}.</string>
     <string name="proFeatureListAnimatedDisplayPicture">Завантажуйте GIF та WebP аватари</string>
     <string name="proFeatureListLargerGroups">Більша кількість — до 300 учасників — групових чатів</string>
     <string name="proFeatureListLoadsMore">Та велика кількість ексклюзивних можливостей</string>
@@ -971,12 +977,16 @@
     <string name="proLongerMessages">Довші повідомлення</string>
     <string name="proLongerMessagesDescription">Ви можете надсилати повідомлення до 10 000 символів у всіх розмовах.</string>
     <string name="proMessageInfoFeatures">У цьому повідомленні наявні наступні функції Session Pro:</string>
+    <string name="proPercentOff">{percent}% Знижки</string>
     <string name="proPlanActivatedAuto">Для тебе діє підписка {app_pro}.\n\n<b>{date}</b> твою підписку буде самодійно поновлено як <b>{current_plan}</b>. Оновлення підписки настане під час наступного оновлення {pro}.</string>
     <string name="proPlanActivatedAutoShort">Для тебе діє підписка {app_pro}.\n\n<b>{date}</b> твою підписку буде самодійно поновлено як <b>{current_plan}</b>.</string>
+    <string name="proPlanActivatedNotAuto">Твоя підписка {app_pro} спливе <b>{date}</b>.\n\nДля збереження особливих можливостей подовж свою підписку.</string>
+    <string name="proPlanExpireDate">Підписка {app_pro} спливе <b>{date}</b>.</string>
     <string name="proPlanNotFound">Передплата {pro} не знайдена</string>
     <string name="proPlanRecover">Відновити передплату {pro}</string>
     <string name="proPlanRenew">Оновити підписку {pro}</string>
     <string name="proPlanRestored">План {pro} відновлено</string>
+    <string name="proPlanRestoredDescription">Виявлено дійсний план {app_pro}, та ваш статус {pro} було відновлено!</string>
     <string name="proPriceOneMonth">1 місяць — {monthly_price} / місяць</string>
     <string name="proPriceThreeMonths">3 місяці — {monthly_price} / місяць</string>
     <string name="proPriceTwelveMonths">12 місяців – {monthly_price} / місяць</string>
@@ -991,7 +1001,9 @@
     <string name="proTosPrivacy">Цією дією ти надаси згоду щодо дотримання <b>Правил послуги</b> {app_pro} {icon} і <b>Ставлення до особистих відомостей</b> {icon}</string>
     <string name="proUnlimitedPins">Необмежена кількість закріплених бесід</string>
     <string name="proUnlimitedPinsDescription">Закріплення необмеженої кількості співрозмовників в головному переліку.</string>
+    <string name="proUpdatePlanExpireDescription">Ваш план завершиться <b>{date}</b>.\n\nПісля оновлення налаштувань автоматичної оплати, ваш план автоматично подовжиться <b>{date}</b> на додатковий {selected_plan} доступу до Pro.</string>
     <string name="proUserProfileModalCallToAction">Хочете отримати більше від {app_name}? Оновіться до {app_pro}, щоб мати потужніший досвід обміну повідомленнями.</string>
+    <string name="processingRefundRequest">{platform_account} опрацьовує ваш запит на відшкодування</string>
     <string name="profile">Профіль</string>
     <string name="profileDisplayPicture">Аватар</string>
     <string name="profileDisplayPictureRemoveError">Не вдалося видалити зображення профілю</string>
@@ -1079,6 +1091,8 @@
     <string name="screenSecurity">Безпека перегляду</string>
     <string name="screenshotNotifications">Сповіщення про скриншот</string>
     <string name="screenshotNotificationsDescription">Отримувати сповіщення, коли контакт робить скриншот особистої бесіди.</string>
+    <string name="screenshotProtectionDescriptionDesktop">Приховувати вікно {app_name} на знімках екрана, зроблених на цьому пристрої.</string>
+    <string name="screenshotProtectionDesktop">Захист від знімків екрана</string>
     <string name="screenshotTaken"><b>{name}</b> зробив скриншот.</string>
     <string name="search">Пошук</string>
     <string name="searchContacts">Пошук контактів</string>
@@ -1196,6 +1210,7 @@
     <string name="urlOpenDescription">Ви впевнені, що хочете відкрити цю URL-адресу у своєму браузері?\n\n<b>{url}</b></string>
     <string name="urlOpenDescriptionAlternative">За ланкою перейде твоє оглядало мережців за промовчання.</string>
     <string name="useFastMode">Використовувати швидкий режим</string>
+    <string name="viaStoreWebsite">Через вебсайт {platform_store}</string>
     <string name="video">Відео</string>
     <string name="videoErrorPlay">Не вдається відтворити відео.</string>
     <string name="view">Вигляд</string>
