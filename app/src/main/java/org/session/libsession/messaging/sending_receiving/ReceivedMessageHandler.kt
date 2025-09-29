@@ -100,9 +100,7 @@ class ReceivedMessageHandler @Inject constructor(
     private val profileUpdateHandler: Provider<ProfileUpdateHandler>,
     @param:ManagerScope private val scope: CoroutineScope,
     private val configFactory: ConfigFactoryProtocol,
-    private val conversationRepository: ConversationRepository,
     private val messageRequestResponseHandler: Provider<MessageRequestResponseHandler>,
-    private val recipientRepository: RecipientRepository,
 ) {
 
     suspend fun handle(
@@ -132,7 +130,7 @@ class ReceivedMessageHandler @Inject constructor(
             }
             is DataExtractionNotification -> handleDataExtractionNotification(message)
             is UnsendRequest -> handleUnsendRequest(message)
-            is MessageRequestResponse -> messageRequestResponseHandler.get().handle(message)
+            is MessageRequestResponse -> messageRequestResponseHandler.get().handleExplicitRequestResponseMessage(message)
             is VisibleMessage -> handleVisibleMessage(
                 message = message,
                 proto = proto,
@@ -286,7 +284,7 @@ class ReceivedMessageHandler @Inject constructor(
         return messageIdToDelete
     }
 
-    fun handleVisibleMessage(
+    suspend fun handleVisibleMessage(
         message: VisibleMessage,
         proto: SignalServiceProtos.Content,
         context: VisibleMessageHandlerContext,
@@ -299,6 +297,7 @@ class ReceivedMessageHandler @Inject constructor(
         // Do nothing if the message was outdated
         if (messageIsOutdated(message, context.threadId)) { return null }
 
+        messageRequestResponseHandler.get().handleVisibleMessage(message)
 
         // Handle group invite response if new closed group
         val threadRecipientAddress = context.threadAddress

@@ -15,6 +15,7 @@ import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.model.NotifyType
@@ -73,6 +74,8 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         }
     }
 
+    private val Recipient.canBlock: Boolean get() = address is Address.Standard
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         if (!this::thread.isInitialized) { return dismiss() }
@@ -82,8 +85,8 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
 
         if (!recipient.isGroupOrCommunityRecipient && !recipient.isLocalNumber) {
             binding.detailsTextView.visibility = View.VISIBLE
-            binding.unblockTextView.visibility = if (recipient.blocked) View.VISIBLE else View.GONE
-            binding.blockTextView.visibility = if (recipient.blocked) View.GONE else View.VISIBLE
+            binding.unblockTextView.visibility = if (recipient.canBlock && recipient.blocked) View.VISIBLE else View.GONE
+            binding.blockTextView.visibility = if (recipient.canBlock && !recipient.blocked) View.VISIBLE else View.GONE
             binding.detailsTextView.setOnClickListener(this)
             binding.blockTextView.setOnClickListener(this)
             binding.unblockTextView.setOnClickListener(this)
