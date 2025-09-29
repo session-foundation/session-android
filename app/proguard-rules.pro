@@ -62,6 +62,10 @@
     @com.fasterxml.jackson.annotation.JsonProperty *;
 }
 
+-keep class org.session.libsession.snode.model.RetrieveMessageConverter { public <init>(); public *; }
+-keep class * implements com.fasterxml.jackson.databind.util.Converter { public <init>(); public *; }
+-keep class * extends com.fasterxml.jackson.databind.JsonDeserializer { public <init>(); public *; }
+
 ########## JNI LOGGER ##########
 # Keep the interface + all implementors (incl. anonymous/lambdas) and the exact method JNI looks up
 -keep interface network.loki.messenger.libsession_util.util.Logger { *; }
@@ -155,6 +159,13 @@
 -keepnames class network.loki.messenger.libsession_util.util.Conversation$OneToOne
 -keepnames class network.loki.messenger.libsession_util.util.Conversation$ClosedGroup
 -keepnames class network.loki.messenger.libsession_util.util.BaseCommunityInfo
+
+-keep class network.loki.messenger.libsession_util.GroupMembersConfig { *; }
+-keep class network.loki.messenger.libsession_util.util.GroupMember { *; }
+-keepclassmembers class network.loki.messenger.libsession_util.util.GroupMember { public <init>(long); }
+-keepnames class network.loki.messenger.libsession_util.util.GroupMember
+
+-keepclassmembers class network.loki.messenger.libsession_util.util.** { public <init>(long); }
 
 # Optional: preserve class names so Kryo’s writeClassAndObject stays stable across app updates
 -keepnames class org.session.libsession.messaging.messages.Destination$**
