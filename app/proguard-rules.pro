@@ -133,6 +133,29 @@
 -keepclassmembers class org.session.libsession.messaging.messages.Destination$OpenGroup { <init>(); }
 -keepclassmembers class org.session.libsession.messaging.messages.Destination$OpenGroupInbox { <init>(); }
 
+# Keep the Conversation model types used by JNI
+-keep class network.loki.messenger.libsession_util.util.Conversation$Community { *; }
+-keep class network.loki.messenger.libsession_util.util.Conversation$OneToOne { *; }
+-keep class network.loki.messenger.libsession_util.util.Conversation$ClosedGroup { *; }
+-keep class network.loki.messenger.libsession_util.util.BaseCommunityInfo { *; }
+
+# Ensure all constructors (including @JvmOverloads-generated) stay public & unstripped
+-keepclassmembers class network.loki.messenger.libsession_util.util.Conversation$Community {
+    public <init>(...);
+}
+-keepclassmembers class network.loki.messenger.libsession_util.util.Conversation$OneToOne {
+    public <init>(...);
+}
+-keepclassmembers class network.loki.messenger.libsession_util.util.Conversation$ClosedGroup {
+    public <init>(...);
+}
+
+# Don’t rename these (JNI searches by name)
+-keepnames class network.loki.messenger.libsession_util.util.Conversation$Community
+-keepnames class network.loki.messenger.libsession_util.util.Conversation$OneToOne
+-keepnames class network.loki.messenger.libsession_util.util.Conversation$ClosedGroup
+-keepnames class network.loki.messenger.libsession_util.util.BaseCommunityInfo
+
 # Optional: preserve class names so Kryo’s writeClassAndObject stays stable across app updates
 -keepnames class org.session.libsession.messaging.messages.Destination$**
 
