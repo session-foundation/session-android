@@ -101,7 +101,7 @@ fun ProSettingsHomeScreen(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun ProSettingsHome(
-    data: ProSettingsViewModel.ProSettingsUIState,
+    data: ProSettingsViewModel.ProSettingsState,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -254,6 +254,7 @@ fun ProStats(
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
         ){
             Row(
+                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing)
             ) {
                 // groups updated
@@ -281,6 +282,7 @@ fun ProStats(
             }
 
             Row(
+                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing)
             ) {
                 // Pro Badges
@@ -289,7 +291,8 @@ fun ProStats(
                     title = pluralStringResource(
                         R.plurals.proBadgesSent,
                         data.proBadges,
-                        NumberUtil.getFormattedNumber(data.proBadges.toLong())
+                        NumberUtil.getFormattedNumber(data.proBadges.toLong()),
+                        NonTranslatableStringConstants.PRO
                     ),
                     icon = R.drawable.ic_rectangle_ellipsis
 
@@ -324,7 +327,7 @@ fun ProStatItem(
         Image(
             painter = painterResource(id = icon),
             contentDescription = null,
-            modifier = Modifier.size(LocalDimensions.current.iconRowItem),
+            modifier = Modifier.size(LocalDimensions.current.iconMedium2),
             colorFilter = ColorFilter.tint(LocalColors.current.accent)
         )
 
@@ -390,9 +393,10 @@ fun ProFeatures(
 ) {
     CategoryCell(
         modifier = modifier,
-        title = Phrase.from(LocalContext.current, R.string.proFeatures)
+        title = "TEMP!!!!!!!"
+        /*title = Phrase.from(LocalContext.current, R.string.proFeatures)
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-            .format().toString(),
+            .format().toString(),*/
     ) {
         // Cell content
         Column(
@@ -640,13 +644,14 @@ fun PreviewProSettingsPro(
 ) {
     PreviewTheme(colors) {
         ProSettingsHome(
-            data = ProSettingsViewModel.ProSettingsUIState(
+            data = ProSettingsViewModel.ProSettingsState(
                 subscriptionState = SubscriptionState.Active.AutoRenewing(
                     proStatus = ProStatus.Pro(
                         visible = true,
                         validUntil = Instant.now() + Duration.ofDays(14),
                     ),
-                    type = ProSubscriptionDuration.THREE_MONTHS
+                    type = ProSubscriptionDuration.THREE_MONTHS,
+                    nonOriginatingSubscription = null
                 ),
             ),
             sendCommand = {},
@@ -662,7 +667,7 @@ fun PreviewProSettingsExpired(
 ) {
     PreviewTheme(colors) {
         ProSettingsHome(
-            data = ProSettingsViewModel.ProSettingsUIState(
+            data = ProSettingsViewModel.ProSettingsState(
                 subscriptionState = SubscriptionState.Expired,
             ),
             sendCommand = {},
@@ -678,7 +683,7 @@ fun PreviewProSettingsNonPro(
 ) {
     PreviewTheme(colors) {
         ProSettingsHome(
-            data = ProSettingsViewModel.ProSettingsUIState(
+            data = ProSettingsViewModel.ProSettingsState(
                 subscriptionState = SubscriptionState.NeverSubscribed,
             ),
             sendCommand = {},

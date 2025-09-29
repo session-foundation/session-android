@@ -399,56 +399,37 @@ public class MmsSmsDatabase extends Database {
     }
   }
 
-  /**
-   * Get all incoming unread + unnotified messages
-   * or
-   * all outgoing messages with unread reactions
-   */
-  public Cursor getUnreadOrUnseenReactions() {
+  private String buildOutgoingConditionForNotifications() {
+    return "(" + TRANSPORT + " = '" + MMS_TRANSPORT + "' AND " +
+            "(" + MESSAGE_BOX + " & " + MmsSmsColumns.Types.BASE_TYPE_MASK + ") IN (" + buildOutgoingTypesList() + "))" +
+            " OR " +
+            "(" + TRANSPORT + " = '" + SMS_TRANSPORT + "' AND " +
+            "(" + SmsDatabase.TYPE + " & " + MmsSmsColumns.Types.BASE_TYPE_MASK + ") IN (" + buildOutgoingTypesList() + "))";
+  }
 
-    // ──────────────────────────────────────────────────────────────
-    // 1) Build “is-outgoing” condition that works for both MMS & SMS
-    // ──────────────────────────────────────────────────────────────
-    //   MMS rows  → use MESSAGE_BOX
-    //   SMS rows  → use TYPE
-    //
-    //   TRANSPORT lets us be sure we’re looking at the right column,
-    //   so an incoming MMS/SMS can never be mistaken for outgoing.
-    //
-    String outgoingCondition =
-            /* MMS */
-            "(" + TRANSPORT + " = '" + MMS_TRANSPORT + "' AND " +
-                    "(" + MESSAGE_BOX + " & " +
-                    MmsSmsColumns.Types.BASE_TYPE_MASK + ") IN (" +
-                    buildOutgoingTypesList() + "))" +
+  public Cursor getUnreadIncomingForNotifications(int maxRows) {
+    String outgoing = buildOutgoingConditionForNotifications();
+    String selection = "(" + READ + " = 0 AND " + NOTIFIED + " = 0 AND NOT (" + outgoing + "))";
+    String order    = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
+    String limitStr = maxRows > 0 ? String.valueOf(maxRows) : null;
+    return queryTables(PROJECTION, selection, order, limitStr);
+  }
 
-                    " OR " +
+  public Cursor getOutgoingWithUnseenReactionsForNotifications(int maxRows) {
+    String outgoing = buildOutgoingConditionForNotifications();
+    String lastSeenQuery =
+            "SELECT " + ThreadDatabase.LAST_SEEN +
+                    " FROM " + ThreadDatabase.TABLE_NAME +
+                    " WHERE " + ThreadDatabase.ID + " = " + MmsSmsColumns.THREAD_ID;
 
-                    /* SMS */
-                    "(" + TRANSPORT + " = '" + SMS_TRANSPORT + "' AND " +
-                    "(" + SmsDatabase.TYPE + " & " +
-                    MmsSmsColumns.Types.BASE_TYPE_MASK + ") IN (" +
-                    buildOutgoingTypesList() + "))";
-
-    final String lastSeenQuery = "SELECT " + ThreadDatabase.LAST_SEEN +
-            " FROM " + ThreadDatabase.TABLE_NAME +
-            " WHERE " + ThreadDatabase.ID + " = " + MmsSmsColumns.THREAD_ID;
-
-    // ──────────────────────────────────────────────────────────────
-    // 2) Selection:
-    //    A) incoming  unread+un-notified,      NOT outgoing
-    //    B) outgoing  with unseen reactions,   IS  outgoing
-    // To query unseen reactions, we compare the date received on the reaction with the "last seen timestamp" on this thread
-    // ──────────────────────────────────────────────────────────────
     String selection =
-            "(" + READ + " = 0 AND " +
-                    NOTIFIED + " = 0 AND NOT (" + outgoingCondition + "))" +   // A
-                    " OR (" +
-                      ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.DATE_SENT + " > (" + lastSeenQuery +") AND (" +
-                      outgoingCondition + "))";             // B
+            "(" + outgoing + ")" +
+                    " AND " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.DATE_SENT + " IS NOT NULL" +
+                    " AND " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.DATE_SENT + " > (" + lastSeenQuery + ")";
 
-    String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " ASC";
-    return queryTables(PROJECTION, selection, order, null);
+    String order    = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
+    String limitStr = maxRows > 0 ? String.valueOf(maxRows) : null;
+    return queryTables(PROJECTION, selection, order, limitStr);
   }
 
   public Set<Address> getAllReferencedAddresses() {

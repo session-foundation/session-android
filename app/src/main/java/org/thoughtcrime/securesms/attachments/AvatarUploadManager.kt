@@ -97,7 +97,8 @@ class AvatarUploadManager @Inject constructor(
                         Log.d(TAG, "Avatar expired, re-uploading")
                         uploadAvatar(
                             pictureData = localEncryptedFileInputStreamFactory.create(localFile)
-                                .use { it.readBytes() }
+                                .use { it.readBytes() },
+                            isReupload = true,
                         )
                     }
             } else {
@@ -137,7 +138,8 @@ class AvatarUploadManager @Inject constructor(
 
 
     suspend fun uploadAvatar(
-        pictureData: ByteArray
+        pictureData: ByteArray,
+        isReupload: Boolean, // Whether this is a re-upload of an existing avatar
     ) = withContext(Dispatchers.IO) {
         check(pictureData.isNotEmpty()) {
             "Should not upload an empty avatar"
@@ -187,7 +189,13 @@ class AvatarUploadManager @Inject constructor(
         // Now that we have the file both locally and remotely, we can update the user profile
         val oldPic = configFactory.withMutableUserConfigs {
             val result = it.userProfile.getPic()
-            it.userProfile.setPic(remoteFile.toUserPic())
+            val userPic = remoteFile.toUserPic()
+            if (isReupload) {
+                it.userProfile.setReuploadedPic(userPic)
+            } else {
+                it.userProfile.setPic(userPic)
+            }
+
             result.toRemoteFile()
         }
 
@@ -199,8 +207,6 @@ class AvatarUploadManager @Inject constructor(
                 oldFile.delete()
             }
         }
-
-        prefs.lastProfileUpdated = Instant.now()
     }
 
     companion object {

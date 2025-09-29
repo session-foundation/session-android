@@ -96,6 +96,9 @@ class CallViewModel @Inject constructor(
 
     val currentCallState get() = callManager.currentCallState
 
+    val connectionState: StateFlow<org.thoughtcrime.securesms.webrtc.data.State>
+        get() = callManager.currentConnectionStateFlow
+
     val initialCallState = CallState("", "", false, false, false)
     val initialAccumulator = CallAccumulator(emptySet(), initialCallState)
 

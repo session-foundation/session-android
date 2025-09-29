@@ -69,7 +69,6 @@ class PrivacySettingsPreferenceFragment : CorrectedPreferenceFragment() {
                                 it.userProfile.setCommunityMessageRequests(value)
                             }
 
-                            textSecurePreferences.lastProfileUpdated = Instant.now()
                             return
                         }
                         super.putBoolean(key, value)

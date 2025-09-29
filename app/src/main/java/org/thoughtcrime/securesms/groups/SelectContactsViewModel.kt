@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.home.search.searchName
@@ -111,7 +112,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
                         address = contact.address,
                         avatarUIData = avatarData,
                         selected = selectedAccountIDs.contains(contact.address),
-                        showProBadge = proStatusManager.shouldShowProBadge(contact.address)
+                        showProBadge = contact.proStatus.shouldShowProBadge()
                     )
                 )
             }

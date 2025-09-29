@@ -10,21 +10,19 @@ import android.media.AudioManager
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import network.loki.messenger.BuildConfig
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.FutureTaskListener
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.notifications.BackgroundPollWorker
 import org.thoughtcrime.securesms.service.CallForegroundService
@@ -122,7 +120,6 @@ class WebRtcCallBridge @Inject constructor(
         Log.d(TAG, "Terminating rtc service")
         context.stopService(Intent(context, CallForegroundService::class.java))
         NotificationManagerCompat.from(context).cancel(WEBRTC_NOTIFICATION)
-        LocalBroadcastManager.getInstance(context).sendBroadcast(Intent(WebRtcCallActivity.ACTION_END))
         callManager.stop()
         _hasAcceptedCall.value = false
         currentTimeouts = 0

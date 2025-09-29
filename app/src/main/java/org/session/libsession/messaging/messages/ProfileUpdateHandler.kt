@@ -54,7 +54,7 @@ class ProfileUpdateHandler @Inject constructor(
         // If the sender has standard address (either as unblinded, or as is), we will check if
         // they are a contact and update their contact information accordingly.
         val standardSender = unblinded ?: (senderAddress as? Address.Standard)
-        if (standardSender != null && (updates.name != null || updates.pic != null || updates.profileUpdateTime != null)) {
+        if (standardSender != null && (!updates.name.isNullOrBlank() || updates.pic != null)) {
             configFactory.withMutableUserConfigs { configs ->
                 configs.contacts.updateContact(standardSender) {
                     if (shouldUpdateProfile(
@@ -96,6 +96,10 @@ class ProfileUpdateHandler @Inject constructor(
                             c.name = updates.name
                         }
 
+                        if (updates.profileUpdateTime != null) {
+                            c.profileUpdatedEpochSeconds = updates.profileUpdateTime.toEpochSeconds()
+                        }
+
                         configs.contacts.setBlinded(c)
                     }
                 }
@@ -119,6 +123,9 @@ class ProfileUpdateHandler @Inject constructor(
                             profilePic = updates.pic ?: r.profilePic,
                             blocksCommunityMessagesRequests = updates.blocksCommunityMessageRequests ?: r.blocksCommunityMessagesRequests
                         )
+                    } else if (updates.blocksCommunityMessageRequests != null &&
+                            r.blocksCommunityMessagesRequests != updates.blocksCommunityMessageRequests) {
+                        r.copy(blocksCommunityMessagesRequests = updates.blocksCommunityMessageRequests)
                     } else {
                         r
                     }
@@ -136,7 +143,11 @@ class ProfileUpdateHandler @Inject constructor(
         lastUpdated: Instant?,
         newUpdateTime: Instant?
     ): Boolean {
-        return (lastUpdated == null || newUpdateTime == null) || (newUpdateTime > lastUpdated)
+        val lastUpdatedTimestamp = lastUpdated?.toEpochSeconds() ?: 0L
+        val newUpdateTimestamp = newUpdateTime?.toEpochSeconds() ?: 0L
+
+        return (lastUpdatedTimestamp == 0L && newUpdateTimestamp == 0L) ||
+                (newUpdateTimestamp > lastUpdatedTimestamp)
     }
 
     class Updates private constructor(

@@ -964,16 +964,13 @@
     <string name="proExpired">Platnost vypršela</string>
     <string name="proExpiredDescription">Bohužel, váš tarif {pro} vypršel. Obnovte jej, abyste nadále měli přístup k exkluzivním výhodám a funkcím {app_pro}.</string>
     <string name="proExpiringSoon">Brzy vyprší</string>
-    <string name="proExpiringSoonDescription">Váš tarif {pro} vyprší za {time}. Aktualizujte si tarif, abyste i nadále měli přístup k exkluzivním výhodám a funkcím {app_pro}.</string>
     <string name="proExpiringTime">{pro} vyprší za <b>{time}</b></string>
     <string name="proFaq">{pro} FAQ</string>
-    <string name="proFaqDescription">Najděte odpovědi na časté dotazy v nápovědě {app_name}.</string>
     <string name="proFeatureListAnimatedDisplayPicture">Nahrajte GIF a WebP jako zobrazovaný obrázek</string>
     <string name="proFeatureListLargerGroups">Větší soukromé skupiny až 300 členů</string>
     <string name="proFeatureListLoadsMore">A další exkluzivních funkce</string>
     <string name="proFeatureListLongerMessages">Zprávy až do 10000 znaků</string>
     <string name="proFeatureListPinnedConversations">Připněte neomezený počet konverzací</string>
-    <string name="proFeatures">Funkce {pro}</string>
     <string name="proGroupActivated">Skupina aktivována</string>
     <string name="proGroupActivatedDescription">Tato skupina má navýšenou kapacitu! Může podporovat až 300 členů, protože správce skupiny má</string>
     <plurals name="proGroupsUpgraded">
@@ -1005,15 +1002,12 @@
     </plurals>
     <string name="proPlanActivatedAuto">Váš tarif {app_pro} je aktivní!\n\nVáš tarif se automaticky obnoví na další <b>{current_plan}</b> dne <b>{date}</b>. Změny tarifu se projeví při příštím obnovení {pro}.</string>
     <string name="proPlanActivatedAutoShort">Váš tarif {app_pro} je aktivní!\n\nTarif se automaticky obnoví na další <b>{current_plan}</b> dne <b>{date}</b>.</string>
-    <string name="proPlanActivatedNotAuto">Váš tarif {app_pro} vyprší dne {date}.\n\nAktualizujte si tarif nyní, abyste měli i nadále nepřerušený přístup k exkluzivním funkcím Pro.</string>
-    <string name="proPlanExpireDate">Váš tarif {app_pro} vyprší dne {date}.</string>
     <string name="proPlanNotFound">{pro} nebyl nalezen</string>
     <string name="proPlanNotFoundDescription">Pro váš účet nebyl nalezen žádný aktivní tarif. Pokud si myslíte, že se jedná o chybu, kontaktujte podporu {app_name} a požádejte o pomoc.</string>
     <string name="proPlanPlatformRefund">Protože jste se původně zaregistrovali do {app_pro} přes <b><font color="0">obchod {platform_store}</font></b>, budete muset pro žádost o vrácení peněz použít stejný účet {platform_account}.</string>
     <string name="proPlanPlatformRefundLong">Protože jste si původně zakoupili {app_pro} přes <b><font color="0">obchod {platform_store}</font></b>, váš požadavek na vrácení peněz bude zpracován podporou {app_name}.\n\nPožádejte o vrácení peněz kliknutím na tlačítko níže a vyplněním formuláře žádosti o vrácení peněz.\n\nAčkoliv se podpora {app_name} snaží zpracovat žádosti o vrácení peněz během 24–72 hodin, může zpracování trvat i déle, pokud dochází k vysokému počtu žádostí.</string>
     <string name="proPlanRecover">Znovu nabýt tarif {pro}</string>
     <string name="proPlanRenew">Obnovit tarif {pro}</string>
-    <string name="proPlanRenewDesktop">V současnosti lze tarify {pro} zakoupit a obnovit pouze prostřednictvím obchodů {platform_store} nebo {platform_store}. Protože používáte {app_name} Desktop, nemůžete zde svůj plán obnovit.\n\nVývojáři {app_pro} intenzivně pracují na alternativních platebních možnostech, které by uživatelům umožnily zakoupit tarify {pro} mimo obchody {platform_store} a {platform_store}. <b>Plán vývoje {pro}</b></string>
     <string name="proPlanRenewDesktopLinked">Obnovte svůj tarif v nastavení {app_pro} na propojeném zařízení s nainstalovanou aplikací {app_name} prostřednictvím obchodu {platform_store} nebo {platform_store}.</string>
     <string name="proPlanRenewDesktopStore">Obnovte svůj tarif na webu {platform_store} pomocí účtu {platform_account}, se kterým jste si pořídili {pro}.</string>
     <string name="proPlanRenewSupport">Váš tarif {app_pro} byl obnoven! Děkujeme, že podporujete síť {network_name}.</string>
@@ -1026,7 +1020,6 @@
     <string name="proRefundDescription">Mrzí nás, že to rušíte. Než požádáte o vrácení peněz, přečtěte si informace, které byste měli vědět.</string>
     <string name="proRefundNextSteps">{platform_account} nyní zpracovává vaši žádost o vrácení peněz. Obvykle to trvá 24–48 hodin. V závislosti na jejich rozhodnutí se může váš stav {pro} v aplikaci {app_name} změnit.</string>
     <string name="proRefundRequestSessionSupport">Váš požadavek na vrácení peněz bude zpracován podporou {app_name}.\n\nPožádejte o vrácení peněz kliknutím na tlačítko níže a vyplněním formuláře žádosti o vrácení peněz.\n\nAčkoliv se podpora {app_name} snaží zpracovat žádosti o vrácení peněz během 24–72 hodin, může zpracování trvat i déle, v případě že je vyřizováno mnoho žádostí.</string>
-    <string name="proRefundRequestStorePolicies">Vaši žádost o vrácení peněz bude vyřizovat výhradně {platform_account} prostřednictvím webových stránek {platform_account}.\n\nVzhledem k pravidlům vracení peněz {platform_account} nemají vývojáři {app_name} žádný vliv na výsledek žádostí o vrácení peněz. To zahrnuje i rozhodnutí, zda bude žádost schválena nebo zamítnuta, a také, zda bude vrácena část peněz, nebo všechny peníze.</string>
     <string name="proRefundSupport">Pro další informace o vaší žádosti o vrácení peněz kontaktujte prosím {platform_account}. Vzhledem k zásadám pro vrácení peněz {platform_account} nemají vývojáři aplikace {app_name} žádnou možnost ovlivnit výsledek žádosti o vrácení.\n\n<font color="0">Podpora vrácení peněz {platform_store}</font></string>
     <string name="proRefunding">Vracení peněz za {pro}</string>
     <string name="proRefundingDescription">Vrácení peněz za tarify {app_pro} je vyřizováno výhradně prostřednictvím {platform_account} v obchodě {platform_store}.\n\nVzhledem k pravidlům vracení peněz služby {platform_account} nemají vývojáři {app_name} žádný vliv na výsledek žádostí o vrácení peněz. To zahrnuje i rozhodnutí, zda bude žádost schválena nebo zamítnuta, a také, zda bude vrácena část peněz, nebo všechny peníze.</string>

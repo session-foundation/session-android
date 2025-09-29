@@ -183,6 +183,7 @@ private fun CommunityScreen(
                     .fillMaxWidth()
                     .qaTag(R.string.AccessibilityId_communityJoin),
                 enabled = state.isJoinButtonEnabled,
+                disabledColor = LocalColors.current.textSecondary,
                 onClick = {
                     sendCommand(JoinCommunityViewModel.Commands.JoinCommunity(
                         state.communityUrl

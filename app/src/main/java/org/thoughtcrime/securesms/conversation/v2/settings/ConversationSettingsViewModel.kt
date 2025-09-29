@@ -22,6 +22,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -44,6 +45,8 @@ import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
+import org.session.libsession.utilities.recipients.isPro
+import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.utilities.AccountId
@@ -318,12 +321,14 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     init {
         // update data when we have a recipient and update when there are changes from the thread or recipient
         viewModelScope.launch {
-            recipientRepository.observeRecipient(address)
-                .filterNotNull()
-                .collect {
-                    recipient = it
-                    getStateFromRecipient(it)
-                }
+            combine(
+                recipientRepository.observeRecipient(address),
+                recipientRepository.observeSelf(),
+                ::Pair
+            ).collect { (r, self) ->
+                recipient = r
+                getStateFromRecipient(r, self)
+            }
         }
     }
 
@@ -368,7 +373,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    private fun getStateFromRecipient(conversation: Recipient){
+    private fun getStateFromRecipient(conversation: Recipient, myself: Recipient) {
         // admin
         val isAdmin: Boolean = conversation.takeIf { it.isGroupV2Recipient || it.isCommunityRecipient }
             ?.currentUserRole?.canModerate == true
@@ -651,11 +656,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             else -> emptyList()
         }
 
-        val showProBadge = proStatusManager.shouldShowProBadge(conversation.address)
-                && !conversation.isLocalNumber
+        val showProBadge = conversation.proStatus.shouldShowProBadge() && !conversation.isLocalNumber
 
         // if it's a one on one convo and the user isn't pro themselves
-        val proBadgeClickable = if(conversation.is1on1 && proStatusManager.isCurrentUserPro()) false
+        val proBadgeClickable = if(conversation.is1on1 && myself.proStatus.isPro()) false
         else showProBadge // otherwise whenever the badge is shown
 
         val avatarData = avatarUtils.getUIDataFromRecipient(conversation)
@@ -711,7 +715,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun pinConversation(){
         // check the pin limit before continuing
         val totalPins = storage.getTotalPinned()
-        val maxPins = proStatusManager.getPinnedConversationLimit()
+        val maxPins = proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().proStatus)
         if(totalPins >= maxPins){
             // the user has reached the pin limit, show the CTA
             _dialogState.update {

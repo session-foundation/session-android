@@ -28,10 +28,9 @@ class GroupMembersViewModel @AssistedInject constructor(
     @param:ApplicationContext private val context: Context,
     storage: StorageProtocol,
     configFactory: ConfigFactoryProtocol,
-    proStatusManager: ProStatusManager,
     avatarUtils: AvatarUtils,
     recipientRepository: RecipientRepository,
-) : BaseGroupMembersViewModel(address, context, storage, configFactory, avatarUtils, recipientRepository, proStatusManager) {
+) : BaseGroupMembersViewModel(address, context, storage, configFactory, avatarUtils, recipientRepository) {
 
     private val _navigationActions = Channel<Intent>()
     val navigationActions get() = _navigationActions.receiveAsFlow()

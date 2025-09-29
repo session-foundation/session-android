@@ -954,16 +954,13 @@
     <string name="proExpired">Підписка сплила</string>
     <string name="proExpiredDescription">На жаль, підписка {pro} сплила. Онови її задля збереження переваг і можливостей {app_pro}.</string>
     <string name="proExpiringSoon">Невдовзі спливе підписка</string>
-    <string name="proExpiringSoonDescription">Підписка {pro} спливе {time}. Онови підписку задля збереження переваг і можливостей {app_pro}.</string>
     <string name="proExpiringTime">{pro} спливає за <b>{time}</b></string>
     <string name="proFaq">{pro} ЧАП</string>
-    <string name="proFaqDescription">Відповіді на загальні запитання знайдеш у ЧаПи {app_name}.</string>
     <string name="proFeatureListAnimatedDisplayPicture">Завантажуйте GIF та WebP аватари</string>
     <string name="proFeatureListLargerGroups">Більша кількість — до 300 учасників — групових чатів</string>
     <string name="proFeatureListLoadsMore">Та велика кількість ексклюзивних можливостей</string>
     <string name="proFeatureListLongerMessages">Повідомлення до 10 000 символів</string>
     <string name="proFeatureListPinnedConversations">Закріплюйте необмежену кількість бесід</string>
-    <string name="proFeatures">Можливості {pro}</string>
     <string name="proGroupActivated">Групу активовано</string>
     <string name="proGroupActivatedDescription">У цієї групи розширено можливості! Тепер вона може вміщати до 300 учасників, тому що адміністратор групи має</string>
     <string name="proImportantDescription">Вимагання повернення грошей закінчено. В разі схвалення твою підписку {pro} негайно скасують і ти втратиш всі можливості {pro}.</string>
@@ -976,8 +973,6 @@
     <string name="proMessageInfoFeatures">У цьому повідомленні наявні наступні функції Session Pro:</string>
     <string name="proPlanActivatedAuto">Для тебе діє підписка {app_pro}.\n\n<b>{date}</b> твою підписку буде самодійно поновлено як <b>{current_plan}</b>. Оновлення підписки настане під час наступного оновлення {pro}.</string>
     <string name="proPlanActivatedAutoShort">Для тебе діє підписка {app_pro}.\n\n<b>{date}</b> твою підписку буде самодійно поновлено як <b>{current_plan}</b>.</string>
-    <string name="proPlanActivatedNotAuto">Твоя підписка {app_pro} спливе {date}.\n\nДля збереження особливих можливостей подовж свою підписку.</string>
-    <string name="proPlanExpireDate">Підписка {app_pro} спливе {date}.</string>
     <string name="proPlanNotFound">Передплата {pro} не знайдена</string>
     <string name="proPlanRecover">Відновити передплату {pro}</string>
     <string name="proPlanRenew">Оновити підписку {pro}</string>
