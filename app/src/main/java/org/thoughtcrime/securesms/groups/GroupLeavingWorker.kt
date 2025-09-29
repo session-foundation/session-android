@@ -88,8 +88,9 @@ class GroupLeavingWorker @AssistedInject constructor(
                         )
 
                         // Wait for both messages to be sent
-                        statusChannel.receive().getOrThrow()
-                        statusChannel.receive().getOrThrow()
+                        repeat(2) {
+                            statusChannel.receive().getOrThrow()
+                        }
                     }
 
                     // If we are the only admin, leaving this group will destroy the group
