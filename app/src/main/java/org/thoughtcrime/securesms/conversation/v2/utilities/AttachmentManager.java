@@ -24,6 +24,7 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -34,6 +35,9 @@ import android.util.Pair;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 import com.bumptech.glide.RequestManager;
 import com.squareup.phrase.Phrase;
 import java.io.IOException;
@@ -266,6 +270,7 @@ public class AttachmentManager {
     }
 
     public static void selectGallery(Activity activity, int requestCode, @NonNull Address recipient, @NonNull String body) {
+
         Context c = activity.getApplicationContext();
         Runnable openGallery = () ->
                 activity.startActivityForResult(
@@ -275,8 +280,14 @@ public class AttachmentManager {
 
         // Android 14+ : if we already have partial OR full access, skip asking
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            if (Permissions.hasAll(activity, Manifest.permission.READ_MEDIA_IMAGES) ||
-                    Permissions.hasAll(activity, Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED)) {
+            boolean hasAllPermissions = Permissions.hasAll(activity,
+                    Manifest.permission.READ_MEDIA_IMAGES,
+                    Manifest.permission.READ_MEDIA_VIDEO);
+
+            boolean hasPartial =  Permissions.hasAll(activity,
+                    Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED);
+
+            if (hasAllPermissions || hasPartial) {
                 openGallery.run();
                 return;
             }
@@ -336,6 +347,32 @@ public class AttachmentManager {
                                 .format().toString()
                 )
                 .execute();
+    }
+
+    public static boolean hasFullAccess(Activity activity) {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
+                Permissions.hasAll(activity,
+                        Manifest.permission.READ_MEDIA_IMAGES,
+                        Manifest.permission.READ_MEDIA_VIDEO);
+    }
+
+    public static void managePhotoAccess(@NonNull Activity activity, @Nullable Runnable onAnyResult) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { // API 34+
+            Permissions.with(activity)
+                    .request(
+                            Manifest.permission.READ_MEDIA_IMAGES,
+                            Manifest.permission.READ_MEDIA_VIDEO,
+                            Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
+                    ).onAnyResult(() -> {
+                        if (onAnyResult != null) onAnyResult.run();
+                    })
+                    .execute();
+        } else {
+            // older Android: no partial selector, send to App settings
+            Intent i = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                    .setData(Uri.fromParts("package", activity.getPackageName(), null));
+            activity.startActivity(i);
+        }
     }
 
     public static void selectAudio(Activity activity, int requestCode) {

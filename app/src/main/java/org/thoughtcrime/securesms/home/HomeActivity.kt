@@ -166,7 +166,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                     is GlobalSearchAdapter.Model.Contact -> ConversationActivityV2
                         .createIntent(
                             this,
-                            address = Address.fromSerialized(model.contact.hexString) as Address.Conversable
+                            address = model.contact
                         )
 
                     is GlobalSearchAdapter.Model.GroupConversation -> ConversationActivityV2
@@ -184,13 +184,13 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 push(intent)
             },
             onContactLongPressed = { model ->
-                onSearchContactLongPress(model.contact.hexString, model.name)
+                onSearchContactLongPress(model.contact, model.name)
             }
         )
     }
 
-    private fun onSearchContactLongPress(accountId: String, contactName: String) {
-        val bottomSheet = SearchContactActionBottomSheet.newInstance(accountId, contactName)
+    private fun onSearchContactLongPress(address: Address, contactName: String) {
+        val bottomSheet = SearchContactActionBottomSheet.newInstance(address, contactName)
         bottomSheet.show(supportFragmentManager, bottomSheet.tag)
     }
 
@@ -422,12 +422,13 @@ class HomeActivity : ScreenLockActionBarActivity(),
         homeViewModel.onCancelSearchClicked()
     }
 
-    override fun onBlockContact(accountId: String) {
-        homeViewModel.blockContact(accountId)
+    override fun onBlockContact(address: Address) {
+        if (address is Address.Standard) {
+            homeViewModel.blockContact(address.address)
+        }
     }
 
-    override fun onDeleteContact(accountId: String) {
-        val address = accountId.toAddress()
+    override fun onDeleteContact(address: Address) {
         if (address is Address.WithAccountId) {
             homeViewModel.deleteContact(address)
         }
