@@ -145,7 +145,7 @@ object MessageSender {
                         myEd25519PrivKey = storage.getUserED25519KeyPair()!!.secretKey.data,
                         timestampMs = message.sentTimestamp!!,
                         recipientPubKey = AccountId(userPublicKey!!).prefixedBytes,
-                        proSignature = null,
+                        proRotatingEd25519PrivKey = null,
                     )
                 } else {
                     SessionProtocol.encryptFor1o1(
@@ -153,7 +153,7 @@ object MessageSender {
                         myEd25519PrivKey = storage.getUserED25519KeyPair()!!.secretKey.data,
                         timestampMs = message.sentTimestamp!!,
                         recipientPubKey = AccountId(destination.publicKey).prefixedBytes,
-                        proSignature = null,
+                        proRotatingEd25519PrivKey = null,
                     )
                 }
             }
@@ -166,7 +166,7 @@ object MessageSender {
                     timestampMs = message.sentTimestamp!!,
                     groupEd25519PublicKey = groupId.prefixedBytes,
                     groupEd25519PrivateKey = configFactory.withGroupConfigs(groupId) { it.groupKeys.groupEncKey() },
-                    proSignature = null,
+                    proRotatingEd25519PrivKey = null,
                 )
             }
 
@@ -381,7 +381,7 @@ object MessageSender {
                         timestampMs = message.sentTimestamp!!,
                         recipientPubKey = AccountId(destination.blindedPublicKey).prefixedBytes,
                         communityServerPubKey = Hex.fromStringCondensed(destination.serverPublicKey),
-                        proSignature = null
+                        proRotatingEd25519PrivKey = null
                     )
 
                     val base64EncodedData = Base64.encodeBytes(cipherText)
