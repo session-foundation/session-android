@@ -33,6 +33,7 @@ import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionCoordinator
+import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
 import org.thoughtcrime.securesms.pro.subscription.expiryFromNow
 import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.ui.UINavigator
@@ -243,6 +244,10 @@ class ProSettingsViewModel @Inject constructor(
                 }
             }
 
+            Commands.ShowRefund -> {
+                navigateTo(ProSettingsDestination.RefundSubscription)
+            }
+
             is Commands.SetShowProBadge -> {
                 //todo PRO implement
             }
@@ -395,6 +400,10 @@ class ProSettingsViewModel @Inject constructor(
         )
     }
 
+    fun getSubscriptionManager(): SubscriptionManager {
+        return subscriptionCoordinator.getCurrentManager()
+    }
+
     private fun navigateTo(destination: ProSettingsDestination){
         viewModelScope.launch {
             navigator.navigate(destination)
@@ -408,6 +417,8 @@ class ProSettingsViewModel @Inject constructor(
         data object HideSimpleDialog : Commands
 
         object ShowPlanUpdate: Commands
+        object ShowRefund: Commands
+
         data class SetShowProBadge(val show: Boolean): Commands
 
         data class SelectProPlan(val plan: ProPlan): Commands

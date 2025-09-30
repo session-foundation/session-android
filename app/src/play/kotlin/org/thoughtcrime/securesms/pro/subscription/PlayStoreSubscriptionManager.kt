@@ -17,6 +17,8 @@ import kotlinx.coroutines.withContext
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
+import java.time.Duration
+import java.time.Instant
 import javax.inject.Inject
 
 /**
@@ -28,9 +30,12 @@ class PlayStoreSubscriptionManager @Inject constructor(
     private val currentActivityObserver: CurrentActivityObserver,
 ) : SubscriptionManager {
     override val id = "google_play_store"
-    override val displayName = ""
+    override val displayName = "Google Play Store"
     override val description = ""
+    override val platform = "Google"
     override val iconRes = null
+
+    override val quickRefundExpiry: Instant = Instant.now() //todo PRO implement properly
 
     private val billingClient by lazy {
         BillingClient.newBuilder(application)

@@ -731,7 +731,7 @@ fun ProManage(
                         iconColor = LocalColors.current.danger,
                         qaTag = R.string.qa_pro_settings_action_request_refund,
                         onClick = {
-                            //todo PRO implement
+                            sendCommand(ShowRefund)
                         }
                     )
                 }
