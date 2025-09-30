@@ -3,22 +3,30 @@ package org.thoughtcrime.securesms.pro
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.session.libsession.messaging.messages.visible.VisibleMessage
-import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.isCommunity
 import org.session.libsession.utilities.recipients.ProStatus
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.isPro
 import org.session.libsession.utilities.recipients.shouldShowProBadge
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
+import org.thoughtcrime.securesms.util.State
 import java.time.Duration
 import java.time.Instant
 import javax.inject.Inject
@@ -28,8 +36,77 @@ import javax.inject.Singleton
 class ProStatusManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val prefs: TextSecurePreferences,
+    private val recipientRepository: RecipientRepository,
 ) : OnAppStartupComponent {
 
+    val subscriptionState: StateFlow<SubscriptionState> = combine(
+        recipientRepository.observeSelf(),
+        (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS } as Flow<*>)
+            .onStart { emit(Unit) }
+            .map { prefs.getDebugSubscriptionType() }
+    ){ selfRecipient, debugSubscription ->
+        //todo PRO implement properly
+
+        val subscriptionState = debugSubscription ?: DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE
+        SubscriptionState(
+            type = when(subscriptionState){
+                DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> SubscriptionType.Active.AutoRenewing(
+                    proStatus = ProStatus.Pro(
+                        visible = true,
+                        validUntil = Instant.now() + Duration.ofDays(14),
+                    ),
+                    duration = ProSubscriptionDuration.THREE_MONTHS,
+                    nonOriginatingSubscription = null
+                )
+
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> SubscriptionType.Active.Expiring(
+                    proStatus = ProStatus.Pro(
+                        visible = true,
+                        validUntil = Instant.now() + Duration.ofDays(2),
+                    ),
+                    duration = ProSubscriptionDuration.TWELVE_MONTHS,
+                    nonOriginatingSubscription = null
+                )
+
+                DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> SubscriptionType.Active.AutoRenewing(
+                    proStatus = ProStatus.Pro(
+                        visible = true,
+                        validUntil = Instant.now() + Duration.ofDays(14),
+                    ),
+                    duration = ProSubscriptionDuration.ONE_MONTH,
+                    nonOriginatingSubscription = SubscriptionType.Active.NonOriginatingSubscription(
+                        device = "iPhone",
+                        store = "Apple App Store",
+                        platform = "Apple",
+                        platformAccount = "Apple Account",
+                        urlSubscription = "https://www.apple.com/account/subscriptions",
+                    )
+                )
+
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_APPLE -> SubscriptionType.Active.Expiring(
+                    proStatus = ProStatus.Pro(
+                        visible = true,
+                        validUntil = Instant.now() + Duration.ofDays(2),
+                    ),
+                    duration = ProSubscriptionDuration.ONE_MONTH,
+                    nonOriginatingSubscription = SubscriptionType.Active.NonOriginatingSubscription(
+                        device = "iPhone",
+                        store = "Apple App Store",
+                        platform = "Apple",
+                        platformAccount = "Apple Account",
+                        urlSubscription = "https://www.apple.com/account/subscriptions",
+                    )
+                )
+
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> SubscriptionType.Expired
+            },
+               // SubscriptionType.NeverSubscribed,
+            refreshState = State.Success(Unit),
+        )
+
+    }.stateIn(GlobalScope, SharingStarted.Eagerly,
+        initialValue = getDefaultSubscriptionStateData()
+    )
 
     private val _postProLaunchStatus = MutableStateFlow(isPostPro())
     val postProLaunchStatus: StateFlow<Boolean> = _postProLaunchStatus
@@ -44,7 +121,6 @@ class ProStatusManager @Inject constructor(
 
     //todo PRO add "about to expire" CTA logic on app launch
     //todo PRO add "expired" CTA logic on app launch
-
 
     /**
      * Logic to determine if we should animate the avatar for a user or freeze it on the first frame
@@ -77,64 +153,6 @@ class ProStatusManager @Inject constructor(
         if(!isPostPro()) return Int.MAX_VALUE // allow infinite pins while not in post Pro
 
         return if (status.isPro()) Int.MAX_VALUE else MAX_PIN_REGULAR
-    }
-
-    fun getCurrentSubscriptionState(): SubscriptionState {
-        //todo PRO implement properly
-        //todo PRO need a way to differentiate originating store
-
-        val subscriptionState = prefs.getDebugSubscriptionType() ?: DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE
-        return  when(subscriptionState){
-            DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> SubscriptionState.Active.AutoRenewing(
-                proStatus = ProStatus.Pro(
-                    visible = true,
-                    validUntil = Instant.now() + Duration.ofDays(14),
-                ),
-                type = ProSubscriptionDuration.THREE_MONTHS,
-                nonOriginatingSubscription = null
-            )
-
-            DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> SubscriptionState.Active.Expiring(
-                proStatus = ProStatus.Pro(
-                    visible = true,
-                    validUntil = Instant.now() + Duration.ofDays(2),
-                ),
-                type = ProSubscriptionDuration.TWELVE_MONTHS,
-                nonOriginatingSubscription = null
-            )
-
-            DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> SubscriptionState.Active.AutoRenewing(
-                proStatus = ProStatus.Pro(
-                    visible = true,
-                    validUntil = Instant.now() + Duration.ofDays(14),
-                ),
-                type = ProSubscriptionDuration.ONE_MONTH,
-                nonOriginatingSubscription = SubscriptionState.Active.NonOriginatingSubscription(
-                    device = "iPhone",
-                    store = "Apple App Store",
-                    platform = "Apple",
-                    platformAccount = "Apple Account",
-                    urlSubscription = "https://www.apple.com/account/subscriptions",
-                )
-            )
-
-            DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_APPLE -> SubscriptionState.Active.Expiring(
-                proStatus = ProStatus.Pro(
-                    visible = true,
-                    validUntil = Instant.now() + Duration.ofDays(2),
-                ),
-                type = ProSubscriptionDuration.ONE_MONTH,
-                nonOriginatingSubscription = SubscriptionState.Active.NonOriginatingSubscription(
-                    device = "iPhone",
-                    store = "Apple App Store",
-                    platform = "Apple",
-                    platformAccount = "Apple Account",
-                    urlSubscription = "https://www.apple.com/account/subscriptions",
-                )
-            )
-
-            DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> SubscriptionState.Expired
-        }
     }
 
     /**
@@ -182,5 +200,7 @@ class ProStatusManager @Inject constructor(
         const val MAX_CHARACTER_PRO = 10000 // max characters in a message for pro users
         private const val MAX_CHARACTER_REGULAR = 2000 // max characters in a message for non pro users
         private const val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
+
+        const val URL_PRO_SUPPORT = "https://getsession.org/pro-form"
     }
 }

@@ -1737,6 +1737,7 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?) {
         setStringPreference(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS, status?.name)
+        _events.tryEmit(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS)
     }
 
     override fun getSubscriptionProvider(): String? {

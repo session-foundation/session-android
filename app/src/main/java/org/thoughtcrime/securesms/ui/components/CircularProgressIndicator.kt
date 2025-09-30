@@ -29,3 +29,15 @@ fun SmallCircularProgressIndicator(
         strokeWidth = 2.dp
     )
 }
+
+@Composable
+fun ExtraSmallCircularProgressIndicator(
+    modifier: Modifier = Modifier,
+    color: Color = LocalContentColor.current
+) {
+    androidx.compose.material3.CircularProgressIndicator(
+        modifier = modifier.size(16.dp),
+        color = color,
+        strokeWidth = 2.dp
+    )
+}

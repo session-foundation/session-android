@@ -341,7 +341,10 @@ class VisibleMessageView : FrameLayout {
 
         // Set text & icons as appropriate for the message state. Note: Possible message states we care
         // about are: isFailed, isSyncFailed, isPending, isSyncing, isResyncing, isRead, and isSent.
-        messageStatus.messageText?.let(binding.messageStatusTextView::setText)
+        messageStatus.messageText?.let{
+            binding.messageStatusTextView.setText(it)
+            binding.messageStatusTextView.contentDescription = context.getString(R.string.AccessibilityId_send_status) + it
+        }
         messageStatus.iconTint?.let(binding.messageStatusTextView::setTextColor)
         messageStatus.iconId?.let { ContextCompat.getDrawable(context, it) }
             ?.run { messageStatus.iconTint?.let { mutate().apply { setTint(it) } } ?: this }
