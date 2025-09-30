@@ -35,6 +35,20 @@
 }
 -dontwarn com.fasterxml.jackson.databind.**
 
+# Jackson DTO used by OpenGroupApi (reactions map values)
+-keep class org.session.libsession.messaging.open_groups.OpenGroupApi$Reaction { *; }
+-keepnames class org.session.libsession.messaging.open_groups.OpenGroupApi$Reaction
+-keepclassmembers class org.session.libsession.messaging.open_groups.OpenGroupApi$Reaction {
+    <fields>;
+    *** get*();
+    void set*(***);
+
+    # keep the default constructor too:
+    public <init>(***, int, kotlin.jvm.internal.DefaultConstructorMarker);
+    # and a bare no-arg ctor if it exists
+    public <init>();
+}
+
 # DTO used by OpenGroupApi
 -keep class org.session.libsession.messaging.open_groups.OpenGroupApi$Capabilities { *; }
 -keepclassmembers class org.session.libsession.messaging.open_groups.OpenGroupApi$Capabilities { <init>(); }
@@ -163,6 +177,14 @@
 -keepclassmembers class org.session.libsession.messaging.messages.Destination$LegacyOpenGroup { <init>(); }
 -keepclassmembers class org.session.libsession.messaging.messages.Destination$OpenGroup { <init>(); }
 -keepclassmembers class org.session.libsession.messaging.messages.Destination$OpenGroupInbox { <init>(); }
+
+# Keep the Enum serializer ctor Kryo reflects on
+-keepclassmembers class com.esotericsoftware.kryo.serializers.DefaultSerializers$EnumSerializer {
+    public <init>(java.lang.Class);
+}
+
+# Prevent enum unboxing/renaming for the enum field being serialized
+-keep class org.session.libsession.messaging.messages.control.TypingIndicator$Kind { *; }
 
 # Optional stability: preserve class names for Kryo (kept as provided)
 -keepnames class org.session.libsession.messaging.messages.Destination$**
