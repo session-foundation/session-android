@@ -1,11 +1,15 @@
-########## BASELINE ##########
+########## BASELINE / ATTRIBUTES ##########
+# Core attrs (serialization/DI/reflective access often rely on these)
 -keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod,MethodParameters,Record
+# Some tools repeat/override attribute keeps; keeping as provided
+-keepattributes Signature,InnerClasses,EnclosingMethod
 
 # Honor @Keep if present
 -keep @androidx.annotation.Keep class * { *; }
 -keepclasseswithmembers class * { @androidx.annotation.Keep *; }
 
-# Optional Google bits you excluded
+########## OPTIONAL GOOGLE BITS (SUPPRESSED WARNINGS) ##########
+# Kept verbatim (includes duplicate line as provided)
 -dontwarn com.google.android.gms.common.annotation.**
 -dontwarn com.google.firebase.analytics.connector.**
 -dontwarn com.google.firebase.analytics.connector.**
@@ -22,7 +26,8 @@
     kotlinx.serialization.KSerializer serializer(...);
 }
 
-########## JACKSON ##########
+########## JACKSON (CORE + ANNOTATIONS + DTOs) ##########
+# Keep Jackson packages and common annotated members
 -keep class com.fasterxml.jackson.** { *; }
 -keepclassmembers class ** {
     @com.fasterxml.jackson.annotation.JsonCreator <init>(...);
@@ -30,17 +35,18 @@
 }
 -dontwarn com.fasterxml.jackson.databind.**
 
-# Jackson DTO used by OpenGroupApi
+# DTO used by OpenGroupApi
 -keep class org.session.libsession.messaging.open_groups.OpenGroupApi$Capabilities { *; }
 -keepclassmembers class org.session.libsession.messaging.open_groups.OpenGroupApi$Capabilities { <init>(); }
 -keepnames class org.session.libsession.messaging.open_groups.OpenGroupApi$Capabilities
 
-# Project models used via Jackson (from your crashes)
+# Project models referenced via Jackson (from crashes)
 -keep class org.thoughtcrime.securesms.crypto.KeyStoreHelper$SealedData { *; }
 -keep class org.thoughtcrime.securesms.crypto.KeyStoreHelper$SealedData$* { *; }
 -keep class org.thoughtcrime.securesms.crypto.AttachmentSecret { *; }
 -keep class org.thoughtcrime.securesms.crypto.AttachmentSecret$* { *; }
 
+# Keep names + bean-style accessors for OpenGroupApi models
 -keepnames class org.session.libsession.messaging.open_groups.**
 -keepclassmembers class org.session.libsession.messaging.open_groups.** {
     <fields>;
@@ -48,6 +54,7 @@
     void set*(***);
 }
 
+# Keep names + bean-style accessors for snode models
 -keepnames class org.session.libsession.snode.**
 -keepclassmembers class org.session.libsession.snode.** {
     <fields>;
@@ -55,121 +62,112 @@
     void set*(***);
 }
 
--keepattributes Signature,InnerClasses,EnclosingMethod
+# TypeReference subclasses and repeated Jackson-annotation keep (kept verbatim)
 -keep class ** extends com.fasterxml.jackson.core.type.TypeReference { *; }
 -keepclassmembers class * {
     @com.fasterxml.jackson.annotation.JsonCreator <init>(...);
     @com.fasterxml.jackson.annotation.JsonProperty *;
 }
 
+# Converters / Deserializers (Jackson constructs via reflection)
 -keep class org.session.libsession.snode.model.RetrieveMessageConverter { public <init>(); public *; }
 -keep class * implements com.fasterxml.jackson.databind.util.Converter { public <init>(); public *; }
 -keep class * extends com.fasterxml.jackson.databind.JsonDeserializer { public <init>(); public *; }
 
-########## JNI LOGGER ##########
-# Keep the interface + all implementors (incl. anonymous/lambdas) and the exact method JNI looks up
+########## JNI LOGGER / NATIVE ENTRYPOINTS ##########
+# Logging interface & implementations (JNI looks up log(String,String,int))
 -keep interface network.loki.messenger.libsession_util.util.Logger { *; }
 -keepnames class * implements network.loki.messenger.libsession_util.util.Logger
 -keepclassmembers class * implements network.loki.messenger.libsession_util.util.Logger {
     public void log(java.lang.String, java.lang.String, int);
 }
 
-# JNI: Config push constructor(s) must stay exactly as-is
+# JNI: ConfigPush constructors (exact signatures preserved)
 -keepnames class network.loki.messenger.libsession_util.util.ConfigPush
-
 -keepclassmembers class network.loki.messenger.libsession_util.util.ConfigPush {
-    # The one JNI is calling:
     public <init>(java.util.List, long, java.util.List);
-    # Keep the Kotlin default-params ctor too (harmless if absent):
     public <init>(java.util.List, long, java.util.List, int, kotlin.jvm.internal.DefaultConstructorMarker);
 }
 
-# JNI: preserve the exact getter used from native
+# JNI: specific getter used from native
 -keepnames class network.loki.messenger.libsession_util.util.UserPic
 -keepclassmembers class network.loki.messenger.libsession_util.util.UserPic {
     public byte[] getKeyAsByteArray();
 }
 
-
 ########## WEBRTC / CHROMIUM JNI ##########
-# Keep WebRTC Java APIs fully to satisfy JNI_OnLoad registration
+# WebRTC public Java APIs (kept for JNI_OnLoad registration)
 -keep class org.webrtc.** { *; }
 
-# Some builds ship Chromium base helpers; harmless if absent
+# Chromium-based bits (harmless if absent, but kept as provided)
 -keep class org.chromium.** { *; }
 -keep class org.chromium.base.** { *; }
 -keep class org.chromium.net.** { *; }
 -keep class org.chromium.media.** { *; }
 
-# Keep all JNI bridges everywhere (prevents stripping/renaming of native methods)
+# Keep all native bridges everywhere
 -keepclasseswithmembers,includedescriptorclasses class * {
     native <methods>;
 }
 
-########## WebRTC/Chromium jni_zero ##########
-# Keep the jni_zero Java side so JNI_OnLoad can FindClass it.
+########## WEBRTC / CHROMIUM jni_zero ##########
+# Ensure jni_zero Java side is discoverable by native
 -keep class org.jni_zero.** { *; }
 -keepnames class org.jni_zero.**
 
-# Conversation.* inner types constructed reflectively/JNI:
-# keep the (String, long, boolean) ctor so GetMethodID/newInstance can find it
+########## CONVERSATION / MODELS (JNI + REFLECTION) ##########
+# Conversation.* types constructed via JNI with (String,long,boolean)
 -keepclassmembers class network.loki.messenger.libsession_util.util.Conversation$OneToOne {
     public <init>(java.lang.String, long, boolean);
 }
-# if other Conversation nested types do the same, cover them too:
 -keepclassmembers class network.loki.messenger.libsession_util.util.Conversation$* {
     public <init>(java.lang.String, long, boolean);
 }
 
-# Emoji search (Jackson polymorphic)
-# If @JsonTypeInfo uses CLASS or MINIMAL_CLASS, keep class NAMES for the model package.
--keepnames class org.thoughtcrime.securesms.database.model.**
-
-# Keep the abstract base + its nested types and members so property/creator names stay intact.
--keep class org.thoughtcrime.securesms.database.model.EmojiSearchData { *; }
--keep class org.thoughtcrime.securesms.database.model.EmojiSearchData$* { *; }
-
-# Kryo needs real no-arg constructors at runtime
--keepclassmembers class org.session.libsession.messaging.messages.Destination$Contact { <init>(); }
--keepclassmembers class org.session.libsession.messaging.messages.Destination$LegacyClosedGroup { <init>(); }
--keepclassmembers class org.session.libsession.messaging.messages.Destination$LegacyOpenGroup { <init>(); }
--keepclassmembers class org.session.libsession.messaging.messages.Destination$ClosedGroup { <init>(); }
--keepclassmembers class org.session.libsession.messaging.messages.Destination$OpenGroup { <init>(); }
--keepclassmembers class org.session.libsession.messaging.messages.Destination$OpenGroupInbox { <init>(); }
-
-# Keep the Conversation model types used by JNI
+# Keep names and members of Conversation/Community models (JNI searches by name)
 -keep class network.loki.messenger.libsession_util.util.Conversation$Community { *; }
 -keep class network.loki.messenger.libsession_util.util.Conversation$OneToOne { *; }
 -keep class network.loki.messenger.libsession_util.util.Conversation$ClosedGroup { *; }
 -keep class network.loki.messenger.libsession_util.util.BaseCommunityInfo { *; }
 
-# Ensure all constructors (including @JvmOverloads-generated) stay public & unstripped
--keepclassmembers class network.loki.messenger.libsession_util.util.Conversation$Community {
-    public <init>(...);
-}
--keepclassmembers class network.loki.messenger.libsession_util.util.Conversation$OneToOne {
-    public <init>(...);
-}
--keepclassmembers class network.loki.messenger.libsession_util.util.Conversation$ClosedGroup {
-    public <init>(...);
-}
+-keepclassmembers class network.loki.messenger.libsession_util.util.Conversation$Community { public <init>(...); }
+-keepclassmembers class network.loki.messenger.libsession_util.util.Conversation$OneToOne { public <init>(...); }
+-keepclassmembers class network.loki.messenger.libsession_util.util.Conversation$ClosedGroup { public <init>(...); }
 
-# Don’t rename these (JNI searches by name)
 -keepnames class network.loki.messenger.libsession_util.util.Conversation$Community
 -keepnames class network.loki.messenger.libsession_util.util.Conversation$OneToOne
 -keepnames class network.loki.messenger.libsession_util.util.Conversation$ClosedGroup
 -keepnames class network.loki.messenger.libsession_util.util.BaseCommunityInfo
 
+# Group members (JNI constructor with long)
 -keep class network.loki.messenger.libsession_util.GroupMembersConfig { *; }
 -keep class network.loki.messenger.libsession_util.util.GroupMember { *; }
 -keepclassmembers class network.loki.messenger.libsession_util.util.GroupMember { public <init>(long); }
 -keepnames class network.loki.messenger.libsession_util.util.GroupMember
 
+# Broad safety net for long-arg ctors in util package
 -keepclassmembers class network.loki.messenger.libsession_util.util.** { public <init>(long); }
 
-# Optional: preserve class names so Kryo’s writeClassAndObject stays stable across app updates
+########## EMOJI SEARCH (JACKSON / POLYMORPHIC) ##########
+# Keep names if @JsonTypeInfo uses CLASS/MINIMAL_CLASS
+-keepnames class org.thoughtcrime.securesms.database.model.**
+# Preserve abstract base + nested types for property/creator names
+-keep class org.thoughtcrime.securesms.database.model.EmojiSearchData { *; }
+-keep class org.thoughtcrime.securesms.database.model.EmojiSearchData$* { *; }
+
+########## KRYO (SERIALIZATION OF DESTINATIONS) ##########
+# No-arg ctors required at runtime for these sealed subclasses
+-keepclassmembers class org.session.libsession.messaging.messages.Destination$ClosedGroup { <init>(); }
+-keepclassmembers class org.session.libsession.messaging.messages.Destination$Contact { <init>(); }
+-keepclassmembers class org.session.libsession.messaging.messages.Destination$LegacyClosedGroup { <init>(); }
+-keepclassmembers class org.session.libsession.messaging.messages.Destination$LegacyOpenGroup { <init>(); }
+-keepclassmembers class org.session.libsession.messaging.messages.Destination$OpenGroup { <init>(); }
+-keepclassmembers class org.session.libsession.messaging.messages.Destination$OpenGroupInbox { <init>(); }
+
+# Optional stability: preserve class names for Kryo (kept as provided)
 -keepnames class org.session.libsession.messaging.messages.Destination$**
 
+########## OPEN GROUP API (MESSAGES) ##########
 -keep class org.session.libsession.messaging.open_groups.OpenGroupApi$Message { *; }
 -keepclassmembers class org.session.libsession.messaging.open_groups.OpenGroupApi$Message { <init>(); }
 -keepnames class org.session.libsession.messaging.open_groups.OpenGroupApi$Message
@@ -178,13 +176,14 @@
     void set*(***);
 }
 
-########## (OPTIONAL) easier stack traces while iterating ##########
+########## (OPTIONAL) EASIER STACK TRACES WHILE ITERATING ##########
 # -keepattributes SourceFile,LineNumberTable
-# This is generated automatically by the Android Gradle plugin.
--dontwarn java.lang.management.ManagementFactory
--dontwarn java.lang.management.RuntimeMXBean
+
+# Misc suppressed warnings left as provided
 -dontwarn java.beans.BeanInfo
 -dontwarn java.beans.IntrospectionException
 -dontwarn java.beans.Introspector
 -dontwarn java.beans.PropertyDescriptor
+-dontwarn java.lang.management.ManagementFactory
+-dontwarn java.lang.management.RuntimeMXBean
 -dontwarn sun.nio.ch.DirectBuffer
