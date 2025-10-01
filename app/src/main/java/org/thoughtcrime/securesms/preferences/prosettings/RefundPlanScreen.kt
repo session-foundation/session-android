@@ -25,11 +25,15 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STO
 import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.recipients.ProStatus
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlan
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlanBadge
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.SubscriptionType
+import org.thoughtcrime.securesms.pro.subscription.NoOpSubscriptionManager
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
+import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -70,8 +74,7 @@ fun RefundPlanScreen(
         // default refund screen
         else -> RefundPlan(
             data = activePlan,
-            isWithinQuickRefundWindow = subManager.isWithinQuickRefundWindow(),
-            subscriptionPlatform = subManager.platform,
+            subscriptionManager = subManager,
             sendCommand = viewModel::onCommand,
             onBack = onBack,
         )
@@ -82,23 +85,27 @@ fun RefundPlanScreen(
 @Composable
 fun RefundPlan(
     data: SubscriptionType.Active,
-    isWithinQuickRefundWindow: Boolean,
-    subscriptionPlatform: String,
+    subscriptionManager: SubscriptionManager,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
+    val isWithinQuickRefundWindow = subscriptionManager.isWithinQuickRefundWindow()
 
     BaseCellButtonProSettingsScreen(
         disabled = true,
         onBack = onBack,
         buttonText = if(isWithinQuickRefundWindow) Phrase.from(context.getText(R.string.openPlatformWebsite))
-            .put(PLATFORM_KEY, subscriptionPlatform)
+            .put(PLATFORM_KEY, subscriptionManager.platform)
             .format().toString()
         else stringResource(R.string.requestRefund),
         dangerButton = true,
         onButtonClick = {
-            //todo PRO implement
+            if(isWithinQuickRefundWindow && !subscriptionManager.quickRefundUrl.isNullOrEmpty()){
+                sendCommand(ShowOpenUrlDialog(subscriptionManager.quickRefundUrl))
+            } else {
+                sendCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_REFUND))
+            }
         },
         title = stringResource(R.string.proRefundDescription),
     ){
@@ -117,9 +124,9 @@ fun RefundPlan(
                 text = annotatedStringResource(
                     if(isWithinQuickRefundWindow)
                         Phrase.from(context.getText(R.string.proRefundRequestStorePolicies))
-                            .put(PLATFORM_KEY, subscriptionPlatform)
-                            .put(PLATFORM_KEY, subscriptionPlatform)
-                            .put(PLATFORM_KEY, subscriptionPlatform)
+                            .put(PLATFORM_KEY, subscriptionManager.platform)
+                            .put(PLATFORM_KEY, subscriptionManager.platform)
+                            .put(PLATFORM_KEY, subscriptionManager.platform)
                             .put(APP_NAME_KEY, context.getString(R.string.app_name))
                             .format()
                     else Phrase.from(context.getText(R.string.proRefundRequestSessionSupport))
@@ -170,8 +177,7 @@ private fun PreviewRefundPlan(
                 duration = ProSubscriptionDuration.THREE_MONTHS,
                 nonOriginatingSubscription = null
             ),
-            isWithinQuickRefundWindow = false,
-            subscriptionPlatform = "Google",
+            subscriptionManager = NoOpSubscriptionManager(),
             sendCommand = {},
             onBack = {},
         )
@@ -193,8 +199,7 @@ private fun PreviewQuickRefundPlan(
                 duration = ProSubscriptionDuration.THREE_MONTHS,
                 nonOriginatingSubscription = null
             ),
-            isWithinQuickRefundWindow = true,
-            subscriptionPlatform = "Google",
+            subscriptionManager = NoOpSubscriptionManager(),
             sendCommand = {},
             onBack = {},
         )

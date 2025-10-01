@@ -249,7 +249,15 @@ class ProSettingsViewModel @Inject constructor(
             }
 
             Commands.GoToProSettings -> {
-                navigateTo(ProSettingsDestination.Home)
+                // navigate back to home and pop all other screens off the stack
+                navigateTo(
+                    destination = ProSettingsDestination.Home,
+                    navOptions = {
+                        popUpTo(ProSettingsDestination.Home){
+                            inclusive = true
+                        }
+                    }
+                )
             }
 
             is Commands.SetShowProBadge -> {

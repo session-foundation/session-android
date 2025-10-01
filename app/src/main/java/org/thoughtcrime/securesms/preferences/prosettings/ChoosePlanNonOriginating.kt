@@ -20,6 +20,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACC
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
 import org.session.libsession.utilities.recipients.ProStatus
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.expiryFromNow
@@ -66,7 +67,7 @@ fun ChoosePlanNonOriginating(
             .format().toString(),
         dangerButton = false,
         onButtonClick = {
-            //todo PRO implement
+            sendCommand(ShowOpenUrlDialog(nonOriginatingData.urlSubscription))
         },
         contentTitle = stringResource(R.string.updatePlan),
         contentDescription = Phrase.from(context.getText(R.string.proPlanSignUp))
@@ -122,6 +123,7 @@ private fun PreviewUpdatePlan(
                     platform = "Apple",
                     platformAccount = "Apple Account",
                     urlSubscription = "https://www.apple.com/account/subscriptions",
+                    urlRefund = "https://www.apple.com/account/subscriptions",
                 )
             ),
             sendCommand = {},

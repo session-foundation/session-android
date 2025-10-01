@@ -80,6 +80,7 @@ class ProStatusManager @Inject constructor(
                         platform = "Apple",
                         platformAccount = "Apple Account",
                         urlSubscription = "https://www.apple.com/account/subscriptions",
+                        urlRefund = "https://support.apple.com/118223",
                     )
                 )
 
@@ -95,6 +96,7 @@ class ProStatusManager @Inject constructor(
                         platform = "Apple",
                         platformAccount = "Apple Account",
                         urlSubscription = "https://www.apple.com/account/subscriptions",
+                        urlRefund = "https://support.apple.com/118223",
                     )
                 )
 
@@ -202,5 +204,6 @@ class ProStatusManager @Inject constructor(
         private const val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
 
         const val URL_PRO_SUPPORT = "https://getsession.org/pro-form"
+        const val URL_PRO_REFUND = "https://getsession.org/android-refund"
     }
 }

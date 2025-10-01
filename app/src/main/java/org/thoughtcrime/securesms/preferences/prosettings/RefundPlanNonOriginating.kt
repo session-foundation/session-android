@@ -18,6 +18,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.recipients.ProStatus
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
@@ -45,7 +46,7 @@ fun RefundPlanNonOriginating(
             .format().toString(),
         dangerButton = true,
         onButtonClick = {
-            //todo PRO implement
+            sendCommand(ShowOpenUrlDialog(nonOriginatingData.urlRefund))
         },
         contentTitle = Phrase.from(context.getText(R.string.proRefunding))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
@@ -104,6 +105,7 @@ private fun PreviewUpdatePlan(
                     platform = "Apple",
                     platformAccount = "Apple Account",
                     urlSubscription = "https://www.apple.com/account/subscriptions",
+                    urlRefund = "https://www.apple.com/account/subscriptions",
                 )
             ),
             sendCommand = {},

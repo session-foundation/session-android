@@ -35,6 +35,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.recipients.ProStatus
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.GoToProSettings
 import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
@@ -131,7 +132,9 @@ fun PlanConfirmation(
                 modifier = Modifier.fillMaxWidth()
                     .widthIn(max = LocalDimensions.current.maxContentWidth),
                 text = stringResource(R.string.theReturn),
-                onClick = {}
+                onClick = {
+                    sendCommand(GoToProSettings)
+                }
             )
 
             Spacer(Modifier.weight(1f))

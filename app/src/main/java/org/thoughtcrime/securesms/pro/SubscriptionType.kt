@@ -36,6 +36,7 @@ sealed interface SubscriptionType{
             val platform: String,
             val platformAccount: String,
             val urlSubscription: String,
+            val urlRefund: String,
         )
     }
 

@@ -36,6 +36,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
     override val iconRes = null
 
     override val quickRefundExpiry: Instant = Instant.now() //todo PRO implement properly
+    override val quickRefundUrl = "https://support.google.com/googleplay/workflow/9813244"
 
     private val billingClient by lazy {
         BillingClient.newBuilder(application)

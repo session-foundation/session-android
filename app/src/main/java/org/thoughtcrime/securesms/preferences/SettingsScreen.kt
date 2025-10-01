@@ -1106,6 +1106,7 @@ private fun SettingsScreenPreview() {
                             platform = "Apple",
                             platformAccount = "Apple Account",
                             urlSubscription = "https://www.apple.com/account/subscriptions",
+                            urlRefund = "https://www.apple.com/account/subscriptions",
                         )),
                     refreshState = State.Success(Unit),
                 ),
