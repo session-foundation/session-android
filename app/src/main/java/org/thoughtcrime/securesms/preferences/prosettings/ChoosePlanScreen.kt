@@ -85,7 +85,7 @@ fun ChoosePlanScreen(
                 onBack = onBack,
             )
 
-        //todo PRO handle the case here when there are no SubscriptionManager available (for example fdroid builds)
+        //todo PRO handle the case here when there are no SubscriptionManager available (for example fdroid builds) OR they do but they are on a different google account from the one they purchsed the sub with
 
         // default plan chooser
         else -> ChoosePlan(

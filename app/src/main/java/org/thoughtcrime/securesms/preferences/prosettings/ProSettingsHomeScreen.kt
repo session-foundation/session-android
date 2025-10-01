@@ -711,6 +711,18 @@ fun ProManage(
         Column(
             modifier = Modifier.fillMaxWidth(),
         ) {
+            val refundButton: @Composable ()->Unit = {
+                IconActionRowItem(
+                    title = annotatedStringResource(R.string.requestRefund),
+                    titleColor = LocalColors.current.danger,
+                    icon = R.drawable.ic_circle_warning_custom,
+                    iconColor = LocalColors.current.danger,
+                    qaTag = R.string.qa_pro_settings_action_request_refund,
+                    onClick = {
+                        sendCommand(ShowRefund)
+                    }
+                )
+            }
             when(data){
                 is SubscriptionType.Active.AutoRenewing -> {
                     IconActionRowItem(
@@ -724,29 +736,11 @@ fun ProManage(
                         }
                     )
                     Divider()
-                    IconActionRowItem(
-                        title = annotatedStringResource(R.string.requestRefund),
-                        titleColor = LocalColors.current.danger,
-                        icon = R.drawable.ic_circle_warning_custom,
-                        iconColor = LocalColors.current.danger,
-                        qaTag = R.string.qa_pro_settings_action_request_refund,
-                        onClick = {
-                            sendCommand(ShowRefund)
-                        }
-                    )
+                    refundButton()
                 }
 
                 is SubscriptionType.Active.Expiring -> {
-                    IconActionRowItem(
-                        title = annotatedStringResource(R.string.cancelPlan),
-                        titleColor = LocalColors.current.danger,
-                        icon = R.drawable.ic_circle_x_custom,
-                        iconColor = LocalColors.current.danger,
-                        qaTag = R.string.qa_pro_settings_action_cancel_plan,
-                        onClick = {
-                            //todo PRO implement
-                        }
-                    )
+                    refundButton()
                 }
 
                 is SubscriptionType.Expired -> {

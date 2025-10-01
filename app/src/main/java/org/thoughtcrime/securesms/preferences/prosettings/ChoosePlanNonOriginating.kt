@@ -89,11 +89,11 @@ fun ChoosePlanNonOriginating(
             ),
             NonOriginatingLinkCellData(
                 title =  Phrase.from(context.getText(R.string.viaStoreWebsite))
-                    .put(PLATFORM_STORE_KEY, nonOriginatingData.platform)
+                    .put(PLATFORM_STORE_KEY, nonOriginatingData.platform)  //todo PRO wrong key in string
                     .format(),
                 info = Phrase.from(context.getText(R.string.viaStoreWebsiteDescription))
                     .put(PLATFORM_ACCOUNT_KEY, nonOriginatingData.platformAccount)
-                    .put(PLATFORM_STORE_KEY, nonOriginatingData.platform)
+                    .put(PLATFORM_STORE_KEY, nonOriginatingData.platform)  //todo PRO wrong key in string
                     .format(),
                 iconRes = R.drawable.ic_globe
             )
