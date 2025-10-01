@@ -19,7 +19,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.DEVICE_TYPE_
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACCOUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
 import org.session.libsession.utilities.recipients.ProStatus
-import org.thoughtcrime.securesms.pro.SubscriptionState
+import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.expiryFromNow
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
@@ -32,7 +32,7 @@ import java.time.Instant
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun ChoosePlanNonOriginating(
-    subscription: SubscriptionState.Active,
+    subscription: SubscriptionType.Active,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ){
@@ -40,19 +40,19 @@ fun ChoosePlanNonOriginating(
     val context = LocalContext.current
 
     val headerTitle = when(subscription) {
-        is SubscriptionState.Active.Expiring -> Phrase.from(context.getText(R.string.proPlanExpireDate))
+        is SubscriptionType.Active.Expiring -> Phrase.from(context.getText(R.string.proPlanExpireDate))
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-            .put(DATE_KEY, subscription.type.expiryFromNow())
+            .put(DATE_KEY, subscription.duration.expiryFromNow())
             .format()
 
         else -> Phrase.from(context.getText(R.string.proPlanActivatedAutoShort))
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .put(CURRENT_PLAN_KEY, DateUtils.getLocalisedTimeDuration(
                 context = context,
-                amount = subscription.type.duration.months,
+                amount = subscription.duration.duration.months,
                 unit = MeasureUnit.MONTH
             ))
-            .put(DATE_KEY, subscription.type.expiryFromNow())
+            .put(DATE_KEY, subscription.duration.expiryFromNow())
             .format()
     }
 
@@ -109,13 +109,13 @@ private fun PreviewUpdatePlan(
     PreviewTheme(colors) {
         val context = LocalContext.current
         ChoosePlanNonOriginating (
-            subscription = SubscriptionState.Active.AutoRenewing(
+            subscription = SubscriptionType.Active.AutoRenewing(
                 proStatus = ProStatus.Pro(
                     visible = true,
                     validUntil = Instant.now() + Duration.ofDays(14),
                 ),
-                type = ProSubscriptionDuration.THREE_MONTHS,
-                nonOriginatingSubscription = SubscriptionState.Active.NonOriginatingSubscription(
+                duration = ProSubscriptionDuration.THREE_MONTHS,
+                nonOriginatingSubscription = SubscriptionType.Active.NonOriginatingSubscription(
                     device = "iPhone",
                     store = "Apple App Store",
                     platform = "Apple",

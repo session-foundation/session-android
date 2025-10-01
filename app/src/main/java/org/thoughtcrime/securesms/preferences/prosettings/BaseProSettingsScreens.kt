@@ -59,6 +59,8 @@ import org.thoughtcrime.securesms.ui.DialogBg
 fun BaseProSettingsScreen(
     disabled: Boolean,
     onBack: () -> Unit,
+    onHeaderClick: (() -> Unit)? = null,
+    extraHeaderContent: @Composable (() -> Unit)? = null,
     content: @Composable () -> Unit
 ){
     Scaffold(
@@ -87,6 +89,8 @@ fun BaseProSettingsScreen(
 
             SessionProSettingsHeader(
                 disabled = disabled,
+                onClick = onHeaderClick,
+                extraContent = extraHeaderContent
             )
 
             content()
@@ -143,14 +147,14 @@ fun BaseCellButtonProSettingsScreen(
                 modifier = Modifier.fillMaxWidth()
                     .widthIn(max = LocalDimensions.current.maxContentWidth),
                 text = buttonText,
-                onClick = {}
+                onClick = onButtonClick
             )
         } else {
             AccentFillButtonRect(
                 modifier = Modifier.fillMaxWidth()
                     .widthIn(max = LocalDimensions.current.maxContentWidth),
                 text = buttonText,
-                onClick = {}
+                onClick = onButtonClick
             )
         }
     }

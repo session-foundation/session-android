@@ -202,6 +202,9 @@
     <string name="change">Dəyişdir</string>
     <string name="changePasswordFail">Parol dəyişdirmə uğursuz oldu</string>
     <string name="changePasswordModalDescription">{app_name} üçün parolunuzu dəyişdirin. Daxili olaraq saxlanılmış verilər, yeni parolunuzla təkrar şifrələnəcək.</string>
+    <string name="checkingProStatus">{pro} statusu yoxlanılır</string>
+    <string name="checkingProStatusDescription">{pro} məlumatlarınız yoxlanılır. Bu səhifədəki bəzi məlumatlar, yoxlama tamamlanana qədər qeyri-dəqiq ola bilər.</string>
+    <string name="checkingProStatusUpgradeDescription">{pro} statusunuz yoxlanılır. Bu yoxlama tamamlandıqdan sonra {pro} ya yüksəldə biləcəksiniz.</string>
     <string name="clear">Təmizlə</string>
     <string name="clearAll">Hamısını təmizlə</string>
     <string name="clearDataAll">Bütün veriləri təmizlə</string>
@@ -454,10 +457,12 @@
     <string name="enjoyingSessionButtonPositive">Əladır {emoji}</string>
     <string name="enjoyingSessionDescription">{app_name} tətbiqini bir müddətdir istifadə edirsiniz, necə gedir? Fikirlərinizi eşitmək bizim üçün çox dəyərli olardı.</string>
     <string name="enter">Daxil ol</string>
+    <string name="errorCheckingProStatus">{pro} statusunu yoxlama xətası.</string>
     <string name="errorConnection">Lütfən internet bağlantınızı yoxlayıb yenidən sınayın.</string>
     <string name="errorCopyAndQuit">Xətanı kopyala və çıx</string>
     <string name="errorDatabase">Veri bazası xətası</string>
     <string name="errorGeneric">Nəsə səhv getdi. Lütfən daha sonra yenidən sınayın.</string>
+    <string name="errorLoadingProPlan">{pro} planını yükləmə xətası.</string>
     <string name="errorUnknown">Bilinməyən bir xəta baş verdi.</string>
     <string name="failedToDownload">Endirmək uğursuz oldu</string>
     <string name="failures">Xətalar</string>
@@ -595,7 +600,9 @@
     </plurals>
     <string name="join">Qoşul</string>
     <string name="later">Daha sonra</string>
+    <string name="launchOnStartDescriptionDesktop">Kompüteriniz açıldığı zaman {app_name}-u avtomatik başlat.</string>
     <string name="launchOnStartDesktop">Açılışda başlat</string>
+    <string name="launchOnStartupDisabledDesktop">Bu ayar, Linux-dakı sisteminiz tərəfindən idarə olunur. Avtomatik açılışı fəallaşdırmaq üçün sistem ayarlarında {app_name} tətbiqini açılış tətbiqlərinizə əlavə edin.</string>
     <string name="learnMore">Daha ətraflı</string>
     <string name="leave">Tərk et</string>
     <string name="leaving">Tərk edilir...</string>
@@ -906,6 +913,7 @@
         <item quantity="one">%1$s %2$s nişan göndərildi</item>
         <item quantity="other">%1$s %2$s nişan göndərildi</item>
     </plurals>
+    <string name="proBetaFeatures">{pro} Beta Xüsusiyyətləri</string>
     <string name="proBilledAnnually">{price} - illik haqq</string>
     <string name="proBilledMonthly">{price} - aylıq haqq</string>
     <string name="proBilledQuarterly">{price} - rüblük haqq</string>
@@ -913,11 +921,14 @@
     <string name="proCallToActionPinnedConversations">Daha çoxunu sancmaq istəyirsiniz? {app_pro} ilə söhbətlərinizi təşkil edin və premium özəlliklərin kilidini açın</string>
     <string name="proCallToActionPinnedConversationsMoreThan">5-dən çoxunu sancmaq istəyirsiniz? {app_pro} ilə söhbətlərinizi təşkil edin və premium özəlliklərin kilidini açın</string>
     <string name="proDiscountTooltip">Hazırkı planınızda artıq tam {app_pro} qiymətinin {percent}% endirimi mövcuddur.</string>
+    <string name="proErrorRefreshingStatus">{pro} statusunu təzələmə xətası</string>
     <string name="proExpired">Müddəti bitib</string>
     <string name="proExpiredDescription">Təəssüf ki, {pro} planınızın müddəti bitib. {app_pro} tətbiqinin eksklüziv imtiyazlarına və özəlliklərinə erişimi davam etdirmək üçün yeniləyin.</string>
     <string name="proExpiringSoon">Tezliklə bitir</string>
+    <string name="proExpiringSoonDescription">{pro} planınızın müddəti <b>{time}</b> vaxtında bitir. {app_pro} tətbiqinin eksklüziv imtiyazlarına və özəlliklərinə erişimi davam etdirmək üçün planınızı güncəlləyin.</string>
     <string name="proExpiringTime">{pro}, <b>{time}</b> vaxtında başa çatır</string>
     <string name="proFaq">{pro} TVS</string>
+    <string name="proFaqDescription">{app_pro} TVS-da tez-tez verilən suallara cavab tapın.</string>
     <string name="proFeatureListAnimatedDisplayPicture">GIF və WebP ekran şəkilləri yüklə</string>
     <string name="proFeatureListLargerGroups">300 üzvə qədər daha da böyük qrup söhbətləri</string>
     <string name="proFeatureListLoadsMore">Üstəgəl, daha çox eksklüziv özəlliklər</string>
@@ -948,14 +959,23 @@
     </plurals>
     <string name="proPlanActivatedAuto">{app_pro} planınız aktivdir!\n\nPlanınız avtomatik olaraq <b>{date}</b> tarixində başqa bir <b>{current_plan}</b> üçün yenilənəcək. Planınıza edilən güncəlləmələr növbəti {pro} yenilənməsi zamanı qüvvəyə minəcək.</string>
     <string name="proPlanActivatedAutoShort">{app_pro} planınız aktivdir!\n\nPlanınız avtomatik olaraq <b>{date}</b> tarixində başqa bir <b>{current_plan}</b> üçün yenilənəcək.</string>
+    <string name="proPlanActivatedNotAuto">{app_pro} planınızın müddəti <b>{date}</b> tarixində bitir.\n\nEksklüziv Pro özəlliklərinə kəsintisiz erişimi təmin etmək üçün planınızı indi güncəlləyin.</string>
+    <string name="proPlanError">{pro} planı xətası</string>
+    <string name="proPlanExpireDate">{app_pro} planınızın müddəti <b>{date}</b> tarixində bitir.</string>
+    <string name="proPlanLoading">{pro} planı yüklənir</string>
+    <string name="proPlanLoadingDescription">{pro} planınız barədə məlumatlar hələ də yüklənir. Bu proses tamamlanana qədər planınızı güncəlləyə bilməzsiniz.</string>
+    <string name="proPlanLoadingEllipsis">{pro} planı yüklənir...</string>
+    <string name="proPlanNetworkLoadError">Hazırkı planınızı yükləmək üçün şəbəkəyə bağlana bilmir. Bağlantı bərpa olunana qədər {app_name} ilə planınızı güncəlləmək sıradan çıxarılacaq.\n\nLütfən şəbəkə bağlantınızı yoxlayıb yenidən sınayın.</string>
     <string name="proPlanNotFound">{pro} planı tapılmadı</string>
     <string name="proPlanNotFoundDescription">Hesabınız üçün heç bir aktiv plan tapılmadı. Bunun bir səhv olduğunu düşünürsünüzsə, lütfən kömək üçün {app_name} dəstəyi ilə əlaqə saxlayın.</string>
     <string name="proPlanPlatformRefund">Başda <b><font color="0">{platform_store} Mağazası</font></b> üzərindən {app_pro} üçün qeydiyyatdan keçdiyinizə görə, geri ödəmə tələbini göndərmək üçün eyni {platform_account} hesabını istifadə etməlisiniz.</string>
     <string name="proPlanPlatformRefundLong">Başda <b><font color="0">{platform_store} Mağazası</font></b> üzərindən {app_pro} üçün qeydiyyatdan keçdiyinizə görə, geri qaytarma tələbiniz {app_name} Dəstək komandası tərəfindən icra olunacaq.\n\nAşağıdakı düyməyə basaraq və geri ödəniş formunu dolduraraq geri ödəmə tələbinizi göndərin.\n\n{app_name} Dəstək komandası, geri ödəmə tələblərini adətən 24-72 saat ərzində emal edir, yüksək tələb həcminə görə bu proses daha uzun çəkə bilər.</string>
     <string name="proPlanRecover">{pro} planını geri qaytar</string>
     <string name="proPlanRenew">{pro} planını yenilə</string>
+    <string name="proPlanRenewDesktop">Hazırda, {pro} planları, yalnızca {platform_store} və {platform_store} Mağazaları vasitəsilə satın alına və yenilənə bilər. {app_name} Masaüstü istifadə etdiyinizə görə planınızı burada yeniləyə bilməzsiniz.\n\n{app_pro} gəlişdiriciləri, istifadəçilərin {pro} planlarını {platform_store} və {platform_store} Mağazalarından kənarda almağına imkan verəcək alternativ ödəniş variantları üzərində ciddi şəkildə çalışırlar. <b>{pro} Yol Xəritəsi</b> {icon}</string>
     <string name="proPlanRenewDesktopLinked">{platform_store} və ya {platform_store} Mağazaları vasitəsilə planınızı {app_name} quraşdırılmış və əlaqələndirilmiş cihazda {app_pro} ayarlarında yeniləyin.</string>
     <string name="proPlanRenewDesktopStore">{pro} üçün qeydiyyatdan keçdiyiniz {platform_account} hesabınızla {platform_store} veb saytında planınızı yeniləyin.</string>
+    <string name="proPlanRenewStart">Güclü {app_pro} özəlliklərini yenidən istifadə etməyə başlamaq üçün {app_pro} planınızı yeniləyin.</string>
     <string name="proPlanRenewSupport">{app_pro} planınız yeniləndi! {network_name} dəstək verdiyiniz üçün təşəkkürlər.</string>
     <string name="proPlanRestored">{pro} planı bərpa edildi</string>
     <string name="proPlanRestoredDescription">{app_pro} üçün yararlı bir plan aşkarlandı və {pro} statusunuz bərpa edildi!</string>
@@ -966,6 +986,7 @@
     <string name="proRefundDescription">Getməyinizə məyus olduq. Geri ödəmə tələb etməzdən əvvəl bilməli olduğunuz şeylər.</string>
     <string name="proRefundNextSteps">{platform_account} hazırda geri ödəniş tələbinizi emal edir. Bu, adətən 24-48 saat çəkir. Onların qərarından asılı olaraq, {app_name} tətbiqində {pro} statusunuzun dəyişdiyini görə bilərsiniz.</string>
     <string name="proRefundRequestSessionSupport">Geri qaytarma tələbiniz {app_name} Dəstək komandası tərəfindən icra olunacaq.\n\nAşağıdakı düyməyə basaraq və geri ödəniş formunu dolduraraq geri ödəniş tələbinizi göndərin.\n\n{app_name} Dəstək komandası, geri ödəniş tələblərini adətən 24-72 saat ərzində emal edir, yüksək tələb həcminə görə bu proses daha uzun çəkə bilər.</string>
+    <string name="proRefundRequestStorePolicies">Geri ödəniş tələbiniz yalnız {platform_account} veb saytında <b>{platform_account}</b> hesabı üzərindən icra olunacaq.\n\n{platform_account} geri ödəniş siyasətlərinə əsasən, {app_name} gəlişdiriciləri, geri ödəniş tələblərinin nəticəsinə təsir edə bilməz. Bu, tələbin qəbul olunub-olunmaması ilə yanaşı, tam və ya qismən geri ödənişin verilib-verilməməsini də əhatə edir.</string>
     <string name="proRefundSupport">Geri ödəmə tələbinizlə bağlı daha çox güncəlləmə üçün lütfən {platform_account} ilə əlaqə saxlayın. {platform_account} geri ödəniş siyasətlərinə əsasən, {app_name} gəlişdiriciləri, geri ödəniş tələblərinin nəticəsinə təsir edə bilməz.\n\n<font color="0">{platform_store} Geri ödəmə dəstəyi</font></string>
     <string name="proRefunding">{pro} geri ödəməsi</string>
     <string name="proRefundingDescription">{app_pro} planları üçün geri ödəmələr yalnız {platform_store} Mağazası vasitəsilə {platform_account} tərəfindən həyata keçirilir.\n\n{platform_account} geri ödəniş siyasətlərinə əsasən, {app_name} gəlişdiriciləri, geri ödəniş tələblərinin nəticəsinə təsir edə bilməz. Bu, tələbin qəbul olunub-olunmaması ilə yanaşı, tam və ya qismən geri ödənişin verilib-verilməməsini də əhatə edir.</string>
@@ -973,7 +994,16 @@
     <string name="proSendMore">Daha çoxunu göndərmək üçün</string>
     <string name="proSettings">{pro} ayarları</string>
     <string name="proStats">{pro} statistikalarınız</string>
+    <string name="proStatsLoading">{pro} statistikaları yüklənir</string>
+    <string name="proStatsLoadingDescription">{pro} statistikalarınız yüklənir, lütfən gözləyin.</string>
     <string name="proStatsTooltip">{pro} statistikaları, bu cihazdakı istifadəni əks-etdirir və əlaqələndirilmiş cihazlarda fərqli görünə bilər.</string>
+    <string name="proStatusError">{pro} status xətası</string>
+    <string name="proStatusInfoInaccurateNetworkError">{pro} statusunuzu yoxlamaq üçün şəbəkəyə bağlana bilmir. Bu səhifədə nümayiş olan məlumatlar, bağlantı bərpa olunana qədər qeyri-dəqiq ola bilər.\n\nLütfən şəbəkə bağlantınızı yoxlayıb yenidən sınayın.</string>
+    <string name="proStatusLoading">{pro} statusu yüklənir</string>
+    <string name="proStatusLoadingDescription">{pro} məlumatlarınız yüklənir. Bu səhifədəki bəzi əməliyyatlar yükləmə tamamlanana qədər əlçatan olmaya bilər.</string>
+    <string name="proStatusLoadingSubtitle">{pro} status yüklənir</string>
+    <string name="proStatusNetworkErrorDescription">{pro} statusunuzu yoxlamaq üçün şəbəkəyə bağlana bilmir. Bağlantı bərpa olunana qədər {pro} ya yüksəldə bilməyəcəksiniz.\n\nLütfən şəbəkə bağlantınızı yoxlayıb yenidən sınayın.</string>
+    <string name="proStatusRefreshNetworkError">{pro} statusunuzu təzələmək üçün şəbəkəyə bağlana bilmir. Bu səhifədəki bəzi əməliyyatlar, bağlantı bərpa olunana qədər sıradan çıxarılacaq.\n\nLütfən şəbəkə bağlantınızı yoxlayıb yenidən sınayın.</string>
     <string name="proSupportDescription">{pro} planınızla bağlı kömək lazımdır? Dəstək komandamıza müraciət edin.</string>
     <string name="proTosPrivacy">Güncəlləyərək, {app_pro} <b>Xidmət Şərtləri</b> {icon} və <b>Məxfilik Siyasəti</b> {icon} ilə razılaşırsınız</string>
     <string name="proUnlimitedPins">Limitsiz sancma</string>
@@ -1064,6 +1094,8 @@
     <string name="screenSecurity">Ekran güvənliyi</string>
     <string name="screenshotNotifications">Ekran şəkli bildirişi</string>
     <string name="screenshotNotificationsDescription">Birə bir söhbətdə qarşı tərəf ekran şəklini çəkəndə bir bildiriş al.</string>
+    <string name="screenshotProtectionDescriptionDesktop">Bu cihazda çəkilən ekran şəkillərində {app_name} pəncərəsini gizlət.</string>
+    <string name="screenshotProtectionDesktop">Ekran şəkli qoruması</string>
     <string name="screenshotTaken"><b>{name}</b> ekran şəklini çəkdi.</string>
     <string name="search">Axtar</string>
     <string name="searchContacts">Kontaktları axtar</string>
@@ -1147,6 +1179,7 @@
     <string name="unavailable">Əlçatmazdır</string>
     <string name="undo">Geri al</string>
     <string name="unknown">Bilinmir</string>
+    <string name="unsupportedCpu">Dəstəklənməyən CPU</string>
     <string name="updateApp">Tətbiq güncəlləmələri</string>
     <string name="updateCommunityInformation">İcma məlumatlarını güncəllə</string>
     <string name="updateCommunityInformationDescription">İcma adı və açıqlaması, bütün icma üzvlərinə görünür</string>
@@ -1192,6 +1225,7 @@
     <string name="window">Pəncərə</string>
     <string name="yes">Bəli</string>
     <string name="you">Siz</string>
+    <string name="yourCpuIsUnsupportedSSE42">CPU-nuz Linux x64 əməliyyat sistemlərində {app_name}-un təsvirləri emal etməsi üçün tələb olunan SSE 4.2 təlimatlarını dəstəkləmir. Lütfən uyumlu bir CPU-ya keçin və ya fərqli bir əməliyyat sistemi istifadə edin.</string>
     <string name="yourRecoveryPassword">Geri qaytarma parolunuz</string>
     <string name="zoomFactor">Böyütmə amili</string>
     <string name="zoomFactorDescription">Mətnin və vizual elementlərin ölçüsünü ayarla.</string>

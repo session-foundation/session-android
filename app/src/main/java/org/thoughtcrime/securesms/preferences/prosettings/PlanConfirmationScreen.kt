@@ -1,71 +1,46 @@
 package org.thoughtcrime.securesms.preferences.prosettings
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.max
 import com.squareup.phrase.Phrase
-import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_KEY
 import org.session.libsession.utilities.recipients.ProStatus
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlan
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlanBadge
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.pro.SubscriptionState
+import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.ui.SessionProSettingsHeader
-import org.thoughtcrime.securesms.ui.SpeechBubbleTooltip
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
-import org.thoughtcrime.securesms.ui.components.BackAppBar
-import org.thoughtcrime.securesms.ui.components.DangerFillButtonRect
-import org.thoughtcrime.securesms.ui.components.RadioButtonIndicator
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
-import org.thoughtcrime.securesms.ui.components.iconExternalLink
-import org.thoughtcrime.securesms.ui.components.inlineContentMap
-import org.thoughtcrime.securesms.ui.components.radioButtonColors
-import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.safeContentWidth
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -73,7 +48,7 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
-import org.thoughtcrime.securesms.ui.theme.bold
+import org.thoughtcrime.securesms.util.State
 import java.time.Duration
 import java.time.Instant
 
@@ -173,14 +148,16 @@ private fun PreviewPlanConfirmation(
     PreviewTheme(colors) {
         PlanConfirmation(
             proData = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState.Active.AutoRenewing(
-                    proStatus = ProStatus.Pro(
-                        visible = true,
-                        validUntil = Instant.now() + Duration.ofDays(14),
+                subscriptionState = SubscriptionState(
+                    type = SubscriptionType.Active.AutoRenewing(
+                        proStatus = ProStatus.Pro(
+                            visible = true,
+                            validUntil = Instant.now() + Duration.ofDays(14),
+                        ),
+                        duration = ProSubscriptionDuration.THREE_MONTHS,
+                        nonOriginatingSubscription = null
                     ),
-                    type = ProSubscriptionDuration.THREE_MONTHS,
-                    nonOriginatingSubscription = null
-                ),
+                    refreshState = State.Success(Unit),),
             ),
             sendCommand = {},
             onBack = {},

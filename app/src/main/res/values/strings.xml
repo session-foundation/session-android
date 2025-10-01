@@ -458,6 +458,9 @@
     <string name="enjoyingSessionButtonPositive">It\'s Great {emoji}</string>
     <string name="enjoyingSessionDescription">You\'ve been using {app_name} for a little while, how’s it going? We’d really appreciate hearing your thoughts.</string>
     <string name="enter">Enter</string>
+    <string name="enterPasswordDescription">Enter the password you set for {app_name}</string>
+    <string name="enterPasswordTooltip">Enter the password you use to unlock Session &amp;#13;
+on startup, not your Recovery Password</string>
     <string name="errorCheckingProStatus">Error checking {pro} status.</string>
     <string name="errorConnection">Please check your internet connection and try again.</string>
     <string name="errorCopyAndQuit">Copy Error and Quit</string>
@@ -925,6 +928,8 @@
     <string name="proCancellationDescription">Canceling your {app_pro} plan will prevent your plan from automatically renewing before your {pro} plan expires. Canceling {pro} does <b>not</b> result in a refund. You will continue to be able to use {app_pro} features until your plan expires.\n\n
 Because you originally signed up for {app_pro} via a <b>{platform_account}</b>, you\'ll need to use the same {platform_account} to cancel your plan.</string>
     <string name="proCancellationOptions">Two ways to cancel your plan:</string>
+    <string name="proClearAllDataDevice">Are you sure you want to delete your data from this device?\n\n<b>{app_pro}</b> cannot be transferred to another account. Please save your Recovery Password to ensure you can restore your {pro} plan later.</string>
+    <string name="proClearAllDataNetwork">Are you sure you want to delete your data from the network? If you continue, you will not be able to restore your messages or contacts.\n\n<b>{app_pro}</b> cannot be transferred to another account. Please save your Recovery Password to ensure you can restore your {pro} plan later.</string>
     <string name="proDiscountTooltip">Your current plan is already discounted by {percent}% of the full {app_pro} price.</string>
     <string name="proErrorRefreshingStatus">Error refreshing {pro} status</string>
     <string name="proExpired">Expired</string>
@@ -1236,7 +1241,7 @@ Because you originally signed up for {app_pro} via a <b>{platform_account}</b>, 
     <string name="window">Window</string>
     <string name="yes">Yes</string>
     <string name="you">You</string>
-    <string name="yourCpuIsUnsupportedSSE42">Your CPU does not support SSE 4.2 instructions, which are required by Session on Linux x64 operating systems to process images. Please upgrade to a compatible CPU or use a different operating system.</string>
+    <string name="yourCpuIsUnsupportedSSE42">Your CPU does not support SSE 4.2 instructions, which are required by {app_name} on Linux x64 operating systems to process images. Please upgrade to a compatible CPU or use a different operating system.</string>
     <string name="yourRecoveryPassword">Your Recovery Password</string>
     <string name="zoomFactor">Zoom Factor</string>
     <string name="zoomFactorDescription">Adjust the size of text and visual elements.</string>

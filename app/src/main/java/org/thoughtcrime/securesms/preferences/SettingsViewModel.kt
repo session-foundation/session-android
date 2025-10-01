@@ -32,12 +32,13 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.utilities.await
+import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.recipients.isPro
-import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.NoExternalStorageException
@@ -45,9 +46,13 @@ import org.thoughtcrime.securesms.attachments.AvatarUploadManager
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.SubscriptionState
+import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
+import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.util.AnimatedImageUtils
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
@@ -55,6 +60,7 @@ import org.thoughtcrime.securesms.util.BitmapDecodingException
 import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.ClearDataUtils
 import org.thoughtcrime.securesms.util.NetworkConnectivity
+import org.thoughtcrime.securesms.util.State
 import org.thoughtcrime.securesms.util.mapToStateFlow
 import java.io.File
 import java.io.IOException
@@ -90,7 +96,7 @@ class SettingsViewModel @Inject constructor(
         recoveryHidden = prefs.getHidePassword(),
         isPro = selfRecipient.value.proStatus.isPro(),
         isPostPro = proStatusManager.isPostPro(),
-        showProBadge = selfRecipient.value.proStatus.shouldShowProBadge(),
+        subscriptionState = getDefaultSubscriptionStateData(),
     ))
     val uiState: StateFlow<UIState>
         get() = _uiState
@@ -104,17 +110,22 @@ class SettingsViewModel @Inject constructor(
                         it.copy(
                             username = recipient.displayName(attachesBlindedId = false),
                             isPro = recipient.proStatus.isPro(),
-                            showProBadge = recipient.proStatus.shouldShowProBadge()
                         )
                     }
                 }
+        }
+
+        // observe subscription status
+        viewModelScope.launch {
+            proStatusManager.subscriptionState.collect { state ->
+                _uiState.update { it.copy(subscriptionState = state) }
+            }
         }
 
         // set default dialog ui
         viewModelScope.launch {
             _uiState.update { it.copy(avatarDialogState = getDefaultAvatarDialogState()) }
         }
-
 
         viewModelScope.launch {
             proStatusManager.postProLaunchStatus.collect { postPro ->
@@ -371,17 +382,38 @@ class SettingsViewModel @Inject constructor(
 
     private fun clearData(clearNetwork: Boolean) {
         val currentClearState = uiState.value.clearDataDialog
+        val isPro = selfRecipient.value.proStatus.isPro()
         // show loading
         _uiState.update { it.copy(clearDataDialog = ClearDataState.Clearing) }
 
         // only clear locally is clearNetwork is false or we are in an error state
         viewModelScope.launch(Dispatchers.Default) {
-            if (!clearNetwork || currentClearState == ClearDataState.Error) {
-                clearDataDeviceOnly()
-            } else if(currentClearState == ClearDataState.Default){
-                _uiState.update { it.copy(clearDataDialog = ClearDataState.ConfirmNetwork) }
-            } else { // clear device and network
-                clearDataDeviceAndNetwork()
+            when{
+                // we have already confirmed the deletion
+                currentClearState is ClearDataState.ConfirmedClearDataState -> {
+                    if(clearNetwork){
+                        clearDataDeviceAndNetwork()
+                    } else {
+                        clearDataDeviceOnly()
+                    }
+                }
+
+                // we need special confirmations for pro users
+                isPro -> {
+                    if(!clearNetwork || currentClearState == ClearDataState.Error){
+                        _uiState.update { it.copy(clearDataDialog = ClearDataState.ConfirmedClearDataState.ConfirmDevicePro) }
+                    } else {
+                        _uiState.update { it.copy(clearDataDialog = ClearDataState.ConfirmedClearDataState.ConfirmNetworkPro) }
+                    }
+                }
+
+                else -> {
+                    if(!clearNetwork || currentClearState == ClearDataState.Error){
+                        clearDataDeviceOnly()
+                    } else {
+                        _uiState.update { it.copy(clearDataDialog = ClearDataState.ConfirmedClearDataState.ConfirmNetwork) }
+                    }
+                }
             }
         }
     }
@@ -553,7 +585,62 @@ class SettingsViewModel @Inject constructor(
                 }
                 showUrlDialog( "https://session.foundation/donate#app")
             }
+
+            is Commands.ShowProErrorOrLoading -> {
+                when(_uiState.value.subscriptionState.refreshState){
+                    // if we are in a loading or refresh state we should show a dialog instead
+                    is State.Loading -> {
+                        _uiState.update {
+                            it.copy(
+                                showSimpleDialog = SimpleDialogData(
+                                    title = Phrase.from(context.getText(R.string.proStatusLoading))
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .format().toString(),
+                                    message = Phrase.from(context.getText(R.string.proStatusLoadingDescription))
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .format(),
+                                    positiveText = context.getString(R.string.okay),
+                                    positiveStyleDanger = false,
+                                )
+                            )
+                        }
+                    }
+
+                    is State.Error -> {
+                        _uiState.update {
+                            it.copy(
+                                showSimpleDialog = SimpleDialogData(
+                                    title = Phrase.from(context.getText(R.string.proStatusError))
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .format().toString(),
+                                    message = Phrase.from(context.getText(R.string.proStatusRefreshNetworkError))
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .format(),
+                                    positiveText = context.getString(R.string.retry),
+                                    negativeText = context.getString(R.string.helpSupport),
+                                    positiveStyleDanger = false,
+                                    showXIcon = true,
+                                    onPositive = { refreshSubscriptionData() },
+                                    onNegative = {
+                                        showUrlDialog(ProStatusManager.URL_PRO_SUPPORT)
+                                    }
+                                )
+                            )
+                        }
+                    }
+
+                    else -> {}
+                }
+            }
+
+            is Commands.HideSimpleDialog -> {
+                _uiState.update { it.copy(showSimpleDialog = null) }
+            }
         }
+    }
+
+    private fun refreshSubscriptionData(){
+        //todo PRO implement properly
     }
 
     sealed class AvatarDialogState() {
@@ -570,8 +657,13 @@ class SettingsViewModel @Inject constructor(
         data object Hidden: ClearDataState
         data object Default: ClearDataState
         data object Clearing: ClearDataState
-        data object ConfirmNetwork: ClearDataState
         data object Error: ClearDataState
+
+        sealed interface ConfirmedClearDataState: ClearDataState {
+            data object ConfirmNetwork : ConfirmedClearDataState
+            data object ConfirmNetworkPro : ConfirmedClearDataState
+            data object ConfirmDevicePro : ConfirmedClearDataState
+        }
     }
 
     data class UsernameDialogData(
@@ -597,9 +689,10 @@ class SettingsViewModel @Inject constructor(
         val showAvatarPickerOptions: Boolean = false,
         val showAnimatedProCTA: Boolean = false,
         val usernameDialog: UsernameDialogData? = null,
+        val showSimpleDialog: SimpleDialogData? = null,
         val isPro: Boolean,
         val isPostPro: Boolean,
-        val showProBadge: Boolean
+        val subscriptionState: SubscriptionState,
     )
 
     sealed interface Commands {
@@ -622,7 +715,11 @@ class SettingsViewModel @Inject constructor(
         data object ShowAnimatedProCTA: Commands
         data object HideAnimatedProCTA: Commands
 
+        data object HideSimpleDialog: Commands
+
         data object OnDonateClicked: Commands
+
+        data object ShowProErrorOrLoading: Commands
 
         data class ClearData(val clearNetwork: Boolean): Commands
     }
