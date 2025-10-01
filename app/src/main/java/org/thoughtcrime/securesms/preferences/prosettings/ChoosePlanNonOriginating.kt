@@ -60,9 +60,7 @@ fun ChoosePlanNonOriginating(
         disabled = false,
         onBack = onBack,
         headerTitle = headerTitle,
-        buttonText = Phrase.from(context.getText(R.string.openStoreWebsite))
-            .put(PLATFORM_STORE_KEY, nonOriginatingData.store)
-            .format().toString(),
+        buttonText = "TEMP",
         dangerButton = false,
         onButtonClick = {
             //todo PRO implement
