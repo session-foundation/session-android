@@ -854,7 +854,6 @@
     <string name="onsErrorNotRecognized">Не вдалося розпізнати цей ONS. Будь ласка, перевірте його та спробуйте ще раз.</string>
     <string name="onsErrorUnableToSearch">Не вдалося виконати пошук цього ONS. Спробуйте пізніше.</string>
     <string name="open">Відкрити</string>
-    <string name="openStoreWebsite">Відкрити {platform_store} вебсайт</string>
     <string name="openSurvey">Пройти опитування</string>
     <string name="other">Інші</string>
     <string name="password">Пароль</string>
@@ -1003,7 +1002,6 @@
     <string name="proUnlimitedPinsDescription">Закріплення необмеженої кількості співрозмовників в головному переліку.</string>
     <string name="proUpdatePlanExpireDescription">Ваш план завершиться <b>{date}</b>.\n\nПісля оновлення налаштувань автоматичної оплати, ваш план автоматично подовжиться <b>{date}</b> на додатковий {selected_plan} доступу до Pro.</string>
     <string name="proUserProfileModalCallToAction">Хочете отримати більше від {app_name}? Оновіться до {app_pro}, щоб мати потужніший досвід обміну повідомленнями.</string>
-    <string name="processingRefundRequest">{platform_account} опрацьовує ваш запит на відшкодування</string>
     <string name="profile">Профіль</string>
     <string name="profileDisplayPicture">Аватар</string>
     <string name="profileDisplayPictureRemoveError">Не вдалося видалити зображення профілю</string>
@@ -1210,7 +1208,6 @@
     <string name="urlOpenDescription">Ви впевнені, що хочете відкрити цю URL-адресу у своєму браузері?\n\n<b>{url}</b></string>
     <string name="urlOpenDescriptionAlternative">За ланкою перейде твоє оглядало мережців за промовчання.</string>
     <string name="useFastMode">Використовувати швидкий режим</string>
-    <string name="viaStoreWebsite">Через вебсайт {platform_store}</string>
     <string name="video">Відео</string>
     <string name="videoErrorPlay">Не вдається відтворити відео.</string>
     <string name="view">Вигляд</string>
