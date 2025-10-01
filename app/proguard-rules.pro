@@ -9,9 +9,7 @@
 -keepclasseswithmembers class * { @androidx.annotation.Keep *; }
 
 ########## OPTIONAL GOOGLE BITS (SUPPRESSED WARNINGS) ##########
-# Kept verbatim (includes duplicate line as provided)
 -dontwarn com.google.android.gms.common.annotation.**
--dontwarn com.google.firebase.analytics.connector.**
 -dontwarn com.google.firebase.analytics.connector.**
 
 ########## ANDROID / DI ##########
@@ -45,7 +43,7 @@
 
     # keep the default constructor too:
     public <init>(***, int, kotlin.jvm.internal.DefaultConstructorMarker);
-    # and a bare no-arg ctor if it exists
+    # and a bare no-arg constructor if it exists
     public <init>();
 }
 
@@ -76,14 +74,14 @@
     void set*(***);
 }
 
-# TypeReference subclasses and repeated Jackson-annotation keep (kept verbatim)
+# TypeReference subclasses and repeated Jackson-annotation keep
 -keep class ** extends com.fasterxml.jackson.core.type.TypeReference { *; }
 -keepclassmembers class * {
     @com.fasterxml.jackson.annotation.JsonCreator <init>(...);
     @com.fasterxml.jackson.annotation.JsonProperty *;
 }
 
-# Converters / Deserializers (Jackson constructs via reflection)
+# Converters / Deserializers
 -keep class org.session.libsession.snode.model.RetrieveMessageConverter { public <init>(); public *; }
 -keep class * implements com.fasterxml.jackson.databind.util.Converter { public <init>(); public *; }
 -keep class * extends com.fasterxml.jackson.databind.JsonDeserializer { public <init>(); public *; }
@@ -113,7 +111,7 @@
 # WebRTC public Java APIs (kept for JNI_OnLoad registration)
 -keep class org.webrtc.** { *; }
 
-# Chromium-based bits (harmless if absent, but kept as provided)
+# Chromium-based bits
 -keep class org.chromium.** { *; }
 -keep class org.chromium.base.** { *; }
 -keep class org.chromium.net.** { *; }
@@ -170,7 +168,7 @@
 -keep class org.thoughtcrime.securesms.database.model.EmojiSearchData$* { *; }
 
 ########## KRYO (SERIALIZATION OF DESTINATIONS) ##########
-# No-arg ctors required at runtime for these sealed subclasses
+# No-arg contructors required at runtime for these sealed subclasses
 -keepclassmembers class org.session.libsession.messaging.messages.Destination$ClosedGroup { <init>(); }
 -keepclassmembers class org.session.libsession.messaging.messages.Destination$Contact { <init>(); }
 -keepclassmembers class org.session.libsession.messaging.messages.Destination$LegacyClosedGroup { <init>(); }
@@ -178,7 +176,7 @@
 -keepclassmembers class org.session.libsession.messaging.messages.Destination$OpenGroup { <init>(); }
 -keepclassmembers class org.session.libsession.messaging.messages.Destination$OpenGroupInbox { <init>(); }
 
-# Keep the Enum serializer ctor Kryo reflects on
+# Keep the Enum serializer contructor Kryo reflects on
 -keepclassmembers class com.esotericsoftware.kryo.serializers.DefaultSerializers$EnumSerializer {
     public <init>(java.lang.Class);
 }
@@ -186,7 +184,7 @@
 # Prevent enum unboxing/renaming for the enum field being serialized
 -keep class org.session.libsession.messaging.messages.control.TypingIndicator$Kind { *; }
 
-# Optional stability: preserve class names for Kryo (kept as provided)
+# Preserve class names for Kryo
 -keepnames class org.session.libsession.messaging.messages.Destination$**
 
 ########## OPEN GROUP API (MESSAGES) ##########
@@ -198,10 +196,7 @@
     void set*(***);
 }
 
-########## (OPTIONAL) EASIER STACK TRACES WHILE ITERATING ##########
-# -keepattributes SourceFile,LineNumberTable
-
-# Misc suppressed warnings left as provided
+# Misc suppressed warnings
 -dontwarn java.beans.BeanInfo
 -dontwarn java.beans.IntrospectionException
 -dontwarn java.beans.Introspector
