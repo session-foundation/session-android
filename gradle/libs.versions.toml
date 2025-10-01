@@ -65,7 +65,7 @@ subsamplingScaleImageViewVersion = "3.10.0"
 testCoreVersion = "1.7.0"
 truthVersion = "1.4.5"
 turbineVersion = "1.2.1"
-uiTestJunit4Version = "1.9.1"
+uiTestJunit4Version = "1.9.2"
 workRuntimeKtxVersion = "2.10.5"
 zxingVersion = "3.5.3"
 huaweiPushVersion = "6.13.0.300"
@@ -168,7 +168,7 @@ turbine = { module = "app.cash.turbine:turbine", version.ref = "turbineVersion" 
 huawei-push = { module = 'com.huawei.hms:push', version.ref = 'huaweiPushVersion' }
 google-play-review = { module = "com.google.android.play:review", version.ref = "googlePlayReviewVersion" }
 google-play-review-ktx = { module = "com.google.android.play:review-ktx", version.ref = "googlePlayReviewVersion" }
-sqlite-web-viewer = { module = "io.github.simophin:sqlite-web-viewer", version = "0.0.3" }
+sqlite-web-viewer = { module = "io.github.simophin:sqlite-web-viewer", version = "0.2.0" }
 protoc = { module = "com.google.protobuf:protoc", version = "4.31.1" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilVersion" }
 coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coilVersion" }
