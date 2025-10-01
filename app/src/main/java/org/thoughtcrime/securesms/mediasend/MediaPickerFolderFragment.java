@@ -53,6 +53,7 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
 
   MediaPickerFolderAdapter adapter;
 
+  private MenuProvider manageMenuProvider;
 
   public static @NonNull MediaPickerFolderFragment newInstance(@NonNull Recipient recipient) {
     Bundle args = new Bundle();
@@ -133,9 +134,20 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
       toolbar.setNavigationOnClickListener(v -> requireActivity().onBackPressed());
     }
 
-    if(!AttachmentManager.hasFullAccess(requireActivity())){
-      MenuHost menuHost = (MenuHost) requireActivity();
-      menuHost.addMenuProvider(new MenuProvider() {
+    initToolbarOptions();
+  }
+
+  private void initToolbarOptions() {
+    MenuHost menuHost = (MenuHost) requireActivity();
+
+    // Always remove current provider first (if any)
+    if (manageMenuProvider != null) {
+      menuHost.removeMenuProvider(manageMenuProvider);
+      manageMenuProvider = null;
+    }
+
+    if (AttachmentManager.shouldShowManagePhoto(requireActivity())) {
+      manageMenuProvider = new MenuProvider() {
         @Override
         public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
           inflater.inflate(R.menu.menu_media_add, menu);
@@ -146,14 +158,19 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
           if (item.getItemId() == R.id.mediapicker_menu_add) {
             AttachmentManager.managePhotoAccess(requireActivity(), () -> {
               if (!isAdded()) return;
+
               viewModel.getFolders(requireContext())
                       .observe(getViewLifecycleOwner(), adapter::setFolders);
+
+              initToolbarOptions();
             });
             return true;
           }
           return false;
         }
-      }, getViewLifecycleOwner(), Lifecycle.State.STARTED);
+      };
+
+      menuHost.addMenuProvider(manageMenuProvider, getViewLifecycleOwner(), Lifecycle.State.STARTED);
     }
   }
 
