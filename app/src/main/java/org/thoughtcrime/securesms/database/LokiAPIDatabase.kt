@@ -2,6 +2,11 @@ package org.thoughtcrime.securesms.database
 
 import android.content.ContentValues
 import android.content.Context
+import androidx.sqlite.db.transaction
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonPrimitive
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
@@ -16,10 +21,17 @@ import org.session.libsignal.utilities.removingIdPrefixIfNeeded
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
+import org.thoughtcrime.securesms.util.asSequence
 import java.util.Date
+import javax.inject.Inject
 import javax.inject.Provider
+import javax.inject.Singleton
 
-class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) : Database(context, helper), LokiAPIDatabaseProtocol {
+@Singleton
+class LokiAPIDatabase @Inject constructor(
+    @ApplicationContext context: Context,
+    helper: Provider<SQLCipherOpenHelper>,
+) : Database(context, helper), LokiAPIDatabaseProtocol {
 
     companion object {
         // Shared
@@ -309,6 +321,47 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
     override fun clearAllLastMessageHashes() {
         val database = writableDatabase
         database.delete(lastMessageHashValueTable2, null, null)
+    }
+
+    override fun dedupMessageHashes(
+        hashes: Sequence<String>,
+        swarmPubKey: String,
+        namespace: Int
+    ): Set<String> {
+        return readableDatabase.rawQuery(
+            """
+                SELECT $receivedMessageHashValues FROM $receivedMessageHashValuesTable
+                WHERE 
+                    $publicKey = ? AND
+                    $receivedMessageHashNamespace = ? AND
+                    ($receivedMessageHashValues NOT IN (SELECT value FROM json_each(?)))
+            """.trimIndent(),
+            JsonArray(hashes.map(::JsonPrimitive).toList()).toString()
+        ).use { cursor ->
+            cursor.asSequence().mapTo(hashSetOf()) { it.getString(0) }
+        }
+    }
+
+    override fun addNewMessageHashes(
+        hashes: Sequence<String>,
+        swarmPubKey: String,
+        namespace: Int
+    ) {
+        writableDatabase.transaction {
+            compileStatement("""
+                INSERT OR IGNORE INTO $receivedMessageHashValuesTable 
+                    ($publicKey, $receivedMessageHashNamespace, $receivedMessageHashValues)
+                VALUES (?, ?, ?)
+            """.trimIndent()).use { statement ->
+                for (hash in hashes) {
+                    statement.clearBindings()
+                    statement.bindString(1, swarmPublicKey)
+                    statement.bindLong(2, namespace.toLong())
+                    statement.bindString(3, hash)
+                    statement.execute()
+                }
+            }
+        }
     }
 
     override fun getReceivedMessageHashValues(publicKey: String, namespace: Int): Set<String>? {

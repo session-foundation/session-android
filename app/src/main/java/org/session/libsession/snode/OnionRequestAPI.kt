@@ -110,7 +110,7 @@ object OnionRequestAPI {
         val destinationSymmetricKey: ByteArray
     )
 
-    internal sealed class Destination(val description: String) {
+    sealed class Destination(val description: String) {
         class Snode(val snode: org.session.libsignal.utilities.Snode) : Destination("Service node ${snode.ip}:${snode.port}")
         class Server(val host: String, val target: String, val x25519PublicKey: String, val scheme: String, val port: Int) : Destination("$host")
     }
@@ -327,7 +327,7 @@ object OnionRequestAPI {
     /**
      * Sends an onion request to `destination`. Builds new paths as needed.
      */
-    private fun sendOnionRequest(
+    fun sendOnionRequest(
         destination: Destination,
         payload: ByteArray,
         version: Version
@@ -429,7 +429,7 @@ object OnionRequestAPI {
     /**
      * Sends an onion request to `snode`. Builds new paths as needed.
      */
-    internal fun sendOnionRequest(
+    fun sendOnionRequest(
         method: Snode.Method,
         parameters: Map<*, *>,
         snode: Snode,

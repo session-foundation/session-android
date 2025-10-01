@@ -407,6 +407,7 @@ dependencies {
     implementation(libs.opencsv)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.rxbinding)
+    implementation(libs.retrofit)
 
     if (hasIncludedLibSessionUtilProject) {
         implementation(

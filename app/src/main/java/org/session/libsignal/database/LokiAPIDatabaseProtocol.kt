@@ -20,6 +20,18 @@ interface LokiAPIDatabaseProtocol {
     fun clearLastMessageHashes(publicKey: String)
     fun clearLastMessageHashesByNamespaces(vararg namespaces: Int)
     fun clearAllLastMessageHashes()
+
+    /**
+     * @return Hashes that are not already present in the database
+     */
+    fun dedupMessageHashes(hashes: Sequence<String>, swarmPubKey: String, namespace: Int): Set<String>
+    fun <M> dedupMessages(messages: Collection<M>, hash: (M) -> String, swarmPubKey: String, namespace: Int): Sequence<M> {
+        val newHashes = dedupMessageHashes(messages.asSequence().map(hash), swarmPubKey, namespace)
+        return messages.asSequence().filter { hash(it) in newHashes }
+    }
+
+    fun addNewMessageHashes(hashes: Sequence<String>, swarmPubKey: String, namespace: Int)
+
     fun getReceivedMessageHashValues(publicKey: String, namespace: Int): Set<String>?
     fun setReceivedMessageHashValues(publicKey: String, newValue: Set<String>, namespace: Int)
     fun clearReceivedMessageHashValues(publicKey: String)
