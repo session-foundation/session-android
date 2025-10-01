@@ -511,7 +511,7 @@ fun ProSettings(
                     }
                 },
                 qaTag = R.string.qa_pro_settings_action_update_plan,
-                onClick = { sendCommand(ShowPlanUpdate) }
+                onClick = { sendCommand(GoToChoosePlan) }
             )
             Divider()
 
@@ -719,7 +719,7 @@ fun ProManage(
                     iconColor = LocalColors.current.danger,
                     qaTag = R.string.qa_pro_settings_action_request_refund,
                     onClick = {
-                        sendCommand(ShowRefund)
+                        sendCommand(GoToRefund)
                     }
                 )
             }
@@ -755,7 +755,7 @@ fun ProManage(
                         iconColor = LocalColors.current.accentText,
                         qaTag = R.string.qa_pro_settings_action_cancel_plan,
                         onClick = {
-                            sendCommand(ShowPlanUpdate)
+                            sendCommand(GoToChoosePlan)
                         }
                     )
                     Divider()

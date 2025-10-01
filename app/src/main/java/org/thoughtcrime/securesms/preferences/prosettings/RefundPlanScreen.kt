@@ -20,6 +20,7 @@ import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACCOUNT_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
@@ -91,8 +92,8 @@ fun RefundPlan(
     BaseCellButtonProSettingsScreen(
         disabled = true,
         onBack = onBack,
-        buttonText = if(isWithinQuickRefundWindow) Phrase.from(context.getText(R.string.openStoreWebsite))
-            .put(PLATFORM_STORE_KEY, subscriptionPlatform) //todo PRO wrong key in string
+        buttonText = if(isWithinQuickRefundWindow) Phrase.from(context.getText(R.string.openPlatformWebsite))
+            .put(PLATFORM_KEY, subscriptionPlatform)
             .format().toString()
         else stringResource(R.string.requestRefund),
         dangerButton = true,
@@ -116,9 +117,9 @@ fun RefundPlan(
                 text = annotatedStringResource(
                     if(isWithinQuickRefundWindow)
                         Phrase.from(context.getText(R.string.proRefundRequestStorePolicies))
-                            .put(PLATFORM_ACCOUNT_KEY, subscriptionPlatform) //todo PRO wrong key
-                            .put(PLATFORM_ACCOUNT_KEY, subscriptionPlatform) //todo PRO wrong key
-                            .put(PLATFORM_ACCOUNT_KEY, subscriptionPlatform) //todo PRO wrong key
+                            .put(PLATFORM_KEY, subscriptionPlatform)
+                            .put(PLATFORM_KEY, subscriptionPlatform)
+                            .put(PLATFORM_KEY, subscriptionPlatform)
                             .put(APP_NAME_KEY, context.getString(R.string.app_name))
                             .format()
                     else Phrase.from(context.getText(R.string.proRefundRequestSessionSupport))

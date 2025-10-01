@@ -183,7 +183,7 @@ fun ChoosePlan(
             text = buttonLabel,
             enabled = planData.enableButton,
             onClick = {
-                sendCommand(GetProPlan)
+                sendCommand(GoToProSettings)
             }
         )
 

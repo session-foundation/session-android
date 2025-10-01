@@ -17,6 +17,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DEVICE_TYPE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACCOUNT_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
 import org.session.libsession.utilities.recipients.ProStatus
 import org.thoughtcrime.securesms.pro.SubscriptionType
@@ -60,8 +61,8 @@ fun ChoosePlanNonOriginating(
         disabled = false,
         onBack = onBack,
         headerTitle = headerTitle,
-        buttonText = Phrase.from(context.getText(R.string.openStoreWebsite))
-            .put(PLATFORM_STORE_KEY, nonOriginatingData.platform) //todo PRO wrong key in string
+        buttonText = Phrase.from(context.getText(R.string.onPlatformWebsite))
+            .put(PLATFORM_KEY, nonOriginatingData.platform)
             .format().toString(),
         dangerButton = false,
         onButtonClick = {
@@ -72,7 +73,7 @@ fun ChoosePlanNonOriginating(
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .put(PLATFORM_STORE_KEY, nonOriginatingData.store)
             .put(PLATFORM_ACCOUNT_KEY, nonOriginatingData.platformAccount)
-            .format(), //todo PRO the string has 'store' hardcoded but it should be part of the key
+            .format(),
         linkCellsInfo = stringResource(R.string.updatePlanTwo),
         linkCells = listOf(
             NonOriginatingLinkCellData(
@@ -89,7 +90,7 @@ fun ChoosePlanNonOriginating(
             ),
             NonOriginatingLinkCellData(
                 title =  Phrase.from(context.getText(R.string.viaStoreWebsite))
-                    .put(PLATFORM_STORE_KEY, nonOriginatingData.platform)  //todo PRO wrong key in string
+                    .put(PLATFORM_KEY, nonOriginatingData.platform)
                     .format(),
                 info = Phrase.from(context.getText(R.string.viaStoreWebsiteDescription))
                     .put(PLATFORM_ACCOUNT_KEY, nonOriginatingData.platformAccount)

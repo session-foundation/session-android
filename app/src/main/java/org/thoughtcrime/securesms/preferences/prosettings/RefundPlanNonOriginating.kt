@@ -14,6 +14,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DEVICE_TYPE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACCOUNT_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.recipients.ProStatus
@@ -39,8 +40,8 @@ fun RefundPlanNonOriginating(
         disabled = true,
         onBack = onBack,
         headerTitle = stringResource(R.string.proRefundDescription),
-        buttonText = Phrase.from(context.getText(R.string.openStoreWebsite))
-            .put(PLATFORM_STORE_KEY, nonOriginatingData.platform) //todo PRO wrong key in string
+        buttonText = Phrase.from(context.getText(R.string.openPlatformWebsite))
+            .put(PLATFORM_KEY, nonOriginatingData.platform)
             .format().toString(),
         dangerButton = true,
         onButtonClick = {
@@ -54,28 +55,29 @@ fun RefundPlanNonOriginating(
             .put(PLATFORM_STORE_KEY, nonOriginatingData.store)
             .put(PLATFORM_ACCOUNT_KEY, nonOriginatingData.platformAccount)
             .format(),
-        linkCellsInfo = stringResource(R.string.updatePlanTwo), //todo PRO need real string
+        linkCellsInfo = stringResource(R.string.refundRequestOptions),
         linkCells = listOf(
             NonOriginatingLinkCellData(
                 title =  Phrase.from(context.getText(R.string.onDevice))
                     .put(DEVICE_TYPE_KEY, nonOriginatingData.device)
                     .format(),
-                info = Phrase.from(context.getText(R.string.onDeviceDescription))
+                info = Phrase.from(context.getText(R.string.proRefundAccountDevice))
                     .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
                     .put(DEVICE_TYPE_KEY, nonOriginatingData.device)
                     .put(PLATFORM_ACCOUNT_KEY, nonOriginatingData.platformAccount)
                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .format(), //todo PRO need real string
+                    .format(),
                 iconRes = R.drawable.ic_smartphone
             ),
             NonOriginatingLinkCellData(
-                title =  Phrase.from(context.getText(R.string.viaStoreWebsite))
-                    .put(PLATFORM_STORE_KEY, nonOriginatingData.platform)
+                title =  Phrase.from(context.getText(R.string.onPlatformWebsite))
+                    .put(PLATFORM_KEY, nonOriginatingData.platform)
                     .format(),
-                info = Phrase.from(context.getText(R.string.viaStoreWebsiteDescription))
-                    .put(PLATFORM_ACCOUNT_KEY, nonOriginatingData.platform)
-                    .put(PLATFORM_STORE_KEY, nonOriginatingData.store)
-                    .format(), //todo PRO need real string
+                info = Phrase.from(context.getText(R.string.requestRefundPlatformWebsite))
+                    .put(PLATFORM_KEY, nonOriginatingData.platform)
+                    .put(PLATFORM_ACCOUNT_KEY, nonOriginatingData.platformAccount)
+                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                    .format(),
                 iconRes = R.drawable.ic_globe
             )
         )

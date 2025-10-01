@@ -4,6 +4,7 @@ import android.content.Context
 import android.icu.util.MeasureUnit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavOptionsBuilder
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -15,7 +16,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.StringSubstitutionConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN_KEY
@@ -196,7 +196,7 @@ class ProSettingsViewModel @Inject constructor(
                 }
             }
 
-            Commands.ShowPlanUpdate -> {
+            Commands.GoToChoosePlan -> {
                 when(_proSettingsUIState.value.subscriptionState.refreshState){
                     // if we are in a loading or refresh state we should show a dialog instead
                     is State.Loading -> {
@@ -244,8 +244,12 @@ class ProSettingsViewModel @Inject constructor(
                 }
             }
 
-            Commands.ShowRefund -> {
+            Commands.GoToRefund -> {
                 navigateTo(ProSettingsDestination.RefundSubscription)
+            }
+
+            Commands.GoToProSettings -> {
+                navigateTo(ProSettingsDestination.Home)
             }
 
             is Commands.SetShowProBadge -> {
@@ -404,9 +408,12 @@ class ProSettingsViewModel @Inject constructor(
         return subscriptionCoordinator.getCurrentManager()
     }
 
-    private fun navigateTo(destination: ProSettingsDestination){
+    private fun navigateTo(
+        destination: ProSettingsDestination,
+        navOptions: NavOptionsBuilder.() -> Unit = {}
+    ){
         viewModelScope.launch {
-            navigator.navigate(destination)
+            navigator.navigate(destination, navOptions)
         }
     }
 
@@ -416,8 +423,9 @@ class ProSettingsViewModel @Inject constructor(
         data object HideTCPolicyDialog: Commands
         data object HideSimpleDialog : Commands
 
-        object ShowPlanUpdate: Commands
-        object ShowRefund: Commands
+        object GoToChoosePlan: Commands
+        object GoToRefund: Commands
+        object GoToProSettings: Commands
 
         data class SetShowProBadge(val show: Boolean): Commands
 
