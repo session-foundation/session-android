@@ -140,8 +140,8 @@ class SettingsViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            OnionRequestAPI.hasPath.collect {
-                _uiState.update { it.copy(hasPath = it.hasPath) }
+            OnionRequestAPI.hasPath.collect { data ->
+                _uiState.update { it.copy(hasPath = data) }
             }
         }
 
