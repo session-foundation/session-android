@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -72,6 +73,7 @@ import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.recipients.effectiveNotifyType
 import org.session.libsession.utilities.recipients.getType
 import org.session.libsession.utilities.recipients.repeatedWithEffectiveNotifyTypeChange
+import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsession.utilities.toGroupString
 import org.session.libsession.utilities.upsertContact
 import org.session.libsession.utilities.userConfigsChanged
@@ -149,7 +151,8 @@ class ConversationViewModel @AssistedInject constructor(
     attachmentDownloadHandlerFactory: AttachmentDownloadHandler.Factory,
 ) : InputbarViewModel(
     application = application,
-    proStatusManager = proStatusManager
+    proStatusManager = proStatusManager,
+    recipientRepository = recipientRepository,
 ) {
     private val edKeyPair by lazy {
         storage.getUserED25519KeyPair()
@@ -308,6 +311,13 @@ class ConversationViewModel @AssistedInject constructor(
 
         // then wait until it is removed
         repository.conversationListAddressesFlow.first { !it.contains(address) }
+
+        // Wait for a bit so the unblinding navigation could take place first (basically
+        // when a unblinding occurs, i.e. a blinded request has been accepted, the
+        // blinded thread will be deleted. It would have come through here and we show "conversation
+        // deleted" then quit, which is not ideal - so there's another coroutine that
+        // try to navigate to the new conversation and we will make sure that coroutine goes first.
+        delay(500L)
         emit(Unit)
     }
 
@@ -326,11 +336,11 @@ class ConversationViewModel @AssistedInject constructor(
 
     init {
         viewModelScope.launch {
-            combine(
-                recipientFlow,
+            combine(recipientFlow,
                 legacyGroupDeprecationManager.deprecationState,
-                ::getInputBarState
-            ).collectLatest {
+                _searchOpened) { r, dep, searchOpen ->
+                getInputBarState(r, dep, searchOpen)
+            }.collectLatest {
                 _inputBarState.value = it
             }
         }
@@ -422,12 +432,13 @@ class ConversationViewModel @AssistedInject constructor(
 
     private fun getInputBarState(
         recipient: Recipient,
-        deprecationState: LegacyGroupDeprecationManager.DeprecationState
+        deprecationState: LegacyGroupDeprecationManager.DeprecationState,
+        searchOpen: Boolean
     ): InputBarState {
         val currentCharLimitState = _inputBarState.value.charLimitState
         return when {
             // prioritise cases that demand the input to be hidden
-            !shouldShowInput(recipient, deprecationState) -> InputBarState(
+            searchOpen || !shouldShowInput(recipient, deprecationState) -> InputBarState(
                 contentState = InputBarContentState.Hidden,
                 enableAttachMediaControls = false,
                 charLimitState = currentCharLimitState
@@ -538,7 +549,7 @@ class ConversationViewModel @AssistedInject constructor(
             showSearch = showSearch,
             avatarUIData = avatarData,
             // show the pro badge when a conversation/user is pro, except for communities
-            showProBadge = proStatusManager.shouldShowProBadge(conversation.address) && !conversation.isLocalNumber // do not show for note to self
+            showProBadge = conversation.proStatus.shouldShowProBadge() && !conversation.isLocalNumber // do not show for note to self
         ).also {
             // also preload the larger version of the avatar in case the user goes to the settings
             avatarData.elements.mapNotNull { it.remoteFile }.forEach {

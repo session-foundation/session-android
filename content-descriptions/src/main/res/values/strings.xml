@@ -218,7 +218,7 @@
     <string name="AccessibilityId_deleteMessageDeleted">Deleted message</string>
     <string name="AccessibilityId_document">Document</string>
     <string name="AccessibilityId_message">Message body</string>
-    <string name="AccessibilityId_sent">Message sent status: Sent</string>
+    <string name="AccessibilityId_send_status">Message sent status: </string>
     <string name="AccessibilityId_reply">Reply to message</string>
     <string name="AccessibilityId_saveAttachment">Save attachment</string>
     <string name="AccessibilityId_select">Select</string>
@@ -277,6 +277,7 @@
     <string name="AccessibilityId_mediaMessage">Media message</string>
     <string name="AccessibilityId_save">Save</string>
     <string name="AccessibilityId_remove">Remove</string>
+    <string name="qa_icon_error">error-icon</string>
     <string name="qa_input_error">error-message</string>
     <string name="qa_button_submit">submit-button</string>
     <string name="qa_blocked_banner">blocked-banner</string>

@@ -15,7 +15,6 @@ import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.deferred
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.applyExpiryMode
@@ -33,10 +32,8 @@ import org.session.libsession.messaging.utilities.MessageWrapper
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeAPI.nowWithOffset
 import org.session.libsession.snode.SnodeMessage
-import org.session.libsession.snode.SnodeModule
 import org.session.libsession.snode.utilities.asyncPromise
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsignal.crypto.PushTransportDetails
 import org.session.libsignal.protos.SignalServiceProtos
@@ -210,9 +207,6 @@ object MessageSender {
         // Set the failure handler (need it here already for precondition failure handling)
         fun handleFailure(error: Exception) {
             handleFailedMessageSend(message, error, isSyncMessage)
-            if (destination is Destination.Contact && message is VisibleMessage && !isSelfSend()) {
-                SnodeModule.shared.broadcaster.broadcast("messageFailed", message.sentTimestamp!!)
-            }
         }
 
         try {

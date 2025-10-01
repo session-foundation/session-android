@@ -236,29 +236,31 @@ class OpenGroupPoller @AssistedInject constructor(
                 }
             )
         }
-        val isAcceptingCommunityRequests = storage.isCheckingCommunityRequests()
-        if (serverCapabilities.contains(Capability.BLIND.name.lowercase()) && isAcceptingCommunityRequests) {
-            requests.add(
-                if (lastInboxMessageId == null) {
-                    BatchRequestInfo(
-                        request = BatchRequest(
-                            method = GET,
-                            path = "/inbox"
-                        ),
-                        endpoint = Endpoint.Inbox,
-                        responseType = object : TypeReference<List<DirectMessage>>() {}
-                    )
-                } else {
-                    BatchRequestInfo(
-                        request = BatchRequest(
-                            method = GET,
-                            path = "/inbox/since/$lastInboxMessageId"
-                        ),
-                        endpoint = Endpoint.InboxSince(lastInboxMessageId),
-                        responseType = object : TypeReference<List<DirectMessage>>() {}
-                    )
-                }
-            )
+        if (serverCapabilities.contains(Capability.BLIND.name.lowercase())) {
+            if (storage.isCheckingCommunityRequests()) {
+                requests.add(
+                    if (lastInboxMessageId == null) {
+                        BatchRequestInfo(
+                            request = BatchRequest(
+                                method = GET,
+                                path = "/inbox"
+                            ),
+                            endpoint = Endpoint.Inbox,
+                            responseType = object : TypeReference<List<DirectMessage>>() {}
+                        )
+                    } else {
+                        BatchRequestInfo(
+                            request = BatchRequest(
+                                method = GET,
+                                path = "/inbox/since/$lastInboxMessageId"
+                            ),
+                            endpoint = Endpoint.InboxSince(lastInboxMessageId),
+                            responseType = object : TypeReference<List<DirectMessage>>() {}
+                        )
+                    }
+                )
+            }
+
             requests.add(
                 if (lastOutboxMessageId == null) {
                     BatchRequestInfo(

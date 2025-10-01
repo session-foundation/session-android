@@ -12,8 +12,10 @@ import android.view.ViewGroup.MarginLayoutParams
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.view.isVisible
@@ -51,6 +53,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
+import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsession.utilities.updateContact
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
@@ -163,7 +166,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                     is GlobalSearchAdapter.Model.Contact -> ConversationActivityV2
                         .createIntent(
                             this,
-                            address = Address.fromSerialized(model.contact.hexString) as Address.Conversable
+                            address = model.contact
                         )
 
                     is GlobalSearchAdapter.Model.GroupConversation -> ConversationActivityV2
@@ -181,13 +184,13 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 push(intent)
             },
             onContactLongPressed = { model ->
-                onSearchContactLongPress(model.contact.hexString, model.name)
+                onSearchContactLongPress(model.contact, model.name)
             }
         )
     }
 
-    private fun onSearchContactLongPress(accountId: String, contactName: String) {
-        val bottomSheet = SearchContactActionBottomSheet.newInstance(accountId, contactName)
+    private fun onSearchContactLongPress(address: Address, contactName: String) {
+        val bottomSheet = SearchContactActionBottomSheet.newInstance(address, contactName)
         bottomSheet.show(supportFragmentManager, bottomSheet.tag)
     }
 
@@ -216,7 +219,11 @@ class HomeActivity : ScreenLockActionBarActivity(),
             Avatar(
                 size = LocalDimensions.current.iconMediumAvatar,
                 data = avatarUtils.getUIDataFromRecipient(recipient),
-                modifier = Modifier.clickable(onClick = ::openSettings)
+                modifier = Modifier.clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = ::openSettings
+                )
             )
         }
 
@@ -224,7 +231,14 @@ class HomeActivity : ScreenLockActionBarActivity(),
             homeViewModel.onSearchClicked()
         }
         binding.sessionToolbar.disableClipping()
-        binding.sessionHeaderProBadge.isVisible = homeViewModel.shouldShowCurrentUserProBadge()
+
+        lifecycleScope.launch {
+            homeViewModel.shouldShowCurrentUserProBadge
+                .collectLatest {
+                    binding.sessionHeaderProBadge.isVisible = it
+                }
+        }
+
         // Set up seed reminder view
         lifecycleScope.launchWhenStarted {
             binding.seedReminderView.setThemedContent {
@@ -408,12 +422,13 @@ class HomeActivity : ScreenLockActionBarActivity(),
         homeViewModel.onCancelSearchClicked()
     }
 
-    override fun onBlockContact(accountId: String) {
-        homeViewModel.blockContact(accountId)
+    override fun onBlockContact(address: Address) {
+        if (address is Address.Standard) {
+            homeViewModel.blockContact(address.address)
+        }
     }
 
-    override fun onDeleteContact(accountId: String) {
-        val address = accountId.toAddress()
+    override fun onDeleteContact(address: Address) {
         if (address is Address.WithAccountId) {
             homeViewModel.deleteContact(address)
         }
@@ -452,7 +467,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                         GlobalSearchAdapter.Model.Contact(
                             contact = it.value,
                             isSelf = it.value.address.address == publicKey,
-                            showProBadge = proStatusManager.shouldShowProBadge(it.value.address)
+                            showProBadge = it.value.proStatus.shouldShowProBadge()
                         )
                     }
             }
@@ -460,11 +475,12 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     private val GlobalSearchResult.contactAndGroupList: List<GlobalSearchAdapter.Model> get() =
         contacts.map { GlobalSearchAdapter.Model.Contact(
-            it,
-            it.address.address == publicKey,
-            showProBadge = proStatusManager.shouldShowProBadge(it.address)) } +
+            contact = it,
+            isSelf = it.isSelf,
+            showProBadge = it.proStatus.shouldShowProBadge()
+        ) } +
             threads.map {
-                GlobalSearchAdapter.Model.GroupConversation(it, showProBadge = proStatusManager.shouldShowProBadge(it.encodedId.toAddress()))
+                GlobalSearchAdapter.Model.GroupConversation(it, showProBadge = recipientRepository.getRecipientSync(it.encodedId.toAddress()).proStatus.shouldShowProBadge())
             }
 
     private val GlobalSearchResult.messageResults: List<GlobalSearchAdapter.Model> get() {
@@ -477,7 +493,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 messageResult = it,
                 unread = unreadThreadMap[it.threadId] ?: 0,
                 isSelf = it.conversationRecipient.isLocalNumber,
-                showProBadge = proStatusManager.shouldShowProBadge(it.conversationRecipient.address)
+                showProBadge = it.conversationRecipient.proStatus.shouldShowProBadge()
             )
         }
     }

@@ -31,6 +31,8 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.ThemeUtil
+import org.session.libsession.utilities.applyCollapsedEllipsisMinWidth
+import org.session.libsession.utilities.clearCollapsedMinWidth
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.modifyLayoutParams
 import org.session.libsession.utilities.needsCollapsing
@@ -356,15 +358,12 @@ class VisibleMessageContentView : ConstraintLayout {
                 }
             }
 
-            val widthCap = binding.bodyTextView.maxWidth
-                .takeIf { it > 0 && it < Int.MAX_VALUE }
-                ?: resources.getDimensionPixelSize(R.dimen.max_bubble_width)
-
             // if the text was already manually expanded, we can skip this logic
             if(!isTextExpanded && binding.bodyTextView.needsCollapsing(
-                    availableWidthPx = widthCap,
+                    availableWidthPx = binding.bodyTextView.maxWidth,
                     maxLines = MAX_COLLAPSED_LINE_COUNT)
             ){
+                binding.bodyTextView.applyCollapsedEllipsisMinWidth( binding.bodyTextView.maxWidth)
                 // show the "Read mode" button
                 binding.readMore.setTextColor(color)
                 binding.readMore.isVisible = true
@@ -375,12 +374,14 @@ class VisibleMessageContentView : ConstraintLayout {
                     binding.readMore.getGlobalVisibleRect(r)
                     if (r.contains(event.rawX.roundToInt(), event.rawY.roundToInt())) {
                         binding.bodyTextView.maxLines = Int.MAX_VALUE
+                        binding.bodyTextView.clearCollapsedMinWidth()
                         binding.readMore.isVisible = false
                         onTextExpanded?.invoke(message.messageId) // Notify that text was expanded
                     }
                 }
                 onContentClick.add(readMoreClickHandler)
             } else {
+                binding.bodyTextView.clearCollapsedMinWidth()
                 binding.readMore.isVisible = false
             }
         }

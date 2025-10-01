@@ -910,13 +910,25 @@ fun AvatarQrWidget(
 
 @Composable
 fun SessionProSettingsHeader(
+    disabled: Boolean,
     modifier: Modifier = Modifier,
-    disabled: Boolean
+    onClick: (() -> Unit)? = null,
+    extraContent: @Composable (() -> Unit)? = null
 ){
     val color = if(disabled) LocalColors.current.disabled else LocalColors.current.accent
     val accentColourWithLowAlpha = color.copy(alpha = 0.15f)
 
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier.then(
+            // make the component clickable is there is an edit action
+            if (onClick != null) Modifier.clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            )
+            else Modifier
+        ),
+    ) {
         // UI with radial gradient
         var headerSize by remember { mutableStateOf(IntSize.Zero) }
 
@@ -988,6 +1000,12 @@ fun SessionProSettingsHeader(
                             backgroundColor = color
                         )
                     )
+                }
+
+                extraContent?.let{
+                    Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+
+                    extraContent()
                 }
             }
         }

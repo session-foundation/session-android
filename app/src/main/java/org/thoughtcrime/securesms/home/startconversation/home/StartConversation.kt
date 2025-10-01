@@ -191,10 +191,14 @@ private fun ActionList(navigateTo: (StartConversationDestination) -> Unit) {
     val dividerIndent: Dp =
         LocalDimensions.current.itemButtonIconSpacing + 2 * LocalDimensions.current.smallSpacing
     val newMessageTitleTxt: String = context.resources.getQuantityString(R.plurals.messageNew, 1, 1)
+    val itemHeight = 50.dp
+
     ItemButton(
         text = annotatedStringResource(newMessageTitleTxt),
         textStyle = LocalType.current.xl,
         iconRes = R.drawable.ic_message_square,
+        iconSize = LocalDimensions.current.iconMedium,
+        minHeight = itemHeight,
         modifier = Modifier.qaTag(R.string.AccessibilityId_messageNew),
         onClick = {
             navigateTo(StartConversationDestination.NewMessage)
@@ -210,6 +214,8 @@ private fun ActionList(navigateTo: (StartConversationDestination) -> Unit) {
         text = annotatedStringResource(R.string.groupCreate),
         textStyle = LocalType.current.xl,
         iconRes = R.drawable.ic_users_group_custom,
+        iconSize = LocalDimensions.current.iconMedium,
+        minHeight = itemHeight,
         modifier = Modifier.qaTag(R.string.AccessibilityId_groupCreate),
         onClick = {
             navigateTo(StartConversationDestination.CreateGroup)
@@ -225,6 +231,8 @@ private fun ActionList(navigateTo: (StartConversationDestination) -> Unit) {
         text = annotatedStringResource(R.string.communityJoin),
         textStyle = LocalType.current.xl,
         iconRes = R.drawable.ic_globe,
+        iconSize = LocalDimensions.current.iconMedium,
+        minHeight = itemHeight,
         modifier = Modifier.qaTag(R.string.AccessibilityId_communityJoin),
         onClick = {
             navigateTo(StartConversationDestination.JoinCommunity)
@@ -240,6 +248,8 @@ private fun ActionList(navigateTo: (StartConversationDestination) -> Unit) {
         text = annotatedStringResource(R.string.sessionInviteAFriend),
         textStyle = LocalType.current.xl,
         iconRes = R.drawable.ic_user_round_plus,
+        iconSize = LocalDimensions.current.iconMedium,
+        minHeight = itemHeight,
         modifier = Modifier.qaTag(R.string.AccessibilityId_sessionInviteAFriendButton),
         onClick = {
             navigateTo(StartConversationDestination.InviteFriend)

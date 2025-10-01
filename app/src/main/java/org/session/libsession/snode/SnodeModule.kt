@@ -11,12 +11,9 @@ import javax.inject.Singleton
 
 @Singleton
 class SnodeModule @Inject constructor(
-    application: Application,
     val storage: LokiAPIDatabaseProtocol,
     prefs: TextSecurePreferences,
 ) {
-
-    val broadcaster: Broadcaster = org.thoughtcrime.securesms.util.Broadcaster(application)
     val environment: Environment = prefs.getEnvironment()
 
     companion object {
