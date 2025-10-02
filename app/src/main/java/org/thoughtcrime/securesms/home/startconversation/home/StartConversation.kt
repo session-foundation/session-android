@@ -70,12 +70,15 @@ internal fun StartConversationScreen(
             ) {
                 val dividerIndent: Dp = LocalDimensions.current.itemButtonIconSpacing + 2*LocalDimensions.current.smallSpacing
                 val newMessageTitleTxt:String = context.resources.getQuantityString(R.plurals.messageNew, 1, 1)
+                val itemHeight = 50.dp
+
                 ItemButton(
                     text = annotatedStringResource(newMessageTitleTxt),
                     textStyle = LocalType.current.xl,
                     iconRes = R.drawable.ic_message_square,
-                    iconSize = LocalDimensions.current.iconMedium2,
+                    iconSize = LocalDimensions.current.iconMedium,
                     modifier = Modifier.qaTag(R.string.AccessibilityId_messageNew),
+                    minHeight = itemHeight,
                     onClick = {
                         navigateTo(StartConversationDestination.NewMessage)
                     }
@@ -90,8 +93,9 @@ internal fun StartConversationScreen(
                     text = annotatedStringResource(R.string.groupCreate),
                     textStyle = LocalType.current.xl,
                     iconRes = R.drawable.ic_users_group_custom,
-                    iconSize = LocalDimensions.current.iconMedium2,
+                    iconSize = LocalDimensions.current.iconMedium,
                     modifier = Modifier.qaTag(R.string.AccessibilityId_groupCreate),
+                    minHeight = itemHeight,
                     onClick = {
                         navigateTo(StartConversationDestination.CreateGroup)
                     }
@@ -106,8 +110,9 @@ internal fun StartConversationScreen(
                     text = annotatedStringResource(R.string.communityJoin),
                     textStyle = LocalType.current.xl,
                     iconRes = R.drawable.ic_globe,
-                    iconSize = LocalDimensions.current.iconMedium2,
+                    iconSize = LocalDimensions.current.iconMedium,
                     modifier = Modifier.qaTag(R.string.AccessibilityId_communityJoin),
+                    minHeight = itemHeight,
                     onClick = {
                         navigateTo(StartConversationDestination.JoinCommunity)
                     }
@@ -122,8 +127,9 @@ internal fun StartConversationScreen(
                     text = annotatedStringResource(R.string.sessionInviteAFriend),
                     textStyle = LocalType.current.xl,
                     iconRes = R.drawable.ic_user_round_plus,
-                    iconSize = LocalDimensions.current.iconMedium2,
+                    iconSize = LocalDimensions.current.iconMedium,
                     modifier = Modifier.qaTag(R.string.AccessibilityId_sessionInviteAFriendButton),
+                    minHeight = itemHeight,
                     onClick = {
                         navigateTo(StartConversationDestination.InviteFriend)
                     }

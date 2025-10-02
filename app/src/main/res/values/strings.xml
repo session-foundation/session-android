@@ -200,6 +200,9 @@
     <string name="cameraGrantAccessQr">{app_name} needs camera access to scan QR codes</string>
     <string name="cancel">Cancel</string>
     <string name="cancelPlan">Cancel Plan</string>
+    <string name="cancelProPlan">Cancel {pro} Plan</string>
+    <string name="cancelProPlatform">Cancel your plan on the {platform} website, using the {platform_account} you signed up for Pro with.</string>
+    <string name="cancelProPlatformStore">Cancel your plan on the {platform_store} website, using the {platform_account} you signed up for Pro with.</string>
     <string name="change">Change</string>
     <string name="changePasswordFail">Failed to change password</string>
     <string name="changePasswordModalDescription">Change your password for {app_name}. Locally stored data will be re-encrypted with your new password.</string>
@@ -458,12 +461,15 @@
     <string name="enjoyingSessionButtonPositive">It\'s Great {emoji}</string>
     <string name="enjoyingSessionDescription">You\'ve been using {app_name} for a little while, how’s it going? We’d really appreciate hearing your thoughts.</string>
     <string name="enter">Enter</string>
+    <string name="enterPasswordDescription">Enter the password you set for {app_name}</string>
+    <string name="enterPasswordTooltip">Enter the password you use to unlock Session &amp;#13;
+on startup, not your Recovery Password</string>
     <string name="errorCheckingProStatus">Error checking {pro} status.</string>
     <string name="errorConnection">Please check your internet connection and try again.</string>
     <string name="errorCopyAndQuit">Copy Error and Quit</string>
     <string name="errorDatabase">Database Error</string>
     <string name="errorGeneric">Something went wrong. Please try again later.</string>
-    <string name="errorLoadingProPlan">Error loading {pro} plan.</string>
+    <string name="errorLoadingProPlan">Error loading {pro} plan</string>
     <string name="errorUnknown">An unknown error occurred.</string>
     <string name="failedToDownload">Failed to download</string>
     <string name="failures">Failures</string>
@@ -792,7 +798,10 @@
     <string name="okay">Okay</string>
     <string name="on">On</string>
     <string name="onDevice">On your {device_type} device</string>
+    <string name="onDeviceCancelDescription">Open this {app_name} account on an {device_type} device logged into the {platform_account} you originally signed up with. Then, cancel your plan via the {app_pro} settings.</string>
     <string name="onDeviceDescription">Open this {app_name} account on an {device_type} device logged into the {platform_account} you originally signed up with. Then, change your plan via the {app_pro} settings.</string>
+    <string name="onPlatformStoreWebsite">On the {platform_store} website</string>
+    <string name="onPlatformWebsite">On the {platform} website</string>
     <string name="onboardingAccountCreate">Create account</string>
     <string name="onboardingAccountCreated">Account Created</string>
     <string name="onboardingAccountExists">I have an account</string>
@@ -817,7 +826,8 @@
     <string name="onsErrorNotRecognized">We couldn\'t recognize this ONS. Please check it and try again.</string>
     <string name="onsErrorUnableToSearch">We were unable to search for this ONS. Please try again later.</string>
     <string name="open">Open</string>
-    <string name="openStoreWebsite">Open {platform_store} Website</string>
+    <string name="openPlatformStoreWebsite">Open {platform_store} Website</string>
+    <string name="openPlatformWebsite">Open {platform} Website</string>
     <string name="openSurvey">Open Survey</string>
     <string name="other">Other</string>
     <string name="password">Password</string>
@@ -921,10 +931,13 @@
     <string name="proCallToActionLongerMessages">Want to send longer messages? Send more text and unlock premium features with {app_pro}</string>
     <string name="proCallToActionPinnedConversations">Want more pins? Organize your chats and unlock premium features with {app_pro}</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Want more than 5 pins? Organize your chats and unlock premium features with {app_pro}</string>
+    <string name="proCancelSorry">We’re sorry to see you cancel {pro}. Here\'s what you need to know before canceling your {app_pro} plan.</string>
     <string name="proCancellation">Cancellation</string>
-    <string name="proCancellationDescription">Canceling your {app_pro} plan will prevent your plan from automatically renewing before your {pro} plan expires. Canceling {pro} does <b>not</b> result in a refund. You will continue to be able to use {app_pro} features until your plan expires.\n\n
-Because you originally signed up for {app_pro} via a <b>{platform_account}</b>, you\'ll need to use the same {platform_account} to cancel your plan.</string>
+    <string name="proCancellationDescription">Canceling your {app_pro} plan will prevent your plan from automatically renewing before your {pro} plan expires. Canceling {pro} does <b>not</b> result in a refund. You will continue to be able to use {app_pro} features until your plan expires.\n\nBecause you originally signed up for {app_pro} using your <b>{platform_account}</b>, you\'ll need to use the same {platform_account} to cancel your plan.</string>
     <string name="proCancellationOptions">Two ways to cancel your plan:</string>
+    <string name="proCancellationShortDescription">Canceling your {app_pro} plan will prevent your plan from automatically renewing before your {pro} plan expires.\n\nCanceling {pro} does <b>not</b> result in a refund. You will continue to be able to use {app_pro} features until your plan expires.</string>
+    <string name="proClearAllDataDevice">Are you sure you want to delete your data from this device?\n\n<b>{app_pro}</b> cannot be transferred to another account. Please save your Recovery Password to ensure you can restore your {pro} plan later.</string>
+    <string name="proClearAllDataNetwork">Are you sure you want to delete your data from the network? If you continue, you will not be able to restore your messages or contacts.\n\n<b>{app_pro}</b> cannot be transferred to another account. Please save your Recovery Password to ensure you can restore your {pro} plan later.</string>
     <string name="proDiscountTooltip">Your current plan is already discounted by {percent}% of the full {app_pro} price.</string>
     <string name="proErrorRefreshingStatus">Error refreshing {pro} status</string>
     <string name="proExpired">Expired</string>
@@ -958,6 +971,8 @@ Because you originally signed up for {app_pro} via a <b>{platform_account}</b>, 
         <item quantity="other">%1$s Longer Messages Sent</item>
     </plurals>
     <string name="proMessageInfoFeatures">This message used the following {app_pro} features:</string>
+    <string name="proNewInstallation">With a new installation</string>
+    <string name="proNewInstallationDescription">Reinstall {app_name} on this device via the {platform_store}, restore your account with your Recovery Password, and renew your plan in the {app_pro} settings.</string>
     <string name="proOptionsRenewalSubtitle">Currently, there are three ways to renew:</string>
     <string name="proPercentOff">{percent}% Off</string>
     <plurals name="proPinnedConversations">
@@ -975,30 +990,32 @@ Because you originally signed up for {app_pro} via a <b>{platform_account}</b>, 
     <string name="proPlanNetworkLoadError">Unable to connect to the network to load your current plan. Updating your plan via {app_name} will be disabled until connectivity is restored.\n\nPlease check your network connection and retry.</string>
     <string name="proPlanNotFound">{pro} Plan Not Found</string>
     <string name="proPlanNotFoundDescription">No active plan was found for your account. If you believe this is a mistake, please reach out to {app_name} support for assistance.</string>
-    <string name="proPlanPlatformRefund">Because you originally signed up for {app_pro} via the <b><font color="0">{platform_store} Store</font></b>, you\'ll need to use the same {platform_account} to request a refund.</string>
-    <string name="proPlanPlatformRefundLong">Because you originally signed up for {app_pro} via the <b><font color="0">{platform_store} Store</font></b>, your refund request will be processed by {app_name} Support.\n\nRequest a refund by hitting the button below and completing the refund request form.\n\nWhile {app_name} Support strives to process refund requests within 24-72 hours, processing may take longer during times of high request volume.</string>
+    <string name="proPlanPlatformRefund">Because you originally signed up for {app_pro} via the <b><font color="0">{platform_store}</font></b>, you\'ll need to use your {platform_account} to request a refund.</string>
+    <string name="proPlanPlatformRefundLong">Because you originally signed up for {app_pro} via the <b><font color="0">{platform_store}</font></b>, your refund request will be processed by {app_name} Support.\n\nRequest a refund by hitting the button below and completing the refund request form.\n\nWhile {app_name} Support strives to process refund requests within 24-72 hours, processing may take longer during times of high request volume.</string>
     <string name="proPlanRecover">Recover {pro} Plan</string>
     <string name="proPlanRenew">Renew {pro} Plan</string>
-    <string name="proPlanRenewDesktop">Currently, {pro} plans can only be purchased and renewed via the {platform_store} or {platform_store} Stores. Because you are using {app_name} Desktop, you\'re not able to renew your plan here.\n\n{app_pro} developers are working hard on alternative payment options to allow users to purchase {pro} plans outside of the {platform_store} and {platform_store} Stores. <b>{pro} Roadmap</b> {icon}</string>
-    <string name="proPlanRenewDesktopLinked">Renew your plan in the {app_pro} settings on a linked device with {app_name} installed via the {platform_store} or {platform_store} Store.</string>
-    <string name="proPlanRenewDesktopStore">Renew your plan on the {platform_store} website using the {platform_account} you signed up for {pro} with.</string>
+    <string name="proPlanRenewDesktop">Currently, {pro} plans can only be purchased and renewed via the {platform_store} or {platform_store}. Because you are using {app_name} Desktop, you\'re not able to renew your plan here.\n\n{app_pro} developers are working hard on alternative payment options to allow users to purchase {pro} plans outside of the {platform_store} and {platform_store}. <b>{pro} Roadmap</b> {icon}</string>
+    <string name="proPlanRenewDesktopLinked">Renew your plan in the {app_pro} settings on a linked device with {app_name} installed via the {platform_store} or {platform_store}.</string>
+    <string name="proPlanRenewPlatformStoreWebsite">Renew your plan on the <b><font color="0">{platform_store} website</font></b> using the {platform_account} you signed up for {pro} with.</string>
+    <string name="proPlanRenewPlatformWebsite">Renew your plan on the <b><font color="0">{platform} website</font></b> using the {platform_account} you signed up for {pro} with.</string>
     <string name="proPlanRenewStart">Renew your {app_pro} plan to start using powerful {app_pro} Beta features again.</string>
     <string name="proPlanRenewSupport">Your {app_pro} plan has been renewed! Thank you for supporting the {network_name}.</string>
     <string name="proPlanRestored">{pro} Plan Restored</string>
     <string name="proPlanRestoredDescription">A valid plan for {app_pro} was detected and your {pro} status has been restored!</string>
-    <string name="proPlanSignUp">Because you originally signed up for {app_pro} via the <b>{platform_store}</b> Store, you\'ll need to use your {platform_account} to update your plan.</string>
+    <string name="proPlanSignUp">Because you originally signed up for {app_pro} via the <b>{platform_store}</b>, you\'ll need to use your {platform_account} to update your plan.</string>
     <string name="proPriceOneMonth">1 Month - {monthly_price} / Month</string>
     <string name="proPriceThreeMonths">3 Months - {monthly_price} / Month</string>
     <string name="proPriceTwelveMonths">12 Months - {monthly_price} / Month</string>
+    <string name="proRefundAccountDevice">Open this {app_name} account on an {device_type} device logged into the {platform_account} you originally signed up with. Then, request a refund via the {app_pro} settings.</string>
     <string name="proRefundDescription">We’re sorry to see you go. Here\'s what you need to know before requesting a refund.</string>
-    <string name="proRefundNextSteps">{platform_account} is now processing your refund request. This typically takes 24-48 hours. Depending on their decision, you may see your {pro} status change in {app_name}.</string>
+    <string name="proRefundNextSteps">{platform} is now processing your refund request. This typically takes 24-48 hours. Depending on their decision, you may see your {pro} status change in {app_name}.</string>
     <string name="proRefundRequestSessionSupport">Your refund request will be handled by {app_name} Support.\n\nRequest a refund by hitting the button below and completing the refund request form.\n\nWhile {app_name} Support strives to process refund requests within 24-72 hours, processing may take longer during times of high request volume.</string>
-    <string name="proRefundRequestStorePolicies">Your refund request will be handled exclusively by {platform_account} through the <b>{platform_account} website</b>.\n\nDue to {platform_account} refund policies, {app_name} developers have no ability to influence the outcome of refund requests. This includes whether the request is approved or denied, as well as whether a full or partial refund is issued.</string>
-    <string name="proRefundSupport">Please contact {platform_account} for further updates on your refund request. Due to {platform_account} refund policies, {app_name} developers have no ability to influence the outcome of refund requests.\n\n<font color="0">{platform_store} Refund Support</font></string>
+    <string name="proRefundRequestStorePolicies">Your refund request will be handled exclusively by {platform} through the <b>{platform} website</b>.\n\nDue to {platform} refund policies, {app_name} developers have no ability to influence the outcome of refund requests. This includes whether the request is approved or denied, as well as whether a full or partial refund is issued.</string>
+    <string name="proRefundSupport">Please contact {platform} for further updates on your refund request. Due to {platform} refund policies, {app_name} developers have no ability to influence the outcome of refund requests.\n\n<font color="0">{platform} Refund Support</font></string>
     <string name="proRefunding">Refunding {pro}</string>
-    <string name="proRefundingDescription">Refunds for {app_pro} plans are handled exclusively by {platform_account} through the {platform_store} Store.\n\nDue to {platform_account} refund policies, {app_name} developers have no ability to influence the outcome of refund requests. This includes whether the request is approved or denied, as well as whether a full or partial refund is issued.</string>
+    <string name="proRefundingDescription">Refunds for {app_pro} plans are handled exclusively by {platform} through the {platform_store}.\n\nDue to {platform} refund policies, {app_name} developers have no ability to influence the outcome of refund requests. This includes whether the request is approved or denied, as well as whether a full or partial refund is issued.</string>
     <string name="proRenewBeta">Renew {pro} Beta</string>
-    <string name="proRenewingNoAccessBilling">Currently, {pro} plans can only be purchased and renewed via the {platform_store} or {platform_store} Stores. Because you installed {app_name} using the {buildVariant}, you\'re not able to renew your plan here.\n\n{app_pro} developers are working hard on alternative payment options to allow users to purchase {pro} plans outside of the {platform_store} and {platform_store} Stores.<b> {pro} Roadmap</b> {icon}</string>
+    <string name="proRenewingNoAccessBilling">Currently, {pro} plans can only be purchased and renewed via the {platform_store} or {platform_store}. Because you installed {app_name} using the {buildVariant}, you\'re not able to renew your plan here.\n\n{app_pro} developers are working hard on alternative payment options to allow users to purchase {pro} plans outside of the {platform_store} and {platform_store}.<b> {pro} Roadmap</b> {icon}</string>
     <string name="proRequestedRefund">Refund Requested</string>
     <string name="proSendMore">Send more with</string>
     <string name="proSettings">{pro} Settings</string>
@@ -1020,7 +1037,7 @@ Because you originally signed up for {app_pro} via a <b>{platform_account}</b>, 
     <string name="proUpdatePlanDescription">You are currently on the <b>{current_plan} Plan</b>. Are you sure you want to switch to the <b>{selected_plan} Plan</b>?\n\nBy updating, your plan will automatically renew on <b>{date}</b> for an additional {selected_plan} of {pro} access.</string>
     <string name="proUpdatePlanExpireDescription">Your plan will expire on <b>{date}</b>.\n\nBy updating, your plan will automatically renew on <b>{date}</b> for an additional {selected_plan} of Pro access.</string>
     <string name="proUserProfileModalCallToAction">Want to get more out of {app_name}? Upgrade to {app_pro} for a more powerful messaging experience.</string>
-    <string name="processingRefundRequest">{platform_account} is processing your refund request</string>
+    <string name="processingRefundRequest">{platform} is processing your refund request</string>
     <string name="profile">Profile</string>
     <string name="profileDisplayPicture">Display Picture</string>
     <string name="profileDisplayPictureRemoveError">Failed to remove display picture.</string>
@@ -1076,7 +1093,8 @@ Because you originally signed up for {app_pro} via a <b>{platform_account}</b>, 
     <string name="recoveryPasswordWarningSendDescription">This is your recovery password. If you send it to someone they\'ll have full access to your account.</string>
     <string name="recreateGroup">Recreate Group</string>
     <string name="redo">Redo</string>
-    <string name="refundPlanNonOriginatorApple">Because you originally signed up for {app_pro} via a different {platform_account}, you\'ll need to use that {platform_account} to update your plan.</string>
+    <string name="refundPlanNonOriginatorApple">Because you originally signed up for {app_pro} via a different {platform_account}, you\'ll need to use that <b><font color="0">{platform_account}</font></b> to update your plan.</string>
+    <string name="refundRequestOptions">Two ways to request a refund:</string>
     <string name="remainingCharactersOverTooltip">Reduce message length by {count}</string>
     <plurals name="remainingCharactersTooltip">
         <item quantity="one">%1$d character remaining</item>
@@ -1089,6 +1107,7 @@ Because you originally signed up for {app_pro} via a <b>{platform_account}</b>, 
     <string name="renewingPro">Renewing Pro</string>
     <string name="reply">Reply</string>
     <string name="requestRefund">Request Refund</string>
+    <string name="requestRefundPlatformWebsite">Request a refund on the <b><font color="0">{platform} website</font></b>, using the {platform_account} you signed up for {pro} with.</string>
     <string name="resend">Resend</string>
     <string name="resolving">Loading country information...</string>
     <string name="restart">Restart</string>
@@ -1223,7 +1242,8 @@ Because you originally signed up for {app_pro} via a <b>{platform_account}</b>, 
     <string name="urlOpenDescription">Are you sure you want to open this URL in your browser?\n\n<b>{url}</b></string>
     <string name="urlOpenDescriptionAlternative">Links will open in your browser.</string>
     <string name="useFastMode">Use Fast Mode</string>
-    <string name="viaStoreWebsite">Via the {platform_store} website</string>
+    <string name="viaPlatformWebsiteDescription">Change your plan using the {platform_account} you used to sign up with, via the <b><font color="0">{platform}</font></b> website.</string>
+    <string name="viaStoreWebsite">Via the {platform} website</string>
     <string name="viaStoreWebsiteDescription">Change your plan using the {platform_account} you used to sign up with, via the <b><font color="0">{platform_store}</font></b> website.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Unable to play video.</string>
@@ -1233,10 +1253,11 @@ Because you originally signed up for {app_pro} via a <b>{platform_account}</b>, 
     <string name="waitFewMinutes">This can take a few minutes.</string>
     <string name="waitOneMoment">One moment please...</string>
     <string name="warning">Warning</string>
+    <string name="warningIosVersionEndingSupport">Support for iOS 15 has ended. Update to iOS 16 or later to continue receiving app updates.</string>
     <string name="window">Window</string>
     <string name="yes">Yes</string>
     <string name="you">You</string>
-    <string name="yourCpuIsUnsupportedSSE42">Your CPU does not support SSE 4.2 instructions, which are required by Session on Linux x64 operating systems to process images. Please upgrade to a compatible CPU or use a different operating system.</string>
+    <string name="yourCpuIsUnsupportedSSE42">Your CPU does not support SSE 4.2 instructions, which are required by {app_name} on Linux x64 operating systems to process images. Please upgrade to a compatible CPU or use a different operating system.</string>
     <string name="yourRecoveryPassword">Your Recovery Password</string>
     <string name="zoomFactor">Zoom Factor</string>
     <string name="zoomFactorDescription">Adjust the size of text and visual elements.</string>

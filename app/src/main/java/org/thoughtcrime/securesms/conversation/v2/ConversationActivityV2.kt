@@ -205,6 +205,7 @@ import org.thoughtcrime.securesms.util.PaddedImageSpan
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
 import org.thoughtcrime.securesms.util.adapter.applyImeBottomPadding
 import org.thoughtcrime.securesms.util.adapter.handleScrollToBottom
+import org.thoughtcrime.securesms.util.adapter.runWhenLaidOut
 import org.thoughtcrime.securesms.util.drawToBitmap
 import org.thoughtcrime.securesms.util.fadeIn
 import org.thoughtcrime.securesms.util.fadeOut
@@ -1161,14 +1162,22 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private fun scrollToFirstUnreadMessageOrBottom() {
         // if there are no unread messages, go straight to the very bottom of the list
         if (unreadCount == 0) {
-            layoutManager?.scrollToPositionWithOffset(adapter.itemCount - 1, Int.MIN_VALUE)
+            binding.conversationRecyclerView.runWhenLaidOut {
+                layoutManager?.scrollToPositionWithOffset(adapter.itemCount - 1, Int.MIN_VALUE)
+            }
             return
         }
 
         val lastSeenTimestamp = threadDb.getLastSeenAndHasSent(viewModel.threadId).first()
         val lastSeenItemPosition = adapter.findLastSeenItemPosition(lastSeenTimestamp) ?: return
 
-        layoutManager?.scrollToPositionWithOffset(lastSeenItemPosition, ((layoutManager?.height ?: 0) / 2))
+        binding.conversationRecyclerView.runWhenLaidOut {
+            layoutManager?.scrollToPositionWithOffset(
+                lastSeenItemPosition,
+                ((layoutManager?.height ?: 0) / 2)
+            )
+        }
+
     }
 
     private fun highlightViewAtPosition(position: Int) {

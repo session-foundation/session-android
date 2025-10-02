@@ -46,7 +46,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlan
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlanBadge
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.*
-import org.thoughtcrime.securesms.pro.SubscriptionState
+import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.expiryFromNow
 import org.thoughtcrime.securesms.ui.SpeechBubbleTooltip
@@ -78,9 +78,9 @@ fun ChoosePlanScreen(
     // there are different UI depending on the state
     when {
        // there is an active subscription but from a different platform
-        (planData.subscriptionState as? SubscriptionState.Active)?.nonOriginatingSubscription != null ->
+        (planData.subscriptionType as? SubscriptionType.Active)?.nonOriginatingSubscription != null ->
             ChoosePlanNonOriginating(
-                subscription = planData.subscriptionState as SubscriptionState.Active,
+                subscription = planData.subscriptionType as SubscriptionType.Active,
                 sendCommand = viewModel::onCommand,
                 onBack = onBack,
             )
@@ -115,26 +115,26 @@ fun ChoosePlan(
         Spacer(Modifier.height(LocalDimensions.current.spacing))
 
         val context = LocalContext.current
-        val title = when(planData.subscriptionState) {
-            is SubscriptionState.Expired ->
+        val title = when(planData.subscriptionType) {
+            is SubscriptionType.Expired ->
                 Phrase.from(context.getText(R.string.proPlanRenewStart))
                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                     .format()
 
-            is SubscriptionState.Active.Expiring -> Phrase.from(context.getText(R.string.proPlanActivatedNotAuto))
+            is SubscriptionType.Active.Expiring -> Phrase.from(context.getText(R.string.proPlanActivatedNotAuto))
                 .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                .put(DATE_KEY, planData.subscriptionState.type.expiryFromNow())
+                .put(DATE_KEY, planData.subscriptionType.duration.expiryFromNow())
                 .format()
 
-            is SubscriptionState.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proPlanActivatedAuto))
+            is SubscriptionType.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proPlanActivatedAuto))
                 .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                 .put(CURRENT_PLAN_KEY, DateUtils.getLocalisedTimeDuration(
                     context = context,
-                    amount = planData.subscriptionState.type.duration.months,
+                    amount = planData.subscriptionType.duration.duration.months,
                     unit = MeasureUnit.MONTH
                 ))
-                .put(DATE_KEY, planData.subscriptionState.type.expiryFromNow())
+                .put(DATE_KEY, planData.subscriptionType.duration.expiryFromNow())
                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                 .format()
 
@@ -171,9 +171,9 @@ fun ChoosePlan(
 
         Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
 
-        val buttonLabel = when(planData.subscriptionState) {
-            is SubscriptionState.Expired -> context.getString(R.string.renew)
-            is SubscriptionState.Active.Expiring -> context.getString(R.string.updatePlan)
+        val buttonLabel = when(planData.subscriptionType) {
+            is SubscriptionType.Expired -> context.getString(R.string.renew)
+            is SubscriptionType.Active.Expiring -> context.getString(R.string.updatePlan)
             else -> context.getString(R.string.updatePlan)
         }
 
@@ -256,7 +256,8 @@ private fun PlanItem(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     Text(
                         text = proPlan.title,
