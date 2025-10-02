@@ -13,7 +13,12 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
@@ -70,6 +75,116 @@ class ProSettingsViewModel @Inject constructor(
                generateState(it)
             }
         }
+
+        // Update choosePlanState whenever proSettingsUIState changes
+        viewModelScope.launch {
+            _proSettingsUIState
+                .map { proState ->
+                    val subType = proState.subscriptionState.type
+                    val isActive = subType is SubscriptionType.Active
+                    val currentPlan12Months = isActive && subType.duration == ProSubscriptionDuration.TWELVE_MONTHS
+                    val currentPlan3Months = isActive && subType.duration == ProSubscriptionDuration.THREE_MONTHS
+                    val currentPlan1Month = isActive && subType.duration == ProSubscriptionDuration.ONE_MONTH
+
+                    ChoosePlanState(
+                        subscriptionType = subType,
+                        hasValidSubscription = proState.hasValidSubscription,
+                        enableButton = subType !is SubscriptionType.Active.AutoRenewing, // only the auto-renew can have a disabled state
+                        plans = listOf(
+                            ProPlan(
+                                title = Phrase.from(context.getText(R.string.proPriceTwelveMonths))
+                                    .put(MONTHLY_PRICE_KEY, "$3.99")  //todo PRO calculate properly
+                                    .format().toString(),
+                                subtitle = Phrase.from(context.getText(R.string.proBilledAnnually))
+                                    .put(PRICE_KEY, "$47.99")  //todo PRO calculate properly
+                                    .format().toString(),
+                                selected = currentPlan12Months,
+                                currentPlan = currentPlan12Months,
+                                durationType = ProSubscriptionDuration.TWELVE_MONTHS,
+                                badges = buildList {
+                                    if(currentPlan12Months){
+                                        add(
+                                            ProPlanBadge(context.getString(R.string.currentPlan))
+                                        )
+                                    }
+
+                                    add(
+                                        ProPlanBadge(
+                                            "33% Off", //todo PRO calculate properly
+                                            if(currentPlan12Months)  Phrase.from(context.getText(R.string.proDiscountTooltip))
+                                                .put(PERCENT_KEY, "33")  //todo PRO calculate properly
+                                                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                                                .format().toString()
+                                            else null
+                                        )
+                                    )
+                                },
+                            ),
+                            ProPlan(
+                                title = Phrase.from(context.getText(R.string.proPriceThreeMonths))
+                                    .put(MONTHLY_PRICE_KEY, "$4.99")  //todo PRO calculate properly
+                                    .format().toString(),
+                                subtitle = Phrase.from(context.getText(R.string.proBilledQuarterly))
+                                    .put(PRICE_KEY, "$14.99")  //todo PRO calculate properly
+                                    .format().toString(),
+                                selected = currentPlan3Months,
+                                currentPlan = currentPlan3Months,
+                                durationType = ProSubscriptionDuration.THREE_MONTHS,
+                                badges = buildList {
+                                    if(currentPlan3Months){
+                                        add(
+                                            ProPlanBadge(context.getString(R.string.currentPlan))
+                                        )
+                                    }
+
+                                    add(
+                                        ProPlanBadge(
+                                            "16% Off", //todo PRO calculate properly
+                                            if(currentPlan3Months)  Phrase.from(context.getText(R.string.proDiscountTooltip))
+                                                .put(PERCENT_KEY, "16")  //todo PRO calculate properly
+                                                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                                                .format().toString()
+                                            else null
+                                        )
+                                    )
+                                },
+                            ),
+                            ProPlan(
+                                title = Phrase.from(context.getText(R.string.proPriceOneMonth))
+                                    .put(MONTHLY_PRICE_KEY, "$5.99") //todo PRO calculate properly
+                                    .format().toString(),
+                                subtitle = Phrase.from(context.getText(R.string.proBilledMonthly))
+                                    .put(PRICE_KEY, "$5") //todo PRO calculate properly
+                                    .format().toString(),
+                                selected = currentPlan1Month,
+                                currentPlan = currentPlan1Month,
+                                durationType = ProSubscriptionDuration.ONE_MONTH,
+                                badges = if(currentPlan1Month) listOf(
+                                    ProPlanBadge(context.getString(R.string.currentPlan))
+                                ) else emptyList(),
+                            ),
+                        )
+                    )
+                }
+                .distinctUntilChanged()
+                .collect { newState ->
+                    _choosePlanState.update { currentState ->
+                        // Preserve the current selection if plans exist
+                        if (currentState.plans.isNotEmpty()) {
+                            val currentlySelectedPlan = currentState.plans.firstOrNull { it.selected }
+                            newState.copy(
+                                plans = newState.plans.map { plan ->
+                                    plan.copy(
+                                        selected = currentlySelectedPlan?.durationType == plan.durationType
+                                    )
+                                }
+                            )
+                        } else {
+                            newState
+                        }
+                    }
+                }
+        }
     }
 
     private fun generateState(subscriptionState: SubscriptionState){
@@ -80,6 +195,8 @@ class ProSettingsViewModel @Inject constructor(
         _proSettingsUIState.update {
             ProSettingsState(
                 subscriptionState = subscriptionState,
+                //todo PRO need to get the product id from libsession - also this might be a long running operation
+                hasValidSubscription = subscriptionCoordinator.getCurrentManager().hasValidSubscription(""),
                 subscriptionExpiryLabel = when(subType){
                     is SubscriptionType.Active.AutoRenewing ->
                         Phrase.from(context, R.string.proAutoRenewTime)
@@ -99,92 +216,6 @@ class ProSettingsViewModel @Inject constructor(
                     is SubscriptionType.Active -> subType.duration.expiryFromNow()
                     else -> ""
                 }
-            )
-        }
-
-        _choosePlanState.update {
-            val isActive = subType is SubscriptionType.Active
-            val currentPlan12Months = isActive && subType.duration == ProSubscriptionDuration.TWELVE_MONTHS
-            val currentPlan3Months = isActive && subType.duration == ProSubscriptionDuration.THREE_MONTHS
-            val currentPlan1Month = isActive && subType.duration == ProSubscriptionDuration.ONE_MONTH
-
-            ChoosePlanState(
-                subscriptionType = subType,
-                enableButton = subType !is SubscriptionType.Active.AutoRenewing, // only the auto-renew can have a disabled state
-                plans = listOf(
-                    ProPlan(
-                        title = Phrase.from(context.getText(R.string.proPriceTwelveMonths))
-                            .put(MONTHLY_PRICE_KEY, "$3.99")  //todo PRO calculate properly
-                            .format().toString(),
-                        subtitle = Phrase.from(context.getText(R.string.proBilledAnnually))
-                            .put(PRICE_KEY, "$47.99")  //todo PRO calculate properly
-                            .format().toString(),
-                        selected = currentPlan12Months,
-                        currentPlan = currentPlan12Months,
-                        durationType = ProSubscriptionDuration.TWELVE_MONTHS,
-                        badges = buildList {
-                            if(currentPlan12Months){
-                                add(
-                                    ProPlanBadge(context.getString(R.string.currentPlan))
-                                )
-                            }
-
-                            add(
-                                ProPlanBadge(
-                                    "33% Off", //todo PRO calculate properly
-                                    if(currentPlan12Months)  Phrase.from(context.getText(R.string.proDiscountTooltip))
-                                        .put(PERCENT_KEY, "33")  //todo PRO calculate properly
-                                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                                        .format().toString()
-                                    else null
-                                )
-                            )
-                        },
-                    ),
-                    ProPlan(
-                        title = Phrase.from(context.getText(R.string.proPriceThreeMonths))
-                            .put(MONTHLY_PRICE_KEY, "$4.99")  //todo PRO calculate properly
-                            .format().toString(),
-                        subtitle = Phrase.from(context.getText(R.string.proBilledQuarterly))
-                            .put(PRICE_KEY, "$14.99")  //todo PRO calculate properly
-                            .format().toString(),
-                        selected = currentPlan3Months,
-                        currentPlan = currentPlan3Months,
-                        durationType = ProSubscriptionDuration.THREE_MONTHS,
-                        badges = buildList {
-                            if(currentPlan3Months){
-                                add(
-                                    ProPlanBadge(context.getString(R.string.currentPlan))
-                                )
-                            }
-
-                            add(
-                                ProPlanBadge(
-                                "16% Off", //todo PRO calculate properly
-                                if(currentPlan3Months)  Phrase.from(context.getText(R.string.proDiscountTooltip))
-                                    .put(PERCENT_KEY, "16")  //todo PRO calculate properly
-                                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                                    .format().toString()
-                                    else null
-                                )
-                            )
-                        },
-                    ),
-                    ProPlan(
-                        title = Phrase.from(context.getText(R.string.proPriceOneMonth))
-                            .put(MONTHLY_PRICE_KEY, "$5.99") //todo PRO calculate properly
-                            .format().toString(),
-                        subtitle = Phrase.from(context.getText(R.string.proBilledMonthly))
-                            .put(PRICE_KEY, "$5") //todo PRO calculate properly
-                            .format().toString(),
-                        selected = currentPlan1Month,
-                        currentPlan = currentPlan1Month,
-                        durationType = ProSubscriptionDuration.ONE_MONTH,
-                        badges = if(currentPlan1Month) listOf(
-                            ProPlanBadge(context.getString(R.string.currentPlan))
-                        ) else emptyList(),
-                    ),
-                )
             )
         }
     }
@@ -267,7 +298,7 @@ class ProSettingsViewModel @Inject constructor(
             }
 
             Commands.OpenSubscriptionPage -> {
-                val subUrl = subscriptionCoordinator.getCurrentManager().details.urlSubscription
+                val subUrl = subscriptionCoordinator.getCurrentManager().details.subscriptionUrl
                 if(subUrl.isNotEmpty()){
                     viewModelScope.launch {
                         navigator.navigateToIntent(
@@ -467,12 +498,14 @@ class ProSettingsViewModel @Inject constructor(
     data class ProSettingsState(
         val subscriptionState: SubscriptionState = getDefaultSubscriptionStateData(),
         val proStats: ProStats = ProStats(),
+        val hasValidSubscription: Boolean = false, // true is there is a current subscription AND the available subscription manager on this device has an account which matches the product id we got from libsession
         val subscriptionExpiryLabel: CharSequence = "", // eg: "Pro auto renewing in 3 days"
         val subscriptionExpiryDate: CharSequence = "" // eg: "May 21st, 2025"
     )
 
     data class ChoosePlanState(
         val subscriptionType: SubscriptionType = SubscriptionType.NeverSubscribed,
+        val hasValidSubscription: Boolean = false,
         val plans: List<ProPlan> = emptyList(),
         val enableButton: Boolean = false,
     )

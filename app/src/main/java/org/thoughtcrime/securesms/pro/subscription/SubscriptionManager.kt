@@ -27,6 +27,11 @@ interface SubscriptionManager: OnAppStartupComponent {
     fun isWithinQuickRefundWindow(): Boolean {
         return quickRefundExpiry != null && Instant.now().isBefore(quickRefundExpiry)
     }
+
+    /**
+     * Checks whether there is a valid subscription for the given product id for the current user within this subscriber's billing API
+     */
+    fun hasValidSubscription(productId: String): Boolean
 }
 
 data class SubscriptionDetails(
@@ -34,6 +39,6 @@ data class SubscriptionDetails(
     val store: String,
     val platform: String,
     val platformAccount: String,
-    val urlSubscription: String,
-    val urlRefund: String,
+    val subscriptionUrl: String,
+    val refundUrl: String,
 )

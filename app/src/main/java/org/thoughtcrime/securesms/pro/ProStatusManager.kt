@@ -79,8 +79,8 @@ class ProStatusManager @Inject constructor(
                         store = "Apple App Store",
                         platform = "Apple",
                         platformAccount = "Apple Account",
-                        urlSubscription = "https://www.apple.com/account/subscriptions",
-                        urlRefund = "https://support.apple.com/118223",
+                        subscriptionUrl = "https://www.apple.com/account/subscriptions",
+                        refundUrl = "https://support.apple.com/118223",
                     )
                 )
 
@@ -95,8 +95,8 @@ class ProStatusManager @Inject constructor(
                         store = "Apple App Store",
                         platform = "Apple",
                         platformAccount = "Apple Account",
-                        urlSubscription = "https://www.apple.com/account/subscriptions",
-                        urlRefund = "https://support.apple.com/118223",
+                        subscriptionUrl = "https://www.apple.com/account/subscriptions",
+                        refundUrl = "https://support.apple.com/118223",
                     )
                 )
 

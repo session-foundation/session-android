@@ -1,7 +1,5 @@
 package org.thoughtcrime.securesms.pro.subscription
 
-import java.time.Duration
-import java.time.Instant
 import javax.inject.Inject
 
 /**
@@ -17,8 +15,8 @@ class NoOpSubscriptionManager @Inject constructor() : SubscriptionManager {
         store = "",
         platform = "",
         platformAccount = "",
-        urlSubscription = "",
-        urlRefund = "",
+        subscriptionUrl = "",
+        refundUrl = "",
     )
 
     override val quickRefundExpiry = null
@@ -27,6 +25,10 @@ class NoOpSubscriptionManager @Inject constructor() : SubscriptionManager {
     override fun purchasePlan(subscriptionDuration: ProSubscriptionDuration) {}
     override val availablePlans: List<ProSubscriptionDuration>
         get() = emptyList()
+
+    override fun hasValidSubscription(productId: String): Boolean {
+        return false
+    }
 
     //todo PRO test out build type with no subscription providers available - What do we show on the Pro Settings page?
 }

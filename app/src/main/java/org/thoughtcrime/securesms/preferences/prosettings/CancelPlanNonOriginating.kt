@@ -15,7 +15,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DEVICE_TYPE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACCOUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.recipients.ProStatus
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
@@ -31,15 +30,12 @@ import java.time.Instant
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun CancelPlanNonOriginating(
-    subscription: SubscriptionType.Active,
+    subscriptionDetails: SubscriptionDetails,
+    platformOverride: String, // this property is here because different scenario will require different property to be used for this string: some will use the platform, others will use the platformStore
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ){
-    val nonOriginatingData = subscription.nonOriginatingSubscription ?: return
     val context = LocalContext.current
-
-    //todo PRO this should also cover the case of a google play sub from a different google account, in which case use displayName from the subscriberManager
-    val platform = nonOriginatingData.platform
 
     BaseNonOriginatingProSettingsScreen(
         disabled = true,
@@ -49,11 +45,11 @@ fun CancelPlanNonOriginating(
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format().toString(),
         buttonText = Phrase.from(context.getText(R.string.openPlatformWebsite))
-            .put(PLATFORM_KEY, nonOriginatingData.platform)
+            .put(PLATFORM_KEY, platformOverride)
             .format().toString(),
         dangerButton = true,
         onButtonClick = {
-            sendCommand(ShowOpenUrlDialog(nonOriginatingData.urlRefund))
+            sendCommand(ShowOpenUrlDialog(subscriptionDetails.subscriptionUrl))
         },
         contentTitle = stringResource(R.string.proCancellation),
         contentDescription = Phrase.from(context.getText(R.string.proCancellationDescription))
@@ -62,30 +58,30 @@ fun CancelPlanNonOriginating(
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-            .put(PLATFORM_ACCOUNT_KEY, nonOriginatingData.platformAccount)
-            .put(PLATFORM_ACCOUNT_KEY, nonOriginatingData.platformAccount)
+            .put(PLATFORM_ACCOUNT_KEY, subscriptionDetails.platformAccount)
+            .put(PLATFORM_ACCOUNT_KEY, subscriptionDetails.platformAccount)
             .format(),
         linkCellsInfo = stringResource(R.string.proCancellationOptions),
         linkCells = listOf(
             NonOriginatingLinkCellData(
                 title =  Phrase.from(context.getText(R.string.onDevice))
-                    .put(DEVICE_TYPE_KEY, nonOriginatingData.device)
+                    .put(DEVICE_TYPE_KEY, subscriptionDetails.device)
                     .format(),
                 info = Phrase.from(context.getText(R.string.onDeviceCancelDescription))
                     .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
-                    .put(DEVICE_TYPE_KEY, nonOriginatingData.device)
-                    .put(PLATFORM_ACCOUNT_KEY, nonOriginatingData.platformAccount)
+                    .put(DEVICE_TYPE_KEY, subscriptionDetails.device)
+                    .put(PLATFORM_ACCOUNT_KEY, subscriptionDetails.platformAccount)
                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                     .format(),
                 iconRes = R.drawable.ic_smartphone
             ),
             NonOriginatingLinkCellData(
                 title =  Phrase.from(context.getText(R.string.onPlatformWebsite))
-                    .put(PLATFORM_KEY, nonOriginatingData.platform)
+                    .put(PLATFORM_KEY, platformOverride)
                     .format(),
                 info = Phrase.from(context.getText(R.string.requestRefundPlatformWebsite))
-                    .put(PLATFORM_KEY, nonOriginatingData.platform)
-                    .put(PLATFORM_ACCOUNT_KEY, nonOriginatingData.platformAccount)
+                    .put(PLATFORM_KEY, platformOverride)
+                    .put(PLATFORM_ACCOUNT_KEY, subscriptionDetails.platformAccount)
                     .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .format(),
                 iconRes = R.drawable.ic_globe
@@ -102,21 +98,15 @@ private fun PreviewUpdatePlan(
     PreviewTheme(colors) {
         val context = LocalContext.current
         CancelPlanNonOriginating (
-            subscription = SubscriptionType.Active.AutoRenewing(
-                proStatus = ProStatus.Pro(
-                    visible = true,
-                    validUntil = Instant.now() + Duration.ofDays(14),
-                ),
-                duration = ProSubscriptionDuration.THREE_MONTHS,
-                nonOriginatingSubscription = SubscriptionDetails(
-                    device = "iPhone",
-                    store = "Apple App Store",
-                    platform = "Apple",
-                    platformAccount = "Apple Account",
-                    urlSubscription = "https://www.apple.com/account/subscriptions",
-                    urlRefund = "https://www.apple.com/account/subscriptions",
-                )
+            subscriptionDetails = SubscriptionDetails(
+                device = "iPhone",
+                store = "Apple App Store",
+                platform = "Apple",
+                platformAccount = "Apple Account",
+                subscriptionUrl = "https://www.apple.com/account/subscriptions",
+                refundUrl = "https://www.apple.com/account/subscriptions",
             ),
+            platformOverride = "Apple",
             sendCommand = {},
             onBack = {},
         )

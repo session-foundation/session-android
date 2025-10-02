@@ -35,11 +35,12 @@ import java.time.Instant
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun ChoosePlanNonOriginating(
-    subscription: SubscriptionType.Active,
+    subscription: SubscriptionType,
+    subscriptionDetails: SubscriptionDetails,
+    platformOverride: String, // this property is here because different scenario will require different property to be used for this string: some will use the platform, others will use the platformStore
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ){
-    val nonOriginatingData = subscription.nonOriginatingSubscription ?: return
     val context = LocalContext.current
 
     val headerTitle = when(subscription) {
@@ -48,7 +49,7 @@ fun ChoosePlanNonOriginating(
             .put(DATE_KEY, subscription.duration.expiryFromNow())
             .format()
 
-        else -> Phrase.from(context.getText(R.string.proPlanActivatedAutoShort))
+        is SubscriptionType.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proPlanActivatedAutoShort))
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .put(CURRENT_PLAN_KEY, DateUtils.getLocalisedTimeDuration(
                 context = context,
@@ -57,46 +58,49 @@ fun ChoosePlanNonOriginating(
             ))
             .put(DATE_KEY, subscription.duration.expiryFromNow())
             .format()
+
+        //todo PRO cater to EXPIRED and NEVER SUBSCRIBED here too
+        else -> ""
     }
 
     BaseNonOriginatingProSettingsScreen(
         disabled = false,
         onBack = onBack,
         headerTitle = headerTitle,
-        buttonText = Phrase.from(context.getText(R.string.onPlatformWebsite))
-            .put(PLATFORM_KEY, nonOriginatingData.platform)
+        buttonText = Phrase.from(context.getText(R.string.openPlatformWebsite))
+            .put(PLATFORM_KEY, platformOverride)
             .format().toString(),
         dangerButton = false,
         onButtonClick = {
-            sendCommand(ShowOpenUrlDialog(nonOriginatingData.urlSubscription))
+            sendCommand(ShowOpenUrlDialog(subscriptionDetails.subscriptionUrl))
         },
         contentTitle = stringResource(R.string.updatePlan),
         contentDescription = Phrase.from(context.getText(R.string.proPlanSignUp))
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-            .put(PLATFORM_STORE_KEY, nonOriginatingData.store)
-            .put(PLATFORM_ACCOUNT_KEY, nonOriginatingData.platformAccount)
+            .put(PLATFORM_STORE_KEY, subscriptionDetails.store)
+            .put(PLATFORM_ACCOUNT_KEY, subscriptionDetails.platformAccount)
             .format(),
         linkCellsInfo = stringResource(R.string.updatePlanTwo),
         linkCells = listOf(
             NonOriginatingLinkCellData(
                 title =  Phrase.from(context.getText(R.string.onDevice))
-                    .put(DEVICE_TYPE_KEY, nonOriginatingData.device)
+                    .put(DEVICE_TYPE_KEY, subscriptionDetails.device)
                     .format(),
                 info = Phrase.from(context.getText(R.string.onDeviceDescription))
                     .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
-                    .put(DEVICE_TYPE_KEY, nonOriginatingData.device)
-                    .put(PLATFORM_ACCOUNT_KEY, nonOriginatingData.platformAccount)
+                    .put(DEVICE_TYPE_KEY, subscriptionDetails.device)
+                    .put(PLATFORM_ACCOUNT_KEY, subscriptionDetails.platformAccount)
                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                     .format(),
                 iconRes = R.drawable.ic_smartphone
             ),
             NonOriginatingLinkCellData(
                 title =  Phrase.from(context.getText(R.string.viaStoreWebsite))
-                    .put(PLATFORM_KEY, nonOriginatingData.platform)
+                    .put(PLATFORM_KEY, platformOverride)
                     .format(),
                 info = Phrase.from(context.getText(R.string.viaStoreWebsiteDescription))
-                    .put(PLATFORM_ACCOUNT_KEY, nonOriginatingData.platformAccount)
-                    .put(PLATFORM_STORE_KEY, nonOriginatingData.platform)  //todo PRO wrong key in string
+                    .put(PLATFORM_ACCOUNT_KEY, subscriptionDetails.platformAccount)
+                    .put(PLATFORM_STORE_KEY, platformOverride)
                     .format(),
                 iconRes = R.drawable.ic_globe
             )
@@ -123,10 +127,19 @@ private fun PreviewUpdatePlan(
                     store = "Apple App Store",
                     platform = "Apple",
                     platformAccount = "Apple Account",
-                    urlSubscription = "https://www.apple.com/account/subscriptions",
-                    urlRefund = "https://www.apple.com/account/subscriptions",
+                    subscriptionUrl = "https://www.apple.com/account/subscriptions",
+                    refundUrl = "https://www.apple.com/account/subscriptions",
                 )
             ),
+            subscriptionDetails = SubscriptionDetails(
+                device = "iPhone",
+                store = "Apple App Store",
+                platform = "Apple",
+                platformAccount = "Apple Account",
+                subscriptionUrl = "https://www.apple.com/account/subscriptions",
+                refundUrl = "https://www.apple.com/account/subscriptions",
+            ),
+            platformOverride = "Apple",
             sendCommand = {},
             onBack = {},
         )

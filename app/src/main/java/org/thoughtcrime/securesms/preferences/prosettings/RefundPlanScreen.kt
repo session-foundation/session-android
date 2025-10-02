@@ -14,22 +14,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import com.squareup.phrase.Phrase
-import kotlinx.coroutines.flow.filter
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACCOUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.recipients.ProStatus
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlan
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlanBadge
-import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.subscription.NoOpSubscriptionManager
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
@@ -105,7 +96,7 @@ fun RefundPlan(
             if(isWithinQuickRefundWindow && !subscriptionManager.quickRefundUrl.isNullOrEmpty()){
                 sendCommand(ShowOpenUrlDialog(subscriptionManager.quickRefundUrl))
             } else {
-                sendCommand(ShowOpenUrlDialog(subscriptionManager.details.urlRefund))
+                sendCommand(ShowOpenUrlDialog(subscriptionManager.details.refundUrl))
             }
         },
         title = stringResource(R.string.proRefundDescription),

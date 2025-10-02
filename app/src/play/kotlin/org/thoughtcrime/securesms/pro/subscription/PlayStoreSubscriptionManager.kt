@@ -17,7 +17,6 @@ import kotlinx.coroutines.withContext
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
-import java.time.Duration
 import java.time.Instant
 import javax.inject.Inject
 
@@ -40,8 +39,8 @@ class PlayStoreSubscriptionManager @Inject constructor(
         platform = "Google",
         platformAccount = "Google account",
         //todo PRO update to final URL once we have it
-        urlSubscription = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
-        urlRefund = "https://getsession.org/android-refund",
+        subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
+        refundUrl = "https://getsession.org/android-refund",
     )
 
     override val quickRefundExpiry: Instant = Instant.now() //todo PRO implement properly
@@ -148,6 +147,10 @@ class PlayStoreSubscriptionManager @Inject constructor(
                 Log.d(TAG, "onBillingSetupFinished with $result")
             }
         })
+    }
+
+    override fun hasValidSubscription(productId: String): Boolean {
+        return false //todo PRO implement properly - we should check if the api has a valid subscription matching this productId for the current google user on this phone
     }
 
     companion object {

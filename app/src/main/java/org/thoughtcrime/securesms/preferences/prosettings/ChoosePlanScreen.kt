@@ -76,16 +76,30 @@ fun ChoosePlanScreen(
     val planData by viewModel.choosePlanState.collectAsState()
 
     // there are different UI depending on the state
+    val nonOriginatingSubscription = (planData.subscriptionType as? SubscriptionType.Active)?.nonOriginatingSubscription
+
     when {
-       // there is an active subscription but from a different platform
-        (planData.subscriptionType as? SubscriptionType.Active)?.nonOriginatingSubscription != null ->
+        // the existing subscription manager does not have a valid subscription for this account
+        // there is an active subscription but from a different platform
+        nonOriginatingSubscription != null ->
             ChoosePlanNonOriginating(
                 subscription = planData.subscriptionType as SubscriptionType.Active,
+                subscriptionDetails = nonOriginatingSubscription,
+                platformOverride = nonOriginatingSubscription.platform,
                 sendCommand = viewModel::onCommand,
                 onBack = onBack,
             )
 
-        //todo PRO handle the case here when there are no SubscriptionManager available (for example fdroid builds) OR they do but they are on a different google account from the one they purchsed the sub with
+        !planData.hasValidSubscription -> {
+            val subscriptionManager = viewModel.getSubscriptionManager()
+            ChoosePlanNonOriginating(
+                subscription = planData.subscriptionType,
+                subscriptionDetails = subscriptionManager.details,
+                platformOverride = subscriptionManager.details.store,
+                sendCommand = viewModel::onCommand,
+                onBack = onBack,
+            )
+        }
 
         // default plan chooser
         else -> ChoosePlan(
@@ -138,6 +152,7 @@ fun ChoosePlan(
                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                 .format()
 
+            //todo PRO cater for brand new subscription in here
             else -> ""
         }
 

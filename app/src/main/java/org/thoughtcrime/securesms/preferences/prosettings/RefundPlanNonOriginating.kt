@@ -47,7 +47,7 @@ fun RefundPlanNonOriginating(
             .format().toString(),
         dangerButton = true,
         onButtonClick = {
-            sendCommand(ShowOpenUrlDialog(nonOriginatingData.urlRefund))
+            sendCommand(ShowOpenUrlDialog(nonOriginatingData.refundUrl))
         },
         contentTitle = Phrase.from(context.getText(R.string.proRefunding))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
@@ -105,8 +105,8 @@ private fun PreviewUpdatePlan(
                     store = "Apple App Store",
                     platform = "Apple",
                     platformAccount = "Apple Account",
-                    urlSubscription = "https://www.apple.com/account/subscriptions",
-                    urlRefund = "https://www.apple.com/account/subscriptions",
+                    subscriptionUrl = "https://www.apple.com/account/subscriptions",
+                    refundUrl = "https://www.apple.com/account/subscriptions",
                 )
             ),
             sendCommand = {},

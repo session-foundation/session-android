@@ -54,13 +54,24 @@ fun CancelPlanScreen(
 
     // there are different UI depending on the state
     when {
-       // there is an active subscription but from a different platform
+        // there is an active subscription but from a different platform
         activePlan.nonOriginatingSubscription != null ->
             CancelPlanNonOriginating(
-                subscription = planData.subscriptionType as SubscriptionType.Active,
+                subscriptionDetails = activePlan.nonOriginatingSubscription!!,
+                platformOverride = activePlan.nonOriginatingSubscription!!.platform,
                 sendCommand = viewModel::onCommand,
                 onBack = onBack,
             )
+        
+        // the existing subscription manager does not have a valid subscription for this account
+        !planData.hasValidSubscription -> {
+            CancelPlanNonOriginating(
+                subscriptionDetails = subManager.details,
+                platformOverride = subManager.details.store,
+                sendCommand = viewModel::onCommand,
+                onBack = onBack,
+            )
+        }
 
         // default cancel screen
         else -> CancelPlan(
