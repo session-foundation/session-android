@@ -83,7 +83,6 @@ class GroupPoller @AssistedInject constructor(
 
     private val fetcher by lazy {
         fetcherFactory.create(
-            swarmAccountId = groupId,
             swarmAuthProvider = { configFactoryProtocol.getGroupAuth(groupId)!! }
         )
     }

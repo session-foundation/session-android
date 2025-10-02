@@ -948,18 +948,6 @@ object SnodeAPI {
             )
         }
 
-    fun parseRawMessagesResponse(rawResponse: RawResponse, snode: Snode, publicKey: String, namespace: Int = 0, updateLatestHash: Boolean = true, updateStoredHashes: Boolean = true, decrypt: ((ByteArray) -> Pair<ByteArray, AccountId>?)? = null): List<Pair<SignalServiceProtos.Envelope, String?>> =
-        (rawResponse["messages"] as? List<*>)?.let { messages ->
-            if (updateLatestHash) updateLastMessageHashValueIfPossible(snode, publicKey, messages, namespace)
-            removeDuplicates(
-                publicKey = publicKey,
-                messages = parseEnvelopes(messages, decrypt),
-                messageHashGetter = { it.second },
-                namespace = namespace,
-                updateStoredHashes = updateStoredHashes
-            )
-        } ?: listOf()
-
     fun updateLastMessageHashValueIfPossible(snode: Snode, publicKey: String, rawMessages: List<*>, namespace: Int) {
         val lastMessageAsJSON = rawMessages.lastOrNull() as? Map<*, *>
         val hashValue = lastMessageAsJSON?.get("hash") as? String
@@ -967,44 +955,6 @@ object SnodeAPI {
             hashValue != null -> database.setLastMessageHashValue(snode, publicKey, hashValue, namespace)
             rawMessages.isNotEmpty() -> Log.d("Loki", "Failed to update last message hash value from: ${rawMessages.prettifiedDescription()}.")
         }
-    }
-
-    /**
-     *
-     *
-     * TODO Use a db transaction, synchronizing is sufficient for now because
-     * database#setReceivedMessageHashValues is only called here.
-     */
-    @Synchronized
-    fun <M> removeDuplicates(
-        publicKey: String,
-        messages: List<M>,
-        messageHashGetter: (M) -> String?,
-        namespace: Int,
-        updateStoredHashes: Boolean
-    ): List<M> {
-        val hashValues = database.getReceivedMessageHashValues(publicKey, namespace)?.toMutableSet() ?: mutableSetOf()
-        return messages
-            .filter { message ->
-                val hash = messageHashGetter(message)
-                if (hash == null) {
-                    Log.d("Loki", "Missing hash value for message: ${message?.prettifiedDescription()}.")
-                    return@filter false
-                }
-
-                val isNew = hashValues.add(hash)
-
-                if (!isNew) {
-                    Log.d("Loki", "Duplicate message hash: $hash.")
-                }
-
-                isNew
-            }
-            .also {
-                if (updateStoredHashes && it.isNotEmpty()) {
-                    database.setReceivedMessageHashValues(publicKey, hashValues, namespace)
-                }
-            }
     }
 
     private fun parseEnvelopes(rawMessages: List<*>, decrypt: ((ByteArray)->Pair<ByteArray, AccountId>?)?): List<Pair<SignalServiceProtos.Envelope, String?>> {

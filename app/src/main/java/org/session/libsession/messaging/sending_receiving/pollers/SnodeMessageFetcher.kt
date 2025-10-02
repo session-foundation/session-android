@@ -8,19 +8,23 @@ import org.session.libsession.snode.StorageRPCService
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.snode.endpoint.Authenticated
 import org.session.libsession.snode.endpoint.Retrieve
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
+import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 
 class SnodeMessageFetcher @AssistedInject constructor(
     val lokiAPIDatabase: LokiAPIDatabase,
     private val storageRPCService: StorageRPCService,
     private val snodeClock: SnodeClock,
-    val swarmAccountId: AccountId,
+    private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     @Assisted private val swarmAuthProvider: () -> SwarmAuth,
 ) {
 
     inner class FetchResult(
+        private val allMessages: List<Retrieve.Message>,
+        private val swarmAccountId: AccountId,
         private val newMessages: List<Retrieve.Message>,
         private val snode: Snode,
         private val namespace: Int
@@ -29,6 +33,21 @@ class SnodeMessageFetcher @AssistedInject constructor(
             chunkSize: Int = 50,
             processor: suspend (List<Retrieve.Message>) -> T
         ): List<T> {
+            if (newMessages.isEmpty()) {
+                val result = processor(newMessages)
+
+                if (allMessages.isNotEmpty()) {
+                    lokiAPIDatabase.setLastMessageHashValue(
+                        snode = snode,
+                        publicKey = swarmAccountId.hexString,
+                        namespace = namespace,
+                        newValue = allMessages.maxBy { it.timestamp }.hash
+                    )
+                }
+
+                return listOf(result)
+            }
+
             return buildList {
                 for (batch in newMessages.asSequence().chunked(chunkSize)) {
                     add(processor(batch))
@@ -43,9 +62,9 @@ class SnodeMessageFetcher @AssistedInject constructor(
                             newValue = batch.maxBy { it.timestamp }.hash
                         )
 
-                        lokiAPIDatabase.addNewMessageHashes(
+                        receivedMessageHashDatabase.addNewMessageHashes(
                             hashes = batch.asSequence().map { it.hash },
-                            swarmPubKey = swarmAccountId.hexString,
+                            repositoryAddress = swarmAccountId.toAddress(),
                             namespace = namespace
                         )
                     }
@@ -67,8 +86,11 @@ class SnodeMessageFetcher @AssistedInject constructor(
         namespace: Int,
         maxSize: Int?,
     ): FetchResult {
+        val swarmAuth = swarmAuthProvider()
+        val swarmAccountId = swarmAuth.accountId
+
         val request = Retrieve.Request(
-            namespace = null,
+            namespace = namespace.takeIf { it != 0 },
             lastHash = lokiAPIDatabase.getLastMessageHashValue(
                 snode = snode,
                 publicKey = swarmAccountId.hexString,
@@ -82,19 +104,23 @@ class SnodeMessageFetcher @AssistedInject constructor(
             endpoint = Authenticated(
                 clock = snodeClock,
                 realEndpoint = Retrieve,
-                swarmAuth = swarmAuthProvider(),
+                swarmAuth = swarmAuth,
             ),
             req = request,
         ).messages
             .sortedBy { it.timestamp }
 
+        val newMessages = receivedMessageHashDatabase.dedupMessages(
+            messages = messages,
+            hash = Retrieve.Message::hash,
+            repositoryAddress = swarmAccountId.toAddress(),
+            namespace = namespace
+        ).toList()
+
         return FetchResult(
-            newMessages = lokiAPIDatabase.dedupMessages(
-                messages = messages,
-                hash = Retrieve.Message::hash,
-                swarmPubKey = swarmAccountId.hexString,
-                namespace = namespace
-            ).toList(),
+            swarmAccountId = swarmAccountId,
+            newMessages = newMessages,
+            allMessages = messages,
             snode = snode,
             namespace = namespace
         )
@@ -104,7 +130,6 @@ class SnodeMessageFetcher @AssistedInject constructor(
     @AssistedFactory
     interface Factory {
         fun create(
-            swarmAccountId: AccountId,
             swarmAuthProvider: () -> SwarmAuth
         ): SnodeMessageFetcher
     }

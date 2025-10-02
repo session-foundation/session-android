@@ -61,6 +61,7 @@ class LokiAPIDatabase @Inject constructor(
             = "CREATE TABLE $legacyLastMessageHashValueTable2 ($snode TEXT, $publicKey TEXT, $lastMessageHashValue TEXT, PRIMARY KEY ($snode, $publicKey));"
         // Received message hash values
         private const val legacyReceivedMessageHashValuesTable3 = "received_message_hash_values_table_3"
+        @Deprecated("This table is now deleted. It's only here for migration purpose")
         private const val receivedMessageHashValuesTable = "session_received_message_hash_values_table"
         private const val receivedMessageHashValues = "received_message_hash_values"
         private const val receivedMessageHashNamespace = "received_message_namespace"
@@ -321,84 +322,6 @@ class LokiAPIDatabase @Inject constructor(
     override fun clearAllLastMessageHashes() {
         val database = writableDatabase
         database.delete(lastMessageHashValueTable2, null, null)
-    }
-
-    override fun dedupMessageHashes(
-        hashes: Sequence<String>,
-        swarmPubKey: String,
-        namespace: Int
-    ): Set<String> {
-        return readableDatabase.rawQuery(
-            """
-                SELECT $receivedMessageHashValues FROM $receivedMessageHashValuesTable
-                WHERE 
-                    $publicKey = ? AND
-                    $receivedMessageHashNamespace = ? AND
-                    ($receivedMessageHashValues NOT IN (SELECT value FROM json_each(?)))
-            """.trimIndent(),
-            JsonArray(hashes.map(::JsonPrimitive).toList()).toString()
-        ).use { cursor ->
-            cursor.asSequence().mapTo(hashSetOf()) { it.getString(0) }
-        }
-    }
-
-    override fun addNewMessageHashes(
-        hashes: Sequence<String>,
-        swarmPubKey: String,
-        namespace: Int
-    ) {
-        writableDatabase.transaction {
-            compileStatement("""
-                INSERT OR IGNORE INTO $receivedMessageHashValuesTable 
-                    ($publicKey, $receivedMessageHashNamespace, $receivedMessageHashValues)
-                VALUES (?, ?, ?)
-            """.trimIndent()).use { statement ->
-                for (hash in hashes) {
-                    statement.clearBindings()
-                    statement.bindString(1, swarmPublicKey)
-                    statement.bindLong(2, namespace.toLong())
-                    statement.bindString(3, hash)
-                    statement.execute()
-                }
-            }
-        }
-    }
-
-    override fun getReceivedMessageHashValues(publicKey: String, namespace: Int): Set<String>? {
-        val database = readableDatabase
-        val query = "${Companion.publicKey} = ? AND ${Companion.receivedMessageHashNamespace} = ?"
-        return database.get(receivedMessageHashValuesTable, query, arrayOf( publicKey, namespace.toString() )) { cursor ->
-            val receivedMessageHashValuesAsString = cursor.getString(cursor.getColumnIndexOrThrow(Companion.receivedMessageHashValues))
-            receivedMessageHashValuesAsString.split("-").toSet()
-        }
-    }
-
-    override fun setReceivedMessageHashValues(publicKey: String, newValue: Set<String>, namespace: Int) {
-        val database = writableDatabase
-        val receivedMessageHashValuesAsString = newValue.joinToString("-")
-        val row = wrap(mapOf(
-            Companion.publicKey to publicKey,
-            Companion.receivedMessageHashValues to receivedMessageHashValuesAsString,
-            Companion.receivedMessageHashNamespace to namespace.toString()
-        ))
-        val query = "${Companion.publicKey} = ? AND $receivedMessageHashNamespace = ?"
-        database.insertOrUpdate(receivedMessageHashValuesTable, row, query, arrayOf( publicKey, namespace.toString() ))
-    }
-
-    override fun clearReceivedMessageHashValues(publicKey: String) {
-        writableDatabase
-            .delete(receivedMessageHashValuesTable, "${Companion.publicKey} = ?", arrayOf(publicKey))
-    }
-
-    override fun clearReceivedMessageHashValues() {
-        val database = writableDatabase
-        database.delete(receivedMessageHashValuesTable, null, null)
-    }
-
-    override fun clearReceivedMessageHashValuesByNamespaces(vararg namespaces: Int) {
-        // Note that we don't use SQL parameter as the given namespaces are integer anyway so there's little chance of SQL injection
-        writableDatabase
-            .delete(receivedMessageHashValuesTable, "$receivedMessageHashNamespace IN (${namespaces.joinToString(",")})", null)
     }
 
     override fun getAuthToken(server: String): String? {

@@ -25,6 +25,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.libsession_util.Namespace
+import network.loki.messenger.libsession_util.protocol.DecryptEnvelopeKey
+import network.loki.messenger.libsession_util.protocol.SessionProtocol
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
 import org.session.libsession.snode.SnodeAPI
@@ -38,10 +40,14 @@ import org.session.libsession.utilities.ConfigMessage
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
+import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
+import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
+import org.thoughtcrime.securesms.util.DateUtils.Companion.toEpochSeconds
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import java.time.Duration
 
@@ -58,6 +64,7 @@ class Poller @AssistedInject constructor(
     private val networkConnectivity: NetworkConnectivity,
     private val storageRPCService: StorageRPCService,
     private val snodeClock: SnodeClock,
+    private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     fetcherFactory: SnodeMessageFetcher.Factory,
     @Assisted scope: CoroutineScope
 ) {
@@ -66,7 +73,6 @@ class Poller @AssistedInject constructor(
 
     private val fetcher by lazy {
         fetcherFactory.create(
-            swarmAccountId = AccountId(preferences.getLocalNumber()!!),
             swarmAuthProvider = { requireNotNull(storage.userAuth) }
         )
     }
@@ -127,7 +133,7 @@ class Poller @AssistedInject constructor(
             // To migrate to multi part config, we'll need to fetch all the config messages so we
             // get the chance to process those multipart messages again...
             lokiApiDatabase.clearLastMessageHashesByNamespaces(*allConfigNamespaces)
-            lokiApiDatabase.clearReceivedMessageHashValuesByNamespaces(*allConfigNamespaces)
+            receivedMessageHashDatabase.removeHashesByNamespaces(allConfigNamespaces.asIterable())
 
             preferences.migratedToMultiPartConfig = true
         }
@@ -217,9 +223,29 @@ class Poller @AssistedInject constructor(
     }
 
     private suspend fun processPersonalMessages(fetchResult: SnodeMessageFetcher.FetchResult) {
+        val privateKey = DecryptEnvelopeKey.Regular(
+            ed25519PrivKey = storage.getUserED25519KeyPair()!!.secretKey.data
+        )
+
         fetchResult.processMessagesInBatches { batch ->
             //TODO:
             Log.d(TAG, "Processing batch of ${batch.size} personal messages")
+            for (msg in batch) {
+                val envelope = SessionProtocol.decryptEnvelope(
+                    key = privateKey,
+                    payload = msg.dataDecoded,
+                    nowEpochSeconds = snodeClock.currentTime().toEpochSeconds(),
+                    proBackendPubKey = ByteArray(32)
+                )
+
+                val senderAccountId = AccountId(IdPrefix.STANDARD, envelope.senderEd25519PubKey.data)
+                val content = SignalServiceProtos.Content.parseFrom(envelope.contentPlainText.data)
+                val timestamp = envelope.timestamp
+
+                Log.d(TAG, "From $senderAccountId, Time = $timestamp: $content")
+
+
+            }
         }
     }
 

@@ -44,6 +44,7 @@ import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.model.BatchResponse
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.RecipientData
@@ -62,6 +63,7 @@ import org.thoughtcrime.securesms.configs.ConfigUploader
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -87,6 +89,7 @@ class GroupManagerV2Impl @Inject constructor(
     private val scope: GroupScope,
     private val groupPollerManager: GroupPollerManager,
     private val recipientRepository: RecipientRepository,
+    private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
 ) : GroupManagerV2 {
     private val dispatcher = Dispatchers.Default
 
@@ -880,7 +883,7 @@ class GroupManagerV2Impl @Inject constructor(
 
         // Clear all polling states
         lokiAPIDatabase.clearLastMessageHashes(groupId.hexString)
-        lokiAPIDatabase.clearReceivedMessageHashValues(groupId.hexString)
+        receivedMessageHashDatabase.removeHashesByRepo(groupId.toAddress())
         SessionMetaProtocol.clearReceivedMessages()
 
         configFactory.deleteGroupConfigs(groupId)

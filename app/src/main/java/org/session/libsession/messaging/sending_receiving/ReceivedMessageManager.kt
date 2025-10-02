@@ -12,7 +12,6 @@ import javax.inject.Singleton
 
 @Singleton
 class ReceivedMessageManager @Inject constructor(
-    private val database: ReceivedMessageDatabase,
     private val handler: ReceivedMessageHandler,
     @param:ManagerScope private val scope: CoroutineScope,
 ): OnAppStartupComponent {
