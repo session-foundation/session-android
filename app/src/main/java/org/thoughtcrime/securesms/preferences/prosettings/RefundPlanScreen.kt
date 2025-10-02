@@ -91,12 +91,13 @@ fun RefundPlan(
 ) {
     val context = LocalContext.current
     val isWithinQuickRefundWindow = subscriptionManager.isWithinQuickRefundWindow()
+    val platform = subscriptionManager.details.platform
 
     BaseCellButtonProSettingsScreen(
         disabled = true,
         onBack = onBack,
         buttonText = if(isWithinQuickRefundWindow) Phrase.from(context.getText(R.string.openPlatformWebsite))
-            .put(PLATFORM_KEY, subscriptionManager.platform)
+            .put(PLATFORM_KEY, platform)
             .format().toString()
         else stringResource(R.string.requestRefund),
         dangerButton = true,
@@ -104,7 +105,7 @@ fun RefundPlan(
             if(isWithinQuickRefundWindow && !subscriptionManager.quickRefundUrl.isNullOrEmpty()){
                 sendCommand(ShowOpenUrlDialog(subscriptionManager.quickRefundUrl))
             } else {
-                sendCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_REFUND))
+                sendCommand(ShowOpenUrlDialog(subscriptionManager.details.urlRefund))
             }
         },
         title = stringResource(R.string.proRefundDescription),
@@ -124,9 +125,9 @@ fun RefundPlan(
                 text = annotatedStringResource(
                     if(isWithinQuickRefundWindow)
                         Phrase.from(context.getText(R.string.proRefundRequestStorePolicies))
-                            .put(PLATFORM_KEY, subscriptionManager.platform)
-                            .put(PLATFORM_KEY, subscriptionManager.platform)
-                            .put(PLATFORM_KEY, subscriptionManager.platform)
+                            .put(PLATFORM_KEY, platform)
+                            .put(PLATFORM_KEY, platform)
+                            .put(PLATFORM_KEY, platform)
                             .put(APP_NAME_KEY, context.getString(R.string.app_name))
                             .format()
                     else Phrase.from(context.getText(R.string.proRefundRequestSessionSupport))

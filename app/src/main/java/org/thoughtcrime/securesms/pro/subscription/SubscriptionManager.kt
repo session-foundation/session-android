@@ -8,12 +8,10 @@ import java.time.Instant
  */
 interface SubscriptionManager: OnAppStartupComponent {
     val id: String
-    val displayName: String
     val description: String
-    val platform: String
     val iconRes: Int?
 
-    val subscriptionUrl: String
+    val details: SubscriptionDetails
 
     // Optional. Some store can have a platform specific refund window and url
     val quickRefundExpiry: Instant?
@@ -30,3 +28,12 @@ interface SubscriptionManager: OnAppStartupComponent {
         return quickRefundExpiry != null && Instant.now().isBefore(quickRefundExpiry)
     }
 }
+
+data class SubscriptionDetails(
+    val device: String,
+    val store: String,
+    val platform: String,
+    val platformAccount: String,
+    val urlSubscription: String,
+    val urlRefund: String,
+)

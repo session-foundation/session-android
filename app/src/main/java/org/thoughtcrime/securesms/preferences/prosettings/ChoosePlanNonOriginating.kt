@@ -23,6 +23,7 @@ import org.session.libsession.utilities.recipients.ProStatus
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
+import org.thoughtcrime.securesms.pro.subscription.SubscriptionDetails
 import org.thoughtcrime.securesms.pro.subscription.expiryFromNow
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
@@ -117,7 +118,7 @@ private fun PreviewUpdatePlan(
                     validUntil = Instant.now() + Duration.ofDays(14),
                 ),
                 duration = ProSubscriptionDuration.THREE_MONTHS,
-                nonOriginatingSubscription = SubscriptionType.Active.NonOriginatingSubscription(
+                nonOriginatingSubscription = SubscriptionDetails(
                     device = "iPhone",
                     store = "Apple App Store",
                     platform = "Apple",

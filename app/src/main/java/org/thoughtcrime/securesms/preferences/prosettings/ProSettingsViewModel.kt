@@ -3,7 +3,7 @@ package org.thoughtcrime.securesms.preferences.prosettings
 import android.content.Context
 import android.content.Intent
 import android.icu.util.MeasureUnit
-import android.net.Uri
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavOptionsBuilder
@@ -28,11 +28,10 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
-import org.thoughtcrime.securesms.openUrl
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
-import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.SubscriptionState
+import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionCoordinator
@@ -43,7 +42,6 @@ import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.State
 import javax.inject.Inject
-import androidx.core.net.toUri
 
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
@@ -269,7 +267,7 @@ class ProSettingsViewModel @Inject constructor(
             }
 
             Commands.OpenSubscriptionPage -> {
-                val subUrl = subscriptionCoordinator.getCurrentManager().subscriptionUrl
+                val subUrl = subscriptionCoordinator.getCurrentManager().details.urlSubscription
                 if(subUrl.isNotEmpty()){
                     viewModelScope.launch {
                         navigator.navigateToIntent(

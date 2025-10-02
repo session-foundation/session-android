@@ -21,6 +21,7 @@ import org.session.libsession.utilities.recipients.ProStatus
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
+import org.thoughtcrime.securesms.pro.subscription.SubscriptionDetails
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
@@ -37,10 +38,16 @@ fun CancelPlanNonOriginating(
     val nonOriginatingData = subscription.nonOriginatingSubscription ?: return
     val context = LocalContext.current
 
+    //todo PRO this should also cover the case of a google play sub from a different google account, in which case use displayName from the subscriberManager
+    val platform = nonOriginatingData.platform
+
     BaseNonOriginatingProSettingsScreen(
         disabled = true,
         onBack = onBack,
-        headerTitle = stringResource(R.string.proRefundDescription),
+        headerTitle = Phrase.from(context.getText(R.string.proCancelSorry))
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+            .format().toString(),
         buttonText = Phrase.from(context.getText(R.string.openPlatformWebsite))
             .put(PLATFORM_KEY, nonOriginatingData.platform)
             .format().toString(),
@@ -48,21 +55,23 @@ fun CancelPlanNonOriginating(
         onButtonClick = {
             sendCommand(ShowOpenUrlDialog(nonOriginatingData.urlRefund))
         },
-        contentTitle = Phrase.from(context.getText(R.string.proRefunding))
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-            .format().toString(),
-        contentDescription = Phrase.from(context.getText(R.string.proPlanPlatformRefund))
+        contentTitle = stringResource(R.string.proCancellation),
+        contentDescription = Phrase.from(context.getText(R.string.proCancellationDescription))
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-            .put(PLATFORM_STORE_KEY, nonOriginatingData.store)
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+            .put(PLATFORM_ACCOUNT_KEY, nonOriginatingData.platformAccount)
             .put(PLATFORM_ACCOUNT_KEY, nonOriginatingData.platformAccount)
             .format(),
-        linkCellsInfo = stringResource(R.string.refundRequestOptions),
+        linkCellsInfo = stringResource(R.string.proCancellationOptions),
         linkCells = listOf(
             NonOriginatingLinkCellData(
                 title =  Phrase.from(context.getText(R.string.onDevice))
                     .put(DEVICE_TYPE_KEY, nonOriginatingData.device)
                     .format(),
-                info = Phrase.from(context.getText(R.string.proRefundAccountDevice))
+                info = Phrase.from(context.getText(R.string.onDeviceCancelDescription))
                     .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
                     .put(DEVICE_TYPE_KEY, nonOriginatingData.device)
                     .put(PLATFORM_ACCOUNT_KEY, nonOriginatingData.platformAccount)
@@ -99,7 +108,7 @@ private fun PreviewUpdatePlan(
                     validUntil = Instant.now() + Duration.ofDays(14),
                 ),
                 duration = ProSubscriptionDuration.THREE_MONTHS,
-                nonOriginatingSubscription = SubscriptionType.Active.NonOriginatingSubscription(
+                nonOriginatingSubscription = SubscriptionDetails(
                     device = "iPhone",
                     store = "Apple App Store",
                     platform = "Apple",

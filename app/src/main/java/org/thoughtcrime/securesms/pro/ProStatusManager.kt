@@ -24,8 +24,8 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
+import org.thoughtcrime.securesms.pro.subscription.SubscriptionDetails
 import org.thoughtcrime.securesms.util.State
 import java.time.Duration
 import java.time.Instant
@@ -74,7 +74,7 @@ class ProStatusManager @Inject constructor(
                         validUntil = Instant.now() + Duration.ofDays(14),
                     ),
                     duration = ProSubscriptionDuration.ONE_MONTH,
-                    nonOriginatingSubscription = SubscriptionType.Active.NonOriginatingSubscription(
+                    nonOriginatingSubscription = SubscriptionDetails(
                         device = "iPhone",
                         store = "Apple App Store",
                         platform = "Apple",
@@ -90,7 +90,7 @@ class ProStatusManager @Inject constructor(
                         validUntil = Instant.now() + Duration.ofDays(2),
                     ),
                     duration = ProSubscriptionDuration.ONE_MONTH,
-                    nonOriginatingSubscription = SubscriptionType.Active.NonOriginatingSubscription(
+                    nonOriginatingSubscription = SubscriptionDetails(
                         device = "iPhone",
                         store = "Apple App Store",
                         platform = "Apple",
@@ -204,6 +204,5 @@ class ProStatusManager @Inject constructor(
         private const val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
 
         const val URL_PRO_SUPPORT = "https://getsession.org/pro-form"
-        const val URL_PRO_REFUND = "https://getsession.org/android-refund"
     }
 }

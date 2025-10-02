@@ -9,12 +9,17 @@ import javax.inject.Inject
  */
 class NoOpSubscriptionManager @Inject constructor() : SubscriptionManager {
     override val id = "noop"
-    override val displayName = ""
     override val description = ""
-    override val platform = ""
     override val iconRes = null
 
-    override val subscriptionUrl = ""
+    override val details = SubscriptionDetails(
+        device = "",
+        store = "",
+        platform = "",
+        platformAccount = "",
+        urlSubscription = "",
+        urlRefund = "",
+    )
 
     override val quickRefundExpiry = null
     override val quickRefundUrl = null
