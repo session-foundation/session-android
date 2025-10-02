@@ -140,7 +140,7 @@ fun ContentView.bindModel(query: String?, model: ContactModel) = binding.run {
     searchResultTimestamp.isVisible = false
     searchResultSubtitle.text = null
     val recipient = MessagingModuleConfiguration.shared.recipientRepository.getRecipientSync(
-        Address.fromSerialized(model.contact.hexString)
+        model.contact
     )
     searchResultProfilePicture.setThemedContent {
         Avatar(

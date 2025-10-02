@@ -15,6 +15,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.annotation.AttrRes
 import androidx.annotation.ColorInt
+import kotlin.math.ceil
 
 @ColorInt
 fun Context.getColorFromAttr(
@@ -59,7 +60,7 @@ fun TextView.needsCollapsing(
         .setHyphenationFrequency(hyphenationFrequency)
         .setAlignment(alignment)
         .setTextDirection(direction)
-        .setMaxLines(maxLines)                                   // cap at maxLines
+        .setMaxLines(maxLines)       // cap at maxLines
         .setEllipsize(ellipsize)     // compute ellipsis
 
     builder.setJustificationMode(justificationMode)
@@ -74,4 +75,28 @@ fun TextView.needsCollapsing(
     // Exactly maxLines: truncated if last line is ellipsized or characters were cut
     val last = (maxLines - 1).coerceAtMost(layout.lineCount - 1)
     return layout.getEllipsisCount(last) > 0 || layout.getLineEnd(last) < textForLayout.length
+}
+
+fun TextView.applyCollapsedEllipsisMinWidth(
+    widthCapPx: Int,
+    maxCharsBeforeEllipsis: Int = 5, // will truncate after this many characters for short texts
+    sampleGlyph: Char = '0'
+) {
+    if (widthCapPx <= 0) return
+
+    val ellipsis = '\u2026'
+
+    val paint = paint
+    val sample = sampleGlyph.toString().repeat(maxCharsBeforeEllipsis)
+    val minContent =
+        ceil(paint.measureText(sample) + paint.measureText(ellipsis.toString())).toInt()
+    val neededTotal = minContent + paddingLeft + paddingRight
+    val applied = neededTotal.coerceAtMost(widthCapPx)
+    if (applied > 0 && minWidth != applied) {
+        minWidth = applied
+    }
+}
+
+fun TextView.clearCollapsedMinWidth() {
+    if (minWidth != 0) minWidth = 0
 }

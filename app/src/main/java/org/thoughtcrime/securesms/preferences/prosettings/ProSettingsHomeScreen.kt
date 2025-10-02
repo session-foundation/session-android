@@ -5,8 +5,10 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,12 +20,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,17 +52,21 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.recipients.ProStatus
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.SetShowProBadge
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowPlanUpdate
+import org.session.libsession.utilities.recipients.shouldShowProBadge
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.*
+import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
+import org.thoughtcrime.securesms.ui.ActionRowItem
 import org.thoughtcrime.securesms.ui.CategoryCell
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.IconActionRowItem
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.SpeechBubbleTooltip
 import org.thoughtcrime.securesms.ui.SwitchActionRowItem
+import org.thoughtcrime.securesms.ui.components.ExtraSmallCircularProgressIndicator
+import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.components.iconExternalLink
 import org.thoughtcrime.securesms.ui.components.inlineContentMap
@@ -72,13 +80,13 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
-import org.thoughtcrime.securesms.ui.theme.primaryGreen
 import org.thoughtcrime.securesms.ui.theme.primaryOrange
 import org.thoughtcrime.securesms.ui.theme.primaryPink
 import org.thoughtcrime.securesms.ui.theme.primaryPurple
 import org.thoughtcrime.securesms.ui.theme.primaryRed
 import org.thoughtcrime.securesms.ui.theme.primaryYellow
 import org.thoughtcrime.securesms.util.NumberUtil
+import org.thoughtcrime.securesms.util.State
 import java.time.Duration
 import java.time.Instant
 
@@ -105,12 +113,68 @@ fun ProSettingsHome(
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ) {
+    val subscriptionType = data.subscriptionState.type
+    val context = LocalContext.current
+
     BaseProSettingsScreen(
-        disabled = data.subscriptionState is SubscriptionState.Expired,
+        disabled = subscriptionType is SubscriptionType.Expired,
         onBack = onBack,
+        onHeaderClick = {
+            // add a click handling if the subscription state is loading or errored
+            if(data.subscriptionState.refreshState !is State.Success<*>){
+                sendCommand(OnHeaderClicked)
+            } else null
+        },
+        extraHeaderContent = {
+            // display extra content if the subscription state is loading or errored
+            when(data.subscriptionState.refreshState){
+                is State.Loading -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing)
+                    ) {
+                        Text(
+                            text = Phrase.from(context.getText(R.string.proStatusLoadingSubtitle))
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format().toString(),
+                            style = LocalType.current.base,
+                            color = LocalColors.current.text
+
+                        )
+
+                        ExtraSmallCircularProgressIndicator()
+                    }
+                }
+
+                is State.Error -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
+                    ) {
+                        Text(
+                            text = Phrase.from(context.getText(R.string.proErrorRefreshingStatus))
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format().toString(),
+                            style = LocalType.current.base,
+                            color = LocalColors.current.warning
+
+                        )
+
+                        Image(
+                            modifier = Modifier.size(LocalDimensions.current.iconXSmall),
+                            painter = painterResource(id = R.drawable.ic_triangle_alert),
+                            colorFilter = ColorFilter.tint(LocalColors.current.warning),
+                            contentDescription = null,
+                        )
+                    }
+                }
+
+                else -> null
+            }
+        }
     ) {
         // Pro Stats
-        if(data.subscriptionState is SubscriptionState.Active){
+        if(subscriptionType is SubscriptionType.Active){
             Spacer(Modifier.height(LocalDimensions.current.spacing))
             ProStats(
                 data = data.proStats,
@@ -119,20 +183,21 @@ fun ProSettingsHome(
         }
 
         // Pro account settings
-        if(data.subscriptionState is SubscriptionState.Active){
+        if(subscriptionType is SubscriptionType.Active){
             Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
             ProSettings(
-                data = data.subscriptionState,
+                data = subscriptionType,
+                subscriptionRefreshState = data.subscriptionState.refreshState,
                 expiry = data.subscriptionExpiryLabel,
                 sendCommand = sendCommand,
             )
         }
 
         // Manage Pro - Expired
-        if(data.subscriptionState is SubscriptionState.Expired){
+        if(subscriptionType is SubscriptionType.Expired){
             Spacer(Modifier.height(LocalDimensions.current.spacing))
             ProManage(
-                data = data.subscriptionState,
+                data = subscriptionType,
                 sendCommand = sendCommand,
             )
         }
@@ -140,15 +205,15 @@ fun ProSettingsHome(
         // Features
         Spacer(Modifier.height(LocalDimensions.current.spacing))
         ProFeatures(
-            data = data.subscriptionState,
+            data = subscriptionType,
             sendCommand = sendCommand,
         )
 
         // Manage Pro - Pro
-        if(data.subscriptionState is SubscriptionState.Active){
+        if(subscriptionType is SubscriptionType.Active){
             Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
             ProManage(
-                data = data.subscriptionState,
+                data = subscriptionType,
                 sendCommand = sendCommand,
             )
         }
@@ -158,7 +223,7 @@ fun ProSettingsHome(
         CategoryCell(
             title = stringResource(R.string.sessionHelp),
         ) {
-            val iconColor = if(data.subscriptionState is SubscriptionState.Expired) LocalColors.current.text
+            val iconColor = if(subscriptionType is SubscriptionType.Expired) LocalColors.current.text
             else LocalColors.current.accentText
 
             // Cell content
@@ -173,7 +238,7 @@ fun ProSettingsHome(
                     ),
                     subtitle = annotatedStringResource(
                         Phrase.from(LocalContext.current, R.string.proFaqDescription)
-                            .put(APP_NAME_KEY, stringResource(R.string.app_name))
+                            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                             .format().toString()
                     ),
                     icon = R.drawable.ic_square_arrow_up_right,
@@ -197,7 +262,7 @@ fun ProSettingsHome(
                     iconColor = iconColor,
                     qaTag = R.string.qa_pro_settings_action_support,
                     onClick = {
-                        sendCommand(ShowOpenUrlDialog("https://getsession.org/pro-form"))
+                        sendCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
                     }
                 )
             }
@@ -257,16 +322,15 @@ fun ProStats(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing)
             ) {
-                // groups updated
+                // Long Messages
                 ProStatItem(
                     modifier = Modifier.weight(1f),
                     title = pluralStringResource(
-                        R.plurals.proGroupsUpgraded,
-                        data.groupsUpdated,
-                        NumberUtil.getFormattedNumber(data.groupsUpdated.toLong())
+                        R.plurals.proLongerMessagesSent,
+                        data.longMessages,
+                        NumberUtil.getFormattedNumber(data.longMessages.toLong())
                     ),
-                    icon = R.drawable.ic_users_group_custom
-
+                    icon = R.drawable.ic_message_square
                 )
 
                 // Pinned Convos
@@ -298,15 +362,86 @@ fun ProStats(
 
                 )
 
-                // Long Messages
+                // groups updated
                 ProStatItem(
                     modifier = Modifier.weight(1f),
                     title = pluralStringResource(
-                        R.plurals.proLongerMessagesSent,
-                        data.longMessages,
-                        NumberUtil.getFormattedNumber(data.longMessages.toLong())
+                        R.plurals.proGroupsUpgraded,
+                        data.groupsUpdated,
+                        NumberUtil.getFormattedNumber(data.groupsUpdated.toLong())
                     ),
-                    icon = R.drawable.ic_message_square
+                    icon = R.drawable.ic_users_group_custom,
+                    disabled = true,
+                    tooltip = stringResource(R.string.proLargerGroupsTooltip)
+
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProStatItem(
+    modifier: Modifier = Modifier,
+    title: String,
+    @DrawableRes icon: Int,
+    disabled: Boolean = false,
+    tooltip: String? = null,
+){
+    val scope = rememberCoroutineScope()
+    val tooltipState = rememberTooltipState(isPersistent = true)
+
+    Row(
+        modifier = modifier.then(
+            // make the component clickable is there is an edit action
+            if (tooltip != null) Modifier.clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = {
+                    scope.launch {
+                        if (tooltipState.isVisible) tooltipState.dismiss() else tooltipState.show()
+                    }
+                }
+            )
+            else Modifier
+        ),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
+    ){
+        Image(
+            painter = painterResource(id = icon),
+            contentDescription = null,
+            modifier = Modifier.size(32.dp),
+            colorFilter = ColorFilter.tint(
+                if(disabled) LocalColors.current.textSecondary else LocalColors.current.accent
+            )
+        )
+
+        Text(
+            modifier = Modifier.weight(1f),
+            text = title,
+            style = LocalType.current.h9,
+            color = if(disabled) LocalColors.current.textSecondary else LocalColors.current.text
+        )
+
+        if(tooltip != null){
+            SpeechBubbleTooltip(
+                text = tooltip,
+                tooltipState = tooltipState
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_circle_help),
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(LocalColors.current.textSecondary),
+                    modifier = Modifier
+                        .size(LocalDimensions.current.iconXSmall)
+                        .clickable {
+                            scope.launch {
+                                if (tooltipState.isVisible) tooltipState.dismiss() else tooltipState.show()
+                            }
+                        }
+                        .qaTag("Tooltip")
                 )
             }
         }
@@ -314,35 +449,10 @@ fun ProStats(
 }
 
 @Composable
-fun ProStatItem(
-    modifier: Modifier = Modifier,
-    title: String,
-    @DrawableRes icon: Int
-){
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
-    ){
-        Image(
-            painter = painterResource(id = icon),
-            contentDescription = null,
-            modifier = Modifier.size(LocalDimensions.current.iconMedium2),
-            colorFilter = ColorFilter.tint(LocalColors.current.accent)
-        )
-
-        Text(
-            text = title,
-            style = LocalType.current.h9,
-            color = LocalColors.current.text
-        )
-    }
-}
-
-@Composable
 fun ProSettings(
     modifier: Modifier = Modifier,
-    data: SubscriptionState.Active,
+    data: SubscriptionType.Active,
+    subscriptionRefreshState: State<Unit>,
     expiry: CharSequence,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
 ){
@@ -356,16 +466,55 @@ fun ProSettings(
         Column(
             modifier = Modifier.fillMaxWidth(),
         ) {
-            val context = LocalContext .current
+            val chevronIcon: @Composable BoxScope.() -> Unit = {
+                Icon(
+                    modifier = Modifier.align(Alignment.Center)
+                        .size(LocalDimensions.current.iconMedium)
+                        .qaTag(R.string.qa_action_item_icon),
+                    painter = painterResource(id = R.drawable.ic_chevron_right),
+                    contentDescription = null,
+                    tint = LocalColors.current.text
+                )
+            }
 
-            IconActionRowItem(
+            val (subtitle, subColor, icon) = when(subscriptionRefreshState){
+                is State.Loading -> Triple<CharSequence, Color, @Composable BoxScope.() -> Unit>(
+                        Phrase.from(LocalContext.current, R.string.proPlanLoadingEllipsis)
+                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                        .format().toString(),
+                            LocalColors.current.text,
+                    { SmallCircularProgressIndicator(modifier = Modifier.align(Alignment.Center)) }
+                    )
+                
+                is State.Error -> Triple<CharSequence, Color, @Composable BoxScope.() -> Unit>(
+                        Phrase.from(LocalContext.current, R.string.errorLoadingProPlan)
+                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                        .format().toString(),
+                            LocalColors.current.warning, chevronIcon
+                    )
+
+                is State.Success<*> -> Triple<CharSequence, Color, @Composable BoxScope.() -> Unit>(
+                        expiry,
+                            LocalColors.current.text, chevronIcon
+                )
+            }
+
+            ActionRowItem(
                 title = annotatedStringResource(R.string.updatePlan),
-                subtitle = annotatedStringResource(expiry),
-                icon = R.drawable.ic_chevron_right,
+                subtitle = annotatedStringResource(subtitle),
+                subtitleColor = subColor,
+                endContent = {
+                    Box(
+                        modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)
+                    ) {
+                        icon()
+                    }
+                },
                 qaTag = R.string.qa_pro_settings_action_update_plan,
                 onClick = { sendCommand(ShowPlanUpdate) }
             )
             Divider()
+
             SwitchActionRowItem(
                 title = annotatedStringResource(
                     Phrase.from(LocalContext.current, R.string.proBadge)
@@ -377,7 +526,7 @@ fun ProSettings(
                         .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                         .format().toString()
                 ),
-                checked = data.proStatus.visible,
+                checked = data.proStatus.shouldShowProBadge(),
                 qaTag = R.string.qa_pro_settings_action_show_badge,
                 onCheckedChange = { sendCommand(SetShowProBadge(it)) }
             )
@@ -388,15 +537,14 @@ fun ProSettings(
 @Composable
 fun ProFeatures(
     modifier: Modifier = Modifier,
-    data: SubscriptionState,
+    data: SubscriptionType,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
 ) {
     CategoryCell(
         modifier = modifier,
-        title = "TEMP!!!!!!!"
-        /*title = Phrase.from(LocalContext.current, R.string.proFeatures)
+        title = Phrase.from(LocalContext.current, R.string.proBetaFeatures)
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-            .format().toString(),*/
+            .format().toString(),
     ) {
         // Cell content
         Column(
@@ -404,15 +552,15 @@ fun ProFeatures(
                 .padding(LocalDimensions.current.smallSpacing),
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
         ) {
-            // Larger Groups
-            ProFeatureItem(
+            // Larger Groups (HIDDEN FOR NOW, UNCOMMENT WHEN READY)
+           /* ProFeatureItem(
                 title = stringResource(R.string.proLargerGroups),
                 subtitle = annotatedStringResource(R.string.proLargerGroupsDescription),
                 icon = R.drawable.ic_users_round_plus_custom,
                 iconGradientStart = primaryGreen,
                 iconGradientEnd = primaryBlue,
                 expired = data is SubscriptionState.Expired
-            )
+            )*/
 
             // Longer messages
             ProFeatureItem(
@@ -421,7 +569,17 @@ fun ProFeatures(
                 icon = R.drawable.ic_message_square,
                 iconGradientStart = primaryBlue,
                 iconGradientEnd = primaryPurple,
-                expired = data is SubscriptionState.Expired
+                expired = data is SubscriptionType.Expired
+            )
+
+            // Unlimited pins
+            ProFeatureItem(
+                title = stringResource(R.string.proUnlimitedPins),
+                subtitle = annotatedStringResource(R.string.proUnlimitedPinsDescription),
+                icon = R.drawable.ic_pin,
+                iconGradientStart = primaryPurple,
+                iconGradientEnd = primaryPink,
+                expired = data is SubscriptionType.Expired
             )
 
             // Animated pics
@@ -429,9 +587,9 @@ fun ProFeatures(
                 title = stringResource(R.string.proAnimatedDisplayPictures),
                 subtitle = annotatedStringResource(R.string.proAnimatedDisplayPicturesDescription),
                 icon = R.drawable.ic_square_play,
-                iconGradientStart = primaryPurple,
-                iconGradientEnd = primaryPink,
-                expired = data is SubscriptionState.Expired
+                iconGradientStart = primaryPink,
+                iconGradientEnd = primaryRed,
+                expired = data is SubscriptionType.Expired
             )
 
             // Pro badges
@@ -443,20 +601,10 @@ fun ProFeatures(
                         .format().toString()
                 ),
                 icon = R.drawable.ic_rectangle_ellipsis,
-                iconGradientStart = primaryPink,
-                iconGradientEnd = primaryRed,
-                expired = data is SubscriptionState.Expired,
-                showProBadge = true,
-            )
-
-            // Unlimited pins
-            ProFeatureItem(
-                title = stringResource(R.string.proUnlimitedPins),
-                subtitle = annotatedStringResource(R.string.proUnlimitedPinsDescription),
-                icon = R.drawable.ic_pin,
                 iconGradientStart = primaryRed,
                 iconGradientEnd = primaryOrange,
-                expired = data is SubscriptionState.Expired
+                expired = data is SubscriptionType.Expired,
+                showProBadge = true,
             )
 
             // More...
@@ -472,7 +620,7 @@ fun ProFeatures(
                 icon = R.drawable.ic_circle_plus,
                 iconGradientStart = primaryOrange,
                 iconGradientEnd = primaryYellow,
-                expired = data is SubscriptionState.Expired,
+                expired = data is SubscriptionType.Expired,
                 onClick = {
                     sendCommand(ShowOpenUrlDialog("https://getsession.org/pro-roadmap"))
                 }
@@ -550,7 +698,7 @@ private fun ProFeatureItem(
 @Composable
 fun ProManage(
     modifier: Modifier = Modifier,
-    data: SubscriptionState,
+    data: SubscriptionType,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
 ){
     CategoryCell(
@@ -564,7 +712,7 @@ fun ProManage(
             modifier = Modifier.fillMaxWidth(),
         ) {
             when(data){
-                is SubscriptionState.Active.AutoRenewing -> {
+                is SubscriptionType.Active.AutoRenewing -> {
                     IconActionRowItem(
                         title = annotatedStringResource(R.string.cancelPlan),
                         titleColor = LocalColors.current.danger,
@@ -588,7 +736,7 @@ fun ProManage(
                     )
                 }
 
-                is SubscriptionState.Active.Expiring -> {
+                is SubscriptionType.Active.Expiring -> {
                     IconActionRowItem(
                         title = annotatedStringResource(R.string.cancelPlan),
                         titleColor = LocalColors.current.danger,
@@ -601,7 +749,7 @@ fun ProManage(
                     )
                 }
 
-                is SubscriptionState.Expired -> {
+                is SubscriptionType.Expired -> {
                     IconActionRowItem(
                         title = annotatedStringResource(
                             Phrase.from(LocalContext.current, R.string.proPlanRenew)
@@ -631,7 +779,7 @@ fun ProManage(
                     )
                 }
 
-                is SubscriptionState.NeverSubscribed -> {}
+                is SubscriptionType.NeverSubscribed -> {}
             }
         }
     }
@@ -645,13 +793,68 @@ fun PreviewProSettingsPro(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState.Active.AutoRenewing(
-                    proStatus = ProStatus.Pro(
-                        visible = true,
-                        validUntil = Instant.now() + Duration.ofDays(14),
+                subscriptionState = SubscriptionState(
+                    type = SubscriptionType.Active.AutoRenewing(
+                        proStatus = ProStatus.Pro(
+                            visible = true,
+                            validUntil = Instant.now() + Duration.ofDays(14),
+                        ),
+                        duration = ProSubscriptionDuration.THREE_MONTHS,
+                        nonOriginatingSubscription = null
                     ),
-                    type = ProSubscriptionDuration.THREE_MONTHS,
-                    nonOriginatingSubscription = null
+                    refreshState = State.Success(Unit),
+                ),
+            ),
+            sendCommand = {},
+            onBack = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewProSettingsProLoading(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        ProSettingsHome(
+            data = ProSettingsViewModel.ProSettingsState(
+                subscriptionState = SubscriptionState(
+                    type = SubscriptionType.Active.AutoRenewing(
+                        proStatus = ProStatus.Pro(
+                            visible = true,
+                            validUntil = Instant.now() + Duration.ofDays(14),
+                        ),
+                        duration = ProSubscriptionDuration.THREE_MONTHS,
+                        nonOriginatingSubscription = null
+                    ),
+                    refreshState = State.Loading,
+                ),
+            ),
+            sendCommand = {},
+            onBack = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewProSettingsProError(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        ProSettingsHome(
+            data = ProSettingsViewModel.ProSettingsState(
+                subscriptionState = SubscriptionState(
+                    type = SubscriptionType.Active.AutoRenewing(
+                        proStatus = ProStatus.Pro(
+                            visible = true,
+                            validUntil = Instant.now() + Duration.ofDays(14),
+                        ),
+                        duration = ProSubscriptionDuration.THREE_MONTHS,
+                        nonOriginatingSubscription = null
+                    ),
+                    refreshState = State.Error(Exception()),
                 ),
             ),
             sendCommand = {},
@@ -668,7 +871,10 @@ fun PreviewProSettingsExpired(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState.Expired,
+                subscriptionState = SubscriptionState(
+                    type = SubscriptionType.Expired,
+                    refreshState = State.Success(Unit),
+                )
             ),
             sendCommand = {},
             onBack = {},
@@ -684,7 +890,10 @@ fun PreviewProSettingsNonPro(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState.NeverSubscribed,
+                subscriptionState = SubscriptionState(
+                    type = SubscriptionType.NeverSubscribed,
+                    refreshState = State.Success(Unit),
+                )
             ),
             sendCommand = {},
             onBack = {},

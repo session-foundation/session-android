@@ -62,6 +62,7 @@ class GroupLeavingWorker @AssistedInject constructor(
 
                     if (group != null && !group.kicked && !weAreTheOnlyAdmin) {
                         val address = Address.fromSerialized(groupId.hexString)
+                        val statusChannel = Channel<kotlin.Result<Unit>>()
 
                         // Always send a "XXX left" message to the group if we can
                         MessageSender.send(
@@ -70,12 +71,12 @@ class GroupLeavingWorker @AssistedInject constructor(
                                     .setMemberLeftNotificationMessage(DataMessage.GroupUpdateMemberLeftNotificationMessage.getDefaultInstance())
                                     .build()
                             ),
-                            address
+                            address,
+                            statusCallback = statusChannel,
                         )
 
                         // If we are not the only admin, send a left message for other admin to handle the member removal
                         // We'll have to wait for this message to be sent before going ahead to delete the group
-                        val statusChannel = Channel<kotlin.Result<Unit>>()
                         MessageSender.send(
                             GroupUpdated(
                                 GroupUpdateMessage.newBuilder()
@@ -86,7 +87,10 @@ class GroupLeavingWorker @AssistedInject constructor(
                             statusCallback = statusChannel
                         )
 
-                        statusChannel.receive().getOrThrow()
+                        // Wait for both messages to be sent
+                        repeat(2) {
+                            statusChannel.receive().getOrThrow()
+                        }
                     }
 
                     // If we are the only admin, leaving this group will destroy the group

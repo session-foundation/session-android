@@ -187,6 +187,7 @@
     <string name="callsSettings">Anrufe (Beta)</string>
     <string name="callsVoiceAndVideo">Sprach- und Videoanrufe</string>
     <string name="callsVoiceAndVideoBeta">Sprach- und Videoanrufe (Beta)</string>
+    <string name="callsVoiceAndVideoModalDescription">Deine IP ist deinem Anrufpartner und einem {session_foundation} Server sichtbar während Beta Anrufe getätigt werden.</string>
     <string name="callsVoiceAndVideoToggleDescription">Aktiviert Sprach- und Videoanrufe an und von anderen Benutzern.</string>
     <string name="callsYouCalled">Du hast {name} angerufen</string>
     <string name="callsYouMissedCallPermissions">Du hast einen Anruf von <b>{name}</b> verpasst, weil du <b>Sprach- und Videoanrufe</b> in den Datenschutzeinstellungen nicht aktiviert hast.</string>
@@ -199,6 +200,7 @@
     <string name="cancel">Abbrechen</string>
     <string name="change">Ändern</string>
     <string name="changePasswordFail">Passwortänderung fehlgeschlagen</string>
+    <string name="changePasswordModalDescription">Ändere dein Passwort für {app_name}. Lokal gespeicherte Dateien werden mit deinem neuen Passwort entschlüsselt.</string>
     <string name="clear">Löschen</string>
     <string name="clearAll">Alles löschen</string>
     <string name="clearDataAll">Alle Daten löschen</string>
@@ -299,6 +301,7 @@
     <string name="copy">Kopieren</string>
     <string name="create">Erstellen</string>
     <string name="creatingCall">Anruf wird erstellt</string>
+    <string name="currentPassword">Aktuelles Passwort</string>
     <string name="cut">Ausschneiden</string>
     <string name="darkMode">Dunkelmodus</string>
     <string name="databaseErrorClearDataWarning">Möchtest du wirklich alle Nachrichten, Anhänge und Kontodaten von diesem Gerät löschen und ein neues Konto erstellen?</string>
@@ -609,6 +612,7 @@
     <string name="linkPreviewsSendModalDescription">Beim Senden von Link-Vorschauen hast du keinen vollständigen Metadatenschutz.</string>
     <string name="linkPreviewsTurnedOff">Link-Vorschauen sind aus</string>
     <string name="linkPreviewsTurnedOffDescription">{app_name} muss verlinkte Webseiten kontaktieren, um Vorschauen von Links zu erstellen, die du sendest und empfängst.\n\nDu kannst diese Funktion in den {app_name}-Einstellungen aktivieren.</string>
+    <string name="links">Verknüpfungen</string>
     <string name="loadAccount">Account laden</string>
     <string name="loadAccountProgressMessage">Dein Account wird geladen</string>
     <string name="loading">Wird geladen...</string>
@@ -621,6 +625,7 @@
     <string name="lockAppStatus">Sperrstatus</string>
     <string name="lockAppUnlock">Tippe zum Entsperren</string>
     <string name="lockAppUnlocked">{app_name} ist entsperrt</string>
+    <string name="logs">Protokolle</string>
     <string name="manageMembers">Mitglieder verwalten</string>
     <string name="max">Maximal</string>
     <string name="media">Medien</string>
@@ -710,6 +715,7 @@
     <string name="modalMessageCharacterTooLongTitle">Nachricht zu lang</string>
     <string name="modalMessageTooLongDescription">Bitte kürze deine Nachricht auf {limit} Zeichen oder weniger.</string>
     <string name="modalMessageTooLongTitle">Nachricht zu lang</string>
+    <string name="newPassword">Neues Passwort</string>
     <string name="next">Weiter</string>
     <string name="nicknameDescription">Wähle einen Spitznamen für <b>{name}</b>. Dieser wird dir in deinen Einzel- und Gruppengesprächen angezeigt.</string>
     <string name="nicknameEnter">Spitzname eingeben</string>
@@ -724,7 +730,9 @@
     <string name="noteToSelfEmpty">Du hast keine Nachrichten in »Notiz an mich«.</string>
     <string name="noteToSelfHide">»Notiz an mich« ausblenden</string>
     <string name="noteToSelfHideDescription">Bist du sicher, dass du »Notiz an mich« ausblenden möchtest?</string>
+    <string name="notificationDisplay">Benachrichtigungsanzeige</string>
     <string name="notificationSenderNameAndPreview">Zeigt den Namen des Absenders und eine Vorschau des Nachrichteninhalts an.</string>
+    <string name="notificationSenderNameOnly">Nur den Namen des Absenders ohne Nachrichteninhalt anzeigen.</string>
     <string name="notificationsAllMessages">Alle Nachrichten</string>
     <string name="notificationsContent">Benachrichtigungsinhalt</string>
     <string name="notificationsContentDescription">Der Inhalt, der in den Benachrichtigungen angezeigt wird.</string>
@@ -807,6 +815,7 @@
     <string name="passwordIncorrect">Falsches Passwort</string>
     <string name="passwordNewConfirm">Neues Passwort wiederholen</string>
     <string name="passwordRemove">Passwort entfernen</string>
+    <string name="passwordRemoveShortDescription">Entfernung des Passwortes erforderlich um {app_name} zu entsperren</string>
     <string name="passwordRemovedDescriptionToast">Dein Passwort wurde entfernt.</string>
     <string name="passwordSet">Passwort festlegen</string>
     <string name="passwordSetDescriptionToast">Dein Passwort wurde festgelegt. Bitte bewahre es sicher auf.</string>
@@ -815,6 +824,7 @@
     <string name="passwordStrengthIncludesLowercase">Enthält einen Kleinbuchstaben</string>
     <string name="passwordStrengthIncludesUppercase">Enthält einen Großbuchstaben</string>
     <string name="passwordStrengthIndicator">Passwortstärke-Anzeige</string>
+    <string name="passwordStrengthIndicatorDescription">Ein schwieriges Passwort hilft deine Nachrichten und Anlagen zu schützen, wenn dein Gerät jemals verloren geht oder gestohlen wird.</string>
     <string name="passwords">Passwörter</string>
     <string name="paste">Einfügen</string>
     <string name="permissionChange">Berechtigungsänderung</string>
@@ -865,9 +875,12 @@
     <string name="proAnimatedDisplayPictureFeature">Animiertes Profilbild</string>
     <string name="proAnimatedDisplayPictureModalDescription">Nutzer können GIFs hochladen</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">GIFs hochladen mit</string>
+    <string name="proAutoRenewTime">Automatische {pro} Erneuerung in <b>{time}</b></string>
     <string name="proCallToActionLongerMessages">Du möchtest längere Nachrichten senden? Sende mehr Text und schalte Premium-Funktionen mit {app_pro} frei</string>
     <string name="proCallToActionPinnedConversations">Mehr Anheftungen gewünscht? Organisiere deine Chats und schalte Premium-Funktionen mit {app_pro} frei</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Mehr als 5 Anheftungen gewünscht? Organisiere deine Chats und schalte Premium-Funktionen mit {app_pro} frei</string>
+    <string name="proExpired">Abgelaufen</string>
+    <string name="proFaq">{pro} FAQ</string>
     <string name="proFeatureListAnimatedDisplayPicture">GIF- und WebP-Profilbilder hochladen</string>
     <string name="proFeatureListLargerGroups">Größere Gruppenchats mit bis zu 300 Mitgliedern</string>
     <string name="proFeatureListLoadsMore">Und viele weitere exklusive Funktionen</string>
@@ -879,6 +892,8 @@
     <string name="proIncreasedMessageLengthFeature">Erhöhte Nachrichtenlänge</string>
     <string name="proMessageInfoFeatures">Diese Nachricht verwendet die folgenden {app_pro}-Funktionen:</string>
     <string name="proSendMore">Mehr senden mit</string>
+    <string name="proStats">Deine {pro} Statistik</string>
+    <string name="proTosPrivacy">Durch die Aktualisierung stimmst du den <b>Nutzungsbedingungen</b> {icon} und der <b>Datenschutzerklärung</b> {icon} von {app_pro} zu</string>
     <string name="proUserProfileModalCallToAction">Willst du mehr aus {app_name} herausholen? Upgrade auf {app_pro} für ein leistungsstärkeres Nachrichten-Erlebnis.</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Anzeigebild</string>
@@ -944,6 +959,7 @@
     <string name="removePasswordFail">Fehler beim Entfernen des Passworts</string>
     <string name="removePasswordModalDescription">Entferne dein aktuelles Passwort für {app_name}. Lokal gespeicherte Daten werden mit einem zufällig generierten Schlüssel, der auf deinem Gerät gespeichert wird, erneut verschlüsselt.</string>
     <string name="reply">Antworten</string>
+    <string name="requestRefund">Rückerstattung anfordern</string>
     <string name="resend">Erneut senden</string>
     <string name="resolving">Länder werden geladen ...</string>
     <string name="restart">Neustart</string>
@@ -999,10 +1015,12 @@
     <string name="sessionNotifications">Benachrichtigungen</string>
     <string name="sessionPermissions">Berechtigungen</string>
     <string name="sessionPrivacy">Datenschutz</string>
+    <string name="sessionProBeta">{app_pro} Beta</string>
     <string name="sessionRecoveryPassword">Wiederherstellungspasswort</string>
     <string name="sessionSettings">Einstellungen</string>
     <string name="set">Speichern</string>
     <string name="setCommunityDisplayPicture">Community-Anzeigebild festlegen</string>
+    <string name="setPasswordModalDescription">Setze ein Passwort für {app_name}. Lokal gespeicherte Dateien werden mit diesem Passwort verschlüsselt. Du wirst jedes Mal nach diesem Passwort gefragt, wenn du {app_name} startest.</string>
     <string name="settingsRestartDescription">Du musst {app_name} neu starten, um die neuen Einstellungen zu übernehmen.</string>
     <string name="settingsScreenSecurityDesktop">Bildschirmschutz</string>
     <string name="share">Teilen</string>

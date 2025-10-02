@@ -62,34 +62,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.squareup.phrase.Phrase
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
+import org.session.libsession.utilities.recipients.ProStatus
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.TempAvatar
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.UserAvatar
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ClearData
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideAnimatedProCTA
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideAvatarPickerOptions
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideClearDataDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideUrlDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideUsernameDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.OnAvatarDialogDismissed
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.OnDonateClicked
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.RemoveAvatar
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.SaveAvatar
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.SetUsername
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowAnimatedProCTA
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowAvatarDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowClearDataDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowUrlDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowUsernameDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.UpdateUsername
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsActivity
+import org.thoughtcrime.securesms.pro.SubscriptionState
+import org.thoughtcrime.securesms.pro.SubscriptionType
+import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.tokenpage.TokenPageActivity
 import org.thoughtcrime.securesms.ui.AccountIdHeader
@@ -104,6 +96,7 @@ import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.PathDot
+import org.thoughtcrime.securesms.ui.ProBadge
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.components.AcccentOutlineCopyButton
@@ -117,6 +110,8 @@ import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.proBadgeColorDisabled
+import org.thoughtcrime.securesms.ui.proBadgeColorStandard
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.safeContentWidth
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -133,7 +128,10 @@ import org.thoughtcrime.securesms.ui.theme.primaryGreen
 import org.thoughtcrime.securesms.ui.theme.primaryYellow
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
+import org.thoughtcrime.securesms.util.State
 import org.thoughtcrime.securesms.util.push
+import java.time.Duration
+import java.time.Instant
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -266,9 +264,16 @@ fun Settings(
                         sendCommand(ShowUsernameDialog)
                     },
                 text = uiState.username,
-                iconRes = if(uiState.showProBadge) R.drawable.ic_pro_badge else null,
-                onIconClick = null,
                 iconSize = 53.sp to 24.sp,
+                content = if(uiState.isPro){{
+                    ProBadge(
+                        modifier = Modifier.padding(start = 4.dp)
+                            .qaTag(stringResource(R.string.qa_pro_badge_icon)),
+                        colors = if(uiState.subscriptionState is SubscriptionType.Active)
+                            proBadgeColorStandard()
+                        else proBadgeColorDisabled()
+                    )
+                }} else null,
                 style = LocalType.current.h5,
             )
 
@@ -296,6 +301,7 @@ fun Settings(
                 recoveryHidden = uiState.recoveryHidden,
                 hasPaths = uiState.hasPath,
                 postPro = uiState.isPostPro,
+                subscriptionState = uiState.subscriptionState,
                 sendCommand = sendCommand
             )
 
@@ -328,6 +334,45 @@ fun Settings(
         }
 
         // DIALOGS AND SHEETS
+        //  Simple dialogs
+        if (uiState.showSimpleDialog != null) {
+            val colors = LocalColors.current
+            val buttons = remember(uiState.showSimpleDialog) {
+                buildList {
+                    uiState.showSimpleDialog.positiveText?.let { positiveText ->
+                        add(
+                            DialogButtonData(
+                                text = GetString(positiveText),
+                                color = if (uiState.showSimpleDialog.positiveStyleDanger) colors.danger
+                                else colors.text,
+                                qaTag = uiState.showSimpleDialog.positiveQaTag,
+                                onClick = uiState.showSimpleDialog.onPositive
+                            )
+                        )
+                    }
+                    uiState.showSimpleDialog.negativeText?.let { negativeText ->
+                        add(
+                            DialogButtonData(
+                                text = GetString(negativeText),
+                                qaTag = uiState.showSimpleDialog.negativeQaTag,
+                                onClick = uiState.showSimpleDialog.onNegative
+                            )
+                        )
+                    }
+                }
+            }
+
+            AlertDialog(
+                onDismissRequest = {
+                    // hide dialog
+                    sendCommand(HideSimpleDialog)
+                },
+                title = annotatedStringResource(uiState.showSimpleDialog.title),
+                text = annotatedStringResource(uiState.showSimpleDialog.message),
+                showCloseButton = uiState.showSimpleDialog.showXIcon,
+                buttons = buttons
+            )
+        }
 
         // loading
         if(uiState.showLoader) {
@@ -435,6 +480,7 @@ fun Buttons(
     recoveryHidden: Boolean,
     hasPaths: Boolean,
     postPro: Boolean,
+    subscriptionState: SubscriptionState,
     sendCommand: (SettingsViewModel.Commands) -> Unit,
 ) {
     Column(
@@ -477,8 +523,31 @@ fun Buttons(
         Cell {
             Column {
                 if(postPro){
-                    ItemButton(
-                        text = annotatedStringResource(NonTranslatableStringConstants.APP_PRO),
+                   ItemButton(
+                        text = annotatedStringResource(
+                            when (subscriptionState.type) {
+                                is SubscriptionType.Active -> Phrase.from(
+                                    LocalContext.current,
+                                    R.string.sessionProBeta
+                                )
+                                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                                    .format().toString()
+
+                                is SubscriptionType.NeverSubscribed -> Phrase.from(
+                                    LocalContext.current,
+                                    R.string.upgradeSession
+                                )
+                                    .put(APP_NAME_KEY, stringResource(R.string.app_name))
+                                    .format().toString()
+
+                                is SubscriptionType.Expired -> Phrase.from(
+                                    LocalContext.current,
+                                    R.string.proRenewBeta
+                                )
+                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                    .format().toString()
+                            }
+                        ),
                         icon = {
                             Image(
                                 modifier = Modifier.size(LocalDimensions.current.iconLargeAvatar)
@@ -487,11 +556,51 @@ fun Buttons(
                                 contentDescription = null,
                             )
                         },
+                       endIcon = {
+                           when(subscriptionState.refreshState){
+                               is State.Loading -> {
+                                   Box(
+                                       modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)
+                                   ) {
+                                       SmallCircularProgressIndicator(
+                                           modifier = Modifier.align(Alignment.Center),
+                                           color = LocalColors.current.text
+                                       )
+                                   }
+                               }
+
+                               is State.Error -> {
+                                   Box(
+                                       modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)
+                                   ) {
+                                       Icon(
+                                           painter = painterResource(id = R.drawable.ic_triangle_alert),
+                                           tint = LocalColors.current.warning,
+                                           contentDescription = stringResource(id = R.string.qa_icon_error),
+                                           modifier = Modifier
+                                               .size(LocalDimensions.current.iconMedium)
+                                               .align(Alignment.Center),
+                                       )
+                                   }
+                               }
+
+                               else -> null
+                           }
+                       },
                         modifier = Modifier.qaTag(R.string.qa_settings_item_pro),
                         colors = accentTextButtonColors()
                     ) {
-                        activity?.push<ProSettingsActivity>()
+                       // there is a special case when we have a subscription error or loading
+                       // but also no pro account
+                       if(subscriptionState.refreshState !is State.Success &&
+                           subscriptionState.type is SubscriptionType.NeverSubscribed
+                       ){
+                           sendCommand(ShowProErrorOrLoading)
+                       } else {
+                           activity?.push<ProSettingsActivity>()
+                       }
                     }
+
                     Divider()
                 }
 
@@ -606,6 +715,7 @@ fun ShowClearDataDialog(
     sendCommand: (SettingsViewModel.Commands) -> Unit
 ) {
     var deleteOnNetwork by remember { mutableStateOf(false)}
+    val context = LocalContext.current
 
     AlertDialog(
         modifier = modifier,
@@ -613,11 +723,28 @@ fun ShowClearDataDialog(
             // hide dialog
             sendCommand(HideClearDataDialog)
         },
-        title = stringResource(R.string.clearDataAll),
+        title = annotatedStringResource(R.string.clearDataAll),
         text = when(state){
-            is SettingsViewModel.ClearDataState.Error -> stringResource(R.string.clearDataErrorDescriptionGeneric)
-            is SettingsViewModel.ClearDataState.ConfirmNetwork -> stringResource(R.string.clearDeviceAndNetworkConfirm)
-            else -> stringResource(R.string.clearDataAllDescription)
+            is SettingsViewModel.ClearDataState.Clearing -> null
+            is SettingsViewModel.ClearDataState.Error -> annotatedStringResource(R.string.clearDataErrorDescriptionGeneric)
+            is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmNetwork -> annotatedStringResource(R.string.clearDeviceAndNetworkConfirm)
+            is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmDevicePro -> {
+                annotatedStringResource(
+                    Phrase.from(context.getText(R.string.proClearAllDataDevice))
+                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                        .format()
+                )
+            }
+            is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmNetworkPro -> {
+                annotatedStringResource(
+                    Phrase.from(context.getText(R.string.proClearAllDataNetwork))
+                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                        .format()
+                )
+            }
+            else -> annotatedStringResource(R.string.clearDataAllDescription)
         },
         content = {
             when(state) {
@@ -654,7 +781,10 @@ fun ShowClearDataDialog(
         },
         buttons = when(state){
             is SettingsViewModel.ClearDataState.Default,
-                 is SettingsViewModel.ClearDataState.ConfirmNetwork -> {
+                 is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmDevicePro,
+                 is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmNetwork,
+                 is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmNetworkPro,
+                      -> {
                 listOf(
                     DialogButtonData(
                         text = GetString(stringResource(id = R.string.clear)),
@@ -961,9 +1091,24 @@ private fun SettingsScreenPreview() {
                         )
                     )
                 ),
-                isPro = false,
+                isPro = true,
                 isPostPro = true,
-                showProBadge = true,
+                subscriptionState = SubscriptionState(
+                    type = SubscriptionType.Active.AutoRenewing(
+                        proStatus = ProStatus.Pro(
+                            visible = true,
+                            validUntil = Instant.now() + Duration.ofDays(14),
+                        ),
+                        duration = ProSubscriptionDuration.THREE_MONTHS,
+                        nonOriginatingSubscription = SubscriptionType.Active.NonOriginatingSubscription(
+                            device = "iPhone",
+                            store = "Apple App Store",
+                            platform = "Apple",
+                            platformAccount = "Apple Account",
+                            urlSubscription = "https://www.apple.com/account/subscriptions",
+                        )),
+                    refreshState = State.Success(Unit),
+                ),
                 username = "Atreyu",
                 accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
                 hasPath = true,
@@ -976,6 +1121,96 @@ private fun SettingsScreenPreview() {
             onBack = {},
 
         )
+    }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@SuppressLint("UnusedContentLambdaTargetStateParameter")
+@Preview
+@Composable
+private fun SettingsScreenNoProPreview() {
+    PreviewTheme {
+        Settings (
+            uiState = SettingsViewModel.UIState(
+                showLoader = false,
+                avatarDialogState = SettingsViewModel.AvatarDialogState.NoAvatar,
+                recoveryHidden = false,
+                showUrlDialog = null,
+                showAvatarDialog = false,
+                showAvatarPickerOptionCamera = false,
+                showAvatarPickerOptions = false,
+                showAnimatedProCTA = false,
+                avatarData = AvatarUIData(
+                    listOf(
+                        AvatarUIElement(
+                            name = "TO",
+                            color = primaryBlue
+                        )
+                    )
+                ),
+                isPro = false,
+                isPostPro = true,
+                subscriptionState = SubscriptionState(
+                    type = SubscriptionType.NeverSubscribed,
+                    refreshState = State.Loading,
+                ),
+                username = "Atreyu",
+                accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
+                hasPath = true,
+                version = "1.26.0",
+            ),
+            sendCommand = {},
+            onGalleryPicked = {},
+            onCameraPicked = {},
+            startAvatarSelection = {},
+            onBack = {},
+
+            )
+    }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@SuppressLint("UnusedContentLambdaTargetStateParameter")
+@Preview
+@Composable
+private fun SettingsScreenProExpiredPreview() {
+    PreviewTheme {
+        Settings (
+            uiState = SettingsViewModel.UIState(
+                showLoader = false,
+                avatarDialogState = SettingsViewModel.AvatarDialogState.NoAvatar,
+                recoveryHidden = false,
+                showUrlDialog = null,
+                showAvatarDialog = false,
+                showAvatarPickerOptionCamera = false,
+                showAvatarPickerOptions = false,
+                showAnimatedProCTA = false,
+                avatarData = AvatarUIData(
+                    listOf(
+                        AvatarUIElement(
+                            name = "TO",
+                            color = primaryBlue
+                        )
+                    )
+                ),
+                isPro = true,
+                isPostPro = true,
+                subscriptionState = SubscriptionState(
+                    type = SubscriptionType.NeverSubscribed,
+                    refreshState = State.Error(Exception()),
+                ),
+                username = "Atreyu",
+                accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
+                hasPath = true,
+                version = "1.26.0",
+            ),
+            sendCommand = {},
+            onGalleryPicked = {},
+            onCameraPicked = {},
+            startAvatarSelection = {},
+            onBack = {},
+
+            )
     }
 }
 
