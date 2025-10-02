@@ -1,7 +1,9 @@
 package org.thoughtcrime.securesms.preferences.prosettings
 
 import android.content.Context
+import android.content.Intent
 import android.icu.util.MeasureUnit
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavOptionsBuilder
@@ -26,6 +28,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
+import org.thoughtcrime.securesms.openUrl
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -40,6 +43,7 @@ import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.State
 import javax.inject.Inject
+import androidx.core.net.toUri
 
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
@@ -248,6 +252,10 @@ class ProSettingsViewModel @Inject constructor(
                 navigateTo(ProSettingsDestination.RefundSubscription)
             }
 
+            Commands.GoToCancel -> {
+                navigateTo(ProSettingsDestination.CancelSubscription)
+            }
+
             Commands.GoToProSettings -> {
                 // navigate back to home and pop all other screens off the stack
                 navigateTo(
@@ -258,6 +266,17 @@ class ProSettingsViewModel @Inject constructor(
                         }
                     }
                 )
+            }
+
+            Commands.OpenSubscriptionPage -> {
+                val subUrl = subscriptionCoordinator.getCurrentManager().subscriptionUrl
+                if(subUrl.isNotEmpty()){
+                    viewModelScope.launch {
+                        navigator.navigateToIntent(
+                            Intent(Intent.ACTION_VIEW, subUrl.toUri())
+                        )
+                    }
+                }
             }
 
             is Commands.SetShowProBadge -> {
@@ -433,7 +452,10 @@ class ProSettingsViewModel @Inject constructor(
 
         object GoToChoosePlan: Commands
         object GoToRefund: Commands
+        object GoToCancel: Commands
         object GoToProSettings: Commands
+
+        object OpenSubscriptionPage: Commands
 
         data class SetShowProBadge(val show: Boolean): Commands
 

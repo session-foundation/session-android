@@ -14,6 +14,8 @@ class NoOpSubscriptionManager @Inject constructor() : SubscriptionManager {
     override val platform = ""
     override val iconRes = null
 
+    override val subscriptionUrl = ""
+
     override val quickRefundExpiry = null
     override val quickRefundUrl = null
 

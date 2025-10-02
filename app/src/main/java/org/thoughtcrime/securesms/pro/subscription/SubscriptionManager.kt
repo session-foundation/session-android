@@ -13,6 +13,8 @@ interface SubscriptionManager: OnAppStartupComponent {
     val platform: String
     val iconRes: Int?
 
+    val subscriptionUrl: String
+
     // Optional. Some store can have a platform specific refund window and url
     val quickRefundExpiry: Instant?
     val quickRefundUrl: String?

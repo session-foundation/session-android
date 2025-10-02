@@ -34,6 +34,8 @@ class PlayStoreSubscriptionManager @Inject constructor(
     override val description = ""
     override val platform = "Google"
     override val iconRes = null
+    //todo PRO update to final URL once we have it
+    override val subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY"
 
     override val quickRefundExpiry: Instant = Instant.now() //todo PRO implement properly
     override val quickRefundUrl = "https://support.google.com/googleplay/workflow/9813244"

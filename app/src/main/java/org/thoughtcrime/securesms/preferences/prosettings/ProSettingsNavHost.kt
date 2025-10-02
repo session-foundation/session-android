@@ -102,6 +102,14 @@ fun ProSettingsNavHost(
                     onBack = { scope.launch { navigator.navigateUp() }},
                 )
             }
+
+            // Cancellation
+            horizontalSlideComposable<CancelSubscription> {
+                CancelPlanScreen(
+                    viewModel = viewModel,
+                    onBack = { scope.launch { navigator.navigateUp() }},
+                )
+            }
         }
 
         // Dialogs

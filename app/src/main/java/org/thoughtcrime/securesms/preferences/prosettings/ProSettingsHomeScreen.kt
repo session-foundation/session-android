@@ -732,7 +732,7 @@ fun ProManage(
                         iconColor = LocalColors.current.danger,
                         qaTag = R.string.qa_pro_settings_action_cancel_plan,
                         onClick = {
-                            //todo PRO implement
+                            sendCommand(GoToCancel)
                         }
                     )
                     Divider()
