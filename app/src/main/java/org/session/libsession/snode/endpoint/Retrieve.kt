@@ -5,7 +5,9 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationStrategy
 import org.session.libsession.utilities.serializable.InstantAsMillisSerializer
+import org.session.libsignal.utilities.Base64
 import java.time.Instant
+import javax.annotation.concurrent.ThreadSafe
 
 object Retrieve : SimpleJsonEndpoint<Retrieve.Request, Retrieve.Response>() {
     override val requestSerializer: SerializationStrategy<Request>
@@ -45,7 +47,9 @@ object Retrieve : SimpleJsonEndpoint<Retrieve.Request, Retrieve.Response>() {
         val hash: String,
         @Serializable(with = InstantAsMillisSerializer::class)
         val timestamp: Instant,
-        @Serializable(with = InstantAsMillisSerializer::class)
-        val expiration: Instant
-    )
+    ) {
+        val dataDecoded by lazy(LazyThreadSafetyMode.NONE) {
+            Base64.decode(data)
+        }
+    }
 }

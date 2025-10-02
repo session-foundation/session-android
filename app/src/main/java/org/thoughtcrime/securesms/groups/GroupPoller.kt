@@ -17,19 +17,14 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.libsession_util.Namespace
-import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
-import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.jobs.MessageReceiveParameters
-import org.session.libsession.messaging.messages.Destination
-import org.session.libsession.snode.RawResponse
+import org.session.libsession.messaging.sending_receiving.pollers.SnodeMessageFetcher
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
-import org.session.libsession.snode.model.BatchResponse
-import org.session.libsession.snode.model.RetrieveMessageResponse
+import org.session.libsession.snode.endpoint.Batch
+import org.session.libsession.snode.endpoint.Retrieve
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigMessage
 import org.session.libsession.utilities.getGroup
-import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
@@ -44,11 +39,10 @@ class GroupPoller @AssistedInject constructor(
     @Assisted scope: CoroutineScope,
     @Assisted private val groupId: AccountId,
     private val configFactoryProtocol: ConfigFactoryProtocol,
-    private val lokiApiDatabase: LokiAPIDatabaseProtocol,
     private val clock: SnodeClock,
     private val appVisibilityManager: AppVisibilityManager,
     private val groupRevokedMessageHandler: GroupRevokedMessageHandler,
-    private val batchMessageReceiveJobFactory: BatchMessageReceiveJob.Factory,
+    fetcherFactory: SnodeMessageFetcher.Factory
 ) {
     companion object {
         private const val POLL_INTERVAL = 3_000L
@@ -85,6 +79,13 @@ class GroupPoller @AssistedInject constructor(
         fun shouldFetchSwarmNodes(): Boolean {
             return swarmNodes.isEmpty()
         }
+    }
+
+    private val fetcher by lazy {
+        fetcherFactory.create(
+            swarmAccountId = groupId,
+            swarmAuthProvider = { configFactoryProtocol.getGroupAuth(groupId)!! }
+        )
     }
 
     // A channel to send tokens to trigger a poll
@@ -226,21 +227,11 @@ class GroupPoller @AssistedInject constructor(
                 val pollingTasks = mutableListOf<Pair<String, Deferred<*>>>()
 
                 val receiveRevokeMessage = async {
-                    SnodeAPI.sendBatchRequest(
-                        snode,
-                        groupId.hexString,
-                        SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
-                            lastHash = lokiApiDatabase.getLastMessageHashValue(
-                                snode,
-                                groupId.hexString,
-                                Namespace.REVOKED_GROUP_MESSAGES()
-                            ).orEmpty(),
-                            auth = groupAuth,
-                            namespace = Namespace.REVOKED_GROUP_MESSAGES(),
-                            maxSize = null,
-                        ),
-                        RetrieveMessageResponse::class.java
-                    ).messages.filterNotNull()
+                    fetcher.fetchLatestMessages(
+                        snode = snode,
+                        namespace = Namespace.REVOKED_GROUP_MESSAGES(),
+                        maxSize = null
+                    )
                 }
 
                 if (configHashesToExtends.isNotEmpty() && adminKey != null) {
@@ -259,24 +250,10 @@ class GroupPoller @AssistedInject constructor(
                 }
 
                 val groupMessageRetrieval = async {
-                    val lastHash = lokiApiDatabase.getLastMessageHashValue(
-                        snode,
-                        groupId.hexString,
-                        Namespace.GROUP_MESSAGES()
-                    ).orEmpty()
-
-                    Log.v(TAG, "Retrieving group($groupId) message since lastHash = $lastHash, snode = ${snode.publicKeySet}")
-
-                    SnodeAPI.sendBatchRequest(
+                    fetcher.fetchLatestMessages(
                         snode = snode,
-                        publicKey = groupId.hexString,
-                        request = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
-                            lastHash = lastHash,
-                            auth = groupAuth,
-                            namespace = Namespace.GROUP_MESSAGES(),
-                            maxSize = null,
-                        ),
-                        responseType = Map::class.java
+                        namespace = Namespace.GROUP_MESSAGES(),
+                        maxSize = null
                     )
                 }
 
@@ -286,21 +263,11 @@ class GroupPoller @AssistedInject constructor(
                     Namespace.GROUP_MEMBERS()
                 ).map { ns ->
                     async {
-                        SnodeAPI.sendBatchRequest(
+                        fetcher.fetchLatestMessages(
                             snode = snode,
-                            publicKey = groupId.hexString,
-                            request = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
-                                lastHash = lokiApiDatabase.getLastMessageHashValue(
-                                    snode,
-                                    groupId.hexString,
-                                    ns
-                                ).orEmpty(),
-                                auth = groupAuth,
-                                namespace = ns,
-                                maxSize = null,
-                            ),
-                            responseType = RetrieveMessageResponse::class.java
-                        ).messages.filterNotNull()
+                            namespace = ns,
+                            maxSize = null
+                        )
                     }
                 }
 
@@ -311,22 +278,16 @@ class GroupPoller @AssistedInject constructor(
                     val result = runCatching {
                         val (keysMessage, infoMessage, membersMessage) = groupConfigRetrieval.map { it.await() }
                         handleGroupConfigMessages(keysMessage, infoMessage, membersMessage)
-                        saveLastMessageHash(snode, keysMessage, Namespace.GROUP_KEYS())
-                        saveLastMessageHash(snode, infoMessage, Namespace.GROUP_INFO())
-                        saveLastMessageHash(snode, membersMessage, Namespace.GROUP_MEMBERS())
 
                         groupExpired = configFactoryProtocol.withGroupConfigs(groupId) {
                             it.groupKeys.size() == 0
                         }
 
-                        val regularMessages = groupMessageRetrieval.await()
-                        handleMessages(regularMessages, snode)
+                        handleMessages(groupMessageRetrieval.await())
                     }
 
                     // Revoke message must be handled regardless, and at the end
-                    val revokedMessages = receiveRevokeMessage.await()
-                    handleRevoked(revokedMessages)
-                    saveLastMessageHash(snode, revokedMessages, Namespace.REVOKED_GROUP_MESSAGES())
+                    handleRevoked(receiveRevokeMessage.await())
 
                     // Propagate any prior exceptions
                     result.getOrThrow()
@@ -360,12 +321,12 @@ class GroupPoller @AssistedInject constructor(
             if (error != null && currentSnode != null) {
                 val badResponse = (sequenceOf(error) + error.suppressedExceptions.asSequence())
                     .firstOrNull { err ->
-                        err.getRootCause<BatchResponse.Error>()?.item?.let { it.isServerError || it.isSnodeNoLongerPartOfSwarm } == true
+                        err.getRootCause<Batch.Response.Error>()?.result?.let { it.isServerError || it.isSnodeNoLongerPartOfSwarm } == true
                     }
 
                 if (badResponse != null) {
                     Log.e(TAG, "Group polling failed due to a server error", badResponse)
-                    pollState.swarmNodes -= currentSnode!!
+                    pollState.swarmNodes -= currentSnode
                 }
             }
         }
@@ -380,85 +341,86 @@ class GroupPoller @AssistedInject constructor(
         return pollResult
     }
 
-    private fun RetrieveMessageResponse.Message.toConfigMessage(): ConfigMessage {
-        return ConfigMessage(hash, data, timestamp ?: clock.currentTimeMills())
-    }
-
-    private fun saveLastMessageHash(
-        snode: Snode,
-        messages: List<RetrieveMessageResponse.Message>,
-        namespace: Int
-    ) {
-        if (messages.isNotEmpty()) {
-            lokiApiDatabase.setLastMessageHashValue(
-                snode = snode,
-                publicKey = groupId.hexString,
-                newValue = messages.last().hash,
-                namespace = namespace
-            )
-        }
-    }
-
-    private suspend fun handleRevoked(messages: List<RetrieveMessageResponse.Message>) {
-        groupRevokedMessageHandler.handleRevokeMessage(groupId, messages.map { it.data })
-    }
-
-    private fun handleGroupConfigMessages(
-        keysResponse: List<RetrieveMessageResponse.Message>,
-        infoResponse: List<RetrieveMessageResponse.Message>,
-        membersResponse: List<RetrieveMessageResponse.Message>
-    ) {
-        if (keysResponse.isEmpty() && infoResponse.isEmpty() && membersResponse.isEmpty()) {
-            return
-        }
-
-        Log.d(
-            TAG, "Handling group config messages(" +
-                    "info = ${infoResponse.size}, " +
-                    "keys = ${keysResponse.size}, " +
-                    "members = ${membersResponse.size})"
-        )
-
-        configFactoryProtocol.mergeGroupConfigMessages(
-            groupId = groupId,
-            keys = keysResponse.map { it.toConfigMessage() },
-            info = infoResponse.map { it.toConfigMessage() },
-            members = membersResponse.map { it.toConfigMessage() },
+    private fun Retrieve.Message.toConfigMessage(): ConfigMessage {
+        return ConfigMessage(
+            hash = hash,
+            data = dataDecoded,
+            timestamp = timestamp.toEpochMilli()
         )
     }
 
-    private fun handleMessages(body: RawResponse, snode: Snode) {
-        val messages = configFactoryProtocol.withGroupConfigs(groupId) {
-            SnodeAPI.parseRawMessagesResponse(
-                rawResponse = body,
-                snode = snode,
-                publicKey = groupId.hexString,
-                decrypt = { data ->
-                    val (decrypted, sender) = it.groupKeys.decrypt(data) ?: return@parseRawMessagesResponse null
-                    decrypted to AccountId(sender)
-                },
-                namespace = Namespace.GROUP_MESSAGES(),
-            )
+
+    private suspend fun handleRevoked(fetchResult: SnodeMessageFetcher.FetchResult) {
+        fetchResult.processMessages { batch ->
+            Log.d(TAG, "Handling ${batch.size} group revoked messages")
+            groupRevokedMessageHandler.handleRevokeMessage(groupId, batch.map { it.dataDecoded })
         }
 
-        val parameters = messages.map { (envelope, serverHash) ->
-            MessageReceiveParameters(
-                envelope.toByteArray(),
-                serverHash = serverHash,
-                closedGroup = Destination.ClosedGroup(groupId.hexString)
-            )
+    }
+
+    private suspend fun handleGroupConfigMessages(
+        keysResponse: SnodeMessageFetcher.FetchResult,
+        infoResponse: SnodeMessageFetcher.FetchResult,
+        membersResponse: SnodeMessageFetcher.FetchResult
+    ) {
+        keysResponse.processMessages { keys ->
+            infoResponse.processMessages { info ->
+                membersResponse.processMessages { members ->
+                    Log.d(
+                        TAG, "Handling group config messages(" +
+                                "info = ${info.size}, " +
+                                "keys = ${keys.size}, " +
+                                "members = ${members.size})"
+                    )
+
+                    configFactoryProtocol.mergeGroupConfigMessages(
+                        groupId = groupId,
+                        keys = keys.map { it.toConfigMessage() },
+                        info = info.map { it.toConfigMessage() },
+                        members = members.map { it.toConfigMessage() },
+                    )
+                }
+            }
+        }
+    }
+
+    private suspend fun handleMessages(fetchResult: SnodeMessageFetcher.FetchResult) {
+        fetchResult.processMessagesInBatches { batch ->
+            Log.d(TAG, "Handling ${batch.size} group messages")
+            //TODO: Handle group messages
         }
 
-        parameters.chunked(BatchMessageReceiveJob.BATCH_DEFAULT_NUMBER).forEach { chunk ->
-            JobQueue.shared.add(batchMessageReceiveJobFactory.create(
-                messages = chunk,
-                fromCommunity = null
-            ))
-        }
-
-        if (messages.isNotEmpty()) {
-            Log.d(TAG, "Received and handled ${messages.size} group messages")
-        }
+//        val messages = configFactoryProtocol.withGroupConfigs(groupId) {
+//            SnodeAPI.parseRawMessagesResponse(
+//                rawResponse = body,
+//                snode = snode,
+//                publicKey = groupId.hexString,
+//                decrypt = { data ->
+//                    val (decrypted, sender) = it.groupKeys.decrypt(data) ?: return@parseRawMessagesResponse null
+//                    decrypted to AccountId(sender)
+//                },
+//                namespace = Namespace.GROUP_MESSAGES(),
+//            )
+//        }
+//
+//        val parameters = messages.map { (envelope, serverHash) ->
+//            MessageReceiveParameters(
+//                envelope.toByteArray(),
+//                serverHash = serverHash,
+//                closedGroup = Destination.ClosedGroup(groupId.hexString)
+//            )
+//        }
+//
+//        parameters.chunked(BatchMessageReceiveJob.BATCH_DEFAULT_NUMBER).forEach { chunk ->
+//            JobQueue.shared.add(batchMessageReceiveJobFactory.create(
+//                messages = chunk,
+//                fromCommunity = null
+//            ))
+//        }
+//
+//        if (messages.isNotEmpty()) {
+//            Log.d(TAG, "Received and handled ${messages.size} group messages")
+//        }
     }
 
     /**
