@@ -1178,7 +1178,6 @@
     <string name="urlOpenDescription">Êtes-vous sûr de vouloir ouvrir cette adresse URL dans votre navigateur web ?\n\n<b>{url}</b></string>
     <string name="urlOpenDescriptionAlternative">Les liens s\'ouvriront dans votre navigateur.</string>
     <string name="useFastMode">Utiliser le mode rapide</string>
-    <string name="viaStoreWebsiteDescription">Modifiez votre abonnement en utilisant le compte {platform_account} avec lequel vous vous êtes inscrit, via le site web de <b><font color="0">{platform_store}</font></b>.</string>
     <string name="video">Vidéo</string>
     <string name="videoErrorPlay">Impossible de lire la vidéo.</string>
     <string name="view">Afficher</string>
