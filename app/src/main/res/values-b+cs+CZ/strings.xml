@@ -1128,7 +1128,6 @@
     <string name="removePasswordFail">Odebrání hesla selhalo</string>
     <string name="removePasswordModalDescription">Odstraňte své aktuální heslo pro {app_name}. Lokálně uložená data budou znovu zašifrována pomocí náhodně vygenerovaného klíče uloženého ve vašem zařízení.</string>
     <string name="renew">Obnovit</string>
-    <string name="renewingPro">Obnovení Pro</string>
     <string name="reply">Odpovědět</string>
     <string name="requestRefund">Požádat o vrácení platby</string>
     <string name="resend">Odeslat znovu</string>
@@ -1267,7 +1266,6 @@
     <string name="urlOpenDescription">Opravdu chcete otevřít tuto URL adresu ve vašem prohlížeči?\n\n<b>{url}</b></string>
     <string name="urlOpenDescriptionAlternative">Odkazy se otevřou ve vašem prohlížeči.</string>
     <string name="useFastMode">Použít rychlý režim</string>
-    <string name="viaStoreWebsiteDescription">Změňte svůj tarif pomocí {platform_account}, se kterým jste se zaregistrovali, prostřednictvím webu <b><font color="0">{platform_store}</font></b>.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Nelze přehrát video.</string>
     <string name="view">Zobrazit</string>
