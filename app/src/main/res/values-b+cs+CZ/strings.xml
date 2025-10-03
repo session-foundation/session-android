@@ -205,7 +205,6 @@
     <string name="changePasswordFail">Změna hesla selhala</string>
     <string name="changePasswordModalDescription">Změňte své heslo pro {app_name}. Lokálně uložená data budou znovu zašifrována pomocí vašeho nového hesla.</string>
     <string name="checkingProStatus">Kontrola stavu {pro}</string>
-    <string name="checkingProStatusDescription">Kontrolují se vaše údaje {pro}. Některé informace na této stránce mohou být nepřesné, dokud kontrola nebude dokončena.</string>
     <string name="checkingProStatusUpgradeDescription">Kontroluje se váš stav {pro}. Jakmile kontrola skončí, budete moci navýšit na {pro}.</string>
     <string name="clear">Smazat</string>
     <string name="clearAll">Smazat vše</string>
