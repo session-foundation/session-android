@@ -79,7 +79,7 @@ public class NotificationItem {
             .appendQueryParameter("address", notifyRecipients.getAddress().toString())
             .build());
 
-    int intentFlags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_CANCEL_CURRENT;
+    int intentFlags = PendingIntent.FLAG_UPDATE_CURRENT;
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
       intentFlags |= PendingIntent.FLAG_MUTABLE;
     }
