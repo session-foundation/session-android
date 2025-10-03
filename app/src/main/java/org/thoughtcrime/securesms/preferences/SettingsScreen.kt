@@ -557,37 +557,6 @@ fun Buttons(
                                 contentDescription = null,
                             )
                         },
-                       endIcon = {
-                           when(subscriptionState.refreshState){
-                               is State.Loading -> {
-                                   Box(
-                                       modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)
-                                   ) {
-                                       SmallCircularProgressIndicator(
-                                           modifier = Modifier.align(Alignment.Center),
-                                           color = LocalColors.current.text
-                                       )
-                                   }
-                               }
-
-                               is State.Error -> {
-                                   Box(
-                                       modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)
-                                   ) {
-                                       Icon(
-                                           painter = painterResource(id = R.drawable.ic_triangle_alert),
-                                           tint = LocalColors.current.warning,
-                                           contentDescription = stringResource(id = R.string.qa_icon_error),
-                                           modifier = Modifier
-                                               .size(LocalDimensions.current.iconMedium)
-                                               .align(Alignment.Center),
-                                       )
-                                   }
-                               }
-
-                               else -> null
-                           }
-                       },
                         modifier = Modifier.qaTag(R.string.qa_settings_item_pro),
                         colors = accentTextButtonColors()
                     ) {
@@ -1124,96 +1093,6 @@ private fun SettingsScreenPreview() {
             onBack = {},
 
         )
-    }
-}
-
-@OptIn(ExperimentalSharedTransitionApi::class)
-@SuppressLint("UnusedContentLambdaTargetStateParameter")
-@Preview
-@Composable
-private fun SettingsScreenNoProPreview() {
-    PreviewTheme {
-        Settings (
-            uiState = SettingsViewModel.UIState(
-                showLoader = false,
-                avatarDialogState = SettingsViewModel.AvatarDialogState.NoAvatar,
-                recoveryHidden = false,
-                showUrlDialog = null,
-                showAvatarDialog = false,
-                showAvatarPickerOptionCamera = false,
-                showAvatarPickerOptions = false,
-                showAnimatedProCTA = false,
-                avatarData = AvatarUIData(
-                    listOf(
-                        AvatarUIElement(
-                            name = "TO",
-                            color = primaryBlue
-                        )
-                    )
-                ),
-                isPro = false,
-                isPostPro = true,
-                subscriptionState = SubscriptionState(
-                    type = SubscriptionType.NeverSubscribed,
-                    refreshState = State.Loading,
-                ),
-                username = "Atreyu",
-                accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
-                hasPath = true,
-                version = "1.26.0",
-            ),
-            sendCommand = {},
-            onGalleryPicked = {},
-            onCameraPicked = {},
-            startAvatarSelection = {},
-            onBack = {},
-
-            )
-    }
-}
-
-@OptIn(ExperimentalSharedTransitionApi::class)
-@SuppressLint("UnusedContentLambdaTargetStateParameter")
-@Preview
-@Composable
-private fun SettingsScreenProExpiredPreview() {
-    PreviewTheme {
-        Settings (
-            uiState = SettingsViewModel.UIState(
-                showLoader = false,
-                avatarDialogState = SettingsViewModel.AvatarDialogState.NoAvatar,
-                recoveryHidden = false,
-                showUrlDialog = null,
-                showAvatarDialog = false,
-                showAvatarPickerOptionCamera = false,
-                showAvatarPickerOptions = false,
-                showAnimatedProCTA = false,
-                avatarData = AvatarUIData(
-                    listOf(
-                        AvatarUIElement(
-                            name = "TO",
-                            color = primaryBlue
-                        )
-                    )
-                ),
-                isPro = true,
-                isPostPro = true,
-                subscriptionState = SubscriptionState(
-                    type = SubscriptionType.NeverSubscribed,
-                    refreshState = State.Error(Exception()),
-                ),
-                username = "Atreyu",
-                accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
-                hasPath = true,
-                version = "1.26.0",
-            ),
-            sendCommand = {},
-            onGalleryPicked = {},
-            onCameraPicked = {},
-            startAvatarSelection = {},
-            onBack = {},
-
-            )
     }
 }
 
