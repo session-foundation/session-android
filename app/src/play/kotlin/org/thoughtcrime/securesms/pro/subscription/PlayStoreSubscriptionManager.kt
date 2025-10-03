@@ -43,6 +43,8 @@ class PlayStoreSubscriptionManager @Inject constructor(
         refundUrl = "https://getsession.org/android-refund",
     )
 
+    override val supportsBilling: Boolean = true
+
     override val quickRefundExpiry: Instant = Instant.now() //todo PRO implement properly
     override val quickRefundUrl = "https://support.google.com/googleplay/workflow/9813244"
 

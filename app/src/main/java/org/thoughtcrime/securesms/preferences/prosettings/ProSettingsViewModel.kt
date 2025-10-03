@@ -13,12 +13,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
@@ -89,6 +86,7 @@ class ProSettingsViewModel @Inject constructor(
                     ChoosePlanState(
                         subscriptionType = subType,
                         hasValidSubscription = proState.hasValidSubscription,
+                        hasBillingCapacity = proState.hasBillingCapacity,
                         enableButton = subType !is SubscriptionType.Active.AutoRenewing, // only the auto-renew can have a disabled state
                         plans = listOf(
                             ProPlan(
@@ -197,6 +195,7 @@ class ProSettingsViewModel @Inject constructor(
                 subscriptionState = subscriptionState,
                 //todo PRO need to get the product id from libsession - also this might be a long running operation
                 hasValidSubscription = subscriptionCoordinator.getCurrentManager().hasValidSubscription(""),
+                hasBillingCapacity = subscriptionCoordinator.getCurrentManager().supportsBilling,
                 subscriptionExpiryLabel = when(subType){
                     is SubscriptionType.Active.AutoRenewing ->
                         Phrase.from(context, R.string.proAutoRenewTime)
@@ -272,8 +271,12 @@ class ProSettingsViewModel @Inject constructor(
                         }
                     }
 
-                    // otherwise navigate to the "Choose plan" screen
-                    else -> navigateTo(ProSettingsDestination.ChoosePlan)
+                    // otherwise navigate to update or get/renew plan screen
+                    else -> navigateTo(
+                        if(_proSettingsUIState.value.subscriptionState.type is SubscriptionType.Active )
+                            ProSettingsDestination.UpdatePlan
+                        else ProSettingsDestination.GetOrRenewPlan
+                    )
                 }
             }
 
@@ -498,6 +501,7 @@ class ProSettingsViewModel @Inject constructor(
     data class ProSettingsState(
         val subscriptionState: SubscriptionState = getDefaultSubscriptionStateData(),
         val proStats: ProStats = ProStats(),
+        val hasBillingCapacity: Boolean = false, // true is the current build flavour supports billing
         val hasValidSubscription: Boolean = false, // true is there is a current subscription AND the available subscription manager on this device has an account which matches the product id we got from libsession
         val subscriptionExpiryLabel: CharSequence = "", // eg: "Pro auto renewing in 3 days"
         val subscriptionExpiryDate: CharSequence = "" // eg: "May 21st, 2025"
@@ -505,6 +509,7 @@ class ProSettingsViewModel @Inject constructor(
 
     data class ChoosePlanState(
         val subscriptionType: SubscriptionType = SubscriptionType.NeverSubscribed,
+        val hasBillingCapacity: Boolean = false,
         val hasValidSubscription: Boolean = false,
         val plans: List<ProPlan> = emptyList(),
         val enableButton: Boolean = false,

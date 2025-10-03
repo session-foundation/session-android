@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.preferences.prosettings
+package org.thoughtcrime.securesms.preferences.prosettings.chooseplan
 
 import android.icu.util.MeasureUnit
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -6,12 +6,23 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,9 +54,13 @@ import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
+import org.thoughtcrime.securesms.preferences.prosettings.BaseProSettingsScreen
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.GetProPlan
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.SelectProPlan
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowTCPolicyDialog
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlan
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlanBadge
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.expiryFromNow
@@ -67,49 +82,6 @@ import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.util.DateUtils
 
 
-@OptIn(ExperimentalSharedTransitionApi::class)
-@Composable
-fun ChoosePlanScreen(
-    viewModel: ProSettingsViewModel,
-    onBack: () -> Unit,
-) {
-    val planData by viewModel.choosePlanState.collectAsState()
-
-    // there are different UI depending on the state
-    val nonOriginatingSubscription = (planData.subscriptionType as? SubscriptionType.Active)?.nonOriginatingSubscription
-
-    when {
-        // the existing subscription manager does not have a valid subscription for this account
-        // there is an active subscription but from a different platform
-        nonOriginatingSubscription != null ->
-            ChoosePlanNonOriginating(
-                subscription = planData.subscriptionType as SubscriptionType.Active,
-                subscriptionDetails = nonOriginatingSubscription,
-                platformOverride = nonOriginatingSubscription.platform,
-                sendCommand = viewModel::onCommand,
-                onBack = onBack,
-            )
-
-        !planData.hasValidSubscription -> {
-            val subscriptionManager = viewModel.getSubscriptionManager()
-            ChoosePlanNonOriginating(
-                subscription = planData.subscriptionType,
-                subscriptionDetails = subscriptionManager.details,
-                platformOverride = subscriptionManager.details.store,
-                sendCommand = viewModel::onCommand,
-                onBack = onBack,
-            )
-        }
-
-        // default plan chooser
-        else -> ChoosePlan(
-            planData = planData,
-            sendCommand = viewModel::onCommand,
-            onBack = onBack,
-        )
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun ChoosePlan(
@@ -129,7 +101,7 @@ fun ChoosePlan(
         Spacer(Modifier.height(LocalDimensions.current.spacing))
 
         val context = LocalContext.current
-        val title = when(planData.subscriptionType) {
+        val title = when (planData.subscriptionType) {
             is SubscriptionType.Expired ->
                 Phrase.from(context.getText(R.string.proPlanRenewStart))
                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
@@ -143,11 +115,13 @@ fun ChoosePlan(
 
             is SubscriptionType.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proPlanActivatedAuto))
                 .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                .put(CURRENT_PLAN_KEY, DateUtils.getLocalisedTimeDuration(
-                    context = context,
-                    amount = planData.subscriptionType.duration.duration.months,
-                    unit = MeasureUnit.MONTH
-                ))
+                .put(
+                    CURRENT_PLAN_KEY, DateUtils.getLocalisedTimeDuration(
+                        context = context,
+                        amount = planData.subscriptionType.duration.duration.months,
+                        unit = MeasureUnit.MONTH
+                    )
+                )
                 .put(DATE_KEY, planData.subscriptionType.duration.expiryFromNow())
                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                 .format()
@@ -163,16 +137,23 @@ fun ChoosePlan(
             style = LocalType.current.base,
             color = LocalColors.current.text,
 
-        )
+            )
 
         Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
 
         // SUBSCRIPTIONS
         planData.plans.forEachIndexed { index, data ->
-            if(index != 0){
-                Spacer(Modifier.height(if(data.badges.isNotEmpty()){
-                    max(LocalDimensions.current.xsSpacing, LocalDimensions.current.contentSpacing - badgeHeight/2)
-                } else LocalDimensions.current.contentSpacing))
+            if (index != 0) {
+                Spacer(
+                    Modifier.height(
+                        if (data.badges.isNotEmpty()) {
+                            max(
+                                LocalDimensions.current.xsSpacing,
+                                LocalDimensions.current.contentSpacing - badgeHeight / 2
+                            )
+                        } else LocalDimensions.current.contentSpacing
+                    )
+                )
             }
             PlanItem(
                 proPlan = data,
@@ -186,7 +167,7 @@ fun ChoosePlan(
 
         Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
 
-        val buttonLabel = when(planData.subscriptionType) {
+        val buttonLabel = when (planData.subscriptionType) {
             is SubscriptionType.Expired -> context.getString(R.string.renew)
             is SubscriptionType.Active.Expiring -> context.getString(R.string.updatePlan)
             else -> context.getString(R.string.updatePlan)
@@ -418,15 +399,15 @@ private fun PreviewUpdatePlanItems(
             )
 
             PlanItem(
-                proPlan = ProSettingsViewModel.ProPlan(
+                proPlan = ProPlan(
                     title = "Plan 1 with a very long title boo foo bar hello there",
                     subtitle = "Subtitle that is also very long and is allowed to go onto another line",
                     selected = true,
                     currentPlan = true,
                     durationType = ProSubscriptionDuration.TWELVE_MONTHS,
                     badges = listOf(
-                        ProSettingsViewModel.ProPlanBadge("Current Plan"),
-                        ProSettingsViewModel.ProPlanBadge(
+                        ProPlanBadge("Current Plan"),
+                        ProPlanBadge(
                             "20% Off but that is very long so we can test how this renders to be safe",
                             "This is a tooltip"
                         ),

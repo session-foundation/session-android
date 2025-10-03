@@ -62,7 +62,7 @@ fun CancelPlanScreen(
                 sendCommand = viewModel::onCommand,
                 onBack = onBack,
             )
-        
+
         // the existing subscription manager does not have a valid subscription for this account
         !planData.hasValidSubscription -> {
             CancelPlanNonOriginating(

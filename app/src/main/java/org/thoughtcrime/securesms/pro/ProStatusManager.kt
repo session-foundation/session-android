@@ -100,7 +100,17 @@ class ProStatusManager @Inject constructor(
                     )
                 )
 
-                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> SubscriptionType.Expired
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> SubscriptionType.Expired(nonOriginatingSubscription = null)
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE -> SubscriptionType.Expired(
+                    nonOriginatingSubscription = SubscriptionDetails(
+                        device = "iPhone",
+                        store = "Apple App Store",
+                        platform = "Apple",
+                        platformAccount = "Apple Account",
+                        subscriptionUrl = "https://www.apple.com/account/subscriptions",
+                        refundUrl = "https://support.apple.com/118223",
+                    )
+                )
             },
                // SubscriptionType.NeverSubscribed,
             refreshState = State.Success(Unit),
@@ -204,5 +214,7 @@ class ProStatusManager @Inject constructor(
         private const val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
 
         const val URL_PRO_SUPPORT = "https://getsession.org/pro-form"
+        const val DEFAULT_GOOGLE_STORE = "Google Play Store"
+        const val DEFAULT_APPLE_STORE = "Apple App Store"
     }
 }

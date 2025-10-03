@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.preferences.prosettings
+package org.thoughtcrime.securesms.preferences.prosettings.chooseplan
 
 import android.icu.util.MeasureUnit
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -20,6 +20,9 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACC
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
 import org.session.libsession.utilities.recipients.ProStatus
+import org.thoughtcrime.securesms.preferences.prosettings.BaseNonOriginatingProSettingsScreen
+import org.thoughtcrime.securesms.preferences.prosettings.NonOriginatingLinkCellData
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
@@ -35,7 +38,7 @@ import java.time.Instant
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun ChoosePlanNonOriginating(
-    subscription: SubscriptionType,
+    subscription: SubscriptionType.Active,
     subscriptionDetails: SubscriptionDetails,
     platformOverride: String, // this property is here because different scenario will require different property to be used for this string: some will use the platform, others will use the platformStore
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
@@ -59,7 +62,6 @@ fun ChoosePlanNonOriginating(
             .put(DATE_KEY, subscription.duration.expiryFromNow())
             .format()
 
-        //todo PRO cater to EXPIRED and NEVER SUBSCRIBED here too
         else -> ""
     }
 
@@ -83,7 +85,7 @@ fun ChoosePlanNonOriginating(
         linkCellsInfo = stringResource(R.string.updatePlanTwo),
         linkCells = listOf(
             NonOriginatingLinkCellData(
-                title =  Phrase.from(context.getText(R.string.onDevice))
+                title = Phrase.from(context.getText(R.string.onDevice))
                     .put(DEVICE_TYPE_KEY, subscriptionDetails.device)
                     .format(),
                 info = Phrase.from(context.getText(R.string.onDeviceDescription))
@@ -95,7 +97,7 @@ fun ChoosePlanNonOriginating(
                 iconRes = R.drawable.ic_smartphone
             ),
             NonOriginatingLinkCellData(
-                title =  Phrase.from(context.getText(R.string.viaStoreWebsite))
+                title = Phrase.from(context.getText(R.string.viaStoreWebsite))
                     .put(PLATFORM_KEY, platformOverride)
                     .format(),
                 info = Phrase.from(context.getText(R.string.viaStoreWebsiteDescription))

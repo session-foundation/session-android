@@ -19,6 +19,8 @@ class NoOpSubscriptionManager @Inject constructor() : SubscriptionManager {
         refundUrl = "",
     )
 
+    override val supportsBilling: Boolean = false
+
     override val quickRefundExpiry = null
     override val quickRefundUrl = null
 

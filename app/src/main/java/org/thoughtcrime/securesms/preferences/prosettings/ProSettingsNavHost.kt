@@ -12,7 +12,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination.*
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination.CancelSubscription
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination.GetOrRenewPlan
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination.Home
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination.PlanConfirmation
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination.RefundSubscription
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination.UpdatePlan
+import org.thoughtcrime.securesms.preferences.prosettings.chooseplan.GetOrRenewPlanScreen
+import org.thoughtcrime.securesms.preferences.prosettings.chooseplan.UpdatePlanScreen
 import org.thoughtcrime.securesms.ui.NavigationAction
 import org.thoughtcrime.securesms.ui.ObserveAsEvents
 import org.thoughtcrime.securesms.ui.UINavigator
@@ -24,7 +31,9 @@ sealed interface ProSettingsDestination {
     data object Home: ProSettingsDestination
 
     @Serializable
-    data object ChoosePlan: ProSettingsDestination
+    data object UpdatePlan: ProSettingsDestination
+    @Serializable
+    data object GetOrRenewPlan: ProSettingsDestination
 
     @Serializable
     data object PlanConfirmation: ProSettingsDestination
@@ -80,10 +89,16 @@ fun ProSettingsNavHost(
             }
 
             // Subscription plan selection
-            horizontalSlideComposable<ChoosePlan> {
-                ChoosePlanScreen(
+            horizontalSlideComposable<UpdatePlan> {
+                UpdatePlanScreen(
                     viewModel = viewModel,
-                    onBack = { scope.launch { navigator.navigateUp() }},
+                    onBack = { scope.launch { navigator.navigateUp() } },
+                )
+            }
+            horizontalSlideComposable<GetOrRenewPlan> {
+                GetOrRenewPlanScreen(
+                    viewModel = viewModel,
+                    onBack = { scope.launch { navigator.navigateUp() } },
                 )
             }
 

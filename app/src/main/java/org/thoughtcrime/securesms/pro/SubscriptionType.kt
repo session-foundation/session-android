@@ -27,7 +27,9 @@ sealed interface SubscriptionType{
 
     }
 
-    data object Expired: SubscriptionType
+    data class Expired(
+        val nonOriginatingSubscription: SubscriptionDetails?
+    ): SubscriptionType
 }
 
 data class SubscriptionState(

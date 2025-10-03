@@ -866,7 +866,7 @@ fun PreviewProSettingsExpired(
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
                 subscriptionState = SubscriptionState(
-                    type = SubscriptionType.Expired,
+                    type = SubscriptionType.Expired(nonOriginatingSubscription = null),
                     refreshState = State.Success(Unit),
                 )
             ),
