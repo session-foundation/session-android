@@ -1154,7 +1154,6 @@
     <string name="urlOpenDescription">Weet u zeker dat u deze URL in uw browser wilt openen?\n\n<b>{url}</b></string>
     <string name="urlOpenDescriptionAlternative">Links worden in uw browser geopend.</string>
     <string name="useFastMode">Gebruik Snelle Modus</string>
-    <string name="viaStoreWebsiteDescription">Wijzig je abonnement met het {platform_account} waarmee je je hebt aangemeld, via de <b><font color="0">{platform_store}</font></b> website.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Kan video niet afspelen.</string>
     <string name="view">Bekijken</string>
