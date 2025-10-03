@@ -203,7 +203,6 @@
     <string name="changePasswordFail">Parol dəyişdirmə uğursuz oldu</string>
     <string name="changePasswordModalDescription">{app_name} üçün parolunuzu dəyişdirin. Daxili olaraq saxlanılmış verilər, yeni parolunuzla təkrar şifrələnəcək.</string>
     <string name="checkingProStatus">{pro} statusu yoxlanılır</string>
-    <string name="checkingProStatusDescription">{pro} məlumatlarınız yoxlanılır. Bu səhifədəki bəzi məlumatlar, yoxlama tamamlanana qədər qeyri-dəqiq ola bilər.</string>
     <string name="checkingProStatusUpgradeDescription">{pro} statusunuz yoxlanılır. Bu yoxlama tamamlandıqdan sonra {pro} ya yüksəldə biləcəksiniz.</string>
     <string name="clear">Təmizlə</string>
     <string name="clearAll">Hamısını təmizlə</string>
