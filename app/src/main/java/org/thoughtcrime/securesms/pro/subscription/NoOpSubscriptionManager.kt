@@ -7,17 +7,9 @@ import javax.inject.Inject
  */
 class NoOpSubscriptionManager @Inject constructor() : SubscriptionManager {
     override val id = "noop"
+    override val name = ""
     override val description = ""
     override val iconRes = null
-
-    override val details = SubscriptionDetails(
-        device = "",
-        store = "",
-        platform = "",
-        platformAccount = "",
-        subscriptionUrl = "",
-        refundUrl = "",
-    )
 
     override val supportsBilling: Boolean = false
 

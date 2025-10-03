@@ -8,10 +8,9 @@ import java.time.Instant
  */
 interface SubscriptionManager: OnAppStartupComponent {
     val id: String
+    val name: String
     val description: String
     val iconRes: Int?
-
-    val details: SubscriptionDetails
 
     val supportsBilling: Boolean
 
@@ -36,11 +35,3 @@ interface SubscriptionManager: OnAppStartupComponent {
     fun hasValidSubscription(productId: String): Boolean
 }
 
-data class SubscriptionDetails(
-    val device: String,
-    val store: String,
-    val platform: String,
-    val platformAccount: String,
-    val subscriptionUrl: String,
-    val refundUrl: String,
-)

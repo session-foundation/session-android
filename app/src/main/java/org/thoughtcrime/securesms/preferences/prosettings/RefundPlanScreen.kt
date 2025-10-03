@@ -21,6 +21,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.recipients.ProStatus
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
+import org.thoughtcrime.securesms.pro.SubscriptionDetails
 import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.subscription.NoOpSubscriptionManager
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
@@ -55,7 +56,7 @@ fun RefundPlanScreen(
     // there are different UI depending on the state
     when {
        // there is an active subscription but from a different platform
-        activePlan.nonOriginatingSubscription != null ->
+        activePlan.subscriptionDetails.isFromAnotherPlatform() ->
             RefundPlanNonOriginating(
                 subscription = planData.subscriptionType as SubscriptionType.Active,
                 sendCommand = viewModel::onCommand,
@@ -82,13 +83,12 @@ fun RefundPlan(
 ) {
     val context = LocalContext.current
     val isWithinQuickRefundWindow = subscriptionManager.isWithinQuickRefundWindow()
-    val platform = subscriptionManager.details.platform
 
     BaseCellButtonProSettingsScreen(
         disabled = true,
         onBack = onBack,
         buttonText = if(isWithinQuickRefundWindow) Phrase.from(context.getText(R.string.openPlatformWebsite))
-            .put(PLATFORM_KEY, platform)
+            .put(PLATFORM_KEY, data.subscriptionDetails.platform)
             .format().toString()
         else stringResource(R.string.requestRefund),
         dangerButton = true,
@@ -96,7 +96,7 @@ fun RefundPlan(
             if(isWithinQuickRefundWindow && !subscriptionManager.quickRefundUrl.isNullOrEmpty()){
                 sendCommand(ShowOpenUrlDialog(subscriptionManager.quickRefundUrl))
             } else {
-                sendCommand(ShowOpenUrlDialog(subscriptionManager.details.refundUrl))
+                sendCommand(ShowOpenUrlDialog(data.subscriptionDetails.refundUrl))
             }
         },
         title = stringResource(R.string.proRefundDescription),
@@ -116,9 +116,7 @@ fun RefundPlan(
                 text = annotatedStringResource(
                     if(isWithinQuickRefundWindow)
                         Phrase.from(context.getText(R.string.proRefundRequestStorePolicies))
-                            .put(PLATFORM_KEY, platform)
-                            .put(PLATFORM_KEY, platform)
-                            .put(PLATFORM_KEY, platform)
+                            .put(PLATFORM_KEY, data.subscriptionDetails.platform)
                             .put(APP_NAME_KEY, context.getString(R.string.app_name))
                             .format()
                     else Phrase.from(context.getText(R.string.proRefundRequestSessionSupport))
@@ -167,7 +165,14 @@ private fun PreviewRefundPlan(
                     validUntil = Instant.now() + Duration.ofDays(14),
                 ),
                 duration = ProSubscriptionDuration.THREE_MONTHS,
-                nonOriginatingSubscription = null
+                subscriptionDetails = SubscriptionDetails(
+                    device = "Android",
+                    store = "Google Play Store",
+                    platform = "Google",
+                    platformAccount = "Google account",
+                    subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
+                    refundUrl = "https://getsession.org/android-refund",
+                )
             ),
             subscriptionManager = NoOpSubscriptionManager(),
             sendCommand = {},
@@ -189,7 +194,14 @@ private fun PreviewQuickRefundPlan(
                     validUntil = Instant.now() + Duration.ofDays(14),
                 ),
                 duration = ProSubscriptionDuration.THREE_MONTHS,
-                nonOriginatingSubscription = null
+                subscriptionDetails = SubscriptionDetails(
+                    device = "Android",
+                    store = "Google Play Store",
+                    platform = "Google",
+                    platformAccount = "Google account",
+                    subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
+                    refundUrl = "https://getsession.org/android-refund",
+                )
             ),
             subscriptionManager = NoOpSubscriptionManager(),
             sendCommand = {},

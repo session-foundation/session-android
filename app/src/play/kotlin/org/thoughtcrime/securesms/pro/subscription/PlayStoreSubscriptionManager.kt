@@ -29,19 +29,9 @@ class PlayStoreSubscriptionManager @Inject constructor(
     private val currentActivityObserver: CurrentActivityObserver,
 ) : SubscriptionManager {
     override val id = "google_play_store"
+    override val name = "Google Play Store"
     override val description = ""
     override val iconRes = null
-
-
-    override val details = SubscriptionDetails(
-        device = "Android",
-        store = "Google Play Store",
-        platform = "Google",
-        platformAccount = "Google account",
-        //todo PRO update to final URL once we have it
-        subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
-        refundUrl = "https://getsession.org/android-refund",
-    )
 
     override val supportsBilling: Boolean = true
 
@@ -152,7 +142,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
     }
 
     override fun hasValidSubscription(productId: String): Boolean {
-        return false //todo PRO implement properly - we should check if the api has a valid subscription matching this productId for the current google user on this phone
+        return true //todo PRO implement properly - we should check if the api has a valid subscription matching this productId for the current google user on this phone
     }
 
     companion object {

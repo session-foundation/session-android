@@ -79,10 +79,10 @@ import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogStat
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsActivity
+import org.thoughtcrime.securesms.pro.SubscriptionDetails
 import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
-import org.thoughtcrime.securesms.pro.subscription.SubscriptionDetails
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.tokenpage.TokenPageActivity
 import org.thoughtcrime.securesms.ui.AccountIdHeader
@@ -1101,14 +1101,15 @@ private fun SettingsScreenPreview() {
                             validUntil = Instant.now() + Duration.ofDays(14),
                         ),
                         duration = ProSubscriptionDuration.THREE_MONTHS,
-                        nonOriginatingSubscription = SubscriptionDetails(
+                        subscriptionDetails = SubscriptionDetails(
                             device = "iPhone",
                             store = "Apple App Store",
                             platform = "Apple",
                             platformAccount = "Apple Account",
                             subscriptionUrl = "https://www.apple.com/account/subscriptions",
                             refundUrl = "https://www.apple.com/account/subscriptions",
-                        )),
+                        )
+                    ),
                     refreshState = State.Success(Unit),
                 ),
                 username = "Atreyu",

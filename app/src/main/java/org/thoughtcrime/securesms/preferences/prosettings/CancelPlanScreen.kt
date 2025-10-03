@@ -21,6 +21,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.recipients.ProStatus
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.OpenSubscriptionPage
+import org.thoughtcrime.securesms.pro.SubscriptionDetails
 import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.subscription.NoOpSubscriptionManager
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
@@ -54,24 +55,15 @@ fun CancelPlanScreen(
 
     // there are different UI depending on the state
     when {
-        // there is an active subscription but from a different platform
-        activePlan.nonOriginatingSubscription != null ->
+        // there is an active subscription but from a different platform or from the
+        // same platform but a different account
+        activePlan.subscriptionDetails.isFromAnotherPlatform()
+                || !planData.hasValidSubscription ->
             CancelPlanNonOriginating(
-                subscriptionDetails = activePlan.nonOriginatingSubscription!!,
-                platformOverride = activePlan.nonOriginatingSubscription!!.platform,
+                subscriptionDetails = activePlan.subscriptionDetails,
                 sendCommand = viewModel::onCommand,
                 onBack = onBack,
             )
-
-        // the existing subscription manager does not have a valid subscription for this account
-        !planData.hasValidSubscription -> {
-            CancelPlanNonOriginating(
-                subscriptionDetails = subManager.details,
-                platformOverride = subManager.details.store,
-                sendCommand = viewModel::onCommand,
-                onBack = onBack,
-            )
-        }
 
         // default cancel screen
         else -> CancelPlan(
@@ -146,7 +138,14 @@ private fun PreviewCancelPlan(
                     validUntil = Instant.now() + Duration.ofDays(14),
                 ),
                 duration = ProSubscriptionDuration.THREE_MONTHS,
-                nonOriginatingSubscription = null
+                subscriptionDetails = SubscriptionDetails(
+                    device = "Android",
+                    store = "Google Play Store",
+                    platform = "Google",
+                    platformAccount = "Google account",
+                    subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
+                    refundUrl = "https://getsession.org/android-refund",
+                )
             ),
             subscriptionManager = NoOpSubscriptionManager(),
             sendCommand = {},

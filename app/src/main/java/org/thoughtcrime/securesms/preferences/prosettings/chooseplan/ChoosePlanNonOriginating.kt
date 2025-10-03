@@ -24,9 +24,9 @@ import org.thoughtcrime.securesms.preferences.prosettings.BaseNonOriginatingProS
 import org.thoughtcrime.securesms.preferences.prosettings.NonOriginatingLinkCellData
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
+import org.thoughtcrime.securesms.pro.SubscriptionDetails
 import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
-import org.thoughtcrime.securesms.pro.subscription.SubscriptionDetails
 import org.thoughtcrime.securesms.pro.subscription.expiryFromNow
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
@@ -39,12 +39,12 @@ import java.time.Instant
 @Composable
 fun ChoosePlanNonOriginating(
     subscription: SubscriptionType.Active,
-    subscriptionDetails: SubscriptionDetails,
-    platformOverride: String, // this property is here because different scenario will require different property to be used for this string: some will use the platform, others will use the platformStore
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ){
     val context = LocalContext.current
+
+    val platformOverride = subscription.subscriptionDetails.getPlatformDisplayName()
 
     val headerTitle = when(subscription) {
         is SubscriptionType.Active.Expiring -> Phrase.from(context.getText(R.string.proPlanExpireDate))
@@ -74,24 +74,24 @@ fun ChoosePlanNonOriginating(
             .format().toString(),
         dangerButton = false,
         onButtonClick = {
-            sendCommand(ShowOpenUrlDialog(subscriptionDetails.subscriptionUrl))
+            sendCommand(ShowOpenUrlDialog(subscription.subscriptionDetails.subscriptionUrl))
         },
         contentTitle = stringResource(R.string.updatePlan),
         contentDescription = Phrase.from(context.getText(R.string.proPlanSignUp))
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-            .put(PLATFORM_STORE_KEY, subscriptionDetails.store)
-            .put(PLATFORM_ACCOUNT_KEY, subscriptionDetails.platformAccount)
+            .put(PLATFORM_STORE_KEY, subscription.subscriptionDetails.store)
+            .put(PLATFORM_ACCOUNT_KEY, subscription.subscriptionDetails.platformAccount)
             .format(),
         linkCellsInfo = stringResource(R.string.updatePlanTwo),
         linkCells = listOf(
             NonOriginatingLinkCellData(
                 title = Phrase.from(context.getText(R.string.onDevice))
-                    .put(DEVICE_TYPE_KEY, subscriptionDetails.device)
+                    .put(DEVICE_TYPE_KEY, subscription.subscriptionDetails.device)
                     .format(),
                 info = Phrase.from(context.getText(R.string.onDeviceDescription))
                     .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
-                    .put(DEVICE_TYPE_KEY, subscriptionDetails.device)
-                    .put(PLATFORM_ACCOUNT_KEY, subscriptionDetails.platformAccount)
+                    .put(DEVICE_TYPE_KEY, subscription.subscriptionDetails.device)
+                    .put(PLATFORM_ACCOUNT_KEY, subscription.subscriptionDetails.platformAccount)
                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                     .format(),
                 iconRes = R.drawable.ic_smartphone
@@ -101,7 +101,7 @@ fun ChoosePlanNonOriginating(
                     .put(PLATFORM_KEY, platformOverride)
                     .format(),
                 info = Phrase.from(context.getText(R.string.viaStoreWebsiteDescription))
-                    .put(PLATFORM_ACCOUNT_KEY, subscriptionDetails.platformAccount)
+                    .put(PLATFORM_ACCOUNT_KEY, subscription.subscriptionDetails.platformAccount)
                     .put(PLATFORM_STORE_KEY, platformOverride)
                     .format(),
                 iconRes = R.drawable.ic_globe
@@ -124,7 +124,7 @@ private fun PreviewUpdatePlan(
                     validUntil = Instant.now() + Duration.ofDays(14),
                 ),
                 duration = ProSubscriptionDuration.THREE_MONTHS,
-                nonOriginatingSubscription = SubscriptionDetails(
+                subscriptionDetails = SubscriptionDetails(
                     device = "iPhone",
                     store = "Apple App Store",
                     platform = "Apple",
@@ -133,15 +133,6 @@ private fun PreviewUpdatePlan(
                     refundUrl = "https://www.apple.com/account/subscriptions",
                 )
             ),
-            subscriptionDetails = SubscriptionDetails(
-                device = "iPhone",
-                store = "Apple App Store",
-                platform = "Apple",
-                platformAccount = "Apple Account",
-                subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                refundUrl = "https://www.apple.com/account/subscriptions",
-            ),
-            platformOverride = "Apple",
             sendCommand = {},
             onBack = {},
         )

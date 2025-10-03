@@ -25,30 +25,16 @@ fun UpdatePlanScreen(
 
     val subscriptionManager = viewModel.getSubscriptionManager()
 
-    // there are different UI depending on the state
-    val nonOriginatingSubscription = (planData.subscriptionType as? SubscriptionType.Active)?.nonOriginatingSubscription
-
     when {
-        // there is an active subscription but from a different platform
-        nonOriginatingSubscription != null ->
+        // there is an active subscription but from a different platform or from the
+        // same platform but a different account
+        subscription.subscriptionDetails.isFromAnotherPlatform()
+                || !planData.hasValidSubscription ->
             ChoosePlanNonOriginating(
                 subscription = planData.subscriptionType as SubscriptionType.Active,
-                subscriptionDetails = nonOriginatingSubscription,
-                platformOverride = nonOriginatingSubscription.platform,
                 sendCommand = viewModel::onCommand,
                 onBack = onBack,
             )
-
-        // there is an active subscription but the existing subscription manager does not have a valid product for this acount account
-        !planData.hasValidSubscription  -> {
-            ChoosePlanNonOriginating(
-                subscription = planData.subscriptionType as SubscriptionType.Active,
-                subscriptionDetails = subscriptionManager.details,
-                platformOverride = subscriptionManager.details.store,
-                sendCommand = viewModel::onCommand,
-                onBack = onBack,
-            )
-        }
 
         // default plan chooser
         else -> ChoosePlan(

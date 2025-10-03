@@ -24,8 +24,8 @@ import org.thoughtcrime.securesms.preferences.prosettings.NonOriginatingLinkCell
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.SubscriptionDetails
 import org.thoughtcrime.securesms.pro.SubscriptionType
-import org.thoughtcrime.securesms.pro.subscription.SubscriptionDetails
 import org.thoughtcrime.securesms.ui.components.iconExternalLink
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
@@ -35,8 +35,6 @@ import org.thoughtcrime.securesms.ui.theme.ThemeColors
 @Composable
 fun ChoosePlanNoBilling(
     subscription: SubscriptionType,
-    subscriptionDetails: SubscriptionDetails?,
-    platformOverride: String, // this property is here because different scenario will require different property to be used for this string: some will use the platform, others will use the platformStore
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ){
@@ -90,62 +88,59 @@ fun ChoosePlanNoBilling(
         else -> ""
     }
 
-    val cells: List<NonOriginatingLinkCellData> = when(subscription) {
-        is SubscriptionType.Expired -> buildList {
-            addAll(listOf(
-                NonOriginatingLinkCellData(
-                    title = stringResource(R.string.onLinkedDevice),
-                    info = Phrase.from(context.getText(R.string.proPlanRenewDesktopLinked))
-                        .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
-                        .put(PLATFORM_STORE_KEY, defaultGoogleStore)
-                        .put(PLATFORM_STORE_KEY, defaultAppleStore)
-                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                        .format(),
-                    iconRes = R.drawable.ic_link
-                ),
-                NonOriginatingLinkCellData(
-                    title = stringResource(R.string.proNewInstallation),
-                    info = Phrase.from(context.getText(R.string.proNewInstallationDescription))
-                        .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
-                        .put(PLATFORM_STORE_KEY, defaultGoogleStore)
-                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                        .format(),
-                    iconRes = R.drawable.ic_smartphone
-                )
-            ))
+    val cells: List<NonOriginatingLinkCellData> = buildList {
+        addAll(listOf(
+            NonOriginatingLinkCellData(
+                title = stringResource(R.string.onLinkedDevice),
+                info = Phrase.from(context.getText(R.string.proPlanRenewDesktopLinked))
+                    .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
+                    .put(PLATFORM_STORE_KEY, defaultGoogleStore)
+                    .put(PLATFORM_STORE_KEY, defaultAppleStore)
+                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                    .format(),
+                iconRes = R.drawable.ic_link
+            ),
+            NonOriginatingLinkCellData(
+                title = stringResource(R.string.proNewInstallation),
+                info = Phrase.from(context.getText(R.string.proNewInstallationDescription))
+                    .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
+                    .put(PLATFORM_STORE_KEY, defaultGoogleStore)
+                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                    .format(),
+                iconRes = R.drawable.ic_smartphone
+            )
+        ))
 
-            if(subscriptionDetails != null) {
-                add(
-                    NonOriginatingLinkCellData(
-                        title = Phrase.from(context.getText(R.string.onPlatformStoreWebsite))
-                            .put(PLATFORM_STORE_KEY, platformOverride)
-                            .format(),
-                        info = Phrase.from(context.getText(R.string.proPlanRenewPlatformStoreWebsite))
-                            .put(PLATFORM_STORE_KEY, platformOverride)
-                            .put(PLATFORM_ACCOUNT_KEY, subscriptionDetails.platformAccount)
-                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                            .format(),
-                        iconRes = R.drawable.ic_globe
-                    )
+        if(subscription is SubscriptionType.Expired) {
+            add(
+                NonOriginatingLinkCellData(
+                    title = Phrase.from(context.getText(R.string.onPlatformStoreWebsite))
+                        .put(PLATFORM_STORE_KEY, subscription.subscriptionDetails.getPlatformDisplayName())
+                        .format(),
+                    info = Phrase.from(context.getText(R.string.proPlanRenewPlatformStoreWebsite))
+                        .put(PLATFORM_STORE_KEY, subscription.subscriptionDetails.getPlatformDisplayName())
+                        .put(PLATFORM_ACCOUNT_KEY, subscription.subscriptionDetails.platformAccount)
+                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                        .format(),
+                    iconRes = R.drawable.ic_globe
                 )
-            }
+            )
         }
-
-        else -> emptyList()
     }
+
 
     BaseNonOriginatingProSettingsScreen(
         disabled = false,
         onBack = onBack,
         headerTitle = headerTitle,
-        buttonText = if (subscriptionDetails != null) Phrase.from(context.getText(R.string.openPlatformWebsite))
-            .put(PLATFORM_KEY, platformOverride)
+        buttonText = if(subscription is SubscriptionType.Expired) Phrase.from(context.getText(R.string.openPlatformWebsite))
+            .put(PLATFORM_KEY, subscription.subscriptionDetails.getPlatformDisplayName())
             .format().toString()
         else null,
         dangerButton = false,
         onButtonClick = {
-            subscriptionDetails?.let {
-                sendCommand(ShowOpenUrlDialog(it.subscriptionUrl))
+            if(subscription is SubscriptionType.Expired) {
+                sendCommand(ShowOpenUrlDialog(subscription.subscriptionDetails.subscriptionUrl))
             }
         },
         contentTitle = contentTitle,
@@ -164,16 +159,16 @@ private fun PreviewNonOrigExpiredUpdatePlan(
     PreviewTheme(colors) {
         val context = LocalContext.current
         ChoosePlanNoBilling (
-            subscription = SubscriptionType.Expired(nonOriginatingSubscription = null),
-            subscriptionDetails = SubscriptionDetails(
-                device = "iPhone",
-                store = "Apple App Store",
-                platform = "Apple",
-                platformAccount = "Apple Account",
-                subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                refundUrl = "https://www.apple.com/account/subscriptions",
+            subscription = SubscriptionType.Expired(
+                SubscriptionDetails(
+                    device = "iPhone",
+                    store = "Apple App Store",
+                    platform = "Apple",
+                    platformAccount = "Apple Account",
+                    subscriptionUrl = "https://www.apple.com/account/subscriptions",
+                    refundUrl = "https://www.apple.com/account/subscriptions",
+                )
             ),
-            platformOverride = "Apple",
             sendCommand = {},
             onBack = {},
         )
@@ -188,9 +183,16 @@ private fun PreviewNoBiilingBrandNewPlan(
     PreviewTheme(colors) {
         val context = LocalContext.current
         ChoosePlanNoBilling (
-            subscription = SubscriptionType.Expired(nonOriginatingSubscription = null),
-            subscriptionDetails = null,
-            platformOverride = "Apple",
+            subscription = SubscriptionType.Expired(
+                SubscriptionDetails(
+                    device = "iPhone",
+                    store = "Apple App Store",
+                    platform = "Apple",
+                    platformAccount = "Apple Account",
+                    subscriptionUrl = "https://www.apple.com/account/subscriptions",
+                    refundUrl = "https://www.apple.com/account/subscriptions",
+                )
+            ),
             sendCommand = {},
             onBack = {},
         )

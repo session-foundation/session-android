@@ -25,7 +25,6 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
-import org.thoughtcrime.securesms.pro.subscription.SubscriptionDetails
 import org.thoughtcrime.securesms.util.State
 import java.time.Duration
 import java.time.Instant
@@ -56,7 +55,14 @@ class ProStatusManager @Inject constructor(
                         validUntil = Instant.now() + Duration.ofDays(14),
                     ),
                     duration = ProSubscriptionDuration.THREE_MONTHS,
-                    nonOriginatingSubscription = null
+                    subscriptionDetails = SubscriptionDetails(
+                        device = "Android",
+                        store = "Google Play Store",
+                        platform = "Google",
+                        platformAccount = "Google account",
+                        subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
+                        refundUrl = "https://getsession.org/android-refund",
+                    )
                 )
 
                 DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> SubscriptionType.Active.Expiring(
@@ -65,7 +71,14 @@ class ProStatusManager @Inject constructor(
                         validUntil = Instant.now() + Duration.ofDays(2),
                     ),
                     duration = ProSubscriptionDuration.TWELVE_MONTHS,
-                    nonOriginatingSubscription = null
+                    subscriptionDetails = SubscriptionDetails(
+                        device = "Android",
+                        store = "Google Play Store",
+                        platform = "Google",
+                        platformAccount = "Google account",
+                        subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
+                        refundUrl = "https://getsession.org/android-refund",
+                    )
                 )
 
                 DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> SubscriptionType.Active.AutoRenewing(
@@ -74,7 +87,7 @@ class ProStatusManager @Inject constructor(
                         validUntil = Instant.now() + Duration.ofDays(14),
                     ),
                     duration = ProSubscriptionDuration.ONE_MONTH,
-                    nonOriginatingSubscription = SubscriptionDetails(
+                    subscriptionDetails = SubscriptionDetails(
                         device = "iPhone",
                         store = "Apple App Store",
                         platform = "Apple",
@@ -90,7 +103,7 @@ class ProStatusManager @Inject constructor(
                         validUntil = Instant.now() + Duration.ofDays(2),
                     ),
                     duration = ProSubscriptionDuration.ONE_MONTH,
-                    nonOriginatingSubscription = SubscriptionDetails(
+                    subscriptionDetails = SubscriptionDetails(
                         device = "iPhone",
                         store = "Apple App Store",
                         platform = "Apple",
@@ -100,9 +113,18 @@ class ProStatusManager @Inject constructor(
                     )
                 )
 
-                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> SubscriptionType.Expired(nonOriginatingSubscription = null)
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> SubscriptionType.Expired(
+                    subscriptionDetails = SubscriptionDetails(
+                        device = "Android",
+                        store = "Google Play Store",
+                        platform = "Google",
+                        platformAccount = "Google account",
+                        subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
+                        refundUrl = "https://getsession.org/android-refund",
+                    )
+                )
                 DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE -> SubscriptionType.Expired(
-                    nonOriginatingSubscription = SubscriptionDetails(
+                    subscriptionDetails = SubscriptionDetails(
                         device = "iPhone",
                         store = "Apple App Store",
                         platform = "Apple",

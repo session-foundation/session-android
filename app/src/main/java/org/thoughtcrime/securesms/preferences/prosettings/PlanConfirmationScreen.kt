@@ -36,6 +36,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.recipients.ProStatus
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.GoToProSettings
+import org.thoughtcrime.securesms.pro.SubscriptionDetails
 import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
@@ -158,7 +159,14 @@ private fun PreviewPlanConfirmation(
                             validUntil = Instant.now() + Duration.ofDays(14),
                         ),
                         duration = ProSubscriptionDuration.THREE_MONTHS,
-                        nonOriginatingSubscription = null
+                        subscriptionDetails = SubscriptionDetails(
+                            device = "iPhone",
+                            store = "Apple App Store",
+                            platform = "Apple",
+                            platformAccount = "Apple Account",
+                            subscriptionUrl = "https://www.apple.com/account/subscriptions",
+                            refundUrl = "https://www.apple.com/account/subscriptions",
+                        )
                     ),
                     refreshState = State.Success(Unit),),
             ),

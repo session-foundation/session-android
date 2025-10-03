@@ -55,6 +55,7 @@ import org.session.libsession.utilities.recipients.ProStatus
 import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.SubscriptionDetails
 import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
@@ -794,7 +795,14 @@ fun PreviewProSettingsPro(
                             validUntil = Instant.now() + Duration.ofDays(14),
                         ),
                         duration = ProSubscriptionDuration.THREE_MONTHS,
-                        nonOriginatingSubscription = null
+                        subscriptionDetails = SubscriptionDetails(
+                            device = "iPhone",
+                            store = "Apple App Store",
+                            platform = "Apple",
+                            platformAccount = "Apple Account",
+                            subscriptionUrl = "https://www.apple.com/account/subscriptions",
+                            refundUrl = "https://www.apple.com/account/subscriptions",
+                        )
                     ),
                     refreshState = State.Success(Unit),
                 ),
@@ -820,7 +828,14 @@ fun PreviewProSettingsProLoading(
                             validUntil = Instant.now() + Duration.ofDays(14),
                         ),
                         duration = ProSubscriptionDuration.THREE_MONTHS,
-                        nonOriginatingSubscription = null
+                        subscriptionDetails = SubscriptionDetails(
+                            device = "iPhone",
+                            store = "Apple App Store",
+                            platform = "Apple",
+                            platformAccount = "Apple Account",
+                            subscriptionUrl = "https://www.apple.com/account/subscriptions",
+                            refundUrl = "https://www.apple.com/account/subscriptions",
+                        )
                     ),
                     refreshState = State.Loading,
                 ),
@@ -846,7 +861,14 @@ fun PreviewProSettingsProError(
                             validUntil = Instant.now() + Duration.ofDays(14),
                         ),
                         duration = ProSubscriptionDuration.THREE_MONTHS,
-                        nonOriginatingSubscription = null
+                        subscriptionDetails = SubscriptionDetails(
+                            device = "iPhone",
+                            store = "Apple App Store",
+                            platform = "Apple",
+                            platformAccount = "Apple Account",
+                            subscriptionUrl = "https://www.apple.com/account/subscriptions",
+                            refundUrl = "https://www.apple.com/account/subscriptions",
+                        )
                     ),
                     refreshState = State.Error(Exception()),
                 ),
@@ -866,7 +888,14 @@ fun PreviewProSettingsExpired(
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
                 subscriptionState = SubscriptionState(
-                    type = SubscriptionType.Expired(nonOriginatingSubscription = null),
+                    type = SubscriptionType.Expired(SubscriptionDetails(
+                        device = "iPhone",
+                        store = "Apple App Store",
+                        platform = "Apple",
+                        platformAccount = "Apple Account",
+                        subscriptionUrl = "https://www.apple.com/account/subscriptions",
+                        refundUrl = "https://www.apple.com/account/subscriptions",
+                    )),
                     refreshState = State.Success(Unit),
                 )
             ),

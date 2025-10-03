@@ -16,39 +16,15 @@ fun GetOrRenewPlanScreen(
 ) {
     // Renew plan
     val planData by viewModel.choosePlanState.collectAsState()
-    val subscription = planData.subscriptionType as? SubscriptionType.Expired
-    // can't update a plan if the subscription isn't expired
-    if(subscription == null){
-        onBack()
-        return
-    }
-
-    val subscriptionManager = viewModel.getSubscriptionManager()
-
-    // there are different UI depending on the state
-    val nonOriginatingSubscription = subscription.nonOriginatingSubscription
 
     when {
-        // there is an active subscription but from a different platform
-        nonOriginatingSubscription != null ->
+        // there are no billing options on this device
+        !planData.hasBillingCapacity ->
             ChoosePlanNoBilling(
                 subscription = planData.subscriptionType,
-                subscriptionDetails = nonOriginatingSubscription,
-                platformOverride = nonOriginatingSubscription.platform,
                 sendCommand = viewModel::onCommand,
                 onBack = onBack,
             )
-
-        // there is an active subscription but the existing subscription manager does not have a valid product for this acount account
-        !planData.hasValidSubscription  -> {
-            ChoosePlanNoBilling(
-                subscription = planData.subscriptionType,
-                subscriptionDetails = subscriptionManager.details,
-                platformOverride = subscriptionManager.details.store,
-                sendCommand = viewModel::onCommand,
-                onBack = onBack,
-            )
-        }
 
         // default plan chooser
         else -> ChoosePlan(

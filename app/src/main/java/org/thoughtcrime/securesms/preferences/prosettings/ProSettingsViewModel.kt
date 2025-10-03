@@ -301,8 +301,9 @@ class ProSettingsViewModel @Inject constructor(
             }
 
             Commands.OpenSubscriptionPage -> {
-                val subUrl = subscriptionCoordinator.getCurrentManager().details.subscriptionUrl
-                if(subUrl.isNotEmpty()){
+                val subUrl = (_proSettingsUIState.value.subscriptionState.type as? SubscriptionType.Active)
+                    ?.subscriptionDetails?.subscriptionUrl
+                if(!subUrl.isNullOrEmpty()){
                     viewModelScope.launch {
                         navigator.navigateToIntent(
                             Intent(Intent.ACTION_VIEW, subUrl.toUri())
