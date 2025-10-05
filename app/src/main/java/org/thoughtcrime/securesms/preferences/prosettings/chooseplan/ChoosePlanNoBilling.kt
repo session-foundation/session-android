@@ -17,6 +17,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.BUILD_VARIAN
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACCOUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE2_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.BaseNonOriginatingProSettingsScreen
@@ -65,7 +66,7 @@ fun ChoosePlanNoBilling(
         is SubscriptionType.Expired -> Phrase.from(context.getText(R.string.proRenewingNoAccessBilling))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(PLATFORM_STORE_KEY, defaultGoogleStore)
-            .put(PLATFORM_STORE_KEY, defaultAppleStore)
+            .put(PLATFORM_STORE2_KEY, defaultAppleStore)
             .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
             .put(BUILD_VARIANT_KEY, when (BuildConfig.FLAVOR) {
                 "fdroid" -> "F-Droid Store"
@@ -75,7 +76,7 @@ fun ChoosePlanNoBilling(
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(PLATFORM_STORE_KEY, defaultGoogleStore)
-            .put(PLATFORM_STORE_KEY, defaultAppleStore)
+            .put(PLATFORM_STORE2_KEY, defaultAppleStore)
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(ICON_KEY, iconExternalLink)
             .format()
@@ -95,7 +96,7 @@ fun ChoosePlanNoBilling(
                 info = Phrase.from(context.getText(R.string.proPlanRenewDesktopLinked))
                     .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
                     .put(PLATFORM_STORE_KEY, defaultGoogleStore)
-                    .put(PLATFORM_STORE_KEY, defaultAppleStore)
+                    .put(PLATFORM_STORE2_KEY, defaultAppleStore)
                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                     .format(),
                 iconRes = R.drawable.ic_link

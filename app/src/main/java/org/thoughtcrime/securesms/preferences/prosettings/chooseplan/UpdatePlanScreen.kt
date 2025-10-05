@@ -28,8 +28,10 @@ fun UpdatePlanScreen(
     when {
         // there is an active subscription but from a different platform or from the
         // same platform but a different account
+        // or we have no billing APIs
         subscription.subscriptionDetails.isFromAnotherPlatform()
-                || !planData.hasValidSubscription ->
+                || !planData.hasValidSubscription
+                || !subscriptionManager.supportsBilling ->
             ChoosePlanNonOriginating(
                 subscription = planData.subscriptionType as SubscriptionType.Active,
                 sendCommand = viewModel::onCommand,
