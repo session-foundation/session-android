@@ -283,9 +283,22 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private val address: Address.Conversable by lazy {
-        requireNotNull(IntentCompat.getParcelableExtra(intent, ADDRESS, Address.Conversable::class.java)) {
-            "Address must be provided in the intent extras"
+        val fromExtras =
+            IntentCompat.getParcelableExtra(intent, ADDRESS, Address.Conversable::class.java)
+        if (fromExtras != null) {
+            return@lazy fromExtras
         }
+
+        // Fallback: parse from URI
+        val serialized = intent.data?.getQueryParameter(ADDRESS)
+        if (!serialized.isNullOrEmpty()) {
+            val parsed = fromSerialized(serialized)
+            if (parsed is Address.Conversable) {
+                return@lazy parsed
+            }
+        }
+
+        throw IllegalArgumentException("Address must be provided in the intent extras or URI")
     }
 
     private val viewModel: ConversationViewModel by viewModels(extrasProducer = {
