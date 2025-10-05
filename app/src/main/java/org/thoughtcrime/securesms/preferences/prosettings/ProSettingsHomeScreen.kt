@@ -199,6 +199,7 @@ fun ProSettingsHome(
             Spacer(Modifier.height(LocalDimensions.current.spacing))
             ProManage(
                 data = subscriptionType,
+                subscriptionRefreshState = data.subscriptionState.refreshState,
                 sendCommand = sendCommand,
             )
         }
@@ -215,6 +216,7 @@ fun ProSettingsHome(
             Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
             ProManage(
                 data = subscriptionType,
+                subscriptionRefreshState = data.subscriptionState.refreshState,
                 sendCommand = sendCommand,
             )
         }
@@ -700,6 +702,7 @@ private fun ProFeatureItem(
 fun ProManage(
     modifier: Modifier = Modifier,
     data: SubscriptionType,
+    subscriptionRefreshState: State<Unit>,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
 ){
     CategoryCell(
@@ -745,20 +748,59 @@ fun ProManage(
                 }
 
                 is SubscriptionType.Expired -> {
-                    IconActionRowItem(
+                    // the details depend on the loading/error state
+                    val renewIcon: @Composable BoxScope.() -> Unit = {
+                        Icon(
+                            modifier = Modifier.align(Alignment.Center)
+                                .size(LocalDimensions.current.iconMedium)
+                                .qaTag(R.string.qa_action_item_icon),
+                            painter = painterResource(id = R.drawable.ic_circle_plus),
+                            contentDescription = null,
+                            tint = LocalColors.current.text
+                        )
+                    }
+
+                    val (subtitle, subColor, icon) = when(subscriptionRefreshState){
+                        is State.Loading -> Triple<CharSequence?, Color, @Composable BoxScope.() -> Unit>(
+                            Phrase.from(LocalContext.current, R.string.proPlanLoadingEllipsis)
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format().toString(),
+                            LocalColors.current.text,
+                            { SmallCircularProgressIndicator(modifier = Modifier.align(Alignment.Center)) }
+                        )
+
+                        is State.Error -> Triple<CharSequence?, Color, @Composable BoxScope.() -> Unit>(
+                            Phrase.from(LocalContext.current, R.string.errorLoadingProPlan)
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format().toString(),
+                            LocalColors.current.warning, renewIcon
+                        )
+
+                        is State.Success<*> -> Triple<CharSequence?, Color, @Composable BoxScope.() -> Unit>(
+                            null,
+                            LocalColors.current.text, renewIcon
+                        )
+                    }
+
+                    ActionRowItem(
                         title = annotatedStringResource(
                             Phrase.from(LocalContext.current, R.string.proPlanRenew)
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString()
                         ),
-                        titleColor = LocalColors.current.accentText,
-                        icon = R.drawable.ic_circle_plus,
-                        iconColor = LocalColors.current.accentText,
-                        qaTag = R.string.qa_pro_settings_action_cancel_plan,
-                        onClick = {
-                            sendCommand(GoToChoosePlan)
-                        }
+                        subtitle = if(subtitle == null) null else annotatedStringResource(subtitle),
+                        subtitleColor = subColor,
+                        endContent = {
+                            Box(
+                                modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)
+                            ) {
+                                icon()
+                            }
+                        },
+                        qaTag = R.string.qa_pro_settings_action_renew_plan,
+                        onClick = { sendCommand(GoToChoosePlan) }
                     )
+
                     Divider()
                     IconActionRowItem(
                         title = annotatedStringResource(
