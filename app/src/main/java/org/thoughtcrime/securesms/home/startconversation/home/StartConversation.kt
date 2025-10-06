@@ -38,7 +38,6 @@ import org.thoughtcrime.securesms.home.startconversation.StartConversationDestin
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.adaptive.rememberAdaptiveInfo
-import org.thoughtcrime.securesms.ui.adaptive.rememberTwoPane
 import org.thoughtcrime.securesms.ui.components.AppBarCloseIcon
 import org.thoughtcrime.securesms.ui.components.BasicAppBar
 import org.thoughtcrime.securesms.ui.components.QrImage
@@ -80,7 +79,7 @@ internal fun StartConversationScreen(
             color = LocalColors.current.backgroundSecondary
         ) {
             if (isLandscape) {
-                TwoPaneContent(accountId, navigateTo)
+                LandscapeContent(accountId, navigateTo)
             } else {
                 PortraitContent(accountId, navigateTo)
             }
@@ -97,31 +96,19 @@ private fun PortraitContent(
         modifier = Modifier.verticalScroll(rememberScrollState())
     ) {
         ActionList(navigateTo = navigateTo)
-        Column(
+        QrPanel(
+            accountId = accountId,
             modifier = Modifier
                 .padding(horizontal = LocalDimensions.current.spacing)
                 .padding(top = LocalDimensions.current.spacing)
                 .padding(bottom = LocalDimensions.current.spacing)
-        ) {
-            Text(stringResource(R.string.accountIdYours), style = LocalType.current.xl)
-            Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
-            Text(
-                text = stringResource(R.string.qrYoursDescription),
-                color = LocalColors.current.textSecondary,
-                style = LocalType.current.small
-            )
-            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
-            QrImage(
-                string = accountId,
-                Modifier.qaTag(R.string.AccessibilityId_qrCode),
-                icon = R.drawable.session
-            )
-        }
+                .fillMaxWidth(),
+        )
     }
 }
 
 @Composable
-private fun TwoPaneContent(
+private fun LandscapeContent(
     accountId: String,
     navigateTo: (StartConversationDestination) -> Unit
 ) {
@@ -158,9 +145,13 @@ private fun QrPanel(
     BoxWithConstraints(
         modifier = modifier
     ) {
-        // Fit the QR inside available height/width of the right rail
-        val shortest: Dp = if (maxWidth < maxHeight) maxWidth else maxHeight
-        val qrSide = (shortest * 0.72f).coerceIn(160.dp, 520.dp)
+        val qrModifier = if (rememberAdaptiveInfo().isLandscape) {
+            val shortest: Dp = if (maxWidth < maxHeight) maxWidth else maxHeight
+            val qrSide = (shortest * 0.70f).coerceIn(160.dp, 520.dp)
+            Modifier.size(qrSide)
+        } else {
+            Modifier
+        }
 
         Column(
             modifier = Modifier.widthIn(max = 420.dp),
@@ -176,8 +167,7 @@ private fun QrPanel(
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
             QrImage(
                 string = accountId,
-                modifier = Modifier
-                    .size(qrSide)
+                modifier = qrModifier
                     .qaTag(R.string.AccessibilityId_qrCode),
                 icon = R.drawable.session
             )
