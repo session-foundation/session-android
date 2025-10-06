@@ -20,6 +20,7 @@ import static org.thoughtcrime.securesms.database.MmsDatabase.MESSAGE_BOX;
 import static org.thoughtcrime.securesms.database.MmsSmsColumns.ID;
 import static org.thoughtcrime.securesms.database.MmsSmsColumns.NOTIFIED;
 import static org.thoughtcrime.securesms.database.MmsSmsColumns.READ;
+import static org.thoughtcrime.securesms.database.MmsSmsColumns.THREAD_ID;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -525,6 +526,8 @@ public class MmsSmsDatabase extends Database {
     return -1;
   }
 
+  // Please note this migration contain a mistake (message_id used as thread_id), it's corrected in the subsequent release,
+  // so you shouldn't try to fix it here.
   private static void migrateLegacyCommunityAddresses(final SQLiteDatabase db, final String tableName) {
     final String query = "SELECT " + ID + ", " + MmsSmsColumns.ADDRESS + " FROM " + tableName;
     try (final Cursor cursor = db.rawQuery(query)) {
@@ -578,9 +581,78 @@ public class MmsSmsDatabase extends Database {
     }
   }
 
+  // This is an attempt to fix the issue in migrateLegacyCommunityAddresses
+  private static void migrateLegacyCommunityAddresses2(final SQLiteDatabase db, final String tableName) {
+    final String query = "SELECT " + ID + ", " + THREAD_ID + ", " + MmsSmsColumns.ADDRESS + " FROM " + tableName;
+    try (final Cursor cursor = db.rawQuery(query)) {
+      while (cursor.moveToNext()) {
+        final long messageId = cursor.getLong(0);
+        final long threadId = cursor.getLong(1);
+        final String address = cursor.getString(2);
+        final String newAddress;
+
+        try {
+          if (address.startsWith(GroupUtil.COMMUNITY_PREFIX)) {
+            // First, if a message has a sender being a community address, it suggests the message
+            // is sent by us (this is an assumption from other part of the code).
+            // This also means that the address will be the thread's address, if the thread address
+            // is indeed a community address
+            final String threadSql = "SELECT " + ThreadDatabase.ADDRESS + " FROM " +
+                    ThreadDatabase.TABLE_NAME + " WHERE " + ThreadDatabase.ID + " = ?";
+            try (final Cursor threadCursor = db.rawQuery(threadSql, threadId)) {
+              if (threadCursor.moveToNext()) {
+                final Address threadAddress = Address.fromSerialized(threadCursor.getString(0));
+                if (threadAddress instanceof Address.Community) {
+                  newAddress = threadAddress.getAddress();
+                } else {
+                  // If this message has a sender being a community address, but the thread address
+                  // is not community(!), we'll have to fall back to unsafe group id migration
+                  final String groupId = GroupUtil.getDecodedGroupID(address);
+                  final int dotIndex = groupId.lastIndexOf('.');
+                  if (dotIndex > 0 && dotIndex < groupId.length() - 1) {
+                    newAddress = new Address.Community(
+                            groupId.substring(0, dotIndex),
+                            groupId.substring(dotIndex + 1)
+                    ).getAddress();
+                  } else {
+                    Log.w(TAG, "Unable to decode group id from address: " + address);
+                    continue;
+                  }
+                }
+              } else {
+                Log.w(TAG, "Thread not found for message id = " + messageId);
+                // Thread not found? - this is strange but if we don't have threads these messages
+                // aren't visible anyway.
+                continue;
+              }
+            }
+          } else {
+            continue;
+          }
+        } catch (Throwable e) {
+          Log.e(TAG, "Error while migrating address " + address, e);
+          continue;
+        }
+
+        if (!newAddress.equals(address)) {
+          Log.i(TAG, "Migrating message ID=" + messageId);
+          ContentValues contentValues = new ContentValues(1);
+          contentValues.put(MmsSmsColumns.ADDRESS, newAddress);
+          db.update(tableName, contentValues, ID + " = ?", new String[]{String.valueOf(messageId)});
+        }
+      }
+    }
+
+  }
+
   public static void migrateLegacyCommunityAddresses(final SQLiteDatabase db) {
     migrateLegacyCommunityAddresses(db, SmsDatabase.TABLE_NAME);
     migrateLegacyCommunityAddresses(db, MmsDatabase.TABLE_NAME);
+  }
+
+  public static void migrateLegacyCommunityAddresses2(final SQLiteDatabase db) {
+    migrateLegacyCommunityAddresses2(db, SmsDatabase.TABLE_NAME);
+    migrateLegacyCommunityAddresses2(db, MmsDatabase.TABLE_NAME);
   }
 
   private Cursor queryTables(String[] projection, String selection, String order, String limit) {

@@ -16,7 +16,7 @@ data class OpenGroup(
     val room: String,
     @SerialName("displayName") // This rename caters for existing data
     val name: String,
-    val description: String?,
+    val description: String? = null,
     val publicKey: String,
     val imageId: String?,
     val infoUpdates: Int,
