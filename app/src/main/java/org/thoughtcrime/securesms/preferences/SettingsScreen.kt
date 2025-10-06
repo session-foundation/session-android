@@ -270,7 +270,7 @@ fun Settings(
                     ProBadge(
                         modifier = Modifier.padding(start = 4.dp)
                             .qaTag(stringResource(R.string.qa_pro_badge_icon)),
-                        colors = if(uiState.subscriptionState is SubscriptionType.Active)
+                        colors = if(uiState.subscriptionState.type is SubscriptionType.Active)
                             proBadgeColorStandard()
                         else proBadgeColorDisabled()
                     )
