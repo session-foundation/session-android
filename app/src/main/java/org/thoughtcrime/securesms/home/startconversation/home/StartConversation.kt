@@ -37,6 +37,7 @@ import network.loki.messenger.R
 import org.thoughtcrime.securesms.home.startconversation.StartConversationDestination
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ItemButton
+import org.thoughtcrime.securesms.ui.adaptive.rememberAdaptiveInfo
 import org.thoughtcrime.securesms.ui.adaptive.rememberTwoPane
 import org.thoughtcrime.securesms.ui.components.AppBarCloseIcon
 import org.thoughtcrime.securesms.ui.components.BasicAppBar
@@ -57,7 +58,7 @@ internal fun StartConversationScreen(
     navigateTo: (StartConversationDestination) -> Unit,
     onClose: () -> Unit,
 ) {
-    val isTwoPane = rememberTwoPane()
+    val isLandscape = rememberAdaptiveInfo().isLandscape
 
     Column(
         modifier = Modifier.background(
@@ -78,7 +79,7 @@ internal fun StartConversationScreen(
             modifier = Modifier.nestedScroll(rememberNestedScrollInteropConnection()),
             color = LocalColors.current.backgroundSecondary
         ) {
-            if (isTwoPane) {
+            if (isLandscape) {
                 TwoPaneContent(accountId, navigateTo)
             } else {
                 PortraitContent(accountId, navigateTo)

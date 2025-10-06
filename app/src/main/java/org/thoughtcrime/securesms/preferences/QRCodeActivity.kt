@@ -32,7 +32,7 @@ import org.session.libsignal.utilities.PublicKeyValidation
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.permissions.Permissions
-import org.thoughtcrime.securesms.ui.adaptive.rememberTwoPane
+import org.thoughtcrime.securesms.ui.adaptive.rememberAdaptiveInfo
 import org.thoughtcrime.securesms.ui.components.QRScannerScreen
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
@@ -127,10 +127,8 @@ private fun Tabs(accountId: String, errors: Flow<String>, onScan: (String) -> Un
 
 @Composable
 fun QrPage(string: String) {
-    val isTwoPane = rememberTwoPane()
-
-    if (isTwoPane) {
-        TwoPaneContent(string)
+    if (rememberAdaptiveInfo().isLandscape) {
+        LandscapeContent(string)
     } else {
         PortraitContent(string)
     }
@@ -165,7 +163,7 @@ private fun PortraitContent(string: String) {
 }
 
 @Composable
-private fun TwoPaneContent(string: String) {
+private fun LandscapeContent(string: String) {
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
