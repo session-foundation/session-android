@@ -280,7 +280,7 @@ fun ProSettingsHome(
 @Composable
 fun ProStats(
     modifier: Modifier = Modifier,
-    data: ProSettingsViewModel.ProStats,
+    data: State<ProSettingsViewModel.ProStats>,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
 ){
     CategoryCell(
@@ -321,6 +321,8 @@ fun ProStats(
                 .padding(LocalDimensions.current.smallSpacing),
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
         ){
+            val stats = (data as? State.Success<ProSettingsViewModel.ProStats>)?.value
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing)
@@ -330,9 +332,11 @@ fun ProStats(
                     modifier = Modifier.weight(1f),
                     title = pluralStringResource(
                         R.plurals.proLongerMessagesSent,
-                        data.longMessages,
-                        NumberUtil.getFormattedNumber(data.longMessages.toLong())
-                    ),
+                        stats?.longMessages ?: 0,
+                        if(stats != null) NumberUtil.getFormattedNumber(stats.longMessages.toLong())
+                        else ""
+                    ).trim(),
+                    loading = data !is State.Success,
                     icon = R.drawable.ic_message_square
                 )
 
@@ -341,9 +345,11 @@ fun ProStats(
                     modifier = Modifier.weight(1f),
                     title = pluralStringResource(
                         R.plurals.proPinnedConversations,
-                        data.pinnedConversations,
-                        NumberUtil.getFormattedNumber(data.pinnedConversations.toLong())
-                    ),
+                        stats?.pinnedConversations ?: 0,
+                        if(stats != null) NumberUtil.getFormattedNumber(stats.pinnedConversations.toLong())
+                        else ""
+                    ).trim(),
+                    loading = data !is State.Success,
                     icon = R.drawable.ic_pin
                 )
             }
@@ -357,10 +363,12 @@ fun ProStats(
                     modifier = Modifier.weight(1f),
                     title = pluralStringResource(
                         R.plurals.proBadgesSent,
-                        data.proBadges,
-                        NumberUtil.getFormattedNumber(data.proBadges.toLong()),
+                        stats?.proBadges ?: 0,
+                        if(stats != null) NumberUtil.getFormattedNumber(stats.proBadges.toLong())
+                        else  "",
                         NonTranslatableStringConstants.PRO
-                    ),
+                    ).trim(),
+                    loading = data !is State.Success,
                     icon = R.drawable.ic_rectangle_ellipsis
 
                 )
@@ -370,11 +378,13 @@ fun ProStats(
                     modifier = Modifier.weight(1f),
                     title = pluralStringResource(
                         R.plurals.proGroupsUpgraded,
-                        data.groupsUpdated,
-                        NumberUtil.getFormattedNumber(data.groupsUpdated.toLong())
-                    ),
+                        stats?.groupsUpdated ?: 0,
+                        if(stats != null) NumberUtil.getFormattedNumber(stats.groupsUpdated.toLong())
+                        else ""
+                    ).trim(),
                     icon = R.drawable.ic_users_group_custom,
                     disabled = true,
+                    loading = data !is State.Success,
                     tooltip = stringResource(R.string.proLargerGroupsTooltip)
 
                 )
@@ -390,10 +400,13 @@ fun ProStatItem(
     title: String,
     @DrawableRes icon: Int,
     disabled: Boolean = false,
+    loading: Boolean = false,
     tooltip: String? = null,
 ){
     val scope = rememberCoroutineScope()
     val tooltipState = rememberTooltipState(isPersistent = true)
+
+    val disabledState = disabled && !loading
 
     Row(
         modifier = modifier.then(
@@ -412,23 +425,27 @@ fun ProStatItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
     ){
-        Image(
-            painter = painterResource(id = icon),
-            contentDescription = null,
-            modifier = Modifier.size(32.dp),
-            colorFilter = ColorFilter.tint(
-                if(disabled) LocalColors.current.textSecondary else LocalColors.current.accent
+        if(loading){
+            SmallCircularProgressIndicator()
+        } else {
+            Image(
+                painter = painterResource(id = icon),
+                contentDescription = null,
+                modifier = Modifier.size(32.dp),
+                colorFilter = ColorFilter.tint(
+                    if (disabledState) LocalColors.current.textSecondary else LocalColors.current.accent
+                )
             )
-        )
+        }
 
         Text(
             modifier = Modifier.weight(1f),
             text = title,
             style = LocalType.current.h9,
-            color = if(disabled) LocalColors.current.textSecondary else LocalColors.current.text
+            color = if(disabledState) LocalColors.current.textSecondary else LocalColors.current.text
         )
 
-        if(tooltip != null){
+        if(tooltip != null && !loading){
             SpeechBubbleTooltip(
                 text = tooltip,
                 tooltipState = tooltipState

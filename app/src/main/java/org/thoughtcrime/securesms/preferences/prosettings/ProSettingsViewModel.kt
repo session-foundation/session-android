@@ -214,7 +214,15 @@ class ProSettingsViewModel @Inject constructor(
                 subscriptionExpiryDate = when(subType){
                     is SubscriptionType.Active -> subType.duration.expiryFromNow()
                     else -> ""
-                }
+                },
+                proStats = State.Success( //todo PRO calculate properly
+                    ProStats(
+                        groupsUpdated = 0,
+                        pinnedConversations = 12,
+                        proBadges = 6400,
+                        longMessages = 215,
+                    )
+                )
             )
         }
     }
@@ -501,7 +509,7 @@ class ProSettingsViewModel @Inject constructor(
 
     data class ProSettingsState(
         val subscriptionState: SubscriptionState = getDefaultSubscriptionStateData(),
-        val proStats: ProStats = ProStats(),
+        val proStats: State<ProStats> = State.Loading,
         val hasBillingCapacity: Boolean = false, // true is the current build flavour supports billing
         val hasValidSubscription: Boolean = false, // true is there is a current subscription AND the available subscription manager on this device has an account which matches the product id we got from libsession
         val subscriptionExpiryLabel: CharSequence = "", // eg: "Pro auto renewing in 3 days"
