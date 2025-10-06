@@ -23,6 +23,4 @@ class NoOpSubscriptionManager @Inject constructor() : SubscriptionManager {
     override fun hasValidSubscription(productId: String): Boolean {
         return false
     }
-
-    //todo PRO test out build type with no subscription providers available - What do we show on the Pro Settings page?
 }

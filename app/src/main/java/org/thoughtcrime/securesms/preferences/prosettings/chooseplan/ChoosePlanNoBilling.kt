@@ -43,7 +43,6 @@ fun ChoosePlanNoBilling(
 
     //todo PRO cater for NEVER SUBSCRIBED here
 
-    //todo PRO currently teh same key are used so we can't display both in the same string - need to update crowdin
     val defaultGoogleStore = ProStatusManager.DEFAULT_GOOGLE_STORE
     val defaultAppleStore = ProStatusManager.DEFAULT_APPLE_STORE
 
