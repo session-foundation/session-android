@@ -1,11 +1,9 @@
 package org.session.libsession.snode
 
-import android.app.Application
 import dagger.Lazy
 import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
-import org.session.libsignal.utilities.Broadcaster
 import javax.inject.Inject
 import javax.inject.Singleton
 

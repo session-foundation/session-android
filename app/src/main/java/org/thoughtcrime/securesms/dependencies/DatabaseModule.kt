@@ -95,10 +95,6 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideLokiApiDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = LokiAPIDatabase(context,openHelper)
-
-    @Provides
-    @Singleton
     fun provideLokiMessageDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = LokiMessageDatabase(context,openHelper)
 
     @Provides

@@ -160,10 +160,10 @@ class PushReceiver @Inject constructor(
             }
 
             if (params != null) {
-                JobQueue.shared.add(batchJobFactory.create(
-                    messages = listOf(params),
-                    fromCommunity = null
-                ))
+//                JobQueue.shared.add(batchJobFactory.create(
+//                    messages = listOf(params),
+//                    fromCommunity = null
+//                ))
             }
         } catch (e: Exception) {
             Log.d(TAG, "Failed to unwrap data for message due to error.", e)

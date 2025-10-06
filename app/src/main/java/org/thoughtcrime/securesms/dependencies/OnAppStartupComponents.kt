@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.dependencies
 
 import org.session.libsession.messaging.notifications.TokenFetcher
+import org.session.libsession.messaging.sending_receiving.ReceivedMessageManager
 import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager
 import org.session.libsession.messaging.sending_receiving.pollers.PollerManager
 import org.session.libsession.snode.SnodeClock
@@ -70,6 +71,7 @@ class OnAppStartupComponents private constructor(
         avatarUploadManager: AvatarUploadManager,
         configToDatabaseSync: ConfigToDatabaseSync,
         subscriptionManagers: Set<@JvmSuppressWildcards SubscriptionManager>,
+        receivedMessageManager: ReceivedMessageManager,
     ): this(
         components = listOf(
             configUploader,
@@ -101,6 +103,7 @@ class OnAppStartupComponents private constructor(
             subscriptionCoordinator,
             avatarUploadManager,
             configToDatabaseSync,
+            receivedMessageManager,
         ) + subscriptionManagers
     )
 }

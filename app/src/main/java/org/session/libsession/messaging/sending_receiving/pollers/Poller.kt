@@ -25,26 +25,31 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.libsession_util.Namespace
+import network.loki.messenger.libsession_util.protocol.DecryptEnvelopeKey
+import network.loki.messenger.libsession_util.protocol.SessionProtocol
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
-import org.session.libsession.messaging.MessagingModuleConfiguration
-import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
-import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.jobs.MessageReceiveParameters
-import org.session.libsession.snode.RawResponse
 import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.SnodeClock
+import org.session.libsession.snode.StorageRPCService
+import org.session.libsession.snode.endpoint.Authenticated
+import org.session.libsession.snode.endpoint.ExtendTtl
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigMessage
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
-import org.session.libsignal.utilities.Base64
+import org.session.libsignal.protos.SignalServiceProtos
+import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
+import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
+import org.thoughtcrime.securesms.util.DateUtils.Companion.toEpochSeconds
 import org.thoughtcrime.securesms.util.NetworkConnectivity
-import kotlin.time.Duration.Companion.days
+import java.time.Duration
 
 private const val TAG = "Poller"
 
@@ -57,11 +62,20 @@ class Poller @AssistedInject constructor(
     private val preferences: TextSecurePreferences,
     private val appVisibilityManager: AppVisibilityManager,
     private val networkConnectivity: NetworkConnectivity,
-    private val batchMessageReceiveJobFactory: BatchMessageReceiveJob.Factory,
+    private val storageRPCService: StorageRPCService,
+    private val snodeClock: SnodeClock,
+    private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
+    fetcherFactory: SnodeMessageFetcher.Factory,
     @Assisted scope: CoroutineScope
 ) {
     private val userPublicKey: String
         get() = storage.getUserPublicKey().orEmpty()
+
+    private val fetcher by lazy {
+        fetcherFactory.create(
+            swarmAuthProvider = { requireNotNull(storage.userAuth) }
+        )
+    }
 
     private val manualRequestTokens: SendChannel<PollerRequestToken>
     val pollState: StateFlow<PollState>
@@ -119,7 +133,7 @@ class Poller @AssistedInject constructor(
             // To migrate to multi part config, we'll need to fetch all the config messages so we
             // get the chance to process those multipart messages again...
             lokiApiDatabase.clearLastMessageHashesByNamespaces(*allConfigNamespaces)
-            lokiApiDatabase.clearReceivedMessageHashValuesByNamespaces(*allConfigNamespaces)
+            receivedMessageHashDatabase.removeHashesByNamespaces(allConfigNamespaces.asIterable())
 
             preferences.migratedToMultiPartConfig = true
         }
@@ -208,79 +222,64 @@ class Poller @AssistedInject constructor(
         }
     }
 
-    private fun processPersonalMessages(snode: Snode, rawMessages: RawResponse) {
-        val messages = SnodeAPI.parseRawMessagesResponse(rawMessages, snode, userPublicKey)
-        val parameters = messages.map { (envelope, serverHash) ->
-            MessageReceiveParameters(envelope.toByteArray(), serverHash = serverHash)
-        }
-        parameters.chunked(BatchMessageReceiveJob.BATCH_DEFAULT_NUMBER).forEach { chunk ->
-            JobQueue.shared.add(batchMessageReceiveJobFactory.create(
-                messages = chunk,
-                fromCommunity = null
-            ))
+    private suspend fun processPersonalMessages(fetchResult: SnodeMessageFetcher.FetchResult) {
+        val privateKey = DecryptEnvelopeKey.Regular(
+            ed25519PrivKey = storage.getUserED25519KeyPair()!!.secretKey.data
+        )
+
+        fetchResult.processMessagesInBatches { batch ->
+            //TODO:
+            Log.d(TAG, "Processing batch of ${batch.size} personal messages")
+            for (msg in batch) {
+                val envelope = SessionProtocol.decryptEnvelope(
+                    key = privateKey,
+                    payload = msg.dataDecoded,
+                    nowEpochSeconds = snodeClock.currentTime().toEpochSeconds(),
+                    proBackendPubKey = ByteArray(32)
+                )
+
+                val senderAccountId = AccountId(IdPrefix.STANDARD, envelope.senderEd25519PubKey.data)
+                val content = SignalServiceProtos.Content.parseFrom(envelope.contentPlainText.data)
+                val timestamp = envelope.timestamp
+
+                Log.d(TAG, "From $senderAccountId, Time = $timestamp: $content")
+
+
+            }
         }
     }
 
-    private fun processConfig(snode: Snode, rawMessages: RawResponse, forConfig: UserConfigType) {
-        Log.d(TAG, "Received ${rawMessages.size} messages for $forConfig")
-        val messages = rawMessages["messages"] as? List<*>
-        val namespace = forConfig.namespace
-        val processed = if (!messages.isNullOrEmpty()) {
-            SnodeAPI.updateLastMessageHashValueIfPossible(snode, userPublicKey, messages, namespace)
-            SnodeAPI.removeDuplicates(
-                publicKey = userPublicKey,
-                messages = messages,
-                messageHashGetter = { (it as? Map<*, *>)?.get("hash") as? String },
-                namespace = namespace,
-                updateStoredHashes = true
-            ).mapNotNull { rawMessageAsJSON ->
-                rawMessageAsJSON as Map<*, *> // removeDuplicates should have ensured this is always a map
-                val hashValue = rawMessageAsJSON["hash"] as? String ?: return@mapNotNull null
-                val b64EncodedBody = rawMessageAsJSON["data"] as? String ?: return@mapNotNull null
-                val timestamp = rawMessageAsJSON["t"] as? Long ?: SnodeAPI.nowWithOffset
-                val body = Base64.decode(b64EncodedBody)
-                ConfigMessage(data = body, hash = hashValue, timestamp = timestamp)
+    private suspend fun processConfig(fetchResult: SnodeMessageFetcher.FetchResult, forConfig: UserConfigType) {
+        fetchResult.processMessages { messages ->
+            Log.d(TAG, "Processing batch of ${messages.size} messages for $forConfig")
+
+            if (messages.isNotEmpty()) {
+                try {
+                    configFactory.mergeUserConfigs(
+                        userConfigType = forConfig,
+                        messages = messages.map { msg ->
+                            ConfigMessage(data = msg.dataDecoded, hash = msg.hash, timestamp = msg.timestamp.toEpochMilli())
+                        },
+                    )
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error while merging user configs", e)
+                }
             }
-        } else emptyList()
-
-        Log.d(TAG, "About to process ${processed.size} messages for $forConfig")
-
-        if (processed.isEmpty()) return
-
-        try {
-            configFactory.mergeUserConfigs(
-                userConfigType = forConfig,
-                messages = processed,
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "Error while merging user configs", e)
         }
-
-        Log.d(TAG, "Completed processing messages for $forConfig")
     }
 
 
     private suspend fun poll(snode: Snode, pollOnlyUserProfileConfig: Boolean) = supervisorScope {
-        val userAuth = requireNotNull(MessagingModuleConfiguration.shared.storage.userAuth)
+        val userAuth = requireNotNull(storage.userAuth)
 
         // Get messages call wrapped in an async
         val fetchMessageTask = if (!pollOnlyUserProfileConfig) {
-            val request = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
-                lastHash = lokiApiDatabase.getLastMessageHashValue(
-                    snode = snode,
-                    publicKey = userAuth.accountId.hexString,
-                    namespace = Namespace.DEFAULT()
-                ),
-                auth = userAuth,
-                maxSize = -2)
-
             this.async {
                 runCatching {
-                    SnodeAPI.sendBatchRequest(
+                    fetcher.fetchLatestMessages(
                         snode = snode,
-                        publicKey = userPublicKey,
-                        request = request,
-                        responseType = Map::class.java
+                        namespace = Namespace.DEFAULT(),
+                        maxSize = -2
                     )
                 }
             }
@@ -301,20 +300,14 @@ class Poller @AssistedInject constructor(
                 .map { type ->
                     val config = configs.getConfig(type)
                     hashesToExtend += config.activeHashes()
-                    val request = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
-                        lastHash = lokiApiDatabase.getLastMessageHashValue(
-                            snode = snode,
-                            publicKey = userAuth.accountId.hexString,
-                            namespace = type.namespace
-                        ),
-                        auth = userAuth,
-                        namespace = type.namespace,
-                        maxSize = -8
-                    )
 
                     this.async {
                         type to runCatching {
-                            SnodeAPI.sendBatchRequest(snode, userPublicKey, request, Map::class.java)
+                            fetcher.fetchLatestMessages(
+                                snode = snode,
+                                namespace = type.namespace,
+                                maxSize = -8
+                            )
                         }
                     }
                 }
@@ -323,14 +316,16 @@ class Poller @AssistedInject constructor(
         if (hashesToExtend.isNotEmpty()) {
             launch {
                 try {
-                    SnodeAPI.sendBatchRequest(
+                    storageRPCService.call(
                         snode,
-                        userPublicKey,
-                        SnodeAPI.buildAuthenticatedAlterTtlBatchRequest(
+                        endpoint = Authenticated(
+                            clock = snodeClock,
+                            realEndpoint = ExtendTtl,
+                            swarmAuth = userAuth
+                        ),
+                        req = ExtendTtl.Request(
+                            newExpiry = snodeClock.currentTime() + Duration.ofDays(14),
                             messageHashes = hashesToExtend.toList(),
-                            auth = userAuth,
-                            newExpiry = SnodeAPI.nowWithOffset + 14.days.inWholeMilliseconds,
-                            extend = true
                         )
                     )
                 } catch (e: Exception) {
@@ -350,7 +345,7 @@ class Poller @AssistedInject constructor(
                 continue
             }
 
-            processConfig(snode, result.getOrThrow(), configType)
+            processConfig(result.getOrThrow(), configType)
         }
 
         // Process the messages if we requested them
@@ -359,7 +354,7 @@ class Poller @AssistedInject constructor(
             if (result.isFailure) {
                 Log.e(TAG, "Error while fetching messages", result.exceptionOrNull())
             } else {
-                processPersonalMessages(snode, result.getOrThrow())
+                processPersonalMessages(result.getOrThrow())
             }
         }
     }

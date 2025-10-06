@@ -37,6 +37,9 @@ class AppModule {
         return Json {
             ignoreUnknownKeys = true
             isLenient = true
+
+            // enabled so that default values are present in the json
+            encodeDefaults = true
             serializersModule += SerializersModule {
                 modules.forEach { include(it) }
             }

@@ -2,6 +2,11 @@ package org.thoughtcrime.securesms.database
 
 import android.content.ContentValues
 import android.content.Context
+import androidx.sqlite.db.transaction
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonPrimitive
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
@@ -16,10 +21,17 @@ import org.session.libsignal.utilities.removingIdPrefixIfNeeded
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
+import org.thoughtcrime.securesms.util.asSequence
 import java.util.Date
+import javax.inject.Inject
 import javax.inject.Provider
+import javax.inject.Singleton
 
-class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) : Database(context, helper), LokiAPIDatabaseProtocol {
+@Singleton
+class LokiAPIDatabase @Inject constructor(
+    @ApplicationContext context: Context,
+    helper: Provider<SQLCipherOpenHelper>,
+) : Database(context, helper), LokiAPIDatabaseProtocol {
 
     companion object {
         // Shared
@@ -49,6 +61,7 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
             = "CREATE TABLE $legacyLastMessageHashValueTable2 ($snode TEXT, $publicKey TEXT, $lastMessageHashValue TEXT, PRIMARY KEY ($snode, $publicKey));"
         // Received message hash values
         private const val legacyReceivedMessageHashValuesTable3 = "received_message_hash_values_table_3"
+        @Deprecated("This table is now deleted. It's only here for migration purpose")
         private const val receivedMessageHashValuesTable = "session_received_message_hash_values_table"
         private const val receivedMessageHashValues = "received_message_hash_values"
         private const val receivedMessageHashNamespace = "received_message_namespace"
@@ -309,43 +322,6 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
     override fun clearAllLastMessageHashes() {
         val database = writableDatabase
         database.delete(lastMessageHashValueTable2, null, null)
-    }
-
-    override fun getReceivedMessageHashValues(publicKey: String, namespace: Int): Set<String>? {
-        val database = readableDatabase
-        val query = "${Companion.publicKey} = ? AND ${Companion.receivedMessageHashNamespace} = ?"
-        return database.get(receivedMessageHashValuesTable, query, arrayOf( publicKey, namespace.toString() )) { cursor ->
-            val receivedMessageHashValuesAsString = cursor.getString(cursor.getColumnIndexOrThrow(Companion.receivedMessageHashValues))
-            receivedMessageHashValuesAsString.split("-").toSet()
-        }
-    }
-
-    override fun setReceivedMessageHashValues(publicKey: String, newValue: Set<String>, namespace: Int) {
-        val database = writableDatabase
-        val receivedMessageHashValuesAsString = newValue.joinToString("-")
-        val row = wrap(mapOf(
-            Companion.publicKey to publicKey,
-            Companion.receivedMessageHashValues to receivedMessageHashValuesAsString,
-            Companion.receivedMessageHashNamespace to namespace.toString()
-        ))
-        val query = "${Companion.publicKey} = ? AND $receivedMessageHashNamespace = ?"
-        database.insertOrUpdate(receivedMessageHashValuesTable, row, query, arrayOf( publicKey, namespace.toString() ))
-    }
-
-    override fun clearReceivedMessageHashValues(publicKey: String) {
-        writableDatabase
-            .delete(receivedMessageHashValuesTable, "${Companion.publicKey} = ?", arrayOf(publicKey))
-    }
-
-    override fun clearReceivedMessageHashValues() {
-        val database = writableDatabase
-        database.delete(receivedMessageHashValuesTable, null, null)
-    }
-
-    override fun clearReceivedMessageHashValuesByNamespaces(vararg namespaces: Int) {
-        // Note that we don't use SQL parameter as the given namespaces are integer anyway so there's little chance of SQL injection
-        writableDatabase
-            .delete(receivedMessageHashValuesTable, "$receivedMessageHashNamespace IN (${namespaces.joinToString(",")})", null)
     }
 
     override fun getAuthToken(server: String): String? {

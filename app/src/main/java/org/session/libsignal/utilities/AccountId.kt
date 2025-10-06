@@ -28,6 +28,13 @@ data class AccountId(
         Hex.fromStringCondensed(hexString.drop(2))
     }
 
+    /**
+     * A 33 bytes prefixed pub key bytes
+     */
+    val prefixedBytes: ByteArray by lazy {
+        byteArrayOf(prefix!!.binaryValue) + pubKeyBytes
+    }
+
     override fun toString(): String {
         return truncatedForDisplay()
     }
