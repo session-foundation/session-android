@@ -135,7 +135,7 @@ class ProStatusManager @Inject constructor(
                 )
             },
                // SubscriptionType.NeverSubscribed,
-            refreshState = State.Error(Exception()),
+            refreshState = State.Success(Unit),
         )
 
     }.stateIn(GlobalScope, SharingStarted.Eagerly,

@@ -318,6 +318,15 @@ fun ProStats(
         // Cell content
         Column(
             modifier = Modifier.fillMaxWidth()
+                .then(
+                    // make the component clickable is we are in the loading state
+                    if (data !is State.Success) Modifier.clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = { sendCommand(OnProStatsClicked) }
+                    )
+                    else Modifier
+                )
                 .padding(LocalDimensions.current.smallSpacing),
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
         ){

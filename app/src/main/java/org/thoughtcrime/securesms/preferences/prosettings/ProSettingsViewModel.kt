@@ -455,6 +455,30 @@ class ProSettingsViewModel @Inject constructor(
                     else -> {}
                 }
             }
+
+            Commands.OnProStatsClicked -> {
+                when(_proSettingsUIState.value.proStats){
+                    // if we are in a loading or refresh state we should show a dialog instead
+                    is State.Loading -> {
+                        _dialogState.update {
+                            it.copy(
+                                showSimpleDialog = SimpleDialogData(
+                                    title = Phrase.from(context.getText(R.string.proStatsLoading))
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .format().toString(),
+                                    message = Phrase.from(context.getText(R.string.proStatsLoadingDescription))
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .format(),
+                                    positiveText = context.getString(R.string.okay),
+                                    positiveStyleDanger = false,
+                                )
+                            )
+                        }
+                    }
+
+                    else -> {}
+                }
+            }
         }
     }
 
@@ -505,6 +529,7 @@ class ProSettingsViewModel @Inject constructor(
         data object ConfirmProPlan: Commands
 
         data object OnHeaderClicked: Commands
+        data object OnProStatsClicked: Commands
     }
 
     data class ProSettingsState(
