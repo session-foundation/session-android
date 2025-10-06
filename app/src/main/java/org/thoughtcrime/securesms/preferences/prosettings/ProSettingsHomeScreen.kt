@@ -135,7 +135,12 @@ fun ProSettingsHome(
                         horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing)
                     ) {
                         Text(
-                            text = Phrase.from(context.getText(R.string.proStatusLoadingSubtitle))
+                            text = Phrase.from(context.getText(
+                                when(subscriptionType){
+                                    is SubscriptionType.Active -> R.string.proStatusLoadingSubtitle
+                                    else -> R.string.checkingProStatus
+                                    //todo PRO will need to handle never subscribed here
+                                }))
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString(),
                             style = LocalType.current.base,
@@ -153,7 +158,12 @@ fun ProSettingsHome(
                         horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
                     ) {
                         Text(
-                            text = Phrase.from(context.getText(R.string.proErrorRefreshingStatus))
+                            text = Phrase.from(context.getText(
+                                when(subscriptionType){
+                                    is SubscriptionType.Active -> R.string.proErrorRefreshingStatus
+                                    else -> R.string.errorCheckingProStatus
+                                    //todo PRO will need to handle never subscribed here
+                                }))
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString(),
                             style = LocalType.current.base,
@@ -788,7 +798,8 @@ fun ProManage(
 
                     val (subtitle, subColor, icon) = when(subscriptionRefreshState){
                         is State.Loading -> Triple<CharSequence?, Color, @Composable BoxScope.() -> Unit>(
-                            Phrase.from(LocalContext.current, R.string.proPlanLoadingEllipsis)
+                            //todo PRO need the ellipsis version of this string
+                            Phrase.from(LocalContext.current, R.string.checkingProStatus)
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString(),
                             LocalColors.current.text,
@@ -796,7 +807,7 @@ fun ProManage(
                         )
 
                         is State.Error -> Triple<CharSequence?, Color, @Composable BoxScope.() -> Unit>(
-                            Phrase.from(LocalContext.current, R.string.errorLoadingProPlan)
+                            Phrase.from(LocalContext.current, R.string.errorCheckingProStatus)
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString(),
                             LocalColors.current.warning, renewIcon
@@ -965,6 +976,58 @@ fun PreviewProSettingsExpired(
                         refundUrl = "https://www.apple.com/account/subscriptions",
                     )),
                     refreshState = State.Success(Unit),
+                )
+            ),
+            sendCommand = {},
+            onBack = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewProSettingsExpiredLoading(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        ProSettingsHome(
+            data = ProSettingsViewModel.ProSettingsState(
+                subscriptionState = SubscriptionState(
+                    type = SubscriptionType.Expired(SubscriptionDetails(
+                        device = "iPhone",
+                        store = "Apple App Store",
+                        platform = "Apple",
+                        platformAccount = "Apple Account",
+                        subscriptionUrl = "https://www.apple.com/account/subscriptions",
+                        refundUrl = "https://www.apple.com/account/subscriptions",
+                    )),
+                    refreshState = State.Loading,
+                )
+            ),
+            sendCommand = {},
+            onBack = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewProSettingsExpiredError(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        ProSettingsHome(
+            data = ProSettingsViewModel.ProSettingsState(
+                subscriptionState = SubscriptionState(
+                    type = SubscriptionType.Expired(SubscriptionDetails(
+                        device = "iPhone",
+                        store = "Apple App Store",
+                        platform = "Apple",
+                        platformAccount = "Apple Account",
+                        subscriptionUrl = "https://www.apple.com/account/subscriptions",
+                        refundUrl = "https://www.apple.com/account/subscriptions",
+                    )),
+                    refreshState = State.Error(Exception()),
                 )
             ),
             sendCommand = {},

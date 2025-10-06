@@ -240,15 +240,27 @@ class ProSettingsViewModel @Inject constructor(
                 when(_proSettingsUIState.value.subscriptionState.refreshState){
                     // if we are in a loading or refresh state we should show a dialog instead
                     is State.Loading -> {
+                        val (title, message) = when(_proSettingsUIState.value.subscriptionState.type){
+                            is SubscriptionType.Active -> Phrase.from(context.getText(R.string.proPlanLoading))
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format().toString() to
+                                    Phrase.from(context.getText(R.string.proPlanLoadingDescription))
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .format()
+                            else -> Phrase.from(context.getText(R.string.checkingProStatus))
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format().toString() to
+                                    Phrase.from(context.getText(R.string.checkingProStatusRenew))
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .format()
+                            //todo PRO will need to handle never subscribed here
+                        }
+
                         _dialogState.update {
                             it.copy(
                                 showSimpleDialog = SimpleDialogData(
-                                    title = Phrase.from(context.getText(R.string.proPlanLoading))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                        .format().toString(),
-                                    message = Phrase.from(context.getText(R.string.proPlanLoadingDescription))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                        .format(),
+                                    title = title,
+                                    message = message,
                                     positiveText = context.getString(R.string.okay),
                                     positiveStyleDanger = false,
                                 )
@@ -257,15 +269,27 @@ class ProSettingsViewModel @Inject constructor(
                     }
 
                     is State.Error -> {
+                        val (title, message) = when(_proSettingsUIState.value.subscriptionState.type){
+                            is SubscriptionType.Active -> Phrase.from(context.getText(R.string.proPlanError))
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format().toString() to
+                                    Phrase.from(context.getText(R.string.proPlanNetworkLoadError))
+                                        .put(APP_NAME_KEY, context.getString(R.string.app_name))
+                                        .format()
+                            else -> Phrase.from(context.getText(R.string.proStatusError))
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format().toString() to
+                                    Phrase.from(context.getText(R.string.proStatusRenewError))
+                                        .put(APP_NAME_KEY, context.getString(R.string.app_name))
+                                        .format()
+                            //todo PRO will need to handle never subscribed here
+                        }
+
                         _dialogState.update {
                             it.copy(
                                 showSimpleDialog = SimpleDialogData(
-                                    title = Phrase.from(context.getText(R.string.proPlanError))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                        .format().toString(),
-                                    message = Phrase.from(context.getText(R.string.proPlanNetworkLoadError))
-                                        .put(APP_NAME_KEY, context.getString(R.string.app_name))
-                                        .format(),
+                                    title = title,
+                                    message = message,
                                     positiveText = context.getString(R.string.retry),
                                     negativeText = context.getString(R.string.helpSupport),
                                     positiveStyleDanger = false,
@@ -413,15 +437,26 @@ class ProSettingsViewModel @Inject constructor(
                 when(_proSettingsUIState.value.subscriptionState.refreshState){
                     // if we are in a loading or refresh state we should show a dialog instead
                     is State.Loading -> {
+                        val (title, message) = when(_proSettingsUIState.value.subscriptionState.type){
+                            is SubscriptionType.Active -> Phrase.from(context.getText(R.string.proStatusLoading))
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format().toString() to
+                                    Phrase.from(context.getText(R.string.proStatusLoadingDescription))
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .format()
+                            else -> Phrase.from(context.getText(R.string.checkingProStatus))
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format().toString() to
+                                    Phrase.from(context.getText(R.string.checkingProStatusDescription))
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .format()
+                            //todo PRO will need to handle never subscribed here
+                        }
                         _dialogState.update {
                             it.copy(
                                 showSimpleDialog = SimpleDialogData(
-                                    title = Phrase.from(context.getText(R.string.proStatusLoading))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                        .format().toString(),
-                                    message = Phrase.from(context.getText(R.string.proStatusLoadingDescription))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                        .format(),
+                                    title = title,
+                                    message = message,
                                     positiveText = context.getString(R.string.okay),
                                     positiveStyleDanger = false,
                                 )
@@ -431,14 +466,26 @@ class ProSettingsViewModel @Inject constructor(
 
                     is State.Error -> {
                         _dialogState.update {
+                            val (title, message) = when(_proSettingsUIState.value.subscriptionState.type){
+                                is SubscriptionType.Active -> Phrase.from(context.getText(R.string.proStatusError))
+                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                    .format().toString() to
+                                        Phrase.from(context.getText(R.string.proStatusRefreshNetworkError))
+                                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                            .format()
+                                else -> Phrase.from(context.getText(R.string.proStatusError))
+                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                    .format().toString() to
+                                        Phrase.from(context.getText(R.string.proStatusRefreshNetworkError))
+                                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                            .format()
+                                //todo PRO will need to handle never subscribed here
+                            }
+
                             it.copy(
                                 showSimpleDialog = SimpleDialogData(
-                                    title = Phrase.from(context.getText(R.string.proStatusError))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                        .format().toString(),
-                                    message = Phrase.from(context.getText(R.string.proStatusRefreshNetworkError))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                        .format(),
+                                    title = title,
+                                    message = message,
                                     positiveText = context.getString(R.string.retry),
                                     negativeText = context.getString(R.string.helpSupport),
                                     positiveStyleDanger = false,
