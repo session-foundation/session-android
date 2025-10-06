@@ -1,15 +1,17 @@
 package org.thoughtcrime.securesms.recoverypassword
 
+import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -20,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -31,6 +34,7 @@ import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.SessionShieldIcon
+import org.thoughtcrime.securesms.ui.adaptive.rememberAdaptiveInfo
 import org.thoughtcrime.securesms.ui.border
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
@@ -104,13 +108,31 @@ private fun RecoveryPasswordCell(
                 showQr,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
-                QrImage(
-                    seed,
-                    modifier = Modifier
-                        .padding(vertical = LocalDimensions.current.spacing)
-                        .qaTag(R.string.AccessibilityId_qrCode),
-                    icon = R.drawable.ic_recovery_password_custom
-                )
+                val config = rememberAdaptiveInfo()
+                val isLandscape = config.isLandscape
+
+                BoxWithConstraints {
+                    val availableWidth = maxWidth
+                    val widthTarget = availableWidth * if (isLandscape) 0.80f else 1f
+                    val heightCap = if (isLandscape) config.heightDp.dp * 0.70f else config.heightDp.dp * 1f
+
+                    val qrSide = widthTarget
+                        .coerceAtMost(heightCap)
+                        .coerceIn(200.dp, 620.dp)
+
+                            QrImage(
+                                seed,
+                                modifier = Modifier
+                                    .padding(
+                                        top = LocalDimensions.current.spacing,
+                                        bottom = LocalDimensions.current.smallSpacing
+                                    )
+                                    .size(qrSide)
+                                    .qaTag(R.string.AccessibilityId_qrCode),
+                                icon = R.drawable.ic_recovery_password_custom
+                            )
+
+                }
             }
 
             AnimatedVisibility(!showQr) {
