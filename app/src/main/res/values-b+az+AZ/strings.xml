@@ -203,7 +203,6 @@
     <string name="changePasswordFail">Parol dəyişdirmə uğursuz oldu</string>
     <string name="changePasswordModalDescription">{app_name} üçün parolunuzu dəyişdirin. Daxili olaraq saxlanılmış verilər, yeni parolunuzla təkrar şifrələnəcək.</string>
     <string name="checkingProStatus">{pro} statusu yoxlanılır</string>
-    <string name="checkingProStatusDescription">{pro} məlumatlarınız yoxlanılır. Bu səhifədəki bəzi məlumatlar, yoxlama tamamlanana qədər qeyri-dəqiq ola bilər.</string>
     <string name="checkingProStatusUpgradeDescription">{pro} statusunuz yoxlanılır. Bu yoxlama tamamlandıqdan sonra {pro} ya yüksəldə biləcəksiniz.</string>
     <string name="clear">Təmizlə</string>
     <string name="clearAll">Hamısını təmizlə</string>
@@ -1198,7 +1197,6 @@
     <string name="urlOpenDescription">Bu URL-ni brauzerinizdə açmaq istədiyinizə əminsiniz?\n\n<b>{url}</b></string>
     <string name="urlOpenDescriptionAlternative">Keçidlər, brauzerinizdə açılacaq.</string>
     <string name="useFastMode">Sürətli rejimi istifadə et</string>
-    <string name="viaStoreWebsiteDescription">Qeydiyyatdan keçərkən istifadə etdiyiniz {platform_account} hesabı ilə <b><font color="0">{platform_store}</font></b> veb saytı üzərindən planınızı dəyişdirin.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Video oxudula bilmir.</string>
     <string name="view">Göstər</string>

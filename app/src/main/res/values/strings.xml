@@ -201,13 +201,14 @@
     <string name="cancel">Cancel</string>
     <string name="cancelPlan">Cancel Plan</string>
     <string name="cancelProPlan">Cancel {pro} Plan</string>
-    <string name="cancelProPlatform">Cancel your plan on the {platform} website, using the {platform_account} you signed up for Pro with.</string>
-    <string name="cancelProPlatformStore">Cancel your plan on the {platform_store} website, using the {platform_account} you signed up for Pro with.</string>
+    <string name="cancelProPlatform">Cancel your plan on the <b><font color="0">{platform} website</font></b>, using the {platform_account} you signed up for {pro} with.</string>
+    <string name="cancelProPlatformStore">Cancel your plan on the <b><font color="0">{platform_store} website</font></b>, using the {platform_account} you signed up for {pro} with.</string>
     <string name="change">Change</string>
     <string name="changePasswordFail">Failed to change password</string>
     <string name="changePasswordModalDescription">Change your password for {app_name}. Locally stored data will be re-encrypted with your new password.</string>
     <string name="checkingProStatus">Checking {pro} Status</string>
-    <string name="checkingProStatusDescription">Checking your {pro} details. Some information on this page may be inaccurate until this check is complete.</string>
+    <string name="checkingProStatusDescription">Checking your {pro} details. Some information on this page may be unavailable until this check is complete.</string>
+    <string name="checkingProStatusRenew">Checking your {pro} details. You cannot renew until this check is complete.</string>
     <string name="checkingProStatusUpgradeDescription">Checking your {pro} status. You\'ll be able to upgrade to {pro} once this check is complete.</string>
     <string name="clear">Clear</string>
     <string name="clearAll">Clear All</string>
@@ -800,6 +801,7 @@ on startup, not your Recovery Password</string>
     <string name="onDevice">On your {device_type} device</string>
     <string name="onDeviceCancelDescription">Open this {app_name} account on an {device_type} device logged into the {platform_account} you originally signed up with. Then, cancel your plan via the {app_pro} settings.</string>
     <string name="onDeviceDescription">Open this {app_name} account on an {device_type} device logged into the {platform_account} you originally signed up with. Then, change your plan via the {app_pro} settings.</string>
+    <string name="onLinkedDevice">On a linked device</string>
     <string name="onPlatformStoreWebsite">On the {platform_store} website</string>
     <string name="onPlatformWebsite">On the {platform} website</string>
     <string name="onboardingAccountCreate">Create account</string>
@@ -994,8 +996,8 @@ on startup, not your Recovery Password</string>
     <string name="proPlanPlatformRefundLong">Because you originally signed up for {app_pro} via the <b><font color="0">{platform_store}</font></b>, your refund request will be processed by {app_name} Support.\n\nRequest a refund by hitting the button below and completing the refund request form.\n\nWhile {app_name} Support strives to process refund requests within 24-72 hours, processing may take longer during times of high request volume.</string>
     <string name="proPlanRecover">Recover {pro} Plan</string>
     <string name="proPlanRenew">Renew {pro} Plan</string>
-    <string name="proPlanRenewDesktop">Currently, {pro} plans can only be purchased and renewed via the {platform_store} or {platform_store}. Because you are using {app_name} Desktop, you\'re not able to renew your plan here.\n\n{app_pro} developers are working hard on alternative payment options to allow users to purchase {pro} plans outside of the {platform_store} and {platform_store}. <b>{pro} Roadmap</b> {icon}</string>
-    <string name="proPlanRenewDesktopLinked">Renew your plan in the {app_pro} settings on a linked device with {app_name} installed via the {platform_store} or {platform_store}.</string>
+    <string name="proPlanRenewDesktop">Currently, {pro} plans can only be purchased and renewed via the {platform_store} or {platform_store_other}. Because you are using {app_name} Desktop, you\'re not able to renew your plan here.\n\n{app_pro} developers are working hard on alternative payment options to allow users to purchase {pro} plans outside of the {platform_store} and {platform_store_other}. <b>{pro} Roadmap</b> {icon}</string>
+    <string name="proPlanRenewDesktopLinked">Renew your plan in the {app_pro} settings on a linked device with {app_name} installed via the {platform_store} or {platform_store_other}.</string>
     <string name="proPlanRenewPlatformStoreWebsite">Renew your plan on the <b><font color="0">{platform_store} website</font></b> using the {platform_account} you signed up for {pro} with.</string>
     <string name="proPlanRenewPlatformWebsite">Renew your plan on the <b><font color="0">{platform} website</font></b> using the {platform_account} you signed up for {pro} with.</string>
     <string name="proPlanRenewStart">Renew your {app_pro} plan to start using powerful {app_pro} Beta features again.</string>
@@ -1015,7 +1017,7 @@ on startup, not your Recovery Password</string>
     <string name="proRefunding">Refunding {pro}</string>
     <string name="proRefundingDescription">Refunds for {app_pro} plans are handled exclusively by {platform} through the {platform_store}.\n\nDue to {platform} refund policies, {app_name} developers have no ability to influence the outcome of refund requests. This includes whether the request is approved or denied, as well as whether a full or partial refund is issued.</string>
     <string name="proRenewBeta">Renew {pro} Beta</string>
-    <string name="proRenewingNoAccessBilling">Currently, {pro} plans can only be purchased and renewed via the {platform_store} or {platform_store}. Because you installed {app_name} using the {buildVariant}, you\'re not able to renew your plan here.\n\n{app_pro} developers are working hard on alternative payment options to allow users to purchase {pro} plans outside of the {platform_store} and {platform_store}.<b> {pro} Roadmap</b> {icon}</string>
+    <string name="proRenewingNoAccessBilling">Currently, {pro} plans can only be purchased and renewed via the {platform_store} or {platform_store_other}. Because you installed {app_name} using the {build_variant}, you\'re not able to renew your plan here.\n\n{app_pro} developers are working hard on alternative payment options to allow users to purchase {pro} plans outside of the {platform_store} and {platform_store_other}.<b> {pro} Roadmap</b> {icon}</string>
     <string name="proRequestedRefund">Refund Requested</string>
     <string name="proSendMore">Send more with</string>
     <string name="proSettings">{pro} Settings</string>
@@ -1030,6 +1032,7 @@ on startup, not your Recovery Password</string>
     <string name="proStatusLoadingSubtitle">{pro} status loading</string>
     <string name="proStatusNetworkErrorDescription">Unable to connect to the network to check your {pro} status. You cannot upgrade to {pro} until connectivity is restored.\n\nPlease check your network connection and retry.</string>
     <string name="proStatusRefreshNetworkError">Unable to connect to the network to refresh your {pro} status. Some actions on this page will be disabled until connectivity is restored.\n\nPlease check your network connection and retry.</string>
+    <string name="proStatusRenewError">Unable to connect to the network to load your current plan. Renewing your plan via {app_name} will be disabled until connectivity is restored.\n\nPlease check your network connection and retry.</string>
     <string name="proSupportDescription">Need help with your {pro} plan? Submit a request to the support team.</string>
     <string name="proTosPrivacy">By updating, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
     <string name="proUnlimitedPins">Unlimited Pins</string>
@@ -1104,7 +1107,7 @@ on startup, not your Recovery Password</string>
     <string name="removePasswordFail">Failed to remove password</string>
     <string name="removePasswordModalDescription">Remove your current password for {app_name}. Locally stored data will be re-encrypted with a randomly generated key, stored on your device.</string>
     <string name="renew">Renew</string>
-    <string name="renewingPro">Renewing Pro</string>
+    <string name="renewingPro">Renewing {pro}</string>
     <string name="reply">Reply</string>
     <string name="requestRefund">Request Refund</string>
     <string name="requestRefundPlatformWebsite">Request a refund on the <b><font color="0">{platform} website</font></b>, using the {platform_account} you signed up for {pro} with.</string>
@@ -1242,9 +1245,9 @@ on startup, not your Recovery Password</string>
     <string name="urlOpenDescription">Are you sure you want to open this URL in your browser?\n\n<b>{url}</b></string>
     <string name="urlOpenDescriptionAlternative">Links will open in your browser.</string>
     <string name="useFastMode">Use Fast Mode</string>
-    <string name="viaPlatformWebsiteDescription">Change your plan using the {platform_account} you used to sign up with, via the <b><font color="0">{platform}</font></b> website.</string>
+    <string name="viaPlatformWebsiteDescription">Change your plan using the {platform_account} you used to sign up with, via the <b><font color="0">{platform} website</font></b> .</string>
     <string name="viaStoreWebsite">Via the {platform} website</string>
-    <string name="viaStoreWebsiteDescription">Change your plan using the {platform_account} you used to sign up with, via the <b><font color="0">{platform_store}</font></b> website.</string>
+    <string name="viaStoreWebsiteDescription">Change your plan using the {platform_account} you used to sign up with, via the <b><font color="0">{platform_store} website</font></b> .</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Unable to play video.</string>
     <string name="view">View</string>
