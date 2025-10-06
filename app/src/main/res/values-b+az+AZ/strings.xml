@@ -203,7 +203,6 @@
     <string name="changePasswordFail">Parol dəyişdirmə uğursuz oldu</string>
     <string name="changePasswordModalDescription">{app_name} üçün parolunuzu dəyişdirin. Daxili olaraq saxlanılmış verilər, yeni parolunuzla təkrar şifrələnəcək.</string>
     <string name="checkingProStatus">{pro} statusu yoxlanılır</string>
-    <string name="checkingProStatusDescription">{pro} məlumatlarınız yoxlanılır. Bu səhifədəki bəzi məlumatlar, yoxlama tamamlanana qədər qeyri-dəqiq ola bilər.</string>
     <string name="checkingProStatusUpgradeDescription">{pro} statusunuz yoxlanılır. Bu yoxlama tamamlandıqdan sonra {pro} ya yüksəldə biləcəksiniz.</string>
     <string name="clear">Təmizlə</string>
     <string name="clearAll">Hamısını təmizlə</string>
@@ -462,7 +461,6 @@
     <string name="errorCopyAndQuit">Xətanı kopyala və çıx</string>
     <string name="errorDatabase">Veri bazası xətası</string>
     <string name="errorGeneric">Nəsə səhv getdi. Lütfən daha sonra yenidən sınayın.</string>
-    <string name="errorLoadingProPlan">{pro} planını yükləmə xətası.</string>
     <string name="errorUnknown">Bilinməyən bir xəta baş verdi.</string>
     <string name="failedToDownload">Endirmək uğursuz oldu</string>
     <string name="failures">Xətalar</string>
@@ -816,7 +814,6 @@
     <string name="onsErrorNotRecognized">Bu ONS-i tanıya bilmədik. Lütfən, yoxlayıb yenidən sınayın.</string>
     <string name="onsErrorUnableToSearch">Bu ONS-i axtara bilmədik. Lütfən, daha sonra yenidən sınayın.</string>
     <string name="open">Aç</string>
-    <string name="openStoreWebsite">{platform_store} veb saytını aç</string>
     <string name="openSurvey">Anketi aç</string>
     <string name="other">Digər</string>
     <string name="password">Parol</string>
@@ -968,28 +965,18 @@
     <string name="proPlanNetworkLoadError">Hazırkı planınızı yükləmək üçün şəbəkəyə bağlana bilmir. Bağlantı bərpa olunana qədər {app_name} ilə planınızı güncəlləmək sıradan çıxarılacaq.\n\nLütfən şəbəkə bağlantınızı yoxlayıb yenidən sınayın.</string>
     <string name="proPlanNotFound">{pro} planı tapılmadı</string>
     <string name="proPlanNotFoundDescription">Hesabınız üçün heç bir aktiv plan tapılmadı. Bunun bir səhv olduğunu düşünürsünüzsə, lütfən kömək üçün {app_name} dəstəyi ilə əlaqə saxlayın.</string>
-    <string name="proPlanPlatformRefund">Başda <b><font color="0">{platform_store} Mağazası</font></b> üzərindən {app_pro} üçün qeydiyyatdan keçdiyinizə görə, geri ödəmə tələbini göndərmək üçün eyni {platform_account} hesabını istifadə etməlisiniz.</string>
-    <string name="proPlanPlatformRefundLong">Başda <b><font color="0">{platform_store} Mağazası</font></b> üzərindən {app_pro} üçün qeydiyyatdan keçdiyinizə görə, geri qaytarma tələbiniz {app_name} Dəstək komandası tərəfindən icra olunacaq.\n\nAşağıdakı düyməyə basaraq və geri ödəniş formunu dolduraraq geri ödəmə tələbinizi göndərin.\n\n{app_name} Dəstək komandası, geri ödəmə tələblərini adətən 24-72 saat ərzində emal edir, yüksək tələb həcminə görə bu proses daha uzun çəkə bilər.</string>
     <string name="proPlanRecover">{pro} planını geri qaytar</string>
     <string name="proPlanRenew">{pro} planını yenilə</string>
-    <string name="proPlanRenewDesktop">Hazırda, {pro} planları, yalnızca {platform_store} və {platform_store} Mağazaları vasitəsilə satın alına və yenilənə bilər. {app_name} Masaüstü istifadə etdiyinizə görə planınızı burada yeniləyə bilməzsiniz.\n\n{app_pro} gəlişdiriciləri, istifadəçilərin {pro} planlarını {platform_store} və {platform_store} Mağazalarından kənarda almağına imkan verəcək alternativ ödəniş variantları üzərində ciddi şəkildə çalışırlar. <b>{pro} Yol Xəritəsi</b> {icon}</string>
-    <string name="proPlanRenewDesktopLinked">{platform_store} və ya {platform_store} Mağazaları vasitəsilə planınızı {app_name} quraşdırılmış və əlaqələndirilmiş cihazda {app_pro} ayarlarında yeniləyin.</string>
-    <string name="proPlanRenewDesktopStore">{pro} üçün qeydiyyatdan keçdiyiniz {platform_account} hesabınızla {platform_store} veb saytında planınızı yeniləyin.</string>
     <string name="proPlanRenewStart">Güclü {app_pro} özəlliklərini yenidən istifadə etməyə başlamaq üçün {app_pro} planınızı yeniləyin.</string>
     <string name="proPlanRenewSupport">{app_pro} planınız yeniləndi! {network_name} dəstək verdiyiniz üçün təşəkkürlər.</string>
     <string name="proPlanRestored">{pro} planı bərpa edildi</string>
     <string name="proPlanRestoredDescription">{app_pro} üçün yararlı bir plan aşkarlandı və {pro} statusunuz bərpa edildi!</string>
-    <string name="proPlanSignUp">Başda {platform_store} Mağazası üzərindən {app_pro} üçün qeydiyyatdan keçdiyinizə görə planınızı həmin {platform_account} vasitəsilə güncəlləməlisiniz.</string>
     <string name="proPriceOneMonth">1 ay - {monthly_price}/ay</string>
     <string name="proPriceThreeMonths">3 ay - {monthly_price}/ay</string>
     <string name="proPriceTwelveMonths">12 ay - {monthly_price}/ay</string>
     <string name="proRefundDescription">Getməyinizə məyus olduq. Geri ödəmə tələb etməzdən əvvəl bilməli olduğunuz şeylər.</string>
-    <string name="proRefundNextSteps">{platform_account} hazırda geri ödəniş tələbinizi emal edir. Bu, adətən 24-48 saat çəkir. Onların qərarından asılı olaraq, {app_name} tətbiqində {pro} statusunuzun dəyişdiyini görə bilərsiniz.</string>
     <string name="proRefundRequestSessionSupport">Geri qaytarma tələbiniz {app_name} Dəstək komandası tərəfindən icra olunacaq.\n\nAşağıdakı düyməyə basaraq və geri ödəniş formunu dolduraraq geri ödəniş tələbinizi göndərin.\n\n{app_name} Dəstək komandası, geri ödəniş tələblərini adətən 24-72 saat ərzində emal edir, yüksək tələb həcminə görə bu proses daha uzun çəkə bilər.</string>
-    <string name="proRefundRequestStorePolicies">Geri ödəniş tələbiniz yalnız {platform_account} veb saytında <b>{platform_account}</b> hesabı üzərindən icra olunacaq.\n\n{platform_account} geri ödəniş siyasətlərinə əsasən, {app_name} gəlişdiriciləri, geri ödəniş tələblərinin nəticəsinə təsir edə bilməz. Bu, tələbin qəbul olunub-olunmaması ilə yanaşı, tam və ya qismən geri ödənişin verilib-verilməməsini də əhatə edir.</string>
-    <string name="proRefundSupport">Geri ödəmə tələbinizlə bağlı daha çox güncəlləmə üçün lütfən {platform_account} ilə əlaqə saxlayın. {platform_account} geri ödəniş siyasətlərinə əsasən, {app_name} gəlişdiriciləri, geri ödəniş tələblərinin nəticəsinə təsir edə bilməz.\n\n<font color="0">{platform_store} Geri ödəmə dəstəyi</font></string>
     <string name="proRefunding">{pro} geri ödəməsi</string>
-    <string name="proRefundingDescription">{app_pro} planları üçün geri ödəmələr yalnız {platform_store} Mağazası vasitəsilə {platform_account} tərəfindən həyata keçirilir.\n\n{platform_account} geri ödəniş siyasətlərinə əsasən, {app_name} gəlişdiriciləri, geri ödəniş tələblərinin nəticəsinə təsir edə bilməz. Bu, tələbin qəbul olunub-olunmaması ilə yanaşı, tam və ya qismən geri ödənişin verilib-verilməməsini də əhatə edir.</string>
     <string name="proRequestedRefund">Geri ödəmə tələb edildi</string>
     <string name="proSendMore">Daha çoxunu göndərmək üçün</string>
     <string name="proSettings">{pro} ayarları</string>
@@ -1011,7 +998,6 @@
     <string name="proUpdatePlanDescription">Hazırda <b>{current_plan} Planı</b> üzərindəsiniz. <b>{selected_plan} Planına</b>na keçmək istədiyinizə əminsiniz?\n\nGüncəlləsəniz, planınız <b>{date}</b> tarixində əlavə {selected_plan} {pro} erişimi üçün avtomatik yenilənəcək.</string>
     <string name="proUpdatePlanExpireDescription">Planınız <b>{date}</b> tarixində bitəcək.\n\nGüncəlləsəniz, planınız <b>{date}</b> tarixində əlavə {selected_plan} Pro erişimi üçün avtomatik olaraq yenilənəcək.</string>
     <string name="proUserProfileModalCallToAction">{app_name} tətbiqindən daha çox faydalanmaq istəyirsiniz? Daha güclü mesajlaşma təcrübəsi üçün {app_pro}-ya yüksəldin.</string>
-    <string name="processingRefundRequest">{platform_account} geri ödəmə tələbinizi emal edir</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Ekran şəkli</string>
     <string name="profileDisplayPictureRemoveError">Ekran şəklini silmə uğursuz oldu.</string>
@@ -1067,7 +1053,6 @@
     <string name="recoveryPasswordWarningSendDescription">Bu, sizin geri qaytarma parolunuzdur. Kiməsə göndərsəniz, hesabınıza tam erişə bilər.</string>
     <string name="recreateGroup">Qrupu yenidən yarat</string>
     <string name="redo">Təkrar et</string>
-    <string name="refundPlanNonOriginatorApple">Başda fərqli {platform_account} vasitəsilə {app_pro} üçün qeydiyyatdan keçdiyinizə görə planınızı həmin {platform_account} vasitəsilə güncəlləməlisiniz.</string>
     <string name="remainingCharactersOverTooltip">Mesajın uzunluğunu {count} qədər azalt</string>
     <plurals name="remainingCharactersTooltip">
         <item quantity="one">%1$d xarakter qaldı</item>
@@ -1212,8 +1197,6 @@
     <string name="urlOpenDescription">Bu URL-ni brauzerinizdə açmaq istədiyinizə əminsiniz?\n\n<b>{url}</b></string>
     <string name="urlOpenDescriptionAlternative">Keçidlər, brauzerinizdə açılacaq.</string>
     <string name="useFastMode">Sürətli rejimi istifadə et</string>
-    <string name="viaStoreWebsite">{platform_store} veb saytı vasitəsilə</string>
-    <string name="viaStoreWebsiteDescription">Qeydiyyatdan keçərkən istifadə etdiyiniz {platform_account} hesabı ilə <b><font color="0">{platform_store}</font></b> veb saytı üzərindən planınızı dəyişdirin.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Video oxudula bilmir.</string>
     <string name="view">Göstər</string>
