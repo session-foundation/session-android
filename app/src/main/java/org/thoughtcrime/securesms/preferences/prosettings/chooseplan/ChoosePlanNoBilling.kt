@@ -91,7 +91,8 @@ fun ChoosePlanNoBilling(
     }
 
     val cells: List<NonOriginatingLinkCellData> = buildList {
-        addAll(listOf(
+        // cell 1
+        add(
             NonOriginatingLinkCellData(
                 title = stringResource(R.string.onLinkedDevice),
                 info = Phrase.from(context.getText(R.string.proPlanRenewDesktopLinked))
@@ -101,7 +102,11 @@ fun ChoosePlanNoBilling(
                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                     .format(),
                 iconRes = R.drawable.ic_link
-            ),
+            )
+        )
+
+        // cell 2
+        add(
             NonOriginatingLinkCellData(
                 title = stringResource(R.string.proNewInstallation),
                 info = Phrase.from(context.getText(R.string.proNewInstallationDescription))
@@ -111,8 +116,9 @@ fun ChoosePlanNoBilling(
                     .format(),
                 iconRes = R.drawable.ic_smartphone
             )
-        ))
+        )
 
+        // optional cell 3
         if(subscription is SubscriptionType.Expired) {
             add(
                 NonOriginatingLinkCellData(
