@@ -88,7 +88,7 @@ import org.thoughtcrime.securesms.tokenpage.TokenPageActivity
 import org.thoughtcrime.securesms.ui.AccountIdHeader
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.AnimatedProfilePicProCTA
-import org.thoughtcrime.securesms.ui.AnimatedSessionProActivatedCTA
+import org.thoughtcrime.securesms.ui.CTAAnimatedImages
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.Divider
@@ -100,6 +100,7 @@ import org.thoughtcrime.securesms.ui.PathDot
 import org.thoughtcrime.securesms.ui.ProBadge
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.RadioOption
+import org.thoughtcrime.securesms.ui.SessionProCTA
 import org.thoughtcrime.securesms.ui.components.AcccentOutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.AnnotatedTextWithIcon
@@ -1005,10 +1006,9 @@ fun AnimatedProCTA(
     sendCommand: (SettingsViewModel.Commands) -> Unit,
 ){
     if(isPro) {
-        AnimatedSessionProActivatedCTA (
-            heroImageBg = R.drawable.cta_hero_animated_bg,
-            heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
+        SessionProCTA (
             title = stringResource(R.string.proActivated),
+            badgeAtStart = true,
             textContent = {
                 ProBadgeText(
                     modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -1028,6 +1028,14 @@ fun AnimatedProCTA(
                     )
                 )
             },
+            content = {
+                CTAAnimatedImages(
+                    heroImageBg = R.drawable.cta_hero_animated_bg,
+                    heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
+                )
+            },
+            positiveButtonText = null,
+            negativeButtonText = stringResource(R.string.close),
             onCancel = { sendCommand(HideAnimatedProCTA) }
         )
     } else {
