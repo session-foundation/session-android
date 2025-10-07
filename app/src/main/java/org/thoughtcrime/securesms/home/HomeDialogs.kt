@@ -20,6 +20,7 @@ import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HidePinCTADialog
 import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HideUserProfileModal
 import org.thoughtcrime.securesms.home.startconversation.StartConversationDestination
 import org.thoughtcrime.securesms.home.startconversation.StartConversationSheet
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
 import org.thoughtcrime.securesms.ui.AnimatedSessionProCTA
 import org.thoughtcrime.securesms.ui.CTAFeature
 import org.thoughtcrime.securesms.ui.PinProCTA
@@ -88,8 +89,8 @@ fun HomeDialogs(
                 positiveButtonText = stringResource(R.string.updatePlan),
                 negativeButtonText = stringResource(R.string.close),
                 onUpgrade = {
-
-                    //todo PRO go to screen once it exists
+                    sendCommand(HomeViewModel.Commands.HideExpiringCTADialog)
+                    sendCommand(HomeViewModel.Commands.GotoProSettings(ProSettingsDestination.UpdatePlan))
                 },
                 onCancel = {
                     sendCommand(HomeViewModel.Commands.HideExpiringCTADialog)
@@ -118,8 +119,8 @@ fun HomeDialogs(
                 positiveButtonText = stringResource(R.string.renew),
                 negativeButtonText = stringResource(R.string.cancel),
                 onUpgrade = {
-
-                    //todo PRO go to screen once it exists
+                    sendCommand(HomeViewModel.Commands.HideExpiredCTADialog)
+                    sendCommand(HomeViewModel.Commands.GotoProSettings(ProSettingsDestination.GetOrRenewPlan))
                 },
                 onCancel = {
                     sendCommand(HomeViewModel.Commands.HideExpiredCTADialog)

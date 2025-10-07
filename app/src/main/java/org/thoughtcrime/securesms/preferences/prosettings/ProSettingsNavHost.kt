@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.preferences.prosettings
 
 import android.annotation.SuppressLint
+import android.os.Parcelable
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.runtime.Composable
@@ -11,6 +12,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.launch
+import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination.CancelSubscription
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination.GetOrRenewPlan
@@ -26,22 +28,28 @@ import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.horizontalSlideComposable
 
 // Destinations
-sealed interface ProSettingsDestination {
+sealed interface ProSettingsDestination: Parcelable {
     @Serializable
+    @Parcelize
     data object Home: ProSettingsDestination
 
     @Serializable
+    @Parcelize
     data object UpdatePlan: ProSettingsDestination
     @Serializable
+    @Parcelize
     data object GetOrRenewPlan: ProSettingsDestination
 
     @Serializable
+    @Parcelize
     data object PlanConfirmation: ProSettingsDestination
 
     @Serializable
+    @Parcelize
     data object CancelSubscription: ProSettingsDestination
 
     @Serializable
+    @Parcelize
     data object RefundSubscription: ProSettingsDestination
 }
 
@@ -50,6 +58,7 @@ sealed interface ProSettingsDestination {
 @Composable
 fun ProSettingsNavHost(
     navigator: UINavigator<ProSettingsDestination>,
+    startDestination: ProSettingsDestination = Home,
     onBack: () -> Unit
 ){
     SharedTransitionLayout {
@@ -60,6 +69,15 @@ fun ProSettingsNavHost(
         val viewModel = hiltViewModel<ProSettingsViewModel>()
 
         val dialogsState by viewModel.dialogState.collectAsState()
+
+        val handleBack: () -> Unit = {
+            if (navController.previousBackStackEntry != null) {
+                scope.launch { navigator.navigateUp() }
+            } else {
+                onBack() // Finish activity if at root
+            }
+        }
+
 
         ObserveAsEvents(flow = navigator.navigationActions) { action ->
             when (action) {
@@ -79,7 +97,7 @@ fun ProSettingsNavHost(
             }
         }
 
-        NavHost(navController = navController, startDestination = Home) {
+        NavHost(navController = navController, startDestination = startDestination) {
             // Home
             horizontalSlideComposable<Home> {
                 ProSettingsHomeScreen(
@@ -92,13 +110,13 @@ fun ProSettingsNavHost(
             horizontalSlideComposable<UpdatePlan> {
                 UpdatePlanScreen(
                     viewModel = viewModel,
-                    onBack = { scope.launch { navigator.navigateUp() } },
+                    onBack = handleBack,
                 )
             }
             horizontalSlideComposable<GetOrRenewPlan> {
                 GetOrRenewPlanScreen(
                     viewModel = viewModel,
-                    onBack = { scope.launch { navigator.navigateUp() } },
+                    onBack = handleBack,
                 )
             }
 
@@ -106,7 +124,7 @@ fun ProSettingsNavHost(
             horizontalSlideComposable<PlanConfirmation> {
                 PlanConfirmationScreen(
                     viewModel = viewModel,
-                    onBack = { scope.launch { navigator.navigateUp() }},
+                    onBack = handleBack,
                 )
             }
 
@@ -114,7 +132,7 @@ fun ProSettingsNavHost(
             horizontalSlideComposable<RefundSubscription> {
                 RefundPlanScreen(
                     viewModel = viewModel,
-                    onBack = { scope.launch { navigator.navigateUp() }},
+                    onBack = handleBack,
                 )
             }
 
@@ -122,7 +140,7 @@ fun ProSettingsNavHost(
             horizontalSlideComposable<CancelSubscription> {
                 CancelPlanScreen(
                     viewModel = viewModel,
-                    onBack = { scope.launch { navigator.navigateUp() }},
+                    onBack = handleBack,
                 )
             }
         }

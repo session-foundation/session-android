@@ -12,6 +12,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -37,6 +38,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
@@ -81,6 +83,12 @@ class HomeViewModel @Inject constructor(
 
     private val _dialogsState = MutableStateFlow(DialogsState())
     val dialogsState: StateFlow<DialogsState> = _dialogsState
+
+    private val _uiEvents = MutableSharedFlow<UiEvent>(
+        replay = 0,
+        extraBufferCapacity = 1
+    )
+    val uiEvents: SharedFlow<UiEvent> = _uiEvents
 
     /**
      * A [StateFlow] that emits the list of threads and the typing status of each thread.
@@ -249,6 +257,12 @@ class HomeViewModel @Inject constructor(
             is Commands.HideExpiredCTADialog -> {
                 _dialogsState.update { it.copy(proExpiredCTA = false) }
             }
+
+            is Commands.GotoProSettings -> {
+                viewModelScope.launch {
+                    _uiEvents.emit(UiEvent.OpenProSettings(command.destination))
+                }
+            }
         }
     }
 
@@ -289,6 +303,10 @@ class HomeViewModel @Inject constructor(
         val accountId: String
     )
 
+    sealed interface UiEvent {
+        data class OpenProSettings(val start: ProSettingsDestination) : UiEvent
+    }
+
     sealed interface Commands {
         data object HidePinCTADialog : Commands
         data object HideExpiringCTADialog : Commands
@@ -300,6 +318,10 @@ class HomeViewModel @Inject constructor(
 
         data object ShowStartConversationSheet : Commands
         data object HideStartConversationSheet : Commands
+
+        data class GotoProSettings(
+            val destination: ProSettingsDestination
+        ): Commands
     }
 
     companion object {
