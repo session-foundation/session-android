@@ -456,7 +456,6 @@
     <string name="enjoyingSessionButtonPositive">Əladır {emoji}</string>
     <string name="enjoyingSessionDescription">{app_name} tətbiqini bir müddətdir istifadə edirsiniz, necə gedir? Fikirlərinizi eşitmək bizim üçün çox dəyərli olardı.</string>
     <string name="enter">Daxil ol</string>
-    <string name="errorCheckingProStatus">{pro} statusunu yoxlama xətası.</string>
     <string name="errorConnection">Lütfən internet bağlantınızı yoxlayıb yenidən sınayın.</string>
     <string name="errorCopyAndQuit">Xətanı kopyala və çıx</string>
     <string name="errorDatabase">Veri bazası xətası</string>

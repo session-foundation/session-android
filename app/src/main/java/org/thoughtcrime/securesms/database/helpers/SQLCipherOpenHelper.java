@@ -98,9 +98,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int lokiV50                          = 71;
   private static final int lokiV51                          = 72;
   private static final int lokiV52                          = 73;
+  private static final int lokiV53                          = 74;
 
   // Loki - onUpgrade(...) must be updated to use Loki version numbers if Signal makes any database changes
-  private static final int    DATABASE_VERSION         = lokiV52;
+  private static final int    DATABASE_VERSION         = lokiV53;
   private static final int    MIN_DATABASE_VERSION     = lokiV7;
   public static final String  DATABASE_NAME            = "session.db";
 
@@ -248,8 +249,8 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(ThreadDatabase.ADD_SNIPPET_CONTENT_COLUMN);
 
     executeStatements(db, RecipientSettingsDatabase.Companion.getMIGRATION_CREATE_TABLE());
+    ReactionDatabase.Companion.migrateToDropForeignConstraint(db);
     db.execSQL(RecipientSettingsDatabase.MIGRATE_DROP_OLD_TABLE);
-    executeStatements(db, ReactionDatabase.MIGRATE_REACTION_TABLE_TO_USE_RECIPIENT_SETTINGS);
     db.execSQL(BlindedIdMappingDatabase.DROP_TABLE_COMMAND);
     db.execSQL(ExpirationConfigurationDatabase.DROP_TABLE_COMMAND);
     db.execSQL(SessionContactDatabase.getDropTableCommand());
@@ -570,8 +571,8 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
         executeStatements(db, RecipientSettingsDatabase.Companion.getMIGRATION_CREATE_TABLE());
         db.execSQL(RecipientSettingsDatabase.MIGRATE_MOVE_DATA_FROM_OLD_TABLE);
+        ReactionDatabase.Companion.migrateToDropForeignConstraint(db);
         db.execSQL(RecipientSettingsDatabase.MIGRATE_DROP_OLD_TABLE);
-        executeStatements(db, ReactionDatabase.MIGRATE_REACTION_TABLE_TO_USE_RECIPIENT_SETTINGS);
         db.execSQL(BlindedIdMappingDatabase.DROP_TABLE_COMMAND);
         db.execSQL(ExpirationConfigurationDatabase.DROP_TABLE_COMMAND);
         db.execSQL(SessionContactDatabase.getDropTableCommand());
@@ -580,6 +581,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         db.execSQL(CommunityDatabase.MIGRATE_CREATE_TABLE);
         CommunityDatabase.Companion.migrateFromOldTables(jsonProvider.get(), db);
         executeStatements(db, CommunityDatabase.Companion.getMIGRATE_DROP_OLD_TABLES());
+      }
+
+      if (oldVersion < lokiV53) {
+        MmsSmsDatabase.migrateLegacyCommunityAddresses2(db);
       }
 
       db.setTransactionSuccessful();

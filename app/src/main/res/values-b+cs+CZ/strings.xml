@@ -476,7 +476,6 @@
     <string name="enjoyingSessionButtonPositive">Skvělé {emoji}</string>
     <string name="enjoyingSessionDescription">Používáte {app_name} \na rádi bychom znali váš názor.</string>
     <string name="enter">Vstoupit</string>
-    <string name="errorCheckingProStatus">Chyba kontroly stavu {pro}.</string>
     <string name="errorConnection">Zkontrolujte prosím připojení k internetu a zkuste to znovu.</string>
     <string name="errorCopyAndQuit">Zkopírovat chybu a ukončit</string>
     <string name="errorDatabase">Chyba databáze</string>

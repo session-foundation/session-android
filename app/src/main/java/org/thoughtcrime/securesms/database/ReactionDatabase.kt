@@ -6,6 +6,7 @@ import android.database.Cursor
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import net.zetetic.database.sqlcipher.SQLiteDatabase
 import org.json.JSONArray
 import org.json.JSONException
 import org.session.libsignal.utilities.JsonUtil.SaneJSONObject
@@ -86,15 +87,15 @@ class ReactionDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) 
     @JvmField
     val CREATE_MESSAGE_ID_MMS_INDEX = arrayOf("CREATE INDEX IF NOT EXISTS reaction_message_id_mms_idx ON $TABLE_NAME ($MESSAGE_ID, $IS_MMS)")
 
-    @JvmField
-    val MIGRATE_REACTION_TABLE_TO_USE_RECIPIENT_SETTINGS = arrayOf(
+    fun migrateToDropForeignConstraint(db: SQLiteDatabase) {
       // Create the new table with updated schema
-      """
+      db.rawExecSQL(
+        """
         CREATE TABLE ${TABLE_NAME}_new (
           $ROW_ID INTEGER PRIMARY KEY,
           $MESSAGE_ID INTEGER NOT NULL,
           $IS_MMS INTEGER NOT NULL,
-          $AUTHOR_ID INTEGER NOT NULL REFERENCES ${RecipientSettingsDatabase.TABLE_NAME} (${RecipientSettingsDatabase.COL_ADDRESS}) ON DELETE CASCADE,
+          $AUTHOR_ID TEXT NOT NULL,
           $EMOJI TEXT NOT NULL,
           $SERVER_ID TEXT NOT NULL,
           $COUNT INTEGER NOT NULL,
@@ -103,27 +104,34 @@ class ReactionDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) 
           $DATE_RECEIVED INTEGER NOT NULL,
           UNIQUE($MESSAGE_ID, $IS_MMS, $EMOJI, $AUTHOR_ID) ON CONFLICT REPLACE
         )
-      """,
+      """
+      )
 
       // Copy data from the old table to the new table
-      """
-        INSERT INTO ${TABLE_NAME}_new ($ROW_ID, $MESSAGE_ID, $IS_MMS, $AUTHOR_ID, $EMOJI, $SERVER_ID, $COUNT, $SORT_ID, $DATE_SENT, $DATE_RECEIVED)
-        SELECT $ROW_ID, $MESSAGE_ID, $IS_MMS, ${AUTHOR_ID}, $EMOJI, $SERVER_ID, $COUNT, $SORT_ID, $DATE_SENT, $DATE_RECEIVED
+      db.rawExecSQL(
+        """
+        INSERT OR REPLACE INTO ${TABLE_NAME}_new ($ROW_ID, $MESSAGE_ID, $IS_MMS, $AUTHOR_ID, $EMOJI, $SERVER_ID, $COUNT, $SORT_ID, $DATE_SENT, $DATE_RECEIVED)
+        SELECT $ROW_ID, $MESSAGE_ID, $IS_MMS, $AUTHOR_ID, $EMOJI, $SERVER_ID, $COUNT, $SORT_ID, $DATE_SENT, $DATE_RECEIVED
         FROM $TABLE_NAME
-      """,
+      """)
 
       // Drop the old table and their triggers
-      "DROP TABLE $TABLE_NAME",
-      "DROP TRIGGER reactions_sms_delete",
-      "DROP TRIGGER reactions_mms_delete",
+      db.rawExecSQL("DROP TRIGGER IF EXISTS reactions_sms_delete")
+      db.rawExecSQL("DROP TRIGGER IF EXISTS reactions_mms_delete")
+      db.rawExecSQL("DROP TABLE IF EXISTS $TABLE_NAME")
 
       // Rename the new table to the original table name
-      "ALTER TABLE ${TABLE_NAME}_new RENAME TO $TABLE_NAME",
+      db.rawExecSQL("ALTER TABLE ${TABLE_NAME}_new RENAME TO $TABLE_NAME")
 
       // Add the necessary indexes and triggers to the new table
-      *CREATE_INDEXS,
-      *CREATE_REACTION_TRIGGERS,
-    )
+      for (indexCmd in CREATE_INDEXS) {
+        db.rawExecSQL(indexCmd)
+      }
+
+      for (triggerCmd in CREATE_REACTION_TRIGGERS) {
+        db.rawExecSQL(triggerCmd)
+      }
+    }
 
     private fun readReaction(cursor: Cursor): ReactionRecord {
       return ReactionRecord(
