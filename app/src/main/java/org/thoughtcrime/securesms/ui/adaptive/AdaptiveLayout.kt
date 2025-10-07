@@ -20,6 +20,8 @@ private fun shouldUseTwoPane(widthDp: Int, isLandscape: Boolean): Boolean {
 /**
  * Convenience helper that returns only the two-pane decision.
  * Equivalent to `rememberAdaptiveInfo().isTwoPane`, but cheaper when you only need the boolean.
+ *
+ * Currently not used
  */
 @SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
@@ -49,7 +51,6 @@ data class AdaptiveInfo(
  * We can use this when multiple layout decisions depend on size/orientation (e.g., choose Row vs Column,
  * cap bubble width, scale a QR square).
  *
- * Prefer `rememberTwoPane()` if you only need the boolean.
  */
 @SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
