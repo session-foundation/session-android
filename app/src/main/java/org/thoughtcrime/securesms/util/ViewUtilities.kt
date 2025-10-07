@@ -137,7 +137,7 @@ fun EditText.addTextChangedListener(listener: (String) -> Unit) {
 @JvmOverloads
 fun View.applySafeInsetsPaddings(
     @InsetsType
-    typeMask: Int = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime(),
+    typeMask: Int = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime() or WindowInsetsCompat.Type.displayCutout() ,
     consumeInsets: Boolean = true,
     applyTop: Boolean = true,
     applyBottom: Boolean = true,
