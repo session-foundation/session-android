@@ -114,6 +114,7 @@ class ProStatusManager @Inject constructor(
                 )
 
                 DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> SubscriptionType.Expired(
+                    expiredAt = Instant.now() - Duration.ofDays(14),
                     subscriptionDetails = SubscriptionDetails(
                         device = "Android",
                         store = "Google Play Store",
@@ -124,6 +125,7 @@ class ProStatusManager @Inject constructor(
                     )
                 )
                 DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE -> SubscriptionType.Expired(
+                    expiredAt = Instant.now() - Duration.ofDays(14),
                     subscriptionDetails = SubscriptionDetails(
                         device = "iPhone",
                         store = "Apple App Store",

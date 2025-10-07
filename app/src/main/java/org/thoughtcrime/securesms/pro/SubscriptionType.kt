@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.pro
 import org.session.libsession.utilities.recipients.ProStatus
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.util.State
+import java.time.Instant
 
 sealed interface SubscriptionType{
     data object NeverSubscribed: SubscriptionType
@@ -27,6 +28,7 @@ sealed interface SubscriptionType{
     }
 
     data class Expired(
+        val expiredAt: Instant,
         val subscriptionDetails: SubscriptionDetails
     ): SubscriptionType
 }

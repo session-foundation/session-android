@@ -967,7 +967,9 @@ fun PreviewProSettingsExpired(
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
                 subscriptionState = SubscriptionState(
-                    type = SubscriptionType.Expired(SubscriptionDetails(
+                    type = SubscriptionType.Expired(
+                        expiredAt = Instant.now() - Duration.ofDays(14),
+                        SubscriptionDetails(
                         device = "iPhone",
                         store = "Apple App Store",
                         platform = "Apple",
@@ -993,7 +995,9 @@ fun PreviewProSettingsExpiredLoading(
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
                 subscriptionState = SubscriptionState(
-                    type = SubscriptionType.Expired(SubscriptionDetails(
+                    type = SubscriptionType.Expired(
+                        expiredAt = Instant.now() - Duration.ofDays(14),
+                        SubscriptionDetails(
                         device = "iPhone",
                         store = "Apple App Store",
                         platform = "Apple",
@@ -1019,7 +1023,9 @@ fun PreviewProSettingsExpiredError(
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
                 subscriptionState = SubscriptionState(
-                    type = SubscriptionType.Expired(SubscriptionDetails(
+                    type = SubscriptionType.Expired(
+                        expiredAt = Instant.now() - Duration.ofDays(14),
+                        SubscriptionDetails(
                         device = "iPhone",
                         store = "Apple App Store",
                         platform = "Apple",

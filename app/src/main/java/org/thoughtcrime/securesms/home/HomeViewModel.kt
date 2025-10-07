@@ -9,6 +9,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,13 +41,18 @@ import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
+import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.UserProfileModalCommands
 import org.thoughtcrime.securesms.util.UserProfileModalData
 import org.thoughtcrime.securesms.util.UserProfileUtils
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
+import java.time.Duration
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 @HiltViewModel
@@ -62,6 +68,7 @@ class HomeViewModel @Inject constructor(
     private val proStatusManager: ProStatusManager,
     private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
     private val recipientRepository: RecipientRepository,
+    private val dateUtils: DateUtils
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
@@ -149,6 +156,51 @@ class HomeViewModel @Inject constructor(
 
     private var userProfileModalJob: Job? = null
     private var userProfileModalUtils: UserProfileUtils? = null
+
+    init {
+        // observe subscription status
+        viewModelScope.launch {
+            proStatusManager.subscriptionState.collect { subscription ->
+                // show a CTA (only once per install) when
+                // - subscription is expiring in less than 7 days
+                // - subscription expired less than 30 days ago
+                val now = Instant.now()
+
+                if(subscription.type is SubscriptionType.Active.Expiring
+                    && !prefs.hasSeenProExpiring()
+                ){
+                    val validUntil = subscription.type.proStatus.validUntil ?: return@collect
+
+                    if (validUntil.isBefore(now.plus(7, ChronoUnit.DAYS))) {
+                        delay(2000)
+                        prefs.setHasSeenProExpiring()
+                        _dialogsState.update { state ->
+                            state.copy(
+                                proExpiringCTA = ProExpiringCTA(
+                                    dateUtils.getExpiryString(
+                                        subscription.type.proStatus.validUntil
+                                    )
+                                )
+                            )
+                        }
+                    }
+                }
+                else if(subscription.type is SubscriptionType.Expired
+                    && !prefs.hasSeenProExpired()) {
+                    val validUntil = subscription.type.expiredAt
+
+                    // Check if now is within 30 days after expiry
+                    if (now.isBefore(validUntil.plus(30, ChronoUnit.DAYS))) {
+                        delay(2000)
+                        prefs.setHasSeenProExpired()
+                        _dialogsState.update { state ->
+                            state.copy(proExpiredCTA = true)
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     private fun observeTypingStatus(): Flow<Set<Long>> = typingStatusRepository
         .typingThreads

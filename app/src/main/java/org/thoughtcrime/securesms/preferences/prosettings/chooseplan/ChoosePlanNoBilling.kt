@@ -31,6 +31,8 @@ import org.thoughtcrime.securesms.ui.components.iconExternalLink
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
+import java.time.Duration
+import java.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
@@ -160,6 +162,7 @@ private fun PreviewNonOrigExpiredUpdatePlan(
         val context = LocalContext.current
         ChoosePlanNoBilling (
             subscription = SubscriptionType.Expired(
+                expiredAt = Instant.now() - Duration.ofDays(14),
                 SubscriptionDetails(
                     device = "iPhone",
                     store = "Apple App Store",
@@ -184,6 +187,7 @@ private fun PreviewNoBiilingBrandNewPlan(
         val context = LocalContext.current
         ChoosePlanNoBilling (
             subscription = SubscriptionType.Expired(
+                expiredAt = Instant.now() - Duration.ofDays(14),
                 SubscriptionDetails(
                     device = "iPhone",
                     store = "Apple App Store",
