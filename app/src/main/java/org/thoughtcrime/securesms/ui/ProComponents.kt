@@ -46,6 +46,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
@@ -212,6 +213,7 @@ fun SessionProCTA(
     modifier: Modifier = Modifier,
     title: String = stringResource(R.string.upgradeTo),
     badgeAtStart: Boolean = false,
+    disabled: Boolean = false,
     features: List<CTAFeature> = emptyList(),
     positiveButtonText: String? = stringResource(R.string.theContinue),
     negativeButtonText: String? = stringResource(R.string.cancel),
@@ -243,7 +245,8 @@ fun SessionProCTA(
                         ProBadgeText(
                             modifier = Modifier.align(Alignment.CenterHorizontally),
                             text = title,
-                            badgeAtStart = badgeAtStart
+                            badgeAtStart = badgeAtStart,
+                            badgeColors = if(disabled) proBadgeColorDisabled() else proBadgeColorStandard(),
                         )
 
                         Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
@@ -375,10 +378,15 @@ fun AnimatedSessionProCTA(
     @DrawableRes heroImageBg: Int,
     @DrawableRes heroImageAnimatedFg: Int,
     text: String,
-    features: List<CTAFeature>,
     modifier: Modifier = Modifier,
-    onUpgrade: () -> Unit,
-    onCancel: () -> Unit,
+    title: String = stringResource(R.string.upgradeTo),
+    badgeAtStart: Boolean = false,
+    disabled: Boolean = false,
+    features: List<CTAFeature> = emptyList(),
+    positiveButtonText: String? = stringResource(R.string.theContinue),
+    negativeButtonText: String? = stringResource(R.string.cancel),
+    onUpgrade: () -> Unit = {},
+    onCancel: () -> Unit = {},
 ){
     SessionProCTA(
         modifier = modifier,
@@ -398,9 +406,16 @@ fun AnimatedSessionProCTA(
         content = {
             CTAAnimatedImages(
                 heroImageBg = heroImageBg,
-                heroImageAnimatedFg = heroImageAnimatedFg
+                heroImageAnimatedFg = heroImageAnimatedFg,
+                disabled = disabled
             )
-        })
+        },
+        positiveButtonText = positiveButtonText,
+        negativeButtonText = negativeButtonText,
+        title = title,
+        badgeAtStart = badgeAtStart,
+        disabled = disabled
+    )
 }
 
 @OptIn(ExperimentalGlideComposeApi::class)
@@ -408,11 +423,15 @@ fun AnimatedSessionProCTA(
 fun CTAAnimatedImages(
     @DrawableRes heroImageBg: Int,
     @DrawableRes heroImageAnimatedFg: Int,
+    disabled: Boolean = false
 ){
     Image(
         modifier = Modifier
             .fillMaxWidth()
-            .background(LocalColors.current.accent),
+            .background(
+                if(disabled) LocalColors.current.disabled
+                else LocalColors.current.accent
+            ),
         contentScale = ContentScale.FillWidth,
         painter = painterResource(id = heroImageBg),
         contentDescription = null,
@@ -430,6 +449,9 @@ fun CTAAnimatedImages(
                     modifier = Modifier.fillMaxWidth(),
                     contentScale = ContentScale.FillWidth,
                     painter = painter,
+                    colorFilter = if(disabled)
+                        ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
+                    else null,
                     contentDescription = null,
                 )
             }

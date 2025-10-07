@@ -241,6 +241,14 @@ class HomeViewModel @Inject constructor(
             is Commands.HideStartConversationSheet -> {
                 _dialogsState.update { it.copy(showStartConversationSheet = null) }
             }
+
+            is Commands.HideExpiringCTADialog -> {
+                _dialogsState.update { it.copy(proExpiringCTA = null) }
+            }
+
+            is Commands.HideExpiredCTADialog -> {
+                _dialogsState.update { it.copy(proExpiredCTA = false) }
+            }
         }
     }
 
@@ -264,11 +272,17 @@ class HomeViewModel @Inject constructor(
     data class DialogsState(
         val pinCTA: PinProCTA? = null,
         val userProfileModal: UserProfileModalData? = null,
-        val showStartConversationSheet: StartConversationSheetData? = null
+        val showStartConversationSheet: StartConversationSheetData? = null,
+        val proExpiringCTA: ProExpiringCTA? = null,
+        val proExpiredCTA: Boolean = false
     )
 
     data class PinProCTA(
         val overTheLimit: Boolean
+    )
+
+    data class ProExpiringCTA(
+        val expiry: String
     )
 
     data class StartConversationSheetData(
@@ -277,6 +291,8 @@ class HomeViewModel @Inject constructor(
 
     sealed interface Commands {
         data object HidePinCTADialog : Commands
+        data object HideExpiringCTADialog : Commands
+        data object HideExpiredCTADialog : Commands
         data object HideUserProfileModal : Commands
         data class HandleUserProfileCommand(
             val upmCommand: UserProfileModalCommands
