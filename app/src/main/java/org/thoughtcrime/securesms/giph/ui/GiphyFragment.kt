@@ -1,12 +1,9 @@
 package org.thoughtcrime.securesms.giph.ui
 
-import android.annotation.SuppressLint
-import android.os.AsyncTask
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -18,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.bumptech.glide.Glide
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
@@ -25,8 +23,8 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.ViewUtil
 import org.thoughtcrime.securesms.giph.model.GiphyImage
 import org.thoughtcrime.securesms.giph.net.GiphyLoader
-import org.thoughtcrime.securesms.giph.ui.compose.setGiphyLoading
-import org.thoughtcrime.securesms.giph.ui.compose.setGiphyNoResults
+import org.thoughtcrime.securesms.giph.ui.compose.GiphyOverlayState
+import org.thoughtcrime.securesms.giph.ui.compose.bindGiphyOverlay
 import org.thoughtcrime.securesms.giph.util.InfiniteScrollListener
 import java.util.LinkedList
 import java.util.List
@@ -41,8 +39,10 @@ abstract class GiphyFragment :
 
     private lateinit var giphyAdapter: GiphyAdapter
     private lateinit var recyclerView: RecyclerView
-    private lateinit var loadingProgress: ComposeView
-    private lateinit var noResultsView: ComposeView
+    private lateinit var overlayView: ComposeView
+    private val overlayState: MutableStateFlow<GiphyOverlayState> = MutableStateFlow(
+        GiphyOverlayState.Hidden
+    )
 
     // Set by toolbar filter via Activity
     var searchString: String? = null
@@ -59,11 +59,9 @@ abstract class GiphyFragment :
 
         // Todo: Make compose
         recyclerView = root.findViewById(R.id.giphy_list)
-        loadingProgress = root.findViewById(R.id.loading_progress)
-        noResultsView = root.findViewById(R.id.no_results)
 
-        setGiphyLoading(loadingProgress)
-        setGiphyNoResults(noResultsView, R.string.searchMatchesNone)
+        overlayView = ViewUtil.findById(root, R.id.giphy_state_overlay)
+        bindGiphyOverlay(overlayView, overlayState)
 
         applySearchStringToUI()
 
@@ -73,6 +71,8 @@ abstract class GiphyFragment :
         } ?: run {
             setLayoutManager(TextSecurePreferences.isGifSearchInGridLayout(requireContext()))
         }
+
+        overlayState.value = GiphyOverlayState.Loading
 
         return root
     }
@@ -105,13 +105,12 @@ abstract class GiphyFragment :
         loader: Loader<List<GiphyImage>>,
         data: List<GiphyImage>
     ) {
-        loadingProgress.visibility = View.GONE
-        noResultsView.visibility = if (data.isEmpty()) View.VISIBLE else View.GONE
+        overlayState.value = if (data.isEmpty()) GiphyOverlayState.Empty() else GiphyOverlayState.Hidden
         giphyAdapter.setImages(data.toMutableList())
     }
 
     override fun onLoaderReset(loader: Loader<List<GiphyImage>>) {
-        noResultsView.visibility = View.GONE
+        overlayState.value = GiphyOverlayState.Hidden
         giphyAdapter.setImages(mutableListOf())
     }
 
@@ -125,9 +124,7 @@ abstract class GiphyFragment :
 
     fun setNewSearchString(newSearch: String?) {
         searchString = newSearch
-        if (this::noResultsView.isInitialized) {
-            applySearchStringToUI()
-        }
+        if (isAdded) applySearchStringToUI()
     }
 
     private fun createLayoutManager(gridLayout: Boolean): RecyclerView.LayoutManager {
@@ -144,7 +141,7 @@ abstract class GiphyFragment :
     }
 
     private fun applySearchStringToUI() {
-        noResultsView.visibility = View.GONE
+        overlayState.value = GiphyOverlayState.Loading
         LoaderManager.getInstance(this).restartLoader(0, null, this)
     }
 
