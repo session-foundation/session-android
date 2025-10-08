@@ -32,6 +32,7 @@ fun buildMmsSmsCombinedQuery(
     order: String?,
     limit: String?
 ): String {
+    // The query parts that fetch all reactions for a given message, and group them into a JSON array
     val reactionsQueryParts = """
         SELECT json_group_array(
             json_object(
@@ -50,14 +51,17 @@ fun buildMmsSmsCombinedQuery(
         FROM ${ReactionDatabase.TABLE_NAME}
         """
 
+    // Subquery to grab sms' server hash
     val smsHashQuery = """
         SELECT server_hash
         FROM ${LokiMessageDatabase.smsHashTable} sms_hash
         WHERE sms_hash.message_id = ${SmsDatabase.TABLE_NAME}.${MmsSmsColumns.ID}
     """
 
+    // Custom where statement for reactions if provided
     val additionalReactionSelection = reactionSelection?.let { " AND ($it)" }.orEmpty()
 
+    // If reactions are not requested, we just return an empty JSON array
     val smsReactionQuery = if (includeReactions) {
         """($reactionsQueryParts 
             WHERE 
@@ -68,6 +72,7 @@ fun buildMmsSmsCombinedQuery(
         "'[]'"
     }
 
+    // The main query for SMS messages
     val smsQuery = """
         SELECT
             ${SmsDatabase.DATE_SENT} AS ${MmsSmsColumns.NORMALIZED_DATE_SENT},
@@ -115,12 +120,14 @@ fun buildMmsSmsCombinedQuery(
         WHERE $selection
     """
 
+    // Subquery to grab mms' server hash
     val mmsHashQuery = """
         SELECT server_hash
         FROM ${LokiMessageDatabase.mmsHashTable} mms_hash
         WHERE mms_hash.message_id = ${MmsDatabase.TABLE_NAME}.${MmsSmsColumns.ID}
     """
 
+    // The subquery that fetches all attachments for a given MMS message, and group them into a JSON array
     val attachmentQuery = """
         SELECT json_group_array(
             json_object(
@@ -152,6 +159,7 @@ fun buildMmsSmsCombinedQuery(
         WHERE a.${AttachmentDatabase.MMS_ID} = ${MmsDatabase.TABLE_NAME}.${MmsSmsColumns.ID}
     """
 
+    // Custom where statement for reactions if provided
     val mmsReactionQuery = if (includeReactions) {
         """($reactionsQueryParts 
             WHERE 
@@ -162,6 +170,7 @@ fun buildMmsSmsCombinedQuery(
         "'[]'"
     }
 
+    // The main query for MMS messages
     val mmsQuery = """
         SELECT
             ${MmsDatabase.DATE_SENT} AS ${MmsSmsColumns.NORMALIZED_DATE_SENT},
