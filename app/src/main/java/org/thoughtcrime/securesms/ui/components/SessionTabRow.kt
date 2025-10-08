@@ -30,7 +30,11 @@ private val TITLES = listOf(R.string.sessionRecoveryPassword, R.string.qrScan)
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun SessionTabRow(pagerState: PagerState, titles: List<Int>) {
+fun SessionTabRow(
+    pagerState: PagerState,
+    titles: List<Int>,
+    onTabSelected: (Int) -> Unit = {} // Optional, for screens that still use Viewpager with fragment
+) {
     TabRow(
             containerColor = Color.Unspecified,
             selectedTabIndex = pagerState.currentPage,
@@ -49,7 +53,10 @@ fun SessionTabRow(pagerState: PagerState, titles: List<Int>) {
             Tab(
                 modifier = Modifier.heightIn(min = 48.dp),
                 selected = i == pagerState.currentPage,
-                onClick = { animationScope.launch { pagerState.animateScrollToPage(i) } },
+                onClick = {
+                    animationScope.launch { pagerState.animateScrollToPage(i) }
+                    onTabSelected(i)
+                },
                 selectedContentColor = LocalColors.current.text,
                 unselectedContentColor = LocalColors.current.text,
             ) {

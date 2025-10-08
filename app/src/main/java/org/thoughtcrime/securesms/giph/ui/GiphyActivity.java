@@ -79,13 +79,14 @@ public class GiphyActivity extends ScreenLockActionBarActivity
 
     binding.giphyPager.setAdapter(new GiphyFragmentPagerAdapter(this));
 
+
     // Compose tabs controlling existing ViewPager2
     GiphyTabsCompose.attachComposeTabs(
             binding.composeTabs,
             binding.giphyPager,
             Arrays.asList(
-                    org.session.libsession.utilities.NonTranslatableStringConstants.GIF,
-                    getString(network.loki.messenger.R.string.stickers)
+                    R.string.gif,
+                    R.string.stickers
             )
     );
   }
