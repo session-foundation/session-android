@@ -79,10 +79,6 @@ public class GiphyActivity extends ScreenLockActionBarActivity
 
     binding.giphyPager.setAdapter(new GiphyFragmentPagerAdapter(this));
 
-//    new TabLayoutMediator(binding.tabLayout, binding.giphyPager, (tab, position) -> {
-//      tab.setText(position == 0 ? NonTranslatableStringConstants.GIF : getString(R.string.stickers));
-//    }).attach();
-
     // Compose tabs controlling existing ViewPager2
     GiphyTabsCompose.attachComposeTabs(
             binding.composeTabs,

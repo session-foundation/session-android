@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.StateFlow
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.LocalType
 
 sealed class GiphyOverlayState {
     data object Hidden : GiphyOverlayState()
@@ -57,7 +58,7 @@ private fun GiphyOverlay(state: GiphyOverlayState) {
                     ) {
                         Text(
                             text = stringResource(s.messageId),
-                            style = MaterialTheme.typography.bodyMedium
+                            style = LocalType.current.large
                         )
                     }
                 }
