@@ -1119,6 +1119,7 @@ on startup, not your Recovery Password</string>
         <item quantity="one">%1$d character remaining</item>
         <item quantity="other">%1$d characters remaining</item>
     </plurals>
+    <string name="remindMeLater">Remind Me Later</string>
     <string name="remove">Remove</string>
     <string name="removePasswordFail">Failed to remove password</string>
     <string name="removePasswordModalDescription">Remove your current password for {app_name}. Locally stored data will be re-encrypted with a randomly generated key, stored on your device.</string>
