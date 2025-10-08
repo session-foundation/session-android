@@ -7,13 +7,20 @@ import javax.inject.Inject
  */
 class NoOpSubscriptionManager @Inject constructor() : SubscriptionManager {
     override val id = "noop"
-    override val displayName = ""
+    override val name = ""
     override val description = ""
     override val iconRes = null
+
+    override val supportsBilling: Boolean = false
+
+    override val quickRefundExpiry = null
+    override val quickRefundUrl = null
 
     override fun purchasePlan(subscriptionDuration: ProSubscriptionDuration) {}
     override val availablePlans: List<ProSubscriptionDuration>
         get() = emptyList()
 
-    //todo PRO test out build type with no subscription providers available - What do we show on the Pro Settings page?
+    override fun hasValidSubscription(productId: String): Boolean {
+        return false
+    }
 }

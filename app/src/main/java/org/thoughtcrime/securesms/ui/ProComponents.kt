@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -45,6 +46,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
@@ -207,11 +209,16 @@ private fun PreviewProBadgeText(
 @Composable
 fun SessionProCTA(
     content: @Composable () -> Unit,
-    text: String,
-    features: List<CTAFeature>,
+    textContent: @Composable ColumnScope.() -> Unit,
     modifier: Modifier = Modifier,
-    onUpgrade: () -> Unit,
-    onCancel: () -> Unit,
+    title: String = stringResource(R.string.upgradeTo),
+    badgeAtStart: Boolean = false,
+    disabled: Boolean = false,
+    features: List<CTAFeature> = emptyList(),
+    positiveButtonText: String? = stringResource(R.string.theContinue),
+    negativeButtonText: String? = stringResource(R.string.cancel),
+    onUpgrade: () -> Unit = {},
+    onCancel: () -> Unit = {},
 ){
     BasicAlertDialog(
         modifier = modifier,
@@ -237,49 +244,62 @@ fun SessionProCTA(
                         // title
                         ProBadgeText(
                             modifier = Modifier.align(Alignment.CenterHorizontally),
-                            text = stringResource(R.string.upgradeTo)
+                            text = title,
+                            badgeAtStart = badgeAtStart,
+                            badgeColors = if(disabled) proBadgeColorDisabled() else proBadgeColorStandard(),
                         )
 
                         Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
 
                         // main message
-                        Text(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            text = text,
-                            textAlign = TextAlign.Center,
-                            style = LocalType.current.base.copy(
-                                color = LocalColors.current.textSecondary
-                            )
-                        )
+                        textContent()
 
                         Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
 
                         // features
-                        features.forEachIndexed { index, feature ->
-                            ProCTAFeature(data = feature)
-                            if(index < features.size - 1){
-                                Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
+                        if(features.isNotEmpty()) {
+                            features.forEachIndexed { index, feature ->
+                                ProCTAFeature(data = feature)
+                                if (index < features.size - 1) {
+                                    Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
+                                }
                             }
-                        }
 
-                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
+                            Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
+                        }
 
                         // buttons
                         Row(
-                            Modifier.height(IntrinsicSize.Min),
-                            horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing),
+                            Modifier.height(IntrinsicSize.Min)
+                                .fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(
+                                LocalDimensions.current.xsSpacing,
+                                Alignment.CenterHorizontally
+                            ),
                         ) {
-                            AccentFillButtonRect(
-                                modifier = Modifier.weight(1f).shimmerOverlay(),
-                                text = stringResource(R.string.theContinue),
-                                onClick = onUpgrade
-                            )
+                            positiveButtonText?.let {
+                                AccentFillButtonRect(
+                                    modifier = Modifier.then(
+                                        if(negativeButtonText != null)
+                                        Modifier.weight(1f)
+                                        else Modifier
+                                    ).shimmerOverlay(),
+                                    text = it,
+                                    onClick = onUpgrade
+                                )
+                            }
 
-                            TertiaryFillButtonRect(
-                                modifier = Modifier.weight(1f),
-                                text = stringResource(R.string.cancel),
-                                onClick = onCancel
-                            )
+                            negativeButtonText?.let {
+                                TertiaryFillButtonRect(
+                                    modifier = Modifier.then(
+                                        if(positiveButtonText != null)
+                                            Modifier.weight(1f)
+                                        else Modifier
+                                    ),
+                                    text = it,
+                                    onClick = onCancel
+                                )
+                            }
                         }
                     }
                 }
@@ -306,15 +326,32 @@ sealed interface CTAFeature {
 fun SimpleSessionProCTA(
     @DrawableRes heroImage: Int,
     text: String,
-    features: List<CTAFeature>,
     modifier: Modifier = Modifier,
-    onUpgrade: () -> Unit,
-    onCancel: () -> Unit,
+    title: String = stringResource(R.string.upgradeTo),
+    badgeAtStart: Boolean = false,
+    features: List<CTAFeature> = emptyList(),
+    positiveButtonText: String? = stringResource(R.string.theContinue),
+    negativeButtonText: String? = stringResource(R.string.cancel),
+    onUpgrade: () -> Unit = {},
+    onCancel: () -> Unit = {},
 ){
     SessionProCTA(
         modifier = modifier,
-        text = text,
+        title = title,
+        badgeAtStart = badgeAtStart,
+        textContent = {
+            Text(
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                text = text,
+                textAlign = TextAlign.Center,
+                style = LocalType.current.base.copy(
+                    color = LocalColors.current.textSecondary
+                )
+            )
+        },
         features = features,
+        positiveButtonText = positiveButtonText,
+        negativeButtonText = negativeButtonText,
         onUpgrade = onUpgrade,
         onCancel = onCancel,
         content = { CTAImage(heroImage = heroImage) }
@@ -341,23 +378,44 @@ fun AnimatedSessionProCTA(
     @DrawableRes heroImageBg: Int,
     @DrawableRes heroImageAnimatedFg: Int,
     text: String,
-    features: List<CTAFeature>,
     modifier: Modifier = Modifier,
-    onUpgrade: () -> Unit,
-    onCancel: () -> Unit,
+    title: String = stringResource(R.string.upgradeTo),
+    badgeAtStart: Boolean = false,
+    disabled: Boolean = false,
+    features: List<CTAFeature> = emptyList(),
+    positiveButtonText: String? = stringResource(R.string.theContinue),
+    negativeButtonText: String? = stringResource(R.string.cancel),
+    onUpgrade: () -> Unit = {},
+    onCancel: () -> Unit = {},
 ){
     SessionProCTA(
         modifier = modifier,
-        text = text,
+        textContent = {
+            Text(
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                text = text,
+                textAlign = TextAlign.Center,
+                style = LocalType.current.base.copy(
+                    color = LocalColors.current.textSecondary
+                )
+            )
+        },
         features = features,
         onUpgrade = onUpgrade,
         onCancel = onCancel,
         content = {
             CTAAnimatedImages(
                 heroImageBg = heroImageBg,
-                heroImageAnimatedFg = heroImageAnimatedFg
+                heroImageAnimatedFg = heroImageAnimatedFg,
+                disabled = disabled
             )
-        })
+        },
+        positiveButtonText = positiveButtonText,
+        negativeButtonText = negativeButtonText,
+        title = title,
+        badgeAtStart = badgeAtStart,
+        disabled = disabled
+    )
 }
 
 @OptIn(ExperimentalGlideComposeApi::class)
@@ -365,11 +423,15 @@ fun AnimatedSessionProCTA(
 fun CTAAnimatedImages(
     @DrawableRes heroImageBg: Int,
     @DrawableRes heroImageAnimatedFg: Int,
+    disabled: Boolean = false
 ){
     Image(
         modifier = Modifier
             .fillMaxWidth()
-            .background(LocalColors.current.accent),
+            .background(
+                if(disabled) LocalColors.current.disabled
+                else LocalColors.current.accent
+            ),
         contentScale = ContentScale.FillWidth,
         painter = painterResource(id = heroImageBg),
         contentDescription = null,
@@ -387,6 +449,9 @@ fun CTAAnimatedImages(
                     modifier = Modifier.fillMaxWidth(),
                     contentScale = ContentScale.FillWidth,
                     painter = painter,
+                    colorFilter = if(disabled)
+                        ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
+                    else null,
                     contentDescription = null,
                 )
             }
@@ -394,104 +459,6 @@ fun CTAAnimatedImages(
             else -> {}
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SessionProActivatedCTA(
-    imageContent: @Composable () -> Unit,
-    modifier: Modifier = Modifier,
-    title: String,
-    textContent: @Composable ColumnScope.() -> Unit,
-    onCancel: () -> Unit,
-){
-    BasicAlertDialog(
-        modifier = modifier,
-        onDismissRequest = onCancel,
-        content = {
-            DialogBg {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    // hero image
-                    BottomFadingEdgeBox(
-                        fadingEdgeHeight = 70.dp,
-                        fadingColor = LocalColors.current.backgroundSecondary,
-                        content = { _ ->
-                            imageContent()
-                        },
-                    )
-
-                    // content
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(LocalDimensions.current.smallSpacing)
-                    ) {
-                        // title
-                        ProBadgeText(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            text = title,
-                            textStyle = LocalType.current.h5,
-                            badgeAtStart = true
-                        )
-
-                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
-
-                        // already have pro
-                        textContent()
-
-                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
-
-                        // buttons
-                        TertiaryFillButtonRect(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            text = stringResource(R.string.close),
-                            onClick = onCancel
-                        )
-                    }
-                }
-            }
-        }
-    )
-}
-
-@Composable
-fun SimpleSessionProActivatedCTA(
-    @DrawableRes heroImage: Int,
-    title: String,
-    onCancel: () -> Unit,
-    modifier: Modifier = Modifier,
-    textContent: @Composable ColumnScope.() -> Unit
-){
-    SessionProActivatedCTA(
-        modifier = modifier,
-        title = title,
-        textContent = textContent,
-        onCancel = onCancel,
-        imageContent = { CTAImage(heroImage = heroImage) }
-    )
-}
-
-@OptIn(ExperimentalGlideComposeApi::class)
-@Composable
-fun AnimatedSessionProActivatedCTA(
-    @DrawableRes heroImageBg: Int,
-    @DrawableRes heroImageAnimatedFg: Int,
-    title: String,
-    onCancel: () -> Unit,
-    modifier: Modifier = Modifier,
-    textContent: @Composable ColumnScope.() -> Unit
-){
-    SessionProActivatedCTA(
-        modifier = modifier,
-        title = title,
-        textContent = textContent,
-        onCancel = onCancel,
-        imageContent = {
-            CTAAnimatedImages(
-                heroImageBg = heroImageBg,
-                heroImageAnimatedFg = heroImageAnimatedFg
-            )
-        })
 }
 
 // Reusable generic Pro CTA
@@ -643,8 +610,7 @@ private fun PreviewProActivatedCTA(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
     PreviewTheme(colors) {
-        SimpleSessionProActivatedCTA(
-            heroImage = R.drawable.cta_hero_char_limit,
+        SessionProCTA(
             title = stringResource(R.string.proActivated),
             textContent = {
                 ProBadgeText(
@@ -665,6 +631,9 @@ private fun PreviewProActivatedCTA(
                     )
                 )
             },
+            content = { CTAImage(heroImage = R.drawable.cta_hero_char_limit) },
+            positiveButtonText = null,
+            negativeButtonText = stringResource(R.string.close),
             onCancel = {}
         )
     }
