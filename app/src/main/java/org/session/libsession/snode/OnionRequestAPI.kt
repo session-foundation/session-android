@@ -418,7 +418,8 @@ object OnionRequestAPI {
                     Log.d("Loki","Request returned a non penalizing code ${exception.statusCode} with message: $message")
                 }
                 else if (destination is Destination.Server
-                    && (exception.statusCode == 500 || exception.statusCode == 504)) {
+                    && exception is HTTPRequestFailedAtDestinationException
+                    && (exception.statusCode in 500..504)) {
                     Log.d("Loki","Destination server error - Non path penalizing. Request returned code ${exception.statusCode} with message: $message")
                 } else if (message == "Loki Server error") {
                     Log.d("Loki", "message was $message")
