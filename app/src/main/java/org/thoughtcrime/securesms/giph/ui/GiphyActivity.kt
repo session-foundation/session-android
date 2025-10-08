@@ -19,7 +19,7 @@ import org.session.libsession.utilities.MediaTypes
 import org.session.libsession.utilities.ViewUtil
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
-import org.thoughtcrime.securesms.giph.ui.compose.GiphyScreen
+import org.thoughtcrime.securesms.giph.ui.compose.GiphyTabsCompose
 import org.thoughtcrime.securesms.providers.BlobUtils
 import org.thoughtcrime.securesms.ui.setThemedContent
 
@@ -64,7 +64,7 @@ class GiphyActivity :
                 ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
             )
             setThemedContent {
-                GiphyScreen(pager, titles)
+                GiphyTabsCompose(pager, titles)
             }
         }
     }

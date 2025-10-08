@@ -5,14 +5,12 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.platform.ComposeView
 import androidx.viewpager2.widget.ViewPager2
 import kotlinx.coroutines.launch
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
-import org.thoughtcrime.securesms.ui.setThemedContent
 
 @Composable
-fun GiphyScreen(
+fun GiphyTabsCompose(
     pager: ViewPager2,
     titles: List<Int>
 ) {
