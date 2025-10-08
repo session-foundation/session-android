@@ -858,9 +858,11 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
 
       MessageRecord lastMessage = null;
 
+      long started = System.currentTimeMillis();
       if (count > 0) {
-        lastMessage = mmsSmsDatabase.get().getLastMessage(threadId);
+        lastMessage = mmsSmsDatabase.get().getLastMessage(threadId, false, false);
       }
+      Log.d(TAG, "Loaded last message for thread "+threadId+" in "+(System.currentTimeMillis()-started)+"ms");
 
       final GroupThreadStatus groupThreadStatus;
       if (recipient.isGroupV2Recipient()) {
