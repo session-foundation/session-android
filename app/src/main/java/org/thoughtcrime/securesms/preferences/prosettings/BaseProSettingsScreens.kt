@@ -50,6 +50,7 @@ import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.bold
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.DialogBg
+import org.thoughtcrime.securesms.ui.components.inlineContentMap
 
 /**
  * Base structure used in most Pro Settings screen
@@ -106,7 +107,7 @@ fun BaseProSettingsScreen(
 fun BaseCellButtonProSettingsScreen(
     disabled: Boolean,
     onBack: () -> Unit,
-    buttonText: String,
+    buttonText: String?,
     dangerButton: Boolean,
     onButtonClick: () -> Unit,
     title: CharSequence? = null,
@@ -142,20 +143,22 @@ fun BaseCellButtonProSettingsScreen(
 
         Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
 
-        if(dangerButton) {
-            DangerFillButtonRect(
-                modifier = Modifier.fillMaxWidth()
-                    .widthIn(max = LocalDimensions.current.maxContentWidth),
-                text = buttonText,
-                onClick = onButtonClick
-            )
-        } else {
-            AccentFillButtonRect(
-                modifier = Modifier.fillMaxWidth()
-                    .widthIn(max = LocalDimensions.current.maxContentWidth),
-                text = buttonText,
-                onClick = onButtonClick
-            )
+        if(buttonText != null) {
+            if (dangerButton) {
+                DangerFillButtonRect(
+                    modifier = Modifier.fillMaxWidth()
+                        .widthIn(max = LocalDimensions.current.maxContentWidth),
+                    text = buttonText,
+                    onClick = onButtonClick
+                )
+            } else {
+                AccentFillButtonRect(
+                    modifier = Modifier.fillMaxWidth()
+                        .widthIn(max = LocalDimensions.current.maxContentWidth),
+                    text = buttonText,
+                    onClick = onButtonClick
+                )
+            }
         }
     }
 }
@@ -191,7 +194,7 @@ private fun PreviewBaseCellButton(
 fun BaseNonOriginatingProSettingsScreen(
     disabled: Boolean,
     onBack: () -> Unit,
-    buttonText: String,
+    buttonText: String?,
     dangerButton: Boolean,
     onButtonClick: () -> Unit,
     headerTitle: CharSequence?,
@@ -222,6 +225,10 @@ fun BaseNonOriginatingProSettingsScreen(
                 text = annotatedStringResource(contentDescription),
                 style = LocalType.current.base,
                 color = LocalColors.current.text,
+                inlineContent = inlineContentMap(
+                    textSize = LocalType.current.base.fontSize,
+                    imageColor = LocalColors.current.text,
+                ),
             )
         }
 

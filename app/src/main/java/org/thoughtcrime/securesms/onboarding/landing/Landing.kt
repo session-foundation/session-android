@@ -39,12 +39,10 @@ import kotlinx.coroutines.delay
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
-import org.thoughtcrime.securesms.ui.AlertDialog
-import org.thoughtcrime.securesms.ui.DialogButtonData
-import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.components.BorderlessHtmlButton
+import org.thoughtcrime.securesms.ui.TCPolicyDialog
 import org.thoughtcrime.securesms.ui.components.AccentFillButton
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
+import org.thoughtcrime.securesms.ui.components.BorderlessHtmlButton
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -60,7 +58,7 @@ private fun PreviewLandingScreen(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
     PreviewTheme(colors) {
-        LandingScreen({}, {}, {}, {})
+        LandingScreen({}, {})
     }
 }
 
@@ -68,8 +66,6 @@ private fun PreviewLandingScreen(
 internal fun LandingScreen(
     createAccount: () -> Unit,
     loadAccount: () -> Unit,
-    openTerms: () -> Unit,
-    openPrivacyPolicy: () -> Unit,
 ) {
     var count by remember { mutableStateOf(0) }
     val listState = rememberLazyListState()
@@ -77,21 +73,10 @@ internal fun LandingScreen(
     var isUrlDialogVisible by remember { mutableStateOf(false) }
 
     if (isUrlDialogVisible) {
-        AlertDialog(
-            onDismissRequest = { isUrlDialogVisible = false },
-            title = stringResource(R.string.urlOpen),
-            text = stringResource(R.string.urlOpenBrowser),
-            showCloseButton = true, // display the 'x' button
-            buttons = listOf(
-                DialogButtonData(
-                    text = GetString(R.string.onboardingTos),
-                    onClick = openTerms
-                ),
-                DialogButtonData(
-                    text = GetString(R.string.onboardingPrivacy),
-                    onClick = openPrivacyPolicy
-                )
-            )
+        TCPolicyDialog(
+            tcsUrl = "https://getsession.org/terms-of-service",
+            privacyUrl = "https://getsession.org/privacy-policy",
+            onDismissRequest = { isUrlDialogVisible = false  },
         )
     }
 

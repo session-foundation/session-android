@@ -24,7 +24,6 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.util.State
 import java.time.Duration
@@ -56,7 +55,14 @@ class ProStatusManager @Inject constructor(
                         validUntil = Instant.now() + Duration.ofDays(14),
                     ),
                     duration = ProSubscriptionDuration.THREE_MONTHS,
-                    nonOriginatingSubscription = null
+                    subscriptionDetails = SubscriptionDetails(
+                        device = "Android",
+                        store = "Google Play Store",
+                        platform = "Google",
+                        platformAccount = "Google account",
+                        subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
+                        refundUrl = "https://getsession.org/android-refund",
+                    )
                 )
 
                 DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> SubscriptionType.Active.Expiring(
@@ -65,7 +71,14 @@ class ProStatusManager @Inject constructor(
                         validUntil = Instant.now() + Duration.ofDays(2),
                     ),
                     duration = ProSubscriptionDuration.TWELVE_MONTHS,
-                    nonOriginatingSubscription = null
+                    subscriptionDetails = SubscriptionDetails(
+                        device = "Android",
+                        store = "Google Play Store",
+                        platform = "Google",
+                        platformAccount = "Google account",
+                        subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
+                        refundUrl = "https://getsession.org/android-refund",
+                    )
                 )
 
                 DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> SubscriptionType.Active.AutoRenewing(
@@ -74,12 +87,13 @@ class ProStatusManager @Inject constructor(
                         validUntil = Instant.now() + Duration.ofDays(14),
                     ),
                     duration = ProSubscriptionDuration.ONE_MONTH,
-                    nonOriginatingSubscription = SubscriptionType.Active.NonOriginatingSubscription(
+                    subscriptionDetails = SubscriptionDetails(
                         device = "iPhone",
                         store = "Apple App Store",
                         platform = "Apple",
                         platformAccount = "Apple Account",
-                        urlSubscription = "https://www.apple.com/account/subscriptions",
+                        subscriptionUrl = "https://www.apple.com/account/subscriptions",
+                        refundUrl = "https://support.apple.com/118223",
                     )
                 )
 
@@ -89,19 +103,41 @@ class ProStatusManager @Inject constructor(
                         validUntil = Instant.now() + Duration.ofDays(2),
                     ),
                     duration = ProSubscriptionDuration.ONE_MONTH,
-                    nonOriginatingSubscription = SubscriptionType.Active.NonOriginatingSubscription(
+                    subscriptionDetails = SubscriptionDetails(
                         device = "iPhone",
                         store = "Apple App Store",
                         platform = "Apple",
                         platformAccount = "Apple Account",
-                        urlSubscription = "https://www.apple.com/account/subscriptions",
+                        subscriptionUrl = "https://www.apple.com/account/subscriptions",
+                        refundUrl = "https://support.apple.com/118223",
                     )
                 )
 
-                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> SubscriptionType.Expired
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> SubscriptionType.Expired(
+                    expiredAt = Instant.now() - Duration.ofDays(14),
+                    subscriptionDetails = SubscriptionDetails(
+                        device = "Android",
+                        store = "Google Play Store",
+                        platform = "Google",
+                        platformAccount = "Google account",
+                        subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
+                        refundUrl = "https://getsession.org/android-refund",
+                    )
+                )
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE -> SubscriptionType.Expired(
+                    expiredAt = Instant.now() - Duration.ofDays(14),
+                    subscriptionDetails = SubscriptionDetails(
+                        device = "iPhone",
+                        store = "Apple App Store",
+                        platform = "Apple",
+                        platformAccount = "Apple Account",
+                        subscriptionUrl = "https://www.apple.com/account/subscriptions",
+                        refundUrl = "https://support.apple.com/118223",
+                    )
+                )
             },
                // SubscriptionType.NeverSubscribed,
-            refreshState = State.Success(Unit),
+            refreshState = State.Error(Exception()),
         )
 
     }.stateIn(GlobalScope, SharingStarted.Eagerly,
@@ -202,5 +238,7 @@ class ProStatusManager @Inject constructor(
         private const val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
 
         const val URL_PRO_SUPPORT = "https://getsession.org/pro-form"
+        const val DEFAULT_GOOGLE_STORE = "Google Play Store"
+        const val DEFAULT_APPLE_STORE = "Apple App Store"
     }
 }
