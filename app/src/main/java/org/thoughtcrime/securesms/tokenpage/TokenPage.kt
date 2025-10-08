@@ -1,11 +1,13 @@
 package org.thoughtcrime.securesms.tokenpage
 
+import android.R.attr.maxWidth
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -71,6 +73,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.TOKEN_NAME_S
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.SpeechBubbleTooltip
+import org.thoughtcrime.securesms.ui.adaptive.rememberAdaptiveInfo
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButtonRect
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.BlurredImage
@@ -179,7 +182,8 @@ fun TokenPage(
                 val hasNoScroll = scrollState.maxValue == 0 || scrollState.maxValue == Int.MAX_VALUE
 
                 Column(
-                    modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)
+                    modifier = Modifier
+                        .padding(horizontal = LocalDimensions.current.spacing)
                         .then(
                             if (hasNoScroll) {
                                 Modifier.weight(1f)
@@ -276,7 +280,6 @@ fun StatsImageBox(
 ) {
     Box(
         modifier = modifier
-            .fillMaxWidth()
             .aspectRatio(1.15f)
             .border(
                 width = 1.dp,
@@ -474,32 +477,50 @@ fun StatsSection(
     priceDataPopupText: String,
     modifier: Modifier = Modifier
 ) {
-    // First row contains the `StatsImageBox` with the number of nodes in your swap and the text
-    // details with that number and the number of nodes securing your messages.
-    Row(modifier = modifier.fillMaxWidth()) {
 
-        // On the left we have the node image showing how many nodes are in the user's swarm..
-        val (linesDrawable, circlesDrawable) = getNodeImageForSwarmSize(currentSessionNodesInSwarm)
-        StatsImageBox(
-            showNodeCountsAsRefreshing = showNodeCountsAsRefreshing,
-            lineDrawableId = linesDrawable,
-            circlesDrawableId = circlesDrawable,
-            modifier = Modifier
-                .fillMaxWidth(0.45f)
-                .qaTag("Swarm image")
-        )
+    val screenInfo = rememberAdaptiveInfo()
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        // Left pane target width = min(45% of row, height cap * aspect)
+        val leftMaxWidth = maxWidth * 0.45f
+        val aspect = 1.15f
 
-        Spacer(modifier = Modifier.width(LocalDimensions.current.xsSpacing))
+        val heightCap =
+            if (screenInfo.isLandscape) screenInfo.heightDp.dp * 0.40f else screenInfo.heightDp.dp * 0.50f
 
-        // ..and on the right we have the text details of num nodes in swarm and total nodes securing your messages.
-        NodeDetailsBox(
-            showNodeCountsAsRefreshing = showNodeCountsAsRefreshing,
-            numNodesInSwarm = currentSessionNodesInSwarm.toString(),
-            numNodesSecuringMessages = currentSessionNodesSecuringMessages.toString(),
-            modifier = Modifier
-                .fillMaxWidth(1.0f)
-                .align(Alignment.CenterVertically)
-        )
+        val targetWidth = leftMaxWidth
+            .coerceAtMost(heightCap * aspect)
+            .coerceIn(140.dp, 420.dp) // hard cap to keep tidy on very wide screens
+
+
+        // First row contains the `StatsImageBox` with the number of nodes in your swap and the text
+        // details with that number and the number of nodes securing your messages.
+        Row(modifier = modifier.fillMaxWidth()) {
+
+            // On the left we have the node image showing how many nodes are in the user's swarm..
+            val (linesDrawable, circlesDrawable) = getNodeImageForSwarmSize(
+                currentSessionNodesInSwarm
+            )
+            StatsImageBox(
+                showNodeCountsAsRefreshing = showNodeCountsAsRefreshing,
+                lineDrawableId = linesDrawable,
+                circlesDrawableId = circlesDrawable,
+                modifier = Modifier
+                    .width(targetWidth)
+                    .qaTag("Swarm image")
+            )
+
+            Spacer(modifier = Modifier.width(LocalDimensions.current.xsSpacing))
+
+            // ..and on the right we have the text details of num nodes in swarm and total nodes securing your messages.
+            NodeDetailsBox(
+                showNodeCountsAsRefreshing = showNodeCountsAsRefreshing,
+                numNodesInSwarm = currentSessionNodesInSwarm.toString(),
+                numNodesSecuringMessages = currentSessionNodesSecuringMessages.toString(),
+                modifier = Modifier
+                    .fillMaxWidth(1.0f)
+                    .align(Alignment.CenterVertically)
+            )
+        }
     }
 
     Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
@@ -580,7 +601,8 @@ fun StatsSection(
             setTwoLineTwo,
             setTwoLineThree,
             qaTag = "Network secured amount",
-            modifier = Modifier.fillMaxWidth(1.0f)
+            modifier = Modifier
+                .fillMaxWidth(1.0f)
                 .onGloballyPositioned { coordinates ->
                     // Calculate this cell's height in dp
                     val heightInDp = with(density) { coordinates.size.height.toDp() }
