@@ -168,7 +168,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
 
         // handle edge to edge display
         ViewCompat.setOnApplyWindowInsetsListener(findViewById<View>(android.R.id.content)) { view, windowInsets ->
-            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime())
+            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
             windowInsetBottom = insets.bottom
 
             binding.toolbar.updatePadding(top = insets.top)
