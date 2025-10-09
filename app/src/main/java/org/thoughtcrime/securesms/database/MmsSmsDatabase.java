@@ -292,9 +292,7 @@ public class MmsSmsDatabase extends Database {
     String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND " +
             "NOT " + MmsSmsColumns.IS_DELETED;
 
-    long started = System.currentTimeMillis();
     try (Cursor cursor = queryTables(PROJECTION, selection, includeReactions, null, order, "1")) {
-      Log.d("ThreadDatabase", "getLastMessage took " + (System.currentTimeMillis() - started) + "ms for threadId " + threadId);
       return readerFor(cursor, getQuote).getNext();
     }
   }
@@ -566,10 +564,7 @@ public class MmsSmsDatabase extends Database {
             additionalReactionSelection,
             order,
             limit);
-    long started = System.currentTimeMillis();
-    final Cursor cursor = db.rawQuery(query, null);
-    Log.d(TAG, "queryTables took " + (System.currentTimeMillis() - started) + "ms");
-    return cursor;
+      return db.rawQuery(query, null);
   }
 
   public Reader readerFor(@NonNull Cursor cursor) {
