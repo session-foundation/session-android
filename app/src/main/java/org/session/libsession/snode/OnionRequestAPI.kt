@@ -417,8 +417,9 @@ object OnionRequestAPI {
                     // 404 is probably file server missing a file, don't rebuild path or mark a snode as bad here
                     Log.d("Loki","Request returned a non penalizing code ${exception.statusCode} with message: $message")
                 }
-                else if (destination is Destination.Server
-                    && (exception.statusCode == 500 || exception.statusCode == 504)) {
+                else if (destination is Destination.Server &&
+                    (exception.statusCode in 500..504) &&
+                    (exception is HTTPRequestFailedAtDestinationException || exception.body?.contains(destination.host) == true)) {
                     Log.d("Loki","Destination server error - Non path penalizing. Request returned code ${exception.statusCode} with message: $message")
                 } else if (message == "Loki Server error") {
                     Log.d("Loki", "message was $message")
