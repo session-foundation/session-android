@@ -27,6 +27,7 @@ import android.net.Uri
 import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
+import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -100,6 +101,7 @@ import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.FilenameUtils.getFilenameFromUri
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
 import org.thoughtcrime.securesms.util.SaveAttachmentTask.Companion.showOneTimeWarningDialogOrSave
+import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import java.io.IOException
 import java.util.WeakHashMap
 import javax.inject.Inject
@@ -171,7 +173,11 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
             val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime())
             windowInsetBottom = insets.bottom
 
-            binding.toolbar.updatePadding(top = insets.top)
+            binding.toolbar.updatePadding(
+                left = insets.left,
+                top = insets.top,
+                right = insets.right
+            )
             binding.mediaPreviewAlbumRailContainer.updatePadding(bottom = max(insets.bottom, binding.mediaPreviewAlbumRailContainer.paddingBottom))
 
             updateControlsPosition()
