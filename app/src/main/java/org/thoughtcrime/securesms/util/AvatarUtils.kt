@@ -28,6 +28,7 @@ import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.ui.theme.classicDark3
 import java.math.BigInteger
 import java.security.MessageDigest
 import java.util.Locale
@@ -101,7 +102,13 @@ class AvatarUtils @Inject constructor(
         // custom image
         val (remoteFile, customIcon, color) = when {
             // use custom image if there is one
-            recipient.avatar != null -> Triple(recipient.avatar!!, null, defaultColor)
+            recipient.avatar != null -> Triple(
+                recipient.avatar!!,
+                // for communities, have an icon fallback in case the image errors out
+                if(recipient.isCommunityRecipient) R.drawable.session_logo else null,
+                // communities should always have a neutral fallback bg
+                if(recipient.isCommunityRecipient) classicDark3 else defaultColor
+            )
 
             // communities without a custom image should use a default image
             recipient.isCommunityRecipient -> Triple(null, R.drawable.session_logo, null)
