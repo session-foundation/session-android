@@ -72,6 +72,8 @@ fun buildMmsSmsCombinedQuery(
         "'[]'"
     }
 
+    val whereStatement = selection?.let { "WHERE $it" }.orEmpty()
+
     // The main query for SMS messages
     val smsQuery = """
         SELECT
@@ -117,7 +119,7 @@ fun buildMmsSmsCombinedQuery(
             ${MmsSmsColumns.HAS_MENTION},
             ($smsHashQuery) AS ${MmsSmsColumns.SERVER_HASH}
         FROM ${SmsDatabase.TABLE_NAME}
-        WHERE $selection
+        $whereStatement
     """
 
     // Subquery to grab mms' server hash
@@ -215,10 +217,10 @@ fun buildMmsSmsCombinedQuery(
             ${MmsSmsColumns.HAS_MENTION},
             ($mmsHashQuery) AS ${MmsSmsColumns.SERVER_HASH}
         FROM ${MmsDatabase.TABLE_NAME}
+        $whereStatement
     """
 
     val orderStatement = order?.let { "ORDER BY $it" }.orEmpty()
-    val whereStatement = selection?.let { "WHERE $it" }.orEmpty()
     val limitStatement = limit?.let { "LIMIT $it" }.orEmpty()
 
     return """
@@ -226,12 +228,11 @@ fun buildMmsSmsCombinedQuery(
             $smsQuery
             UNION ALL
             $mmsQuery
-            $whereStatement
-            $orderStatement
         )
         
         SELECT ${projections.joinToString(", ")}
         FROM combined
+        $orderStatement
         $limitStatement
     """
 }
