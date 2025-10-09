@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -226,12 +225,13 @@ class DefaultConversationRepository @Inject constructor(
                                 it == TextSecurePreferences.SET_FORCE_POST_PRO
                     }
                 ).debounce(500)
-                    .onStart { emit(Unit) }
-                    .mapLatest {
-                        withContext(Dispatchers.Default) {
-                            threadDb.getThreads(allAddresses)
-                        }
-                    }
+                    .onStart { emit(allAddresses) }
+                    .map { allAddresses }
+            }
+            .map { addresses ->
+                withContext(Dispatchers.Default) {
+                    threadDb.getThreads(addresses)
+                }
             }
     }
 
