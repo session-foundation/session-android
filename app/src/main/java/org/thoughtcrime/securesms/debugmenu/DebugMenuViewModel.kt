@@ -90,6 +90,7 @@ class DebugMenuViewModel @Inject constructor(
                 DebugSubscriptionStatus.AUTO_APPLE,
                 DebugSubscriptionStatus.EXPIRING_APPLE,
                 DebugSubscriptionStatus.EXPIRED,
+                DebugSubscriptionStatus.EXPIRED_APPLE,
             ),
             selectedDebugSubscriptionStatus = textSecurePreferences.getDebugSubscriptionType() ?: DebugSubscriptionStatus.AUTO_GOOGLE,
             debugProPlans = subscriptionManagers.asSequence()
@@ -423,7 +424,8 @@ class DebugMenuViewModel @Inject constructor(
         EXPIRING_GOOGLE("Expiring/Cancelled (Google, 12 months)"),
         AUTO_APPLE("Auto Renewing (Apple, 1 months)"),
         EXPIRING_APPLE("Expiring/Cancelled (Apple, 1 months)"),
-        EXPIRED("Expired"),
+        EXPIRED("Expired (Google)"),
+        EXPIRED_APPLE("Expired (Apple)"),
     }
 
     sealed class Commands {

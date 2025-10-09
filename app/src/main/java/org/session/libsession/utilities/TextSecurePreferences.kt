@@ -28,6 +28,8 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONM
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FORCED_SHORT_TTL
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_MESSAGE_REQUESTS
+import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN_PRO_EXPIRED
+import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN_PRO_EXPIRING
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HIDE_PASSWORD
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VACUUM_TIME
@@ -174,6 +176,10 @@ interface TextSecurePreferences {
     fun setForceIncomingMessagesAsPro(isPro: Boolean)
     fun forcePostPro(): Boolean
     fun setForcePostPro(postPro: Boolean)
+    fun hasSeenProExpiring(): Boolean
+    fun setHasSeenProExpiring()
+    fun hasSeenProExpired(): Boolean
+    fun setHasSeenProExpired()
     fun watchPostProStatus(): StateFlow<Boolean>
     fun setShownCallWarning(): Boolean
     fun setShownCallNotification(): Boolean
@@ -306,6 +312,8 @@ interface TextSecurePreferences {
         const val SET_FORCE_OTHER_USERS_PRO = "pref_force_other_users_pro"
         const val SET_FORCE_INCOMING_MESSAGE_PRO = "pref_force_incoming_message_pro"
         const val SET_FORCE_POST_PRO = "pref_force_post_pro"
+        const val HAS_SEEN_PRO_EXPIRING = "has_seen_pro_expiring"
+        const val HAS_SEEN_PRO_EXPIRED = "has_seen_pro_expired"
         const val CALL_NOTIFICATIONS_ENABLED = "pref_call_notifications_enabled"
         const val SHOWN_CALL_WARNING = "pref_shown_call_warning" // call warning is user-facing warning of enabling calls
         const val SHOWN_CALL_NOTIFICATION = "pref_shown_call_notification" // call notification is a prompt to check privacy settings
@@ -1556,6 +1564,22 @@ class AppTextSecurePreferences @Inject constructor(
         setBooleanPreference(SET_FORCE_POST_PRO, postPro)
         postProLaunchState.update { postPro }
         _events.tryEmit(SET_FORCE_POST_PRO)
+    }
+
+    override fun hasSeenProExpiring(): Boolean {
+        return getBooleanPreference(HAS_SEEN_PRO_EXPIRING, false)
+    }
+
+    override fun setHasSeenProExpiring() {
+        setBooleanPreference(HAS_SEEN_PRO_EXPIRING, true)
+    }
+
+    override fun hasSeenProExpired(): Boolean {
+        return getBooleanPreference(HAS_SEEN_PRO_EXPIRED, false)
+    }
+
+    override fun setHasSeenProExpired() {
+        setBooleanPreference(HAS_SEEN_PRO_EXPIRED, true)
     }
 
     override fun watchPostProStatus(): StateFlow<Boolean> {

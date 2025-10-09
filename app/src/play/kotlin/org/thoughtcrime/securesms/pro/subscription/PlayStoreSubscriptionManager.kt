@@ -17,6 +17,7 @@ import kotlinx.coroutines.withContext
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
+import java.time.Instant
 import javax.inject.Inject
 
 /**
@@ -28,9 +29,14 @@ class PlayStoreSubscriptionManager @Inject constructor(
     private val currentActivityObserver: CurrentActivityObserver,
 ) : SubscriptionManager {
     override val id = "google_play_store"
-    override val displayName = ""
+    override val name = "Google Play Store"
     override val description = ""
     override val iconRes = null
+
+    override val supportsBilling: Boolean = true
+
+    override val quickRefundExpiry: Instant = Instant.now() //todo PRO implement properly
+    override val quickRefundUrl = "https://support.google.com/googleplay/workflow/9813244"
 
     private val billingClient by lazy {
         BillingClient.newBuilder(application)
@@ -133,6 +139,10 @@ class PlayStoreSubscriptionManager @Inject constructor(
                 Log.d(TAG, "onBillingSetupFinished with $result")
             }
         })
+    }
+
+    override fun hasValidSubscription(productId: String): Boolean {
+        return true //todo PRO implement properly - we should check if the api has a valid subscription matching this productId for the current google user on this phone
     }
 
     companion object {

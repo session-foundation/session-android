@@ -811,7 +811,6 @@
     <string name="onsErrorNotRecognized">Nous n\'avons pas pu reconnaître cet ONS. Veuillez vérifier et réessayer.</string>
     <string name="onsErrorUnableToSearch">Nous n\'avons pas pu rechercher cet ONS. Veuillez réessayer plus tard.</string>
     <string name="open">Ouvrir</string>
-    <string name="openStoreWebsite">Ouvrir le site Web de {platform_store}</string>
     <string name="openSurvey">Ouvrir le questionnaire</string>
     <string name="other">Autre</string>
     <string name="password">Mot de passe</string>
@@ -957,28 +956,18 @@
     <string name="proPlanExpireDate">Votre forfait {app_pro} expirera le <b>{date}</b>.</string>
     <string name="proPlanNotFound">Forfait {pro} introuvable</string>
     <string name="proPlanNotFoundDescription">Aucun forfait actif n’a été trouvé pour votre compte. Si vous pensez qu’il s’agit d’une erreur, veuillez contacter l’assistance de {app_name} pour obtenir de l’aide.</string>
-    <string name="proPlanPlatformRefund">Parce que vous avez initialement souscrit {app_pro} depuis <b><font color="0">{platform_store}</font></b>, vous devrez utiliser le même {platform_account} pour demander un remboursement.</string>
-    <string name="proPlanPlatformRefundLong">Comme vous vous êtes initialement inscrit à {app_pro} via le <b><font color="0">Store {platform_store}</font></b>, votre demande de remboursement sera traitée par le support de {app_name}.\n\nDemandez un remboursement en cliquant sur le bouton ci-dessous et en remplissant le formulaire de demande de remboursement.\n\nBien que le support de {app_name} s\'efforce de traiter les demandes de remboursement sous 24-72 heures, le traitement peut prendre plus de temps en cas de forte demande.</string>
     <string name="proPlanRecover">Récupérer le forfait {pro}</string>
     <string name="proPlanRenew">Renouveler l’abonnement {pro}</string>
-    <string name="proPlanRenewDesktop">Actuellement, les abonnements {pro} ne peuvent être achetés et renouvelés que via les boutiques {platform_store} et {platform_store}. Étant donné que vous utilisez {app_name} Desktop, vous ne pouvez pas renouveler votre abonnement ici.\n\nLes développeurs de {app_pro} travaillent activement sur des options de paiement alternatives pour permettre aux utilisateurs d\'acheter des abonnements {pro} en dehors des boutiques {platform_store} et {platform_store}. <b>Feuille de route de {pro}</b> {icon}</string>
-    <string name="proPlanRenewDesktopLinked">Renouvelez votre abonnement dans les paramètres de {app_pro} sur un appareil lié avec {app_name} installé via le {platform_store} ou le magasin {platform_store}.</string>
-    <string name="proPlanRenewDesktopStore">Renouvelez votre abonnement sur le site Web de {platform_store} en utilisant le compte {platform_account} avec lequel vous vous êtes inscrit à {pro}.</string>
     <string name="proPlanRenewStart">Renouvelez votre abonnement {app_pro} pour recommencer à utiliser les puissantes fonctionnalités bêta de {app_pro}.</string>
     <string name="proPlanRenewSupport">Votre forfait {app_pro} a été renouvelé ! Merci de soutenir le {network_name}.</string>
     <string name="proPlanRestored">{pro} Forfait rétabli</string>
     <string name="proPlanRestoredDescription">Un abonnement valide pour {app_pro} a été détecté et votre statut {pro} a été restauré !</string>
-    <string name="proPlanSignUp">Comme vous vous êtes initialement inscrit à {app_pro} via le <b>{platform_store}</b>, vous devez utiliser votre compte {platform_account} pour mettre à jour votre abonnement.</string>
     <string name="proPriceOneMonth">1 mois – {monthly_price} / mois</string>
     <string name="proPriceThreeMonths">3 mois - {monthly_price} / mois</string>
     <string name="proPriceTwelveMonths">12 mois - {monthly_price} / mois</string>
     <string name="proRefundDescription">Nous sommes désolés de vous voir partir. Voici ce que vous devez savoir avant de demander un remboursement.</string>
-    <string name="proRefundNextSteps">{platform_account} traite actuellement votre demande de remboursement. Cela prend généralement 24-48 heures. Selon leur décision, votre statut {pro} peut changer dans {app_name}.</string>
     <string name="proRefundRequestSessionSupport">Votre demande de remboursement sera traitée par le service de {app_name}.\n\nDemandez un remboursement en appuyant sur le bouton ci-dessous et en remplissant le formulaire de demande de remboursement.\n\nBien que le service de {app_name} fait au mieux afin de traiter les demandes de remboursement dans un délai de 24-72 heures, le traitement peut être plus long en période de forte demande.</string>
-    <string name="proRefundRequestStorePolicies">Votre demande de remboursement sera traitée exclusivement par {platform_account} via le site Web de <b>{platform_account}</b>.\n\nEn raison des politiques de remboursement de {platform_account}, les développeurs de {app_name} n\'ont aucun moyen d\'influencer l\'issue des demandes de remboursement. Cela inclut la décision d\'approuver ou de refuser la demande, ainsi que l\'éventualité d\'un remboursement total ou partiel.</string>
-    <string name="proRefundSupport">Veuillez contacter {platform_account} pour obtenir des mises à jour concernant votre demande de remboursement. En raison des politiques de remboursement de {platform_account}, les développeurs de {app_name} n\'ont aucune possibilité d\'influencer le résultat des demandes de remboursement.\n\n<font color="0">Assistance pour les remboursements de {platform_store}</font>.</string>
     <string name="proRefunding">Remboursement de {pro}</string>
-    <string name="proRefundingDescription">Les remboursements pour les forfaits {app_pro} sont exclusivement gérés par {platform_account} via le Store {platform_store}.\n\nConformément aux politiques de remboursement de {platform_account}, les développeurs de {app_name} n\'ont aucun pouvoir d\'influencer l\'issue des demandes de remboursement. Cela inclut la décision d\'approbation ou de refus, ainsi que le montant total ou partiel du remboursement.</string>
     <string name="proRequestedRefund">Remboursement demandé</string>
     <string name="proSendMore">Envoyez plus avec</string>
     <string name="proSettings">Paramètres {pro}</string>
@@ -991,7 +980,6 @@
     <string name="proUpdatePlanDescription">Vous êtes actuellement sur le <b>forfait {current_plan}</b>. Voulez-vous vraiment passer au <b>forfait {selected_plan}</b>?\n\nEn mettant à jour, votre forfait sera automatiquement renouvelé le <b>{date}</b> pour {selected_plan} supplémentaire de l\'accès {pro}.</string>
     <string name="proUpdatePlanExpireDescription">Votre forfait expirera le <b>{date}</b>.\n\nEn le mettant à jour, votre forfait sera automatiquement renouvelé le <b>{date}</b> pour {selected_plan} supplémentaires d’accès Pro.</string>
     <string name="proUserProfileModalCallToAction">Vous voulez tirer le meilleur parti de {app_name} ? Passez à {app_pro} pour une expérience de messagerie améliorée.</string>
-    <string name="processingRefundRequest">{platform_account} traite votre demande de remboursement</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Définir une photo de profil</string>
     <string name="profileDisplayPictureRemoveError">Échec de suppression de la photo de profil.</string>
@@ -1047,7 +1035,6 @@
     <string name="recoveryPasswordWarningSendDescription">Voici votre mot de passe de récupération. Si vous l\'envoyez à quelqu\'un, il aura un accès complet à votre compte.</string>
     <string name="recreateGroup">Recréer le groupe</string>
     <string name="redo">Rétablir</string>
-    <string name="refundPlanNonOriginatorApple">Comme vous vous êtes initialement inscrit à {app_pro} via un autre {platform_account}, vous devez utiliser ce {platform_account} pour mettre à jour votre abonnement.</string>
     <string name="remainingCharactersOverTooltip">Réduis la longueur du message de {count}</string>
     <plurals name="remainingCharactersTooltip">
         <item quantity="one">%1$d caractères restants</item>
@@ -1191,8 +1178,6 @@
     <string name="urlOpenDescription">Êtes-vous sûr de vouloir ouvrir cette adresse URL dans votre navigateur web ?\n\n<b>{url}</b></string>
     <string name="urlOpenDescriptionAlternative">Les liens s\'ouvriront dans votre navigateur.</string>
     <string name="useFastMode">Utiliser le mode rapide</string>
-    <string name="viaStoreWebsite">Via le site Web {platform_store}</string>
-    <string name="viaStoreWebsiteDescription">Modifiez votre abonnement en utilisant le compte {platform_account} avec lequel vous vous êtes inscrit, via le site web de <b><font color="0">{platform_store}</font></b>.</string>
     <string name="video">Vidéo</string>
     <string name="videoErrorPlay">Impossible de lire la vidéo.</string>
     <string name="view">Afficher</string>
