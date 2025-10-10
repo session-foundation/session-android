@@ -726,7 +726,7 @@ class DefaultMessageNotifier @Inject constructor(
                     }
                 }
 
-                Log.w(TAG, "Adding incoming message notification: ${body}")
+                Log.w(TAG, "Adding incoming message notification: messageLength = ${body.length}")
 
                 // Add incoming message notification
                 notificationState.addNotification(
@@ -781,7 +781,7 @@ class DefaultMessageNotifier @Inject constructor(
 
                         Log.w(
                             TAG,
-                            "Adding reaction notification: ${emoji} to our message ID ${record.getId()}"
+                            "Adding reaction notification to our message ID ${record.getId()}"
                         )
 
                         notificationState.addNotification(
