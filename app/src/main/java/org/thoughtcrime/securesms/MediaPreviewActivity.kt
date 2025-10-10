@@ -143,7 +143,6 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
     private var albumRailAdapter: MediaRailAdapter? = null
 
     private var windowInsetBottom = 0
-    private var railHeight = 0
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun onCreate(bundle: Bundle?, ready: Boolean) {
@@ -168,11 +167,11 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
 
         // handle edge to edge display
         ViewCompat.setOnApplyWindowInsetsListener(findViewById<View>(android.R.id.content)) { view, windowInsets ->
-            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime())
             windowInsetBottom = insets.bottom
 
             binding.toolbar.updatePadding(top = insets.top)
-            binding.mediaPreviewAlbumRailContainer.updatePadding(bottom = max(insets.bottom, binding.mediaPreviewAlbumRailContainer.paddingBottom))
+            binding.mediaPreviewAlbumRailContainer.updatePadding(bottom = insets.bottom)
 
             updateControlsPosition()
 
@@ -213,12 +212,9 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
      * Updates the media controls' position based on the rail's position
      */
     private fun updateControlsPosition() {
-        // the ypos of the controls is either the window bottom inset, or the rail height if there is a rail
-        // since the rail height takes the window inset into account with its padding
-        val totalBottomPadding = max(
-            windowInsetBottom,
-            railHeight + resources.getDimensionPixelSize(R.dimen.medium_spacing)
-        )
+        val totalBottomPadding = windowInsetBottom +
+                binding.mediaPreviewAlbumRail.height+
+                resources.getDimensionPixelSize(R.dimen.medium_spacing)
 
         adapter?.setControlsYPosition(totalBottomPadding)
     }
@@ -431,7 +427,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
                                 binding.mediaPreviewAlbumRailContainer.viewTreeObserver.removeOnGlobalLayoutListener(
                                     this
                                 )
-                                railHeight = binding.mediaPreviewAlbumRailContainer.height
+
                                 updateControlsPosition()
                             }
                         }
