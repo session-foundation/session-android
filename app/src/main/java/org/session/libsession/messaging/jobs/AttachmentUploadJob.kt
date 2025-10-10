@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.jobs
 
+import coil3.size.Size
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
@@ -31,7 +32,9 @@ import org.session.libsignal.streams.PlaintextOutputStreamFactory
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.PushAttachmentData
 import org.session.libsignal.utilities.Util
+import org.thoughtcrime.securesms.attachments.AttachmentProcessor
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import java.io.ByteArrayInputStream
 
 class AttachmentUploadJob @AssistedInject constructor(
     @Assisted val attachmentID: Long,
@@ -42,6 +45,7 @@ class AttachmentUploadJob @AssistedInject constructor(
     private val messageDataProvider: MessageDataProvider,
     private val messageSendJobFactory: MessageSendJob.Factory,
     private val threadDatabase: ThreadDatabase,
+    private val attachmentProcessor: AttachmentProcessor,
 ) : Job {
     override var delegate: JobDelegate? = null
     override var id: String? = null
@@ -97,22 +101,35 @@ class AttachmentUploadJob @AssistedInject constructor(
     private suspend fun upload(attachment: SignalServiceAttachmentStream, server: String, encrypt: Boolean, upload: (ByteArray) -> Promise<String, Exception>): Pair<ByteArray, UploadResult> {
         // Key
         val key = if (encrypt) Util.getSecretBytes(64) else ByteArray(0)
+
+        val processResult = attachment.inputStream.use { stream ->
+            attachmentProcessor.process(
+                mimeType = attachment.contentType,
+                data = stream,
+                maxImageResolution = Size(1024, 768),
+                compressImage = true
+            )
+        }
+
         // Length
-        val rawLength = attachment.length
+        val rawLength = processResult.data.size.toLong()
         val length = if (encrypt) {
             val paddedLength = PaddingInputStream.getPaddedSize(rawLength)
             AttachmentCipherOutputStream.getCiphertextLength(paddedLength)
         } else {
-            attachment.length
+            processResult.data.size.toLong()
         }
+
+        val attachmentStream = ByteArrayInputStream(processResult.data)
+
         // In & out streams
         // PaddingInputStream adds padding as data is read out from it. AttachmentCipherOutputStream
         // encrypts as it writes data.
-        val inputStream = if (encrypt) PaddingInputStream(attachment.inputStream, rawLength) else attachment.inputStream
+        val inputStream = if (encrypt) PaddingInputStream(attachmentStream, rawLength) else attachmentStream
         val outputStreamFactory = if (encrypt) AttachmentCipherOutputStreamFactory(key) else PlaintextOutputStreamFactory()
         // Create a digesting request body but immediately read it out to a buffer. Doing this makes
         // it easier to deal with inputStream and outputStreamFactory.
-        val pad = PushAttachmentData(attachment.contentType, inputStream, length, outputStreamFactory)
+        val pad = PushAttachmentData(processResult.mimeType, inputStream, length, outputStreamFactory)
         val contentType = "application/octet-stream"
         val drb = DigestingRequestBody(pad.data, pad.outputStreamFactory, contentType, pad.dataSize)
         Log.d("Loki", "File size: ${length.toDouble() / 1000} kb.")
