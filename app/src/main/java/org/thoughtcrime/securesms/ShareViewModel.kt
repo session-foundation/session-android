@@ -71,10 +71,10 @@ class ShareViewModel @Inject constructor(
          ::filterContacts
     ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    val hasAnyConversations: StateFlow<Boolean> =
+    val hasAnyConversations: StateFlow<Boolean?> =
         conversationRepository.observeConversationList()
             .map { it.isNotEmpty() }
-            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private val _uiEvents = MutableSharedFlow<ShareUIEvent>(extraBufferCapacity = 1)
     val uiEvents: SharedFlow<ShareUIEvent> get() = _uiEvents

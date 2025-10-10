@@ -52,6 +52,7 @@ import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils.queue
 import org.session.libsignal.utilities.guava.Optional
+import org.thoughtcrime.securesms.database.MmsDatabase.Companion.MESSAGE_BOX
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -1450,6 +1451,9 @@ class MmsDatabase @Inject constructor(
                 $MESSAGE_BOX = $MESSAGE_BOX & ~${MmsSmsColumns.Types.EXPIRATION_TIMER_UPDATE_BIT}
             WHERE ($MESSAGE_BOX & ${MmsSmsColumns.Types.EXPIRATION_TIMER_UPDATE_BIT}) != 0;
         """
+
+        const val ADD_LAST_MESSAGE_INDEX: String =
+            "CREATE INDEX mms_thread_id_date_sent_index ON $TABLE_NAME ($THREAD_ID, $DATE_SENT)"
 
         private val MMS_PROJECTION: Array<String> = arrayOf(
             "$TABLE_NAME.$ID AS $ID",

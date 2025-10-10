@@ -224,7 +224,7 @@ parser = argparse.ArgumentParser(
     description='Build and release script for Session Android'
  )
 
-parser.add_argument('--build-play-only', action='store_true', help='If set, will only build Play releases and skip F-Droid and Huawei releases.')
+parser.add_argument('--build-only', action='store_true', help='If set, will only build APKs and skip all upload/fdroid actions')
 parser.add_argument('--build-type', help='Build with specified build type. Default: release', default = 'release')
 
 args = parser.parse_args()
@@ -260,10 +260,6 @@ play_build_result = build_releases(
     build_type=args.build_type,
     )
 
-if args.build_play_only:
-    print('Skipping F-Droid and Huawei releases as --build-play-only is set.')
-    sys.exit(0)
-
 print("Building fdroid releases...")
 fdroid_build_result = build_releases(
     project_root=project_root,
@@ -273,8 +269,9 @@ fdroid_build_result = build_releases(
     build_type=args.build_type,
     )
 
-print("Updating fdroid repo...")
-update_fdroid(build=fdroid_build_result, creds=BuildCredentials(credentials['fdroid']), fdroid_workspace=os.path.join(fdroid_repo_path, 'fdroid'))
+if not args.build_only:
+    print("Updating fdroid repo...")
+    update_fdroid(build=fdroid_build_result, creds=BuildCredentials(credentials['fdroid']), fdroid_workspace=os.path.join(fdroid_repo_path, 'fdroid'))
 
 print("Building huawei releases...")
 huawei_build_result = build_releases(
@@ -287,23 +284,24 @@ huawei_build_result = build_releases(
     )
 
 # If the a github release draft exists, upload the apks to the release
-try:
-    release_info = json.loads(subprocess.check_output(f'gh release view --json isDraft {play_build_result.version_name}', shell=True, cwd=project_root))
-    if release_info['isDraft'] == True:
-        print(f'Uploading build artifact to the release {play_build_result.version_name} draft...')
-        files_to_upload = [*play_build_result.apk_paths,
-                           play_build_result.bundle_path,
-                           *huawei_build_result.apk_paths]
-        upload_commands = ['gh', 'release', 'upload', play_build_result.version_name, '--clobber', *files_to_upload]
-        subprocess.run(upload_commands, shell=False, cwd=project_root, check=True)
+if not args.build_only:
+    try:
+        release_info = json.loads(subprocess.check_output(f'gh release view --json isDraft {play_build_result.version_name}', shell=True, cwd=project_root))
+        if release_info['isDraft'] == True:
+            print(f'Uploading build artifact to the release {play_build_result.version_name} draft...')
+            files_to_upload = [*play_build_result.apk_paths,
+                               play_build_result.bundle_path,
+                               *huawei_build_result.apk_paths]
+            upload_commands = ['gh', 'release', 'upload', play_build_result.version_name, '--clobber', *files_to_upload]
+            subprocess.run(upload_commands, shell=False, cwd=project_root, check=True)
 
-        print('Successfully uploaded these files to the draft release: ')
-        for file in files_to_upload:
-            print(file)
-    else:
-        print(f'Release {play_build_result.version_name} not a draft. Skipping upload of apks to the release.')
-except subprocess.CalledProcessError:
-    print(f'{play_build_result.version_name} has not had a release draft created. Skipping upload of apks to the release.')
+            print('Successfully uploaded these files to the draft release: ')
+            for file in files_to_upload:
+                print(file)
+        else:
+            print(f'Release {play_build_result.version_name} not a draft. Skipping upload of apks to the release.')
+    except subprocess.CalledProcessError:
+        print(f'{play_build_result.version_name} has not had a release draft created. Skipping upload of apks to the release.')
 
 
 print('\n=====================')
