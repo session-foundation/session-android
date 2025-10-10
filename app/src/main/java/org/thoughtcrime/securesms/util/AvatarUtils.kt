@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.util
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Rect
@@ -128,7 +129,7 @@ class AvatarUtils @Inject constructor(
         return avatarBgColors[(hash % avatarBgColors.size).toInt()]
     }
 
-    fun generateTextBitmap(pixelSize: Int, hashString: String, displayName: String?): BitmapDrawable {
+    fun generateTextBitmap(pixelSize: Int, hashString: String, displayName: String?): Bitmap {
         val colorPrimary = getColorFromKey(hashString)
 
         val labelText = when {
@@ -158,7 +159,7 @@ class AvatarUtils @Inject constructor(
         textBounds.top += (areaRect.height() - textBounds.bottom) * 0.5f
         canvas.drawText(labelText, textBounds.left, textBounds.top - textPaint.ascent(), textPaint)
 
-        return BitmapDrawable(context.resources, bitmap)
+        return bitmap
     }
 
     private fun getSha512(input: String): String {

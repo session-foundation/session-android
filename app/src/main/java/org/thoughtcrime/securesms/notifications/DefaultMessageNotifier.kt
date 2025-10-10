@@ -31,6 +31,7 @@ import android.text.TextUtils
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import coil3.ImageLoader
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
@@ -72,6 +73,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
+import javax.inject.Provider
 import kotlin.concurrent.Volatile
 
 /**
@@ -87,7 +89,8 @@ class DefaultMessageNotifier @Inject constructor(
     private val threadDatabase: ThreadDatabase,
     private val recipientRepository: RecipientRepository,
     private val mmsSmsDatabase: MmsSmsDatabase,
-    private val textSecurePreferences: TextSecurePreferences
+    private val textSecurePreferences: TextSecurePreferences,
+    private val imageLoader: Provider<ImageLoader>,
 ) : MessageNotifier {
     override fun setVisibleThread(threadId: Long) {
         visibleThread = threadId
@@ -351,7 +354,8 @@ class DefaultMessageNotifier @Inject constructor(
         val builder = SingleRecipientNotificationBuilder(
             context,
             getNotificationPrivacy(context),
-            avatarUtils
+            avatarUtils,
+            imageLoader,
         )
         builder.putStringExtra(CONTENT_SIGNATURE, contentSignature)
 
