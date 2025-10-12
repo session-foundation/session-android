@@ -1299,8 +1299,9 @@ class MmsDatabase @Inject constructor(
         private fun getQuote(cursor: Cursor): Quote? {
             val quoteId = cursor.getLong(cursor.getColumnIndexOrThrow(QUOTE_ID))
             val quoteAuthor = cursor.getString(cursor.getColumnIndexOrThrow(QUOTE_AUTHOR))
+            val threadId = cursor.getLong(cursor.getColumnIndexOrThrow(THREAD_ID))
             if (quoteId == 0L || quoteAuthor.isNullOrBlank()) return null
-            val retrievedQuote = mmsSmsDatabase.get().getMessageFor(quoteId, quoteAuthor, false)
+            val retrievedQuote = mmsSmsDatabase.get().getMessageFor(threadId, quoteId, quoteAuthor, false)
             val quoteText = retrievedQuote?.body
             val quoteMissing = retrievedQuote == null
             val quoteDeck = (

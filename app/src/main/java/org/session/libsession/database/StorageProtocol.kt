@@ -92,7 +92,7 @@ interface StorageProtocol {
     fun addReceivedMessageTimestamp(timestamp: Long)
     fun removeReceivedMessageTimestamps(timestamps: Set<Long>)
     fun getAttachmentsForMessage(mmsMessageId: Long): List<DatabaseAttachment>
-    fun getMessageBy(timestamp: Long, author: String): MessageRecord?
+    fun getMessageBy(threadId: Long, timestamp: Long, author: String): MessageRecord?
     fun updateSentTimestamp(messageId: MessageId, newTimestamp: Long)
     fun markAsResyncing(messageId: MessageId)
     fun markAsSyncing(messageId: MessageId)
