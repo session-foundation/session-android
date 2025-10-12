@@ -11,6 +11,7 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.text.SpannableStringBuilder;
 
@@ -129,16 +130,14 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
         recycleBitmap = true;
       }
 
+      setLargeIcon(getCircularBitmap(largeIconBitmap));
+      if(recycleBitmap) largeIconBitmap.recycle();
+
     } else {
       setContentTitle(context.getString(R.string.app_name));
 
-      largeIconBitmap = avatarUtils.generateTextBitmap(ICON_SIZE, "", "Unknown");
-      recycleBitmap = true;
-    }
-
-    setLargeIcon(getCircularBitmap(largeIconBitmap));
-    if (recycleBitmap) {
-      largeIconBitmap.recycle();
+      setSmallIcon(R.drawable.ic_user_filled_custom);
+      setColor(context.getColor(R.color.classic_dark_3));
     }
   }
 
