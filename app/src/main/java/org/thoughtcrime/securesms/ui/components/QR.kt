@@ -260,29 +260,56 @@ class QRCodeAnalyzer(
     @SuppressLint("UnsafeOptInUsageError")
     override fun analyze(image: ImageProxy) {
         try {
+            // Visible frame size that ZXing will use for decoding
             val w = image.width
             val h = image.height
 
+            // YUV_420_888 format: plane[0] = Y (grayscale), plane[1] = U, plane[2] = V
+            // ZXing only needs luminance (Y)
             val yPlane = image.planes[0]
+
+            // Strides describe how bytes are laid out in memory for this plane
+            // - rowStride: distance in bytes from start of one row to the next row
+            // - pixelStride: distance in bytes from one pixel to the next pixel in the same row
+            //   Usually 1 for Y (packed), but not guaranteed across devices
             val rowStride = yPlane.rowStride
             val pixelStride = yPlane.pixelStride
+
             val buf = yPlane.buffer
             buf.rewind()
 
+            // ZXing wants a contiguous WxH grayscale buffer (one byte per pixel)
             val y = ByteArray(w * h)
+
+            // FAST PATH: already tightly packed (no row padding, no interleaving)
             if (pixelStride == 1 && rowStride == w) {
+                // We can copy the entire Y plane in a single read
                 buf.get(y, 0, y.size)
             } else {
+                // GENERAL PATH: re-pack into contiguous WxH
+                // We use a duplicate buffer so we can manipulate position/absolute reads
+                // without affecting the original buffer state elsewhere
                 val dup = buf.duplicate()
-                var dst = 0
+
+                var dst = 0 // index we write into in the output array 'y'
+
+                // Walk row by row in the source plane
                 for (row in 0 until h) {
+                    // Start of this row in the plane's buffer
                     val rowStart = row * rowStride
+
                     if (pixelStride == 1) {
+                        // Case A: packed pixels (good), but rows have padding (rowStride > w)
+                        // Copy only the first 'w' bytes of each row into our contiguous output
                         dup.position(rowStart)
                         dup.get(y, dst, w)
                         dst += w
                     } else {
+                        // Case B: pixels are interleaved horizontally (pixelStride > 1)
+                        // Read one luminance byte every 'pixelStride' bytes for 'w' columns
                         for (col in 0 until w) {
+                            // Absolute read: get byte at (rowStart + col*pixelStride) without
+                            // changing buffer's position. This picks each pixel's Y byte
                             y[dst++] = dup.get(rowStart + col * pixelStride)
                         }
                     }
