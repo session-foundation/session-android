@@ -243,11 +243,15 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
     }
 
     private fun updateControlsRotation() {
-        with (binding) {
-            val rotation = when(viewModel.deviceOrientation){
-                Orientation.LANDSCAPE -> -90f
-                Orientation.REVERSED_LANDSCAPE -> 90f
-                else -> 0f
+        with(binding) {
+            val rotation = if (!orientationManager.isAutoRotateOn()) {
+                when (viewModel.deviceOrientation) {
+                    Orientation.LANDSCAPE -> -90f
+                    Orientation.REVERSED_LANDSCAPE -> 90f
+                    else -> 0f
+                }
+            } else {
+                0f
             }
 
             userAvatar.animate().cancel()
