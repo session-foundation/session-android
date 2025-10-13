@@ -214,7 +214,6 @@ class ReceivedMessageHandler @Inject constructor(
         val senderPublicKey = message.sender!!
 
         val notification: DataExtractionNotificationInfoMessage = when(message.kind) {
-            is DataExtractionNotification.Kind.Screenshot -> DataExtractionNotificationInfoMessage(DataExtractionNotificationInfoMessage.Kind.SCREENSHOT)
             is DataExtractionNotification.Kind.MediaSaved -> DataExtractionNotificationInfoMessage(DataExtractionNotificationInfoMessage.Kind.MEDIA_SAVED)
             else -> return
         }
