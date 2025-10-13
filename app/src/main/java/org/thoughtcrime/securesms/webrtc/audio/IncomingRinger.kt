@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.webrtc.audio
 
 import android.content.Context
+import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.RingtoneManager
@@ -76,9 +77,17 @@ class IncomingRinger(private val context: Context) {
             } ?: return null
 
             try {
-                val mediaPlayer = MediaPlayer()
-                mediaPlayer.setDataSource(context, defaultRingtone)
-                return mediaPlayer
+                return MediaPlayer().apply {
+                    // Make volume follow the "Ring & notification" slider
+                    setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .build()
+                    )
+                    isLooping = true
+                    setDataSource(context, defaultRingtone)
+                }
             } catch (e: SecurityException) {
                 Log.w(TAG, "Failed to create player with ringtone the normal way", e)
             }
