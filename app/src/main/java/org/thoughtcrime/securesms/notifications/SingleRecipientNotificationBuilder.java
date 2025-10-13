@@ -136,8 +136,21 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
     } else {
       setContentTitle(context.getString(R.string.app_name));
 
-      setSmallIcon(R.drawable.ic_user_filled_custom);
+      Drawable drawable = ContextCompat.getDrawable(context, R.drawable.ic_user_filled_custom_padded);
+      int iconWidth  = context.getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_width);
+      int iconHeight = context.getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_height);
+
+      Bitmap src = Bitmap.createBitmap(iconWidth, iconHeight, Bitmap.Config.ARGB_8888);
+      Canvas canvas = new Canvas(src);
+      canvas.drawColor(context.getColor(R.color.classic_dark_3));
+
+      int padding = (int) (iconWidth * 0.08); //add some padding to the icon
+      drawable.setBounds(padding, padding, iconWidth - padding, iconHeight - padding);
+      drawable.draw(canvas);
+
+      setLargeIcon(getCircularBitmap(src));
       setColor(context.getColor(R.color.classic_dark_3));
+      src.recycle();
     }
   }
 
