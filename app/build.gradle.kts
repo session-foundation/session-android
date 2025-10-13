@@ -402,6 +402,7 @@ dependencies {
     implementation(libs.phrase)
     implementation(libs.copper.flow)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.guava)
     implementation(libs.kovenant)
     implementation(libs.kovenant.android)
     implementation(libs.opencsv)

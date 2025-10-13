@@ -11,6 +11,7 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.text.SpannableStringBuilder;
 
@@ -129,16 +130,27 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
         recycleBitmap = true;
       }
 
+      setLargeIcon(getCircularBitmap(largeIconBitmap));
+      if(recycleBitmap) largeIconBitmap.recycle();
+
     } else {
       setContentTitle(context.getString(R.string.app_name));
 
-      largeIconBitmap = avatarUtils.generateTextBitmap(ICON_SIZE, "", "Unknown");
-      recycleBitmap = true;
-    }
+      Drawable drawable = ContextCompat.getDrawable(context, R.drawable.ic_user_filled_custom_padded);
+      int iconWidth  = context.getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_width);
+      int iconHeight = context.getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_height);
 
-    setLargeIcon(getCircularBitmap(largeIconBitmap));
-    if (recycleBitmap) {
-      largeIconBitmap.recycle();
+      Bitmap src = Bitmap.createBitmap(iconWidth, iconHeight, Bitmap.Config.ARGB_8888);
+      Canvas canvas = new Canvas(src);
+      canvas.drawColor(context.getColor(R.color.classic_dark_3));
+
+      int padding = (int) (iconWidth * 0.08); //add some padding to the icon
+      drawable.setBounds(padding, padding, iconWidth - padding, iconHeight - padding);
+      drawable.draw(canvas);
+
+      setLargeIcon(getCircularBitmap(src));
+      setColor(context.getColor(R.color.classic_dark_3));
+      src.recycle();
     }
   }
 
