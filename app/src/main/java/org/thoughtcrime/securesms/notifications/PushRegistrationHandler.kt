@@ -12,6 +12,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
@@ -71,7 +72,9 @@ class PushRegistrationHandler @Inject constructor(
                         desiredSubscriptions()
                     else emptySet()
                 Triple(enabled, token, desired)
-            }.collect { (pushEnabled, token, desiredIds) ->
+            }
+                .distinctUntilChanged()
+                .collect { (pushEnabled, token, desiredIds) ->
                 try {
                     reconcileWithWorkManager(pushEnabled, token, desiredIds)
                 } catch (t: Throwable) {
@@ -91,6 +94,8 @@ class PushRegistrationHandler @Inject constructor(
         // Read existing push periodic workers and parse (AccountId, tokenFingerprint) from tags.
         val periodicInfos = wm.getWorkInfosByTag(TAG_PERIODIC).await()
             .filter { it.state != WorkInfo.State.CANCELLED && it.state != WorkInfo.State.FAILED }
+
+        Log.d(TAG, "We currently have ${periodicInfos.size} push periodic workers")
 
         val accountsAlreadyRegistered: Map<AccountId, String> = buildMap {
             for (info in periodicInfos) {
@@ -199,33 +204,32 @@ class PushRegistrationHandler @Inject constructor(
     }
 
     private fun parseAccountId(info: WorkInfo): AccountId? {
-        val tag = info.tags.firstOrNull { it.startsWith(TAG_ACCOUNT_PREFIX) } ?: return null
-        val hex = tag.removePrefix(TAG_ACCOUNT_PREFIX)
+        val tag = info.tags.firstOrNull { it.startsWith(ARG_ACCOUNT_ID) } ?: return null
+        val hex = tag.removePrefix(ARG_ACCOUNT_ID)
         return AccountId.fromStringOrNull(hex)
     }
 
     private fun parseTokenFingerprint(info: WorkInfo): String? {
-        val tag = info.tags.firstOrNull { it.startsWith(TAG_TOKEN_PREFIX) } ?: return null
-        return tag.removePrefix(TAG_TOKEN_PREFIX)
-    }
-
-    private fun tokenFingerprint(token: String): String {
-        val digest = MessageDigest.getInstance("SHA-256")
-            .digest(token.toByteArray(Charsets.UTF_8))
-        val short = digest.copyOfRange(0, 8) // 64 bits is plenty for equality checks
-        @Suppress("InlinedApi")
-        return android.util.Base64.encodeToString(
-            short,
-            android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE
-        )
+        val tag = info.tags.firstOrNull { it.startsWith(ARG_TOKEN) } ?: return null
+        return tag.removePrefix(ARG_TOKEN)
     }
 
     companion object {
         private const val TAG = "PushRegistrationHandler"
 
-        // Must match tags added in PushRegistrationWorker
-        internal const val TAG_PERIODIC   = "pn-register-periodic"
-        internal const val TAG_ACCOUNT_PREFIX = "pn-account-"
-        internal const val TAG_TOKEN_PREFIX = "pn-token-"
+        const val TAG_PERIODIC   = "pn-register-periodic"
+        const val ARG_ACCOUNT_ID = "pn-account-"
+        const val ARG_TOKEN = "pn-token-"
+
+        fun tokenFingerprint(token: String): String {
+            val digest = MessageDigest.getInstance("SHA-256")
+                .digest(token.toByteArray(Charsets.UTF_8))
+            val short = digest.copyOfRange(0, 8) // 64 bits is plenty for equality checks
+            @Suppress("InlinedApi")
+            return android.util.Base64.encodeToString(
+                short,
+                android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE
+            )
+        }
     }
 }

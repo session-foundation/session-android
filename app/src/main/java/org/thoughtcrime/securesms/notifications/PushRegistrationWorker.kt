@@ -28,6 +28,10 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.notifications.PushRegistrationHandler.Companion.ARG_ACCOUNT_ID
+import org.thoughtcrime.securesms.notifications.PushRegistrationHandler.Companion.ARG_TOKEN
+import org.thoughtcrime.securesms.notifications.PushRegistrationHandler.Companion.TAG_PERIODIC
+import org.thoughtcrime.securesms.notifications.PushRegistrationHandler.Companion.tokenFingerprint
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
@@ -97,14 +101,12 @@ class PushRegistrationWorker @AssistedInject constructor(
 
     companion object {
         private const val TAG = "PushRegistrationWorker"
-        private const val ARG_ACCOUNT_ID = "account_id"
-        private const val ARG_TOKEN = "token"
-        const val TAG_PERIODIC = "pn-register-periodic"
+
 
         private fun oneTimeName(id: AccountId) = "pn-register-once-${id.hexString}"
         private fun periodicName(id: AccountId) = "pn-register-periodic-${id.hexString}"
 
-        fun scheduleImmediate(context: Context, id: AccountId, token: String) {
+        suspend fun scheduleImmediate(context: Context, id: AccountId, token: String) {
             val data = Data.Builder()
                 .putString(ARG_ACCOUNT_ID, id.hexString)
                 .putString(ARG_TOKEN, token)
@@ -115,10 +117,10 @@ class PushRegistrationWorker @AssistedInject constructor(
                 .setConstraints(Constraints(NetworkType.CONNECTED))
                 .build()
             WorkManager.getInstance(context)
-                .enqueueUniqueWork(oneTimeName(id), ExistingWorkPolicy.REPLACE, req)
+                .enqueueUniqueWork(oneTimeName(id), ExistingWorkPolicy.REPLACE, req).await()
         }
 
-        fun ensurePeriodic(context: Context, id: AccountId, token: String, replace: Boolean) {
+        suspend fun ensurePeriodic(context: Context, id: AccountId, token: String, replace: Boolean) {
             val data = Data.Builder()
                 .putString(ARG_ACCOUNT_ID, id.hexString)
                 .putString(ARG_TOKEN, token) // immutable token snapshot
@@ -129,6 +131,8 @@ class PushRegistrationWorker @AssistedInject constructor(
                 )
                 .setInputData(data)
                 .addTag(TAG_PERIODIC)
+                .addTag(ARG_ACCOUNT_ID + id.hexString)
+                .addTag(ARG_TOKEN + tokenFingerprint(token))
                 .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
                 .build()
 
@@ -136,7 +140,7 @@ class PushRegistrationWorker @AssistedInject constructor(
                 periodicName(id),
                 if (replace) ExistingPeriodicWorkPolicy.REPLACE else ExistingPeriodicWorkPolicy.KEEP,
                 req
-            )
+            ).await()
         }
 
         suspend fun cancelAll(context: Context, id: AccountId) {
