@@ -11,6 +11,8 @@ import org.session.libsession.messaging.calls.CallMessageType.CALL_INCOMING
 import org.session.libsession.messaging.calls.CallMessageType.CALL_MISSED
 import org.session.libsession.messaging.calls.CallMessageType.CALL_OUTGOING
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
+import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage.Kind.MEDIA_SAVED
+import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage.Kind.SCREENSHOT
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ExpirationUtil
@@ -418,10 +420,15 @@ object UpdateMessageBuilder {
 
         val senderName = if (senderId != null) getGroupMemberName(senderId) else context.getString(R.string.unknown)
 
-        return Phrase.from(context, R.string.attachmentsMediaSaved)
-            .put(NAME_KEY, senderName)
-            .format()
+        return when (kind) {
+            SCREENSHOT  -> Phrase.from(context, R.string.screenshotTaken)
+                .put(NAME_KEY, senderName)
+                .format()
 
+            MEDIA_SAVED -> Phrase.from(context, R.string.attachmentsMediaSaved)
+                .put(NAME_KEY, senderName)
+                .format()
+        }
     }
 
     fun buildCallMessage(context: Context, type: CallMessageType, senderId: String): String {
