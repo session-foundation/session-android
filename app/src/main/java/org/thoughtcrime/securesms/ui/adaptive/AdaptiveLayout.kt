@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.res.Configuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalConfiguration
 
 /**
@@ -21,12 +20,10 @@ data class AdaptiveInfo(
 /**
  * Returns a stable snapshot of the window/adaptive state for the current composition.
  * Currently we use this for landscape
- *
- * TODO: Create helpers for adaptive screen layouts
  */
 @SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
-fun rememberAdaptiveInfo(): AdaptiveInfo {
+fun getAdaptiveInfo(): AdaptiveInfo {
     val configuration = LocalConfiguration.current
     val landscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     return AdaptiveInfo(configuration.screenWidthDp, configuration.screenHeightDp, landscape)

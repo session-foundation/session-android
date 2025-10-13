@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.tokenpage
 
-import android.R.attr.maxWidth
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -39,7 +38,6 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -74,7 +72,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.TOKEN_NAME_S
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.SpeechBubbleTooltip
-import org.thoughtcrime.securesms.ui.adaptive.rememberAdaptiveInfo
+import org.thoughtcrime.securesms.ui.adaptive.getAdaptiveInfo
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButtonRect
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.BlurredImage
@@ -479,7 +477,7 @@ fun StatsSection(
     modifier: Modifier = Modifier
 ) {
 
-    val screenInfo = rememberAdaptiveInfo()
+    val screenInfo = getAdaptiveInfo()
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
         // Left pane target width = min(45% of row, height cap * aspect)
         val leftMaxWidth = maxWidth * 0.45f

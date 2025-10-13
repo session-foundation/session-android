@@ -37,7 +37,7 @@ import network.loki.messenger.R
 import org.thoughtcrime.securesms.home.startconversation.StartConversationDestination
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ItemButton
-import org.thoughtcrime.securesms.ui.adaptive.rememberAdaptiveInfo
+import org.thoughtcrime.securesms.ui.adaptive.getAdaptiveInfo
 import org.thoughtcrime.securesms.ui.components.AppBarCloseIcon
 import org.thoughtcrime.securesms.ui.components.BasicAppBar
 import org.thoughtcrime.securesms.ui.components.QrImage
@@ -57,7 +57,7 @@ internal fun StartConversationScreen(
     navigateTo: (StartConversationDestination) -> Unit,
     onClose: () -> Unit,
 ) {
-    val isLandscape = rememberAdaptiveInfo().isLandscape
+    val isLandscape = getAdaptiveInfo().isLandscape
 
     Column(
         modifier = Modifier.background(
@@ -145,7 +145,7 @@ private fun QrPanel(
     BoxWithConstraints(
         modifier = modifier
     ) {
-        val qrModifier = if (rememberAdaptiveInfo().isLandscape) {
+        val qrModifier = if (getAdaptiveInfo().isLandscape) {
             val shortest: Dp = if (maxWidth < maxHeight) maxWidth else maxHeight
             val qrSide = (shortest * 0.70f).coerceIn(160.dp, 520.dp)
             Modifier.size(qrSide)
