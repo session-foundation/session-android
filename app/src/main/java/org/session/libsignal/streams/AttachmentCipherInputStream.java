@@ -10,6 +10,7 @@ import static org.session.libsignal.crypto.CipherUtil.CIPHER_LOCK;
 
 import org.session.libsignal.exceptions.InvalidMacException;
 import org.session.libsignal.exceptions.InvalidMessageException;
+import org.session.libsignal.utilities.ByteArraySlice;
 import org.session.libsignal.utilities.Util;
 
 import java.io.File;
@@ -50,7 +51,7 @@ public class AttachmentCipherInputStream extends FilterInputStream {
   private long    totalRead;
   private byte[]  overflowBuffer;
 
-  public static InputStream createForAttachment(File file, long plaintextLength, byte[] combinedKeyMaterial, byte[] digest)
+  public static InputStream createForAttachment(File file, byte[] combinedKeyMaterial, byte[] digest)
       throws InvalidMessageException, IOException
   {
     try {
@@ -66,16 +67,44 @@ public class AttachmentCipherInputStream extends FilterInputStream {
         throw new InvalidMacException("Missing digest!");
       }
 
-      FileInputStream fin = new FileInputStream(file);
-      verifyMac(fin, file.length(), mac, digest);
-
-      InputStream inputStream = new AttachmentCipherInputStream(new FileInputStream(file), parts[0], file.length() - BLOCK_SIZE - mac.getMacLength());
-
-      if (plaintextLength != 0) {
-        inputStream = new ContentLengthInputStream(inputStream, plaintextLength);
+      try (FileInputStream fin = new FileInputStream(file)) {
+        verifyMac(fin, file.length(), mac, digest);
       }
 
-      return inputStream;
+      return new AttachmentCipherInputStream(new FileInputStream(file), parts[0], file.length() - BLOCK_SIZE - mac.getMacLength());
+    } catch (NoSuchAlgorithmException e) {
+      throw new AssertionError(e);
+    } catch (InvalidKeyException e) {
+      throw new AssertionError(e);
+    } catch (InvalidMacException e) {
+      throw new InvalidMessageException(e);
+    }
+  }
+
+  public static InputStream createForAttachment(ByteArraySlice ciphertext, byte[] combinedKeyMaterial, byte[] digest)
+          throws InvalidMessageException, IOException
+  {
+    try {
+      byte[][] parts = Util.split(combinedKeyMaterial, CIPHER_KEY_SIZE, MAC_KEY_SIZE);
+      Mac      mac   = Mac.getInstance("HmacSHA256");
+      mac.init(new SecretKeySpec(parts[1], "HmacSHA256"));
+
+      if (ciphertext.getLen() <= BLOCK_SIZE + mac.getMacLength()) {
+        throw new InvalidMessageException("Message shorter than crypto overhead!");
+      }
+
+      if (digest == null) {
+        throw new InvalidMacException("Missing digest!");
+      }
+
+      try (final InputStream input = ciphertext.inputStream()) {
+        verifyMac(input, ciphertext.getLen(), mac, digest);
+      }
+
+      return new AttachmentCipherInputStream(ciphertext.inputStream(),
+              parts[0],
+              ciphertext.getLen() - BLOCK_SIZE - mac.getMacLength()
+      );
     } catch (NoSuchAlgorithmException e) {
       throw new AssertionError(e);
     } catch (InvalidKeyException e) {
@@ -105,6 +134,13 @@ public class AttachmentCipherInputStream extends FilterInputStream {
     } catch (NoSuchAlgorithmException | InvalidKeyException | NoSuchPaddingException | InvalidAlgorithmParameterException e) {
       throw new AssertionError(e);
     }
+  }
+
+  @Override
+  public void close() throws IOException {
+    super.close();
+
+    in.close();
   }
 
   @Override

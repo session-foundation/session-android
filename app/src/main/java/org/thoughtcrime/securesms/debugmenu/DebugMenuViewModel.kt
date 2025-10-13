@@ -74,6 +74,7 @@ class DebugMenuViewModel @Inject constructor(
             hideMessageRequests = textSecurePreferences.hasHiddenMessageRequests(),
             hideNoteToSelf = configFactory.withUserConfigs { it.userProfile.getNtsPriority() == PRIORITY_HIDDEN },
             forceDeprecationState = deprecationManager.deprecationStateOverride.value,
+            forceDeterministicAttachment = textSecurePreferences.forcesDeterministicAttachmentUpload,
             availableDeprecationState = listOf(null) + LegacyGroupDeprecationManager.DeprecationState.entries.toList(),
             deprecatedTime = deprecationManager.deprecatedTime.value,
             deprecatingStartTime = deprecationManager.deprecatingStartTime.value,
@@ -304,6 +305,13 @@ class DebugMenuViewModel @Inject constructor(
             is Commands.PurchaseDebugPlan -> {
                 command.plan.apply { manager.purchasePlan(plan) }
             }
+
+            is Commands.ToggleDeterministicAttachmentUpload -> {
+                val newValue = !_uiState.value.forceDeterministicAttachment
+                _uiState.update { it.copy(forceDeterministicAttachment = newValue) }
+                textSecurePreferences.forcesDeterministicAttachmentUpload = newValue
+            }
+
         }
     }
 
@@ -396,6 +404,7 @@ class DebugMenuViewModel @Inject constructor(
         val showDeprecatedStateWarningDialog: Boolean,
         val hideMessageRequests: Boolean,
         val hideNoteToSelf: Boolean,
+        val forceDeterministicAttachment: Boolean,
         val forceCurrentUserAsPro: Boolean,
         val forceOtherUsersAsPro: Boolean,
         val forceIncomingMessagesAsPro: Boolean,
@@ -451,5 +460,6 @@ class DebugMenuViewModel @Inject constructor(
         data object ToggleDatabaseInspector : Commands()
         data class SetDebugSubscriptionStatus(val status: DebugSubscriptionStatus) : Commands()
         data class PurchaseDebugPlan(val plan: DebugProPlan) : Commands()
+        data object ToggleDeterministicAttachmentUpload : Commands()
     }
 }

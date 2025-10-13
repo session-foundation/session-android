@@ -226,6 +226,7 @@ interface TextSecurePreferences {
     var selectedActivityAliasName: String?
 
     var inAppReviewState: String?
+    var forcesDeterministicAttachmentUpload: Boolean
 
 
     companion object {
@@ -1747,4 +1748,10 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setSubscriptionProvider(provider: String) {
         setStringPreference(TextSecurePreferences.SUBSCRIPTION_PROVIDER, provider)
     }
+
+    override var forcesDeterministicAttachmentUpload: Boolean
+        get() = getBooleanPreference("forces_deterministic_attachment_upload", false)
+        set(value) {
+            setBooleanPreference("forces_deterministic_attachment_upload", value)
+        }
 }

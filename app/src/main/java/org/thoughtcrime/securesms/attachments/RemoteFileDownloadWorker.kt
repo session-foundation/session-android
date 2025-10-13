@@ -20,6 +20,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapNotNull
 import network.loki.messenger.libsession_util.util.Bytes
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.messaging.open_groups.OpenGroupApi
@@ -54,6 +55,8 @@ class RemoteFileDownloadWorker @AssistedInject constructor(
     private val prefs: TextSecurePreferences,
     private val recipientSettingsDatabase: RecipientSettingsDatabase,
     private val configFactory: ConfigFactoryProtocol,
+    private val fileServerApi: FileServerApi,
+    private val attachmentProcessor: AttachmentProcessor,
 ) : CoroutineWorker(context, params) {
     private val file: RemoteFile by lazy {
         when {
@@ -220,22 +223,31 @@ class RemoteFileDownloadWorker @AssistedInject constructor(
                     }
                 }
 
-                val fileId = requireNotNull(FileServerApi.getFileIdFromUrl(file.url)) {
-                    "RemoteFileDownloadWorker currently only supports downloading files from Session's file server"
-                }
+                val result = fileServerApi.parseAttachmentUrl(file.url.toHttpUrl())
 
-                val response = FileServerApi.download(fileId).await()
+                val response = fileServerApi.download(
+                    fileId = result.fileId,
+                    fileServer = result.fileServer,
+                ).await()
+
                 Log.d(TAG, "Downloaded file from file server: $file")
 
                 // Decrypt data
-                val decrypted = AESGCM.decrypt(
-                    ivAndCiphertext = response.body.data,
-                    offset = response.body.offset,
-                    len = response.body.len,
-                    symmetricKey = file.key.data
-                )
+                val decrypted = if (result.usesDeterministicEncryption) {
+                    attachmentProcessor.decryptDeterministically(
+                        ciphertext = response.body,
+                        key = file.key.data
+                    )
+                } else {
+                    AESGCM.decrypt(
+                        ivAndCiphertext = response.body.data,
+                        offset = response.body.offset,
+                        len = response.body.len,
+                        symmetricKey = file.key.data
+                    ).view()
+                }
 
-                decrypted.view() to FileMetadata(expiryTime = response.expires?.toInstant())
+                decrypted to FileMetadata(expiryTime = response.expires?.toInstant())
 
             }
 

@@ -17,18 +17,28 @@ import coil3.request.allowRgb565
 import coil3.size.Precision
 import coil3.size.Size
 import dagger.hilt.android.qualifiers.ApplicationContext
+import network.loki.messenger.libsession_util.encrypt.Attachments
 import okio.FileSystem
 import okio.buffer
 import okio.source
+import org.session.libsession.utilities.Util
+import org.session.libsignal.streams.AttachmentCipherInputStream
+import org.session.libsignal.streams.AttachmentCipherOutputStream
+import org.session.libsignal.streams.PaddingInputStream
+import org.session.libsignal.utilities.ByteArraySlice
+import org.session.libsignal.utilities.ByteArraySlice.Companion.view
 import org.session.libsignal.utilities.Log
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.io.SequenceInputStream
+import java.security.MessageDigest
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
 import kotlin.experimental.and
+
+typealias DigestResult = ByteArray
 
 @Singleton
 class AttachmentProcessor @Inject constructor(
@@ -117,6 +127,90 @@ class AttachmentProcessor @Inject constructor(
             }
         }
     }
+
+
+    class EncryptResult(
+        val ciphertext: ByteArray,
+        val key: ByteArray,
+    )
+
+    fun encryptDeterministically(plaintext: ByteArray, domain: Attachments.Domain): EncryptResult {
+        val cipherOut = ByteArray(Attachments.encryptedSize(plaintext.size.toLong()).toInt())
+        val key = Attachments.encryptBytes(
+            seed = Util.getSecretBytes(32),
+            plaintextIn = plaintext,
+            cipherOut = cipherOut,
+            domain = domain,
+        )
+
+        return EncryptResult(
+            ciphertext = cipherOut,
+            key = key,
+        )
+    }
+
+    fun encrypt(plaintext: ByteArray): Pair<EncryptResult, DigestResult> {
+        val key = Util.getSecretBytes(64)
+        var remainingPaddingSize = (PaddingInputStream.getPaddedSize(plaintext.size.toLong()) - plaintext.size.toLong()).toInt()
+        val paddingBuffer = ByteArray(remainingPaddingSize.coerceAtMost(512))
+        val digest: ByteArray
+
+        val cipherText = ByteArrayOutputStream().also { outputStream ->
+            AttachmentCipherOutputStream(key, outputStream).use { os ->
+                os.write(plaintext)
+
+                while (remainingPaddingSize > 0) {
+                    val toWrite = remainingPaddingSize.coerceAtMost(paddingBuffer.size)
+                    os.write(paddingBuffer, 0, toWrite)
+                    remainingPaddingSize -= toWrite
+                }
+
+                os.flush()
+
+                digest = os.transmittedDigest
+            }
+        }.toByteArray()
+
+        return EncryptResult(
+            ciphertext = cipherText,
+            key = key,
+        ) to digest
+    }
+
+    fun decryptDeterministically(ciphertext: ByteArraySlice, key: ByteArray): ByteArraySlice {
+        val plaintextOut = ByteArray(
+            requireNotNull(Attachments.decryptedMaxSizeOrNull(ciphertext.len.toLong())) {
+                "Ciphertext size ${ciphertext.len} is too small to be valid"
+            }.toInt()
+        )
+
+        val plaintextSize = Attachments.decryptBytes(
+            key = key,
+            cipherIn = ciphertext.data,
+            cipherInOffset = ciphertext.offset,
+            cipherInLen = ciphertext.len,
+            plainOut = plaintextOut,
+            plainOutOffset = 0,
+            plainOutLen = plaintextOut.size,
+        ).toInt()
+
+        return plaintextOut.view(0 until plaintextSize)
+    }
+
+    fun decrypt(ciphertext: ByteArraySlice, key: ByteArray, digest: ByteArray?): ByteArraySlice {
+        return AttachmentCipherInputStream.createForAttachment(ciphertext, key, digest)
+            .use { it.readBytes().view() }
+    }
+
+    fun digest(data: ByteArray): ByteArray {
+        try {
+            return MessageDigest.getInstance("SHA256").digest(data)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to compute SHA256 digest", e)
+            return byteArrayOf()
+        }
+    }
+
 
     private fun processAnimatedWebP(
         updatedInputStream: InputStream,

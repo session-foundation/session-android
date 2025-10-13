@@ -59,7 +59,8 @@ class AvatarUploadManager @Inject constructor(
     private val prefs: TextSecurePreferences,
     @ManagerScope scope: CoroutineScope,
     localEncryptedFileInputStreamFactory: LocalEncryptedFileInputStream.Factory,
-    private val localEncryptedFileOutputStreamFactory: LocalEncryptedFileOutputStream.Factory
+    private val localEncryptedFileOutputStreamFactory: LocalEncryptedFileOutputStream.Factory,
+    private val fileServerApi: FileServerApi,
 ) : OnAppStartupComponent {
     @OptIn(ExperimentalCoroutinesApi::class)
     val reuploadState: StateFlow<Unit> = prefs.watchLocalNumber()
@@ -167,7 +168,7 @@ class AvatarUploadManager @Inject constructor(
         drb.writeTo(b)
         val data = b.readByteArray()
 
-        val uploadResult = FileServerApi.upload(
+        val uploadResult = fileServerApi.upload(
             file = data,
             customExpiresDuration = DEBUG_AVATAR_TTL.takeIf { prefs.forcedShortTTL() }
         ).await()

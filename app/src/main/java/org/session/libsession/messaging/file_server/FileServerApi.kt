@@ -6,10 +6,10 @@ import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.functional.map
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody
-import org.session.libsession.messaging.MessagingModuleConfiguration
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.utilities.await
 import org.session.libsignal.utilities.ByteArraySlice
@@ -20,20 +20,25 @@ import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochSeconds
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.util.regex.Pattern
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
-object FileServerApi {
+@Singleton
+class FileServerApi @Inject constructor(
+    private val storage: StorageProtocol,
+) {
 
-    private const val FILE_SERVER_PUBLIC_KEY = "da21e1d886c6fbaea313f75298bd64aab03a97ce985b46bb2dad9f2089c8ee59"
-    const val FILE_SERVER_URL = "http://filev2.getsession.org"
-    const val MAX_FILE_SIZE = 10_000_000 // 10 MB
+    companion object {
+        const val MAX_FILE_SIZE = 10_000_000 // 10 MB
 
-    val fileServerUrl: HttpUrl by lazy { FILE_SERVER_URL.toHttpUrl() }
-
-    val FILE_SERVER_FILE_URL_PATTERN: Pattern by lazy {
-        Pattern.compile("^https?://filev2\\.getsession\\.org/files?/(.+)$", Pattern.CASE_INSENSITIVE)
+        val DEFAULT_FILE_SERVER: FileServer by lazy {
+            FileServer(
+                url = "http://filev2.getsession.org",
+                publicKeyHex = "da21e1d886c6fbaea313f75298bd64aab03a97ce985b46bb2dad9f2089c8ee59"
+            )
+        }
     }
 
     sealed class Error(message: String) : Exception(message) {
@@ -42,13 +47,14 @@ object FileServerApi {
         object NoEd25519KeyPair : Error("Couldn't find ed25519 key pair.")
     }
 
-    data class Request(
-            val verb: HTTP.Verb,
-            val endpoint: String,
-            val queryParameters: Map<String, String> = mapOf(),
-            val parameters: Any? = null,
-            val headers: Map<String, String> = mapOf(),
-            val body: ByteArray? = null,
+    private data class Request(
+        val fileServer: FileServer,
+        val verb: HTTP.Verb,
+        val endpoint: String,
+        val queryParameters: Map<String, String> = mapOf(),
+        val parameters: Any? = null,
+        val headers: Map<String, String> = mapOf(),
+        val body: ByteArray? = null,
             /**
          * Always `true` under normal circumstances. You might want to disable
          * this when running over Lokinet.
@@ -56,25 +62,21 @@ object FileServerApi {
         val useOnionRouting: Boolean = true
     )
 
-    fun getFileIdFromUrl(url: String): String? {
-        val matcher = FILE_SERVER_FILE_URL_PATTERN.matcher(url)
-        return if (matcher.matches()) {
-            matcher.group(1)
-        } else {
-            null
-        }
-    }
-
     private fun createBody(body: ByteArray?, parameters: Any?): RequestBody? {
-        if (body != null) return RequestBody.create("application/octet-stream".toMediaType(), body)
+        if (body != null) return body.toRequestBody(
+            "application/octet-stream".toMediaType(),
+            0,
+            body.size
+        )
+
         if (parameters == null) return null
         val parametersAsJSON = JsonUtil.toJson(parameters)
-        return RequestBody.create("application/json".toMediaType(), parametersAsJSON)
+        return parametersAsJSON.toRequestBody("application/json".toMediaType())
     }
 
 
     private fun send(request: Request): Promise<SendResponse, Exception> {
-        val urlBuilder = fileServerUrl
+        val urlBuilder = request.fileServer.url
             .newBuilder()
             .addPathSegments(request.endpoint)
         if (request.verb == HTTP.Verb.GET) {
@@ -92,7 +94,11 @@ object FileServerApi {
             HTTP.Verb.DELETE -> requestBuilder.delete(createBody(request.body, request.parameters))
         }
         return if (request.useOnionRouting) {
-            OnionRequestAPI.sendOnionRequest(requestBuilder.build(), FILE_SERVER_URL, FILE_SERVER_PUBLIC_KEY).map {
+            OnionRequestAPI.sendOnionRequest(
+                request = requestBuilder.build(),
+                server = request.fileServer.url.host,
+                x25519PublicKey = request.fileServer.publicKeyHex
+            ).map {
                 val body = it.body ?: throw Error.ParsingFailed
 
                 SendResponse(
@@ -113,9 +119,11 @@ object FileServerApi {
 
     fun upload(
         file: ByteArray,
+        fileServer: FileServer = DEFAULT_FILE_SERVER,
         customExpiresDuration: Duration? = null
     ): Promise<UploadResult, Exception> {
         val request = Request(
+            fileServer = fileServer,
             verb = HTTP.Verb.POST,
             endpoint = "file",
             body = file,
@@ -134,7 +142,8 @@ object FileServerApi {
 
             UploadResult(
                 fileId = id,
-                fileUrl = fileServerUrl.newBuilder()
+                fileUrl = fileServer.url
+                    .newBuilder()
                     .addPathSegment("file")
                     .addPathSegments(id)
                     .build()
@@ -144,9 +153,106 @@ object FileServerApi {
         }
     }
 
-    fun download(file: String): Promise<SendResponse, Exception> {
-        val request = Request(verb = HTTP.Verb.GET, endpoint = "file/$file")
+    fun download(
+        fileId: String,
+        fileServer: FileServer = DEFAULT_FILE_SERVER
+    ): Promise<SendResponse, Exception> {
+        val request = Request(
+            fileServer = fileServer,
+            verb = HTTP.Verb.GET,
+            endpoint = "file/$fileId"
+        )
         return send(request)
+    }
+
+    fun buildAttachmentUrl(
+        fileId: String,
+        fileServer: FileServer,
+        usesDeterministicEncryption: Boolean
+    ): HttpUrl {
+        val urlFragment = sequenceOf(
+            "d".takeIf { usesDeterministicEncryption },
+            if (fileServer != DEFAULT_FILE_SERVER) {
+                "p=${fileServer.publicKeyHex}"
+            } else {
+                null
+            }
+        ).filterNotNull()
+            .joinToString(separator = "&")
+
+        return fileServer.url
+            .newBuilder()
+            .addPathSegment("file")
+            .addPathSegment(fileId)
+            .fragment(urlFragment.takeIf { it.isNotBlank() })
+            .build()
+    }
+
+    data class URLParseResult(
+        val fileId: String,
+        val fileServer: FileServer,
+        val usesDeterministicEncryption: Boolean
+    )
+
+    fun parseAttachmentUrl(url: HttpUrl): URLParseResult {
+        check(url.pathSegments.size == 2) {
+            "Invalid URL: requiring exactly 2 path segments"
+        }
+
+        check(url.pathSegments[0] == "file") {
+            "Invalid URL: first path segment must be 'file'"
+        }
+
+        val id = url.pathSegments[1]
+        check(id.isNotBlank()) {
+            "Invalid URL: id must not be blank"
+        }
+
+        var deterministicEncryption = false
+        var fileServerPubKeyHex: String? = null
+
+        url.fragment
+            .orEmpty()
+            .splitToSequence('&')
+            .forEach { fragment ->
+                when {
+                    fragment == "d" || fragment == "d=" -> deterministicEncryption = true
+                    fragment.startsWith("p=", ignoreCase = true) -> {
+                        fileServerPubKeyHex = fragment.substringAfter("p=").takeIf { it.isNotBlank() }
+                    }
+                }
+            }
+
+        val fileServerUrl = url.newBuilder()
+            .removePathSegment(0) // remove "file"
+            .removePathSegment(0) // remove id
+            .fragment(null) // remove fragment
+            .build()
+
+        when {
+            !fileServerPubKeyHex.isNullOrEmpty() -> {
+                // We'll use the public key we get from the URL
+                return URLParseResult(
+                    fileId = id,
+                    fileServer = FileServer(url = fileServerUrl, publicKeyHex = fileServerPubKeyHex),
+                    usesDeterministicEncryption = deterministicEncryption
+                )
+            }
+
+            fileServerUrl == DEFAULT_FILE_SERVER.url -> {
+                // We'll use the default file server
+                return URLParseResult(
+                    fileId = id,
+                    fileServer = DEFAULT_FILE_SERVER,
+                    usesDeterministicEncryption = deterministicEncryption
+                )
+            }
+
+            else -> {
+                // We don't have a public key, and it's not the default file server
+                throw Error.InvalidURL
+            }
+        }
     }
 
     /**
@@ -159,9 +265,9 @@ object FileServerApi {
      *
      * https://github.com/session-foundation/session-file-server/blob/dev/doc/api.yaml#L119
      */
-    suspend fun getClientVersion(): VersionData {
+    suspend fun getClientVersion(fileServer: FileServer = DEFAULT_FILE_SERVER): VersionData {
         // Generate the auth signature
-        val secretKey =  MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()?.secretKey?.data
+        val secretKey =  storage.getUserED25519KeyPair()?.secretKey?.data
             ?: throw (Error.NoEd25519KeyPair)
 
         val blindedKeys = BlindKeyAPI.blindVersionKeyPair(secretKey)
@@ -172,6 +278,7 @@ object FileServerApi {
         val blindedPkHex = "07" + blindedKeys.pubKey.data.toHexString()
 
         val request = Request(
+            fileServer = fileServer,
             verb = HTTP.Verb.GET,
             endpoint = "session_version",
             queryParameters = mapOf("platform" to "android"),

@@ -463,6 +463,14 @@ fun DebugMenu(
                     }
                 )
 
+                DebugSwitchRow(
+                    text = "Force using deterministic attachment uploads",
+                    checked = uiState.forceDeterministicAttachment,
+                    onCheckedChange = {
+                        sendCommand(DebugMenuViewModel.Commands.ToggleDeterministicAttachmentUpload)
+                    }
+                )
+
                 SlimOutlineButton(
                     modifier = Modifier.fillMaxWidth(),
                     text = "Clear All Trusted Downloads",
@@ -751,6 +759,7 @@ fun PreviewDebugMenu() {
                 debugSubscriptionStatuses = setOf(DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE),
                 selectedDebugSubscriptionStatus = DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE,
                 debugProPlans = emptyList(),
+                forceDeterministicAttachment = false
             ),
             sendCommand = {},
             onClose = {}
