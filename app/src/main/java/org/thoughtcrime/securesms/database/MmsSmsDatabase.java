@@ -123,13 +123,15 @@ public class MmsSmsDatabase extends Database {
     }
   }
 
-  public @Nullable MessageRecord getMessageFor(long timestamp, String serializedAuthor) {
-    return getMessageFor(timestamp, serializedAuthor, true);
+  public @Nullable MessageRecord getMessageFor(long threadId, long timestamp, String serializedAuthor) {
+    return getMessageFor(threadId, timestamp, serializedAuthor, true);
   }
 
-  public @Nullable MessageRecord getMessageFor(long timestamp, String serializedAuthor, boolean getQuote) {
+  public @Nullable MessageRecord getMessageFor(long threadId, long timestamp, String serializedAuthor, boolean getQuote) {
+    String selection = MmsSmsColumns.NORMALIZED_DATE_SENT + " = " + timestamp + " AND " +
+            MmsSmsColumns.THREAD_ID + " = " + threadId;
 
-    try (Cursor cursor = queryTables(PROJECTION, MmsSmsColumns.NORMALIZED_DATE_SENT + " = " + timestamp, true, null, null, null)) {
+    try (Cursor cursor = queryTables(PROJECTION, selection, true, null, null, null)) {
       MmsSmsDatabase.Reader reader = readerFor(cursor, getQuote);
 
       MessageRecord messageRecord;
@@ -166,8 +168,8 @@ public class MmsSmsDatabase extends Database {
     return null;
   }
 
-  public @Nullable MessageRecord getMessageFor(long timestamp, Address author) {
-    return getMessageFor(timestamp, author.toString());
+  public @Nullable MessageRecord getMessageFor(long threadId, long timestamp, Address author) {
+    return getMessageFor(threadId, timestamp, author.toString());
   }
 
   public Cursor getConversation(long threadId, boolean reverse, long offset, long limit) {
