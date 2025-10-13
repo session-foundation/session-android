@@ -35,12 +35,17 @@
 
     <androidx.compose.ui.platform.ComposeView
         android:id="@+id/contactAvatar"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         app:layout_constraintStart_toStartOf="@id/fullscreen_renderer_container"
         app:layout_constraintEnd_toEndOf="@id/fullscreen_renderer_container"
         app:layout_constraintTop_toBottomOf="@id/remote_recipient_name"
         app:layout_constraintBottom_toTopOf="@id/titleContainer"
-        android:layout_width="@dimen/extra_large_profile_picture_size"
-        android:layout_height="@dimen/extra_large_profile_picture_size" />
+        app:layout_constraintWidth_max="@dimen/extra_large_profile_picture_size"
+        app:layout_constraintHeight_max="@dimen/extra_large_profile_picture_size"
+        app:layout_constraintWidth_min="@dimen/large_profile_picture_size"
+        app:layout_constraintHeight_min="@dimen/large_profile_picture_size"
+        app:layout_constraintDimensionRatio="H,1:1"/>
 
     <ImageView
         android:id="@+id/back_arrow"
@@ -173,7 +178,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginBottom="@dimen/large_spacing"
-        app:layout_constraintHorizontal_bias="0.2"
+        app:layout_constraintHorizontal_bias="0.25"
         />
 
     <ImageView
@@ -215,7 +220,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginBottom="@dimen/large_spacing"
-        app:layout_constraintHorizontal_bias="0.8"
+        app:layout_constraintHorizontal_bias="0.75"
         />
 
     <ImageView
