@@ -478,8 +478,7 @@
     <string name="enjoyingSessionDescription">You\'ve been using {app_name} for a little while, how’s it going? We’d really appreciate hearing your thoughts.</string>
     <string name="enter">Enter</string>
     <string name="enterPasswordDescription">Enter the password you set for {app_name}</string>
-    <string name="enterPasswordTooltip">Enter the password you use to unlock Session &amp;#13;
-on startup, not your Recovery Password</string>
+    <string name="enterPasswordTooltip">Enter the password you use to unlock {app_name} on startup, not your Recovery Password</string>
     <string name="errorCheckingProStatus">Error checking {pro} status</string>
     <string name="errorConnection">Please check your internet connection and try again.</string>
     <string name="errorCopyAndQuit">Copy Error and Quit</string>
