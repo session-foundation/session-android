@@ -1651,7 +1651,7 @@ class AppTextSecurePreferences @Inject constructor(
     }
 
     /**
-     * Clear all prefs and reset or observables
+     * Clear all prefs and reset our observables
      */
     override fun clearAll() {
         pushEnabled.update { false }

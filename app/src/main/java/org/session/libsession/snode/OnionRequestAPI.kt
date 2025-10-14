@@ -60,7 +60,7 @@ object OnionRequestAPI {
         .map { it.isNotEmpty() }
         .stateIn(GlobalScope, SharingStarted.Eagerly, paths.value.isNotEmpty())
 
-    private val NON_PENALIZING_STATUSES = setOf(400, 403, 404, 406, 425)
+    private val NON_PENALIZING_STATUSES = setOf(403, 404, 406, 425)
 
     init {
         // Listen for the changes in paths and persist it to the db
