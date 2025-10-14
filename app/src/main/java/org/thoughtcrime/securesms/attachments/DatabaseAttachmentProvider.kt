@@ -31,6 +31,7 @@ import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MessagingDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.mms.MediaConstraints
@@ -50,7 +51,7 @@ class DatabaseAttachmentProvider @Inject constructor(
     helper: Provider<SQLCipherOpenHelper>,
     private val attachmentDatabase: AttachmentDatabase,
     private val mmsDatabase: MmsDatabase,
-    private val smsDatabase: MmsDatabase,
+    private val smsDatabase: SmsDatabase,
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val lokiMessageDatabase: LokiMessageDatabase,
     private val attachmentProcessor: AttachmentProcessor,
