@@ -173,6 +173,7 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.giph.ui.GiphyActivity
 import org.thoughtcrime.securesms.groups.GroupMembersActivity
 import org.thoughtcrime.securesms.groups.OpenGroupManager
+import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.home.search.searchName
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewRepository
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewUtil
@@ -282,9 +283,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private val address: Address.Conversable by lazy {
-        requireNotNull(IntentCompat.getParcelableExtra(intent, ADDRESS, Address.Conversable::class.java)) {
-            "Address must be provided in the intent extras"
-        }
+        IntentCompat.getParcelableExtra(intent, ADDRESS, Address.Conversable::class.java)!! // safe to do !! since we check for this in onCreate
     }
 
     private val viewModel: ConversationViewModel by viewModels(extrasProducer = {
@@ -521,6 +520,18 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
         super.onCreate(savedInstanceState, isReady)
+
+        // Check if address is null before proceeding with initialization
+        if (IntentCompat.getParcelableExtra(intent, ADDRESS, Address.Conversable::class.java) == null) {
+            Log.w(TAG, "ConversationActivityV2 launched without ADDRESS extra - Returning home")
+            val intent = Intent(this, HomeActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            startActivity(intent)
+            finish()
+            return
+        }
+
         binding = ActivityConversationV2Binding.inflate(layoutInflater)
         setContentView(binding.root)
 
