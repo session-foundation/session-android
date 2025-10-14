@@ -1,6 +1,5 @@
 package org.session.libsession.messaging.jobs
 
-import coil3.size.Size
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
@@ -8,9 +7,6 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import network.loki.messenger.libsession_util.encrypt.Attachments
-import nl.komponents.kovenant.Promise
-import nl.komponents.kovenant.functional.map
-import okhttp3.HttpUrl
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.file_server.FileServerApi
@@ -121,13 +117,8 @@ class AttachmentUploadJob @AssistedInject constructor(
                                    isDeterministicallyEncrypted: Boolean,
                                ) -> Pair<String, String>
     ): Pair<ByteArray, UploadResult> {
-        val processResult = attachment.inputStream.use { stream ->
-            attachmentProcessor.process(
-                mimeType = attachment.contentType,
-                data = stream,
-                maxImageResolution = Size(1024, 768),
-                compressImage = true
-            )
+        val input = attachment.inputStream.use {
+            it.readBytes()
         }
 
         val key: ByteArray
@@ -139,7 +130,7 @@ class AttachmentUploadJob @AssistedInject constructor(
             encrypt && preferences.forcesDeterministicAttachmentUpload -> {
                 deterministicallyEncrypted = true
                 val result = attachmentProcessor.encryptDeterministically(
-                    plaintext = processResult.data,
+                    plaintext = input,
                     domain = Attachments.Domain.Attachment
                 )
                 key = result.key
@@ -149,7 +140,7 @@ class AttachmentUploadJob @AssistedInject constructor(
 
             encrypt -> {
                 deterministicallyEncrypted = false
-                val result = attachmentProcessor.encrypt(plaintext = processResult.data)
+                val result = attachmentProcessor.encrypt(plaintext = input)
                 key = result.first.key
                 dataToUpload = result.first.ciphertext
                 digest = result.second
@@ -158,7 +149,7 @@ class AttachmentUploadJob @AssistedInject constructor(
             else -> {
                 deterministicallyEncrypted = false
                 key = byteArrayOf()
-                dataToUpload = processResult.data
+                dataToUpload = input
                 digest = attachmentProcessor.digest(dataToUpload)
             }
         }

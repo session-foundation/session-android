@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.attachments
 
 import android.content.Context
 import android.text.TextUtils
+import coil3.size.Size
 import com.google.protobuf.ByteString
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.session.libsession.database.MessageDataProvider
@@ -32,8 +33,10 @@ import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.mms.MediaConstraints
+import org.thoughtcrime.securesms.mms.MediaStream
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.MediaUtil
+import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
 import javax.inject.Inject
@@ -49,6 +52,7 @@ class DatabaseAttachmentProvider @Inject constructor(
     private val smsDatabase: MmsDatabase,
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val lokiMessageDatabase: LokiMessageDatabase,
+    private val attachmentProcessor: AttachmentProcessor,
 ) : Database(context, helper), MessageDataProvider {
 
     override fun getAttachmentStream(attachmentId: Long): SessionServiceAttachmentStream? {
@@ -66,10 +70,11 @@ class DatabaseAttachmentProvider @Inject constructor(
         return databaseAttachment.toSignalAttachmentStream(context)
     }
 
-    override fun getScaledSignalAttachmentStream(attachmentId: Long): SignalServiceAttachmentStream? {
-        val databaseAttachment = attachmentDatabase.getAttachment(AttachmentId(attachmentId, 0)) ?: return null
+    override suspend fun getScaledSignalAttachmentStream(attachmentId: Long): SignalServiceAttachmentStream? {
+        val id = AttachmentId(attachmentId, 0)
+        val databaseAttachment = attachmentDatabase.getAttachment(id) ?: return null
         val mediaConstraints = MediaConstraints.getPushMediaConstraints()
-        val scaledAttachment = scaleAndStripExif(attachmentDatabase, mediaConstraints, databaseAttachment) ?: return null
+        val scaledAttachment = processAttachment(attachmentDatabase, mediaConstraints, databaseAttachment) ?: return null
         return getAttachmentFor(scaledAttachment)
     }
 
@@ -259,22 +264,25 @@ class DatabaseAttachmentProvider @Inject constructor(
         attachmentDatabase
             .getAttachment(AttachmentId(attachmentId, 0))
 
-    private fun scaleAndStripExif(attachmentDatabase: AttachmentDatabase, constraints: MediaConstraints, attachment: Attachment): Attachment? {
+    private suspend fun processAttachment(
+        attachmentDatabase: AttachmentDatabase,
+        constraints: MediaConstraints,
+        attachment: Attachment,
+    ): Attachment? {
         return try {
-            if (constraints.isSatisfied(context, attachment)) {
-                if (MediaUtil.isJpeg(attachment)) {
-                    val stripped = constraints.getResizedMedia(context, attachment)
-                    attachmentDatabase.updateAttachmentData(attachment, stripped)
-                } else {
-                    attachment
-                }
-            } else if (constraints.canResize(attachment)) {
-                val resized = constraints.getResizedMedia(context, attachment)
-                attachmentDatabase.updateAttachmentData(attachment, resized)
-            } else {
-                throw Exception("Size constraints could not be met!")
-            }
+            val result = attachmentProcessor.process(
+                mimeType = attachment.contentType,
+                data = { PartAuthority.getAttachmentStream(context, attachment.dataUri!!) },
+                maxImageResolution = Size(constraints.getImageMaxWidth(context), constraints.getImageMaxHeight(context)),
+                compressImage = false,
+            ) ?: return null
+
+            attachmentDatabase.updateAttachmentData(
+                attachment,
+                MediaStream(ByteArrayInputStream(result.data), result.mimeType, result.imageSize.width, result.imageSize.height)
+            )
         } catch (e: Exception) {
+            Log.e(TAG, "Error processing attachment", e)
             return null
         }
     }
@@ -299,7 +307,10 @@ class DatabaseAttachmentProvider @Inject constructor(
         return null
     }
 
+
 }
+
+private const val TAG = "DatabaseAttachmentProvider"
 
 fun DatabaseAttachment.toAttachmentPointer(): SessionServiceAttachmentPointer {
     return SessionServiceAttachmentPointer(attachmentId.rowId, contentType, key?.toByteArray(), Optional.fromNullable(size.toInt()), Optional.absent(), width, height, Optional.fromNullable(digest), filename, isVoiceNote, Optional.fromNullable(caption), url)

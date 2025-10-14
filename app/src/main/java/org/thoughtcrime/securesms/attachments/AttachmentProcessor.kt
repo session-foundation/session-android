@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.attachments
 
 import android.content.Context
 import android.graphics.Bitmap
+import androidx.compose.ui.unit.IntSize
 import coil3.BitmapImage
 import coil3.ImageLoader
 import coil3.decode.DataSource
@@ -48,53 +49,56 @@ class AttachmentProcessor @Inject constructor(
     class ProcessResult(
         val data: ByteArray,
         val mimeType: String,
+        val imageSize: IntSize
     )
 
     suspend fun process(
         mimeType: String,
-        data: InputStream,
+        data: () -> InputStream,
         maxImageResolution: Size?,
         compressImage: Boolean,
-    ): ProcessResult {
+    ): ProcessResult? {
         when {
             mimeType.startsWith("image/gif", ignoreCase = true) -> {
                 if (maxImageResolution == null) {
                     Log.d(TAG, "Skipping processing of GIF with no size constraints")
-                    return ProcessResult(
-                        data = data.readBytes(),
-                        mimeType = mimeType,
-                    )
+                    return null
                 }
 
-                return processGif(data, maxImageResolution)
+                return processGif(data(), maxImageResolution)
             }
 
             mimeType.startsWith("image/jpeg", ignoreCase = true) ||
                     mimeType.startsWith("image/jpg", ignoreCase = true) -> {
+                val (data, imageSize) = processStaticImage(
+                    mimeType = mimeType,
+                    data = data(),
+                    maxImageResolution = maxImageResolution,
+                    format = Bitmap.CompressFormat.JPEG,
+                    quality = if (compressImage) 75 else 100,
+                )
                 return ProcessResult(
-                    data = processStaticImage(
-                        mimeType = mimeType,
-                        data = data,
-                        maxImageResolution = maxImageResolution,
-                        format = Bitmap.CompressFormat.JPEG,
-                        quality = if (compressImage) 75 else 100,
-                    ),
+                    data = data,
+                    imageSize = imageSize,
                     mimeType = mimeType,
                 )
             }
 
             mimeType.startsWith("image/png", ignoreCase = true) -> {
+                val (data, imageSize) = processStaticImage(
+                    mimeType = mimeType,
+                    data = data(),
+                    maxImageResolution = maxImageResolution,
+                    format = if (android.os.Build.VERSION.SDK_INT >= 30)
+                        Bitmap.CompressFormat.WEBP_LOSSLESS
+                    else
+                        Bitmap.CompressFormat.WEBP,
+                    quality = if (compressImage) 75 else 100,
+                )
+
                 return ProcessResult(
-                    data = processStaticImage(
-                        mimeType = mimeType,
-                        data = data,
-                        maxImageResolution = maxImageResolution,
-                        format = if (android.os.Build.VERSION.SDK_INT >= 30)
-                            Bitmap.CompressFormat.WEBP_LOSSLESS
-                        else
-                            Bitmap.CompressFormat.WEBP,
-                        quality = if (compressImage) 75 else 100,
-                    ),
+                    data = data,
+                    imageSize = imageSize,
                     mimeType = "image/webp",
                 )
             }
@@ -102,29 +106,27 @@ class AttachmentProcessor @Inject constructor(
             mimeType.startsWith("image/webp", ignoreCase = true) -> {
                 // For webp, we'll have to find out if it's animated upfront to avoid
                 // extra costly decoding.
-                val (isAnimated, updatedInputStream) = isWebPAnimation(data)
+                val (isAnimated, updatedInputStream) = isWebPAnimation(data())
                 if (isAnimated) {
                     return processAnimatedWebP(updatedInputStream, maxImageResolution)
                 }
 
+                val (data, imageSize) = processStaticImage(
+                    mimeType = mimeType,
+                    data = updatedInputStream,
+                    maxImageResolution = maxImageResolution,
+                    format = Bitmap.CompressFormat.WEBP,
+                    quality = if (compressImage) 75 else 100,
+                )
+
                 return ProcessResult(
-                    data = processStaticImage(
-                        mimeType = mimeType,
-                        data = updatedInputStream,
-                        maxImageResolution = maxImageResolution,
-                        format = Bitmap.CompressFormat.WEBP,
-                        quality = if (compressImage) 75 else 100,
-                    ),
+                    data = data,
+                    imageSize = imageSize,
                     mimeType = mimeType,
                 )
             }
 
-            else -> {
-                return ProcessResult(
-                    data = data.readBytes(),
-                    mimeType = mimeType,
-                )
-            }
+            else -> return null // No processing needed
         }
     }
 
@@ -225,7 +227,7 @@ class AttachmentProcessor @Inject constructor(
         maxImageResolution: Size?,
         format: Bitmap.CompressFormat,
         quality: Int,
-    ): ByteArray {
+    ): Pair<ByteArray, IntSize> {
         val builder = ImageRequest.Builder(context)
             .allowHardware(false)
             .allowRgb565(true)
@@ -257,7 +259,7 @@ class AttachmentProcessor @Inject constructor(
 
         return ByteArrayOutputStream().also { out ->
             bitmap.compress(format, quality, out)
-        }.toByteArray()
+        }.toByteArray() to IntSize(bitmap.width, bitmap.height)
     }
 
     private fun processGif(
