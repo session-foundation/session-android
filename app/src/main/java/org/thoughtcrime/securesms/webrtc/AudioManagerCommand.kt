@@ -26,7 +26,7 @@ open class AudioManagerCommand: Parcelable {
     data class Stop(val playDisconnect: Boolean): AudioManagerCommand()
 
     @Parcelize
-    data class StartIncomingRinger(val vibrate: Boolean): AudioManagerCommand()
+    data object StartIncomingRinger: AudioManagerCommand()
 
     @Parcelize
     data class SetUserDevice(val device: SignalAudioManager.AudioDevice): AudioManagerCommand()

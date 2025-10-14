@@ -823,7 +823,7 @@ class CallManager @Inject constructor(
     }
 
     fun startIncomingRinger() {
-        signalAudioManager.handleCommand(AudioManagerCommand.StartIncomingRinger(true))
+        signalAudioManager.handleCommand(AudioManagerCommand.StartIncomingRinger)
     }
 
     fun startCommunication() {
