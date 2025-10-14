@@ -930,12 +930,6 @@ interface TextSecurePreferences {
             setBooleanPreference(context, FINGERPRINT_KEY_GENERATED, true)
         }
 
-        @JvmStatic
-        fun clearAll(context: Context) {
-            getDefaultSharedPreferences(context).edit().clear().commit()
-        }
-
-
         // ----- Get / set methods for if we have already warned the user that saving attachments will allow other apps to access them -----
         // Note: We only ever show the warning dialog about this ONCE - when the user accepts this fact we write true to the flag & never show again.
         @JvmStatic
@@ -1656,8 +1650,16 @@ class AppTextSecurePreferences @Inject constructor(
         return getBooleanPreference(AUTOPLAY_AUDIO_MESSAGES, false)
     }
 
+    /**
+     * Clear all prefs and reset or observables
+     */
     override fun clearAll() {
-        getDefaultSharedPreferences(context).edit().clear().commit()
+        pushEnabled.update { false }
+        localNumberState.update { null }
+        postProLaunchState.update { false }
+        hiddenPasswordState.update { false }
+
+        getDefaultSharedPreferences(context).edit(commit = true) { clear() }
     }
 
     override fun getHidePassword() = getBooleanPreference(HIDE_PASSWORD, false)
