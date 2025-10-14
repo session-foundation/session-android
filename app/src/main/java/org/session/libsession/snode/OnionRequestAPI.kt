@@ -418,10 +418,10 @@ object OnionRequestAPI {
                     Log.d("Loki","Request returned a non penalizing code ${exception.statusCode} with message: $message")
                 }
                 // we do not want to penalize the path/nodes when:
-                // - the exit node reached the server but the destination returned 5xx
-                // - the exit node couldn't reach its destination with a 5xx, but the destination was a community (which we can know from the server's name being in the error message)
+                // - the exit node reached the server but the destination returned 5xx or 400
+                // - the exit node couldn't reach its destination with a 5xx or 400, but the destination was a community (which we can know from the server's name being in the error message)
                 else if (destination is Destination.Server &&
-                    (exception.statusCode in 500..504) &&
+                    (exception.statusCode in 500..504 || exception.statusCode == 400) &&
                     (exception is HTTPRequestFailedAtDestinationException || exception.body?.contains(destination.host) == true)) {
                     Log.d("Loki","Destination server error - Non path penalizing. Request returned code ${exception.statusCode} with message: $message")
                 } else if (message == "Loki Server error") {
