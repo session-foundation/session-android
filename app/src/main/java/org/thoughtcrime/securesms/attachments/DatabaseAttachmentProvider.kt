@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.attachments
 
 import android.content.Context
 import android.text.TextUtils
+import androidx.compose.ui.unit.IntSize
 import coil3.size.Size
 import com.google.protobuf.ByteString
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -273,7 +274,7 @@ class DatabaseAttachmentProvider @Inject constructor(
             val result = attachmentProcessor.process(
                 mimeType = attachment.contentType,
                 data = { PartAuthority.getAttachmentStream(context, attachment.dataUri!!) },
-                maxImageResolution = Size(constraints.getImageMaxWidth(context), constraints.getImageMaxHeight(context)),
+                maxImageResolution = IntSize(constraints.getImageMaxWidth(context), constraints.getImageMaxHeight(context)),
                 compressImage = false,
             ) ?: return null
 

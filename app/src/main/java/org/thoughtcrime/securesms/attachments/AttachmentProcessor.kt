@@ -55,7 +55,7 @@ class AttachmentProcessor @Inject constructor(
     suspend fun process(
         mimeType: String,
         data: () -> InputStream,
-        maxImageResolution: Size?,
+        maxImageResolution: IntSize?,
         compressImage: Boolean,
     ): ProcessResult? {
         when {
@@ -75,7 +75,7 @@ class AttachmentProcessor @Inject constructor(
                     data = data(),
                     maxImageResolution = maxImageResolution,
                     format = Bitmap.CompressFormat.JPEG,
-                    quality = if (compressImage) 75 else 100,
+                    quality = if (compressImage) 75 else 95,
                 )
                 return ProcessResult(
                     data = data,
@@ -93,7 +93,7 @@ class AttachmentProcessor @Inject constructor(
                         Bitmap.CompressFormat.WEBP_LOSSLESS
                     else
                         Bitmap.CompressFormat.WEBP,
-                    quality = if (compressImage) 75 else 100,
+                    quality = if (compressImage) 75 else 95,
                 )
 
                 return ProcessResult(
@@ -116,7 +116,7 @@ class AttachmentProcessor @Inject constructor(
                     data = updatedInputStream,
                     maxImageResolution = maxImageResolution,
                     format = Bitmap.CompressFormat.WEBP,
-                    quality = if (compressImage) 75 else 100,
+                    quality = if (compressImage) 75 else 95,
                 )
 
                 return ProcessResult(
@@ -216,7 +216,7 @@ class AttachmentProcessor @Inject constructor(
 
     private fun processAnimatedWebP(
         updatedInputStream: InputStream,
-        maxImageResolution: Size?
+        maxImageResolution: IntSize?,
     ): ProcessResult {
         TODO("Not yet implemented")
     }
@@ -224,7 +224,7 @@ class AttachmentProcessor @Inject constructor(
     private suspend fun processStaticImage(
         mimeType: String,
         data: InputStream,
-        maxImageResolution: Size?,
+        maxImageResolution: IntSize?,
         format: Bitmap.CompressFormat,
         quality: Int,
     ): Pair<ByteArray, IntSize> {
@@ -247,7 +247,7 @@ class AttachmentProcessor @Inject constructor(
             }
 
         if (maxImageResolution != null) {
-            builder.size(maxImageResolution)
+            builder.size(maxImageResolution.width, maxImageResolution.height)
                 .precision(Precision.INEXACT)
         }
 
@@ -264,7 +264,7 @@ class AttachmentProcessor @Inject constructor(
 
     private fun processGif(
         data: InputStream,
-        maxImageResolution: Size
+        maxImageResolution: IntSize
     ): ProcessResult {
         TODO("Not yet implemented")
     }

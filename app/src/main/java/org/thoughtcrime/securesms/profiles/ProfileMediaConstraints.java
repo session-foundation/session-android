@@ -8,12 +8,12 @@ import org.thoughtcrime.securesms.mms.MediaConstraints;
 public class ProfileMediaConstraints extends MediaConstraints {
   @Override
   public int getImageMaxWidth(Context context) {
-    return 640;
+    return 600;
   }
 
   @Override
   public int getImageMaxHeight(Context context) {
-    return 640;
+    return 600;
   }
 
   @Override

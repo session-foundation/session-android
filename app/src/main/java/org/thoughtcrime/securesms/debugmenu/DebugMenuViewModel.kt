@@ -74,7 +74,7 @@ class DebugMenuViewModel @Inject constructor(
             hideMessageRequests = textSecurePreferences.hasHiddenMessageRequests(),
             hideNoteToSelf = configFactory.withUserConfigs { it.userProfile.getNtsPriority() == PRIORITY_HIDDEN },
             forceDeprecationState = deprecationManager.deprecationStateOverride.value,
-            forceDeterministicAttachment = textSecurePreferences.forcesDeterministicAttachmentUpload,
+            forceDeterministicAttachment = textSecurePreferences.forcesDeterministicAttachmentEncryption,
             availableDeprecationState = listOf(null) + LegacyGroupDeprecationManager.DeprecationState.entries.toList(),
             deprecatedTime = deprecationManager.deprecatedTime.value,
             deprecatingStartTime = deprecationManager.deprecatingStartTime.value,
@@ -309,7 +309,7 @@ class DebugMenuViewModel @Inject constructor(
             is Commands.ToggleDeterministicAttachmentUpload -> {
                 val newValue = !_uiState.value.forceDeterministicAttachment
                 _uiState.update { it.copy(forceDeterministicAttachment = newValue) }
-                textSecurePreferences.forcesDeterministicAttachmentUpload = newValue
+                textSecurePreferences.forcesDeterministicAttachmentEncryption = newValue
             }
 
         }

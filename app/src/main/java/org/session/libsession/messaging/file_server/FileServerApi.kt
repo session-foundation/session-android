@@ -119,6 +119,7 @@ class FileServerApi @Inject constructor(
 
     fun upload(
         file: ByteArray,
+        usedDeterministicEncryption: Boolean,
         fileServer: FileServer = DEFAULT_FILE_SERVER,
         customExpiresDuration: Duration? = null
     ): Promise<UploadResult, Exception> {
@@ -142,12 +143,11 @@ class FileServerApi @Inject constructor(
 
             UploadResult(
                 fileId = id,
-                fileUrl = fileServer.url
-                    .newBuilder()
-                    .addPathSegment("file")
-                    .addPathSegments(id)
-                    .build()
-                    .toString(),
+                fileUrl = buildAttachmentUrl(
+                    fileId = id,
+                    fileServer = fileServer,
+                    usesDeterministicEncryption = usedDeterministicEncryption
+                ).toString(),
                 expires = expiresEpochSeconds?.asEpochSeconds()
             )
         }

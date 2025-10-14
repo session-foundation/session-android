@@ -18,8 +18,8 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import network.loki.messenger.libsession_util.encrypt.Attachments
 import network.loki.messenger.libsession_util.util.Bytes
-import okio.Buffer
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -28,18 +28,12 @@ import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
 import org.session.libsession.utilities.userConfigsChanged
-import org.session.libsignal.streams.DigestingRequestBody
-import org.session.libsignal.streams.ProfileCipherOutputStream
-import org.session.libsignal.streams.ProfileCipherOutputStreamFactory
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.ProfileAvatarData
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.util.DateUtils.Companion.millsToInstant
 import org.thoughtcrime.securesms.util.castAwayType
-import java.io.ByteArrayInputStream
 import java.io.File
-import java.security.SecureRandom
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -61,6 +55,7 @@ class AvatarUploadManager @Inject constructor(
     localEncryptedFileInputStreamFactory: LocalEncryptedFileInputStream.Factory,
     private val localEncryptedFileOutputStreamFactory: LocalEncryptedFileOutputStream.Factory,
     private val fileServerApi: FileServerApi,
+    private val attachmentProcessor: AttachmentProcessor,
 ) : OnAppStartupComponent {
     @OptIn(ExperimentalCoroutinesApi::class)
     val reuploadState: StateFlow<Unit> = prefs.watchLocalNumber()
@@ -146,36 +141,25 @@ class AvatarUploadManager @Inject constructor(
             "Should not upload an empty avatar"
         }
 
-        val inputStream = ByteArrayInputStream(pictureData)
-        val outputStream =
-            ProfileCipherOutputStream.getCiphertextLength(pictureData.size.toLong())
-        val profileKey = ByteArray(PROFILE_KEY_LENGTH)
-            .also(SecureRandom()::nextBytes)
-
-        val pad = ProfileAvatarData(
-            inputStream,
-            outputStream,
-            "image/jpeg",
-            ProfileCipherOutputStreamFactory(profileKey)
-        )
-        val drb = DigestingRequestBody(
-            pad.data,
-            pad.outputStreamFactory,
-            pad.contentType,
-            pad.dataLength,
-        )
-        val b = Buffer()
-        drb.writeTo(b)
-        val data = b.readByteArray()
+        val usesDeterministicEncryption = prefs.forcesDeterministicAttachmentEncryption
+        val result = if (usesDeterministicEncryption) {
+            attachmentProcessor.encryptDeterministically(
+                plaintext = pictureData,
+                domain = Attachments.Domain.ProfilePic
+            )
+        } else {
+            attachmentProcessor.encrypt(pictureData).first
+        }
 
         val uploadResult = fileServerApi.upload(
-            file = data,
+            file = result.ciphertext,
+            usedDeterministicEncryption = usesDeterministicEncryption,
             customExpiresDuration = DEBUG_AVATAR_TTL.takeIf { prefs.forcedShortTTL() }
         ).await()
 
         Log.d(TAG, "Avatar upload finished with $uploadResult")
 
-        val remoteFile = RemoteFile.Encrypted(url = uploadResult.fileUrl, key = Bytes(profileKey))
+        val remoteFile = RemoteFile.Encrypted(url = uploadResult.fileUrl, key = Bytes(result.key))
 
         // To save us from downloading this avatar again, we store the data as it would be downloaded
         localEncryptedFileOutputStreamFactory.create(

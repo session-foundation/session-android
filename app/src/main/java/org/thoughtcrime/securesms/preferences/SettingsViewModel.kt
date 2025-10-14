@@ -3,6 +3,8 @@ package org.thoughtcrime.securesms.preferences
 import android.content.Context
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.ui.unit.IntSize
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.canhub.cropper.CropImage
@@ -42,6 +44,7 @@ import org.session.libsession.utilities.recipients.isPro
 import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.NoExternalStorageException
+import org.thoughtcrime.securesms.attachments.AttachmentProcessor
 import org.thoughtcrime.securesms.attachments.AvatarUploadManager
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
 import org.thoughtcrime.securesms.database.RecipientRepository
@@ -80,6 +83,7 @@ class SettingsViewModel @Inject constructor(
     private val storage: StorageProtocol,
     private val inAppReviewManager: InAppReviewManager,
     private val avatarUploadManager: AvatarUploadManager,
+    private val attachmentProcessor: AttachmentProcessor,
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
 
@@ -181,29 +185,7 @@ class SettingsViewModel @Inject constructor(
     fun onAvatarPicked(result: CropImageView.CropResult) {
         when {
             result.isSuccessful -> {
-                Log.i(TAG, result.getUriFilePath(context).toString())
-
-                viewModelScope.launch(Dispatchers.IO) {
-                    try {
-                        val profilePictureToBeUploaded =
-                            BitmapUtil.createScaledBytes(
-                                context,
-                                result.getUriFilePath(context).toString(),
-                                ProfileMediaConstraints()
-                            ).bitmap
-
-                        // update dialog with temporary avatar (has not been saved/uploaded yet)
-                        _uiState.update {
-                            it.copy(avatarDialogState = AvatarDialogState.TempAvatar(
-                                data = profilePictureToBeUploaded,
-                                isAnimated = false, // cropped avatars can't be animated
-                                hasAvatar = hasAvatar()
-                            ))
-                        }
-                    } catch (e: BitmapDecodingException) {
-                        Log.e(TAG, e)
-                    }
-                }
+                onAvatarPicked("file://${result.getUriFilePath(context)!!}".toUri())
             }
 
             result is CropImage.CancelledResult -> {
@@ -221,9 +203,23 @@ class SettingsViewModel @Inject constructor(
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                val mimeType = context.contentResolver.getType(uri) ?: "image/jpeg"
+                val constraints = ProfileMediaConstraints()
+                val processResult = attachmentProcessor
+                    .process(
+                        mimeType = mimeType,
+                        data = { context.contentResolver.openInputStream(uri)!! },
+                        maxImageResolution = IntSize(
+                            constraints.getImageMaxWidth(context),
+                            constraints.getImageMaxHeight(context)
+                        ),
+                        compressImage = true,
+                    )
 
-                if(bytes == null){
+                val bytes = processResult?.data
+                    ?: context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+
+                if (bytes == null){
                     Log.e(TAG, "Error reading avatar bytes")
                     Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
                 } else {

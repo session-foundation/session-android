@@ -85,17 +85,13 @@ class AttachmentUploadJob @AssistedInject constructor(
                     attachment = attachment,
                     encrypt = true
                 ) { data, isDeterministicallyEncrypted ->
-                    val id = fileServerApi.upload(file = data, fileServer = fileServer)
-                        .await()
-                        .fileId
+                    val result = fileServerApi.upload(
+                        file = data,
+                        usedDeterministicEncryption = isDeterministicallyEncrypted,
+                        fileServer = fileServer
+                    ).await()
 
-                    val url = fileServerApi.buildAttachmentUrl(
-                        fileId = id,
-                        fileServer = fileServer,
-                        usesDeterministicEncryption = isDeterministicallyEncrypted
-                    )
-
-                    id to url.toString()
+                    result.fileId to result.fileUrl
                 }
 
                 handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second)
@@ -127,7 +123,7 @@ class AttachmentUploadJob @AssistedInject constructor(
         val deterministicallyEncrypted: Boolean
 
         when {
-            encrypt && preferences.forcesDeterministicAttachmentUpload -> {
+            encrypt && preferences.forcesDeterministicAttachmentEncryption -> {
                 deterministicallyEncrypted = true
                 val result = attachmentProcessor.encryptDeterministically(
                     plaintext = input,
