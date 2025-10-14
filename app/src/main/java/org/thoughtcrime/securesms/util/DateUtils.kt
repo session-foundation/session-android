@@ -200,25 +200,43 @@ class DateUtils @Inject constructor(
     }
 
     fun getExpiryString(instant: Instant?): String {
-        val now = Instant.now()
-        val timeRemaining = Duration.between(now, instant)
+        if (instant == null) return context.getString(R.string.proExpired)
 
-        // Instant has passed
-        if (timeRemaining.isNegative || timeRemaining.isZero) {
+        val now = Instant.now()
+        val remaining = Duration.between(now, instant)
+
+        // Already expired
+        if (remaining.isNegative || remaining.isZero) {
             return context.getString(R.string.proExpired)
         }
 
-        val totalHours = max(timeRemaining.toHours(), 1)
         val locale = context.resources.configuration.locales[0]
         val format = MeasureFormat.getInstance(locale, MeasureFormat.FormatWidth.WIDE)
 
-        return if (totalHours >= 24) {
-            // More than one full day remaining - show days
-            val days = timeRemaining.toDays()
-            format.format(Measure(days, MeasureUnit.DAY))
-        } else {
-            // Less than 24 hours remaining - show hours
-            format.format(Measure(totalHours, MeasureUnit.HOUR))
+        // Round any fractional second up to the next whole second
+        val totalSeconds = remaining.seconds + if (remaining.nano > 0) 1 else 0
+        val DAY: Long = 86_400
+        val HOUR: Long = 3_600
+        val MIN: Long = 60
+
+        fun ceilDiv(n: Long, d: Long) = (n + d - 1) / d
+
+        return when {
+            // "Days is used when there is more than 1 full day before expiry"
+            totalSeconds > DAY -> {
+                val days = ceilDiv(totalSeconds, DAY)
+                format.format(Measure(days, MeasureUnit.DAY))
+            }
+            // Hours - using >= here makes exactly 1h show "1 hour"
+            totalSeconds >= HOUR -> {
+                val hours = ceilDiv(totalSeconds, HOUR)
+                format.format(Measure(hours, MeasureUnit.HOUR))
+            }
+            else -> {
+                // Less than 1h → minutes, rounded up; ensure minimum of 1 minute
+                val minutes = max(1L, ceilDiv(totalSeconds, MIN))
+                format.format(Measure(minutes, MeasureUnit.MINUTE))
+            }
         }
     }
 

@@ -79,6 +79,7 @@ import org.thoughtcrime.securesms.home.startconversation.StartConversationDestin
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsActivity
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.reviews.StoreReviewManager
@@ -86,6 +87,7 @@ import org.thoughtcrime.securesms.reviews.ui.InAppReview
 import org.thoughtcrime.securesms.reviews.ui.InAppReviewViewModel
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
+import org.thoughtcrime.securesms.ui.ObserveAsEvents
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.setThemedContent
@@ -239,6 +241,23 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 .collectLatest {
                     binding.sessionHeaderProBadge.isVisible = it
                 }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                homeViewModel.uiEvents.collect { event ->
+                    when (event) {
+                        is HomeViewModel.UiEvent.OpenProSettings -> {
+                            startActivity(
+                                ProSettingsActivity.createIntent(
+                                    this@HomeActivity,
+                                    event.start
+                                )
+                            )
+                        }
+                    }
+                }
+            }
         }
 
         // Set up seed reminder view

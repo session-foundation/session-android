@@ -192,6 +192,10 @@
     <string name="callsVoiceAndVideoToggleDescription">Enables voice and video calls to and from other users.</string>
     <string name="callsYouCalled">You called {name}</string>
     <string name="callsYouMissedCallPermissions">You missed a call from <b>{name}</b> because you haven\'t enabled <b>Voice and Video Calls</b> in Privacy Settings.</string>
+    <string name="cameraAccessDeniedMessage">{app_name} needs access to your camera to enable video calls, but this permission has been denied. You can’t update your camera permissions during a call.\n\nWould you like to end the call now and enable camera access, or would you like to be reminded after the call?</string>
+    <string name="cameraAccessInstructions">To allow camera access, open settings and turn on the Camera permission.</string>
+    <string name="cameraAccessReminderMessage">During your last call, you tried to use video but couldn’t because camera access was previously denied. To allow camera access, open settings and turn on the Camera permission.</string>
+    <string name="cameraAccessRequired">Camera Access Required</string>
     <string name="cameraErrorNotFound">No camera found</string>
     <string name="cameraErrorUnavailable">Camera unavailable.</string>
     <string name="cameraGrantAccess">Grant Camera Access</string>
@@ -208,6 +212,7 @@
     <string name="changePasswordModalDescription">Change your password for {app_name}. Locally stored data will be re-encrypted with your new password.</string>
     <string name="checkingProStatus">Checking {pro} Status</string>
     <string name="checkingProStatusDescription">Checking your {pro} details. Some information on this page may be unavailable until this check is complete.</string>
+    <string name="checkingProStatusEllipsis">Checking {pro} Status...</string>
     <string name="checkingProStatusRenew">Checking your {pro} details. You cannot renew until this check is complete.</string>
     <string name="checkingProStatusUpgradeDescription">Checking your {pro} status. You\'ll be able to upgrade to {pro} once this check is complete.</string>
     <string name="clear">Clear</string>
@@ -341,6 +346,14 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">Please wait while the group is created...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">Failed to Update Group</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">You don’t have permission to delete others’ messages</string>
+    <plurals name="deleteAttachments">
+        <item quantity="one">Delete Selected Attachment</item>
+        <item quantity="other">Delete Selected Attachments</item>
+    </plurals>
+    <plurals name="deleteAttachmentsDescription">
+        <item quantity="one">Are you sure you want to delete the selected attachment? The message associated with the attachment will also be deleted.</item>
+        <item quantity="other">Are you sure you want to delete the selected attachments? The message associated with the attachments will also be deleted.</item>
+    </plurals>
     <string name="deleteContactDescription">Are you sure you want to delete <b>{name}</b> from your contacts?\n\nThis will delete your conversation, including all messages and attachments. Future messages from <b>{name}</b> will appear as a message request.</string>
     <string name="deleteConversationDescription">Are you sure you want to delete your conversation with <b>{name}</b>?\nThis will permanently delete all messages and attachments.</string>
     <plurals name="deleteMessage">
@@ -456,16 +469,17 @@
     <string name="emojiReactsHoverYouNameTwoDesktop">You and {name} reacted with {emoji_name}</string>
     <string name="emojiReactsNotification">Reacted to your message {emoji}</string>
     <string name="enable">Enable</string>
+    <string name="enableCameraAccess">Enable Camera Access?</string>
     <string name="enableNotifications">Show notifications when you receive new messages.</string>
+    <string name="endCallToEnable">End Call to Enable</string>
     <string name="enjoyingSession">Enjoying {app_name}?</string>
     <string name="enjoyingSessionButtonNegative">Needs Work {emoji}</string>
     <string name="enjoyingSessionButtonPositive">It\'s Great {emoji}</string>
     <string name="enjoyingSessionDescription">You\'ve been using {app_name} for a little while, how’s it going? We’d really appreciate hearing your thoughts.</string>
     <string name="enter">Enter</string>
     <string name="enterPasswordDescription">Enter the password you set for {app_name}</string>
-    <string name="enterPasswordTooltip">Enter the password you use to unlock Session &amp;#13;
-on startup, not your Recovery Password</string>
-    <string name="errorCheckingProStatus">Error checking {pro} status.</string>
+    <string name="enterPasswordTooltip">Enter the password you use to unlock {app_name} on startup, not your Recovery Password</string>
+    <string name="errorCheckingProStatus">Error checking {pro} status</string>
     <string name="errorConnection">Please check your internet connection and try again.</string>
     <string name="errorCopyAndQuit">Copy Error and Quit</string>
     <string name="errorDatabase">Database Error</string>
@@ -830,6 +844,7 @@ on startup, not your Recovery Password</string>
     <string name="open">Open</string>
     <string name="openPlatformStoreWebsite">Open {platform_store} Website</string>
     <string name="openPlatformWebsite">Open {platform} Website</string>
+    <string name="openSettings">Open Settings</string>
     <string name="openSurvey">Open Survey</string>
     <string name="other">Other</string>
     <string name="password">Password</string>
@@ -1103,6 +1118,7 @@ on startup, not your Recovery Password</string>
         <item quantity="one">%1$d character remaining</item>
         <item quantity="other">%1$d characters remaining</item>
     </plurals>
+    <string name="remindMeLater">Remind Me Later</string>
     <string name="remove">Remove</string>
     <string name="removePasswordFail">Failed to remove password</string>
     <string name="removePasswordModalDescription">Remove your current password for {app_name}. Locally stored data will be re-encrypted with a randomly generated key, stored on your device.</string>

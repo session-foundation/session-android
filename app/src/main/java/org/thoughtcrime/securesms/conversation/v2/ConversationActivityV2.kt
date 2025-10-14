@@ -120,7 +120,6 @@ import org.session.libsignal.utilities.hexEncodedPrivateKey
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.FullComposeActivity.Companion.applyCommonPropertiesForCompose
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
-import org.thoughtcrime.securesms.attachments.ScreenshotObserver
 import org.thoughtcrime.securesms.audio.AudioRecorderHandle
 import org.thoughtcrime.securesms.audio.recordAudio
 import org.thoughtcrime.securesms.components.TypingStatusSender
@@ -269,13 +268,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override val applyAutoScrimForNavigationBar: Boolean
         get() = false
-
-    private val screenshotObserver by lazy {
-        ScreenshotObserver(this, Handler(Looper.getMainLooper())) {
-            // post screenshot message
-            sendScreenshotNotification()
-        }
-    }
 
     private val screenWidth = Resources.getSystem().displayMetrics.widthPixels
     private val linkPreviewViewModel: LinkPreviewViewModel by lazy {
@@ -741,18 +733,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun onResume() {
         super.onResume()
         ApplicationContext.getInstance(this).messageNotifier.setVisibleThread(viewModel.threadId)
-
-        contentResolver.registerContentObserver(
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-            true,
-            screenshotObserver
-        )
     }
 
     override fun onPause() {
         super.onPause()
         ApplicationContext.getInstance(this).messageNotifier.setVisibleThread(-1)
-        contentResolver.unregisterContentObserver(screenshotObserver)
     }
 
     override fun getSystemService(name: String): Any? {
@@ -2660,14 +2645,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun destroyActionMode() {
         this.actionMode = null
-    }
-
-    private fun sendScreenshotNotification() {
-        val recipient = viewModel.recipient
-        if (recipient.isGroupOrCommunityRecipient) return
-        val kind = DataExtractionNotification.Kind.Screenshot()
-        val message = DataExtractionNotification(kind)
-        MessageSender.send(message, recipient.address)
     }
 
     private fun sendMediaSavedNotification() {
