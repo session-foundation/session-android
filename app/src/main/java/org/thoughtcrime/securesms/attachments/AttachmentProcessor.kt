@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Movie
 import android.os.SystemClock
+import android.text.format.Formatter
 import androidx.compose.ui.unit.IntSize
 import androidx.core.graphics.createBitmap
 import coil3.BitmapImage
@@ -15,8 +16,7 @@ import coil3.fetch.FetchResult
 import coil3.fetch.Fetcher
 import coil3.fetch.SourceFetchResult
 import coil3.request.CachePolicy
-import coil3.request.ImageRequest
-import coil3.request.ImageResult
+import coil3.request.ImageRequest.Builder
 import coil3.request.Options
 import coil3.request.allowConversionToBitmap
 import coil3.request.allowHardware
@@ -26,6 +26,7 @@ import com.squareup.gifencoder.GifEncoder
 import com.squareup.gifencoder.ImageOptions
 import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.libsession_util.encrypt.Attachments
+import network.loki.messenger.libsession_util.image.WebPUtils
 import okio.FileSystem
 import okio.buffer
 import okio.source
@@ -36,16 +37,13 @@ import org.session.libsignal.streams.PaddingInputStream
 import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.ByteArraySlice.Companion.view
 import org.session.libsignal.utilities.Log
-import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
-import java.io.SequenceInputStream
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
-import kotlin.experimental.and
 import kotlin.math.roundToInt
 
 typealias DigestResult = ByteArray
@@ -61,6 +59,11 @@ class AttachmentProcessor @Inject constructor(
         val imageSize: IntSize
     )
 
+    /**
+     * Process a file based on its mime type and the given constraints.
+     *
+     * @return null if nothing was done, or a ProcessResult if processing was performed.
+     */
     suspend fun process(
         mimeType: String,
         data: () -> InputStream,
@@ -113,16 +116,21 @@ class AttachmentProcessor @Inject constructor(
             }
 
             mimeType.startsWith("image/webp", ignoreCase = true) -> {
-                // For webp, we'll have to find out if it's animated upfront to avoid
-                // extra costly decoding.
-                val (isAnimated, updatedInputStream) = isWebPAnimation(data())
-                if (isAnimated) {
-                    return processAnimatedWebP(updatedInputStream, maxImageResolution)
+                // For webp, we need all the data to do any processing, so read it all into memory
+                val bytes = data().use { it.readBytes() }
+
+                if (WebPUtils.isWebPAnimation(bytes)) {
+                    if (maxImageResolution == null) {
+                        Log.d(TAG, "Skipping processing of animated WebP with no size constraints")
+                        return null;
+                    }
+
+                    return processAnimatedWebP(bytes, maxImageResolution)
                 }
 
                 val (data, imageSize) = processStaticImage(
                     mimeType = mimeType,
-                    data = updatedInputStream,
+                    data = bytes,
                     maxImageResolution = maxImageResolution,
                     format = Bitmap.CompressFormat.WEBP,
                     quality = if (compressImage) 75 else 95,
@@ -145,6 +153,9 @@ class AttachmentProcessor @Inject constructor(
         val key: ByteArray,
     )
 
+    /**
+     * Encrypt the given data using deterministic encryption from libsession.
+     */
     fun encryptDeterministically(plaintext: ByteArray, domain: Attachments.Domain): EncryptResult {
         val cipherOut = ByteArray(Attachments.encryptedSize(plaintext.size.toLong()).toInt())
         val key = Attachments.encryptBytes(
@@ -160,6 +171,10 @@ class AttachmentProcessor @Inject constructor(
         )
     }
 
+    /**
+     * Encrypt the given data using the legacy attachment encryption method, returning a digest
+     * for the encrypted data too.
+     */
     fun encrypt(plaintext: ByteArray): Pair<EncryptResult, DigestResult> {
         val key = Util.getSecretBytes(64)
         var remainingPaddingSize = (PaddingInputStream.getPaddedSize(plaintext.size.toLong()) - plaintext.size.toLong()).toInt()
@@ -222,43 +237,78 @@ class AttachmentProcessor @Inject constructor(
         }
     }
 
+    private fun scaleToFit(original: IntSize, max: IntSize): Pair<IntSize, Float> {
+        val scale = minOf(
+            max.width.toDouble() / original.width.toDouble(),
+            max.height.toDouble() / original.height.toDouble()
+        )
 
-    private fun processAnimatedWebP(
-        updatedInputStream: InputStream,
-        maxImageResolution: IntSize?,
-    ): ProcessResult {
-        TODO("Not yet implemented")
+        return IntSize(
+            width = (original.width * scale).roundToInt(),
+            height = (original.height * scale).roundToInt()
+        ) to scale.toFloat()
     }
 
-    private suspend fun loadImageFromCoil(
-        data: InputStream,
+    private fun processAnimatedWebP(
+        data: ByteArray,
+        maxImageResolution: IntSize,
+    ): ProcessResult? {
+        val origSize = requireNotNull(WebPUtils.getWebPDimensions(data)) {
+            "Given data is not a valid WebP image"
+        }.let { (width, height) -> IntSize(width, height) }
+
+        val targetSize: IntSize
+
+        if (origSize.width <= maxImageResolution.width &&
+                origSize.height <= maxImageResolution.height) {
+            targetSize = origSize
+        } else {
+            targetSize = scaleToFit(
+                original = origSize,
+                max = maxImageResolution
+            ).first
+        }
+
+        val start = System.currentTimeMillis()
+
+        val reencoded = WebPUtils.reencodeWebPAnimation(
+            input = data,
+            targetWidth = targetSize.width,
+            targetHeight = targetSize.height,
+        )
+
+        Log.d(TAG, "Re-encoded animated WebP from ${origSize.width}x${origSize.height} to ${targetSize.width}x${targetSize.height} " +
+                "in ${System.currentTimeMillis() - start}ms, original size=${Formatter.formatFileSize(context, data.size.toLong())}, " +
+                "new size=${Formatter.formatFileSize(context, reencoded.size.toLong())}")
+
+        return ProcessResult(
+            data = reencoded,
+            mimeType = "image/webp",
+            imageSize = targetSize
+        )
+    }
+
+    private suspend fun processStaticImage(
         mimeType: String,
+        data: Any,
         maxImageResolution: IntSize?,
-    ): ImageResult {
-        val builder = ImageRequest.Builder(context)
+        format: Bitmap.CompressFormat,
+        quality: Int,
+    ): Pair<ByteArray, IntSize> {
+        val builder = Builder(context)
             .allowHardware(false)
             .allowRgb565(true)
             .allowConversionToBitmap(true)
             .memoryCachePolicy(CachePolicy.DISABLED)
             .networkCachePolicy(CachePolicy.DISABLED)
-            .fetcherFactory(InputStreamFetcherFactory(data, mimeType))
+            .fetcherFactory<InputStream>(InputStreamFetcherFactory(mimeType))
 
         if (maxImageResolution != null) {
             builder.size(maxImageResolution.width, maxImageResolution.height)
                 .precision(Precision.INEXACT)
         }
 
-        return imageLoader.get().execute(builder.data(data).build())
-    }
-
-    private suspend fun processStaticImage(
-        mimeType: String,
-        data: InputStream,
-        maxImageResolution: IntSize?,
-        format: Bitmap.CompressFormat,
-        quality: Int,
-    ): Pair<ByteArray, IntSize> {
-        val result = loadImageFromCoil(data, mimeType, maxImageResolution)
+        val result = imageLoader.get().execute(builder.data(data).build())
         val bitmap = checkNotNull(result.image as? BitmapImage) {
             "Expected a BitmapImage but got ${result.image?.javaClass}"
         }.bitmap
@@ -268,6 +318,7 @@ class AttachmentProcessor @Inject constructor(
         }.toByteArray() to IntSize(bitmap.width, bitmap.height)
     }
 
+    @Suppress("DEPRECATION")
     private fun processGif(
         data: InputStream,
         maxImageResolution: IntSize
@@ -281,24 +332,22 @@ class AttachmentProcessor @Inject constructor(
         }
 
         // Work out the scale to fit within the max dimensions.
-        val scale = minOf(
-            maxImageResolution.width.toDouble() / movie.width().toDouble(),
-            maxImageResolution.height.toDouble() / movie.height().toDouble()
+        val (targetSize, scale) = scaleToFit(
+            original = IntSize(movie.width(), movie.height()),
+            max = maxImageResolution
         )
 
         val totalDuration = movie.duration()
-        val targetWidth = (movie.width() * scale).roundToInt()
-        val targetHeight = (movie.height() * scale).roundToInt()
-        val frameBitmap = createBitmap(targetWidth, targetHeight, Bitmap.Config.RGB_565)
+        val frameBitmap = createBitmap(targetSize.width, targetSize.height, Bitmap.Config.RGB_565)
         val deadline = SystemClock.elapsedRealtime() + 10_000 // 10 seconds
         val frameIntervalMills = 1000 / 20L // Target 20 FPS
-        val frameBytes = IntArray(targetWidth * targetHeight)
+        val frameBytes = IntArray(targetSize.width * targetSize.height)
         val imageOptions = ImageOptions()
         val frameCanvas = Canvas(frameBitmap)
-        frameCanvas.scale(scale.toFloat(), scale.toFloat())
+        frameCanvas.scale(scale, scale)
 
         val compressed = ByteArrayOutputStream().use { outputStream ->
-            val gifEncoder = GifEncoder(outputStream, targetWidth, targetHeight, 1)
+            val gifEncoder = GifEncoder(outputStream, targetSize.width, targetSize.height, 1)
 
             var time = 0
             while (time < totalDuration) {
@@ -306,11 +355,10 @@ class AttachmentProcessor @Inject constructor(
                 frameBitmap.eraseColor(0) // Clear to get ready for next frame
                 movie.draw(frameCanvas, 0f, 0f, null)
 
-
-                frameBitmap.getPixels(frameBytes, 0, targetWidth, 0, 0, targetWidth, targetHeight)
+                frameBitmap.getPixels(frameBytes, 0, targetSize.width, 0, 0, targetSize.width, targetSize.height)
 
                 imageOptions.setDelay(if (time == 0) 0L else frameIntervalMills, TimeUnit.MILLISECONDS)
-                gifEncoder.addImage(frameBytes, targetWidth, imageOptions)
+                gifEncoder.addImage(frameBytes, targetSize.width, imageOptions)
 
                 time += frameIntervalMills.toInt()
 
@@ -330,57 +378,14 @@ class AttachmentProcessor @Inject constructor(
         return ProcessResult(
             data = compressed,
             mimeType = "image/gif",
-            imageSize = IntSize(targetWidth, targetHeight)
+            imageSize = targetSize
         )
     }
 
-    private fun checkBytes(a: ByteArray, range: IntRange, expect: ByteArray): Boolean {
-        for (i in expect.indices) {
-            if (a[range.first + i] != expect[i]) {
-                return false
-            }
-        }
-
-        return true
-    }
-
-    private fun isWebPAnimation(stream: InputStream): Pair<Boolean, InputStream> {
-        val headers = ByteArray(
-            4 + 4 + 4 + 4 + 4 + 4 // RIFF + fileSize + WEBP + VP8X + chuck size + flags
-        )
-
-        var offset = 0
-        while (offset < headers.size) {
-            val read = stream.read(headers, offset, headers.size - offset)
-            check(read > 0) { "Unexpected EOF while reading from input stream" }
-            offset += read
-        }
-
-        check(checkBytes(headers, 0 until 4, "RIFF".toByteArray())) {
-            "Invalid WebP file, missing RIFF"
-        }
-        check(checkBytes(headers, 8 until 12, "WEBP".toByteArray())) {
-            "Invalid WebP file, missing WEBP"
-        }
-
-        val isAnimated = if (checkBytes(headers, 12 until 16, "VP8X".toByteArray())) {
-            headers[20] and 0x02 != 0.toByte()
-        } else {
-            false
-        }
-
-        // Once we read something from the input stream, we can't put it back so we'll
-        // create a new inputStream that covers both the headers we read and the rest of the stream.
-        val updatedInputStream = SequenceInputStream(
-            ByteArrayInputStream(headers),
-            stream
-        )
-
-        return isAnimated to updatedInputStream
-    }
-
+    /**
+     * A locally scoped fetcher to allow us to use Coil's for decoding an inputStream.
+     */
     private class InputStreamFetcherFactory(
-        private val stream: InputStream,
         private val mimeType: String
     ) : Fetcher.Factory<InputStream> {
         override fun create(
@@ -391,7 +396,7 @@ class AttachmentProcessor @Inject constructor(
             return object : Fetcher {
                 override suspend fun fetch(): FetchResult? {
                     return SourceFetchResult(
-                        source = ImageSource(source = stream.source().buffer(), FileSystem.SYSTEM),
+                        source = ImageSource(source = data.source().buffer(), FileSystem.SYSTEM),
                         mimeType = mimeType,
                         dataSource = DataSource.MEMORY
                     )
