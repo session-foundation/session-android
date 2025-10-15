@@ -25,14 +25,17 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
+import org.session.libsession.utilities.Util
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
 import org.session.libsession.utilities.userConfigsChanged
+import org.session.libsignal.streams.ProfileCipherOutputStream
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.util.DateUtils.Companion.millsToInstant
 import org.thoughtcrime.securesms.util.castAwayType
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.time.Instant
 import javax.inject.Inject
@@ -148,7 +151,16 @@ class AvatarUploadManager @Inject constructor(
                 domain = Attachments.Domain.ProfilePic
             )
         } else {
-            attachmentProcessor.encrypt(pictureData).first
+            val key = Util.getSecretBytes(PROFILE_KEY_LENGTH)
+            val ciphertext = ByteArrayOutputStream().use { outputStream ->
+                ProfileCipherOutputStream(outputStream, key).use {
+                    it.write(pictureData)
+                }
+
+                outputStream.toByteArray()
+            }
+
+            AttachmentProcessor.EncryptResult(ciphertext = ciphertext, key = key)
         }
 
         val uploadResult = fileServerApi.upload(

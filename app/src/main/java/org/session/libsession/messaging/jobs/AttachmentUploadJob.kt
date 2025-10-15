@@ -136,7 +136,7 @@ class AttachmentUploadJob @AssistedInject constructor(
 
             encrypt -> {
                 deterministicallyEncrypted = false
-                val result = attachmentProcessor.encrypt(plaintext = input)
+                val result = attachmentProcessor.encryptAttachmentLegacy(plaintext = input)
                 key = result.first.key
                 dataToUpload = result.first.ciphertext
                 digest = result.second

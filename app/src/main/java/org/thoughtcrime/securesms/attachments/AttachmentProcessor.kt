@@ -178,7 +178,7 @@ class AttachmentProcessor @Inject constructor(
      * Encrypt the given data using the legacy attachment encryption method, returning a digest
      * for the encrypted data too.
      */
-    fun encrypt(plaintext: ByteArray): Pair<EncryptResult, DigestResult> {
+    fun encryptAttachmentLegacy(plaintext: ByteArray): Pair<EncryptResult, DigestResult> {
         val key = Util.getSecretBytes(64)
         var remainingPaddingSize = (PaddingInputStream.getPaddedSize(plaintext.size.toLong()) - plaintext.size.toLong()).toInt()
         val paddingBuffer = ByteArray(remainingPaddingSize.coerceAtMost(512))
@@ -226,7 +226,7 @@ class AttachmentProcessor @Inject constructor(
         return plaintextOut.view(0 until plaintextSize)
     }
 
-    fun decrypt(ciphertext: ByteArraySlice, key: ByteArray, digest: ByteArray?): ByteArraySlice {
+    fun decryptAttachmentLegacy(ciphertext: ByteArraySlice, key: ByteArray, digest: ByteArray?): ByteArraySlice {
         return AttachmentCipherInputStream.createForAttachment(ciphertext, key, digest)
             .use { it.readBytes().view() }
     }

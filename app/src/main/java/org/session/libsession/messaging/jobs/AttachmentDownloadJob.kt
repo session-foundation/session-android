@@ -30,7 +30,6 @@ import org.thoughtcrime.securesms.database.model.MessageId
 class AttachmentDownloadJob @AssistedInject constructor(
     @Assisted("attachmentID") val attachmentID: Long,
     @Assisted val mmsMessageId: Long,
-    @param:ApplicationContext private val context: Context,
     private val storage: StorageProtocol,
     private val messageDataProvider: MessageDataProvider,
     private val attachmentProcessor: AttachmentProcessor,
@@ -181,7 +180,7 @@ class AttachmentDownloadJob @AssistedInject constructor(
                             key = key
                         )
                     } else {
-                        attachmentProcessor.decrypt(
+                        attachmentProcessor.decryptAttachmentLegacy(
                             ciphertext = cipherText,
                             key = key,
                             digest = attachment.digest
