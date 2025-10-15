@@ -96,7 +96,8 @@ fun ChoosePlanNoBilling(
         add(
             NonOriginatingLinkCellData(
                 title = stringResource(R.string.onLinkedDevice),
-                info = Phrase.from(context.getText(R.string.proPlanRenewDesktopLinked))
+                info = Phrase.from(context.getText(R.string.proRenewDesktopLinked))
+                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
                     .put(PLATFORM_STORE_KEY, defaultGoogleStore)
                     .put(PLATFORM_STORE2_KEY, defaultAppleStore)

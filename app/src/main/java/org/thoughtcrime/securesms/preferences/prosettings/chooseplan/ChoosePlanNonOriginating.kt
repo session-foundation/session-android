@@ -99,6 +99,7 @@ fun ChoosePlanNonOriginating(
                     .put(DEVICE_TYPE_KEY, subscription.subscriptionDetails.device)
                     .put(PLATFORM_ACCOUNT_KEY, subscription.subscriptionDetails.platformAccount)
                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .format(),
                 iconRes = R.drawable.ic_smartphone
             ),
@@ -109,6 +110,7 @@ fun ChoosePlanNonOriginating(
                 info = Phrase.from(context.getText(R.string.viaStoreWebsiteDescription))
                     .put(PLATFORM_ACCOUNT_KEY, subscription.subscriptionDetails.platformAccount)
                     .put(PLATFORM_STORE_KEY, platformOverride)
+                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .format(),
                 iconRes = R.drawable.ic_globe
             )

@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.preferences.prosettings
 import android.content.Context
 import android.content.Intent
 import android.icu.util.MeasureUnit
-import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -23,12 +22,14 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN_LENGTH_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PERCENT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_LENGTH_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_LENGTH_SINGULAR_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -96,7 +97,7 @@ class ProSettingsViewModel @Inject constructor(
                                 subtitle = Phrase.from(context.getText(R.string.proBilledAnnually))
                                     .put(PRICE_KEY, "$47.99")  //todo PRO calculate properly
                                     .format().toString(),
-                                selected = currentPlan12Months,
+                                selected = currentPlan12Months || subType !is SubscriptionType.Active, // selected if our active sub is 12 month, or as a default for non pro or renew
                                 currentPlan = currentPlan12Months,
                                 durationType = ProSubscriptionDuration.TWELVE_MONTHS,
                                 badges = buildList {
@@ -110,6 +111,7 @@ class ProSettingsViewModel @Inject constructor(
                                         ProPlanBadge(
                                             "33% Off", //todo PRO calculate properly
                                             if(currentPlan12Months)  Phrase.from(context.getText(R.string.proDiscountTooltip))
+                                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                                 .put(PERCENT_KEY, "33")  //todo PRO calculate properly
                                                 .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                                                 .format().toString()
@@ -139,6 +141,7 @@ class ProSettingsViewModel @Inject constructor(
                                         ProPlanBadge(
                                             "16% Off", //todo PRO calculate properly
                                             if(currentPlan3Months)  Phrase.from(context.getText(R.string.proDiscountTooltip))
+                                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                                 .put(PERCENT_KEY, "16")  //todo PRO calculate properly
                                                 .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                                                 .format().toString()
@@ -400,7 +403,12 @@ class ProSettingsViewModel @Inject constructor(
                                     .format().toString(),
                                 message = if(currentSubscription is SubscriptionType.Active.AutoRenewing)
                                     Phrase.from(context.getText(R.string.proUpdateAccessDescription))
-                                        //todo PRO STRING need to correct keys here - still waiting on answers from the team
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .put(DATE_KEY, newSubscriptionExpiryString)
+                                        .put(CURRENT_PLAN_LENGTH_KEY, currentSubscriptionDuration)
+                                        .put(SELECTED_PLAN_LENGTH_KEY, selectedSubscriptionDuration)
+                                        // for this string below, we want to remove the 's' at the end if there is one: 12 Months becomes 12 Month
+                                        .put(SELECTED_PLAN_LENGTH_SINGULAR_KEY, selectedSubscriptionDuration.removeSuffix("s"))
                                         .format()
                                 else Phrase.from(context.getText(R.string.proUpdateAccessExpireDescription))
                                     .put(PRO_KEY, NonTranslatableStringConstants.PRO)
