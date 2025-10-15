@@ -39,21 +39,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import com.google.zxing.BarcodeFormat
 import com.google.zxing.BinaryBitmap
 import com.google.zxing.ChecksumException
+import com.google.zxing.DecodeHintType
 import com.google.zxing.FormatException
 import com.google.zxing.NotFoundException
 import com.google.zxing.PlanarYUVLuminanceSource
-import com.google.zxing.Result
+import com.google.zxing.common.GlobalHistogramBinarizer
 import com.google.zxing.common.HybridBinarizer
 import com.google.zxing.qrcode.QRCodeReader
 import com.squareup.phrase.Phrase
@@ -255,38 +257,100 @@ class QRCodeAnalyzer(
     private val onBarcodeScanned: (String) -> Unit
 ): ImageAnalysis.Analyzer {
 
-    // Note: This analyze method is called once per frame of the camera feed.
     @SuppressLint("UnsafeOptInUsageError")
     override fun analyze(image: ImageProxy) {
-        // Grab the image data as a byte array so we can generate a PlanarYUVLuminanceSource from it
-        val buffer = image.planes[0].buffer
-        buffer.rewind()
-        val imageBytes = ByteArray(buffer.capacity())
-        buffer.get(imageBytes) // IMPORTANT: This transfers data from the buffer INTO the imageBytes array, although it looks like it would go the other way around!
-
-        // ZXing requires data as a BinaryBitmap to scan for QR codes, and to generate that we need to feed it a PlanarYUVLuminanceSource
-        val luminanceSource = PlanarYUVLuminanceSource(imageBytes, image.width, image.height, 0, 0, image.width, image.height, false)
-        val binaryBitmap = BinaryBitmap(HybridBinarizer(luminanceSource))
-
-        // Attempt to extract a QR code from the binary bitmap, and pass it through to our `onBarcodeScanned` method if we find one
         try {
-            val result: Result = qrCodeReader.decode(binaryBitmap)
-            val resultTxt = result.text
-            // No need to close the image here - it'll always make it to the end, and calling `onBarcodeScanned`
-            // with a valid contact / recovery phrase / community code will stop calling this `analyze` method.
-            onBarcodeScanned(resultTxt)
-        }
-        catch (nfe: NotFoundException) { /* Hits if there is no QR code in the image           */ }
-        catch (fe: FormatException)    { /* Hits if we found a QR code but failed to decode it */ }
-        catch (ce: ChecksumException)  { /* Hits if we found a QR code which is corrupted      */ }
-        catch (e: Exception) {
-            // Hits if there's a genuine problem
-            Log.e("QR", "error", e)
-        }
+            // Visible frame size that ZXing will use for decoding
+            val w = image.width
+            val h = image.height
 
-        // Remember to close the image when we're done with it!
-        // IMPORTANT: It is CLOSING the image that allows this method to run again! If we don't
-        // close the image this method runs precisely ONCE and that's it, which is essentially useless.
-        image.close()
+            // YUV_420_888 format: plane[0] = Y (grayscale), plane[1] = U, plane[2] = V
+            // ZXing only needs luminance (Y)
+            val yPlane = image.planes[0]
+
+            // Strides describe how bytes are laid out in memory for this plane
+            // - rowStride: distance in bytes from start of one row to the next row
+            // - pixelStride: distance in bytes from one pixel to the next pixel in the same row
+            //   Usually 1 for Y (packed), but not guaranteed across devices
+            val rowStride = yPlane.rowStride
+            val pixelStride = yPlane.pixelStride
+
+            val buf = yPlane.buffer
+            buf.rewind()
+
+            // ZXing wants a contiguous WxH grayscale buffer (one byte per pixel)
+            val y = ByteArray(w * h)
+
+            // FAST PATH: already tightly packed (no row padding, no interleaving)
+            if (pixelStride == 1 && rowStride == w) {
+                // We can copy the entire Y plane in a single read
+                buf.get(y, 0, y.size)
+            } else {
+                // GENERAL PATH: re-pack into contiguous WxH
+                // We use a duplicate buffer so we can manipulate position/absolute reads
+                // without affecting the original buffer state elsewhere
+                val dup = buf.duplicate()
+
+                var dst = 0 // index we write into in the output array 'y'
+
+                // Walk row by row in the source plane
+                for (row in 0 until h) {
+                    // Start of this row in the plane's buffer
+                    val rowStart = row * rowStride
+
+                    if (pixelStride == 1) {
+                        // Case A: packed pixels (good), but rows have padding (rowStride > w)
+                        // Copy only the first 'w' bytes of each row into our contiguous output
+                        dup.position(rowStart)
+                        dup.get(y, dst, w)
+                        dst += w
+                    } else {
+                        // Case B: pixels are interleaved horizontally (pixelStride > 1)
+                        // Read one luminance byte every 'pixelStride' bytes for 'w' columns
+                        for (col in 0 until w) {
+                            // Absolute read: get byte at (rowStart + col*pixelStride) without
+                            // changing buffer's position. This picks each pixel's Y byte
+                            y[dst++] = dup.get(rowStart + col * pixelStride)
+                        }
+                    }
+                }
+            }
+
+            // Build a source from a contiguous Y plane (no rotation)
+            val base = PlanarYUVLuminanceSource(
+                y, w, h, 0, 0, w, h,  false
+            )
+
+            val hints = java.util.EnumMap<DecodeHintType, Any>(DecodeHintType::class.java).apply {
+                put(DecodeHintType.TRY_HARDER, true)
+                put(DecodeHintType.POSSIBLE_FORMATS, listOf(BarcodeFormat.QR_CODE))
+            }
+
+            val attempts = listOf(
+                BinaryBitmap(HybridBinarizer(base)),
+                BinaryBitmap(GlobalHistogramBinarizer(base)),
+                BinaryBitmap(HybridBinarizer(com.google.zxing.InvertedLuminanceSource(base))),
+                BinaryBitmap(GlobalHistogramBinarizer(com.google.zxing.InvertedLuminanceSource(base)))
+            )
+
+            for (bb in attempts) {
+                try {
+                    val result = qrCodeReader.decode(bb, hints)
+                    onBarcodeScanned(result.text)
+                    return
+                } catch (_: NotFoundException) {
+                    qrCodeReader.reset() // harmless, move to next attempt
+                }
+            }
+        } catch (e: FormatException) {
+            Log.e("QR", "QR decoding failed", e)
+        } catch (e: ChecksumException) {
+            Log.e("QR", "QR checksum exception", e)
+        } catch (e: Exception) {
+            Log.e("QR", "Analyzer error", e)
+        } finally {
+            qrCodeReader.reset()
+            image.close()
+        }
     }
 }

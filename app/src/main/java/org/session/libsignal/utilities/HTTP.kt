@@ -73,7 +73,8 @@ object HTTP {
 
     open class HTTPRequestFailedException(
         val statusCode: Int,
-        val json: Map<*, *>?,
+        val json: Map<*, *>? = null,
+        val body: String? = null,
         message: String = "HTTP request failed with status code $statusCode"
     ) : kotlin.Exception(message)
     class HTTPNoNetworkException : HTTPRequestFailedException(0, null, "No network connection")
@@ -131,10 +132,10 @@ object HTTP {
                 else -> defaultConnection
             }.newCall(request.build()).await().use { response ->
                 when (val statusCode = response.code) {
-                    200 -> response.body!!.bytes()
+                    in 200..299 -> response.body.bytes()
                     else -> {
                         Log.d("Loki", "${verb.rawValue} request to $url failed with status code: $statusCode.")
-                        throw HTTPRequestFailedException(statusCode, null)
+                        throw HTTPRequestFailedException(statusCode, body = response.body.string())
                     }
                 }
             }
@@ -143,8 +144,16 @@ object HTTP {
 
             if (!isConnectedToNetwork()) { throw HTTPNoNetworkException() }
 
-            // Override the actual error so that we can correctly catch failed requests in OnionRequestAPI
-            throw HTTPRequestFailedException(0, null, "HTTP request failed due to: ${exception.message}")
+            if (exception !is HTTPRequestFailedException) {
+
+                // Override the actual error so that we can correctly catch failed requests in OnionRequestAPI
+                throw HTTPRequestFailedException(
+                    statusCode = 0,
+                    message = "HTTP request failed due to: ${exception.message}"
+                )
+            } else {
+                throw exception
+            }
         }
     }
 

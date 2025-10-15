@@ -859,7 +859,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
       MessageRecord lastMessage = null;
 
       if (count > 0) {
-        lastMessage = mmsSmsDatabase.get().getLastMessage(threadId);
+        lastMessage = mmsSmsDatabase.get().getLastMessage(threadId, false, false);
       }
 
       final GroupThreadStatus groupThreadStatus;

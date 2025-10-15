@@ -288,10 +288,6 @@ class RemoteFileDownloadWorker @AssistedInject constructor(
             return File(downloadsDirectory(context), remote.sha256Hash())
         }
 
-        fun cancelAll(context: Context) {
-            WorkManager.getInstance(context).cancelAllWorkByTag(TAG)
-        }
-
         private fun uniqueWorkName(remote: RemoteFile): String {
             return "download-remote-file-${remote.sha256Hash()}"
         }

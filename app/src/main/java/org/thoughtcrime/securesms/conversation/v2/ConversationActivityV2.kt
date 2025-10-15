@@ -172,6 +172,7 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.giph.ui.GiphyActivity
 import org.thoughtcrime.securesms.groups.GroupMembersActivity
 import org.thoughtcrime.securesms.groups.OpenGroupManager
+import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.home.search.searchName
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewRepository
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewUtil
@@ -202,7 +203,6 @@ import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.PaddedImageSpan
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
-import org.thoughtcrime.securesms.util.adapter.applyImeBottomPadding
 import org.thoughtcrime.securesms.util.adapter.handleScrollToBottom
 import org.thoughtcrime.securesms.util.adapter.runWhenLaidOut
 import org.thoughtcrime.securesms.util.drawToBitmap
@@ -527,6 +527,25 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
         super.onCreate(savedInstanceState, isReady)
+
+        // Check if address is null before proceeding with initialization
+        if (
+                IntentCompat.getParcelableExtra(
+                    intent,
+                    ADDRESS,
+                    Address.Conversable::class.java
+                ) == null &&
+                intent.data?.getQueryParameter(ADDRESS).isNullOrEmpty()
+        ) {
+            Log.w(TAG, "ConversationActivityV2 launched without ADDRESS extra - Returning home")
+            val intent = Intent(this, HomeActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            startActivity(intent)
+            finish()
+            return
+        }
+
         binding = ActivityConversationV2Binding.inflate(layoutInflater)
         setContentView(binding.root)
 

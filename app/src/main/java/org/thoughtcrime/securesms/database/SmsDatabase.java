@@ -155,6 +155,8 @@ public class SmsDatabase extends MessagingDatabase {
           "DROP TABLE " + TEMP_TABLE_NAME
   };
 
+  public static String ADD_LAST_MESSAGE_INDEX = "CREATE INDEX sms_thread_id_date_sent_index ON " + TABLE_NAME + " (" + THREAD_ID + "," +  DATE_SENT + ")";
+
   public static final String ADD_IS_DELETED_COLUMN = "ALTER TABLE " + TABLE_NAME + " ADD COLUMN " + IS_DELETED_COLUMN_DEF;
   public static final String ADD_IS_GROUP_UPDATE_COLUMN = "ALTER TABLE " + TABLE_NAME +" ADD COLUMN " + IS_GROUP_UPDATE +" BOOL GENERATED ALWAYS AS (" + TYPE +" & " + GROUP_UPDATE_MESSAGE_BIT +" != 0) VIRTUAL";
 
