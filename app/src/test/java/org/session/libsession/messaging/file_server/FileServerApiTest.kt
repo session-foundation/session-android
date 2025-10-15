@@ -65,6 +65,18 @@ class FileServerApiTest {
                     fileServer = FileServerApi.DEFAULT_FILE_SERVER
                 ),
             ),
+            Case(
+                name = "Alt official server without public key",
+                url = "http://fileabc.getsession.org/file/id1".toHttpUrl(),
+                successfulParseResult = FileServerApi.URLParseResult(
+                    fileId = "id1",
+                    usesDeterministicEncryption = false,
+                    fileServer = FileServer(
+                        "http://fileabc.getsession.org",
+                        FileServerApi.DEFAULT_FILE_SERVER.publicKeyHex
+                    )
+                ),
+            ),
 
             // Error cases
             Case(

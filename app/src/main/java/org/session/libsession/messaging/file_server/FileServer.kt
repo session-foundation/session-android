@@ -8,4 +8,8 @@ data class FileServer(
     val publicKeyHex: String
 ) {
     constructor(url: String, publicKeyHex: String) : this(url.toHttpUrl(), publicKeyHex)
+
 }
+
+val HttpUrl.isOfficial: Boolean
+    get() = host.endsWith(".getsession.org", ignoreCase = true)

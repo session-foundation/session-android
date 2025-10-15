@@ -172,7 +172,7 @@ class FileServerApi @Inject constructor(
     ): HttpUrl {
         val urlFragment = sequenceOf(
             "d".takeIf { usesDeterministicEncryption },
-            if (fileServer != DEFAULT_FILE_SERVER) {
+            if (!fileServer.url.isOfficial) {
                 "p=${fileServer.publicKeyHex}"
             } else {
                 null
@@ -244,6 +244,19 @@ class FileServerApi @Inject constructor(
                 return URLParseResult(
                     fileId = id,
                     fileServer = DEFAULT_FILE_SERVER,
+                    usesDeterministicEncryption = deterministicEncryption
+                )
+            }
+
+            fileServerUrl.isOfficial -> {
+                // We don't have a public key, but given it's an official file server,
+                // we can use the default public key
+                return URLParseResult(
+                    fileId = id,
+                    fileServer = FileServer(
+                        url = fileServerUrl,
+                        publicKeyHex = DEFAULT_FILE_SERVER.publicKeyHex
+                    ),
                     usesDeterministicEncryption = deterministicEncryption
                 )
             }
