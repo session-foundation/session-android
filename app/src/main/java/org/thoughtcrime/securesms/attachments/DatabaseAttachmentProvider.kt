@@ -6,6 +6,8 @@ import androidx.compose.ui.unit.IntSize
 import coil3.size.Size
 import com.google.protobuf.ByteString
 import dagger.hilt.android.qualifiers.ApplicationContext
+import okio.buffer
+import okio.source
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.messages.MarkAsDeletedMessage
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
@@ -274,7 +276,7 @@ class DatabaseAttachmentProvider @Inject constructor(
         return try {
             val result = attachmentProcessor.process(
                 mimeType = attachment.contentType,
-                data = { PartAuthority.getAttachmentStream(context, attachment.dataUri!!) },
+                data = { PartAuthority.getAttachmentStream(context, attachment.dataUri!!).source().buffer() },
                 maxImageResolution = IntSize(constraints.getImageMaxWidth(context), constraints.getImageMaxHeight(context)),
                 compressImage = false,
             ) ?: return null

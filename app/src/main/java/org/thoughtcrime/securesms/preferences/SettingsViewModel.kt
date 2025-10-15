@@ -28,6 +28,8 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.UserPic
+import okio.buffer
+import okio.source
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.open_groups.OpenGroupApi
@@ -208,7 +210,7 @@ class SettingsViewModel @Inject constructor(
                 val processResult = attachmentProcessor
                     .process(
                         mimeType = mimeType,
-                        data = { context.contentResolver.openInputStream(uri)!! },
+                        data = { context.contentResolver.openInputStream(uri)!!.source().buffer() },
                         maxImageResolution = IntSize(
                             constraints.getImageMaxWidth(context),
                             constraints.getImageMaxHeight(context)

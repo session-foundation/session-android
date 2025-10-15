@@ -27,9 +27,8 @@ import com.squareup.gifencoder.ImageOptions
 import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.libsession_util.encrypt.Attachments
 import network.loki.messenger.libsession_util.image.WebPUtils
+import okio.BufferedSource
 import okio.FileSystem
-import okio.buffer
-import okio.source
 import org.session.libsession.utilities.Util
 import org.session.libsignal.streams.AttachmentCipherInputStream
 import org.session.libsignal.streams.AttachmentCipherOutputStream
@@ -38,7 +37,6 @@ import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.ByteArraySlice.Companion.view
 import org.session.libsignal.utilities.Log
 import java.io.ByteArrayOutputStream
-import java.io.InputStream
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -69,7 +67,7 @@ class AttachmentProcessor @Inject constructor(
      */
     suspend fun process(
         mimeType: String,
-        data: () -> InputStream,
+        data: () -> BufferedSource,
         maxImageResolution: IntSize?,
         compressImage: Boolean,
     ): ProcessResult? {
@@ -120,12 +118,12 @@ class AttachmentProcessor @Inject constructor(
 
             mimeType.startsWith("image/webp", ignoreCase = true) -> {
                 // For webp, we need all the data to do any processing, so read it all into memory
-                val bytes = data().use { it.readBytes() }
+                val bytes = data().use { it.readByteArray() }
 
                 if (WebPUtils.isWebPAnimation(bytes)) {
                     if (maxImageResolution == null) {
                         Log.d(TAG, "Skipping processing of animated WebP with no size constraints")
-                        return null;
+                        return null
                     }
 
                     return processAnimatedWebP(bytes, maxImageResolution)
@@ -304,7 +302,7 @@ class AttachmentProcessor @Inject constructor(
             .allowConversionToBitmap(true)
             .memoryCachePolicy(CachePolicy.DISABLED)
             .networkCachePolicy(CachePolicy.DISABLED)
-            .fetcherFactory<InputStream>(InputStreamFetcherFactory(mimeType))
+            .fetcherFactory(BufferedSourceFetcherFactory(mimeType))
 
         if (maxImageResolution != null) {
             builder.size(maxImageResolution.width, maxImageResolution.height)
@@ -323,10 +321,10 @@ class AttachmentProcessor @Inject constructor(
 
     @Suppress("DEPRECATION")
     private fun processGif(
-        data: InputStream,
+        data: BufferedSource,
         maxImageResolution: IntSize
     ): ProcessResult? {
-        val movie = data.use(Movie::decodeStream)
+        val movie = data.use { Movie.decodeStream(it.inputStream()) }
 
         // If the GIF is already within the size limits, no need to process it.
         if (movie.width() <= maxImageResolution.width &&
@@ -388,18 +386,18 @@ class AttachmentProcessor @Inject constructor(
     /**
      * A locally scoped fetcher to allow us to use Coil's for decoding an inputStream.
      */
-    private class InputStreamFetcherFactory(
+    private class BufferedSourceFetcherFactory(
         private val mimeType: String
-    ) : Fetcher.Factory<InputStream> {
+    ) : Fetcher.Factory<BufferedSource> {
         override fun create(
-            data: InputStream,
+            data: BufferedSource,
             options: Options,
             imageLoader: ImageLoader
         ): Fetcher {
             return object : Fetcher {
                 override suspend fun fetch(): FetchResult? {
                     return SourceFetchResult(
-                        source = ImageSource(source = data.source().buffer(), FileSystem.SYSTEM),
+                        source = ImageSource(data, FileSystem.SYSTEM),
                         mimeType = mimeType,
                         dataSource = DataSource.MEMORY
                     )
