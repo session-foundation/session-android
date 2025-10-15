@@ -2,7 +2,11 @@ package org.thoughtcrime.securesms.attachments
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Movie
+import android.os.SystemClock
 import androidx.compose.ui.unit.IntSize
+import androidx.core.graphics.createBitmap
 import coil3.BitmapImage
 import coil3.ImageLoader
 import coil3.decode.DataSource
@@ -12,11 +16,14 @@ import coil3.fetch.Fetcher
 import coil3.fetch.SourceFetchResult
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
+import coil3.request.ImageResult
+import coil3.request.Options
 import coil3.request.allowConversionToBitmap
 import coil3.request.allowHardware
 import coil3.request.allowRgb565
 import coil3.size.Precision
-import coil3.size.Size
+import com.squareup.gifencoder.GifEncoder
+import com.squareup.gifencoder.ImageOptions
 import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.libsession_util.encrypt.Attachments
 import okio.FileSystem
@@ -34,10 +41,12 @@ import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.io.SequenceInputStream
 import java.security.MessageDigest
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
 import kotlin.experimental.and
+import kotlin.math.roundToInt
 
 typealias DigestResult = ByteArray
 
@@ -221,6 +230,27 @@ class AttachmentProcessor @Inject constructor(
         TODO("Not yet implemented")
     }
 
+    private suspend fun loadImageFromCoil(
+        data: InputStream,
+        mimeType: String,
+        maxImageResolution: IntSize?,
+    ): ImageResult {
+        val builder = ImageRequest.Builder(context)
+            .allowHardware(false)
+            .allowRgb565(true)
+            .allowConversionToBitmap(true)
+            .memoryCachePolicy(CachePolicy.DISABLED)
+            .networkCachePolicy(CachePolicy.DISABLED)
+            .fetcherFactory(InputStreamFetcherFactory(data, mimeType))
+
+        if (maxImageResolution != null) {
+            builder.size(maxImageResolution.width, maxImageResolution.height)
+                .precision(Precision.INEXACT)
+        }
+
+        return imageLoader.get().execute(builder.data(data).build())
+    }
+
     private suspend fun processStaticImage(
         mimeType: String,
         data: InputStream,
@@ -228,31 +258,7 @@ class AttachmentProcessor @Inject constructor(
         format: Bitmap.CompressFormat,
         quality: Int,
     ): Pair<ByteArray, IntSize> {
-        val builder = ImageRequest.Builder(context)
-            .allowHardware(false)
-            .allowRgb565(true)
-            .allowConversionToBitmap(true)
-            .memoryCachePolicy(CachePolicy.DISABLED)
-            .networkCachePolicy(CachePolicy.DISABLED)
-            .fetcherFactory<InputStream> { stream, _, _ ->
-                object : Fetcher {
-                    override suspend fun fetch(): FetchResult? {
-                        return SourceFetchResult(
-                            source = ImageSource(source = stream.source().buffer(), FileSystem.SYSTEM),
-                            mimeType = mimeType,
-                            dataSource = DataSource.MEMORY
-                        )
-                    }
-                }
-            }
-
-        if (maxImageResolution != null) {
-            builder.size(maxImageResolution.width, maxImageResolution.height)
-                .precision(Precision.INEXACT)
-        }
-
-        val result = imageLoader.get().execute(builder.data(data).build())
-
+        val result = loadImageFromCoil(data, mimeType, maxImageResolution)
         val bitmap = checkNotNull(result.image as? BitmapImage) {
             "Expected a BitmapImage but got ${result.image?.javaClass}"
         }.bitmap
@@ -265,8 +271,67 @@ class AttachmentProcessor @Inject constructor(
     private fun processGif(
         data: InputStream,
         maxImageResolution: IntSize
-    ): ProcessResult {
-        TODO("Not yet implemented")
+    ): ProcessResult? {
+        val movie = data.use(Movie::decodeStream)
+
+        // If the GIF is already within the size limits, no need to process it.
+        if (movie.width() <= maxImageResolution.width &&
+            movie.height() <= maxImageResolution.height) {
+            return null
+        }
+
+        // Work out the scale to fit within the max dimensions.
+        val scale = minOf(
+            maxImageResolution.width.toDouble() / movie.width().toDouble(),
+            maxImageResolution.height.toDouble() / movie.height().toDouble()
+        )
+
+        val totalDuration = movie.duration()
+        val targetWidth = (movie.width() * scale).roundToInt()
+        val targetHeight = (movie.height() * scale).roundToInt()
+        val frameBitmap = createBitmap(targetWidth, targetHeight, Bitmap.Config.RGB_565)
+        val deadline = SystemClock.elapsedRealtime() + 10_000 // 10 seconds
+        val frameIntervalMills = 1000 / 20L // Target 20 FPS
+        val frameBytes = IntArray(targetWidth * targetHeight)
+        val imageOptions = ImageOptions()
+        val frameCanvas = Canvas(frameBitmap)
+        frameCanvas.scale(scale.toFloat(), scale.toFloat())
+
+        val compressed = ByteArrayOutputStream().use { outputStream ->
+            val gifEncoder = GifEncoder(outputStream, targetWidth, targetHeight, 1)
+
+            var time = 0
+            while (time < totalDuration) {
+                movie.setTime(time)
+                frameBitmap.eraseColor(0) // Clear to get ready for next frame
+                movie.draw(frameCanvas, 0f, 0f, null)
+
+
+                frameBitmap.getPixels(frameBytes, 0, targetWidth, 0, 0, targetWidth, targetHeight)
+
+                imageOptions.setDelay(if (time == 0) 0L else frameIntervalMills, TimeUnit.MILLISECONDS)
+                gifEncoder.addImage(frameBytes, targetWidth, imageOptions)
+
+                time += frameIntervalMills.toInt()
+
+                if (SystemClock.elapsedRealtime() > deadline) {
+                    Log.w(TAG, "Given up downsizing GIF as it took too long")
+                    frameBitmap.recycle()
+                    return null
+                }
+            }
+
+            gifEncoder.finishEncoding()
+            outputStream.toByteArray()
+        }
+
+        frameBitmap.recycle()
+
+        return ProcessResult(
+            data = compressed,
+            mimeType = "image/gif",
+            imageSize = IntSize(targetWidth, targetHeight)
+        )
     }
 
     private fun checkBytes(a: ByteArray, range: IntRange, expect: ByteArray): Boolean {
@@ -312,6 +377,27 @@ class AttachmentProcessor @Inject constructor(
         )
 
         return isAnimated to updatedInputStream
+    }
+
+    private class InputStreamFetcherFactory(
+        private val stream: InputStream,
+        private val mimeType: String
+    ) : Fetcher.Factory<InputStream> {
+        override fun create(
+            data: InputStream,
+            options: Options,
+            imageLoader: ImageLoader
+        ): Fetcher {
+            return object : Fetcher {
+                override suspend fun fetch(): FetchResult? {
+                    return SourceFetchResult(
+                        source = ImageSource(source = stream.source().buffer(), FileSystem.SYSTEM),
+                        mimeType = mimeType,
+                        dataSource = DataSource.MEMORY
+                    )
+                }
+            }
+        }
     }
 
     companion object {
