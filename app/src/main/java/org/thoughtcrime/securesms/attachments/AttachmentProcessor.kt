@@ -48,6 +48,9 @@ import kotlin.math.roundToInt
 
 typealias DigestResult = ByteArray
 
+/**
+ * A central class to handle attachment resizing/exif stripping/compression/encryption, etc.
+ */
 @Singleton
 class AttachmentProcessor @Inject constructor(
     @param:ApplicationContext private val context: Context,
