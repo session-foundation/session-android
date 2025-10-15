@@ -518,7 +518,7 @@ fun ProSettings(
 
             val (subtitle, subColor, icon) = when(subscriptionRefreshState){
                 is State.Loading -> Triple<CharSequence, Color, @Composable BoxScope.() -> Unit>(
-                        Phrase.from(LocalContext.current, R.string.proPlanLoadingEllipsis)
+                        Phrase.from(LocalContext.current, R.string.proAccessLoadingEllipsis)
                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format().toString(),
                             LocalColors.current.text,
@@ -526,7 +526,7 @@ fun ProSettings(
                     )
                 
                 is State.Error -> Triple<CharSequence, Color, @Composable BoxScope.() -> Unit>(
-                        Phrase.from(LocalContext.current, R.string.errorLoadingProPlan)
+                        Phrase.from(LocalContext.current, R.string.errorLoadingProAccess)
                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format().toString(),
                             LocalColors.current.warning, chevronIcon
@@ -539,7 +539,11 @@ fun ProSettings(
             }
 
             ActionRowItem(
-                title = annotatedStringResource(R.string.updatePlan),
+                title = annotatedStringResource(
+                    Phrase.from(LocalContext.current, R.string.updateAccess)
+                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                        .format().toString()
+                ),
                 subtitle = annotatedStringResource(subtitle),
                 subtitleColor = subColor,
                 endContent = {
@@ -766,7 +770,11 @@ fun ProManage(
             when(data){
                 is SubscriptionType.Active.AutoRenewing -> {
                     IconActionRowItem(
-                        title = annotatedStringResource(R.string.cancelPlan),
+                        title = annotatedStringResource(
+                            Phrase.from(LocalContext.current, R.string.cancelAccess)
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format().toString()
+                        ),
                         titleColor = LocalColors.current.danger,
                         icon = R.drawable.ic_circle_x_custom,
                         iconColor = LocalColors.current.danger,
@@ -821,7 +829,7 @@ fun ProManage(
 
                     ActionRowItem(
                         title = annotatedStringResource(
-                            Phrase.from(LocalContext.current, R.string.proPlanRenew)
+                            Phrase.from(LocalContext.current, R.string.proAccessRenew)
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString()
                         ),
@@ -841,7 +849,7 @@ fun ProManage(
                     Divider()
                     IconActionRowItem(
                         title = annotatedStringResource(
-                            Phrase.from(LocalContext.current, R.string.proPlanRecover)
+                            Phrase.from(LocalContext.current, R.string.proAccessRecover)
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString()
                         ),

@@ -49,7 +49,8 @@ fun ChoosePlanNoBilling(
     val defaultAppleStore = ProStatusManager.DEFAULT_APPLE_STORE
 
     val headerTitle = when(subscription) {
-        is SubscriptionType.Expired -> Phrase.from(context.getText(R.string.proPlanRenewStart))
+        is SubscriptionType.Expired -> Phrase.from(context.getText(R.string.proAccessRenewStart))
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format()
 
@@ -125,7 +126,7 @@ fun ChoosePlanNoBilling(
                     title = Phrase.from(context.getText(R.string.onPlatformStoreWebsite))
                         .put(PLATFORM_STORE_KEY, subscription.subscriptionDetails.getPlatformDisplayName())
                         .format(),
-                    info = Phrase.from(context.getText(R.string.proPlanRenewPlatformStoreWebsite))
+                    info = Phrase.from(context.getText(R.string.proAccessRenewPlatformStoreWebsite))
                         .put(PLATFORM_STORE_KEY, subscription.subscriptionDetails.getPlatformDisplayName())
                         .put(PLATFORM_ACCOUNT_KEY, subscription.subscriptionDetails.platformAccount)
                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)

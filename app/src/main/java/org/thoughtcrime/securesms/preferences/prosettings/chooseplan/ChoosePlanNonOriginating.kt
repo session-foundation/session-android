@@ -19,6 +19,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.DEVICE_TYPE_
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACCOUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.recipients.ProStatus
 import org.thoughtcrime.securesms.preferences.prosettings.BaseNonOriginatingProSettingsScreen
 import org.thoughtcrime.securesms.preferences.prosettings.NonOriginatingLinkCellData
@@ -47,13 +48,13 @@ fun ChoosePlanNonOriginating(
     val platformOverride = subscription.subscriptionDetails.getPlatformDisplayName()
 
     val headerTitle = when(subscription) {
-        is SubscriptionType.Active.Expiring -> Phrase.from(context.getText(R.string.proPlanExpireDate))
-            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+        is SubscriptionType.Active.Expiring -> Phrase.from(context.getText(R.string.proAccessExpireDate))
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(DATE_KEY, subscription.duration.expiryFromNow())
             .format()
 
-        is SubscriptionType.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proPlanActivatedAutoShort))
-            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+        is SubscriptionType.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proAccessActivatedAutoShort))
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(CURRENT_PLAN_KEY, DateUtils.getLocalisedTimeDuration(
                 context = context,
                 amount = subscription.duration.duration.months,
@@ -76,13 +77,18 @@ fun ChoosePlanNonOriginating(
         onButtonClick = {
             sendCommand(ShowOpenUrlDialog(subscription.subscriptionDetails.subscriptionUrl))
         },
-        contentTitle = stringResource(R.string.updatePlan),
-        contentDescription = Phrase.from(context.getText(R.string.proPlanSignUp))
+        contentTitle = Phrase.from(LocalContext.current, R.string.updateAccess)
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .format().toString(),
+        contentDescription = Phrase.from(context.getText(R.string.proAccessSignUp))
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .put(PLATFORM_STORE_KEY, subscription.subscriptionDetails.store)
             .put(PLATFORM_ACCOUNT_KEY, subscription.subscriptionDetails.platformAccount)
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format(),
-        linkCellsInfo = stringResource(R.string.updatePlanTwo),
+        linkCellsInfo = Phrase.from(context.getText(R.string.updateAccessTwo))
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .format().toString(),
         linkCells = listOf(
             NonOriginatingLinkCellData(
                 title = Phrase.from(context.getText(R.string.onDevice))

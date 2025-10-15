@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.preferences.prosettings
 import android.content.Context
 import android.content.Intent
 import android.icu.util.MeasureUnit
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -22,13 +23,12 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PERCENT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_LENGTH_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -102,7 +102,7 @@ class ProSettingsViewModel @Inject constructor(
                                 badges = buildList {
                                     if(currentPlan12Months){
                                         add(
-                                            ProPlanBadge(context.getString(R.string.currentPlan))
+                                            ProPlanBadge(context.getString(R.string.currentBilling))
                                         )
                                     }
 
@@ -131,7 +131,7 @@ class ProSettingsViewModel @Inject constructor(
                                 badges = buildList {
                                     if(currentPlan3Months){
                                         add(
-                                            ProPlanBadge(context.getString(R.string.currentPlan))
+                                            ProPlanBadge(context.getString(R.string.currentBilling))
                                         )
                                     }
 
@@ -158,7 +158,7 @@ class ProSettingsViewModel @Inject constructor(
                                 currentPlan = currentPlan1Month,
                                 durationType = ProSubscriptionDuration.ONE_MONTH,
                                 badges = if(currentPlan1Month) listOf(
-                                    ProPlanBadge(context.getString(R.string.currentPlan))
+                                    ProPlanBadge(context.getString(R.string.currentBilling))
                                 ) else emptyList(),
                             ),
                         )
@@ -241,10 +241,10 @@ class ProSettingsViewModel @Inject constructor(
                     // if we are in a loading or refresh state we should show a dialog instead
                     is State.Loading -> {
                         val (title, message) = when(_proSettingsUIState.value.subscriptionState.type){
-                            is SubscriptionType.Active -> Phrase.from(context.getText(R.string.proPlanLoading))
+                            is SubscriptionType.Active -> Phrase.from(context.getText(R.string.proAccessLoading))
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
-                                    Phrase.from(context.getText(R.string.proPlanLoadingDescription))
+                                    Phrase.from(context.getText(R.string.proAccessLoadingDescription))
                                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format()
                             else -> Phrase.from(context.getText(R.string.checkingProStatus))
@@ -270,10 +270,11 @@ class ProSettingsViewModel @Inject constructor(
 
                     is State.Error -> {
                         val (title, message) = when(_proSettingsUIState.value.subscriptionState.type){
-                            is SubscriptionType.Active -> Phrase.from(context.getText(R.string.proPlanError))
+                            is SubscriptionType.Active -> Phrase.from(context.getText(R.string.proAccessError))
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
-                                    Phrase.from(context.getText(R.string.proPlanNetworkLoadError))
+                                    Phrase.from(context.getText(R.string.proAccessNetworkLoadError))
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .put(APP_NAME_KEY, context.getString(R.string.app_name))
                                         .format()
                             else -> Phrase.from(context.getText(R.string.proStatusError))
@@ -394,21 +395,19 @@ class ProSettingsViewModel @Inject constructor(
                     _dialogState.update {
                         it.copy(
                             showSimpleDialog = SimpleDialogData(
-                                title = context.getString(R.string.updatePlan),
+                                title = Phrase.from(context, R.string.updateAccess)
+                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                    .format().toString(),
                                 message = if(currentSubscription is SubscriptionType.Active.AutoRenewing)
-                                    Phrase.from(context.getText(R.string.proUpdatePlanDescription))
-                                        .put(CURRENT_PLAN_KEY, currentSubscriptionDuration)
-                                        .put(SELECTED_PLAN_KEY, selectedSubscriptionDuration)
-                                        .put(DATE_KEY, newSubscriptionExpiryString)
-                                        .put(SELECTED_PLAN_KEY, selectedSubscriptionDuration)
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                    Phrase.from(context.getText(R.string.proUpdateAccessDescription))
+                                        //todo PRO STRING need to correct keys here - still waiting on answers from the team
                                         .format()
-                                else Phrase.from(context.getText(R.string.proUpdatePlanExpireDescription))
+                                else Phrase.from(context.getText(R.string.proUpdateAccessExpireDescription))
+                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                     .put(DATE_KEY, newSubscriptionExpiryString)
-                                    .put(DATE_KEY, newSubscriptionExpiryString)
-                                    .put(SELECTED_PLAN_KEY, selectedSubscriptionDuration)
+                                    .put(SELECTED_PLAN_LENGTH_KEY, selectedSubscriptionDuration)
                                     .format(),
-                                positiveText = context.getString(R.string.updatePlan),
+                                positiveText = context.getString(R.string.update),
                                 negativeText = context.getString(R.string.cancel),
                                 positiveStyleDanger = false,
                                 onPositive = { getPlanFromProvider() },
