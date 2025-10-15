@@ -72,7 +72,7 @@ class SignalAudioManager(private val context: Context,
                 is AudioManagerCommand.Stop -> stop(command.playDisconnect)
                 is AudioManagerCommand.SetDefaultDevice -> setDefaultAudioDevice(command.device, command.clearUserEarpieceSelection)
                 is AudioManagerCommand.SetUserDevice -> selectAudioDevice(command.device)
-                is AudioManagerCommand.StartIncomingRinger -> startIncomingRinger(command.vibrate)
+                is AudioManagerCommand.StartIncomingRinger -> startIncomingRinger()
                 is AudioManagerCommand.SilenceIncomingRinger -> silenceIncomingRinger()
                 is AudioManagerCommand.StartOutgoingRinger -> startOutgoingRinger(command.type)
             }
@@ -331,11 +331,11 @@ class SignalAudioManager(private val context: Context,
         }
     }
 
-    private fun startIncomingRinger(vibrate: Boolean) {
-        Log.i(TAG, "startIncomingRinger(): vibrate: $vibrate")
+    private fun startIncomingRinger() {
+        Log.i(TAG, "startIncomingRinger()")
         androidAudioManager.mode = AudioManager.MODE_RINGTONE
 
-        incomingRinger.start(vibrate)
+        incomingRinger.start()
     }
 
     private fun silenceIncomingRinger() {
