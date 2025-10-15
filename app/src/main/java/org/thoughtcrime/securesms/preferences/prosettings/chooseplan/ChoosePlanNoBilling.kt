@@ -75,7 +75,6 @@ fun ChoosePlanNoBilling(
                 "huawei" -> "Huawei App Gallery"
                 else -> "APK"
             })
-            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(PLATFORM_STORE_KEY, defaultGoogleStore)
             .put(PLATFORM_STORE2_KEY, defaultAppleStore)
@@ -115,6 +114,7 @@ fun ChoosePlanNoBilling(
                     .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
                     .put(PLATFORM_STORE_KEY, defaultGoogleStore)
                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .format(),
                 iconRes = R.drawable.ic_smartphone
             )
