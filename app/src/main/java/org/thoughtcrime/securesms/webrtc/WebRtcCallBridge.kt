@@ -418,22 +418,28 @@ class WebRtcCallBridge @Inject constructor(
 
     fun handleAnswerIncoming(address: Address, sdp: String, callId: UUID) {
         serviceExecutor.execute {
-            try {
-                if (address.isLocalNumber && callManager.currentConnectionState in CallState.CAN_DECLINE_STATES) {
-                    handleLocalHangup(address)
-                    return@execute
+            val state = callManager.currentConnectionState
+            val isInitiator = callManager.isInitiator()
+
+            // If we receive a self-synced ANSWER:
+            if (address.isLocalNumber) {
+                // Only act if this device was in an INCOMING ring state (answered elsewhere).
+                if (!isInitiator && state in arrayOf(CallState.RemotePreOffer, CallState.RemoteRing)) {
+                    // Stop ringing / update UI, but DO NOT hang up the remote.
+                    callManager.silenceIncomingRinger()
+                    callManager.handleIgnoreCall()  
+                    terminate()
+                } else {
+                    // We’re the caller or already past ring → ignore self-answer
+                    Log.w(TAG, "Ignoring self-synced ANSWER in state=$state (isInitiator=$isInitiator)")
                 }
-
-                callManager.postViewModelState(CallViewModel.State.CALL_ANSWER_OUTGOING)
-
-                callManager.handleResponseMessage(
-                    address,
-                    callId,
-                    SessionDescription(SessionDescription.Type.ANSWER, sdp)
-                )
-            } catch (e: PeerConnectionException) {
-                terminate()
+                return@execute
             }
+
+            callManager.postViewModelState(CallViewModel.State.CALL_ANSWER_OUTGOING)
+            callManager.handleResponseMessage(
+                address, callId, SessionDescription(SessionDescription.Type.ANSWER, sdp)
+            )
         }
     }
 

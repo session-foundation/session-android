@@ -71,7 +71,6 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.sskenvironment.ReadReceiptManager
 import java.security.SignatureException
 import javax.inject.Inject
@@ -244,7 +243,8 @@ class ReceivedMessageHandler @Inject constructor(
 
         val timestamp = message.timestamp ?: return null
         val author = message.author ?: return null
-        val messageToDelete = storage.getMessageBy(timestamp, author) ?: return null
+        val threadId = message.threadID ?: return null
+        val messageToDelete = storage.getMessageBy(threadId, timestamp, author) ?: return null
         val messageIdToDelete = messageToDelete.messageId
         val messageType = messageToDelete.individualRecipient?.getType()
 
@@ -326,7 +326,7 @@ class ReceivedMessageHandler @Inject constructor(
                 Address.fromSerialized(quote.author)
             }
 
-            val messageInfo = messageDataProvider.getMessageForQuote(quote.id, author)
+            val messageInfo = messageDataProvider.getMessageForQuote(context.threadId, quote.id, author)
             quoteMessageBody = messageInfo?.third
             quoteModel = if (messageInfo != null) {
                 val attachments = if (messageInfo.second) messageDataProvider.getAttachmentsAndLinkPreviewFor(messageInfo.first) else ArrayList()
