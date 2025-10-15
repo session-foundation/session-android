@@ -1052,7 +1052,7 @@
     <string name="proTosPrivacy">By updating, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
     <string name="proUnlimitedPins">Unlimited Pins</string>
     <string name="proUnlimitedPinsDescription">Organize all your chats with unlimited pinned conversations.</string>
-    <string name="proUpdateAccessDescription">Your current billing option grants <b>{current_plan_length}</b> of {pro} access. Are you sure you want to switch to the <b>{selected_plan_length_singular}</b> billing option?\n\nBy updating, your {pro} access will automatically renew on <b>{date}</b> for an additional <b>{selected_plan length}</b> of {pro} access.</string>
+    <string name="proUpdateAccessDescription">Your current billing option grants <b>{current_plan_length}</b> of {pro} access. Are you sure you want to switch to the <b>{selected_plan_length_singular}</b> billing option?\n\nBy updating, your {pro} access will automatically renew on <b>{date}</b> for an additional <b>{selected_plan_length}</b> of {pro} access.</string>
     <string name="proUpdateAccessExpireDescription">Your {pro} access will expire on <b>{date}</b>.\n\nBy updating, your {pro} access will automatically renew on <b>{date}</b> for an additional <b>{selected_plan_length}</b> of {pro} access.</string>
     <string name="proUserProfileModalCallToAction">Want to get more out of {app_name}? Upgrade to {app_pro} for a more powerful messaging experience.</string>
     <string name="processingRefundRequest">{platform} is processing your refund request</string>
