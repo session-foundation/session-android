@@ -216,6 +216,8 @@ interface TextSecurePreferences {
 
     fun getDebugSubscriptionType(): DebugMenuViewModel.DebugSubscriptionStatus?
     fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?)
+    fun getDebugProPlanStatus(): DebugMenuViewModel.DebugProPlanStatus?
+    fun setDebugProPlanStatus(status: DebugMenuViewModel.DebugProPlanStatus?)
 
     fun setSubscriptionProvider(provider: String)
     fun getSubscriptionProvider(): String?
@@ -377,6 +379,7 @@ interface TextSecurePreferences {
 
         const val DEBUG_MESSAGE_FEATURES = "debug_message_features"
         const val DEBUG_SUBSCRIPTION_STATUS = "debug_subscription_status"
+        const val DEBUG_PRO_PLAN_STATUS = "debug_pro_plan_status"
 
         const val SUBSCRIPTION_PROVIDER = "session_subscription_provider"
 
@@ -1764,6 +1767,17 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?) {
         setStringPreference(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS, status?.name)
         _events.tryEmit(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS)
+    }
+
+    override fun getDebugProPlanStatus(): DebugMenuViewModel.DebugProPlanStatus? {
+        return getStringPreference(TextSecurePreferences.DEBUG_PRO_PLAN_STATUS, null)?.let {
+            DebugMenuViewModel.DebugProPlanStatus.valueOf(it)
+        }
+    }
+
+    override fun setDebugProPlanStatus(status: DebugMenuViewModel.DebugProPlanStatus?) {
+        setStringPreference(TextSecurePreferences.DEBUG_PRO_PLAN_STATUS, status?.name)
+        _events.tryEmit(TextSecurePreferences.DEBUG_PRO_PLAN_STATUS)
     }
 
     override fun getSubscriptionProvider(): String? {
