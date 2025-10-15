@@ -283,7 +283,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private val address: Address.Conversable by lazy {
-        IntentCompat.getParcelableExtra(intent, ADDRESS, Address.Conversable::class.java)!! // safe to do !! since we check for this in onCreate
+        requireNotNull(IntentCompat.getParcelableExtra(intent, ADDRESS, Address.Conversable::class.java)) {
+            "Address must be provided in the intent extras to open a conversation"
+        }
     }
 
     private val viewModel: ConversationViewModel by viewModels(extrasProducer = {
