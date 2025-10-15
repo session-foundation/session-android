@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.FileObserver
 import android.os.FileObserver.CREATE
 import android.os.FileObserver.MOVED_TO
+import androidx.compose.ui.unit.IntSize
 import androidx.hilt.work.HiltWorker
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
@@ -24,9 +25,12 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okio.BufferedSource
+import okio.buffer
+import okio.source
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
 import java.io.File
 import java.time.Duration
@@ -55,12 +59,42 @@ class AvatarReuploadWorker @AssistedInject constructor(
         waitUntilExists(localFile)
 
         if (lastUpdated != null) {
-            localEncryptedFileInputStreamFactory.create(localFile).use { inputStream ->
-                StaticImageDecoder
+            localEncryptedFileInputStreamFactory.create(localFile).source().buffer().use { source ->
+                if (needsReProcessing(source)) {
+                    Log.d(TAG, "Reprocessing avatar for upload.")
+                    val attachment = attachmentProcessor.process(
+                        context = context,
+                        inputStream = source.inputStream(),
+                        mimeType = profile.mimeType,
+                        isAvatar = true
+                    ) ?: return Result.failure()
+
+                    val uploadedAvatar = avatarUploadManager.get().uploadAvatar(attachment, isRetry = true)
+                        ?: return Result.failure()
+
+                    configFactory.withUserConfigs { configs ->
+                        configs.userProfile.setPic(uploadedAvatar.toRemoteFile())
+                    }
+
+                    Log.d(TAG, "Successfully reuploaded avatar.")
+                    return Result.success()
+                } else {
+                    Log.d(TAG, "No need to reprocess avatar; nothing to do.")
+                    return Result.success()
+                }
             }
         }
 
         TODO("Not yet implemented")
+    }
+
+    private fun needsReProcessing(source: BufferedSource): Boolean {
+        if (isPng(source)) {
+            return true
+        }
+
+        val bounds = readImageBounds(source)
+        return bounds.width > 600 || bounds.height > 600
     }
 
 
@@ -107,6 +141,11 @@ class AvatarReuploadWorker @AssistedInject constructor(
 
             return source.peek().readByteArray(pngSignature.size.toLong())
                 .contentEquals(pngSignature)
+        }
+
+        private fun readImageBounds(source: BufferedSource): IntSize {
+            val r = BitmapUtil.getDimensions(source.peek().inputStream())
+            return IntSize(r.first, r.second)
         }
 
         suspend fun schedule(context: Context) {
