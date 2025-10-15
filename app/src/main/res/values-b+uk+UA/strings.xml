@@ -200,7 +200,6 @@
     <string name="cameraGrantAccessDescription">{app_name} потребує доступ до камери, щоб фотографувати, знімати відео або сканувати QR-коди.</string>
     <string name="cameraGrantAccessQr">{app_name} потрібен дозвіл до камери для сканування QR-кодів</string>
     <string name="cancel">Скасувати</string>
-    <string name="cancelPlan">Скасувати тарифний план</string>
     <string name="change">Змінити</string>
     <string name="changePasswordFail">Не вдалося змінити пароль</string>
     <string name="changePasswordModalDescription">Змінити ваш пароль для {app_name}. Локально збережені дані будуть наново шифровані з застосуванням нового паролю.</string>
@@ -310,7 +309,6 @@
     <string name="create">Створити</string>
     <string name="creatingCall">Викликаємо</string>
     <string name="currentPassword">Поточний пароль</string>
-    <string name="currentPlan">Поточна передплата</string>
     <string name="cut">Вирізати</string>
     <string name="darkMode">Темний режим</string>
     <string name="databaseErrorClearDataWarning">Ви впевнені, що хочете видалити всі повідомлення, вкладення та дані облікового запису з цього пристрою та створити новий обліковий запис?</string>
@@ -932,7 +930,6 @@
     <string name="previewNotification">Попередній перегляд сповіщень</string>
     <string name="proActivated">активовано</string>
     <string name="proAllSet">Готово!</string>
-    <string name="proAllSetDescription">Твою підписку {app_pro} оновлено. <b>{date}</b> коли підписку {pro} буде подовжено, тоді й стягнуть гроші.</string>
     <string name="proAlreadyPurchased">У вас вже є</string>
     <string name="proAnimatedDisplayPicture">Не зволікайте і завантажуйте GIF та анімовані WebP картинки для свого аватара!</string>
     <string name="proAnimatedDisplayPictureCallToActionDescription">Отримайте анімовані аватари та розблокуйте преміальні функції з {app_pro}</string>
@@ -953,11 +950,8 @@
     <string name="proCallToActionLongerMessages">Хочете відправляти довші повідомлення? Надсилайте більше тексту та розблокуйте преміальні функції застосунку з Session Pro</string>
     <string name="proCallToActionPinnedConversations">Потрібно більше закріплених бесід? Впорядкуйте свої чати та розблокуйте преміальні функції з {app_pro}</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Потрібно понад 5 закріплених бесід? Впорядкуйте свої бесіди та розблокуйте преміальні функції з {app_pro}</string>
-    <string name="proDiscountTooltip">На поточну підписку ти вже маєш знижку {percent}% від загальної ціни {app_pro}.</string>
     <string name="proExpired">Підписка сплила</string>
-    <string name="proExpiredDescription">На жаль, підписка {pro} сплила. Онови її задля збереження переваг і можливостей {app_pro}.</string>
     <string name="proExpiringSoon">Невдовзі спливе підписка</string>
-    <string name="proExpiringSoonDescription">Підписка {pro} спливе <b>{time}</b>. Онови підписку задля збереження переваг і можливостей {app_pro}.</string>
     <string name="proExpiringTime">{pro} спливає за <b>{time}</b></string>
     <string name="proFaq">{pro} ЧАП</string>
     <string name="proFaqDescription">Відповіді на загальні запитання знайдеш у ЧаПи {app_pro}.</string>
@@ -968,7 +962,6 @@
     <string name="proFeatureListPinnedConversations">Закріплюйте необмежену кількість бесід</string>
     <string name="proGroupActivated">Групу активовано</string>
     <string name="proGroupActivatedDescription">У цієї групи розширено можливості! Тепер вона може вміщати до 300 учасників, тому що адміністратор групи має</string>
-    <string name="proImportantDescription">Вимагання повернення грошей закінчено. В разі схвалення твою підписку {pro} негайно скасують і ти втратиш всі можливості {pro}.</string>
     <string name="proIncreasedAttachmentSizeFeature">Збільшений розмір вкладення</string>
     <string name="proIncreasedMessageLengthFeature">Збільшена довжина повідомлень</string>
     <string name="proLargerGroups">Більші групи</string>
@@ -977,15 +970,6 @@
     <string name="proLongerMessagesDescription">Ви можете надсилати повідомлення до 10 000 символів у всіх розмовах.</string>
     <string name="proMessageInfoFeatures">У цьому повідомленні наявні наступні функції Session Pro:</string>
     <string name="proPercentOff">{percent}% Знижки</string>
-    <string name="proPlanActivatedAuto">Для тебе діє підписка {app_pro}.\n\n<b>{date}</b> твою підписку буде самодійно поновлено як <b>{current_plan}</b>. Оновлення підписки настане під час наступного оновлення {pro}.</string>
-    <string name="proPlanActivatedAutoShort">Для тебе діє підписка {app_pro}.\n\n<b>{date}</b> твою підписку буде самодійно поновлено як <b>{current_plan}</b>.</string>
-    <string name="proPlanActivatedNotAuto">Твоя підписка {app_pro} спливе <b>{date}</b>.\n\nДля збереження особливих можливостей подовж свою підписку.</string>
-    <string name="proPlanExpireDate">Підписка {app_pro} спливе <b>{date}</b>.</string>
-    <string name="proPlanNotFound">Передплата {pro} не знайдена</string>
-    <string name="proPlanRecover">Відновити передплату {pro}</string>
-    <string name="proPlanRenew">Оновити підписку {pro}</string>
-    <string name="proPlanRestored">План {pro} відновлено</string>
-    <string name="proPlanRestoredDescription">Виявлено дійсний план {app_pro}, та ваш статус {pro} було відновлено!</string>
     <string name="proPriceOneMonth">1 місяць — {monthly_price} / місяць</string>
     <string name="proPriceThreeMonths">3 місяці — {monthly_price} / місяць</string>
     <string name="proPriceTwelveMonths">12 місяців – {monthly_price} / місяць</string>
@@ -996,11 +980,9 @@
     <string name="proSettings">Налаштування {pro}</string>
     <string name="proStats">Ваша статистика {pro}</string>
     <string name="proStatsTooltip">Звіти підписки {pro} відображають використання лише цього пристрою, тож, мабуть, матимуть иншого вигляду на инших пристроях</string>
-    <string name="proSupportDescription">Якщо потребуєш допомоги щодо підписки {pro}, надійшли звернення до відділу підтримки.</string>
     <string name="proTosPrivacy">Цією дією ти надаси згоду щодо дотримання <b>Правил послуги</b> {app_pro} {icon} і <b>Ставлення до особистих відомостей</b> {icon}</string>
     <string name="proUnlimitedPins">Необмежена кількість закріплених бесід</string>
     <string name="proUnlimitedPinsDescription">Закріплення необмеженої кількості співрозмовників в головному переліку.</string>
-    <string name="proUpdatePlanExpireDescription">Ваш план завершиться <b>{date}</b>.\n\nПісля оновлення налаштувань автоматичної оплати, ваш план автоматично подовжиться <b>{date}</b> на додатковий {selected_plan} доступу до Pro.</string>
     <string name="proUserProfileModalCallToAction">Хочете отримати більше від {app_name}? Оновіться до {app_pro}, щоб мати потужніший досвід обміну повідомленнями.</string>
     <string name="profile">Профіль</string>
     <string name="profileDisplayPicture">Аватар</string>
@@ -1190,8 +1172,6 @@
     <string name="updateGroupInformationEnterShorterDescription">Будь ласка, введіть коротший опис групи</string>
     <string name="updateNewVersion">Нова версія {app_name} доступна.</string>
     <string name="updateNewVersionDescription">Доступна нова версія ({version}) {app_name}.</string>
-    <string name="updatePlan">Оновити тарифний план</string>
-    <string name="updatePlanTwo">Два шляхи поновлення твоєї підписки:</string>
     <string name="updateProfileInformation">Оновити інформацію облікового запису</string>
     <string name="updateProfileInformationDescription">Ваше відображуване ім’я та зображення профілю видимі у всіх розмовах.</string>
     <string name="updateReleaseNotes">Перейти в примітки до випуску</string>
