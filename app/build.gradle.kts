@@ -26,8 +26,8 @@ configurations.configureEach {
     exclude(module = "commons-logging")
 }
 
-val canonicalVersionCode = 426
-val canonicalVersionName = "1.28.1"
+val canonicalVersionCode = 427
+val canonicalVersionName = "1.28.2"
 
 val postFixSize = 10
 val abiPostFix = mapOf(
@@ -402,6 +402,7 @@ dependencies {
     implementation(libs.phrase)
     implementation(libs.copper.flow)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.guava)
     implementation(libs.kovenant)
     implementation(libs.kovenant.android)
     implementation(libs.opencsv)
