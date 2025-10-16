@@ -84,7 +84,6 @@ private fun BaseSessionTabRow(
         },
         divider = { HorizontalDivider(color = LocalColors.current.borders) }
     ) {
-        val animationScope = rememberCoroutineScope()
         titles.forEachIndexed { i, it ->
             Tab(
                 modifier = Modifier.heightIn(min = 48.dp),
