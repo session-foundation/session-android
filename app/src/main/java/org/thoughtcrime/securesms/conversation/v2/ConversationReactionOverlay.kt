@@ -143,7 +143,7 @@ class ConversationReactionOverlay : FrameLayout {
 
         // Use your existing utility to handle insets
         applySafeInsetsPaddings(
-            typeMask = WindowInsetsCompat.Type.systemBars(),
+            typeMask = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout(),
             consumeInsets = false, // Don't consume so children can also access them
             applyTop = false,      // Don't apply as padding, just capture the values
             applyBottom = false
@@ -214,7 +214,17 @@ class ConversationReactionOverlay : FrameLayout {
         val contextMenu = ConversationContextMenu(dropdownAnchor, recipient?.let { getMenuActionItems(messageRecord, it) }.orEmpty())
         this.contextMenu = contextMenu
 
-        var endX = if (isMessageOnLeft) scrubberHorizontalMargin.toFloat() else selectedConversationModel.bubbleX - conversationItem.width + selectedConversationModel.bubbleWidth
+        // Visual left/right edges that account for system insets and configured margin.
+        val leftEdge = (systemInsets.left + scrubberHorizontalMargin).toFloat()
+        val rightEdge = (width - systemInsets.right - scrubberHorizontalMargin).toFloat()
+
+        // Start the bubble aligned to the same visual edge as the scrubber.
+        var endX = if (isMessageOnLeft) {
+            leftEdge
+        } else {
+            rightEdge - conversationItem.width
+        }
+
         var endY = selectedConversationModel.bubbleY - statusBarHeight
         conversationItem.x = endX
         conversationItem.y = endY
@@ -315,13 +325,23 @@ class ConversationReactionOverlay : FrameLayout {
 
         // Adjust for system insets
         reactionBarBackgroundY = maxOf(reactionBarBackgroundY, systemInsets.top.toFloat() - statusBarHeight)
+
+        // Now that endScale is final, clamp the bubble X so it stays fully within the visual edges.
+        val minBubbleX = leftEdge
+        val maxBubbleX = rightEdge
+        endX = endX.coerceIn(minBubbleX, maxBubbleX)
+        // Ensure initial position is corrected before making the overlay visible.
+        conversationItem.x = endX
+        conversationItem.y = endY
+
         hideAnimatorSet.end()
         visibility = VISIBLE
 
+        // Place the scrubber on the same visual edges (accounting for its own width on the right).
         val scrubberX = if (isMessageOnLeft) {
-            scrubberHorizontalMargin.toFloat()
+            leftEdge
         } else {
-            (width - scrubberWidth - scrubberHorizontalMargin).toFloat()
+            (rightEdge - scrubberWidth)
         }
 
         foregroundView.x = scrubberX
@@ -336,15 +356,18 @@ class ConversationReactionOverlay : FrameLayout {
 
         if (isWideLayout) {
             val scrubberRight = scrubberX + scrubberWidth
+            val scrubberLeft = scrubberX - scrubberWidth
             val offsetX = when {
-                isMessageOnLeft -> scrubberRight + menuPadding
-                else -> scrubberX - contextMenu.getMaxWidth() - menuPadding
+                isMessageOnLeft -> scrubberRight - menuPadding
+                else ->  scrubberLeft + menuPadding
             }
             // Adjust Y position to account for insets
             val adjustedY = minOf(backgroundView.y, (availableHeight - actualMenuHeight).toFloat()).toInt()
             contextMenu.show(offsetX.toInt(), adjustedY)
         } else {
-            val contentX = if (isMessageOnLeft) scrubberHorizontalMargin.toFloat() else selectedConversationModel.bubbleX
+            // Use the same left visual edge for narrow layout too.
+            val contentX = if (isMessageOnLeft) leftEdge else selectedConversationModel.bubbleX
+
             val offsetX = when {
                 isMessageOnLeft -> contentX
                 else -> -contextMenu.getMaxWidth() + contentX + bubbleWidth

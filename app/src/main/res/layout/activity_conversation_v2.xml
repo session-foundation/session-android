@@ -284,14 +284,6 @@
             android:layout_height="match_parent"
             tools:visibility="gone" />
 
-        <ViewStub
-            android:id="@+id/conversation_reaction_scrubber_stub"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:focusable="false"
-            android:inflatedId="@+id/conversation_reaction_scrubber"
-            android:layout="@layout/conversation_reaction_scrubber" />
-
         <FrameLayout
             android:id="@+id/loader"
             android:layout_width="match_parent"
@@ -311,5 +303,14 @@
 
         </FrameLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <ViewStub
+        android:id="@+id/conversation_reaction_scrubber_stub"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:focusable="false"
+        android:inflatedId="@+id/conversation_reaction_scrubber"
+        android:layout="@layout/conversation_reaction_scrubber" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
