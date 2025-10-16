@@ -1,12 +1,13 @@
 @file:JvmName("GiphyTabsCompose") // lets Java call attachComposeTabs(...)
 package org.thoughtcrime.securesms.giph.ui.compose
 
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.viewpager2.widget.ViewPager2
-import kotlinx.coroutines.launch
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
 
 @Composable
@@ -14,25 +15,26 @@ fun GiphyTabsCompose(
     pager: ViewPager2,
     titles: List<Int>
 ) {
-    val scope = rememberCoroutineScope()
-    val pagerState = rememberPagerState { titles.size }
+    var selectedIndex by rememberSaveable {
+        mutableIntStateOf(pager.currentItem.coerceIn(0, titles.lastIndex))
+    }
 
     // Keep pager -> tabs selection in sync.
     DisposableEffect(pager) {
         val callback = object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
-                scope.launch { pagerState.scrollToPage(position) }
+                selectedIndex = position
             }
         }
         pager.registerOnPageChangeCallback(callback)
         onDispose { pager.unregisterOnPageChangeCallback(callback) }
     }
 
+    // Tabs -> ViewPager2
     SessionTabRow(
-        pagerState = pagerState,
+        selectedIndex = selectedIndex,
         titles = titles,
         onTabSelected = { index ->
-            // Compose tab click -> advance ViewPager2 (and the indicator animates above)
             if (index != pager.currentItem) pager.setCurrentItem(index, true)
         }
     )
