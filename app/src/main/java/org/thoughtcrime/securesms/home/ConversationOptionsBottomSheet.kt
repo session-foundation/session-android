@@ -1,12 +1,18 @@
 package org.thoughtcrime.securesms.home
 
 import android.content.Context
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
+import androidx.core.view.updatePadding
 import androidx.core.widget.TextViewCompat
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
@@ -22,6 +28,7 @@ import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.ui.adaptive.getAdaptiveInfo
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -74,7 +81,7 @@ class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnCli
         super.onCreate(savedInstanceState)
         val args = requireArguments()
         publicKey = requireNotNull(args.getString(ARG_PUBLIC_KEY))
-        val threadId = requireNotNull(args.getLong(ARG_THREAD_ID))
+        requireNotNull(args.getLong(ARG_THREAD_ID))
         val addressString = requireNotNull(args.getString(ARG_ADDRESS))
         val address = Address.fromSerialized(addressString)
         thread = requireNotNull(
@@ -253,5 +260,26 @@ class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnCli
         super.onStart()
         val window = dialog?.window ?: return
         window.setDimAmount(0.6f)
+
+        val dlg = dialog as? BottomSheetDialog ?: return
+        val sheet = dlg.findViewById<android.widget.FrameLayout>(R.id.design_bottom_sheet)
+            ?: return
+
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+            val behavior = BottomSheetBehavior.from(sheet)
+            behavior.state = BottomSheetBehavior.STATE_HALF_EXPANDED
+        }
+
+        ViewCompat.setOnApplyWindowInsetsListener(sheet) { _, insets ->
+            val cut = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or
+                        WindowInsetsCompat.Type.displayCutout()
+            )
+
+            binding.root.updatePadding(left = cut.left, right = cut.right)
+            insets
+        }
+
+        ViewCompat.requestApplyInsets(sheet)
     }
 }
