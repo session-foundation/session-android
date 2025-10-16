@@ -21,7 +21,7 @@ import okio.source
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsignal.exceptions.NonRetryableException
 import org.thoughtcrime.securesms.attachments.LocalEncryptedFileInputStream
-import org.thoughtcrime.securesms.attachments.RemoteFileDownloadWorker
+import org.thoughtcrime.securesms.attachments.AvatarDownloadWorker
 
 class RemoteFileFetcher @AssistedInject constructor(
     @Assisted private val file: RemoteFile,
@@ -30,14 +30,14 @@ class RemoteFileFetcher @AssistedInject constructor(
     val localEncryptedFileInputStreamFactory: LocalEncryptedFileInputStream.Factory,
 ) : Fetcher {
     override suspend fun fetch(): FetchResult? {
-        val downloadedFile = RemoteFileDownloadWorker.computeFileName(context, file)
+        val downloadedFile = AvatarDownloadWorker.computeFileName(context, file)
 
         // Check if the file already exists in the local storage, otherwise enqueue a download and
         // wait for it to complete.
         val dataSource = when {
             downloadedFile.exists() -> DataSource.DISK
             options.networkCachePolicy == CachePolicy.ENABLED -> {
-                RemoteFileDownloadWorker.enqueue(context, file)
+                AvatarDownloadWorker.enqueue(context, file)
                     .first { it?.state == WorkInfo.State.FAILED || it?.state == WorkInfo.State.SUCCEEDED }
                 DataSource.NETWORK
             }

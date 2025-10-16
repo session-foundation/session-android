@@ -46,8 +46,15 @@ import java.io.File
 import java.security.MessageDigest
 import java.time.Duration
 
+/**
+ * A worker that downloads a remote file and stores it locally in an encrypted format.
+ *
+ * Right now this is only used for downloading avatars, for downloading attachment, there's
+ * [org.session.libsession.messaging.jobs.AttachmentDownloadJob] as it's still using a different
+ * encryption method.
+ */
 @HiltWorker
-class RemoteFileDownloadWorker @AssistedInject constructor(
+class AvatarDownloadWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted params: WorkerParameters,
     private val localEncryptedFileOutputStreamFactory: LocalEncryptedFileOutputStream.Factory,
@@ -264,7 +271,7 @@ class RemoteFileDownloadWorker @AssistedInject constructor(
     }
 
     companion object {
-        const val TAG = "RemoteFileDownloadWorker"
+        const val TAG = "AvatarDownloadWorker"
 
         private const val ARG_ENCRYPTED_URL = "encrypted_url"
         private const val ARG_ENCRYPTED_KEY = "encrypted_key"
@@ -334,7 +341,7 @@ class RemoteFileDownloadWorker @AssistedInject constructor(
                     .putString(ARG_COMMUNITY_FILE_ID, file.fileId)
             }
 
-            val request = OneTimeWorkRequestBuilder<RemoteFileDownloadWorker>()
+            val request = OneTimeWorkRequestBuilder<AvatarDownloadWorker>()
                 .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, Duration.ofSeconds(5))
                 .addTag(TAG)

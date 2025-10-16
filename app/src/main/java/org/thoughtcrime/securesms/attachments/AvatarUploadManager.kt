@@ -74,7 +74,7 @@ class AvatarUploadManager @Inject constructor(
                             ?.toRemoteFile()
                     }
                     .filterNotNull()
-                    .map { RemoteFileDownloadWorker.computeFileName(application, it) }
+                    .map { AvatarDownloadWorker.computeFileName(application, it) }
                     .distinctUntilChanged()
                     .mapLatest { localFile ->
                         waitUntilExists(localFile)
@@ -175,7 +175,7 @@ class AvatarUploadManager @Inject constructor(
 
         // To save us from downloading this avatar again, we store the data as it would be downloaded
         localEncryptedFileOutputStreamFactory.create(
-            file = RemoteFileDownloadWorker.computeFileName(application, remoteFile),
+            file = AvatarDownloadWorker.computeFileName(application, remoteFile),
             meta = FileMetadata(expiryTime = uploadResult.expires?.toInstant())
         ).use {
             it.write(pictureData)
@@ -202,7 +202,7 @@ class AvatarUploadManager @Inject constructor(
 
         if (oldPic != null) {
             // If we had an old avatar, delete it from local storage
-            val oldFile = RemoteFileDownloadWorker.computeFileName(application, oldPic)
+            val oldFile = AvatarDownloadWorker.computeFileName(application, oldPic)
             if (oldFile.exists()) {
                 Log.d(TAG, "Deleting old avatar file: $oldFile")
                 oldFile.delete()
