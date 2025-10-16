@@ -1,6 +1,7 @@
 package org.session.libsession.messaging.file_server
 
 import android.util.Base64
+import kotlinx.coroutines.CancellationException
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.functional.map
@@ -75,7 +76,7 @@ class FileServerApi @Inject constructor(
     }
 
 
-    private fun send(request: Request): Promise<SendResponse, Exception> {
+    private suspend fun send(request: Request): SendResponse {
         val urlBuilder = request.fileServer.url
             .newBuilder()
             .addPathSegments(request.endpoint)
@@ -89,40 +90,45 @@ class FileServerApi @Inject constructor(
             .headers(request.headers.toHeaders())
         when (request.verb) {
             HTTP.Verb.GET -> requestBuilder.get()
-            HTTP.Verb.PUT -> requestBuilder.put(createBody(request.body, request.parameters)!!)
-            HTTP.Verb.POST -> requestBuilder.post(createBody(request.body, request.parameters)!!)
+            HTTP.Verb.PUT -> requestBuilder.put(createBody(request.body, request.parameters) ?: RequestBody.EMPTY)
+            HTTP.Verb.POST -> requestBuilder.post(createBody(request.body, request.parameters) ?: RequestBody.EMPTY)
             HTTP.Verb.DELETE -> requestBuilder.delete(createBody(request.body, request.parameters))
         }
         return if (request.useOnionRouting) {
-            OnionRequestAPI.sendOnionRequest(
-                request = requestBuilder.build(),
-                server = request.fileServer.url.host,
-                x25519PublicKey = request.fileServer.publicKeyHex
-            ).map {
-                val body = it.body ?: throw Error.ParsingFailed
+            try {
+                val response = OnionRequestAPI.sendOnionRequest(
+                    request = requestBuilder.build(),
+                    server = request.fileServer.url.host,
+                    x25519PublicKey = request.fileServer.publicKeyHex
+                ).await()
+
+                check(response.code in 200..299) {
+                    "Error response from file server: ${response.code}"
+                }
+
+                val body = response.body ?: throw Error.ParsingFailed
 
                 SendResponse(
                     body = body,
-                    headers = it.info["headers"] as? Map<String, String>
+                    headers = response.info["headers"] as? Map<String, String>
                 )
-            }.fail { e ->
-                when (e) {
-                    // No need for the stack trace for HTTP errors
-                    is HTTP.HTTPRequestFailedException -> Log.e("Loki", "File server request failed due to error: ${e.message}")
-                    else -> Log.e("Loki", "File server request failed", e)
-                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e("Loki", "File server request failed", e)
+                throw e
             }
         } else {
-            Promise.ofFail(IllegalStateException("It's currently not allowed to send non onion routed requests."))
+            error("It's currently not allowed to send non onion routed requests.")
         }
     }
 
-    fun upload(
+    suspend fun upload(
         file: ByteArray,
         usedDeterministicEncryption: Boolean,
         fileServer: FileServer = DEFAULT_FILE_SERVER,
         customExpiresDuration: Duration? = null
-    ): Promise<UploadResult, Exception> {
+    ): UploadResult {
         val request = Request(
             fileServer = fileServer,
             verb = HTTP.Verb.POST,
@@ -136,33 +142,49 @@ class FileServerApi @Inject constructor(
                 }
             }
         )
-        return send(request).map { response ->
-            val json = JsonUtil.fromJson(response.body, Map::class.java)
-            val id = json["id"]!!.toString()
-            val expiresEpochSeconds = (json.getOrDefault("expires", null) as? Number)?.toLong()
+        val response = send(request)
+        val json = JsonUtil.fromJson(response.body, Map::class.java)
+        val id = json["id"]!!.toString()
+        val expiresEpochSeconds = (json.getOrDefault("expires", null) as? Number)?.toLong()
 
-            UploadResult(
+        return UploadResult(
+            fileId = id,
+            fileUrl = buildAttachmentUrl(
                 fileId = id,
-                fileUrl = buildAttachmentUrl(
-                    fileId = id,
-                    fileServer = fileServer,
-                    usesDeterministicEncryption = usedDeterministicEncryption
-                ).toString(),
-                expires = expiresEpochSeconds?.asEpochSeconds()
-            )
-        }
+                fileServer = fileServer,
+                usesDeterministicEncryption = usedDeterministicEncryption
+            ).toString(),
+            expires = expiresEpochSeconds?.asEpochSeconds()
+        )
     }
 
-    fun download(
+    suspend fun download(
         fileId: String,
         fileServer: FileServer = DEFAULT_FILE_SERVER
-    ): Promise<SendResponse, Exception> {
+    ): SendResponse {
         val request = Request(
             fileServer = fileServer,
             verb = HTTP.Verb.GET,
             endpoint = "file/$fileId"
         )
         return send(request)
+    }
+
+    suspend fun renew(fileId: String,
+                      customTtl: Duration? = null,
+                      fileServer: FileServer = DEFAULT_FILE_SERVER) {
+        val resp = send(Request(
+            fileServer = fileServer,
+            verb = HTTP.Verb.POST,
+            endpoint = "file/$fileId/extend",
+            headers = customTtl?.let {
+                buildMap {
+                    "X-FS-TTL" to it.inWholeSeconds.toString()
+                }
+            } ?: mapOf()
+        ))
+
+        resp.expires
     }
 
     fun buildAttachmentUrl(
@@ -303,7 +325,7 @@ class FileServerApi @Inject constructor(
         )
 
         // transform the promise into a coroutine
-        val result = send(request).await()
+        val result = send(request)
 
         // map out the result
         return JsonUtil.fromJson(result.body, Map::class.java).let {

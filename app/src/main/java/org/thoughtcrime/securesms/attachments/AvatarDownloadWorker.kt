@@ -235,7 +235,7 @@ class AvatarDownloadWorker @AssistedInject constructor(
                 val response = fileServerApi.download(
                     fileId = result.fileId,
                     fileServer = result.fileServer,
-                ).await()
+                )
 
                 Log.d(TAG, "Downloaded file from file server: $file")
 

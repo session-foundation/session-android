@@ -171,7 +171,7 @@ class AttachmentDownloadJob @AssistedInject constructor(
                 val cipherText = fileServerApi.download(
                     fileId = r.fileId,
                     fileServer = r.fileServer
-                ).await().body
+                ).body
 
                 runCatching {
                     if (r.usesDeterministicEncryption) {
@@ -245,7 +245,7 @@ class AttachmentDownloadJob @AssistedInject constructor(
         return Data.Builder()
             .putLong(ATTACHMENT_ID_KEY, attachmentID)
             .putLong(TS_INCOMING_MESSAGE_ID_KEY, mmsMessageId)
-            .build();
+            .build()
     }
 
     override fun getFactoryKey(): String {

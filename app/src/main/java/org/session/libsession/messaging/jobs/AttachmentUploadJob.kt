@@ -89,7 +89,7 @@ class AttachmentUploadJob @AssistedInject constructor(
                         file = data,
                         usedDeterministicEncryption = isDeterministicallyEncrypted,
                         fileServer = fileServer
-                    ).await()
+                    )
 
                     result.fileId to result.fileUrl
                 }
