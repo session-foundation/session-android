@@ -198,7 +198,6 @@
     <string name="cameraGrantAccessDescription">{app_name} foto və video çəkmək və ya QR kodlarını skan etmək üçün kameraya müraciət etməlidir.</string>
     <string name="cameraGrantAccessQr">{app_name} QR kodlarını skan etmək üçün kameraya müraciət etməlidir</string>
     <string name="cancel">İmtina</string>
-    <string name="cancelPlan">Planı ləğv et</string>
     <string name="change">Dəyişdir</string>
     <string name="changePasswordFail">Parol dəyişdirmə uğursuz oldu</string>
     <string name="changePasswordModalDescription">{app_name} üçün parolunuzu dəyişdirin. Daxili olaraq saxlanılmış verilər, yeni parolunuzla təkrar şifrələnəcək.</string>
@@ -308,7 +307,6 @@
     <string name="create">Yarat</string>
     <string name="creatingCall">Zəng yaradılır</string>
     <string name="currentPassword">Hazırkı parol</string>
-    <string name="currentPlan">Hazırkı plan</string>
     <string name="cut">Kəs</string>
     <string name="darkMode">Qaranlıq rejim</string>
     <string name="databaseErrorClearDataWarning">Bu cihazdan bütün mesajları, qoşmaları və hesab məlumatlarını silmək və yeni hesab yaratmaq istədiyinizə əminsinizmi?</string>
@@ -788,7 +786,6 @@
     <string name="okay">Yaxşı</string>
     <string name="on">Açıq</string>
     <string name="onDevice">{device_type} cihazınızda</string>
-    <string name="onDeviceDescription">Başda qeydiyyatdan keçdiyiniz {platform_account} hesabına giriş etdiyiniz {device_type} cihazından bu {app_name} hesabını açın. Sonra planınızı {app_pro} ayarları vasitəsilə dəyişdirin.</string>
     <string name="onboardingAccountCreate">Hesab yarat</string>
     <string name="onboardingAccountCreated">Hesab yaradıldı</string>
     <string name="onboardingAccountExists">Hesabım var</string>
@@ -891,7 +888,6 @@
     <string name="previewNotification">Bildirişi önizlə</string>
     <string name="proActivated">Aktivləşdirildi</string>
     <string name="proAllSet">Hər şey hazırdır!</string>
-    <string name="proAllSetDescription">{app_pro} planınız güncəlləndi! Hazırkı {pro} planınız avtomatik olaraq <b>{date}</b> tarixində yeniləndiyi zaman ödəniş haqqı alınacaq.</string>
     <string name="proAlreadyPurchased">Artıq yüksəltdiniz</string>
     <string name="proAnimatedDisplayPicture">Getdik və ekran şəkliniz üçün GIF-lər və animasiyalı WebP təsvirləri yükləyin!</string>
     <string name="proAnimatedDisplayPictureCallToActionDescription">{app_pro} ilə animasiyalı ekran şəkillərini endirin və premium özəlliklərin kilidini açın</string>
@@ -916,12 +912,9 @@
     <string name="proCallToActionLongerMessages">Daha uzun mesajlar göndərmək istəyirsiniz? {app_pro} ilə daha çox mətn göndərin və premium özəlliklərin kilidini açın</string>
     <string name="proCallToActionPinnedConversations">Daha çoxunu sancmaq istəyirsiniz? {app_pro} ilə söhbətlərinizi təşkil edin və premium özəlliklərin kilidini açın</string>
     <string name="proCallToActionPinnedConversationsMoreThan">5-dən çoxunu sancmaq istəyirsiniz? {app_pro} ilə söhbətlərinizi təşkil edin və premium özəlliklərin kilidini açın</string>
-    <string name="proDiscountTooltip">Hazırkı planınızda artıq tam {app_pro} qiymətinin {percent}% endirimi mövcuddur.</string>
     <string name="proErrorRefreshingStatus">{pro} statusunu təzələmə xətası</string>
     <string name="proExpired">Müddəti bitib</string>
-    <string name="proExpiredDescription">Təəssüf ki, {pro} planınızın müddəti bitib. {app_pro} tətbiqinin eksklüziv imtiyazlarına və özəlliklərinə erişimi davam etdirmək üçün yeniləyin.</string>
     <string name="proExpiringSoon">Tezliklə bitir</string>
-    <string name="proExpiringSoonDescription">{pro} planınızın müddəti <b>{time}</b> vaxtında bitir. {app_pro} tətbiqinin eksklüziv imtiyazlarına və özəlliklərinə erişimi davam etdirmək üçün planınızı güncəlləyin.</string>
     <string name="proExpiringTime">{pro}, <b>{time}</b> vaxtında başa çatır</string>
     <string name="proFaq">{pro} TVS</string>
     <string name="proFaqDescription">{app_pro} TVS-da tez-tez verilən suallara cavab tapın.</string>
@@ -936,7 +929,6 @@
         <item quantity="one">%1$s qrup yüksəldildi</item>
         <item quantity="other">%1$s qrup yüksəldildi</item>
     </plurals>
-    <string name="proImportantDescription">Geri ödəniş tələbi qətidir. Əgər təsdiqlənsə, {pro} planınız dərhal ləğv ediləcək və bütün {pro} özəlliklərinə erişimi itirəcəksiniz.</string>
     <string name="proIncreasedAttachmentSizeFeature">Artırılmış qoşma ölçüsü</string>
     <string name="proIncreasedMessageLengthFeature">Artırılmış mesaj uzunluğu</string>
     <string name="proLargerGroups">Daha böyük qruplar</string>
@@ -953,23 +945,6 @@
         <item quantity="one">%1$s sancılmış danışıq</item>
         <item quantity="other">%1$s sancılmış danışıq</item>
     </plurals>
-    <string name="proPlanActivatedAuto">{app_pro} planınız aktivdir!\n\nPlanınız avtomatik olaraq <b>{date}</b> tarixində başqa bir <b>{current_plan}</b> üçün yenilənəcək. Planınıza edilən güncəlləmələr növbəti {pro} yenilənməsi zamanı qüvvəyə minəcək.</string>
-    <string name="proPlanActivatedAutoShort">{app_pro} planınız aktivdir!\n\nPlanınız avtomatik olaraq <b>{date}</b> tarixində başqa bir <b>{current_plan}</b> üçün yenilənəcək.</string>
-    <string name="proPlanActivatedNotAuto">{app_pro} planınızın müddəti <b>{date}</b> tarixində bitir.\n\nEksklüziv Pro özəlliklərinə kəsintisiz erişimi təmin etmək üçün planınızı indi güncəlləyin.</string>
-    <string name="proPlanError">{pro} planı xətası</string>
-    <string name="proPlanExpireDate">{app_pro} planınızın müddəti <b>{date}</b> tarixində bitir.</string>
-    <string name="proPlanLoading">{pro} planı yüklənir</string>
-    <string name="proPlanLoadingDescription">{pro} planınız barədə məlumatlar hələ də yüklənir. Bu proses tamamlanana qədər planınızı güncəlləyə bilməzsiniz.</string>
-    <string name="proPlanLoadingEllipsis">{pro} planı yüklənir...</string>
-    <string name="proPlanNetworkLoadError">Hazırkı planınızı yükləmək üçün şəbəkəyə bağlana bilmir. Bağlantı bərpa olunana qədər {app_name} ilə planınızı güncəlləmək sıradan çıxarılacaq.\n\nLütfən şəbəkə bağlantınızı yoxlayıb yenidən sınayın.</string>
-    <string name="proPlanNotFound">{pro} planı tapılmadı</string>
-    <string name="proPlanNotFoundDescription">Hesabınız üçün heç bir aktiv plan tapılmadı. Bunun bir səhv olduğunu düşünürsünüzsə, lütfən kömək üçün {app_name} dəstəyi ilə əlaqə saxlayın.</string>
-    <string name="proPlanRecover">{pro} planını geri qaytar</string>
-    <string name="proPlanRenew">{pro} planını yenilə</string>
-    <string name="proPlanRenewStart">Güclü {app_pro} özəlliklərini yenidən istifadə etməyə başlamaq üçün {app_pro} planınızı yeniləyin.</string>
-    <string name="proPlanRenewSupport">{app_pro} planınız yeniləndi! {network_name} dəstək verdiyiniz üçün təşəkkürlər.</string>
-    <string name="proPlanRestored">{pro} planı bərpa edildi</string>
-    <string name="proPlanRestoredDescription">{app_pro} üçün yararlı bir plan aşkarlandı və {pro} statusunuz bərpa edildi!</string>
     <string name="proPriceOneMonth">1 ay - {monthly_price}/ay</string>
     <string name="proPriceThreeMonths">3 ay - {monthly_price}/ay</string>
     <string name="proPriceTwelveMonths">12 ay - {monthly_price}/ay</string>
@@ -990,12 +965,9 @@
     <string name="proStatusLoadingSubtitle">{pro} status yüklənir</string>
     <string name="proStatusNetworkErrorDescription">{pro} statusunuzu yoxlamaq üçün şəbəkəyə bağlana bilmir. Bağlantı bərpa olunana qədər {pro} ya yüksəldə bilməyəcəksiniz.\n\nLütfən şəbəkə bağlantınızı yoxlayıb yenidən sınayın.</string>
     <string name="proStatusRefreshNetworkError">{pro} statusunuzu təzələmək üçün şəbəkəyə bağlana bilmir. Bu səhifədəki bəzi əməliyyatlar, bağlantı bərpa olunana qədər sıradan çıxarılacaq.\n\nLütfən şəbəkə bağlantınızı yoxlayıb yenidən sınayın.</string>
-    <string name="proSupportDescription">{pro} planınızla bağlı kömək lazımdır? Dəstək komandamıza müraciət edin.</string>
     <string name="proTosPrivacy">Güncəlləyərək, {app_pro} <b>Xidmət Şərtləri</b> {icon} və <b>Məxfilik Siyasəti</b> {icon} ilə razılaşırsınız</string>
     <string name="proUnlimitedPins">Limitsiz sancma</string>
     <string name="proUnlimitedPinsDescription">Limitsiz sancılmış danışıqla bütün söhbətlərinizi təşkil edin.</string>
-    <string name="proUpdatePlanDescription">Hazırda <b>{current_plan} Planı</b> üzərindəsiniz. <b>{selected_plan} Planına</b>na keçmək istədiyinizə əminsiniz?\n\nGüncəlləsəniz, planınız <b>{date}</b> tarixində əlavə {selected_plan} {pro} erişimi üçün avtomatik yenilənəcək.</string>
-    <string name="proUpdatePlanExpireDescription">Planınız <b>{date}</b> tarixində bitəcək.\n\nGüncəlləsəniz, planınız <b>{date}</b> tarixində əlavə {selected_plan} Pro erişimi üçün avtomatik olaraq yenilənəcək.</string>
     <string name="proUserProfileModalCallToAction">{app_name} tətbiqindən daha çox faydalanmaq istəyirsiniz? Daha güclü mesajlaşma təcrübəsi üçün {app_pro}-ya yüksəldin.</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Ekran şəkli</string>
@@ -1178,8 +1150,6 @@
     <string name="updateGroupInformationEnterShorterDescription">Zəhmət olmasa, qrupun daha qısa təsvirini daxil edin</string>
     <string name="updateNewVersion">{app_name} üçün yeni versiyası mövcuddur, güncəlləmək üçün toxunun</string>
     <string name="updateNewVersionDescription">Yeni {app_name} versiyası ({version}) mövcuddur.</string>
-    <string name="updatePlan">Planı güncəllə</string>
-    <string name="updatePlanTwo">Planınızı güncəlləməyin iki yolu var:</string>
     <string name="updateProfileInformation">Profil məlumatlarını güncəllə</string>
     <string name="updateProfileInformationDescription">Ekran adınız və ekran şəkliniz bütün danışıqlarda görünür.</string>
     <string name="updateReleaseNotes">Buraxılış qeydlərinə get</string>

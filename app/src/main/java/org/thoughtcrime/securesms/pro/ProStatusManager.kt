@@ -42,11 +42,20 @@ class ProStatusManager @Inject constructor(
         recipientRepository.observeSelf(),
         (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS } as Flow<*>)
             .onStart { emit(Unit) }
-            .map { prefs.getDebugSubscriptionType() }
-    ){ selfRecipient, debugSubscription ->
+            .map { prefs.getDebugSubscriptionType() },
+        (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_PRO_PLAN_STATUS } as Flow<*>)
+            .onStart { emit(Unit) }
+            .map { prefs.getDebugProPlanStatus() },
+    ){ selfRecipient, debugSubscription, debugProPlanStatus ->
         //todo PRO implement properly
 
         val subscriptionState = debugSubscription ?: DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE
+        val proStatus = when(debugProPlanStatus){
+            DebugMenuViewModel.DebugProPlanStatus.LOADING -> State.Loading
+            DebugMenuViewModel.DebugProPlanStatus.ERROR -> State.Error(Exception())
+            else -> State.Success(Unit)
+        }
+
         SubscriptionState(
             type = when(subscriptionState){
                 DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> SubscriptionType.Active.AutoRenewing(
@@ -136,8 +145,8 @@ class ProStatusManager @Inject constructor(
                     )
                 )
             },
-               // SubscriptionType.NeverSubscribed,
-            refreshState = State.Error(Exception()),
+
+            refreshState = proStatus,
         )
 
     }.stateIn(GlobalScope, SharingStarted.Eagerly,
