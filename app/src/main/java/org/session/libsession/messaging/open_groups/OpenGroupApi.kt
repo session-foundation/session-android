@@ -5,17 +5,14 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.databind.annotation.JsonNaming
-import com.fasterxml.jackson.databind.type.TypeFactory
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.decodeFromStream
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.Hash
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
-import nl.komponents.kovenant.Promise
-import nl.komponents.kovenant.functional.map
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
@@ -24,7 +21,6 @@ import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.OnionResponse
 import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.utilities.asyncPromise
 import org.session.libsession.snode.utilities.await
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64.encodeBytes
@@ -40,9 +36,6 @@ import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import java.security.SecureRandom
 import java.util.concurrent.TimeUnit
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.set
 
 object OpenGroupApi {
     val defaultRooms = MutableSharedFlow<List<DefaultGroup>>(replay = 1)
@@ -215,12 +208,16 @@ object OpenGroupApi {
         val index: Long = 0
     )
 
+    @Serializable
     data class AddReactionResponse(
+        @SerialName("seqno")
         val seqNo: Long,
         val added: Boolean
     )
 
+    @Serializable
     data class DeleteReactionResponse(
+        @SerialName("seqno")
         val seqNo: Long,
         val removed: Boolean
     )
@@ -283,24 +280,23 @@ object OpenGroupApi {
         return RequestBody.create("application/json".toMediaType(), parametersAsJSON)
     }
 
-    private fun getResponseBody(
+    private suspend fun getResponseBody(
         request: Request,
         signRequest: Boolean = true,
         serverPubKeyHex: String? = null
-    ): Promise<ByteArraySlice, Exception> {
-        return send(request, signRequest = signRequest, serverPubKeyHex = serverPubKeyHex).map { response ->
-            response.body ?: throw Error.ParsingFailed
-        }
+    ): ByteArraySlice {
+        val response =  send(request, signRequest = signRequest, serverPubKeyHex = serverPubKeyHex)
+
+        return response.body ?: throw Error.ParsingFailed
     }
 
-    private fun getResponseBodyJson(
+    private suspend fun getResponseBodyJson(
         request: Request,
         signRequest: Boolean = true,
         serverPubKeyHex: String? = null
-    ): Promise<Map<*, *>, Exception> {
-        return send(request, signRequest = signRequest, serverPubKeyHex = serverPubKeyHex).map {
-            JsonUtil.fromJson(it.body, Map::class.java)
-        }
+    ): Map<*, *> {
+        val response =  send(request, signRequest = signRequest, serverPubKeyHex = serverPubKeyHex)
+        return JsonUtil.fromJson(response.body, Map::class.java)
     }
 
     suspend fun getOrFetchServerCapabilities(server: String): List<String> {
@@ -313,14 +309,15 @@ object OpenGroupApi {
 
         val fetched = getCapabilities(server,
             serverPubKeyHex = defaultServerPublicKey.takeIf { server == defaultServer }
-        ).await()
+        )
 
         storage.setServerCapabilities(server, fetched.capabilities)
         return fetched.capabilities
     }
 
-    private fun send(request: Request, signRequest: Boolean, serverPubKeyHex: String? = null): Promise<OnionResponse, Exception> {
-        request.server.toHttpUrlOrNull() ?: return Promise.ofFail(Error.InvalidURL)
+    private suspend fun send(request: Request, signRequest: Boolean, serverPubKeyHex: String? = null): OnionResponse {
+        request.server.toHttpUrlOrNull() ?: throw(Error.InvalidURL)
+
         val urlBuilder = StringBuilder("${request.server}/${request.endpoint.value}")
         if (request.verb == GET && request.queryParameters.isNotEmpty()) {
             urlBuilder.append("?")
@@ -329,113 +326,109 @@ object OpenGroupApi {
             }
         }
 
-        suspend fun execute(): OnionResponse {
-            val serverPublicKey = serverPubKeyHex
-                ?: MessagingModuleConfiguration.shared.storage.getOpenGroupPublicKey(request.server)
-                ?: throw Error.NoPublicKey
-            val urlRequest = urlBuilder.toString()
+        val serverPublicKey = serverPubKeyHex
+            ?: MessagingModuleConfiguration.shared.storage.getOpenGroupPublicKey(request.server)
+            ?: throw Error.NoPublicKey
+        val urlRequest = urlBuilder.toString()
 
-            val headers = if (signRequest) {
-                val serverCapabilities = getOrFetchServerCapabilities(request.server)
+        val headers = if (signRequest) {
+            val serverCapabilities = getOrFetchServerCapabilities(request.server)
 
-                val ed25519KeyPair = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()
-                    ?: throw Error.NoEd25519KeyPair
+            val ed25519KeyPair = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()
+                ?: throw Error.NoEd25519KeyPair
 
-                val headers = request.headers.toMutableMap()
-                val nonce = ByteArray(16).also { SecureRandom().nextBytes(it) }
-                val timestamp = TimeUnit.MILLISECONDS.toSeconds(SnodeAPI.nowWithOffset)
-                val bodyHash = if (request.parameters != null) {
-                    val parameterBytes = JsonUtil.toJson(request.parameters).toByteArray()
-                    Hash.hash64(parameterBytes)
-                } else if (request.body != null) {
-                    Hash.hash64(request.body)
-                } else {
-                    byteArrayOf()
-                }
+            val headers = request.headers.toMutableMap()
+            val nonce = ByteArray(16).also { SecureRandom().nextBytes(it) }
+            val timestamp = TimeUnit.MILLISECONDS.toSeconds(SnodeAPI.nowWithOffset)
+            val bodyHash = if (request.parameters != null) {
+                val parameterBytes = JsonUtil.toJson(request.parameters).toByteArray()
+                Hash.hash64(parameterBytes)
+            } else if (request.body != null) {
+                Hash.hash64(request.body)
+            } else {
+                byteArrayOf()
+            }
 
-                val messageBytes = Hex.fromStringCondensed(serverPublicKey)
-                    .plus(nonce)
-                    .plus("$timestamp".toByteArray(Charsets.US_ASCII))
-                    .plus(request.verb.rawValue.toByteArray())
-                    .plus("/${request.endpoint.value}".toByteArray())
-                    .plus(bodyHash)
+            val messageBytes = Hex.fromStringCondensed(serverPublicKey)
+                .plus(nonce)
+                .plus("$timestamp".toByteArray(Charsets.US_ASCII))
+                .plus(request.verb.rawValue.toByteArray())
+                .plus("/${request.endpoint.value}".toByteArray())
+                .plus(bodyHash)
 
-                val signature: ByteArray
-                val pubKey: String
+            val signature: ByteArray
+            val pubKey: String
 
-                if (serverCapabilities.isEmpty() || serverCapabilities.contains(Capability.BLIND.name.lowercase())) {
-                    pubKey = AccountId(
-                        IdPrefix.BLINDED,
-                        BlindKeyAPI.blind15KeyPair(
-                            ed25519SecretKey = ed25519KeyPair.secretKey.data,
-                            serverPubKey = Hex.fromStringCondensed(serverPublicKey)
-                        ).pubKey.data
-                    ).hexString
+            if (serverCapabilities.isEmpty() || serverCapabilities.contains(Capability.BLIND.name.lowercase())) {
+                pubKey = AccountId(
+                    IdPrefix.BLINDED,
+                    BlindKeyAPI.blind15KeyPair(
+                        ed25519SecretKey = ed25519KeyPair.secretKey.data,
+                        serverPubKey = Hex.fromStringCondensed(serverPublicKey)
+                    ).pubKey.data
+                ).hexString
 
-                    try {
-                        signature = BlindKeyAPI.blind15Sign(
-                            ed25519SecretKey = ed25519KeyPair.secretKey.data,
-                            serverPubKey = serverPublicKey,
-                            message = messageBytes
-                        )
-                    } catch (e: Exception) {
-                        throw Error.SigningFailed
-                    }
-                } else {
-                    pubKey = AccountId(
-                        IdPrefix.UN_BLINDED,
-                        ed25519KeyPair.pubKey.data
-                    ).hexString
-
-                    signature = ED25519.sign(
-                        ed25519PrivateKey = ed25519KeyPair.secretKey.data,
+                try {
+                    signature = BlindKeyAPI.blind15Sign(
+                        ed25519SecretKey = ed25519KeyPair.secretKey.data,
+                        serverPubKey = serverPublicKey,
                         message = messageBytes
                     )
+                } catch (e: Exception) {
+                    throw Error.SigningFailed
                 }
-                headers["X-SOGS-Nonce"] = encodeBytes(nonce)
-                headers["X-SOGS-Timestamp"] = "$timestamp"
-                headers["X-SOGS-Pubkey"] = pubKey
-                headers["X-SOGS-Signature"] = encodeBytes(signature)
-                headers
             } else {
-                request.headers
-            }
+                pubKey = AccountId(
+                    IdPrefix.UN_BLINDED,
+                    ed25519KeyPair.pubKey.data
+                ).hexString
 
-            val requestBuilder = okhttp3.Request.Builder()
-                .url(urlRequest)
-                .headers(headers.toHeaders())
-            when (request.verb) {
-                GET -> requestBuilder.get()
-                PUT -> requestBuilder.put(createBody(request.body, request.parameters)!!)
-                POST -> requestBuilder.post(createBody(request.body, request.parameters)!!)
-                DELETE -> requestBuilder.delete(createBody(request.body, request.parameters))
+                signature = ED25519.sign(
+                    ed25519PrivateKey = ed25519KeyPair.secretKey.data,
+                    message = messageBytes
+                )
             }
-            if (!request.room.isNullOrEmpty()) {
-                requestBuilder.header("Room", request.room)
-            }
-            return if (request.useOnionRouting) {
-                OnionRequestAPI.sendOnionRequest(requestBuilder.build(), request.server, serverPublicKey).fail { e ->
-                    when (e) {
-                        // No need for the stack trace for HTTP errors
-                        is HTTP.HTTPRequestFailedException -> Log.e("SOGS", "Failed onion request: ${e.message}")
-                        else -> Log.e("SOGS", "Failed onion request", e)
-                    }
-                }.await()
-            } else {
-                throw IllegalStateException("It's currently not allowed to send non onion routed requests.")
-            }
+            headers["X-SOGS-Nonce"] = encodeBytes(nonce)
+            headers["X-SOGS-Timestamp"] = "$timestamp"
+            headers["X-SOGS-Pubkey"] = pubKey
+            headers["X-SOGS-Signature"] = encodeBytes(signature)
+            headers
+        } else {
+            request.headers
         }
 
-        return GlobalScope.asyncPromise(block=::execute)
+        val requestBuilder = okhttp3.Request.Builder()
+            .url(urlRequest)
+            .headers(headers.toHeaders())
+        when (request.verb) {
+            GET -> requestBuilder.get()
+            PUT -> requestBuilder.put(createBody(request.body, request.parameters)!!)
+            POST -> requestBuilder.post(createBody(request.body, request.parameters)!!)
+            DELETE -> requestBuilder.delete(createBody(request.body, request.parameters))
+        }
+        if (!request.room.isNullOrEmpty()) {
+            requestBuilder.header("Room", request.room)
+        }
+        return if (request.useOnionRouting) {
+            OnionRequestAPI.sendOnionRequest(requestBuilder.build(), request.server, serverPublicKey).fail { e ->
+                when (e) {
+                    // No need for the stack trace for HTTP errors
+                    is HTTP.HTTPRequestFailedException -> Log.e("SOGS", "Failed onion request: ${e.message}")
+                    else -> Log.e("SOGS", "Failed onion request", e)
+                }
+            }.await()
+        } else {
+            throw IllegalStateException("It's currently not allowed to send non onion routed requests.")
+        }
     }
 
-    fun downloadOpenGroupProfilePicture(
+    suspend fun downloadOpenGroupProfilePicture(
         server: String,
         roomID: String,
         imageId: String,
         signRequest: Boolean = true,
         serverPubKeyHex: String? = null,
-    ): Promise<ByteArraySlice, Exception> {
+    ): ByteArraySlice {
         val request = Request(
             verb = GET,
             room = roomID,
@@ -446,7 +439,7 @@ object OpenGroupApi {
     }
 
     // region Upload/Download
-    fun upload(file: ByteArray, room: String, server: String): Promise<String, Exception> {
+    suspend fun upload(file: ByteArray, room: String, server: String): String {
         val request = Request(
             verb = POST,
             room = room,
@@ -458,12 +451,11 @@ object OpenGroupApi {
                 "Content-Type" to "application/octet-stream"
             )
         )
-        return getResponseBodyJson(request, signRequest = true).map { json ->
-            json["id"]?.toString() ?: throw Error.ParsingFailed
-        }
+        val json =  getResponseBodyJson(request, signRequest = true)
+        return json["id"]?.toString() ?: throw Error.ParsingFailed
     }
 
-    fun download(fileId: String, room: String, server: String): Promise<ByteArraySlice, Exception> {
+    suspend fun download(fileId: String, room: String, server: String): ByteArraySlice {
         val request = Request(
             verb = GET,
             room = room,
@@ -475,15 +467,15 @@ object OpenGroupApi {
     // endregion
 
     // region Sending
-    fun sendMessage(
+    suspend fun sendMessage(
         message: OpenGroupMessage,
         room: String,
         server: String,
         whisperTo: List<String>? = null,
         whisperMods: Boolean? = null,
         fileIds: List<String>? = null
-    ): Promise<OpenGroupMessage, Exception> {
-        val signedMessage = message.sign(server) ?: return Promise.ofFail(Error.SigningFailed)
+    ): OpenGroupMessage {
+        val signedMessage = message.sign(server) ?:throw Error.SigningFailed
         val parameters = signedMessage.toJSON().toMutableMap()
 
         // add file IDs if there are any (from attachments)
@@ -498,18 +490,18 @@ object OpenGroupApi {
             endpoint = Endpoint.RoomMessage(room),
             parameters = parameters
         )
-        return getResponseBodyJson(request, signRequest = true).map { json ->
-            @Suppress("UNCHECKED_CAST") val rawMessage = json as? Map<String, Any>
-                ?: throw Error.ParsingFailed
-            val result = OpenGroupMessage.fromJSON(rawMessage) ?: throw Error.ParsingFailed
-            val storage = MessagingModuleConfiguration.shared.storage
-            storage.addReceivedMessageTimestamp(result.sentTimestamp)
-            result
-        }
+        val json =  getResponseBodyJson(request, signRequest = true)
+        @Suppress("UNCHECKED_CAST") val rawMessage = json as? Map<String, Any>
+            ?: throw Error.ParsingFailed
+        val result = OpenGroupMessage.fromJSON(rawMessage) ?: throw Error.ParsingFailed
+        val storage = MessagingModuleConfiguration.shared.storage
+        storage.addReceivedMessageTimestamp(result.sentTimestamp)
+        return result
     }
     // endregion
 
-    fun addReaction(room: String, server: String, messageId: Long, emoji: String): Promise<AddReactionResponse, Exception> {
+    @OptIn(ExperimentalSerializationApi::class)
+    suspend fun addReaction(room: String, server: String, messageId: Long, emoji: String): AddReactionResponse {
         val request = Request(
             verb = PUT,
             room = room,
@@ -517,89 +509,53 @@ object OpenGroupApi {
             endpoint = Endpoint.Reaction(room, messageId, emoji),
             parameters = emptyMap<String, String>()
         )
-        val pendingReaction = PendingReaction(server, room, messageId, emoji, true)
-        return getResponseBody(request, signRequest = true).map { response ->
-            JsonUtil.fromJson(response, AddReactionResponse::class.java).also {
-                val index = pendingReactions.indexOf(pendingReaction)
-                pendingReactions[index].seqNo = it.seqNo
-            }
-        }
+
+        val response = getResponseBody(request, signRequest = true)
+        val reaction: AddReactionResponse = MessagingModuleConfiguration.shared.json.decodeFromStream(response.inputStream())
+
+        return reaction
     }
 
-    fun deleteReaction(room: String, server: String, messageId: Long, emoji: String): Promise<DeleteReactionResponse, Exception> {
+    @OptIn(ExperimentalSerializationApi::class)
+    suspend fun deleteReaction(room: String, server: String, messageId: Long, emoji: String): DeleteReactionResponse {
         val request = Request(
             verb = DELETE,
             room = room,
             server = server,
             endpoint = Endpoint.Reaction(room, messageId, emoji)
         )
-        val pendingReaction = PendingReaction(server, room, messageId, emoji, true)
-        return getResponseBody(request, signRequest = true).map { response ->
-            JsonUtil.fromJson(response, DeleteReactionResponse::class.java).also {
-                val index = pendingReactions.indexOf(pendingReaction)
-                pendingReactions[index].seqNo = it.seqNo
-            }
-        }
+
+        val response = getResponseBody(request, signRequest = true)
+        val reaction: DeleteReactionResponse = MessagingModuleConfiguration.shared.json.decodeFromStream(response.inputStream())
+
+        return reaction
     }
 
-    fun deleteAllReactions(room: String, server: String, messageId: Long, emoji: String): Promise<DeleteAllReactionsResponse, Exception> {
+    suspend fun deleteAllReactions(room: String, server: String, messageId: Long, emoji: String): DeleteAllReactionsResponse {
         val request = Request(
             verb = DELETE,
             room = room,
             server = server,
             endpoint = Endpoint.ReactionDelete(room, messageId, emoji)
         )
-        return getResponseBody(request, signRequest = true).map { response ->
-            JsonUtil.fromJson(response, DeleteAllReactionsResponse::class.java)
-        }
+        val response = getResponseBody(request, signRequest = true)
+        return JsonUtil.fromJson(response, DeleteAllReactionsResponse::class.java)
     }
     // endregion
 
     // region Message Deletion
     @JvmStatic
-    fun deleteMessage(serverID: Long, room: String, server: String): Promise<Unit, Exception> {
+    suspend fun deleteMessage(serverID: Long, room: String, server: String) {
         val request = Request(verb = DELETE, room = room, server = server, endpoint = Endpoint.RoomMessageIndividual(room, serverID))
-        return send(request, signRequest = true).map {
-            Log.d("Loki", "Message deletion successful.")
-        }
+        send(request, signRequest = true)
+        Log.d("Loki", "Message deletion successful.")
     }
 
-    fun getDeletedMessages(
-        room: String,
-        server: String
-    ): Promise<List<MessageDeletion>, Exception> {
-        val storage = MessagingModuleConfiguration.shared.storage
-        val queryParameters = mutableMapOf<String, String>()
-        storage.getLastDeletionServerID(room, server)?.let { last ->
-            queryParameters["from_server_id"] = last.toString()
-        }
-        val request = Request(
-            verb = GET,
-            room = room,
-            server = server,
-            endpoint = Endpoint.RoomDeleteMessages(room, storage.getUserPublicKey() ?: ""),
-            queryParameters = queryParameters
-        )
-        return getResponseBody(request, signRequest = true).map { response ->
-            val json = JsonUtil.fromJson(response, Map::class.java)
-            val type = TypeFactory.defaultInstance()
-                .constructCollectionType(List::class.java, MessageDeletion::class.java)
-            val idsAsString = JsonUtil.toJson(json["ids"])
-            val serverIDs = JsonUtil.fromJson<List<MessageDeletion>>(idsAsString, type)
-                ?: throw Error.ParsingFailed
-            val lastMessageServerId = storage.getLastDeletionServerID(room, server) ?: 0
-            val serverID = serverIDs.maxByOrNull { it.id } ?: MessageDeletion.empty
-            if (serverID.id > lastMessageServerId) {
-                storage.setLastDeletionServerID(room, server, serverID.id)
-            }
-            serverIDs
-        }
-    }
     // endregion
 
     // region Moderation
     @JvmStatic
-    fun ban(publicKey: String, room: String, server: String): Promise<Unit, Exception> {
+    suspend fun ban(publicKey: String, room: String, server: String) {
         val parameters =  mapOf("rooms" to listOf(room))
         val request = Request(
             verb = POST,
@@ -608,12 +564,12 @@ object OpenGroupApi {
             endpoint = Endpoint.UserBan(publicKey),
             parameters = parameters
         )
-        return send(request, signRequest = true).map {
-            Log.d("Loki", "Banned user: $publicKey from: $server.$room.")
-        }
+
+        send(request, signRequest = true)
+        Log.d("Loki", "Banned user: $publicKey from: $server.$room.")
     }
 
-    fun banAndDeleteAll(publicKey: String, room: String, server: String): Promise<Unit, Exception> {
+    suspend fun banAndDeleteAll(publicKey: String, room: String, server: String) {
 
         val requests = mutableListOf<BatchRequestInfo<*>>(
             // Ban request
@@ -633,25 +589,23 @@ object OpenGroupApi {
                 responseType = object: TypeReference<Any>(){}
             )
         )
-        return sequentialBatch(server, requests).map {
-            Log.d("Loki", "Banned user: $publicKey from: $server.$room.")
-        }
+        sequentialBatch(server, requests)
+        Log.d("Loki", "Banned user: $publicKey from: $server.$room.")
     }
 
-    fun unban(publicKey: String, room: String, server: String): Promise<Unit, Exception> {
+    suspend fun unban(publicKey: String, room: String, server: String) {
         val request = Request(verb = DELETE, room = room, server = server, endpoint = Endpoint.UserUnban(publicKey))
-        return send(request, signRequest = true).map {
-            Log.d("Loki", "Unbanned user: $publicKey from: $server.$room")
-        }
+        send(request, signRequest = true)
+        Log.d("Loki", "Unbanned user: $publicKey from: $server.$room")
     }
     // endregion
 
     // region General
 
-    fun parallelBatch(
+    suspend fun parallelBatch(
         server: String,
         requests: MutableList<BatchRequestInfo<*>>
-    ): Promise<List<BatchResponse<*>>, Exception> {
+    ): List<BatchResponse<*>> {
         val request = Request(
             verb = POST,
             room = null,
@@ -662,10 +616,10 @@ object OpenGroupApi {
         return getBatchResponseJson(request, requests)
     }
 
-    private fun sequentialBatch(
+    private suspend fun sequentialBatch(
         server: String,
         requests: MutableList<BatchRequestInfo<*>>
-    ): Promise<List<BatchResponse<*>>, Exception> {
+    ): List<BatchResponse<*>> {
         val request = Request(
             verb = POST,
             room = null,
@@ -676,97 +630,93 @@ object OpenGroupApi {
         return getBatchResponseJson(request, requests)
     }
 
-    private fun getBatchResponseJson(
+    private suspend fun getBatchResponseJson(
         request: Request,
         requests: MutableList<BatchRequestInfo<*>>,
         signRequest: Boolean = true
-    ): Promise<List<BatchResponse<*>>, Exception> {
-        return getResponseBody(request, signRequest = signRequest).map { batch ->
-            val results = JsonUtil.fromJson(batch, List::class.java) ?: throw Error.ParsingFailed
-            results.mapIndexed { idx, result ->
-                val response = result as? Map<*, *> ?: throw Error.ParsingFailed
-                val code = response["code"] as Int
-                BatchResponse(
-                    endpoint = requests[idx].endpoint,
-                    code = code,
-                    headers = response["headers"] as Map<String, String>,
-                    body = if (code in 200..299) {
-                        requests[idx].responseType?.let { respType ->
-                            JsonUtil.toJson(response["body"]).takeIf { it != "[]" }?.let {
-                                JsonUtil.fromJson(it, respType)
-                            } ?: response["body"]
-                        }
+    ): List<BatchResponse<*>> {
+        val batch = getResponseBody(request, signRequest = signRequest)
+        val results = JsonUtil.fromJson(batch, List::class.java) ?: throw Error.ParsingFailed
+        return results.mapIndexed { idx, result ->
+            val response = result as? Map<*, *> ?: throw Error.ParsingFailed
+            val code = response["code"] as Int
+            BatchResponse(
+                endpoint = requests[idx].endpoint,
+                code = code,
+                headers = response["headers"] as Map<String, String>,
+                body = if (code in 200..299) {
+                    requests[idx].responseType?.let { respType ->
+                        JsonUtil.toJson(response["body"]).takeIf { it != "[]" }?.let {
+                            JsonUtil.fromJson(it, respType)
+                        } ?: response["body"]
+                    }
 
-                    } else null
-                )
-            }
+                } else null
+            )
         }
     }
 
-    fun getDefaultServerCapabilities(): Promise<List<String>, Exception> {
-        return GlobalScope.asyncPromise { getOrFetchServerCapabilities(defaultServer) }
+    suspend fun getDefaultServerCapabilities(): List<String> {
+        return getOrFetchServerCapabilities(defaultServer)
     }
 
-    fun getDefaultRoomsIfNeeded(): Promise<List<DefaultGroup>, Exception> {
-        return GlobalScope.asyncPromise {
-            val groups = getAllRooms().await()
+    suspend fun getDefaultRoomsIfNeeded(): List<DefaultGroup> {
+        val groups = getAllRooms()
 
-            val earlyGroups = groups.map { group ->
-                DefaultGroup(group.token, group.name, null)
-            }
-            // See if we have any cached rooms, and if they already have images don't overwrite them with early non-image results
-            defaultRooms.replayCache.firstOrNull()?.let { replayed ->
-                if (replayed.none { it.image?.isNotEmpty() == true }) {
-                    defaultRooms.tryEmit(earlyGroups)
-                }
-            }
-            val images = groups.associate { group ->
-                group.token to group.imageId?.let { downloadOpenGroupProfilePicture(
-                    server = defaultServer,
-                    roomID = group.token,
-                    imageId = it,
-                    signRequest = false,
-                    serverPubKeyHex = defaultServerPublicKey,
-                ) }
-            }
-            groups.map { group ->
-                val image = try {
-                    images[group.token]!!.await()
-                } catch (e: Exception) {
-                    // No image or image failed to download
-                    null
-                }
-                DefaultGroup(group.token, group.name, image)
-            }.also(defaultRooms::tryEmit)
+        val earlyGroups = groups.map { group ->
+            DefaultGroup(group.token, group.name, null)
         }
+        // See if we have any cached rooms, and if they already have images don't overwrite them with early non-image results
+        defaultRooms.replayCache.firstOrNull()?.let { replayed ->
+            if (replayed.none { it.image?.isNotEmpty() == true }) {
+                defaultRooms.tryEmit(earlyGroups)
+            }
+        }
+        val images = groups.associate { group ->
+            group.token to group.imageId?.let { downloadOpenGroupProfilePicture(
+                server = defaultServer,
+                roomID = group.token,
+                imageId = it,
+                signRequest = false,
+                serverPubKeyHex = defaultServerPublicKey,
+            ) }
+        }
+
+        return groups.map { group ->
+            val image = try {
+                images[group.token]!!
+            } catch (e: Exception) {
+                // No image or image failed to download
+                null
+            }
+            DefaultGroup(group.token, group.name, image)
+        }.also(defaultRooms::tryEmit)
     }
 
-    private fun getAllRooms(): Promise<List<RoomInfoDetails>, Exception> {
+    private suspend fun getAllRooms(): List<RoomInfoDetails> {
         val request = Request(
             verb = GET,
             room = null,
             server = defaultServer,
             endpoint = Endpoint.Rooms
         )
-        return getResponseBody(
+        val response = getResponseBody(
             request = request,
             signRequest = false,
             serverPubKeyHex = defaultServerPublicKey
-        ).map { response ->
-            MessagingModuleConfiguration.shared.json
-                .decodeFromStream<Array<RoomInfoDetails>>(response.inputStream())
-                .toList()
-        }
+        )
+
+        return MessagingModuleConfiguration.shared.json
+            .decodeFromStream<Array<RoomInfoDetails>>(response.inputStream()).toList()
     }
 
-    fun getCapabilities(server: String, serverPubKeyHex: String? = null): Promise<Capabilities, Exception> {
+    suspend fun getCapabilities(server: String, serverPubKeyHex: String? = null): Capabilities {
         val request = Request(verb = GET, room = null, server = server, endpoint = Endpoint.Capabilities)
-        return getResponseBody(request, signRequest = false, serverPubKeyHex).map { response ->
-            JsonUtil.fromJson(response, Capabilities::class.java)
-        }
+        val response = getResponseBody(request, signRequest = false, serverPubKeyHex)
+        return JsonUtil.fromJson(response, Capabilities::class.java)
     }
 
-    fun sendDirectMessage(message: String, blindedAccountId: String, server: String): Promise<DirectMessage, Exception> {
+    suspend fun sendDirectMessage(message: String, blindedAccountId: String, server: String): DirectMessage {
         val request = Request(
             verb = POST,
             room = null,
@@ -774,21 +724,19 @@ object OpenGroupApi {
             endpoint = Endpoint.InboxFor(blindedAccountId),
             parameters = mapOf("message" to message)
         )
-        return getResponseBody(request).map { response ->
-            JsonUtil.fromJson(response, DirectMessage::class.java)
-        }
+        val response = getResponseBody(request)
+        return JsonUtil.fromJson(response, DirectMessage::class.java)
     }
 
-    fun deleteAllInboxMessages(server: String): Promise<Map<*, *>, java.lang.Exception> {
+    suspend fun deleteAllInboxMessages(server: String): Map<*, *> {
         val request = Request(
             verb = DELETE,
             room = null,
             server = server,
             endpoint = Endpoint.Inbox
         )
-        return getResponseBody(request).map { response ->
-            JsonUtil.fromJson(response, Map::class.java)
-        }
+        val response = getResponseBody(request)
+        return JsonUtil.fromJson(response, Map::class.java)
     }
 
     // endregion

@@ -66,7 +66,7 @@ class WebRtcCallBridge @Inject constructor(
     private val networkConnectivity: NetworkConnectivity,
     private val recipientRepository: RecipientRepository,
     private val storage: StorageProtocol,
-    @ManagerScope scope: CoroutineScope,
+    @ManagerScope private val scope: CoroutineScope,
 ): CallManager.WebRtcListener, OnAppStartupComponent  {
 
     companion object {
@@ -159,10 +159,14 @@ class WebRtcCallBridge @Inject constructor(
 
     private fun handleNewOffer(address: Address, sdp: String, callId: UUID) {
         Log.d(TAG, "Handle new offer")
-        callManager.onNewOffer(sdp, callId, address).fail {
-            Log.e("Loki", "Error handling new offer", it)
-            callManager.postConnectionError()
-            terminate()
+        scope.launch {
+            try {
+                callManager.onNewOffer(sdp, callId, address)
+            } catch (e: Exception) {
+                Log.e("Loki", "Error handling new offer", e)
+                callManager.postConnectionError()
+                terminate()
+            }
         }
     }
 
@@ -268,9 +272,10 @@ class WebRtcCallBridge @Inject constructor(
                 val expectedState = callManager.currentConnectionState
                 val expectedCallId = callManager.callId
 
-                try {
-                    val offerFuture = callManager.onOutgoingCall(context)
-                    offerFuture.fail { e ->
+                scope.launch {
+                    try {
+                        callManager.onOutgoingCall(context)
+                    } catch (e: Exception) {
                         if (isConsistentState(
                                 expectedState,
                                 expectedCallId,
@@ -278,16 +283,13 @@ class WebRtcCallBridge @Inject constructor(
                                 callManager.callId
                             )
                         ) {
-                            Log.e(TAG, e)
                             callManager.postViewModelState(CallViewModel.State.NETWORK_FAILURE)
-                            callManager.postConnectionError()
-                            terminate()
                         }
+
+                        Log.e(TAG, e)
+                        callManager.postConnectionError()
+                        terminate()
                     }
-                } catch (e: Exception) {
-                    Log.e(TAG, e)
-                    callManager.postConnectionError()
-                    terminate()
                 }
             }
         }
@@ -348,9 +350,12 @@ class WebRtcCallBridge @Inject constructor(
                 val expectedState = callManager.currentConnectionState
                 val expectedCallId = callManager.callId
 
-                try {
-                    val answerFuture = callManager.onIncomingCall(context)
-                    answerFuture.fail { e ->
+                scope.launch {
+                    try {
+                        callManager.onIncomingCall(context)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "incoming call error: $e")
+
                         if (isConsistentState(
                                 expectedState,
                                 expectedCallId,
@@ -358,19 +363,15 @@ class WebRtcCallBridge @Inject constructor(
                                 callManager.callId
                             )
                         ) {
-                            Log.e(TAG, "incoming call error: $e")
                             insertMissedCall(
                                 recipient,
                                 true
                             ) //todo PHONE do we want a missed call in this case? Or just [xxx] called you ?
-                            callManager.postConnectionError()
-                            terminate()
                         }
+
+                        callManager.postConnectionError()
+                        terminate()
                     }
-                } catch (e: Exception) {
-                    Log.e(TAG, e)
-                    callManager.postConnectionError()
-                    terminate()
                 }
             }
         }
