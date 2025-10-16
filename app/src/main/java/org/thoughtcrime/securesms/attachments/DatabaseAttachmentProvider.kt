@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.attachments
 import android.content.Context
 import android.text.TextUtils
 import androidx.compose.ui.unit.IntSize
-import coil3.size.Size
 import com.google.protobuf.ByteString
 import dagger.hilt.android.qualifiers.ApplicationContext
 import okio.buffer
@@ -78,7 +77,7 @@ class DatabaseAttachmentProvider @Inject constructor(
         val id = AttachmentId(attachmentId, 0)
         val databaseAttachment = attachmentDatabase.getAttachment(id) ?: return null
         val mediaConstraints = MediaConstraints.getPushMediaConstraints()
-        val scaledAttachment = processAttachment(attachmentDatabase, mediaConstraints, databaseAttachment) ?: return null
+        val scaledAttachment = processAttachment(attachmentDatabase, mediaConstraints, databaseAttachment) ?: databaseAttachment
         return getAttachmentFor(scaledAttachment)
     }
 
@@ -275,8 +274,7 @@ class DatabaseAttachmentProvider @Inject constructor(
     ): Attachment? {
         return try {
             val result = attachmentProcessor.process(
-                mimeType = attachment.contentType,
-                data = { PartAuthority.getAttachmentStream(context, attachment.dataUri!!).source().buffer() },
+                data = PartAuthority.getAttachmentStream(context, attachment.dataUri!!).source().buffer(),
                 maxImageResolution = IntSize(constraints.getImageMaxWidth(context), constraints.getImageMaxHeight(context)),
                 compressImage = false,
             ) ?: return null

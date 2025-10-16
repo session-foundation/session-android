@@ -11,10 +11,12 @@ import androidx.core.graphics.createBitmap
 import coil3.BitmapImage
 import coil3.ImageLoader
 import coil3.decode.DataSource
+import coil3.decode.DecodeUtils
 import coil3.decode.ImageSource
 import coil3.fetch.FetchResult
 import coil3.fetch.Fetcher
 import coil3.fetch.SourceFetchResult
+import coil3.gif.isAnimatedWebP
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest.Builder
 import coil3.request.Options
@@ -36,6 +38,7 @@ import org.session.libsignal.streams.PaddingInputStream
 import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.ByteArraySlice.Companion.view
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.util.ImageUtils
 import java.io.ByteArrayOutputStream
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
@@ -66,26 +69,31 @@ class AttachmentProcessor @Inject constructor(
      * @return null if nothing was done, or a ProcessResult if processing was performed.
      */
     suspend fun process(
-        mimeType: String,
-        data: () -> BufferedSource,
+        data: BufferedSource,
         maxImageResolution: IntSize?,
         compressImage: Boolean,
     ): ProcessResult? {
+        val mimeType = ImageUtils.getImageMimeType(data) ?: run {
+            Log.d(TAG, "No image detected based on magic bytes, skipping processing")
+            return null
+        }
+
+        Log.d(TAG, "Processing $mimeType with max resolution $maxImageResolution")
+
         when {
-            mimeType.startsWith("image/gif", ignoreCase = true) -> {
+            mimeType.startsWith("image/gif") -> {
                 if (maxImageResolution == null) {
                     Log.d(TAG, "Skipping processing of GIF with no size constraints")
                     return null
                 }
 
-                return processGif(data(), maxImageResolution)
+                return processGif(data, maxImageResolution)
             }
 
-            mimeType.startsWith("image/jpeg", ignoreCase = true) ||
-                    mimeType.startsWith("image/jpg", ignoreCase = true) -> {
+            mimeType.startsWith("image/jpeg") -> {
                 val (data, imageSize) = processStaticImage(
                     mimeType = mimeType,
-                    data = data(),
+                    data = data,
                     maxImageResolution = maxImageResolution,
                     format = Bitmap.CompressFormat.JPEG,
                     quality = if (compressImage) 75 else 95,
@@ -97,10 +105,10 @@ class AttachmentProcessor @Inject constructor(
                 )
             }
 
-            mimeType.startsWith("image/png", ignoreCase = true) -> {
+            mimeType.startsWith("image/png") -> {
                 val (data, imageSize) = processStaticImage(
                     mimeType = mimeType,
-                    data = data(),
+                    data = data,
                     maxImageResolution = maxImageResolution,
                     format = if (android.os.Build.VERSION.SDK_INT >= 30)
                         Bitmap.CompressFormat.WEBP_LOSSLESS
@@ -116,22 +124,19 @@ class AttachmentProcessor @Inject constructor(
                 )
             }
 
-            mimeType.startsWith("image/webp", ignoreCase = true) -> {
-                // For webp, we need all the data to do any processing, so read it all into memory
-                val bytes = data().use { it.readByteArray() }
-
-                if (WebPUtils.isWebPAnimation(bytes)) {
+            mimeType.startsWith("image/webp") -> {
+                if (DecodeUtils.isAnimatedWebP(data)) {
                     if (maxImageResolution == null) {
                         Log.d(TAG, "Skipping processing of animated WebP with no size constraints")
                         return null
                     }
 
-                    return processAnimatedWebP(bytes, maxImageResolution)
+                    return processAnimatedWebP(data = data.readByteArray(), maxImageResolution)
                 }
 
                 val (data, imageSize) = processStaticImage(
                     mimeType = mimeType,
-                    data = bytes,
+                    data = data,
                     maxImageResolution = maxImageResolution,
                     format = Bitmap.CompressFormat.WEBP,
                     quality = if (compressImage) 75 else 95,
@@ -252,7 +257,7 @@ class AttachmentProcessor @Inject constructor(
 
     private fun processAnimatedWebP(
         data: ByteArray,
-        maxImageResolution: IntSize,
+        maxImageResolution: IntSize?,
     ): ProcessResult? {
         val origSize = requireNotNull(WebPUtils.getWebPDimensions(data)) {
             "Given data is not a valid WebP image"
@@ -260,8 +265,10 @@ class AttachmentProcessor @Inject constructor(
 
         val targetSize: IntSize
 
-        if (origSize.width <= maxImageResolution.width &&
-                origSize.height <= maxImageResolution.height) {
+        if (maxImageResolution == null || (
+                    origSize.width <= maxImageResolution.width &&
+                        origSize.height <= maxImageResolution.height)) {
+            // No resizing needed
             targetSize = origSize
         } else {
             targetSize = scaleToFit(

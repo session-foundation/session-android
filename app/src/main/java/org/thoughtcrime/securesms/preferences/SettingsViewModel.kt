@@ -51,7 +51,6 @@ import org.thoughtcrime.securesms.attachments.AvatarUploadManager
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
@@ -61,8 +60,6 @@ import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.util.AnimatedImageUtils
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
-import org.thoughtcrime.securesms.util.BitmapDecodingException
-import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.ClearDataUtils
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import org.thoughtcrime.securesms.util.State
@@ -205,12 +202,10 @@ class SettingsViewModel @Inject constructor(
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val mimeType = context.contentResolver.getType(uri) ?: "image/jpeg"
                 val constraints = ProfileMediaConstraints()
                 val processResult = attachmentProcessor
                     .process(
-                        mimeType = mimeType,
-                        data = { context.contentResolver.openInputStream(uri)!!.source().buffer() },
+                        data = context.contentResolver.openInputStream(uri)!!.source().buffer(),
                         maxImageResolution = IntSize(
                             constraints.getImageMaxWidth(context),
                             constraints.getImageMaxHeight(context)
