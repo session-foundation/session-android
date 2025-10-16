@@ -437,6 +437,8 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 sendCommands = inAppReviewViewModel::sendUiCommand,
             )
         }
+
+        rewireConversationOptionsCallbacksIfPresent()
     }
 
     override fun onCancelClicked() {
@@ -587,75 +589,98 @@ class HomeActivity : ScreenLockActionBarActivity(),
     }
 
     override fun onLongConversationClick(thread: ThreadRecord) {
-        val bottomSheet = ConversationOptionsBottomSheet(this)
-        bottomSheet.publicKey = publicKey
-        bottomSheet.thread = thread
         val threadRecipient = thread.recipient
-        bottomSheet.group = groupDatabase.getGroup(threadRecipient.address.toString()).orNull()
-        bottomSheet.onViewDetailsTapped = {
-            bottomSheet.dismiss()
+        val bottomSheet = ConversationOptionsBottomSheet.newInstance(
+            publicKey = publicKey,
+            threadId = thread.threadId,
+            address = threadRecipient.address.toString()
+        )
+        attachConversationOptionsCallbacks(bottomSheet, thread)
+        bottomSheet.show(supportFragmentManager, ConversationOptionsBottomSheet.FRAGMENT_TAG)
+    }
+
+    /**
+     * If a ConversationOptionsBottomSheet was restored by FragmentManager after a
+     * configuration change, re-attach its callbacks and refresh the ThreadRecord.
+     */
+    private fun rewireConversationOptionsCallbacksIfPresent() {
+        val sheet = supportFragmentManager
+            .findFragmentByTag(ConversationOptionsBottomSheet.FRAGMENT_TAG)
+                as? ConversationOptionsBottomSheet ?: return
+
+        // Refresh from sheet args
+        val addressStr = sheet.requireArguments()
+            .getString(ConversationOptionsBottomSheet.ARG_ADDRESS) ?: return
+        val address = Address.fromSerialized(addressStr)
+
+        // Fetch the current ThreadRecord for this address
+        val thread = threadDb.getThreads(listOf(address)).firstOrNull() ?: return
+
+        attachConversationOptionsCallbacks(sheet, thread)
+    }
+
+    private fun attachConversationOptionsCallbacks(
+        sheet: ConversationOptionsBottomSheet,
+        thread: ThreadRecord
+    ) {
+        val threadRecipient = thread.recipient
+        sheet.onViewDetailsTapped = {
+            sheet.dismiss()
             homeViewModel.showUserProfileModal(thread)
         }
-        bottomSheet.onCopyConversationId = onCopyConversationId@{
-            bottomSheet.dismiss()
+        sheet.onCopyConversationId = {
+            sheet.dismiss()
             if (threadRecipient.address is Address.WithAccountId && !threadRecipient.isSelf) {
-                val clip = ClipData.newPlainText("Account ID", threadRecipient.address.accountId.hexString)
-                val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-                manager.setPrimaryClip(clip)
-                Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
-            }
-            else if (threadRecipient.data is RecipientData.Community) {
+                val clip = ClipData.newPlainText(
+                    "Account ID",
+                    threadRecipient.address.accountId.hexString
+                )
+                (getSystemService(CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(clip)
+                Toast.makeText(this@HomeActivity, R.string.copied, Toast.LENGTH_SHORT).show()
+            } else if (threadRecipient.data is RecipientData.Community) {
                 val clip = ClipData.newPlainText("Community URL", threadRecipient.data.joinURL)
-                val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-                manager.setPrimaryClip(clip)
-                Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
+                (getSystemService(CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(clip)
+                Toast.makeText(this@HomeActivity, R.string.copied, Toast.LENGTH_SHORT).show()
             }
         }
-        bottomSheet.onBlockTapped = {
-            bottomSheet.dismiss()
-            if (!threadRecipient.blocked) {
-                blockConversation(thread)
-            }
+        sheet.onBlockTapped = {
+            sheet.dismiss()
+            if (!threadRecipient.blocked) blockConversation(thread)
         }
-        bottomSheet.onUnblockTapped = {
-            bottomSheet.dismiss()
-            if (threadRecipient.blocked) {
-                unblockConversation(thread)
-            }
+        sheet.onUnblockTapped = {
+            sheet.dismiss()
+            if (threadRecipient.blocked) unblockConversation(thread)
         }
-        bottomSheet.onDeleteTapped = {
-            bottomSheet.dismiss()
+        sheet.onDeleteTapped = {
+            sheet.dismiss()
             deleteConversation(thread)
         }
-        bottomSheet.onNotificationTapped = {
-            bottomSheet.dismiss()
-            // go to the notification settings
-            val intent = Intent(this, NotificationSettingsActivity::class.java).apply {
+        sheet.onNotificationTapped = {
+            sheet.dismiss()
+            startActivity(Intent(this, NotificationSettingsActivity::class.java).apply {
                 putExtra(NotificationSettingsActivity.ARG_ADDRESS, threadRecipient.address)
-            }
-            startActivity(intent)
+            })
         }
-        bottomSheet.onPinTapped = {
-            bottomSheet.dismiss()
+        sheet.onPinTapped = {
+            sheet.dismiss()
             setConversationPinned(threadRecipient.address, true)
         }
-        bottomSheet.onUnpinTapped = {
-            bottomSheet.dismiss()
+        sheet.onUnpinTapped = {
+            sheet.dismiss()
             setConversationPinned(threadRecipient.address, false)
         }
-        bottomSheet.onMarkAllAsReadTapped = {
-            bottomSheet.dismiss()
+        sheet.onMarkAllAsReadTapped = {
+            sheet.dismiss()
             markAllAsRead(thread)
         }
-        bottomSheet.onMarkAsUnreadTapped = {
-            bottomSheet.dismiss()
+        sheet.onMarkAsUnreadTapped = {
+            sheet.dismiss()
             markAsUnread(thread)
         }
-        bottomSheet.onDeleteContactTapped = {
-            bottomSheet.dismiss()
+        sheet.onDeleteContactTapped = {
+            sheet.dismiss()
             confirmDeleteContact(thread)
         }
-        bottomSheet.show(supportFragmentManager, bottomSheet.tag)
     }
 
     private fun blockConversation(thread: ThreadRecord) {
