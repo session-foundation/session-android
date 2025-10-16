@@ -375,7 +375,7 @@ class ReceivedMessageHandler @Inject constructor(
                     emoji = reaction.emoji!!,
                     messageTimestamp = reaction.timestamp!!,
                     threadId = context.threadId,
-                    author = reaction.publicKey!!,
+                    author = senderAddress.address,
                     notifyUnread = threadIsGroup
                 )
             }
