@@ -7,6 +7,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.util.Size
 import android.view.LayoutInflater
@@ -30,6 +31,7 @@ import org.session.libsession.utilities.MediaTypes
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.providers.BlobUtils
 import org.thoughtcrime.securesms.util.applySafeInsetsMargins
+import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.setSafeOnClickListener
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.ExecutorService
@@ -111,6 +113,12 @@ class CameraXFragment : Fragment() {
                 }
             }
         }
+
+        binding.root.applySafeInsetsPaddings(
+            applyTop = false,
+            applyBottom = false,
+            consumeInsets = false
+        )
     }
 
     override fun onResume() {
@@ -140,10 +148,12 @@ class CameraXFragment : Fragment() {
             else                 -> 270f
         }
 
-        binding.cameraFlipButton.animate()
-            .rotation(angle)
-            .setDuration(150)
-            .start()
+        if(!isAutoRotateOn()){
+            binding.cameraFlipButton.animate()
+                .rotation(angle)
+                .setDuration(150)
+                .start()
+        }
     }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
@@ -269,6 +279,13 @@ class CameraXFragment : Fragment() {
             .rotationBy(-180f)
             .setDuration(200)
             .start()
+    }
+
+    private fun isAutoRotateOn(): Boolean {
+        return Settings.System.getInt(
+            context?.contentResolver,
+            Settings.System.ACCELEROMETER_ROTATION, 0
+        ) == 1
     }
 
     override fun onDestroyView() {
