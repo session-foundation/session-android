@@ -751,7 +751,9 @@ class CallManager @Inject constructor(
         }
     }
 
-    fun setDeviceOrientation(orientation: Orientation) {
+    fun setDeviceOrientation(orientation: Orientation, isAutoRotateOn : Boolean) {
+        if(isAutoRotateOn) return // let the activity handle the rotation
+
         // set rotation to the video based on the device's orientation and the camera facing direction
         val rotation = when (orientation) {
             Orientation.PORTRAIT -> 0

@@ -154,7 +154,7 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
 
         lifecycleScope.launch {
             orientationManager.orientation.collect { orientation ->
-                viewModel.deviceOrientation = orientation
+                viewModel.setDeviceOrientation(orientation, orientationManager.isAutoRotateOn())
                 updateControlsRotation()
             }
         }
