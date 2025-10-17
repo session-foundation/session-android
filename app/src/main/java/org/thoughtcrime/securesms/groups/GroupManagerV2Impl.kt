@@ -4,6 +4,7 @@ import android.content.Context
 import com.google.protobuf.ByteString
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
@@ -657,11 +658,13 @@ class GroupManagerV2Impl @Inject constructor(
                 .setInviteResponse(inviteResponse)
             val responseMessage = GroupUpdated(responseData.build(), profile = storage.getUserProfile())
             // this will fail the first couple of times :)
-            MessageSender.sendNonDurably(
-                responseMessage,
-                Destination.ClosedGroup(group.groupAccountId),
-                isSyncMessage = false
-            )
+            runCatching {
+                MessageSender.sendNonDurably(
+                    responseMessage,
+                    Destination.ClosedGroup(group.groupAccountId),
+                    isSyncMessage = false
+                )
+            }
         } else {
             // If we are invited as admin, we can just update the group info ourselves
             configFactory.withMutableGroupConfigs(AccountId(group.groupAccountId)) { configs ->

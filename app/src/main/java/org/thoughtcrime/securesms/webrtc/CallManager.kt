@@ -339,11 +339,13 @@ class CallManager @Inject constructor(
                     .applyExpiryMode(expectedRecipient)
                     .also {
                         scope.launch {
-                            MessageSender.sendNonDurably(
-                                it,
-                                currentRecipient,
-                                isSyncMessage = currentRecipient.isLocalNumber
-                            )
+                            runCatching {
+                                MessageSender.sendNonDurably(
+                                    it,
+                                    currentRecipient,
+                                    isSyncMessage = currentRecipient.isLocalNumber
+                                )
+                            }
                         }
                     }
 
@@ -475,7 +477,7 @@ class CallManager @Inject constructor(
         val connection = peerConnection ?: throw NullPointerException("No peer connection wrapper")
 
         val reconnected = stateProcessor.processEvent(Event.ReceiveOffer) && stateProcessor.processEvent(Event.SendAnswer)
-        return if (reconnected) {
+        if (reconnected) {
             Log.i("Loki", "Handling new offer, restarting ice session")
             connection.setNewRemoteDescription(SessionDescription(SessionDescription.Type.OFFER, offer))
             // re-established an ice
@@ -487,7 +489,14 @@ class CallManager @Inject constructor(
             pendingIncomingIceUpdates.clear()
             val answerMessage = CallMessage.answer(answer.description, callId).applyExpiryMode(recipient)
             Log.i("Loki", "Posting new answer")
-            MessageSender.sendNonDurably(answerMessage, recipient, isSyncMessage = recipient.isLocalNumber)
+
+            runCatching {
+                MessageSender.sendNonDurably(
+                    answerMessage,
+                    recipient,
+                    isSyncMessage = recipient.isLocalNumber
+                )
+            }
         } else {
             throw Exception("Couldn't reconnect from current state")
         }
@@ -534,11 +543,23 @@ class CallManager @Inject constructor(
         connection.setLocalDescription(answer)
         val answerMessage = CallMessage.answer(answer.description, callId).applyExpiryMode(recipient)
         val userAddress = storage.getUserPublicKey() ?: throw NullPointerException("No user public key")
-        MessageSender.sendNonDurably(answerMessage, Address.fromSerialized(userAddress), isSyncMessage = true)
-        MessageSender.sendNonDurably(CallMessage.answer(
-                answer.description,
-                callId
-        ).applyExpiryMode(recipient), recipient, isSyncMessage = recipient.isLocalNumber)
+
+        runCatching {
+            MessageSender.sendNonDurably(
+                answerMessage,
+                Address.fromSerialized(userAddress),
+                isSyncMessage = true
+            )
+        }
+
+        runCatching {
+            MessageSender.sendNonDurably(
+                CallMessage.answer(
+                    answer.description,
+                    callId
+                ).applyExpiryMode(recipient), recipient, isSyncMessage = recipient.isLocalNumber
+            )
+        }
 
         insertCallMessage(recipient.toString(), CallMessageType.CALL_INCOMING, false)
 
@@ -587,15 +608,17 @@ class CallManager @Inject constructor(
             connection.setLocalDescription(offer)
 
             Log.d("Loki", "Sending pre-offer")
-            MessageSender.sendNonDurably(CallMessage.preOffer(
-                callId
-            ).applyExpiryMode(recipient), recipient, isSyncMessage = recipient.isLocalNumber)
-
-            Log.d("Loki", "Sent pre-offer")
-            Log.d("Loki", "Sending offer")
-            postViewModelState(CallViewModel.State.CALL_OFFER_OUTGOING)
-
             try {
+                MessageSender.sendNonDurably(
+                    CallMessage.preOffer(
+                        callId
+                    ).applyExpiryMode(recipient), recipient, isSyncMessage = recipient.isLocalNumber
+                )
+
+                Log.d("Loki", "Sent pre-offer")
+                Log.d("Loki", "Sending offer")
+                postViewModelState(CallViewModel.State.CALL_OFFER_OUTGOING)
+
                 MessageSender.sendNonDurably(CallMessage.offer(
                     offer.description,
                     callId
@@ -615,19 +638,25 @@ class CallManager @Inject constructor(
         val userAddress = storage.getUserPublicKey() ?: return
         stateProcessor.processEvent(Event.DeclineCall) {
             scope.launch {
-                MessageSender.sendNonDurably(
-                    CallMessage.endCall(callId).applyExpiryMode(recipient),
-                    Address.fromSerialized(userAddress),
-                    isSyncMessage = true
-                )
-                MessageSender.sendNonDurably(
-                    CallMessage.endCall(callId).applyExpiryMode(recipient),
-                    recipient,
-                    isSyncMessage = recipient.isLocalNumber
-                )
-                insertCallMessage(recipient.toString(), CallMessageType.CALL_INCOMING)
+                runCatching {
+                    MessageSender.sendNonDurably(
+                        CallMessage.endCall(callId).applyExpiryMode(recipient),
+                        Address.fromSerialized(userAddress),
+                        isSyncMessage = true
+                    )
+                }
+            }
+            scope.launch {
+                runCatching {
+                    MessageSender.sendNonDurably(
+                        CallMessage.endCall(callId).applyExpiryMode(recipient),
+                        recipient,
+                        isSyncMessage = recipient.isLocalNumber
+                    )
+                }
             }
 
+            insertCallMessage(recipient.toString(), CallMessageType.CALL_INCOMING)
         }
     }
 
@@ -650,11 +679,13 @@ class CallManager @Inject constructor(
             }
 
             scope.launch {
-                MessageSender.sendNonDurably(
-                    CallMessage.endCall(callId).applyExpiryMode(recipient),
-                    recipient,
-                    isSyncMessage = recipient.isLocalNumber
-                )
+                runCatching {
+                    MessageSender.sendNonDurably(
+                        CallMessage.endCall(callId).applyExpiryMode(recipient),
+                        recipient,
+                        isSyncMessage = recipient.isLocalNumber
+                    )
+                }
             }
         }
     }
@@ -887,11 +918,13 @@ class CallManager @Inject constructor(
             })
             connection.setLocalDescription(offer)
             scope.launch {
-                MessageSender.sendNonDurably(
-                    CallMessage.offer(offer.description, callId).applyExpiryMode(recipient),
-                    recipient,
-                    isSyncMessage = recipient.isLocalNumber
-                )
+                runCatching {
+                    MessageSender.sendNonDurably(
+                        CallMessage.offer(offer.description, callId).applyExpiryMode(recipient),
+                        recipient,
+                        isSyncMessage = recipient.isLocalNumber
+                    )
+                }
             }
         }
     }

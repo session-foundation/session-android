@@ -1257,12 +1257,14 @@ class ConversationViewModel @AssistedInject constructor(
             reactionDb.deleteEmojiReactions(emoji, messageId)
             (address as? Address.Community)?.let { openGroup ->
                 lokiMessageDb.getServerID(messageId)?.let { serverId ->
-                    OpenGroupApi.deleteAllReactions(
-                        openGroup.room,
-                        openGroup.serverUrl,
-                        serverId,
-                        emoji
-                    )
+                    runCatching {
+                        OpenGroupApi.deleteAllReactions(
+                            openGroup.room,
+                            openGroup.serverUrl,
+                            serverId,
+                            emoji
+                        )
+                    }
                 }
             }
         }

@@ -43,6 +43,7 @@ import org.session.libsignal.utilities.defaultRequiresAuth
 import org.session.libsignal.utilities.hasNamespaces
 import org.session.libsignal.utilities.hexEncodedPublicKey
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.cancellation.CancellationException
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview as SignalLinkPreview
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel as SignalQuote
 
@@ -398,7 +399,7 @@ object MessageSender {
                 else -> throw IllegalStateException("Invalid destination.")
             }
         } catch (exception: Exception) {
-            handleFailedMessageSend(message, exception)
+            if (exception !is CancellationException) handleFailedMessageSend(message, exception)
             throw exception
         }
     }

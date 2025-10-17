@@ -1752,12 +1752,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     return Log.w(TAG, "Failed to find message server ID when adding emoji reaction")
 
                 scope.launch {
-                    OpenGroupApi.addReaction(
-                        room = recipient.address.room,
-                        server = recipient.address.serverUrl,
-                        messageId = messageServerId,
-                        emoji = emoji
-                    )
+                    runCatching {
+                        OpenGroupApi.addReaction(
+                            room = recipient.address.room,
+                            server = recipient.address.serverUrl,
+                            messageId = messageServerId,
+                            emoji = emoji
+                        )
+                    }
                 }
             } else {
                 MessageSender.send(reactionMessage, recipient.address)
@@ -1803,7 +1805,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     return Log.w(TAG, "Failed to find message server ID when removing emoji reaction")
 
                 scope.launch {
-                    OpenGroupApi.deleteReaction(recipient.address.room, recipient.address.serverUrl, messageServerId, emoji)
+                    runCatching {
+                        OpenGroupApi.deleteReaction(
+                            recipient.address.room,
+                            recipient.address.serverUrl,
+                            messageServerId,
+                            emoji
+                        )
+                    }
                 }
             } else {
                 MessageSender.send(message, recipient.address)
@@ -2519,13 +2528,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun resyncMessage(messages: Set<MessageRecord>) {
         val accountId = textSecurePreferences.getLocalNumber()
         scope.launch {
-            messages.iterator().forEach { messageRecord ->
-                ResendMessageUtilities.resend(
-                    accountId,
-                    messageRecord,
-                    viewModel.blindedPublicKey,
-                    isResync = true
-                )
+            runCatching {
+                messages.iterator().forEach { messageRecord ->
+                    ResendMessageUtilities.resend(
+                        accountId,
+                        messageRecord,
+                        viewModel.blindedPublicKey,
+                        isResync = true
+                    )
+                }
             }
         }
 
@@ -2536,7 +2547,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val accountId = textSecurePreferences.getLocalNumber()
         scope.launch {
             messages.iterator().forEach { messageRecord ->
-                ResendMessageUtilities.resend(accountId, messageRecord, viewModel.blindedPublicKey)
+                runCatching {
+                    ResendMessageUtilities.resend(
+                        accountId,
+                        messageRecord,
+                        viewModel.blindedPublicKey
+                    )
+                }
             }
         }
         endActionMode()

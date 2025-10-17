@@ -511,7 +511,7 @@ object OpenGroupApi {
         )
 
         val response = getResponseBody(request, signRequest = true)
-        val reaction: AddReactionResponse = MessagingModuleConfiguration.shared.json.decodeFromStream(response.inputStream())
+        val reaction: AddReactionResponse =  response.inputStream().use( MessagingModuleConfiguration.shared.json::decodeFromStream)
 
         return reaction
     }
@@ -544,7 +544,6 @@ object OpenGroupApi {
     // endregion
 
     // region Message Deletion
-    @JvmStatic
     suspend fun deleteMessage(serverID: Long, room: String, server: String) {
         val request = Request(verb = DELETE, room = room, server = server, endpoint = Endpoint.RoomMessageIndividual(room, serverID))
         send(request, signRequest = true)
@@ -554,7 +553,6 @@ object OpenGroupApi {
     // endregion
 
     // region Moderation
-    @JvmStatic
     suspend fun ban(publicKey: String, room: String, server: String) {
         val parameters =  mapOf("rooms" to listOf(room))
         val request = Request(

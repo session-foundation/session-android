@@ -50,6 +50,7 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 import org.thoughtcrime.securesms.webrtc.data.State as CallState
 
 //todo PHONE We want to eventually remove this bridging class and move the logic here to a better place, probably in the callManager
@@ -162,6 +163,9 @@ class WebRtcCallBridge @Inject constructor(
         scope.launch {
             try {
                 callManager.onNewOffer(sdp, callId, address)
+            } catch (e: CancellationException) {
+                Log.d(TAG, "onNewOffer coroutine cancelled", e)
+                throw e
             } catch (e: Exception) {
                 Log.e("Loki", "Error handling new offer", e)
                 callManager.postConnectionError()
