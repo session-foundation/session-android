@@ -2528,8 +2528,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun resyncMessage(messages: Set<MessageRecord>) {
         val accountId = textSecurePreferences.getLocalNumber()
         scope.launch {
-            runCatching {
-                messages.iterator().forEach { messageRecord ->
+            messages.iterator().forEach { messageRecord ->
+                runCatching {
                     ResendMessageUtilities.resend(
                         accountId,
                         messageRecord,

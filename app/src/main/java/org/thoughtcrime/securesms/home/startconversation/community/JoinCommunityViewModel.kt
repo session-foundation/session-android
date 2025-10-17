@@ -47,9 +47,8 @@ class JoinCommunityViewModel @Inject constructor(
     init {
         viewModelScope.launch(Dispatchers.Default) {
             runCatching {
-                OpenGroupApi.getDefaultServerCapabilities().map {
-                    OpenGroupApi.getDefaultRoomsIfNeeded()
-                }
+                OpenGroupApi.getDefaultServerCapabilities()
+                OpenGroupApi.getDefaultRoomsIfNeeded()
             }
         }
 
