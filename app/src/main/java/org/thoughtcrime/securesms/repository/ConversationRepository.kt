@@ -386,7 +386,7 @@ class DefaultConversationRepository @Inject constructor(
     ) {
         messages.forEach { message ->
             lokiMessageDb.getServerID(message.messageId)?.let { messageServerID ->
-                OpenGroupApi.deleteMessage(messageServerID, community.room, community.serverUrl).await()
+                OpenGroupApi.deleteMessage(messageServerID, community.room, community.serverUrl)
             }
         }
     }
@@ -484,7 +484,7 @@ class DefaultConversationRepository @Inject constructor(
             publicKey = userId.hexString,
             room = community.room,
             server = community.serverUrl,
-        ).await()
+        )
     }
 
     override suspend fun banAndDeleteAll(community: Address.Community, userId: AccountId) = runCatching {
@@ -493,7 +493,7 @@ class DefaultConversationRepository @Inject constructor(
             publicKey = userId.hexString,
             room = community.room,
             server = community.serverUrl
-        ).await()
+        )
     }
 
     override suspend fun deleteMessageRequest(thread: ThreadRecord): Result<Unit> {
