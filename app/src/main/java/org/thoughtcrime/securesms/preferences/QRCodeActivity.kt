@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -171,7 +172,7 @@ private fun LandscapeContent(string: String) {
             .padding(horizontal = LocalDimensions.current.mediumSpacing)
     ) {
         // Scale QR to the shorter side to avoid overflow in landscape. Clamp for sanity
-        val shortest: Dp = if (maxWidth < maxHeight) maxWidth else maxHeight
+        val shortest: Dp = min(maxWidth, maxHeight)
         val qrSide = (shortest * 0.72f).coerceIn(160.dp, 520.dp)
 
         Column(

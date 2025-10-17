@@ -32,6 +32,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.times
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.home.startconversation.StartConversationDestination
@@ -146,7 +147,7 @@ private fun QrPanel(
         modifier = modifier
     ) {
         val qrModifier = if (getAdaptiveInfo().isLandscape) {
-            val shortest: Dp = if (maxWidth < maxHeight) maxWidth else maxHeight
+            val shortest: Dp = min(maxWidth, maxHeight)
             val qrSide = (shortest * 0.70f).coerceIn(160.dp, 520.dp)
             Modifier.size(qrSide)
         } else {
