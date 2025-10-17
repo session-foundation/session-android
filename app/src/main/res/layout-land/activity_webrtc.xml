@@ -17,8 +17,8 @@
 
         <FrameLayout
             android:id="@+id/fullscreen_renderer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
             android:layout_gravity="center"/>
     </FrameLayout>
 
@@ -124,8 +124,8 @@
         <FrameLayout
             android:elevation="8dp"
             android:id="@+id/floating_renderer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
             android:layout_gravity="center"/>
 
         <ProgressBar
