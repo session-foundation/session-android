@@ -78,10 +78,6 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
 
         setResult(RESULT_CANCELED)
 
-        if (savedInstanceState != null) {
-            return
-        }
-
         // Apply windowInsets for our own UI (not the fragment ones because they will want to do their own things)
         binding.mediasendBottomBar.applySafeInsetsPaddings()
 
@@ -91,29 +87,31 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
 
         viewModel.onBodyChanged(intent.getStringExtra(KEY_BODY)!!)
 
-        val media: List<Media?>? = intent.getParcelableArrayListExtra(KEY_MEDIA)
-        val isCamera = intent.getBooleanExtra(KEY_IS_CAMERA, false)
+        if (savedInstanceState == null) {
+            val media: List<Media?>? = intent.getParcelableArrayListExtra(KEY_MEDIA)
+            val isCamera = intent.getBooleanExtra(KEY_IS_CAMERA, false)
 
-        if (isCamera) {
-            val fragment: Fragment = CameraXFragment()
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.mediasend_fragment_container, fragment, TAG_CAMERA)
-                .commit()
-        } else if (!isEmpty(media)) {
-            viewModel.onSelectedMediaChanged(this, media!!)
+            if (isCamera) {
+                val fragment: Fragment = CameraXFragment()
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.mediasend_fragment_container, fragment, TAG_CAMERA)
+                    .commit()
+            } else if (!isEmpty(media)) {
+                viewModel.onSelectedMediaChanged(this, media!!)
 
-            val fragment: Fragment = MediaSendFragment.newInstance(recipient!!.address)
+                val fragment: Fragment = MediaSendFragment.newInstance(recipient!!.address)
 
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.mediasend_fragment_container, fragment, TAG_SEND)
-                .commit()
-        } else {
-            val fragment = MediaPickerFolderFragment.newInstance(
-                recipient!!
-            )
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.mediasend_fragment_container, fragment, TAG_FOLDER_PICKER)
-                .commit()
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.mediasend_fragment_container, fragment, TAG_SEND)
+                    .commit()
+            } else {
+                val fragment = MediaPickerFolderFragment.newInstance(
+                    recipient!!
+                )
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.mediasend_fragment_container, fragment, TAG_FOLDER_PICKER)
+                    .commit()
+            }
         }
 
         initializeCountButtonObserver()
