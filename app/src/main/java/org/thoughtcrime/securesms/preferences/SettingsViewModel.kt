@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.preferences
 import android.content.Context
 import android.net.Uri
 import android.widget.Toast
-import androidx.compose.ui.unit.IntSize
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,6 +11,7 @@ import com.canhub.cropper.CropImageView
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -54,7 +54,6 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
-import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
 import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.util.AnimatedImageUtils
@@ -202,36 +201,31 @@ class SettingsViewModel @Inject constructor(
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val constraints = ProfileMediaConstraints()
-                val processResult = attachmentProcessor
-                    .process(
-                        data = context.contentResolver.openInputStream(uri)!!.source().buffer(),
-                        maxImageResolution = IntSize(
-                            constraints.getImageMaxWidth(context),
-                            constraints.getImageMaxHeight(context)
-                        ),
-                        compressImage = true,
-                    )
-
-                val bytes = processResult?.data
-                    ?: context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-
-                if (bytes == null){
-                    Log.e(TAG, "Error reading avatar bytes")
-                    Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
-                } else {
-                    _uiState.update {
-                        it.copy(
-                            avatarDialogState = AvatarDialogState.TempAvatar(
-                                data = bytes,
-                                isAnimated = isAnimated(uri),
-                                hasAvatar = hasAvatar()
-                            )
+                val bytes = context.contentResolver.openInputStream(uri)!!.source().buffer().use { data ->
+                    attachmentProcessor
+                        .process(
+                            data = data,
+                            maxImageResolution = AttachmentProcessor.MAX_AVATAR_SIZE_PX,
+                            compressImage = true,
                         )
-                    }
+                        ?.data
+                        ?: data.readByteArray()
+                }
+
+                _uiState.update {
+                    it.copy(
+                        avatarDialogState = AvatarDialogState.TempAvatar(
+                            data = bytes,
+                            isAnimated = isAnimated(uri),
+                            hasAvatar = hasAvatar()
+                        )
+                    )
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error reading avatar bytes", e)
+                if (e !is CancellationException) {
+                    Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
+                }
             }
         }
     }

@@ -273,11 +273,13 @@ class DatabaseAttachmentProvider @Inject constructor(
         attachment: Attachment,
     ): Attachment? {
         return try {
-            val result = attachmentProcessor.process(
-                data = PartAuthority.getAttachmentStream(context, attachment.dataUri!!).source().buffer(),
-                maxImageResolution = IntSize(constraints.getImageMaxWidth(context), constraints.getImageMaxHeight(context)),
-                compressImage = false,
-            ) ?: return null
+            val result = PartAuthority.getAttachmentStream(context, attachment.dataUri!!).source().buffer().use { data ->
+                attachmentProcessor.process(
+                    data = data,
+                    maxImageResolution = IntSize(constraints.getImageMaxWidth(context), constraints.getImageMaxHeight(context)),
+                    compressImage = false,
+                )
+            }  ?: return null
 
             attachmentDatabase.updateAttachmentData(
                 attachment,

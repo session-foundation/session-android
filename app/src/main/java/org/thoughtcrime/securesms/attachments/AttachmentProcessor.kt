@@ -2,12 +2,9 @@ package org.thoughtcrime.securesms.attachments
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.graphics.Movie
-import android.os.SystemClock
 import android.text.format.Formatter
 import androidx.compose.ui.unit.IntSize
-import androidx.core.graphics.createBitmap
 import coil3.BitmapImage
 import coil3.ImageLoader
 import coil3.decode.DataSource
@@ -24,10 +21,9 @@ import coil3.request.allowConversionToBitmap
 import coil3.request.allowHardware
 import coil3.request.allowRgb565
 import coil3.size.Precision
-import com.squareup.gifencoder.GifEncoder
-import com.squareup.gifencoder.ImageOptions
 import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.libsession_util.encrypt.Attachments
+import network.loki.messenger.libsession_util.image.GifUtils
 import network.loki.messenger.libsession_util.image.WebPUtils
 import okio.BufferedSource
 import okio.FileSystem
@@ -38,10 +34,11 @@ import org.session.libsignal.streams.PaddingInputStream
 import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.ByteArraySlice.Companion.view
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.ImageUtils
+import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.security.MessageDigest
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -65,6 +62,9 @@ class AttachmentProcessor @Inject constructor(
 
     /**
      * Process a file based on its mime type and the given constraints.
+     *
+     * @param data The data to process. This method will **NOT** close the source for you. If
+     * this function returns null, the source will remain unconsumed.
      *
      * @return null if nothing was done, or a ProcessResult if processing was performed.
      */
@@ -183,7 +183,8 @@ class AttachmentProcessor @Inject constructor(
      */
     fun encryptAttachmentLegacy(plaintext: ByteArray): Pair<EncryptResult, DigestResult> {
         val key = Util.getSecretBytes(64)
-        var remainingPaddingSize = (PaddingInputStream.getPaddedSize(plaintext.size.toLong()) - plaintext.size.toLong()).toInt()
+        var remainingPaddingSize =
+            (PaddingInputStream.getPaddedSize(plaintext.size.toLong()) - plaintext.size.toLong()).toInt()
         val paddingBuffer = ByteArray(remainingPaddingSize.coerceAtMost(512))
         val digest: ByteArray
 
@@ -229,7 +230,11 @@ class AttachmentProcessor @Inject constructor(
         return plaintextOut.view(0 until plaintextSize)
     }
 
-    fun decryptAttachmentLegacy(ciphertext: ByteArraySlice, key: ByteArray, digest: ByteArray?): ByteArraySlice {
+    fun decryptAttachmentLegacy(
+        ciphertext: ByteArraySlice,
+        key: ByteArray,
+        digest: ByteArray?
+    ): ByteArraySlice {
         return AttachmentCipherInputStream.createForAttachment(ciphertext, key, digest)
             .use { it.readBytes().view() }
     }
@@ -259,15 +264,15 @@ class AttachmentProcessor @Inject constructor(
         data: ByteArray,
         maxImageResolution: IntSize?,
     ): ProcessResult? {
-        val origSize = requireNotNull(WebPUtils.getWebPDimensions(data)) {
-            "Given data is not a valid WebP image"
-        }.let { (width, height) -> IntSize(width, height) }
+        val origSize = BitmapUtil.getDimensions(ByteArrayInputStream(data))
+            .let { pair -> IntSize(pair.first, pair.second) }
 
         val targetSize: IntSize
 
         if (maxImageResolution == null || (
                     origSize.width <= maxImageResolution.width &&
-                        origSize.height <= maxImageResolution.height)) {
+                            origSize.height <= maxImageResolution.height)
+        ) {
             // No resizing needed
             targetSize = origSize
         } else {
@@ -283,11 +288,20 @@ class AttachmentProcessor @Inject constructor(
             input = data,
             targetWidth = targetSize.width,
             targetHeight = targetSize.height,
+            timeoutMills = 10_000L,
         )
 
-        Log.d(TAG, "Re-encoded animated WebP from ${origSize.width}x${origSize.height} to ${targetSize.width}x${targetSize.height} " +
-                "in ${System.currentTimeMillis() - start}ms, original size=${Formatter.formatFileSize(context, data.size.toLong())}, " +
-                "new size=${Formatter.formatFileSize(context, reencoded.size.toLong())}")
+        Log.d(
+            TAG,
+            "Re-encoded animated WebP from ${origSize.width}x${origSize.height} to ${targetSize.width}x${targetSize.height} " +
+                    "in ${System.currentTimeMillis() - start}ms, original size=${
+                        Formatter.formatFileSize(
+                            context,
+                            data.size.toLong()
+                        )
+                    }, " +
+                    "new size=${Formatter.formatFileSize(context, reencoded.size.toLong())}"
+        )
 
         return ProcessResult(
             data = reencoded,
@@ -328,63 +342,50 @@ class AttachmentProcessor @Inject constructor(
 
     @Suppress("DEPRECATION")
     private fun processGif(
-        data: BufferedSource,
-        maxImageResolution: IntSize
+        data: ByteArray,
+        maxImageResolution: IntSize?
     ): ProcessResult? {
-        val movie = data.use { Movie.decodeStream(it.inputStream()) }
+        val origSize = BitmapUtil.getDimensions(ByteArrayInputStream(data))
+            .let { pair -> IntSize(pair.first, pair.second) }
 
-        // If the GIF is already within the size limits, no need to process it.
-        if (movie.width() <= maxImageResolution.width &&
-            movie.height() <= maxImageResolution.height) {
-            return null
+        val targetSize: IntSize
+
+        if (maxImageResolution == null || (
+                    origSize.width <= maxImageResolution.width &&
+                            origSize.height <= maxImageResolution.height)
+        ) {
+            // No resizing needed
+            targetSize = origSize
+        } else {
+            targetSize = scaleToFit(
+                original = origSize,
+                max = maxImageResolution
+            ).first
         }
 
-        // Work out the scale to fit within the max dimensions.
-        val (targetSize, scale) = scaleToFit(
-            original = IntSize(movie.width(), movie.height()),
-            max = maxImageResolution
+        val start = System.currentTimeMillis()
+
+        val reencoded = GifUtils.reencodeGif(
+            input = data,
+            targetWidth = targetSize.width,
+            targetHeight = targetSize.height,
+            timeoutMills = 10_000L,
         )
 
-        val totalDuration = movie.duration()
-        val frameBitmap = createBitmap(targetSize.width, targetSize.height, Bitmap.Config.RGB_565)
-        val deadline = SystemClock.elapsedRealtime() + 10_000 // 10 seconds
-        val frameIntervalMills = 1000 / 20L // Target 20 FPS
-        val frameBytes = IntArray(targetSize.width * targetSize.height)
-        val imageOptions = ImageOptions()
-        val frameCanvas = Canvas(frameBitmap)
-        frameCanvas.scale(scale, scale)
-
-        val compressed = ByteArrayOutputStream().use { outputStream ->
-            val gifEncoder = GifEncoder(outputStream, targetSize.width, targetSize.height, 1)
-
-            var time = 0
-            while (time < totalDuration) {
-                movie.setTime(time)
-                frameBitmap.eraseColor(0) // Clear to get ready for next frame
-                movie.draw(frameCanvas, 0f, 0f, null)
-
-                frameBitmap.getPixels(frameBytes, 0, targetSize.width, 0, 0, targetSize.width, targetSize.height)
-
-                imageOptions.setDelay(if (time == 0) 0L else frameIntervalMills, TimeUnit.MILLISECONDS)
-                gifEncoder.addImage(frameBytes, targetSize.width, imageOptions)
-
-                time += frameIntervalMills.toInt()
-
-                if (SystemClock.elapsedRealtime() > deadline) {
-                    Log.w(TAG, "Given up downsizing GIF as it took too long")
-                    frameBitmap.recycle()
-                    return null
-                }
-            }
-
-            gifEncoder.finishEncoding()
-            outputStream.toByteArray()
-        }
-
-        frameBitmap.recycle()
+        Log.d(
+            TAG,
+            "Re-encoded animated gif from ${origSize.width}x${origSize.height} to ${targetSize.width}x${targetSize.height} " +
+                    "in ${System.currentTimeMillis() - start}ms, original size=${
+                        Formatter.formatFileSize(
+                            context,
+                            data.size.toLong()
+                        )
+                    }, " +
+                    "new size=${Formatter.formatFileSize(context, reencoded.size.toLong())}"
+        )
 
         return ProcessResult(
-            data = compressed,
+            data = reencoded,
             mimeType = "image/gif",
             imageSize = targetSize
         )
@@ -415,5 +416,7 @@ class AttachmentProcessor @Inject constructor(
 
     companion object {
         private const val TAG = "AttachmentProcessor"
+
+        val MAX_AVATAR_SIZE_PX = IntSize(600, 600)
     }
 }
