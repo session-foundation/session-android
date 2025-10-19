@@ -191,15 +191,16 @@ open class Storage @Inject constructor(
         return messages.map { it.second } // return the message hashes
     }
 
-    override fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean) {
+    override fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean, updateNotification: Boolean) {
         val threadDb = threadDatabase
         getRecipientForThread(threadId)?.let { recipient ->
-            val currentLastRead = threadDb.getLastSeenAndHasSent(threadId).first()
             // don't set the last read in the volatile if we didn't set it in the DB
-            if (!threadDb.markAllAsRead(threadId, lastSeenTime, force) && !force) return
+            if (!threadDb.markAllAsRead(threadId, lastSeenTime, force, updateNotification) && !force) return
 
             // don't process configs for inbox recipients
             if (recipient.isCommunityInboxRecipient) return
+
+            val currentLastRead = threadDb.getLastSeenAndHasSent(threadId).first()
 
             configFactory.withMutableUserConfigs { configs ->
                 val config = configs.convoInfoVolatile

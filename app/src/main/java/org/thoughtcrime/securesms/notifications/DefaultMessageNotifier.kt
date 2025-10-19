@@ -16,14 +16,11 @@
  */
 package org.thoughtcrime.securesms.notifications
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.pm.PackageManager
 import android.database.Cursor
 import android.graphics.Bitmap
 import android.text.TextUtils
-import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import coil3.ImageLoader
@@ -44,8 +41,6 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.Util
-import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities.getUserED25519KeyPair
 import org.thoughtcrime.securesms.database.MmsSmsColumns.NOTIFIED
@@ -62,10 +57,7 @@ import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol.canUserReplyToNotification
 import org.thoughtcrime.securesms.util.SpanUtil
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.WEBRTC_NOTIFICATION
-import java.util.concurrent.Executor
-import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Provider
 import kotlin.concurrent.Volatile
@@ -92,14 +84,6 @@ class DefaultMessageNotifier @Inject constructor(
 
     override fun setHomeScreenVisible(isVisible: Boolean) {
         homeScreenVisible = isVisible
-    }
-
-    override fun setLastDesktopActivityTimestamp(timestamp: Long) {
-        lastDesktopActivityTimestamp = timestamp
-    }
-
-    override fun cancelDelayedNotifications() {
-        executor.cancel()
     }
 
     private fun cancelActiveNotifications(context: Context): Boolean {
@@ -172,12 +156,7 @@ class DefaultMessageNotifier @Inject constructor(
     }
 
     override fun updateNotification(context: Context, threadId: Long) {
-        if (System.currentTimeMillis() - lastDesktopActivityTimestamp < DESKTOP_ACTIVITY_PERIOD) {
-            Log.i(TAG, "Scheduling delayed notification...")
-            executor.execute(DelayedNotification(context, threadId))
-        } else {
-            updateNotification(context, threadId, true)
-        }
+        updateNotification(context, threadId, true)
     }
 
     override fun updateNotification(context: Context, threadId: Long, signal: Boolean) {
@@ -822,72 +801,6 @@ class DefaultMessageNotifier @Inject constructor(
         return null
     }
 
-    private class DelayedNotification(private val context: Context, private val threadId: Long) :
-        Runnable {
-        private val canceled = AtomicBoolean(false)
-
-        private val delayUntil: Long
-
-        init {
-            this.delayUntil = System.currentTimeMillis() + DELAY
-        }
-
-        override fun run() {
-            val delayMillis = delayUntil - System.currentTimeMillis()
-            Log.i(TAG, "Waiting to notify: $delayMillis")
-
-            if (delayMillis > 0) {
-                Util.sleep(delayMillis)
-            }
-
-            if (!canceled.get()) {
-                Log.i(TAG, "Not canceled, notifying...")
-                ApplicationContext.getInstance(context).messageNotifier.updateNotification(
-                    context,
-                    threadId,
-                    true
-                )
-                ApplicationContext.getInstance(context).messageNotifier.cancelDelayedNotifications()
-            } else {
-                Log.w(TAG, "Canceled, not notifying...")
-            }
-        }
-
-        fun cancel() {
-            canceled.set(true)
-        }
-
-        companion object {
-            private val DELAY = TimeUnit.SECONDS.toMillis(5)
-        }
-    }
-
-    private class CancelableExecutor {
-        private val executor: Executor = Executors.newSingleThreadExecutor()
-        private val tasks: MutableSet<DelayedNotification> = HashSet()
-
-        fun execute(runnable: DelayedNotification) {
-            synchronized(tasks) { tasks.add(runnable) }
-
-            val wrapper = Runnable {
-                runnable.run()
-                synchronized(tasks) {
-                    tasks.remove(runnable)
-                }
-            }
-
-            executor.execute(wrapper)
-        }
-
-        fun cancel() {
-            synchronized(tasks) {
-                for (task in tasks) {
-                    task.cancel()
-                }
-            }
-        }
-    }
-
     companion object {
         private val TAG: String = DefaultMessageNotifier::class.java.simpleName
 
@@ -908,7 +821,6 @@ class DefaultMessageNotifier @Inject constructor(
         private const val REQUEST_TAG    = "message_request"
 
         private val MIN_AUDIBLE_PERIOD_MILLIS = TimeUnit.SECONDS.toMillis(5)
-        private val DESKTOP_ACTIVITY_PERIOD = TimeUnit.MINUTES.toMillis(1)
 
         @Volatile
         private var visibleThread: Long = -1
@@ -917,10 +829,6 @@ class DefaultMessageNotifier @Inject constructor(
         private var homeScreenVisible = false
 
         @Volatile
-        private var lastDesktopActivityTimestamp: Long = -1
-
-        @Volatile
         private var lastAudibleNotification: Long = -1
-        private val executor = CancelableExecutor()
     }
 }

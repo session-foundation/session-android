@@ -48,13 +48,6 @@ public class OptimizedMessageNotifier implements MessageNotifier {
   }
 
   @Override
-  public void setLastDesktopActivityTimestamp(long timestamp) { wrapped.setLastDesktopActivityTimestamp(timestamp);}
-
-
-  @Override
-  public void cancelDelayedNotifications() { wrapped.cancelDelayedNotifications(); }
-
-  @Override
   public void updateNotification(@NonNull Context context) {
     boolean isCaughtUp = true;
     isCaughtUp = isCaughtUp && !pollerManager.isPolling();
