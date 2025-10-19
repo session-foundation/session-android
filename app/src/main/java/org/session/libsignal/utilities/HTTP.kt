@@ -1,81 +1,76 @@
 package org.session.libsignal.utilities
 
 import android.util.Log
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import okhttp3.Call
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody
-import okhttp3.Response
-import org.session.libsignal.utilities.Util.SECURE_RANDOM
+import androidx.annotation.RawRes
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.timeout
+import io.ktor.client.request.request
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsBytes
+import io.ktor.http.HttpMethod
+import io.ktor.http.headers
+import org.session.libsession.messaging.MessagingModuleConfiguration
+import java.security.KeyStore
+import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
-import java.util.concurrent.TimeUnit
-import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import network.loki.messenger.R
 
 
 object HTTP {
     var isConnectedToNetwork: (() -> Boolean) = { false }
 
-    private val seedNodeConnection by lazy {
+    private val seedNodeTrustManagers = sequenceOf("seed1" to R.raw.seed1, "seed2" to R.raw.seed2, "seed3" to R.raw.seed3)
+        .associate { (name, resId) -> "$name.getsession.org" to lazy { createTrustManagerForPEM(resId) } }
 
-        OkHttpClient().newBuilder()
-            .callTimeout(timeout, TimeUnit.SECONDS)
-            .connectTimeout(timeout, TimeUnit.SECONDS)
-            .readTimeout(timeout, TimeUnit.SECONDS)
-            .writeTimeout(timeout, TimeUnit.SECONDS)
-            .build()
-    }
-
-    private val defaultConnection by lazy {
-        // Snode to snode communication uses self-signed certificates but clients can safely ignore this
-        val trustManager = object : X509TrustManager {
-
-            override fun checkClientTrusted(chain: Array<out X509Certificate>?, authorizationType: String?) { }
-            override fun checkServerTrusted(chain: Array<out X509Certificate>?, authorizationType: String?) { }
-            override fun getAcceptedIssuers(): Array<X509Certificate> { return arrayOf() }
+    private fun createTrustManagerForPEM(@RawRes resId: Int): X509TrustManager {
+        val certificates = MessagingModuleConfiguration.shared.context.resources.openRawResource(resId).use { inputStream ->
+            CertificateFactory.getInstance("X.509").generateCertificates(inputStream)
         }
-        val sslContext = SSLContext.getInstance("SSL")
-        sslContext.init(null, arrayOf( trustManager ), SECURE_RANDOM)
-        OkHttpClient().newBuilder()
-            .sslSocketFactory(sslContext.socketFactory, trustManager)
-            .hostnameVerifier { _, _ -> true }
-            .callTimeout(timeout, TimeUnit.SECONDS)
-            .connectTimeout(timeout, TimeUnit.SECONDS)
-            .readTimeout(timeout, TimeUnit.SECONDS)
-            .writeTimeout(timeout, TimeUnit.SECONDS)
-            .build()
-    }
 
-    private fun getDefaultConnection(timeout: Long): OkHttpClient {
-        // Snode to snode communication uses self-signed certificates but clients can safely ignore this
-        val trustManager = object : X509TrustManager {
-
-            override fun checkClientTrusted(chain: Array<out X509Certificate>?, authorizationType: String?) { }
-            override fun checkServerTrusted(chain: Array<out X509Certificate>?, authorizationType: String?) { }
-            override fun getAcceptedIssuers(): Array<X509Certificate> { return arrayOf() }
+        val keyStore = KeyStore.getInstance(KeyStore.getDefaultType()).also { keyStore ->
+            keyStore.load(null, null)
+            certificates.forEachIndexed { index, certificate ->
+                keyStore.setCertificateEntry("ca$index", certificate)
+            }
         }
-        val sslContext = SSLContext.getInstance("SSL")
-        sslContext.init(null, arrayOf( trustManager ), SECURE_RANDOM)
-        return OkHttpClient().newBuilder()
-            .sslSocketFactory(sslContext.socketFactory, trustManager)
-            .hostnameVerifier { _, _ -> true }
-            .callTimeout(timeout, TimeUnit.SECONDS)
-            .connectTimeout(timeout, TimeUnit.SECONDS)
-            .readTimeout(timeout, TimeUnit.SECONDS)
-            .writeTimeout(timeout, TimeUnit.SECONDS)
-            .build()
+
+        val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+        trustManagerFactory.init(keyStore)
+        return trustManagerFactory.trustManagers.first { it is X509TrustManager } as X509TrustManager
     }
 
-    private const val timeout: Long = 120
+    private val client by lazy {
+        HttpClient(CIO) {
+            engine {
+                // It is only for trusting self-signed certificates.
+                https {
+                    TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+                    trustManager = object : X509TrustManager {
+                        override fun checkClientTrusted(chain: Array<out X509Certificate>?, authorization: String?) {
+                            error("Client certificate not required")
+                        }
+
+                        override fun checkServerTrusted(chain: Array<out X509Certificate>?, authorization: String) {
+                            seedNodeTrustManagers[authorization]?.value?.checkServerTrusted(chain, authorization)
+                        }
+
+                        override fun getAcceptedIssuers(): Array<X509Certificate>? = null
+                    }
+                }
+            }
+        }
+    }
+
+    private const val DEFAULT_TIMEOUT_SECONDS: Long = 120
 
     open class HTTPRequestFailedException(
         val statusCode: Int,
         val json: Map<*, *>?,
         message: String = "HTTP request failed with status code $statusCode"
-    ) : kotlin.Exception(message)
+    ) : Exception(message)
     class HTTPNoNetworkException : HTTPRequestFailedException(0, null, "No network connection")
 
     enum class Verb(val rawValue: String) {
@@ -85,57 +80,63 @@ object HTTP {
     /**
      * Sync. Don't call from the main thread.
      */
-    suspend fun execute(verb: Verb, url: String, timeout: Long = HTTP.timeout, useSeedNodeConnection: Boolean = false): ByteArray {
-        return execute(verb = verb, url = url, body = null, timeout = timeout, useSeedNodeConnection = useSeedNodeConnection)
+    suspend fun execute(verb: Verb, url: String, timeout: Long = DEFAULT_TIMEOUT_SECONDS): ByteArray {
+        return execute(verb = verb, url = url, body = null, timeoutSeconds = timeout)
     }
 
     /**
      * Sync. Don't call from the main thread.
      */
-    suspend fun execute(verb: Verb, url: String, parameters: Map<String, Any>?, timeout: Long = HTTP.timeout, useSeedNodeConnection: Boolean = false): ByteArray {
+    suspend fun execute(
+        verb: Verb,
+        url: String,
+        parameters: Map<String, Any>?,
+        timeout: Long = DEFAULT_TIMEOUT_SECONDS
+    ): ByteArray {
         return if (parameters != null) {
             val body = JsonUtil.toJson(parameters).toByteArray()
-            execute(verb = verb, url = url, body = body, timeout = timeout, useSeedNodeConnection = useSeedNodeConnection)
+            execute(verb = verb, url = url, body = body, timeoutSeconds = timeout)
         } else {
-            execute(verb = verb, url = url, body = null, timeout = timeout, useSeedNodeConnection = useSeedNodeConnection)
+            execute(verb = verb, url = url, body = null, timeoutSeconds = timeout)
         }
     }
 
     /**
      * Sync. Don't call from the main thread.
      */
-    suspend fun execute(verb: Verb, url: String, body: ByteArray?, timeout: Long = HTTP.timeout, useSeedNodeConnection: Boolean = false): ByteArray {
-        val request = Request.Builder().url(url)
-            .removeHeader("User-Agent").addHeader("User-Agent", "WhatsApp") // Set a fake value
-            .removeHeader("Accept-Language").addHeader("Accept-Language", "en-us") // Set a fake value
-        when (verb) {
-            Verb.GET -> request.get()
-            Verb.PUT, Verb.POST -> {
-                if (body == null) { throw Exception("Invalid request body.") }
-                val contentType = "application/json; charset=utf-8".toMediaType()
-                @Suppress("NAME_SHADOWING") val body = RequestBody.create(contentType, body)
-                if (verb == Verb.PUT) request.put(body) else request.post(body)
-            }
-            Verb.DELETE -> request.delete()
-        }
+    suspend fun execute(verb: Verb, url: String, body: ByteArray?, timeoutSeconds: Long = DEFAULT_TIMEOUT_SECONDS): ByteArray {
+        check(body == null || verb != Verb.GET) { "GET requests cannot have a body." }
+
         return try {
-            when {
-                // Custom timeout
-                timeout != HTTP.timeout -> {
-                    if (useSeedNodeConnection) {
-                        throw IllegalStateException("Setting a custom timeout is only allowed for requests to snodes.")
+            val response = client.request(urlString = url) {
+                method = HttpMethod(verb.rawValue)
+
+                headers {
+                    append("User-Agent", "WhatsApp")
+                    append("Accept-Language", "en-us")
+
+                    if (body != null) {
+                        append("Content-Length", body.size.toString())
+                        append("Content-Type", "application/json")
                     }
-                    getDefaultConnection(timeout)
                 }
-                useSeedNodeConnection -> seedNodeConnection
-                else -> defaultConnection
-            }.newCall(request.build()).await().use { response ->
-                when (val statusCode = response.code) {
-                    200 -> response.body!!.bytes()
-                    else -> {
-                        Log.d("Loki", "${verb.rawValue} request to $url failed with status code: $statusCode.")
-                        throw HTTPRequestFailedException(statusCode, null)
-                    }
+
+                if (body != null) {
+                    setBody(body)
+                }
+
+                timeout {
+                    connectTimeoutMillis = timeoutSeconds * 1000
+                }
+            }
+
+            val statusCode = response.status
+
+            when (statusCode.value) {
+                200 -> response.bodyAsBytes()
+                else -> {
+                    Log.d("Loki", "${verb.rawValue} request to $url failed with status code: $statusCode.")
+                    throw HTTPRequestFailedException(statusCode.value, null)
                 }
             }
         } catch (exception: Exception) {
@@ -145,15 +146,6 @@ object HTTP {
 
             // Override the actual error so that we can correctly catch failed requests in OnionRequestAPI
             throw HTTPRequestFailedException(0, null, "HTTP request failed due to: ${exception.message}")
-        }
-    }
-
-    @Suppress("OPT_IN_USAGE")
-    private val httpCallDispatcher = Dispatchers.IO.limitedParallelism(15)
-
-    private suspend fun Call.await(): Response {
-        return withContext(httpCallDispatcher) {
-            execute()
         }
     }
 }

@@ -1,7 +1,7 @@
 [versions]
 androidMinSdkVersion = "26"
 androidTargetSdkVersion = "35"
-androidCompileSdkVersion = "35"
+androidCompileSdkVersion = "36"
 accompanistPermissionsVersion = "0.37.3"
 activityKtxVersion = "1.10.1"
 androidImageCropperVersion = "4.6.0"
@@ -72,6 +72,7 @@ huaweiPushVersion = "6.13.0.300"
 googlePlayReviewVersion = "2.0.2"
 coilVersion = "3.3.0"
 billingVersion = "8.0.0"
+ktorVersion = "3.3.1"
 
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissionsVersion" }
@@ -174,6 +175,8 @@ coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilVe
 coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coilVersion" }
 android-billing = { module = "com.android.billingclient:billing", version.ref = "billingVersion" }
 android-billing-ktx = { module = "com.android.billingclient:billing-ktx", version.ref = "billingVersion" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktorVersion" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktorVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "gradlePluginVersion" }

@@ -12,7 +12,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
@@ -20,10 +19,8 @@ import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.Hash
 import network.loki.messenger.libsession_util.SessionEncrypt
 import nl.komponents.kovenant.Promise
-import nl.komponents.kovenant.all
 import nl.komponents.kovenant.functional.bind
 import nl.komponents.kovenant.functional.map
-import nl.komponents.kovenant.unwrap
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.utilities.MessageWrapper
 import org.session.libsession.snode.model.BatchResponse
@@ -40,14 +37,12 @@ import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
-import org.session.libsignal.utilities.Broadcaster
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.prettifiedDescription
-import org.session.libsignal.utilities.retryIfNeeded
 import org.session.libsignal.utilities.retryWithUniformInterval
 import java.util.Locale
 import kotlin.collections.component1
@@ -199,7 +194,7 @@ object SnodeAPI {
             val target = seedNodePool.random()
             Log.d("Loki", "Populating snode pool using: $target.")
             val url = "$target/json_rpc"
-            val response = HTTP.execute(HTTP.Verb.POST, url, GET_RANDOM_SNODE_PARAMS, useSeedNodeConnection = true)
+            val response = HTTP.execute(HTTP.Verb.POST, url, GET_RANDOM_SNODE_PARAMS)
             val json = runCatching { JsonUtil.fromJson(response, Map::class.java) }.getOrNull()
                 ?: buildMap { this["result"] = response.toString() }
             val intermediate = json["result"] as? Map<*, *> ?: throw Error.Generic
