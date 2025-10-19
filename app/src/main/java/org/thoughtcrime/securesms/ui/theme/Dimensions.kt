@@ -45,4 +45,11 @@ data class Dimensions(
 
     val maxContentWidth: Dp = 410.dp,
     val maxTooltipWidth: Dp = 280.dp,
+
+    val smallMinimumImgClamp: Dp = 140.dp,
+    val smallMaximumImgClamp: Dp = 420.dp,
+    val minimumImgClamp: Dp = 160.dp,
+    val mediumMinimumImgClamp: Dp = 200.dp,
+    val maximumImgClamp: Dp = 520.dp,
+    val mediumMaximumImgClamp: Dp = 620.dp
 )

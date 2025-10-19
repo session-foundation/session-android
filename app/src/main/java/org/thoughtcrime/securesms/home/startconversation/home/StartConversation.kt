@@ -148,7 +148,10 @@ private fun QrPanel(
     ) {
         val qrModifier = if (getAdaptiveInfo().isLandscape) {
             val shortest: Dp = min(maxWidth, maxHeight)
-            val qrSide = (shortest * 0.70f).coerceIn(160.dp, 520.dp)
+            val qrSide = (shortest * 0.70f).coerceIn(
+                LocalDimensions.current.minimumImgClamp,
+                LocalDimensions.current.maximumImgClamp
+            )
             Modifier.size(qrSide)
         } else {
             Modifier

@@ -49,7 +49,6 @@ class ConversationView : LinearLayout {
 
     override fun onFinishInflate() {
         super.onFinishInflate()
-//        layoutParams = RecyclerView.LayoutParams(screenWidth, RecyclerView.LayoutParams.WRAP_CONTENT)
         (layoutParams as? RecyclerView.LayoutParams)?.width = RecyclerView.LayoutParams.MATCH_PARENT
     }
     // endregion

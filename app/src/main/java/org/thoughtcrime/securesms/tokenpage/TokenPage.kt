@@ -488,7 +488,10 @@ fun StatsSection(
 
         val targetWidth = leftMaxWidth
             .coerceAtMost(heightCap * aspect)
-            .coerceIn(140.dp, 420.dp) // hard cap to keep tidy on very wide screens
+            .coerceIn(
+                LocalDimensions.current.smallMinimumImgClamp,
+                LocalDimensions.current.smallMaximumImgClamp
+            ) // hard cap to keep tidy on very wide screens
 
 
         // First row contains the `StatsImageBox` with the number of nodes in your swap and the text
