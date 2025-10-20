@@ -761,13 +761,15 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
   /**
    * @param threadId
    * @param lastSeenTime
+   * @param force
+   * @param updateNotifications - if true, update the notification state. Set to false if you already came from a notification interaction
    * @return true if we have set the last seen for the thread, false if there were no messages in the thread
    */
-  public boolean markAllAsRead(long threadId, long lastSeenTime, boolean force) {
+  public boolean markAllAsRead(long threadId, long lastSeenTime, boolean force, boolean updateNotifications) {
     if (mmsSmsDatabase.get().getConversationCount(threadId) <= 0 && !force) return false;
     List<MarkedMessageInfo> messages = setRead(threadId, lastSeenTime);
     MarkReadReceiver.process(context, messages);
-    messageNotifier.get().updateNotification(context, threadId);
+    if(updateNotifications) messageNotifier.get().updateNotification(context, threadId);
     return setLastSeen(threadId, lastSeenTime);
   }
 

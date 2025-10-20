@@ -7,11 +7,9 @@ import androidx.annotation.NonNull;
 
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
 import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager;
-import org.session.libsession.messaging.sending_receiving.pollers.Poller;
 import org.session.libsession.messaging.sending_receiving.pollers.PollerManager;
 import org.session.libsession.utilities.Debouncer;
 import org.session.libsignal.utilities.ThreadUtils;
-import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.util.AvatarUtils;
 
 import java.util.concurrent.TimeUnit;
@@ -48,13 +46,6 @@ public class OptimizedMessageNotifier implements MessageNotifier {
   public void setHomeScreenVisible(boolean isVisible) {
     wrapped.setHomeScreenVisible(isVisible);
   }
-
-  @Override
-  public void setLastDesktopActivityTimestamp(long timestamp) { wrapped.setLastDesktopActivityTimestamp(timestamp);}
-
-
-  @Override
-  public void cancelDelayedNotifications() { wrapped.cancelDelayedNotifications(); }
 
   @Override
   public void updateNotification(@NonNull Context context) {
@@ -111,9 +102,6 @@ public class OptimizedMessageNotifier implements MessageNotifier {
       debouncer.publish(() -> performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotification(context, signal, reminderCount)));
     }
   }
-
-  @Override
-  public void clearReminder(@NonNull Context context) { wrapped.clearReminder(context); }
 
   private void performOnBackgroundThreadIfNeeded(Runnable r) {
     if (Looper.myLooper() == Looper.getMainLooper()) {

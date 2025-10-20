@@ -1381,10 +1381,18 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val maybeTargetVisiblePosition = layoutManager?.findLastVisibleItemPosition()
         val targetVisiblePosition = maybeTargetVisiblePosition ?: RecyclerView.NO_POSITION
         if (!firstLoad.get() && targetVisiblePosition != RecyclerView.NO_POSITION) {
-            adapter.getTimestampForItemAt(targetVisiblePosition)?.let { visibleItemTimestamp ->
-                    bufferedLastSeenChannel.trySend(visibleItemTimestamp).apply {
-                        if (isFailure) Log.e(TAG, "trySend failed", exceptionOrNull())
-                    }
+            val timestampToSend: Long? = if (binding.conversationRecyclerView.isFullyScrolled) {
+                // We are at the bottom, so mark "now" as the last seen time
+                clock.currentTimeMills()
+            } else {
+                // We are not at the bottom, so just mark the timestamp of the last visible message
+                adapter.getTimestampForItemAt(targetVisiblePosition)
+            }
+
+            timestampToSend?.let {
+                bufferedLastSeenChannel.trySend(it).apply {
+                    if (isFailure) Log.e(TAG, "trySend failed", exceptionOrNull())
+                }
             }
         }
 
