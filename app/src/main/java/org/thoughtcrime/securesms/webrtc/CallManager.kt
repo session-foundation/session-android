@@ -751,9 +751,7 @@ class CallManager @Inject constructor(
         }
     }
 
-    fun setDeviceOrientation(orientation: Orientation, isAutoRotateOn : Boolean) {
-        if(isAutoRotateOn) return // let the activity handle the rotation
-
+    fun setDeviceOrientation(orientation: Orientation) {
         // set rotation to the video based on the device's orientation and the camera facing direction
         val rotation = when (orientation) {
             Orientation.PORTRAIT -> 0
@@ -764,9 +762,9 @@ class CallManager @Inject constructor(
 
         // apply the rotation to the streams
         peerConnection?.setDeviceRotation(rotation)
-        remoteRotationSink?.rotation = abs(rotation) // abs as we never need the remote video to be inverted
+        remoteRotationSink?.rotation =
+            abs(rotation) // abs as we never need the remote video to be inverted
     }
-
     fun handleWiredHeadsetChanged(present: Boolean) {
         if (currentConnectionState in arrayOf(CallState.Connected,
                         CallState.LocalRing,
