@@ -408,6 +408,7 @@ dependencies {
     implementation(libs.opencsv)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.rxbinding)
+    implementation(libs.gif.encoder)
 
     if (hasIncludedLibSessionUtilProject) {
         implementation(

@@ -226,6 +226,8 @@ interface TextSecurePreferences {
     var selectedActivityAliasName: String?
 
     var inAppReviewState: String?
+    var forcesDeterministicAttachmentEncryption: Boolean
+    var debugAvatarReupload: Boolean
 
 
     companion object {
@@ -371,6 +373,7 @@ interface TextSecurePreferences {
         const val DEBUG_SUBSCRIPTION_STATUS = "debug_subscription_status"
 
         const val SUBSCRIPTION_PROVIDER = "session_subscription_provider"
+        const val DEBUG_AVATAR_REUPLOAD = "debug_avatar_reupload"
 
         @JvmStatic
         fun getConfigurationMessageSynced(context: Context): Boolean {
@@ -1749,4 +1752,17 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setSubscriptionProvider(provider: String) {
         setStringPreference(TextSecurePreferences.SUBSCRIPTION_PROVIDER, provider)
     }
+
+    override var forcesDeterministicAttachmentEncryption: Boolean
+        get() = getBooleanPreference("forces_deterministic_attachment_upload", false)
+        set(value) {
+            setBooleanPreference("forces_deterministic_attachment_upload", value)
+        }
+
+    override var debugAvatarReupload: Boolean
+        get() = getBooleanPreference(TextSecurePreferences.DEBUG_AVATAR_REUPLOAD, false)
+        set(value) {
+            setBooleanPreference(TextSecurePreferences.DEBUG_AVATAR_REUPLOAD, value)
+            _events.tryEmit(TextSecurePreferences.DEBUG_AVATAR_REUPLOAD)
+        }
 }

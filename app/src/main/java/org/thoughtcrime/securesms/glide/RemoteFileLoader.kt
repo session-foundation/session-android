@@ -20,7 +20,7 @@ import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.attachments.LocalEncryptedFileInputStream
-import org.thoughtcrime.securesms.attachments.RemoteFileDownloadWorker
+import org.thoughtcrime.securesms.attachments.AvatarDownloadWorker
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import java.io.InputStream
 import java.security.MessageDigest
@@ -57,12 +57,12 @@ class RemoteFileLoader @Inject constructor(
         ) {
             job = scope.launch {
                 try {
-                    val downloadedFile = RemoteFileDownloadWorker.computeFileName(context, file)
+                    val downloadedFile = AvatarDownloadWorker.computeFileName(context, file)
 
                     // Check if the file already exists in the local storage, otherwise enqueue a download and
                     // wait for it to complete.
                     if (!downloadedFile.exists()) {
-                        RemoteFileDownloadWorker.enqueue(context, file)
+                        AvatarDownloadWorker.enqueue(context, file)
                             .first { it?.state == WorkInfo.State.FAILED || it?.state == WorkInfo.State.SUCCEEDED }
                     }
 

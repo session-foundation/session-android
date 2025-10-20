@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.glide
 
 import android.app.Application
-import androidx.work.await
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
@@ -14,13 +13,12 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
 import network.loki.messenger.libsession_util.util.GroupInfo
-import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.attachments.RemoteFileDownloadWorker
+import org.thoughtcrime.securesms.attachments.AvatarDownloadWorker
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import javax.inject.Inject
@@ -53,13 +51,13 @@ class RecipientAvatarDownloadManager @Inject constructor(
                     val toDownload = newSet - acc.downloadedAvatar
                     for (file in toDownload) {
                         Log.d(TAG, "Downloading $file")
-                        RemoteFileDownloadWorker.enqueue(application, file)
+                        AvatarDownloadWorker.enqueue(application, file)
                     }
 
                     val toRemove = acc.downloadedAvatar - newSet
                     for (file in toRemove) {
                         Log.d(TAG, "Cancelling downloading of $file")
-                        RemoteFileDownloadWorker.cancel(application, file)
+                        AvatarDownloadWorker.cancel(application, file)
                     }
 
                     acc.copy(downloadedAvatar = newSet)

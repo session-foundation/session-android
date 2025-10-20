@@ -20,6 +20,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapNotNull
 import network.loki.messenger.libsession_util.util.Bytes
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.messaging.open_groups.OpenGroupApi
@@ -45,8 +46,15 @@ import java.io.File
 import java.security.MessageDigest
 import java.time.Duration
 
+/**
+ * A worker that downloads a remote file and stores it locally in an encrypted format.
+ *
+ * Right now this is only used for downloading avatars, for downloading attachment, there's
+ * [org.session.libsession.messaging.jobs.AttachmentDownloadJob] as it's still using a different
+ * encryption method.
+ */
 @HiltWorker
-class RemoteFileDownloadWorker @AssistedInject constructor(
+class AvatarDownloadWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted params: WorkerParameters,
     private val localEncryptedFileOutputStreamFactory: LocalEncryptedFileOutputStream.Factory,
@@ -54,6 +62,8 @@ class RemoteFileDownloadWorker @AssistedInject constructor(
     private val prefs: TextSecurePreferences,
     private val recipientSettingsDatabase: RecipientSettingsDatabase,
     private val configFactory: ConfigFactoryProtocol,
+    private val fileServerApi: FileServerApi,
+    private val attachmentProcessor: AttachmentProcessor,
 ) : CoroutineWorker(context, params) {
     private val file: RemoteFile by lazy {
         when {
@@ -220,22 +230,31 @@ class RemoteFileDownloadWorker @AssistedInject constructor(
                     }
                 }
 
-                val fileId = requireNotNull(FileServerApi.getFileIdFromUrl(file.url)) {
-                    "RemoteFileDownloadWorker currently only supports downloading files from Session's file server"
-                }
+                val result = fileServerApi.parseAttachmentUrl(file.url.toHttpUrl())
 
-                val response = FileServerApi.download(fileId).await()
+                val response = fileServerApi.download(
+                    fileId = result.fileId,
+                    fileServer = result.fileServer,
+                )
+
                 Log.d(TAG, "Downloaded file from file server: $file")
 
                 // Decrypt data
-                val decrypted = AESGCM.decrypt(
-                    ivAndCiphertext = response.body.data,
-                    offset = response.body.offset,
-                    len = response.body.len,
-                    symmetricKey = file.key.data
-                )
+                val decrypted = if (result.usesDeterministicEncryption) {
+                    attachmentProcessor.decryptDeterministically(
+                        ciphertext = response.body,
+                        key = file.key.data
+                    )
+                } else {
+                    AESGCM.decrypt(
+                        ivAndCiphertext = response.body.data,
+                        offset = response.body.offset,
+                        len = response.body.len,
+                        symmetricKey = file.key.data
+                    ).view()
+                }
 
-                decrypted.view() to FileMetadata(expiryTime = response.expires?.toInstant())
+                decrypted to FileMetadata(expiryTime = response.expires?.toInstant())
 
             }
 
@@ -252,7 +271,7 @@ class RemoteFileDownloadWorker @AssistedInject constructor(
     }
 
     companion object {
-        const val TAG = "RemoteFileDownloadWorker"
+        const val TAG = "AvatarDownloadWorker"
 
         private const val ARG_ENCRYPTED_URL = "encrypted_url"
         private const val ARG_ENCRYPTED_KEY = "encrypted_key"
@@ -322,7 +341,7 @@ class RemoteFileDownloadWorker @AssistedInject constructor(
                     .putString(ARG_COMMUNITY_FILE_ID, file.fileId)
             }
 
-            val request = OneTimeWorkRequestBuilder<RemoteFileDownloadWorker>()
+            val request = OneTimeWorkRequestBuilder<AvatarDownloadWorker>()
                 .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, Duration.ofSeconds(5))
                 .addTag(TAG)
