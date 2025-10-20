@@ -432,7 +432,7 @@ class DefaultMessageNotifier @Inject constructor(
                 NotificationManagerCompat.from(context).notify(notificationId, notification)
             }
 
-            Log.i(TAG, "Posted notification. $notification")
+            Log.i(TAG, "Posted notification. $notificationId")
         }
     }
 
