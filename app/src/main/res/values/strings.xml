@@ -977,7 +977,7 @@
     <string name="proCancellationDescription">Canceling {pro} access will prevent automatic renewal from occurring before {pro} access expires. Canceling {pro} does <b>not</b> result in a refund. You will continue to be able to use {app_pro} features until your {pro} access expires.\n\nBecause you originally signed up for {app_pro} using your <b>{platform_account}</b>, you\'ll need to use the same {platform_account} to cancel {pro}.</string>
     <string name="proCancellationOptions">Two ways to cancel your {pro} access:</string>
     <string name="proCancellationShortDescription">Canceling {pro} access will prevent will prevent automatic renewal from occurring before {pro} expires.\n\nCanceling {pro} does <b>not</b> result in a refund. You will continue to be able to use {app_pro} features until your {pro} access expires.</string>
-    <string name="proChooseAccess">Choose the {pro} access option that\'s right for you.\n\nLonger access means bigger discounts.</string>
+    <string name="proChooseAccess">Choose the {pro} access option that\'s right for you.\nLonger access means bigger discounts.</string>
     <string name="proClearAllDataDevice">Are you sure you want to delete your data from this device?\n\n<b>{app_pro}</b> cannot be transferred to another account. Please save your Recovery Password to ensure you can restore your {pro} access later.</string>
     <string name="proClearAllDataNetwork">Are you sure you want to delete your data from the network? If you continue, you will not be able to restore your messages or contacts.\n\n<b>{app_pro}</b> cannot be transferred to another account. Please save your Recovery Password to ensure you can restore your {pro} access later.</string>
     <string name="proDiscountTooltip">Your {pro} access is already discounted by {percent}% of the full {app_pro} price.</string>
@@ -994,7 +994,7 @@
     <string name="proFeatureListLoadsMore">Plus loads more exclusive features</string>
     <string name="proFeatureListLongerMessages">Messages up to 10,000 characters</string>
     <string name="proFeatureListPinnedConversations">Pin unlimited conversations</string>
-    <string name="proFullestPotential">Want to use {app_name} to its fullest potential?\n\nUpgrade to {app_pro} Beta to get access to loads of exclusive perks and features.</string>
+    <string name="proFullestPotential">Want to use {app_name} to its fullest potential?\nUpgrade to {app_pro} Beta to get access to loads of exclusive perks and features.</string>
     <string name="proGroupActivated">Group Activated</string>
     <string name="proGroupActivatedDescription">This group has expanded capacity! It can support up to 300 members because a group admin has</string>
     <plurals name="proGroupsUpgraded">
@@ -1072,7 +1072,7 @@
     <string name="proUpdateAccessExpireDescription">Your {pro} access will expire on <b>{date}</b>.\n\nBy updating, your {pro} access will automatically renew on <b>{date}</b> for an additional <b>{selected_plan_length}</b> of {pro} access.</string>
     <string name="proUpgradeAccess">Upgrade to {app_pro} Beta to get access to loads of exclusive perks and features.</string>
     <string name="proUpgradeDesktopLinked">Upgrade to {pro} from the {app_pro} settings on a linked device with {app_name} installed via the {platform_store} or {platform_store_other}.</string>
-    <string name="proUpgradeNoAccessBilling">Currently, {pro} access can only be purchased and renewed via the {platform_store} or {platform_store_other}. Because you installed {app_name} using the {build_variant}, you\'re not able to upgrade to {pro} here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the {platform_store} and {platform_store_other}.<b> {pro} Roadmap</b> {icon}</string>
+    <string name="proUpgradeNoAccessBilling">Currently, {pro} access can only be purchased via the {platform_store} or {platform_store_other}. Because you installed {app_name} using the {build_variant}, you\'re not able to upgrade to {pro} here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the {platform_store} and {platform_store_other}.<b> {pro} Roadmap</b> {icon}</string>
     <string name="proUpgradeOption">For now, there is only one way to upgrade:</string>
     <string name="proUpgradeOptionsTwo">For now, there are two ways to upgrade:</string>
     <string name="proUpgraded">You have upgraded to {app_pro}!\n\nThank you for supporting the {network_name}.</string>
@@ -1277,6 +1277,7 @@
     <string name="updated">Last updated {relative_time} ago</string>
     <string name="updates">Updates</string>
     <string name="updating">Updating...</string>
+    <string name="upgrade">Upgrade</string>
     <string name="upgradeSession">Upgrade {app_name}</string>
     <string name="upgradeTo">Upgrade to</string>
     <string name="uploading">Uploading</string>
