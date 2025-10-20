@@ -1,22 +1,15 @@
 package org.thoughtcrime.securesms.attachments
 
 import android.app.Application
-import android.os.FileObserver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.encrypt.Attachments
 import network.loki.messenger.libsession_util.util.Bytes
@@ -24,23 +17,17 @@ import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.Util
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
-import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.streams.ProfileCipherOutputStream
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
-import org.thoughtcrime.securesms.util.DateUtils.Companion.millsToInstant
 import org.thoughtcrime.securesms.util.castAwayType
 import java.io.ByteArrayOutputStream
-import java.io.File
-import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.coroutines.resume
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
@@ -55,87 +42,39 @@ class AvatarUploadManager @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val prefs: TextSecurePreferences,
     @ManagerScope scope: CoroutineScope,
-    localEncryptedFileInputStreamFactory: LocalEncryptedFileInputStream.Factory,
     private val localEncryptedFileOutputStreamFactory: LocalEncryptedFileOutputStream.Factory,
     private val fileServerApi: FileServerApi,
     private val attachmentProcessor: AttachmentProcessor,
 ) : OnAppStartupComponent {
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val reuploadState: StateFlow<Unit> = prefs.watchLocalNumber()
-        .map { it != null }
-        .flatMapLatest { isLoggedIn ->
-            if (isLoggedIn) {
-                configFactory.userConfigsChanged(onlyConfigTypes = setOf(UserConfigType.USER_PROFILE))
+    init {
+        // Manage scheduling/cancellation of the AvatarReuploadWorker based on login state
+        scope.launch {
+            combine(
+                prefs.watchLocalNumber()
+                    .map { it != null }
+                    .distinctUntilChanged(),
+                TextSecurePreferences._events.filter { it == TextSecurePreferences.DEBUG_AVATAR_REUPLOAD }
                     .castAwayType()
                     .onStart { emit(Unit) }
-                    .map {
-                        configFactory.withUserConfigs { it.userProfile.getPic() }
-                            .takeIf { it.url.isNotBlank() }
-                            ?.toRemoteFile()
-                    }
-                    .filterNotNull()
-                    .map { AvatarDownloadWorker.computeFileName(application, it) }
-                    .distinctUntilChanged()
-                    .mapLatest { localFile ->
-                        waitUntilExists(localFile)
-                        Log.d(TAG, "About to look at file $localFile for re-upload")
-
-                        val expiringIn = runCatching {
-                            localEncryptedFileInputStreamFactory.create(localFile)
-                                .use { it.meta.expiryTime }
-                        }.onFailure {
-                            Log.w(TAG, "Failed to read expiry time from $localFile", it)
-                        }.getOrNull() ?: (localFile.lastModified() + DEFAULT_AVATAR_TTL.inWholeMilliseconds).millsToInstant()!!
-
-                        Log.d(TAG, "Avatar expiring at $expiringIn")
-                        val now = Instant.now()
-                        if (expiringIn.isAfter(now)) {
-                            delay(expiringIn.toEpochMilli() - now.toEpochMilli())
-                        }
-
-                        Log.d(TAG, "Avatar expired, re-uploading")
-                        uploadAvatar(
-                            pictureData = localEncryptedFileInputStreamFactory.create(localFile)
-                                .use { it.readBytes() },
-                            isReupload = true,
-                        )
-                    }
-            } else {
-                emptyFlow()
-            }
-        }
-        .stateIn(scope, SharingStarted.Eagerly, Unit)
-
-    private suspend fun waitUntilExists(file: File) {
-        if (file.exists()) return
-
-        // First make sure its parent directory exists so we can observe it
-        file.parentFile!!.mkdirs()
-
-        var fileObserver: FileObserver
-
-        return suspendCancellableCoroutine { cont ->
-            // The fileObserver variable MUST exist until the coroutine is resumed or cancelled,
-            // otherwise the observer will be garbage collected and the coroutine will never resume.
-            @Suppress("DEPRECATION")
-            fileObserver = object : FileObserver(
-                file.parentFile!!.absolutePath,
-                CREATE or MOVED_TO
-            ) {
-                override fun onEvent(event: Int, path: String?) {
-                    Log.d(TAG, "FileObserver event: $event, path: $path")
-                    if (path == file.name) {
-                        stopWatching()
-                        cont.resume(Unit)
+            ) { loggedIn, _ -> loggedIn }
+                .collectLatest { loggedIn ->
+                    if (loggedIn) {
+                        AvatarReuploadWorker.schedule(application, prefs)
+                    } else {
+                        AvatarReuploadWorker.cancel(application)
                     }
                 }
-            }
-
-            fileObserver.startWatching()
         }
     }
 
 
+    /**
+     * Uploads the given avatar image data to the file server, updates the user profile to point to
+     * the new avatar, and deletes any old avatar from local storage.
+     *
+     * @param pictureData The raw image data of the avatar to upload. Should be unencrypted real image data.
+     * @param isReupload Whether this is a re-upload of an existing avatar.
+     */
     suspend fun uploadAvatar(
         pictureData: ByteArray,
         isReupload: Boolean, // Whether this is a re-upload of an existing avatar
@@ -167,7 +106,7 @@ class AvatarUploadManager @Inject constructor(
             file = result.ciphertext,
             usedDeterministicEncryption = usesDeterministicEncryption,
             customExpiresDuration = DEBUG_AVATAR_TTL.takeIf { prefs.forcedShortTTL() }
-        ).await()
+        )
 
         Log.d(TAG, "Avatar upload finished with $uploadResult")
 
