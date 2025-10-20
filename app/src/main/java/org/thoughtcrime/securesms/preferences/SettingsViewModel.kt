@@ -216,7 +216,7 @@ class SettingsViewModel @Inject constructor(
                     it.copy(
                         avatarDialogState = AvatarDialogState.TempAvatar(
                             data = bytes,
-                            isAnimated = isAnimated(uri),
+                            isAnimated = isAnimated(bytes),
                             hasAvatar = hasAvatar()
                         )
                     )
@@ -338,6 +338,9 @@ class SettingsViewModel @Inject constructor(
 
     fun isAnimated(uri: Uri) = proStatusManager.isPostPro() // block animated avatars prior to pro
             && AnimatedImageUtils.isAnimated(context, uri)
+
+    fun isAnimated(rawImageData: ByteArray) = proStatusManager.isPostPro() // block animated avatars prior to pro
+            && AnimatedImageUtils.isAnimated(rawImageData)
 
     private fun showAnimatedProCTA() {
         _uiState.update { it.copy(showAnimatedProCTA = true) }

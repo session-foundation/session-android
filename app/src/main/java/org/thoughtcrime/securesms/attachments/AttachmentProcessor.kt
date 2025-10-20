@@ -2,18 +2,15 @@ package org.thoughtcrime.securesms.attachments
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Movie
 import android.text.format.Formatter
 import androidx.compose.ui.unit.IntSize
 import coil3.BitmapImage
 import coil3.ImageLoader
 import coil3.decode.DataSource
-import coil3.decode.DecodeUtils
 import coil3.decode.ImageSource
 import coil3.fetch.FetchResult
 import coil3.fetch.Fetcher
 import coil3.fetch.SourceFetchResult
-import coil3.gif.isAnimatedWebP
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest.Builder
 import coil3.request.Options
@@ -34,9 +31,9 @@ import org.session.libsignal.streams.PaddingInputStream
 import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.ByteArraySlice.Companion.view
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.util.AnimatedImageUtils
 import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.ImageUtils
-import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.security.MessageDigest
 import javax.inject.Inject
@@ -73,15 +70,47 @@ class AttachmentProcessor @Inject constructor(
         maxImageResolution: IntSize?,
         compressImage: Boolean,
     ): ProcessResult? {
-        val mimeType = ImageUtils.getImageMimeType(data) ?: run {
-            Log.d(TAG, "No image detected based on magic bytes, skipping processing")
-            return null
-        }
-
-        Log.d(TAG, "Processing $mimeType with max resolution $maxImageResolution")
-
         when {
-            mimeType.startsWith("image/gif") -> {
+            ImageUtils.isJpeg(data) -> {
+                val (data, imageSize) = processStaticImage(
+                    data = data,
+                    maxImageResolution = maxImageResolution,
+                    format = Bitmap.CompressFormat.JPEG,
+                    quality = if (compressImage) 75 else 95,
+                )
+
+                return ProcessResult(
+                    data = data,
+                    imageSize = imageSize,
+                    mimeType = "image/jpeg",
+                )
+            }
+
+            AnimatedImageUtils.isAnimatedWebP(data) -> {
+                if (maxImageResolution == null) {
+                    Log.d(TAG, "Skipping processing of animated WebP with no size constraints")
+                    return null
+                }
+
+                return processAnimatedWebP(data = data, maxImageResolution)
+            }
+
+            ImageUtils.isWebP(data) -> {
+                val (data, imageSize) = processStaticImage(
+                    data = data,
+                    maxImageResolution = maxImageResolution,
+                    format = Bitmap.CompressFormat.WEBP,
+                    quality = if (compressImage) 75 else 95,
+                )
+
+                return ProcessResult(
+                    data = data,
+                    imageSize = imageSize,
+                    mimeType = "image/webp",
+                )
+            }
+
+            ImageUtils.isGif(data) -> {
                 if (maxImageResolution == null) {
                     Log.d(TAG, "Skipping processing of GIF with no size constraints")
                     return null
@@ -90,24 +119,8 @@ class AttachmentProcessor @Inject constructor(
                 return processGif(data, maxImageResolution)
             }
 
-            mimeType.startsWith("image/jpeg") -> {
+            ImageUtils.isPng(data) -> {
                 val (data, imageSize) = processStaticImage(
-                    mimeType = mimeType,
-                    data = data,
-                    maxImageResolution = maxImageResolution,
-                    format = Bitmap.CompressFormat.JPEG,
-                    quality = if (compressImage) 75 else 95,
-                )
-                return ProcessResult(
-                    data = data,
-                    imageSize = imageSize,
-                    mimeType = mimeType,
-                )
-            }
-
-            mimeType.startsWith("image/png") -> {
-                val (data, imageSize) = processStaticImage(
-                    mimeType = mimeType,
                     data = data,
                     maxImageResolution = maxImageResolution,
                     format = if (android.os.Build.VERSION.SDK_INT >= 30)
@@ -121,31 +134,6 @@ class AttachmentProcessor @Inject constructor(
                     data = data,
                     imageSize = imageSize,
                     mimeType = "image/webp",
-                )
-            }
-
-            mimeType.startsWith("image/webp") -> {
-                if (DecodeUtils.isAnimatedWebP(data)) {
-                    if (maxImageResolution == null) {
-                        Log.d(TAG, "Skipping processing of animated WebP with no size constraints")
-                        return null
-                    }
-
-                    return processAnimatedWebP(data = data.readByteArray(), maxImageResolution)
-                }
-
-                val (data, imageSize) = processStaticImage(
-                    mimeType = mimeType,
-                    data = data,
-                    maxImageResolution = maxImageResolution,
-                    format = Bitmap.CompressFormat.WEBP,
-                    quality = if (compressImage) 75 else 95,
-                )
-
-                return ProcessResult(
-                    data = data,
-                    imageSize = imageSize,
-                    mimeType = mimeType,
                 )
             }
 
@@ -261,10 +249,10 @@ class AttachmentProcessor @Inject constructor(
     }
 
     private fun processAnimatedWebP(
-        data: ByteArray,
+        data: BufferedSource,
         maxImageResolution: IntSize?,
     ): ProcessResult? {
-        val origSize = BitmapUtil.getDimensions(ByteArrayInputStream(data))
+        val origSize = data.peek().inputStream().use(BitmapUtil::getDimensions)
             .let { pair -> IntSize(pair.first, pair.second) }
 
         val targetSize: IntSize
@@ -273,8 +261,8 @@ class AttachmentProcessor @Inject constructor(
                     origSize.width <= maxImageResolution.width &&
                             origSize.height <= maxImageResolution.height)
         ) {
-            // No resizing needed
-            targetSize = origSize
+            // No resizing needed hence no processing
+            return null
         } else {
             targetSize = scaleToFit(
                 original = origSize,
@@ -285,7 +273,7 @@ class AttachmentProcessor @Inject constructor(
         val start = System.currentTimeMillis()
 
         val reencoded = WebPUtils.reencodeWebPAnimation(
-            input = data,
+            input = data.readByteArray(),
             targetWidth = targetSize.width,
             targetHeight = targetSize.height,
             timeoutMills = 10_000L,
@@ -294,12 +282,7 @@ class AttachmentProcessor @Inject constructor(
         Log.d(
             TAG,
             "Re-encoded animated WebP from ${origSize.width}x${origSize.height} to ${targetSize.width}x${targetSize.height} " +
-                    "in ${System.currentTimeMillis() - start}ms, original size=${
-                        Formatter.formatFileSize(
-                            context,
-                            data.size.toLong()
-                        )
-                    }, " +
+                    "in ${System.currentTimeMillis() - start}ms, " +
                     "new size=${Formatter.formatFileSize(context, reencoded.size.toLong())}"
         )
 
@@ -311,7 +294,6 @@ class AttachmentProcessor @Inject constructor(
     }
 
     private suspend fun processStaticImage(
-        mimeType: String,
         data: Any,
         maxImageResolution: IntSize?,
         format: Bitmap.CompressFormat,
@@ -323,7 +305,7 @@ class AttachmentProcessor @Inject constructor(
             .allowConversionToBitmap(true)
             .memoryCachePolicy(CachePolicy.DISABLED)
             .networkCachePolicy(CachePolicy.DISABLED)
-            .fetcherFactory(BufferedSourceFetcherFactory(mimeType))
+            .fetcherFactory(BufferedSourceFetcherFactory())
 
         if (maxImageResolution != null) {
             builder.size(maxImageResolution.width, maxImageResolution.height)
@@ -342,10 +324,10 @@ class AttachmentProcessor @Inject constructor(
 
     @Suppress("DEPRECATION")
     private fun processGif(
-        data: ByteArray,
+        data: BufferedSource,
         maxImageResolution: IntSize?
     ): ProcessResult? {
-        val origSize = BitmapUtil.getDimensions(ByteArrayInputStream(data))
+        val origSize = data.peek().inputStream().use(BitmapUtil::getDimensions)
             .let { pair -> IntSize(pair.first, pair.second) }
 
         val targetSize: IntSize
@@ -354,8 +336,8 @@ class AttachmentProcessor @Inject constructor(
                     origSize.width <= maxImageResolution.width &&
                             origSize.height <= maxImageResolution.height)
         ) {
-            // No resizing needed
-            targetSize = origSize
+            // No resizing needed hence no processing
+            return null
         } else {
             targetSize = scaleToFit(
                 original = origSize,
@@ -365,22 +347,18 @@ class AttachmentProcessor @Inject constructor(
 
         val start = System.currentTimeMillis()
 
-        val reencoded = GifUtils.reencodeGif(
-            input = data,
-            targetWidth = targetSize.width,
-            targetHeight = targetSize.height,
-            timeoutMills = 10_000L,
-        )
+        val reencoded = data.peek().inputStream().use { input ->
+            GifUtils.reencodeGif(
+                input = input,
+                targetWidth = targetSize.width,
+                targetHeight = targetSize.height,
+                timeoutMills = 10_000L,
+            )
+        }
 
         Log.d(
             TAG,
             "Re-encoded animated gif from ${origSize.width}x${origSize.height} to ${targetSize.width}x${targetSize.height} " +
-                    "in ${System.currentTimeMillis() - start}ms, original size=${
-                        Formatter.formatFileSize(
-                            context,
-                            data.size.toLong()
-                        )
-                    }, " +
                     "new size=${Formatter.formatFileSize(context, reencoded.size.toLong())}"
         )
 
@@ -394,9 +372,7 @@ class AttachmentProcessor @Inject constructor(
     /**
      * A locally scoped fetcher to allow us to use Coil's for decoding an inputStream.
      */
-    private class BufferedSourceFetcherFactory(
-        private val mimeType: String
-    ) : Fetcher.Factory<BufferedSource> {
+    private class BufferedSourceFetcherFactory : Fetcher.Factory<BufferedSource> {
         override fun create(
             data: BufferedSource,
             options: Options,
@@ -406,7 +382,7 @@ class AttachmentProcessor @Inject constructor(
                 override suspend fun fetch(): FetchResult? {
                     return SourceFetchResult(
                         source = ImageSource(data, FileSystem.SYSTEM),
-                        mimeType = mimeType,
+                        mimeType = null,
                         dataSource = DataSource.MEMORY
                     )
                 }

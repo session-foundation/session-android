@@ -287,7 +287,7 @@ class DatabaseAttachmentProvider @Inject constructor(
             )
         } catch (e: Exception) {
             Log.e(TAG, "Error processing attachment", e)
-            return null
+            throw e
         }
     }
 
