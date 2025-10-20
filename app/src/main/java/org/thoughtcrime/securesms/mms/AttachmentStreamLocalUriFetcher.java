@@ -22,11 +22,13 @@ class AttachmentStreamLocalUriFetcher implements DataFetcher<InputStream> {
   private final File             attachment;
   private final byte[]           key;
   private final Optional<byte[]> digest;
+  private final long             plaintextLength;
 
   private InputStream is;
 
-  AttachmentStreamLocalUriFetcher(File attachment, byte[] key, Optional<byte[]> digest) {
+  AttachmentStreamLocalUriFetcher(File attachment, long plaintextLength, byte[] key, Optional<byte[]> digest) {
     this.attachment      = attachment;
+    this.plaintextLength = plaintextLength;
     this.digest          = digest;
     this.key             = key;
   }
@@ -35,7 +37,7 @@ class AttachmentStreamLocalUriFetcher implements DataFetcher<InputStream> {
   public void loadData(@NonNull Priority priority, @NonNull DataCallback<? super InputStream> callback) {
     try {
       if (!digest.isPresent()) throw new InvalidMessageException("No attachment digest!");
-      is = AttachmentCipherInputStream.createForAttachment(attachment, key, digest.get());
+      is = AttachmentCipherInputStream.createForAttachment(attachment, plaintextLength, key, digest.get());
       callback.onDataReady(is);
     } catch (IOException | InvalidMessageException e) {
       callback.onLoadFailed(e);

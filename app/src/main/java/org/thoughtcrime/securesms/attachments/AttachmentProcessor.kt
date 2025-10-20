@@ -345,8 +345,6 @@ class AttachmentProcessor @Inject constructor(
             ).first
         }
 
-        val start = System.currentTimeMillis()
-
         val reencoded = data.peek().inputStream().use { input ->
             GifUtils.reencodeGif(
                 input = input,

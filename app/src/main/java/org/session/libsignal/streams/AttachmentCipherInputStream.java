@@ -51,7 +51,7 @@ public class AttachmentCipherInputStream extends FilterInputStream {
   private long    totalRead;
   private byte[]  overflowBuffer;
 
-  public static InputStream createForAttachment(File file, byte[] combinedKeyMaterial, byte[] digest)
+  public static InputStream createForAttachment(File file, long plaintextLength, byte[] combinedKeyMaterial, byte[] digest)
       throws InvalidMessageException, IOException
   {
     try {
@@ -71,7 +71,13 @@ public class AttachmentCipherInputStream extends FilterInputStream {
         verifyMac(fin, file.length(), mac, digest);
       }
 
-      return new AttachmentCipherInputStream(new FileInputStream(file), parts[0], file.length() - BLOCK_SIZE - mac.getMacLength());
+      InputStream inputStream = new AttachmentCipherInputStream(new FileInputStream(file), parts[0], file.length() - BLOCK_SIZE - mac.getMacLength());
+
+      if (plaintextLength != 0) {
+        inputStream = new ContentLengthInputStream(inputStream, plaintextLength);
+      }
+
+      return new AttachmentCipherInputStream(inputStream, parts[0], file.length() - BLOCK_SIZE - mac.getMacLength());
     } catch (NoSuchAlgorithmException e) {
       throw new AssertionError(e);
     } catch (InvalidKeyException e) {
