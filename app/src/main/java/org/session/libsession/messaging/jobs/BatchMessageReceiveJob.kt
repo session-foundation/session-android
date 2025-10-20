@@ -253,7 +253,7 @@ class BatchMessageReceiveJob @AssistedInject constructor(
                         }
 
                         is UnsendRequest -> {
-                            val deletedMessage = receivedMessageHandler.handleUnsendRequest(message)
+                            val deletedMessage = receivedMessageHandler.handleUnsendRequest(message, threadId)
 
                             // If we removed a message then ensure it isn't in the 'messageIds'
                             if (deletedMessage != null) {

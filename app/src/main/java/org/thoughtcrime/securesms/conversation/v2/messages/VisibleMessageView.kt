@@ -277,10 +277,10 @@ class VisibleMessageView : FrameLayout {
             if (capabilities.isNullOrEmpty() || capabilities.contains(OpenGroupApi.Capability.REACTIONS.name.lowercase())) {
                 emojiReactionsBinding.value.root.let { root ->
                     root.setReactions(message.messageId, message.reactions, message.isOutgoing, delegate)
-                    root.isVisible = true
-                    (root.layoutParams as ConstraintLayout.LayoutParams).apply {
+                    root.layoutParams = (root.layoutParams as ConstraintLayout.LayoutParams).apply {
                         horizontalBias = if (message.isOutgoing) 1f else 0f
                     }
+                    root.isVisible = true
                 }
             } else if (emojiReactionsBinding.isInitialized()) {
                 emojiReactionsBinding.value.root.isVisible = false

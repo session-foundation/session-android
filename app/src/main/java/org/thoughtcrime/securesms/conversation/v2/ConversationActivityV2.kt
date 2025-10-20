@@ -62,6 +62,7 @@ import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
@@ -169,6 +170,7 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.giph.ui.GiphyActivity
 import org.thoughtcrime.securesms.groups.GroupMembersActivity
 import org.thoughtcrime.securesms.groups.OpenGroupManager
@@ -261,6 +263,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var openGroupManager: OpenGroupManager
     @Inject lateinit var attachmentDatabase: AttachmentDatabase
     @Inject lateinit var clock: SnodeClock
+    @Inject @ManagerScope
+    lateinit var scope: CoroutineScope
 
     override val applyDefaultWindowInsets: Boolean
         get() = false
@@ -1377,10 +1381,18 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val maybeTargetVisiblePosition = layoutManager?.findLastVisibleItemPosition()
         val targetVisiblePosition = maybeTargetVisiblePosition ?: RecyclerView.NO_POSITION
         if (!firstLoad.get() && targetVisiblePosition != RecyclerView.NO_POSITION) {
-            adapter.getTimestampForItemAt(targetVisiblePosition)?.let { visibleItemTimestamp ->
-                    bufferedLastSeenChannel.trySend(visibleItemTimestamp).apply {
-                        if (isFailure) Log.e(TAG, "trySend failed", exceptionOrNull())
-                    }
+            val timestampToSend: Long? = if (binding.conversationRecyclerView.isFullyScrolled) {
+                // We are at the bottom, so mark "now" as the last seen time
+                clock.currentTimeMills()
+            } else {
+                // We are not at the bottom, so just mark the timestamp of the last visible message
+                adapter.getTimestampForItemAt(targetVisiblePosition)
+            }
+
+            timestampToSend?.let {
+                bufferedLastSeenChannel.trySend(it).apply {
+                    if (isFailure) Log.e(TAG, "trySend failed", exceptionOrNull())
+                }
             }
         }
 
@@ -1752,11 +1764,16 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 val messageServerId = lokiMessageDb.getServerID(originalMessage.messageId) ?:
                     return Log.w(TAG, "Failed to find message server ID when adding emoji reaction")
 
-                OpenGroupApi.addReaction(
-                    room = recipient.address.room,
-                    server = recipient.address.serverUrl,
-                    messageId = messageServerId,
-                    emoji = emoji)
+                scope.launch {
+                    runCatching {
+                        OpenGroupApi.addReaction(
+                            room = recipient.address.room,
+                            server = recipient.address.serverUrl,
+                            messageId = messageServerId,
+                            emoji = emoji
+                        )
+                    }
+                }
             } else {
                 MessageSender.send(reactionMessage, recipient.address)
             }
@@ -1785,16 +1802,31 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             )
 
             val originalAuthor = if (originalMessage.isOutgoing) {
-                fromSerialized(viewModel.blindedPublicKey ?: textSecurePreferences.getLocalNumber()!!)
+                fromSerialized(viewModel.blindedPublicKey ?: author)
             } else originalMessage.individualRecipient.address
 
-            message.reaction = Reaction.from(originalMessage.timestamp, originalAuthor.toString(), emoji, false)
+            message.reaction = Reaction.from(
+                timestamp = originalMessage.timestamp,
+                author = originalAuthor.address, 
+                emoji = emoji,
+                react = false
+            )
+
             if (recipient.address is Address.Community) {
 
                 val messageServerId = lokiMessageDb.getServerID(originalMessage.messageId) ?:
                     return Log.w(TAG, "Failed to find message server ID when removing emoji reaction")
 
-                OpenGroupApi.deleteReaction(recipient.address.room, recipient.address.serverUrl, messageServerId, emoji)
+                scope.launch {
+                    runCatching {
+                        OpenGroupApi.deleteReaction(
+                            recipient.address.room,
+                            recipient.address.serverUrl,
+                            messageServerId,
+                            emoji
+                        )
+                    }
+                }
             } else {
                 MessageSender.send(message, recipient.address)
             }
@@ -2507,15 +2539,35 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun resyncMessage(messages: Set<MessageRecord>) {
-        messages.iterator().forEach { messageRecord ->
-            ResendMessageUtilities.resend(this, messageRecord, viewModel.blindedPublicKey, isResync = true)
+        val accountId = textSecurePreferences.getLocalNumber()
+        scope.launch {
+            messages.iterator().forEach { messageRecord ->
+                runCatching {
+                    ResendMessageUtilities.resend(
+                        accountId,
+                        messageRecord,
+                        viewModel.blindedPublicKey,
+                        isResync = true
+                    )
+                }
+            }
         }
+
         endActionMode()
     }
 
     override fun resendMessage(messages: Set<MessageRecord>) {
-        messages.iterator().forEach { messageRecord ->
-            ResendMessageUtilities.resend(this, messageRecord, viewModel.blindedPublicKey)
+        val accountId = textSecurePreferences.getLocalNumber()
+        scope.launch {
+            messages.iterator().forEach { messageRecord ->
+                runCatching {
+                    ResendMessageUtilities.resend(
+                        accountId,
+                        messageRecord,
+                        viewModel.blindedPublicKey
+                    )
+                }
+            }
         }
         endActionMode()
     }
