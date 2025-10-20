@@ -36,6 +36,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -125,8 +126,10 @@ fun ChoosePlan(
                 .put(DATE_KEY, planData.subscriptionType.duration.expiryFromNow())
                 .format()
 
-            //todo PRO cater for brand new subscription in here
-            else -> ""
+            is SubscriptionType.NeverSubscribed ->
+                Phrase.from(context.getText(R.string.proChooseAccess))
+                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                    .format()
         }
 
         Text(
@@ -171,6 +174,7 @@ fun ChoosePlan(
             is SubscriptionType.Active.Expiring -> Phrase.from(LocalContext.current, R.string.updateAccess)
                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                 .format().toString()
+            is SubscriptionType.NeverSubscribed -> stringResource(R.string.upgrade)
             else -> Phrase.from(LocalContext.current, R.string.updateAccess)
                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                 .format().toString()
@@ -188,6 +192,25 @@ fun ChoosePlan(
 
         Spacer(Modifier.height(LocalDimensions.current.xxsSpacing))
 
+        val footer = when (planData.subscriptionType) {
+            is SubscriptionType.Expired ->
+                Phrase.from(LocalContext.current.getText(R.string.proRenewTosPrivacy))
+                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                    .put(ICON_KEY, iconExternalLink)
+                    .format()
+
+            is SubscriptionType.Active -> Phrase.from(LocalContext.current.getText(R.string.proTosPrivacy))
+                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                .put(ICON_KEY, iconExternalLink)
+                .format()
+
+            is SubscriptionType.NeverSubscribed ->
+                Phrase.from(LocalContext.current.getText(R.string.proUpgradingTosPrivacy))
+                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                    .put(ICON_KEY, iconExternalLink)
+                    .format()
+        }
+
         Text(
             modifier = Modifier.fillMaxWidth()
                 .clickable(
@@ -200,13 +223,7 @@ fun ChoosePlan(
                     vertical = LocalDimensions.current.xxsSpacing
                 )
                 .clip(MaterialTheme.shapes.extraSmall),
-            text = annotatedStringResource(
-                Phrase.from(LocalContext.current.getText(R.string.proTosPrivacy))
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .put(ICON_KEY, iconExternalLink)
-                    .put(ICON_KEY, iconExternalLink)
-                    .format()
-            ),
+            text = annotatedStringResource(footer),
             textAlign = TextAlign.Center,
             style = LocalType.current.small,
             color = LocalColors.current.text,

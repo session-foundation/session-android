@@ -218,6 +218,8 @@ interface TextSecurePreferences {
     fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?)
     fun getDebugProPlanStatus(): DebugMenuViewModel.DebugProPlanStatus?
     fun setDebugProPlanStatus(status: DebugMenuViewModel.DebugProPlanStatus?)
+    fun getDebugForceNoBilling(): Boolean
+    fun setDebugForceNoBilling(hasBilling: Boolean)
 
     fun setSubscriptionProvider(provider: String)
     fun getSubscriptionProvider(): String?
@@ -380,6 +382,7 @@ interface TextSecurePreferences {
         const val DEBUG_MESSAGE_FEATURES = "debug_message_features"
         const val DEBUG_SUBSCRIPTION_STATUS = "debug_subscription_status"
         const val DEBUG_PRO_PLAN_STATUS = "debug_pro_plan_status"
+        const val DEBUG_FORCE_NO_BILLING = "debug_pro_has_billing"
 
         const val SUBSCRIPTION_PROVIDER = "session_subscription_provider"
 
@@ -1778,6 +1781,14 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setDebugProPlanStatus(status: DebugMenuViewModel.DebugProPlanStatus?) {
         setStringPreference(TextSecurePreferences.DEBUG_PRO_PLAN_STATUS, status?.name)
         _events.tryEmit(TextSecurePreferences.DEBUG_PRO_PLAN_STATUS)
+    }
+
+    override fun getDebugForceNoBilling(): Boolean {
+        return getBooleanPreference(TextSecurePreferences.DEBUG_FORCE_NO_BILLING, false)
+    }
+
+    override fun setDebugForceNoBilling(hasBilling: Boolean) {
+        setBooleanPreference(TextSecurePreferences.DEBUG_FORCE_NO_BILLING, hasBilling)
     }
 
     override fun getSubscriptionProvider(): String? {

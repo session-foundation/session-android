@@ -50,13 +50,19 @@ class ProStatusManager @Inject constructor(
         //todo PRO implement properly
 
         val subscriptionState = debugSubscription ?: DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE
-        val proStatus = when(debugProPlanStatus){
+        val proDataStatus = when(debugProPlanStatus){
             DebugMenuViewModel.DebugProPlanStatus.LOADING -> State.Loading
             DebugMenuViewModel.DebugProPlanStatus.ERROR -> State.Error(Exception())
             else -> State.Success(Unit)
         }
 
-        SubscriptionState(
+        if(selfRecipient.proStatus is ProStatus.None){
+            SubscriptionState(
+                type = SubscriptionType.NeverSubscribed,
+                refreshState = proDataStatus
+            )
+        }
+        else SubscriptionState(
             type = when(subscriptionState){
                 DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> SubscriptionType.Active.AutoRenewing(
                     proStatus = ProStatus.Pro(
@@ -146,7 +152,7 @@ class ProStatusManager @Inject constructor(
                 )
             },
 
-            refreshState = proStatus,
+            refreshState = proDataStatus,
         )
 
     }.stateIn(GlobalScope, SharingStarted.Eagerly,
