@@ -14,7 +14,6 @@ import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.DecodedAudio
 import org.session.libsession.utilities.DownloadUtilities
@@ -167,7 +166,7 @@ class AttachmentDownloadJob @AssistedInject constructor(
                 Log.d("AttachmentDownloadJob", "downloading open group attachment")
                 val url = attachment.url.toHttpUrlOrNull()!!
                 val fileID = url.pathSegments.last()
-                OpenGroupApi.download(fileID, room = threadRecipient.address.room, server = threadRecipient.address.serverUrl).await()
+                OpenGroupApi.download(fileID, room = threadRecipient.address.room, server = threadRecipient.address.serverUrl)
             }
 
             tempFile = createTempFile().also { file ->

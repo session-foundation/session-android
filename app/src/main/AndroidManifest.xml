@@ -402,10 +402,7 @@
             </intent-filter>
         </receiver>
         <receiver android:name="org.thoughtcrime.securesms.notifications.DeleteNotificationReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="network.loki.securesms.DELETE_NOTIFICATION" />
-            </intent-filter>
+            android:exported="false">
         </receiver>
         <receiver
             android:name="org.thoughtcrime.securesms.service.PanicResponderListener"

@@ -39,9 +39,8 @@ interface MessageDataProvider {
     fun isDeletedMessage(id: MessageId): Boolean
     fun handleSuccessfulAttachmentUpload(attachmentId: Long, attachmentStream: SignalServiceAttachmentStream, attachmentKey: ByteArray, uploadResult: UploadResult)
     fun handleFailedAttachmentUpload(attachmentId: Long)
-    fun getMessageForQuote(timestamp: Long, author: Address): Triple<Long, Boolean, String>?
+    fun getMessageForQuote(threadId: Long, timestamp: Long, author: Address): Triple<Long, Boolean, String>?
     fun getAttachmentsAndLinkPreviewFor(mmsId: Long): List<Attachment>
-    fun getMessageBodyFor(timestamp: Long, author: String): String
     fun getAttachmentIDsFor(mmsMessageId: Long): List<Long>
     fun getLinkPreviewAttachmentIDFor(mmsMessageId: Long): Long?
 }

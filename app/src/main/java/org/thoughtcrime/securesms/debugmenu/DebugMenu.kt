@@ -277,6 +277,26 @@ fun DebugMenu(
                                 )
                             }
                         )
+
+                        Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+                        Text(
+                            modifier = Modifier.padding(top = LocalDimensions.current.xxsSpacing),
+                            text = "Pro Data Status",
+                            style = LocalType.current.base
+                        )
+                        DropDown(
+                            modifier = Modifier.fillMaxWidth()
+                                .padding(top = LocalDimensions.current.xxsSpacing),
+                            selectedText = uiState.selectedDebugProPlanStatus.label,
+                            values = uiState.debugProPlanStatus.map { it.label },
+                            onValueSelected = { selection ->
+                                sendCommand(
+                                    DebugMenuViewModel.Commands.SetDebugProPlanStatus(
+                                        uiState.debugProPlanStatus.first { it.label == selection }
+                                    )
+                                )
+                            }
+                        )
                     }
                 }
 
@@ -750,6 +770,8 @@ fun PreviewDebugMenu() {
                 dbInspectorState = DebugMenuViewModel.DatabaseInspectorState.STARTED,
                 debugSubscriptionStatuses = setOf(DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE),
                 selectedDebugSubscriptionStatus = DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE,
+                debugProPlanStatus = setOf(DebugMenuViewModel.DebugProPlanStatus.NORMAL),
+                selectedDebugProPlanStatus = DebugMenuViewModel.DebugProPlanStatus.NORMAL,
                 debugProPlans = emptyList(),
             ),
             sendCommand = {},

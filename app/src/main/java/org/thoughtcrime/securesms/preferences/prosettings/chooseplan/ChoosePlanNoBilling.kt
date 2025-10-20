@@ -49,7 +49,8 @@ fun ChoosePlanNoBilling(
     val defaultAppleStore = ProStatusManager.DEFAULT_APPLE_STORE
 
     val headerTitle = when(subscription) {
-        is SubscriptionType.Expired -> Phrase.from(context.getText(R.string.proPlanRenewStart))
+        is SubscriptionType.Expired -> Phrase.from(context.getText(R.string.proAccessRenewStart))
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format()
 
@@ -74,7 +75,6 @@ fun ChoosePlanNoBilling(
                 "huawei" -> "Huawei App Gallery"
                 else -> "APK"
             })
-            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(PLATFORM_STORE_KEY, defaultGoogleStore)
             .put(PLATFORM_STORE2_KEY, defaultAppleStore)
@@ -95,7 +95,8 @@ fun ChoosePlanNoBilling(
         add(
             NonOriginatingLinkCellData(
                 title = stringResource(R.string.onLinkedDevice),
-                info = Phrase.from(context.getText(R.string.proPlanRenewDesktopLinked))
+                info = Phrase.from(context.getText(R.string.proRenewDesktopLinked))
+                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
                     .put(PLATFORM_STORE_KEY, defaultGoogleStore)
                     .put(PLATFORM_STORE2_KEY, defaultAppleStore)
@@ -113,6 +114,7 @@ fun ChoosePlanNoBilling(
                     .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
                     .put(PLATFORM_STORE_KEY, defaultGoogleStore)
                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .format(),
                 iconRes = R.drawable.ic_smartphone
             )
@@ -125,7 +127,7 @@ fun ChoosePlanNoBilling(
                     title = Phrase.from(context.getText(R.string.onPlatformStoreWebsite))
                         .put(PLATFORM_STORE_KEY, subscription.subscriptionDetails.getPlatformDisplayName())
                         .format(),
-                    info = Phrase.from(context.getText(R.string.proPlanRenewPlatformStoreWebsite))
+                    info = Phrase.from(context.getText(R.string.proAccessRenewPlatformStoreWebsite))
                         .put(PLATFORM_STORE_KEY, subscription.subscriptionDetails.getPlatformDisplayName())
                         .put(PLATFORM_ACCOUNT_KEY, subscription.subscriptionDetails.platformAccount)
                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)

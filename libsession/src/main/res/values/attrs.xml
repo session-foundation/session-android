@@ -62,11 +62,6 @@
         <attr name="camera" format="integer"/>
     </declare-styleable>
 
-
-    <declare-styleable name="SquareFrameLayout">
-        <attr name="square_height" format="boolean"/>
-    </declare-styleable>
-
     <declare-styleable name="VerticalSlideColorPicker">
         <attr name="pickerBorderColor" format="color" />
         <attr name="pickerBorderWidth" format="dimension" />

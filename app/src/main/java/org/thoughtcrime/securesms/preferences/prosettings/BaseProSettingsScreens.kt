@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -95,6 +96,9 @@ fun BaseProSettingsScreen(
             )
 
             content()
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+            Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
         }
     }
 }

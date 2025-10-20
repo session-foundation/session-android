@@ -30,17 +30,26 @@ import org.session.libsession.utilities.NotificationPrivacyPreference;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsession.utilities.recipients.RecipientNamesKt;
+import org.session.libsession.utilities.recipients.RemoteFile;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.util.AvatarUtils;
-import org.thoughtcrime.securesms.util.BitmapUtil;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import javax.inject.Provider;
+
+import coil3.BitmapImage;
+import coil3.Image;
+import coil3.ImageLoader;
+import coil3.ImageLoaders;
+import coil3.request.CachePolicy;
+import coil3.request.ImageRequest;
+import coil3.request.ImageResult;
 import network.loki.messenger.R;
 
 public class SingleRecipientNotificationBuilder extends AbstractNotificationBuilder {
@@ -53,17 +62,20 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
   private CharSequence contentTitle;
   private CharSequence contentText;
   private AvatarUtils avatarUtils;
+  private final Provider<ImageLoader> imageLoaderProvider;
 
   private static final Integer ICON_SIZE = 128;
 
   public SingleRecipientNotificationBuilder(
           @NonNull Context context,
           @NonNull NotificationPrivacyPreference privacy,
-          @NonNull AvatarUtils avatarUtils
+          @NonNull AvatarUtils avatarUtils,
+          Provider<ImageLoader> imageLoaderProvider
   ) {
     super(context, privacy);
 
     this.avatarUtils = avatarUtils;
+    this.imageLoaderProvider = imageLoaderProvider;
     setSmallIcon(R.drawable.ic_notification);
     setColor(ContextCompat.getColor(context, R.color.accent_green));
     setCategory(NotificationCompat.CATEGORY_MESSAGE);
@@ -72,34 +84,73 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
   public void setThread(@NonNull Recipient recipient) {
     setChannelId(NotificationChannels.getMessagesChannel(context));
 
+    Bitmap largeIconBitmap;
+    boolean recycleBitmap;
+
     if (privacy.isDisplayContact()) {
       setContentTitle(RecipientNamesKt.displayName(recipient));
 
-      Object avatar = recipient.getAvatar();
+      RemoteFile avatar = recipient.getAvatar();
       if (avatar != null) {
         try {
-          // AC: For some reason, if not use ".asBitmap()" method, the returned BitmapDrawable
-          // wraps a recycled bitmap and leads to a crash.
-          Bitmap iconBitmap = Glide.with(context.getApplicationContext())
-                  .asBitmap()
-                  .load(avatar)
-                  .diskCacheStrategy(DiskCacheStrategy.NONE)
-                  .circleCrop()
-                  .submit(context.getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_width),
-                          context.getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_height))
-                  .get();
-          setLargeIcon(iconBitmap);
-        } catch (InterruptedException | ExecutionException e) {
+          int iconWidth = context.getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_width);
+          int iconHeight = context.getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_height);
+
+          final ImageResult result = ImageLoaders.executeBlocking(
+                  imageLoaderProvider.get(),
+                  new ImageRequest.Builder(context)
+                          .data(avatar)
+                          .size(iconWidth, iconHeight)
+                          .networkCachePolicy(CachePolicy.DISABLED)
+                          .fallback(new BitmapImage(getPlaceholderDrawable(avatarUtils, recipient), true))
+                          .build()
+          );
+
+          Image image = result.getImage();
+
+          if (image instanceof BitmapImage) {
+            largeIconBitmap = ((BitmapImage) image).getBitmap();
+            recycleBitmap = false;
+          } else if (image != null) {
+            // Generate a bitmap from this generic image by drawing on the bitmap
+            largeIconBitmap = Bitmap.createBitmap(iconWidth, iconHeight, Bitmap.Config.RGB_565);
+            image.draw(new Canvas(largeIconBitmap));
+            recycleBitmap = true;
+          } else {
+            throw new IllegalStateException("No image returned from Coil");
+          }
+
+        } catch (Exception e) {
           Log.w(TAG, "get iconBitmap in getThread failed", e);
-          setLargeIcon(getPlaceholderDrawable(avatarUtils, recipient));
+          largeIconBitmap = getPlaceholderDrawable(avatarUtils, recipient);
+          recycleBitmap = true;
         }
       } else {
-        setLargeIcon(getPlaceholderDrawable(avatarUtils, recipient));
+        largeIconBitmap = getPlaceholderDrawable(avatarUtils, recipient);
+        recycleBitmap = true;
       }
+
+      setLargeIcon(getCircularBitmap(largeIconBitmap));
+      if(recycleBitmap) largeIconBitmap.recycle();
 
     } else {
       setContentTitle(context.getString(R.string.app_name));
-      setLargeIcon(avatarUtils.generateTextBitmap(ICON_SIZE, "", "Unknown"));
+
+      Drawable drawable = ContextCompat.getDrawable(context, R.drawable.ic_user_filled_custom_padded);
+      int iconWidth  = context.getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_width);
+      int iconHeight = context.getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_height);
+
+      Bitmap src = Bitmap.createBitmap(iconWidth, iconHeight, Bitmap.Config.ARGB_8888);
+      Canvas canvas = new Canvas(src);
+      canvas.drawColor(context.getColor(R.color.classic_dark_3));
+
+      int padding = (int) (iconWidth * 0.08); //add some padding to the icon
+      drawable.setBounds(padding, padding, iconWidth - padding, iconHeight - padding);
+      drawable.draw(canvas);
+
+      setLargeIcon(getCircularBitmap(src));
+      setColor(context.getColor(R.color.classic_dark_3));
+      src.recycle();
     }
   }
 
@@ -228,18 +279,14 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
     return super.build();
   }
 
-  private void setLargeIcon(@Nullable Drawable drawable) {
-    if (drawable != null) {
-      int    largeIconTargetSize  = context.getResources().getDimensionPixelSize(R.dimen.contact_photo_target_size);
-      Bitmap recipientPhotoBitmap = BitmapUtil.createFromDrawable(drawable, largeIconTargetSize, largeIconTargetSize);
-
-      if (recipientPhotoBitmap != null) {
-        setLargeIcon(getCircularBitmap(recipientPhotoBitmap));
-      }
-    }
-  }
-
   private Bitmap getCircularBitmap(Bitmap bitmap) {
+    boolean recycleInputBitmap = false;
+
+    if (bitmap.getConfig() == Bitmap.Config.HARDWARE) {
+      bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+      recycleInputBitmap = true;
+    }
+
     final Bitmap output = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), Bitmap.Config.ARGB_8888);
     final Canvas canvas = new Canvas(output);
     final int color = Color.RED;
@@ -254,7 +301,9 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
     paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
     canvas.drawBitmap(bitmap, rect, rect, paint);
 
-    bitmap.recycle();
+    if (recycleInputBitmap) {
+      bitmap.recycle();
+    }
 
     return output;
   }
@@ -314,7 +363,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
     return content;
   }
 
-  private static Drawable getPlaceholderDrawable(AvatarUtils avatarUtils, Recipient recipient) {
+  private static Bitmap getPlaceholderDrawable(AvatarUtils avatarUtils, Recipient recipient) {
     String publicKey = recipient.getAddress().toString();
     String displayName = RecipientNamesKt.displayName(recipient);
     return avatarUtils.generateTextBitmap(ICON_SIZE, publicKey, displayName);

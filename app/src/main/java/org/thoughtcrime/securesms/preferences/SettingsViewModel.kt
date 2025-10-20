@@ -46,7 +46,6 @@ import org.thoughtcrime.securesms.attachments.AvatarUploadManager
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
@@ -440,7 +439,7 @@ class SettingsViewModel @Inject constructor(
             coroutineScope {
                 allCommunityServers.map { server ->
                     launch {
-                        runCatching { OpenGroupApi.deleteAllInboxMessages(server).await() }
+                        runCatching { OpenGroupApi.deleteAllInboxMessages(server) }
                             .onFailure { Log.e(TAG, "Error deleting messages for $server", it) }
                     }
                 }.joinAll()
