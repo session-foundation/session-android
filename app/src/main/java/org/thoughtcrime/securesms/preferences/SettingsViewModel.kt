@@ -430,7 +430,7 @@ class SettingsViewModel @Inject constructor(
             coroutineScope {
                 allCommunityServers.map { server ->
                     launch {
-                        runCatching { OpenGroupApi.deleteAllInboxMessages(server).await() }
+                        runCatching { OpenGroupApi.deleteAllInboxMessages(server) }
                             .onFailure { Log.e(TAG, "Error deleting messages for $server", it) }
                     }
                 }.joinAll()

@@ -181,7 +181,7 @@ interface StorageProtocol {
         attachments: List<Attachment>,
         runThreadUpdate: Boolean
     ): MessageId?
-    fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean = false)
+    fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean = false, updateNotification: Boolean = true)
     fun markConversationAsUnread(threadId: Long)
     fun getLastSeen(threadId: Long): Long
     fun ensureMessageHashesAreSender(hashes: Set<String>, sender: String, closedGroupId: String): Boolean

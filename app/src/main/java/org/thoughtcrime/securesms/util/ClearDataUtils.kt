@@ -49,7 +49,9 @@ class ClearDataUtils @Inject constructor(
             application.deleteDatabase(DatabaseMigrationManager.CIPHER4_DB_NAME)
             application.deleteDatabase(DatabaseMigrationManager.CIPHER3_DB_NAME)
 
-            TextSecurePreferences.clearAll(application)
+            // clear all prefs
+            prefs.clearAll()
+
             application.getSharedPreferences(ApplicationContext.PREFERENCES_NAME, 0).edit(commit = true) { clear() }
             application.cacheDir.deleteRecursively()
             application.filesDir.deleteRecursively()

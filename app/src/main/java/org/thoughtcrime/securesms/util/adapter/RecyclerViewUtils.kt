@@ -1,24 +1,9 @@
 package org.thoughtcrime.securesms.util.adapter
 
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnPreDraw
-import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
-import kotlin.math.max
-
-// Makes sure that the recyclerView is scrolled to the bottom
-fun RecyclerView.applyImeBottomPadding() {
-    clipToPadding = false
-    ViewCompat.setOnApplyWindowInsetsListener(this) { v, insets ->
-        val system = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom
-        val ime = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
-        v.updatePadding(bottom = max(system, ime))
-        insets
-    }
-}
 
 // Handle scroll logic
 fun RecyclerView.handleScrollToBottom(fastScroll: Boolean = false) {

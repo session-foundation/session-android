@@ -263,7 +263,7 @@ class AvatarDownloadWorker @AssistedInject constructor(
                     fileId = file.fileId,
                     room = file.roomId,
                     server = file.communityServerBaseUrl
-                ).await()
+                )
 
                 data to FileMetadata()
             }
