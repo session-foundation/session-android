@@ -992,7 +992,6 @@
         <item quantity="other">%1$s delších zpráv odesláno</item>
     </plurals>
     <string name="proMessageInfoFeatures">V této zprávě byly použity následující funkce {app_pro}:</string>
-    <string name="proOptionsRenewalSubtitle">Nyní jsou k dispozici tři způsoby obnovy:</string>
     <string name="proPercentOff">Sleva {percent} %</string>
     <plurals name="proPinnedConversations">
         <item quantity="one">%1$s připnutá konverzace</item>
