@@ -75,7 +75,7 @@ class AttachmentUploadJob @AssistedInject constructor(
                     attachment = attachment,
                     encrypt = false
                 ) { data, _ ->
-                    val id = OpenGroupApi.upload(data, threadAddress.room, threadAddress.serverUrl).await()
+                    val id = OpenGroupApi.upload(data, threadAddress.room, threadAddress.serverUrl)
                     id to "${threadAddress.serverUrl}/file/$id"
                 }
                 handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second)
