@@ -4,8 +4,11 @@ import android.app.Application
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.encrypt.Attachments
@@ -21,6 +24,7 @@ import org.session.libsignal.streams.ProfileCipherOutputStream
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
+import org.thoughtcrime.securesms.util.castAwayType
 import java.io.ByteArrayOutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -45,12 +49,17 @@ class AvatarUploadManager @Inject constructor(
     init {
         // Manage scheduling/cancellation of the AvatarReuploadWorker based on login state
         scope.launch {
-            prefs.watchLocalNumber()
-                .map { it != null }
-                .distinctUntilChanged()
+            combine(
+                prefs.watchLocalNumber()
+                    .map { it != null }
+                    .distinctUntilChanged(),
+                TextSecurePreferences._events.filter { it == TextSecurePreferences.DEBUG_AVATAR_REUPLOAD }
+                    .castAwayType()
+                    .onStart { emit(Unit) }
+            ) { loggedIn, _ -> loggedIn }
                 .collectLatest { loggedIn ->
                     if (loggedIn) {
-                        AvatarReuploadWorker.schedule(application)
+                        AvatarReuploadWorker.schedule(application, prefs)
                     } else {
                         AvatarReuploadWorker.cancel(application)
                     }

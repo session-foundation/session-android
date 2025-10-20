@@ -83,6 +83,7 @@ class DebugMenuViewModel @Inject constructor(
             forceIncomingMessagesAsPro = textSecurePreferences.forceIncomingMessagesAsPro(),
             forcePostPro = textSecurePreferences.forcePostPro(),
             forceShortTTl = textSecurePreferences.forcedShortTTL(),
+            debugAvatarReupload = textSecurePreferences.debugAvatarReupload,
             messageProFeature = textSecurePreferences.getDebugMessageFeatures(),
             dbInspectorState = DatabaseInspectorState.NOT_AVAILABLE,
             debugSubscriptionStatuses = setOf(
@@ -312,6 +313,11 @@ class DebugMenuViewModel @Inject constructor(
                 textSecurePreferences.forcesDeterministicAttachmentEncryption = newValue
             }
 
+            is Commands.ToggleDebugAvatarReupload -> {
+                val newValue = !_uiState.value.debugAvatarReupload
+                _uiState.update { it.copy(debugAvatarReupload = newValue) }
+                textSecurePreferences.debugAvatarReupload = newValue
+            }
         }
     }
 
@@ -412,6 +418,7 @@ class DebugMenuViewModel @Inject constructor(
         val forcePostPro: Boolean,
         val forceShortTTl: Boolean,
         val forceDeprecationState: LegacyGroupDeprecationManager.DeprecationState?,
+        val debugAvatarReupload: Boolean,
         val availableDeprecationState: List<LegacyGroupDeprecationManager.DeprecationState?>,
         val deprecatedTime: ZonedDateTime,
         val deprecatingStartTime: ZonedDateTime,
@@ -461,5 +468,6 @@ class DebugMenuViewModel @Inject constructor(
         data class SetDebugSubscriptionStatus(val status: DebugSubscriptionStatus) : Commands()
         data class PurchaseDebugPlan(val plan: DebugProPlan) : Commands()
         data object ToggleDeterministicAttachmentUpload : Commands()
+        data object ToggleDebugAvatarReupload : Commands()
     }
 }

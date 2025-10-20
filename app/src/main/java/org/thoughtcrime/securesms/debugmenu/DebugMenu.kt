@@ -471,6 +471,14 @@ fun DebugMenu(
                     }
                 )
 
+                DebugSwitchRow(
+                    text = "Debug avatar reupload (shorten interval, and toast messages)",
+                    checked = uiState.debugAvatarReupload,
+                    onCheckedChange = {
+                        sendCommand(DebugMenuViewModel.Commands.ToggleDebugAvatarReupload)
+                    }
+                )
+
                 SlimOutlineButton(
                     modifier = Modifier.fillMaxWidth(),
                     text = "Clear All Trusted Downloads",
@@ -759,7 +767,8 @@ fun PreviewDebugMenu() {
                 debugSubscriptionStatuses = setOf(DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE),
                 selectedDebugSubscriptionStatus = DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE,
                 debugProPlans = emptyList(),
-                forceDeterministicAttachment = false
+                forceDeterministicAttachment = false,
+                debugAvatarReupload = true,
             ),
             sendCommand = {},
             onClose = {}

@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.attachments
 
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.ui.unit.IntSize
 import androidx.hilt.work.HiltWorker
 import androidx.work.BackoffPolicy
@@ -24,11 +25,12 @@ import okio.source
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
 import org.thoughtcrime.securesms.util.BitmapUtil
+import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
 import org.thoughtcrime.securesms.util.ImageUtils
 import java.time.Duration
@@ -51,8 +53,21 @@ class AvatarReuploadWorker @AssistedInject constructor(
     private val avatarUploadManager: Lazy<AvatarUploadManager>,
     private val localEncryptedFileInputStreamFactory: LocalEncryptedFileInputStream.Factory,
     private val fileServerApi: FileServerApi,
+    private val prefs: TextSecurePreferences,
+    private val currentActivityObserver: CurrentActivityObserver,
 ) : CoroutineWorker(context, params) {
-    private val profileConstraints = ProfileMediaConstraints()
+
+    /**
+     * Log the given message and show a toast if in debug mode
+     */
+    private fun logAndToast(message: String, e: Throwable? = null) {
+        Log.d(TAG, message, e)
+
+        val context = currentActivityObserver.currentActivity.value ?: return
+        if (prefs.debugAvatarReupload || BuildConfig.DEBUG) {
+            Toast.makeText(context, "AvatarReupload[debug only]: $message", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
 
     override suspend fun doWork(): Result {
         val (profile, lastUpdated) = configFactory.withUserConfigs { configs ->
@@ -60,33 +75,30 @@ class AvatarReuploadWorker @AssistedInject constructor(
         }
 
         if (profile == null) {
-            Log.d(TAG, "No profile picture set; nothing to do.")
+            logAndToast("No profile picture set; nothing to do.")
             return Result.success()
         }
 
-        val localFile = RemoteFileDownloadWorker.computeFileName(context, profile)
+        val localFile = AvatarDownloadWorker.computeFileName(context, profile)
         if (!localFile.exists()) {
-            Log.d(TAG, "No local file exists for re-upload; nothing to do.")
+            logAndToast("Avatar file is missing locally; nothing to do.")
             return Result.success()
         }
 
         // Check if the file exists and whether we need to do reprocessing, if we do, we reprocess and re-upload
         localEncryptedFileInputStreamFactory.create(localFile).use { stream ->
             if (stream.meta.hasPermanentDownloadError) {
-                Log.w(TAG, "Permanent download error for avatar; nothing to do.")
+                logAndToast("Permanent download error for current avatar; nothing to do.")
                 return Result.success()
             }
 
             val source = stream.source().buffer()
 
             if ((lastUpdated != null && needsReProcessing(source)) || lastUpdated == null) {
-                Log.d(TAG, "Reprocessing avatar for upload.")
+                logAndToast("About to start reuploading avatar.")
                 val attachment = attachmentProcessor.process(
                     data = source,
-                    maxImageResolution = IntSize(
-                        profileConstraints.getImageMaxSize(context),
-                        profileConstraints.getImageMaxHeight(context)
-                    ),
+                    maxImageResolution = AttachmentProcessor.MAX_AVATAR_SIZE_PX,
                     compressImage = true,
                 ) ?: return Result.failure()
 
@@ -98,14 +110,14 @@ class AvatarReuploadWorker @AssistedInject constructor(
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: NonRetryableException) {
-                    Log.e(TAG, "Non-retryable error while reuploading avatar.", e)
+                    logAndToast("Non-retryable error while reuploading avatar.", e)
                     return Result.failure()
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error while reuploading avatar.", e)
+                    logAndToast("Error while reuploading avatar.", e)
                     return Result.retry()
                 }
 
-                Log.d(TAG, "Successfully reuploaded avatar.")
+                logAndToast("Successfully reuploaded avatar.")
                 return Result.success()
             }
         }
@@ -113,7 +125,7 @@ class AvatarReuploadWorker @AssistedInject constructor(
         // Otherwise, we only need to renew the same avatar on the server
         val parsed = fileServerApi.parseAttachmentUrl(profile.url.toHttpUrl())
 
-        Log.d(TAG, "Renewing user avatar on ${parsed.fileServer}")
+        logAndToast("Renewing user avatar on ${parsed.fileServer}")
         try {
             fileServerApi.renew(
                 fileId = parsed.fileId,
@@ -122,7 +134,7 @@ class AvatarReuploadWorker @AssistedInject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Log.w(TAG, "FileServer renew failed", e)
+            logAndToast("FileServer renew failed", e)
 
             // If the server doesn't allow us to renew, and last updated is 12 days ago, then re-upload our avatar
             if ((e is NonRetryableException || e is OnionRequestAPI.HTTPRequestFailedAtDestinationException)) {
@@ -140,9 +152,9 @@ class AvatarReuploadWorker @AssistedInject constructor(
                         isReupload = true
                     )
 
-                    Log.d(TAG, "Successfully reuploaded avatar after renew failed.")
+                    logAndToast("Successfully reuploaded avatar after renew failed.")
                 } else {
-                    Log.d(TAG, "Not reuploading avatar after renew failed; last updated too recent.")
+                    logAndToast( "Not reuploading avatar after renew failed; last updated too recent.")
                 }
 
                 return Result.success()
@@ -155,18 +167,12 @@ class AvatarReuploadWorker @AssistedInject constructor(
     }
 
     private fun needsReProcessing(source: BufferedSource): Boolean {
-        val imageMimeType = requireNotNull(ImageUtils.getImageMimeType(source)) {
-            "Expecting the file to be an image file but could not find valid image magic bytes."
-        }
-
-        if (imageMimeType.startsWith("image/png")) {
+        if (ImageUtils.isPng(source)) {
             return true
         }
-
-
         val bounds = readImageBounds(source)
-        return bounds.width > profileConstraints.getImageMaxWidth(context)
-                || bounds.height > profileConstraints.getImageMaxHeight(context)
+        return bounds.width > AttachmentProcessor.MAX_AVATAR_SIZE_PX.width
+                || bounds.height > AttachmentProcessor.MAX_AVATAR_SIZE_PX.height
     }
 
 
@@ -176,14 +182,14 @@ class AvatarReuploadWorker @AssistedInject constructor(
         private const val UNIQUE_WORK_NAME = "avatar-reupload"
 
         private fun readImageBounds(source: BufferedSource): IntSize {
-            val r = BitmapUtil.getDimensions(source.peek().inputStream())
+            val r = source.peek().inputStream().use(BitmapUtil::getDimensions)
             return IntSize(r.first, r.second)
         }
 
-        suspend fun schedule(context: Context) {
+        suspend fun schedule(context: Context, prefs: TextSecurePreferences) {
             Log.d(TAG, "Scheduling avatar reupload worker.")
 
-            val request = if (BuildConfig.DEBUG) {
+            val request = if (BuildConfig.DEBUG || prefs.debugAvatarReupload) {
                 PeriodicWorkRequestBuilder<AvatarReuploadWorker>(
                     Duration.ofMinutes(15)
                 ).setInitialDelay(0L, TimeUnit.MILLISECONDS)
