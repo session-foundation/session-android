@@ -14,6 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
@@ -27,13 +28,15 @@ class PlayStoreSubscriptionManager @Inject constructor(
     private val application: Application,
     @param:ManagerScope private val scope: CoroutineScope,
     private val currentActivityObserver: CurrentActivityObserver,
+    private val prefs: TextSecurePreferences
 ) : SubscriptionManager {
     override val id = "google_play_store"
     override val name = "Google Play Store"
     override val description = ""
     override val iconRes = null
 
-    override val supportsBilling: Boolean = true
+    override val supportsBilling: Boolean
+        get() = !prefs.getDebugForceNoBilling()
 
     override val quickRefundExpiry: Instant = Instant.now() //todo PRO implement properly
     override val quickRefundUrl = "https://support.google.com/googleplay/workflow/9813244"

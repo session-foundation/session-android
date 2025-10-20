@@ -302,6 +302,15 @@ fun DebugMenu(
 
                 Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
                 DebugSwitchRow(
+                    text = "Force \"No Billing\" APIs",
+                    checked = uiState.forceNoBilling,
+                    onCheckedChange = {
+                        sendCommand(DebugMenuViewModel.Commands.ForceNoBilling(it))
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+                DebugSwitchRow(
                     text = "Set all incoming messages as Pro",
                     checked = uiState.forceIncomingMessagesAsPro,
                     onCheckedChange = {
@@ -773,6 +782,7 @@ fun PreviewDebugMenu() {
                 debugProPlanStatus = setOf(DebugMenuViewModel.DebugProPlanStatus.NORMAL),
                 selectedDebugProPlanStatus = DebugMenuViewModel.DebugProPlanStatus.NORMAL,
                 debugProPlans = emptyList(),
+                forceNoBilling = false
             ),
             sendCommand = {},
             onClose = {}
