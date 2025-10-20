@@ -128,7 +128,7 @@ class ReceivedMessageHandler @Inject constructor(
                 }
             }
             is DataExtractionNotification -> handleDataExtractionNotification(message)
-            is UnsendRequest -> handleUnsendRequest(message)
+            is UnsendRequest -> handleUnsendRequest(message, threadId)
             is MessageRequestResponse -> messageRequestResponseHandler.get().handleExplicitRequestResponseMessage(message)
             is VisibleMessage -> handleVisibleMessage(
                 message = message,
@@ -220,7 +220,7 @@ class ReceivedMessageHandler @Inject constructor(
     }
 
 
-    fun handleUnsendRequest(message: UnsendRequest): MessageId? {
+    fun handleUnsendRequest(message: UnsendRequest, threadId: Long): MessageId? {
         val userPublicKey = storage.getUserPublicKey()
         val userAuth = storage.userAuth ?: return null
         val isLegacyGroupAdmin: Boolean = message.groupPublicKey?.let { key ->
@@ -243,7 +243,6 @@ class ReceivedMessageHandler @Inject constructor(
 
         val timestamp = message.timestamp ?: return null
         val author = message.author ?: return null
-        val threadId = message.threadID ?: return null
         val messageToDelete = storage.getMessageBy(threadId, timestamp, author) ?: return null
         val messageIdToDelete = messageToDelete.messageId
         val messageType = messageToDelete.individualRecipient?.getType()
@@ -375,7 +374,7 @@ class ReceivedMessageHandler @Inject constructor(
                     emoji = reaction.emoji!!,
                     messageTimestamp = reaction.timestamp!!,
                     threadId = context.threadId,
-                    author = reaction.publicKey!!,
+                    author = senderAddress.address,
                     notifyUnread = threadIsGroup
                 )
             }
@@ -769,17 +768,13 @@ fun constructReactionRecords(
     out: MutableMap<MessageId, MutableList<ReactionRecord>>
 ) {
     if (reactions.isNullOrEmpty()) return
-    val communityAddress = context.threadAddress as? Address.Community ?: return
+    if (context.threadAddress !is Address.Community) return
     val messageId = context.messageDataProvider.getMessageID(openGroupMessageServerID, context.threadId) ?: return
 
     val outList = out.getOrPut(messageId) { arrayListOf() }
 
     for ((emoji, reaction) in reactions) {
-        val pendingUserReaction = OpenGroupApi.pendingReactions
-            .filter { it.server == communityAddress.serverUrl && it.room == communityAddress.room && it.messageId == openGroupMessageServerID && it.add }
-            .sortedByDescending { it.seqNo }
-            .any { it.emoji == emoji }
-        val shouldAddUserReaction = pendingUserReaction || reaction.you || reaction.reactors.contains(context.userPublicKey)
+        val shouldAddUserReaction = reaction.you || reaction.reactors.contains(context.userPublicKey)
         val reactorIds = reaction.reactors.filter { it != context.userBlindedKey && it != context.userPublicKey }
         val count = if (reaction.you) reaction.count - 1 else reaction.count
         // Add the first reaction (with the count)

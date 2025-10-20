@@ -6,7 +6,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
@@ -30,7 +29,7 @@ class OpenGroupManager @Inject constructor(
         // for the user to see if the server they are adding is reachable.
         // The addition of the community to the config later will always succeed and the poller
         // will be started regardless of the server's status.
-        val caps = OpenGroupApi.getCapabilities(server, serverPubKeyHex = publicKey).await()
+        val caps = OpenGroupApi.getCapabilities(server, serverPubKeyHex = publicKey)
         lokiAPIDatabase.setServerCapabilities(server, caps.capabilities)
 
         // We should be good, now go ahead and add the community to the config
