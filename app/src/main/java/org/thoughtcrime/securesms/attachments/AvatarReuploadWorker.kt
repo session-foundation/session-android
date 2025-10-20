@@ -147,10 +147,17 @@ class AvatarReuploadWorker @AssistedInject constructor(
                             stream.readBytes()
                         }
 
-                    avatarUploadManager.get().uploadAvatar(
-                        pictureData = pictureData,
-                        isReupload = true
-                    )
+                    try {
+                        avatarUploadManager.get().uploadAvatar(
+                            pictureData = pictureData,
+                            isReupload = true
+                        )
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        logAndToast("Error while reuploading avatar after renew failed.", e)
+                        return Result.failure()
+                    }
 
                     logAndToast("Successfully reuploaded avatar after renew failed.")
                 } else {
