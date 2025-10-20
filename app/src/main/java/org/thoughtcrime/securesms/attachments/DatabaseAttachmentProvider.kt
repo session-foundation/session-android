@@ -74,19 +74,14 @@ class DatabaseAttachmentProvider(context: Context, helper: Provider<SQLCipherOpe
         attachmentDatabase.setTransferState(attachmentId, attachmentState.value)
     }
 
-    override fun getMessageForQuote(timestamp: Long, author: Address): Triple<Long, Boolean, String>? {
+    override fun getMessageForQuote(threadId: Long, timestamp: Long, author: Address): Triple<Long, Boolean, String>? {
         val messagingDatabase = DatabaseComponent.get(context).mmsSmsDatabase()
-        val message = messagingDatabase.getMessageFor(timestamp, author)
+        val message = messagingDatabase.getMessageFor(threadId, timestamp, author)
         return if (message != null) Triple(message.id, message.isMms, message.body) else null
     }
 
     override fun getAttachmentsAndLinkPreviewFor(mmsId: Long): List<Attachment> {
         return DatabaseComponent.get(context).attachmentDatabase().getAttachmentsForMessage(mmsId)
-    }
-
-    override fun getMessageBodyFor(timestamp: Long, author: String): String {
-        val messagingDatabase = DatabaseComponent.get(context).mmsSmsDatabase()
-        return messagingDatabase.getMessageFor(timestamp, author)!!.body
     }
 
     override fun getAttachmentIDsFor(mmsMessageId: Long): List<Long> {

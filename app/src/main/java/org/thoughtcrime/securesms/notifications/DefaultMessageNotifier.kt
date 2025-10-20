@@ -16,21 +16,14 @@
  */
 package org.thoughtcrime.securesms.notifications
 
-import android.Manifest
 import android.annotation.SuppressLint
-import android.app.AlarmManager
-import android.app.PendingIntent
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.database.Cursor
 import android.graphics.Bitmap
-import android.os.AsyncTask
 import android.text.TextUtils
-import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import coil3.ImageLoader
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
@@ -41,7 +34,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getNotificationPrivacy
-import org.session.libsession.utilities.TextSecurePreferences.Companion.getRepeatAlertsCount
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isNotificationsEnabled
 import org.session.libsession.utilities.TextSecurePreferences.Companion.removeHasHiddenMessageRequests
 import org.session.libsession.utilities.recipients.RecipientData
@@ -49,8 +41,6 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.Util
-import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities.getUserED25519KeyPair
 import org.thoughtcrime.securesms.database.MmsSmsColumns.NOTIFIED
@@ -67,11 +57,9 @@ import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol.canUserReplyToNotification
 import org.thoughtcrime.securesms.util.SpanUtil
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.WEBRTC_NOTIFICATION
-import java.util.concurrent.Executor
-import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
+import javax.inject.Provider
 import kotlin.concurrent.Volatile
 
 /**
@@ -87,7 +75,8 @@ class DefaultMessageNotifier @Inject constructor(
     private val threadDatabase: ThreadDatabase,
     private val recipientRepository: RecipientRepository,
     private val mmsSmsDatabase: MmsSmsDatabase,
-    private val textSecurePreferences: TextSecurePreferences
+    private val textSecurePreferences: TextSecurePreferences,
+    private val imageLoader: Provider<ImageLoader>,
 ) : MessageNotifier {
     override fun setVisibleThread(threadId: Long) {
         visibleThread = threadId
@@ -95,14 +84,6 @@ class DefaultMessageNotifier @Inject constructor(
 
     override fun setHomeScreenVisible(isVisible: Boolean) {
         homeScreenVisible = isVisible
-    }
-
-    override fun setLastDesktopActivityTimestamp(timestamp: Long) {
-        lastDesktopActivityTimestamp = timestamp
-    }
-
-    override fun cancelDelayedNotifications() {
-        executor.cancel()
     }
 
     private fun cancelActiveNotifications(context: Context): Boolean {
@@ -175,12 +156,7 @@ class DefaultMessageNotifier @Inject constructor(
     }
 
     override fun updateNotification(context: Context, threadId: Long) {
-        if (System.currentTimeMillis() - lastDesktopActivityTimestamp < DESKTOP_ACTIVITY_PERIOD) {
-            Log.i(TAG, "Scheduling delayed notification...")
-            executor.execute(DelayedNotification(context, threadId))
-        } else {
-            updateNotification(context, threadId, true)
-        }
+        updateNotification(context, threadId, true)
     }
 
     override fun updateNotification(context: Context, threadId: Long, signal: Boolean) {
@@ -236,7 +212,6 @@ class DefaultMessageNotifier @Inject constructor(
             // early exit
             if (nothingToDo || localNumber == null) {
                 cancelActiveNotifications(context)
-                clearReminder(context)
                 return
             }
 
@@ -282,12 +257,7 @@ class DefaultMessageNotifier @Inject constructor(
                 if (normalItems.notificationCount == 0 && requestItems.notificationCount == 0) {
                     // Request-aware cleanup (keeps active request notifs alive)
                     cancelOrphanedNotifications(context, normalItems)
-                    clearReminder(context)
                     return
-                }
-
-                if (playNotificationAudio) {
-                    scheduleReminder(context, reminderCount)
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error creating notification", e)
@@ -300,6 +270,7 @@ class DefaultMessageNotifier @Inject constructor(
     }
 
     // Note: The `signal` parameter means "play an audio signal for the notification".
+    @SuppressLint("MissingPermission")
     private fun sendSingleThreadNotification(
         context: Context,
         notificationState: NotificationState,
@@ -351,7 +322,8 @@ class DefaultMessageNotifier @Inject constructor(
         val builder = SingleRecipientNotificationBuilder(
             context,
             getNotificationPrivacy(context),
-            avatarUtils
+            avatarUtils,
+            imageLoader,
         )
         builder.putStringExtra(CONTENT_SIGNATURE, contentSignature)
 
@@ -452,29 +424,16 @@ class DefaultMessageNotifier @Inject constructor(
 
         val notification = builder.build()
 
-        // TODO - ACL to fix this properly & will do on 2024-08-26, but just skipping for now so review can start
-        if (ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return
-        }
+        if (hasNotificationPermissions(context)) {
+            if (isRequest) {
+                NotificationManagerCompat.from(context)
+                    .notify(REQUEST_TAG, notificationId, notification)
+            } else {
+                NotificationManagerCompat.from(context).notify(notificationId, notification)
+            }
 
-        if (isRequest) {
-            NotificationManagerCompat.from(context).notify(REQUEST_TAG, notificationId, notification)
-        } else {
-            NotificationManagerCompat.from(context).notify(notificationId, notification)
+            Log.i(TAG, "Posted notification. $notificationId")
         }
-
-        Log.i(TAG, "Posted notification. $notification")
     }
 
     private fun getNotificationSignature(notification: NotificationItem): String {
@@ -482,6 +441,7 @@ class DefaultMessageNotifier @Inject constructor(
     }
 
     // Note: The `signal` parameter means "play an audio signal for the notification".
+    @SuppressLint("MissingPermission")
     private fun sendMultipleThreadNotification(
         context: Context,
         notificationState: NotificationState,
@@ -567,25 +527,16 @@ class DefaultMessageNotifier @Inject constructor(
 
         builder.putStringExtra(LATEST_MESSAGE_ID_TAG, messageIdTag)
 
-        // TODO - ACL to fix this properly & will do on 2024-08-26, but just skipping for now so review can start
-        if (ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return
-        }
 
-        val notification = builder.build()
-        NotificationManagerCompat.from(context).notify(SUMMARY_NOTIFICATION_ID, notification)
-        Log.i(TAG, "Posted notification. $notification")
+        if (hasNotificationPermissions(context)) {
+            val notification = builder.build()
+            NotificationManagerCompat.from(context).notify(SUMMARY_NOTIFICATION_ID, notification)
+            Log.i(TAG, "Posted notification. $notification")
+        }
+    }
+
+    private fun hasNotificationPermissions(context: Context): Boolean {
+        return NotificationManagerCompat.from(context).areNotificationsEnabled()
     }
 
     private fun constructNotificationState(context: Context, cursor: Cursor): NotificationState {
@@ -722,7 +673,7 @@ class DefaultMessageNotifier @Inject constructor(
                     }
                 }
 
-                Log.w(TAG, "Adding incoming message notification: ${body}")
+                Log.w(TAG, "Adding incoming message notification: messageLength = ${body.length}")
 
                 // Add incoming message notification
                 notificationState.addNotification(
@@ -777,7 +728,7 @@ class DefaultMessageNotifier @Inject constructor(
 
                         Log.w(
                             TAG,
-                            "Adding reaction notification: ${emoji} to our message ID ${record.getId()}"
+                            "Adding reaction notification to our message ID ${record.getId()}"
                         )
 
                         notificationState.addNotification(
@@ -850,128 +801,6 @@ class DefaultMessageNotifier @Inject constructor(
         return null
     }
 
-    private fun scheduleReminder(context: Context, count: Int) {
-        if (count >= getRepeatAlertsCount(context)) {
-            return
-        }
-
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val alarmIntent = Intent(ReminderReceiver.REMINDER_ACTION)
-        alarmIntent.putExtra("reminder_count", count)
-
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            0,
-            alarmIntent,
-            PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        val timeout = TimeUnit.MINUTES.toMillis(2)
-
-        alarmManager[AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + timeout] = pendingIntent
-    }
-
-    override fun clearReminder(context: Context) {
-        val alarmIntent = Intent(ReminderReceiver.REMINDER_ACTION)
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            0,
-            alarmIntent,
-            PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        alarmManager.cancel(pendingIntent)
-    }
-
-    class ReminderReceiver : BroadcastReceiver() {
-        @SuppressLint("StaticFieldLeak")
-        override fun onReceive(context: Context, intent: Intent) {
-            object : AsyncTask<Void?, Void?, Void?>() {
-
-                override fun doInBackground(vararg params: Void?): Void? {
-                    val reminderCount = intent.getIntExtra("reminder_count", 0)
-                    ApplicationContext.getInstance(context).messageNotifier.updateNotification(
-                        context,
-                        true,
-                        reminderCount + 1
-                    )
-                    return null
-                }
-
-            }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR)
-        }
-
-        companion object {
-            const val REMINDER_ACTION: String =
-                "network.loki.securesms.MessageNotifier.REMINDER_ACTION"
-        }
-    }
-
-    private class DelayedNotification(private val context: Context, private val threadId: Long) :
-        Runnable {
-        private val canceled = AtomicBoolean(false)
-
-        private val delayUntil: Long
-
-        init {
-            this.delayUntil = System.currentTimeMillis() + DELAY
-        }
-
-        override fun run() {
-            val delayMillis = delayUntil - System.currentTimeMillis()
-            Log.i(TAG, "Waiting to notify: $delayMillis")
-
-            if (delayMillis > 0) {
-                Util.sleep(delayMillis)
-            }
-
-            if (!canceled.get()) {
-                Log.i(TAG, "Not canceled, notifying...")
-                ApplicationContext.getInstance(context).messageNotifier.updateNotification(
-                    context,
-                    threadId,
-                    true
-                )
-                ApplicationContext.getInstance(context).messageNotifier.cancelDelayedNotifications()
-            } else {
-                Log.w(TAG, "Canceled, not notifying...")
-            }
-        }
-
-        fun cancel() {
-            canceled.set(true)
-        }
-
-        companion object {
-            private val DELAY = TimeUnit.SECONDS.toMillis(5)
-        }
-    }
-
-    private class CancelableExecutor {
-        private val executor: Executor = Executors.newSingleThreadExecutor()
-        private val tasks: MutableSet<DelayedNotification> = HashSet()
-
-        fun execute(runnable: DelayedNotification) {
-            synchronized(tasks) { tasks.add(runnable) }
-
-            val wrapper = Runnable {
-                runnable.run()
-                synchronized(tasks) {
-                    tasks.remove(runnable)
-                }
-            }
-
-            executor.execute(wrapper)
-        }
-
-        fun cancel() {
-            synchronized(tasks) {
-                for (task in tasks) {
-                    task.cancel()
-                }
-            }
-        }
-    }
-
     companion object {
         private val TAG: String = DefaultMessageNotifier::class.java.simpleName
 
@@ -992,7 +821,6 @@ class DefaultMessageNotifier @Inject constructor(
         private const val REQUEST_TAG    = "message_request"
 
         private val MIN_AUDIBLE_PERIOD_MILLIS = TimeUnit.SECONDS.toMillis(5)
-        private val DESKTOP_ACTIVITY_PERIOD = TimeUnit.MINUTES.toMillis(1)
 
         @Volatile
         private var visibleThread: Long = -1
@@ -1001,10 +829,6 @@ class DefaultMessageNotifier @Inject constructor(
         private var homeScreenVisible = false
 
         @Volatile
-        private var lastDesktopActivityTimestamp: Long = -1
-
-        @Volatile
         private var lastAudibleNotification: Long = -1
-        private val executor = CancelableExecutor()
     }
 }

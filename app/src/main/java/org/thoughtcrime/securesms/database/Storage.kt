@@ -73,7 +73,6 @@ import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
 import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
-import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -192,15 +191,16 @@ open class Storage @Inject constructor(
         return messages.map { it.second } // return the message hashes
     }
 
-    override fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean) {
+    override fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean, updateNotification: Boolean) {
         val threadDb = threadDatabase
         getRecipientForThread(threadId)?.let { recipient ->
-            val currentLastRead = threadDb.getLastSeenAndHasSent(threadId).first()
             // don't set the last read in the volatile if we didn't set it in the DB
-            if (!threadDb.markAllAsRead(threadId, lastSeenTime, force) && !force) return
+            if (!threadDb.markAllAsRead(threadId, lastSeenTime, force, updateNotification) && !force) return
 
             // don't process configs for inbox recipients
             if (recipient.isCommunityInboxRecipient) return
+
+            val currentLastRead = threadDb.getLastSeenAndHasSent(threadId).first()
 
             configFactory.withMutableUserConfigs { configs ->
                 val config = configs.convoInfoVolatile
@@ -481,10 +481,10 @@ open class Storage @Inject constructor(
         SessionMetaProtocol.removeTimestamps(timestamps)
     }
 
-    override fun getMessageBy(timestamp: Long, author: String): MessageRecord? {
+    override fun getMessageBy(threadId: Long, timestamp: Long, author: String): MessageRecord? {
         val database = mmsSmsDatabase
         val address = fromSerialized(author)
-        return database.getMessageFor(timestamp, address)
+        return database.getMessageFor(threadId, timestamp, address)
     }
 
     override fun updateSentTimestamp(
@@ -636,7 +636,7 @@ open class Storage @Inject constructor(
         )
         val mmsDB = mmsDatabase
         val mmsSmsDB = mmsSmsDatabase
-        if (mmsSmsDB.getMessageFor(sentTimestamp, userPublicKey) != null) {
+        if (mmsSmsDB.getMessageFor(threadID, sentTimestamp, userPublicKey) != null) {
             Log.w(TAG, "Bailing from insertOutgoingInfoMessage because we believe the message has already been sent!")
             return null
         }
@@ -797,7 +797,7 @@ open class Storage @Inject constructor(
             val mmsDB = mmsDatabase
             val mmsSmsDB = mmsSmsDatabase
             // check for conflict here, not returning duplicate in case it's different
-            if (mmsSmsDB.getMessageFor(sentTimestamp, userPublicKey) != null) return null
+            if (mmsSmsDB.getMessageFor(threadID, sentTimestamp, userPublicKey) != null) return null
             val infoMessageID = mmsDB.insertMessageOutbox(
                 infoMessage,
                 threadID,

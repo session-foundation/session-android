@@ -86,7 +86,7 @@ fun HomeDialogs(
                     CTAFeature.Icon(stringResource(R.string.proFeatureListLongerMessages)),
                     CTAFeature.Icon(stringResource(R.string.proFeatureListPinnedConversations)),
                 ),
-                positiveButtonText = stringResource(R.string.updatePlan),
+                positiveButtonText = stringResource(R.string.update),
                 negativeButtonText = stringResource(R.string.close),
                 onUpgrade = {
                     sendCommand(HomeViewModel.Commands.HideExpiringCTADialog)

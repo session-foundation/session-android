@@ -228,9 +228,16 @@ public class NotificationState {
       mms[index++]   = notificationItem.isMms();
     }
 
+    long[] threadIds = new long[threads.size()];
+    index = 0;
+    for (long thread : threads) {
+      threadIds[index++] = thread;
+    }
+
     Intent intent = new Intent(context, DeleteNotificationReceiver.class);
     intent.setAction(DeleteNotificationReceiver.DELETE_NOTIFICATION_ACTION);
     intent.putExtra(DeleteNotificationReceiver.EXTRA_IDS, ids);
+    intent.putExtra(DeleteNotificationReceiver.EXTRA_THREAD_IDS, threadIds);
     intent.putExtra(DeleteNotificationReceiver.EXTRA_MMS, mms);
     intent.setData((Uri.parse("custom://"+System.currentTimeMillis())));
 

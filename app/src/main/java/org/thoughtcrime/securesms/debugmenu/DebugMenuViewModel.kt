@@ -93,6 +93,12 @@ class DebugMenuViewModel @Inject constructor(
                 DebugSubscriptionStatus.EXPIRED_APPLE,
             ),
             selectedDebugSubscriptionStatus = textSecurePreferences.getDebugSubscriptionType() ?: DebugSubscriptionStatus.AUTO_GOOGLE,
+            debugProPlanStatus = setOf(
+                DebugProPlanStatus.NORMAL,
+                DebugProPlanStatus.LOADING,
+                DebugProPlanStatus.ERROR,
+            ),
+            selectedDebugProPlanStatus = textSecurePreferences.getDebugProPlanStatus() ?: DebugProPlanStatus.NORMAL,
             debugProPlans = subscriptionManagers.asSequence()
                 .flatMap { it.availablePlans.asSequence().map { plan -> DebugProPlan(it, plan) } }
                 .toList(),
@@ -302,6 +308,13 @@ class DebugMenuViewModel @Inject constructor(
                 }
             }
 
+            is Commands.SetDebugProPlanStatus -> {
+                textSecurePreferences.setDebugProPlanStatus(command.status)
+                _uiState.update {
+                    it.copy(selectedDebugProPlanStatus = command.status)
+                }
+            }
+
             is Commands.PurchaseDebugPlan -> {
                 command.plan.apply { manager.purchasePlan(plan) }
             }
@@ -410,6 +423,8 @@ class DebugMenuViewModel @Inject constructor(
         val dbInspectorState: DatabaseInspectorState,
         val debugSubscriptionStatuses: Set<DebugSubscriptionStatus>,
         val selectedDebugSubscriptionStatus: DebugSubscriptionStatus,
+        val debugProPlanStatus: Set<DebugProPlanStatus>,
+        val selectedDebugProPlanStatus: DebugProPlanStatus,
         val debugProPlans: List<DebugProPlan>,
     )
 
@@ -426,6 +441,12 @@ class DebugMenuViewModel @Inject constructor(
         EXPIRING_APPLE("Expiring/Cancelled (Apple, 1 months)"),
         EXPIRED("Expired (Google)"),
         EXPIRED_APPLE("Expired (Apple)"),
+    }
+
+    enum class DebugProPlanStatus(val label: String){
+        NORMAL("Normal State"),
+        LOADING("Always Loading"),
+        ERROR("Always Erroring out"),
     }
 
     sealed class Commands {
@@ -452,6 +473,7 @@ class DebugMenuViewModel @Inject constructor(
         data class GenerateContacts(val prefix: String, val count: Int): Commands()
         data object ToggleDatabaseInspector : Commands()
         data class SetDebugSubscriptionStatus(val status: DebugSubscriptionStatus) : Commands()
+        data class SetDebugProPlanStatus(val status: DebugProPlanStatus) : Commands()
         data class PurchaseDebugPlan(val plan: DebugProPlan) : Commands()
     }
 }

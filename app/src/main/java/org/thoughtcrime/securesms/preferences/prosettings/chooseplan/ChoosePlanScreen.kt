@@ -103,18 +103,18 @@ fun ChoosePlan(
         val context = LocalContext.current
         val title = when (planData.subscriptionType) {
             is SubscriptionType.Expired ->
-                Phrase.from(context.getText(R.string.proPlanRenewStart))
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                Phrase.from(context.getText(R.string.proAccessRenewStart))
+                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                     .format()
 
-            is SubscriptionType.Active.Expiring -> Phrase.from(context.getText(R.string.proPlanActivatedNotAuto))
-                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+            is SubscriptionType.Active.Expiring -> Phrase.from(context.getText(R.string.proAccessActivatedNotAuto))
+                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                 .put(DATE_KEY, planData.subscriptionType.duration.expiryFromNow())
                 .format()
 
-            is SubscriptionType.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proPlanActivatedAuto))
-                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+            is SubscriptionType.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proAccessActivatesAuto))
+                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                 .put(
                     CURRENT_PLAN_KEY, DateUtils.getLocalisedTimeDuration(
                         context = context,
@@ -123,7 +123,6 @@ fun ChoosePlan(
                     )
                 )
                 .put(DATE_KEY, planData.subscriptionType.duration.expiryFromNow())
-                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                 .format()
 
             //todo PRO cater for brand new subscription in here
@@ -169,8 +168,12 @@ fun ChoosePlan(
 
         val buttonLabel = when (planData.subscriptionType) {
             is SubscriptionType.Expired -> context.getString(R.string.renew)
-            is SubscriptionType.Active.Expiring -> context.getString(R.string.updatePlan)
-            else -> context.getString(R.string.updatePlan)
+            is SubscriptionType.Active.Expiring -> Phrase.from(LocalContext.current, R.string.updateAccess)
+                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                .format().toString()
+            else -> Phrase.from(LocalContext.current, R.string.updateAccess)
+                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                .format().toString()
         }
 
         AccentFillButtonRect(

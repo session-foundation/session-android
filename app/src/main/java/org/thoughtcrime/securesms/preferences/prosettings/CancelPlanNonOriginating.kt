@@ -36,7 +36,6 @@ fun CancelPlanNonOriginating(
         onBack = onBack,
         headerTitle = Phrase.from(context.getText(R.string.proCancelSorry))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format().toString(),
         buttonText = Phrase.from(context.getText(R.string.openPlatformWebsite))
             .put(PLATFORM_KEY, subscriptionDetails.getPlatformDisplayName())
@@ -47,12 +46,8 @@ fun CancelPlanNonOriginating(
         },
         contentTitle = stringResource(R.string.proCancellation),
         contentDescription = Phrase.from(context.getText(R.string.proCancellationDescription))
-            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-            .put(PLATFORM_ACCOUNT_KEY, subscriptionDetails.platformAccount)
             .put(PLATFORM_ACCOUNT_KEY, subscriptionDetails.platformAccount)
             .format(),
         linkCellsInfo = stringResource(R.string.proCancellationOptions),
@@ -66,6 +61,7 @@ fun CancelPlanNonOriginating(
                     .put(DEVICE_TYPE_KEY, subscriptionDetails.device)
                     .put(PLATFORM_ACCOUNT_KEY, subscriptionDetails.platformAccount)
                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .format(),
                 iconRes = R.drawable.ic_smartphone
             ),

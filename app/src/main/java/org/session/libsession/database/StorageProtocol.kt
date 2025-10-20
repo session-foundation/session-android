@@ -92,7 +92,7 @@ interface StorageProtocol {
     fun addReceivedMessageTimestamp(timestamp: Long)
     fun removeReceivedMessageTimestamps(timestamps: Set<Long>)
     fun getAttachmentsForMessage(mmsMessageId: Long): List<DatabaseAttachment>
-    fun getMessageBy(timestamp: Long, author: String): MessageRecord?
+    fun getMessageBy(threadId: Long, timestamp: Long, author: String): MessageRecord?
     fun updateSentTimestamp(messageId: MessageId, newTimestamp: Long)
     fun markAsResyncing(messageId: MessageId)
     fun markAsSyncing(messageId: MessageId)
@@ -181,7 +181,7 @@ interface StorageProtocol {
         attachments: List<Attachment>,
         runThreadUpdate: Boolean
     ): MessageId?
-    fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean = false)
+    fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean = false, updateNotification: Boolean = true)
     fun markConversationAsUnread(threadId: Long)
     fun getLastSeen(threadId: Long): Long
     fun ensureMessageHashesAreSender(hashes: Set<String>, sender: String, closedGroupId: String): Boolean

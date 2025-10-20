@@ -97,7 +97,6 @@ fun CancelPlan(
         },
         title = Phrase.from(context.getText(R.string.proCancelSorry))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format().toString(),
     ){
         Column {
