@@ -70,8 +70,7 @@ class HomeViewModel @Inject constructor(
     private val proStatusManager: ProStatusManager,
     private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
     private val recipientRepository: RecipientRepository,
-    private val dateUtils: DateUtils,
-    private val threadDb: ThreadDatabase
+    private val dateUtils: DateUtils
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
@@ -337,13 +336,6 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
-
-    suspend fun getThreadRecordById(threadId: Long): ThreadRecord? = data.value
-              ?.items
-              ?.asSequence()
-              ?.filterIsInstance<HomeViewModel.Item.Thread>()
-              ?.firstOrNull { it.thread.threadId == threadId }
-              ?.thread
 
     data class DialogsState(
         val pinCTA: PinProCTA? = null,
