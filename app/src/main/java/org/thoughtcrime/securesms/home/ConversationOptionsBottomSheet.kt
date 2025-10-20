@@ -63,7 +63,7 @@ class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnCli
     companion object {
         const val FRAGMENT_TAG = "ConversationOptionsBottomSheet"
         private const val ARG_PUBLIC_KEY = "arg_public_key"
-        private const val ARG_THREAD_ID = "arg_thread_id"
+        const val ARG_THREAD_ID = "arg_thread_id"
         const  val ARG_ADDRESS = "arg_address"
 
         fun newInstance(publicKey: String, threadId: Long, address: String): ConversationOptionsBottomSheet {

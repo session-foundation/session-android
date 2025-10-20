@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import org.session.libsession.database.StorageProtocol
@@ -37,6 +38,7 @@ import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
@@ -68,7 +70,8 @@ class HomeViewModel @Inject constructor(
     private val proStatusManager: ProStatusManager,
     private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
     private val recipientRepository: RecipientRepository,
-    private val dateUtils: DateUtils
+    private val dateUtils: DateUtils,
+    private val threadDb: ThreadDatabase
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
@@ -334,6 +337,13 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
+
+    suspend fun getThreadRecordById(threadId: Long): ThreadRecord? = data.value
+              ?.items
+              ?.asSequence()
+              ?.filterIsInstance<HomeViewModel.Item.Thread>()
+              ?.firstOrNull { it.thread.threadId == threadId }
+              ?.thread
 
     data class DialogsState(
         val pinCTA: PinProCTA? = null,

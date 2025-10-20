@@ -608,15 +608,16 @@ class HomeActivity : ScreenLockActionBarActivity(),
             .findFragmentByTag(ConversationOptionsBottomSheet.FRAGMENT_TAG)
                 as? ConversationOptionsBottomSheet ?: return
 
-        // Refresh from sheet args
-        val addressStr = sheet.requireArguments()
-            .getString(ConversationOptionsBottomSheet.ARG_ADDRESS) ?: return
-        val address = Address.fromSerialized(addressStr)
+        val threadId = sheet.requireArguments()
+            .getLong(ConversationOptionsBottomSheet.ARG_THREAD_ID)
 
-        // Fetch the current ThreadRecord for this address
-        val thread = threadDb.getThreads(listOf(address)).firstOrNull() ?: return
+        val threadRecord = homeViewModel.data.value?.items?.asSequence()
+            ?.filterIsInstance<HomeViewModel.Item.Thread>()
+            ?.firstOrNull { it.thread.threadId == threadId }?.thread
 
-        attachConversationOptionsCallbacks(sheet, thread)
+        threadRecord?.let {
+            attachConversationOptionsCallbacks(sheet, it)
+        }
     }
 
     private fun attachConversationOptionsCallbacks(
