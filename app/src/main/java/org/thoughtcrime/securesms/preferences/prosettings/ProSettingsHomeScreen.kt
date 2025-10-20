@@ -40,6 +40,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
@@ -66,6 +67,7 @@ import org.thoughtcrime.securesms.ui.IconActionRowItem
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.SpeechBubbleTooltip
 import org.thoughtcrime.securesms.ui.SwitchActionRowItem
+import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.ExtraSmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
@@ -74,6 +76,7 @@ import org.thoughtcrime.securesms.ui.components.inlineContentMap
 import org.thoughtcrime.securesms.ui.proBadgeColorDisabled
 import org.thoughtcrime.securesms.ui.proBadgeColorStandard
 import org.thoughtcrime.securesms.ui.qaTag
+import org.thoughtcrime.securesms.ui.shimmerOverlay
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -184,6 +187,26 @@ fun ProSettingsHome(
             }
         }
     ) {
+        // Header for non-pro users
+        if(subscriptionType is SubscriptionType.NeverSubscribed) {
+            Text(
+                text = Phrase.from(context.getText(R.string.proFullestPotential))
+                    .put(APP_NAME_KEY, stringResource(R.string.app_name))
+                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                    .format().toString(),
+                style = LocalType.current.base,
+                textAlign = TextAlign.Center,
+            )
+
+            Spacer(Modifier.height(LocalDimensions.current.spacing))
+
+            AccentFillButtonRect(
+                modifier = Modifier.fillMaxWidth(),
+                text = stringResource(R.string.theContinue),
+                onClick = { sendCommand(GoToChoosePlan) }
+            )
+        }
+        
         // Pro Stats
         if(subscriptionType is SubscriptionType.Active){
             Spacer(Modifier.height(LocalDimensions.current.spacing))
@@ -652,7 +675,7 @@ fun ProFeatures(
 
             // More...
             ProFeatureItem(
-                title = stringResource(R.string.proFeatureListLoadsMore),
+                title = stringResource(R.string.plusLoadsMore),
                 subtitle = annotatedStringResource(
                     text = Phrase.from(LocalContext.current.getText(R.string.plusLoadsMoreDescription))
                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)

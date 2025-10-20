@@ -43,14 +43,16 @@ fun ChoosePlanNoBilling(
 ){
     val context = LocalContext.current
 
-    //todo PRO cater for NEVER SUBSCRIBED here
-
     val defaultGoogleStore = ProStatusManager.DEFAULT_GOOGLE_STORE
     val defaultAppleStore = ProStatusManager.DEFAULT_APPLE_STORE
 
     val headerTitle = when(subscription) {
         is SubscriptionType.Expired -> Phrase.from(context.getText(R.string.proAccessRenewStart))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+            .format()
+
+        is SubscriptionType.NeverSubscribed -> Phrase.from(context.getText(R.string.proUpgradeAccess))
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format()
 
@@ -61,6 +63,11 @@ fun ChoosePlanNoBilling(
         is SubscriptionType.Expired -> Phrase.from(context.getText(R.string.renewingPro))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString()
+
+        is SubscriptionType.NeverSubscribed-> Phrase.from(context.getText(R.string.proUpgradingTo))
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .format().toString()
+
         else -> ""
     }
 
@@ -82,11 +89,63 @@ fun ChoosePlanNoBilling(
             .put(ICON_KEY, iconExternalLink)
             .format()
 
+        is SubscriptionType.NeverSubscribed -> Phrase.from(context.getText(R.string.proUpgradeNoAccessBilling))
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .put(PLATFORM_STORE_KEY, defaultGoogleStore)
+            .put(PLATFORM_STORE2_KEY, defaultAppleStore)
+            .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
+            .put(BUILD_VARIANT_KEY, when (BuildConfig.FLAVOR) {
+                "fdroid" -> "F-Droid Store"
+                "huawei" -> "Huawei App Gallery"
+                else -> "APK"
+            })
+            .put(ICON_KEY, iconExternalLink)
+            .format()
+
         else -> ""
     }
     
     val cellsInfo = when(subscription) {
         is SubscriptionType.Expired -> stringResource(R.string.proOptionsRenewalSubtitle)
+        is SubscriptionType.NeverSubscribed -> stringResource(R.string.proUpgradeOptionsTwo)
+        else -> ""
+    }
+
+    val cell1Text: CharSequence = when(subscription) {
+        is SubscriptionType.Expired -> Phrase.from(context.getText(R.string.proRenewDesktopLinked))
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
+            .put(PLATFORM_STORE_KEY, defaultGoogleStore)
+            .put(PLATFORM_STORE2_KEY, defaultAppleStore)
+            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+            .format()
+
+        is SubscriptionType.NeverSubscribed -> Phrase.from(context.getText(R.string.proUpgradeDesktopLinked))
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
+            .put(PLATFORM_STORE_KEY, defaultGoogleStore)
+            .put(PLATFORM_STORE2_KEY, defaultAppleStore)
+            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+            .format()
+
+        else -> ""
+    }
+
+    val cell2Text: CharSequence = when(subscription) {
+        is SubscriptionType.Expired -> Phrase.from(context.getText(R.string.proNewInstallationDescription))
+            .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
+            .put(PLATFORM_STORE_KEY, defaultGoogleStore)
+            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .format()
+
+        is SubscriptionType.NeverSubscribed -> Phrase.from(context.getText(R.string.proNewInstallationUpgrade))
+            .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
+            .put(PLATFORM_STORE_KEY, defaultGoogleStore)
+            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .format()
+
         else -> ""
     }
 
@@ -95,13 +154,7 @@ fun ChoosePlanNoBilling(
         add(
             NonOriginatingLinkCellData(
                 title = stringResource(R.string.onLinkedDevice),
-                info = Phrase.from(context.getText(R.string.proRenewDesktopLinked))
-                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                    .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
-                    .put(PLATFORM_STORE_KEY, defaultGoogleStore)
-                    .put(PLATFORM_STORE2_KEY, defaultAppleStore)
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .format(),
+                info = cell1Text,
                 iconRes = R.drawable.ic_link
             )
         )
@@ -110,12 +163,7 @@ fun ChoosePlanNoBilling(
         add(
             NonOriginatingLinkCellData(
                 title = stringResource(R.string.proNewInstallation),
-                info = Phrase.from(context.getText(R.string.proNewInstallationDescription))
-                    .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
-                    .put(PLATFORM_STORE_KEY, defaultGoogleStore)
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                    .format(),
+                info = cell2Text,
                 iconRes = R.drawable.ic_smartphone
             )
         )
@@ -194,17 +242,7 @@ private fun PreviewNoBiilingBrandNewPlan(
     PreviewTheme(colors) {
         val context = LocalContext.current
         ChoosePlanNoBilling (
-            subscription = SubscriptionType.Expired(
-                expiredAt = Instant.now() - Duration.ofDays(14),
-                SubscriptionDetails(
-                    device = "iPhone",
-                    store = "Apple App Store",
-                    platform = "Apple",
-                    platformAccount = "Apple Account",
-                    subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                    refundUrl = "https://www.apple.com/account/subscriptions",
-                )
-            ),
+            subscription = SubscriptionType.NeverSubscribed,
             sendCommand = {},
             onBack = {},
         )
