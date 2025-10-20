@@ -211,6 +211,7 @@
     <string name="changePasswordFail">Failed to change password</string>
     <string name="changePasswordModalDescription">Change your password for {app_name}. Locally stored data will be re-encrypted with your new password.</string>
     <string name="checkingProStatus">Checking {pro} Status</string>
+    <string name="checkingProStatusContinue">Checking your {pro} status. You\'ll be able to continue once this check is complete.</string>
     <string name="checkingProStatusDescription">Checking your {pro} details. Some information on this page may be unavailable until this check is complete.</string>
     <string name="checkingProStatusEllipsis">Checking {pro} Status...</string>
     <string name="checkingProStatusRenew">Checking your {pro} details. You cannot renew until this check is complete.</string>
@@ -763,6 +764,8 @@
     <string name="nicknameSet">Set Nickname</string>
     <string name="no">No</string>
     <string name="noSuggestions">No Suggestions</string>
+    <string name="nonProLongerMessagesDescription">Send messages up to 10,000 characters in all conversations.</string>
+    <string name="nonProUnlimitedPinnedDescription">Organize chats with unlimited pinned conversations.</string>
     <string name="none">None</string>
     <string name="notNow">Not now</string>
     <string name="noteToSelf">Note to Self</string>
@@ -921,9 +924,9 @@
     <string name="preferences">Preferences</string>
     <string name="preview">Preview</string>
     <string name="previewNotification">Preview Notification</string>
-    <string name="proAccessActivatedAutoShort">Your {pro} access is active!\n\nYour {pro} access will automatically renew for another <b>{current_plan}</b> on <b>{date}</b>.</string>
+    <string name="proAccessActivatedAutoShort">Your {pro} access is active!\n\nYour {pro} access will automatically renew for another <b>{current_plan_length}</b> on <b>{date}</b>.</string>
     <string name="proAccessActivatedNotAuto">Your {pro} access will expire on <b>{date}</b>.\n\nUpdate your {pro} access now to ensure you automatically renew before your {pro} access expires.</string>
-    <string name="proAccessActivatesAuto">Your {pro} access is active!\n\nYour {pro} access will automatically renew for another\n<b>{current_plan}</b> on <b>{date}</b>. Any updates you make here will take effect at your next renewal.</string>
+    <string name="proAccessActivatesAuto">Your {pro} access is active!\n\nYour {pro} access will automatically renew for another\n<b>{current_plan_length}</b> on <b>{date}</b>. Any updates you make here will take effect at your next renewal.</string>
     <string name="proAccessError">{pro} Access Error</string>
     <string name="proAccessExpireDate">Your {pro} access will expire on <b>{date}</b>.</string>
     <string name="proAccessLoading">{pro} Access Loading</string>
@@ -934,12 +937,14 @@
     <string name="proAccessNotFoundDescription">{app_name} detected that your account does not have {pro} access. If you believe this is a mistake, please reach out to {app_name} support for assistance.</string>
     <string name="proAccessRecover">Recover {pro} Access</string>
     <string name="proAccessRenew">Renew {pro} Access</string>
+    <string name="proAccessRenewDesktop">Currently, {pro} access can only be purchased and renewed via the {platform_store} or {platform_store_other}. Because you are using {app_name} Desktop, you\'re not able to renew here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the {platform_store} and {platform_store_other}. <b>{pro} Roadmap</b> {icon}</string>
     <string name="proAccessRenewPlatformStoreWebsite">Renew your {pro} access on the <b><font color="0">{platform_store} website</font></b> using the {platform_account} you signed up for {pro} with.</string>
     <string name="proAccessRenewPlatformWebsite">Renew on the <b><font color="0">{platform} website</font></b> using the {platform_account} you signed up for {pro} with.</string>
     <string name="proAccessRenewStart">Renew your {pro} access to start using powerful {app_pro} Beta features again.</string>
     <string name="proAccessRestored">{pro} Access Recovered</string>
     <string name="proAccessRestoredDescription">{app_name} detected and recovered {pro} access for your account. Your {pro} status has been restored!</string>
     <string name="proAccessSignUp">Because you originally signed up for {app_pro} via the <b>{platform_store}</b>, you\'ll need to use your {platform_account} to update your {pro} access.</string>
+    <string name="proAccessUpgradeDesktop">Currently, {pro} access can only be purchased via the {platform_store} or {platform_store_other}. Because you are using {app_name} Desktop, you\'re not able to upgrade to {pro} here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the {platform_store} and {platform_store_other}. <b>{pro} Roadmap</b> {icon}</string>
     <string name="proActivated">Activated</string>
     <string name="proAllSet">You\'re all set!</string>
     <string name="proAllSetDescription">Your {app_pro} access was updated! You will be billed when {pro} is automatically renewed on <b>{date}</b>.</string>
@@ -972,6 +977,7 @@
     <string name="proCancellationDescription">Canceling {pro} access will prevent automatic renewal from occurring before {pro} access expires. Canceling {pro} does <b>not</b> result in a refund. You will continue to be able to use {app_pro} features until your {pro} access expires.\n\nBecause you originally signed up for {app_pro} using your <b>{platform_account}</b>, you\'ll need to use the same {platform_account} to cancel {pro}.</string>
     <string name="proCancellationOptions">Two ways to cancel your {pro} access:</string>
     <string name="proCancellationShortDescription">Canceling {pro} access will prevent will prevent automatic renewal from occurring before {pro} expires.\n\nCanceling {pro} does <b>not</b> result in a refund. You will continue to be able to use {app_pro} features until your {pro} access expires.</string>
+    <string name="proChooseAccess">Choose the {pro} access option that\'s right for you.\n\nLonger access means bigger discounts.</string>
     <string name="proClearAllDataDevice">Are you sure you want to delete your data from this device?\n\n<b>{app_pro}</b> cannot be transferred to another account. Please save your Recovery Password to ensure you can restore your {pro} access later.</string>
     <string name="proClearAllDataNetwork">Are you sure you want to delete your data from the network? If you continue, you will not be able to restore your messages or contacts.\n\n<b>{app_pro}</b> cannot be transferred to another account. Please save your Recovery Password to ensure you can restore your {pro} access later.</string>
     <string name="proDiscountTooltip">Your {pro} access is already discounted by {percent}% of the full {app_pro} price.</string>
@@ -988,6 +994,7 @@
     <string name="proFeatureListLoadsMore">Plus loads more exclusive features</string>
     <string name="proFeatureListLongerMessages">Messages up to 10,000 characters</string>
     <string name="proFeatureListPinnedConversations">Pin unlimited conversations</string>
+    <string name="proFullestPotential">Want to use {app_name} to its fullest potential?\n\nUpgrade to {app_pro} Beta to get access to loads of exclusive perks and features.</string>
     <string name="proGroupActivated">Group Activated</string>
     <string name="proGroupActivatedDescription">This group has expanded capacity! It can support up to 300 members because a group admin has</string>
     <plurals name="proGroupsUpgraded">
@@ -1009,7 +1016,9 @@
     <string name="proMessageInfoFeatures">This message used the following {app_pro} features:</string>
     <string name="proNewInstallation">With a new installation</string>
     <string name="proNewInstallationDescription">Reinstall {app_name} on this device via the {platform_store}, restore your account with your Recovery Password, and renew {pro} from the {app_pro} settings.</string>
-    <string name="proOptionsRenewalSubtitle">Currently, there are three ways to renew:</string>
+    <string name="proNewInstallationUpgrade">Reinstall {app_name} on this device via the {platform_store}, restore your account with your Recovery Password, and upgrade to {pro} from the {app_pro} settings.</string>
+    <string name="proOptionsRenewalSubtitle">For now, there are three ways to renew:</string>
+    <string name="proOptionsTwoRenewalSubtitle">For now, there are two ways to renew:</string>
     <string name="proPercentOff">{percent}% Off</string>
     <plurals name="proPinnedConversations">
         <item quantity="one">%1$s Pinned Conversation</item>
@@ -1017,7 +1026,6 @@
     </plurals>
     <string name="proPlanPlatformRefund">Because you originally signed up for {app_pro} via the <b><font color="0">{platform_store}</font></b>, you\'ll need to use your {platform_account} to request a refund.</string>
     <string name="proPlanPlatformRefundLong">Because you originally signed up for {app_pro} via the <b><font color="0">{platform_store}</font></b>, your refund request will be processed by {app_name} Support.\n\nRequest a refund by hitting the button below and completing the refund request form.\n\nWhile {app_name} Support strives to process refund requests within 24-72 hours, processing may take longer during times of high request volume.</string>
-    <string name="proPlanRenewDesktop">Currently, {pro} access can only be purchased and renewed via the {platform_store} or {platform_store_other}. Because you are using {app_name} Desktop, you\'re not able to renew here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the {platform_store} and {platform_store_other}. <b>{pro} Roadmap</b> {icon}</string>
     <string name="proPlanRenewSupport">Your {app_pro} access has been renewed! Thank you for supporting the {network_name}.</string>
     <string name="proPriceOneMonth">1 Month - {monthly_price} / Month</string>
     <string name="proPriceThreeMonths">3 Months - {monthly_price} / Month</string>
@@ -1030,12 +1038,19 @@
     <string name="proRefundSupport">Please contact {platform} for further updates on your refund request. Due to {platform} refund policies, {app_name} developers have no ability to influence the outcome of refund requests.\n\n<font color="0">{platform} Refund Support</font></string>
     <string name="proRefunding">Refunding {pro}</string>
     <string name="proRefundingDescription">Refunds for {app_pro} are handled exclusively by {platform} through the {platform_store}.\n\nDue to {platform} refund policies, {app_name} developers have no ability to influence the outcome of refund requests. This includes whether the request is approved or denied, as well as whether a full or partial refund is issued.</string>
+    <string name="proRenewAnimatedDisplayPicture">Want to use animated display pictures again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
     <string name="proRenewBeta">Renew {pro} Beta</string>
     <string name="proRenewDesktopLinked">Renew your {pro} access from the {app_pro} settings on a linked device with {app_name} installed via the {platform_store} or {platform_store_other}.</string>
+    <string name="proRenewLongerMessages">Want to send longer messages again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
+    <string name="proRenewMaxPotential">Want to use {app_name} to its max potential again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
+    <string name="proRenewPinFiveConversations">Want to pin more than 5 conversations again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
+    <string name="proRenewPinMoreConversations">Want to more pin more conversations again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
+    <string name="proRenewTosPrivacy">By renewing, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
     <string name="proRenewingNoAccessBilling">Currently, {pro} access can only be purchased and renewed via the {platform_store} or {platform_store_other}. Because you installed {app_name} using the {build_variant}, you\'re not able to renew here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the {platform_store} and {platform_store_other}.<b> {pro} Roadmap</b> {icon}</string>
     <string name="proRequestedRefund">Refund Requested</string>
     <string name="proSendMore">Send more with</string>
     <string name="proSettings">{pro} Settings</string>
+    <string name="proStartUsing">Start Using {pro}</string>
     <string name="proStats">Your {pro} Stats</string>
     <string name="proStatsLoading">{pro} Stats Loading</string>
     <string name="proStatsLoadingDescription">Your {pro} stats are loading, please wait.</string>
@@ -1045,6 +1060,7 @@
     <string name="proStatusLoading">{pro} Status Loading</string>
     <string name="proStatusLoadingDescription">Your {pro} information is being loaded. Some actions on this page may be unavailable until loading is complete.</string>
     <string name="proStatusLoadingSubtitle">{pro} status loading</string>
+    <string name="proStatusNetworkErrorContinue">Unable to connect to the network to check your {pro} status. You cannot continue until connectivity is restored.\n\nPlease check your network connection and retry.</string>
     <string name="proStatusNetworkErrorDescription">Unable to connect to the network to check your {pro} status. You cannot upgrade to {pro} until connectivity is restored.\n\nPlease check your network connection and retry.</string>
     <string name="proStatusRefreshNetworkError">Unable to connect to the network to refresh your {pro} status. Some actions on this page will be disabled until connectivity is restored.\n\nPlease check your network connection and retry.</string>
     <string name="proStatusRenewError">Unable to connect to the network to load your current {pro} access. Renewing {pro} via {app_name} will be disabled until connectivity is restored.\n\nPlease check your network connection and retry.</string>
@@ -1054,6 +1070,14 @@
     <string name="proUnlimitedPinsDescription">Organize all your chats with unlimited pinned conversations.</string>
     <string name="proUpdateAccessDescription">Your current billing option grants <b>{current_plan_length}</b> of {pro} access. Are you sure you want to switch to the <b>{selected_plan_length_singular}</b> billing option?\n\nBy updating, your {pro} access will automatically renew on <b>{date}</b> for an additional <b>{selected_plan_length}</b> of {pro} access.</string>
     <string name="proUpdateAccessExpireDescription">Your {pro} access will expire on <b>{date}</b>.\n\nBy updating, your {pro} access will automatically renew on <b>{date}</b> for an additional <b>{selected_plan_length}</b> of {pro} access.</string>
+    <string name="proUpgradeAccess">Upgrade to {app_pro} Beta to get access to loads of exclusive perks and features.</string>
+    <string name="proUpgradeDesktopLinked">Upgrade to {pro} from the {app_pro} settings on a linked device with {app_name} installed via the {platform_store} or {platform_store_other}.</string>
+    <string name="proUpgradeNoAccessBilling">Currently, {pro} access can only be purchased and renewed via the {platform_store} or {platform_store_other}. Because you installed {app_name} using the {build_variant}, you\'re not able to upgrade to {pro} here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the {platform_store} and {platform_store_other}.<b> {pro} Roadmap</b> {icon}</string>
+    <string name="proUpgradeOption">For now, there is only one way to upgrade:</string>
+    <string name="proUpgradeOptionsTwo">For now, there are two ways to upgrade:</string>
+    <string name="proUpgraded">You have upgraded to {app_pro}!\n\nThank you for supporting the {network_name}.</string>
+    <string name="proUpgradingTo">Upgrading to {pro}</string>
+    <string name="proUpgradingTosPrivacy">By upgrading, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
     <string name="proUserProfileModalCallToAction">Want to get more out of {app_name}? Upgrade to {app_pro} for a more powerful messaging experience.</string>
     <string name="processingRefundRequest">{platform} is processing your refund request</string>
     <string name="profile">Profile</string>
