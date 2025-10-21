@@ -940,7 +940,6 @@
     <string name="proAnimatedDisplayPictures">Animované zobrazované obrázky</string>
     <string name="proAnimatedDisplayPicturesDescription">Nastavte si animované obrázky GIF a WebP jako svůj zobrazovaný profilový obrázek.</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Nahrajte GIFy se</string>
-    <string name="proAutoRenewTime">{pro} se automaticky obnoví za <b>{time}</b></string>
     <string name="proBadge">Odznak {pro}</string>
     <string name="proBadgeVisible">Zobrazit odznak {app_pro} ostatním uživatelům</string>
     <string name="proBadges">Odznaky</string>
@@ -1005,7 +1004,6 @@
     <string name="proRefundDescription">Mrzí nás, že to rušíte. Než požádáte o vrácení peněz, přečtěte si informace, které byste měli vědět.</string>
     <string name="proRefundRequestSessionSupport">Váš požadavek na vrácení peněz bude zpracován podporou {app_name}.\n\nPožádejte o vrácení peněz kliknutím na tlačítko níže a vyplněním formuláře žádosti o vrácení peněz.\n\nAčkoliv se podpora {app_name} snaží zpracovat žádosti o vrácení peněz během 24–72 hodin, může zpracování trvat i déle, v případě že je vyřizováno mnoho žádostí.</string>
     <string name="proRefunding">Vracení peněz za {pro}</string>
-    <string name="proRenewBeta">Obnovit {pro} Beta</string>
     <string name="proRequestedRefund">Žádost o vrácení peněz</string>
     <string name="proSendMore">Posílejte více se</string>
     <string name="proSettings">Nastavení {pro}</string>
@@ -1093,7 +1091,6 @@
     <string name="remove">Odstranit</string>
     <string name="removePasswordFail">Odebrání hesla selhalo</string>
     <string name="removePasswordModalDescription">Odstraňte své aktuální heslo pro {app_name}. Lokálně uložená data budou znovu zašifrována pomocí náhodně vygenerovaného klíče uloženého ve vašem zařízení.</string>
-    <string name="renew">Obnovit</string>
     <string name="reply">Odpovědět</string>
     <string name="requestRefund">Požádat o vrácení platby</string>
     <string name="resend">Odeslat znovu</string>

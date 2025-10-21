@@ -1046,6 +1046,7 @@
     <string name="proRenewPinFiveConversations">Want to pin more than 5 conversations again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
     <string name="proRenewPinMoreConversations">Want to more pin more conversations again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
     <string name="proRenewTosPrivacy">By renewing, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
+    <string name="proRenewalUnsuccessful">Pro renewal unsuccessful, retrying soon</string>
     <string name="proRenewingNoAccessBilling">Currently, {pro} access can only be purchased and renewed via the {platform_store} or {platform_store_other}. Because you installed {app_name} using the {build_variant}, you\'re not able to renew here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the {platform_store} and {platform_store_other}.<b> {pro} Roadmap</b> {icon}</string>
     <string name="proRequestedRefund">Refund Requested</string>
     <string name="proSendMore">Send more with</string>
