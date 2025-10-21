@@ -18,6 +18,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
@@ -419,13 +421,20 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
         binding.root.applySafeInsetsPaddings(
             applyBottom = false,
+            consumeInsets = false,
             alsoApply = { insets ->
                 binding.globalSearchRecycler.updatePadding(bottom = insets.bottom)
-                binding.newConversationButton.updateLayoutParams<MarginLayoutParams> {
-                    bottomMargin = insets.bottom + resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset)
-                }
             }
         )
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.newConversationButton) { v, insets ->
+            val nav = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            v.updateLayoutParams<MarginLayoutParams> {
+                bottomMargin = nav.bottom +
+                        resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset)
+            }
+            insets // don’t consume
+        }
 
         // Set up in-app review
         binding.inAppReviewView.setThemedContent {
