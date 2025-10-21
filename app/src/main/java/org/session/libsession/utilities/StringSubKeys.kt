@@ -50,7 +50,6 @@ object StringSubstitutionConstants {
     const val BUILD_VARIANT_KEY: StringSubKey              = "build_variant"
     const val APP_PRO_KEY: StringSubKey                    = "app_pro"
     const val PRO_KEY: StringSubKey                        = "pro"
-    const val CURRENT_PLAN_KEY: StringSubKey               = "current_plan"
     const val CURRENT_PLAN_LENGTH_KEY: StringSubKey        = "current_plan_length"
     const val SELECTED_PLAN_LENGTH_KEY: StringSubKey       = "selected_plan_length"
     const val SELECTED_PLAN_LENGTH_SINGULAR_KEY: StringSubKey = "selected_plan_length_singular"
