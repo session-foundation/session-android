@@ -355,15 +355,32 @@ class ConversationReactionOverlay : FrameLayout {
         revealAnimatorSet.start()
 
         if (isWideLayout) {
-            val scrubberRight = scrubberX + scrubberWidth
-            val scrubberLeft = scrubberX - scrubberWidth
-            val offsetX = when {
-                isMessageOnLeft -> scrubberRight - menuPadding
-                else ->  scrubberLeft + menuPadding
-            }
             // Adjust Y position to account for insets
-            val adjustedY = minOf(backgroundView.y, (availableHeight - actualMenuHeight).toFloat()).toInt()
-            contextMenu.show(offsetX.toInt(), adjustedY)
+            val adjustedY =
+                minOf(backgroundView.y, (availableHeight - actualMenuHeight).toFloat()).toInt()
+
+            val menuXInOverlay = if (isMessageOnLeft) {
+                // Menu to the RIGHT of the scrubber
+                scrubberX + scrubberWidth + menuPadding
+            } else {
+                // Menu to the LEFT of the scrubber - use MENU width here, not scrubber width
+                scrubberX - contextMenu.getMaxWidth() - menuPadding
+            }
+
+            val maxMenuYInOverlay = (height - systemInsets.bottom - actualMenuHeight).toFloat()
+            val menuYInOverlay = minOf(backgroundView.y, maxMenuYInOverlay)
+
+            // Convert overlay-local to anchor relative as expected by ConversationContextMenu.show()
+            val overlayOnScreen = IntArray(2).also { getLocationOnScreen(it) }
+            val anchorOnScreen = IntArray(2).also { dropdownAnchor.getLocationOnScreen(it) }
+
+            val menuXRelativeToAnchor =
+                (overlayOnScreen[0] + menuXInOverlay - anchorOnScreen[0]).toInt()
+            val menuYRelativeToAnchor =
+                (overlayOnScreen[1] + menuYInOverlay - anchorOnScreen[1]).toInt()
+
+            contextMenu.show(menuXRelativeToAnchor, menuYRelativeToAnchor)
+
         } else {
             // Use the same left visual edge for narrow layout too.
             val contentX = if (isMessageOnLeft) leftEdge else selectedConversationModel.bubbleX
