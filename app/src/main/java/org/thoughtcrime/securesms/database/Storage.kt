@@ -487,6 +487,12 @@ open class Storage @Inject constructor(
         return database.getMessageFor(threadId, timestamp, address)
     }
 
+    @Deprecated("We shouldn't be querying messages by timestamp alone. Use `getMessageBy` when possible ")
+    override fun getMessageByTimestamp(timestamp: Long, author: String, getQuote: Boolean): MessageRecord? {
+        val database = mmsSmsDatabase
+        return database.getMessageByTimestamp(timestamp, author, getQuote)
+    }
+
     override fun updateSentTimestamp(
         messageId: MessageId,
         newTimestamp: Long

@@ -93,6 +93,8 @@ interface StorageProtocol {
     fun removeReceivedMessageTimestamps(timestamps: Set<Long>)
     fun getAttachmentsForMessage(mmsMessageId: Long): List<DatabaseAttachment>
     fun getMessageBy(threadId: Long, timestamp: Long, author: String): MessageRecord?
+    @Deprecated("We shouldn't be querying messages by timestamp alone. Use `getMessageBy` when possible ")
+    fun getMessageByTimestamp(timestamp: Long, author: String, getQuote: Boolean): MessageRecord?
     fun updateSentTimestamp(messageId: MessageId, newTimestamp: Long)
     fun markAsResyncing(messageId: MessageId)
     fun markAsSyncing(messageId: MessageId)
