@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.coil
 
 import android.content.Context
-import androidx.work.WorkInfo
 import coil3.ImageLoader
 import coil3.decode.DataSource
 import coil3.decode.ImageSource
@@ -14,51 +13,35 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.first
 import okio.FileSystem
 import okio.buffer
 import okio.source
 import org.session.libsession.utilities.recipients.RemoteFile
-import org.session.libsignal.exceptions.NonRetryableException
-import org.thoughtcrime.securesms.attachments.LocalEncryptedFileInputStream
-import org.thoughtcrime.securesms.attachments.AvatarDownloadWorker
+import org.thoughtcrime.securesms.attachments.AvatarDownloadManager
 
 class RemoteFileFetcher @AssistedInject constructor(
     @Assisted private val file: RemoteFile,
     @Assisted private val options: Options,
     @param:ApplicationContext private val context: Context,
-    val localEncryptedFileInputStreamFactory: LocalEncryptedFileInputStream.Factory,
+    private val avatarDownloadManager: AvatarDownloadManager,
 ) : Fetcher {
     override suspend fun fetch(): FetchResult? {
-        val downloadedFile = AvatarDownloadWorker.computeFileName(context, file)
+        val downloadedFile = AvatarDownloadManager.computeFileName(context, file)
 
         // Check if the file already exists in the local storage, otherwise enqueue a download and
         // wait for it to complete.
         val dataSource = when {
             downloadedFile.exists() -> DataSource.DISK
-            options.networkCachePolicy == CachePolicy.ENABLED -> {
-                AvatarDownloadWorker.enqueue(context, file, urgent = true)
-                    .first { it?.state?.isFinished == true }
-                DataSource.NETWORK
-            }
+            options.networkCachePolicy == CachePolicy.ENABLED -> DataSource.NETWORK
             else -> {
                 throw RuntimeException("RemoteFile doesn't exist locally and we aren't allowed to download" +
                         "from network")
             }
         }
 
-        val stream = localEncryptedFileInputStreamFactory.create(downloadedFile)
-
-        if (stream.meta.hasPermanentDownloadError) {
-            stream.close()
-            throw NonRetryableException(
-                "File download failed permanently for $file"
-            )
-        }
-
         return SourceFetchResult(
             source = ImageSource(
-                source = stream.source().buffer(),
+                source = avatarDownloadManager.download(file).source().buffer(),
                 fileSystem = FileSystem.SYSTEM,
                 metadata = null
             ),

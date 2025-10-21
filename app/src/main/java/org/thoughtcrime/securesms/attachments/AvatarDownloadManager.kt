@@ -1,27 +1,10 @@
 package org.thoughtcrime.securesms.attachments
 
 import android.content.Context
-import androidx.work.BackoffPolicy
-import androidx.work.Constraints
-import androidx.work.CoroutineWorker
-import androidx.work.Data
-import androidx.work.ExistingWorkPolicy
-import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.Operation
-import androidx.work.OutOfQuotaPolicy
-import androidx.work.WorkInfo
-import androidx.work.WorkManager
-import androidx.work.WorkRequest
-import androidx.work.WorkerParameters
-import androidx.work.await
-import androidx.work.hasKeyWithValueOfType
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedInject
+import androidx.annotation.CheckResult
+import androidx.work.ListenableWorker
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.mapNotNull
-import network.loki.messenger.libsession_util.util.Bytes
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.messaging.file_server.FileServerApi
@@ -44,19 +27,17 @@ import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.util.DateUtils.Companion.millsToInstant
 import org.thoughtcrime.securesms.util.getRootCause
 import java.io.File
+import java.io.InputStream
 import java.security.MessageDigest
-import java.util.concurrent.TimeUnit
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
- * A worker that downloads a remote file and stores it locally in an encrypted format.
- *
- * Right now this is only used for downloading avatars, for downloading attachment, there's
- * [org.session.libsession.messaging.jobs.AttachmentDownloadJob] as it's still using a different
- * encryption method.
+ * A manager that handles downloading and caching user avatars.
  */
-class AvatarDownloadWorker @AssistedInject constructor(
-    @Assisted private val context: Context,
-    @Assisted params: WorkerParameters,
+@Singleton
+class AvatarDownloadManager @Inject constructor(
+    @param:ApplicationContext private val context: Context,
     private val localEncryptedFileOutputStreamFactory: LocalEncryptedFileOutputStream.Factory,
     private val localEncryptedFileInputStreamFactory: LocalEncryptedFileInputStream.Factory,
     private val prefs: TextSecurePreferences,
@@ -64,73 +45,63 @@ class AvatarDownloadWorker @AssistedInject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val fileServerApi: FileServerApi,
     private val attachmentProcessor: AttachmentProcessor,
-) : CoroutineWorker(context, params) {
-    private val file: RemoteFile by lazy {
-        when {
-            inputData.hasKeyWithValueOfType<String>(ARG_ENCRYPTED_URL) -> RemoteFile.Encrypted(
-                url = inputData.getString(ARG_ENCRYPTED_URL)!!,
-                key = Bytes(requireNotNull(inputData.getByteArray(ARG_ENCRYPTED_KEY)))
-            )
+) {
 
-            else -> RemoteFile.Community(
-                communityServerBaseUrl = requireNotNull(inputData.getString(ARG_COMMUNITY_URL)) {
-                    "RemoteFileDownloadWorker requires a community URL"
-                },
-                roomId = requireNotNull(inputData.getString(ARG_COMMUNITY_ROOM_ID)) {
-                    "RemoteFileDownloadWorker requires a community room ID"
-                },
-                fileId = requireNotNull(inputData.getString(ARG_COMMUNITY_FILE_ID)) {
-                    "RemoteFileDownloadWorker requires a community file ID"
-                }
-            )
-        }
-    }
-
-    override suspend fun doWork(): Result {
+    /**
+     * Downloads the given remote file, returning an InputStream to read the downloaded file.
+     * If the file has already been downloaded, returns an InputStream to read the cached file.
+     *
+     * @throws NonRetryableException if the download failed permanently.
+     * @return InputStream to read the downloaded file. It's the caller's responsibility to close the stream.
+     */
+    @CheckResult
+    suspend fun download(file: RemoteFile): InputStream {
         val downloaded = computeFileName(context, file)
 
         // If the downloaded file exists, it can either mean it's already downloaded or the previous
         // download failed permanently, so we can skip it.
         if (downloaded.exists()) {
-            try {
-                localEncryptedFileInputStreamFactory.create(downloaded).use {
-                    if (it.meta.hasPermanentDownloadError) {
-                        Log.w(TAG, "File $downloaded is marked as a permanent error, skipping download")
-                        return Result.failure()
-                    } else {
-                        Log.i(TAG, "File $downloaded already exists, skipping download")
-                        return Result.success()
-                    }
-                }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
+            val downloadedFile = runCatching {
+                localEncryptedFileInputStreamFactory.create(downloaded)
+            }.onFailure { e ->
                 Log.w(TAG, "Failed to read downloaded file $downloaded", e)
                 // If we can't read the file, we assume it's corrupted and we need to delete it.
                 if (!downloaded.delete()) {
                     Log.w(TAG, "Failed to delete corrupted file $downloaded")
+                }
+            }.getOrNull()
+
+            when {
+                downloadedFile?.meta?.hasPermanentDownloadError == true -> {
+                    throw NonRetryableException("Previous download failed permanently for file $file")
+                }
+
+                downloadedFile != null -> {
+                    Log.d(TAG, "Avatar file already downloaded: $file")
+                    return downloadedFile
                 }
             }
         }
 
         Log.d(TAG, "Start downloading file from $file")
 
-        val result = runCatching { downloadAndDecryptFile() }
+        val (bytes, meta) = try {
+            downloadAndDecryptFile(file)
+        } catch (e: Exception) {
+            if (e.getRootCause<NonRetryableException>() != null ||
+                e.getRootCause<OnionRequestAPI.HTTPRequestFailedAtDestinationException>()?.statusCode == 404) {
+                Log.w(TAG, "Download failed permanently for file $file", e)
+                // Write an empty file with a permanent error metadata if the download failed permanently.
+                localEncryptedFileOutputStreamFactory.create(downloaded, FileMetadata(
+                    hasPermanentDownloadError = true
+                )).use {}
 
-        val (bytes, meta) = if (result.isSuccess) {
-            result.getOrThrow()
-        } else if (result.exceptionOrNull() is NonRetryableException ||
-            result.exceptionOrNull()?.getRootCause<OnionRequestAPI.HTTPRequestFailedAtDestinationException>()?.statusCode == 404) {
-            Log.w(TAG, "Download failed permanently for file $file", result.exceptionOrNull())
-            // Write an empty file with a permanent error metadata if the download failed permanently.
-            byteArrayOf().view() to FileMetadata(
-                hasPermanentDownloadError = true
-            )
-        } else {
-            Log.w(TAG, "Download failed for file $file", result.exceptionOrNull())
-            // If the download failed otherwise, we retry the work.
-            return Result.retry()
+                throw NonRetryableException("Download failed permanently for file $file", e)
+            } else {
+                throw e
+            }
         }
+
 
         // A temp file to clear, if it exists
         var tmpFileToClean: File? = null
@@ -152,13 +123,13 @@ class AvatarDownloadWorker @AssistedInject constructor(
             // Since we successfully moved the file, we don't need to delete the temporary file anymore.
             tmpFileToClean = null
             Log.d(TAG, "Successfully downloaded file $file")
-            return Result.success()
+            return localEncryptedFileInputStreamFactory.create(downloaded)
         } catch (e: CancellationException) {
             Log.i(TAG, "Download cancelled for file $file")
             throw e
         } catch (e: Exception) {
             Log.e(TAG, "Failed to download file $file", e)
-            return Result.failure()
+            throw e
         } finally {
             tmpFileToClean?.delete()
         }
@@ -202,8 +173,8 @@ class AvatarDownloadWorker @AssistedInject constructor(
         }
     }
 
-    private suspend fun downloadAndDecryptFile(): Pair<ByteArraySlice, FileMetadata> {
-        return when (val file = file) {
+    private suspend fun downloadAndDecryptFile(file: RemoteFile): Pair<ByteArraySlice, FileMetadata> {
+        return when (file) {
             is RemoteFile.Encrypted -> {
                 // Look at the db and find out which addresses have this file as their profile picture,
                 // then we will look at the old location of the avatar file and migrate it to the new location.
@@ -271,15 +242,7 @@ class AvatarDownloadWorker @AssistedInject constructor(
     }
 
     companion object {
-        const val TAG = "AvatarDownloadWorker"
-
-        private const val ARG_ENCRYPTED_URL = "encrypted_url"
-        private const val ARG_ENCRYPTED_KEY = "encrypted_key"
-
-        private const val ARG_COMMUNITY_URL = "community_url"
-        private const val ARG_COMMUNITY_ROOM_ID = "community_room_id"
-        private const val ARG_COMMUNITY_FILE_ID = "community_file_id"
-
+        private const val TAG = "AvatarDownloadManager"
         private const val SUBDIRECTORY = "remote_files"
 
         private fun RemoteFile.sha256Hash(): String {
@@ -307,69 +270,11 @@ class AvatarDownloadWorker @AssistedInject constructor(
             return File(downloadsDirectory(context), remote.sha256Hash())
         }
 
-        private fun uniqueWorkName(remote: RemoteFile): String {
-            return "download-remote-file-${remote.sha256Hash()}"
-        }
-
-        fun cancel(context: Context, file: RemoteFile): Operation {
-            return WorkManager.getInstance(context).cancelUniqueWork(
-                uniqueWorkName(file)
-            )
-        }
-
         /** Returns all currently downloaded files (may be empty). */
         fun listDownloadedFiles(context: Context): List<File> {
             val directory = downloadsDirectory(context)
             return directory.listFiles()?.toList().orEmpty()
         }
 
-        /**
-         * Enqueue a download for the given remote file.
-         *
-         * @param urgent If true, the work will be expedited (if possible). Normally used
-         * for when the user is actively waiting for the download to complete (like displaying
-         * a profile picture)
-         */
-        suspend fun enqueue(context: Context, file: RemoteFile, urgent: Boolean = false): Flow<WorkInfo?> {
-            val input = when (file) {
-                is RemoteFile.Encrypted -> Data.Builder()
-                    .putString(ARG_ENCRYPTED_URL, file.url)
-                    .putByteArray(ARG_ENCRYPTED_KEY, file.key.data)
-
-                is RemoteFile.Community -> Data.Builder()
-                    .putString(ARG_COMMUNITY_URL, file.communityServerBaseUrl)
-                    .putString(ARG_COMMUNITY_ROOM_ID, file.roomId)
-                    .putString(ARG_COMMUNITY_FILE_ID, file.fileId)
-            }
-
-            val requestBuilder = OneTimeWorkRequestBuilder<AvatarDownloadWorker>()
-                .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
-                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, WorkRequest.MIN_BACKOFF_MILLIS,
-                    TimeUnit.MILLISECONDS)
-                .addTag(TAG)
-                .setInputData(input.build())
-
-            if (urgent) {
-                requestBuilder.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-            }
-
-            val workName = uniqueWorkName(file)
-            WorkManager.getInstance(context)
-                .enqueueUniqueWork(
-                    workName,
-                    ExistingWorkPolicy.REPLACE,
-                    requestBuilder.build()
-                )
-                .await()
-
-            Log.d(TAG, "Enqueued download for $file")
-
-            return WorkManager.getInstance(context)
-                .getWorkInfosForUniqueWorkFlow(workName)
-                .mapNotNull {
-                    Log.d(TAG, "WorkInfo for download of $file: $it")
-                    it.firstOrNull()
-                }
-        }
     }
 }
