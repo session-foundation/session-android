@@ -5,7 +5,6 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import com.squareup.phrase.Phrase
@@ -13,7 +12,7 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN_LENGTH_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DEVICE_TYPE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACCOUNT_KEY
@@ -55,7 +54,7 @@ fun ChoosePlanNonOriginating(
 
         is SubscriptionType.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proAccessActivatedAutoShort))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-            .put(CURRENT_PLAN_KEY, DateUtils.getLocalisedTimeDuration(
+            .put(CURRENT_PLAN_LENGTH_KEY, DateUtils.getLocalisedTimeDuration(
                 context = context,
                 amount = subscription.duration.duration.months,
                 unit = MeasureUnit.MONTH

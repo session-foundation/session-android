@@ -49,7 +49,7 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN_LENGTH_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
@@ -117,7 +117,7 @@ fun ChoosePlan(
             is SubscriptionType.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proAccessActivatesAuto))
                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                 .put(
-                    CURRENT_PLAN_KEY, DateUtils.getLocalisedTimeDuration(
+                    CURRENT_PLAN_LENGTH_KEY, DateUtils.getLocalisedTimeDuration(
                         context = context,
                         amount = planData.subscriptionType.duration.duration.months,
                         unit = MeasureUnit.MONTH
