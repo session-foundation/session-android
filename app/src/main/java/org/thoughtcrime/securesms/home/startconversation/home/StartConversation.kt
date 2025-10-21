@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.home.startconversation.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -115,8 +116,7 @@ private fun LandscapeContent(
 ) {
     Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = LocalDimensions.current.spacing),
+            .fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.spacing)
     ) {
         // Left: independently scrollable actions list
@@ -129,12 +129,18 @@ private fun LandscapeContent(
         }
 
         // Right: QR panel, vertically centered, with square sizing
-        QrPanel(
-            accountId = accountId,
+        Box(
             modifier = Modifier
-                .widthIn(max = 420.dp)
+                .weight(1f)
                 .align(Alignment.CenterVertically)
-        )
+        ) {
+            QrPanel(
+                accountId = accountId,
+                modifier = Modifier
+                    .widthIn(max = 420.dp)
+            )
+        }
+
     }
 }
 

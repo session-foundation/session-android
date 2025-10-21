@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -22,8 +23,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
@@ -63,16 +69,27 @@ fun StartConversationSheet(
         modifier = modifier,
         sheetState = sheetState,
         dragHandle = null,
-        onDismissRequest = onDismissRequest
+        onDismissRequest = onDismissRequest,
     ){
-        BoxWithConstraints(modifier = modifier.windowInsetsPadding(
-            WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
-        )) {
+        BoxWithConstraints {
+            val windowWidthDp = with(LocalDensity.current) {
+                LocalWindowInfo.current.containerSize.width.toDp()
+            }
+
+            val isFullWidth = maxWidth >= windowWidthDp
+
+            val horizontalInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
+            val contentMod = if (isFullWidth) {
+                Modifier.windowInsetsPadding(horizontalInsets)
+            } else {
+                Modifier
+            }
+
             val topInset = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding()
             val targetHeight = (this.maxHeight - topInset) * 0.94f // sheet should take up 94% of the height, without the staatus bar
             Box(
-                modifier = Modifier.height(targetHeight),
-                contentAlignment = Alignment.TopCenter,
+                modifier = contentMod.height(targetHeight),
+                contentAlignment = Alignment.TopCenter
             ) {
                 StartConversationNavHost(
                     accountId = accountId,
