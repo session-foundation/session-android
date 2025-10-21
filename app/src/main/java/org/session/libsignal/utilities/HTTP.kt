@@ -157,8 +157,7 @@ object HTTP {
         }
     }
 
-    @Suppress("OPT_IN_USAGE")
-    private val httpCallDispatcher = Dispatchers.IO.limitedParallelism(15)
+    private val httpCallDispatcher = Dispatchers.IO
 
     private suspend fun Call.await(): Response {
         return withContext(httpCallDispatcher) {

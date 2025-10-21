@@ -37,8 +37,8 @@ class RemoteFileFetcher @AssistedInject constructor(
         val dataSource = when {
             downloadedFile.exists() -> DataSource.DISK
             options.networkCachePolicy == CachePolicy.ENABLED -> {
-                AvatarDownloadWorker.enqueue(context, file)
-                    .first { it?.state == WorkInfo.State.FAILED || it?.state == WorkInfo.State.SUCCEEDED }
+                AvatarDownloadWorker.enqueue(context, file, urgent = true)
+                    .first { it?.state?.isFinished == true }
                 DataSource.NETWORK
             }
             else -> {

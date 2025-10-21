@@ -109,6 +109,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory.get())
+            .setMinimumLoggingLevel(android.util.Log.VERBOSE)
             .build()
 
     override fun getSystemService(name: String): Any? {

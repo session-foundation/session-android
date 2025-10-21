@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.attachments
 
 import android.content.Context
-import androidx.hilt.work.HiltWorker
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
@@ -10,9 +9,12 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.Operation
+import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import androidx.work.WorkRequest
 import androidx.work.WorkerParameters
+import androidx.work.await
 import androidx.work.hasKeyWithValueOfType
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -25,7 +27,6 @@ import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.AESGCM
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
@@ -44,7 +45,7 @@ import org.thoughtcrime.securesms.util.DateUtils.Companion.millsToInstant
 import org.thoughtcrime.securesms.util.getRootCause
 import java.io.File
 import java.security.MessageDigest
-import java.time.Duration
+import java.util.concurrent.TimeUnit
 
 /**
  * A worker that downloads a remote file and stores it locally in an encrypted format.
@@ -53,7 +54,6 @@ import java.time.Duration
  * [org.session.libsession.messaging.jobs.AttachmentDownloadJob] as it's still using a different
  * encryption method.
  */
-@HiltWorker
 class AvatarDownloadWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted params: WorkerParameters,
@@ -324,12 +324,13 @@ class AvatarDownloadWorker @AssistedInject constructor(
         }
 
         /**
-         * @param isOldAvatarOf used to indicate that this file is an avatar of a specific address. This
-         * information is optional and only used for migration purposes (to move the avatar from
-         * the old location to the new one). Once the migration grace period is over, this parameter
-         * shall be removed.
+         * Enqueue a download for the given remote file.
+         *
+         * @param urgent If true, the work will be expedited (if possible). Normally used
+         * for when the user is actively waiting for the download to complete (like displaying
+         * a profile picture)
          */
-        fun enqueue(context: Context, file: RemoteFile): Flow<WorkInfo?> {
+        suspend fun enqueue(context: Context, file: RemoteFile, urgent: Boolean = false): Flow<WorkInfo?> {
             val input = when (file) {
                 is RemoteFile.Encrypted -> Data.Builder()
                     .putString(ARG_ENCRYPTED_URL, file.url)
@@ -341,24 +342,34 @@ class AvatarDownloadWorker @AssistedInject constructor(
                     .putString(ARG_COMMUNITY_FILE_ID, file.fileId)
             }
 
-            val request = OneTimeWorkRequestBuilder<AvatarDownloadWorker>()
+            val requestBuilder = OneTimeWorkRequestBuilder<AvatarDownloadWorker>()
                 .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
-                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, Duration.ofSeconds(5))
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, WorkRequest.MIN_BACKOFF_MILLIS,
+                    TimeUnit.MILLISECONDS)
                 .addTag(TAG)
                 .setInputData(input.build())
-                .build()
+
+            if (urgent) {
+                requestBuilder.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+            }
 
             val workName = uniqueWorkName(file)
             WorkManager.getInstance(context)
                 .enqueueUniqueWork(
                     workName,
-                    ExistingWorkPolicy.KEEP,
-                    request
+                    ExistingWorkPolicy.REPLACE,
+                    requestBuilder.build()
                 )
+                .await()
+
+            Log.d(TAG, "Enqueued download for $file")
 
             return WorkManager.getInstance(context)
                 .getWorkInfosForUniqueWorkFlow(workName)
-                .mapNotNull { it.firstOrNull() }
+                .mapNotNull {
+                    Log.d(TAG, "WorkInfo for download of $file: $it")
+                    it.firstOrNull()
+                }
         }
     }
 }
