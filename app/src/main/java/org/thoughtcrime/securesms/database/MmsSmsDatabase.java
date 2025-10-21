@@ -149,6 +149,29 @@ public class MmsSmsDatabase extends Database {
     return null;
   }
 
+  /**
+   * @deprecated We shouldn't be querying messages by timestamp alone. Use `getMessageFor` when possible
+   */
+  @Deprecated(forRemoval = true)
+  public @Nullable MessageRecord getMessageByTimestamp(long timestamp, String serializedAuthor, boolean getQuote) {
+    try (Cursor cursor = queryTables(PROJECTION, MmsSmsColumns.NORMALIZED_DATE_SENT + " = " + timestamp, true, null, null, null)) {
+      MmsSmsDatabase.Reader reader = readerFor(cursor, getQuote);
+
+      MessageRecord messageRecord;
+      boolean isOwnNumber = Util.isOwnNumber(context, serializedAuthor);
+
+      while ((messageRecord = reader.getNext()) != null) {
+        if ((isOwnNumber && messageRecord.isOutgoing()) ||
+                (!isOwnNumber && messageRecord.getIndividualRecipient().getAddress().toString().equals(serializedAuthor)))
+        {
+          return messageRecord;
+        }
+      }
+    }
+
+    return null;
+  }
+
   @Nullable
   public MessageId getLastSentMessageID(long threadId) {
     String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
