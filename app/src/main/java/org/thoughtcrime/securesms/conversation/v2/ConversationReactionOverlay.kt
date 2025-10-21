@@ -355,10 +355,6 @@ class ConversationReactionOverlay : FrameLayout {
         revealAnimatorSet.start()
 
         if (isWideLayout) {
-            // Adjust Y position to account for insets
-            val adjustedY =
-                minOf(backgroundView.y, (availableHeight - actualMenuHeight).toFloat()).toInt()
-
             val menuXInOverlay = if (isMessageOnLeft) {
                 // Menu to the RIGHT of the scrubber
                 scrubberX + scrubberWidth + menuPadding
@@ -371,26 +367,25 @@ class ConversationReactionOverlay : FrameLayout {
             val menuYInOverlay = minOf(backgroundView.y, maxMenuYInOverlay)
 
             // Convert overlay-local to anchor relative as expected by ConversationContextMenu.show()
-            val overlayOnScreen = IntArray(2).also { getLocationOnScreen(it) }
-            val anchorOnScreen = IntArray(2).also { dropdownAnchor.getLocationOnScreen(it) }
-
-            val menuXRelativeToAnchor =
-                (overlayOnScreen[0] + menuXInOverlay - anchorOnScreen[0]).toInt()
-            val menuYRelativeToAnchor =
-                (overlayOnScreen[1] + menuYInOverlay - anchorOnScreen[1]).toInt()
-
-            contextMenu.show(menuXRelativeToAnchor, menuYRelativeToAnchor)
+            val (xOffset, yOffset) = toAnchorOffsets(menuXInOverlay, menuYInOverlay)
+            contextMenu.show(xOffset, yOffset)
 
         } else {
-            // Use the same left visual edge for narrow layout too.
-            val contentX = if (isMessageOnLeft) leftEdge else selectedConversationModel.bubbleX
-
-            val offsetX = when {
-                isMessageOnLeft -> contentX
-                else -> -contextMenu.getMaxWidth() + contentX + bubbleWidth
+            val menuXInOverlay = if (isMessageOnLeft) {
+                leftEdge
+            } else {
+                rightEdge - contextMenu.getMaxWidth()
             }
+
             val menuTop = endApparentTop + conversationItemSnapshot.height * endScale
-            contextMenu.show(offsetX.toInt(), (menuTop + menuPadding).toInt())
+            val menuYInOverlay = (menuTop + menuPadding)
+                .coerceIn(
+                    systemInsets.top.toFloat(),
+                    (height - systemInsets.bottom - actualMenuHeight).toFloat()
+                )
+
+            val (xOffset, yOffset) = toAnchorOffsets(menuXInOverlay, menuYInOverlay)
+            contextMenu.show(xOffset, yOffset)
         }
 
         val revealDuration = context.resources.getInteger(R.integer.reaction_scrubber_reveal_duration)
@@ -402,6 +397,12 @@ class ConversationReactionOverlay : FrameLayout {
             .x(endX)
             .y(endY)
             .setDuration(revealDuration.toLong())
+    }
+
+    private fun toAnchorOffsets(xInOverlay: Float, yInOverlay: Float): Pair<Int, Int> {
+        val xOffset = (xInOverlay - dropdownAnchor.x).toInt()
+        val yOffset = (yInOverlay - dropdownAnchor.y).toInt()
+        return xOffset to yOffset
     }
 
     private fun getReactionBarOffsetForTouch(itemY: Float,
