@@ -7,11 +7,13 @@ import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.remember
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
-import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination.CancelSubscription
@@ -53,26 +55,25 @@ sealed interface ProSettingsDestination: Parcelable {
     data object RefundSubscription: ProSettingsDestination
 }
 
+@Serializable object ProSettingsGraph
+
 @SuppressLint("RestrictedApi")
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ProSettingsNavHost(
-    navigator: UINavigator<ProSettingsDestination>,
     startDestination: ProSettingsDestination = Home,
+    hideHomeAppBar: Boolean,
     onBack: () -> Unit
 ){
     SharedTransitionLayout {
         val navController = rememberNavController()
-        val scope = rememberCoroutineScope()
-
-        // all screens within the Pro Flow can share the same VM
-        val viewModel = hiltViewModel<ProSettingsViewModel>()
-
-        val dialogsState by viewModel.dialogState.collectAsState()
+        val navigator: UINavigator<ProSettingsDestination> = remember {
+            UINavigator<ProSettingsDestination>()
+        }
 
         val handleBack: () -> Unit = {
             if (navController.previousBackStackEntry != null) {
-                scope.launch { navigator.navigateUp() }
+                navController.navigateUp()
             } else {
                 onBack() // Finish activity if at root
             }
@@ -87,7 +88,7 @@ fun ProSettingsNavHost(
                     action.navOptions(this)
                 }
 
-                NavigationAction.NavigateUp -> navController.navigateUp()
+                NavigationAction.NavigateUp -> handleBack()
 
                 is NavigationAction.NavigateToIntent -> {
                     navController.context.startActivity(action.intent)
@@ -97,58 +98,84 @@ fun ProSettingsNavHost(
             }
         }
 
-        NavHost(navController = navController, startDestination = startDestination) {
-            // Home
-            horizontalSlideComposable<Home> {
-                ProSettingsHomeScreen(
-                    viewModel = viewModel,
-                    onBack = onBack,
-                )
-            }
+        NavHost(navController = navController, startDestination = ProSettingsGraph) {
+            navigation<ProSettingsGraph>(startDestination = startDestination) {
+                // Home
+                horizontalSlideComposable<Home> { entry ->
+                    val viewModel = navController.proGraphViewModel(entry, navigator)
+                    ProSettingsHomeScreen(
+                        viewModel = viewModel,
+                        hideHomeAppBar = hideHomeAppBar,
+                        onBack = onBack,
+                    )
+                }
 
-            // Subscription plan selection
-            horizontalSlideComposable<UpdatePlan> {
-                UpdatePlanScreen(
-                    viewModel = viewModel,
-                    onBack = handleBack,
-                )
-            }
-            horizontalSlideComposable<GetOrRenewPlan> {
-                GetOrRenewPlanScreen(
-                    viewModel = viewModel,
-                    onBack = handleBack,
-                )
-            }
+                // Subscription plan selection
+                horizontalSlideComposable<UpdatePlan> { entry ->
+                    val viewModel = navController.proGraphViewModel(entry, navigator)
+                    UpdatePlanScreen(
+                        viewModel = viewModel,
+                        onBack = handleBack,
+                    )
+                }
+                horizontalSlideComposable<GetOrRenewPlan> { entry ->
+                    val viewModel = navController.proGraphViewModel(entry, navigator)
+                    GetOrRenewPlanScreen(
+                        viewModel = viewModel,
+                        onBack = handleBack,
+                    )
+                }
 
-            // Subscription plan confirmation
-            horizontalSlideComposable<PlanConfirmation> {
-                PlanConfirmationScreen(
-                    viewModel = viewModel,
-                    onBack = handleBack,
-                )
-            }
+                // Subscription plan confirmation
+                horizontalSlideComposable<PlanConfirmation> { entry ->
+                    val viewModel = navController.proGraphViewModel(entry, navigator)
+                    PlanConfirmationScreen(
+                        viewModel = viewModel,
+                        onBack = handleBack,
+                    )
+                }
 
-            // Refund
-            horizontalSlideComposable<RefundSubscription> {
-                RefundPlanScreen(
-                    viewModel = viewModel,
-                    onBack = handleBack,
-                )
-            }
+                // Refund
+                horizontalSlideComposable<RefundSubscription> { entry ->
+                    val viewModel = navController.proGraphViewModel(entry, navigator)
+                    RefundPlanScreen(
+                        viewModel = viewModel,
+                        onBack = handleBack,
+                    )
+                }
 
-            // Cancellation
-            horizontalSlideComposable<CancelSubscription> {
-                CancelPlanScreen(
-                    viewModel = viewModel,
-                    onBack = handleBack,
-                )
+                // Cancellation
+                horizontalSlideComposable<CancelSubscription> { entry ->
+                    val viewModel = navController.proGraphViewModel(entry, navigator)
+                    CancelPlanScreen(
+                        viewModel = viewModel,
+                        onBack = handleBack,
+                    )
+                }
             }
         }
 
         // Dialogs
-        ProSettingsDialogs(
-            dialogsState = dialogsState,
-            sendCommand = viewModel::onCommand,
-        )
+        // the composable need to wait until the graph has been rendered
+        val graphReady = remember(navController.currentBackStackEntryAsState().value) {
+            runCatching { navController.getBackStackEntry(ProSettingsGraph) }.getOrNull()
+        }
+        graphReady?.let { entry ->
+            val vm = navController.proGraphViewModel(entry, navigator)
+            val dialogsState by vm.dialogState.collectAsState()
+            ProSettingsDialogs(dialogsState = dialogsState, sendCommand = vm::onCommand)
+        }
     }
+}
+
+@Composable
+fun NavController.proGraphViewModel(
+    entry: androidx.navigation.NavBackStackEntry,
+    navigator: UINavigator<ProSettingsDestination>
+): ProSettingsViewModel {
+    val graphEntry = remember(entry) { getBackStackEntry(ProSettingsGraph) }
+    return hiltViewModel<
+            ProSettingsViewModel,
+            ProSettingsViewModel.Factory
+            >(graphEntry) { factory -> factory.create(navigator) }
 }

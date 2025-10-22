@@ -135,7 +135,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var proStatusManager: ProStatusManager
     @Inject lateinit var recipientRepository: RecipientRepository
     @Inject lateinit var avatarUtils: AvatarUtils
-    @Inject lateinit var startConversationNavigator: UINavigator<StartConversationDestination>
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
@@ -294,7 +293,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 val dialogsState by homeViewModel.dialogsState.collectAsState()
                 HomeDialogs(
                     dialogsState = dialogsState,
-                    startConversationNavigator = startConversationNavigator,
                     sendCommand = homeViewModel::onCommand
                 )
             }

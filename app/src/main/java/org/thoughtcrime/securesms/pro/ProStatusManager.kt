@@ -46,7 +46,10 @@ class ProStatusManager @Inject constructor(
         (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_PRO_PLAN_STATUS } as Flow<*>)
             .onStart { emit(Unit) }
             .map { prefs.getDebugProPlanStatus() },
-    ){ selfRecipient, debugSubscription, debugProPlanStatus ->
+        (TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO } as Flow<*>)
+            .onStart { emit(Unit) }
+            .map { prefs.forceCurrentUserAsPro() },
+    ){ selfRecipient, debugSubscription, debugProPlanStatus, forceCurrentUserAsPro ->
         //todo PRO implement properly
 
         val subscriptionState = debugSubscription ?: DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE
@@ -56,7 +59,8 @@ class ProStatusManager @Inject constructor(
             else -> State.Success(Unit)
         }
 
-        if(selfRecipient.proStatus is ProStatus.None){
+        if(!forceCurrentUserAsPro){
+            //todo PRO this is where we should get the real state
             SubscriptionState(
                 type = SubscriptionType.NeverSubscribed,
                 refreshState = proDataStatus
@@ -96,6 +100,22 @@ class ProStatusManager @Inject constructor(
                     )
                 )
 
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER -> SubscriptionType.Active.Expiring(
+                    proStatus = ProStatus.Pro(
+                        visible = true,
+                        validUntil = Instant.now() + Duration.ofDays(40),
+                    ),
+                    duration = ProSubscriptionDuration.TWELVE_MONTHS,
+                    subscriptionDetails = SubscriptionDetails(
+                        device = "Android",
+                        store = "Google Play Store",
+                        platform = "Google",
+                        platformAccount = "Google account",
+                        subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
+                        refundUrl = "https://getsession.org/android-refund",
+                    )
+                )
+
                 DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> SubscriptionType.Active.AutoRenewing(
                     proStatus = ProStatus.Pro(
                         visible = true,
@@ -103,7 +123,7 @@ class ProStatusManager @Inject constructor(
                     ),
                     duration = ProSubscriptionDuration.ONE_MONTH,
                     subscriptionDetails = SubscriptionDetails(
-                        device = "iPhone",
+                        device = "iOS",
                         store = "Apple App Store",
                         platform = "Apple",
                         platformAccount = "Apple Account",
@@ -119,7 +139,7 @@ class ProStatusManager @Inject constructor(
                     ),
                     duration = ProSubscriptionDuration.ONE_MONTH,
                     subscriptionDetails = SubscriptionDetails(
-                        device = "iPhone",
+                        device = "iOS",
                         store = "Apple App Store",
                         platform = "Apple",
                         platformAccount = "Apple Account",
@@ -139,10 +159,21 @@ class ProStatusManager @Inject constructor(
                         refundUrl = "https://getsession.org/android-refund",
                     )
                 )
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_EARLIER -> SubscriptionType.Expired(
+                    expiredAt = Instant.now() - Duration.ofDays(60),
+                    subscriptionDetails = SubscriptionDetails(
+                        device = "Android",
+                        store = "Google Play Store",
+                        platform = "Google",
+                        platformAccount = "Google account",
+                        subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
+                        refundUrl = "https://getsession.org/android-refund",
+                    )
+                )
                 DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE -> SubscriptionType.Expired(
                     expiredAt = Instant.now() - Duration.ofDays(14),
                     subscriptionDetails = SubscriptionDetails(
-                        device = "iPhone",
+                        device = "iOS",
                         store = "Apple App Store",
                         platform = "Apple",
                         platformAccount = "Apple Account",

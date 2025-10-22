@@ -47,8 +47,10 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.RecipientSettings
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.groups.GroupMemberComparator
+import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
 import java.lang.ref.WeakReference
 import java.time.Duration
@@ -147,7 +149,10 @@ class RecipientRepository @Inject constructor(
                 value = createLocalRecipient(address, recipientData)
                 changeSource = merge(
                     configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_PROFILE)),
-                    TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO }
+                    TextSecurePreferences.events.filter {
+                        it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO
+                                || it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS
+                    }
                 )
             }
 
@@ -407,7 +412,11 @@ class RecipientRepository @Inject constructor(
                             expiryMode = configs.userProfile.getNtsExpiry(),
                             priority = configs.userProfile.getNtsPriority(),
                             proStatus = if (preferences.forceCurrentUserAsPro()) {
-                                ProStatus.Pro()
+                                // take into account the fact that we can be expired via the debug menu - which is no longer pro
+                                if(preferences.getDebugSubscriptionType() == DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED
+                                    || preferences.getDebugSubscriptionType() == DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE
+                                    || preferences.getDebugSubscriptionType() == DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_EARLIER) ProStatus.None
+                                else ProStatus.Pro()
                             } else {
                                 // TODO: Get pro status from config
                                 ProStatus.None
