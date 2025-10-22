@@ -127,10 +127,11 @@
             android:layout_below="@id/scribble_color_picker"
             android:layout_alignEnd="@id/scribble_color_picker"
             android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="8dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="@+id/scribble_color_picker"
-            app:layout_constraintTop_toBottomOf="@+id/scribble_color_picker"
+            android:layout_marginEnd="@dimen/small_spacing"
+            app:layout_constraintBottom_toBottomOf="@+id/scribble_color_picker"
+            app:layout_constraintEnd_toStartOf="@+id/scribble_color_picker"
+            app:layout_constraintTop_toTopOf="@+id/scribble_color_picker"
+
             app:layout_constraintVertical_bias="0.0" />
 
         <ImageView
