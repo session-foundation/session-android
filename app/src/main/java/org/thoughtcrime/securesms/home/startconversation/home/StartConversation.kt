@@ -185,7 +185,6 @@ private fun QrPanel(
         }
     }
 }
-//}
 
 @Composable
 private fun ActionList(navigateTo: (StartConversationDestination) -> Unit) {
