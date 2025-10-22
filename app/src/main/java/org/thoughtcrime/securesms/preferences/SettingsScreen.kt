@@ -561,15 +561,7 @@ fun Buttons(
                         modifier = Modifier.qaTag(R.string.qa_settings_item_pro),
                         colors = accentTextButtonColors()
                     ) {
-                       // there is a special case when we have a subscription error or loading
-                       // but also no pro account
-                       if(subscriptionState.refreshState !is State.Success &&
-                           subscriptionState.type is SubscriptionType.NeverSubscribed
-                       ){
-                           sendCommand(ShowProErrorOrLoading)
-                       } else {
-                           activity?.push<ProSettingsActivity>()
-                       }
+                       activity?.push<ProSettingsActivity>()
                     }
 
                     Divider()

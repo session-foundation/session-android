@@ -131,6 +131,7 @@ fun ProSettingsHome(
             // add a click handling if the subscription state is loading or errored
             if(data.subscriptionState.refreshState !is State.Success<*>){
                 sendCommand(OnHeaderClicked)
+                //todo PRO double check if KEE is ok to not have two different dialogs for the header vs the action button. If yes then I need to simplify the logic, if not I need to fix the never-subscribed case
             } else null
         },
         extraHeaderContent = {
@@ -146,7 +147,6 @@ fun ProSettingsHome(
                                 when(subscriptionType){
                                     is SubscriptionType.Active -> R.string.proStatusLoadingSubtitle
                                     else -> R.string.checkingProStatus
-                                    //todo PRO will need to handle never subscribed here
                                 }))
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString(),
@@ -193,6 +193,10 @@ fun ProSettingsHome(
     ) {
         // Header for non-pro users
         if(subscriptionType is SubscriptionType.NeverSubscribed) {
+            if(data.subscriptionState.refreshState !is State.Success){
+                Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+            }
+
             Text(
                 text = Phrase.from(context.getText(R.string.proFullestPotential))
                     .put(APP_NAME_KEY, stringResource(R.string.app_name))
@@ -207,6 +211,7 @@ fun ProSettingsHome(
             AccentFillButtonRect(
                 modifier = Modifier.fillMaxWidth(),
                 text = stringResource(R.string.theContinue),
+                enabled = data.subscriptionState.refreshState is State.Success,
                 onClick = { sendCommand(GoToChoosePlan) }
             )
         }
