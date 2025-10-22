@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.mediasend
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
@@ -494,6 +495,12 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         if (sendFragment != null && sendFragment.isVisible) {
             sendFragment.onRequestFullScreen(fullScreen)
         }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        (supportFragmentManager.findFragmentByTag(TAG_CAMERA) as? CameraXFragment)
+            ?.onHostConfigChanged()
     }
 
     companion object {
