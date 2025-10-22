@@ -46,7 +46,10 @@ class ProStatusManager @Inject constructor(
         (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_PRO_PLAN_STATUS } as Flow<*>)
             .onStart { emit(Unit) }
             .map { prefs.getDebugProPlanStatus() },
-    ){ selfRecipient, debugSubscription, debugProPlanStatus ->
+        (TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO } as Flow<*>)
+            .onStart { emit(Unit) }
+            .map { prefs.forceCurrentUserAsPro() },
+    ){ selfRecipient, debugSubscription, debugProPlanStatus, forceCurrentUserAsPro ->
         //todo PRO implement properly
 
         val subscriptionState = debugSubscription ?: DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE
@@ -56,7 +59,8 @@ class ProStatusManager @Inject constructor(
             else -> State.Success(Unit)
         }
 
-        if(selfRecipient.proStatus is ProStatus.None){
+        if(!forceCurrentUserAsPro){
+            //todo PRO this is where we should get the real state
             SubscriptionState(
                 type = SubscriptionType.NeverSubscribed,
                 refreshState = proDataStatus
