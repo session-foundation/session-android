@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -29,6 +30,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
@@ -149,41 +151,41 @@ private fun QrPanel(
     accountId: String,
     modifier: Modifier = Modifier
 ) {
-    BoxWithConstraints(
-        modifier = modifier
+    Column(
+        modifier = Modifier.widthIn(max = 420.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        val qrModifier = if (getAdaptiveInfo().isLandscape) {
-            val shortest: Dp = min(maxWidth, maxHeight)
-            val qrSide = (shortest * 0.70f).coerceIn(
-                LocalDimensions.current.minimumImgClamp,
-                LocalDimensions.current.maximumImgClamp
-            )
-            Modifier.size(qrSide)
-        } else {
-            Modifier
-        }
-
-        Column(
-            modifier = Modifier.widthIn(max = 420.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(stringResource(R.string.accountIdYours), style = LocalType.current.xl)
-            Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
-            Text(
-                text = stringResource(R.string.qrYoursDescription),
-                color = LocalColors.current.textSecondary,
-                style = LocalType.current.small
-            )
-            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
+        Text(stringResource(R.string.accountIdYours), style = LocalType.current.xl)
+        Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
+        Text(
+            text = stringResource(R.string.qrYoursDescription),
+            color = LocalColors.current.textSecondary,
+            style = LocalType.current.small,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
+        BoxWithConstraints(modifier = modifier) {
+            val qrModifier = if (getAdaptiveInfo().isLandscape) {
+                val shortest: Dp = min(maxWidth, maxHeight)
+                val qrSide = (shortest * 0.70f).coerceIn(
+                    LocalDimensions.current.minimumImgClamp,
+                    LocalDimensions.current.maximumImgClamp
+                )
+                Modifier.size(qrSide)
+            } else {
+                Modifier
+            }
             QrImage(
                 string = accountId,
                 modifier = qrModifier
-                    .qaTag(R.string.AccessibilityId_qrCode),
+                    .qaTag(R.string.AccessibilityId_qrCode)
+                    .aspectRatio(1f),
                 icon = R.drawable.session
             )
         }
     }
 }
+//}
 
 @Composable
 private fun ActionList(navigateTo: (StartConversationDestination) -> Unit) {
