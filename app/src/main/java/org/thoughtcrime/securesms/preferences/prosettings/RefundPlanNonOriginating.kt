@@ -100,7 +100,7 @@ private fun PreviewUpdatePlan(
                 ),
                 duration = ProSubscriptionDuration.THREE_MONTHS,
                 subscriptionDetails = SubscriptionDetails(
-                    device = "iPhone",
+                    device = "iOS",
                     store = "Apple App Store",
                     platform = "Apple",
                     platformAccount = "Apple Account",

@@ -42,6 +42,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,6 +60,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -70,6 +72,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideSubcomposition
@@ -1013,22 +1016,25 @@ fun SessionProSettingsHeader(
 
                 Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
 
-                Row(
-                    modifier = Modifier.height(LocalDimensions.current.smallSpacing)
-                ) {
-                    Image(
-                        painter = painterResource(R.drawable.ic_session),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(LocalColors.current.text)
-                    )
-
-                    Spacer(Modifier.width(LocalDimensions.current.xxxsSpacing))
-
-                    ProBadge(
-                        colors = proBadgeColorStandard().copy(
-                            backgroundColor = color
+                // Force the row to remain in LTR to preserve the image+icon order
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                    Row(
+                        modifier = Modifier.height(LocalDimensions.current.smallSpacing)
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.ic_session),
+                            contentDescription = null,
+                            colorFilter = ColorFilter.tint(LocalColors.current.text)
                         )
-                    )
+
+                        Spacer(Modifier.width(LocalDimensions.current.xxxsSpacing))
+
+                        ProBadge(
+                            colors = proBadgeColorStandard().copy(
+                                backgroundColor = color
+                            )
+                        )
+                    }
                 }
 
                 extraContent?.let{

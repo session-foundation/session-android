@@ -103,7 +103,7 @@ class ProStatusManager @Inject constructor(
                     ),
                     duration = ProSubscriptionDuration.ONE_MONTH,
                     subscriptionDetails = SubscriptionDetails(
-                        device = "iPhone",
+                        device = "iOS",
                         store = "Apple App Store",
                         platform = "Apple",
                         platformAccount = "Apple Account",
@@ -119,7 +119,7 @@ class ProStatusManager @Inject constructor(
                     ),
                     duration = ProSubscriptionDuration.ONE_MONTH,
                     subscriptionDetails = SubscriptionDetails(
-                        device = "iPhone",
+                        device = "iOS",
                         store = "Apple App Store",
                         platform = "Apple",
                         platformAccount = "Apple Account",
@@ -142,7 +142,7 @@ class ProStatusManager @Inject constructor(
                 DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE -> SubscriptionType.Expired(
                     expiredAt = Instant.now() - Duration.ofDays(14),
                     subscriptionDetails = SubscriptionDetails(
-                        device = "iPhone",
+                        device = "iOS",
                         store = "Apple App Store",
                         platform = "Apple",
                         platformAccount = "Apple Account",

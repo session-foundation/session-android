@@ -89,7 +89,7 @@ private fun PreviewUpdatePlan(
         val context = LocalContext.current
         CancelPlanNonOriginating (
             subscriptionDetails = SubscriptionDetails(
-                device = "iPhone",
+                device = "iOS",
                 store = "Apple App Store",
                 platform = "Apple",
                 platformAccount = "Apple Account",

@@ -293,6 +293,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.proStatusRenewError))
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .put(APP_NAME_KEY, context.getString(R.string.app_name))
                                         .format()
                             //todo PRO will need to handle never subscribed here

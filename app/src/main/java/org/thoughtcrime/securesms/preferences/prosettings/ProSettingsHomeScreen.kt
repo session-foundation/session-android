@@ -635,7 +635,8 @@ fun ProFeatures(
             // Longer messages
             ProFeatureItem(
                 title = stringResource(R.string.proLongerMessages),
-                subtitle = annotatedStringResource(R.string.proLongerMessagesDescription),
+                subtitle = if(data is SubscriptionType.Active) annotatedStringResource(R.string.proLongerMessagesDescription)
+                else annotatedStringResource(R.string.nonProLongerMessagesDescription),
                 icon = R.drawable.ic_message_square,
                 iconGradientStart = primaryBlue,
                 iconGradientEnd = primaryPurple,
@@ -820,21 +821,20 @@ fun ProManage(
 
                 is SubscriptionType.Expired -> {
                     // the details depend on the loading/error state
-                    val renewIcon: @Composable BoxScope.() -> Unit = {
+                    fun renewIcon(color: Color): @Composable BoxScope.() -> Unit = {
                         Icon(
                             modifier = Modifier.align(Alignment.Center)
                                 .size(LocalDimensions.current.iconMedium)
                                 .qaTag(R.string.qa_action_item_icon),
                             painter = painterResource(id = R.drawable.ic_circle_plus),
                             contentDescription = null,
-                            tint = LocalColors.current.text
+                            tint = color
                         )
                     }
 
                     val (subtitle, subColor, icon) = when(subscriptionRefreshState){
                         is State.Loading -> Triple<CharSequence?, Color, @Composable BoxScope.() -> Unit>(
-                            //todo PRO need the ellipsis version of this string
-                            Phrase.from(LocalContext.current, R.string.checkingProStatus)
+                            Phrase.from(LocalContext.current, R.string.checkingProStatusEllipsis)
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString(),
                             LocalColors.current.text,
@@ -845,12 +845,12 @@ fun ProManage(
                             Phrase.from(LocalContext.current, R.string.errorCheckingProStatus)
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString(),
-                            LocalColors.current.warning, renewIcon
+                            LocalColors.current.warning, renewIcon(LocalColors.current.text)
                         )
 
                         is State.Success<*> -> Triple<CharSequence?, Color, @Composable BoxScope.() -> Unit>(
                             null,
-                            LocalColors.current.text, renewIcon
+                            LocalColors.current.text, renewIcon(LocalColors.current.accent)
                         )
                     }
 
@@ -860,6 +860,8 @@ fun ProManage(
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString()
                         ),
+                        titleColor = if(subscriptionRefreshState is State.Success ) LocalColors.current.accent
+                        else LocalColors.current.text,
                         subtitle = if(subtitle == null) null else annotatedStringResource(subtitle),
                         subtitleColor = subColor,
                         endContent = {
@@ -910,7 +912,7 @@ fun PreviewProSettingsPro(
                         ),
                         duration = ProSubscriptionDuration.THREE_MONTHS,
                         subscriptionDetails = SubscriptionDetails(
-                            device = "iPhone",
+                            device = "iOS",
                             store = "Apple App Store",
                             platform = "Apple",
                             platformAccount = "Apple Account",
@@ -944,7 +946,7 @@ fun PreviewProSettingsProLoading(
                         ),
                         duration = ProSubscriptionDuration.THREE_MONTHS,
                         subscriptionDetails = SubscriptionDetails(
-                            device = "iPhone",
+                            device = "iOS",
                             store = "Apple App Store",
                             platform = "Apple",
                             platformAccount = "Apple Account",
@@ -978,7 +980,7 @@ fun PreviewProSettingsProError(
                         ),
                         duration = ProSubscriptionDuration.THREE_MONTHS,
                         subscriptionDetails = SubscriptionDetails(
-                            device = "iPhone",
+                            device = "iOS",
                             store = "Apple App Store",
                             platform = "Apple",
                             platformAccount = "Apple Account",
@@ -1008,7 +1010,7 @@ fun PreviewProSettingsExpired(
                     type = SubscriptionType.Expired(
                         expiredAt = Instant.now() - Duration.ofDays(14),
                         SubscriptionDetails(
-                        device = "iPhone",
+                        device = "iOS",
                         store = "Apple App Store",
                         platform = "Apple",
                         platformAccount = "Apple Account",
@@ -1037,7 +1039,7 @@ fun PreviewProSettingsExpiredLoading(
                     type = SubscriptionType.Expired(
                         expiredAt = Instant.now() - Duration.ofDays(14),
                         SubscriptionDetails(
-                        device = "iPhone",
+                        device = "iOS",
                         store = "Apple App Store",
                         platform = "Apple",
                         platformAccount = "Apple Account",
@@ -1066,7 +1068,7 @@ fun PreviewProSettingsExpiredError(
                     type = SubscriptionType.Expired(
                         expiredAt = Instant.now() - Duration.ofDays(14),
                         SubscriptionDetails(
-                        device = "iPhone",
+                        device = "iOS",
                         store = "Apple App Store",
                         platform = "Apple",
                         platformAccount = "Apple Account",
