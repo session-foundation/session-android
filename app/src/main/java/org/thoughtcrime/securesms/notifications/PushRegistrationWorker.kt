@@ -28,6 +28,9 @@ import org.thoughtcrime.securesms.util.getRootCause
 import java.time.Duration
 import java.time.Instant
 
+/**
+ * Worker to process pending push registrations.
+ */
 @HiltWorker
 class PushRegistrationWorker @AssistedInject constructor(
     @Assisted private val context: Context,

@@ -31,6 +31,11 @@ class PushRegistrationDatabase @Inject constructor(
     @Serializable
     data class EnsureRegistration(val accountId: String, val input: Input)
 
+    /**
+     * Ensure that the provided registrations exist in the database. If input changes for an existing
+     * registration, reset its state to NONE. Any registrations not in the provided list will be
+     * removed.
+     */
     fun ensureRegistrations(registrations: Collection<EnsureRegistration>) {
         val accountIDsAsText = json.encodeToString(registrations.map { it.accountId })
         val registrationsAsText = json.encodeToString(registrations)
@@ -81,6 +86,7 @@ class PushRegistrationDatabase @Inject constructor(
         }
     }
 
+
     fun updateRegistrationStates(accountIdAndStates: Collection<Pair<String, RegistrationState>>) {
         val changed = writableDatabase.compileStatement(
             """
@@ -106,6 +112,11 @@ class PushRegistrationDatabase @Inject constructor(
         }
     }
 
+    /**
+     * Get registrations that are due for processing. This includes:
+     * - Registrations in ERROR or REGISTERED state whose due time is <= now
+     * - Registrations in NONE state (which should be processed immediately)
+     */
     fun getDueRegistrations(now: Instant, limit: Int): List<Registration> {
         return readableDatabase.rawQuery(
             """
@@ -136,6 +147,12 @@ class PushRegistrationDatabase @Inject constructor(
         }
     }
 
+    /**
+     * Get the next due time among all registrations. Null if there are no pending registrations.
+     *
+     * Note that the due time can be in the past or now, meaning there are som registrations
+     * that must be processed immediately.
+     */
     fun getNextDueTime(now: Instant = Instant.now()): Instant? {
         // The NONE state means we should process immediately, so we'll look them up first
         readableDatabase.rawQuery(
@@ -209,6 +226,9 @@ class PushRegistrationDatabase @Inject constructor(
         data object PermanentError : RegistrationState
     }
 
+    /**
+     * The input required to perform a push registration.
+     */
     @Serializable
     data class Input(
         val pushToken: String

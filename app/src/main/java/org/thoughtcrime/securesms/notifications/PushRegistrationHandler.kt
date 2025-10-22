@@ -27,13 +27,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * PN registration source of truth using per-account periodic workers.
- *
- * Periodic workers must be created with tags:
- *  - "pn-register-periodic"
- *  - "pn-acc-<hexAccountId>"
- *  - "pn-tfp-<tokenFingerprint>"
- *
+ * A PN registration handler that watches for changes in the configs, and arrange the desired state
+ * of push registrations into the database, and triggers [PushRegistrationWorker] to process them.
  */
 @Singleton
 class PushRegistrationHandler @Inject constructor(
