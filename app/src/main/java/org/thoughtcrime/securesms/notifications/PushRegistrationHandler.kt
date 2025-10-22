@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -64,7 +66,7 @@ class PushRegistrationHandler @Inject constructor(
                                 .debounce(500L)
                                 .onStart { emit(Unit) },
                             preferences.pushEnabled,
-                            tokenFetcher.token
+                            tokenFetcher.token.filterNotNull()
                         ) { _, enabled, token ->
                             if (enabled && hasCoreIdentity() && !token.isNullOrBlank())
                                 desiredSubscriptions(token)

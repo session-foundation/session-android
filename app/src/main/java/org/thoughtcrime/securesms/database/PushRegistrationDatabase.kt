@@ -42,16 +42,6 @@ class PushRegistrationDatabase @Inject constructor(
             var numChanges = 0
 
             if (registrations.isNotEmpty()) {
-                // Delete pending unregister entries for these accounts, so we can upsert new states later
-                numChanges += writableDatabase.delete(
-                    "push_registration_state",
-                    "account_id IN (SELECT value FROM json_each(?)) AND state_type = ?",
-                    arrayOf(
-                        accountIDsAsText,
-                        TYPE_PENDING_UNREGISTER
-                    )
-                )
-
                 // Make sure we have all the registrations by
                 // 1. Inserting new rows with NONE state
                 // 2. Updating existing rows to NONE state if input has changed
@@ -76,25 +66,11 @@ class PushRegistrationDatabase @Inject constructor(
                 }
             }
 
-            // Make sure we mark all the abandoned registrations as pending unregister
-            numChanges += compileStatement(
-                """
-                UPDATE push_registration_state
-                SET state = :state
-                WHERE account_id NOT IN (SELECT value FROM json_each(:account_ids))
-                  AND state_type != :state
-            """
-            ).use { stmt ->
-                stmt.bindString(1, json.encodeToString<RegistrationState>(RegistrationState.PendingUnregister))
-                stmt.bindString(2, accountIDsAsText)
-                stmt.executeUpdateDelete()
-            }
-
-            // Make sure to delete all permanent error registrations
+            // Make sure to delete all other registrations that are not in the provided list
             numChanges += writableDatabase.delete(
                 "push_registration_state",
-                "state_type = ? AND account_id NOT IN (SELECT value FROM json_each(?))",
-                arrayOf(TYPE_PERMANENT_ERROR, accountIDsAsText)
+                "account_id NOT IN (SELECT value FROM json_each(?))",
+                arrayOf(accountIDsAsText)
             )
 
             numChanges > 0
@@ -127,41 +103,6 @@ class PushRegistrationDatabase @Inject constructor(
 
         if (changed) {
             mutableChangeNotification.tryEmit(Unit)
-        }
-    }
-
-    fun removeRegistrations(accountIds: Collection<String>) {
-        val accountIDsAsText = json.encodeToString(accountIds)
-
-        val changed = writableDatabase.delete(
-            "push_registration_state",
-            "account_id IN (SELECT value FROM json_each(?))",
-            arrayOf(accountIDsAsText)
-        ) > 0
-
-        if (changed) {
-            mutableChangeNotification.tryEmit(Unit)
-        }
-    }
-
-    fun getPendingUnregister(): List<Registration> {
-        return readableDatabase.rawQuery(
-            """
-            SELECT account_id, input, state
-            FROM push_registration_state
-            WHERE state_type = ?
-        """,
-            TYPE_PENDING_UNREGISTER
-        ).use { cursor ->
-            cursor.asSequence()
-                .map {
-                    Registration(
-                        accountId = cursor.getString(0),
-                        input = json.decodeFromString(cursor.getString(1)),
-                        state = json.decodeFromString(cursor.getString(2)),
-                    )
-                }
-                .toList()
         }
     }
 
@@ -264,10 +205,6 @@ class PushRegistrationDatabase @Inject constructor(
         ) : RegistrationState
 
         @Serializable
-        @SerialName(TYPE_PENDING_UNREGISTER)
-        data object PendingUnregister : RegistrationState
-
-        @Serializable
         @SerialName(TYPE_PERMANENT_ERROR)
         data object PermanentError : RegistrationState
     }
@@ -283,7 +220,6 @@ class PushRegistrationDatabase @Inject constructor(
         private const val TYPE_NONE = "NONE"
         private const val TYPE_REGISTERED = "REGISTERED"
         private const val TYPE_ERROR = "ERROR"
-        private const val TYPE_PENDING_UNREGISTER = "PENDING_UNREGISTER"
         private const val TYPE_PERMANENT_ERROR = "PERMANENT_ERROR"
 
         fun createTableStatements() = arrayOf(
