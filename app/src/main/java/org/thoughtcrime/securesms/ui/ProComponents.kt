@@ -15,24 +15,30 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -336,27 +342,46 @@ fun SessionProCTA(
     }
 
     if(showProSheet) {
+        val dismissSheet: () -> Unit = {
+            scope.launch {
+                sheetState.hide()
+                onCancel()
+            }
+        }
+
         BaseBottomSheet(
             modifier = modifier,
             sheetState = sheetState,
             dragHandle = null,
-            onDismissRequest = {
-                scope.launch {
-                    sheetState.hide()
-                    onCancel()
-                }
-            }
+            onDismissRequest = dismissSheet
         ) {
-            ProSettingsNavHost(
-                startDestination = ProSettingsDestination.Home,
-                showClose = true,
-                onBack = {
-                    scope.launch {
-                        sheetState.hide()
-                        onCancel()
+            BoxWithConstraints(modifier = modifier) {
+                val topInset = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding()
+                val targetHeight =
+                    (this.maxHeight - topInset) * 0.94f // sheet should take up 94% of the height, without the status bar
+                Box(
+                    modifier = Modifier.height(targetHeight),
+                    contentAlignment = Alignment.TopCenter
+                ) {
+                    ProSettingsNavHost(
+                        startDestination = ProSettingsDestination.Home,
+                        hideHomeAppBar = true,
+                        onBack = dismissSheet
+                    )
+
+                    IconButton(
+                        onClick = dismissSheet,
+                        modifier = Modifier.align(Alignment.TopEnd)
+                            .padding(10.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_x),
+                            tint = LocalColors.current.text,
+                            contentDescription = stringResource(R.string.close)
+                        )
                     }
                 }
-            )
+            }
         }
     }
 }

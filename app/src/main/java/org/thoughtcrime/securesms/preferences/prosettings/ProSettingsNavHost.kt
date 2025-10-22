@@ -62,7 +62,7 @@ sealed interface ProSettingsDestination: Parcelable {
 @Composable
 fun ProSettingsNavHost(
     startDestination: ProSettingsDestination = Home,
-    showClose: Boolean,
+    hideHomeAppBar: Boolean,
     onBack: () -> Unit
 ){
     SharedTransitionLayout {
@@ -105,6 +105,7 @@ fun ProSettingsNavHost(
                     val viewModel = navController.proGraphViewModel(entry, navigator)
                     ProSettingsHomeScreen(
                         viewModel = viewModel,
+                        hideHomeAppBar = hideHomeAppBar,
                         onBack = onBack,
                     )
                 }

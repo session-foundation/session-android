@@ -99,12 +99,14 @@ import java.time.Instant
 @Composable
 fun ProSettingsHomeScreen(
     viewModel: ProSettingsViewModel,
+    hideHomeAppBar: Boolean,
     onBack: () -> Unit,
 ) {
     val data by viewModel.proSettingsUIState.collectAsState()
 
     ProSettingsHome(
         data = data,
+        hideHomeAppBar = hideHomeAppBar,
         sendCommand = viewModel::onCommand,
         onBack = onBack,
     )
@@ -114,6 +116,7 @@ fun ProSettingsHomeScreen(
 @Composable
 fun ProSettingsHome(
     data: ProSettingsViewModel.ProSettingsState,
+    hideHomeAppBar: Boolean,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -122,6 +125,7 @@ fun ProSettingsHome(
 
     BaseProSettingsScreen(
         disabled = subscriptionType is SubscriptionType.Expired,
+        hideHomeAppBar = hideHomeAppBar,
         onBack = onBack,
         onHeaderClick = {
             // add a click handling if the subscription state is loading or errored
@@ -917,6 +921,7 @@ fun PreviewProSettingsPro(
                     refreshState = State.Success(Unit),
                 ),
             ),
+            hideHomeAppBar = false,
             sendCommand = {},
             onBack = {},
         )
@@ -950,6 +955,7 @@ fun PreviewProSettingsProLoading(
                     refreshState = State.Loading,
                 ),
             ),
+            hideHomeAppBar = false,
             sendCommand = {},
             onBack = {},
         )
@@ -983,6 +989,7 @@ fun PreviewProSettingsProError(
                     refreshState = State.Error(Exception()),
                 ),
             ),
+            hideHomeAppBar = false,
             sendCommand = {},
             onBack = {},
         )
@@ -1011,6 +1018,7 @@ fun PreviewProSettingsExpired(
                     refreshState = State.Success(Unit),
                 )
             ),
+            hideHomeAppBar = false,
             sendCommand = {},
             onBack = {},
         )
@@ -1039,6 +1047,7 @@ fun PreviewProSettingsExpiredLoading(
                     refreshState = State.Loading,
                 )
             ),
+            hideHomeAppBar = false,
             sendCommand = {},
             onBack = {},
         )
@@ -1067,6 +1076,7 @@ fun PreviewProSettingsExpiredError(
                     refreshState = State.Error(Exception()),
                 )
             ),
+            hideHomeAppBar = false,
             sendCommand = {},
             onBack = {},
         )
@@ -1086,6 +1096,7 @@ fun PreviewProSettingsNonPro(
                     refreshState = State.Success(Unit),
                 )
             ),
+            hideHomeAppBar = false,
             sendCommand = {},
             onBack = {},
         )

@@ -60,26 +60,29 @@ import org.thoughtcrime.securesms.ui.components.inlineContentMap
 @Composable
 fun BaseProSettingsScreen(
     disabled: Boolean,
+    hideHomeAppBar: Boolean = false,
     onBack: () -> Unit,
     onHeaderClick: (() -> Unit)? = null,
     extraHeaderContent: @Composable (() -> Unit)? = null,
     content: @Composable () -> Unit
 ){
     Scaffold(
-        topBar = {
-            BackAppBar(
-                title = "",
-                backgroundColor = Color.Transparent,
-                onBack = onBack,
-            )
-        },
+        topBar = if(!hideHomeAppBar){{
+                BackAppBar(
+                    title = "",
+                    backgroundColor = Color.Transparent,
+                    onBack = onBack,
+                )
+            }} else {{}},
         contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
     ) { paddings ->
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = paddings.calculateTopPadding() - LocalDimensions.current.appBarHeight)
+                .padding(top =
+                    (paddings.calculateTopPadding() - LocalDimensions.current.appBarHeight)
+                        .coerceAtLeast(0.dp))
                 .consumeWindowInsets(paddings)
                 .padding(
                     horizontal = LocalDimensions.current.spacing,
