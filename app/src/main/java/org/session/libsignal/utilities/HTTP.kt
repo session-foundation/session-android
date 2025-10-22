@@ -2,6 +2,8 @@ package org.session.libsignal.utilities
 
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import okhttp3.Call
 import okhttp3.MediaType.Companion.toMediaType
@@ -157,11 +159,13 @@ object HTTP {
         }
     }
 
-    private val httpCallDispatcher = Dispatchers.IO
+    private val httpCallSemaphore = Semaphore(20)
 
     private suspend fun Call.await(): Response {
-        return withContext(httpCallDispatcher) {
-            execute()
+        return withContext(Dispatchers.IO) {
+            httpCallSemaphore.withPermit {
+                execute()
+            }
         }
     }
 }

@@ -19,8 +19,6 @@ import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.os.AsyncTask
-import android.os.Handler
-import android.os.HandlerThread
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -32,7 +30,6 @@ import androidx.work.Configuration
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
-import coil3.request.crossfade
 import dagger.Lazy
 import dagger.hilt.EntryPoints
 import dagger.hilt.android.HiltAndroidApp
@@ -53,7 +50,6 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.pushSuff
 import org.session.libsignal.utilities.HTTP.isConnectedToNetwork
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.AppContext.configureKovenant
-import org.thoughtcrime.securesms.coil.RemoteFileKeyer
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.dependencies.DatabaseModule.init
@@ -109,7 +105,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory.get())
-            .setMinimumLoggingLevel(android.util.Log.VERBOSE)
             .build()
 
     override fun getSystemService(name: String): Any? {

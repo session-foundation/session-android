@@ -2,9 +2,10 @@ package org.thoughtcrime.securesms.attachments
 
 import android.content.Context
 import androidx.annotation.CheckResult
-import androidx.work.ListenableWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.messaging.file_server.FileServerApi
@@ -29,6 +30,7 @@ import org.thoughtcrime.securesms.util.getRootCause
 import java.io.File
 import java.io.InputStream
 import java.security.MessageDigest
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -46,6 +48,39 @@ class AvatarDownloadManager @Inject constructor(
     private val fileServerApi: FileServerApi,
     private val attachmentProcessor: AttachmentProcessor,
 ) {
+    /**
+     * A map of mutexes to synchronize downloads for each remote file.
+     */
+    private val downloadMutex = ConcurrentHashMap<RemoteFile, Mutex>()
+
+    // Return null if the file doesn't exist locally or corrupted
+    private fun openDownloadedFile(file: File): InputStream? {
+        if (!file.exists()) return null
+
+        val downloadedFile = runCatching {
+            localEncryptedFileInputStreamFactory.create(file)
+        }.onFailure { e ->
+            Log.w(TAG, "Failed to read downloaded file $file", e)
+            // If we can't read the file, we assume it's corrupted and we need to delete it.
+            if (!file.delete()) {
+                Log.w(TAG, "Failed to delete corrupted file $file")
+            }
+        }.getOrNull()
+
+        when {
+            downloadedFile?.meta?.hasPermanentDownloadError == true -> {
+                throw NonRetryableException("Previous download failed permanently for file $file")
+            }
+
+            downloadedFile != null -> {
+                Log.d(TAG, "Avatar file already downloaded: $file")
+                return downloadedFile
+            }
+
+            else -> return null
+        }
+    }
+
 
     /**
      * Downloads the given remote file, returning an InputStream to read the downloaded file.
@@ -58,80 +93,70 @@ class AvatarDownloadManager @Inject constructor(
     suspend fun download(file: RemoteFile): InputStream {
         val downloaded = computeFileName(context, file)
 
-        // If the downloaded file exists, it can either mean it's already downloaded or the previous
-        // download failed permanently, so we can skip it.
-        if (downloaded.exists()) {
-            val downloadedFile = runCatching {
-                localEncryptedFileInputStreamFactory.create(downloaded)
-            }.onFailure { e ->
-                Log.w(TAG, "Failed to read downloaded file $downloaded", e)
-                // If we can't read the file, we assume it's corrupted and we need to delete it.
-                if (!downloaded.delete()) {
-                    Log.w(TAG, "Failed to delete corrupted file $downloaded")
-                }
-            }.getOrNull()
+        // Quickly look at the downloaded file without holding the lock,
+        // in case we already have it downloaded.
+        openDownloadedFile(downloaded)?.let { return it }
 
-            when {
-                downloadedFile?.meta?.hasPermanentDownloadError == true -> {
-                    throw NonRetryableException("Previous download failed permanently for file $file")
-                }
+        // Now given we don't have a locally download file, we will hold the mutex for this
+        // file when we try to download it from network
+        downloadMutex.getOrPut(file) { Mutex() }.withLock {
+            // Once we hold the lock, we MUST check the local file again just in case
+            // another coroutine already downloaded it while we were waiting for the lock
+            openDownloadedFile(downloaded)?.let { return it }
 
-                downloadedFile != null -> {
-                    Log.d(TAG, "Avatar file already downloaded: $file")
-                    return downloadedFile
+            Log.d(TAG, "Start downloading file from $file")
+
+            val (bytes, meta) = try {
+                downloadAndDecryptFile(file)
+            } catch (e: Exception) {
+                if (e.getRootCause<NonRetryableException>() != null ||
+                    e.getRootCause<OnionRequestAPI.HTTPRequestFailedAtDestinationException>()?.statusCode == 404
+                ) {
+                    Log.w(TAG, "Download failed permanently for file $file", e)
+                    // Write an empty file with a permanent error metadata if the download failed permanently.
+                    localEncryptedFileOutputStreamFactory.create(
+                        downloaded, FileMetadata(
+                            hasPermanentDownloadError = true
+                        )
+                    ).use {}
+
+                    throw NonRetryableException("Download failed permanently for file $file", e)
+                } else {
+                    throw e
                 }
             }
-        }
 
-        Log.d(TAG, "Start downloading file from $file")
 
-        val (bytes, meta) = try {
-            downloadAndDecryptFile(file)
-        } catch (e: Exception) {
-            if (e.getRootCause<NonRetryableException>() != null ||
-                e.getRootCause<OnionRequestAPI.HTTPRequestFailedAtDestinationException>()?.statusCode == 404) {
-                Log.w(TAG, "Download failed permanently for file $file", e)
-                // Write an empty file with a permanent error metadata if the download failed permanently.
-                localEncryptedFileOutputStreamFactory.create(downloaded, FileMetadata(
-                    hasPermanentDownloadError = true
-                )).use {}
+            // A temp file to clear, if it exists
+            var tmpFileToClean: File? = null
+            try {
+                // Re-encrypt the file with our streaming cipher, and encode it with the metadata,
+                // and doing it to a temporary file first.
+                downloaded.parentFile!!.mkdirs()
+                val tmpFile = File.createTempFile("downloaded-", null, downloaded.parentFile)
+                    .also { tmpFileToClean = it }
 
-                throw NonRetryableException("Download failed permanently for file $file", e)
-            } else {
+                localEncryptedFileOutputStreamFactory.create(tmpFile, meta)
+                    .use { fos -> fos.write(bytes) }
+
+                // Once done, rename the temporary file to the final file name.
+                check(tmpFile.renameTo(downloaded)) {
+                    "Failed to rename temporary file ${tmpFile.absolutePath} to $downloaded"
+                }
+
+                // Since we successfully moved the file, we don't need to delete the temporary file anymore.
+                tmpFileToClean = null
+                Log.d(TAG, "Successfully downloaded file $file")
+                return localEncryptedFileInputStreamFactory.create(downloaded)
+            } catch (e: CancellationException) {
+                Log.i(TAG, "Download cancelled for file $file")
                 throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to download file $file", e)
+                throw e
+            } finally {
+                tmpFileToClean?.delete()
             }
-        }
-
-
-        // A temp file to clear, if it exists
-        var tmpFileToClean: File? = null
-        try {
-            // Re-encrypt the file with our streaming cipher, and encode it with the metadata,
-            // and doing it to a temporary file first.
-            downloaded.parentFile!!.mkdirs()
-            val tmpFile = File.createTempFile("downloaded-", null, downloaded.parentFile)
-                .also { tmpFileToClean = it }
-
-            localEncryptedFileOutputStreamFactory.create(tmpFile, meta)
-                .use { fos -> fos.write(bytes) }
-
-            // Once done, rename the temporary file to the final file name.
-            check(tmpFile.renameTo(downloaded)) {
-                "Failed to rename temporary file ${tmpFile.absolutePath} to $downloaded"
-            }
-
-            // Since we successfully moved the file, we don't need to delete the temporary file anymore.
-            tmpFileToClean = null
-            Log.d(TAG, "Successfully downloaded file $file")
-            return localEncryptedFileInputStreamFactory.create(downloaded)
-        } catch (e: CancellationException) {
-            Log.i(TAG, "Download cancelled for file $file")
-            throw e
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to download file $file", e)
-            throw e
-        } finally {
-            tmpFileToClean?.delete()
         }
     }
 
@@ -194,7 +219,10 @@ class AvatarDownloadManager @Inject constructor(
                             }
                         )
 
-                        Log.d(TAG, "Migrated old avatar file for ${address.debugString} to new location")
+                        Log.d(
+                            TAG,
+                            "Migrated old avatar file for ${address.debugString} to new location"
+                        )
 
                         avatarFile.delete()
                         return data.view() to meta
