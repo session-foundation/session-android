@@ -34,10 +34,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,12 +69,16 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideSubcomposition
 import com.bumptech.glide.integration.compose.RequestState
 import com.squareup.phrase.Phrase
+import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsNavHost
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.Avatar
+import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
 import org.thoughtcrime.securesms.ui.components.FillButtonRect
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.TertiaryFillButtonRect
@@ -205,6 +211,10 @@ private fun PreviewProBadgeText(
     }
 }
 
+/**
+ * This composable comprises of the CTA itself
+ * and the bottom sheet with the whole pro settings content
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionProCTA(
@@ -217,95 +227,138 @@ fun SessionProCTA(
     features: List<CTAFeature> = emptyList(),
     positiveButtonText: String? = stringResource(R.string.theContinue),
     negativeButtonText: String? = stringResource(R.string.cancel),
-    onUpgrade: () -> Unit = {},
+    onUpgrade: (() -> Unit)? = null,
     onCancel: () -> Unit = {},
 ){
-    BasicAlertDialog(
-        modifier = modifier,
-        onDismissRequest = onCancel,
-        content = {
-            DialogBg {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    // hero image
-                    BottomFadingEdgeBox(
-                        fadingEdgeHeight = 70.dp,
-                        fadingColor = LocalColors.current.backgroundSecondary,
-                        content = { _ ->
-                            content()
-                        },
-                    )
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
+    val scope = rememberCoroutineScope()
 
-                    // content
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(LocalDimensions.current.smallSpacing)
-                    ) {
-                        // title
-                        ProBadgeText(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            text = title,
-                            badgeAtStart = badgeAtStart,
-                            badgeColors = if(disabled) proBadgeColorDisabled() else proBadgeColorStandard(),
+    // We should avoid internal state in a composable but having the bottom sheet
+    // here avoids re-defining the sheet in multiple places in the app
+    var showDialog by remember { mutableStateOf(true) }
+    var showProSheet by remember { mutableStateOf(false) }
+
+    // default handling of the upgrade button
+    val defaultUpgrade: () -> Unit = {
+        showProSheet = true
+        showDialog = false
+    }
+
+    if(showDialog) {
+        BasicAlertDialog(
+            modifier = modifier,
+            onDismissRequest = onCancel,
+            content = {
+                DialogBg {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        // hero image
+                        BottomFadingEdgeBox(
+                            fadingEdgeHeight = 70.dp,
+                            fadingColor = LocalColors.current.backgroundSecondary,
+                            content = { _ ->
+                                content()
+                            },
                         )
 
-                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
-
-                        // main message
-                        textContent()
-
-                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
-
-                        // features
-                        if(features.isNotEmpty()) {
-                            features.forEachIndexed { index, feature ->
-                                ProCTAFeature(data = feature)
-                                if (index < features.size - 1) {
-                                    Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
-                                }
-                            }
+                        // content
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(LocalDimensions.current.smallSpacing)
+                        ) {
+                            // title
+                            ProBadgeText(
+                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                                text = title,
+                                badgeAtStart = badgeAtStart,
+                                badgeColors = if (disabled) proBadgeColorDisabled() else proBadgeColorStandard(),
+                            )
 
                             Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
-                        }
 
-                        // buttons
-                        Row(
-                            Modifier.height(IntrinsicSize.Min)
-                                .fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(
-                                LocalDimensions.current.xsSpacing,
-                                Alignment.CenterHorizontally
-                            ),
-                        ) {
-                            positiveButtonText?.let {
-                                AccentFillButtonRect(
-                                    modifier = Modifier.then(
-                                        if(negativeButtonText != null)
-                                        Modifier.weight(1f)
-                                        else Modifier
-                                    ).shimmerOverlay(),
-                                    text = it,
-                                    onClick = onUpgrade
-                                )
+                            // main message
+                            textContent()
+
+                            Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
+
+                            // features
+                            if (features.isNotEmpty()) {
+                                features.forEachIndexed { index, feature ->
+                                    ProCTAFeature(data = feature)
+                                    if (index < features.size - 1) {
+                                        Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
+                                    }
+                                }
+
+                                Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
                             }
 
-                            negativeButtonText?.let {
-                                TertiaryFillButtonRect(
-                                    modifier = Modifier.then(
-                                        if(positiveButtonText != null)
-                                            Modifier.weight(1f)
-                                        else Modifier
-                                    ),
-                                    text = it,
-                                    onClick = onCancel
-                                )
+                            // buttons
+                            Row(
+                                Modifier.height(IntrinsicSize.Min)
+                                    .fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(
+                                    LocalDimensions.current.xsSpacing,
+                                    Alignment.CenterHorizontally
+                                ),
+                            ) {
+                                positiveButtonText?.let {
+                                    AccentFillButtonRect(
+                                        modifier = Modifier.then(
+                                            if (negativeButtonText != null)
+                                                Modifier.weight(1f)
+                                            else Modifier
+                                        ).shimmerOverlay(),
+                                        text = it,
+                                        onClick = onUpgrade ?: defaultUpgrade
+                                    )
+                                }
+
+                                negativeButtonText?.let {
+                                    TertiaryFillButtonRect(
+                                        modifier = Modifier.then(
+                                            if (positiveButtonText != null)
+                                                Modifier.weight(1f)
+                                            else Modifier
+                                        ),
+                                        text = it,
+                                        onClick = onCancel
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
+        )
+    }
+
+    if(showProSheet) {
+        BaseBottomSheet(
+            modifier = modifier,
+            sheetState = sheetState,
+            dragHandle = null,
+            onDismissRequest = {
+                scope.launch {
+                    sheetState.hide()
+                    onCancel()
+                }
+            }
+        ) {
+            ProSettingsNavHost(
+                startDestination = ProSettingsDestination.Home,
+                showClose = true,
+                onBack = {
+                    scope.launch {
+                        sheetState.hide()
+                        onCancel()
+                    }
+                }
+            )
         }
-    )
+    }
 }
 
 sealed interface CTAFeature {
@@ -332,7 +385,7 @@ fun SimpleSessionProCTA(
     features: List<CTAFeature> = emptyList(),
     positiveButtonText: String? = stringResource(R.string.theContinue),
     negativeButtonText: String? = stringResource(R.string.cancel),
-    onUpgrade: () -> Unit = {},
+    onUpgrade: (() -> Unit)? = null,
     onCancel: () -> Unit = {},
 ){
     SessionProCTA(
@@ -385,7 +438,7 @@ fun AnimatedSessionProCTA(
     features: List<CTAFeature> = emptyList(),
     positiveButtonText: String? = stringResource(R.string.theContinue),
     negativeButtonText: String? = stringResource(R.string.cancel),
-    onUpgrade: () -> Unit = {},
+    onUpgrade: (() -> Unit)? = null,
     onCancel: () -> Unit = {},
 ){
     SessionProCTA(
@@ -465,7 +518,6 @@ fun CTAAnimatedImages(
 @Composable
 fun GenericProCTA(
     onDismissRequest: () -> Unit,
-    onPostAction: (() -> Unit)? = null // a function for optional code once an action has been taken
 ){
     val context = LocalContext.current
     AnimatedSessionProCTA(
@@ -481,11 +533,6 @@ fun GenericProCTA(
             CTAFeature.Icon(stringResource(R.string.proFeatureListLongerMessages)),
             CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
         ),
-        onUpgrade = {
-            onDismissRequest()
-            onPostAction?.invoke()
-            //todo PRO go to screen once it exists
-        },
         onCancel = {
             onDismissRequest()
         }
@@ -508,10 +555,6 @@ fun LongMessageProCTA(
             CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
             CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
         ),
-        onUpgrade = {
-            onDismissRequest()
-            //todo PRO go to screen once it exists
-        },
         onCancel = {
             onDismissRequest()
         }
@@ -535,10 +578,6 @@ fun AnimatedProfilePicProCTA(
             CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
             CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
         ),
-        onUpgrade = {
-            onDismissRequest()
-            //todo PRO go to screen once it exists
-        },
         onCancel = {
             onDismissRequest()
         }
@@ -574,10 +613,6 @@ fun PinProCTA(
             CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
             CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
         ),
-        onUpgrade = {
-            onDismissRequest()
-            //todo PRO go to screen once it exists
-        },
         onCancel = {
             onDismissRequest()
         }

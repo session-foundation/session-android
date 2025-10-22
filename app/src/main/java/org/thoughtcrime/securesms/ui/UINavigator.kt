@@ -5,10 +5,10 @@ import androidx.navigation.NavOptionsBuilder
 import dagger.hilt.android.scopes.ActivityRetainedScoped
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
+import org.session.libsignal.utilities.Log
 import javax.inject.Inject
 
-@ActivityRetainedScoped
-class UINavigator<T> @Inject constructor() {
+class UINavigator<T> () {
     private val _navigationActions = Channel<NavigationAction<T>>()
     val navigationActions = _navigationActions.receiveAsFlow()
 

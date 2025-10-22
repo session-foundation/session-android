@@ -32,7 +32,6 @@ import org.thoughtcrime.securesms.ui.theme.SessionMaterialTheme
 @Composable
 fun HomeDialogs(
     dialogsState: HomeViewModel.DialogsState,
-    startConversationNavigator: UINavigator<StartConversationDestination>,
     sendCommand: (HomeViewModel.Commands) -> Unit
 ) {
     SessionMaterialTheme {
@@ -61,7 +60,6 @@ fun HomeDialogs(
         if(dialogsState.showStartConversationSheet != null){
             StartConversationSheet(
                 accountId = dialogsState.showStartConversationSheet.accountId,
-                navigator = startConversationNavigator,
                 onDismissRequest = {
                     sendCommand(HomeViewModel.Commands.HideStartConversationSheet)
                 }

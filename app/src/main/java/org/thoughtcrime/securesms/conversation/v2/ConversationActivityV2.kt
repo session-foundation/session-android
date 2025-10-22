@@ -124,7 +124,6 @@ import org.thoughtcrime.securesms.audio.AudioRecorderHandle
 import org.thoughtcrime.securesms.audio.recordAudio
 import org.thoughtcrime.securesms.components.TypingStatusSender
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
-import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnReactionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ShowOpenUrlDialog
@@ -150,6 +149,7 @@ import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDel
 import org.thoughtcrime.securesms.conversation.v2.search.SearchBottomBar
 import org.thoughtcrime.securesms.conversation.v2.search.SearchViewModel
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsActivity
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsActivity
 import org.thoughtcrime.securesms.conversation.v2.utilities.AttachmentManager
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
@@ -692,9 +692,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     }
 
                     is ConversationUiEvent.ShowDisappearingMessages -> {
-                        val intent = Intent(this@ConversationActivityV2, DisappearingMessagesActivity::class.java).apply {
-                            putExtra(DisappearingMessagesActivity.ARG_ADDRESS, event.address)
-                        }
+                        val intent = ConversationSettingsActivity.createIntent(
+                            context = this@ConversationActivityV2,
+                            address = event.address,
+                            startDestination = ConversationSettingsDestination.RouteDisappearingMessages
+                        )
                         startActivity(intent)
                     }
 

@@ -8,6 +8,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavOptionsBuilder
 import com.squareup.phrase.Phrase
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,6 +34,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_LENGTH_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_LENGTH_SINGULAR_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.SubscriptionState
@@ -48,14 +52,19 @@ import javax.inject.Inject
 
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
-@HiltViewModel
-class ProSettingsViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val navigator: UINavigator<ProSettingsDestination>,
+@HiltViewModel(assistedFactory = ProSettingsViewModel.Factory::class)
+class ProSettingsViewModel @AssistedInject constructor(
+    @Assisted private val navigator: UINavigator<ProSettingsDestination>,
+    @param:ApplicationContext private val context: Context,
     private val proStatusManager: ProStatusManager,
     private val subscriptionCoordinator: SubscriptionCoordinator,
     private val dateUtils: DateUtils
 ) : ViewModel() {
+
+    @AssistedFactory
+    interface Factory {
+        fun create(navigator: UINavigator<ProSettingsDestination>): ProSettingsViewModel
+    }
 
     private val _proSettingsUIState: MutableStateFlow<ProSettingsState> = MutableStateFlow(ProSettingsState())
     val proSettingsUIState: StateFlow<ProSettingsState> = _proSettingsUIState
