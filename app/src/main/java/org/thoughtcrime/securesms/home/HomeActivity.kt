@@ -88,7 +88,6 @@ import org.thoughtcrime.securesms.reviews.ui.InAppReview
 import org.thoughtcrime.securesms.reviews.ui.InAppReviewViewModel
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
-import org.thoughtcrime.securesms.ui.ObserveAsEvents
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.setThemedContent
@@ -419,23 +418,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
             }
         }
 
-        binding.root.applySafeInsetsPaddings(
-            applyBottom = false,
-            consumeInsets = false,
-            alsoApply = { insets ->
-                binding.globalSearchRecycler.updatePadding(bottom = insets.bottom)
-            }
-        )
-
-        ViewCompat.setOnApplyWindowInsetsListener(binding.newConversationButton) { v, insets ->
-            val nav = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
-            v.updateLayoutParams<MarginLayoutParams> {
-                bottomMargin = nav.bottom +
-                        resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset)
-            }
-            insets // don’t consume
-        }
-
         // Set up in-app review
         binding.inAppReviewView.setThemedContent {
             InAppReview(
@@ -444,6 +426,8 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 sendCommands = inAppReviewViewModel::sendUiCommand,
             )
         }
+
+        applyViewInsets()
     }
 
     override fun onCancelClicked() {
@@ -903,6 +887,25 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     private fun showStartConversation() {
         homeViewModel.onCommand(HomeViewModel.Commands.ShowStartConversationSheet)
+    }
+
+    private fun applyViewInsets() {
+        binding.root.applySafeInsetsPaddings(
+            applyBottom = false,
+            consumeInsets = false,
+            alsoApply = { insets ->
+                binding.globalSearchRecycler.updatePadding(bottom = insets.bottom)
+            }
+        )
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.newConversationButton) { view, insets ->
+            val nav = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            view.updateLayoutParams<MarginLayoutParams> {
+                bottomMargin = nav.bottom +
+                        resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset)
+            }
+            insets
+        }
     }
 }
 
