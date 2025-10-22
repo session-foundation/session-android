@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -36,7 +37,6 @@ class PushRegistrationHandler @Inject constructor(
     private val preferences: TextSecurePreferences,
     private val tokenFetcher: TokenFetcher,
     @param:ApplicationContext private val context: Context,
-    private val registry: PushRegistryV2,
     private val storage: Storage,
     @param:ManagerScope private val scope: CoroutineScope,
     private val pushRegistrationDatabase: PushRegistrationDatabase,
@@ -60,9 +60,9 @@ class PushRegistrationHandler @Inject constructor(
                                 .debounce(500L)
                                 .onStart { emit(Unit) },
                             preferences.pushEnabled,
-                            tokenFetcher.token.filterNotNull()
+                            tokenFetcher.token.filterNotNull().filter { !it.isBlank() }
                         ) { _, enabled, token ->
-                            if (enabled && hasCoreIdentity() && !token.isNullOrBlank())
+                            if (enabled && hasCoreIdentity())
                                 desiredSubscriptions(token)
                             else emptyList()
                         }
