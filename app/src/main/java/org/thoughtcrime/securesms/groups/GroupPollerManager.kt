@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.groups
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
@@ -23,12 +22,14 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.sync.Semaphore
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import org.thoughtcrime.securesms.util.castAwayType
@@ -55,7 +56,10 @@ class GroupPollerManager @Inject constructor(
     preferences: TextSecurePreferences,
     connectivity: NetworkConnectivity,
     pollFactory: GroupPoller.Factory,
+    @param:ManagerScope private val managerScope: CoroutineScope,
 ) : OnAppStartupComponent {
+    private val groupPollerSemaphore = Semaphore(5)
+
     @Suppress("OPT_IN_USAGE")
     private val groupPollers: StateFlow<Map<AccountId, GroupPollerHandle>> =
         combine(
@@ -109,6 +113,7 @@ class GroupPollerManager @Inject constructor(
                             poller = pollFactory.create(
                                 scope = scope,
                                 groupId = groupId,
+                                pollSemaphore = groupPollerSemaphore,
                             ),
                             scope = scope
                         )
@@ -118,7 +123,7 @@ class GroupPollerManager @Inject constructor(
                 }
             }
 
-            .stateIn(GlobalScope, SharingStarted.Eagerly, emptyMap())
+            .stateIn(managerScope, SharingStarted.Eagerly, emptyMap())
 
 
     @Suppress("OPT_IN_USAGE")

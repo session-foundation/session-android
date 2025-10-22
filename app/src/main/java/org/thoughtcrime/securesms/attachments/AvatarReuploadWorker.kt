@@ -79,7 +79,7 @@ class AvatarReuploadWorker @AssistedInject constructor(
             return Result.success()
         }
 
-        val localFile = AvatarDownloadWorker.computeFileName(context, profile)
+        val localFile = AvatarDownloadManager.computeFileName(context, profile)
         if (!localFile.exists()) {
             logAndToast("Avatar file is missing locally; nothing to do.")
             return Result.success()

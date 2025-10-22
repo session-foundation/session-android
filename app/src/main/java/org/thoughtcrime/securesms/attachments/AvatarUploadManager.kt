@@ -14,7 +14,6 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.encrypt.Attachments
 import network.loki.messenger.libsession_util.util.Bytes
 import org.session.libsession.messaging.file_server.FileServerApi
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.Util
@@ -114,7 +113,7 @@ class AvatarUploadManager @Inject constructor(
 
         // To save us from downloading this avatar again, we store the data as it would be downloaded
         localEncryptedFileOutputStreamFactory.create(
-            file = AvatarDownloadWorker.computeFileName(application, remoteFile),
+            file = AvatarDownloadManager.computeFileName(application, remoteFile),
             meta = FileMetadata(expiryTime = uploadResult.expires?.toInstant())
         ).use {
             it.write(pictureData)
@@ -141,7 +140,7 @@ class AvatarUploadManager @Inject constructor(
 
         if (oldPic != null) {
             // If we had an old avatar, delete it from local storage
-            val oldFile = AvatarDownloadWorker.computeFileName(application, oldPic)
+            val oldFile = AvatarDownloadManager.computeFileName(application, oldPic)
             if (oldFile.exists()) {
                 Log.d(TAG, "Deleting old avatar file: $oldFile")
                 oldFile.delete()

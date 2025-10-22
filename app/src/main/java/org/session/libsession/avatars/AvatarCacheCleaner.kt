@@ -7,7 +7,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.attachments.AvatarDownloadWorker
+import org.thoughtcrime.securesms.attachments.AvatarDownloadManager
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.glide.RecipientAvatarDownloadManager
@@ -47,11 +47,11 @@ class AvatarCacheCleaner @Inject constructor(
 
         // 4) Map to actual files (same hashing/location as downloader)
         val wantedFiles: Set<File> = filesToKeep
-            .map { AvatarDownloadWorker.computeFileName(application, it) }
+            .map { AvatarDownloadManager.computeFileName(application, it) }
             .toSet()
 
         // 5) Delete everything not wanted in cache/remote_files
-        val files = AvatarDownloadWorker.listDownloadedFiles(application)
+        val files = AvatarDownloadManager.listDownloadedFiles(application)
         var deleted = 0
         for (file in files) {
             if (file !in wantedFiles && file.delete()) deleted++
