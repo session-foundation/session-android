@@ -3,8 +3,6 @@ package org.thoughtcrime.securesms.database
 import android.content.Context
 import androidx.sqlite.db.transaction
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -25,8 +23,6 @@ class PushRegistrationDatabase @Inject constructor(
     private val json: Json,
 ) : Database(context, helper) {
 
-    private val mutableChangeNotification = MutableSharedFlow<Unit>(extraBufferCapacity = 10)
-    val changeNotification: SharedFlow<Unit> get() = mutableChangeNotification
 
     @Serializable
     data class EnsureRegistration(val accountId: String, val input: Input)
@@ -34,23 +30,26 @@ class PushRegistrationDatabase @Inject constructor(
     /**
      * Ensure that the provided registrations exist in the database. If input changes for an existing
      * registration, reset its state to NONE. Any registrations not in the provided list will be
-     * removed.
+     * marked as pending unregistration.
+     *
+     * @return True if any database rows were inserted or updated.
      */
-    fun ensureRegistrations(registrations: Collection<EnsureRegistration>) {
+    fun ensureRegistrations(registrations: Collection<EnsureRegistration>): Boolean {
         val accountIDsAsText = json.encodeToString(registrations.map { it.accountId })
         val registrationsAsText = json.encodeToString(registrations)
 
         // It's important to specify the base RegistrationState so that the discriminator is correct
         val noneStateAsText = json.encodeToString<RegistrationState>(RegistrationState.None)
+        val pendingUnregisterAsText = json.encodeToString<RegistrationState>(RegistrationState.PendingUnregister)
 
-        val changed = writableDatabase.transaction {
-            var numChanges = 0
+        return writableDatabase.transaction {
+            var numChanges: Int = 0
 
             if (registrations.isNotEmpty()) {
                 // Make sure we have all the registrations by
                 // 1. Inserting new rows with NONE state
-                // 2. Updating existing rows to NONE state if input has changed
-                numChanges += compileStatement(
+                // 2. Updating existing rows to NONE state if input has changed, or if they are in PENDING_UNREGISTER state
+                compileStatement(
                     """
                 INSERT INTO push_registration_state (account_id, input, state)
                 SELECT 
@@ -62,33 +61,32 @@ class PushRegistrationDatabase @Inject constructor(
                 ON CONFLICT DO UPDATE 
                     SET input = excluded.input,
                        state = :none_state
-                    WHERE input != excluded.input
+                    WHERE input != excluded.input OR state_type = '$TYPE_PENDING_UNREGISTER'
             """
                 ).use { stmt ->
                     stmt.bindString(1, noneStateAsText)
                     stmt.bindString(2, registrationsAsText)
-                    stmt.executeUpdateDelete()
+                    numChanges += stmt.executeUpdateDelete()
                 }
             }
 
-            // Make sure to delete all other registrations that are not in the provided list
-            numChanges += writableDatabase.delete(
-                "push_registration_state",
-                "account_id NOT IN (SELECT value FROM json_each(?))",
-                arrayOf(accountIDsAsText)
-            )
+            // Mark all other registrations as PENDING_UNREGISTER to be cleaned up
+            compileStatement("""
+                UPDATE push_registration_state
+                SET state = ?
+                WHERE account_id NOT IN (SELECT value FROM json_each(?))
+            """).use { stmt ->
+                stmt.bindString(1, pendingUnregisterAsText)
+                stmt.bindString(2, accountIDsAsText)
+                numChanges += stmt.executeUpdateDelete()
+            }
 
             numChanges > 0
         }
-
-        if (changed) {
-            mutableChangeNotification.tryEmit(Unit)
-        }
     }
 
-
     fun updateRegistrationStates(accountIdAndStates: Collection<Pair<String, RegistrationState>>) {
-        val changed = writableDatabase.compileStatement(
+        writableDatabase.compileStatement(
             """
             UPDATE push_registration_state 
             SET state = :state
@@ -104,11 +102,6 @@ class PushRegistrationDatabase @Inject constructor(
             }
 
             numUpdated > 0
-        }
-
-
-        if (changed) {
-            mutableChangeNotification.tryEmit(Unit)
         }
     }
 
@@ -147,18 +140,52 @@ class PushRegistrationDatabase @Inject constructor(
         }
     }
 
+    fun getPendingRegistrations(limit: Int): List<Registration> {
+        return readableDatabase.rawQuery(
+            """
+            SELECT account_id, input, state
+            FROM push_registration_state
+            WHERE state_type = '$TYPE_PENDING_UNREGISTER'
+            LIMIT ?
+        """, limit
+        ).use { cursor ->
+            cursor.asSequence()
+                .map {
+                    Registration(
+                        accountId = cursor.getString(0),
+                        input = json.decodeFromString(cursor.getString(1)),
+                        state = json.decodeFromString(cursor.getString(2)),
+                    )
+                }
+                .toList()
+        }
+    }
+
+    fun removeRegistrations(accountIds: Collection<String>) {
+        if (accountIds.isEmpty()) return
+
+        val accountIDsAsText = json.encodeToString(accountIds)
+
+        writableDatabase.execSQL(
+            """
+            DELETE FROM push_registration_state
+            WHERE account_id IN (SELECT value FROM json_each(?))
+            """, arrayOf(accountIDsAsText)
+        )
+    }
+
     /**
      * Get the next due time among all registrations. Null if there are no pending registrations.
      *
      * Note that the due time can be in the past or now, meaning there are som registrations
      * that must be processed immediately.
      */
-    fun getNextDueTime(now: Instant = Instant.now()): Instant? {
+    fun getNextProcessTime(now: Instant = Instant.now()): Instant? {
         // The NONE state means we should process immediately, so we'll look them up first
         readableDatabase.rawQuery(
             """
                 SELECT 1 FROM push_registration_state
-                WHERE state_type = '$TYPE_NONE'
+                WHERE state_type IN ('$TYPE_NONE', '$TYPE_PENDING_UNREGISTER')
             """
         ).use { cursor ->
             if (cursor.moveToNext()) {
@@ -224,6 +251,10 @@ class PushRegistrationDatabase @Inject constructor(
         @Serializable
         @SerialName(TYPE_PERMANENT_ERROR)
         data object PermanentError : RegistrationState
+
+        @Serializable
+        @SerialName(TYPE_PENDING_UNREGISTER)
+        data object PendingUnregister : RegistrationState
     }
 
     /**
@@ -241,6 +272,7 @@ class PushRegistrationDatabase @Inject constructor(
         private const val TYPE_REGISTERED = "REGISTERED"
         private const val TYPE_ERROR = "ERROR"
         private const val TYPE_PERMANENT_ERROR = "PERMANENT_ERROR"
+        private const val TYPE_PENDING_UNREGISTER = "PENDING_UNREGISTER"
 
         fun createTableStatements() = arrayOf(
             """

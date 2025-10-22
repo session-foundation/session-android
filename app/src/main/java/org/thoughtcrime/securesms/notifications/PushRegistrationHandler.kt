@@ -84,13 +84,8 @@ class PushRegistrationHandler @Inject constructor(
     private suspend fun reconcileWithDatabase(
         registration: List<PushRegistrationDatabase.EnsureRegistration>
     ) {
-        pushRegistrationDatabase.ensureRegistrations(registration)
-
-        if (registration.isEmpty()) {
-            PushRegistrationWorker.cancel(context)
-        } else {
-            Log.d(TAG, "Enqueued push registration worker")
-            // Make sure the worker is run immediately to handle any new registrations.
+        if (pushRegistrationDatabase.ensureRegistrations(registration)) {
+            // Make sure the worker is run immediately to handle any new registration change
             PushRegistrationWorker.enqueue(context, delay = null)
         }
     }

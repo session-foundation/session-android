@@ -13,10 +13,12 @@ import androidx.work.await
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
+import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.exceptions.NonRetryableException
@@ -48,30 +50,43 @@ class PushRegistrationWorker @AssistedInject constructor(
             limit = MAX_REGISTRATIONS_PER_RUN,
         )
 
-        Log.d(TAG, "Processing ${registrations.size} push registrations")
+        val unregister = pushRegistrationDatabase.getPendingRegistrations(
+            limit = MAX_REGISTRATIONS_PER_RUN
+        )
+
+        Log.d(TAG, "Processing ${registrations.size} push registrations and ${unregister.size} unregister")
 
         supervisorScope {
+            val unregisterResult = unregister.map { registration ->
+                async {
+                    runCatching {
+                        registry.unregister(
+                            token = registration.input.pushToken,
+                            swarmAuth = swarmAuthForAccount(AccountId(registration.accountId)),
+                        )
+                    }.onSuccess {
+                        Log.d(TAG, "Successfully unregistered push token for account ${registration.accountId}")
+                    }.onFailure { exception ->
+                        Log.e(TAG, "Failed to unregister push token for account ${registration.accountId}", exception)
+                    }
+
+                    registration.accountId
+                }
+            }
+
             val registrationResults = registrations.associateWith { registration ->
                 async {
                     runCatching {
                         val (auth, namespaces) = runCatching {
                             val accountId = AccountId(registration.accountId)
 
-                            when {
-                                registration.accountId == prefs.getLocalNumber() -> {
-                                    requireNotNull(storage.userAuth) {
-                                        "User auth is required for local number push registration"
-                                    } to REGULAR_PUSH_NAMESPACES
+                            swarmAuthForAccount(accountId) to (
+                                if (accountId.prefix == IdPrefix.GROUP) {
+                                    GROUP_PUSH_NAMESPACES
+                                } else {
+                                    REGULAR_PUSH_NAMESPACES
                                 }
-
-                                accountId.prefix == IdPrefix.GROUP -> {
-                                    requireNotNull(configFactory.getGroupAuth(accountId)) {
-                                        "Group auth is required for group push registration"
-                                    } to GROUP_PUSH_NAMESPACES
-                                }
-
-                                else -> error("Invalid account ID")
-                            }
+                            )
                         }.recoverCatching {
                             throw NonRetryableException("Unable to get auth for account ID", it)
                         }.getOrThrow()
@@ -125,11 +140,13 @@ class PushRegistrationWorker @AssistedInject constructor(
                     }
                 }
             )
+
+            pushRegistrationDatabase.removeRegistrations(unregisterResult.awaitAll())
         }
 
         // Look for the next due registration and enqueue a new worker if needed.
         now = Instant.now()
-        val nextDueTime = pushRegistrationDatabase.getNextDueTime(now)
+        val nextDueTime = pushRegistrationDatabase.getNextProcessTime(now)
         if (nextDueTime != null) {
             // Don't set the delay if the due time is in the past, so the worker runs immediately.
             val delay = if (nextDueTime.isAfter(now)) Duration.between(now, nextDueTime) else null
@@ -140,6 +157,24 @@ class PushRegistrationWorker @AssistedInject constructor(
         }
 
         return Result.success()
+    }
+
+    private fun swarmAuthForAccount(accountId: AccountId): SwarmAuth {
+        return when {
+            accountId.prefix == IdPrefix.GROUP -> {
+                requireNotNull(configFactory.getGroupAuth(accountId)) {
+                    "Group auth is required for group push registration"
+                }
+            }
+
+            accountId.hexString == prefs.getLocalNumber() -> {
+                requireNotNull(storage.userAuth) {
+                    "User auth is required for local number push registration"
+                }
+            }
+
+            else -> error("Invalid account ID")
+        }
     }
 
     companion object {
