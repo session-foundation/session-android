@@ -109,15 +109,18 @@
         <org.thoughtcrime.securesms.scribbles.widget.VerticalSlideColorPicker
             android:id="@+id/scribble_color_picker"
             android:layout_width="32dp"
-            android:layout_height="250dp"
+            android:layout_height="0dp"
             android:layout_below="@id/scribble_toolbar"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="32dp"
             android:layout_marginEnd="10dp"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="@+id/scribble_toolbar"
             app:layout_constraintTop_toBottomOf="@+id/scribble_toolbar"
             app:pickerBorderColor="@color/white"
             app:pickerBorderWidth="3dp"
+            app:layout_constraintHeight_percent="0.70"
+            app:layout_constraintVertical_bias="0.0"
             app:pickerColors="@array/scribble_colors" />
 
         <androidx.recyclerview.widget.RecyclerView
