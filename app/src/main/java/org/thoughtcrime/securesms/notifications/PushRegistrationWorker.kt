@@ -29,7 +29,7 @@ import java.time.Duration
 import java.time.Instant
 
 @HiltWorker
-class PushRegistrationWorkerV2 @AssistedInject constructor(
+class PushRegistrationWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted params: WorkerParameters,
     private val registry: PushRegistryV2,
@@ -158,7 +158,7 @@ class PushRegistrationWorkerV2 @AssistedInject constructor(
         private val REGULAR_PUSH_NAMESPACES = listOf(Namespace.DEFAULT())
 
         suspend fun enqueue(context: Context, delay: Duration?) {
-            val builder = OneTimeWorkRequestBuilder<PushRegistrationWorkerV2>()
+            val builder = OneTimeWorkRequestBuilder<PushRegistrationWorker>()
                 .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
 
             if (delay != null) {

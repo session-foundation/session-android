@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
@@ -93,11 +92,11 @@ class PushRegistrationHandler @Inject constructor(
         pushRegistrationDatabase.ensureRegistrations(registration)
 
         if (registration.isEmpty()) {
-            PushRegistrationWorkerV2.cancel(context)
+            PushRegistrationWorker.cancel(context)
         } else {
             Log.d(TAG, "Enqueued push registration worker")
             // Make sure the worker is run immediately to handle any new registrations.
-            PushRegistrationWorkerV2.enqueue(context, delay = null)
+            PushRegistrationWorker.enqueue(context, delay = null)
         }
     }
 
