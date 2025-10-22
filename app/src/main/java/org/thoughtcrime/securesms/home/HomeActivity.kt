@@ -427,18 +427,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
             )
         }
 
-        binding.root.applySafeInsetsPaddings(
-            typeMask = WindowInsetsCompat.Type.systemBars(),
-            applyBottom = false,
-            consumeInsets = false,
-            alsoApply = { insets ->
-                binding.globalSearchRecycler.updatePadding(bottom = insets.bottom)
-                binding.newConversationButton.updateLayoutParams<MarginLayoutParams> {
-                    bottomMargin = insets.bottom +
-                            resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset)
-                }
-            }
-        )
+        applyViewInsets()
     }
 
     override fun onCancelClicked() {
@@ -898,6 +887,25 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     private fun showStartConversation() {
         homeViewModel.onCommand(HomeViewModel.Commands.ShowStartConversationSheet)
+    }
+
+    private fun applyViewInsets() {
+        binding.root.applySafeInsetsPaddings(
+            applyBottom = false,
+            consumeInsets = false,
+            alsoApply = { insets ->
+                binding.globalSearchRecycler.updatePadding(bottom = insets.bottom)
+            }
+        )
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.newConversationButton) { view, insets ->
+            val nav = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            view.updateLayoutParams<MarginLayoutParams> {
+                bottomMargin = nav.bottom +
+                        resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset)
+            }
+            insets
+        }
     }
 }
 
