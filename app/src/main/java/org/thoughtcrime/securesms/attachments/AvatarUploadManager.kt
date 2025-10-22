@@ -93,6 +93,7 @@ class AvatarUploadManager @Inject constructor(
             val ciphertext = ByteArrayOutputStream().use { outputStream ->
                 ProfileCipherOutputStream(outputStream, key).use {
                     it.write(pictureData)
+                    it.flush()
                 }
 
                 outputStream.toByteArray()
