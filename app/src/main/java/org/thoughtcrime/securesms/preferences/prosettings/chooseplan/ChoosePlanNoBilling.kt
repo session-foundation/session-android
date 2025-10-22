@@ -27,6 +27,7 @@ import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.C
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.SubscriptionDetails
 import org.thoughtcrime.securesms.pro.SubscriptionType
+import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.components.iconExternalLink
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
@@ -203,6 +204,9 @@ fun ChoosePlanNoBilling(
         },
         contentTitle = contentTitle,
         contentDescription = contentDescription,
+        contentClick = {
+            sendCommand(ShowOpenUrlDialog("https://getsession.org/pro-roadmap"))
+        },
         linkCellsInfo = cellsInfo,
         linkCells = cells
     )

@@ -2,6 +2,8 @@ package org.thoughtcrime.securesms.preferences.prosettings
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
@@ -207,6 +210,7 @@ fun BaseNonOriginatingProSettingsScreen(
     headerTitle: CharSequence?,
     contentTitle: String?,
     contentDescription: CharSequence?,
+    contentClick: (() -> Unit)? = null,
     linkCellsInfo: String?,
     linkCells: List<NonOriginatingLinkCellData> = emptyList(),
 ) {
@@ -229,6 +233,15 @@ fun BaseNonOriginatingProSettingsScreen(
         if (contentDescription != null) {
             Spacer(Modifier.height(LocalDimensions.current.xxxsSpacing))
             Text(
+                modifier = Modifier.then(
+                    // make the component clickable is there is an action
+                    if (contentClick != null) Modifier.clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = contentClick
+                    )
+                    else Modifier
+                ),
                 text = annotatedStringResource(contentDescription),
                 style = LocalType.current.base,
                 color = LocalColors.current.text,
