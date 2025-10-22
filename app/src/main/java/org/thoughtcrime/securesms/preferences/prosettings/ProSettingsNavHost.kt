@@ -5,20 +5,15 @@ import android.os.Parcelable
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.ViewModelStore
-import androidx.lifecycle.ViewModelStoreOwner
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
-import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination.CancelSubscription
@@ -72,14 +67,13 @@ fun ProSettingsNavHost(
 ){
     SharedTransitionLayout {
         val navController = rememberNavController()
-        val scope = rememberCoroutineScope()
         val navigator: UINavigator<ProSettingsDestination> = remember {
             UINavigator<ProSettingsDestination>()
         }
 
         val handleBack: () -> Unit = {
             if (navController.previousBackStackEntry != null) {
-                scope.launch { navigator.navigateUp() }
+                navController.navigateUp()
             } else {
                 onBack() // Finish activity if at root
             }

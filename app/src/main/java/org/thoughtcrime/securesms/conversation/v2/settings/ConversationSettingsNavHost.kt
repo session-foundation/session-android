@@ -7,7 +7,6 @@ import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -16,7 +15,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 import network.loki.messenger.BuildConfig
@@ -110,12 +108,11 @@ fun ConversationSettingsNavHost(
 ){
     SharedTransitionLayout {
         val navController = rememberNavController()
-        val scope = rememberCoroutineScope()
         val navigator: UINavigator<ConversationSettingsDestination> = remember { UINavigator() }
 
         val handleBack: () -> Unit = {
             if (navController.previousBackStackEntry != null) {
-                scope.launch { navigator.navigateUp() }
+                navController.navigateUp()
             } else {
                 onBack() // Finish activity if at root
             }
