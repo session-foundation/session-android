@@ -231,6 +231,7 @@ fun SessionProCTA(
     textContent: @Composable ColumnScope.() -> Unit,
     modifier: Modifier = Modifier,
     title: String = stringResource(R.string.upgradeTo),
+    titleColor: Color = LocalColors.current.text,
     badgeAtStart: Boolean = false,
     disabled: Boolean = false,
     features: List<CTAFeature> = emptyList(),
@@ -281,6 +282,7 @@ fun SessionProCTA(
                             ProBadgeText(
                                 modifier = Modifier.align(Alignment.CenterHorizontally),
                                 text = title,
+                                textStyle = LocalType.current.h5.copy(color = titleColor),
                                 badgeAtStart = badgeAtStart,
                                 badgeColors = if (disabled) proBadgeColorDisabled() else proBadgeColorStandard(),
                             )
@@ -494,6 +496,7 @@ fun AnimatedSessionProCTA(
         positiveButtonText = positiveButtonText,
         negativeButtonText = negativeButtonText,
         title = title,
+        titleColor = if(disabled) LocalColors.current.disabled else LocalColors.current.text,
         badgeAtStart = badgeAtStart,
         disabled = disabled
     )

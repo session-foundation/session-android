@@ -2,12 +2,18 @@ package org.thoughtcrime.securesms.home
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import com.squareup.phrase.Phrase
+import kotlinx.coroutines.delay
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.NonTranslatableStringConstants.PRO
@@ -66,7 +72,18 @@ fun HomeDialogs(
             )
         }
 
-        if(dialogsState.proExpiringCTA != null){
+        // we need a delay before displaying this.
+        // Setting the delay in the VM does not account for render and it seems to appear immediately
+        var showExpiring by remember { mutableStateOf(false) }
+        LaunchedEffect(dialogsState.proExpiringCTA) {
+            showExpiring = false
+            if (dialogsState.proExpiringCTA != null) {
+                delay(1500)
+                showExpiring = true
+            }
+        }
+
+        if(showExpiring && dialogsState.proExpiringCTA != null){
             val context = LocalContext.current
             AnimatedSessionProCTA(
                 heroImageBg = R.drawable.cta_hero_generic_bg,
@@ -80,9 +97,9 @@ fun HomeDialogs(
                     .format()
                     .toString(),
                 features = listOf(
-                    CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
                     CTAFeature.Icon(stringResource(R.string.proFeatureListLongerMessages)),
                     CTAFeature.Icon(stringResource(R.string.proFeatureListPinnedConversations)),
+                    CTAFeature.Icon(stringResource(R.string.proFeatureListAnimatedDisplayPicture)),
                 ),
                 positiveButtonText = stringResource(R.string.update),
                 negativeButtonText = stringResource(R.string.close),
@@ -96,7 +113,18 @@ fun HomeDialogs(
             )
         }
 
-        if(dialogsState.proExpiredCTA){
+        // we need a delay before displaying this.
+        // Setting the delay in the VM does not account for render and it seems to appear immediately
+        var showExpired by remember { mutableStateOf(false) }
+        LaunchedEffect(dialogsState.proExpiredCTA) {
+            showExpired = false
+            if (dialogsState.proExpiredCTA) {
+                delay(1500)
+                showExpired = true
+            }
+        }
+
+        if (showExpired && dialogsState.proExpiredCTA) {
             val context = LocalContext.current
             AnimatedSessionProCTA(
                 heroImageBg = R.drawable.cta_hero_generic_bg,
@@ -110,9 +138,9 @@ fun HomeDialogs(
                     .format()
                     .toString(),
                 features = listOf(
-                    CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
                     CTAFeature.Icon(stringResource(R.string.proFeatureListLongerMessages)),
                     CTAFeature.Icon(stringResource(R.string.proFeatureListPinnedConversations)),
+                    CTAFeature.Icon(stringResource(R.string.proFeatureListAnimatedDisplayPicture)),
                 ),
                 positiveButtonText = stringResource(R.string.renew),
                 negativeButtonText = stringResource(R.string.cancel),

@@ -100,6 +100,22 @@ class ProStatusManager @Inject constructor(
                     )
                 )
 
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER -> SubscriptionType.Active.Expiring(
+                    proStatus = ProStatus.Pro(
+                        visible = true,
+                        validUntil = Instant.now() + Duration.ofDays(40),
+                    ),
+                    duration = ProSubscriptionDuration.TWELVE_MONTHS,
+                    subscriptionDetails = SubscriptionDetails(
+                        device = "Android",
+                        store = "Google Play Store",
+                        platform = "Google",
+                        platformAccount = "Google account",
+                        subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
+                        refundUrl = "https://getsession.org/android-refund",
+                    )
+                )
+
                 DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> SubscriptionType.Active.AutoRenewing(
                     proStatus = ProStatus.Pro(
                         visible = true,
@@ -134,6 +150,17 @@ class ProStatusManager @Inject constructor(
 
                 DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> SubscriptionType.Expired(
                     expiredAt = Instant.now() - Duration.ofDays(14),
+                    subscriptionDetails = SubscriptionDetails(
+                        device = "Android",
+                        store = "Google Play Store",
+                        platform = "Google",
+                        platformAccount = "Google account",
+                        subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
+                        refundUrl = "https://getsession.org/android-refund",
+                    )
+                )
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_EARLIER -> SubscriptionType.Expired(
+                    expiredAt = Instant.now() - Duration.ofDays(60),
                     subscriptionDetails = SubscriptionDetails(
                         device = "Android",
                         store = "Google Play Store",

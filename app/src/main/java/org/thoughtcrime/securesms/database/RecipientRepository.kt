@@ -414,7 +414,8 @@ class RecipientRepository @Inject constructor(
                             proStatus = if (preferences.forceCurrentUserAsPro()) {
                                 // take into account the fact that we can be expired via the debug menu - which is no longer pro
                                 if(preferences.getDebugSubscriptionType() == DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED
-                                    || preferences.getDebugSubscriptionType() == DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE) ProStatus.None
+                                    || preferences.getDebugSubscriptionType() == DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE
+                                    || preferences.getDebugSubscriptionType() == DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_EARLIER) ProStatus.None
                                 else ProStatus.Pro()
                             } else {
                                 // TODO: Get pro status from config
