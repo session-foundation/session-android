@@ -119,8 +119,7 @@ class PushRegistrationWorker @AssistedInject constructor(
 
                                     Log.e(
                                         TAG,
-                                        "Push registration failed, retried $numRetried times",
-                                        exception
+                                        "Push registration failed (${exception.message}), retried $numRetried times",
                                     )
 
                                     // Exponential backoff: 15s, 30s, 1m, 2m, 4m, capped at 4m
@@ -144,7 +143,7 @@ class PushRegistrationWorker @AssistedInject constructor(
 
             pushRegistrationDatabase.removeRegistrations(unregisterResults.await().map {
                 if (it.second.isFailure) {
-                    Log.e(TAG, "Push unregistration failed", it.second.exceptionOrNull()!!)
+                    Log.e(TAG, "Push unregistration failed (${it.second.exceptionOrNull()?.message})")
                 }
 
                 PushRegistrationDatabase.Registration(
