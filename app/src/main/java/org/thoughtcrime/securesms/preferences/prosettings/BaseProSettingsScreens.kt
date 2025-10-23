@@ -2,6 +2,8 @@ package org.thoughtcrime.securesms.preferences.prosettings
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
@@ -60,26 +63,29 @@ import org.thoughtcrime.securesms.ui.components.inlineContentMap
 @Composable
 fun BaseProSettingsScreen(
     disabled: Boolean,
+    hideHomeAppBar: Boolean = false,
     onBack: () -> Unit,
     onHeaderClick: (() -> Unit)? = null,
     extraHeaderContent: @Composable (() -> Unit)? = null,
     content: @Composable () -> Unit
 ){
     Scaffold(
-        topBar = {
-            BackAppBar(
-                title = "",
-                backgroundColor = Color.Transparent,
-                onBack = onBack,
-            )
-        },
+        topBar = if(!hideHomeAppBar){{
+                BackAppBar(
+                    title = "",
+                    backgroundColor = Color.Transparent,
+                    onBack = onBack,
+                )
+            }} else {{}},
         contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
     ) { paddings ->
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = paddings.calculateTopPadding() - LocalDimensions.current.appBarHeight)
+                .padding(top =
+                    (paddings.calculateTopPadding() - LocalDimensions.current.appBarHeight)
+                        .coerceAtLeast(0.dp))
                 .consumeWindowInsets(paddings)
                 .padding(
                     horizontal = LocalDimensions.current.spacing,
@@ -204,6 +210,7 @@ fun BaseNonOriginatingProSettingsScreen(
     headerTitle: CharSequence?,
     contentTitle: String?,
     contentDescription: CharSequence?,
+    contentClick: (() -> Unit)? = null,
     linkCellsInfo: String?,
     linkCells: List<NonOriginatingLinkCellData> = emptyList(),
 ) {
@@ -226,6 +233,15 @@ fun BaseNonOriginatingProSettingsScreen(
         if (contentDescription != null) {
             Spacer(Modifier.height(LocalDimensions.current.xxxsSpacing))
             Text(
+                modifier = Modifier.then(
+                    // make the component clickable is there is an action
+                    if (contentClick != null) Modifier.clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = contentClick
+                    )
+                    else Modifier
+                ),
                 text = annotatedStringResource(contentDescription),
                 style = LocalType.current.base,
                 color = LocalColors.current.text,

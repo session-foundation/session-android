@@ -87,9 +87,11 @@ class DebugMenuViewModel @Inject constructor(
             debugSubscriptionStatuses = setOf(
                 DebugSubscriptionStatus.AUTO_GOOGLE,
                 DebugSubscriptionStatus.EXPIRING_GOOGLE,
+                DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER,
                 DebugSubscriptionStatus.AUTO_APPLE,
                 DebugSubscriptionStatus.EXPIRING_APPLE,
                 DebugSubscriptionStatus.EXPIRED,
+                DebugSubscriptionStatus.EXPIRED_EARLIER,
                 DebugSubscriptionStatus.EXPIRED_APPLE,
             ),
             selectedDebugSubscriptionStatus = textSecurePreferences.getDebugSubscriptionType() ?: DebugSubscriptionStatus.AUTO_GOOGLE,
@@ -445,11 +447,13 @@ class DebugMenuViewModel @Inject constructor(
 
     enum class DebugSubscriptionStatus(val label: String) {
         AUTO_GOOGLE("Auto Renewing (Google, 3 months)"),
-        EXPIRING_GOOGLE("Expiring/Cancelled (Google, 12 months)"),
+        EXPIRING_GOOGLE("Expiring/Cancelled (Expires in 14 days, Google, 12 months)"),
+        EXPIRING_GOOGLE_LATER("Expiring/Cancelled (Expires in 40 days, Google, 12 months)"),
         AUTO_APPLE("Auto Renewing (Apple, 1 months)"),
-        EXPIRING_APPLE("Expiring/Cancelled (Apple, 1 months)"),
-        EXPIRED("Expired (Google)"),
-        EXPIRED_APPLE("Expired (Apple)"),
+        EXPIRING_APPLE("Expiring/Cancelled (Expires in 14 days, Apple, 1 months)"),
+        EXPIRED("Expired (Expired 2 days ago, Google)"),
+        EXPIRED_EARLIER("Expired (Expired 60 days ago, Google)"),
+        EXPIRED_APPLE("Expired (Expired 2 days ago, Apple)"),
     }
 
     enum class DebugProPlanStatus(val label: String){

@@ -9,7 +9,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,7 +49,6 @@ import org.thoughtcrime.securesms.util.UserProfileModalData
 import org.thoughtcrime.securesms.util.UserProfileUtils
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
-import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
@@ -172,7 +170,6 @@ class HomeViewModel @Inject constructor(
                     val validUntil = subscription.type.proStatus.validUntil ?: return@collect
 
                     if (validUntil.isBefore(now.plus(7, ChronoUnit.DAYS))) {
-                        delay(2000)
                         prefs.setHasSeenProExpiring()
                         _dialogsState.update { state ->
                             state.copy(
@@ -191,7 +188,6 @@ class HomeViewModel @Inject constructor(
 
                     // Check if now is within 30 days after expiry
                     if (now.isBefore(validUntil.plus(30, ChronoUnit.DAYS))) {
-                        delay(2000)
                         prefs.setHasSeenProExpired()
                         _dialogsState.update { state ->
                             state.copy(proExpiredCTA = true)

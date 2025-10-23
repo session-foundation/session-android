@@ -72,13 +72,13 @@ import org.thoughtcrime.securesms.util.AvatarUtils
 @HiltViewModel(assistedFactory = ConversationSettingsViewModel.Factory::class)
 class ConversationSettingsViewModel @AssistedInject constructor(
     @Assisted private val address: Address.Conversable,
+    @Assisted private val navigator: UINavigator<ConversationSettingsDestination>,
     @param:ApplicationContext private val context: Context,
     private val avatarUtils: AvatarUtils,
     private val repository: ConversationRepository,
     private val configFactory: ConfigFactoryProtocol,
     private val storage: StorageProtocol,
     private val conversationRepository: ConversationRepository,
-    private val navigator: UINavigator<ConversationSettingsDestination>,
     private val groupManagerV2: GroupManagerV2,
     private val groupManager: GroupManagerV2,
     private val openGroupManager: OpenGroupManager,
@@ -1385,7 +1385,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(address: Address.Conversable): ConversationSettingsViewModel
+        fun create(
+            address: Address.Conversable,
+            navigator: UINavigator<ConversationSettingsDestination>
+        ): ConversationSettingsViewModel
     }
 
     data class UIState(

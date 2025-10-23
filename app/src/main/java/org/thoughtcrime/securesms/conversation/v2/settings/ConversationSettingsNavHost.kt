@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.conversation.v2.settings
 
 import android.annotation.SuppressLint
+import android.os.Parcelable
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.runtime.Composable
@@ -14,6 +15,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 import network.loki.messenger.BuildConfig
 import org.session.libsession.messaging.messages.ExpirationConfiguration
@@ -39,11 +41,13 @@ import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.horizontalSlideComposable
 
 // Destinations
-sealed interface ConversationSettingsDestination {
+sealed interface ConversationSettingsDestination: Parcelable {
     @Serializable
+    @Parcelize
     data object RouteConversationSettings: ConversationSettingsDestination
 
     @Serializable
+    @Parcelize
     data class RouteGroupMembers private constructor(
         private val address: String
     ): ConversationSettingsDestination {
@@ -53,6 +57,7 @@ sealed interface ConversationSettingsDestination {
     }
 
     @Serializable
+    @Parcelize
     data class RouteManageMembers private constructor(
         private val address: String
     ): ConversationSettingsDestination {
@@ -62,6 +67,7 @@ sealed interface ConversationSettingsDestination {
     }
 
     @Serializable
+    @Parcelize
     data class RouteInviteToGroup private constructor(
         private val address: String,
         val excludingAccountIDs: List<String>
@@ -73,15 +79,19 @@ sealed interface ConversationSettingsDestination {
     }
 
     @Serializable
+    @Parcelize
     data object RouteDisappearingMessages: ConversationSettingsDestination
 
     @Serializable
+    @Parcelize
     data object RouteAllMedia: ConversationSettingsDestination
 
     @Serializable
+    @Parcelize
     data object RouteNotifications: ConversationSettingsDestination
 
     @Serializable
+    @Parcelize
     data class RouteInviteToCommunity(
         val communityUrl: String
     ): ConversationSettingsDestination
@@ -92,12 +102,21 @@ sealed interface ConversationSettingsDestination {
 @Composable
 fun ConversationSettingsNavHost(
     address: Address.Conversable,
-    navigator: UINavigator<ConversationSettingsDestination>,
+    startDestination: ConversationSettingsDestination = RouteConversationSettings,
     returnResult: (String, Boolean) -> Unit,
     onBack: () -> Unit
 ){
     SharedTransitionLayout {
         val navController = rememberNavController()
+        val navigator: UINavigator<ConversationSettingsDestination> = remember { UINavigator() }
+
+        val handleBack: () -> Unit = {
+            if (navController.previousBackStackEntry != null) {
+                navController.navigateUp()
+            } else {
+                onBack() // Finish activity if at root
+            }
+        }
 
         ObserveAsEvents(flow = navigator.navigationActions) { action ->
             when (action) {
@@ -107,7 +126,7 @@ fun ConversationSettingsNavHost(
                     action.navOptions(this)
                 }
 
-                NavigationAction.NavigateUp -> navController.navigateUp()
+                NavigationAction.NavigateUp -> handleBack()
 
                 is NavigationAction.NavigateToIntent -> {
                     navController.context.startActivity(action.intent)
@@ -119,12 +138,12 @@ fun ConversationSettingsNavHost(
             }
         }
 
-        NavHost(navController = navController, startDestination = RouteConversationSettings) {
+        NavHost(navController = navController, startDestination = startDestination) {
             // Conversation Settings
             horizontalSlideComposable<RouteConversationSettings> {
                 val viewModel =
                     hiltViewModel<ConversationSettingsViewModel, ConversationSettingsViewModel.Factory> { factory ->
-                        factory.create(address)
+                        factory.create(address, navigator)
                     }
 
                 val lifecycleOwner = LocalLifecycleOwner.current
@@ -154,7 +173,7 @@ fun ConversationSettingsNavHost(
                 GroupMembersScreen(
                     viewModel = viewModel,
                     onBack = dropUnlessResumed {
-                        navController.popBackStack()
+                        handleBack()
                     },
                 )
             }
@@ -178,7 +197,7 @@ fun ConversationSettingsNavHost(
                         )
                     },
                     onBack = dropUnlessResumed {
-                        navController.popBackStack()
+                        handleBack()
                     },
                 )
             }
@@ -208,10 +227,10 @@ fun ConversationSettingsNavHost(
                         //send invites from the manage group screen
                         editGroupViewModel.onContactSelected(viewModel.currentSelected)
 
-                        navController.popBackStack()
+                        handleBack()
                     },
                     onBack = dropUnlessResumed {
-                        navController.popBackStack()
+                        handleBack()
                     },
                     banner = {
                         GroupMinimumVersionBanner()
@@ -244,7 +263,7 @@ fun ConversationSettingsNavHost(
                         viewModel.clearSelection()
                     },
                     onBack = dropUnlessResumed {
-                        navController.popBackStack()
+                        handleBack()
                     },
                 )
             }
@@ -256,14 +275,15 @@ fun ConversationSettingsNavHost(
                         factory.create(
                             address = address,
                             isNewConfigEnabled = ExpirationConfiguration.isNewConfigEnabled,
-                            showDebugOptions = BuildConfig.BUILD_TYPE != "release"
+                            showDebugOptions = BuildConfig.BUILD_TYPE != "release",
+                            navigator = navigator
                         )
                     }
 
                 DisappearingMessagesScreen(
                     viewModel = viewModel,
                     onBack = dropUnlessResumed {
-                        navController.popBackStack()
+                        handleBack()
                     },
                 )
             }
@@ -278,7 +298,7 @@ fun ConversationSettingsNavHost(
                 MediaOverviewScreen(
                     viewModel = viewModel,
                     onClose = dropUnlessResumed {
-                        navController.popBackStack()
+                        handleBack()
                     },
                 )
             }
@@ -293,7 +313,7 @@ fun ConversationSettingsNavHost(
                 NotificationSettingsScreen(
                     viewModel = viewModel,
                     onBack = dropUnlessResumed {
-                        navController.popBackStack()
+                        handleBack()
                     }
                 )
             }

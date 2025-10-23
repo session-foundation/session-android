@@ -99,12 +99,14 @@ import java.time.Instant
 @Composable
 fun ProSettingsHomeScreen(
     viewModel: ProSettingsViewModel,
+    hideHomeAppBar: Boolean,
     onBack: () -> Unit,
 ) {
     val data by viewModel.proSettingsUIState.collectAsState()
 
     ProSettingsHome(
         data = data,
+        hideHomeAppBar = hideHomeAppBar,
         sendCommand = viewModel::onCommand,
         onBack = onBack,
     )
@@ -114,6 +116,7 @@ fun ProSettingsHomeScreen(
 @Composable
 fun ProSettingsHome(
     data: ProSettingsViewModel.ProSettingsState,
+    hideHomeAppBar: Boolean,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -122,11 +125,13 @@ fun ProSettingsHome(
 
     BaseProSettingsScreen(
         disabled = subscriptionType is SubscriptionType.Expired,
+        hideHomeAppBar = hideHomeAppBar,
         onBack = onBack,
         onHeaderClick = {
             // add a click handling if the subscription state is loading or errored
             if(data.subscriptionState.refreshState !is State.Success<*>){
                 sendCommand(OnHeaderClicked)
+                //todo PRO double check if KEE is ok to not have two different dialogs for the header vs the action button. If yes then I need to simplify the logic, if not I need to fix the never-subscribed case
             } else null
         },
         extraHeaderContent = {
@@ -142,7 +147,6 @@ fun ProSettingsHome(
                                 when(subscriptionType){
                                     is SubscriptionType.Active -> R.string.proStatusLoadingSubtitle
                                     else -> R.string.checkingProStatus
-                                    //todo PRO will need to handle never subscribed here
                                 }))
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString(),
@@ -189,6 +193,10 @@ fun ProSettingsHome(
     ) {
         // Header for non-pro users
         if(subscriptionType is SubscriptionType.NeverSubscribed) {
+            if(data.subscriptionState.refreshState !is State.Success){
+                Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+            }
+
             Text(
                 text = Phrase.from(context.getText(R.string.proFullestPotential))
                     .put(APP_NAME_KEY, stringResource(R.string.app_name))
@@ -203,6 +211,7 @@ fun ProSettingsHome(
             AccentFillButtonRect(
                 modifier = Modifier.fillMaxWidth(),
                 text = stringResource(R.string.theContinue),
+                enabled = data.subscriptionState.refreshState is State.Success,
                 onClick = { sendCommand(GoToChoosePlan) }
             )
         }
@@ -631,7 +640,8 @@ fun ProFeatures(
             // Longer messages
             ProFeatureItem(
                 title = stringResource(R.string.proLongerMessages),
-                subtitle = annotatedStringResource(R.string.proLongerMessagesDescription),
+                subtitle = if(data is SubscriptionType.Active) annotatedStringResource(R.string.proLongerMessagesDescription)
+                else annotatedStringResource(R.string.nonProLongerMessagesDescription),
                 icon = R.drawable.ic_message_square,
                 iconGradientStart = primaryBlue,
                 iconGradientEnd = primaryPurple,
@@ -816,21 +826,20 @@ fun ProManage(
 
                 is SubscriptionType.Expired -> {
                     // the details depend on the loading/error state
-                    val renewIcon: @Composable BoxScope.() -> Unit = {
+                    fun renewIcon(color: Color): @Composable BoxScope.() -> Unit = {
                         Icon(
                             modifier = Modifier.align(Alignment.Center)
                                 .size(LocalDimensions.current.iconMedium)
                                 .qaTag(R.string.qa_action_item_icon),
                             painter = painterResource(id = R.drawable.ic_circle_plus),
                             contentDescription = null,
-                            tint = LocalColors.current.text
+                            tint = color
                         )
                     }
 
                     val (subtitle, subColor, icon) = when(subscriptionRefreshState){
                         is State.Loading -> Triple<CharSequence?, Color, @Composable BoxScope.() -> Unit>(
-                            //todo PRO need the ellipsis version of this string
-                            Phrase.from(LocalContext.current, R.string.checkingProStatus)
+                            Phrase.from(LocalContext.current, R.string.checkingProStatusEllipsis)
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString(),
                             LocalColors.current.text,
@@ -841,12 +850,12 @@ fun ProManage(
                             Phrase.from(LocalContext.current, R.string.errorCheckingProStatus)
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString(),
-                            LocalColors.current.warning, renewIcon
+                            LocalColors.current.warning, renewIcon(LocalColors.current.text)
                         )
 
                         is State.Success<*> -> Triple<CharSequence?, Color, @Composable BoxScope.() -> Unit>(
                             null,
-                            LocalColors.current.text, renewIcon
+                            LocalColors.current.text, renewIcon(LocalColors.current.accent)
                         )
                     }
 
@@ -856,6 +865,8 @@ fun ProManage(
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString()
                         ),
+                        titleColor = if(subscriptionRefreshState is State.Success ) LocalColors.current.accent
+                        else LocalColors.current.text,
                         subtitle = if(subtitle == null) null else annotatedStringResource(subtitle),
                         subtitleColor = subColor,
                         endContent = {
@@ -906,7 +917,7 @@ fun PreviewProSettingsPro(
                         ),
                         duration = ProSubscriptionDuration.THREE_MONTHS,
                         subscriptionDetails = SubscriptionDetails(
-                            device = "iPhone",
+                            device = "iOS",
                             store = "Apple App Store",
                             platform = "Apple",
                             platformAccount = "Apple Account",
@@ -917,6 +928,7 @@ fun PreviewProSettingsPro(
                     refreshState = State.Success(Unit),
                 ),
             ),
+            hideHomeAppBar = false,
             sendCommand = {},
             onBack = {},
         )
@@ -939,7 +951,7 @@ fun PreviewProSettingsProLoading(
                         ),
                         duration = ProSubscriptionDuration.THREE_MONTHS,
                         subscriptionDetails = SubscriptionDetails(
-                            device = "iPhone",
+                            device = "iOS",
                             store = "Apple App Store",
                             platform = "Apple",
                             platformAccount = "Apple Account",
@@ -950,6 +962,7 @@ fun PreviewProSettingsProLoading(
                     refreshState = State.Loading,
                 ),
             ),
+            hideHomeAppBar = false,
             sendCommand = {},
             onBack = {},
         )
@@ -972,7 +985,7 @@ fun PreviewProSettingsProError(
                         ),
                         duration = ProSubscriptionDuration.THREE_MONTHS,
                         subscriptionDetails = SubscriptionDetails(
-                            device = "iPhone",
+                            device = "iOS",
                             store = "Apple App Store",
                             platform = "Apple",
                             platformAccount = "Apple Account",
@@ -983,6 +996,7 @@ fun PreviewProSettingsProError(
                     refreshState = State.Error(Exception()),
                 ),
             ),
+            hideHomeAppBar = false,
             sendCommand = {},
             onBack = {},
         )
@@ -1001,7 +1015,7 @@ fun PreviewProSettingsExpired(
                     type = SubscriptionType.Expired(
                         expiredAt = Instant.now() - Duration.ofDays(14),
                         SubscriptionDetails(
-                        device = "iPhone",
+                        device = "iOS",
                         store = "Apple App Store",
                         platform = "Apple",
                         platformAccount = "Apple Account",
@@ -1011,6 +1025,7 @@ fun PreviewProSettingsExpired(
                     refreshState = State.Success(Unit),
                 )
             ),
+            hideHomeAppBar = false,
             sendCommand = {},
             onBack = {},
         )
@@ -1029,7 +1044,7 @@ fun PreviewProSettingsExpiredLoading(
                     type = SubscriptionType.Expired(
                         expiredAt = Instant.now() - Duration.ofDays(14),
                         SubscriptionDetails(
-                        device = "iPhone",
+                        device = "iOS",
                         store = "Apple App Store",
                         platform = "Apple",
                         platformAccount = "Apple Account",
@@ -1039,6 +1054,7 @@ fun PreviewProSettingsExpiredLoading(
                     refreshState = State.Loading,
                 )
             ),
+            hideHomeAppBar = false,
             sendCommand = {},
             onBack = {},
         )
@@ -1057,7 +1073,7 @@ fun PreviewProSettingsExpiredError(
                     type = SubscriptionType.Expired(
                         expiredAt = Instant.now() - Duration.ofDays(14),
                         SubscriptionDetails(
-                        device = "iPhone",
+                        device = "iOS",
                         store = "Apple App Store",
                         platform = "Apple",
                         platformAccount = "Apple Account",
@@ -1067,6 +1083,7 @@ fun PreviewProSettingsExpiredError(
                     refreshState = State.Error(Exception()),
                 )
             ),
+            hideHomeAppBar = false,
             sendCommand = {},
             onBack = {},
         )
@@ -1086,6 +1103,7 @@ fun PreviewProSettingsNonPro(
                     refreshState = State.Success(Unit),
                 )
             ),
+            hideHomeAppBar = false,
             sendCommand = {},
             onBack = {},
         )

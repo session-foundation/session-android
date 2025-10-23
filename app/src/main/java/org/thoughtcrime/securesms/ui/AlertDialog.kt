@@ -151,7 +151,7 @@ fun AlertDialogContent(
                 Icon(
                     painter = painterResource(id = R.drawable.ic_x),
                     tint = LocalColors.current.text,
-                    contentDescription = "back"
+                    contentDescription = stringResource(R.string.close)
                 )
             }
         }
