@@ -251,8 +251,6 @@
         <activity
             android:name="org.thoughtcrime.securesms.mediasend.MediaSendActivity"
             android:theme="@style/Theme.Session.DayNight.NoActionBar"
-            android:rotationAnimation="seamless"
-            android:configChanges="orientation|screenSize|smallestScreenSize|keyboardHidden|uiMode"
             android:windowSoftInputMode="stateHidden" />
         <activity
             android:name="org.thoughtcrime.securesms.MediaPreviewActivity"

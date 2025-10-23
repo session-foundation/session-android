@@ -22,12 +22,9 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.view.LifecycleCameraController
-import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.viewbinding.ViewBinding
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.databinding.CameraxFragmentBinding
 import org.session.libsession.utilities.MediaTypes
@@ -40,7 +37,6 @@ import java.io.ByteArrayOutputStream
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import javax.inject.Inject
-import kotlin.math.roundToInt
 
 @AndroidEntryPoint
 class CameraXFragment : Fragment() {
@@ -290,188 +286,6 @@ class CameraXFragment : Fragment() {
             context?.contentResolver,
             Settings.System.ACCELEROMETER_ROTATION, 0
         ) == 1
-    }
-
-    fun onHostConfigChanged() {
-        applyLayoutForCurrentRotation()
-    }
-
-    private fun applyLayoutForCurrentRotation() {
-        // 1) Make sure the overlay is truly full screen
-        constrainOverlayToParent()
-
-        // 2) Flip the preview ratio based on rotation
-        val rot = requireView().display?.rotation ?: Surface.ROTATION_0
-        val isLandscape = rot == Surface.ROTATION_90 || rot == Surface.ROTATION_270
-        applyPreviewConstraints(isLandscape)
-
-        // 3) Move controls where we want them
-        applyControlsConstraints(isLandscape)
-
-        // 4) Keep icons upright (no animations)
-        rotateIconsUpright(rot)
-    }
-
-    /** Ensure camera_controls_safe_area fills the root and is on top */
-    private fun constrainOverlayToParent() {
-        val root = binding.root as ConstraintLayout
-        val set = ConstraintSet().apply { clone(root) }
-        val id = binding.cameraControlsSafeArea.id
-
-        set.clear(id)
-        set.connect(id, ConstraintSet.TOP,    ConstraintSet.PARENT_ID, ConstraintSet.TOP)
-        set.connect(id, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
-        set.connect(id, ConstraintSet.START,  ConstraintSet.PARENT_ID, ConstraintSet.START)
-        set.connect(id, ConstraintSet.END,    ConstraintSet.PARENT_ID, ConstraintSet.END)
-        set.constrainWidth(id,  ConstraintSet.MATCH_CONSTRAINT)
-        set.constrainHeight(id, ConstraintSet.MATCH_CONSTRAINT)
-        set.applyTo(root)
-
-        // kill any accidental rotation/translation that could push it off-screen
-        binding.cameraControlsSafeArea.apply {
-            rotation = 0f
-            translationX = 0f
-            translationY = 0f
-            bringToFront()
-            visibility = View.VISIBLE
-        }
-    }
-
-    private fun applyPreviewConstraints(isLandscape: Boolean) {
-        val root = binding.root as ConstraintLayout
-        val set = ConstraintSet().apply { clone(root) }
-        val previewId = binding.previewView.id
-
-        set.clear(previewId)
-        set.connect(previewId, ConstraintSet.TOP,    ConstraintSet.PARENT_ID, ConstraintSet.TOP)
-        set.connect(previewId, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
-        set.connect(previewId, ConstraintSet.START,  ConstraintSet.PARENT_ID, ConstraintSet.START)
-        set.connect(previewId, ConstraintSet.END,    ConstraintSet.PARENT_ID, ConstraintSet.END)
-        set.constrainWidth(previewId,  ConstraintSet.MATCH_CONSTRAINT)
-        set.constrainHeight(previewId, ConstraintSet.MATCH_CONSTRAINT)
-        set.setDimensionRatio(previewId, if (isLandscape) "4:3" else "3:4")
-        set.applyTo(root)
-    }
-
-    private fun applyControlsConstraints(isLandscape: Boolean) {
-        if(!isLandscape) return
-        val controls = binding.cameraControlsSafeArea as ConstraintLayout
-        val captureId = binding.cameraCaptureButton.id
-        val closeId   = binding.cameraCloseButton.id
-        val flipId    = binding.cameraFlipButton.id
-        val closeLp   = binding.cameraCloseButton.layoutParams as ViewGroup.MarginLayoutParams
-        val captureLp = binding.cameraCaptureButton.layoutParams as ViewGroup.MarginLayoutParams
-        val forty     = dp(binding, 40)
-
-        ConstraintSet().apply {
-            clone(controls)
-
-            // make sure they stay visible even if XML had them GONE
-            setVisibility(closeId, View.VISIBLE)
-            setVisibility(flipId,  View.VISIBLE)
-
-            // CLOSE: top-start with existing margins
-            clear(closeId)
-            connect(closeId, ConstraintSet.TOP,   ConstraintSet.PARENT_ID, ConstraintSet.TOP,   closeLp.topMargin)
-            connect(closeId, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START, closeLp.marginStart)
-            constrainWidth(closeId,  ConstraintSet.WRAP_CONTENT)
-            constrainHeight(closeId, ConstraintSet.WRAP_CONTENT)
-
-            // CAPTURE: fixed 80dp if not measured yet, centered vertically at end
-            clear(captureId)
-            constrainWidth(captureId,  binding.cameraCaptureButton.width.takeIf { it > 0 } ?: dp(binding, 80))
-            constrainHeight(captureId, binding.cameraCaptureButton.height.takeIf { it > 0 } ?: dp(binding, 80))
-            connect(captureId, ConstraintSet.TOP,    ConstraintSet.PARENT_ID, ConstraintSet.TOP)
-            connect(captureId, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM, captureLp.bottomMargin)
-            connect(captureId, ConstraintSet.END,    ConstraintSet.PARENT_ID, ConstraintSet.END)
-
-            // FLIP: ***under*** the capture with 40dp, centered on capture, keep WRAP_CONTENT
-            clear(flipId)
-            constrainWidth(flipId,  ConstraintSet.WRAP_CONTENT)
-            constrainHeight(flipId, ConstraintSet.WRAP_CONTENT)
-            connect(flipId, ConstraintSet.TOP,  captureId, ConstraintSet.BOTTOM, forty)
-            connect(flipId, ConstraintSet.START, captureId, ConstraintSet.START)
-            connect(flipId, ConstraintSet.END,   captureId, ConstraintSet.END)
-            setHorizontalBias(flipId, 0.5f) // center within capture’s left/right
-
-            applyTo(controls)
-        }
-
-
-//        val root = binding.root as ConstraintLayout
-//        val controls = binding.cameraControlsSafeArea as ConstraintLayout
-//
-//        // PreviewView constraints
-//        ConstraintSet().apply {
-//            clone(root)
-//            clear(binding.previewView.id)
-//            constrainWidth(binding.previewView.id, 0)
-//            constrainHeight(binding.previewView.id, ConstraintSet.MATCH_CONSTRAINT)
-//            setDimensionRatio(binding.previewView.id, "4:3")
-//            connect(binding.previewView.id, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START)
-//            connect(binding.previewView.id, ConstraintSet.END,   ConstraintSet.PARENT_ID, ConstraintSet.END)
-//            connect(binding.previewView.id, ConstraintSet.TOP,   ConstraintSet.PARENT_ID, ConstraintSet.TOP)
-//            connect(binding.previewView.id, ConstraintSet.BOTTOM,ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
-//            applyTo(root)
-//        }
-//
-//        // Controls constraints
-//        ConstraintSet().apply {
-//            clone(controls)
-//
-//            // reuse the margins already defined in XML (no R lookups)
-//            val closeLp = binding.cameraCloseButton.layoutParams as ViewGroup.MarginLayoutParams
-//            val captureLp = binding.cameraCaptureButton.layoutParams as ViewGroup.MarginLayoutParams
-//            val forty = dp(binding, 40)
-//
-//            // Make sure ConstraintSet keeps them visible
-//            setVisibility(binding.cameraCloseButton.id, View.VISIBLE)
-//            setVisibility(binding.cameraFlipButton.id, View.VISIBLE)
-//
-//            // close button
-//            clear(binding.cameraCloseButton.id)
-//            connect(binding.cameraCloseButton.id, ConstraintSet.TOP,    ConstraintSet.PARENT_ID, ConstraintSet.TOP, closeLp.topMargin)
-//            connect(binding.cameraCloseButton.id, ConstraintSet.START,  ConstraintSet.PARENT_ID, ConstraintSet.START, closeLp.marginStart)
-//
-//            // capture button
-//            clear(binding.cameraCaptureButton.id)
-//            constrainWidth(binding.cameraCaptureButton.id, binding.cameraCaptureButton.width.takeIf { it > 0 } ?: dp(binding, 80))
-//            constrainHeight(binding.cameraCaptureButton.id, binding.cameraCaptureButton.height.takeIf { it > 0 } ?: dp(binding, 80))
-//            connect(binding.cameraCaptureButton.id, ConstraintSet.TOP,    ConstraintSet.PARENT_ID, ConstraintSet.TOP)
-//            connect(binding.cameraCaptureButton.id, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM, captureLp.bottomMargin)
-//            connect(binding.cameraCaptureButton.id, ConstraintSet.END,    ConstraintSet.PARENT_ID, ConstraintSet.END)
-//
-//            // flip button
-//            clear(binding.cameraFlipButton.id)
-//            connect(binding.cameraFlipButton.id, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP)
-//            connect(binding.cameraFlipButton.id, ConstraintSet.START, binding.cameraCaptureButton.id, ConstraintSet.START)
-//            connect(binding.cameraFlipButton.id, ConstraintSet.END,   binding.cameraCaptureButton.id, ConstraintSet.END)
-//
-//            applyTo(controls)
-//        }
-    }
-
-    /** Keep icons upright; instant change (no animation) */
-    private fun rotateIconsUpright(rotation: Int) {
-        val angle = when (rotation) {
-            Surface.ROTATION_0   -> 0f
-            Surface.ROTATION_90  -> -90f
-            Surface.ROTATION_180 -> 180f
-            else                 -> 90f
-        }
-        listOf(
-            binding.cameraCaptureButton,
-            binding.cameraFlipButton,
-            binding.cameraCloseButton
-        ).forEach { v ->
-            v.animate().cancel()
-            v.rotation = angle
-        }
-    }
-
-    private fun dp(binding: Any, value: Int): Int {
-        val dm = (binding as? ViewBinding)?.root?.resources?.displayMetrics
-        return (value * (dm?.density ?: 1f)).roundToInt()
     }
 
     override fun onDestroyView() {

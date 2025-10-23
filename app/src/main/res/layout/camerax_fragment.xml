@@ -54,7 +54,7 @@
             android:contentDescription="@string/ic_flip_24"
             android:scaleType="fitCenter"
             android:background="?selectableItemBackgroundBorderless"
-            android:visibility="visible"
+            android:visibility="gone"
             tools:visibility="visible"
             app:layout_constraintTop_toTopOf="@+id/camera_capture_button"
             app:layout_constraintBottom_toBottomOf="@id/camera_capture_button"
