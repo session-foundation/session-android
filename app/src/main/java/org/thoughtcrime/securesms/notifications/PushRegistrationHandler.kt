@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.notifications
 
 import android.content.Context
+import androidx.work.await
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
@@ -13,13 +14,11 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.launch
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.userConfigsChanged
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.PushRegistrationDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -40,9 +39,7 @@ class PushRegistrationHandler @Inject constructor(
     private val preferences: TextSecurePreferences,
     private val tokenFetcher: TokenFetcher,
     @param:ApplicationContext private val context: Context,
-    private val storage: Storage,
     @param:ManagerScope private val scope: CoroutineScope,
-    private val pushRegistrationDatabase: PushRegistrationDatabase,
 ) : OnAppStartupComponent {
 
     private var job: Job? = null
@@ -67,72 +64,17 @@ class PushRegistrationHandler @Inject constructor(
                                 .onStart { emit(Unit) },
                             preferences.pushEnabled,
                             tokenFetcher.token.filterNotNull().filter { !it.isBlank() }
-                        ) { _, enabled, token ->
-                            if (enabled && hasCoreIdentity())
-                                desiredSubscriptions(token)
-                            else emptyList()
-                        }
+                        ) { _, _, _ -> Unit }
                     } else {
                         emptyFlow()
                     }
                 }
-                .distinctUntilChanged()
-                .withIndex()
-                .collect { (idx, registrations) ->
-                    try {
-                        reconcileWithDatabase(registrations, firstRun = idx == 0)
-                    } catch (t: Throwable) {
-                        Log.e(TAG, "Reconciliation failed", t)
-                    }
+                .collect {
+                    PushRegistrationWorker.enqueue(context, delay = null).await()
                 }
         }
     }
 
-    private suspend fun reconcileWithDatabase(
-        registration: List<PushRegistrationDatabase.Registration>,
-        firstRun: Boolean,
-    ) {
-        val numChanges = pushRegistrationDatabase.ensureRegistrations(registration)
-        Log.d(TAG, "Reconciliation resulted in $numChanges registration changes")
-
-        if (numChanges > 0 || firstRun) {
-            // Try to cancel any non-running work to avoid redundant work piling up. But if
-            // it's not possible, it doesn't hurt to have extra worker runs.
-            PushRegistrationWorker.tryCancellingNonRunningWorks(context)
-
-            // Make sure the worker is run immediately to handle any new registration change
-            PushRegistrationWorker.enqueue(context, delay = null)
-        }
-    }
-
-    /**
-     * Build desired subscriptions: self (local number) + any group that shouldPoll.
-     * */
-    private fun desiredSubscriptions(token: String): List<PushRegistrationDatabase.Registration> =
-        buildList {
-            val input = PushRegistrationDatabase.Input(
-                pushToken = token
-            )
-            preferences.getLocalNumber()?.let {
-                add(PushRegistrationDatabase.Registration(accountId = it, input = input))
-            }
-
-            val groups = configFactory.withUserConfigs { it.userGroups.allClosedGroupInfo() }
-            for (group in groups) {
-                if (group.shouldPoll) {
-                    add(
-                        PushRegistrationDatabase.Registration(
-                            accountId = group.groupAccountId,
-                            input = input
-                        )
-                    )
-                }
-            }
-        }
-
-    private fun hasCoreIdentity(): Boolean {
-        return preferences.getLocalNumber() != null && storage.getUserED25519KeyPair() != null
-    }
 
     companion object {
         private const val TAG = "PushRegistrationHandler"

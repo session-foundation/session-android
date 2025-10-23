@@ -4,26 +4,22 @@ import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.Operation
 import androidx.work.OutOfQuotaPolicy
-import androidx.work.WorkInfo
 import androidx.work.WorkManager
-import androidx.work.WorkQuery
 import androidx.work.WorkerParameters
-import androidx.work.await
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.guava.await
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
+import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
@@ -48,16 +44,36 @@ class PushRegistrationWorker @AssistedInject constructor(
     private val pushRegistrationDatabase: PushRegistrationDatabase,
     private val configFactory: ConfigFactoryProtocol,
     private val prefs: TextSecurePreferences,
+    private val tokenFetcher: TokenFetcher,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         var now = Instant.now()
+
+        val pushEnabled = prefs.pushEnabled.value
+        val token = tokenFetcher.token.value
+
+        // Safe guard on the prerequisite of handling push registrations.
+        if (prefs.getLocalNumber().isNullOrBlank() || (pushEnabled && token.isNullOrBlank())) {
+            Log.d(
+                TAG,
+                "No local number or missing push token, skipping push registration processing"
+            )
+            return Result.success()
+        }
+
+        pushRegistrationDatabase.ensureRegistrations(
+            if (pushEnabled) desiredSubscriptions(token = token!!) else emptyList()
+        )
 
         val work = pushRegistrationDatabase.getPendingRegistrationWork(
             now = now,
             limit = MAX_REGISTRATIONS_PER_RUN
         )
 
-        Log.d(TAG, "Processing ${work.register.size} registrations and ${work.unregister.size} unregisters")
+        Log.d(
+            TAG,
+            "Processing ${work.register.size} registrations and ${work.unregister.size} unregisters"
+        )
 
         supervisorScope {
             val unregisterResult = work.unregister.map { r ->
@@ -84,12 +100,12 @@ class PushRegistrationWorker @AssistedInject constructor(
                             val accountId = AccountId(r.accountId)
 
                             swarmAuthForAccount(accountId) to (
-                                if (accountId.prefix == IdPrefix.GROUP) {
-                                    GROUP_PUSH_NAMESPACES
-                                } else {
-                                    REGULAR_PUSH_NAMESPACES
-                                }
-                            )
+                                    if (accountId.prefix == IdPrefix.GROUP) {
+                                        GROUP_PUSH_NAMESPACES
+                                    } else {
+                                        REGULAR_PUSH_NAMESPACES
+                                    }
+                                    )
                         }.recoverCatching {
                             throw NonRetryableException("Unable to get auth for account ID", it)
                         }.getOrThrow()
@@ -127,7 +143,11 @@ class PushRegistrationWorker @AssistedInject constructor(
                                             1
                                         ) ?: 0
 
-                                    Log.e(TAG, "Push registration failed, retried $numRetried times", exception)
+                                    Log.e(
+                                        TAG,
+                                        "Push registration failed, retried $numRetried times",
+                                        exception
+                                    )
 
                                     // Exponential backoff: 15s, 30s, 1m, 2m, 4m, capped at 4m
                                     PushRegistrationDatabase.RegistrationState.Error(
@@ -183,10 +203,35 @@ class PushRegistrationWorker @AssistedInject constructor(
         }
     }
 
+    /**
+     * Build desired subscriptions: self (local number) + any group that shouldPoll.
+     * */
+    private fun desiredSubscriptions(token: String): List<PushRegistrationDatabase.Registration> =
+        buildList {
+            val input = PushRegistrationDatabase.Input(
+                pushToken = token
+            )
+            prefs.getLocalNumber()?.let {
+                add(PushRegistrationDatabase.Registration(accountId = it, input = input))
+            }
+
+            val groups = configFactory.withUserConfigs { it.userGroups.allClosedGroupInfo() }
+            for (group in groups) {
+                if (group.shouldPoll) {
+                    add(
+                        PushRegistrationDatabase.Registration(
+                            accountId = group.groupAccountId,
+                            input = input
+                        )
+                    )
+                }
+            }
+        }
+
     companion object {
         private const val TAG = "PushRegistrationWorker"
 
-        private const val WORK_TAG = "push-registration-worker"
+        private const val WORK_NAME = "push-registration-worker"
 
 
         private const val MAX_REGISTRATIONS_PER_RUN = 5
@@ -201,10 +246,9 @@ class PushRegistrationWorker @AssistedInject constructor(
         )
         private val REGULAR_PUSH_NAMESPACES = listOf(Namespace.DEFAULT())
 
-        suspend fun enqueue(context: Context, delay: Duration?) {
+        fun enqueue(context: Context, delay: Duration?): Operation {
             val builder = OneTimeWorkRequestBuilder<PushRegistrationWorker>()
                 .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
-                .addTag(WORK_TAG)
 
             if (delay != null) {
                 builder.setInitialDelay(delay)
@@ -212,32 +256,16 @@ class PushRegistrationWorker @AssistedInject constructor(
                 builder.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             }
 
-            WorkManager.getInstance(context)
-                .enqueue(builder.build())
-                .await()
+            val op = WorkManager.getInstance(context)
+                .enqueueUniqueWork(
+                    uniqueWorkName = WORK_NAME,
+                    existingWorkPolicy = ExistingWorkPolicy.REPLACE,
+                    request = builder.build()
+                )
 
             Log.d(TAG, "Enqueued next worker with delay = $delay")
-        }
 
-        /**
-         * Best effort attempt to cancel all non-running work.
-         */
-        suspend fun tryCancellingNonRunningWorks(context: Context) {
-            val manager = WorkManager.getInstance(context)
-
-            coroutineScope {
-                manager
-                    .getWorkInfos(WorkQuery.Builder.fromTags(tags = listOf(WORK_TAG))
-                        .addStates(WorkInfo.State.entries.filter { it != WorkInfo.State.RUNNING })
-                        .build())
-                    .await()
-                    .map { work ->
-                        launch {
-                            manager.cancelWorkById(work.id)
-                        }
-                    }
-                    .joinAll()
-            }
+            return op
         }
     }
 }

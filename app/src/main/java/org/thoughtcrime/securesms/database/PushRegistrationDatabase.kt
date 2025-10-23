@@ -38,15 +38,15 @@ class PushRegistrationDatabase @Inject constructor(
         val registrationsAsText = json.encodeToString(registrations)
 
         // It's important to specify the base RegistrationState so that the discriminator is correct
-        val noneStateAsText = json.encodeToString<RegistrationState>(RegistrationState.None)
+        val pendingRegisterAsText = json.encodeToString<RegistrationState>(RegistrationState.PendingRegister)
         val pendingUnregisterAsText = json.encodeToString<RegistrationState>(RegistrationState.PendingUnregister)
 
         return writableDatabase.transaction {
             var numChanges = 0
 
             if (registrations.isNotEmpty()) {
-                // Insert the provided registrations with NONE state
-                // If they already exist with a "pending unregister" state, flip them back to NONE,
+                // Insert the provided registrations with PendingRegister state
+                // If they already exist with a PendingUnregister state, flip them back to PendingRegister,
                 // otherwise keep their existing state.
                 compileStatement(
                     """
@@ -54,38 +54,38 @@ class PushRegistrationDatabase @Inject constructor(
                 SELECT 
                     value->>'$.accountId',
                     value->>'$.input',
-                    :none_state
+                    :pending_register_state
                 FROM json_each(:registrations)
                 WHERE TRUE
                 ON CONFLICT DO UPDATE
-                    SET state = :none_state
+                    SET state = :pending_register_state
                     WHERE state_type = '$TYPE_PENDING_UNREGISTER'
             """
                 ).use { stmt ->
-                    stmt.bindString(1, noneStateAsText)
+                    stmt.bindString(1, pendingRegisterAsText)
                     stmt.bindString(2, registrationsAsText)
                     numChanges += stmt.executeUpdateDelete()
                 }
             }
 
-            // Mark all other registrations as PENDING_UNREGISTER to be cleaned up
+            // Mark all other registrations that are registered or error as PendingUnregister to be cleaned up
             compileStatement("""
                 UPDATE push_registration_state
                 SET state = ?
                 WHERE (account_id, input) NOT IN (SELECT value->>'$.accountId', value->>'$.input' FROM json_each(?))
+                    AND state_type IN ('$TYPE_REGISTERED', '$TYPE_ERROR')
             """).use { stmt ->
                 stmt.bindString(1, pendingUnregisterAsText)
                 stmt.bindString(2, registrationsAsText)
                 numChanges += stmt.executeUpdateDelete()
             }
 
-            // Delete all registrations that were previously marked as PermanentError and
-            // are no longer desired.
+            // Delete no longer desired registrations that didn't start, or ended up in a permanent error
             // Note: the changes here do not count towards numChanges since they won't affect
             // the scheduling
             compileStatement("""
                 DELETE FROM push_registration_state
-                WHERE state_type = '$TYPE_PERMANENT_ERROR'
+                WHERE state_type IN ('$TYPE_PERMANENT_ERROR', '$TYPE_PENDING_REGISTER')
                     AND (account_id, input) NOT IN (SELECT value->>'$.accountId', value->>'$.input' FROM json_each(?))
             """).use { stmt ->
                 stmt.bindString(1, registrationsAsText)
@@ -135,7 +135,7 @@ class PushRegistrationDatabase @Inject constructor(
             
             SELECT account_id, input, state, 0 AS due_time
             FROM push_registration_state
-            WHERE state_type IN ('$TYPE_NONE', '$TYPE_PENDING_UNREGISTER')
+            WHERE state_type IN ('$TYPE_PENDING_REGISTER', '$TYPE_PENDING_UNREGISTER')
             
             ORDER BY due_time ASC
             LIMIT ?
@@ -177,7 +177,7 @@ class PushRegistrationDatabase @Inject constructor(
         readableDatabase.rawQuery(
             """
                 SELECT 1 FROM push_registration_state
-                WHERE state_type IN ('$TYPE_NONE', '$TYPE_PENDING_UNREGISTER')
+                WHERE state_type IN ('$TYPE_PENDING_REGISTER', '$TYPE_PENDING_UNREGISTER')
             """
         ).use { cursor ->
             if (cursor.moveToNext()) {
@@ -222,8 +222,8 @@ class PushRegistrationDatabase @Inject constructor(
     @JsonClassDiscriminator(STATE_TYPE_DISCRIMINATOR)
     sealed interface RegistrationState {
         @Serializable
-        @SerialName(TYPE_NONE)
-        data object None : RegistrationState
+        @SerialName(TYPE_PENDING_REGISTER)
+        data object PendingRegister : RegistrationState
 
         @Serializable
         @SerialName(TYPE_REGISTERED)
@@ -260,7 +260,7 @@ class PushRegistrationDatabase @Inject constructor(
     companion object {
         private const val STATE_TYPE_DISCRIMINATOR = "type"
 
-        private const val TYPE_NONE = "NONE"
+        private const val TYPE_PENDING_REGISTER = "PENDING_REGISTER"
         private const val TYPE_REGISTERED = "REGISTERED"
         private const val TYPE_ERROR = "ERROR"
         private const val TYPE_PERMANENT_ERROR = "PERMANENT_ERROR"
