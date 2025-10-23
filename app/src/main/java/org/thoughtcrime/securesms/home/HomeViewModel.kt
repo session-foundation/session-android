@@ -170,7 +170,6 @@ class HomeViewModel @Inject constructor(
                     val validUntil = subscription.type.proStatus.validUntil ?: return@collect
 
                     if (validUntil.isBefore(now.plus(7, ChronoUnit.DAYS))) {
-                        prefs.setHasSeenProExpiring()
                         _dialogsState.update { state ->
                             state.copy(
                                 proExpiringCTA = ProExpiringCTA(
@@ -188,7 +187,7 @@ class HomeViewModel @Inject constructor(
 
                     // Check if now is within 30 days after expiry
                     if (now.isBefore(validUntil.plus(30, ChronoUnit.DAYS))) {
-                        prefs.setHasSeenProExpired()
+
                         _dialogsState.update { state ->
                             state.copy(proExpiredCTA = true)
                         }
@@ -299,10 +298,12 @@ class HomeViewModel @Inject constructor(
             }
 
             is Commands.HideExpiringCTADialog -> {
+                prefs.setHasSeenProExpiring()
                 _dialogsState.update { it.copy(proExpiringCTA = null) }
             }
 
             is Commands.HideExpiredCTADialog -> {
+                prefs.setHasSeenProExpired()
                 _dialogsState.update { it.copy(proExpiredCTA = false) }
             }
 
