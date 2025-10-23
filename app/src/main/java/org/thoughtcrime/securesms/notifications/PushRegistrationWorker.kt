@@ -13,13 +13,14 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.notifications.TokenFetcher
+import org.session.libsession.messaging.sending_receiving.notifications.Response
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
@@ -76,55 +77,45 @@ class PushRegistrationWorker @AssistedInject constructor(
         )
 
         supervisorScope {
-            val unregisterResult = work.unregister.map { r ->
-                async {
-                    runCatching {
-                        registry.unregister(
-                            token = r.input.pushToken,
-                            swarmAuth = swarmAuthForAccount(AccountId(r.accountId)),
+            val unregisterResults = async {
+                batchRequest(
+                    items = work.unregister,
+                    buildRequest = { r ->
+                        registry.buildUnregisterRequest(
+                            r.input.pushToken,
+                            swarmAuthForAccount(AccountId(r.accountId))
                         )
-                    }.onSuccess {
-                        Log.d(TAG, "Successfully unregistered push token")
-                    }.onFailure { exception ->
-                        Log.e(TAG, "Failed to unregister push token", exception)
-                    }
-
-                    PushRegistrationDatabase.Registration(accountId = r.accountId, input = r.input)
-                }
+                    },
+                    sendBatchRequest = registry::unregister
+                )
             }
 
-            val registrationResults = work.register.associateWith { r ->
-                async {
-                    runCatching {
-                        val (auth, namespaces) = runCatching {
-                            val accountId = AccountId(r.accountId)
-
-                            swarmAuthForAccount(accountId) to (
-                                    if (accountId.prefix == IdPrefix.GROUP) {
-                                        GROUP_PUSH_NAMESPACES
-                                    } else {
-                                        REGULAR_PUSH_NAMESPACES
-                                    }
-                                    )
-                        }.recoverCatching {
-                            throw NonRetryableException("Unable to get auth for account ID", it)
-                        }.getOrThrow()
-
-                        registry.register(
+            val registerResults = async {
+                batchRequest(
+                    items = work.register,
+                    buildRequest = { r ->
+                        val accountId = AccountId(r.accountId)
+                        registry.buildRegisterRequest(
                             token = r.input.pushToken,
-                            swarmAuth = auth,
-                            namespaces = namespaces
+                            swarmAuth = swarmAuthForAccount(accountId),
+                            namespaces = if (accountId.prefix == IdPrefix.GROUP) {
+                                GROUP_PUSH_NAMESPACES
+                            } else {
+                                REGULAR_PUSH_NAMESPACES
+                            }
                         )
-                    }
-                }
+                    },
+                    sendBatchRequest = registry::register
+                )
             }
+
+
 
             pushRegistrationDatabase.updateRegistrations(
-                registrationResults.map { (registration, resultDeferred) ->
-                    val result = resultDeferred.await()
+                registerResults.await().map { (r, result) ->
                     PushRegistrationDatabase.RegistrationWithState(
-                        accountId = registration.accountId,
-                        input = registration.input,
+                        accountId = r.accountId,
+                        input = r.input,
                         state = when {
                             result.isSuccess -> {
                                 PushRegistrationDatabase.RegistrationState.Registered(
@@ -139,7 +130,7 @@ class PushRegistrationWorker @AssistedInject constructor(
                                     PushRegistrationDatabase.RegistrationState.PermanentError
                                 } else {
                                     val numRetried =
-                                        (registration.state as? PushRegistrationDatabase.RegistrationState.Error)?.numRetried?.plus(
+                                        (r.state as? PushRegistrationDatabase.RegistrationState.Error)?.numRetried?.plus(
                                             1
                                         ) ?: 0
 
@@ -168,7 +159,12 @@ class PushRegistrationWorker @AssistedInject constructor(
                 }
             )
 
-            pushRegistrationDatabase.removeRegistrations(unregisterResult.awaitAll())
+            pushRegistrationDatabase.removeRegistrations(unregisterResults.await().map {
+                PushRegistrationDatabase.Registration(
+                    accountId = it.first.accountId,
+                    input = it.first.input
+                )
+            })
         }
 
         // Look for the next due registration and enqueue a new worker if needed.
@@ -183,6 +179,48 @@ class PushRegistrationWorker @AssistedInject constructor(
         }
 
         return Result.success()
+    }
+
+    private suspend fun <T, Req, Res: Response> batchRequest(
+        items: List<T>,
+        buildRequest: (T) -> Req,
+        sendBatchRequest: suspend (Collection<Req>) -> List<Res>,
+    ): List<Pair<T, kotlin.Result<Unit>>> {
+        val results = ArrayList<Pair<T, kotlin.Result<Unit>>>(items.size)
+
+        val batchRequestItems = mutableListOf<T>()
+        val batchRequests = mutableListOf<Req>()
+
+        for (item in items) {
+            try {
+                val request = buildRequest(item)
+                batchRequestItems += item
+                batchRequests += request
+            } catch (ec: Exception) {
+                results += item to kotlin.Result.failure(NonRetryableException("Failed to build a request", ec))
+            }
+        }
+
+        try {
+            val responses = sendBatchRequest(batchRequests)
+            responses.forEachIndexed { idx, response ->
+                val item = batchRequestItems[idx]
+                results += item to when {
+                    response.isSuccess() -> kotlin.Result.success(Unit)
+                    response.error == 403 -> kotlin.Result.failure(NonRetryableException("Request failed: ${response.error} ${response.message}"))
+                    else -> kotlin.Result.failure(Exception("Request failed: ${response.error} ${response.message}"))
+                }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // If the batch API fails, mark all requests in this batch as failed.
+            batchRequestItems.forEach { item ->
+                results += item to kotlin.Result.failure(e)
+            }
+        }
+
+        return results
     }
 
     private fun swarmAuthForAccount(accountId: AccountId): SwarmAuth {
@@ -234,7 +272,7 @@ class PushRegistrationWorker @AssistedInject constructor(
         private const val WORK_NAME = "push-registration-worker"
 
 
-        private const val MAX_REGISTRATIONS_PER_RUN = 5
+        private const val MAX_REGISTRATIONS_PER_RUN = 100
         private const val RE_REGISTER_INTERVAL_DAYS = 7L
 
         private val GROUP_PUSH_NAMESPACES = listOf(
