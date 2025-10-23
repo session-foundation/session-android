@@ -48,7 +48,6 @@ class PushRegistrationWorker @AssistedInject constructor(
     private val tokenFetcher: TokenFetcher,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
-        var now = Instant.now()
 
         val pushEnabled = prefs.pushEnabled.value
         val token = tokenFetcher.token.value
@@ -67,7 +66,6 @@ class PushRegistrationWorker @AssistedInject constructor(
         )
 
         val work = pushRegistrationDatabase.getPendingRegistrationWork(
-            now = now,
             limit = MAX_REGISTRATIONS_PER_RUN
         )
 
@@ -119,7 +117,7 @@ class PushRegistrationWorker @AssistedInject constructor(
                         state = when {
                             result.isSuccess -> {
                                 PushRegistrationDatabase.RegistrationState.Registered(
-                                    due = now.plus(Duration.ofDays(RE_REGISTER_INTERVAL_DAYS)),
+                                    due = Instant.now().plus(Duration.ofDays(RE_REGISTER_INTERVAL_DAYS)),
                                 )
                             }
 
@@ -142,7 +140,7 @@ class PushRegistrationWorker @AssistedInject constructor(
 
                                     // Exponential backoff: 15s, 30s, 1m, 2m, 4m, capped at 4m
                                     PushRegistrationDatabase.RegistrationState.Error(
-                                        due = now + Duration.ofSeconds(
+                                        due = Instant.now() + Duration.ofSeconds(
                                             15L * (1 shl minOf(
                                                 numRetried,
                                                 4
@@ -160,6 +158,10 @@ class PushRegistrationWorker @AssistedInject constructor(
             )
 
             pushRegistrationDatabase.removeRegistrations(unregisterResults.await().map {
+                if (it.second.isFailure) {
+                    Log.e(TAG, "Push unregistration failed", it.second.exceptionOrNull()!!)
+                }
+
                 PushRegistrationDatabase.Registration(
                     accountId = it.first.accountId,
                     input = it.first.input
@@ -168,7 +170,7 @@ class PushRegistrationWorker @AssistedInject constructor(
         }
 
         // Look for the next due registration and enqueue a new worker if needed.
-        now = Instant.now()
+        val now = Instant.now()
         val nextDueTime = pushRegistrationDatabase.getNextProcessTime(now)
         if (nextDueTime != null) {
             // Don't set the delay if the due time is in the past, so the worker runs immediately.
@@ -181,7 +183,7 @@ class PushRegistrationWorker @AssistedInject constructor(
         return Result.success()
     }
 
-    private suspend fun <T, Req, Res: Response> batchRequest(
+    private suspend inline fun <T, Req, Res: Response> batchRequest(
         items: List<T>,
         buildRequest: (T) -> Req,
         sendBatchRequest: suspend (Collection<Req>) -> List<Res>,
