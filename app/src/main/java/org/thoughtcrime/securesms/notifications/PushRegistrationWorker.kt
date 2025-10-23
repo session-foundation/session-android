@@ -16,10 +16,11 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
-import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.notifications.Response
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -45,26 +46,10 @@ class PushRegistrationWorker @AssistedInject constructor(
     private val pushRegistrationDatabase: PushRegistrationDatabase,
     private val configFactory: ConfigFactoryProtocol,
     private val prefs: TextSecurePreferences,
-    private val tokenFetcher: TokenFetcher,
+    @param:PushNotificationModule.PushProcessingSemaphore
+    private val semaphore: Semaphore,
 ) : CoroutineWorker(context, params) {
-    override suspend fun doWork(): Result {
-
-        val pushEnabled = prefs.pushEnabled.value
-        val token = tokenFetcher.token.value
-
-        // Safe guard on the prerequisite of handling push registrations.
-        if (prefs.getLocalNumber().isNullOrBlank() || (pushEnabled && token.isNullOrBlank())) {
-            Log.d(
-                TAG,
-                "No local number or missing push token, skipping push registration processing"
-            )
-            return Result.success()
-        }
-
-        pushRegistrationDatabase.ensureRegistrations(
-            if (pushEnabled) desiredSubscriptions(token = token!!) else emptyList()
-        )
-
+    override suspend fun doWork(): Result = semaphore.withPermit {
         val work = pushRegistrationDatabase.getPendingRegistrationWork(
             limit = MAX_REGISTRATIONS_PER_RUN
         )
@@ -242,31 +227,6 @@ class PushRegistrationWorker @AssistedInject constructor(
             else -> error("Invalid account ID")
         }
     }
-
-    /**
-     * Build desired subscriptions: self (local number) + any group that shouldPoll.
-     * */
-    private fun desiredSubscriptions(token: String): List<PushRegistrationDatabase.Registration> =
-        buildList {
-            val input = PushRegistrationDatabase.Input(
-                pushToken = token
-            )
-            prefs.getLocalNumber()?.let {
-                add(PushRegistrationDatabase.Registration(accountId = it, input = input))
-            }
-
-            val groups = configFactory.withUserConfigs { it.userGroups.allClosedGroupInfo() }
-            for (group in groups) {
-                if (group.shouldPoll) {
-                    add(
-                        PushRegistrationDatabase.Registration(
-                            accountId = group.groupAccountId,
-                            input = input
-                        )
-                    )
-                }
-            }
-        }
 
     companion object {
         private const val TAG = "PushRegistrationWorker"
