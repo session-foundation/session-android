@@ -18,6 +18,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.core.graphics.Insets
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
@@ -86,13 +89,13 @@ import org.thoughtcrime.securesms.reviews.ui.InAppReview
 import org.thoughtcrime.securesms.reviews.ui.InAppReviewViewModel
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
-import org.thoughtcrime.securesms.ui.ObserveAsEvents
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
+import org.thoughtcrime.securesms.util.applySafeInsetsMargins
 import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.fadeIn
@@ -415,16 +418,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
             }
         }
 
-        binding.root.applySafeInsetsPaddings(
-            applyBottom = false,
-            alsoApply = { insets ->
-                binding.globalSearchRecycler.updatePadding(bottom = insets.bottom)
-                binding.newConversationButton.updateLayoutParams<MarginLayoutParams> {
-                    bottomMargin = insets.bottom + resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset)
-                }
-            }
-        )
-
         // Set up in-app review
         binding.inAppReviewView.setThemedContent {
             InAppReview(
@@ -433,6 +426,8 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 sendCommands = inAppReviewViewModel::sendUiCommand,
             )
         }
+
+        applyViewInsets()
     }
 
     override fun onCancelClicked() {
@@ -892,6 +887,21 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     private fun showStartConversation() {
         homeViewModel.onCommand(HomeViewModel.Commands.ShowStartConversationSheet)
+    }
+
+    private fun applyViewInsets() {
+        binding.root.applySafeInsetsPaddings(
+            applyBottom = false,
+            consumeInsets = false,
+            alsoApply = { insets ->
+                binding.globalSearchRecycler.updatePadding(bottom = insets.bottom)
+            }
+        )
+
+        binding.newConversationButton.applySafeInsetsMargins(
+            typeMask = WindowInsetsCompat.Type.navigationBars(),
+            additionalInsets = Insets.of(0,0,0, resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset))
+        )
     }
 }
 
