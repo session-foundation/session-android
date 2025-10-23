@@ -22,6 +22,7 @@ import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -290,7 +291,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         binding.dialogs.apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setThemedContent {
-                val dialogsState by homeViewModel.dialogsState.collectAsState()
+                val dialogsState by homeViewModel.dialogsState.collectAsStateWithLifecycle()
                 HomeDialogs(
                     dialogsState = dialogsState,
                     sendCommand = homeViewModel::onCommand
