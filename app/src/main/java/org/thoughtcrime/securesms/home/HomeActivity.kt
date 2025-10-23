@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
@@ -94,6 +95,7 @@ import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
+import org.thoughtcrime.securesms.util.applySafeInsetsMargins
 import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.fadeIn
@@ -898,14 +900,10 @@ class HomeActivity : ScreenLockActionBarActivity(),
             }
         )
 
-        ViewCompat.setOnApplyWindowInsetsListener(binding.newConversationButton) { view, insets ->
-            val nav = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
-            view.updateLayoutParams<MarginLayoutParams> {
-                bottomMargin = nav.bottom +
-                        resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset)
-            }
-            insets
-        }
+        binding.newConversationButton.applySafeInsetsMargins(
+            consumeInsets = false,
+            additionalInsets = Insets.of(0,0,0, resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset))
+        )
     }
 }
 
