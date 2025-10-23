@@ -103,10 +103,8 @@ private fun PortraitContent(
         QrPanel(
             accountId = accountId,
             modifier = Modifier
-                .padding(horizontal = LocalDimensions.current.spacing)
-                .padding(top = LocalDimensions.current.spacing)
-                .padding(bottom = LocalDimensions.current.spacing)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .padding(LocalDimensions.current.spacing),
         )
     }
 }
@@ -119,7 +117,6 @@ private fun LandscapeContent(
     Row(
         modifier = Modifier
             .fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.spacing)
     ) {
         // Left: independently scrollable actions list
         Column(
@@ -134,12 +131,14 @@ private fun LandscapeContent(
         Box(
             modifier = Modifier
                 .weight(1f)
-                .align(Alignment.CenterVertically)
+                .verticalScroll(rememberScrollState())
         ) {
             QrPanel(
                 accountId = accountId,
                 modifier = Modifier
-                    .widthIn(max = 420.dp)
+                    .fillMaxWidth()
+                    .padding(horizontal = LocalDimensions.current.spacing)
+                    .padding(bottom = LocalDimensions.current.spacing)
             )
         }
 
@@ -152,19 +151,17 @@ private fun QrPanel(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = Modifier.widthIn(max = 420.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier.widthIn(max = 420.dp),
     ) {
         Text(stringResource(R.string.accountIdYours), style = LocalType.current.xl)
         Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
         Text(
             text = stringResource(R.string.qrYoursDescription),
             color = LocalColors.current.textSecondary,
-            style = LocalType.current.small,
-            textAlign = TextAlign.Center
+            style = LocalType.current.small
         )
         Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
-        BoxWithConstraints(modifier = modifier) {
+        BoxWithConstraints(modifier = Modifier) {
             val qrModifier = if (getAdaptiveInfo().isLandscape) {
                 val shortest: Dp = min(maxWidth, maxHeight)
                 val qrSide = (shortest * 0.70f).coerceIn(

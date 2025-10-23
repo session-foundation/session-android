@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -179,9 +181,12 @@ private fun LandscapeContent(string: String) {
 
         Column(
             modifier = Modifier
-                .align(Alignment.Center), // vertical + horizontal centering
+                .align(Alignment.Center)
+                .verticalScroll(rememberScrollState())
+                .padding(vertical = LocalDimensions.current.spacing), // vertical + horizontal centering
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
+
         ) {
             QrImage(
                 string = string,
