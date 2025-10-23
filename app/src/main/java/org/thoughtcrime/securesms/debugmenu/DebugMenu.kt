@@ -481,6 +481,13 @@ fun DebugMenu(
 
                 SlimOutlineButton(
                     modifier = Modifier.fillMaxWidth(),
+                    text = "Reset Push Token",
+                ) {
+                    sendCommand(DebugMenuViewModel.Commands.ResetPushToken)
+                }
+
+                SlimOutlineButton(
+                    modifier = Modifier.fillMaxWidth(),
                     text = "Clear All Trusted Downloads",
                 ) {
                     sendCommand(ClearTrustedDownloads)

@@ -5,9 +5,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
@@ -15,15 +13,20 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.launch
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.UserConfigType
+import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.PushRegistrationDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
+import org.thoughtcrime.securesms.util.castAwayType
+import java.util.EnumSet
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -56,8 +59,11 @@ class PushRegistrationHandler @Inject constructor(
                 .flatMapLatest { isLoggedIn ->
                     if (isLoggedIn) {
                         combine(
-                            (configFactory.configUpdateNotifications as Flow<Any>)
-                                .debounce(500L)
+                            configFactory.userConfigsChanged(
+                                    onlyConfigTypes = EnumSet.of(UserConfigType.USER_GROUPS),
+                                    debounceMills = 500
+                                )
+                                .castAwayType()
                                 .onStart { emit(Unit) },
                             preferences.pushEnabled,
                             tokenFetcher.token.filterNotNull().filter { !it.isBlank() }
@@ -71,9 +77,10 @@ class PushRegistrationHandler @Inject constructor(
                     }
                 }
                 .distinctUntilChanged()
-                .collect { registrations ->
+                .withIndex()
+                .collect { (idx, registrations) ->
                     try {
-                        reconcileWithDatabase(registrations)
+                        reconcileWithDatabase(registrations, firstRun = idx == 0)
                     } catch (t: Throwable) {
                         Log.e(TAG, "Reconciliation failed", t)
                     }
@@ -82,9 +89,17 @@ class PushRegistrationHandler @Inject constructor(
     }
 
     private suspend fun reconcileWithDatabase(
-        registration: List<PushRegistrationDatabase.EnsureRegistration>
+        registration: List<PushRegistrationDatabase.Registration>,
+        firstRun: Boolean,
     ) {
-        if (pushRegistrationDatabase.ensureRegistrations(registration)) {
+        val numChanges = pushRegistrationDatabase.ensureRegistrations(registration)
+        Log.d(TAG, "Reconciliation resulted in $numChanges registration changes")
+
+        if (numChanges > 0 || firstRun) {
+            // Try to cancel any non-running work to avoid redundant work piling up. But if
+            // it's not possible, it doesn't hurt to have extra worker runs.
+            PushRegistrationWorker.tryCancellingNonRunningWorks(context)
+
             // Make sure the worker is run immediately to handle any new registration change
             PushRegistrationWorker.enqueue(context, delay = null)
         }
@@ -93,20 +108,20 @@ class PushRegistrationHandler @Inject constructor(
     /**
      * Build desired subscriptions: self (local number) + any group that shouldPoll.
      * */
-    private fun desiredSubscriptions(token: String): List<PushRegistrationDatabase.EnsureRegistration> =
+    private fun desiredSubscriptions(token: String): List<PushRegistrationDatabase.Registration> =
         buildList {
             val input = PushRegistrationDatabase.Input(
                 pushToken = token
             )
             preferences.getLocalNumber()?.let {
-                add(PushRegistrationDatabase.EnsureRegistration(accountId = it, input = input))
+                add(PushRegistrationDatabase.Registration(accountId = it, input = input))
             }
 
             val groups = configFactory.withUserConfigs { it.userGroups.allClosedGroupInfo() }
             for (group in groups) {
                 if (group.shouldPoll) {
                     add(
-                        PushRegistrationDatabase.EnsureRegistration(
+                        PushRegistrationDatabase.Registration(
                             accountId = group.groupAccountId,
                             input = input
                         )
