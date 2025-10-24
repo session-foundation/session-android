@@ -255,6 +255,12 @@ fun buildMaxTimestampInThreadUpToQuery(id: MessageId): Pair<String, Array<Any>> 
     val dateSentColumn = if (id.mms) MmsDatabase.DATE_SENT else SmsDatabase.DATE_SENT
     val threadIdColumn = if (id.mms) MmsSmsColumns.THREAD_ID else SmsDatabase.THREAD_ID
 
+    // The query below does this:
+    // 1. Query the given message, find out its thread id and its date sent
+    // 2. Find all the messages in this thread before this messages (using result from step 1)
+    // 3. With this message + earlier messages, grab all the reactions associated with them
+    // 4. Look at the max date among the reactions returned from step 3
+    // 5. Return the max between this message's date and the max reaction date
     return """
         SELECT 
             MAX(
@@ -263,6 +269,7 @@ fun buildMaxTimestampInThreadUpToQuery(id: MessageId): Pair<String, Array<Any>> 
                     (
                         SELECT MAX(r.${ReactionDatabase.DATE_SENT})
                         FROM ${ReactionDatabase.TABLE_NAME} r
+                        INDEXED BY reaction_message_id_is_mms_index
                         WHERE (r.${ReactionDatabase.MESSAGE_ID}, r.${ReactionDatabase.IS_MMS}) IN (
                             SELECT s.${MmsSmsColumns.ID}, FALSE
                             FROM ${SmsDatabase.TABLE_NAME} s
