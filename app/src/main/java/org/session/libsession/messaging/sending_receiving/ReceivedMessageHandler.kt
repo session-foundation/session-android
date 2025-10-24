@@ -53,6 +53,7 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.SSKEnvironment
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
@@ -100,6 +101,7 @@ class ReceivedMessageHandler @Inject constructor(
     @param:ManagerScope private val scope: CoroutineScope,
     private val configFactory: ConfigFactoryProtocol,
     private val messageRequestResponseHandler: Provider<MessageRequestResponseHandler>,
+    private val prefs: TextSecurePreferences,
 ) {
 
     suspend fun handle(
@@ -183,6 +185,9 @@ class ReceivedMessageHandler @Inject constructor(
     }
 
     private fun showTypingIndicatorIfNeeded(senderPublicKey: String) {
+        // We don't want to show other people's indicators if the toggle is off
+        if(!prefs.isTypingIndicatorsEnabled()) return
+
         val address = Address.fromSerialized(senderPublicKey)
         val threadID = storage.getThreadId(address) ?: return
         typingIndicators.didReceiveTypingStartedMessage(threadID, address, 1)
