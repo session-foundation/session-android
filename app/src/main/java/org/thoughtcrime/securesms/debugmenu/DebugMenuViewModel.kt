@@ -495,11 +495,11 @@ class DebugMenuViewModel @Inject constructor(
         private val TEST_FILE_SERVERS: List<FileServer> = listOf(
             FileServer(
                 url = "http://potatofiles.getsession.org",
-                publicKeyHex = "fc097b06821c98a2db75ce02e521cef5fd9d3446e42e81d843c4c8c4e9260f48",
+                ed25519PublicKeyHex = "ff86dcd4b26d1bfec944c59859494248626d6428efc12168749d65a1b92f5e28",
             ),
             FileServer(
                 url = "http://superduperfiles.oxen.io",
-                publicKeyHex = "16d6c60aebb0851de7e6f4dc0a4734671dbf80f73664c008596511454cb6576d",
+                ed25519PublicKeyHex = "929e33ded05e653fec04b49645117f51851f102a947e04806791be416ed76602",
             )
         )
     }
