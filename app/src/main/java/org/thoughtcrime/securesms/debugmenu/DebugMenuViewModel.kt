@@ -25,6 +25,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.file_server.FileServer
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
@@ -60,6 +61,7 @@ class DebugMenuViewModel @Inject constructor(
     private val attachmentDatabase: AttachmentDatabase,
     private val conversationRepository: ConversationRepository,
     private val databaseInspector: DatabaseInspector,
+    private val tokenFetcher: TokenFetcher,
     subscriptionManagers: Set<@JvmSuppressWildcards SubscriptionManager>,
 ) : ViewModel() {
     private val TAG = "DebugMenu"
@@ -322,6 +324,12 @@ class DebugMenuViewModel @Inject constructor(
                 textSecurePreferences.debugAvatarReupload = newValue
             }
 
+            is Commands.ResetPushToken -> {
+                viewModelScope.launch {
+                    tokenFetcher.resetToken()
+                }
+            }
+
             is Commands.SelectAltFileServer -> {
                 _uiState.update { it.copy(alternativeFileServer = command.fileServer) }
                 textSecurePreferences.alternativeFileServer = command.fileServer
@@ -479,6 +487,7 @@ class DebugMenuViewModel @Inject constructor(
         data class PurchaseDebugPlan(val plan: DebugProPlan) : Commands()
         data object ToggleDeterministicEncryption : Commands()
         data object ToggleDebugAvatarReupload : Commands()
+        data object ResetPushToken : Commands()
         data class SelectAltFileServer(val fileServer: FileServer?) : Commands()
     }
 

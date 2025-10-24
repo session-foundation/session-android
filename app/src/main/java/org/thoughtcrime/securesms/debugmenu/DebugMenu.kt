@@ -495,14 +495,19 @@ fun DebugMenu(
                     }
                 )
 
-                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
-                DebugSwitchRow(
-                    text = "Force 30sec TTL avatar",
-                    checked = uiState.forceShortTTl,
-                    onCheckedChange = {
-                        sendCommand(DebugMenuViewModel.Commands.ForceShortTTl(it))
-                    }
-                )
+                SlimOutlineButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = "Reset Push Token",
+                ) {
+                    sendCommand(DebugMenuViewModel.Commands.ResetPushToken)
+                }
+
+                SlimOutlineButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = "Clear All Trusted Downloads",
+                ) {
+                    sendCommand(ClearTrustedDownloads)
+                }
             }
 
             // Group deprecation state
