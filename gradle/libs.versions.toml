@@ -29,7 +29,7 @@ kotlinVersion = "2.2.20"
 kryoVersion = "5.6.2"
 kspVersion = "2.2.10-2.0.2"
 legacySupportV13Version = "1.0.0"
-libsessionUtilAndroidVersion = "1.0.8-15-gcf74f3b"
+libsessionUtilAndroidVersion = "1.0.8-3-g781debf"
 media3ExoplayerVersion = "1.8.0"
 mockitoCoreVersion = "5.20.0"
 navVersion = "2.9.4"
@@ -72,7 +72,6 @@ huaweiPushVersion = "6.13.0.300"
 googlePlayReviewVersion = "2.0.2"
 coilVersion = "3.3.0"
 billingVersion = "8.0.0"
-gifEncoderVersion = "0.10.1"
 
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissionsVersion" }
@@ -176,7 +175,6 @@ coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilVe
 coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coilVersion" }
 android-billing = { module = "com.android.billingclient:billing", version.ref = "billingVersion" }
 android-billing-ktx = { module = "com.android.billingclient:billing-ktx", version.ref = "billingVersion" }
-gif-encoder = { module = "com.squareup:gifencoder", version.ref = "gifEncoderVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "gradlePluginVersion" }
