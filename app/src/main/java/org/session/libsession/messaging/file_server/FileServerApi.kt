@@ -34,12 +34,10 @@ class FileServerApi @Inject constructor(
     companion object {
         const val MAX_FILE_SIZE = 10_000_000 // 10 MB
 
-        val DEFAULT_FILE_SERVER: FileServer by lazy {
-            FileServer(
-                url = "http://filev2.getsession.org",
-                publicKeyHex = "da21e1d886c6fbaea313f75298bd64aab03a97ce985b46bb2dad9f2089c8ee59"
-            )
-        }
+        val DEFAULT_FILE_SERVER: FileServer = FileServer(
+            url = "http://filev2.getsession.org",
+            publicKeyHex = "da21e1d886c6fbaea313f75298bd64aab03a97ce985b46bb2dad9f2089c8ee59"
+        )
     }
 
     sealed class Error(message: String) : Exception(message) {
@@ -126,7 +124,7 @@ class FileServerApi @Inject constructor(
     suspend fun upload(
         file: ByteArray,
         usedDeterministicEncryption: Boolean,
-        fileServer: FileServer = DEFAULT_FILE_SERVER,
+        fileServer: FileServer,
         customExpiresDuration: Duration? = null
     ): UploadResult {
         val request = Request(
@@ -194,7 +192,7 @@ class FileServerApi @Inject constructor(
     ): HttpUrl {
         val urlFragment = sequenceOf(
             "d".takeIf { usesDeterministicEncryption },
-            if (!fileServer.url.isOfficial) {
+            if (!fileServer.url.isOfficial || fileServer.publicKeyHex != DEFAULT_FILE_SERVER.publicKeyHex) {
                 "p=${fileServer.publicKeyHex}"
             } else {
                 null

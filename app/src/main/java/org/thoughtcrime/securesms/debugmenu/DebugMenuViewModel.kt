@@ -22,6 +22,7 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDD
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.file_server.FileServer
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
@@ -74,7 +75,7 @@ class DebugMenuViewModel @Inject constructor(
             hideMessageRequests = textSecurePreferences.hasHiddenMessageRequests(),
             hideNoteToSelf = configFactory.withUserConfigs { it.userProfile.getNtsPriority() == PRIORITY_HIDDEN },
             forceDeprecationState = deprecationManager.deprecationStateOverride.value,
-            forceDeterministicAttachment = textSecurePreferences.forcesDeterministicAttachmentEncryption,
+            forceDeterministicEncryption = textSecurePreferences.forcesDeterministicAttachmentEncryption,
             availableDeprecationState = listOf(null) + LegacyGroupDeprecationManager.DeprecationState.entries.toList(),
             deprecatedTime = deprecationManager.deprecatedTime.value,
             deprecatingStartTime = deprecationManager.deprecatingStartTime.value,
@@ -97,6 +98,8 @@ class DebugMenuViewModel @Inject constructor(
             debugProPlans = subscriptionManagers.asSequence()
                 .flatMap { it.availablePlans.asSequence().map { plan -> DebugProPlan(it, plan) } }
                 .toList(),
+            availableAltFileServers = TEST_FILE_SERVERS,
+            alternativeFileServer = textSecurePreferences.alternativeFileServer,
         )
     )
     val uiState: StateFlow<UIState>
@@ -307,9 +310,9 @@ class DebugMenuViewModel @Inject constructor(
                 command.plan.apply { manager.purchasePlan(plan) }
             }
 
-            is Commands.ToggleDeterministicAttachmentUpload -> {
-                val newValue = !_uiState.value.forceDeterministicAttachment
-                _uiState.update { it.copy(forceDeterministicAttachment = newValue) }
+            is Commands.ToggleDeterministicEncryption -> {
+                val newValue = !_uiState.value.forceDeterministicEncryption
+                _uiState.update { it.copy(forceDeterministicEncryption = newValue) }
                 textSecurePreferences.forcesDeterministicAttachmentEncryption = newValue
             }
 
@@ -317,6 +320,11 @@ class DebugMenuViewModel @Inject constructor(
                 val newValue = !_uiState.value.debugAvatarReupload
                 _uiState.update { it.copy(debugAvatarReupload = newValue) }
                 textSecurePreferences.debugAvatarReupload = newValue
+            }
+
+            is Commands.SelectAltFileServer -> {
+                _uiState.update { it.copy(alternativeFileServer = command.fileServer) }
+                textSecurePreferences.alternativeFileServer = command.fileServer
             }
         }
     }
@@ -410,7 +418,7 @@ class DebugMenuViewModel @Inject constructor(
         val showDeprecatedStateWarningDialog: Boolean,
         val hideMessageRequests: Boolean,
         val hideNoteToSelf: Boolean,
-        val forceDeterministicAttachment: Boolean,
+        val forceDeterministicEncryption: Boolean,
         val forceCurrentUserAsPro: Boolean,
         val forceOtherUsersAsPro: Boolean,
         val forceIncomingMessagesAsPro: Boolean,
@@ -426,6 +434,8 @@ class DebugMenuViewModel @Inject constructor(
         val debugSubscriptionStatuses: Set<DebugSubscriptionStatus>,
         val selectedDebugSubscriptionStatus: DebugSubscriptionStatus,
         val debugProPlans: List<DebugProPlan>,
+        val alternativeFileServer: FileServer? = null,
+        val availableAltFileServers: List<FileServer> = emptyList(),
     )
 
     enum class DatabaseInspectorState {
@@ -467,7 +477,21 @@ class DebugMenuViewModel @Inject constructor(
         data object ToggleDatabaseInspector : Commands()
         data class SetDebugSubscriptionStatus(val status: DebugSubscriptionStatus) : Commands()
         data class PurchaseDebugPlan(val plan: DebugProPlan) : Commands()
-        data object ToggleDeterministicAttachmentUpload : Commands()
+        data object ToggleDeterministicEncryption : Commands()
         data object ToggleDebugAvatarReupload : Commands()
+        data class SelectAltFileServer(val fileServer: FileServer?) : Commands()
+    }
+
+    companion object {
+        private val TEST_FILE_SERVERS: List<FileServer> = listOf(
+            FileServer(
+                url = "http://potatofiles.getsession.org",
+                publicKeyHex = "fc097b06821c98a2db75ce02e521cef5fd9d3446e42e81d843c4c8c4e9260f48",
+            ),
+            FileServer(
+                url = "http://superduperfiles.oxen.io",
+                publicKeyHex = "16d6c60aebb0851de7e6f4dc0a4734671dbf80f73664c008596511454cb6576d",
+            )
+        )
     }
 }

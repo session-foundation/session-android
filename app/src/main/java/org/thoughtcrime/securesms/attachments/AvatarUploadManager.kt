@@ -104,6 +104,7 @@ class AvatarUploadManager @Inject constructor(
 
         val uploadResult = fileServerApi.upload(
             file = result.ciphertext,
+            fileServer = prefs.alternativeFileServer ?: FileServerApi.DEFAULT_FILE_SERVER,
             usedDeterministicEncryption = usesDeterministicEncryption,
             customExpiresDuration = DEBUG_AVATAR_TTL.takeIf { prefs.forcedShortTTL() }
         )
@@ -154,7 +155,6 @@ class AvatarUploadManager @Inject constructor(
 
         private const val PROFILE_KEY_LENGTH = 32
 
-        private val DEFAULT_AVATAR_TTL: Duration = 14.days
         private val DEBUG_AVATAR_TTL: Duration = 30.seconds
     }
 }
