@@ -5,12 +5,19 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -65,6 +72,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
@@ -762,13 +770,23 @@ fun CollapsibleActionTray(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val rotation by animateFloatAsState(
+                targetValue = if (data.collapsed) 0f else 180f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessLow
+                )
+            )
+
             Icon(
-                modifier = Modifier,
+                modifier = Modifier
+                    .rotate(rotation)
+                    .clickable(onClick = onCollapsedClicked),
                 painter = painterResource(R.drawable.ic_chevron_down),
                 contentDescription = null
             )
             Text(
-                "looooooooooooooooooooo000000oong",
+                data.title,
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
@@ -779,14 +797,24 @@ fun CollapsibleActionTray(
                 overflow = TextOverflow.Ellipsis
             )
             Icon(
-                modifier = Modifier,
+                modifier = Modifier
+                    .clickable(onClick = onClosedClicked),
                 painter = painterResource(R.drawable.ic_x),
                 contentDescription = null
             )
         }
 
         // Rendered actions
-        AnimatedVisibility(visible = !data.collapsed) {
+        AnimatedVisibility(
+            visible = !data.collapsed,
+            enter = slideInVertically(
+                animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
+                initialOffsetY = { it } // start just below and slide up into place
+            ),
+            exit = slideOutVertically(
+                animationSpec = tween(durationMillis = 300, easing = FastOutLinearInEasing),
+                targetOffsetY = { it } // slide down out of view when collapsing
+            )) {
             CategoryCell {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     data.items.forEachIndexed { index, item ->
@@ -794,15 +822,15 @@ fun CollapsibleActionTray(
                         ActionRowItem(
                             modifier = Modifier.background(LocalColors.current.backgroundTertiary),
                             title = item.label,
-                            onClick = item.onClick,
-                            qaTag = 0,
+                            onClick = {},
+                            qaTag = R.string.qa_string_placeholder,
                             endContent = {
                                 DangerFillButtonRect(
                                     item.buttonLabel,
                                     modifier = Modifier
                                         .width(100.dp)
                                 ) {
-                                    item.onClick
+                                    item.onClick()
                                 }
                             }
                         )
