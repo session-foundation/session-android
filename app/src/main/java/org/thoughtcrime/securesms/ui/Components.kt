@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.ui
 
+import android.R.attr.data
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
@@ -88,6 +89,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
@@ -98,6 +100,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
+import org.thoughtcrime.securesms.ui.components.DangerFillButtonRect
 import org.thoughtcrime.securesms.ui.components.SessionSwitch
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.TitledRadioButton
@@ -106,6 +109,8 @@ import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
+import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.ui.theme.primaryGreen
 import org.thoughtcrime.securesms.ui.theme.primaryOrange
@@ -286,7 +291,8 @@ fun ItemButton(
                 painter = painterResource(id = iconRes),
                 contentDescription = null,
                 tint = iconTint ?: colors.contentColor,
-                modifier = Modifier.align(Alignment.Center)
+                modifier = Modifier
+                    .align(Alignment.Center)
                     .size(iconSize)
             )
         },
@@ -318,7 +324,8 @@ fun ItemButton(
     onClick: () -> Unit
 ) {
     TextButton(
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier
+            .fillMaxWidth()
             .heightIn(min = minHeight),
         colors = colors,
         onClick = onClick,
@@ -351,7 +358,8 @@ fun ItemButton(
             subtitle?.let {
                 Text(
                     text = it,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
                         .qaTag(subtitleQaTag),
                     style = LocalType.current.small,
                 )
@@ -392,7 +400,7 @@ fun Cell(
     Box(
         modifier = modifier
             .then(
-                if(dropShadow)
+                if (dropShadow)
                     Modifier.dropShadow(
                         shape = MaterialTheme.shapes.small,
                         shadow = Shadow(
@@ -731,6 +739,131 @@ fun SearchBar(
     )
 }
 
+/**
+ * CollapsingActionTray
+ */
+@Composable
+fun CollapsibleActionTray(
+    modifier: Modifier = Modifier,
+    data: CollapsibleActionTrayData,
+    onCollapsedClicked: () -> Unit = {},
+    onClosedClicked: () -> Unit = {}
+) {
+    Column(
+        modifier = modifier
+            .background(LocalColors.current.backgroundSecondary)
+            .padding(LocalDimensions.current.smallSpacing)
+            .clip(RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp))
+            .fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                modifier = Modifier,
+                painter = painterResource(R.drawable.ic_chevron_down),
+                contentDescription = null
+            )
+            Text(
+                "looooooooooooooooooooo000000oong",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .padding(horizontal = LocalDimensions.current.smallSpacing),
+                style = LocalType.current.h8,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Icon(
+                modifier = Modifier,
+                painter = painterResource(R.drawable.ic_x),
+                contentDescription = null
+            )
+        }
+
+        // Rendered actions
+        AnimatedVisibility(visible = !data.collapsed) {
+            CategoryCell {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    data.items.forEachIndexed { index, item ->
+                        if (index != 0) Divider()
+                        ActionRowItem(
+                            modifier = Modifier.background(LocalColors.current.backgroundTertiary),
+                            title = item.label,
+                            onClick = item.onClick,
+                            qaTag = 0,
+                            endContent = {
+                                DangerFillButtonRect(
+                                    item.buttonLabel,
+                                    modifier = Modifier
+                                        .width(100.dp)
+                                ) {
+                                    item.onClick
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+data class CollapsibleActionTrayData(
+    val title: AnnotatedString,
+    val collapsed: Boolean,
+    val items: List<CollapsibleActionTrayItemData>
+)
+
+data class CollapsibleActionTrayItemData(
+    val label: AnnotatedString,
+    val buttonLabel: String,
+    val buttonColor: Color,
+    val onClick: () -> Unit
+)
+
+
+@Preview
+@Composable
+fun PreviewCollapsibleActionTray(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        val demoItems = listOf(
+            CollapsibleActionTrayItemData(
+                label = annotatedStringResource("Mute notifications"),
+                buttonLabel = "Mute",
+                buttonColor = LocalColors.current.text,
+                onClick = {}
+            ),
+            CollapsibleActionTrayItemData(
+                label = annotatedStringResource("Pin conversation"),
+                buttonLabel = "Pin",
+                buttonColor = LocalColors.current.accent,
+                onClick = {}
+            ),
+            CollapsibleActionTrayItemData(
+                label = annotatedStringResource("Delete chat"),
+                buttonLabel = "Delete",
+                buttonColor = LocalColors.current.danger,
+                onClick = {}
+            )
+        )
+
+        CollapsibleActionTray(
+            data = CollapsibleActionTrayData(
+                title = annotatedStringResource("Header"),
+                collapsed = false,
+                items = demoItems
+            )
+        )
+    }
+}
+
 @Preview
 @Composable
 fun PreviewSearchBar() {
@@ -1020,7 +1153,8 @@ fun ActionRowItem(
     endContent: @Composable (() -> Unit)? = null
 ){
     Row(
-        modifier = modifier.heightIn(min = minHeight)
+        modifier = modifier
+            .heightIn(min = minHeight)
             .clickable { onClick() }
             .padding(paddingValues)
             .qaTag(qaTag),
@@ -1092,7 +1226,8 @@ fun IconActionRowItem(
                 modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)
             ) {
                 Icon(
-                    modifier = Modifier.align(Alignment.Center)
+                    modifier = Modifier
+                        .align(Alignment.Center)
                         .size(iconSize)
                         .qaTag(R.string.qa_action_item_icon),
                     painter = painterResource(id = icon),
