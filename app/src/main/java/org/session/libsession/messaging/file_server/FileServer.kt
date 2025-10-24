@@ -9,9 +9,9 @@ import org.session.libsession.utilities.serializable.HttpSerializer
 data class FileServer(
     @Serializable(with = HttpSerializer::class)
     val url: HttpUrl,
-    val publicKeyHex: String
+    val ed25519PublicKeyHex: String
 ) {
-    constructor(url: String, publicKeyHex: String) : this(url.toHttpUrl(), publicKeyHex)
+    constructor(url: String, ed25519PublicKeyHex: String) : this(url.toHttpUrl(), ed25519PublicKeyHex)
 }
 
 val HttpUrl.isOfficial: Boolean

@@ -28,7 +28,7 @@ class FileServerApiTest {
                     usesDeterministicEncryption = true,
                     fileServer = FileServer(
                         url = "http://fileserver".toHttpUrl(),
-                        publicKeyHex = "1234"
+                        ed25519PublicKeyHex = "1234"
                     )
                 )
             ),
@@ -40,7 +40,7 @@ class FileServerApiTest {
                     usesDeterministicEncryption = true,
                     fileServer = FileServer(
                         url = "http://fileserver".toHttpUrl(),
-                        publicKeyHex = "1234"
+                        ed25519PublicKeyHex = "1234"
                     )
                 )
             ),
@@ -52,7 +52,7 @@ class FileServerApiTest {
                     usesDeterministicEncryption = false,
                     fileServer = FileServer(
                         url = "http://fileserver".toHttpUrl(),
-                        publicKeyHex = "1234"
+                        ed25519PublicKeyHex = "1234"
                     )
                 )
             ),
@@ -73,7 +73,7 @@ class FileServerApiTest {
                     usesDeterministicEncryption = false,
                     fileServer = FileServer(
                         "http://fileabc.getsession.org",
-                        FileServerApi.DEFAULT_FILE_SERVER.publicKeyHex
+                        FileServerApi.DEFAULT_FILE_SERVER.ed25519PublicKeyHex
                     )
                 ),
             ),

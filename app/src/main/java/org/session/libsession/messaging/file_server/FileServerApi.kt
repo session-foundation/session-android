@@ -2,9 +2,9 @@ package org.session.libsession.messaging.file_server
 
 import android.util.Base64
 import kotlinx.coroutines.CancellationException
+import network.loki.messenger.libsession_util.Curve25519
+import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
-import nl.komponents.kovenant.Promise
-import nl.komponents.kovenant.functional.map
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.HttpUrl
 import okhttp3.MediaType.Companion.toMediaType
@@ -15,6 +15,7 @@ import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.utilities.await
 import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.HTTP
+import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
@@ -36,7 +37,7 @@ class FileServerApi @Inject constructor(
 
         val DEFAULT_FILE_SERVER: FileServer = FileServer(
             url = "http://filev2.getsession.org",
-            publicKeyHex = "da21e1d886c6fbaea313f75298bd64aab03a97ce985b46bb2dad9f2089c8ee59"
+            ed25519PublicKeyHex = "b8eef9821445ae16e2e97ef8aa6fe782fd11ad5253cd6723b281341dba22e371"
         )
     }
 
@@ -97,7 +98,10 @@ class FileServerApi @Inject constructor(
                 val response = OnionRequestAPI.sendOnionRequest(
                     request = requestBuilder.build(),
                     server = request.fileServer.url.host,
-                    x25519PublicKey = request.fileServer.publicKeyHex
+                    x25519PublicKey =
+                        Hex.toStringCondensed(
+                            Curve25519.pubKeyFromED25519(Hex.fromStringCondensed(request.fileServer.ed25519PublicKeyHex))
+                        )
                 ).await()
 
                 check(response.code in 200..299) {
@@ -192,8 +196,8 @@ class FileServerApi @Inject constructor(
     ): HttpUrl {
         val urlFragment = sequenceOf(
             "d".takeIf { usesDeterministicEncryption },
-            if (!fileServer.url.isOfficial || fileServer.publicKeyHex != DEFAULT_FILE_SERVER.publicKeyHex) {
-                "p=${fileServer.publicKeyHex}"
+            if (!fileServer.url.isOfficial || fileServer.ed25519PublicKeyHex != DEFAULT_FILE_SERVER.ed25519PublicKeyHex) {
+                "p=${fileServer.ed25519PublicKeyHex}"
             } else {
                 null
             }
@@ -254,7 +258,7 @@ class FileServerApi @Inject constructor(
                 // We'll use the public key we get from the URL
                 return URLParseResult(
                     fileId = id,
-                    fileServer = FileServer(url = fileServerUrl, publicKeyHex = fileServerPubKeyHex),
+                    fileServer = FileServer(url = fileServerUrl, ed25519PublicKeyHex = fileServerPubKeyHex),
                     usesDeterministicEncryption = deterministicEncryption
                 )
             }
@@ -275,7 +279,7 @@ class FileServerApi @Inject constructor(
                     fileId = id,
                     fileServer = FileServer(
                         url = fileServerUrl,
-                        publicKeyHex = DEFAULT_FILE_SERVER.publicKeyHex
+                        ed25519PublicKeyHex = DEFAULT_FILE_SERVER.ed25519PublicKeyHex
                     ),
                     usesDeterministicEncryption = deterministicEncryption
                 )
