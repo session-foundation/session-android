@@ -184,6 +184,14 @@ interface StorageProtocol {
         runThreadUpdate: Boolean
     ): MessageId?
     fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean = false, updateNotification: Boolean = true)
+
+    /**
+     * Marks the conversation as read up to and including the message with [messageId]. It will
+     * take the reactions associated with messages prior to and including that message into account.
+     *
+     * It will not do anything if the last seen of this thread is already set in the future.
+     */
+    fun markConversationAsReadUpToMessage(messageId: MessageId)
     fun markConversationAsUnread(threadId: Long)
     fun getLastSeen(threadId: Long): Long
     fun ensureMessageHashesAreSender(hashes: Set<String>, sender: String, closedGroupId: String): Boolean

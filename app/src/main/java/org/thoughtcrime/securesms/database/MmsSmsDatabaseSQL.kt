@@ -1,5 +1,7 @@
 package org.thoughtcrime.securesms.database
 
+import org.thoughtcrime.securesms.database.model.MessageId
+
 /**
  * Build a combined query to fetch both MMS and SMS messages in one go, the high level idea is to
  * use a UNION between two SELECT statements, one for MMS and one for SMS. And they will need
@@ -235,4 +237,51 @@ fun buildMmsSmsCombinedQuery(
         $orderStatement
         $limitStatement
     """
+}
+
+/**
+ * Build a query to get the maximum timestamp (date sent) in a thread up to and including
+ * the timestamp of the given message ID.
+ *
+ * This query will also look at reactions associated with messages in the thread
+ * to ensure that if there are reactions with later timestamps, they are considered
+ * as well.
+ *
+ * @return A pair containing the SQL query string and an array of parameters to bind.
+ *         The query will return at most one row of "maxTimestamp", "threadId".
+ */
+fun buildMaxTimestampInThreadUpToQuery(id: MessageId): Pair<String, Array<Any>> {
+    val msgTable = if (id.mms) MmsDatabase.TABLE_NAME else SmsDatabase.TABLE_NAME
+    val dateSentColumn = if (id.mms) MmsDatabase.DATE_SENT else SmsDatabase.DATE_SENT
+    val threadIdColumn = if (id.mms) MmsSmsColumns.THREAD_ID else SmsDatabase.THREAD_ID
+
+    return """
+        SELECT 
+            MAX(
+                mainMessage.$dateSentColumn, 
+                IFNULL(
+                    (
+                        SELECT MAX(r.${ReactionDatabase.DATE_SENT})
+                        FROM ${ReactionDatabase.TABLE_NAME} r
+                        WHERE (r.${ReactionDatabase.MESSAGE_ID}, r.${ReactionDatabase.IS_MMS}) IN (
+                            SELECT s.${MmsSmsColumns.ID}, FALSE
+                            FROM ${SmsDatabase.TABLE_NAME} s
+                            WHERE s.${SmsDatabase.THREAD_ID} = mainMessage.${threadIdColumn} AND
+                                s.${SmsDatabase.DATE_SENT} <= mainMessage.$dateSentColumn
+                                
+                            UNION ALL
+                            
+                            SELECT m.${MmsSmsColumns.ID}, TRUE
+                            FROM ${MmsDatabase.TABLE_NAME} m
+                            WHERE m.${MmsSmsColumns.THREAD_ID} = mainMessage.${threadIdColumn} AND
+                                m.${MmsDatabase.DATE_SENT} <= mainMessage.$dateSentColumn
+                        )
+                    ),
+                    0
+                )
+            ) AS maxTimestamp,
+            mainMessage.$threadIdColumn AS threadId
+        FROM $msgTable mainMessage
+        WHERE mainMessage.${MmsSmsColumns.ID} = ?
+    """ to arrayOf(id.id)
 }
