@@ -73,7 +73,8 @@ fun Button(
     style.applyButtonConstraints {
         androidx.compose.material3.Button(
             onClick = onClick,
-            modifier = modifier.heightIn(min = style.minHeight)
+            modifier = modifier
+                .heightIn(min = style.minHeight)
                 .defaultMinSize(minWidth = minWidth),
             enabled = enabled,
             interactionSource = interactionSource,
@@ -352,6 +353,25 @@ fun BorderlessHtmlButton(
     }
 }
 
+@Composable
+fun SlimFillButtonRect(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = LocalColors.current.accent,
+    enabled: Boolean = true,
+    onClick: () -> Unit
+) {
+    Button(
+        text, onClick,
+        ButtonType.Fill(color),
+        modifier,
+        enabled,
+        style = ButtonStyle.Slim,
+        shape = sessionShapes().extraSmall
+    )
+}
+
+
 val MutableInteractionSource.releases
     get() = interactions.filter { it is PressInteraction.Release }
 
@@ -380,6 +400,7 @@ private fun VariousButtons(
             SlimOutlineButton("Slim Outline Disabled", enabled = false) {}
             SlimAccentOutlineButton("Slim Accent") {}
             SlimOutlineButton("Slim Danger", color = LocalColors.current.danger) {}
+            SlimFillButtonRect("Slim Fill", color = LocalColors.current.accent) {}
             BorderlessButton("Borderless Button") {}
             BorderlessButton("Borderless Secondary", color = LocalColors.current.textSecondary) {}
             FillButtonRect("Fill Rect") {}

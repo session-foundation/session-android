@@ -110,6 +110,7 @@ import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.DangerFillButtonRect
 import org.thoughtcrime.securesms.ui.components.SessionSwitch
+import org.thoughtcrime.securesms.ui.components.SlimFillButtonRect
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.TitledRadioButton
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
@@ -759,10 +760,15 @@ fun CollapsibleActionTray(
 ) {
     Column(
         modifier = modifier
+            .fillMaxWidth()
+            .clip(
+                RoundedCornerShape(
+                    topStart = LocalDimensions.current.contentSpacing,
+                    topEnd = LocalDimensions.current.contentSpacing
+                )
+            )
             .background(LocalColors.current.backgroundSecondary)
-            .padding(LocalDimensions.current.smallSpacing)
-            .clip(RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp))
-            .fillMaxWidth(),
+            .padding(LocalDimensions.current.smallSpacing),
         verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
     ) {
         Row(
@@ -825,8 +831,9 @@ fun CollapsibleActionTray(
                             onClick = {},
                             qaTag = R.string.qa_string_placeholder,
                             endContent = {
-                                DangerFillButtonRect(
+                                SlimFillButtonRect(
                                     item.buttonLabel,
+                                    color = item.buttonColor,
                                     modifier = Modifier
                                         .width(100.dp)
                                 ) {
