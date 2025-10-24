@@ -80,7 +80,7 @@ class AttachmentUploadJob @AssistedInject constructor(
                 }
                 handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second)
             } else {
-                val fileServer = FileServerApi.DEFAULT_FILE_SERVER
+                val fileServer = preferences.alternativeFileServer ?: FileServerApi.DEFAULT_FILE_SERVER
                 val keyAndResult = upload(
                     attachment = attachment,
                     encrypt = true

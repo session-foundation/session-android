@@ -243,8 +243,9 @@ fun DebugMenu(
                     selected = null,
                     modifier = modifier,
                     values = uiState.debugProPlans,
-                    onValueSelected = { sendCommand(DebugMenuViewModel.Commands.PurchaseDebugPlan(it)) },
-                    labeler = { it?.label ?: "Select a plan to buy" }
+                    onValueSelected = { sendCommand(DebugMenuViewModel.Commands.PurchaseDebugPlan(it!!)) },
+                    labeler = { it?.label ?: "Select a plan to buy" },
+                    allowSelectingNullValue = false,
                 )
 
                 Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
@@ -352,15 +353,6 @@ fun DebugMenu(
                 )
 
                 Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
-                DebugSwitchRow(
-                    text = "Force 30sec TTL avatar",
-                    checked = uiState.forceShortTTl,
-                    onCheckedChange = {
-                        sendCommand(DebugMenuViewModel.Commands.ForceShortTTl(it))
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing)
@@ -463,19 +455,52 @@ fun DebugMenu(
                     }
                 )
 
+                SlimOutlineButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = "Clear All Trusted Downloads",
+                ) {
+                    sendCommand(ClearTrustedDownloads)
+                }
+            }
+
+            DebugCell("Fileserver, avatar & attachment") {
+                Text("Alternative file server")
+
+                DropDown(
+                    modifier = Modifier.fillMaxWidth(),
+                    selected = uiState.alternativeFileServer,
+                    values = uiState.availableAltFileServers,
+                    onValueSelected = { sendCommand(DebugMenuViewModel.Commands.SelectAltFileServer(it)) },
+                    labeler = { it?.url?.host ?: "Do not use" },
+                    allowSelectingNullValue = true,
+                )
+
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+
                 DebugSwitchRow(
-                    text = "Force using deterministic attachment uploads",
-                    checked = uiState.forceDeterministicAttachment,
+                    text = "Uses deterministic encryption for both avatar and attachment uploads",
+                    checked = uiState.forceDeterministicEncryption,
                     onCheckedChange = {
-                        sendCommand(DebugMenuViewModel.Commands.ToggleDeterministicAttachmentUpload)
+                        sendCommand(DebugMenuViewModel.Commands.ToggleDeterministicEncryption)
                     }
                 )
+
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
 
                 DebugSwitchRow(
                     text = "Debug avatar reupload (shorten interval, and toast messages)",
                     checked = uiState.debugAvatarReupload,
                     onCheckedChange = {
                         sendCommand(DebugMenuViewModel.Commands.ToggleDebugAvatarReupload)
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+                DebugSwitchRow(
+                    text = "Force 30sec TTL avatar",
+                    checked = uiState.forceShortTTl,
+                    onCheckedChange = {
+                        sendCommand(DebugMenuViewModel.Commands.ForceShortTTl(it))
                     }
                 )
 
@@ -774,7 +799,7 @@ fun PreviewDebugMenu() {
                 debugSubscriptionStatuses = setOf(DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE),
                 selectedDebugSubscriptionStatus = DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE,
                 debugProPlans = emptyList(),
-                forceDeterministicAttachment = false,
+                forceDeterministicEncryption = false,
                 debugAvatarReupload = true,
             ),
             sendCommand = {},
