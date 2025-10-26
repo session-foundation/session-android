@@ -822,7 +822,8 @@ fun CollapsibleActionTray(
                 targetOffsetY = { it } // slide down out of view when collapsing
             )) {
             CategoryCell {
-                Column(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.fillMaxWidth()
+                    .background(LocalColors.current.backgroundTertiary)) {
                     data.items.forEachIndexed { index, item ->
                         if (index != 0) Divider()
                         ActionRowItem(
