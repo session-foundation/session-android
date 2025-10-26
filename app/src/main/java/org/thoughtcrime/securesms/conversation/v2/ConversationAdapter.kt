@@ -269,6 +269,13 @@ class ConversationAdapter(
         return MessageId(id, isMms)
     }
 
+    fun getMessageTimestampAt(position: Int): Long? {
+        val cursor = this.cursor ?: return null
+        if (!cursor.moveToPosition(position)) return null
+
+        return cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.NORMALIZED_DATE_SENT))
+    }
+
     companion object {
         private const val VIEW_TYPE_VISIBLE = 1
         private const val VIEW_TYPE_CONTROL = 2

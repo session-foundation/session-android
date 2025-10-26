@@ -325,7 +325,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // Search
     val searchViewModel: SearchViewModel by viewModels()
 
-    private val bufferedLastSeenChannel = Channel<MessageId>(capacity = 10, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    // The channel where we buffer the last seen data to be saved in the db
+    // The data can be:
+    // 1. A `MessageId`, which indicates what message we should mark the last seen until (inclusive of reactions)
+    // 2. A `Long` (timestamp), which indicates we should mark all messages until that timestamp as seen
+    private val bufferedLastSeenChannel = Channel<Any>(capacity = 10, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     private var emojiPickerVisible = false
 
@@ -607,9 +611,21 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 .collectLatest {
                     withContext(Dispatchers.Default) {
                         try {
-                            storage.markConversationAsReadUpToMessage(it)
+                            when (it) {
+                                is Long -> {
+                                    if (storage.getLastSeen(viewModel.threadId) < it) {
+                                        storage.markConversationAsRead(viewModel.threadId, it)
+                                    }
+                                }
+
+                                is MessageId -> {
+                                    storage.markConversationAsReadUpToMessage(it)
+                                }
+
+                                else -> error("Unsupported type sent to bufferedLastSeenChannel: $it")
+                            }
                         } catch (e: Exception) {
-                            Log.e(TAG, "bufferedLastSeenChannel collectLatest", e)
+                            Log.e(TAG, "Error handling last seen", e)
                         }
                     }
                 }
@@ -1376,9 +1392,16 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val maybeTargetVisiblePosition = layoutManager?.findLastVisibleItemPosition()
         val targetVisiblePosition = maybeTargetVisiblePosition ?: RecyclerView.NO_POSITION
         if (!firstLoad.get() && targetVisiblePosition != RecyclerView.NO_POSITION) {
-            adapter.getMessageIdAt(targetVisiblePosition)?.let { lastSeenMessageId ->
-                bufferedLastSeenChannel.trySend(lastSeenMessageId)
+            if (binding.conversationRecyclerView.isFullyScrolled) {
+                adapter.getMessageIdAt(targetVisiblePosition)?.let { lastSeenMessageId ->
+                    bufferedLastSeenChannel.trySend(lastSeenMessageId)
+                }
+            } else {
+                adapter.getMessageTimestampAt(targetVisiblePosition)?.let { timestamp ->
+                    bufferedLastSeenChannel.trySend(timestamp)
+                }
             }
+
         }
 
         val layoutUnreadCount = layoutManager?.let { (it.itemCount - 1) - it.findLastVisibleItemPosition() }
