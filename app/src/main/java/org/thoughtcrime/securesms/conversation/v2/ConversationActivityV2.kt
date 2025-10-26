@@ -71,6 +71,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -324,7 +325,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // Search
     val searchViewModel: SearchViewModel by viewModels()
 
-    private val bufferedLastSeenChannel = Channel<Long>(capacity = 512, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    // The channel where we buffer the last seen data to be saved in the db
+    // The data can be:
+    // 1. A `MessageId`, which indicates what message we should mark the last seen until (inclusive of reactions)
+    // 2. A `Long` (timestamp), which indicates we should mark all messages until that timestamp as seen
+    private val bufferedLastSeenChannel = Channel<Any>(capacity = 10, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     private var emojiPickerVisible = false
 
@@ -598,21 +603,32 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         reactionDelegate = ConversationReactionDelegate(reactionOverlayStub)
         reactionDelegate.setOnReactionSelectedListener(this)
         lifecycleScope.launch {
-                // only update the conversation every 3 seconds maximum
-                // channel is rendezvous and shouldn't block on try send calls as often as we want
-                bufferedLastSeenChannel.receiveAsFlow()
-                    .flowWithLifecycle(lifecycle, Lifecycle.State.RESUMED)
-                    .collectLatest {
-                        withContext(Dispatchers.IO) {
-                            try {
-                                if (it > storage.getLastSeen(viewModel.threadId)) {
-                                    storage.markConversationAsRead(viewModel.threadId, it)
+            @Suppress("OPT_IN_USAGE")
+            bufferedLastSeenChannel.receiveAsFlow()
+                .flowWithLifecycle(lifecycle, Lifecycle.State.RESUMED)
+                .distinctUntilChanged()
+                .debounce(500L)
+                .collectLatest {
+                    withContext(Dispatchers.Default) {
+                        try {
+                            when (it) {
+                                is Long -> {
+                                    if (storage.getLastSeen(viewModel.threadId) < it) {
+                                        storage.markConversationAsRead(viewModel.threadId, it)
+                                    }
                                 }
-                            } catch (e: Exception) {
-                                Log.e(TAG, "bufferedLastSeenChannel collectLatest", e)
+
+                                is MessageId -> {
+                                    storage.markConversationAsReadUpToMessage(it)
+                                }
+
+                                else -> error("Unsupported type sent to bufferedLastSeenChannel: $it")
                             }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error handling last seen", e)
                         }
                     }
+                }
         }
 
         lifecycleScope.launch {
@@ -1376,19 +1392,16 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val maybeTargetVisiblePosition = layoutManager?.findLastVisibleItemPosition()
         val targetVisiblePosition = maybeTargetVisiblePosition ?: RecyclerView.NO_POSITION
         if (!firstLoad.get() && targetVisiblePosition != RecyclerView.NO_POSITION) {
-            val timestampToSend: Long? = if (binding.conversationRecyclerView.isFullyScrolled) {
-                // We are at the bottom, so mark "now" as the last seen time
-                clock.currentTimeMills()
+            if (binding.conversationRecyclerView.isFullyScrolled) {
+                adapter.getMessageIdAt(targetVisiblePosition)?.let { lastSeenMessageId ->
+                    bufferedLastSeenChannel.trySend(lastSeenMessageId)
+                }
             } else {
-                // We are not at the bottom, so just mark the timestamp of the last visible message
-                adapter.getTimestampForItemAt(targetVisiblePosition)
-            }
-
-            timestampToSend?.let {
-                bufferedLastSeenChannel.trySend(it).apply {
-                    if (isFailure) Log.e(TAG, "trySend failed", exceptionOrNull())
+                adapter.getMessageTimestampAt(targetVisiblePosition)?.let { timestamp ->
+                    bufferedLastSeenChannel.trySend(timestamp)
                 }
             }
+
         }
 
         val layoutUnreadCount = layoutManager?.let { (it.itemCount - 1) - it.findLastVisibleItemPosition() }

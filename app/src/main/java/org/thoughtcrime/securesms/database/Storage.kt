@@ -7,6 +7,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.MutableConversationVolatileConfig
+import network.loki.messenger.libsession_util.ReadableUserGroupsConfig
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.Conversation
@@ -51,6 +52,7 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.isCommunity
+import org.session.libsession.utilities.isCommunityInbox
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.upsertContact
@@ -73,9 +75,12 @@ import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
 import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
+import java.time.Instant
+import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
+import kotlin.math.max
 import network.loki.messenger.libsession_util.util.GroupMember as LibSessionGroupMember
 
 private const val TAG = "Storage"
@@ -193,66 +198,98 @@ open class Storage @Inject constructor(
 
     override fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean, updateNotification: Boolean) {
         val threadDb = threadDatabase
-        getRecipientForThread(threadId)?.let { recipient ->
-            // don't set the last read in the volatile if we didn't set it in the DB
-            if (!threadDb.markAllAsRead(threadId, lastSeenTime, force, updateNotification) && !force) return
+        val threadAddress = threadDb.getRecipientForThreadId(threadId) ?: return
+        // don't set the last read in the volatile if we didn't set it in the DB
+        if (!threadDb.markAllAsRead(threadId, lastSeenTime, force, updateNotification) && !force) return
 
-            // don't process configs for inbox recipients
-            if (recipient.isCommunityInboxRecipient) return
+        // don't process configs for inbox recipients
+        if (threadAddress.isCommunityInbox) return
 
-            val currentLastRead = threadDb.getLastSeenAndHasSent(threadId).first()
+        val currentLastRead = threadDb.getLastSeenAndHasSent(threadId).first()
 
-            configFactory.withMutableUserConfigs { configs ->
-                val config = configs.convoInfoVolatile
-                val convo = getConvo(recipient, config)  ?: return@withMutableUserConfigs
-                convo.lastRead = lastSeenTime
+        configFactory.withMutableUserConfigs { configs ->
+            val config = configs.convoInfoVolatile
+            val convo = getConvo(
+                threadAddress = threadAddress,
+                config = config,
+                groupConfig = configs.userGroups
+            )  ?: return@withMutableUserConfigs
+            convo.lastRead = lastSeenTime
 
-                if(convo.unread){
-                    convo.unread = lastSeenTime < currentLastRead
-                }
+            if(convo.unread){
+                convo.unread = lastSeenTime < currentLastRead
+            }
 
-                config.set(convo)
+            config.set(convo)
+        }
+    }
+
+    override fun markConversationAsReadUpToMessage(messageId: MessageId) {
+        val maxTimestampMillsAndThreadId = mmsSmsDatabase.getMaxTimestampInThreadUpTo(messageId)
+        if (maxTimestampMillsAndThreadId != null) {
+            val threadId = maxTimestampMillsAndThreadId.second
+            val maxTimestamp = maxTimestampMillsAndThreadId.first
+            if (getLastSeen(threadId) < maxTimestamp) {
+                Log.d(TAG, "Marking last seen for thread $threadId as ${Instant.ofEpochMilli(maxTimestamp).atZone(
+                    ZoneId.systemDefault())}")
+                markConversationAsRead(
+                    threadId = threadId,
+                    lastSeenTime = maxTimestamp,
+                    force = false,
+                    updateNotification = true
+                )
             }
         }
     }
 
     override fun markConversationAsUnread(threadId: Long) {
-        getRecipientForThread(threadId)?.let { recipient ->
-            // don't process configs for inbox recipients
-            if (recipient.isCommunityInboxRecipient) return
+        val threadAddress = threadDatabase.getRecipientForThreadId(threadId) ?: return
 
-            configFactory.withMutableUserConfigs { configs ->
-                val config = configs.convoInfoVolatile
-                val convo = getConvo(recipient, config) ?: return@withMutableUserConfigs
+        // don't process configs for inbox recipients
+        if (threadAddress.isCommunityInbox) return
 
-                convo.unread = true
-                config.set(convo)
-            }
+        configFactory.withMutableUserConfigs { configs ->
+            val config = configs.convoInfoVolatile
+            val convo = getConvo(
+                threadAddress = threadAddress,
+                config = config,
+                groupConfig = configs.userGroups
+            ) ?: return@withMutableUserConfigs
+
+            convo.unread = true
+            config.set(convo)
         }
     }
 
-    private fun getConvo(recipient: Recipient, config: MutableConversationVolatileConfig) : Conversation? {
-        return when (recipient.address) {
+    private fun getConvo(
+        threadAddress: Address,
+        config: MutableConversationVolatileConfig,
+        groupConfig: ReadableUserGroupsConfig
+    ) : Conversation? {
+        return when (threadAddress) {
             // recipient closed group
-            is Address.LegacyGroup -> config.getOrConstructLegacyGroup(recipient.address.groupPublicKeyHex)
-            is Address.Group -> config.getOrConstructClosedGroup(recipient.address.accountId.hexString)
+            is Address.LegacyGroup -> config.getOrConstructLegacyGroup(threadAddress.groupPublicKeyHex)
+            is Address.Group -> config.getOrConstructClosedGroup(threadAddress.accountId.hexString)
             // recipient is open group
             is Address.Community -> {
-                val og = recipient.data as? RecipientData.Community ?: return null
+                val og = groupConfig.getCommunityInfo(
+                    baseUrl = threadAddress.serverUrl,
+                    room = threadAddress.room,
+                ) ?: return null
                 config.getOrConstructCommunity(
-                    baseUrl = recipient.address.serverUrl,
-                    room = recipient.address.room,
-                    pubKeyHex = og.serverPubKey,
+                    baseUrl = threadAddress.serverUrl,
+                    room = threadAddress.room,
+                    pubKeyHex = og.community.pubKeyHex,
                 )
             }
             is Address.CommunityBlindedId -> {
-                config.getOrConstructedBlindedOneToOne(recipient.address.blindedId.blindedId.hexString)
+                config.getOrConstructedBlindedOneToOne(threadAddress.blindedId.blindedId.hexString)
             }
             // otherwise recipient is one to one
             is Address.Standard -> {
-                config.getOrConstructOneToOne(recipient.address.accountId.hexString)
+                config.getOrConstructOneToOne(threadAddress.accountId.hexString)
             }
-            else -> throw NullPointerException("Weren't expecting to have a convo with address ${recipient.address}")
+            else -> throw NullPointerException("Weren't expecting to have a convo with address ${threadAddress}")
         }
     }
 
