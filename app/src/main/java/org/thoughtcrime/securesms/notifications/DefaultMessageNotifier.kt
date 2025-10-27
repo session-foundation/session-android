@@ -179,12 +179,12 @@ class DefaultMessageNotifier @Inject constructor(
             return
         }
 
-        if ((!isVisible && !homeScreenVisible) || hasExistingSummaryNotification(context)) {
+        if ((!isVisible && !homeScreenVisible) || hasExistingNotifications(context)) {
             updateNotification(context, signal, 0)
         }
     }
 
-    private fun hasExistingSummaryNotification(context: Context): Boolean {
+    private fun hasExistingNotifications(context: Context): Boolean {
         val notifications = ServiceUtil.getNotificationManager(context)
         try {
             val activeNotifications = notifications.activeNotifications
@@ -237,31 +237,31 @@ class DefaultMessageNotifier @Inject constructor(
                 }
 
                 // Normal notifications (unchanged behavior, but uses normalItems)
-                if (normalItems.hasMultipleThreads() || (
-                            normalItems.notificationCount > 0 &&
-                            hasExistingSummaryNotification(context))
-                    ) {
-                    // The case of sending grouped notifications. This includes:
-                    // 1. A notification per thread
+                if (normalItems.notificationCount == 0) {
+                    // There's no notification at all, we'll remove the "group summary notification"
+                    // here, exists or not. Other notifications will be cleaned up in
+                    // `cancelOrphanedNotifications`
+                    ServiceUtil.getNotificationManager(context)
+                        .cancel(SUMMARY_NOTIFICATION_ID)
+                }
+                else if (normalItems.hasMultipleThreads() || hasGroupSummaryNotification(context)) {
+                    // The case of "grouped notifications".
+                    // This includes:
+                    // 1. One notification per thread
                     // 2. A summary notification for all threads
-                    // We will enter this state if there are multiple threads with notifications,
-                    // or if there is already a summary notification present. The latter is to avoid
-                    // having to collapse an existing summary notification into a single-thread notification,
-                    // which causes the notification manager to notify again (causing sound/vibration).
+                    //
+                    // We will first enter this state when we have multiple threads to show,
+                    // and remain so until the user clears all notifications. This is to avoid
+                    // going back into single-thread mode as it can cause excessive notification
+                    // alerts.
                     for (threadId in normalItems.threads) {
                         val perThread = NotificationState(normalItems.getNotificationsForThread(threadId))
                         sendSingleThreadNotification(context, perThread, false, true)
                     }
                     sendGroupSummaryNotification(context, normalItems, playNotificationAudio)
-                } else if (normalItems.notificationCount > 0) {
-                    // The case of showing just one single-threaded notification. We can only
-                    // get here if we don't already have a "multiple threads grouped" notification.
-                    sendSingleThreadNotification(context, normalItems, playNotificationAudio, false)
-                    ServiceUtil.getNotificationManager(context)
-                        .cancel(SUMMARY_NOTIFICATION_ID)
                 } else {
-                    ServiceUtil.getNotificationManager(context)
-                        .cancel(SUMMARY_NOTIFICATION_ID)
+                    // The case of showing just one single-threaded notification.
+                    sendSingleThreadNotification(context, normalItems, playNotificationAudio, false)
                 }
 
                 // Post request notifications per thread (no sound, not bundled)
