@@ -237,13 +237,30 @@ class DefaultMessageNotifier @Inject constructor(
                 }
 
                 // Normal notifications (unchanged behavior, but uses normalItems)
-                if (normalItems.hasMultipleThreads()) {
+                if (normalItems.notificationCount == 0) {
+                    // There's no notification at all, we'll remove the "group summary notification"
+                    // here, exists or not. Other notifications will be cleaned up in
+                    // `cancelOrphanedNotifications`
+                    ServiceUtil.getNotificationManager(context)
+                        .cancel(SUMMARY_NOTIFICATION_ID)
+                }
+                else if (normalItems.hasMultipleThreads() || hasGroupSummaryNotification(context)) {
+                    // The case of "grouped notifications".
+                    // This includes:
+                    // 1. One notification per thread
+                    // 2. A summary notification for all threads
+                    //
+                    // We will first enter this state when we have multiple threads to show,
+                    // and remain so until the user clears all notifications. This is to avoid
+                    // going back into single-thread mode as it can cause excessive notification
+                    // alerts.
                     for (threadId in normalItems.threads) {
                         val perThread = NotificationState(normalItems.getNotificationsForThread(threadId))
                         sendSingleThreadNotification(context, perThread, false, true)
                     }
-                    sendMultipleThreadNotification(context, normalItems, playNotificationAudio)
-                } else if (normalItems.notificationCount > 0) {
+                    sendGroupSummaryNotification(context, normalItems, playNotificationAudio)
+                } else {
+                    // The case of showing just one single-threaded notification.
                     sendSingleThreadNotification(context, normalItems, playNotificationAudio, false)
                 }
 
@@ -253,12 +270,8 @@ class DefaultMessageNotifier @Inject constructor(
                     sendSingleThreadNotification(context, perThread,false,false)
                 }
 
-                // If nothing to display at all, clear everything (including reminders)
-                if (normalItems.notificationCount == 0 && requestItems.notificationCount == 0) {
-                    // Request-aware cleanup (keeps active request notifs alive)
-                    cancelOrphanedNotifications(context, normalItems)
-                    return
-                }
+                // Clean up any notifications that are no longer in our state
+                cancelOrphanedNotifications(context, normalItems)
             } catch (e: Exception) {
                 Log.e(TAG, "Error creating notification", e)
             }
@@ -267,6 +280,13 @@ class DefaultMessageNotifier @Inject constructor(
             incomingCursor?.close()
             reactionsCursor?.close()
         }
+    }
+
+    private fun hasGroupSummaryNotification(context: Context): Boolean {
+        return ServiceUtil.getNotificationManager(context)
+            .activeNotifications
+            ?.any { it.id == SUMMARY_NOTIFICATION_ID } == true
+
     }
 
     // Note: The `signal` parameter means "play an audio signal for the notification".
@@ -279,23 +299,11 @@ class DefaultMessageNotifier @Inject constructor(
     ) {
         Log.i(TAG, "sendSingleThreadNotification()  signal: $signal  bundled: $bundled")
 
-        if (notificationState.notifications.isEmpty()) {
-            if (!bundled) {
-                cancelActiveNotifications(context)
-            }
-            Log.i(TAG, "Empty notification state. Skipping.")
-            return
-        }
-
         // Bail early if the existing displayed notification has the same content as what we are trying to send now
         val notifications = notificationState.notifications
         // Use dedicated id + group for request notifications
         val isRequest = notifications.firstOrNull()?.isMessageRequest == true
-        val notificationId = if (isRequest) {
-            (SUMMARY_NOTIFICATION_ID + notifications[0].threadId).toInt()
-        } else {
-            (SUMMARY_NOTIFICATION_ID + (if (bundled) notifications[0].threadId else 0)).toInt()
-        }
+        val notificationId = (SUMMARY_NOTIFICATION_ID + notifications[0].threadId).toInt()
 
         val contentSignature = notifications.map {
             getNotificationSignature(it)
@@ -303,18 +311,23 @@ class DefaultMessageNotifier @Inject constructor(
 
         val existingNotifications = ServiceUtil.getNotificationManager(context).activeNotifications
 
-        val existingSignature = if (isRequest) {
-            // For requests: match BOTH id and tag to detect duplicates correctly
-            existingNotifications
-                .firstOrNull { it.id == notificationId && REQUEST_TAG == it.tag }
-                ?.notification?.extras?.getString(CONTENT_SIGNATURE)
-        } else {
-            existingNotifications
-                .firstOrNull { it.id == notificationId }
-                ?.notification?.extras?.getString(CONTENT_SIGNATURE)
-        }
+        val exitingNotification = existingNotifications.firstOrNull {
+            if (isRequest) {
+                it.id == notificationId && REQUEST_TAG == it.tag
+            } else {
+                it.id == notificationId
+            }
+        }?.notification
 
-        if (existingSignature == contentSignature) {
+        val contentChanged = exitingNotification?.extras?.getString(
+            CONTENT_SIGNATURE
+        ) != contentSignature
+
+        val bundleStateChanged = exitingNotification == null || (
+            bundled != (exitingNotification.group == NOTIFICATION_GROUP)
+        )
+
+        if (!contentChanged && !bundleStateChanged) {
             Log.i(TAG, "Skipping duplicate single thread notification for ID $notificationId")
             return
         }
@@ -368,8 +381,10 @@ class DefaultMessageNotifier @Inject constructor(
 
         builder.setContentIntent(notificationItem.getPendingIntent(context))
         builder.setDeleteIntent(notificationState.getDeleteIntent(context))
-        builder.setOnlyAlertOnce(!signal)
-        builder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
+        // Turn on the OnlyAlertOnce if the content doesn't change. If
+        // the content doesn't change, we don't want to keep alerting the user.
+        val alertOnce = !contentChanged
+        builder.setOnlyAlertOnce(alertOnce)
         builder.setAutoCancel(true)
 
         val replyMethod = ReplyMethod.forRecipient(context, messageOriginator)
@@ -408,7 +423,7 @@ class DefaultMessageNotifier @Inject constructor(
             builder.addMessageBody(item.recipient, item.individualRecipient, item.text)
         }
 
-        if (signal) {
+        if (signal && contentChanged) {
             builder.setAlarms(notificationState.getRingtone(context))
             builder.setTicker(
                 notificationItem.individualRecipient,
@@ -419,7 +434,7 @@ class DefaultMessageNotifier @Inject constructor(
         // requests go to a separate group; normal keeps existing behavior
         if (bundled || isRequest) {
             builder.setGroup(if (isRequest) REQUESTS_GROUP else NOTIFICATION_GROUP)
-            builder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
+            builder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
         }
 
         val notification = builder.build()
@@ -442,7 +457,7 @@ class DefaultMessageNotifier @Inject constructor(
 
     // Note: The `signal` parameter means "play an audio signal for the notification".
     @SuppressLint("MissingPermission")
-    private fun sendMultipleThreadNotification(
+    private fun sendGroupSummaryNotification(
         context: Context,
         notificationState: NotificationState,
         signal: Boolean
@@ -465,7 +480,7 @@ class DefaultMessageNotifier @Inject constructor(
             return
         }
 
-        val builder = MultipleRecipientNotificationBuilder(context, getNotificationPrivacy(context))
+        val builder = GroupSummaryNotificationBuilder(context, getNotificationPrivacy(context))
         builder.putStringExtra(CONTENT_SIGNATURE, contentSignature)
 
         builder.setMessageCount(notificationState.notificationCount, notificationState.threadCount)
@@ -473,7 +488,7 @@ class DefaultMessageNotifier @Inject constructor(
         builder.setGroup(NOTIFICATION_GROUP)
         builder.setDeleteIntent(notificationState.getDeleteIntent(context))
         builder.setOnlyAlertOnce(!signal)
-        builder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
+        builder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
         builder.setAutoCancel(true)
 
         val messageIdTag = notifications[0].timestamp.toString()
