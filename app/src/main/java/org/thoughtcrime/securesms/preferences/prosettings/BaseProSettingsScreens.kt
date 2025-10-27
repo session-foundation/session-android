@@ -76,7 +76,7 @@ fun BaseProSettingsScreen(
     val lazyListState = rememberLazyListState()
     // Calculate scroll fraction
     val density = LocalDensity.current
-    val thresholdPx = remember { with(density) { 28.dp.toPx() } } // amount before the appbar gets fully opaque
+    val thresholdPx = remember(density) { with(density) { 28.dp.toPx() } } // amount before the appbar gets fully opaque
 
     // raw fraction 0..1 derived from scrolling
     val rawFraction by remember {
