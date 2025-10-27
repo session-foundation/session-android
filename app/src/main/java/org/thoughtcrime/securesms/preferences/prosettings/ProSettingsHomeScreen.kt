@@ -131,7 +131,6 @@ fun ProSettingsHome(
             // add a click handling if the subscription state is loading or errored
             if(data.subscriptionState.refreshState !is State.Success<*>){
                 sendCommand(OnHeaderClicked)
-                //todo PRO double check if KEE is ok to not have two different dialogs for the header vs the action button. If yes then I need to simplify the logic, if not I need to fix the never-subscribed case
             } else null
         },
         extraHeaderContent = {

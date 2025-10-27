@@ -288,13 +288,18 @@ class ProSettingsViewModel @AssistedInject constructor(
                                     Phrase.from(context.getText(R.string.proAccessLoadingDescription))
                                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format()
+                            is SubscriptionType.NeverSubscribed -> Phrase.from(context.getText(R.string.checkingProStatus))
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format().toString() to
+                                    Phrase.from(context.getText(R.string.checkingProStatusContinue))
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .format()
                             else -> Phrase.from(context.getText(R.string.checkingProStatus))
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.checkingProStatusRenew))
                                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format()
-                            //todo PRO will need to handle never subscribed here
                         }
 
                         _dialogState.update {
@@ -318,6 +323,12 @@ class ProSettingsViewModel @AssistedInject constructor(
                                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .put(APP_NAME_KEY, context.getString(R.string.app_name))
                                         .format()
+                            is SubscriptionType.NeverSubscribed -> Phrase.from(context.getText(R.string.proStatusError))
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format().toString() to
+                                    Phrase.from(context.getText(R.string.proStatusNetworkErrorContinue))
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .format()
                             else -> Phrase.from(context.getText(R.string.proStatusError))
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
@@ -325,7 +336,6 @@ class ProSettingsViewModel @AssistedInject constructor(
                                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .put(APP_NAME_KEY, context.getString(R.string.app_name))
                                         .format()
-                            //todo PRO will need to handle never subscribed here
                         }
 
                         _dialogState.update {
@@ -489,13 +499,18 @@ class ProSettingsViewModel @AssistedInject constructor(
                                     Phrase.from(context.getText(R.string.proStatusLoadingDescription))
                                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format()
+                            is SubscriptionType.NeverSubscribed -> Phrase.from(context.getText(R.string.checkingProStatus))
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format().toString() to
+                                    Phrase.from(context.getText(R.string.checkingProStatusContinue))
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .format()
                             else -> Phrase.from(context.getText(R.string.checkingProStatus))
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.checkingProStatusDescription))
                                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format()
-                            //todo PRO will need to handle never subscribed here
                         }
                         _dialogState.update {
                             it.copy(
@@ -518,13 +533,18 @@ class ProSettingsViewModel @AssistedInject constructor(
                                         Phrase.from(context.getText(R.string.proStatusRefreshNetworkError))
                                             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                             .format()
+                                is SubscriptionType.NeverSubscribed -> Phrase.from(context.getText(R.string.proStatusError))
+                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                    .format().toString() to
+                                        Phrase.from(context.getText(R.string.proStatusNetworkErrorContinue))
+                                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                            .format()
                                 else -> Phrase.from(context.getText(R.string.proStatusError))
                                     .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                     .format().toString() to
                                         Phrase.from(context.getText(R.string.proStatusRefreshNetworkError))
                                             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                             .format()
-                                //todo PRO will need to handle never subscribed here
                             }
 
                             it.copy(
