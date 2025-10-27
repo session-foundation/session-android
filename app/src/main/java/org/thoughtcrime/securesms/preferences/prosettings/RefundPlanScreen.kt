@@ -44,21 +44,19 @@ fun RefundPlanScreen(
     viewModel: ProSettingsViewModel,
     onBack: () -> Unit,
 ) {
-    val planData by viewModel.choosePlanState.collectAsState()
-    val activePlan = planData.subscriptionType as? SubscriptionType.Active
+    val refundData by viewModel.refundPlanState.collectAsState()
+    val activePlan = refundData.subscriptionType as? SubscriptionType.Active
     if (activePlan == null) {
         onBack()
         return
     }
-
-    val subManager = viewModel.getSubscriptionManager()
 
     // there are different UI depending on the state
     when {
        // there is an active subscription but from a different platform
         activePlan.subscriptionDetails.isFromAnotherPlatform() ->
             RefundPlanNonOriginating(
-                subscription = planData.subscriptionType as SubscriptionType.Active,
+                subscription = activePlan,
                 sendCommand = viewModel::onCommand,
                 onBack = onBack,
             )
@@ -66,7 +64,8 @@ fun RefundPlanScreen(
         // default refund screen
         else -> RefundPlan(
             data = activePlan,
-            subscriptionManager = subManager,
+            isQuickRefund = refundData.isQuickRefund,
+            quickRefundUrl = refundData.quickRefundUrl,
             sendCommand = viewModel::onCommand,
             onBack = onBack,
         )
@@ -77,24 +76,24 @@ fun RefundPlanScreen(
 @Composable
 fun RefundPlan(
     data: SubscriptionType.Active,
-    subscriptionManager: SubscriptionManager,
+    isQuickRefund: Boolean,
+    quickRefundUrl: String?,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
-    val isWithinQuickRefundWindow = subscriptionManager.isWithinQuickRefundWindow()
 
     BaseCellButtonProSettingsScreen(
         disabled = true,
         onBack = onBack,
-        buttonText = if(isWithinQuickRefundWindow) Phrase.from(context.getText(R.string.openPlatformWebsite))
+        buttonText = if(isQuickRefund) Phrase.from(context.getText(R.string.openPlatformWebsite))
             .put(PLATFORM_KEY, data.subscriptionDetails.platform)
             .format().toString()
         else stringResource(R.string.requestRefund),
         dangerButton = true,
         onButtonClick = {
-            if(isWithinQuickRefundWindow && !subscriptionManager.quickRefundUrl.isNullOrEmpty()){
-                sendCommand(ShowOpenUrlDialog(subscriptionManager.quickRefundUrl))
+            if(isQuickRefund && !quickRefundUrl.isNullOrEmpty()){
+                sendCommand(ShowOpenUrlDialog(quickRefundUrl))
             } else {
                 sendCommand(ShowOpenUrlDialog(data.subscriptionDetails.refundUrl))
             }
@@ -114,7 +113,7 @@ fun RefundPlan(
 
             Text(
                 text = annotatedStringResource(
-                    if(isWithinQuickRefundWindow)
+                    if(isQuickRefund)
                         Phrase.from(context.getText(R.string.proRefundRequestStorePolicies))
                             .put(PLATFORM_KEY, data.subscriptionDetails.platform)
                             .put(APP_NAME_KEY, context.getString(R.string.app_name))
@@ -174,7 +173,8 @@ private fun PreviewRefundPlan(
                     refundUrl = "https://getsession.org/android-refund",
                 )
             ),
-            subscriptionManager = NoOpSubscriptionManager(),
+            isQuickRefund = false,
+            quickRefundUrl = "",
             sendCommand = {},
             onBack = {},
         )
@@ -203,7 +203,8 @@ private fun PreviewQuickRefundPlan(
                     refundUrl = "https://getsession.org/android-refund",
                 )
             ),
-            subscriptionManager = NoOpSubscriptionManager(),
+            isQuickRefund = true,
+            quickRefundUrl = "",
             sendCommand = {},
             onBack = {},
         )

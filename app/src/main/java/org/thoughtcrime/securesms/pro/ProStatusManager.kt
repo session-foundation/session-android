@@ -201,9 +201,6 @@ class ProStatusManager @Inject constructor(
         }
     }
 
-    //todo PRO add "about to expire" CTA logic on app launch
-    //todo PRO add "expired" CTA logic on app launch
-
     /**
      * Logic to determine if we should animate the avatar for a user or freeze it on the first frame
      */
