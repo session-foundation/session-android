@@ -86,7 +86,7 @@ class PushRegistryV2 @Inject constructor(
         val publicKey = swarmAuth.accountId.hexString
         val timestamp = clock.currentTimeMills() / 1000 // get timestamp in ms -> s
         // if we want to support passing namespace list, here is the place to do it
-        val signature = swarmAuth.signForPushRegistry(
+        val signature = swarmAuth.sign(
             "UNSUBSCRIBE${publicKey}${timestamp}".encodeToByteArray()
         )
 

@@ -143,7 +143,7 @@ class PushRegistrationWorker @AssistedInject constructor(
 
             pushRegistrationDatabase.removeRegistrations(unregisterResults.await().map {
                 if (it.second.isFailure) {
-                    Log.e(TAG, "Push unregistration failed (${it.second.exceptionOrNull()?.message})")
+                    Log.e(TAG, "Push unregistration failed: (${it.second.exceptionOrNull()?.message})")
                 }
 
                 PushRegistrationDatabase.Registration(
@@ -193,8 +193,8 @@ class PushRegistrationWorker @AssistedInject constructor(
                 val item = batchRequestItems[idx]
                 results += item to when {
                     response.isSuccess() -> kotlin.Result.success(Unit)
-                    response.error == 403 -> kotlin.Result.failure(NonRetryableException("Request failed: ${response.error} ${response.message}"))
-                    else -> kotlin.Result.failure(Exception("Request failed: ${response.error} ${response.message}"))
+                    response.error == 403 -> kotlin.Result.failure(NonRetryableException("Request failed: code = ${response.error}, message = ${response.message}"))
+                    else -> kotlin.Result.failure(RuntimeException("Request failed: code = ${response.error}, message = ${response.message}"))
                 }
             }
         } catch (e: CancellationException) {
