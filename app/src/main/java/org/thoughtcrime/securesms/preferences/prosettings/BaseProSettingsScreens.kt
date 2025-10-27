@@ -33,33 +33,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.consumeAllChanges
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.ProgressBarRangeInfo
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.progressBarRangeInfo
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.ui.AnimateFade
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogBg
 import org.thoughtcrime.securesms.ui.SessionProSettingsHeader
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.BackAppBar
-import org.thoughtcrime.securesms.ui.components.CircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.DangerFillButtonRect
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.components.inlineContentMap
@@ -69,7 +57,6 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
-import org.thoughtcrime.securesms.ui.theme.blackAlpha40
 import org.thoughtcrime.securesms.ui.theme.bold
 
 /**
@@ -79,7 +66,6 @@ import org.thoughtcrime.securesms.ui.theme.bold
 @Composable
 fun BaseProSettingsScreen(
     disabled: Boolean,
-    loading: Boolean = false,
     hideHomeAppBar: Boolean = false,
     onBack: () -> Unit,
     onHeaderClick: (() -> Unit)? = null,
@@ -121,64 +107,28 @@ fun BaseProSettingsScreen(
             }} else {{}},
         contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
     ) { paddings ->
-
-        Box(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .consumeWindowInsets(paddings)
+                .padding(horizontal = LocalDimensions.current.spacing),
+            state = lazyListState,
+            contentPadding = PaddingValues(
+                top = (paddings.calculateTopPadding() - LocalDimensions.current.appBarHeight)
+                    .coerceAtLeast(0.dp) + 46.dp,
+                bottom = paddings.calculateBottomPadding() + LocalDimensions.current.spacing
+            ),
+            horizontalAlignment = CenterHorizontally
         ) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .consumeWindowInsets(paddings)
-                    .padding(horizontal = LocalDimensions.current.spacing),
-                state = lazyListState,
-                contentPadding = PaddingValues(
-                    top = (paddings.calculateTopPadding() - LocalDimensions.current.appBarHeight)
-                        .coerceAtLeast(0.dp) + 46.dp,
-                    bottom = paddings.calculateBottomPadding() + LocalDimensions.current.spacing
-                ),
-                horizontalAlignment = CenterHorizontally
-            ) {
-                item {
-                    SessionProSettingsHeader(
-                        disabled = disabled,
-                        onClick = onHeaderClick,
-                        extraContent = extraHeaderContent
-                    )
-                }
-
-                item { content() }
+            item {
+                SessionProSettingsHeader(
+                    disabled = disabled,
+                    onClick = onHeaderClick,
+                    extraContent = extraHeaderContent
+                )
             }
-        }
 
-        AnimateFade(loading) {
-            val loadingLabel = stringResource(R.string.loading)
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    // dim the background so it's visually obvious it's blocked (optional)
-                    .background(blackAlpha40)
-                    // Intercept click events so that when the loading is on we can't click beneath
-                    .pointerInput(loading) {
-                        if (loading) {
-                            awaitPointerEventScope {
-                                while (true) {
-                                    val event = awaitPointerEvent()
-                                    event.changes.forEach { it.consume() }
-                                }
-                            }
-                        }
-                    }
-                    // Provide proper a11y semantics: announce an indeterminate progress.
-                    .semantics(mergeDescendants = true) {
-                        progressBarRangeInfo = ProgressBarRangeInfo.Indeterminate
-                        contentDescription = loadingLabel
-                        liveRegion = LiveRegionMode.Polite
-                    },
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator()
-            }
+            item { content() }
         }
     }
 }
@@ -195,12 +145,10 @@ fun BaseCellButtonProSettingsScreen(
     dangerButton: Boolean,
     onButtonClick: () -> Unit,
     title: CharSequence? = null,
-    loading: Boolean = false,
     content: @Composable () -> Unit
 ) {
     BaseProSettingsScreen(
         disabled = disabled,
-        loading = loading,
         onBack = onBack,
     ) {
         Spacer(Modifier.height(LocalDimensions.current.spacing))
@@ -286,14 +234,12 @@ fun BaseNonOriginatingProSettingsScreen(
     headerTitle: CharSequence?,
     contentTitle: String?,
     contentDescription: CharSequence?,
-    loading: Boolean = false,
     contentClick: (() -> Unit)? = null,
     linkCellsInfo: String?,
     linkCells: List<NonOriginatingLinkCellData> = emptyList(),
 ) {
     BaseCellButtonProSettingsScreen(
         disabled = disabled,
-        loading = loading,
         onBack = onBack,
         buttonText = buttonText,
         dangerButton = dangerButton,

@@ -6,6 +6,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -65,6 +66,7 @@ import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.P
 import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.expiryFromNow
+import org.thoughtcrime.securesms.ui.LoadingArcOr
 import org.thoughtcrime.securesms.ui.SpeechBubbleTooltip
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.RadioButtonIndicator
@@ -92,7 +94,6 @@ fun ChoosePlan(
 ) {
     BaseProSettingsScreen(
         disabled = false,
-        loading = planData.loading,
         onBack = onBack,
     ) {
         // Keeps track of the badge height dynamically so we can adjust the padding accordingly
@@ -162,6 +163,7 @@ fun ChoosePlan(
                 proPlan = data,
                 badgePadding = badgeHeight / 2,
                 onBadgeLaidOut = { height -> badgeHeight = max(badgeHeight, height) },
+                enabled = !planData.loading,
                 onClick = {
                     sendCommand(SelectProPlan(data))
                 }
@@ -184,12 +186,15 @@ fun ChoosePlan(
         AccentFillButtonRect(
             modifier = Modifier.fillMaxWidth()
                 .widthIn(max = LocalDimensions.current.maxContentWidth),
-            text = buttonLabel,
             enabled = planData.enableButton,
             onClick = {
                 sendCommand(GetProPlan)
             }
-        )
+        ){
+            LoadingArcOr(loading = planData.loading) {
+                Text(text = buttonLabel)
+            }
+        }
 
         Spacer(Modifier.height(LocalDimensions.current.xxsSpacing))
 
@@ -240,6 +245,7 @@ fun ChoosePlan(
 private fun PlanItem(
     proPlan: ProPlan,
     badgePadding: Dp,
+    enabled: Boolean,
     modifier: Modifier= Modifier,
     onBadgeLaidOut: (Dp) -> Unit,
     onClick: () -> Unit
@@ -262,9 +268,13 @@ private fun PlanItem(
                     shape = MaterialTheme.shapes.small
                 )
                 .clip(MaterialTheme.shapes.small)
-                .clickable(
-                    onClick = onClick
-                )
+                .then(
+                    if (enabled) Modifier.clickable(
+                        onClick = onClick
+                    )
+                    else Modifier
+                ),
+
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth()
@@ -289,7 +299,7 @@ private fun PlanItem(
 
                 RadioButtonIndicator(
                     selected = proPlan.selected,
-                    enabled = true,
+                    enabled = enabled,
                     colors = radioButtonColors(
                         unselectedBorder = LocalColors.current.borders,
                         selectedBorder = LocalColors.current.accent,
@@ -399,6 +409,7 @@ private fun PreviewUpdatePlanItems(
                 ),
                 badgePadding = 0.dp,
                 onBadgeLaidOut = {},
+                enabled = true,
                 onClick = {}
             )
 
@@ -415,6 +426,7 @@ private fun PreviewUpdatePlanItems(
                     ),
                 ),
                 badgePadding = 0.dp,
+                enabled = true,
                 onBadgeLaidOut = {},
                 onClick = {}
             )
@@ -435,6 +447,7 @@ private fun PreviewUpdatePlanItems(
                     ),
                 ),
                 badgePadding = 0.dp,
+                enabled = true,
                 onBadgeLaidOut = {},
                 onClick = {}
             )
