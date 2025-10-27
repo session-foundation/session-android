@@ -21,7 +21,9 @@ class NoOpSubscriptionManager @Inject constructor() : SubscriptionManager {
 
     override val quickRefundUrl = null
 
-    override fun purchasePlan(subscriptionDuration: ProSubscriptionDuration) {}
+    override suspend fun purchasePlan(subscriptionDuration: ProSubscriptionDuration): Result<Unit> {
+        return Result.success(Unit)
+    }
     override val availablePlans: List<ProSubscriptionDuration>
         get() = emptyList()
 

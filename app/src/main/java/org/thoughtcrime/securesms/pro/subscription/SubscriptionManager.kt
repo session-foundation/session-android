@@ -33,7 +33,7 @@ interface SubscriptionManager: OnAppStartupComponent {
     // purchase events
     val purchaseEvents: SharedFlow<PurchaseEvent>
 
-    fun purchasePlan(subscriptionDuration: ProSubscriptionDuration)
+    suspend fun purchasePlan(subscriptionDuration: ProSubscriptionDuration): Result<Unit>
 
     /**
      * Returns true if a provider has a quick refunds and the current time since purchase is within that window

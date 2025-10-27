@@ -326,7 +326,9 @@ class DebugMenuViewModel @Inject constructor(
             }
 
             is Commands.PurchaseDebugPlan -> {
-                command.plan.apply { manager.purchasePlan(plan) }
+                viewModelScope.launch {
+                    command.plan.apply { manager.purchasePlan(plan) }
+                }
             }
         }
     }

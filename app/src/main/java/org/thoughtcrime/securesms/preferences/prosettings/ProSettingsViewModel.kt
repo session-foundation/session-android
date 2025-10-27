@@ -619,13 +619,17 @@ class ProSettingsViewModel @AssistedInject constructor(
     }
 
     private fun getPlanFromProvider(){
-        _choosePlanState.update {
-            it.copy(loading = true)
-        }
+        viewModelScope.launch {
+            val purchaseStarted = subscriptionCoordinator.getCurrentManager().purchasePlan(
+                getSelectedPlan().durationType
+            )
 
-        subscriptionCoordinator.getCurrentManager().purchasePlan(
-            getSelectedPlan().durationType
-        )
+            if(purchaseStarted.isSuccess) {
+                _choosePlanState.update {
+                    it.copy(loading = true)
+                }
+            }
+        }
     }
 
     fun getSubscriptionManager(): SubscriptionManager {

@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.pro.subscription
 
 import android.app.Application
 import android.widget.Toast
+import androidx.compose.ui.res.stringResource
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
@@ -16,6 +17,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +33,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ManagerScope
@@ -89,6 +92,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
                            // signal that purchase was completed
                             try {
                                 //todo PRO send confirmation to libsession
+                                delay(4000)
                             } catch (e : Exception){
                                 _purchaseEvents.emit(PurchaseEvent.Failed())
                             }
@@ -116,87 +120,89 @@ class PlayStoreSubscriptionManager @Inject constructor(
     override val availablePlans: List<ProSubscriptionDuration> =
         ProSubscriptionDuration.entries.toList()
 
-    override fun purchasePlan(subscriptionDuration: ProSubscriptionDuration) {
-        scope.launch {
-            try {
-                val activity = checkNotNull(currentActivityObserver.currentActivity.value) {
-                    "No current activity available to launch the billing flow"
-                }
+    override suspend fun purchasePlan(subscriptionDuration: ProSubscriptionDuration): Result<Unit> {
+        try {
+            val activity = checkNotNull(currentActivityObserver.currentActivity.value) {
+                "No current activity available to launch the billing flow"
+            }
 
-                val result = billingClient.queryProductDetails(
-                    QueryProductDetailsParams.newBuilder()
-                        .setProductList(
-                            listOf(
-                                QueryProductDetailsParams.Product.newBuilder()
-                                    .setProductId("session_pro")
-                                    .setProductType(BillingClient.ProductType.SUBS)
-                                    .build()
-                            )
-                        )
-                        .build()
-                )
-
-                check(result.billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                    "Failed to query product details. Reason: ${result.billingResult}"
-                }
-
-                val productDetails = checkNotNull(result.productDetailsList?.firstOrNull()) {
-                    "Unable to get the product: product for given id is null"
-                }
-
-                val planId = subscriptionDuration.planId
-
-                val offerDetails = checkNotNull(productDetails.subscriptionOfferDetails
-                    ?.firstOrNull { it.basePlanId == planId }) {
-                        "Unable to find a plan with id $planId"
-                    }
-
-                // Check for existing subscription
-                val existingPurchase = getExistingSubscription()
-
-                val billingFlowParamsBuilder = BillingFlowParams.newBuilder()
-                    .setProductDetailsParamsList(
+            val result = billingClient.queryProductDetails(
+                QueryProductDetailsParams.newBuilder()
+                    .setProductList(
                         listOf(
-                            BillingFlowParams.ProductDetailsParams.newBuilder()
-                                .setProductDetails(productDetails)
-                                .setOfferToken(offerDetails.offerToken)
+                            QueryProductDetailsParams.Product.newBuilder()
+                                .setProductId("session_pro")
+                                .setProductType(BillingClient.ProductType.SUBS)
                                 .build()
                         )
                     )
+                    .build()
+            )
 
-                // If user has an existing subscription, configure upgrade/downgrade
-                if (existingPurchase != null) {
-                    Log.d(TAG, "Found existing subscription, configuring upgrade/downgrade with WITHOUT_PRORATION")
+            check(result.billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                "Failed to query product details. Reason: ${result.billingResult}"
+            }
 
-                    billingFlowParamsBuilder.setSubscriptionUpdateParams(
-                        BillingFlowParams.SubscriptionUpdateParams.newBuilder()
-                            .setOldPurchaseToken(existingPurchase.purchaseToken)
-                            // WITHOUT_PRORATION ensures new plan only bills when existing plan expires/renews
-                            // This applies whether the subscription is auto-renewing or canceled
-                            .setSubscriptionReplacementMode(
-                                BillingFlowParams.SubscriptionUpdateParams.ReplacementMode.WITHOUT_PRORATION
-                            )
+            val productDetails = checkNotNull(result.productDetailsList?.firstOrNull()) {
+                "Unable to get the product: product for given id is null"
+            }
+
+            val planId = subscriptionDuration.planId
+
+            val offerDetails = checkNotNull(productDetails.subscriptionOfferDetails
+                ?.firstOrNull { it.basePlanId == planId }) {
+                    "Unable to find a plan with id $planId"
+                }
+
+            // Check for existing subscription
+            val existingPurchase = getExistingSubscription()
+
+            val billingFlowParamsBuilder = BillingFlowParams.newBuilder()
+                .setProductDetailsParamsList(
+                    listOf(
+                        BillingFlowParams.ProductDetailsParams.newBuilder()
+                            .setProductDetails(productDetails)
+                            .setOfferToken(offerDetails.offerToken)
                             .build()
                     )
-                }
-
-                val billingResult = billingClient.launchBillingFlow(
-                    activity,
-                    billingFlowParamsBuilder.build()
                 )
 
-                check(billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                    "Unable to launch the billing flow. Reason: ${billingResult.debugMessage}"
-                }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Log.e(TAG, "Error purchase plan", e)
+            // If user has an existing subscription, configure upgrade/downgrade
+            if (existingPurchase != null) {
+                Log.d(TAG, "Found existing subscription, configuring upgrade/downgrade with WITHOUT_PRORATION")
 
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(application, e.message, Toast.LENGTH_LONG).show()
-                }
+                billingFlowParamsBuilder.setSubscriptionUpdateParams(
+                    BillingFlowParams.SubscriptionUpdateParams.newBuilder()
+                        .setOldPurchaseToken(existingPurchase.purchaseToken)
+                        // WITHOUT_PRORATION ensures new plan only bills when existing plan expires/renews
+                        // This applies whether the subscription is auto-renewing or canceled
+                        .setSubscriptionReplacementMode(
+                            BillingFlowParams.SubscriptionUpdateParams.ReplacementMode.WITHOUT_PRORATION
+                        )
+                        .build()
+                )
             }
+
+            val billingResult = billingClient.launchBillingFlow(
+                activity,
+                billingFlowParamsBuilder.build()
+            )
+
+            check(billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                "Unable to launch the billing flow. Reason: ${billingResult.debugMessage}"
+            }
+
+            return Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(TAG, "Error purchase plan", e)
+
+            withContext(Dispatchers.Main) {
+                Toast.makeText(application, application.getString(R.string.errorGeneric), Toast.LENGTH_LONG).show()
+            }
+
+            return Result.failure(e)
         }
     }
 
