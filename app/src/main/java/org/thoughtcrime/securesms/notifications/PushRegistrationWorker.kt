@@ -143,7 +143,7 @@ class PushRegistrationWorker @AssistedInject constructor(
 
             pushRegistrationDatabase.removeRegistrations(unregisterResults.await().map {
                 if (it.second.isFailure) {
-                    Log.e(TAG, "Push unregistration failed for ${it.first.accountId}: (${it.second.exceptionOrNull()?.message})")
+                    Log.e(TAG, "Push unregistration failed: (${it.second.exceptionOrNull()?.message})")
                 }
 
                 PushRegistrationDatabase.Registration(
