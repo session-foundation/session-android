@@ -50,7 +50,6 @@ import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.State
-import javax.inject.Inject
 
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
@@ -76,6 +75,9 @@ class ProSettingsViewModel @AssistedInject constructor(
 
     private val _choosePlanState: MutableStateFlow<ChoosePlanState> = MutableStateFlow(ChoosePlanState())
     val choosePlanState: StateFlow<ChoosePlanState> = _choosePlanState
+
+    private val _refundPlanState: MutableStateFlow<RefundPlanState> = MutableStateFlow(RefundPlanState())
+    val refundPlanState: StateFlow<RefundPlanState> = _refundPlanState
 
     init {
         // observe subscription status
@@ -222,6 +224,22 @@ class ProSettingsViewModel @AssistedInject constructor(
                         }
                     }
                 }
+        }
+
+        // Update refund plan state
+        viewModelScope.launch {
+            _proSettingsUIState.map { proUIState ->
+                val subManager = subscriptionCoordinator.getCurrentManager()
+                RefundPlanState(
+                    subscriptionType = proUIState.subscriptionState.type,
+                    isQuickRefund = subManager.isWithinQuickRefundWindow(),
+                    quickRefundUrl = subManager.quickRefundUrl
+                )
+            }
+            .distinctUntilChanged()
+            .collect {
+                _refundPlanState.update { it }
+            }
         }
     }
 
@@ -663,6 +681,12 @@ class ProSettingsViewModel @AssistedInject constructor(
         val loading: Boolean = false,
         val plans: List<ProPlan> = emptyList(),
         val enableButton: Boolean = false,
+    )
+
+    data class RefundPlanState(
+        val subscriptionType: SubscriptionType = SubscriptionType.NeverSubscribed,
+        val isQuickRefund: Boolean = false,
+        val quickRefundUrl: String? = null
     )
 
     data class ProStats(

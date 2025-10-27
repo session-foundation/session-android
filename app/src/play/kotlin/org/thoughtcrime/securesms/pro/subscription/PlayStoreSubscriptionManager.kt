@@ -38,6 +38,7 @@ import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager.PurchaseEvent
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -70,7 +71,6 @@ class PlayStoreSubscriptionManager @Inject constructor(
         }
         .stateIn(scope, SharingStarted.Eagerly, false)
 
-    override val quickRefundExpiry: Instant = Instant.now() //todo PRO implement properly
     override val quickRefundUrl = "https://support.google.com/googleplay/workflow/9813244"
 
     private val _purchaseEvents = MutableSharedFlow<PurchaseEvent>(
@@ -254,6 +254,19 @@ class PlayStoreSubscriptionManager @Inject constructor(
         // if in debug mode, always return true
         return if(prefs.forceCurrentUserAsPro()) true
         else getExistingSubscription() != null
+    }
+
+    override suspend fun isWithinQuickRefundWindow(): Boolean {
+        val purchaseTimeMillis = getExistingSubscription()?.purchaseTime ?: return false
+
+        val now = Instant.now()
+        val purchaseInstant = Instant.ofEpochMilli(purchaseTimeMillis)
+
+        // Google Play allows refunds within 48 hours of purchase
+        val refundWindowHours = 48
+        val refundDeadline = purchaseInstant.plus(refundWindowHours.toLong(), ChronoUnit.HOURS)
+
+        return now.isBefore(refundDeadline)
     }
 
     companion object {
