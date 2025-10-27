@@ -31,8 +31,10 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.NETWORK_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.recipients.ProStatus
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.GoToProSettings
@@ -110,17 +112,34 @@ fun PlanConfirmation(
 
             Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
 
+            val description = when (proData.subscriptionState.type) {
+                is SubscriptionType.Active -> {
+                    Phrase.from(context.getText(R.string.proAllSetDescription))
+                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                        .put(DATE_KEY, proData.subscriptionExpiryDate)
+                        .format()
+                }
+
+                is SubscriptionType.NeverSubscribed -> {
+                    Phrase.from(context.getText(R.string.proUpgraded))
+                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                        .put(NETWORK_NAME_KEY, NETWORK_NAME)
+                        .format()
+                }
+
+                is SubscriptionType.Expired -> {
+                    Phrase.from(context.getText(R.string.proPlanRenewSupport))
+                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                        .put(NETWORK_NAME_KEY, NETWORK_NAME)
+                        .format()
+                }
+            }
+
             Text(
                 modifier = Modifier.align(CenterHorizontally)
                     .safeContentWidth(),
-                //todo PRO the text below can change if the user was renewing vs expiring and/or/auto-renew
-                text = annotatedStringResource(
-                    Phrase.from(context.getText(R.string.proAllSetDescription))
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                    .put(DATE_KEY, proData.subscriptionExpiryDate)
-                    .format()
-                ),
+                text = annotatedStringResource(description),
                 textAlign = TextAlign.Center,
                 style = LocalType.current.base,
                 color = LocalColors.current.text,
@@ -128,11 +147,21 @@ fun PlanConfirmation(
 
             Spacer(Modifier.height(LocalDimensions.current.spacing))
 
-            //todo PRO the button text can change if the user was renewing vs expiring and/or/auto-renew
+            val buttonLabel = when (proData.subscriptionState.type) {
+                is SubscriptionType.Active -> stringResource(R.string.theReturn)
+
+                else -> {
+                    Phrase.from(context.getText(R.string.proStartUsing))
+                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                        .format()
+                        .toString()
+                }
+            }
+
             AccentFillButtonRect(
                 modifier = Modifier.fillMaxWidth()
                     .widthIn(max = LocalDimensions.current.maxContentWidth),
-                text = stringResource(R.string.theReturn),
+                text = buttonLabel,
                 onClick = {
                     sendCommand(GoToProSettings)
                 }
@@ -146,12 +175,13 @@ fun PlanConfirmation(
 
 @Preview
 @Composable
-private fun PreviewPlanConfirmation(
+private fun PreviewPlanConfirmationActive(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
     PreviewTheme(colors) {
         PlanConfirmation(
             proData = ProSettingsViewModel.ProSettingsState(
+                subscriptionExpiryDate = "20th June 2026",
                 subscriptionState = SubscriptionState(
                     type = SubscriptionType.Active.AutoRenewing(
                         proStatus = ProStatus.Pro(
@@ -175,5 +205,52 @@ private fun PreviewPlanConfirmation(
         )
     }
 }
+
+@Preview
+@Composable
+private fun PreviewPlanConfirmationExpired(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        PlanConfirmation(
+            proData = ProSettingsViewModel.ProSettingsState(
+                subscriptionState = SubscriptionState(
+                    type = SubscriptionType.Expired(
+                        expiredAt = Instant.now() - Duration.ofDays(14),
+                        SubscriptionDetails(
+                            device = "iOS",
+                            store = "Apple App Store",
+                            platform = "Apple",
+                            platformAccount = "Apple Account",
+                            subscriptionUrl = "https://www.apple.com/account/subscriptions",
+                            refundUrl = "https://www.apple.com/account/subscriptions",
+                        )),
+                    refreshState = State.Success(Unit),),
+            ),
+            sendCommand = {},
+            onBack = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewPlanConfirmationNeverSub(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        PlanConfirmation(
+            proData = ProSettingsViewModel.ProSettingsState(
+                subscriptionState = SubscriptionState(
+                    type = SubscriptionType.NeverSubscribed,
+                    refreshState = State.Success(Unit),),
+            ),
+            sendCommand = {},
+            onBack = {},
+        )
+    }
+}
+
+
 
 
