@@ -214,14 +214,12 @@ class PlayStoreSubscriptionManager @Inject constructor(
         billingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingServiceDisconnected() {
 
-                Log.w(TAG, " *** SETTING TO FALSE")
                 _playBillingAvailable.update { false }
             }
 
             override fun onBillingSetupFinished(result: BillingResult) {
                 Log.d(TAG, "onBillingSetupFinished with $result")
                 if (result.responseCode == BillingClient.BillingResponseCode.OK) {
-                    Log.w(TAG, " *** SETTING TO TRUE")
                     _playBillingAvailable.update { true }
                 }
             }

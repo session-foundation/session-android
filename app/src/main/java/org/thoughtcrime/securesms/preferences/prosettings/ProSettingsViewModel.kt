@@ -249,8 +249,6 @@ class ProSettingsViewModel @AssistedInject constructor(
         val subType = subscriptionState.type
 
         _proSettingsUIState.update {
-            Log.w("", " *** SETTING VM TO: ${subscriptionCoordinator.getCurrentManager().supportsBilling.value}")
-
             ProSettingsState(
                 subscriptionState = subscriptionState,
                 //todo PRO need to get the product id from libsession - also this might be a long running operation
