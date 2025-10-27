@@ -92,6 +92,7 @@ fun ChoosePlan(
 ) {
     BaseProSettingsScreen(
         disabled = false,
+        loading = planData.loading,
         onBack = onBack,
     ) {
         // Keeps track of the badge height dynamically so we can adjust the padding accordingly

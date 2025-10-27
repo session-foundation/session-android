@@ -7,16 +7,25 @@ import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.BillingResult
 import com.android.billingclient.api.PendingPurchasesParams
+import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.QueryProductDetailsParams
+import com.android.billingclient.api.QueryPurchasesParams
 import com.android.billingclient.api.queryProductDetails
+import com.android.billingclient.api.queryPurchasesAsync
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager.PurchaseEvent
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import java.time.Instant
 import javax.inject.Inject
@@ -41,10 +50,32 @@ class PlayStoreSubscriptionManager @Inject constructor(
     override val quickRefundExpiry: Instant = Instant.now() //todo PRO implement properly
     override val quickRefundUrl = "https://support.google.com/googleplay/workflow/9813244"
 
+    private val _purchaseEvents = MutableSharedFlow<PurchaseEvent>(
+        replay = 0,
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+    override val purchaseEvents: SharedFlow<PurchaseEvent> = _purchaseEvents.asSharedFlow()
+
     private val billingClient by lazy {
         BillingClient.newBuilder(application)
             .setListener { result, purchases ->
                 Log.d(TAG, "onPurchasesUpdated: $result, $purchases")
+                if (result.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
+                    for (purchase in purchases) {
+                        scope.launch {
+                           // signal that purchase was completed
+
+                            //todo PRO send confirmation to libsession
+                            _purchaseEvents.emit(PurchaseEvent.Success)
+                        }
+                    }
+                } else if (result.responseCode != BillingClient.BillingResponseCode.USER_CANCELED) {
+                    Log.w(TAG, "Purchase failed or cancelled: $result")
+                    scope.launch {
+                        _purchaseEvents.emit(PurchaseEvent.Failed())
+                    }
+                }
             }
             .enableAutoServiceReconnection()
             .enablePendingPurchases(
@@ -94,23 +125,43 @@ class PlayStoreSubscriptionManager @Inject constructor(
                         "Unable to find a plan with id $planId"
                     }
 
-                val billingResult = billingClient.launchBillingFlow(
-                    activity, BillingFlowParams.newBuilder()
-                        .setProductDetailsParamsList(
-                            listOf(
-                                BillingFlowParams.ProductDetailsParams.newBuilder()
-                                    .setProductDetails(productDetails)
-                                    .setOfferToken(offerDetails.offerToken)
-                                    .build()
-                            )
+                // Check for existing subscription
+                val existingPurchase = getExistingSubscription()
+
+                val billingFlowParamsBuilder = BillingFlowParams.newBuilder()
+                    .setProductDetailsParamsList(
+                        listOf(
+                            BillingFlowParams.ProductDetailsParams.newBuilder()
+                                .setProductDetails(productDetails)
+                                .setOfferToken(offerDetails.offerToken)
+                                .build()
                         )
-                        .build()
+                    )
+
+                // If user has an existing subscription, configure upgrade/downgrade
+                if (existingPurchase != null) {
+                    Log.d(TAG, "Found existing subscription, configuring upgrade/downgrade with WITHOUT_PRORATION")
+
+                    billingFlowParamsBuilder.setSubscriptionUpdateParams(
+                        BillingFlowParams.SubscriptionUpdateParams.newBuilder()
+                            .setOldPurchaseToken(existingPurchase.purchaseToken)
+                            // WITHOUT_PRORATION ensures new plan only bills when existing plan expires/renews
+                            // This applies whether the subscription is auto-renewing or canceled
+                            .setSubscriptionReplacementMode(
+                                BillingFlowParams.SubscriptionUpdateParams.ReplacementMode.WITHOUT_PRORATION
+                            )
+                            .build()
+                    )
+                }
+
+                val billingResult = billingClient.launchBillingFlow(
+                    activity,
+                    billingFlowParamsBuilder.build()
                 )
 
                 check(billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                     "Unable to launch the billing flow. Reason: ${billingResult.debugMessage}"
                 }
-
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -144,8 +195,32 @@ class PlayStoreSubscriptionManager @Inject constructor(
         })
     }
 
-    override fun hasValidSubscription(productId: String): Boolean {
-        return true //todo PRO implement properly - we should check if the api has a valid subscription matching this productId for the current google user on this phone
+    /**
+     * Gets the user's existing active subscription if one exists.
+     * Returns null if no active subscription is found.
+     */
+    private suspend fun getExistingSubscription(): Purchase? {
+        return try {
+            val params = QueryPurchasesParams.newBuilder()
+                .setProductType(BillingClient.ProductType.SUBS)
+                .build()
+
+            val result = billingClient.queryPurchasesAsync(params)
+
+            // Return the first active subscription
+            result.purchasesList.firstOrNull {
+                it.purchaseState == Purchase.PurchaseState.PURCHASED //todo PRO Should we also OR PENDING here?
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error querying existing subscription", e)
+            null
+        }
+    }
+
+    override suspend fun hasValidSubscription(productId: String): Boolean {
+        // if in debug mode, always return true
+        return if(prefs.forceCurrentUserAsPro()) true
+        else getExistingSubscription() != null
     }
 
     companion object {

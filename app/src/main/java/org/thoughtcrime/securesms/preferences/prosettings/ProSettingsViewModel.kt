@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.preferences.prosettings
 import android.content.Context
 import android.content.Intent
 import android.icu.util.MeasureUnit
+import android.widget.Toast
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -80,6 +81,27 @@ class ProSettingsViewModel @AssistedInject constructor(
         viewModelScope.launch {
             proStatusManager.subscriptionState.collect {
                generateState(it)
+            }
+        }
+
+        // observe purchase events
+        viewModelScope.launch {
+            subscriptionCoordinator.getCurrentManager().purchaseEvents.collect { purchaseEvent ->
+                _choosePlanState.update { it.copy(loading = false) }
+
+                when(purchaseEvent){
+                    is SubscriptionManager.PurchaseEvent.Success -> {
+                        navigator.navigate(destination = ProSettingsDestination.PlanConfirmation)
+                    }
+
+                    is SubscriptionManager.PurchaseEvent.Failed -> {
+                        Toast.makeText(
+                            context,
+                            purchaseEvent.errorMessage ?: context.getString(R.string.errorGeneric),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
             }
         }
 
@@ -197,7 +219,7 @@ class ProSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    private fun generateState(subscriptionState: SubscriptionState){
+    private suspend fun generateState(subscriptionState: SubscriptionState){
         //todo PRO need to properly calculate this
 
         val subType = subscriptionState.type
@@ -389,7 +411,6 @@ class ProSettingsViewModel @AssistedInject constructor(
             Commands.GetProPlan -> {
                 val currentSubscription = _proSettingsUIState.value.subscriptionState.type
 
-
                 if(currentSubscription is SubscriptionType.Active){
                     val newSubscriptionExpiryString = getSelectedPlan().durationType.expiryFromNow()
 
@@ -555,6 +576,10 @@ class ProSettingsViewModel @AssistedInject constructor(
     }
 
     private fun getPlanFromProvider(){
+        _choosePlanState.update {
+            it.copy(loading = true)
+        }
+
         subscriptionCoordinator.getCurrentManager().purchasePlan(
             getSelectedPlan().durationType
         )
@@ -609,6 +634,7 @@ class ProSettingsViewModel @AssistedInject constructor(
         val subscriptionType: SubscriptionType = SubscriptionType.NeverSubscribed,
         val hasBillingCapacity: Boolean = false,
         val hasValidSubscription: Boolean = false,
+        val loading: Boolean = false,
         val plans: List<ProPlan> = emptyList(),
         val enableButton: Boolean = false,
     )

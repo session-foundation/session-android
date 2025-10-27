@@ -1,5 +1,9 @@
 package org.thoughtcrime.securesms.pro.subscription
 
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import java.time.Instant
 
@@ -20,6 +24,14 @@ interface SubscriptionManager: OnAppStartupComponent {
 
     val availablePlans: List<ProSubscriptionDuration>
 
+    sealed interface PurchaseEvent {
+        data object Success : PurchaseEvent
+        data class Failed(val errorMessage: String? = null) : PurchaseEvent
+    }
+
+    // purchase events
+    val purchaseEvents: SharedFlow<PurchaseEvent>
+
     fun purchasePlan(subscriptionDuration: ProSubscriptionDuration)
 
     /**
@@ -32,6 +44,6 @@ interface SubscriptionManager: OnAppStartupComponent {
     /**
      * Checks whether there is a valid subscription for the given product id for the current user within this subscriber's billing API
      */
-    fun hasValidSubscription(productId: String): Boolean
+    suspend fun hasValidSubscription(productId: String): Boolean
 }
 

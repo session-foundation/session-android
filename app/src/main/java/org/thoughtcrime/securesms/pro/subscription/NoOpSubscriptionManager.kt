@@ -1,5 +1,10 @@
 package org.thoughtcrime.securesms.pro.subscription
 
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.emptyFlow
+import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager.PurchaseEvent
 import javax.inject.Inject
 
 /**
@@ -20,7 +25,9 @@ class NoOpSubscriptionManager @Inject constructor() : SubscriptionManager {
     override val availablePlans: List<ProSubscriptionDuration>
         get() = emptyList()
 
-    override fun hasValidSubscription(productId: String): Boolean {
+    override val purchaseEvents: SharedFlow<PurchaseEvent> = MutableSharedFlow()
+
+    override suspend fun hasValidSubscription(productId: String): Boolean {
         return false
     }
 }
