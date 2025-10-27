@@ -31,7 +31,7 @@ fun UpdatePlanScreen(
         // or we have no billing APIs
         subscription.subscriptionDetails.isFromAnotherPlatform()
                 || !planData.hasValidSubscription
-                || !subscriptionManager.supportsBilling ->
+                || !subscriptionManager.supportsBilling.value ->
             ChoosePlanNonOriginating(
                 subscription = planData.subscriptionType as SubscriptionType.Active,
                 sendCommand = viewModel::onCommand,

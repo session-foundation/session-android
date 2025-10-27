@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.pro.subscription
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import java.time.Instant
@@ -16,7 +17,7 @@ interface SubscriptionManager: OnAppStartupComponent {
     val description: String
     val iconRes: Int?
 
-    val supportsBilling: Boolean
+    val supportsBilling: StateFlow<Boolean>
 
     // Optional. Some store can have a platform specific refund window and url
     val quickRefundExpiry: Instant?
@@ -26,6 +27,7 @@ interface SubscriptionManager: OnAppStartupComponent {
 
     sealed interface PurchaseEvent {
         data object Success : PurchaseEvent
+        data object Cancelled : PurchaseEvent
         data class Failed(val errorMessage: String? = null) : PurchaseEvent
     }
 

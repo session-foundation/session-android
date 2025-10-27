@@ -18,6 +18,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
@@ -101,14 +102,19 @@ class ProSettingsViewModel @AssistedInject constructor(
                             Toast.LENGTH_SHORT
                         ).show()
                     }
+
+                    is SubscriptionManager.PurchaseEvent.Cancelled -> {
+                        // nothing to do in this case
+                    }
                 }
             }
         }
 
-        // Update choosePlanState whenever proSettingsUIState changes
+        // Update choosePlanState whenever proSettingsUIState or the billing support change
         viewModelScope.launch {
-            _proSettingsUIState
-                .map { proState ->
+            combine(_proSettingsUIState,
+                subscriptionCoordinator.getCurrentManager().supportsBilling
+            ) { proState, supportsBilling ->
                     val subType = proState.subscriptionState.type
                     val isActive = subType is SubscriptionType.Active
                     val currentPlan12Months = isActive && subType.duration == ProSubscriptionDuration.TWELVE_MONTHS
@@ -118,7 +124,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                     ChoosePlanState(
                         subscriptionType = subType,
                         hasValidSubscription = proState.hasValidSubscription,
-                        hasBillingCapacity = proState.hasBillingCapacity,
+                        hasBillingCapacity = supportsBilling,
                         enableButton = subType !is SubscriptionType.Active.AutoRenewing, // only the auto-renew can have a disabled state
                         plans = listOf(
                             ProPlan(
@@ -225,11 +231,12 @@ class ProSettingsViewModel @AssistedInject constructor(
         val subType = subscriptionState.type
 
         _proSettingsUIState.update {
+            Log.w("", " *** SETTING VM TO: ${subscriptionCoordinator.getCurrentManager().supportsBilling.value}")
+
             ProSettingsState(
                 subscriptionState = subscriptionState,
                 //todo PRO need to get the product id from libsession - also this might be a long running operation
                 hasValidSubscription = subscriptionCoordinator.getCurrentManager().hasValidSubscription(""),
-                hasBillingCapacity = subscriptionCoordinator.getCurrentManager().supportsBilling,
                 subscriptionExpiryLabel = when(subType){
                     is SubscriptionType.Active.AutoRenewing ->
                         Phrase.from(context, R.string.proAutoRenewTime)
@@ -624,7 +631,6 @@ class ProSettingsViewModel @AssistedInject constructor(
     data class ProSettingsState(
         val subscriptionState: SubscriptionState = getDefaultSubscriptionStateData(),
         val proStats: State<ProStats> = State.Loading,
-        val hasBillingCapacity: Boolean = false, // true is the current build flavour supports billing
         val hasValidSubscription: Boolean = false, // true is there is a current subscription AND the available subscription manager on this device has an account which matches the product id we got from libsession
         val subscriptionExpiryLabel: CharSequence = "", // eg: "Pro auto renewing in 3 days"
         val subscriptionExpiryDate: CharSequence = "" // eg: "May 21st, 2025"

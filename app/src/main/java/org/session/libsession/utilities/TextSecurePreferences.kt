@@ -1789,6 +1789,7 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setDebugForceNoBilling(hasBilling: Boolean) {
         setBooleanPreference(TextSecurePreferences.DEBUG_FORCE_NO_BILLING, hasBilling)
+        _events.tryEmit(TextSecurePreferences.DEBUG_FORCE_NO_BILLING)
     }
 
     override fun getSubscriptionProvider(): String? {

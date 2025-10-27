@@ -17,9 +17,19 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.session.libsession.utilities.TextSecurePreferences
@@ -29,10 +39,12 @@ import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager.PurchaseE
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import java.time.Instant
 import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * The Google Play Store implementation of our subscription manager
  */
+@Singleton
 class PlayStoreSubscriptionManager @Inject constructor(
     private val application: Application,
     @param:ManagerScope private val scope: CoroutineScope,
@@ -44,8 +56,19 @@ class PlayStoreSubscriptionManager @Inject constructor(
     override val description = ""
     override val iconRes = null
 
-    override val supportsBilling: Boolean
-        get() = !prefs.getDebugForceNoBilling()
+    // specifically test the google play billing
+    private val _playBillingAvailable = MutableStateFlow(false)
+
+    // generic billing support method. Uses the property above and also checks the debug pref
+    override val supportsBilling: StateFlow<Boolean> = combine(
+        _playBillingAvailable,
+        (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_FORCE_NO_BILLING } as Flow<*>)
+            .onStart { emit(Unit) }
+            .map { prefs.getDebugForceNoBilling() },
+        ){ available, forceNoBilling ->
+            !forceNoBilling && available
+        }
+        .stateIn(scope, SharingStarted.Eagerly, false)
 
     override val quickRefundExpiry: Instant = Instant.now() //todo PRO implement properly
     override val quickRefundUrl = "https://support.google.com/googleplay/workflow/9813244"
@@ -62,18 +85,22 @@ class PlayStoreSubscriptionManager @Inject constructor(
             .setListener { result, purchases ->
                 Log.d(TAG, "onPurchasesUpdated: $result, $purchases")
                 if (result.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
-                    for (purchase in purchases) {
+                    purchases.firstOrNull()?.let{
                         scope.launch {
                            // signal that purchase was completed
+                            try {
+                                //todo PRO send confirmation to libsession
+                            } catch (e : Exception){
+                                _purchaseEvents.emit(PurchaseEvent.Failed())
+                            }
 
-                            //todo PRO send confirmation to libsession
                             _purchaseEvents.emit(PurchaseEvent.Success)
                         }
                     }
-                } else if (result.responseCode != BillingClient.BillingResponseCode.USER_CANCELED) {
+                } else {
                     Log.w(TAG, "Purchase failed or cancelled: $result")
                     scope.launch {
-                        _purchaseEvents.emit(PurchaseEvent.Failed())
+                        _purchaseEvents.emit(PurchaseEvent.Cancelled)
                     }
                 }
             }
@@ -186,11 +213,17 @@ class PlayStoreSubscriptionManager @Inject constructor(
 
         billingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingServiceDisconnected() {
-                Log.w(TAG, "onBillingServiceDisconnected")
+
+                Log.w(TAG, " *** SETTING TO FALSE")
+                _playBillingAvailable.update { false }
             }
 
             override fun onBillingSetupFinished(result: BillingResult) {
                 Log.d(TAG, "onBillingSetupFinished with $result")
+                if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                    Log.w(TAG, " *** SETTING TO TRUE")
+                    _playBillingAvailable.update { true }
+                }
             }
         })
     }
