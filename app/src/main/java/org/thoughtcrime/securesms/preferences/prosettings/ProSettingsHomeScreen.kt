@@ -168,7 +168,6 @@ fun ProSettingsHome(
                                 when(subscriptionType){
                                     is SubscriptionType.Active -> R.string.proErrorRefreshingStatus
                                     else -> R.string.errorCheckingProStatus
-                                    //todo PRO will need to handle never subscribed here
                                 }))
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString(),
