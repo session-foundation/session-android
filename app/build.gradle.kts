@@ -27,7 +27,7 @@ configurations.configureEach {
 }
 
 val canonicalVersionCode = 427
-val canonicalVersionName = "1.28.2"
+val canonicalVersionName = "1.30.0"
 
 val postFixSize = 10
 val abiPostFix = mapOf(
