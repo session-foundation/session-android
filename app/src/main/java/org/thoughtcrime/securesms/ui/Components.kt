@@ -15,8 +15,10 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
@@ -839,14 +841,15 @@ fun CollapsibleFooterAction(
             // Rendered actions
             AnimatedVisibility(
                 visible = !data.collapsed,
-                enter = slideInVertically(
-                    animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
-                    initialOffsetY = { it } // start just below and slide up into place
-                ),
-                exit = slideOutVertically(
-                    animationSpec = tween(durationMillis = 300, easing = FastOutLinearInEasing),
-                    targetOffsetY = { it } // slide down out of view when collapsing
-                )) {
+                enter = expandVertically(
+                    animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
+                    expandFrom = Alignment.Top
+                ) + fadeIn(animationSpec = tween(durationMillis = 150)),
+                exit = shrinkVertically(
+                    animationSpec = tween(durationMillis = 180, easing = FastOutLinearInEasing),
+                    shrinkTowards = Alignment.Top
+                ) + fadeOut(animationSpec = tween(durationMillis = 120))
+            ) {
                 CategoryCell {
                     Column(
                         modifier = Modifier
