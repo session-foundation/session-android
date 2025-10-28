@@ -139,11 +139,11 @@ fun AccountIdHeader(
         horizontal = LocalDimensions.current.contentSpacing,
         vertical = LocalDimensions.current.xxsSpacing
     )
-){
+) {
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
-    ){
+    ) {
         Box(
             modifier = Modifier
                 .weight(1f)
@@ -156,8 +156,7 @@ fun AccountIdHeader(
                 .border(
                     shape = MaterialTheme.shapes.large
                 )
-                .padding(textPaddingValues)
-            ,
+                .padding(textPaddingValues),
             text = text,
             style = textStyle.copy(color = LocalColors.current.textSecondary)
         )
@@ -216,7 +215,7 @@ fun PathDot(
 
 @Preview
 @Composable
-fun PreviewPathDot(){
+fun PreviewPathDot() {
     PreviewTheme {
         Box(
             modifier = Modifier.padding(20.dp)
@@ -241,8 +240,11 @@ data class OptionsCardData<T>(
     val title: GetString?,
     val options: List<RadioOption<T>>
 ) {
-    constructor(title: GetString, vararg options: RadioOption<T>): this(title, options.asList())
-    constructor(@StringRes title: Int, vararg options: RadioOption<T>): this(GetString(title), options.asList())
+    constructor(title: GetString, vararg options: RadioOption<T>) : this(title, options.asList())
+    constructor(@StringRes title: Int, vararg options: RadioOption<T>) : this(
+        GetString(title),
+        options.asList()
+    )
 }
 
 @Composable
@@ -375,7 +377,7 @@ fun ItemButton(
             }
         }
 
-        endIcon?.let{
+        endIcon?.let {
             Spacer(Modifier.width(LocalDimensions.current.smallSpacing))
 
             Box(
@@ -442,7 +444,7 @@ fun getCellTopShape() = RoundedCornerShape(
 
 @Composable
 fun getCellBottomShape() = RoundedCornerShape(
-    topStart =  0.dp,
+    topStart = 0.dp,
     topEnd = 0.dp,
     bottomEnd = LocalDimensions.current.shapeSmall,
     bottomStart = LocalDimensions.current.shapeSmall
@@ -456,11 +458,11 @@ fun CategoryCell(
     dropShadow: Boolean = false,
     content: @Composable () -> Unit,
 
-){
+    ) {
     Column(
         modifier = modifier.fillMaxWidth()
     ) {
-        if(!title.isNullOrEmpty() || titleIcon != null) {
+        if (!title.isNullOrEmpty() || titleIcon != null) {
             Row(
                 modifier = Modifier.padding(
                     start = LocalDimensions.current.smallSpacing,
@@ -481,12 +483,12 @@ fun CategoryCell(
             }
         }
 
-       Cell(
-           modifier = Modifier.fillMaxWidth(),
-           dropShadow = dropShadow
-       ){
+        Cell(
+            modifier = Modifier.fillMaxWidth(),
+            dropShadow = dropShadow
+        ) {
             content()
-       }
+        }
     }
 }
 
@@ -527,9 +529,11 @@ private fun BottomFadingEdgeBoxPreview() {
             content = { bottomContentPadding ->
                 LazyColumn(contentPadding = PaddingValues(bottom = bottomContentPadding)) {
                     items(200) {
-                        Text("Item $it",
+                        Text(
+                            "Item $it",
                             color = LocalColors.current.text,
-                            style = LocalType.current.base)
+                            style = LocalType.current.base
+                        )
                     }
                 }
             },
@@ -648,7 +652,7 @@ fun SpeechBubbleTooltip(
         state = tooltipState,
         modifier = modifier,
         positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                tooltip = {
+        tooltip = {
             val bubbleColor = LocalColors.current.backgroundBubbleReceived
 
             Card(
@@ -777,7 +781,7 @@ fun CollapsibleActionTray(
             verticalAlignment = Alignment.CenterVertically
         ) {
             val rotation by animateFloatAsState(
-                targetValue = if (data.collapsed) 0f else 180f,
+                targetValue = if (data.collapsed) 180f else 0f,
                 animationSpec = spring(
                     dampingRatio = Spring.DampingRatioMediumBouncy,
                     stiffness = Spring.StiffnessLow
@@ -792,7 +796,7 @@ fun CollapsibleActionTray(
                 contentDescription = null
             )
             Text(
-                data.title,
+                text = data.title.string(),
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
@@ -822,18 +826,23 @@ fun CollapsibleActionTray(
                 targetOffsetY = { it } // slide down out of view when collapsing
             )) {
             CategoryCell {
-                Column(modifier = Modifier.fillMaxWidth()
-                    .background(LocalColors.current.backgroundTertiary)) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(LocalColors.current.backgroundTertiary)
+                ) {
                     data.items.forEachIndexed { index, item ->
+                        val titleText = item.label()
+                        val annotatedTitle = remember(titleText) { AnnotatedString(titleText) }
                         if (index != 0) Divider()
                         ActionRowItem(
                             modifier = Modifier.background(LocalColors.current.backgroundTertiary),
-                            title = item.label,
+                            title = annotatedTitle,
                             onClick = {},
                             qaTag = R.string.qa_string_placeholder,
                             endContent = {
                                 SlimFillButtonRect(
-                                    item.buttonLabel,
+                                    item.buttonLabel.string(),
                                     color = item.buttonColor,
                                     modifier = Modifier
                                         .width(100.dp)
@@ -850,14 +859,15 @@ fun CollapsibleActionTray(
 }
 
 data class CollapsibleActionTrayData(
-    val title: AnnotatedString,
+    val title: GetString,
     val collapsed: Boolean,
+    val visible: Boolean,
     val items: List<CollapsibleActionTrayItemData>
 )
 
 data class CollapsibleActionTrayItemData(
-    val label: AnnotatedString,
-    val buttonLabel: String,
+    val label: GetString,
+    val buttonLabel: GetString,
     val buttonColor: Color,
     val onClick: () -> Unit
 )
@@ -871,20 +881,20 @@ fun PreviewCollapsibleActionTray(
     PreviewTheme(colors) {
         val demoItems = listOf(
             CollapsibleActionTrayItemData(
-                label = annotatedStringResource("Mute notifications"),
-                buttonLabel = "Mute",
+                label = GetString("Mute notifications"),
+                buttonLabel = GetString("Mute"),
                 buttonColor = LocalColors.current.text,
                 onClick = {}
             ),
             CollapsibleActionTrayItemData(
-                label = annotatedStringResource("Pin conversation"),
-                buttonLabel = "Pin",
+                label = GetString("Pin conversation"),
+                buttonLabel = GetString("Pin"),
                 buttonColor = LocalColors.current.accent,
                 onClick = {}
             ),
             CollapsibleActionTrayItemData(
-                label = annotatedStringResource("Delete chat"),
-                buttonLabel = "Delete",
+                label = GetString("Delete chat"),
+                buttonLabel = GetString("Delete"),
                 buttonColor = LocalColors.current.danger,
                 onClick = {}
             )
@@ -892,8 +902,9 @@ fun PreviewCollapsibleActionTray(
 
         CollapsibleActionTray(
             data = CollapsibleActionTrayData(
-                title = annotatedStringResource("Header"),
+                title = GetString("Invite Contacts"),
                 collapsed = false,
+                visible = true,
                 items = demoItems
             )
         )
@@ -930,14 +941,15 @@ fun ExpandableText(
     expandedMaxLines: Int = Int.MAX_VALUE,
     expandButtonText: String = stringResource(id = R.string.viewMore),
     collapseButtonText: String = stringResource(id = R.string.viewLess),
-){
+) {
     var expanded by remember { mutableStateOf(false) }
     var showButton by remember { mutableStateOf(false) }
     var maxHeight by remember { mutableStateOf(Dp.Unspecified) }
 
     val density = LocalDensity.current
 
-    val enableScrolling = expanded && maxHeight != Dp.Unspecified && expandedMaxLines != Int.MAX_VALUE
+    val enableScrolling =
+        expanded && maxHeight != Dp.Unspecified && expandedMaxLines != Int.MAX_VALUE
 
     BaseExpandableText(
         text = text,
@@ -958,10 +970,11 @@ fun ExpandableText(
         onTextMeasured = { textLayoutResult ->
             showButton = expanded || textLayoutResult.hasVisualOverflow
             val lastVisible = (expandedMaxLines - 1).coerceAtMost(textLayoutResult.lineCount - 1)
-            val px = textLayoutResult.getLineBottom(lastVisible)          // bottom of that line in px
+            val px =
+                textLayoutResult.getLineBottom(lastVisible)          // bottom of that line in px
             maxHeight = with(density) { px.toDp() }
         },
-        onTap = if(showButton){ // only expand if there is enough text
+        onTap = if (showButton) { // only expand if there is enough text
             { expanded = !expanded }
         } else null
     )
@@ -1020,11 +1033,11 @@ fun BaseExpandableText(
     showScroll: Boolean = false,
     onTextMeasured: (TextLayoutResult) -> Unit = {},
     onTap: (() -> Unit)? = null
-){
+) {
     var textModifier: Modifier = Modifier
-    if(qaTag != null) textModifier = textModifier.qaTag(qaTag)
-    if(expanded) textModifier = textModifier.height(expandedMaxHeight)
-    if(showScroll){
+    if (qaTag != null) textModifier = textModifier.qaTag(qaTag)
+    if (expanded) textModifier = textModifier.height(expandedMaxHeight)
+    if (showScroll) {
         val scrollState = rememberScrollState()
         val scrollEdge = LocalDimensions.current.xxxsSpacing
         val scrollWidth = 2.dp
@@ -1040,7 +1053,7 @@ fun BaseExpandableText(
 
     Column(
         modifier = modifier.then(
-            if(onTap != null) Modifier.clickable { onTap() } else Modifier
+            if (onTap != null) Modifier.clickable { onTap() } else Modifier
         ),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -1057,7 +1070,7 @@ fun BaseExpandableText(
             overflow = if (expanded) TextOverflow.Clip else TextOverflow.Ellipsis
         )
 
-        if(showButton) {
+        if (showButton) {
             Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
             Text(
                 text = if (expanded) collapseButtonText else expandButtonText,
@@ -1187,7 +1200,7 @@ fun ActionRowItem(
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     paddingValues: PaddingValues = PaddingValues(horizontal = LocalDimensions.current.smallSpacing),
     endContent: @Composable (() -> Unit)? = null
-){
+) {
     Row(
         modifier = modifier
             .heightIn(min = minHeight)
@@ -1244,7 +1257,7 @@ fun IconActionRowItem(
     iconSize: Dp = LocalDimensions.current.iconMedium,
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     paddingValues: PaddingValues = PaddingValues(horizontal = LocalDimensions.current.smallSpacing),
-){
+) {
     ActionRowItem(
         modifier = modifier,
         title = title,
@@ -1289,7 +1302,7 @@ fun SwitchActionRowItem(
     subtitleStyle: TextStyle = LocalType.current.small,
     paddingValues: PaddingValues = PaddingValues(horizontal = LocalDimensions.current.smallSpacing),
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
-){
+) {
     ActionRowItem(
         modifier = modifier,
         title = title,
@@ -1313,7 +1326,7 @@ fun SwitchActionRowItem(
 
 @Preview
 @Composable
-fun PreviewActionRowItems(){
+fun PreviewActionRowItems() {
     PreviewTheme {
         Column(
             modifier = Modifier.padding(20.dp),
