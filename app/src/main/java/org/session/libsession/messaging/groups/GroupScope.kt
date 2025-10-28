@@ -1,14 +1,16 @@
 package org.session.libsession.messaging.groups
 
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
-import java.util.concurrent.atomic.AtomicLong
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import javax.inject.Inject
+import javax.inject.Singleton
 
 private const val TAG = "GroupScope"
 
@@ -19,8 +21,11 @@ private const val TAG = "GroupScope"
  * It's probably harmful if you apply the scope on message retrieval, as normally the message retriveal
  * doesn't have any order requirement and it will likly slow down usual group operations.
  */
-class GroupScope(private val scope: CoroutineScope = GlobalScope) {
-    private val tasksByGroupId = hashMapOf<AccountId, ArrayDeque<Task<*>>>()
+@Singleton
+class GroupScope @Inject constructor(
+    @param:ManagerScope private val scope: CoroutineScope
+) {
+    private val groupSemaphores = hashMapOf<AccountId, Semaphore>()
 
     /**
      * Launch a coroutine in a group context. The coroutine will be executed sequentially
@@ -50,60 +55,15 @@ class GroupScope(private val scope: CoroutineScope = GlobalScope) {
      * See [launch] for more details.
      */
     fun <T> async(groupId: AccountId, debugName: String, block: suspend () -> T) : Deferred<T> {
-        val completion = CompletableDeferred<T>()
-
-        synchronized(tasksByGroupId) {
-            val tasks = tasksByGroupId.getOrPut(groupId) { ArrayDeque() }
-
-            val task = Task(groupId, debugName, block, completion)
-            tasks.addLast(task)
-
-            Log.d(TAG, "Added $task to queue, queue size: ${tasks.size}")
-
-            // If this is the first task in the queue, start it directly (otherwise the next will be started by the previous task)
-            if (tasks.size == 1) {
-                scope.launch {
-                    task.run()
-                }
+        return scope.async {
+            val semaphore = synchronized(groupSemaphores) {
+                groupSemaphores.getOrPut(groupId) { Semaphore(1) }
             }
-        }
 
-        return completion
-    }
-
-    private val taskIdSeq = AtomicLong(0)
-
-    private inner class Task<T>(val groupId: AccountId, val debugName: String, val block: suspend () -> T, val completion: CompletableDeferred<T>) {
-        private val id = taskIdSeq.getAndIncrement()
-
-        suspend fun run() {
-            Log.d(TAG, "Task started: $this")
-            try {
-                completion.complete(block())
-            } catch (e: Throwable) {
-                completion.completeExceptionally(e)
-            } finally {
-                Log.d(TAG, "Task completed: $this")
-                // Remove self from the queue and start the next task
-                synchronized(tasksByGroupId) {
-                    val tasks = tasksByGroupId[groupId]
-                    require(tasks != null && tasks.firstOrNull() == this) { "Task is not the first in the queue: $this" }
-                    tasks.removeFirst()
-
-                    if (tasks.isEmpty()) {
-                        tasksByGroupId.remove(groupId)
-                    } else {
-                        val nextTask = tasks.first()
-                        scope.launch {
-                            nextTask.run()
-                        }
-                    }
-                }
+            semaphore.withPermit {
+                Log.d(TAG, "Starting group-scoped task '$debugName' for group $groupId")
+                block()
             }
-        }
-
-        override fun toString(): String {
-            return "Task($debugName, id=$id)"
         }
     }
 }

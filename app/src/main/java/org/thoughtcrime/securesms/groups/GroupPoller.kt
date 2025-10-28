@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
@@ -43,6 +45,7 @@ import kotlin.time.Duration.Companion.days
 class GroupPoller @AssistedInject constructor(
     @Assisted scope: CoroutineScope,
     @Assisted private val groupId: AccountId,
+    @Assisted private val pollSemaphore: Semaphore,
     private val configFactoryProtocol: ConfigFactoryProtocol,
     private val lokiApiDatabase: LokiAPIDatabaseProtocol,
     private val clock: SnodeClock,
@@ -107,7 +110,9 @@ class GroupPoller @AssistedInject constructor(
 
             lastState = lastState.copy(inProgress = true).also { emit(it) }
 
-            val pollResult = doPollOnce(internalPollState)
+            val pollResult = pollSemaphore.withPermit {
+                doPollOnce(internalPollState)
+            }
 
             lastState = lastState.copy(
                 hadAtLeastOneSuccessfulPoll = lastState.hadAtLeastOneSuccessfulPoll || pollResult.result.isSuccess,
@@ -469,6 +474,6 @@ class GroupPoller @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(scope: CoroutineScope, groupId: AccountId): GroupPoller
+        fun create(scope: CoroutineScope, groupId: AccountId, pollSemaphore: Semaphore): GroupPoller
     }
 }
