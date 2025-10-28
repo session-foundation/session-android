@@ -8,6 +8,7 @@ import coil3.decode.ImageSource
 import coil3.fetch.FetchResult
 import coil3.fetch.Fetcher
 import coil3.fetch.SourceFetchResult
+import coil3.request.CachePolicy
 import coil3.request.Options
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -24,6 +25,7 @@ import org.thoughtcrime.securesms.attachments.RemoteFileDownloadWorker
 
 class RemoteFileFetcher @AssistedInject constructor(
     @Assisted private val file: RemoteFile,
+    @Assisted private val options: Options,
     @param:ApplicationContext private val context: Context,
     val localEncryptedFileInputStreamFactory: LocalEncryptedFileInputStream.Factory,
 ) : Fetcher {
@@ -32,12 +34,17 @@ class RemoteFileFetcher @AssistedInject constructor(
 
         // Check if the file already exists in the local storage, otherwise enqueue a download and
         // wait for it to complete.
-        val dataSource = if (!downloadedFile.exists()) {
-            RemoteFileDownloadWorker.enqueue(context, file)
-                .first { it?.state == WorkInfo.State.FAILED || it?.state == WorkInfo.State.SUCCEEDED }
-            DataSource.NETWORK
-        } else {
-            DataSource.DISK
+        val dataSource = when {
+            downloadedFile.exists() -> DataSource.DISK
+            options.networkCachePolicy == CachePolicy.ENABLED -> {
+                RemoteFileDownloadWorker.enqueue(context, file)
+                    .first { it?.state == WorkInfo.State.FAILED || it?.state == WorkInfo.State.SUCCEEDED }
+                DataSource.NETWORK
+            }
+            else -> {
+                throw RuntimeException("RemoteFile doesn't exist locally and we aren't allowed to download" +
+                        "from network")
+            }
         }
 
         val stream = localEncryptedFileInputStreamFactory.create(downloadedFile)
@@ -62,14 +69,14 @@ class RemoteFileFetcher @AssistedInject constructor(
 
     @AssistedFactory
     abstract class Factory : Fetcher.Factory<RemoteFile> {
-        abstract fun create(remoteFile: RemoteFile): RemoteFileFetcher
+        abstract fun create(remoteFile: RemoteFile, options: Options): RemoteFileFetcher
 
         override fun create(
             data: RemoteFile,
             options: Options,
             imageLoader: ImageLoader
         ): Fetcher? {
-            return create(data)
+            return create(data, options)
         }
     }
 }

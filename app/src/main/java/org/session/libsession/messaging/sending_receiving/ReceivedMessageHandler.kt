@@ -53,6 +53,7 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.SSKEnvironment
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
@@ -71,7 +72,6 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.sskenvironment.ReadReceiptManager
 import java.security.SignatureException
 import javax.inject.Inject
@@ -101,6 +101,7 @@ class ReceivedMessageHandler @Inject constructor(
     @param:ManagerScope private val scope: CoroutineScope,
     private val configFactory: ConfigFactoryProtocol,
     private val messageRequestResponseHandler: Provider<MessageRequestResponseHandler>,
+    private val prefs: TextSecurePreferences,
 ) {
 
     suspend fun handle(
@@ -129,7 +130,7 @@ class ReceivedMessageHandler @Inject constructor(
                 }
             }
             is DataExtractionNotification -> handleDataExtractionNotification(message)
-            is UnsendRequest -> handleUnsendRequest(message)
+            is UnsendRequest -> handleUnsendRequest(message, threadId)
             is MessageRequestResponse -> messageRequestResponseHandler.get().handleExplicitRequestResponseMessage(message)
             is VisibleMessage -> handleVisibleMessage(
                 message = message,
@@ -184,6 +185,9 @@ class ReceivedMessageHandler @Inject constructor(
     }
 
     private fun showTypingIndicatorIfNeeded(senderPublicKey: String) {
+        // We don't want to show other people's indicators if the toggle is off
+        if(!prefs.isTypingIndicatorsEnabled()) return
+
         val address = Address.fromSerialized(senderPublicKey)
         val threadID = storage.getThreadId(address) ?: return
         typingIndicators.didReceiveTypingStartedMessage(threadID, address, 1)
@@ -214,7 +218,6 @@ class ReceivedMessageHandler @Inject constructor(
         val senderPublicKey = message.sender!!
 
         val notification: DataExtractionNotificationInfoMessage = when(message.kind) {
-            is DataExtractionNotification.Kind.Screenshot -> DataExtractionNotificationInfoMessage(DataExtractionNotificationInfoMessage.Kind.SCREENSHOT)
             is DataExtractionNotification.Kind.MediaSaved -> DataExtractionNotificationInfoMessage(DataExtractionNotificationInfoMessage.Kind.MEDIA_SAVED)
             else -> return
         }
@@ -222,7 +225,7 @@ class ReceivedMessageHandler @Inject constructor(
     }
 
 
-    fun handleUnsendRequest(message: UnsendRequest): MessageId? {
+    fun handleUnsendRequest(message: UnsendRequest, threadId: Long): MessageId? {
         val userPublicKey = storage.getUserPublicKey()
         val userAuth = storage.userAuth ?: return null
         val isLegacyGroupAdmin: Boolean = message.groupPublicKey?.let { key ->
@@ -245,7 +248,7 @@ class ReceivedMessageHandler @Inject constructor(
 
         val timestamp = message.timestamp ?: return null
         val author = message.author ?: return null
-        val messageToDelete = storage.getMessageBy(timestamp, author) ?: return null
+        val messageToDelete = storage.getMessageBy(threadId, timestamp, author) ?: return null
         val messageIdToDelete = messageToDelete.messageId
         val messageType = messageToDelete.individualRecipient?.getType()
 
@@ -327,7 +330,7 @@ class ReceivedMessageHandler @Inject constructor(
                 Address.fromSerialized(quote.author)
             }
 
-            val messageInfo = messageDataProvider.getMessageForQuote(quote.id, author)
+            val messageInfo = messageDataProvider.getMessageForQuote(context.threadId, quote.id, author)
             quoteMessageBody = messageInfo?.third
             quoteModel = if (messageInfo != null) {
                 val attachments = if (messageInfo.second) messageDataProvider.getAttachmentsAndLinkPreviewFor(messageInfo.first) else ArrayList()
@@ -376,7 +379,7 @@ class ReceivedMessageHandler @Inject constructor(
                     emoji = reaction.emoji!!,
                     messageTimestamp = reaction.timestamp!!,
                     threadId = context.threadId,
-                    author = reaction.publicKey!!,
+                    author = senderAddress.address,
                     notifyUnread = threadIsGroup
                 )
             }
@@ -770,17 +773,13 @@ fun constructReactionRecords(
     out: MutableMap<MessageId, MutableList<ReactionRecord>>
 ) {
     if (reactions.isNullOrEmpty()) return
-    val communityAddress = context.threadAddress as? Address.Community ?: return
+    if (context.threadAddress !is Address.Community) return
     val messageId = context.messageDataProvider.getMessageID(openGroupMessageServerID, context.threadId) ?: return
 
     val outList = out.getOrPut(messageId) { arrayListOf() }
 
     for ((emoji, reaction) in reactions) {
-        val pendingUserReaction = OpenGroupApi.pendingReactions
-            .filter { it.server == communityAddress.serverUrl && it.room == communityAddress.room && it.messageId == openGroupMessageServerID && it.add }
-            .sortedByDescending { it.seqNo }
-            .any { it.emoji == emoji }
-        val shouldAddUserReaction = pendingUserReaction || reaction.you || reaction.reactors.contains(context.userPublicKey)
+        val shouldAddUserReaction = reaction.you || reaction.reactors.contains(context.userPublicKey)
         val reactorIds = reaction.reactors.filter { it != context.userBlindedKey && it != context.userPublicKey }
         val count = if (reaction.you) reaction.count - 1 else reaction.count
         // Add the first reaction (with the count)

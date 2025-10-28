@@ -244,7 +244,7 @@ class RemoteFileDownloadWorker @AssistedInject constructor(
                     fileId = file.fileId,
                     room = file.roomId,
                     server = file.communityServerBaseUrl
-                ).await()
+                )
 
                 data to FileMetadata()
             }
@@ -286,10 +286,6 @@ class RemoteFileDownloadWorker @AssistedInject constructor(
         // Deterministically get the file path for the given remote file.
         fun computeFileName(context: Context, remote: RemoteFile): File {
             return File(downloadsDirectory(context), remote.sha256Hash())
-        }
-
-        fun cancelAll(context: Context) {
-            WorkManager.getInstance(context).cancelAllWorkByTag(TAG)
         }
 
         private fun uniqueWorkName(remote: RemoteFile): String {

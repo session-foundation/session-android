@@ -225,6 +225,10 @@ class ConversationViewModel @AssistedInject constructor(
         it.currentUserRole in EnumSet.of(GroupMemberRole.ADMIN, GroupMemberRole.HIDDEN_ADMIN)
     }
 
+    val canModerate: StateFlow<Boolean> = recipientFlow.mapStateFlow(viewModelScope) {
+        it.currentUserRole.canModerate
+    }
+
     private val _searchOpened = MutableStateFlow(false)
 
     val appBarData: StateFlow<ConversationAppBarData> = combine(
@@ -750,7 +754,7 @@ class ConversationViewModel @AssistedInject constructor(
                 }
 
                 // If the user is an admin or is interacting with their own message And are allowed to delete for everyone
-                (isAdmin.value || allSentByCurrentUser) && canDeleteForEveryone -> {
+                (canModerate.value || allSentByCurrentUser) && canDeleteForEveryone -> {
                     _dialogsState.update {
                         it.copy(
                             deleteEveryone = DeleteForEveryoneDialogData(
@@ -1257,12 +1261,14 @@ class ConversationViewModel @AssistedInject constructor(
             reactionDb.deleteEmojiReactions(emoji, messageId)
             (address as? Address.Community)?.let { openGroup ->
                 lokiMessageDb.getServerID(messageId)?.let { serverId ->
-                    OpenGroupApi.deleteAllReactions(
-                        openGroup.room,
-                        openGroup.serverUrl,
-                        serverId,
-                        emoji
-                    )
+                    runCatching {
+                        OpenGroupApi.deleteAllReactions(
+                            openGroup.room,
+                            openGroup.serverUrl,
+                            serverId,
+                            emoji
+                        )
+                    }
                 }
             }
         }
@@ -1291,7 +1297,7 @@ class ConversationViewModel @AssistedInject constructor(
                 }
             }
 
-            _uiEvents.tryEmit(ConversationUiEvent.ShowDisappearingMessages(convo.address))
+            _uiEvents.tryEmit(ConversationUiEvent.ShowDisappearingMessages(address))
         }
     }
 
@@ -1453,7 +1459,7 @@ data class UiMessage(val id: Long, val message: String)
 
 sealed interface ConversationUiEvent {
     data class NavigateToConversation(val address: Address.Conversable) : ConversationUiEvent
-    data class ShowDisappearingMessages(val address: Address) : ConversationUiEvent
+    data class ShowDisappearingMessages(val address: Address.Conversable) : ConversationUiEvent
     data class ShowNotificationSettings(val address: Address) : ConversationUiEvent
     data class ShowGroupMembers(val groupAddress: Address.Group) : ConversationUiEvent
     data class ShowConversationSettings(val threadAddress: Address.Conversable) : ConversationUiEvent

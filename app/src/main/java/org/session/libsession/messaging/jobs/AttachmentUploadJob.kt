@@ -80,8 +80,8 @@ class AttachmentUploadJob @AssistedInject constructor(
                 }
                 handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second)
             } else {
-                val keyAndResult = upload(attachment, FileServerApi.FILE_SERVER_URL, true) {
-                    FileServerApi.upload(it).map { it.fileId }
+                val keyAndResult = upload(attachment, FileServerApi.FILE_SERVER_URL, true) { file ->
+                    FileServerApi.upload(file).map { it.fileId }.await()
                 }
                 handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second)
             }
@@ -94,7 +94,7 @@ class AttachmentUploadJob @AssistedInject constructor(
         }
     }
 
-    private suspend fun upload(attachment: SignalServiceAttachmentStream, server: String, encrypt: Boolean, upload: (ByteArray) -> Promise<String, Exception>): Pair<ByteArray, UploadResult> {
+    private suspend fun upload(attachment: SignalServiceAttachmentStream, server: String, encrypt: Boolean, upload: suspend (ByteArray) -> String): Pair<ByteArray, UploadResult> {
         // Key
         val key = if (encrypt) Util.getSecretBytes(64) else ByteArray(0)
         // Length
@@ -120,7 +120,7 @@ class AttachmentUploadJob @AssistedInject constructor(
         drb.writeTo(b)
         val data = b.readByteArray()
         // Upload the data
-        val id = upload(data).await()
+        val id = upload(data)
         val digest = drb.transmittedDigest
         // Return
         return Pair(key, UploadResult(id, "${server}/file/$id", digest))

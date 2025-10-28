@@ -277,10 +277,10 @@ class VisibleMessageView : FrameLayout {
             if (capabilities.isNullOrEmpty() || capabilities.contains(OpenGroupApi.Capability.REACTIONS.name.lowercase())) {
                 emojiReactionsBinding.value.root.let { root ->
                     root.setReactions(message.messageId, message.reactions, message.isOutgoing, delegate)
-                    root.isVisible = true
-                    (root.layoutParams as ConstraintLayout.LayoutParams).apply {
+                    root.layoutParams = (root.layoutParams as ConstraintLayout.LayoutParams).apply {
                         horizontalBias = if (message.isOutgoing) 1f else 0f
                     }
+                    root.isVisible = true
                 }
             } else if (emojiReactionsBinding.isInitialized()) {
                 emojiReactionsBinding.value.root.isVisible = false
@@ -341,9 +341,11 @@ class VisibleMessageView : FrameLayout {
 
         // Set text & icons as appropriate for the message state. Note: Possible message states we care
         // about are: isFailed, isSyncFailed, isPending, isSyncing, isResyncing, isRead, and isSent.
-        messageStatus.messageText?.let{
+        messageStatus.messageTextRes?.let{
             binding.messageStatusTextView.setText(it)
-            binding.messageStatusTextView.contentDescription = context.getString(R.string.AccessibilityId_send_status) + it
+            binding.messageStatusTextView.contentDescription =
+                context.getString(R.string.AccessibilityId_send_status)+
+                        context.getString(it)
         }
         messageStatus.iconTint?.let(binding.messageStatusTextView::setTextColor)
         messageStatus.iconId?.let { ContextCompat.getDrawable(context, it) }
@@ -421,7 +423,7 @@ class VisibleMessageView : FrameLayout {
 
     data class MessageStatusInfo(@DrawableRes val iconId: Int?,
                                  @ColorInt val iconTint: Int?,
-                                 @StringRes val messageText: Int?)
+                                 @StringRes val messageTextRes: Int?)
 
     private fun getMessageStatusInfo(message: MessageRecord): MessageStatusInfo? = when {
         message.isFailed ->

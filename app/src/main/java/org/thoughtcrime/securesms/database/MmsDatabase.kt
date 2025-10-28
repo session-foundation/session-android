@@ -52,6 +52,7 @@ import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils.queue
 import org.session.libsignal.utilities.guava.Optional
+import org.thoughtcrime.securesms.database.MmsDatabase.Companion.MESSAGE_BOX
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -696,9 +697,6 @@ class MmsDatabase @Inject constructor(
         if (retrieved.isPushMessage) {
             type = type or MmsSmsColumns.Types.PUSH_MESSAGE_BIT
         }
-        if (retrieved.isScreenshotDataExtraction) {
-            type = type or MmsSmsColumns.Types.SCREENSHOT_EXTRACTION_BIT
-        }
         if (retrieved.isMediaSavedDataExtraction) {
             type = type or MmsSmsColumns.Types.MEDIA_SAVED_EXTRACTION_BIT
         }
@@ -1298,8 +1296,9 @@ class MmsDatabase @Inject constructor(
         private fun getQuote(cursor: Cursor): Quote? {
             val quoteId = cursor.getLong(cursor.getColumnIndexOrThrow(QUOTE_ID))
             val quoteAuthor = cursor.getString(cursor.getColumnIndexOrThrow(QUOTE_AUTHOR))
+            val threadId = cursor.getLong(cursor.getColumnIndexOrThrow(THREAD_ID))
             if (quoteId == 0L || quoteAuthor.isNullOrBlank()) return null
-            val retrievedQuote = mmsSmsDatabase.get().getMessageFor(quoteId, quoteAuthor, false)
+            val retrievedQuote = mmsSmsDatabase.get().getMessageFor(threadId, quoteId, quoteAuthor, false)
             val quoteText = retrievedQuote?.body
             val quoteMissing = retrievedQuote == null
             val quoteDeck = (
@@ -1450,6 +1449,9 @@ class MmsDatabase @Inject constructor(
                 $MESSAGE_BOX = $MESSAGE_BOX & ~${MmsSmsColumns.Types.EXPIRATION_TIMER_UPDATE_BIT}
             WHERE ($MESSAGE_BOX & ${MmsSmsColumns.Types.EXPIRATION_TIMER_UPDATE_BIT}) != 0;
         """
+
+        const val ADD_LAST_MESSAGE_INDEX: String =
+            "CREATE INDEX mms_thread_id_date_sent_index ON $TABLE_NAME ($THREAD_ID, $DATE_SENT)"
 
         private val MMS_PROJECTION: Array<String> = arrayOf(
             "$TABLE_NAME.$ID AS $ID",

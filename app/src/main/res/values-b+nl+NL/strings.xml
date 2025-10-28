@@ -198,7 +198,6 @@
     <string name="cameraGrantAccessDescription">{app_name} heeft toegang tot de camera nodig om foto\'s en video\'s te maken of QR-codes te scannen.</string>
     <string name="cameraGrantAccessQr">{app_name} heeft toegang tot de camera nodig om QR-codes te scannen</string>
     <string name="cancel">Annuleren</string>
-    <string name="cancelPlan">Abonnement annuleren</string>
     <string name="change">Wijzigen</string>
     <string name="changePasswordFail">Wachtwoord wijzigen mislukt</string>
     <string name="changePasswordModalDescription">Wijzig je wachtwoord voor {app_name}. Lokaal opgeslagen gegevens worden opnieuw versleuteld met je nieuwe wachtwoord.</string>
@@ -306,7 +305,6 @@
     <string name="create">Aanmaken</string>
     <string name="creatingCall">Oproep starten</string>
     <string name="currentPassword">Huidig wachtwoord</string>
-    <string name="currentPlan">Huidig abonnement</string>
     <string name="cut">Knippen</string>
     <string name="darkMode">Donkere modus</string>
     <string name="databaseErrorClearDataWarning">Weet u zeker dat u alle berichten, bijlagen en accountgegevens van dit apparaat wilt verwijderen en een nieuw account wilt aanmaken?</string>
@@ -783,7 +781,6 @@
     <string name="okay">Oké</string>
     <string name="on">Aan</string>
     <string name="onDevice">Op je {device_type} apparaat</string>
-    <string name="onDeviceDescription">Open dit {app_name} account op een {device_type} apparaat waarop je bent aangemeld met het {platform_account} waarmee je je oorspronkelijk hebt geregistreerd. Wijzig vervolgens je abonnement via de instellingen van {app_pro}.</string>
     <string name="onboardingAccountCreate">Account aanmaken</string>
     <string name="onboardingAccountCreated">Account aangemaakt</string>
     <string name="onboardingAccountExists">Ik heb een account</string>
@@ -808,7 +805,6 @@
     <string name="onsErrorNotRecognized">We konden deze ONS niet herkennen. Controleer deze alsjeblieft en probeer het opnieuw.</string>
     <string name="onsErrorUnableToSearch">We konden niet zoeken naar deze ONS. Probeer het later opnieuw.</string>
     <string name="open">Openen</string>
-    <string name="openStoreWebsite">Open de {platform_store} website</string>
     <string name="openSurvey">Enquête openen</string>
     <string name="other">Overige</string>
     <string name="password">Wachtwoord</string>
@@ -887,7 +883,6 @@
     <string name="previewNotification">Voorbeeldmelding</string>
     <string name="proActivated">Geactiveerd</string>
     <string name="proAllSet">Alles is geregeld!</string>
-    <string name="proAllSetDescription">Je {app_pro} abonnement is bijgewerkt! Je wordt gefactureerd wanneer je huidige {pro} abonnement automatisch wordt verlengd op <b>{date}</b>.</string>
     <string name="proAlreadyPurchased">Je hebt al</string>
     <string name="proAnimatedDisplayPicture">Upload nu GIF\'s en geanimeerde WebP-afbeeldingen voor je profielfoto!</string>
     <string name="proAnimatedDisplayPictureCallToActionDescription">Krijg geanimeerde profielfoto\'s en ontgrendel premiumfuncties met {app_pro}</string>
@@ -908,11 +903,8 @@
     <string name="proCallToActionLongerMessages">Wil je langere berichten versturen? Verstuur meer tekst en ontgrendel premiumfuncties met {app_pro}</string>
     <string name="proCallToActionPinnedConversations">Wil je meer vastzetten? Organiseer je chats en ontgrendel premiumfuncties met {app_pro}</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Wil je meer dan 5 vastgezette gesprekken? Organiseer je chats en ontgrendel premiumfuncties met {app_pro}</string>
-    <string name="proDiscountTooltip">Je huidige abonnement is al met {percent}% korting ten opzichte van de volledige {app_pro} prijs.</string>
     <string name="proExpired">Verlopen</string>
-    <string name="proExpiredDescription">Helaas is je {pro} abonnement verlopen. Verleng om toegang te blijven houden tot de exclusieve voordelen en functies van {app_pro}.</string>
     <string name="proExpiringSoon">Verloopt binnenkort</string>
-    <string name="proExpiringSoonDescription">Je {pro} abonnement verloopt over <b>{time}</b>. Werk je abonnement bij om toegang te blijven houden tot de exclusieve voordelen en functies van {app_pro}.</string>
     <string name="proFaq">{pro} FAQ</string>
     <string name="proFaqDescription">Vind antwoorden op veelgestelde vragen in de {app_pro} FAQ.</string>
     <string name="proFeatureListAnimatedDisplayPicture">Upload GIF- en WebP-profielfoto\'s</string>
@@ -922,7 +914,6 @@
     <string name="proFeatureListPinnedConversations">Onbeperkt gesprekken vastzetten</string>
     <string name="proGroupActivated">Groep geactiveerd</string>
     <string name="proGroupActivatedDescription">Deze groep heeft een grotere capaciteit! Er kunnen nu tot 300 leden deelnemen omdat een groepsbeheerder een</string>
-    <string name="proImportantDescription">Het aanvragen van een terugbetaling is definitief. Indien goedgekeurd, wordt je {pro} abonnement onmiddellijk geannuleerd en verlies je de toegang tot alle {pro} functies.</string>
     <string name="proIncreasedAttachmentSizeFeature">Verhoogde bijlagegrootte</string>
     <string name="proIncreasedMessageLengthFeature">Verlengde berichtlengte</string>
     <string name="proLargerGroups">Grotere groepen</string>
@@ -931,47 +922,21 @@
     <string name="proLongerMessagesDescription">Je kunt berichten tot 10.000 tekens verzenden in alle gesprekken.</string>
     <string name="proMessageInfoFeatures">Dit bericht maakte gebruik van de volgende {app_pro}-functies:</string>
     <string name="proPercentOff">{percent}% korting</string>
-    <string name="proPlanActivatedAuto">Je {app_pro} abonnement is actief!\n\nJe abonnement wordt automatisch verlengd voor een nieuw <b>{current_plan}</b> op <b>{date}</b>. Wijzigingen aan je abonnement gaan in wanneer {pro} de volgende keer wordt verlengd.</string>
-    <string name="proPlanActivatedAutoShort">Je {app_pro} abonnement is actief!\n\nJe abonnement wordt automatisch verlengd met een <b>{current_plan}</b> op <b>{date}</b>.</string>
-    <string name="proPlanActivatedNotAuto">Je {app_pro} abonnement verloopt op <b>{date}</b>.\n\nWerk je abonnement nu bij om ononderbroken toegang te behouden tot exclusieve Pro functies.</string>
-    <string name="proPlanExpireDate">Je {app_pro} abonnement verloopt op <b>{date}</b>.</string>
-    <string name="proPlanNotFound">{pro} abonnement niet gevonden</string>
-    <string name="proPlanNotFoundDescription">Er is geen actief abonnement gevonden voor je account. Als je denkt dat dit een vergissing is, neem dan contact op met de ondersteuning van {app_name} voor hulp.</string>
-    <string name="proPlanPlatformRefund">Omdat je je oorspronkelijk hebt aangemeld voor {app_pro} via de <b><font color="0">{platform_store} winkel</font></b>, moet je hetzelfde {platform_account} gebruiken om een terugbetaling aan te vragen.</string>
-    <string name="proPlanPlatformRefundLong">Omdat je je oorspronkelijk hebt aangemeld voor {app_pro} via de <b><font color="0">{platform_store} winkel</font></b>, wordt je restitutieverzoek afgehandeld door {app_name} Support.\n\nVraag een restitutie aan door op de knop hieronder te drukken en het restitutieformulier in te vullen.\n\nHoewel {app_name} Support ernaar streeft om restitutieverzoeken binnen 24-72 uur te verwerken, kan het tijdens drukte langer duren</string>
-    <string name="proPlanRecover">{pro} abonnement herstellen</string>
-    <string name="proPlanRenew">{pro} abonnement verlengen</string>
-    <string name="proPlanRenewDesktop">Momenteel kunnen {pro} abonnementen alleen worden gekocht en verlengd via de {platform_store}- of {platform_store} winkels. Omdat je {app_name} Desktop gebruikt, kun je je abonnement hier niet verlengen.\n\nDe ontwikkelaars van {app_pro} werken hard aan alternatieve betaalmogelijkheden, zodat gebruikers {pro} abonnementen buiten de {platform_store}- en {platform_store} winkels kunnen aanschaffen. <b>{pro} Routekaart</b>{icon}</string>
-    <string name="proPlanRenewDesktopLinked">Verleng je abonnement in de {app_pro} instellingen op een gekoppeld apparaat met {app_name} geïnstalleerd via de {platform_store} of {platform_store} winkel.</string>
-    <string name="proPlanRenewDesktopStore">Verleng je abonnement op de {platform_store} website met het {platform_account} waarmee je je voor {pro} hebt aangemeld.</string>
-    <string name="proPlanRenewStart">Verleng je {app_pro} abonnement om opnieuw gebruik te maken van krachtige {app_pro} functies.</string>
-    <string name="proPlanRenewSupport">Je {app_pro} abonnement is verlengd! Bedankt voor je steun aan de {network_name}.</string>
-    <string name="proPlanRestored">{pro} abonnement hersteld</string>
-    <string name="proPlanRestoredDescription">Een geldig abonnement voor {app_pro} is gedetecteerd en je {pro} status is hersteld!</string>
-    <string name="proPlanSignUp">Omdat je je oorspronkelijk hebt aangemeld voor {app_pro} via de {platform_store} winkel, moet je je {platform_account} gebruiken om je abonnement bij te werken.</string>
     <string name="proPriceOneMonth">1 maand - {monthly_price} / maand</string>
     <string name="proPriceThreeMonths">3 maanden - {monthly_price} / maand</string>
     <string name="proPriceTwelveMonths">12 maanden - {monthly_price} / maand</string>
     <string name="proRefundDescription">Het spijt ons dat je vertrekt. Dit moet je weten voordat je een terugbetaling aanvraagt.</string>
-    <string name="proRefundNextSteps">{platform_account} verwerkt nu je terugbetalingsverzoek. Dit duurt meestal 24-48 uur. Afhankelijk van hun beslissing kan je {pro} status wijzigen in {app_name}.</string>
     <string name="proRefundRequestSessionSupport">Je restitutieverzoek wordt afgehandeld door {app_name} Support.\n\nVraag een restitutie aan door op de knop hieronder te drukken en het restitutieformulier in te vullen.\n\nHoewel {app_name} Support ernaar streeft om restitutieverzoeken binnen 24-72 uur te verwerken, kan het tijdens drukte langer duren.</string>
-    <string name="proRefundRequestStorePolicies">Je terugbetalingsverzoek wordt uitsluitend afgehandeld door {platform_account} via de website van <b>{platform_account}</b>.\n\nVanwege het restitutiebeleid van {platform_account} hebben ontwikkelaars van {app_name} geen invloed op de uitkomst van terugbetalingsverzoeken. Dit geldt zowel voor de goedkeuring of afwijzing van het verzoek als voor het wel of niet toekennen van een volledige of gedeeltelijke terugbetaling.</string>
-    <string name="proRefundSupport">Neem contact op met {platform_account} voor verdere updates over je restitutieverzoek. Vanwege het restitutiebeleid van {platform_account} hebben de ontwikkelaars van {app_name} geen invloed op de uitkomst van restitutieverzoeken.\n\n<font color="0">{platform_store} Terugbetalingsondersteuning</font></string>
     <string name="proRefunding">Terugbetalen {pro}</string>
-    <string name="proRefundingDescription">Terugbetalingen voor {app_pro} abonnementen worden uitsluitend afgehandeld door {platform_account} via de {platform_store} Store.\n\nVanwege het restitutiebeleid van {platform_account} hebben ontwikkelaars van {app_name} geen invloed op de uitkomst van terugbetalingsverzoeken. Dit geldt zowel voor de goedkeuring of afwijzing van het verzoek als voor het wel of niet toekennen van een volledige of gedeeltelijke terugbetaling.</string>
     <string name="proRequestedRefund">Terugbetaling aangevraagd</string>
     <string name="proSendMore">Verstuur meer met</string>
     <string name="proSettings">{pro} instellingen</string>
     <string name="proStats">Je {pro} statistieken</string>
     <string name="proStatsTooltip">{pro} statistieken weerspiegelen het gebruik op dit apparaat en kunnen anders weergegeven worden op gekoppelde apparaten</string>
-    <string name="proSupportDescription">Hulp nodig met je {pro} abonnement? Dien een verzoek in bij het ondersteuningsteam.</string>
     <string name="proTosPrivacy">Door bij te werken ga je akkoord met de {app_pro} <b>Gebruiksvoorwaarden</b> {icon} en het <b>Privacybeleid</b> {icon}</string>
     <string name="proUnlimitedPins">Onbeperkte Pins</string>
     <string name="proUnlimitedPinsDescription">Organiseer al je chats met onbeperkt vastgezette gesprekken.</string>
-    <string name="proUpdatePlanDescription">Je zit momenteel op het <b>{current_plan} abonnement</b>. Weet je zeker dat je wilt overschakelen naar het <b>{selected_plan} abonnement</b>?\n\nAls je dit bijwerkt, wordt je abonnement op <b>{date}</b> automatisch verlengd met {selected_plan} {pro} toegang.</string>
-    <string name="proUpdatePlanExpireDescription">Je abonnement verloopt op <b>{date}</b>.\n\nDoor bij te werken wordt je abonnement automatisch verlengd op <b>{date}</b> voor een extra {selected_plan} aan Pro-toegang.</string>
     <string name="proUserProfileModalCallToAction">Wil je meer uit {app_name} halen? Upgrade naar {app_pro} voor een krachtigere berichtbeleving.</string>
-    <string name="processingRefundRequest">{platform_account} verwerkt je restitutieverzoek</string>
     <string name="profile">Profiel</string>
     <string name="profileDisplayPicture">Toon afbeelding</string>
     <string name="profileDisplayPictureRemoveError">Verwijderen profielfoto mislukt.</string>
@@ -1027,7 +992,6 @@
     <string name="recoveryPasswordWarningSendDescription">Dit is uw herstelwachtwoord. Als u het naar iemand stuurt hebben ze volledige toegang tot uw account.</string>
     <string name="recreateGroup">Groep opnieuw aanmaken</string>
     <string name="redo">Opnieuw doen</string>
-    <string name="refundPlanNonOriginatorApple">Omdat je je oorspronkelijk hebt aangemeld voor {app_pro} via een ander {platform_account}, moet je datzelfde {platform_account} gebruiken om je abonnement bij te werken.</string>
     <string name="remainingCharactersOverTooltip">Verkort berichtlengte met {count}</string>
     <plurals name="remainingCharactersTooltip">
         <item quantity="one">%1$d teken resterend</item>
@@ -1149,8 +1113,6 @@
     <string name="updateGroupInformationEnterShorterDescription">Vul alstublieft een kortere groepsnaam in</string>
     <string name="updateNewVersion">Er is een nieuwe versie van {app_name} beschikbaar, tik om bij te werken</string>
     <string name="updateNewVersionDescription">Versie ({version}) van {app_name} is beschikbaar.</string>
-    <string name="updatePlan">Abonnement bijwerken</string>
-    <string name="updatePlanTwo">Twee manieren om je abonnement bij te werken:</string>
     <string name="updateProfileInformation">Profielinformatie bijwerken</string>
     <string name="updateProfileInformationDescription">Je weergavenaam en profielfoto zijn zichtbaar in alle gesprekken.</string>
     <string name="updateReleaseNotes">Ga naar Release Opmerkingen</string>
@@ -1167,8 +1129,6 @@
     <string name="urlOpenDescription">Weet u zeker dat u deze URL in uw browser wilt openen?\n\n<b>{url}</b></string>
     <string name="urlOpenDescriptionAlternative">Links worden in uw browser geopend.</string>
     <string name="useFastMode">Gebruik Snelle Modus</string>
-    <string name="viaStoreWebsite">Via de {platform_store} website</string>
-    <string name="viaStoreWebsiteDescription">Wijzig je abonnement met het {platform_account} waarmee je je hebt aangemeld, via de <b><font color="0">{platform_store}</font></b> website.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Kan video niet afspelen.</string>
     <string name="view">Bekijken</string>

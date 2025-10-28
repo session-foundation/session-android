@@ -37,7 +37,6 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi.parallelBatch
 import org.session.libsession.messaging.open_groups.OpenGroupMessage
 import org.session.libsession.messaging.sending_receiving.MessageReceiver
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageHandler
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -283,7 +282,7 @@ class OpenGroupPoller @AssistedInject constructor(
                 }
             )
         }
-        return parallelBatch(server, requests).await()
+        return parallelBatch(server, requests)
     }
 
 
@@ -295,7 +294,6 @@ class OpenGroupPoller @AssistedInject constructor(
         val sortedMessages = messages.sortedBy { it.seqno }
         sortedMessages.maxOfOrNull { it.seqno }?.let { seqNo ->
             storage.setLastMessageServerID(roomToken, server, seqNo)
-            OpenGroupApi.pendingReactions.removeAll { !(it.seqNo == null || it.seqNo!! > seqNo) }
         }
         val (deletions, additions) = sortedMessages.partition { it.deleted }
         handleNewMessages(server, roomToken, additions.map {

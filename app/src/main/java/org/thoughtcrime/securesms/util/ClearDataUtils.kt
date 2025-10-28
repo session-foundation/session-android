@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Intent
 import androidx.core.content.edit
+import androidx.work.WorkManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -57,9 +58,10 @@ class ClearDataUtils @Inject constructor(
             application.filesDir.deleteRecursively()
             configFactory.clearAll()
 
-            RemoteFileDownloadWorker.cancelAll(application)
-
             persistentLogger.deleteAllLogs()
+
+            // clean up existing work manager
+            WorkManager.getInstance(application).cancelAllWork()
 
             // The token deletion is nice but not critical, so don't let it block the rest of the process
             runCatching {

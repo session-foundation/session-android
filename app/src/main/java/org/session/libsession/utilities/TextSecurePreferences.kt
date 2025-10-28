@@ -28,6 +28,8 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONM
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FORCED_SHORT_TTL
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_MESSAGE_REQUESTS
+import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN_PRO_EXPIRED
+import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN_PRO_EXPIRING
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HIDE_PASSWORD
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VACUUM_TIME
@@ -174,6 +176,10 @@ interface TextSecurePreferences {
     fun setForceIncomingMessagesAsPro(isPro: Boolean)
     fun forcePostPro(): Boolean
     fun setForcePostPro(postPro: Boolean)
+    fun hasSeenProExpiring(): Boolean
+    fun setHasSeenProExpiring()
+    fun hasSeenProExpired(): Boolean
+    fun setHasSeenProExpired()
     fun watchPostProStatus(): StateFlow<Boolean>
     fun setShownCallWarning(): Boolean
     fun setShownCallNotification(): Boolean
@@ -210,6 +216,10 @@ interface TextSecurePreferences {
 
     fun getDebugSubscriptionType(): DebugMenuViewModel.DebugSubscriptionStatus?
     fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?)
+    fun getDebugProPlanStatus(): DebugMenuViewModel.DebugProPlanStatus?
+    fun setDebugProPlanStatus(status: DebugMenuViewModel.DebugProPlanStatus?)
+    fun getDebugForceNoBilling(): Boolean
+    fun setDebugForceNoBilling(hasBilling: Boolean)
 
     fun setSubscriptionProvider(provider: String)
     fun getSubscriptionProvider(): String?
@@ -306,6 +316,8 @@ interface TextSecurePreferences {
         const val SET_FORCE_OTHER_USERS_PRO = "pref_force_other_users_pro"
         const val SET_FORCE_INCOMING_MESSAGE_PRO = "pref_force_incoming_message_pro"
         const val SET_FORCE_POST_PRO = "pref_force_post_pro"
+        const val HAS_SEEN_PRO_EXPIRING = "has_seen_pro_expiring"
+        const val HAS_SEEN_PRO_EXPIRED = "has_seen_pro_expired"
         const val CALL_NOTIFICATIONS_ENABLED = "pref_call_notifications_enabled"
         const val SHOWN_CALL_WARNING = "pref_shown_call_warning" // call warning is user-facing warning of enabling calls
         const val SHOWN_CALL_NOTIFICATION = "pref_shown_call_notification" // call notification is a prompt to check privacy settings
@@ -369,6 +381,8 @@ interface TextSecurePreferences {
 
         const val DEBUG_MESSAGE_FEATURES = "debug_message_features"
         const val DEBUG_SUBSCRIPTION_STATUS = "debug_subscription_status"
+        const val DEBUG_PRO_PLAN_STATUS = "debug_pro_plan_status"
+        const val DEBUG_FORCE_NO_BILLING = "debug_pro_has_billing"
 
         const val SUBSCRIPTION_PROVIDER = "session_subscription_provider"
 
@@ -1552,6 +1566,22 @@ class AppTextSecurePreferences @Inject constructor(
         _events.tryEmit(SET_FORCE_POST_PRO)
     }
 
+    override fun hasSeenProExpiring(): Boolean {
+        return getBooleanPreference(HAS_SEEN_PRO_EXPIRING, false)
+    }
+
+    override fun setHasSeenProExpiring() {
+        setBooleanPreference(HAS_SEEN_PRO_EXPIRING, true)
+    }
+
+    override fun hasSeenProExpired(): Boolean {
+        return getBooleanPreference(HAS_SEEN_PRO_EXPIRED, false)
+    }
+
+    override fun setHasSeenProExpired() {
+        setBooleanPreference(HAS_SEEN_PRO_EXPIRED, true)
+    }
+
     override fun watchPostProStatus(): StateFlow<Boolean> {
         return postProLaunchState
     }
@@ -1651,7 +1681,7 @@ class AppTextSecurePreferences @Inject constructor(
     }
 
     /**
-     * Clear all prefs and reset or observables
+     * Clear all prefs and reset our observables
      */
     override fun clearAll() {
         pushEnabled.update { false }
@@ -1740,6 +1770,26 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?) {
         setStringPreference(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS, status?.name)
         _events.tryEmit(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS)
+    }
+
+    override fun getDebugProPlanStatus(): DebugMenuViewModel.DebugProPlanStatus? {
+        return getStringPreference(TextSecurePreferences.DEBUG_PRO_PLAN_STATUS, null)?.let {
+            DebugMenuViewModel.DebugProPlanStatus.valueOf(it)
+        }
+    }
+
+    override fun setDebugProPlanStatus(status: DebugMenuViewModel.DebugProPlanStatus?) {
+        setStringPreference(TextSecurePreferences.DEBUG_PRO_PLAN_STATUS, status?.name)
+        _events.tryEmit(TextSecurePreferences.DEBUG_PRO_PLAN_STATUS)
+    }
+
+    override fun getDebugForceNoBilling(): Boolean {
+        return getBooleanPreference(TextSecurePreferences.DEBUG_FORCE_NO_BILLING, false)
+    }
+
+    override fun setDebugForceNoBilling(hasBilling: Boolean) {
+        setBooleanPreference(TextSecurePreferences.DEBUG_FORCE_NO_BILLING, hasBilling)
+        _events.tryEmit(TextSecurePreferences.DEBUG_FORCE_NO_BILLING)
     }
 
     override fun getSubscriptionProvider(): String? {
