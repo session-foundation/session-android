@@ -53,6 +53,7 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.SSKEnvironment
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
@@ -100,6 +101,7 @@ class ReceivedMessageHandler @Inject constructor(
     @param:ManagerScope private val scope: CoroutineScope,
     private val configFactory: ConfigFactoryProtocol,
     private val messageRequestResponseHandler: Provider<MessageRequestResponseHandler>,
+    private val prefs: TextSecurePreferences,
 ) {
 
     suspend fun handle(
@@ -128,7 +130,7 @@ class ReceivedMessageHandler @Inject constructor(
                 }
             }
             is DataExtractionNotification -> handleDataExtractionNotification(message)
-            is UnsendRequest -> handleUnsendRequest(message, threadId)
+            is UnsendRequest -> handleUnsendRequest(message)
             is MessageRequestResponse -> messageRequestResponseHandler.get().handleExplicitRequestResponseMessage(message)
             is VisibleMessage -> handleVisibleMessage(
                 message = message,
@@ -183,6 +185,9 @@ class ReceivedMessageHandler @Inject constructor(
     }
 
     private fun showTypingIndicatorIfNeeded(senderPublicKey: String) {
+        // We don't want to show other people's indicators if the toggle is off
+        if(!prefs.isTypingIndicatorsEnabled()) return
+
         val address = Address.fromSerialized(senderPublicKey)
         val threadID = storage.getThreadId(address) ?: return
         typingIndicators.didReceiveTypingStartedMessage(threadID, address, 1)
@@ -220,7 +225,7 @@ class ReceivedMessageHandler @Inject constructor(
     }
 
 
-    fun handleUnsendRequest(message: UnsendRequest, threadId: Long): MessageId? {
+    fun handleUnsendRequest(message: UnsendRequest): MessageId? {
         val userPublicKey = storage.getUserPublicKey()
         val userAuth = storage.userAuth ?: return null
         val isLegacyGroupAdmin: Boolean = message.groupPublicKey?.let { key ->
@@ -243,7 +248,7 @@ class ReceivedMessageHandler @Inject constructor(
 
         val timestamp = message.timestamp ?: return null
         val author = message.author ?: return null
-        val messageToDelete = storage.getMessageBy(threadId, timestamp, author) ?: return null
+        val messageToDelete = storage.getMessageByTimestamp(timestamp, author, false) ?: return null
         val messageIdToDelete = messageToDelete.messageId
         val messageType = messageToDelete.individualRecipient?.getType()
 

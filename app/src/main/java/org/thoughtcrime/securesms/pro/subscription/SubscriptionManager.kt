@@ -1,5 +1,10 @@
 package org.thoughtcrime.securesms.pro.subscription
 
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import java.time.Instant
 
@@ -12,26 +17,32 @@ interface SubscriptionManager: OnAppStartupComponent {
     val description: String
     val iconRes: Int?
 
-    val supportsBilling: Boolean
+    val supportsBilling: StateFlow<Boolean>
 
     // Optional. Some store can have a platform specific refund window and url
-    val quickRefundExpiry: Instant?
     val quickRefundUrl: String?
 
     val availablePlans: List<ProSubscriptionDuration>
 
+    sealed interface PurchaseEvent {
+        data object Success : PurchaseEvent
+        data object Cancelled : PurchaseEvent
+        data class Failed(val errorMessage: String? = null) : PurchaseEvent
+    }
+
+    // purchase events
+    val purchaseEvents: SharedFlow<PurchaseEvent>
+
     fun purchasePlan(subscriptionDuration: ProSubscriptionDuration)
 
     /**
-     * Returns true if a provider has a non null [quickRefundExpiry] and the current time is within that window
+     * Returns true if a provider has a quick refunds and the current time since purchase is within that window
      */
-    fun isWithinQuickRefundWindow(): Boolean {
-        return quickRefundExpiry != null && Instant.now().isBefore(quickRefundExpiry)
-    }
+    suspend fun isWithinQuickRefundWindow(): Boolean
 
     /**
      * Checks whether there is a valid subscription for the given product id for the current user within this subscriber's billing API
      */
-    fun hasValidSubscription(productId: String): Boolean
+    suspend fun hasValidSubscription(productId: String): Boolean
 }
 

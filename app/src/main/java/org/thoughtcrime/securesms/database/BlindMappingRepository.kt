@@ -5,7 +5,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -43,21 +43,24 @@ class BlindMappingRepository @Inject constructor(
      */
     @Suppress("OPT_IN_USAGE")
     val mappings: StateFlow<Map<CommunityServerUrl, Map<Address.Blinded, Address.Standard>>> = prefs.watchLocalNumber()
-        .filterNotNull()
         .flatMapLatest { localAddress ->
-            configFactory
-                .userConfigsChanged(setOf(UserConfigType.USER_GROUPS, UserConfigType.CONTACTS))
-                .castAwayType()
-                .onStart { emit(Unit) }
-                .map {
-                    configFactory.withUserConfigs { configs ->
-                        Pair(
-                            configs.userGroups.allCommunityInfo().map { it.community },
-                            configs.contacts.all().map { Address.Standard(AccountId(it.id)) }
-                                    + Address.Standard(AccountId(localAddress))
-                        )
+            if (localAddress.isNullOrBlank()) {
+                emptyFlow()
+            } else {
+                configFactory
+                    .userConfigsChanged(setOf(UserConfigType.USER_GROUPS, UserConfigType.CONTACTS))
+                    .castAwayType()
+                    .onStart { emit(Unit) }
+                    .map {
+                        configFactory.withUserConfigs { configs ->
+                            Pair(
+                                configs.userGroups.allCommunityInfo().map { it.community },
+                                configs.contacts.all().map { Address.Standard(AccountId(it.id)) }
+                                        + Address.Standard(AccountId(localAddress))
+                            )
+                        }
                     }
-                }
+            }
         }
         .distinctUntilChanged()
         .map { (allCommunities, allContacts) ->

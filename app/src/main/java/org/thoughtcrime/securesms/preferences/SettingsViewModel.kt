@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.preferences
 import android.content.Context
 import android.net.Uri
 import android.widget.Toast
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.canhub.cropper.CropImage
@@ -10,6 +11,7 @@ import com.canhub.cropper.CropImageView
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -26,6 +28,8 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.UserPic
+import okio.buffer
+import okio.source
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.open_groups.OpenGroupApi
@@ -42,6 +46,7 @@ import org.session.libsession.utilities.recipients.isPro
 import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.NoExternalStorageException
+import org.thoughtcrime.securesms.attachments.AttachmentProcessor
 import org.thoughtcrime.securesms.attachments.AvatarUploadManager
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
 import org.thoughtcrime.securesms.database.RecipientRepository
@@ -49,14 +54,11 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
-import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
 import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.util.AnimatedImageUtils
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
-import org.thoughtcrime.securesms.util.BitmapDecodingException
-import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.ClearDataUtils
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import org.thoughtcrime.securesms.util.State
@@ -79,6 +81,7 @@ class SettingsViewModel @Inject constructor(
     private val storage: StorageProtocol,
     private val inAppReviewManager: InAppReviewManager,
     private val avatarUploadManager: AvatarUploadManager,
+    private val attachmentProcessor: AttachmentProcessor,
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
 
@@ -180,29 +183,7 @@ class SettingsViewModel @Inject constructor(
     fun onAvatarPicked(result: CropImageView.CropResult) {
         when {
             result.isSuccessful -> {
-                Log.i(TAG, result.getUriFilePath(context).toString())
-
-                viewModelScope.launch(Dispatchers.IO) {
-                    try {
-                        val profilePictureToBeUploaded =
-                            BitmapUtil.createScaledBytes(
-                                context,
-                                result.getUriFilePath(context).toString(),
-                                ProfileMediaConstraints()
-                            ).bitmap
-
-                        // update dialog with temporary avatar (has not been saved/uploaded yet)
-                        _uiState.update {
-                            it.copy(avatarDialogState = AvatarDialogState.TempAvatar(
-                                data = profilePictureToBeUploaded,
-                                isAnimated = false, // cropped avatars can't be animated
-                                hasAvatar = hasAvatar()
-                            ))
-                        }
-                    } catch (e: BitmapDecodingException) {
-                        Log.e(TAG, e)
-                    }
-                }
+                onAvatarPicked("file://${result.getUriFilePath(context)!!}".toUri())
             }
 
             result is CropImage.CancelledResult -> {
@@ -220,24 +201,31 @@ class SettingsViewModel @Inject constructor(
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-
-                if(bytes == null){
-                    Log.e(TAG, "Error reading avatar bytes")
-                    Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
-                } else {
-                    _uiState.update {
-                        it.copy(
-                            avatarDialogState = AvatarDialogState.TempAvatar(
-                                data = bytes,
-                                isAnimated = isAnimated(uri),
-                                hasAvatar = hasAvatar()
-                            )
+                val bytes = context.contentResolver.openInputStream(uri)!!.source().buffer().use { data ->
+                    attachmentProcessor
+                        .process(
+                            data = data,
+                            maxImageResolution = AttachmentProcessor.MAX_AVATAR_SIZE_PX,
+                            compressImage = true,
                         )
-                    }
+                        ?.data
+                        ?: data.readByteArray()
+                }
+
+                _uiState.update {
+                    it.copy(
+                        avatarDialogState = AvatarDialogState.TempAvatar(
+                            data = bytes,
+                            isAnimated = isAnimated(bytes),
+                            hasAvatar = hasAvatar()
+                        )
+                    )
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error reading avatar bytes", e)
+                if (e !is CancellationException) {
+                    Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
+                }
             }
         }
     }
@@ -350,6 +338,9 @@ class SettingsViewModel @Inject constructor(
 
     fun isAnimated(uri: Uri) = proStatusManager.isPostPro() // block animated avatars prior to pro
             && AnimatedImageUtils.isAnimated(context, uri)
+
+    fun isAnimated(rawImageData: ByteArray) = proStatusManager.isPostPro() // block animated avatars prior to pro
+            && AnimatedImageUtils.isAnimated(rawImageData)
 
     private fun showAnimatedProCTA() {
         _uiState.update { it.copy(showAnimatedProCTA = true) }

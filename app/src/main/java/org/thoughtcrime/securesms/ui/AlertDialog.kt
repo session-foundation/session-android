@@ -450,6 +450,7 @@ fun TCPolicyDialog(
         onDismissRequest = onDismissRequest,
         title = stringResource(R.string.urlOpen),
         text = stringResource(R.string.urlOpenBrowser),
+        showCloseButton = true,
         content = {
             Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
             Cell(

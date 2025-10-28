@@ -1,12 +1,14 @@
 package org.thoughtcrime.securesms.preferences.prosettings
 
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -20,31 +22,35 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.windowInsetsBottomHeight
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.Cell
+import org.thoughtcrime.securesms.ui.DialogBg
 import org.thoughtcrime.securesms.ui.SessionProSettingsHeader
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.DangerFillButtonRect
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.components.inlineContentMap
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -52,9 +58,6 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.bold
-import network.loki.messenger.R
-import org.thoughtcrime.securesms.ui.DialogBg
-import org.thoughtcrime.securesms.ui.components.inlineContentMap
 
 /**
  * Base structure used in most Pro Settings screen
@@ -69,42 +72,63 @@ fun BaseProSettingsScreen(
     extraHeaderContent: @Composable (() -> Unit)? = null,
     content: @Composable () -> Unit
 ){
+    // We need the app bar to start as transparent and slowly go opaque as we scroll
+    val lazyListState = rememberLazyListState()
+    // Calculate scroll fraction
+    val density = LocalDensity.current
+    val thresholdPx = remember(density) { with(density) { 28.dp.toPx() } } // amount before the appbar gets fully opaque
+
+    // raw fraction 0..1 derived from scrolling
+    val rawFraction by remember {
+        derivedStateOf {
+            when {
+                lazyListState.layoutInfo.totalItemsCount == 0 -> 0f
+                lazyListState.firstVisibleItemIndex > 0 -> 1f
+                else -> (lazyListState.firstVisibleItemScrollOffset / thresholdPx).coerceIn(0f, 1f)
+            }
+        }
+    }
+
+    // easing + smoothing of fraction
+    val easedFraction = remember(rawFraction) {
+        FastOutSlowInEasing.transform(rawFraction)
+    }
+
+    // setting the appbar's bg alpha based on scroll
+    val backgroundColor = LocalColors.current.background.copy(alpha = easedFraction)
+
     Scaffold(
         topBar = if(!hideHomeAppBar){{
                 BackAppBar(
                     title = "",
-                    backgroundColor = Color.Transparent,
+                    backgroundColor = backgroundColor,
                     onBack = onBack,
                 )
             }} else {{}},
         contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
     ) { paddings ->
-
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top =
-                    (paddings.calculateTopPadding() - LocalDimensions.current.appBarHeight)
-                        .coerceAtLeast(0.dp))
                 .consumeWindowInsets(paddings)
-                .padding(
-                    horizontal = LocalDimensions.current.spacing,
-                )
-                .verticalScroll(rememberScrollState()),
+                .padding(horizontal = LocalDimensions.current.spacing),
+            state = lazyListState,
+            contentPadding = PaddingValues(
+                top = (paddings.calculateTopPadding() - LocalDimensions.current.appBarHeight)
+                    .coerceAtLeast(0.dp) + 46.dp,
+                bottom = paddings.calculateBottomPadding() + LocalDimensions.current.spacing
+            ),
             horizontalAlignment = CenterHorizontally
         ) {
-            Spacer(Modifier.height(46.dp))
+            item {
+                SessionProSettingsHeader(
+                    disabled = disabled,
+                    onClick = onHeaderClick,
+                    extraContent = extraHeaderContent
+                )
+            }
 
-            SessionProSettingsHeader(
-                disabled = disabled,
-                onClick = onHeaderClick,
-                extraContent = extraHeaderContent
-            )
-
-            content()
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-            Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
+            item { content() }
         }
     }
 }
