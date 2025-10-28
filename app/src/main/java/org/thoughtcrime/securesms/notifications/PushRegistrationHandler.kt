@@ -1,52 +1,54 @@
 package org.thoughtcrime.securesms.notifications
 
 import android.content.Context
+import androidx.work.await
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
-import org.session.libsession.database.userAuth
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.notifications.TokenFetcher
-import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.IdPrefix
+import org.session.libsession.utilities.UserConfigType
+import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.database.Storage
+import org.thoughtcrime.securesms.database.PushRegistrationDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
+import org.thoughtcrime.securesms.util.castAwayType
+import java.util.EnumSet
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private const val TAG = "PushRegistrationHandler"
-
 /**
- * A class that listens to the config, user's preference, token changes and
- * register/unregister push notification accordingly.
- *
- * This class DOES NOT handle the legacy groups push notification.
+ * A PN registration handler that watches for changes in the configs, and arrange the desired state
+ * of push registrations into the database, and triggers [PushRegistrationWorker] to process them.
  */
 @Singleton
-class PushRegistrationHandler
-@Inject
-constructor(
+class PushRegistrationHandler @Inject constructor(
     private val configFactory: ConfigFactory,
     private val preferences: TextSecurePreferences,
     private val tokenFetcher: TokenFetcher,
     @param:ApplicationContext private val context: Context,
-    private val registry: PushRegistryV2,
-    private val storage: Storage,
-    @param:ManagerScope private val scope: CoroutineScope
+    @param:ManagerScope private val scope: CoroutineScope,
+    @param:PushNotificationModule.PushProcessingSemaphore
+    private val semaphore: Semaphore,
+    private val storage: StorageProtocol,
+    private val pushRegistrationDatabase: PushRegistrationDatabase,
 ) : OnAppStartupComponent {
 
     private var job: Job? = null
@@ -55,90 +57,78 @@ constructor(
     override fun onPostAppStarted() {
         require(job == null) { "Job is already running" }
 
-        job = scope.launch(Dispatchers.Default) {
-            combine(
-                (configFactory.configUpdateNotifications as Flow<Any>)
-                    .debounce(500L)
-                    .onStart { emit(Unit) },
-                preferences.watchLocalNumber(),
-                preferences.pushEnabled,
-                tokenFetcher.token,
-            ) { _, myAccountId, enabled, token ->
-                if (!enabled || myAccountId == null || storage.getUserED25519KeyPair() == null || token.isNullOrEmpty()) {
-                    return@combine emptySet<SubscriptionKey>()
-                }
 
-                setOf(SubscriptionKey(AccountId(myAccountId), token)) + getGroupSubscriptions(token)
-            }
-                .scan(emptySet<SubscriptionKey>() to emptySet<SubscriptionKey>()) { acc, current ->
-                    acc.second to current
-                }
-                .collect { (prev, current) ->
-                    val added = current - prev
-                    val removed = prev - current
-                    if (added.isNotEmpty()) {
-                        Log.d(TAG, "Adding ${added.size} new subscriptions")
-                    }
+        job = scope.launch {
+            val firstRun = AtomicBoolean(true)
 
-                    if (removed.isNotEmpty()) {
-                        Log.d(TAG, "Removing ${removed.size} subscriptions")
-                    }
-
-                    for (key in added) {
-                        PushRegistrationWorker.schedule(
-                            context = context,
-                            token = key.token,
-                            accountId = key.accountId,
-                        )
-                    }
-
-                    supervisorScope {
-                        for (key in removed) {
-                            PushRegistrationWorker.cancelRegistration(
-                                context = context,
-                                accountId = key.accountId,
-                            )
-
-                            launch {
-                                Log.d(TAG, "Unregistering push token for account: ${key.accountId}")
-                                try {
-                                    val swarmAuth = swarmAuthForAccount(key.accountId)
-                                        ?: throw IllegalStateException("No SwarmAuth found for account: ${key.accountId}")
-
-                                    registry.unregister(
-                                        token = key.token,
-                                        swarmAuth = swarmAuth,
-                                    )
-
-                                    Log.d(TAG, "Successfully unregistered push token for account: ${key.accountId}")
-                                } catch (e: Exception) {
-                                    if (e !is CancellationException) {
-                                        Log.e(TAG, "Failed to unregister push token for account: ${key.accountId}", e)
-                                    }
-                                }
+            @Suppress("OPT_IN_USAGE")
+            preferences.watchLocalNumber()
+                .filterNotNull()
+                .distinctUntilChanged()
+                .flatMapLatest { localNumber ->
+                    if (hasCoreIdentity()) {
+                        combine(
+                            configFactory.userConfigsChanged(
+                                    onlyConfigTypes = EnumSet.of(UserConfigType.USER_GROUPS),
+                                    debounceMills = 500
+                                )
+                                .castAwayType()
+                                .onStart { emit(Unit) },
+                            preferences.pushEnabled,
+                            tokenFetcher.token.filterNotNull().filter { !it.isBlank() }
+                        ) { _, enabled, token ->
+                            if (enabled) {
+                                desiredSubscriptions(localNumber, token)
+                            } else {
+                                emptyList()
                             }
                         }
+                    } else {
+                        emptyFlow()
+                    }
+                }
+                .distinctUntilChanged()
+                .collectLatest { desiredRegistrations ->
+                    val changes = semaphore.withPermit {
+                        pushRegistrationDatabase.ensureRegistrations(desiredRegistrations)
+                    }
+
+                    Log.d(TAG, "Push registration changes: $changes")
+
+                    if (firstRun.compareAndSet(true, false) || changes > 0) {
+                        PushRegistrationWorker.enqueue(context, delay = null).await()
                     }
                 }
         }
     }
 
-    private fun swarmAuthForAccount(accountId: AccountId): SwarmAuth? {
-        return when (accountId.prefix) {
-            IdPrefix.STANDARD -> storage.userAuth?.takeIf { it.accountId == accountId }
-            IdPrefix.GROUP -> configFactory.getGroupAuth(accountId)
-            else -> null // Unsupported account ID prefix
+    /**
+     * Build desired subscriptions: self (local number) + any group that shouldPoll.
+     * */
+    private fun desiredSubscriptions(localNumber: String, token: String): List<PushRegistrationDatabase.Registration> =
+        buildList {
+            val input = PushRegistrationDatabase.Input(pushToken = token)
+
+            add(PushRegistrationDatabase.Registration(accountId = localNumber, input = input))
+
+            val groups = configFactory.withUserConfigs { it.userGroups.allClosedGroupInfo() }
+            for (group in groups) {
+                if (group.shouldPoll) {
+                    add(
+                        PushRegistrationDatabase.Registration(
+                            accountId = group.groupAccountId,
+                            input = input
+                        )
+                    )
+                }
+            }
         }
+
+    private fun hasCoreIdentity(): Boolean {
+        return preferences.getLocalNumber() != null && storage.getUserED25519KeyPair() != null
     }
 
-    private fun getGroupSubscriptions(
-        token: String
-    ): Set<SubscriptionKey> {
-        return configFactory.withUserConfigs { it.userGroups.allClosedGroupInfo() }
-            .asSequence()
-            .filter { it.shouldPoll }
-            .mapTo(hashSetOf()) { SubscriptionKey(accountId = AccountId(it.groupAccountId), token = token) }
+    companion object {
+        private const val TAG = "PushRegistrationHandler"
     }
-
-    private data class SubscriptionKey(val accountId: AccountId, val token: String)
 }

@@ -30,7 +30,6 @@ import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.SearchDatabase
 import org.thoughtcrime.securesms.database.SessionContactDatabase
-import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
 import javax.inject.Provider
@@ -129,10 +128,6 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideExpirationConfigurationDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = ExpirationConfigurationDatabase(context, openHelper)
-
-    @Provides
-    @Singleton
-    fun provideAttachmentProvider(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>): MessageDataProvider = DatabaseAttachmentProvider(context, openHelper)
 
     @Provides
     @Singleton

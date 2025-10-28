@@ -22,8 +22,10 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDD
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.file_server.FileServer
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
@@ -59,6 +61,7 @@ class DebugMenuViewModel @Inject constructor(
     private val attachmentDatabase: AttachmentDatabase,
     private val conversationRepository: ConversationRepository,
     private val databaseInspector: DatabaseInspector,
+    private val tokenFetcher: TokenFetcher,
     subscriptionManagers: Set<@JvmSuppressWildcards SubscriptionManager>,
 ) : ViewModel() {
     private val TAG = "DebugMenu"
@@ -74,6 +77,7 @@ class DebugMenuViewModel @Inject constructor(
             hideMessageRequests = textSecurePreferences.hasHiddenMessageRequests(),
             hideNoteToSelf = configFactory.withUserConfigs { it.userProfile.getNtsPriority() == PRIORITY_HIDDEN },
             forceDeprecationState = deprecationManager.deprecationStateOverride.value,
+            forceDeterministicEncryption = textSecurePreferences.forcesDeterministicAttachmentEncryption,
             availableDeprecationState = listOf(null) + LegacyGroupDeprecationManager.DeprecationState.entries.toList(),
             deprecatedTime = deprecationManager.deprecatedTime.value,
             deprecatingStartTime = deprecationManager.deprecatingStartTime.value,
@@ -82,19 +86,32 @@ class DebugMenuViewModel @Inject constructor(
             forceIncomingMessagesAsPro = textSecurePreferences.forceIncomingMessagesAsPro(),
             forcePostPro = textSecurePreferences.forcePostPro(),
             forceShortTTl = textSecurePreferences.forcedShortTTL(),
+            debugAvatarReupload = textSecurePreferences.debugAvatarReupload,
             messageProFeature = textSecurePreferences.getDebugMessageFeatures(),
             dbInspectorState = DatabaseInspectorState.NOT_AVAILABLE,
             debugSubscriptionStatuses = setOf(
                 DebugSubscriptionStatus.AUTO_GOOGLE,
                 DebugSubscriptionStatus.EXPIRING_GOOGLE,
+                DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER,
                 DebugSubscriptionStatus.AUTO_APPLE,
                 DebugSubscriptionStatus.EXPIRING_APPLE,
                 DebugSubscriptionStatus.EXPIRED,
+                DebugSubscriptionStatus.EXPIRED_EARLIER,
+                DebugSubscriptionStatus.EXPIRED_APPLE,
             ),
             selectedDebugSubscriptionStatus = textSecurePreferences.getDebugSubscriptionType() ?: DebugSubscriptionStatus.AUTO_GOOGLE,
+            debugProPlanStatus = setOf(
+                DebugProPlanStatus.NORMAL,
+                DebugProPlanStatus.LOADING,
+                DebugProPlanStatus.ERROR,
+            ),
+            selectedDebugProPlanStatus = textSecurePreferences.getDebugProPlanStatus() ?: DebugProPlanStatus.NORMAL,
             debugProPlans = subscriptionManagers.asSequence()
                 .flatMap { it.availablePlans.asSequence().map { plan -> DebugProPlan(it, plan) } }
                 .toList(),
+            forceNoBilling = textSecurePreferences.getDebugForceNoBilling(),
+            availableAltFileServers = TEST_FILE_SERVERS,
+            alternativeFileServer = textSecurePreferences.alternativeFileServer,
         )
     )
     val uiState: StateFlow<UIState>
@@ -261,6 +278,13 @@ class DebugMenuViewModel @Inject constructor(
                 }
             }
 
+            is Commands.ForceNoBilling -> {
+                textSecurePreferences.setDebugForceNoBilling(command.set)
+                _uiState.update {
+                    it.copy(forceNoBilling = command.set)
+                }
+            }
+
             is Commands.ForcePostPro -> {
                 textSecurePreferences.setForcePostPro(command.set)
                 _uiState.update {
@@ -301,8 +325,38 @@ class DebugMenuViewModel @Inject constructor(
                 }
             }
 
+            is Commands.SetDebugProPlanStatus -> {
+                textSecurePreferences.setDebugProPlanStatus(command.status)
+                _uiState.update {
+                    it.copy(selectedDebugProPlanStatus = command.status)
+                }
+            }
+
             is Commands.PurchaseDebugPlan -> {
                 command.plan.apply { manager.purchasePlan(plan) }
+            }
+
+            is Commands.ToggleDeterministicEncryption -> {
+                val newValue = !_uiState.value.forceDeterministicEncryption
+                _uiState.update { it.copy(forceDeterministicEncryption = newValue) }
+                textSecurePreferences.forcesDeterministicAttachmentEncryption = newValue
+            }
+
+            is Commands.ToggleDebugAvatarReupload -> {
+                val newValue = !_uiState.value.debugAvatarReupload
+                _uiState.update { it.copy(debugAvatarReupload = newValue) }
+                textSecurePreferences.debugAvatarReupload = newValue
+            }
+
+            is Commands.ResetPushToken -> {
+                viewModelScope.launch {
+                    tokenFetcher.resetToken()
+                }
+            }
+
+            is Commands.SelectAltFileServer -> {
+                _uiState.update { it.copy(alternativeFileServer = command.fileServer) }
+                textSecurePreferences.alternativeFileServer = command.fileServer
             }
         }
     }
@@ -396,6 +450,7 @@ class DebugMenuViewModel @Inject constructor(
         val showDeprecatedStateWarningDialog: Boolean,
         val hideMessageRequests: Boolean,
         val hideNoteToSelf: Boolean,
+        val forceDeterministicEncryption: Boolean,
         val forceCurrentUserAsPro: Boolean,
         val forceOtherUsersAsPro: Boolean,
         val forceIncomingMessagesAsPro: Boolean,
@@ -403,13 +458,19 @@ class DebugMenuViewModel @Inject constructor(
         val forcePostPro: Boolean,
         val forceShortTTl: Boolean,
         val forceDeprecationState: LegacyGroupDeprecationManager.DeprecationState?,
+        val debugAvatarReupload: Boolean,
         val availableDeprecationState: List<LegacyGroupDeprecationManager.DeprecationState?>,
         val deprecatedTime: ZonedDateTime,
         val deprecatingStartTime: ZonedDateTime,
         val dbInspectorState: DatabaseInspectorState,
         val debugSubscriptionStatuses: Set<DebugSubscriptionStatus>,
         val selectedDebugSubscriptionStatus: DebugSubscriptionStatus,
+        val debugProPlanStatus: Set<DebugProPlanStatus>,
+        val selectedDebugProPlanStatus: DebugProPlanStatus,
         val debugProPlans: List<DebugProPlan>,
+        val forceNoBilling: Boolean,
+        val alternativeFileServer: FileServer? = null,
+        val availableAltFileServers: List<FileServer> = emptyList(),
     )
 
     enum class DatabaseInspectorState {
@@ -420,10 +481,19 @@ class DebugMenuViewModel @Inject constructor(
 
     enum class DebugSubscriptionStatus(val label: String) {
         AUTO_GOOGLE("Auto Renewing (Google, 3 months)"),
-        EXPIRING_GOOGLE("Expiring/Cancelled (Google, 12 months)"),
+        EXPIRING_GOOGLE("Expiring/Cancelled (Expires in 14 days, Google, 12 months)"),
+        EXPIRING_GOOGLE_LATER("Expiring/Cancelled (Expires in 40 days, Google, 12 months)"),
         AUTO_APPLE("Auto Renewing (Apple, 1 months)"),
-        EXPIRING_APPLE("Expiring/Cancelled (Apple, 1 months)"),
-        EXPIRED("Expired"),
+        EXPIRING_APPLE("Expiring/Cancelled (Expires in 14 days, Apple, 1 months)"),
+        EXPIRED("Expired (Expired 2 days ago, Google)"),
+        EXPIRED_EARLIER("Expired (Expired 60 days ago, Google)"),
+        EXPIRED_APPLE("Expired (Expired 2 days ago, Apple)"),
+    }
+
+    enum class DebugProPlanStatus(val label: String){
+        NORMAL("Normal State"),
+        LOADING("Always Loading"),
+        ERROR("Always Erroring out"),
     }
 
     sealed class Commands {
@@ -438,6 +508,7 @@ class DebugMenuViewModel @Inject constructor(
         data class ForceCurrentUserAsPro(val set: Boolean) : Commands()
         data class ForceOtherUsersAsPro(val set: Boolean) : Commands()
         data class ForceIncomingMessagesAsPro(val set: Boolean) : Commands()
+        data class ForceNoBilling(val set: Boolean) : Commands()
         data class ForcePostPro(val set: Boolean) : Commands()
         data class ForceShortTTl(val set: Boolean) : Commands()
         data class SetMessageProFeature(val feature: ProStatusManager.MessageProFeature, val set: Boolean) : Commands()
@@ -450,6 +521,24 @@ class DebugMenuViewModel @Inject constructor(
         data class GenerateContacts(val prefix: String, val count: Int): Commands()
         data object ToggleDatabaseInspector : Commands()
         data class SetDebugSubscriptionStatus(val status: DebugSubscriptionStatus) : Commands()
+        data class SetDebugProPlanStatus(val status: DebugProPlanStatus) : Commands()
         data class PurchaseDebugPlan(val plan: DebugProPlan) : Commands()
+        data object ToggleDeterministicEncryption : Commands()
+        data object ToggleDebugAvatarReupload : Commands()
+        data object ResetPushToken : Commands()
+        data class SelectAltFileServer(val fileServer: FileServer?) : Commands()
+    }
+
+    companion object {
+        private val TEST_FILE_SERVERS: List<FileServer> = listOf(
+            FileServer(
+                url = "http://potatofiles.getsession.org",
+                ed25519PublicKeyHex = "ff86dcd4b26d1bfec944c59859494248626d6428efc12168749d65a1b92f5e28",
+            ),
+            FileServer(
+                url = "http://superduperfiles.oxen.io",
+                ed25519PublicKeyHex = "929e33ded05e653fec04b49645117f51851f102a947e04806791be416ed76602",
+            )
+        )
     }
 }

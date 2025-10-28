@@ -12,8 +12,6 @@ import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.protocol.SessionProtocol
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import nl.komponents.kovenant.Promise
-import nl.komponents.kovenant.deferred
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.messages.Destination
@@ -32,7 +30,6 @@ import org.session.libsession.messaging.open_groups.OpenGroupMessage
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeAPI.nowWithOffset
 import org.session.libsession.snode.SnodeMessage
-import org.session.libsession.snode.utilities.asyncPromise
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsignal.crypto.PushTransportDetails
@@ -44,6 +41,7 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.defaultRequiresAuth
 import org.session.libsignal.utilities.hasNamespaces
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.cancellation.CancellationException
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview as SignalLinkPreview
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel as SignalQuote
 
@@ -70,13 +68,11 @@ object MessageSender {
     }
 
     // Convenience
-    fun sendNonDurably(message: Message, destination: Destination, isSyncMessage: Boolean): Promise<Unit, Exception> {
+    suspend fun sendNonDurably(message: Message, destination: Destination, isSyncMessage: Boolean) {
         return if (destination is Destination.LegacyOpenGroup || destination is Destination.OpenGroup || destination is Destination.OpenGroupInbox) {
             sendToOpenGroupDestination(destination, message)
         } else {
-            GlobalScope.asyncPromise {
-                sendToSnodeDestination(destination, message, isSyncMessage)
-            }
+            sendToSnodeDestination(destination, message, isSyncMessage)
         }
     }
 
@@ -185,12 +181,7 @@ object MessageSender {
 
     // One-on-One Chats & Closed Groups
     private suspend fun sendToSnodeDestination(destination: Destination, message: Message, isSyncMessage: Boolean = false) = supervisorScope {
-        val storage = MessagingModuleConfiguration.shared.storage
         val configFactory = MessagingModuleConfiguration.shared.configFactory
-        val userPublicKey = storage.getUserPublicKey()
-
-        // recipient will be set later, so initialize it as a function here
-        val isSelfSend = { message.recipient == userPublicKey }
 
         // Set the failure handler (need it here already for precondition failure handling)
         fun handleFailure(error: Exception) {
@@ -281,8 +272,7 @@ object MessageSender {
     }
 
     // Open Groups
-    private fun sendToOpenGroupDestination(destination: Destination, message: Message): Promise<Unit, Exception> {
-        val deferred = deferred<Unit, Exception>()
+    private suspend fun sendToOpenGroupDestination(destination: Destination, message: Message) {
         val storage = MessagingModuleConfiguration.shared.storage
         val configFactory = MessagingModuleConfiguration.shared.configFactory
         if (message.sentTimestamp == null) {
@@ -331,11 +321,7 @@ object MessageSender {
             AccountId(IdPrefix.UN_BLINDED, userEdKeyPair.pubKey.data).hexString
         }
         message.sender = messageSender
-        // Set the failure handler (need it here already for precondition failure handling)
-        fun handleFailure(error: Exception) {
-            handleFailedMessageSend(message, error)
-            deferred.reject(error)
-        }
+
         try {
             // Attach the user's profile if needed
             if (message is VisibleMessage) {
@@ -360,13 +346,19 @@ object MessageSender {
                         sentTimestamp = message.sentTimestamp!!,
                         base64EncodedData = Base64.encodeBytes(plaintext),
                     )
-                    OpenGroupApi.sendMessage(openGroupMessage, destination.roomToken, destination.server, destination.whisperTo, destination.whisperMods, destination.fileIds).success {
-                        message.openGroupServerMessageID = it.serverID
-                        handleSuccessfulMessageSend(message, destination, openGroupSentTimestamp = it.sentTimestamp)
-                        deferred.resolve(Unit)
-                    }.fail {
-                        handleFailure(it)
-                    }
+
+                    val response = OpenGroupApi.sendMessage(
+                        openGroupMessage,
+                        destination.roomToken,
+                        destination.server,
+                        destination.whisperTo,
+                        destination.whisperMods,
+                        destination.fileIds
+                    )
+
+                    message.openGroupServerMessageID = response.serverID
+                    handleSuccessfulMessageSend(message, destination, openGroupSentTimestamp = response.sentTimestamp)
+                    return
                 }
                 is Destination.OpenGroupInbox -> {
                     message.recipient = destination.blindedPublicKey
@@ -383,22 +375,23 @@ object MessageSender {
                         communityServerPubKey = Hex.fromStringCondensed(destination.serverPublicKey),
                         proRotatingEd25519PrivKey = null
                     )
+                    val base64EncodedData = Base64.encodeBytes(ciphertext)
+                    val response = OpenGroupApi.sendDirectMessage(
+                        base64EncodedData,
+                        destination.blindedPublicKey,
+                        destination.server
+                    )
 
-                    val base64EncodedData = Base64.encodeBytes(cipherText)
-                    OpenGroupApi.sendDirectMessage(base64EncodedData, destination.blindedPublicKey, destination.server).success {
-                        message.openGroupServerMessageID = it.id
-                        handleSuccessfulMessageSend(message, destination, openGroupSentTimestamp = TimeUnit.SECONDS.toMillis(it.postedAt))
-                        deferred.resolve(Unit)
-                    }.fail {
-                        handleFailure(it)
-                    }
+                    message.openGroupServerMessageID = response.id
+                    handleSuccessfulMessageSend(message, destination, openGroupSentTimestamp = TimeUnit.SECONDS.toMillis(response.postedAt))
+                    return
                 }
                 else -> throw IllegalStateException("Invalid destination.")
             }
         } catch (exception: Exception) {
-            handleFailure(exception)
+            if (exception !is CancellationException) handleFailedMessageSend(message, exception)
+            throw exception
         }
-        return deferred.promise
     }
 
     // Result Handling
@@ -543,10 +536,10 @@ object MessageSender {
         resultChannel.receive().getOrThrow()
     }
 
-    fun sendNonDurably(message: Message, address: Address, isSyncMessage: Boolean): Promise<Unit, Exception> {
+    suspend fun sendNonDurably(message: Message, address: Address, isSyncMessage: Boolean) {
         val threadID = MessagingModuleConfiguration.shared.storage.getThreadId(address)
         message.threadID = threadID
         val destination = Destination.from(address)
-        return sendNonDurably(message, destination, isSyncMessage)
+        sendNonDurably(message, destination, isSyncMessage)
     }
 }

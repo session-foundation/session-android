@@ -46,24 +46,6 @@ val View.hitRect: Rect
 @ColorInt
 fun Context.getAccentColor() = getColorFromAttr(R.attr.colorAccent)
 
-// Method to grab the appropriate attribute for a message colour.
-// Note: This is an attribute, NOT a resource Id - see `getColorResourceIdFromAttr` for that.
-@AttrRes
-fun getMessageTextColourAttr(messageIsOutgoing: Boolean): Int {
-    return if (messageIsOutgoing) R.attr.message_sent_text_color else R.attr.message_received_text_color
-}
-
-// Method to get an actual R.id.<SOME_COLOUR> resource Id from an attribute such as R.attr.message_sent_text_color etc.
-@ColorRes
-fun getColorResourceIdFromAttr(context: Context, attr: Int): Int {
-    val outTypedValue = TypedValue()
-    val successfullyFoundAttribute = context.theme.resolveAttribute(attr, outTypedValue, true)
-    if (successfullyFoundAttribute) { return outTypedValue.resourceId }
-
-    Log.w("ViewUtils", "Could not find colour attribute $attr in theme - using grey as a safe fallback")
-    return R.color.gray50
-}
-
 fun View.animateSizeChange(@DimenRes startSizeID: Int, @DimenRes endSizeID: Int, animationDuration: Long = 250) {
     val startSize = resources.getDimension(startSizeID)
     val endSize = resources.getDimension(endSizeID)
@@ -172,6 +154,7 @@ fun View.applySafeInsetsMargins(
     consumeInsets: Boolean = true,
     @InsetsType
     typeMask: Int = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime(),
+    additionalInsets : Insets = Insets.NONE // for additional offsets
 ) {
     ViewCompat.setOnApplyWindowInsetsListener(this) { view, windowInsets ->
         // Get system bars insets
@@ -180,7 +163,7 @@ fun View.applySafeInsetsMargins(
         // Update view margins to account for system bars
         val lp = view.layoutParams as? MarginLayoutParams
         if (lp != null) {
-            lp.setMargins(systemBarsInsets.left, systemBarsInsets.top, systemBarsInsets.right, systemBarsInsets.bottom)
+            lp.setMargins(additionalInsets.left + systemBarsInsets.left, additionalInsets.top + systemBarsInsets.top, additionalInsets.right + systemBarsInsets.right, additionalInsets.bottom + systemBarsInsets.bottom)
             view.layoutParams = lp
 
             if (consumeInsets) {

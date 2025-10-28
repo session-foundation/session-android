@@ -16,12 +16,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.launch
@@ -48,7 +49,6 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 fun StartConversationSheet(
     modifier: Modifier = Modifier,
     accountId: String,
-    navigator: UINavigator<StartConversationDestination>,
     onDismissRequest: () -> Unit,
 ){
     val sheetState = rememberModalBottomSheetState(
@@ -71,7 +71,6 @@ fun StartConversationSheet(
             ) {
                 StartConversationNavHost(
                     accountId = accountId,
-                    navigator = navigator,
                     onClose = {
                         scope.launch {
                             sheetState.hide()
@@ -107,11 +106,12 @@ sealed interface StartConversationDestination {
 @Composable
 fun StartConversationNavHost(
     accountId: String,
-    navigator: UINavigator<StartConversationDestination>,
     onClose: () -> Unit
 ){
     SharedTransitionLayout {
         val navController = rememberNavController()
+        val navigator: UINavigator<StartConversationDestination> =
+            remember { UINavigator() }
 
         ObserveAsEvents(flow = navigator.navigationActions) { action ->
             when (action) {
@@ -235,7 +235,6 @@ fun PreviewStartConversationSheet(){
         StartConversationSheet(
             accountId = "",
             onDismissRequest = {},
-            navigator = UINavigator()
         )
     }
 }

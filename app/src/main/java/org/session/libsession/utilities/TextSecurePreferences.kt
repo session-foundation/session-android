@@ -17,9 +17,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.serialization.json.Json
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.file_server.FileServer
 import org.session.libsession.utilities.TextSecurePreferences.Companion.AUTOPLAY_AUDIO_MESSAGES
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_DARK
@@ -28,6 +30,8 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONM
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FORCED_SHORT_TTL
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_MESSAGE_REQUESTS
+import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN_PRO_EXPIRED
+import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN_PRO_EXPIRING
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HIDE_PASSWORD
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VACUUM_TIME
@@ -174,6 +178,10 @@ interface TextSecurePreferences {
     fun setForceIncomingMessagesAsPro(isPro: Boolean)
     fun forcePostPro(): Boolean
     fun setForcePostPro(postPro: Boolean)
+    fun hasSeenProExpiring(): Boolean
+    fun setHasSeenProExpiring()
+    fun hasSeenProExpired(): Boolean
+    fun setHasSeenProExpired()
     fun watchPostProStatus(): StateFlow<Boolean>
     fun setShownCallWarning(): Boolean
     fun setShownCallNotification(): Boolean
@@ -210,6 +218,10 @@ interface TextSecurePreferences {
 
     fun getDebugSubscriptionType(): DebugMenuViewModel.DebugSubscriptionStatus?
     fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?)
+    fun getDebugProPlanStatus(): DebugMenuViewModel.DebugProPlanStatus?
+    fun setDebugProPlanStatus(status: DebugMenuViewModel.DebugProPlanStatus?)
+    fun getDebugForceNoBilling(): Boolean
+    fun setDebugForceNoBilling(hasBilling: Boolean)
 
     fun setSubscriptionProvider(provider: String)
     fun getSubscriptionProvider(): String?
@@ -226,6 +238,9 @@ interface TextSecurePreferences {
     var selectedActivityAliasName: String?
 
     var inAppReviewState: String?
+    var forcesDeterministicAttachmentEncryption: Boolean
+    var debugAvatarReupload: Boolean
+    var alternativeFileServer: FileServer?
 
 
     companion object {
@@ -306,6 +321,8 @@ interface TextSecurePreferences {
         const val SET_FORCE_OTHER_USERS_PRO = "pref_force_other_users_pro"
         const val SET_FORCE_INCOMING_MESSAGE_PRO = "pref_force_incoming_message_pro"
         const val SET_FORCE_POST_PRO = "pref_force_post_pro"
+        const val HAS_SEEN_PRO_EXPIRING = "has_seen_pro_expiring"
+        const val HAS_SEEN_PRO_EXPIRED = "has_seen_pro_expired"
         const val CALL_NOTIFICATIONS_ENABLED = "pref_call_notifications_enabled"
         const val SHOWN_CALL_WARNING = "pref_shown_call_warning" // call warning is user-facing warning of enabling calls
         const val SHOWN_CALL_NOTIFICATION = "pref_shown_call_notification" // call notification is a prompt to check privacy settings
@@ -369,8 +386,11 @@ interface TextSecurePreferences {
 
         const val DEBUG_MESSAGE_FEATURES = "debug_message_features"
         const val DEBUG_SUBSCRIPTION_STATUS = "debug_subscription_status"
+        const val DEBUG_PRO_PLAN_STATUS = "debug_pro_plan_status"
+        const val DEBUG_FORCE_NO_BILLING = "debug_pro_has_billing"
 
         const val SUBSCRIPTION_PROVIDER = "session_subscription_provider"
+        const val DEBUG_AVATAR_REUPLOAD = "debug_avatar_reupload"
 
         @JvmStatic
         fun getConfigurationMessageSynced(context: Context): Boolean {
@@ -930,12 +950,6 @@ interface TextSecurePreferences {
             setBooleanPreference(context, FINGERPRINT_KEY_GENERATED, true)
         }
 
-        @JvmStatic
-        fun clearAll(context: Context) {
-            getDefaultSharedPreferences(context).edit().clear().commit()
-        }
-
-
         // ----- Get / set methods for if we have already warned the user that saving attachments will allow other apps to access them -----
         // Note: We only ever show the warning dialog about this ONCE - when the user accepts this fact we write true to the flag & never show again.
         @JvmStatic
@@ -967,7 +981,8 @@ interface TextSecurePreferences {
 
 @Singleton
 class AppTextSecurePreferences @Inject constructor(
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context,
+    private val json: Json,
 ): TextSecurePreferences {
     private val localNumberState = MutableStateFlow(getStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, null))
     private val postProLaunchState = MutableStateFlow(getBooleanPreference(SET_FORCE_POST_PRO, false))
@@ -1558,6 +1573,22 @@ class AppTextSecurePreferences @Inject constructor(
         _events.tryEmit(SET_FORCE_POST_PRO)
     }
 
+    override fun hasSeenProExpiring(): Boolean {
+        return getBooleanPreference(HAS_SEEN_PRO_EXPIRING, false)
+    }
+
+    override fun setHasSeenProExpiring() {
+        setBooleanPreference(HAS_SEEN_PRO_EXPIRING, true)
+    }
+
+    override fun hasSeenProExpired(): Boolean {
+        return getBooleanPreference(HAS_SEEN_PRO_EXPIRED, false)
+    }
+
+    override fun setHasSeenProExpired() {
+        setBooleanPreference(HAS_SEEN_PRO_EXPIRED, true)
+    }
+
     override fun watchPostProStatus(): StateFlow<Boolean> {
         return postProLaunchState
     }
@@ -1656,8 +1687,16 @@ class AppTextSecurePreferences @Inject constructor(
         return getBooleanPreference(AUTOPLAY_AUDIO_MESSAGES, false)
     }
 
+    /**
+     * Clear all prefs and reset our observables
+     */
     override fun clearAll() {
-        getDefaultSharedPreferences(context).edit().clear().commit()
+        pushEnabled.update { false }
+        localNumberState.update { null }
+        postProLaunchState.update { false }
+        hiddenPasswordState.update { false }
+
+        getDefaultSharedPreferences(context).edit(commit = true) { clear() }
     }
 
     override fun getHidePassword() = getBooleanPreference(HIDE_PASSWORD, false)
@@ -1740,6 +1779,26 @@ class AppTextSecurePreferences @Inject constructor(
         _events.tryEmit(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS)
     }
 
+    override fun getDebugProPlanStatus(): DebugMenuViewModel.DebugProPlanStatus? {
+        return getStringPreference(TextSecurePreferences.DEBUG_PRO_PLAN_STATUS, null)?.let {
+            DebugMenuViewModel.DebugProPlanStatus.valueOf(it)
+        }
+    }
+
+    override fun setDebugProPlanStatus(status: DebugMenuViewModel.DebugProPlanStatus?) {
+        setStringPreference(TextSecurePreferences.DEBUG_PRO_PLAN_STATUS, status?.name)
+        _events.tryEmit(TextSecurePreferences.DEBUG_PRO_PLAN_STATUS)
+    }
+
+    override fun getDebugForceNoBilling(): Boolean {
+        return getBooleanPreference(TextSecurePreferences.DEBUG_FORCE_NO_BILLING, false)
+    }
+
+    override fun setDebugForceNoBilling(hasBilling: Boolean) {
+        setBooleanPreference(TextSecurePreferences.DEBUG_FORCE_NO_BILLING, hasBilling)
+        _events.tryEmit(TextSecurePreferences.DEBUG_FORCE_NO_BILLING)
+    }
+
     override fun getSubscriptionProvider(): String? {
         return getStringPreference(TextSecurePreferences.SUBSCRIPTION_PROVIDER, null)
     }
@@ -1747,4 +1806,28 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setSubscriptionProvider(provider: String) {
         setStringPreference(TextSecurePreferences.SUBSCRIPTION_PROVIDER, provider)
     }
+
+    override var forcesDeterministicAttachmentEncryption: Boolean
+        get() = getBooleanPreference("forces_deterministic_attachment_upload", false)
+        set(value) {
+            setBooleanPreference("forces_deterministic_attachment_upload", value)
+        }
+
+    override var debugAvatarReupload: Boolean
+        get() = getBooleanPreference(TextSecurePreferences.DEBUG_AVATAR_REUPLOAD, false)
+        set(value) {
+            setBooleanPreference(TextSecurePreferences.DEBUG_AVATAR_REUPLOAD, value)
+            _events.tryEmit(TextSecurePreferences.DEBUG_AVATAR_REUPLOAD)
+        }
+
+    override var alternativeFileServer: FileServer?
+        get() = getStringPreference("alternative_file_server", null)?.let {
+            json.decodeFromString(it)
+        }
+
+        set(value) {
+            setStringPreference("alternative_file_server", value?.let {
+                json.encodeToString(it)
+            })
+        }
 }

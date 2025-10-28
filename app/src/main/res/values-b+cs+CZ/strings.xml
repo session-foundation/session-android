@@ -200,7 +200,6 @@
     <string name="cameraGrantAccessDescription">{app_name} potřebuje přístup k fotoaparátu pro pořizování fotografií a videí nebo skenování QR kódů.</string>
     <string name="cameraGrantAccessQr">{app_name} potřebuje přístup k fotoaparátu ke skenování QR kódů</string>
     <string name="cancel">Zrušit</string>
-    <string name="cancelPlan">Zrušit tarif</string>
     <string name="change">Změnit</string>
     <string name="changePasswordFail">Změna hesla selhala</string>
     <string name="changePasswordModalDescription">Změňte své heslo pro {app_name}. Lokálně uložená data budou znovu zašifrována pomocí vašeho nového hesla.</string>
@@ -312,7 +311,6 @@
     <string name="create">Vytvořit</string>
     <string name="creatingCall">Vytváření hovoru</string>
     <string name="currentPassword">Aktuální heslo</string>
-    <string name="currentPlan">Současný tarif</string>
     <string name="cut">Vyjmout</string>
     <string name="darkMode">Tmavý režim</string>
     <string name="databaseErrorClearDataWarning">Opravdu chcete smazat všechny zprávy, přílohy a data účtu z tohoto zařízení a vytvořit nový účet?</string>
@@ -476,7 +474,6 @@
     <string name="enjoyingSessionButtonPositive">Skvělé {emoji}</string>
     <string name="enjoyingSessionDescription">Používáte {app_name} \na rádi bychom znali váš názor.</string>
     <string name="enter">Vstoupit</string>
-    <string name="errorCheckingProStatus">Chyba kontroly stavu {pro}.</string>
     <string name="errorConnection">Zkontrolujte prosím připojení k internetu a zkuste to znovu.</string>
     <string name="errorCopyAndQuit">Zkopírovat chybu a ukončit</string>
     <string name="errorDatabase">Chyba databáze</string>
@@ -833,7 +830,6 @@
     <string name="okay">OK</string>
     <string name="on">Zap.</string>
     <string name="onDevice">Na vašem zařízení {device_type}</string>
-    <string name="onDeviceDescription">Otevřete tento účet {app_name} na zařízení {device_type}, které je přihlášeno do účtu {platform_account}, pomocí kterého jste se původně zaregistrovali. Poté změňte svůj tarif v nastavení {app_pro}.</string>
     <string name="onboardingAccountCreate">Vytvořit účet</string>
     <string name="onboardingAccountCreated">Účet vytvořen</string>
     <string name="onboardingAccountExists">Mám účet</string>
@@ -936,7 +932,6 @@
     <string name="previewNotification">Náhled upozornění</string>
     <string name="proActivated">Aktivováno</string>
     <string name="proAllSet">Vše je nastaveno!</string>
-    <string name="proAllSetDescription">Váš tarif {app_pro} byl aktualizován! Účtování proběhne při automatickém obnovení vašeho aktuálního tarifu {pro} dne <b>{date}</b>.</string>
     <string name="proAlreadyPurchased">Už máte</string>
     <string name="proAnimatedDisplayPicture">Jako váš zobrazovaný profilový obrázek nastavte animovaný GIF nebo WebP!</string>
     <string name="proAnimatedDisplayPictureCallToActionDescription">Získejte možnost nahrát animovaný zobrazovaný obrázek profilu a další prémiové funkce se Session Pro</string>
@@ -945,7 +940,6 @@
     <string name="proAnimatedDisplayPictures">Animované zobrazované obrázky</string>
     <string name="proAnimatedDisplayPicturesDescription">Nastavte si animované obrázky GIF a WebP jako svůj zobrazovaný profilový obrázek.</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Nahrajte GIFy se</string>
-    <string name="proAutoRenewTime">{pro} se automaticky obnoví za <b>{time}</b></string>
     <string name="proBadge">Odznak {pro}</string>
     <string name="proBadgeVisible">Zobrazit odznak {app_pro} ostatním uživatelům</string>
     <string name="proBadges">Odznaky</string>
@@ -964,15 +958,9 @@
     <string name="proCallToActionPinnedConversations">Chcete více připnutí? Organizujte své chaty a odemkněte prémiové funkce pomocí Session Pro</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Chcete více než 5 připnutí? Organizujte své chaty a odemkněte prémiové funkce pomocí Session Pro</string>
     <string name="proCancellation">Zrušit</string>
-    <string name="proCancellationOptions">Dva způsoby, jak zrušit váš tarif:</string>
-    <string name="proClearAllDataDevice">Opravdu chcete smazat svá data z tohoto zařízení?\n\n<b>{app_pro}</b> nelze převést na jiný účet. Uložte si své heslo pro obnovení, abyste mohli svůj tarif {pro} později obnovit.</string>
-    <string name="proClearAllDataNetwork">Opravdu chcete smazat svá data ze sítě? Pokud budete pokračovat, nebudete moci obnovit vaše zprávy ani kontakty.\n\n<b>{app_pro}</b> nelze převést na jiný účet. Uložte si své heslo pro obnovení, abyste mohli svůj tarif {pro} později obnovit.</string>
-    <string name="proDiscountTooltip">Váš aktuální tarif je již zlevněn o {percent} % z plné ceny {app_pro}.</string>
     <string name="proErrorRefreshingStatus">Chyba obnovování stavu {pro}</string>
     <string name="proExpired">Platnost vypršela</string>
-    <string name="proExpiredDescription">Bohužel, váš tarif {pro} vypršel. Obnovte jej, abyste nadále měli přístup k exkluzivním výhodám a funkcím {app_pro}.</string>
     <string name="proExpiringSoon">Brzy vyprší</string>
-    <string name="proExpiringSoonDescription">Váš tarif {pro} vyprší za <b>{time}</b>. Aktualizujte si tarif, abyste i nadále měli přístup k exkluzivním výhodám a funkcím {app_pro}.</string>
     <string name="proExpiringTime">{pro} vyprší za <b>{time}</b></string>
     <string name="proFaq">{pro} FAQ</string>
     <string name="proFaqDescription">Najděte odpovědi na časté dotazy v nápovědě {app_pro}.</string>
@@ -989,7 +977,6 @@
         <item quantity="many">%1$s skupin navýšeno</item>
         <item quantity="other">%1$s skupin navýšeno</item>
     </plurals>
-    <string name="proImportantDescription">Žádost o vrácení peněz je konečné. Pokud bude schváleno, váš tarif {pro} bude ihned zrušen a ztratíte přístup ke všem funkcím {pro}.</string>
     <string name="proIncreasedAttachmentSizeFeature">Navýšená velikost přílohy</string>
     <string name="proIncreasedMessageLengthFeature">Navýšená délka zprávy</string>
     <string name="proLargerGroups">Větší skupiny</string>
@@ -1004,7 +991,6 @@
         <item quantity="other">%1$s delších zpráv odesláno</item>
     </plurals>
     <string name="proMessageInfoFeatures">V této zprávě byly použity následující funkce {app_pro}:</string>
-    <string name="proOptionsRenewalSubtitle">Nyní jsou k dispozici tři způsoby obnovy:</string>
     <string name="proPercentOff">Sleva {percent} %</string>
     <plurals name="proPinnedConversations">
         <item quantity="one">%1$s připnutá konverzace</item>
@@ -1012,30 +998,12 @@
         <item quantity="many">%1$s připnutých konverzací</item>
         <item quantity="other">%1$s připnutých konverzací</item>
     </plurals>
-    <string name="proPlanActivatedAuto">Váš tarif {app_pro} je aktivní!\n\nVáš tarif se automaticky obnoví na další <b>{current_plan}</b> dne <b>{date}</b>. Změny tarifu se projeví při příštím obnovení {pro}.</string>
-    <string name="proPlanActivatedAutoShort">Váš tarif {app_pro} je aktivní!\n\nTarif se automaticky obnoví na další <b>{current_plan}</b> dne <b>{date}</b>.</string>
-    <string name="proPlanActivatedNotAuto">Váš tarif {app_pro} vyprší dne <b>{date}</b>.\n\nAktualizujte si tarif nyní, abyste měli i nadále nepřerušený přístup k exkluzivním funkcím Pro.</string>
-    <string name="proPlanError">Chyba tarifu {pro}</string>
-    <string name="proPlanExpireDate">Váš tarif {app_pro} vyprší dne <b>{date}</b>.</string>
-    <string name="proPlanLoading">Načítání tarifu {pro}</string>
-    <string name="proPlanLoadingDescription">Váš tarif {pro} se stále načítá. Dokud nebude načítání dokončeno, nemůžete tarif změnit.</string>
-    <string name="proPlanLoadingEllipsis">Načítání tarifu {pro}...</string>
-    <string name="proPlanNetworkLoadError">Nelze se připojit k síti a načíst váš aktuální tarif. Aktualizace tarifu prostřednictvím {app_name} bude deaktivována, dokud nebude obnoveno připojení.\n\nZkontrolujte připojení k síti a zkuste to znovu.</string>
-    <string name="proPlanNotFound">{pro} nebyl nalezen</string>
-    <string name="proPlanNotFoundDescription">Pro váš účet nebyl nalezen žádný aktivní tarif. Pokud si myslíte, že se jedná o chybu, kontaktujte podporu {app_name} a požádejte o pomoc.</string>
-    <string name="proPlanRecover">Znovu nabýt tarif {pro}</string>
-    <string name="proPlanRenew">Obnovit tarif {pro}</string>
-    <string name="proPlanRenewStart">Obnovte váš tarif {app_pro}, abyste mohli znovu využívat užitečné funkce {app_pro}.</string>
-    <string name="proPlanRenewSupport">Váš tarif {app_pro} byl obnoven! Děkujeme, že podporujete síť {network_name}.</string>
-    <string name="proPlanRestored">{pro} obnoven</string>
-    <string name="proPlanRestoredDescription">Byl rozpoznán platný tarif {app_pro} a váš stav {pro} byl obnoven!</string>
     <string name="proPriceOneMonth">1 měsíc – {monthly_price} / měsíc</string>
     <string name="proPriceThreeMonths">3 měsíce – {monthly_price} / měsíc</string>
     <string name="proPriceTwelveMonths">12 měsíců – {monthly_price} / měsíc</string>
     <string name="proRefundDescription">Mrzí nás, že to rušíte. Než požádáte o vrácení peněz, přečtěte si informace, které byste měli vědět.</string>
     <string name="proRefundRequestSessionSupport">Váš požadavek na vrácení peněz bude zpracován podporou {app_name}.\n\nPožádejte o vrácení peněz kliknutím na tlačítko níže a vyplněním formuláře žádosti o vrácení peněz.\n\nAčkoliv se podpora {app_name} snaží zpracovat žádosti o vrácení peněz během 24–72 hodin, může zpracování trvat i déle, v případě že je vyřizováno mnoho žádostí.</string>
     <string name="proRefunding">Vracení peněz za {pro}</string>
-    <string name="proRenewBeta">Obnovit {pro} Beta</string>
     <string name="proRequestedRefund">Žádost o vrácení peněz</string>
     <string name="proSendMore">Posílejte více se</string>
     <string name="proSettings">Nastavení {pro}</string>
@@ -1050,12 +1018,9 @@
     <string name="proStatusLoadingSubtitle">stav načítání {pro}</string>
     <string name="proStatusNetworkErrorDescription">Nelze se připojit k síti, aby bylo možné zkontrolovat váš stav {pro}. Dokud nebude obnoveno připojení, nelze provést navýšení na {pro}.\n\nZkontrolujte připojení k síti a zkuste to znovu.</string>
     <string name="proStatusRefreshNetworkError">Nelze se připojit k síti, aby se obnovil váš stav {pro}. Některé akce na této stránce budou deaktivovány, dokud nebude obnoveno připojení.\n\nZkontrolujte připojení k síti a zkuste to znovu.</string>
-    <string name="proSupportDescription">Potřebujete pomoc se svým tarifem {pro}? Pošlete žádost týmu podpory.</string>
     <string name="proTosPrivacy">Aktualizací souhlasíte s <b>Podmínkami služby</b> {icon} a <b>Zásadami ochrany osobních údajů</b> {icon} {app_pro}</string>
     <string name="proUnlimitedPins">Neomezený počet připnutí</string>
     <string name="proUnlimitedPinsDescription">Organizujte si komunikaci pomocí neomezeného počtu připnutých konverzací.</string>
-    <string name="proUpdatePlanDescription">V současné době jste na <b>tarifu {current_plan}</b>. Jste si jisti, že chcete přepnout na <b>tarif {selected_plan}</b>?\n\nPo aktualizaci bude váš tarif automaticky obnoven <b>{date}</b> na další {selected_plan} přístupu {pro}.</string>
-    <string name="proUpdatePlanExpireDescription">Váš tarif vyprší <b>{date}</b>.\n\nPo aktualizaci se váš tarif automaticky obnoví <b>{date}</b> na další {selected_plan} přístupu Pro.</string>
     <string name="proUserProfileModalCallToAction">Chcete z {app_name} získat více? Navyštee na {app_pro} pro výkonnější posílání zpráv.</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Zobrazovaný obrázek</string>
@@ -1126,7 +1091,6 @@
     <string name="remove">Odstranit</string>
     <string name="removePasswordFail">Odebrání hesla selhalo</string>
     <string name="removePasswordModalDescription">Odstraňte své aktuální heslo pro {app_name}. Lokálně uložená data budou znovu zašifrována pomocí náhodně vygenerovaného klíče uloženého ve vašem zařízení.</string>
-    <string name="renew">Obnovit</string>
     <string name="reply">Odpovědět</string>
     <string name="requestRefund">Požádat o vrácení platby</string>
     <string name="resend">Odeslat znovu</string>
@@ -1246,8 +1210,6 @@
     <string name="updateGroupInformationEnterShorterDescription">Zadejte prosím kratší popis skupiny</string>
     <string name="updateNewVersion"><b>Je dostupná nová verze {app_name}, klikněte pro aktualizaci</b></string>
     <string name="updateNewVersionDescription">Je dostupná nová verze ({version}) aplikace {app_name}.</string>
-    <string name="updatePlan">Aktualizovat tarif</string>
-    <string name="updatePlanTwo">Dva způsoby, jak aktualizovat váš tarif:</string>
     <string name="updateProfileInformation">Upravit informace profilu</string>
     <string name="updateProfileInformationDescription">Vaše zobrazované jméno a profilová fotka jsou viditelné ve všech konverzacích.</string>
     <string name="updateReleaseNotes">Přejít na poznámky k vydání</string>

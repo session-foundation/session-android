@@ -37,12 +37,13 @@ import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsV
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.UpdateGroupName
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.UpdateNickname
 import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.CTAImage
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GenericProCTA
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.PinProCTA
 import org.thoughtcrime.securesms.ui.RadioOption
-import org.thoughtcrime.securesms.ui.SimpleSessionProActivatedCTA
+import org.thoughtcrime.securesms.ui.SessionProCTA
 import org.thoughtcrime.securesms.ui.components.AnnotatedTextWithIcon
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
@@ -248,9 +249,9 @@ fun ConversationSettingsDialogs(
         }
 
         is ConversationSettingsViewModel.ProBadgeCTA.Group -> {
-            SimpleSessionProActivatedCTA(
-                heroImage = R.drawable.cta_hero_group,
+            SessionProCTA(
                 title = stringResource(R.string.proGroupActivated),
+                badgeAtStart = true,
                 textContent = {
                     AnnotatedTextWithIcon(
                         modifier = Modifier
@@ -261,6 +262,9 @@ fun ConversationSettingsDialogs(
                         style = LocalType.current.large,
                     )
                 },
+                content = { CTAImage(heroImage = R.drawable.cta_hero_group) },
+                positiveButtonText = null,
+                negativeButtonText = stringResource(R.string.close),
                 onCancel = {
                     sendCommand(HideProBadgeCTA)
                 }

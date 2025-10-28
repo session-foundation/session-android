@@ -25,18 +25,18 @@ class CurrentActivityObserver @Inject constructor(
     init {
         application.registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
-            override fun onActivityStarted(activity: Activity) {
+            override fun onActivityStarted(activity: Activity) {}
+            override fun onActivityResumed(activity: Activity) {
                 _currentActivity.value = activity
                 Log.d("CurrentActivityObserver", "Current activity set to: ${activity.javaClass.simpleName}")
             }
-            override fun onActivityResumed(activity: Activity) {}
-            override fun onActivityPaused(activity: Activity) {}
-            override fun onActivityStopped(activity: Activity) {
+            override fun onActivityPaused(activity: Activity) {
                 if (_currentActivity.value === activity) {
                     _currentActivity.value = null
                     Log.d("CurrentActivityObserver", "Current activity set to null")
                 }
             }
+            override fun onActivityStopped(activity: Activity) {}
             override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
             override fun onActivityDestroyed(activity: Activity) {}
         })

@@ -60,6 +60,8 @@ object OnionRequestAPI {
         .map { it.isNotEmpty() }
         .stateIn(GlobalScope, SharingStarted.Eagerly, paths.value.isNotEmpty())
 
+    private val NON_PENALIZING_STATUSES = setOf(403, 404, 406, 425)
+
     init {
         // Listen for the changes in paths and persist it to the db
         GlobalScope.launch {
@@ -410,12 +412,20 @@ object OnionRequestAPI {
                     } else {
                         handleUnspecificError()
                     }
-                } else if (destination is Destination.Server && exception.statusCode == 400) {
-                    Log.d("Loki","Destination server returned code ${exception.statusCode} with message: $message")
+                } else if(exception.statusCode in NON_PENALIZING_STATUSES){
+                    // error codes that shouldn't penalize our path or drop snodes
+                    // 404 is probably file server missing a file, don't rebuild path or mark a snode as bad here
+                    Log.d("Loki","Request returned a non penalizing code ${exception.statusCode} with message: $message")
+                }
+                // we do not want to penalize the path/nodes when:
+                // - the exit node reached the server but the destination returned 5xx or 400
+                // - the exit node couldn't reach its destination with a 5xx or 400, but the destination was a community (which we can know from the server's name being in the error message)
+                else if (destination is Destination.Server &&
+                    (exception.statusCode in 500..504 || exception.statusCode == 400) &&
+                    (exception is HTTPRequestFailedAtDestinationException || exception.body?.contains(destination.host) == true)) {
+                    Log.d("Loki","Destination server error - Non path penalizing. Request returned code ${exception.statusCode} with message: $message")
                 } else if (message == "Loki Server error") {
                     Log.d("Loki", "message was $message")
-                } else if (exception.statusCode == 404) {
-                    // 404 is probably file server missing a file, don't rebuild path or mark a snode as bad here
                 } else { // Only drop snode/path if not receiving above two exception cases
                     handleUnspecificError()
                 }

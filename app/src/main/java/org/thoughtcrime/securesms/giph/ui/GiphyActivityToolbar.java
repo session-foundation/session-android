@@ -93,6 +93,7 @@ public class GiphyActivityToolbar extends Toolbar {
         if (actionId == EditorInfo.IME_ACTION_SEARCH) {
           InputMethodManager inputMethodManager = (InputMethodManager)getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
           inputMethodManager.hideSoftInputFromWindow(searchText.getWindowToken(), 0);
+          return true;
         }
 
         return false;

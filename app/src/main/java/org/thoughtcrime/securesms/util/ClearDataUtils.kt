@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Intent
 import androidx.core.content.edit
+import androidx.work.WorkManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -14,7 +15,6 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.hexEncodedPublicKey
 import org.thoughtcrime.securesms.ApplicationContext
-import org.thoughtcrime.securesms.attachments.RemoteFileDownloadWorker
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities
 import org.thoughtcrime.securesms.database.Storage
@@ -49,15 +49,18 @@ class ClearDataUtils @Inject constructor(
             application.deleteDatabase(DatabaseMigrationManager.CIPHER4_DB_NAME)
             application.deleteDatabase(DatabaseMigrationManager.CIPHER3_DB_NAME)
 
-            TextSecurePreferences.clearAll(application)
+            // clear all prefs
+            prefs.clearAll()
+
             application.getSharedPreferences(ApplicationContext.PREFERENCES_NAME, 0).edit(commit = true) { clear() }
             application.cacheDir.deleteRecursively()
             application.filesDir.deleteRecursively()
             configFactory.clearAll()
 
-            RemoteFileDownloadWorker.cancelAll(application)
-
             persistentLogger.deleteAllLogs()
+
+            // clean up existing work manager
+            WorkManager.getInstance(application).cancelAllWork()
 
             // The token deletion is nice but not critical, so don't let it block the rest of the process
             runCatching {
