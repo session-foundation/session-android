@@ -931,25 +931,21 @@ private fun CollapsibleFooterActions(
                     onClick = {},
                     qaTag = R.string.qa_collapsing_footer_action,
                     endContent = {
+                        var modifier = Modifier.padding(start = LocalDimensions.current.smallSpacing)
 
-                        val modifier: Modifier = Modifier
-                            .padding(start = LocalDimensions.current.smallSpacing)
-
-                        if (single) {
-                            modifier
-                                .wrapContentWidth()      // size to content
-                                .widthIn(max = capDp)    // but don't exceed the cap
+                        modifier = if (single) {
+                            modifier.wrapContentWidth().widthIn(max = capDp)
                         } else {
                             modifier.width(equalWidthDp)
                         }
 
                         Box(modifier = modifier) {
                             SlimFillButtonRect(
-                                item.buttonLabel.string(),
+                                modifier = Modifier.fillMaxWidth(),
+                                text = item.buttonLabel.string(),
                                 color = item.buttonColor
                             ) { item.onClick() }
                         }
-
                     }
                 )
             }
