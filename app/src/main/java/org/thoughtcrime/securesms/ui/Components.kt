@@ -28,6 +28,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -37,11 +38,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
@@ -66,6 +69,7 @@ import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -91,6 +95,7 @@ import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -101,6 +106,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
@@ -850,35 +856,95 @@ fun CollapsibleFooterAction(
                     shrinkTowards = Alignment.Top
                 ) + fadeOut(animationSpec = tween(durationMillis = 120))
             ) {
-                CategoryCell {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(LocalColors.current.backgroundTertiary)
-                    ) {
-                        data.items.forEachIndexed { index, item ->
-                            val titleText = item.label()
-                            val annotatedTitle = remember(titleText) { AnnotatedString(titleText) }
-                            if (index != 0) Divider()
-                            ActionRowItem(
-                                modifier = Modifier.background(LocalColors.current.backgroundTertiary),
-                                title = annotatedTitle,
-                                onClick = {},
-                                qaTag = R.string.qa_collapsing_footer_action,
-                                endContent = {
-                                    SlimFillButtonRect(
-                                        item.buttonLabel.string(),
-                                        color = item.buttonColor,
-                                        modifier = Modifier
-                                            .width(100.dp)
-                                    ) {
-                                        item.onClick()
-                                    }
-                                }
-                            )
-                        }
+                CategoryCell(modifier = Modifier.padding(bottom = LocalDimensions.current.smallSpacing)) {
+                    CollapsibleFooterActions(items = data.items)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CollapsibleFooterActions(
+    items: List<CollapsibleFooterItemData>,
+    buttonWidthCapFraction: Float = 1f / 3f // criteria
+) {
+    // rules for this:
+    // Max width should be approx 1/3 of the available space (buttonWidthCapFraction)
+    // Buttons should have matching widths
+
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val density = LocalDensity.current
+        val capPx = (constraints.maxWidth * buttonWidthCapFraction).toInt()
+        val capDp = with(density) { capPx.toDp() }
+
+        val single = items.size == 1
+        val measuredMaxButtonWidthPx = remember(items, capPx) { mutableIntStateOf(1) }
+
+        // Only do the offscreen equal width computation when we have 2+ buttons.
+        if (!single) {
+            SubcomposeLayout { parentConstraints ->
+                val measurables = subcompose("measureButtons") {
+                    items.forEach { item ->
+                        SlimFillButtonRect(item.buttonLabel.string(), color = item.buttonColor) {}
                     }
                 }
+                val placeables = measurables.map { m ->
+                    m.measure(
+                        Constraints(
+                            minWidth = 1,
+                            maxWidth = capPx,
+                            minHeight = 0,
+                            maxHeight = parentConstraints.maxHeight
+                        )
+                    )
+                }
+                val natural = placeables.maxOfOrNull { it.width } ?: 1
+                measuredMaxButtonWidthPx.intValue = natural.coerceIn(1, capPx)
+                layout(0, 0) {}
+            }
+        }
+
+        val equalWidthDp = with(density) { measuredMaxButtonWidthPx.intValue.toDp() }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(LocalColors.current.backgroundTertiary)
+        ) {
+            items.forEachIndexed { index, item ->
+                if (index != 0) Divider()
+
+                val titleText = item.label()
+                val annotatedTitle = remember(titleText) { AnnotatedString(titleText) }
+
+                ActionRowItem(
+                    modifier = Modifier.background(LocalColors.current.backgroundTertiary),
+                    title = annotatedTitle,
+                    onClick = {},
+                    qaTag = R.string.qa_collapsing_footer_action,
+                    endContent = {
+
+                        val modifier: Modifier = Modifier
+                            .padding(start = LocalDimensions.current.smallSpacing)
+
+                        if (single) {
+                            modifier
+                                .wrapContentWidth()      // size to content
+                                .widthIn(max = capDp)    // but don't exceed the cap
+                        } else {
+                            modifier.width(equalWidthDp)
+                        }
+
+                        Box(modifier = modifier) {
+                            SlimFillButtonRect(
+                                item.buttonLabel.string(),
+                                color = item.buttonColor
+                            ) { item.onClick() }
+                        }
+
+                    }
+                )
             }
         }
     }
@@ -907,19 +973,45 @@ fun PreviewCollapsibleActionTray(
     PreviewTheme(colors) {
         val demoItems = listOf(
             CollapsibleFooterItemData(
-                label = GetString("Mute notifications"),
-                buttonLabel = GetString("Mute"),
-                buttonColor = LocalColors.current.text,
-                onClick = {}
-            ),
-            CollapsibleFooterItemData(
-                label = GetString("Pin conversation"),
-                buttonLabel = GetString("Pin"),
+                label = GetString("Invite "),
+                buttonLabel = GetString("Invite"),
                 buttonColor = LocalColors.current.accent,
                 onClick = {}
             ),
             CollapsibleFooterItemData(
-                label = GetString("Delete chat"),
+                label = GetString("Delete"),
+                buttonLabel = GetString("2"),
+                buttonColor = LocalColors.current.danger,
+                onClick = {}
+            )
+        )
+
+        CollapsibleFooterAction(
+            data = CollapsibleFooterActionData(
+                title = GetString("Invite Contacts"),
+                collapsed = false,
+                visible = true,
+                items = demoItems
+            )
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewCollapsibleActionTrayLongText(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        val demoItems = listOf(
+            CollapsibleFooterItemData(
+                label = GetString("Looooooooooooooooooooooooooooooooooooooooooooooooooooooooong"),
+                buttonLabel = GetString("Long Loooooooooooooong"),
+                buttonColor = LocalColors.current.accent,
+                onClick = {}
+            ),
+            CollapsibleFooterItemData(
+                label = GetString("Delete"),
                 buttonLabel = GetString("Delete"),
                 buttonColor = LocalColors.current.danger,
                 onClick = {}
