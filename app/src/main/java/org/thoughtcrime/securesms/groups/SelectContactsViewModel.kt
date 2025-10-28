@@ -164,19 +164,21 @@ open class SelectContactsViewModel @AssistedInject constructor(
     private fun updateUiState() {
         val count = currentSelected.size
         val visible = currentSelected.isNotEmpty()
-        val footerTitle =
+        val footerTitle = if(count == 0) GetString("") else
             GetString(context.resources.getQuantityString(R.plurals.contactSelected, count, count))
 
-        _uiState.value = InviteUiState(
-            collapsed = count == 0,
-            visible = visible,
-            footerActionTitle = footerTitle
-        )
+        _uiState.update {
+            it.copy(
+                visible = visible,
+                collapsed =  if(!it.visible) false else it.collapsed,
+                footerActionTitle = footerTitle
+            )
+        }
     }
 
     data class InviteUiState(
         val visible: Boolean = false,
-        val collapsed: Boolean = true,
+        val collapsed: Boolean = false,
         val footerActionTitle : GetString = GetString("")
     )
 
