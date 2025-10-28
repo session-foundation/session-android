@@ -164,9 +164,8 @@ open class SelectContactsViewModel @AssistedInject constructor(
     private fun updateUiState() {
         val count = currentSelected.size
         val visible = currentSelected.isNotEmpty()
-        // TODO: String from crowdin
         val footerTitle =
-            GetString(context.resources.getQuantityString(R.plurals.membersInviteSend, count, count))
+            GetString(context.resources.getQuantityString(R.plurals.contactSelected, count, count))
 
         _uiState.value = InviteUiState(
             collapsed = count == 0,
