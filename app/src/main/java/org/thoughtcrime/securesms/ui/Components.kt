@@ -848,13 +848,20 @@ fun CollapsibleFooterAction(
             AnimatedVisibility(
                 visible = !data.collapsed,
                 enter = expandVertically(
-                    animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
-                    expandFrom = Alignment.Top
-                ) + fadeIn(animationSpec = tween(durationMillis = 150)),
-                exit = shrinkVertically(
-                    animationSpec = tween(durationMillis = 180, easing = FastOutLinearInEasing),
-                    shrinkTowards = Alignment.Top
-                ) + fadeOut(animationSpec = tween(durationMillis = 120))
+                    expandFrom = Alignment.Top,
+                    animationSpec = spring(
+                        dampingRatio = 0.9f,
+                        stiffness = Spring.StiffnessLow
+                    )
+                ) + fadeIn(animationSpec = tween(durationMillis = 120, delayMillis = 40)),
+                exit = fadeOut(animationSpec = tween(durationMillis = 90)) +
+                        shrinkVertically(
+                            shrinkTowards = Alignment.Top,
+                            animationSpec = spring(
+                                dampingRatio = 1.0f,
+                                stiffness = Spring.StiffnessMedium
+                            )
+                        )
             ) {
                 CategoryCell(modifier = Modifier.padding(bottom = LocalDimensions.current.smallSpacing)) {
                     CollapsibleFooterActions(items = data.items)
@@ -1006,7 +1013,7 @@ fun PreviewCollapsibleActionTrayLongText(
         val demoItems = listOf(
             CollapsibleFooterItemData(
                 label = GetString("Looooooooooooooooooooooooooooooooooooooooooooooooooooooooong"),
-                buttonLabel = GetString("Long Loooooooooooooong"),
+                buttonLabel = GetString("Long Looooooooooooooooooooong"),
                 buttonColor = LocalColors.current.accent,
                 onClick = {}
             ),
