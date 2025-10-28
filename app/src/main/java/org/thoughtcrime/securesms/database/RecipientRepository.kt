@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
@@ -93,9 +94,13 @@ class RecipientRepository @Inject constructor(
 
     fun observeSelf(): Flow<Recipient> {
         return preferences.watchLocalNumber()
-            .filterNotNull()
-            .distinctUntilChanged()
-            .flatMapLatest { observeRecipient(it.toAddress()) }
+            .flatMapLatest {
+                if (it.isNullOrBlank()) {
+                    emptyFlow()
+                } else {
+                    observeRecipient(it.toAddress())
+                }
+            }
     }
 
     fun getSelf(): Recipient {
