@@ -105,12 +105,6 @@ fun ChoosePlan(
 
         val context = LocalContext.current
         val title = when (planData.subscriptionType) {
-            is SubscriptionType.Expired ->
-                Phrase.from(context.getText(R.string.proAccessRenewStart))
-                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .format()
-
             is SubscriptionType.Active.Expiring -> Phrase.from(context.getText(R.string.proAccessActivatedNotAuto))
                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                 .put(DATE_KEY, planData.subscriptionType.duration.expiryFromNow())
@@ -128,7 +122,7 @@ fun ChoosePlan(
                 .put(DATE_KEY, planData.subscriptionType.duration.expiryFromNow())
                 .format()
 
-            is SubscriptionType.NeverSubscribed ->
+            else ->
                 Phrase.from(context.getText(R.string.proChooseAccess))
                     .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .format()

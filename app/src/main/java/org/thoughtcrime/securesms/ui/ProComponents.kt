@@ -25,9 +25,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -88,7 +88,6 @@ import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsNavHost
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
-import org.thoughtcrime.securesms.ui.components.FillButtonRect
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.TertiaryFillButtonRect
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -362,15 +361,18 @@ fun SessionProCTA(
         ) {
             BoxWithConstraints(modifier = modifier) {
                 val topInset = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding()
-                val targetHeight =
-                    (this.maxHeight - topInset) * 0.94f // sheet should take up 94% of the height, without the status bar
+                val maxHeight =
+                    (this.maxHeight - topInset) * 0.8f // sheet should take up 80% of the height, without the status bar
+
                 Box(
-                    modifier = Modifier.height(targetHeight),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = maxHeight),
                     contentAlignment = Alignment.TopCenter
                 ) {
                     ProSettingsNavHost(
                         startDestination = ProSettingsDestination.Home,
-                        hideHomeAppBar = true,
+                        inSheet = true,
                         onBack = dismissSheet
                     )
 
