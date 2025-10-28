@@ -15,6 +15,8 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
@@ -759,95 +761,119 @@ fun CollapsibleFooterAction(
     onCollapsedClicked: () -> Unit = {},
     onClosedClicked: () -> Unit = {}
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(
-                RoundedCornerShape(
-                    topStart = LocalDimensions.current.contentSpacing,
-                    topEnd = LocalDimensions.current.contentSpacing
-                )
-            )
-            .background(LocalColors.current.backgroundSecondary)
-            .padding(LocalDimensions.current.smallSpacing),
-        verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
+
+    // Bottomsheet-like enter/exit
+    val enterFromBottom = remember {
+        slideInVertically(
+            // start completely off-screen below
+            initialOffsetY = { it },
+            animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)
+        ) + fadeIn()
+    }
+    val exitToBottom = remember {
+        slideOutVertically(
+            // leave sliding down out of view
+            targetOffsetY = { it },
+            animationSpec = tween(durationMillis = 300, easing = FastOutLinearInEasing)
+        ) + fadeOut()
+    }
+
+    AnimatedVisibility(
+        // drives show/hide from bottom
+        visible = data.visible,
+        enter = enterFromBottom,
+        exit = exitToBottom
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            val rotation by animateFloatAsState(
-                targetValue = if (data.collapsed) 180f else 0f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow
+        Column(
+            modifier = modifier
+                .fillMaxWidth()
+                .clip(
+                    RoundedCornerShape(
+                        topStart = LocalDimensions.current.contentSpacing,
+                        topEnd = LocalDimensions.current.contentSpacing
+                    )
                 )
-            )
+                .background(LocalColors.current.backgroundSecondary)
+                .padding(LocalDimensions.current.smallSpacing),
+            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val rotation by animateFloatAsState(
+                    targetValue = if (data.collapsed) 180f else 0f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
+                )
 
-            Icon(
-                modifier = Modifier
-                    .rotate(rotation)
-                    .clickable(onClick = onCollapsedClicked),
-                painter = painterResource(R.drawable.ic_chevron_down),
-                contentDescription = null
-            )
-            Text(
-                text = data.title.string(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(horizontal = LocalDimensions.current.smallSpacing),
-                style = LocalType.current.h8,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Icon(
-                modifier = Modifier
-                    .clickable(onClick = onClosedClicked),
-                painter = painterResource(R.drawable.ic_x),
-                contentDescription = null
-            )
-        }
-
-        // Rendered actions
-        AnimatedVisibility(
-            visible = !data.collapsed,
-            enter = slideInVertically(
-                animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
-                initialOffsetY = { it } // start just below and slide up into place
-            ),
-            exit = slideOutVertically(
-                animationSpec = tween(durationMillis = 300, easing = FastOutLinearInEasing),
-                targetOffsetY = { it } // slide down out of view when collapsing
-            )) {
-            CategoryCell {
-                Column(
+                Icon(
+                    modifier = Modifier
+                        .rotate(rotation)
+                        .clickable(onClick = onCollapsedClicked),
+                    painter = painterResource(R.drawable.ic_chevron_down),
+                    contentDescription = null
+                )
+                Text(
+                    text = data.title.string(),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(LocalColors.current.backgroundTertiary)
-                ) {
-                    data.items.forEachIndexed { index, item ->
-                        val titleText = item.label()
-                        val annotatedTitle = remember(titleText) { AnnotatedString(titleText) }
-                        if (index != 0) Divider()
-                        ActionRowItem(
-                            modifier = Modifier.background(LocalColors.current.backgroundTertiary),
-                            title = annotatedTitle,
-                            onClick = {},
-                            qaTag = R.string.qa_string_placeholder,
-                            endContent = {
-                                SlimFillButtonRect(
-                                    item.buttonLabel.string(),
-                                    color = item.buttonColor,
-                                    modifier = Modifier
-                                        .width(100.dp)
-                                ) {
-                                    item.onClick()
+                        .weight(1f)
+                        .padding(horizontal = LocalDimensions.current.smallSpacing),
+                    style = LocalType.current.h8,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Icon(
+                    modifier = Modifier
+                        .clickable(onClick = onClosedClicked),
+                    painter = painterResource(R.drawable.ic_x),
+                    contentDescription = null
+                )
+            }
+
+            // Rendered actions
+            AnimatedVisibility(
+                visible = !data.collapsed,
+                enter = slideInVertically(
+                    animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
+                    initialOffsetY = { it } // start just below and slide up into place
+                ),
+                exit = slideOutVertically(
+                    animationSpec = tween(durationMillis = 300, easing = FastOutLinearInEasing),
+                    targetOffsetY = { it } // slide down out of view when collapsing
+                )) {
+                CategoryCell {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(LocalColors.current.backgroundTertiary)
+                    ) {
+                        data.items.forEachIndexed { index, item ->
+                            val titleText = item.label()
+                            val annotatedTitle = remember(titleText) { AnnotatedString(titleText) }
+                            if (index != 0) Divider()
+                            ActionRowItem(
+                                modifier = Modifier.background(LocalColors.current.backgroundTertiary),
+                                title = annotatedTitle,
+                                onClick = {},
+                                qaTag = R.string.qa_string_placeholder,
+                                endContent = {
+                                    SlimFillButtonRect(
+                                        item.buttonLabel.string(),
+                                        color = item.buttonColor,
+                                        modifier = Modifier
+                                            .width(100.dp)
+                                    ) {
+                                        item.onClick()
+                                    }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             }
