@@ -864,7 +864,7 @@ fun CollapsibleFooterAction(
                                 modifier = Modifier.background(LocalColors.current.backgroundTertiary),
                                 title = annotatedTitle,
                                 onClick = {},
-                                qaTag = R.string.qa_string_placeholder,
+                                qaTag = R.string.qa_collapsing_footer_action,
                                 endContent = {
                                     SlimFillButtonRect(
                                         item.buttonLabel.string(),
