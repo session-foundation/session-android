@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.attachments
 
 import android.app.Application
 import android.os.FileObserver
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -95,11 +96,17 @@ class AvatarUploadManager @Inject constructor(
                         }
 
                         Log.d(TAG, "Avatar expired, re-uploading")
-                        uploadAvatar(
-                            pictureData = localEncryptedFileInputStreamFactory.create(localFile)
-                                .use { it.readBytes() },
-                            isReupload = true,
-                        )
+                        try {
+                            uploadAvatar(
+                                pictureData = localEncryptedFileInputStreamFactory.create(localFile)
+                                    .use { it.readBytes() },
+                                isReupload = true,
+                            )
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Failed to re-upload avatar", e)
+                        }
                     }
             } else {
                 emptyFlow()

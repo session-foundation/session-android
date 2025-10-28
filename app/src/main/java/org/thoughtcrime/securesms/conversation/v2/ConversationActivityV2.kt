@@ -1809,7 +1809,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
             message.reaction = Reaction.from(
                 timestamp = originalMessage.timestamp,
-                author = originalAuthor.address, 
+                author = originalAuthor.address,
                 emoji = emoji,
                 react = false
             )
