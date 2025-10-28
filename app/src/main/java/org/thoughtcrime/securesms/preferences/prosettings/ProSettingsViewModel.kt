@@ -293,18 +293,20 @@ class ProSettingsViewModel @AssistedInject constructor(
                 }
             }
 
-            Commands.GoToChoosePlan -> {
+            is Commands.GoToChoosePlan -> {
                 when(_proSettingsUIState.value.subscriptionState.refreshState){
                     // if we are in a loading or refresh state we should show a dialog instead
                     is State.Loading -> {
-                        val (title, message) = when(_proSettingsUIState.value.subscriptionState.type){
-                            is SubscriptionType.Active -> Phrase.from(context.getText(R.string.proAccessLoading))
+                        val state = _proSettingsUIState.value.subscriptionState.type
+                        val (title, message) = when{
+                            state is SubscriptionType.Active -> Phrase.from(context.getText(R.string.proAccessLoading))
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.proAccessLoadingDescription))
                                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format()
-                            is SubscriptionType.NeverSubscribed -> Phrase.from(context.getText(R.string.checkingProStatus))
+                            state is SubscriptionType.NeverSubscribed
+                                    || command.inSheet -> Phrase.from(context.getText(R.string.checkingProStatus))
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.checkingProStatusContinue))
@@ -331,15 +333,17 @@ class ProSettingsViewModel @AssistedInject constructor(
                     }
 
                     is State.Error -> {
-                        val (title, message) = when(_proSettingsUIState.value.subscriptionState.type){
-                            is SubscriptionType.Active -> Phrase.from(context.getText(R.string.proAccessError))
+                        val state = _proSettingsUIState.value.subscriptionState.type
+                        val (title, message) = when{
+                            state is SubscriptionType.Active -> Phrase.from(context.getText(R.string.proAccessError))
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.proAccessNetworkLoadError))
                                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .put(APP_NAME_KEY, context.getString(R.string.app_name))
                                         .format()
-                            is SubscriptionType.NeverSubscribed -> Phrase.from(context.getText(R.string.proStatusError))
+                            state is SubscriptionType.NeverSubscribed
+                                    || command.inSheet-> Phrase.from(context.getText(R.string.proStatusError))
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.proStatusNetworkErrorContinue))
@@ -504,18 +508,20 @@ class ProSettingsViewModel @AssistedInject constructor(
                 }
             }
 
-            Commands.OnHeaderClicked -> {
+            is Commands.OnHeaderClicked -> {
                 when(_proSettingsUIState.value.subscriptionState.refreshState){
                     // if we are in a loading or refresh state we should show a dialog instead
                     is State.Loading -> {
-                        val (title, message) = when(_proSettingsUIState.value.subscriptionState.type){
-                            is SubscriptionType.Active -> Phrase.from(context.getText(R.string.proStatusLoading))
+                        val state = _proSettingsUIState.value.subscriptionState.type
+                        val (title, message) = when{
+                            state is SubscriptionType.Active -> Phrase.from(context.getText(R.string.proStatusLoading))
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.proStatusLoadingDescription))
                                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format()
-                            is SubscriptionType.NeverSubscribed -> Phrase.from(context.getText(R.string.checkingProStatus))
+                            state is SubscriptionType.NeverSubscribed
+                                    || command.inSheet-> Phrase.from(context.getText(R.string.checkingProStatus))
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.checkingProStatusContinue))
@@ -542,14 +548,16 @@ class ProSettingsViewModel @AssistedInject constructor(
 
                     is State.Error -> {
                         _dialogState.update {
-                            val (title, message) = when(_proSettingsUIState.value.subscriptionState.type){
-                                is SubscriptionType.Active -> Phrase.from(context.getText(R.string.proStatusError))
+                            val state = _proSettingsUIState.value.subscriptionState.type
+                            val (title, message) = when{
+                                state is SubscriptionType.Active -> Phrase.from(context.getText(R.string.proStatusError))
                                     .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                     .format().toString() to
                                         Phrase.from(context.getText(R.string.proStatusRefreshNetworkError))
                                             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                             .format()
-                                is SubscriptionType.NeverSubscribed -> Phrase.from(context.getText(R.string.proStatusError))
+                                state is SubscriptionType.NeverSubscribed ||
+                                     command.inSheet -> Phrase.from(context.getText(R.string.proStatusError))
                                     .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                     .format().toString() to
                                         Phrase.from(context.getText(R.string.proStatusNetworkErrorContinue))
@@ -651,7 +659,7 @@ class ProSettingsViewModel @AssistedInject constructor(
         data object HideTCPolicyDialog: Commands
         data object HideSimpleDialog : Commands
 
-        object GoToChoosePlan: Commands
+        data class GoToChoosePlan(val inSheet: Boolean): Commands
         object GoToRefund: Commands
         object GoToCancel: Commands
         object GoToProSettings: Commands
@@ -664,7 +672,7 @@ class ProSettingsViewModel @AssistedInject constructor(
         data object GetProPlan: Commands
         data object ConfirmProPlan: Commands
 
-        data object OnHeaderClicked: Commands
+        data class OnHeaderClicked(val inSheet: Boolean): Commands
         data object OnProStatsClicked: Commands
     }
 

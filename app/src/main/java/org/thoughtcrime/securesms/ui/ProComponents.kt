@@ -362,7 +362,7 @@ fun SessionProCTA(
             BoxWithConstraints(modifier = modifier) {
                 val topInset = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding()
                 val maxHeight =
-                    (this.maxHeight - topInset) * 0.8f // sheet should take up 80% of the height, without the status bar
+                    (this.maxHeight - topInset) * 0.85f // sheet should take up 80% of the height, without the status bar
 
                 Box(
                     modifier = Modifier

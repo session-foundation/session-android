@@ -39,6 +39,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -54,11 +56,17 @@ import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.recipients.ProStatus
 import org.session.libsession.utilities.recipients.shouldShowProBadge
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.*
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.GoToCancel
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.GoToChoosePlan
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.GoToRefund
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.OnHeaderClicked
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.OnProStatsClicked
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.SetShowProBadge
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.SubscriptionDetails
-import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.SubscriptionState
+import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.ui.ActionRowItem
 import org.thoughtcrime.securesms.ui.CategoryCell
@@ -132,7 +140,7 @@ fun ProSettingsHome(
         onHeaderClick = {
             // add a click handling if the subscription state is loading or errored
             if(data.subscriptionState.refreshState !is State.Success<*>){
-                sendCommand(OnHeaderClicked)
+                sendCommand(OnHeaderClicked(inSheet))
             } else null
         },
         extraHeaderContent = {
@@ -212,12 +220,34 @@ fun ProSettingsHome(
 
             Spacer(Modifier.height(LocalDimensions.current.spacing))
 
-            AccentFillButtonRect(
-                modifier = Modifier.fillMaxWidth(),
-                text = stringResource(R.string.theContinue),
-                enabled = data.subscriptionState.refreshState is State.Success,
-                onClick = { sendCommand(GoToChoosePlan) }
-            )
+            Box {
+                val enableButon = data.subscriptionState.refreshState is State.Success
+                AccentFillButtonRect(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = stringResource(R.string.theContinue),
+                    enabled = enableButon,
+                    onClick = { sendCommand(GoToChoosePlan(inSheet)) }
+                )
+                // the designs require we should still be able to click on the disabled button...
+                // this goes against the system the built in ux decisions.
+                // To avoid extending the button we will instead add a clickable area above the button,
+                // invisible to screen readers as this is purely a visual action in case people try to
+                // click in spite of the state being "loading" or "error"
+                if (!enableButon) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth()
+                            .height(LocalDimensions.current.minItemButtonHeight)
+                            .semantics {
+                                hideFromAccessibility()
+                            }
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = { sendCommand(GoToChoosePlan(inSheet)) }
+                            )
+                    ) { }
+                }
+            }
         }
 
         // Pro Stats
@@ -235,6 +265,7 @@ fun ProSettingsHome(
             ProSettings(
                 data = subscriptionType,
                 subscriptionRefreshState = data.subscriptionState.refreshState,
+                inSheet = inSheet,
                 expiry = data.subscriptionExpiryLabel,
                 sendCommand = sendCommand,
             )
@@ -246,6 +277,7 @@ fun ProSettingsHome(
             ProManage(
                 data = subscriptionType,
                 subscriptionRefreshState = data.subscriptionState.refreshState,
+                inSheet = inSheet,
                 sendCommand = sendCommand,
             )
         }
@@ -263,6 +295,7 @@ fun ProSettingsHome(
            ProSettingsFooter(
                subscriptionType = subscriptionType,
                subscriptionRefreshState = data.subscriptionState.refreshState,
+               inSheet = inSheet,
                sendCommand = sendCommand
            )
         }
@@ -478,6 +511,7 @@ fun ProSettings(
     modifier: Modifier = Modifier,
     data: SubscriptionType.Active,
     subscriptionRefreshState: State<Unit>,
+    inSheet: Boolean,
     expiry: CharSequence,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
 ){
@@ -540,7 +574,7 @@ fun ProSettings(
                     }
                 },
                 qaTag = R.string.qa_pro_settings_action_update_plan,
-                onClick = { sendCommand(GoToChoosePlan) }
+                onClick = { sendCommand(GoToChoosePlan(inSheet)) }
             )
             Divider()
 
@@ -730,6 +764,7 @@ private fun ProFeatureItem(
 fun ProManage(
     modifier: Modifier = Modifier,
     data: SubscriptionType,
+    inSheet: Boolean,
     subscriptionRefreshState: State<Unit>,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
 ){
@@ -832,7 +867,7 @@ fun ProManage(
                             }
                         },
                         qaTag = R.string.qa_pro_settings_action_renew_plan,
-                        onClick = { sendCommand(GoToChoosePlan) }
+                        onClick = { sendCommand(GoToChoosePlan(inSheet)) }
                     )
 
                     Divider()
@@ -860,6 +895,7 @@ fun ProManage(
 fun ProSettingsFooter(
     subscriptionType: SubscriptionType,
     subscriptionRefreshState: State<Unit>,
+    inSheet: Boolean,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
 ) {
     // Manage Pro - Pro
@@ -867,6 +903,7 @@ fun ProSettingsFooter(
         Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
         ProManage(
             data = subscriptionType,
+            inSheet = inSheet,
             subscriptionRefreshState = subscriptionRefreshState,
             sendCommand = sendCommand,
         )
