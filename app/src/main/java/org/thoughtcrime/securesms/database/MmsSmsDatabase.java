@@ -149,6 +149,29 @@ public class MmsSmsDatabase extends Database {
     return null;
   }
 
+  /**
+   * @deprecated We shouldn't be querying messages by timestamp alone. Use `getMessageFor` when possible
+   */
+  @Deprecated(forRemoval = true)
+  public @Nullable MessageRecord getMessageByTimestamp(long timestamp, String serializedAuthor, boolean getQuote) {
+    try (Cursor cursor = queryTables(PROJECTION, MmsSmsColumns.NORMALIZED_DATE_SENT + " = " + timestamp, true, null, null, null)) {
+      MmsSmsDatabase.Reader reader = readerFor(cursor, getQuote);
+
+      MessageRecord messageRecord;
+      boolean isOwnNumber = Util.isOwnNumber(context, serializedAuthor);
+
+      while ((messageRecord = reader.getNext()) != null) {
+        if ((isOwnNumber && messageRecord.isOutgoing()) ||
+                (!isOwnNumber && messageRecord.getIndividualRecipient().getAddress().toString().equals(serializedAuthor)))
+        {
+          return messageRecord;
+        }
+      }
+    }
+
+    return null;
+  }
+
   @Nullable
   public MessageId getLastSentMessageID(long threadId) {
     String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
@@ -296,6 +319,28 @@ public class MmsSmsDatabase extends Database {
 
     try (Cursor cursor = queryTables(PROJECTION, selection, includeReactions, null, order, "1")) {
       return readerFor(cursor, getQuote).getNext();
+    }
+  }
+
+  /**
+   * Get the maximum timestamp in a thread up to (and including) the message with the given ID.
+   * Useful for determining the last read timestamp in a thread.
+   * <p>
+   * This method will also consider the reactions associated with messages in the thread.
+   * If a reaction has a timestamp greater than the message timestamp, it will be taken into account.
+   *
+   * @param messageId The message ID up to which to search.
+   * @return A pair of maximum timestamp in mills and thread ID, or null if no messages are found.
+   */
+  @Nullable
+  public Pair<Long, Long> getMaxTimestampInThreadUpTo(@NonNull final MessageId messageId) {
+    Pair<String, Object[]> query = MmsSmsDatabaseSQLKt.buildMaxTimestampInThreadUpToQuery(messageId);
+    try (Cursor cursor = getReadableDatabase().rawQuery(query.getFirst(), query.getSecond())) {
+      if (cursor != null && cursor.moveToFirst()) {
+        return new Pair<>(cursor.getLong(0), cursor.getLong(1));
+      } else {
+        return null;
+      }
     }
   }
 

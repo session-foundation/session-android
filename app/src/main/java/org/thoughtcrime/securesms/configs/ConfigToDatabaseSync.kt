@@ -8,6 +8,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -58,6 +59,7 @@ import org.thoughtcrime.securesms.util.castAwayType
 import java.util.EnumSet
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlin.math.log
 
 private const val TAG = "ConfigToDatabaseSync"
 
@@ -93,17 +95,20 @@ class ConfigToDatabaseSync @Inject constructor(
         // Sync conversations from config -> database
         scope.launch {
             preferences.watchLocalNumber()
-                .filterNotNull()
-                .take(1)
-                .flatMapLatest {
-                    combine(
-                        conversationRepository.conversationListAddressesFlow,
-                        configFactory.userConfigsChanged(EnumSet.of(UserConfigType.CONVO_INFO_VOLATILE))
-                            .castAwayType()
-                            .onStart { emit(Unit) }
-                            .map { _ -> configFactory.withUserConfigs { it.convoInfoVolatile.all() } },
-                        ::Pair
-                    )
+                .map { it != null }
+                .flatMapLatest { loggedIn ->
+                    if (loggedIn) {
+                        combine(
+                            conversationRepository.conversationListAddressesFlow,
+                            configFactory.userConfigsChanged(EnumSet.of(UserConfigType.CONVO_INFO_VOLATILE))
+                                .castAwayType()
+                                .onStart { emit(Unit) }
+                                .map { _ -> configFactory.withUserConfigs { it.convoInfoVolatile.all() } },
+                            ::Pair
+                        )
+                    } else {
+                        emptyFlow()
+                    }
                 }
                 .distinctUntilChanged()
                 .collectLatest { (conversations, convoInfo) ->

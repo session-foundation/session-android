@@ -22,8 +22,10 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDD
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.file_server.FileServer
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
@@ -59,6 +61,7 @@ class DebugMenuViewModel @Inject constructor(
     private val attachmentDatabase: AttachmentDatabase,
     private val conversationRepository: ConversationRepository,
     private val databaseInspector: DatabaseInspector,
+    private val tokenFetcher: TokenFetcher,
     subscriptionManagers: Set<@JvmSuppressWildcards SubscriptionManager>,
 ) : ViewModel() {
     private val TAG = "DebugMenu"
@@ -74,6 +77,7 @@ class DebugMenuViewModel @Inject constructor(
             hideMessageRequests = textSecurePreferences.hasHiddenMessageRequests(),
             hideNoteToSelf = configFactory.withUserConfigs { it.userProfile.getNtsPriority() == PRIORITY_HIDDEN },
             forceDeprecationState = deprecationManager.deprecationStateOverride.value,
+            forceDeterministicEncryption = textSecurePreferences.forcesDeterministicAttachmentEncryption,
             availableDeprecationState = listOf(null) + LegacyGroupDeprecationManager.DeprecationState.entries.toList(),
             deprecatedTime = deprecationManager.deprecatedTime.value,
             deprecatingStartTime = deprecationManager.deprecatingStartTime.value,
@@ -82,6 +86,7 @@ class DebugMenuViewModel @Inject constructor(
             forceIncomingMessagesAsPro = textSecurePreferences.forceIncomingMessagesAsPro(),
             forcePostPro = textSecurePreferences.forcePostPro(),
             forceShortTTl = textSecurePreferences.forcedShortTTL(),
+            debugAvatarReupload = textSecurePreferences.debugAvatarReupload,
             messageProFeature = textSecurePreferences.getDebugMessageFeatures(),
             dbInspectorState = DatabaseInspectorState.NOT_AVAILABLE,
             debugSubscriptionStatuses = setOf(
@@ -105,6 +110,8 @@ class DebugMenuViewModel @Inject constructor(
                 .flatMap { it.availablePlans.asSequence().map { plan -> DebugProPlan(it, plan) } }
                 .toList(),
             forceNoBilling = textSecurePreferences.getDebugForceNoBilling(),
+            availableAltFileServers = TEST_FILE_SERVERS,
+            alternativeFileServer = textSecurePreferences.alternativeFileServer,
         )
     )
     val uiState: StateFlow<UIState>
@@ -330,6 +337,29 @@ class DebugMenuViewModel @Inject constructor(
                     command.plan.apply { manager.purchasePlan(plan) }
                 }
             }
+
+            is Commands.ToggleDeterministicEncryption -> {
+                val newValue = !_uiState.value.forceDeterministicEncryption
+                _uiState.update { it.copy(forceDeterministicEncryption = newValue) }
+                textSecurePreferences.forcesDeterministicAttachmentEncryption = newValue
+            }
+
+            is Commands.ToggleDebugAvatarReupload -> {
+                val newValue = !_uiState.value.debugAvatarReupload
+                _uiState.update { it.copy(debugAvatarReupload = newValue) }
+                textSecurePreferences.debugAvatarReupload = newValue
+            }
+
+            is Commands.ResetPushToken -> {
+                viewModelScope.launch {
+                    tokenFetcher.resetToken()
+                }
+            }
+
+            is Commands.SelectAltFileServer -> {
+                _uiState.update { it.copy(alternativeFileServer = command.fileServer) }
+                textSecurePreferences.alternativeFileServer = command.fileServer
+            }
         }
     }
 
@@ -422,6 +452,7 @@ class DebugMenuViewModel @Inject constructor(
         val showDeprecatedStateWarningDialog: Boolean,
         val hideMessageRequests: Boolean,
         val hideNoteToSelf: Boolean,
+        val forceDeterministicEncryption: Boolean,
         val forceCurrentUserAsPro: Boolean,
         val forceOtherUsersAsPro: Boolean,
         val forceIncomingMessagesAsPro: Boolean,
@@ -429,6 +460,7 @@ class DebugMenuViewModel @Inject constructor(
         val forcePostPro: Boolean,
         val forceShortTTl: Boolean,
         val forceDeprecationState: LegacyGroupDeprecationManager.DeprecationState?,
+        val debugAvatarReupload: Boolean,
         val availableDeprecationState: List<LegacyGroupDeprecationManager.DeprecationState?>,
         val deprecatedTime: ZonedDateTime,
         val deprecatingStartTime: ZonedDateTime,
@@ -439,6 +471,8 @@ class DebugMenuViewModel @Inject constructor(
         val selectedDebugProPlanStatus: DebugProPlanStatus,
         val debugProPlans: List<DebugProPlan>,
         val forceNoBilling: Boolean,
+        val alternativeFileServer: FileServer? = null,
+        val availableAltFileServers: List<FileServer> = emptyList(),
     )
 
     enum class DatabaseInspectorState {
@@ -491,5 +525,22 @@ class DebugMenuViewModel @Inject constructor(
         data class SetDebugSubscriptionStatus(val status: DebugSubscriptionStatus) : Commands()
         data class SetDebugProPlanStatus(val status: DebugProPlanStatus) : Commands()
         data class PurchaseDebugPlan(val plan: DebugProPlan) : Commands()
+        data object ToggleDeterministicEncryption : Commands()
+        data object ToggleDebugAvatarReupload : Commands()
+        data object ResetPushToken : Commands()
+        data class SelectAltFileServer(val fileServer: FileServer?) : Commands()
+    }
+
+    companion object {
+        private val TEST_FILE_SERVERS: List<FileServer> = listOf(
+            FileServer(
+                url = "http://potatofiles.getsession.org",
+                ed25519PublicKeyHex = "ff86dcd4b26d1bfec944c59859494248626d6428efc12168749d65a1b92f5e28",
+            ),
+            FileServer(
+                url = "http://superduperfiles.oxen.io",
+                ed25519PublicKeyHex = "929e33ded05e653fec04b49645117f51851f102a947e04806791be416ed76602",
+            )
+        )
     }
 }

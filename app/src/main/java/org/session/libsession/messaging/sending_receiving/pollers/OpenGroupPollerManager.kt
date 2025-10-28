@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.sync.Semaphore
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
@@ -45,6 +46,8 @@ class OpenGroupPollerManager @Inject constructor(
     preferences: TextSecurePreferences,
     @ManagerScope scope: CoroutineScope
 ) : OnAppStartupComponent {
+    private val pollerSemaphore = Semaphore(3)
+
     val pollers: StateFlow<Map<String, PollerHandle>> =
         preferences.watchLocalNumber()
             .map { it != null }
@@ -74,7 +77,7 @@ class OpenGroupPollerManager @Inject constructor(
                             val scope = CoroutineScope(Dispatchers.Default)
                             Log.d(TAG, "Creating new poller for $baseUrl")
                             PollerHandle(
-                                poller = pollerFactory.create(baseUrl, scope),
+                                poller = pollerFactory.create(baseUrl, scope, pollerSemaphore),
                                 pollerScope = scope
                             )
                         }
