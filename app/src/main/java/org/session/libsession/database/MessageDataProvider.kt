@@ -30,7 +30,7 @@ interface MessageDataProvider {
     fun getAttachmentStream(attachmentId: Long): SessionServiceAttachmentStream?
     fun getAttachmentPointer(attachmentId: Long): SessionServiceAttachmentPointer?
     fun getSignalAttachmentStream(attachmentId: Long): SignalServiceAttachmentStream?
-    fun getScaledSignalAttachmentStream(attachmentId: Long): SignalServiceAttachmentStream?
+    suspend fun getScaledSignalAttachmentStream(attachmentId: Long): SignalServiceAttachmentStream?
     fun getSignalAttachmentPointer(attachmentId: Long): SignalServiceAttachmentPointer?
     fun setAttachmentState(attachmentState: AttachmentState, attachmentId: AttachmentId, messageID: Long)
     fun insertAttachment(messageId: Long, attachmentId: AttachmentId, stream : InputStream)
