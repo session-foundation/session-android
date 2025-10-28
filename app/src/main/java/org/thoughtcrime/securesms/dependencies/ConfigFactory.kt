@@ -485,16 +485,6 @@ class ConfigFactory @Inject constructor(
                 }
             }
         }
-
-        override fun signForPushRegistry(data: ByteArray): Map<String, String> {
-            return factory.withGroupConfigs(accountId) {
-                val auth = it.groupKeys.subAccountSign(data, authData)
-                buildMap {
-                    put("subkey_tag", auth.subAccount)
-                    put("signature", auth.signature)
-                }
-            }
-        }
     }
 }
 

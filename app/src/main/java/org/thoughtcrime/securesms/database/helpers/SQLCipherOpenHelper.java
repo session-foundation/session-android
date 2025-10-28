@@ -31,6 +31,7 @@ import org.thoughtcrime.securesms.database.LokiUserDatabase;
 import org.thoughtcrime.securesms.database.MmsDatabase;
 import org.thoughtcrime.securesms.database.MmsSmsDatabase;
 import org.thoughtcrime.securesms.database.PushDatabase;
+import org.thoughtcrime.securesms.database.PushRegistrationDatabase;
 import org.thoughtcrime.securesms.database.ReactionDatabase;
 import org.thoughtcrime.securesms.database.RecipientDatabase;
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase;
@@ -100,6 +101,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int lokiV52                          = 73;
   private static final int lokiV53                          = 74;
   private static final int lokiV54                          = 75;
+  private static final int lokiV55                          = 76;
 
   // Loki - onUpgrade(...) must be updated to use Loki version numbers if Signal makes any database changes
   private static final int    DATABASE_VERSION         = lokiV54;
@@ -262,6 +264,8 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
     db.execSQL(SmsDatabase.ADD_LAST_MESSAGE_INDEX);
     db.execSQL(MmsDatabase.ADD_LAST_MESSAGE_INDEX);
+
+    executeStatements(db, PushRegistrationDatabase.Companion.createTableStatements());
   }
 
   @Override
@@ -594,6 +598,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       if (oldVersion < lokiV54) {
         db.execSQL(SmsDatabase.ADD_LAST_MESSAGE_INDEX);
         db.execSQL(MmsDatabase.ADD_LAST_MESSAGE_INDEX);
+      }
+
+      if (oldVersion < lokiV55) {
+        executeStatements(db, PushRegistrationDatabase.Companion.createTableStatements());
       }
 
       db.setTransactionSuccessful();

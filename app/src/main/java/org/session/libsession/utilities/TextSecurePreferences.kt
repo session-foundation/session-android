@@ -17,9 +17,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.serialization.json.Json
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.file_server.FileServer
 import org.session.libsession.utilities.TextSecurePreferences.Companion.AUTOPLAY_AUDIO_MESSAGES
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_DARK
@@ -236,6 +238,9 @@ interface TextSecurePreferences {
     var selectedActivityAliasName: String?
 
     var inAppReviewState: String?
+    var forcesDeterministicAttachmentEncryption: Boolean
+    var debugAvatarReupload: Boolean
+    var alternativeFileServer: FileServer?
 
 
     companion object {
@@ -385,6 +390,7 @@ interface TextSecurePreferences {
         const val DEBUG_FORCE_NO_BILLING = "debug_pro_has_billing"
 
         const val SUBSCRIPTION_PROVIDER = "session_subscription_provider"
+        const val DEBUG_AVATAR_REUPLOAD = "debug_avatar_reupload"
 
         @JvmStatic
         fun getConfigurationMessageSynced(context: Context): Boolean {
@@ -975,7 +981,8 @@ interface TextSecurePreferences {
 
 @Singleton
 class AppTextSecurePreferences @Inject constructor(
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context,
+    private val json: Json,
 ): TextSecurePreferences {
     private val localNumberState = MutableStateFlow(getStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, null))
     private val postProLaunchState = MutableStateFlow(getBooleanPreference(SET_FORCE_POST_PRO, false))
@@ -1799,4 +1806,28 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setSubscriptionProvider(provider: String) {
         setStringPreference(TextSecurePreferences.SUBSCRIPTION_PROVIDER, provider)
     }
+
+    override var forcesDeterministicAttachmentEncryption: Boolean
+        get() = getBooleanPreference("forces_deterministic_attachment_upload", false)
+        set(value) {
+            setBooleanPreference("forces_deterministic_attachment_upload", value)
+        }
+
+    override var debugAvatarReupload: Boolean
+        get() = getBooleanPreference(TextSecurePreferences.DEBUG_AVATAR_REUPLOAD, false)
+        set(value) {
+            setBooleanPreference(TextSecurePreferences.DEBUG_AVATAR_REUPLOAD, value)
+            _events.tryEmit(TextSecurePreferences.DEBUG_AVATAR_REUPLOAD)
+        }
+
+    override var alternativeFileServer: FileServer?
+        get() = getStringPreference("alternative_file_server", null)?.let {
+            json.decodeFromString(it)
+        }
+
+        set(value) {
+            setStringPreference("alternative_file_server", value?.let {
+                json.encodeToString(it)
+            })
+        }
 }
