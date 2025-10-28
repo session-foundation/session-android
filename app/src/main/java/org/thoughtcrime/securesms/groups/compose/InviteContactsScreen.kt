@@ -29,9 +29,9 @@ import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.groups.ContactItem
 import org.thoughtcrime.securesms.groups.SelectContactsViewModel
 import org.thoughtcrime.securesms.ui.BottomFadingEdgeBox
-import org.thoughtcrime.securesms.ui.CollapsibleActionTray
-import org.thoughtcrime.securesms.ui.CollapsibleActionTrayData
-import org.thoughtcrime.securesms.ui.CollapsibleActionTrayItemData
+import org.thoughtcrime.securesms.ui.CollapsibleFooterAction
+import org.thoughtcrime.securesms.ui.CollapsibleFooterActionData
+import org.thoughtcrime.securesms.ui.CollapsibleFooterItemData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.SearchBar
 import org.thoughtcrime.securesms.ui.components.BackAppBar
@@ -87,7 +87,7 @@ fun InviteContacts(
 ) {
     val colors = LocalColors.current
     val trayItems = listOf(
-        CollapsibleActionTrayItemData(
+        CollapsibleFooterItemData(
             label = GetString(LocalResources.current.getString(R.string.membersInvite)),
             buttonLabel = GetString(LocalResources.current.getString(R.string.membersInviteTitle)),
             buttonColor = colors.accent,
@@ -109,8 +109,8 @@ fun InviteContacts(
                     .fillMaxWidth()
                     .imePadding()
             ) {
-                CollapsibleActionTray(
-                    data = CollapsibleActionTrayData(
+                CollapsibleFooterAction(
+                    data = CollapsibleFooterActionData(
                         title = data.footerActionTitle,
                         collapsed = data.collapsed,
                         visible = data.visible,

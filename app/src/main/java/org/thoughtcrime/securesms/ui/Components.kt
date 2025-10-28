@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.ui
 
-import android.R.attr.data
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
@@ -101,14 +100,12 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.times
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
-import org.thoughtcrime.securesms.ui.components.DangerFillButtonRect
 import org.thoughtcrime.securesms.ui.components.SessionSwitch
 import org.thoughtcrime.securesms.ui.components.SlimFillButtonRect
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
@@ -753,12 +750,12 @@ fun SearchBar(
 }
 
 /**
- * CollapsingActionTray
+ * CollapsibleFooterAction
  */
 @Composable
-fun CollapsibleActionTray(
+fun CollapsibleFooterAction(
     modifier: Modifier = Modifier,
-    data: CollapsibleActionTrayData,
+    data: CollapsibleFooterActionData,
     onCollapsedClicked: () -> Unit = {},
     onClosedClicked: () -> Unit = {}
 ) {
@@ -858,14 +855,14 @@ fun CollapsibleActionTray(
     }
 }
 
-data class CollapsibleActionTrayData(
+data class CollapsibleFooterActionData(
     val title: GetString,
     val collapsed: Boolean,
     val visible: Boolean,
-    val items: List<CollapsibleActionTrayItemData>
+    val items: List<CollapsibleFooterItemData>
 )
 
-data class CollapsibleActionTrayItemData(
+data class CollapsibleFooterItemData(
     val label: GetString,
     val buttonLabel: GetString,
     val buttonColor: Color,
@@ -880,19 +877,19 @@ fun PreviewCollapsibleActionTray(
 ) {
     PreviewTheme(colors) {
         val demoItems = listOf(
-            CollapsibleActionTrayItemData(
+            CollapsibleFooterItemData(
                 label = GetString("Mute notifications"),
                 buttonLabel = GetString("Mute"),
                 buttonColor = LocalColors.current.text,
                 onClick = {}
             ),
-            CollapsibleActionTrayItemData(
+            CollapsibleFooterItemData(
                 label = GetString("Pin conversation"),
                 buttonLabel = GetString("Pin"),
                 buttonColor = LocalColors.current.accent,
                 onClick = {}
             ),
-            CollapsibleActionTrayItemData(
+            CollapsibleFooterItemData(
                 label = GetString("Delete chat"),
                 buttonLabel = GetString("Delete"),
                 buttonColor = LocalColors.current.danger,
@@ -900,8 +897,8 @@ fun PreviewCollapsibleActionTray(
             )
         )
 
-        CollapsibleActionTray(
-            data = CollapsibleActionTrayData(
+        CollapsibleFooterAction(
+            data = CollapsibleFooterActionData(
                 title = GetString("Invite Contacts"),
                 collapsed = false,
                 visible = true,
