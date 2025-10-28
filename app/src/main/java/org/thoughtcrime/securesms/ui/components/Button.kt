@@ -359,6 +359,7 @@ fun SlimFillButtonRect(
     modifier: Modifier = Modifier,
     color: Color = LocalColors.current.accent,
     enabled: Boolean = true,
+    minWidth: Dp = Dp.Unspecified,
     onClick: () -> Unit
 ) {
     Button(
@@ -367,7 +368,8 @@ fun SlimFillButtonRect(
         modifier,
         enabled,
         style = ButtonStyle.Slim,
-        shape = sessionShapes().extraSmall
+        shape = sessionShapes().extraSmall,
+        minWidth = minWidth
     )
 }
 
