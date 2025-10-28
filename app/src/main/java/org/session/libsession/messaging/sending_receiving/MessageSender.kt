@@ -375,7 +375,7 @@ object MessageSender {
                         communityServerPubKey = Hex.fromStringCondensed(destination.serverPublicKey),
                         proRotatingEd25519PrivKey = null
                     )
-                    val base64EncodedData = Base64.encodeBytes(ciphertext)
+                    val base64EncodedData = Base64.encodeBytes(cipherText)
                     val response = OpenGroupApi.sendDirectMessage(
                         base64EncodedData,
                         destination.blindedPublicKey,
