@@ -775,14 +775,14 @@ fun CollapsibleFooterAction(
         slideInVertically(
             // start completely off-screen below
             initialOffsetY = { it },
-            animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)
+            animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)
         ) + fadeIn()
     }
     val exitToBottom = remember {
         slideOutVertically(
             // leave sliding down out of view
             targetOffsetY = { it },
-            animationSpec = tween(durationMillis = 300, easing = FastOutLinearInEasing)
+            animationSpec = tween(durationMillis = 200, easing = FastOutLinearInEasing)
         ) + fadeOut()
     }
 
