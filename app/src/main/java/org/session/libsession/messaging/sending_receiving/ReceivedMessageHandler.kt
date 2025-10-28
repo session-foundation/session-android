@@ -130,7 +130,7 @@ class ReceivedMessageHandler @Inject constructor(
                 }
             }
             is DataExtractionNotification -> handleDataExtractionNotification(message)
-            is UnsendRequest -> handleUnsendRequest(message, threadId)
+            is UnsendRequest -> handleUnsendRequest(message)
             is MessageRequestResponse -> messageRequestResponseHandler.get().handleExplicitRequestResponseMessage(message)
             is VisibleMessage -> handleVisibleMessage(
                 message = message,
@@ -225,7 +225,7 @@ class ReceivedMessageHandler @Inject constructor(
     }
 
 
-    fun handleUnsendRequest(message: UnsendRequest, threadId: Long): MessageId? {
+    fun handleUnsendRequest(message: UnsendRequest): MessageId? {
         val userPublicKey = storage.getUserPublicKey()
         val userAuth = storage.userAuth ?: return null
         val isLegacyGroupAdmin: Boolean = message.groupPublicKey?.let { key ->
@@ -248,7 +248,7 @@ class ReceivedMessageHandler @Inject constructor(
 
         val timestamp = message.timestamp ?: return null
         val author = message.author ?: return null
-        val messageToDelete = storage.getMessageBy(threadId, timestamp, author) ?: return null
+        val messageToDelete = storage.getMessageByTimestamp(timestamp, author, false) ?: return null
         val messageIdToDelete = messageToDelete.messageId
         val messageType = messageToDelete.individualRecipient?.getType()
 

@@ -12,6 +12,10 @@ class FirebaseTokenFetcher @Inject constructor(): TokenFetcher {
     override val token = MutableStateFlow<String?>(null)
 
     init {
+        fetchToken()
+    }
+
+    private fun fetchToken() {
         FirebaseMessaging.getInstance()
             .token
             .addOnSuccessListener(this::onNewToken)
@@ -23,5 +27,6 @@ class FirebaseTokenFetcher @Inject constructor(): TokenFetcher {
 
     override suspend fun resetToken() {
         FirebaseMessaging.getInstance().deleteToken().await()
+        fetchToken()
     }
 }

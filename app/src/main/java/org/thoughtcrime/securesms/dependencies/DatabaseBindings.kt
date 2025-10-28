@@ -5,9 +5,11 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
+import org.thoughtcrime.securesms.attachments.DatabaseAttachmentProvider
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.service.ExpiringMessageManager
@@ -26,4 +28,6 @@ abstract class DatabaseBindings {
     @Binds
     abstract fun bindMessageExpirationManagerProtocol(manager: ExpiringMessageManager): SSKEnvironment.MessageExpirationManagerProtocol
 
+    @Binds
+    abstract fun bindMessageProvider(provider: DatabaseAttachmentProvider): MessageDataProvider
 }
