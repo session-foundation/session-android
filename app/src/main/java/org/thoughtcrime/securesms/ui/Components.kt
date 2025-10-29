@@ -951,9 +951,13 @@ private fun CollapsibleFooterActions(
                             modifier.width(equalWidthDp)
                         }
 
+                        val buttonModifier =
+                            if (single) Modifier.wrapContentWidth()
+                            else Modifier.fillMaxWidth()
+
                         Box(modifier = modifier) {
                             SlimFillButtonRect(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = buttonModifier,
                                 text = item.buttonLabel.string(),
                                 color = item.buttonColor
                             ) { item.onClick() }
