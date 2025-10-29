@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.squareup.phrase.Phrase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
@@ -19,6 +20,7 @@ import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.PublicKeyValidation
@@ -135,7 +137,9 @@ class NewMessageViewModel @Inject constructor(
 
     private fun Exception.toMessage() = when (this) {
         is SnodeAPI.Error.Generic -> application.getString(R.string.onsErrorNotRecognized)
-        else -> application.getString(R.string.onsErrorUnableToSearch)
+        else -> Phrase.from(application, R.string.errorNoLookupOns)
+            .put(APP_NAME_KEY, application.getString(R.string.app_name))
+            .format().toString()
     }
 }
 
