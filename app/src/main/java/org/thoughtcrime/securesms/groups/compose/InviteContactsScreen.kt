@@ -55,7 +55,7 @@ fun InviteContactsScreen(
     onBack: () -> Unit,
     banner: @Composable () -> Unit = {}
 ) {
-    val footerData by viewModel.uiState.collectAsState()
+    val footerData by viewModel.collapsibleFooterState.collectAsState()
 
     InviteContacts(
         contacts = viewModel.contacts.collectAsState().value,
@@ -84,7 +84,7 @@ fun InviteContacts(
     onDoneClicked: () -> Unit,
     onBack: () -> Unit,
     banner: @Composable () -> Unit = {},
-    data: SelectContactsViewModel.InviteUiState,
+    data: SelectContactsViewModel.CollapsibleFooterState,
     onToggleFooter: () -> Unit,
     onCloseFooter: () -> Unit,
 ) {
@@ -205,7 +205,7 @@ private fun PreviewSelectContacts() {
             onSearchQueryClear = {},
             onDoneClicked = {},
             onBack = {},
-            data = SelectContactsViewModel.InviteUiState(
+            data = SelectContactsViewModel.CollapsibleFooterState(
                 collapsed = false,
                 visible = true,
                 footerActionTitle = GetString("1 Contact Selected")
@@ -230,7 +230,7 @@ private fun PreviewSelectEmptyContacts() {
             onSearchQueryClear = {},
             onDoneClicked = {},
             onBack = {},
-            data = SelectContactsViewModel.InviteUiState(
+            data = SelectContactsViewModel.CollapsibleFooterState(
                 collapsed = true,
                 visible = false,
                 footerActionTitle = GetString("")
@@ -255,7 +255,7 @@ private fun PreviewSelectEmptyContactsWithSearch() {
             onSearchQueryClear = {},
             onDoneClicked = {},
             onBack = {},
-            data = SelectContactsViewModel.InviteUiState(
+            data = SelectContactsViewModel.CollapsibleFooterState(
                 collapsed = true,
                 visible = false,
                 footerActionTitle = GetString("")

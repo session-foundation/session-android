@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -77,8 +78,26 @@ open class SelectContactsViewModel @AssistedInject constructor(
     val currentSelected: Set<Address>
         get() = mutableSelectedContactAccountIDs.value
 
-    private val _uiState = MutableStateFlow(InviteUiState())
-    val uiState: StateFlow<InviteUiState> = _uiState
+    private val footerCollapsed = MutableStateFlow(false)
+
+    val collapsibleFooterState: StateFlow<CollapsibleFooterState> =
+        combine(mutableSelectedContactAccountIDs, footerCollapsed) { selected, isCollapsed ->
+            val count = selected.size
+            val visible = count > 0
+            val title = if (count == 0) GetString("")
+            else GetString(
+                context.resources.getQuantityString(R.plurals.contactSelected, count, count)
+            )
+
+            CollapsibleFooterState(
+                visible = visible,
+                // auto-expand when nothing is selected, otherwise keep user's choice
+                collapsed = if (!visible) false else isCollapsed,
+                footerActionTitle = title
+            )
+        }
+            .distinctUntilChanged()
+            .stateIn(viewModelScope, SharingStarted.Eagerly, CollapsibleFooterState())
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeContacts() = (configFactory.configUpdateNotifications as Flow<Any>)
@@ -143,7 +162,6 @@ open class SelectContactsViewModel @AssistedInject constructor(
             newSet.add(address)
         }
         mutableSelectedContactAccountIDs.value = newSet
-        updateUiState()
     }
 
     fun selectAccountIDs(accountIDs: Set<Address>) {
@@ -152,31 +170,13 @@ open class SelectContactsViewModel @AssistedInject constructor(
 
     fun clearSelection(){
         mutableSelectedContactAccountIDs.value = emptySet()
-        updateUiState()
     }
 
     fun toggleFooter() {
-        _uiState.update {
-            it.copy(collapsed = !it.collapsed)
-        }
+        footerCollapsed.update { !it }
     }
 
-    private fun updateUiState() {
-        val count = currentSelected.size
-        val visible = currentSelected.isNotEmpty()
-        val footerTitle = if(count == 0) GetString("") else
-            GetString(context.resources.getQuantityString(R.plurals.contactSelected, count, count))
-
-        _uiState.update {
-            it.copy(
-                visible = visible,
-                collapsed =  if(!it.visible) false else it.collapsed,
-                footerActionTitle = footerTitle
-            )
-        }
-    }
-
-    data class InviteUiState(
+    data class CollapsibleFooterState(
         val visible: Boolean = false,
         val collapsed: Boolean = false,
         val footerActionTitle : GetString = GetString("")
