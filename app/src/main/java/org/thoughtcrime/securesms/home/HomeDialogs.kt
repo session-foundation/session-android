@@ -45,6 +45,7 @@ fun HomeDialogs(
         if(dialogsState.pinCTA != null){
             PinProCTA(
                 overTheLimit = dialogsState.pinCTA.overTheLimit,
+                proSubscription = dialogsState.pinCTA.proSubscription,
                 onDismissRequest = {
                     sendCommand(HidePinCTADialog)
                 }

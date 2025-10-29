@@ -395,7 +395,7 @@ fun Settings(
         // Animated avatar CTA
         if(uiState.showAnimatedProCTA){
             AnimatedProCTA(
-                isPro = uiState.isPro,
+                proSubscription = uiState.subscriptionState.type,
                 sendCommand = sendCommand
             )
         }
@@ -994,10 +994,10 @@ fun AvatarDialog(
 
 @Composable
 fun AnimatedProCTA(
-    isPro: Boolean,
+    proSubscription: SubscriptionType,
     sendCommand: (SettingsViewModel.Commands) -> Unit,
 ){
-    if(isPro) {
+    if(proSubscription is SubscriptionType.Active) {
         SessionProCTA (
             title = stringResource(R.string.proActivated),
             badgeAtStart = true,
@@ -1032,6 +1032,7 @@ fun AnimatedProCTA(
         )
     } else {
         AnimatedProfilePicProCTA(
+            proSubscription = proSubscription,
             onDismissRequest = { sendCommand(HideAnimatedProCTA) },
         )
     }
