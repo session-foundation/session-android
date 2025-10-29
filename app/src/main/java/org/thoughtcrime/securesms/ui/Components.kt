@@ -58,6 +58,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -802,7 +803,7 @@ fun CollapsibleFooterAction(
                     )
                 )
                 .background(LocalColors.current.backgroundSecondary)
-                .padding(LocalDimensions.current.smallSpacing),
+                .padding(horizontal = LocalDimensions.current.smallSpacing, vertical = LocalDimensions.current.xxsSpacing),
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
         ) {
             Row(
@@ -818,13 +819,15 @@ fun CollapsibleFooterAction(
                     )
                 )
 
-                Icon(
-                    modifier = Modifier
-                        .rotate(rotation)
-                        .clickable(onClick = onCollapsedClicked),
-                    painter = painterResource(R.drawable.ic_chevron_down),
-                    contentDescription = null
-                )
+                IconButton(
+                    modifier = Modifier.rotate(rotation),
+                    onClick = onCollapsedClicked
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_chevron_down),
+                        contentDescription = null
+                    )
+                }
                 Text(
                     text = data.title.string(),
                     modifier = Modifier
@@ -836,12 +839,15 @@ fun CollapsibleFooterAction(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Icon(
-                    modifier = Modifier
-                        .clickable(onClick = onClosedClicked),
-                    painter = painterResource(R.drawable.ic_x),
-                    contentDescription = null
-                )
+                IconButton(
+                    modifier = Modifier.rotate(rotation),
+                    onClick = onClosedClicked
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_x),
+                        contentDescription = null
+                    )
+                }
             }
 
             // Rendered actions
@@ -934,7 +940,9 @@ private fun CollapsibleFooterActions(
                         var modifier = Modifier.padding(start = LocalDimensions.current.smallSpacing)
 
                         modifier = if (single) {
-                            modifier.wrapContentWidth().widthIn(max = capDp)
+                            modifier
+                                .wrapContentWidth()
+                                .widthIn(max = capDp)
                         } else {
                             modifier.width(equalWidthDp)
                         }
