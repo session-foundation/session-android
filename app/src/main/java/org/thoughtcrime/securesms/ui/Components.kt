@@ -840,7 +840,6 @@ fun CollapsibleFooterAction(
                     overflow = TextOverflow.Ellipsis
                 )
                 IconButton(
-                    modifier = Modifier.rotate(rotation),
                     onClick = onClosedClicked
                 ) {
                     Icon(
