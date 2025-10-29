@@ -16,8 +16,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -39,6 +41,7 @@ import org.thoughtcrime.securesms.home.startconversation.newmessage.State
 import org.thoughtcrime.securesms.openUrl
 import org.thoughtcrime.securesms.ui.NavigationAction
 import org.thoughtcrime.securesms.ui.ObserveAsEvents
+import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
 import org.thoughtcrime.securesms.ui.horizontalSlideComposable
@@ -152,13 +155,17 @@ fun StartConversationNavHost(
                 val viewModel = hiltViewModel<NewMessageViewModel>()
                 val uiState by viewModel.state.collectAsState(State())
 
+                val helpUrl = "https://getsession.org/account-ids"
+
                 LaunchedEffect(Unit) {
                     scope.launch {
                         viewModel.success.collect {
-                            context.startActivity(ConversationActivityV2.createIntent(
-                                context,
-                                address = it.address
-                            ))
+                            context.startActivity(
+                                ConversationActivityV2.createIntent(
+                                    context,
+                                    address = it.address
+                                )
+                            )
 
                             onClose()
                         }
@@ -169,10 +176,16 @@ fun StartConversationNavHost(
                     uiState,
                     viewModel.qrErrors,
                     viewModel,
-                    onBack = { scope.launch { navigator.navigateUp() }},
+                    onBack = { scope.launch { navigator.navigateUp() } },
                     onClose = onClose,
-                    onHelp = { activity?.openUrl("https://sessionapp.zendesk.com/hc/en-us/articles/4439132747033-How-do-Account-ID-usernames-work") }
+                    onHelp = { viewModel.onCommand(NewMessageViewModel.Commands.ToggleUrlDialog) }
                 )
+                if (uiState.showUrlDialog) {
+                    OpenURLAlertDialog(
+                        url = helpUrl,
+                        onDismissRequest = { viewModel.onCommand(NewMessageViewModel.Commands.ToggleUrlDialog) }
+                    )
+                }
             }
 
             // Create Group

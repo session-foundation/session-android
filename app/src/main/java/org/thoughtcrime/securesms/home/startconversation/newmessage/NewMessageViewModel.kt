@@ -24,6 +24,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.PublicKeyValidation
+import org.thoughtcrime.securesms.preferences.SettingsViewModel
 import org.thoughtcrime.securesms.ui.GetString
 import java.net.IDN
 import javax.inject.Inject
@@ -124,7 +125,6 @@ class NewMessageViewModel @Inject constructor(
         if (address is Address.Standard) {
             viewModelScope.launch { _success.emit(Success(address)) }
         }
-
     }
 
     private fun onUnvalidatedPublicKey(publicKey: String) {
@@ -141,15 +141,31 @@ class NewMessageViewModel @Inject constructor(
             .put(APP_NAME_KEY, application.getString(R.string.app_name))
             .format().toString()
     }
+
+    fun onCommand(commands: Commands) {
+        when (commands) {
+            is Commands.ToggleUrlDialog -> {
+                _state.update { it.copy(showUrlDialog = !it.showUrlDialog) }
+            }
+        }
+    }
+
+    sealed interface Commands {
+        data object ToggleUrlDialog : Commands
+    }
 }
 
 data class State(
     val newMessageIdOrOns: String = "",
     val isTextErrorColor: Boolean = false,
     val error: GetString? = null,
-    val loading: Boolean = false
+    val loading: Boolean = false,
+    val showUrlDialog : Boolean = false
 ) {
     val isNextButtonEnabled: Boolean get() = newMessageIdOrOns.isNotBlank()
 }
+
+
+
 
 data class Success(val address: Address.Standard)
