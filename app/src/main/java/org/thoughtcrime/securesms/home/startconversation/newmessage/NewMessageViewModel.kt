@@ -136,7 +136,7 @@ class NewMessageViewModel @Inject constructor(
     }
 
     private fun Exception.toMessage() = when (this) {
-        is SnodeAPI.Error.Generic -> application.getString(R.string.onsErrorNotRecognized)
+        is SnodeAPI.Error.Generic -> application.getString(R.string.errorUnregisteredOns)
         else -> Phrase.from(application, R.string.errorNoLookupOns)
             .put(APP_NAME_KEY, application.getString(R.string.app_name))
             .format().toString()
