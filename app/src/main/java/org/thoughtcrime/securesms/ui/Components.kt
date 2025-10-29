@@ -780,10 +780,9 @@ fun CollapsibleFooterAction(
         ) + fadeIn()
     }
     val exitToBottom = remember {
-        slideOutVertically(
-            // leave sliding down out of view
-            targetOffsetY = { it },
-            animationSpec = tween(durationMillis = 200, easing = FastOutLinearInEasing)
+        shrinkVertically(
+            shrinkTowards = Alignment.Bottom,
+            animationSpec = tween(200, easing = FastOutLinearInEasing)
         ) + fadeOut()
     }
 
@@ -796,6 +795,7 @@ fun CollapsibleFooterAction(
         Column(
             modifier = modifier
                 .fillMaxWidth()
+                .animateContentSize()
                 .clip(
                     RoundedCornerShape(
                         topStart = LocalDimensions.current.contentSpacing,
@@ -803,7 +803,10 @@ fun CollapsibleFooterAction(
                     )
                 )
                 .background(LocalColors.current.backgroundSecondary)
-                .padding(horizontal = LocalDimensions.current.smallSpacing, vertical = LocalDimensions.current.xxsSpacing),
+                .padding(
+                    horizontal = LocalDimensions.current.smallSpacing,
+                    vertical = LocalDimensions.current.xxsSpacing
+                ),
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
         ) {
             Row(
@@ -861,7 +864,7 @@ fun CollapsibleFooterAction(
                 ) + fadeIn(animationSpec = tween(durationMillis = 120, delayMillis = 40)),
                 exit = fadeOut(animationSpec = tween(durationMillis = 90)) +
                         shrinkVertically(
-                            shrinkTowards = Alignment.Top,
+                            shrinkTowards = Alignment.Bottom,
                             animationSpec = spring(
                                 dampingRatio = 1.0f,
                                 stiffness = Spring.StiffnessMedium
