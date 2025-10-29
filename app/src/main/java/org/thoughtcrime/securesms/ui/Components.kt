@@ -781,9 +781,9 @@ fun CollapsibleFooterAction(
         ) + fadeIn()
     }
     val exitToBottom = remember {
-        shrinkVertically(
-            shrinkTowards = Alignment.Bottom,
-            animationSpec = tween(200, easing = FastOutLinearInEasing)
+        slideOutVertically(
+            targetOffsetY = { it },
+            animationSpec = tween(durationMillis = 200, easing = FastOutLinearInEasing)
         ) + fadeOut()
     }
 
@@ -858,20 +858,13 @@ fun CollapsibleFooterAction(
             AnimatedVisibility(
                 visible = showActions,
                 enter = expandVertically(
-                    expandFrom = Alignment.Top,
-                    animationSpec = spring(
-                        dampingRatio = 0.9f,
-                        stiffness = Spring.StiffnessLow
-                    )
-                ) + fadeIn(animationSpec = tween(durationMillis = 120, delayMillis = 40)),
-                exit = fadeOut(animationSpec = tween(durationMillis = 90)) +
-                        shrinkVertically(
-                            shrinkTowards = Alignment.Bottom,
-                            animationSpec = spring(
-                                dampingRatio = 1.0f,
-                                stiffness = Spring.StiffnessMedium
-                            )
-                        )
+                    animationSpec = tween(durationMillis = 150, easing = FastOutSlowInEasing),
+                    expandFrom = Alignment.Top
+                ) + fadeIn(animationSpec = tween(durationMillis = 120)),
+                exit = shrinkVertically(
+                    animationSpec = tween(durationMillis = 100, easing = FastOutLinearInEasing),
+                    shrinkTowards = Alignment.Top
+                ) + fadeOut(animationSpec = tween(durationMillis = 80))
             ) {
                 CategoryCell(modifier = Modifier.padding(bottom = LocalDimensions.current.smallSpacing)) {
                     CollapsibleFooterActions(items = data.items)
