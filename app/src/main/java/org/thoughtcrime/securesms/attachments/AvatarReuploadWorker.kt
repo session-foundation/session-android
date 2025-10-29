@@ -103,10 +103,9 @@ class AvatarReuploadWorker @AssistedInject constructor(
 
             if ((lastUpdated != null && needsReProcessing(source)) || lastUpdated == null) {
                 logAndToast("About to start reuploading avatar.")
-                val attachment = attachmentProcessor.process(
+                val attachment = attachmentProcessor.processAvatar(
                     data = source,
-                    maxImageResolution = AttachmentProcessor.MAX_AVATAR_SIZE_PX,
-                    compressImage = true,
+                    dataSizeHint = null,
                 ) ?: return Result.failure()
 
                 try {

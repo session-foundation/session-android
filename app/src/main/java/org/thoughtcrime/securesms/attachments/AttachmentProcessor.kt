@@ -24,6 +24,7 @@ import network.loki.messenger.libsession_util.image.GifUtils
 import network.loki.messenger.libsession_util.image.WebPUtils
 import okio.BufferedSource
 import okio.FileSystem
+import okio.blackholeSink
 import org.session.libsession.utilities.Util
 import org.session.libsignal.streams.AttachmentCipherInputStream
 import org.session.libsignal.streams.AttachmentCipherOutputStream
@@ -36,6 +37,7 @@ import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.ImageUtils
 import java.io.ByteArrayOutputStream
 import java.security.MessageDigest
+import java.util.concurrent.TimeoutException
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -56,6 +58,80 @@ class AttachmentProcessor @Inject constructor(
         val mimeType: String,
         val imageSize: IntSize
     )
+
+    suspend fun processAvatar(
+        data: BufferedSource,
+        dataSizeHint: Long?,
+    ): ProcessResult? {
+        return when {
+            AnimatedImageUtils.isAnimatedWebP(data) -> {
+                processAnimatedWebP(data, MAX_AVATAR_SIZE_PX)
+            }
+
+            AnimatedImageUtils.isAnimatedGif(data) -> {
+                val origSize = data.peek().inputStream().use(BitmapUtil::getDimensions)
+                    .let { pair -> IntSize(pair.first, pair.second) }
+
+                val targetSize = if (origSize.width <= MAX_AVATAR_SIZE_PX.width &&
+                    origSize.height <= MAX_AVATAR_SIZE_PX.height) {
+                    origSize
+                } else {
+                    scaleToFit(origSize, MAX_AVATAR_SIZE_PX).first
+                }
+
+                // First try to convert to webp in 5 seconds
+                val convertResult = runCatching {
+                    data.peek().inputStream().use { input ->
+                        WebPUtils.encodeGifToWebP(
+                            input = input, 5_000L,
+                            targetWidth = targetSize.width, targetHeight = targetSize.height
+                        )
+                    }
+                }
+
+                val processResult = when {
+                    convertResult.isSuccess -> ProcessResult(
+                        data = convertResult.getOrThrow(),
+                        mimeType = "image/webp",
+                        imageSize = targetSize
+                    )
+
+                    convertResult.exceptionOrNull() is TimeoutException -> {
+                        Log.w(TAG, "WebP conversion timed out, falling back to GIF re-encoding")
+                        // Fallback to re-encoding as GIF
+                        processGif(data.peek(), MAX_AVATAR_SIZE_PX)
+                    }
+
+                    else -> {
+                        throw convertResult.exceptionOrNull()!!
+                    }
+                }
+
+                if (processResult != null) {
+                    val dataSize = dataSizeHint ?: data.readAll(blackholeSink())
+                    if (dataSize < processResult.data.size) {
+                        Log.d(
+                            TAG,
+                            "Avatar processing increased size from $dataSize to ${processResult.data.size}, skipped result"
+                        )
+                        return null
+                    }
+                }
+
+                processResult
+            }
+
+            else -> {
+                // All static images
+                val (data, size) = processStaticImage(data, MAX_AVATAR_SIZE_PX, Bitmap.CompressFormat.WEBP, 90)
+                ProcessResult(
+                    data = data,
+                    mimeType = "image/webp",
+                    imageSize = size
+                )
+            }
+        }
+    }
 
     /**
      * Process a file based on its mime type and the given constraints.
