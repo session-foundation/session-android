@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.ui
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -790,12 +791,11 @@ fun CollapsibleFooterAction(
         // drives show/hide from bottom
         visible = data.visible,
         enter = enterFromBottom,
-        exit = exitToBottom
+        exit = exitToBottom,
     ) {
         Column(
             modifier = modifier
                 .fillMaxWidth()
-                .animateContentSize()
                 .clip(
                     RoundedCornerShape(
                         topStart = LocalDimensions.current.contentSpacing,
@@ -803,6 +803,7 @@ fun CollapsibleFooterAction(
                     )
                 )
                 .background(LocalColors.current.backgroundSecondary)
+                .animateContentSize()
                 .padding(
                     horizontal = LocalDimensions.current.smallSpacing,
                     vertical = LocalDimensions.current.xxsSpacing
@@ -852,9 +853,10 @@ fun CollapsibleFooterAction(
                 }
             }
 
+            val showActions = data.visible && !data.collapsed
             // Rendered actions
             AnimatedVisibility(
-                visible = !data.collapsed,
+                visible = showActions,
                 enter = expandVertically(
                     expandFrom = Alignment.Top,
                     animationSpec = spring(
