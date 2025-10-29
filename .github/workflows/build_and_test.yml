@@ -54,14 +54,14 @@ jobs:
 
       - name: Upload build reports regardless
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: build-reports-${{ matrix.variant }}-${{ matrix.build_type }}
           path: app/build/reports
           if-no-files-found: ignore
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: session-${{ matrix.variant }}-${{ matrix.build_type }}
           path: app/build/outputs/apk/${{ matrix.variant }}/${{ matrix.build_type }}/*-universal*apk
