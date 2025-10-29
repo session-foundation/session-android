@@ -150,7 +150,7 @@ fun InviteContacts(
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
-            BottomFadingEdgeBox(modifier = Modifier.weight(1f)) { bottomContentPadding ->
+            Box(modifier = Modifier.weight(1f)) {
                 if (contacts.isEmpty() && searchQuery.isEmpty()) {
                     Text(
                         text = stringResource(id = R.string.contactNone),
@@ -162,7 +162,7 @@ fun InviteContacts(
                 } else {
                     LazyColumn(
                         state = scrollState,
-                        contentPadding = PaddingValues(bottom = bottomContentPadding),
+                        contentPadding = PaddingValues(bottom = LocalDimensions.current.spacing),
                     ) {
                         multiSelectMemberList(
                             contacts = contacts,
