@@ -258,6 +258,8 @@ class PlayStoreSubscriptionManager @Inject constructor(
     }
 
     override suspend fun isWithinQuickRefundWindow(): Boolean {
+        if(prefs.getDebugIsWithinQuickRefund()) return true // debug mode
+
         val purchaseTimeMillis = getExistingSubscription()?.purchaseTime ?: return false
 
         val now = Instant.now()

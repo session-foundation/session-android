@@ -36,6 +36,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_LENGTH_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_LENGTH_SINGULAR_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.SubscriptionState
@@ -82,6 +83,7 @@ class ProSettingsViewModel @AssistedInject constructor(
     val cancelPlanState: StateFlow<State<CancelPlanState>> = _cancelPlanState
 
     init {
+        Log.w("", "*** VM INIT")
         // observe subscription status
         viewModelScope.launch {
             proStatusManager.subscriptionState.collect {
@@ -120,22 +122,6 @@ class ProSettingsViewModel @AssistedInject constructor(
                         // nothing to do in this case
                     }
                 }
-            }
-        }
-
-        // Update refund plan state
-        viewModelScope.launch {
-            _proSettingsUIState.map { proUIState ->
-                val subManager = subscriptionCoordinator.getCurrentManager()
-                RefundPlanState(
-                    subscriptionType = proUIState.subscriptionState.type,
-                    isQuickRefund = subManager.isWithinQuickRefundWindow(),
-                    quickRefundUrl = subManager.quickRefundUrl
-                )
-            }
-            .distinctUntilChanged()
-            .collect {
-                _refundPlanState.update { it }
             }
         }
     }
@@ -277,7 +263,19 @@ class ProSettingsViewModel @AssistedInject constructor(
             }
 
             Commands.GoToRefund -> {
-                navigateTo(ProSettingsDestination.RefundSubscription)
+                viewModelScope.launch {
+                    val subManager = subscriptionCoordinator.getCurrentManager()
+                    _refundPlanState.update {
+                        RefundPlanState(
+                            subscriptionType = _proSettingsUIState.value.subscriptionState.type,
+                            isQuickRefund = subManager.isWithinQuickRefundWindow(),
+                            quickRefundUrl = subManager.quickRefundUrl
+                        )
+                    }
+
+                    //todo PRO might need a State here as well...
+                    navigateTo(ProSettingsDestination.RefundSubscription)
+                }
             }
 
             Commands.GoToCancel -> {
