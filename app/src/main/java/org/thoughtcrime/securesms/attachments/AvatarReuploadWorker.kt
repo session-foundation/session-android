@@ -142,11 +142,16 @@ class AvatarReuploadWorker @AssistedInject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            logAndToast("FileServer renew failed", e)
-
-            // If the server doesn't allow us to renew, and last updated is 12 days ago, then re-upload our avatar
+            // When renew fails, we will try to re-upload the avatar if:
+            // 1. The file was not found on the server (404), or
+            // 2. The last update was more than 12 days ago.
             if ((e is NonRetryableException || e is OnionRequestAPI.HTTPRequestFailedAtDestinationException)) {
-                if ((lastUpdated?.isBefore(Instant.now().minus(Duration.ofDays(12)))) == true) {
+                val fileNotFound = e is OnionRequestAPI.HTTPRequestFailedAtDestinationException &&
+                        e.statusCode == 404
+
+                if ((lastUpdated?.isBefore(Instant.now().minus(Duration.ofDays(12)))) == true ||
+                        fileNotFound) {
+                    logAndToast("FileServer renew failed, trying to upload", e)
                     val pictureData =
                         localEncryptedFileInputStreamFactory.create(localFile).use { stream ->
                             check(!stream.meta.hasPermanentDownloadError) {
@@ -173,9 +178,10 @@ class AvatarReuploadWorker @AssistedInject constructor(
                 }
 
                 return Result.success()
+            } else {
+                logAndToast("Error while renewing avatar. Retrying...", e)
+                return Result.retry()
             }
-
-            return Result.failure()
         }
 
         return Result.success()
