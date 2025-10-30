@@ -232,9 +232,7 @@ fun ConversationSettingsNavHost(
                     onBack = dropUnlessResumed {
                         handleBack()
                     },
-                    banner = {
-                        GroupMinimumVersionBanner()
-                    }
+                    banner = {}
                 )
             }
 
