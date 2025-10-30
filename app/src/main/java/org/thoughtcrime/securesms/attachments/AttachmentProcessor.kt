@@ -65,7 +65,36 @@ class AttachmentProcessor @Inject constructor(
     ): ProcessResult? {
         return when {
             AnimatedImageUtils.isAnimatedWebP(data) -> {
-                processAnimatedWebP(data, MAX_AVATAR_SIZE_PX)
+                val convertResult = runCatching {
+                    data.peek().use {
+                        processAnimatedWebP(
+                            data = it,
+                            maxImageResolution = MAX_AVATAR_SIZE_PX,
+                            timeoutMills = 5_000L,
+                        )
+                    }
+                }
+
+                val processResult = when {
+                    convertResult.isSuccess -> convertResult.getOrThrow() ?: return null
+                    convertResult.exceptionOrNull() is TimeoutException -> {
+                        Log.w(TAG, "Animated WebP processing timed out, skipping")
+                        return null
+                    }
+
+                    else -> throw convertResult.exceptionOrNull()!!
+                }
+
+                val dataSize = dataSizeHint ?: data.readAll(blackholeSink())
+                if (dataSize < processResult.data.size) {
+                    Log.d(
+                        TAG,
+                        "Avatar processing increased size from $dataSize to ${processResult.data.size}, skipped result"
+                    )
+                    return null
+                } else {
+                    processResult
+                }
             }
 
             AnimatedImageUtils.isAnimatedGif(data) -> {
@@ -168,7 +197,11 @@ class AttachmentProcessor @Inject constructor(
                     return null
                 }
 
-                return processAnimatedWebP(data = data, maxImageResolution)
+                return processAnimatedWebP(
+                    data = data,
+                    maxImageResolution = maxImageResolution,
+                    timeoutMills = 30_000L
+                )
             }
 
             ImageUtils.isWebP(data) -> {
@@ -326,17 +359,15 @@ class AttachmentProcessor @Inject constructor(
 
     private fun processAnimatedWebP(
         data: BufferedSource,
-        maxImageResolution: IntSize?,
+        maxImageResolution: IntSize,
+        timeoutMills: Long,
     ): ProcessResult? {
         val origSize = data.peek().inputStream().use(BitmapUtil::getDimensions)
             .let { pair -> IntSize(pair.first, pair.second) }
 
         val targetSize: IntSize
 
-        if (maxImageResolution == null || (
-                    origSize.width <= maxImageResolution.width &&
-                            origSize.height <= maxImageResolution.height)
-        ) {
+        if (origSize.width <= maxImageResolution.width && origSize.height <= maxImageResolution.height) {
             // No resizing needed hence no processing
             return null
         } else {
@@ -352,7 +383,7 @@ class AttachmentProcessor @Inject constructor(
             input = data.readByteArray(),
             targetWidth = targetSize.width,
             targetHeight = targetSize.height,
-            timeoutMills = 10_000L,
+            timeoutMills = timeoutMills,
         )
 
         Log.d(
