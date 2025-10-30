@@ -203,10 +203,9 @@ class SettingsViewModel @Inject constructor(
             try {
                 val bytes = context.contentResolver.openInputStream(uri)!!.source().buffer().use { data ->
                     attachmentProcessor
-                        .process(
+                        .processAvatar(
                             data = data,
-                            maxImageResolution = AttachmentProcessor.MAX_AVATAR_SIZE_PX,
-                            compressImage = true,
+                            dataSizeHint = null
                         )
                         ?.data
                         ?: data.readByteArray()
@@ -224,7 +223,10 @@ class SettingsViewModel @Inject constructor(
             } catch (e: Exception) {
                 Log.e(TAG, "Error reading avatar bytes", e)
                 if (e !is CancellationException) {
-                    Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG)
+                            .show()
+                    }
                 }
             }
         }

@@ -103,11 +103,12 @@ class AvatarReuploadWorker @AssistedInject constructor(
 
             if ((lastUpdated != null && needsReProcessing(source)) || lastUpdated == null) {
                 logAndToast("About to start reuploading avatar.")
-                val attachment = attachmentProcessor.process(
+                val attachment = attachmentProcessor.processAvatar(
                     data = source,
-                    maxImageResolution = AttachmentProcessor.MAX_AVATAR_SIZE_PX,
-                    compressImage = true,
+                    dataSizeHint = null,
                 ) ?: return Result.failure()
+
+                Log.d(TAG, "Reuploading avatar with mimeType=${attachment.mimeType}, size=${attachment.imageSize}")
 
                 try {
                     avatarUploadManager.get().uploadAvatar(
@@ -185,6 +186,7 @@ class AvatarReuploadWorker @AssistedInject constructor(
             return true
         }
         val bounds = readImageBounds(source)
+        Log.d(TAG, "Old avatar bounds: $bounds")
         return bounds.width > AttachmentProcessor.MAX_AVATAR_SIZE_PX.width
                 || bounds.height > AttachmentProcessor.MAX_AVATAR_SIZE_PX.height
     }
