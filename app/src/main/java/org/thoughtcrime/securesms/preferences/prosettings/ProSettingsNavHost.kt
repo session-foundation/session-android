@@ -3,15 +3,10 @@ package org.thoughtcrime.securesms.preferences.prosettings
 import android.annotation.SuppressLint
 import android.os.Parcelable
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionLayout
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -21,13 +16,10 @@ import androidx.navigation.compose.rememberNavController
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination.CancelSubscription
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination.GetOrRenewPlan
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination.Home
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination.PlanConfirmation
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination.RefundSubscription
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination.UpdatePlan
-import org.thoughtcrime.securesms.preferences.prosettings.chooseplan.GetOrRenewPlanScreen
-import org.thoughtcrime.securesms.preferences.prosettings.chooseplan.UpdatePlanScreen
+import org.thoughtcrime.securesms.preferences.prosettings.chooseplan.ChoosePlanHomeScreen
 import org.thoughtcrime.securesms.ui.NavigationAction
 import org.thoughtcrime.securesms.ui.ObserveAsEvents
 import org.thoughtcrime.securesms.ui.UINavigator
@@ -41,10 +33,7 @@ sealed interface ProSettingsDestination: Parcelable {
 
     @Serializable
     @Parcelize
-    data object UpdatePlan: ProSettingsDestination
-    @Serializable
-    @Parcelize
-    data object GetOrRenewPlan: ProSettingsDestination
+    data object ChoosePlan: ProSettingsDestination
 
     @Serializable
     @Parcelize
@@ -117,16 +106,9 @@ fun ProSettingsNavHost(
             }
 
             // Subscription plan selection
-            horizontalSlideComposable<UpdatePlan> { entry ->
+            horizontalSlideComposable<ProSettingsDestination.ChoosePlan> { entry ->
                 val viewModel = navController.proGraphViewModel(entry, navigator)
-                UpdatePlanScreen(
-                    viewModel = viewModel,
-                    onBack = handleBack,
-                )
-            }
-            horizontalSlideComposable<GetOrRenewPlan> { entry ->
-                val viewModel = navController.proGraphViewModel(entry, navigator)
-                GetOrRenewPlanScreen(
+                ChoosePlanHomeScreen(
                     viewModel = viewModel,
                     onBack = handleBack,
                 )
