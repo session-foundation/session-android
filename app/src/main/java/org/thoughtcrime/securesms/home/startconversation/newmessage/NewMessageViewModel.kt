@@ -154,14 +154,23 @@ class NewMessageViewModel @Inject constructor(
 
     fun onCommand(commands: Commands) {
         when (commands) {
-            is Commands.ToggleUrlDialog -> {
-                _state.update { it.copy(showUrlDialog = !it.showUrlDialog) }
+            is Commands.ShowUrlDialog -> {
+                _state.update { it.copy(showUrlDialog = true) }
+            }
+
+            is Commands.DismissUrlDialog -> {
+                _state.update {
+                    it.copy(
+                        showUrlDialog = false
+                    )
+                }
             }
         }
     }
 
     sealed interface Commands {
-        data object ToggleUrlDialog : Commands
+        data object ShowUrlDialog : Commands
+        data object DismissUrlDialog : Commands
     }
 }
 

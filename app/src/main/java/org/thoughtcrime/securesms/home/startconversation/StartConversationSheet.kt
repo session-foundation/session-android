@@ -178,12 +178,12 @@ fun StartConversationNavHost(
                     viewModel,
                     onBack = { scope.launch { navigator.navigateUp() } },
                     onClose = onClose,
-                    onHelp = { viewModel.onCommand(NewMessageViewModel.Commands.ToggleUrlDialog) }
+                    onHelp = { viewModel.onCommand(NewMessageViewModel.Commands.ShowUrlDialog) }
                 )
                 if (uiState.showUrlDialog) {
                     OpenURLAlertDialog(
                         url = helpUrl,
-                        onDismissRequest = { viewModel.onCommand(NewMessageViewModel.Commands.ToggleUrlDialog) }
+                        onDismissRequest = { viewModel.onCommand(NewMessageViewModel.Commands.DismissUrlDialog) }
                     )
                 }
             }
