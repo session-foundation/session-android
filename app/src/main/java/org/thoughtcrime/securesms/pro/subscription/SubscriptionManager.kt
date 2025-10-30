@@ -41,8 +41,13 @@ interface SubscriptionManager: OnAppStartupComponent {
     suspend fun isWithinQuickRefundWindow(): Boolean
 
     /**
-     * Checks whether there is a valid subscription for the given product id for the current user within this subscriber's billing API
+     * Checks whether there is a valid subscription for the current user within this subscriber's billing API
      */
-    suspend fun hasValidSubscription(productId: String): Boolean
+    suspend fun hasValidSubscription(): Boolean
+
+    data class SubscriptionPricing(
+        val subscriptionDuration: ProSubscriptionDuration,
+        val price: String,
+    )
 }
 

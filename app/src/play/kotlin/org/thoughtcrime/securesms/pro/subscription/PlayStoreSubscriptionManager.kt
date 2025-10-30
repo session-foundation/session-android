@@ -8,6 +8,7 @@ import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.BillingResult
 import com.android.billingclient.api.PendingPurchasesParams
+import com.android.billingclient.api.ProductDetailsResult
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
@@ -43,6 +44,7 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.measureTime
 
 /**
  * The Google Play Store implementation of our subscription manager
@@ -92,7 +94,6 @@ class PlayStoreSubscriptionManager @Inject constructor(
                            // signal that purchase was completed
                             try {
                                 //todo PRO send confirmation to libsession
-                                delay(4000)
                             } catch (e : Exception){
                                 _purchaseEvents.emit(PurchaseEvent.Failed())
                             }
@@ -126,18 +127,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
                 "No current activity available to launch the billing flow"
             }
 
-            val result = billingClient.queryProductDetails(
-                QueryProductDetailsParams.newBuilder()
-                    .setProductList(
-                        listOf(
-                            QueryProductDetailsParams.Product.newBuilder()
-                                .setProductId("session_pro")
-                                .setProductType(BillingClient.ProductType.SUBS)
-                                .build()
-                        )
-                    )
-                    .build()
-            )
+            val result = getProductDetails()
 
             check(result.billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                 "Failed to query product details. Reason: ${result.billingResult}"
@@ -147,7 +137,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
                 "Unable to get the product: product for given id is null"
             }
 
-            val planId = subscriptionDuration.planId
+            val planId = subscriptionDuration.id
 
             val offerDetails = checkNotNull(productDetails.subscriptionOfferDetails
                 ?.firstOrNull { it.basePlanId == planId }) {
@@ -206,12 +196,20 @@ class PlayStoreSubscriptionManager @Inject constructor(
         }
     }
 
-    private val ProSubscriptionDuration.planId: String
-        get() = when (this) {
-            ProSubscriptionDuration.ONE_MONTH -> "session-pro-1-month"
-            ProSubscriptionDuration.THREE_MONTHS -> "session-pro-3-months"
-            ProSubscriptionDuration.TWELVE_MONTHS -> "session-pro-12-months"
-        }
+    private suspend fun getProductDetails(): ProductDetailsResult {
+        return billingClient.queryProductDetails(
+            QueryProductDetailsParams.newBuilder()
+                .setProductList(
+                    listOf(
+                        QueryProductDetailsParams.Product.newBuilder()
+                            .setProductId("session_pro")
+                            .setProductType(BillingClient.ProductType.SUBS)
+                            .build()
+                    )
+                )
+                .build()
+        )
+    }
 
     override fun onPostAppStarted() {
         super.onPostAppStarted()
@@ -253,7 +251,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
         }
     }
 
-    override suspend fun hasValidSubscription(productId: String): Boolean {
+    override suspend fun hasValidSubscription(): Boolean {
         // if in debug mode, always return true
         return if(prefs.forceCurrentUserAsPro()) true
         else getExistingSubscription() != null

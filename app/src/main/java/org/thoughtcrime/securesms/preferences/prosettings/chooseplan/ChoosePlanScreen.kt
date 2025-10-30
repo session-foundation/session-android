@@ -6,7 +6,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -157,7 +156,7 @@ fun ChoosePlan(
                 proPlan = data,
                 badgePadding = badgeHeight / 2,
                 onBadgeLaidOut = { height -> badgeHeight = max(badgeHeight, height) },
-                enabled = !planData.loading,
+                enabled = !planData.purchaseInProgress,
                 onClick = {
                     sendCommand(SelectProPlan(data))
                 }
@@ -185,7 +184,7 @@ fun ChoosePlan(
                 sendCommand(GetProPlan)
             }
         ){
-            LoadingArcOr(loading = planData.loading) {
+            LoadingArcOr(loading = planData.purchaseInProgress) {
                 Text(text = buttonLabel)
             }
         }

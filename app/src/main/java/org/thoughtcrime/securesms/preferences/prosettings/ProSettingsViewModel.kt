@@ -36,7 +36,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_LENGTH_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_LENGTH_SINGULAR_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.SubscriptionState
@@ -90,7 +89,7 @@ class ProSettingsViewModel @AssistedInject constructor(
         // observe purchase events
         viewModelScope.launch {
             subscriptionCoordinator.getCurrentManager().purchaseEvents.collect { purchaseEvent ->
-                _choosePlanState.update { it.copy(loading = false) }
+                _choosePlanState.update { it.copy(purchaseInProgress = false) }
 
                 when(purchaseEvent){
                     is SubscriptionManager.PurchaseEvent.Success -> {
@@ -125,7 +124,7 @@ class ProSettingsViewModel @AssistedInject constructor(
 
                     ChoosePlanState(
                         subscriptionType = subType,
-                        hasValidSubscription = proState.hasValidSubscription,
+                        hasValidSubscription = subscriptionCoordinator.getCurrentManager().hasValidSubscription(),
                         hasBillingCapacity = supportsBilling,
                         enableButton = subType !is SubscriptionType.Active.AutoRenewing, // only the auto-renew can have a disabled state
                         plans = listOf(
@@ -243,7 +242,7 @@ class ProSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    private suspend fun generateState(subscriptionState: SubscriptionState){
+    private fun generateState(subscriptionState: SubscriptionState){
         //todo PRO need to properly calculate this
 
         val subType = subscriptionState.type
@@ -251,8 +250,6 @@ class ProSettingsViewModel @AssistedInject constructor(
         _proSettingsUIState.update {
             ProSettingsState(
                 subscriptionState = subscriptionState,
-                //todo PRO need to get the product id from libsession - also this might be a long running operation
-                hasValidSubscription = subscriptionCoordinator.getCurrentManager().hasValidSubscription(""),
                 subscriptionExpiryLabel = when(subType){
                     is SubscriptionType.Active.AutoRenewing ->
                         Phrase.from(context, R.string.proAutoRenewTime)
@@ -634,7 +631,7 @@ class ProSettingsViewModel @AssistedInject constructor(
 
             if(purchaseStarted.isSuccess) {
                 _choosePlanState.update {
-                    it.copy(loading = true)
+                    it.copy(purchaseInProgress = true)
                 }
             }
         }
@@ -679,16 +676,15 @@ class ProSettingsViewModel @AssistedInject constructor(
     data class ProSettingsState(
         val subscriptionState: SubscriptionState = getDefaultSubscriptionStateData(),
         val proStats: State<ProStats> = State.Loading,
-        val hasValidSubscription: Boolean = false, // true is there is a current subscription AND the available subscription manager on this device has an account which matches the product id we got from libsession
         val subscriptionExpiryLabel: CharSequence = "", // eg: "Pro auto renewing in 3 days"
         val subscriptionExpiryDate: CharSequence = "" // eg: "May 21st, 2025"
     )
 
     data class ChoosePlanState(
         val subscriptionType: SubscriptionType = SubscriptionType.NeverSubscribed,
-        val hasBillingCapacity: Boolean = false,
+        val hasBillingCapacity: Boolean = false, // true is there is a current subscription AND the available subscription manager on this device has an account which matches the product id we got from libsession
         val hasValidSubscription: Boolean = false,
-        val loading: Boolean = false,
+        val purchaseInProgress: Boolean = false,
         val plans: List<ProPlan> = emptyList(),
         val enableButton: Boolean = false,
     )

@@ -29,7 +29,7 @@ class NoOpSubscriptionManager @Inject constructor() : SubscriptionManager {
 
     override val purchaseEvents: SharedFlow<PurchaseEvent> = MutableSharedFlow()
 
-    override suspend fun hasValidSubscription(productId: String): Boolean {
+    override suspend fun hasValidSubscription(): Boolean {
         return false
     }
 
