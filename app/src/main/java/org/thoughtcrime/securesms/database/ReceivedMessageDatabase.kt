@@ -7,6 +7,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.serialization.json.Json
+import net.zetetic.database.sqlcipher.SQLiteDatabase
 import org.session.libsession.snode.endpoint.Retrieve
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
@@ -168,5 +169,26 @@ class ReceivedMessageDatabase(
         """,
             "CREATE INDEX idx_received_messages_repository_ts ON received_messages(repository_address, timestamp_ms)"
         )
+
+        fun migrateFromOldTable(db: SQLiteDatabase) {
+            db.rawQuery("""
+                SELECT public_key, received_message_namespace, received_message_hash_values
+                FROM session_received_message_hash_values_table
+            """).use { cursor ->
+                while (cursor.moveToNext()) {
+                    val publicKey = cursor.getString(0)
+                    val namespace = cursor.getInt(1)
+                    for (hash in cursor.getString(2).splitToSequence("-")) {
+                        db.rawExecSQL("""
+                            INSERT OR IGNORE INTO received_messages(repository_address, namespace, server_id)
+                            VALUES (?, ?, ?)
+                        """, publicKey, namespace, hash)
+                    }
+                }
+            }
+
+            db.rawExecSQL("DROP TABLE session_received_message_hash_values_table")
+        }
+
     }
 }
