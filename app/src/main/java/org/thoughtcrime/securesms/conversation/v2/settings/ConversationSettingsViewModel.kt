@@ -581,6 +581,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                         dangerOptions.addAll(
                             listOf(
                                 optionClearMessages,
+                                optionLeaveGroup,
                                 optionDeleteGroup
                             )
                         )
