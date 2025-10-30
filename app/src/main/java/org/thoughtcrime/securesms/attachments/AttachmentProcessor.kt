@@ -18,6 +18,7 @@ import coil3.request.allowConversionToBitmap
 import coil3.request.allowHardware
 import coil3.request.allowRgb565
 import coil3.size.Precision
+import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.libsession_util.encrypt.Attachments
 import network.loki.messenger.libsession_util.image.GifUtils
@@ -30,7 +31,10 @@ import org.session.libsignal.streams.AttachmentCipherOutputStream
 import org.session.libsignal.streams.PaddingInputStream
 import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.ByteArraySlice.Companion.view
+import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
+import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.util.AnimatedImageUtils
 import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.ImageUtils
@@ -50,6 +54,7 @@ typealias DigestResult = ByteArray
 class AttachmentProcessor @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val imageLoader: Provider<ImageLoader>,
+    private val storage: Lazy<Storage>,
 ) {
     class ProcessResult(
         val data: ByteArray,
@@ -152,8 +157,16 @@ class AttachmentProcessor @Inject constructor(
      */
     fun encryptDeterministically(plaintext: ByteArray, domain: Attachments.Domain): EncryptResult {
         val cipherOut = ByteArray(Attachments.encryptedSize(plaintext.size.toLong()).toInt())
+        val privateKey = requireNotNull(storage.get().getUserED25519KeyPair()?.secretKey) {
+            "No user identity available"
+        }
+        check(privateKey.data.size == 64) {
+            "Invalid ED25519 private key size: ${privateKey.data.size}"
+        }
+        val seed = privateKey.data.sliceArray(0 until 32)
+
         val key = Attachments.encryptBytes(
-            seed = Util.getSecretBytes(32),
+            seed = seed,
             plaintextIn = plaintext,
             cipherOut = cipherOut,
             domain = domain,
