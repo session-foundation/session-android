@@ -72,10 +72,20 @@ class NewMessageViewModel @Inject constructor(
             }
         }
 
-        if (PublicKeyValidation.isValid(idOrONS, isPrefixRequired = false)) {
-            onUnvalidatedPublicKey(publicKey = idOrONS)
+        if (PublicKeyValidation.hasValidLength(idOrONS)) {
+            if (PublicKeyValidation.isValid(idOrONS, isPrefixRequired = false)) {
+                onUnvalidatedPublicKey(idOrONS)
+            } else {
+                _state.update {
+                    it.copy(
+                        isTextErrorColor = true,
+                        error = GetString(R.string.accountIdErrorInvalid),
+                        loading = false
+                    )
+                }
+            }
         } else {
-            resolveONS(ons = idOrONS)
+            resolveONS(idOrONS)
         }
     }
 
