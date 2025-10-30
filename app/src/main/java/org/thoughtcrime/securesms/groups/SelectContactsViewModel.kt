@@ -1,11 +1,13 @@
 package org.thoughtcrime.securesms.groups
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -15,11 +17,14 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
+import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.shouldShowProBadge
@@ -27,6 +32,7 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.home.search.searchName
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 
@@ -39,6 +45,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
     @Assisted private val excludingAccountIDs: Set<Address>,
     @Assisted private val contactFiltering: (Recipient) -> Boolean, //  default will filter out blocked and unapproved contacts
     private val recipientRepository: RecipientRepository,
+    @param:ApplicationContext private val context: Context,
 ) : ViewModel() {
     // Input: The search query
     private val mutableSearchQuery = MutableStateFlow("")
@@ -70,6 +77,27 @@ open class SelectContactsViewModel @AssistedInject constructor(
     // Output
     val currentSelected: Set<Address>
         get() = mutableSelectedContactAccountIDs.value
+
+    private val footerCollapsed = MutableStateFlow(false)
+
+    val collapsibleFooterState: StateFlow<CollapsibleFooterState> =
+        combine(mutableSelectedContactAccountIDs, footerCollapsed) { selected, isCollapsed ->
+            val count = selected.size
+            val visible = count > 0
+            val title = if (count == 0) GetString("")
+            else GetString(
+                context.resources.getQuantityString(R.plurals.contactSelected, count, count)
+            )
+
+            CollapsibleFooterState(
+                visible = visible,
+                // auto-expand when nothing is selected, otherwise keep user's choice
+                collapsed = if (!visible) false else isCollapsed,
+                footerActionTitle = title
+            )
+        }
+            .distinctUntilChanged()
+            .stateIn(viewModelScope, SharingStarted.Eagerly, CollapsibleFooterState())
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeContacts() = (configFactory.configUpdateNotifications as Flow<Any>)
@@ -143,6 +171,16 @@ open class SelectContactsViewModel @AssistedInject constructor(
     fun clearSelection(){
         mutableSelectedContactAccountIDs.value = emptySet()
     }
+
+    fun toggleFooter() {
+        footerCollapsed.update { !it }
+    }
+
+    data class CollapsibleFooterState(
+        val visible: Boolean = false,
+        val collapsed: Boolean = false,
+        val footerActionTitle : GetString = GetString("")
+    )
 
     @AssistedFactory
     interface Factory {
