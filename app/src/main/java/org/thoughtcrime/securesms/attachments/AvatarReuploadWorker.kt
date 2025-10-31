@@ -92,12 +92,16 @@ class AvatarReuploadWorker @AssistedInject constructor(
             return Result.success()
         }
 
+        val fileExpiry: Instant?
+
         // Check if the file exists and whether we need to do reprocessing, if we do, we reprocess and re-upload
         localEncryptedFileInputStreamFactory.create(localFile).use { stream ->
             if (stream.meta.hasPermanentDownloadError) {
                 logAndToast("Permanent download error for current avatar; nothing to do.")
                 return Result.success()
             }
+
+            fileExpiry = stream.meta.expiryTime
 
             val source = stream.source().buffer()
 
@@ -143,14 +147,12 @@ class AvatarReuploadWorker @AssistedInject constructor(
             throw e
         } catch (e: Exception) {
             // When renew fails, we will try to re-upload the avatar if:
-            // 1. The file was not found on the server (404), or
+            // 1. The file is expired (we have the record of this file's expiry time), or
             // 2. The last update was more than 12 days ago.
             if ((e is NonRetryableException || e is OnionRequestAPI.HTTPRequestFailedAtDestinationException)) {
-                val fileNotFound = e is OnionRequestAPI.HTTPRequestFailedAtDestinationException &&
-                        e.statusCode == 404
-
-                if ((lastUpdated?.isBefore(Instant.now().minus(Duration.ofDays(12)))) == true ||
-                        fileNotFound) {
+                val now = Instant.now()
+                if (fileExpiry?.isBefore(now) == true ||
+                    (lastUpdated?.isBefore(now.minus(Duration.ofDays(12)))) == true) {
                     logAndToast("FileServer renew failed, trying to upload", e)
                     val pictureData =
                         localEncryptedFileInputStreamFactory.create(localFile).use { stream ->
