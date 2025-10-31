@@ -668,7 +668,14 @@ class ProSettingsViewModel @AssistedInject constructor(
         val months = CurrencyFormatter.monthsFromIso(pricing.billingPeriodIso)
         val perMonthUnits = CurrencyFormatter.perMonthUnitsFloor(pricing.priceAmountMicros, months, pricing.priceCurrencyCode)
         val perMonthText  = CurrencyFormatter.formatUnits(perMonthUnits, pricing.priceCurrencyCode)
-        return PriceDisplayData(perMonthUnits, perMonthText, pricing.formattedTotal)
+
+        val totalUnits = CurrencyFormatter.microToBigDecimal(pricing.priceAmountMicros)
+        val totalText = CurrencyFormatter.formatUnits(
+            amountUnits = totalUnits,
+            currencyCode = pricing.priceCurrencyCode
+        )
+
+        return PriceDisplayData(perMonthUnits, perMonthText, totalText)
     }
 
     private fun discountBadge(baseline: BigDecimal ,perMonthUnits: BigDecimal, showTooltip: Boolean): ProPlanBadge? {
