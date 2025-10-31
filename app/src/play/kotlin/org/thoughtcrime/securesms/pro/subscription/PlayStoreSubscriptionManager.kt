@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.pro.subscription
 
 import android.app.Application
 import android.widget.Toast
-import androidx.compose.ui.res.stringResource
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
@@ -18,7 +17,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,7 +42,6 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.time.measureTime
 
 /**
  * The Google Play Store implementation of our subscription manager
@@ -270,6 +267,47 @@ class PlayStoreSubscriptionManager @Inject constructor(
         val refundDeadline = purchaseInstant.plus(refundWindowHours.toLong(), ChronoUnit.HOURS)
 
         return now.isBefore(refundDeadline)
+    }
+
+    @Throws(Exception::class)
+    override suspend fun getSubscriptionPrices(): List<SubscriptionManager.SubscriptionPricing> {
+        val result = getProductDetails()
+        check(result.billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+            "Failed to query product details. Reason: ${result.billingResult}"
+        }
+
+        val productDetails = result.productDetailsList?.firstOrNull()
+            ?: run {
+                Log.w(TAG, "No ProductDetails returned for product id session_pro")
+                return emptyList()
+            }
+
+        val offersByBasePlan = productDetails.subscriptionOfferDetails
+            ?.associateBy { it.basePlanId }
+            .orEmpty()
+
+        // For each duration we support, find the matching offer by basePlanId
+        return availablePlans.mapNotNull { duration ->
+            val offer = offersByBasePlan[duration.id]
+            if (offer == null) {
+                Log.w(TAG, "No offer found for basePlanId=${duration.id}")
+                return@mapNotNull null
+            }
+
+            val phases = offer.pricingPhases.pricingPhaseList
+
+            val pricing = phases.firstOrNull {
+                it.recurrenceMode == com.android.billingclient.api.ProductDetails.RecurrenceMode.INFINITE_RECURRING
+            } ?:return@mapNotNull null  // skip if not found
+
+            SubscriptionManager.SubscriptionPricing(
+                subscriptionDuration = duration,
+                priceAmountMicros = pricing.priceAmountMicros,
+                priceCurrencyCode = pricing.priceCurrencyCode,
+                billingPeriodIso = pricing.billingPeriod,  // e.g., P1M, P3M, P1Y
+                formattedTotal = pricing.formattedPrice    // Play-formatted localized total
+            )
+        }
     }
 
     companion object {

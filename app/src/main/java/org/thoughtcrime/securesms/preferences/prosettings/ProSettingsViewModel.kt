@@ -45,8 +45,10 @@ import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
 import org.thoughtcrime.securesms.pro.subscription.expiryFromNow
 import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.ui.UINavigator
+import org.thoughtcrime.securesms.util.CurrencyFormatter
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.State
+import java.math.BigDecimal
 
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
@@ -558,7 +560,16 @@ class ProSettingsViewModel @AssistedInject constructor(
             // there is no point in calculating it if the user is pro but without a valid sub
             // (meaning they got pro from a different google account than the one they are on now
             val plans = if(subType is SubscriptionType.Active && !hasValidSub) emptyList()
-            else getSubscriptionPlans(subType)
+            else {
+                // attempt to get the prices from the subscription provider
+                // return early in case of error
+                try {
+                    getSubscriptionPlans(subType)
+                } catch (e: Exception){
+                    _choosePlanState.update { State.Error(e) }
+                    return@launch
+                }
+            }
 
             _choosePlanState.update {
                 State.Success(
@@ -585,81 +596,96 @@ class ProSettingsViewModel @AssistedInject constructor(
         val currentPlan3Months = isActive && subType.duration == ProSubscriptionDuration.THREE_MONTHS
         val currentPlan1Month = isActive && subType.duration == ProSubscriptionDuration.ONE_MONTH
 
-        return listOf(
+        // get prices from the subscription provider
+        val prices = subscriptionCoordinator.getCurrentManager().getSubscriptionPrices()
+
+        val data1Month  = calculatePricesFor(prices.firstOrNull{ it.subscriptionDuration == ProSubscriptionDuration.ONE_MONTH })
+        val data3Month  = calculatePricesFor(prices.firstOrNull{ it.subscriptionDuration == ProSubscriptionDuration.THREE_MONTHS })
+        val data12Month = calculatePricesFor(prices.firstOrNull{ it.subscriptionDuration == ProSubscriptionDuration.TWELVE_MONTHS })
+
+        val baseline = data1Month?.perMonthUnits ?: BigDecimal.ZERO
+
+        val plan12Months = data12Month?.let {
             ProPlan(
                 title = Phrase.from(context.getText(R.string.proPriceTwelveMonths))
-                    .put(MONTHLY_PRICE_KEY, "$3.99")  //todo PRO calculate properly
+                    .put(MONTHLY_PRICE_KEY, it.perMonthText)
                     .format().toString(),
                 subtitle = Phrase.from(context.getText(R.string.proBilledAnnually))
-                    .put(PRICE_KEY, "$47.99")  //todo PRO calculate properly
+                    .put(PRICE_KEY, it.totalText)
                     .format().toString(),
                 selected = currentPlan12Months || subType !is SubscriptionType.Active, // selected if our active sub is 12 month, or as a default for non pro or renew
                 currentPlan = currentPlan12Months,
                 durationType = ProSubscriptionDuration.TWELVE_MONTHS,
                 badges = buildList {
-                    if(currentPlan12Months){
-                        add(
-                            ProPlanBadge(context.getString(R.string.currentBilling))
-                        )
-                    }
+                    if (currentPlan12Months) add(ProPlanBadge(context.getString(R.string.currentBilling)))
+                    discountBadge(baseline = baseline, it.perMonthUnits, showTooltip = currentPlan12Months)?.let(this::add)
+                }
+            )
+        }
 
-                    add(
-                        ProPlanBadge(
-                            "33% Off", //todo PRO calculate properly
-                            if(currentPlan12Months)  Phrase.from(context.getText(R.string.proDiscountTooltip))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                .put(PERCENT_KEY, "33")  //todo PRO calculate properly
-                                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                                .format().toString()
-                            else null
-                        )
-                    )
-                },
-            ),
+        val plan3Months = data3Month?.let {
             ProPlan(
                 title = Phrase.from(context.getText(R.string.proPriceThreeMonths))
-                    .put(MONTHLY_PRICE_KEY, "$4.99")  //todo PRO calculate properly
+                    .put(MONTHLY_PRICE_KEY, it.perMonthText)
                     .format().toString(),
                 subtitle = Phrase.from(context.getText(R.string.proBilledQuarterly))
-                    .put(PRICE_KEY, "$14.99")  //todo PRO calculate properly
+                    .put(PRICE_KEY, it.totalText)
                     .format().toString(),
                 selected = currentPlan3Months,
                 currentPlan = currentPlan3Months,
                 durationType = ProSubscriptionDuration.THREE_MONTHS,
                 badges = buildList {
-                    if(currentPlan3Months){
-                        add(
-                            ProPlanBadge(context.getString(R.string.currentBilling))
-                        )
-                    }
+                    if (currentPlan3Months) add(ProPlanBadge(context.getString(R.string.currentBilling)))
+                    discountBadge(baseline = baseline, it.perMonthUnits, showTooltip = currentPlan3Months)?.let(this::add)
+                }
+            )
+        }
 
-                    add(
-                        ProPlanBadge(
-                            "16% Off", //todo PRO calculate properly
-                            if(currentPlan3Months)  Phrase.from(context.getText(R.string.proDiscountTooltip))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                .put(PERCENT_KEY, "16")  //todo PRO calculate properly
-                                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                                .format().toString()
-                            else null
-                        )
-                    )
-                },
-            ),
+        val plan1Month = data1Month?.let {
             ProPlan(
                 title = Phrase.from(context.getText(R.string.proPriceOneMonth))
-                    .put(MONTHLY_PRICE_KEY, "$5.99") //todo PRO calculate properly
+                    .put(MONTHLY_PRICE_KEY, it.perMonthText)
                     .format().toString(),
                 subtitle = Phrase.from(context.getText(R.string.proBilledMonthly))
-                    .put(PRICE_KEY, "$5") //todo PRO calculate properly
+                    .put(PRICE_KEY, it.totalText)
                     .format().toString(),
                 selected = currentPlan1Month,
                 currentPlan = currentPlan1Month,
                 durationType = ProSubscriptionDuration.ONE_MONTH,
-                badges = if(currentPlan1Month) listOf(
-                    ProPlanBadge(context.getString(R.string.currentBilling))
-                ) else emptyList(),
-            ),
+                badges = if (currentPlan1Month) listOf(ProPlanBadge(context.getString(R.string.currentBilling))) else emptyList()
+                // no discount on the baseline 1 month...
+            )
+        }
+
+        return listOfNotNull(plan12Months, plan3Months, plan1Month)
+    }
+
+    private data class PriceDisplayData(val perMonthUnits: BigDecimal, val perMonthText: String, val totalText: String)
+
+    private fun calculatePricesFor(pricing: SubscriptionManager.SubscriptionPricing?): PriceDisplayData? {
+        if(pricing == null) return null
+
+        val months = CurrencyFormatter.monthsFromIso(pricing.billingPeriodIso)
+        val perMonthUnits = CurrencyFormatter.perMonthUnitsFloor(pricing.priceAmountMicros, months, pricing.priceCurrencyCode)
+        val perMonthText  = CurrencyFormatter.formatUnits(perMonthUnits, pricing.priceCurrencyCode)
+        return PriceDisplayData(perMonthUnits, perMonthText, pricing.formattedTotal)
+    }
+
+    private fun discountBadge(baseline: BigDecimal ,perMonthUnits: BigDecimal, showTooltip: Boolean): ProPlanBadge? {
+        val pct = CurrencyFormatter.percentOffFloor(baseline, perMonthUnits)
+        if (pct <= 0) return null
+        val tooltip = if (showTooltip)
+            Phrase.from(context.getText(R.string.proDiscountTooltip))
+                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                .put(PERCENT_KEY, pct.toString())
+                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                .format().toString()
+        else null
+        return ProPlanBadge(
+            title = Phrase.from(context.getText(R.string.proPercentOff))
+                .put(PERCENT_KEY, pct.toString())
+                .format().toString(),
+            tooltip = tooltip
         )
     }
 

@@ -45,9 +45,19 @@ interface SubscriptionManager: OnAppStartupComponent {
      */
     suspend fun hasValidSubscription(): Boolean
 
+    /**
+     * Gets a list of pricing for the subscriptions
+     * @throws Exception in case of errors fetching prices
+     */
+    @Throws(Exception::class)
+    suspend fun getSubscriptionPrices(): List<SubscriptionPricing>
+
     data class SubscriptionPricing(
         val subscriptionDuration: ProSubscriptionDuration,
-        val price: String,
+        val priceAmountMicros: Long,
+        val priceCurrencyCode: String,
+        val billingPeriodIso: String,
+        val formattedTotal: String,
     )
 }
 

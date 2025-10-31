@@ -36,4 +36,8 @@ class NoOpSubscriptionManager @Inject constructor() : SubscriptionManager {
     override suspend fun isWithinQuickRefundWindow(): Boolean {
         return false
     }
+
+    override suspend fun getSubscriptionPrices(): List<SubscriptionManager.SubscriptionPricing> {
+        return emptyList()
+    }
 }
