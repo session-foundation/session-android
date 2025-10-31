@@ -32,9 +32,7 @@ import org.session.libsignal.streams.AttachmentCipherOutputStream
 import org.session.libsignal.streams.PaddingInputStream
 import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.ByteArraySlice.Companion.view
-import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.util.AnimatedImageUtils
 import org.thoughtcrime.securesms.util.BitmapUtil
