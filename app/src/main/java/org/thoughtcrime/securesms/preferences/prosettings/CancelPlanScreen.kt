@@ -45,48 +45,29 @@ fun CancelPlanScreen(
 ) {
     val state by viewModel.cancelPlanState.collectAsState()
 
-    when(state) {
-        is State.Error -> {
-            // show a toast and go back to pro settings home screen
-            Toast.makeText(LocalContext.current, R.string.errorGeneric, Toast.LENGTH_LONG).show()
-            onBack()
-        }
+    BaseStateProScreen(
+        state = state,
+        onBack = onBack
+    ){ planData ->
+        val activePlan = planData.subscriptionType
 
-        is State.Loading -> {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        }
-
-        is State.Success -> {
-            val planData = (state as State.Success).value
-            val activePlan = planData.subscriptionType as? SubscriptionType.Active
-            if (activePlan == null) {
-                onBack()
-                return
-            }
-
-            // there are different UI depending on the state
-            when {
-                // there is an active subscription but from a different platform or from the
-                // same platform but a different account
-                activePlan.subscriptionDetails.isFromAnotherPlatform()
-                        || !planData.hasValidSubscription ->
-                    CancelPlanNonOriginating(
-                        subscriptionDetails = activePlan.subscriptionDetails,
-                        sendCommand = viewModel::onCommand,
-                        onBack = onBack,
-                    )
-
-                // default cancel screen
-                else -> CancelPlan(
+        // there are different UI depending on the state
+        when {
+            // there is an active subscription but from a different platform or from the
+            // same platform but a different account
+            activePlan.subscriptionDetails.isFromAnotherPlatform()
+                    || !planData.hasValidSubscription ->
+                CancelPlanNonOriginating(
+                    subscriptionDetails = activePlan.subscriptionDetails,
                     sendCommand = viewModel::onCommand,
                     onBack = onBack,
                 )
-            }
+
+            // default cancel screen
+            else -> CancelPlan(
+                sendCommand = viewModel::onCommand,
+                onBack = onBack,
+            )
         }
     }
 }

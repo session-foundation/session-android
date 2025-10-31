@@ -16,11 +16,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
@@ -76,8 +73,8 @@ class ProSettingsViewModel @AssistedInject constructor(
     private val _choosePlanState: MutableStateFlow<State<ChoosePlanState>> = MutableStateFlow(State.Loading)
     val choosePlanState: StateFlow<State<ChoosePlanState>> = _choosePlanState
 
-    private val _refundPlanState: MutableStateFlow<RefundPlanState> = MutableStateFlow(RefundPlanState())
-    val refundPlanState: StateFlow<RefundPlanState> = _refundPlanState
+    private val _refundPlanState: MutableStateFlow<State<RefundPlanState>> = MutableStateFlow(State.Loading)
+    val refundPlanState: StateFlow<State<RefundPlanState>> = _refundPlanState
 
     private val _cancelPlanState: MutableStateFlow<State<CancelPlanState>> = MutableStateFlow(State.Loading)
     val cancelPlanState: StateFlow<State<CancelPlanState>> = _cancelPlanState
@@ -263,22 +260,30 @@ class ProSettingsViewModel @AssistedInject constructor(
             }
 
             Commands.GoToRefund -> {
+                val sub = _proSettingsUIState.value.subscriptionState.type
+                if(sub !is SubscriptionType.Active) return
+
+                _refundPlanState.update { State.Loading }
+                navigateTo(ProSettingsDestination.RefundSubscription)
+
                 viewModelScope.launch {
                     val subManager = subscriptionCoordinator.getCurrentManager()
                     _refundPlanState.update {
-                        RefundPlanState(
-                            subscriptionType = _proSettingsUIState.value.subscriptionState.type,
-                            isQuickRefund = subManager.isWithinQuickRefundWindow(),
-                            quickRefundUrl = subManager.quickRefundUrl
+                        State.Success(
+                            RefundPlanState(
+                                subscriptionType = sub,
+                                isQuickRefund = subManager.isWithinQuickRefundWindow(),
+                                quickRefundUrl = subManager.quickRefundUrl
+                            )
                         )
                     }
-
-                    //todo PRO might need a State here as well...
-                    navigateTo(ProSettingsDestination.RefundSubscription)
                 }
             }
 
             Commands.GoToCancel -> {
+                val sub = _proSettingsUIState.value.subscriptionState.type
+                if(sub !is SubscriptionType.Active) return
+
                 // calculate state
                 _cancelPlanState.update { State.Loading }
                 navigateTo(ProSettingsDestination.CancelSubscription)
@@ -289,7 +294,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                     _cancelPlanState.update {
                         State.Success(
                             CancelPlanState(
-                                subscriptionType = _proSettingsUIState.value.subscriptionState.type,
+                                subscriptionType = sub,
                                 hasValidSubscription = hasValidSubscription
                             )
                         )
@@ -730,14 +735,14 @@ class ProSettingsViewModel @AssistedInject constructor(
     )
 
     data class CancelPlanState(
-        val subscriptionType: SubscriptionType = SubscriptionType.NeverSubscribed,
-        val hasValidSubscription: Boolean = false,  // true is there is a current subscription AND the available subscription manager on this device has an account which matches the product id we got from libsession
+        val subscriptionType: SubscriptionType.Active,
+        val hasValidSubscription: Boolean,  // true is there is a current subscription AND the available subscription manager on this device has an account which matches the product id we got from libsession
     )
 
     data class RefundPlanState(
-        val subscriptionType: SubscriptionType = SubscriptionType.NeverSubscribed,
-        val isQuickRefund: Boolean = false,
-        val quickRefundUrl: String? = null
+        val subscriptionType: SubscriptionType.Active,
+        val isQuickRefund: Boolean,
+        val quickRefundUrl: String?
     )
 
     data class ProStats(
