@@ -1,13 +1,10 @@
 package org.thoughtcrime.securesms.database
 
-import android.content.ContentValues
 import android.content.Context
-import android.database.Cursor
-import androidx.core.database.getStringOrNull
-import org.session.libsession.messaging.BlindedIdMapping
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import javax.inject.Provider
 
+@Deprecated("Use the new BlindMappingRepository instead. This class will be removed in a future release.")
 class BlindedIdMappingDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) : Database(context, helper) {
 
     companion object {
@@ -29,61 +26,9 @@ class BlindedIdMappingDatabase(context: Context, helper: Provider<SQLCipherOpenH
       )
     """.trimIndent()
 
-        private fun readBlindedIdMapping(cursor: Cursor): BlindedIdMapping {
-            return BlindedIdMapping(
-                blindedId = cursor.getString(cursor.getColumnIndexOrThrow(BLINDED_PK)),
-                accountId = cursor.getStringOrNull(cursor.getColumnIndexOrThrow(SESSION_PK)),
-                serverUrl = cursor.getString(cursor.getColumnIndexOrThrow(SERVER_URL)),
-                serverId = cursor.getString(cursor.getColumnIndexOrThrow(SERVER_PK)),
-            )
-        }
-    }
+        @JvmField
+        val DROP_TABLE_COMMAND = "DROP TABLE $TABLE_NAME"
 
-    fun getBlindedIdMapping(blindedId: String): List<BlindedIdMapping> {
-        val query = "$BLINDED_PK = ?"
-        val args = arrayOf(blindedId)
-
-        val mappings: MutableList<BlindedIdMapping> = mutableListOf()
-
-        readableDatabase.query(TABLE_NAME, null, query, args, null, null, null).use { cursor ->
-            while (cursor.moveToNext()) {
-                mappings += readBlindedIdMapping(cursor)
-            }
-        }
-
-        return mappings
-    }
-
-    fun addBlindedIdMapping(blindedIdMapping: BlindedIdMapping) {
-        writableDatabase.beginTransaction()
-        try {
-            val values = ContentValues().apply {
-                put(BLINDED_PK, blindedIdMapping.blindedId)
-                put(SERVER_PK, blindedIdMapping.accountId)
-                put(SERVER_URL, blindedIdMapping.serverUrl)
-                put(SERVER_PK, blindedIdMapping.serverId)
-            }
-
-            writableDatabase.insert(TABLE_NAME, null, values)
-            writableDatabase.setTransactionSuccessful()
-        } finally {
-            writableDatabase.endTransaction()
-        }
-    }
-
-    fun getBlindedIdMappingsExceptFor(server: String): List<BlindedIdMapping> {
-        val query = "$SESSION_PK IS NOT NULL AND $SERVER_URL <> ?"
-        val args = arrayOf(server)
-
-        val mappings: MutableList<BlindedIdMapping> = mutableListOf()
-
-        readableDatabase.query(TABLE_NAME, null, query, args, null, null, null).use { cursor ->
-            while (cursor.moveToNext()) {
-                mappings += readBlindedIdMapping(cursor)
-            }
-        }
-
-        return mappings
     }
 
 }

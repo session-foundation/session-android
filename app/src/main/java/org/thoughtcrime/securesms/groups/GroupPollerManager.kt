@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.groups
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
@@ -13,7 +12,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -24,15 +22,18 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.supervisorScope
-import org.session.libsession.snode.SnodeClock
-import org.session.libsession.utilities.ConfigUpdateNotification
+import kotlinx.coroutines.sync.Semaphore
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsignal.database.LokiAPIDatabaseProtocol
+import org.session.libsession.utilities.UserConfigType
+import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.util.AppVisibilityManager
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.util.NetworkConnectivity
+import org.thoughtcrime.securesms.util.castAwayType
+import java.util.EnumSet
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -52,13 +53,13 @@ import javax.inject.Singleton
 @Singleton
 class GroupPollerManager @Inject constructor(
     configFactory: ConfigFactory,
-    lokiApiDatabase: LokiAPIDatabaseProtocol,
-    clock: SnodeClock,
     preferences: TextSecurePreferences,
-    appVisibilityManager: AppVisibilityManager,
     connectivity: NetworkConnectivity,
-    groupRevokedMessageHandler: GroupRevokedMessageHandler,
-) {
+    pollFactory: GroupPoller.Factory,
+    @param:ManagerScope private val managerScope: CoroutineScope,
+) : OnAppStartupComponent {
+    private val groupPollerSemaphore = Semaphore(5)
+
     @Suppress("OPT_IN_USAGE")
     private val groupPollers: StateFlow<Map<AccountId, GroupPollerHandle>> =
         combine(
@@ -71,8 +72,8 @@ class GroupPollerManager @Inject constructor(
             // This flatMap produces a flow of groups that should be polled now
             .flatMapLatest { shouldPoll ->
                 if (shouldPoll) {
-                    (configFactory.configUpdateNotifications
-                        .filter { it is ConfigUpdateNotification.UserConfigsMerged || it == ConfigUpdateNotification.UserConfigsModified } as Flow<*>)
+                    configFactory.userConfigsChanged(EnumSet.of(UserConfigType.USER_GROUPS))
+                        .castAwayType()
                         .onStart { emit(Unit) }
                         .map {
                             configFactory.withUserConfigs { it.userGroups.allClosedGroupInfo() }
@@ -109,14 +110,10 @@ class GroupPollerManager @Inject constructor(
                         Log.d(TAG, "Starting poller for $groupId")
                         val scope = CoroutineScope(Dispatchers.Default)
                         poller = GroupPollerHandle(
-                            poller = GroupPoller(
+                            poller = pollFactory.create(
                                 scope = scope,
                                 groupId = groupId,
-                                configFactoryProtocol = configFactory,
-                                lokiApiDatabase = lokiApiDatabase,
-                                clock = clock,
-                                appVisibilityManager = appVisibilityManager,
-                                groupRevokedMessageHandler = groupRevokedMessageHandler,
+                                pollSemaphore = groupPollerSemaphore,
                             ),
                             scope = scope
                         )
@@ -126,7 +123,7 @@ class GroupPollerManager @Inject constructor(
                 }
             }
 
-            .stateIn(GlobalScope, SharingStarted.Eagerly, emptyMap())
+            .stateIn(managerScope, SharingStarted.Eagerly, emptyMap())
 
 
     @Suppress("OPT_IN_USAGE")

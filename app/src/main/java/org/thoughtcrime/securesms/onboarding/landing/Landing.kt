@@ -1,13 +1,10 @@
 package org.thoughtcrime.securesms.onboarding.landing
 
-import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,8 +23,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -44,14 +38,11 @@ import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.thoughtcrime.securesms.conversation.v3.compose.Message
 import org.thoughtcrime.securesms.conversation.v3.compose.MessageType
 import org.thoughtcrime.securesms.conversation.v3.compose.MessageViewData
-import org.thoughtcrime.securesms.ui.AlertDialog
-import org.thoughtcrime.securesms.ui.DialogButtonData
-import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.components.BorderlessHtmlButton
+import org.thoughtcrime.securesms.ui.TCPolicyDialog
 import org.thoughtcrime.securesms.ui.components.AccentFillButton
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.qaTag
-import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
@@ -65,7 +56,7 @@ private fun PreviewLandingScreen(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
     PreviewTheme(colors) {
-        LandingScreen({}, {}, {}, {})
+        LandingScreen({}, {})
     }
 }
 
@@ -73,8 +64,6 @@ private fun PreviewLandingScreen(
 internal fun LandingScreen(
     createAccount: () -> Unit,
     loadAccount: () -> Unit,
-    openTerms: () -> Unit,
-    openPrivacyPolicy: () -> Unit,
 ) {
     var count by remember { mutableStateOf(0) }
     val listState = rememberLazyListState()
@@ -116,21 +105,10 @@ internal fun LandingScreen(
     var isUrlDialogVisible by remember { mutableStateOf(false) }
 
     if (isUrlDialogVisible) {
-        AlertDialog(
-            onDismissRequest = { isUrlDialogVisible = false },
-            title = stringResource(R.string.urlOpen),
-            text = stringResource(R.string.urlOpenBrowser),
-            showCloseButton = true, // display the 'x' button
-            buttons = listOf(
-                DialogButtonData(
-                    text = GetString(R.string.onboardingTos),
-                    onClick = openTerms
-                ),
-                DialogButtonData(
-                    text = GetString(R.string.onboardingPrivacy),
-                    onClick = openPrivacyPolicy
-                )
-            )
+        TCPolicyDialog(
+            tcsUrl = "https://getsession.org/terms-of-service",
+            privacyUrl = "https://getsession.org/privacy-policy",
+            onDismissRequest = { isUrlDialogVisible = false  },
         )
     }
 

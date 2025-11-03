@@ -11,10 +11,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import nl.komponents.kovenant.Promise
 import org.session.libsession.LocalisedTimeUtil.toShortSinglePartString
 import org.session.libsession.snode.OnionRequestAPI
@@ -23,32 +27,30 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.NonTranslatableStringConstants.SESSION_NETWORK_DATA_PRICE
 import org.session.libsession.utilities.NonTranslatableStringConstants.TOKEN_NAME_SHORT
 import org.session.libsession.utilities.NonTranslatableStringConstants.USD_NAME_SHORT
-import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_TIME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
+import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import org.thoughtcrime.securesms.util.NumberUtil.formatAbbreviated
 import org.thoughtcrime.securesms.util.NumberUtil.formatWithDecimalPlaces
 import javax.inject.Inject
 import kotlin.math.min
+import kotlin.sequences.filter
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 
 @HiltViewModel
 class TokenPageViewModel @Inject constructor(
-    @ApplicationContext val context: Context,
-    private val tokenRepository: TokenRepository,
+    @param:ApplicationContext val context: Context,
     private val tokenDataManager: TokenDataManager,
     private val dateUtils: DateUtils,
-    private val prefs: TextSecurePreferences
+    private val prefs: TextSecurePreferences,
+    private val conversationRepository: ConversationRepository,
 ) : ViewModel() {
     private val TAG = "TokenPageVM"
 
@@ -257,24 +259,24 @@ class TokenPageViewModel @Inject constructor(
             var numGroupV2Convos = 0
 
             // Grab the database and reader details we need to count the conversations / groups
-            val threadDatabase = DatabaseComponent.get(context).threadDatabase()
-            val cursor = threadDatabase.approvedConversationList
+            val convoList = conversationRepository.observeConversationList()
+                .map{ convo ->
+                    convo.filter { it.recipient.approved }
+                }
+                .first()
             val result = mutableSetOf<Recipient>()
 
             // Look through the database to build up our conversation & group counts (still on Dispatchers.IO not the main thread)
-            threadDatabase.readerFor(cursor).use { reader ->
-                while (reader.next != null) {
-                    val thread = reader.current
-                    val recipient = thread.recipient
-                    result.add(recipient)
+            convoList.forEach { thread ->
+                val recipient = thread.recipient
+                result.add(recipient)
 
-                    if (recipient.is1on1) {
-                        num1to1Convos += 1
-                    } else if (recipient.isGroupV2Recipient) {
-                        numGroupV2Convos += 1
-                    } else if (recipient.isLegacyGroupRecipient) {
-                        numLegacyGroupConvos += 1
-                    }
+                if (recipient.is1on1) {
+                    num1to1Convos += 1
+                } else if (recipient.isGroupV2Recipient) {
+                    numGroupV2Convos += 1
+                } else if (recipient.isLegacyGroupRecipient) {
+                    numLegacyGroupConvos += 1
                 }
             }
 

@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.dangerDark
 
 private val disabledBorder @Composable get() = BorderStroke(
     width = LocalDimensions.current.borderStroke,
@@ -25,55 +26,70 @@ interface ButtonType {
 
     class Outline(
         private val contentColor: Color,
-        private val borderColor: Color = contentColor
+        private val borderColor: Color = contentColor,
+        private val disabledColor: Color? = null
     ): ButtonType {
         @Composable
         override fun border(enabled: Boolean) = BorderStroke(
             width = LocalDimensions.current.borderStroke,
-            color = if (enabled) borderColor else LocalColors.current.disabled
+            color = if (enabled) borderColor else disabledColor ?: LocalColors.current.disabled
         )
         @Composable
         override fun buttonColors() = ButtonDefaults.buttonColors(
             contentColor = contentColor,
             containerColor = Color.Transparent,
-            disabledContentColor = LocalColors.current.disabled,
+            disabledContentColor = disabledColor ?: LocalColors.current.disabled,
             disabledContainerColor = Color.Transparent
         )
     }
 
-    object Fill: ButtonType {
+    class Fill(
+        private val containerColor: Color,
+    ): ButtonType {
         @Composable
-        override fun border(enabled: Boolean) = if (enabled) null else disabledBorder
+        override fun border(enabled: Boolean) = null
         @Composable
         override fun buttonColors() = ButtonDefaults.buttonColors(
             contentColor = LocalColors.current.background,
-            containerColor = LocalColors.current.text,
-            disabledContentColor = LocalColors.current.disabled,
-            disabledContainerColor = Color.Transparent
+            containerColor = containerColor,
+            disabledContentColor = LocalColors.current.accentButtonFillText,
+            disabledContainerColor = LocalColors.current.disabled
         )
     }
 
     object AccentFill: ButtonType {
         @Composable
-        override fun border(enabled: Boolean) = if (enabled) null else disabledBorder
+        override fun border(enabled: Boolean) = null
         @Composable
         override fun buttonColors() = ButtonDefaults.buttonColors(
             contentColor = LocalColors.current.accentButtonFillText,
             containerColor = LocalColors.current.accent,
-            disabledContentColor = LocalColors.current.disabled,
-            disabledContainerColor = Color.Transparent
+            disabledContentColor = LocalColors.current.accentButtonFillText,
+            disabledContainerColor = LocalColors.current.disabled
         )
     }
 
     object TertiaryFill: ButtonType {
         @Composable
-        override fun border(enabled: Boolean) = if (enabled) null else disabledBorder
+        override fun border(enabled: Boolean) = null
         @Composable
         override fun buttonColors() = ButtonDefaults.buttonColors(
             contentColor = LocalColors.current.text,
             containerColor = LocalColors.current.backgroundTertiary,
-            disabledContentColor = LocalColors.current.disabled,
-            disabledContainerColor = Color.Transparent
+            disabledContentColor = LocalColors.current.accentButtonFillText,
+            disabledContainerColor = LocalColors.current.disabled
+        )
+    }
+
+    object DangerFill: ButtonType {
+        @Composable
+        override fun border(enabled: Boolean) = null
+        @Composable
+        override fun buttonColors() = ButtonDefaults.buttonColors(
+            contentColor = Color.Black,
+            containerColor = dangerDark,
+            disabledContentColor = LocalColors.current.accentButtonFillText,
+            disabledContainerColor = LocalColors.current.disabled
         )
     }
 

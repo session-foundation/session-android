@@ -10,6 +10,7 @@ import androidx.compose.material3.Shapes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
@@ -17,8 +18,8 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.ApplicationContext
 
 // Globally accessible composition local objects
-val LocalColors = compositionLocalOf <ThemeColors> { ClassicDark() }
-val LocalType = compositionLocalOf { sessionTypography }
+val LocalColors = staticCompositionLocalOf <ThemeColors> { ClassicDark() }
+val LocalType = staticCompositionLocalOf { sessionTypography }
 
 var cachedColorsProvider: ThemeColorsProvider? = null
 

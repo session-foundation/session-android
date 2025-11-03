@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -162,7 +163,8 @@ private fun HideRecoveryPasswordCell(
 
     Cell {
         Row(
-            modifier = Modifier.padding(LocalDimensions.current.smallSpacing)
+            modifier = Modifier.padding(LocalDimensions.current.smallSpacing),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Column(
                 Modifier.weight(1f)
@@ -180,8 +182,7 @@ private fun HideRecoveryPasswordCell(
             SlimOutlineButton(
                 text = stringResource(R.string.hide),
                 modifier = Modifier
-                    .wrapContentWidth()
-                    .align(Alignment.CenterVertically)
+                    .widthIn(min = LocalDimensions.current.minSmallButtonWidth)
                     .qaTag(R.string.AccessibilityId_recoveryPasswordHideRecoveryPassword),
                 color = LocalColors.current.danger,
                 onClick = { showHideRecoveryDialog = true }

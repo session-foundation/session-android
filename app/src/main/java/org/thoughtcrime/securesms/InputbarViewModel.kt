@@ -8,7 +8,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.LIMIT_KEY
+import org.session.libsession.utilities.recipients.isPro
+import org.session.libsession.utilities.recipients.shouldShowProBadge
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.util.NumberUtil
 
@@ -17,7 +21,8 @@ private const  val CHARACTER_LIMIT_THRESHOLD = 200
 
 abstract class InputbarViewModel(
     private val application: Application,
-    private val proStatusManager: ProStatusManager
+    private val proStatusManager: ProStatusManager,
+    private val recipientRepository: RecipientRepository,
 ): ViewModel() {
     protected val _inputBarState = MutableStateFlow(InputBarState())
     val inputBarState: StateFlow<InputBarState> get() = _inputBarState
@@ -25,9 +30,11 @@ abstract class InputbarViewModel(
     private val _inputBarStateDialogsState = MutableStateFlow(InputBarDialogsState())
     val inputBarStateDialogsState: StateFlow<InputBarDialogsState> = _inputBarStateDialogsState
 
+    val currentUserProStatus by lazy { recipientRepository.getSelf().proStatus }
+
     fun onTextChanged(text: CharSequence) {
         // check the character limit
-        val maxChars = proStatusManager.getCharacterLimit()
+        val maxChars = proStatusManager.getCharacterLimit(currentUserProStatus)
         val charsLeft = maxChars - text.length
 
         // update the char limit state based on characters left
@@ -36,7 +43,7 @@ abstract class InputbarViewModel(
                 count = charsLeft,
                 countFormatted = NumberUtil.getFormattedNumber(charsLeft.toLong()),
                 danger = charsLeft < 0,
-                showProBadge = proStatusManager.isPostPro() && !proStatusManager.isCurrentUserPro() // only show the badge for non pro users POST pro launch
+                showProBadge = proStatusManager.isPostPro() && currentUserProStatus.shouldShowProBadge() // only show the badge for non pro users POST pro launch
             )
         } else {
             null
@@ -52,7 +59,7 @@ abstract class InputbarViewModel(
             // the user is trying to send a message that is too long - we should display a dialog
             // we currently have different logic for PRE and POST Pro launch
             // which we can remove once Pro is out - currently we can switch this fro the debug menu
-            if(!proStatusManager.isPostPro() || proStatusManager.isCurrentUserPro()){
+            if(!proStatusManager.isPostPro() || currentUserProStatus.isPro()){
                 showMessageTooLongSendDialog()
             } else {
                 showSessionProCTA()
@@ -67,7 +74,7 @@ abstract class InputbarViewModel(
     fun onCharLimitTapped(){
         // we currently have different logic for PRE and POST Pro launch
         // which we can remove once Pro is out - currently we can switch this fro the debug menu
-        if(!proStatusManager.isPostPro() || proStatusManager.isCurrentUserPro()){
+        if(!proStatusManager.isPostPro() || currentUserProStatus.isPro()){
             handleCharLimitTappedForProUser()
         } else {
             handleCharLimitTappedForRegularUser()
@@ -88,7 +95,7 @@ abstract class InputbarViewModel(
 
     fun showSessionProCTA(){
         _inputBarStateDialogsState.update {
-            it.copy(sessionProCharLimitCTA = true)
+            it.copy(sessionProCharLimitCTA = CharLimitCTAData(proStatusManager.subscriptionState.value.type))
         }
     }
 
@@ -101,7 +108,7 @@ abstract class InputbarViewModel(
                     message = application.resources.getQuantityString(
                         R.plurals.modalMessageCharacterDisplayDescription,
                         charsLeft, // quantity for plural
-                        proStatusManager.getCharacterLimit(), // 1st arg: total character limit
+                        proStatusManager.getCharacterLimit(currentUserProStatus), // 1st arg: total character limit
                         charsLeft, // 2nd arg: chars left
                     ),
                     positiveStyleDanger = false,
@@ -119,7 +126,7 @@ abstract class InputbarViewModel(
                 showSimpleDialog = SimpleDialogData(
                     title = application.getString(R.string.modalMessageTooLongTitle),
                     message = Phrase.from(application.getString(R.string.modalMessageCharacterTooLongDescription))
-                        .put(LIMIT_KEY, proStatusManager.getCharacterLimit())
+                        .put(LIMIT_KEY, proStatusManager.getCharacterLimit(currentUserProStatus))
                         .format(),
                     positiveStyleDanger = false,
                     positiveText = application.getString(R.string.okay),
@@ -135,7 +142,7 @@ abstract class InputbarViewModel(
                 showSimpleDialog = SimpleDialogData(
                     title = application.getString(R.string.modalMessageTooLongTitle),
                     message = Phrase.from(application.getString(R.string.modalMessageTooLongDescription))
-                        .put(LIMIT_KEY, proStatusManager.getCharacterLimit())
+                        .put(LIMIT_KEY, proStatusManager.getCharacterLimit(currentUserProStatus))
                         .format(),
                     positiveStyleDanger = false,
                     positiveText = application.getString(R.string.okay),
@@ -159,7 +166,7 @@ abstract class InputbarViewModel(
 
             is Commands.HideSessionProCTA -> {
                 _inputBarStateDialogsState.update {
-                    it.copy(sessionProCharLimitCTA = false)
+                    it.copy(sessionProCharLimitCTA = null)
                 }
             }
         }
@@ -189,7 +196,11 @@ abstract class InputbarViewModel(
 
     data class InputBarDialogsState(
         val showSimpleDialog: SimpleDialogData? = null,
-        val sessionProCharLimitCTA: Boolean = false
+        val sessionProCharLimitCTA: CharLimitCTAData? = null
+    )
+
+    data class CharLimitCTAData(
+        val proSubscription: SubscriptionType
     )
 
     sealed interface Commands {

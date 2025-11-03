@@ -8,9 +8,6 @@
     <color name="compose_text_view_background">#141414</color>
     <color name="paths_building">#FFCE3A</color>
 
-    <color name="loki_darkest_gray">#0a0a0a</color>
-
-
     <color name="white">#ffffffff</color>
     <color name="black">#ff000000</color>
     <color name="gray13">#ffababab</color>
@@ -27,14 +24,8 @@
     <color name="transparent_white_aa">#aaffffff</color>
     <color name="transparent_white_bb">#bbffffff</color>
 
-    <color name="action_mode_status_bar">@color/gray65</color>
-
-    <color name="device_link_item_background_dark">#ff333333</color>
-
     <color name="transparent">#00FFFFFF</color>
     <color name="transparent_black">#00000000</color>
-
-    <color name="MediaOverview_Media_selected_overlay">#88000000</color>
 
     <color name="avatar_background">@color/transparent_black_90</color>
 

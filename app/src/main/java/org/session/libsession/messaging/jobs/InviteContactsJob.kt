@@ -16,7 +16,6 @@ import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildGroupInviteSignature
 import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.getGroup
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateInviteMessage
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMessage
@@ -78,7 +77,6 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
                         }
 
                         MessageSender.sendNonDurably(update, Destination.Contact(memberSessionId), false)
-                            .await()
                     }
                 }
             }
@@ -110,8 +108,6 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
             // assume job "success" even if we fail, the state of invites is tracked outside of this job
             if (failures.isNotEmpty()) {
                 // show the failure toast
-                val toaster = MessagingModuleConfiguration.shared.toaster
-
                 val (_, firstError) = failures.first()
 
                 // Add the rest of the exceptions as suppressed
@@ -127,9 +123,9 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
                     groupName = groupName.orEmpty(),
                     underlying = firstError,
                 ).format(MessagingModuleConfiguration.shared.context,
-                    MessagingModuleConfiguration.shared.usernameUtils).let {
+                    MessagingModuleConfiguration.shared.recipientRepository).let {
                     withContext(Dispatchers.Main) {
-                        toaster.toast(it, Toast.LENGTH_LONG)
+                        Toast.makeText(MessagingModuleConfiguration.shared.context, it, Toast.LENGTH_LONG).show()
                     }
                 }
             }

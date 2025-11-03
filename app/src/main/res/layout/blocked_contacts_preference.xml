@@ -1,15 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Button
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    style="@style/Widget.Session.Button.Common.Borderless"
-    android:layout_width="wrap_content"
+<LinearLayout
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingHorizontal="@dimen/medium_spacing"
-    android:layout_marginHorizontal="@dimen/large_spacing"
-    android:layout_marginVertical="@dimen/medium_spacing"
-    android:text="@string/conversationsBlockedContacts"
-    android:contentDescription="@string/AccessibilityId_conversationsBlockedContacts"
-    android:textColor="?danger"
-    android:textSize="16sp"
-    android:textStyle="bold"
-/>
+    android:background="?android:attr/selectableItemBackground"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:contentDescription="@string/qa_conversations_blocked_contact_item"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:paddingVertical="@dimen/medium_spacing"
+        android:orientation="vertical">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="?android:textColorPrimary"
+            android:textStyle="bold"
+            android:textSize="@dimen/medium_font_size"
+            android:text="@string/conversationsBlockedContacts" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="?android:textColorSecondary"
+            android:textSize="@dimen/medium_font_size"
+            android:text="@string/blockedContactsManageDescription" />
+    </LinearLayout>
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_chevron_right"
+        app:tint="?android:textColorPrimary"
+        android:contentDescription="null"
+        android:layout_marginStart="8dp" />
+
+</LinearLayout>

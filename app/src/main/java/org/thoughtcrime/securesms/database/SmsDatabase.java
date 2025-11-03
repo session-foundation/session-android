@@ -17,7 +17,6 @@
  */
 package org.thoughtcrime.securesms.database;
 
-import static org.session.libsignal.utilities.Util.SECURE_RANDOM;
 import static org.thoughtcrime.securesms.database.MmsSmsColumns.Types.GROUP_UPDATE_MESSAGE_BIT;
 
 import android.content.ContentValues;
@@ -25,12 +24,17 @@ import android.content.Context;
 import android.database.Cursor;
 import android.text.TextUtils;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+
 import com.annimon.stream.Stream;
+
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
+
+import org.json.JSONArray;
 import net.zetetic.database.sqlcipher.SQLiteStatement;
+
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.session.libsession.messaging.calls.CallMessageType;
 import org.session.libsession.messaging.messages.signal.IncomingGroupMessage;
 import org.session.libsession.messaging.messages.signal.IncomingTextMessage;
@@ -50,24 +54,30 @@ import org.thoughtcrime.securesms.database.model.MessageId;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.database.model.ReactionRecord;
 import org.thoughtcrime.securesms.database.model.SmsMessageRecord;
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
+import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
+
+import dagger.Lazy;
+import dagger.hilt.android.qualifiers.ApplicationContext;
 
 /**
  * Database for storage of SMS messages.
  *
  * @author Moxie Marlinspike
  */
+@Singleton
 public class SmsDatabase extends MessagingDatabase {
 
   private static final String TAG = SmsDatabase.class.getSimpleName();
@@ -145,14 +155,28 @@ public class SmsDatabase extends MessagingDatabase {
           "DROP TABLE " + TEMP_TABLE_NAME
   };
 
+  public static String ADD_LAST_MESSAGE_INDEX = "CREATE INDEX sms_thread_id_date_sent_index ON " + TABLE_NAME + " (" + THREAD_ID + "," +  DATE_SENT + ")";
+
   public static final String ADD_IS_DELETED_COLUMN = "ALTER TABLE " + TABLE_NAME + " ADD COLUMN " + IS_DELETED_COLUMN_DEF;
   public static final String ADD_IS_GROUP_UPDATE_COLUMN = "ALTER TABLE " + TABLE_NAME +" ADD COLUMN " + IS_GROUP_UPDATE +" BOOL GENERATED ALWAYS AS (" + TYPE +" & " + GROUP_UPDATE_MESSAGE_BIT +" != 0) VIRTUAL";
 
   private static final EarlyReceiptCache earlyDeliveryReceiptCache = new EarlyReceiptCache();
   private static final EarlyReceiptCache earlyReadReceiptCache     = new EarlyReceiptCache();
 
-  public SmsDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper) {
+  private final RecipientRepository recipientRepository;
+  private final Lazy<@NonNull ThreadDatabase> threadDatabase;
+  private final Lazy<@NonNull ReactionDatabase> reactionDatabase;
+
+  @Inject
+  public SmsDatabase(@ApplicationContext Context context,
+                     Provider<SQLCipherOpenHelper> databaseHelper,
+                     RecipientRepository recipientRepository,
+                     Lazy<@NonNull ThreadDatabase> threadDatabase,
+                     Lazy<@NonNull ReactionDatabase> reactionDatabase) {
     super(context, databaseHelper);
+    this.recipientRepository = recipientRepository;
+    this.threadDatabase = threadDatabase;
+    this.reactionDatabase = reactionDatabase;
   }
 
   protected String getTableName() {
@@ -169,8 +193,7 @@ public class SmsDatabase extends MessagingDatabase {
 
     long threadId = getThreadIdForMessage(id);
 
-    DatabaseComponent.get(context).threadDatabase().update(threadId, false);
-    notifyConversationListeners(threadId);
+    threadDatabase.get().update(threadId, false);
   }
 
   public long getThreadIdForMessage(long id) {
@@ -264,7 +287,7 @@ public class SmsDatabase extends MessagingDatabase {
                     "WHERE " + ID + " = ? RETURNING " + THREAD_ID, startedAtTimestamp, id)) {
       if (cursor.moveToNext()) {
         long threadId = cursor.getLong(0);
-        DatabaseComponent.get(context).threadDatabase().update(threadId, false);
+        threadDatabase.get().update(threadId, false);
       }
     }
   }
@@ -355,8 +378,7 @@ public class SmsDatabase extends MessagingDatabase {
                              ID + " = ?",
                              new String[] {String.valueOf(cursor.getLong(cursor.getColumnIndexOrThrow(ID)))});
 
-            DatabaseComponent.get(context).threadDatabase().update(threadId, false);
-            notifyConversationListeners(threadId);
+            threadDatabase.get().update(threadId, false);
             foundMessage = true;
           }
         }
@@ -417,33 +439,27 @@ public class SmsDatabase extends MessagingDatabase {
 
   public void updateSentTimestamp(long messageId, long newTimestamp) {
     SQLiteDatabase db = getWritableDatabase();
-    try(final Cursor cursor = db.rawQuery("UPDATE " + TABLE_NAME + " SET " + DATE_SENT + " = ? " +
-                    "WHERE " + ID + " = ? RETURNING " + THREAD_ID, newTimestamp, messageId)) {
-      if (cursor.moveToNext()) {
-        notifyConversationListeners(cursor.getLong(0));
-      }
-    }
-
-    notifyConversationListListeners();
+    db.rawExecSQL("UPDATE " + TABLE_NAME + " SET " + DATE_SENT + " = ? " +
+            "WHERE " + ID + " = ?", newTimestamp, messageId);
   }
 
   protected Optional<InsertResult> insertMessageInbox(IncomingTextMessage message, long type, long serverTimestamp, boolean runThreadUpdate) {
-    Recipient recipient = Recipient.from(context, message.getSender(), true);
+    Address recipient = message.getSender();
 
-    Recipient groupRecipient;
+    Address groupRecipient;
 
     if (message.getGroupId() == null) {
       groupRecipient = null;
     } else {
-      groupRecipient = Recipient.from(context, message.getGroupId(), true);
+      groupRecipient = message.getGroupId();
     }
 
     boolean    unread     = (message.isSecureMessage() || message.isGroup() || message.isUnreadCallMessage());
 
     long       threadId;
 
-    if (groupRecipient == null) threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient);
-    else                        threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(groupRecipient);
+    if (groupRecipient == null) threadId = threadDatabase.get().getOrCreateThreadIdFor(recipient);
+    else                        threadId = threadDatabase.get().getOrCreateThreadIdFor(groupRecipient);
 
     if (message.isSecureMessage()) {
       type |= Types.SECURE_MESSAGE_BIT;
@@ -494,14 +510,8 @@ public class SmsDatabase extends MessagingDatabase {
       long           messageId = db.insert(TABLE_NAME, null, values);
 
       if (runThreadUpdate) {
-        DatabaseComponent.get(context).threadDatabase().update(threadId, true);
+        threadDatabase.get().update(threadId, true);
       }
-
-      if (message.getSubscriptionId() != -1) {
-        DatabaseComponent.get(context).recipientDatabase().setDefaultSubscriptionId(recipient, message.getSubscriptionId());
-      }
-
-      notifyConversationListeners(threadId);
 
       return Optional.of(new InsertResult(messageId, threadId));
     }
@@ -536,7 +546,7 @@ public class SmsDatabase extends MessagingDatabase {
 
   public Optional<InsertResult> insertMessageOutbox(long threadId, OutgoingTextMessage message, long serverTimestamp, boolean runThreadUpdate) {
     if (threadId == -1) {
-      threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(message.getRecipient());
+      threadId = threadDatabase.get().getOrCreateThreadIdFor(message.getRecipient());
     }
     long messageId = insertMessageOutbox(threadId, message, false, serverTimestamp, runThreadUpdate);
     if (messageId == -1) {
@@ -556,7 +566,7 @@ public class SmsDatabase extends MessagingDatabase {
     if (forceSms)                        type |= Types.MESSAGE_FORCE_SMS_BIT;
     if (message.isOpenGroupInvitation()) type |= Types.OPEN_GROUP_INVITATION_BIT;
 
-    Address            address               = message.getRecipient().getAddress();
+    Address            address               = message.getRecipient();
     Map<Address, Long> earlyDeliveryReceipts = earlyDeliveryReceiptCache.remove(date);
     Map<Address, Long> earlyReadReceipts     = earlyReadReceiptCache.remove(date);
 
@@ -583,17 +593,14 @@ public class SmsDatabase extends MessagingDatabase {
     long           messageId = db.insert(TABLE_NAME, ADDRESS, contentValues);
 
     if (runThreadUpdate) {
-      DatabaseComponent.get(context).threadDatabase().update(threadId, true);
+      threadDatabase.get().update(threadId, true);
     }
-    long lastSeen = DatabaseComponent.get(context).threadDatabase().getLastSeenAndHasSent(threadId).first();
+    long lastSeen = threadDatabase.get().getLastSeenAndHasSent(threadId).first();
     if (lastSeen < message.getSentTimestampMillis()) {
-      DatabaseComponent.get(context).threadDatabase().setLastSeen(threadId, message.getSentTimestampMillis());
+      threadDatabase.get().setLastSeen(threadId, message.getSentTimestampMillis());
     }
 
-    DatabaseComponent.get(context).threadDatabase().setHasSent(threadId, true);
-
-    notifyConversationListeners(threadId);
-
+    threadDatabase.get().setHasSent(threadId, true);
 
     return messageId;
   }
@@ -653,38 +660,16 @@ public class SmsDatabase extends MessagingDatabase {
     }
   }
 
-  // Caution: The bool returned from `deleteMessage` is NOT "Was the message successfully deleted?"
-  // - it is "Was the thread deleted because removing that message resulted in an empty thread"!
   @Override
-  public boolean deleteMessage(long messageId) {
-    Log.i("MessageDatabase", "Deleting: " + messageId);
-    SQLiteDatabase db = getWritableDatabase();
-    long threadId = getThreadIdForMessage(messageId);
-    db.delete(TABLE_NAME, ID_WHERE, new String[] {messageId+""});
-    notifyConversationListeners(threadId);
-    boolean threadDeleted = DatabaseComponent.get(context).threadDatabase().update(threadId, false);
-    return threadDeleted;
+  public void deleteMessage(long messageId) {
+    doDeleteMessages(true, ID + " = ?", messageId);
   }
 
   @Override
-  public boolean deleteMessages(long[] messageIds, long threadId) {
-    String[] argsArray = new String[messageIds.length];
-    String[] argValues = new String[messageIds.length];
-    Arrays.fill(argsArray, "?");
-
-    for (int i = 0; i < messageIds.length; i++) {
-      argValues[i] = (messageIds[i] + "");
-    }
-
-    SQLiteDatabase db = getWritableDatabase();
-    db.delete(
-      TABLE_NAME,
-      ID + " IN (" + StringUtils.join(argsArray, ',') + ")",
-      argValues
+  public void deleteMessages(Collection<Long> messageIds) {doDeleteMessages(true,
+            ID + " IN (SELECT value FROM json_each(?))",
+            new JSONArray(messageIds).toString()
     );
-    boolean threadDeleted = DatabaseComponent.get(context).threadDatabase().update(threadId, false);
-    notifyConversationListeners(threadId);
-    return threadDeleted;
   }
 
   @Override
@@ -694,8 +679,6 @@ public class SmsDatabase extends MessagingDatabase {
 
     SQLiteDatabase db = getWritableDatabase();
     db.update(TABLE_NAME, contentValues, THREAD_ID + " = ?", new String[] {fromId + ""});
-    notifyConversationListeners(toId);
-    notifyConversationListListeners();
   }
 
   @Override
@@ -719,7 +702,7 @@ public class SmsDatabase extends MessagingDatabase {
   private boolean isDuplicate(OutgoingTextMessage message, long threadId) {
     SQLiteDatabase database = getReadableDatabase();
     Cursor         cursor   = database.query(TABLE_NAME, null, DATE_SENT + " = ? AND " + ADDRESS + " = ? AND " + THREAD_ID + " = ?",
-            new String[]{String.valueOf(message.getSentTimestampMillis()), message.getRecipient().getAddress().toString(), String.valueOf(threadId)},
+            new String[]{String.valueOf(message.getSentTimestampMillis()), message.getRecipient().toString(), String.valueOf(threadId)},
             null, null, null, "1");
 
     try {
@@ -729,58 +712,47 @@ public class SmsDatabase extends MessagingDatabase {
     }
   }
 
+  private boolean doDeleteMessages(final boolean updateThread, @NonNull final String where, @Nullable final Object...args) {
+    final String sql = "DELETE FROM " + TABLE_NAME + " WHERE " + where + " RETURNING " + THREAD_ID;
+    final HashSet<Long> deletedMessageThreadIds = new HashSet<>();
+
+    try (final Cursor cursor = getWritableDatabase().rawQuery(sql, args)) {
+        while (cursor.moveToNext()) {
+            final long threadId = cursor.getLong(0);
+            deletedMessageThreadIds.add(threadId);
+        }
+    }
+
+    if (updateThread) {
+      for (final long threadId : deletedMessageThreadIds) {
+        threadDatabase.get().update(threadId, false);
+      }
+    }
+
+    return !deletedMessageThreadIds.isEmpty();
+  }
+
   void deleteMessagesFrom(long threadId, String fromUser) {
-    SQLiteDatabase db = getWritableDatabase();
-    db.delete(TABLE_NAME, THREAD_ID+" = ? AND "+ADDRESS+" = ?", new String[]{threadId+"", fromUser});
+    doDeleteMessages(
+        true,
+        THREAD_ID + " = ? AND " + ADDRESS + " = ?",
+        threadId, fromUser
+    );
   }
 
   void deleteMessagesInThreadBeforeDate(long threadId, long date) {
-    SQLiteDatabase db = getWritableDatabase();
-    String where      = THREAD_ID + " = ? AND " + DATE_SENT + " < " + date;
-
-    db.delete(TABLE_NAME, where, new String[] {threadId + ""});
+    doDeleteMessages(true, THREAD_ID + " = ? AND " + DATE_SENT + " < ?", threadId, date);
   }
 
   void deleteThread(long threadId) {
-    SQLiteDatabase db = getWritableDatabase();
-    db.delete(TABLE_NAME, THREAD_ID + " = ?", new String[] {threadId+""});
+    doDeleteMessages(true, THREAD_ID + " = ?", threadId);
   }
 
-  void deleteThreads(Set<Long> threadIds) {
-    SQLiteDatabase db = getWritableDatabase();
-    String where      = "";
-
-    for (long threadId : threadIds) {
-      where += THREAD_ID + " = '" + threadId + "' OR ";
-    }
-
-    where = where.substring(0, where.length() - 4); // Remove the final: "' OR "
-
-    db.delete(TABLE_NAME, where, null);
+  public void deleteThreads(@NonNull Collection<Long> threadIds, boolean updateThreads) {
+    doDeleteMessages(updateThreads, THREAD_ID + " IN (SELECT value FROM json_each(?))",
+            new JSONArray(threadIds).toString());
   }
 
-  void deleteAllThreads() {
-    SQLiteDatabase db = getWritableDatabase();
-    db.delete(TABLE_NAME, null, null);
-  }
-
-
-  /*package*/ SQLiteStatement createInsertStatement(SQLiteDatabase database) {
-    return database.compileStatement("INSERT INTO " + TABLE_NAME + " (" + ADDRESS + ", " +
-                                                                      PERSON + ", " +
-                                                                      DATE_SENT + ", " +
-                                                                      DATE_RECEIVED  + ", " +
-                                                                      PROTOCOL + ", " +
-                                                                      READ + ", " +
-                                                                      STATUS + ", " +
-                                                                      TYPE + ", " +
-                                                                      REPLY_PATH_PRESENT + ", " +
-                                                                      SUBJECT + ", " +
-                                                                      BODY + ", " +
-                                                                      SERVICE_CENTER +
-                                                                      ", " + THREAD_ID + ") " +
-                                     " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-  }
 
   public static class Status {
     public static final int STATUS_NONE     = -1;
@@ -791,33 +763,6 @@ public class SmsDatabase extends MessagingDatabase {
 
   public Reader readerFor(Cursor cursor) {
     return new Reader(cursor);
-  }
-
-  public OutgoingMessageReader readerFor(OutgoingTextMessage message, long threadId) {
-    return new OutgoingMessageReader(message, threadId);
-  }
-
-  public class OutgoingMessageReader {
-
-    private final OutgoingTextMessage message;
-    private final long                id;
-    private final long                threadId;
-
-    public OutgoingMessageReader(OutgoingTextMessage message, long threadId) {
-      this.message  = message;
-      this.threadId = threadId;
-      this.id       = SECURE_RANDOM.nextLong();
-    }
-
-    public MessageRecord getCurrent() {
-      return new SmsMessageRecord(id, message.getMessageBody(),
-                                  message.getRecipient(), message.getRecipient(),
-                                  SnodeAPI.getNowWithOffset(), SnodeAPI.getNowWithOffset(),
-                                  0, message.isSecureMessage() ? MmsSmsColumns.Types.getOutgoingEncryptedMessageType() : MmsSmsColumns.Types.getOutgoingSmsMessageType(),
-                                  threadId, 0, new LinkedList<IdentityKeyMismatch>(),
-                                  message.getExpiresIn(),
-                                  SnodeAPI.getNowWithOffset(), 0, Collections.emptyList(), false);
-    }
   }
 
   public class Reader implements Closeable {
@@ -863,8 +808,8 @@ public class SmsDatabase extends MessagingDatabase {
       }
 
       List<IdentityKeyMismatch> mismatches = getMismatches(mismatchDocument);
-      Recipient                 recipient  = Recipient.from(context, address, true);
-      List<ReactionRecord>      reactions  = DatabaseComponent.get(context).reactionDatabase().getReactions(cursor);
+      Recipient recipient  = recipientRepository.getRecipientSync(address);
+      List<ReactionRecord>      reactions  = reactionDatabase.get().getReactions(cursor);
 
       return new SmsMessageRecord(messageId, body, recipient,
                                   recipient,

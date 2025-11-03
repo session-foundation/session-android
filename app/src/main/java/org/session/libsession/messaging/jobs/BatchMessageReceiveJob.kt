@@ -1,12 +1,17 @@
 package org.session.libsession.messaging.jobs
 
+import android.content.Context
 import com.google.protobuf.ByteString
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import network.loki.messenger.libsession_util.ConfigBase
-import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.Message.Companion.senderOrSync
@@ -21,17 +26,19 @@ import org.session.libsession.messaging.messages.visible.ParsedMessage
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.MessageReceiver
+import org.session.libsession.messaging.sending_receiving.ReceivedMessageHandler
 import org.session.libsession.messaging.sending_receiving.VisibleMessageHandlerContext
 import org.session.libsession.messaging.sending_receiving.constructReactionRecords
-import org.session.libsession.messaging.sending_receiving.handle
-import org.session.libsession.messaging.sending_receiving.handleUnsendRequest
-import org.session.libsession.messaging.sending_receiving.handleVisibleMessage
+import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.utilities.Data
-import org.session.libsession.utilities.SSKEnvironment
+import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
+import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsignal.protos.UtilProtos
-import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import kotlin.math.max
@@ -44,9 +51,17 @@ data class MessageReceiveParameters(
     val closedGroup: Destination.ClosedGroup? = null
 )
 
-class BatchMessageReceiveJob(
-    val messages: List<MessageReceiveParameters>,
-    val openGroupID: String? = null
+class BatchMessageReceiveJob @AssistedInject constructor(
+    @Assisted private val messages: List<MessageReceiveParameters>,
+    @Assisted val fromCommunity: Address.Community?, // The community the messages are received in, if any
+    private val configFactory: ConfigFactoryProtocol,
+    private val storage: StorageProtocol,
+    @param:ApplicationContext private val context: Context,
+    private val receivedMessageHandler: ReceivedMessageHandler,
+    private val visibleMessageHandlerContextFactory: VisibleMessageHandlerContext.Factory,
+    private val messageNotifier: MessageNotifier,
+    private val threadDatabase: ThreadDatabase,
+    private val recipientRepository: RecipientRepository,
 ) : Job {
 
     override var delegate: JobDelegate? = null
@@ -70,8 +85,27 @@ class BatchMessageReceiveJob(
         private val DATA_KEY = "data"
         private val SERVER_HASH_KEY = "serverHash"
         private val OPEN_GROUP_MESSAGE_SERVER_ID_KEY = "openGroupMessageServerID"
+        @Deprecated("No longer used, keep for backwards compatibility")
         private val OPEN_GROUP_ID_KEY = "open_group_id"
         private val CLOSED_GROUP_DESTINATION_KEY = "closed_group_destination"
+        private val FROM_COMMUNITY_KEY = "from_community"
+    }
+
+    fun recreateWithNewMessages(
+        newMessages: List<MessageReceiveParameters>,
+    ): BatchMessageReceiveJob {
+        return BatchMessageReceiveJob(
+            messages = newMessages,
+            configFactory = configFactory,
+            storage = storage,
+            context = context,
+            receivedMessageHandler = receivedMessageHandler,
+            visibleMessageHandlerContextFactory = visibleMessageHandlerContextFactory,
+            messageNotifier = messageNotifier,
+            fromCommunity = fromCommunity,
+            threadDatabase = threadDatabase,
+            recipientRepository = recipientRepository,
+        )
     }
 
     private fun shouldCreateThread(parsedMessage: ParsedMessage): Boolean {
@@ -98,8 +132,7 @@ class BatchMessageReceiveJob(
     private fun isHidden(message: Message): Boolean {
         // if the contact is marked as hidden for 1on1 messages
         // and  the message's sentTimestamp is earlier than the sentTimestamp of the last config
-        val configFactory = MessagingModuleConfiguration.shared.configFactory
-        val publicKey = MessagingModuleConfiguration.shared.storage.getUserPublicKey()
+        val publicKey = storage.getUserPublicKey()
         if (message.sentTimestamp == null || publicKey == null) return false
 
         val contactConfigTimestamp = configFactory.getConfigTimestamp(UserConfigType.CONTACTS, publicKey)
@@ -115,11 +148,9 @@ class BatchMessageReceiveJob(
     }
 
     suspend fun executeAsync(dispatcherName: String) {
-        val threadMap = mutableMapOf<Long, MutableList<ParsedMessage>>()
-        val storage = MessagingModuleConfiguration.shared.storage
-        val context = MessagingModuleConfiguration.shared.context
+        val threadMap = mutableMapOf<Long, Pair<Address.Conversable, MutableList<ParsedMessage>>>()
         val localUserPublicKey = storage.getUserPublicKey()
-        val serverPublicKey = openGroupID?.let { storage.getOpenGroupPublicKey(it.split(".").dropLast(1).joinToString(".")) }
+        val serverPublicKey = fromCommunity?.let { storage.getOpenGroupPublicKey(it.serverUrl) }
         val currentClosedGroups = storage.getAllActiveClosedGroupPublicKeys()
 
         // parse and collect IDs
@@ -138,13 +169,18 @@ class BatchMessageReceiveJob(
 
                 if(isHidden(message)) return@forEach
 
-                val threadID = Message.getThreadId(
-                    message = message,
-                    openGroupID = openGroupID,
-                    storage = storage,
-                    shouldCreateThread = shouldCreateThread(parsedParams)
-                ) ?: NO_THREAD_MAPPING
-                threadMap.getOrPut(threadID) { mutableListOf() } += parsedParams
+                val threadAddress = when {
+                    fromCommunity != null -> fromCommunity
+                    message.groupPublicKey != null -> message.groupPublicKey!!.toAddress()
+                    else -> message.senderOrSync.toAddress()
+                } as Address.Conversable
+
+                val threadID = if (shouldCreateThread(parsedParams)) {
+                    threadDatabase.getOrCreateThreadIdFor(threadAddress)
+                } else {
+                    threadDatabase.getThreadIdIfExistsFor(threadAddress)
+                }
+                threadMap.getOrPut(threadID) { threadAddress to mutableListOf() }.second += parsedParams
             } catch (e: Exception) {
                 when (e) {
                     is MessageReceiver.Error.DuplicateMessage, MessageReceiver.Error.SelfSend -> {
@@ -168,15 +204,14 @@ class BatchMessageReceiveJob(
         }
 
         // iterate over threads and persist them (persistence is the longest constant in the batch process operation)
-        suspend fun processMessages(threadId: Long, messages: List<ParsedMessage>) {
+        suspend fun processMessages(threadId: Long, threadAddress: Address.Conversable, messages: List<ParsedMessage>) {
             // The LinkedHashMap should preserve insertion order
             val messageIds = linkedMapOf<MessageId, Pair<Boolean, Boolean>>()
             val myLastSeen = storage.getLastSeen(threadId)
             var updatedLastSeen = myLastSeen.takeUnless { it == -1L } ?: 0
-            val handlerContext = VisibleMessageHandlerContext(
-                module = MessagingModuleConfiguration.shared,
+            val handlerContext = visibleMessageHandlerContextFactory.create(
                 threadId = threadId,
-                openGroupID = openGroupID,
+                threadAddress,
             )
 
             val communityReactions = mutableMapOf<MessageId, MutableList<ReactionRecord>>()
@@ -192,7 +227,7 @@ class BatchMessageReceiveJob(
                                 // use sent timestamp here since that is technically the last one we have
                                 updatedLastSeen = max(updatedLastSeen, message.sentTimestamp!!)
                             }
-                            val messageId = MessageReceiver.handleVisibleMessage(
+                            val messageId = receivedMessageHandler.handleVisibleMessage(
                                 message = message,
                                 proto = proto,
                                 context = handlerContext,
@@ -218,7 +253,7 @@ class BatchMessageReceiveJob(
                         }
 
                         is UnsendRequest -> {
-                            val deletedMessage = MessageReceiver.handleUnsendRequest(message)
+                            val deletedMessage = receivedMessageHandler.handleUnsendRequest(message)
 
                             // If we removed a message then ensure it isn't in the 'messageIds'
                             if (deletedMessage != null) {
@@ -226,12 +261,11 @@ class BatchMessageReceiveJob(
                             }
                         }
 
-                        else -> MessageReceiver.handle(
+                        else -> receivedMessageHandler.handle(
                             message = message,
                             proto = proto,
                             threadId = threadId,
-                            openGroupID = openGroupID,
-                            groupv2Id = parameters.closedGroup?.publicKey?.let(::AccountId)
+                            threadAddress = threadAddress
                         )
                     }
                 } catch (e: Exception) {
@@ -256,7 +290,7 @@ class BatchMessageReceiveJob(
                 storage.markConversationAsRead(threadId, updatedLastSeen, force = true)
             }
             storage.updateThread(threadId, true)
-            SSKEnvironment.shared.notificationManager.updateNotification(context, threadId)
+            messageNotifier.updateNotification(context, threadId)
 
             if (communityReactions.isNotEmpty()) {
                 storage.addReactions(communityReactions, replaceAll = true, notifyUnread = false)
@@ -265,18 +299,23 @@ class BatchMessageReceiveJob(
 
         coroutineScope {
             val withoutDefault = threadMap.entries.filter { it.key != NO_THREAD_MAPPING }
-            val deferredThreadMap = withoutDefault.map { (threadId, messages) ->
+            val deferredThreadMap = withoutDefault.map { (threadId, data) ->
+                val (threadAddress, messages) = data
                 async(Dispatchers.Default) {
-                    processMessages(threadId, messages)
+                    processMessages(
+                        threadId = threadId,
+                        threadAddress = threadAddress,
+                        messages = messages
+                    )
                 }
             }
             // await all thread processing
             deferredThreadMap.awaitAll()
         }
 
-        val noThreadMessages = threadMap[NO_THREAD_MAPPING] ?: listOf()
-        if (noThreadMessages.isNotEmpty()) {
-            processMessages(NO_THREAD_MAPPING, noThreadMessages)
+        val noThreadMessages = threadMap[NO_THREAD_MAPPING]
+        if (noThreadMessages != null && noThreadMessages.second.isNotEmpty()) {
+            processMessages(NO_THREAD_MAPPING, noThreadMessages.first, noThreadMessages.second)
         }
 
         if (failures.isEmpty()) {
@@ -307,16 +346,23 @@ class BatchMessageReceiveJob(
         return Data.Builder()
             .putInt(NUM_MESSAGES_KEY, arraySize)
             .putByteArray(DATA_KEY, dataArrays.toByteArray())
-            .putString(OPEN_GROUP_ID_KEY, openGroupID)
             .putLongArray(OPEN_GROUP_MESSAGE_SERVER_ID_KEY, openGroupServerIds.toLongArray())
             .putStringArray(SERVER_HASH_KEY, serverHashes.toTypedArray())
             .putStringArray(CLOSED_GROUP_DESTINATION_KEY, closedGroups.toTypedArray())
+            .putString(FROM_COMMUNITY_KEY, fromCommunity?.address)
             .build()
     }
 
     override fun getFactoryKey(): String = KEY
 
-    class Factory : Job.Factory<BatchMessageReceiveJob> {
+
+    @AssistedFactory
+    abstract class Factory : Job.DeserializeFactory<BatchMessageReceiveJob> {
+        abstract fun create(
+            messages: List<MessageReceiveParameters>,
+            fromCommunity: Address.Community?,
+        ): BatchMessageReceiveJob
+
         override fun create(data: Data): BatchMessageReceiveJob {
             val numMessages = data.getInt(NUM_MESSAGES_KEY)
             val dataArrays = data.getByteArray(DATA_KEY)
@@ -343,8 +389,22 @@ class BatchMessageReceiveJob(
                     closedGroup = closedGroup
                 )
             }
+            var fromCommunity = data.getStringOrDefault(FROM_COMMUNITY_KEY, null)
+                ?.toAddress() as? Address.Community
 
-            return BatchMessageReceiveJob(parameters, openGroupID)
+            if (fromCommunity == null && openGroupID != null) {
+                // This is the old "server.room" format, which we no longer use but will have
+                // to support for a bit for the persisted data to run through the system.
+                val split = openGroupID.lastIndexOf(".")
+                    .takeIf { it >= 0 && it < openGroupID.length - 1 }
+                    ?.let { openGroupID.substring(0, it) to openGroupID.substring(it + 1) }
+
+                if (split != null) {
+                    fromCommunity = Address.Community(serverUrl = split.first, room = split.second)
+                }
+            }
+
+            return create(messages = parameters, fromCommunity = fromCommunity)
         }
     }
 

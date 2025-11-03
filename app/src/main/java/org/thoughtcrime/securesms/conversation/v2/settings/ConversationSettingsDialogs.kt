@@ -36,13 +36,15 @@ import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsV
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.UpdateGroupDescription
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.UpdateGroupName
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.UpdateNickname
+import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.CTAImage
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GenericProCTA
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.PinProCTA
 import org.thoughtcrime.securesms.ui.RadioOption
-import org.thoughtcrime.securesms.ui.SimpleSessionProActivatedCTA
+import org.thoughtcrime.securesms.ui.SessionProCTA
 import org.thoughtcrime.securesms.ui.components.AnnotatedTextWithIcon
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
@@ -231,6 +233,7 @@ fun ConversationSettingsDialogs(
     // pin CTA
     if(dialogsState.pinCTA != null){
         PinProCTA(
+            proSubscription = dialogsState.pinCTA.proSubscription,
             overTheLimit = dialogsState.pinCTA.overTheLimit,
             onDismissRequest = {
                 sendCommand(HidePinCTADialog)
@@ -241,6 +244,7 @@ fun ConversationSettingsDialogs(
     when(dialogsState.proBadgeCTA){
         is ConversationSettingsViewModel.ProBadgeCTA.Generic -> {
             GenericProCTA(
+                proSubscription = dialogsState.proBadgeCTA.proSubscription,
                 onDismissRequest = {
                     sendCommand(HideProBadgeCTA)
                 }
@@ -248,9 +252,9 @@ fun ConversationSettingsDialogs(
         }
 
         is ConversationSettingsViewModel.ProBadgeCTA.Group -> {
-            SimpleSessionProActivatedCTA(
-                heroImage = R.drawable.cta_hero_group,
+            SessionProCTA(
                 title = stringResource(R.string.proGroupActivated),
+                badgeAtStart = true,
                 textContent = {
                     AnnotatedTextWithIcon(
                         modifier = Modifier
@@ -261,6 +265,9 @@ fun ConversationSettingsDialogs(
                         style = LocalType.current.large,
                     )
                 },
+                content = { CTAImage(heroImage = R.drawable.cta_hero_group) },
+                positiveButtonText = null,
+                negativeButtonText = stringResource(R.string.close),
                 onCancel = {
                     sendCommand(HideProBadgeCTA)
                 }
@@ -434,7 +441,7 @@ fun PreviewCTAGroupDialog() {
     PreviewTheme {
         ConversationSettingsDialogs(
             dialogsState = ConversationSettingsViewModel.DialogsState(
-                proBadgeCTA = ConversationSettingsViewModel.ProBadgeCTA.Group
+                proBadgeCTA = ConversationSettingsViewModel.ProBadgeCTA.Group(SubscriptionType.NeverSubscribed)
             ),
             sendCommand = {}
         )

@@ -3,7 +3,7 @@ package org.thoughtcrime.securesms.service
 import android.content.Context
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -17,26 +17,28 @@ import org.session.libsession.messaging.messages.signal.OutgoingSecureMediaMessa
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.DistributionTypes
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerProtocol
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
-import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.MessagingDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.Storage
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.mms.MmsException
-import org.thoughtcrime.securesms.util.observeChanges
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -60,10 +62,13 @@ class ExpiringMessageManager @Inject constructor(
     private val clock: SnodeClock,
     private val storage: Lazy<Storage>,
     private val preferences: TextSecurePreferences,
-) : MessageExpirationManagerProtocol {
+    private val recipientRepository: RecipientRepository,
+    private val threadDatabase: ThreadDatabase,
+    @ManagerScope scope: CoroutineScope,
+) : MessageExpirationManagerProtocol, OnAppStartupComponent {
 
     init {
-        GlobalScope.launch {
+        scope.launch {
             listOf(
                 launch { processDatabase(smsDatabase) },
                 launch { processDatabase(mmsDatabase) }
@@ -78,31 +83,20 @@ class ExpiringMessageManager @Inject constructor(
     ): MessageId? {
         val senderPublicKey = message.sender
         val sentTimestamp = message.sentTimestamp
-        val groupId = message.groupPublicKey
+        val groupAddress = message.groupPublicKey?.toAddress() as? Address.GroupLike
         val expiresInMillis = message.expiryMode.expiryMillis
         var groupInfo = Optional.absent<SignalServiceGroup?>()
         val address = fromSerialized(senderPublicKey!!)
-        var recipient = Recipient.from(context, address, false)
+        var recipient = recipientRepository.getRecipientSync(address)
 
         // if the sender is blocked, we don't display the update, except if it's in a closed group
-        if (recipient.isBlocked && groupId == null) return null
+        if (recipient.blocked && groupAddress == null) return null
         return try {
-            if (groupId != null) {
-                val groupAddress: Address
-                groupInfo = when {
-                    groupId.startsWith(IdPrefix.GROUP.value) -> {
-                        groupAddress = fromSerialized(groupId)
-                        Optional.of(SignalServiceGroup(Hex.fromStringCondensed(groupId), SignalServiceGroup.GroupType.SIGNAL))
-                    }
-                    else -> {
-                        val doubleEncoded = GroupUtil.doubleEncodeGroupID(groupId)
-                        groupAddress = fromSerialized(doubleEncoded)
-                        Optional.of(SignalServiceGroup(GroupUtil.getDecodedGroupIDAsData(doubleEncoded), SignalServiceGroup.GroupType.SIGNAL))
-                    }
-                }
-                recipient = Recipient.from(context, groupAddress, false)
+            if (groupAddress != null) {
+                recipient = recipientRepository.getRecipientSync(groupAddress)
             }
-            val threadId = storage.get().getThreadId(recipient) ?: return null
+
+            val threadId = recipient.address.let(storage.get()::getThreadId) ?: return null
             val mediaMessage = IncomingMediaMessage(
                 address, sentTimestamp!!, -1,
                 expiresInMillis,
@@ -111,7 +105,7 @@ class ExpiringMessageManager @Inject constructor(
                 false,
                 false,
                 Optional.absent(),
-                groupInfo,
+                Optional.fromNullable(groupAddress),
                 Optional.absent(),
                 DisappearingMessageUpdate(message.expiryMode),
                 Optional.absent(),
@@ -145,12 +139,11 @@ class ExpiringMessageManager @Inject constructor(
                 else -> doubleEncodeGroupID(groupId)
             }
             val address = fromSerialized(serializedAddress)
-            val recipient = Recipient.from(context, address, false)
 
             message.threadID = storage.get().getOrCreateThreadIdFor(address)
             val content = DisappearingMessageUpdate(message.expiryMode)
             val timerUpdateMessage = if (groupId != null) OutgoingGroupMediaMessage(
-                recipient,
+                address,
                 "",
                 groupId,
                 null,
@@ -163,7 +156,7 @@ class ExpiringMessageManager @Inject constructor(
                 emptyList(),
                 content
             ) else OutgoingSecureMediaMessage(
-                recipient,
+                address,
                 "",
                 emptyList(),
                 sentTimestamp!!,
@@ -218,10 +211,14 @@ class ExpiringMessageManager @Inject constructor(
     }
 
     override fun onMessageReceived(message: Message) {
+        val messageId = message.id ?: return
+
         // When we receive a message, we'll schedule deletion if it has an expiry mode set to
         // AfterSend, as the message would be considered sent from the sender's perspective.
-        val messageId = message.id
-        if (message.expiryMode is ExpiryMode.AfterSend && messageId != null) {
+        // If we receive a message that is sent from ourselves (aka the sync message), we
+        // will start the expiry timer regardless
+        if (message.expiryMode is ExpiryMode.AfterSend ||
+            (message.expiryMode != ExpiryMode.NONE && message.isSenderSelf)) {
             getDatabase(messageId.mms)
                 .markExpireStarted(messageId.id, clock.currentTimeMills())
         }
@@ -249,7 +246,7 @@ class ExpiringMessageManager @Inject constructor(
                 continue // Proceed to the next iteration if the next expiration is already or about go to in the past
             }
 
-            val dbChanges = context.contentResolver.observeChanges(DatabaseContentProviders.Conversation.CONTENT_URI, true)
+            val dbChanges = threadDatabase.updateNotifications
 
             if (nextExpiration > 0) {
                 val delayMills = nextExpiration - now

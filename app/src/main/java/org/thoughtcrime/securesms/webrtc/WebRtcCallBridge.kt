@@ -7,23 +7,23 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.media.AudioManager
-import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import network.loki.messenger.BuildConfig
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.FutureTaskListener
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.notifications.BackgroundPollWorker
 import org.thoughtcrime.securesms.service.CallForegroundService
 import org.thoughtcrime.securesms.util.NetworkConnectivity
@@ -50,6 +50,7 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 import org.thoughtcrime.securesms.webrtc.data.State as CallState
 
 //todo PHONE We want to eventually remove this bridging class and move the logic here to a better place, probably in the callManager
@@ -61,10 +62,13 @@ import org.thoughtcrime.securesms.webrtc.data.State as CallState
  */
 @Singleton
 class WebRtcCallBridge @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val callManager: CallManager,
-    private val networkConnectivity: NetworkConnectivity
-): CallManager.WebRtcListener  {
+    private val networkConnectivity: NetworkConnectivity,
+    private val recipientRepository: RecipientRepository,
+    private val storage: StorageProtocol,
+    @ManagerScope private val scope: CoroutineScope,
+): CallManager.WebRtcListener, OnAppStartupComponent  {
 
     companion object {
 
@@ -103,10 +107,13 @@ class WebRtcCallBridge @Inject constructor(
         isNetworkAvailable = true
         registerWiredHeadsetStateReceiver()
 
-        GlobalScope.launch {
+        scope.launch {
             networkConnectivity.networkAvailable.collectLatest(::networkChange)
         }
     }
+
+    private val Address.isLocalNumber: Boolean
+        get() = address.equals(storage.getUserPublicKey(), ignoreCase = true)
 
 
     @Synchronized
@@ -114,7 +121,6 @@ class WebRtcCallBridge @Inject constructor(
         Log.d(TAG, "Terminating rtc service")
         context.stopService(Intent(context, CallForegroundService::class.java))
         NotificationManagerCompat.from(context).cancel(WEBRTC_NOTIFICATION)
-        LocalBroadcastManager.getInstance(context).sendBroadcast(Intent(WebRtcCallActivity.ACTION_END))
         callManager.stop()
         _hasAcceptedCall.value = false
         currentTimeouts = 0
@@ -149,17 +155,22 @@ class WebRtcCallBridge @Inject constructor(
     }
 
     private fun handleBusyCall(address: Address) {
-        val recipient = getRecipientFromAddress(address)
-        insertMissedCall(recipient, false)
+        insertMissedCall(address, false)
     }
 
     private fun handleNewOffer(address: Address, sdp: String, callId: UUID) {
         Log.d(TAG, "Handle new offer")
-        val recipient = getRecipientFromAddress(address)
-        callManager.onNewOffer(sdp, callId, recipient).fail {
-            Log.e("Loki", "Error handling new offer", it)
-            callManager.postConnectionError()
-            terminate()
+        scope.launch {
+            try {
+                callManager.onNewOffer(sdp, callId, address)
+            } catch (e: CancellationException) {
+                Log.d(TAG, "onNewOffer coroutine cancelled", e)
+                throw e
+            } catch (e: Exception) {
+                Log.e("Loki", "Error handling new offer", e)
+                callManager.postConnectionError()
+                terminate()
+            }
         }
     }
 
@@ -187,17 +198,15 @@ class WebRtcCallBridge @Inject constructor(
                 return@execute
             }
 
-            val recipient = getRecipientFromAddress(address)
-            
             if (isIncomingMessageExpired(callTime)) {
                 Log.d(TAG, "Pre offer expired - message timestamp was deemed expired: ${System.currentTimeMillis() - callTime}s")
-                insertMissedCall(recipient, true)
+                insertMissedCall(address, true)
                 terminate()
                 return@execute
             }
 
-            callManager.onPreOffer(callId, recipient) {
-                setCallNotification(TYPE_INCOMING_PRE_OFFER, recipient)
+            callManager.onPreOffer(callId, address) {
+                setCallNotification(TYPE_INCOMING_PRE_OFFER, address)
                 callManager.postViewModelState(CallViewModel.State.CALL_PRE_OFFER_INCOMING)
                 callManager.initializeAudioForCall()
                 callManager.startIncomingRinger()
@@ -213,16 +222,15 @@ class WebRtcCallBridge @Inject constructor(
 
     private fun handleIncomingPreOffer(address: Address, sdp: String, callId: UUID, callTime: Long) {
         serviceExecutor.execute {
-            val recipient = getRecipientFromAddress(address)
             val preOffer = callManager.preOfferCallData
-            if (callManager.isPreOffer() && (preOffer == null || preOffer.callId != callId || preOffer.recipient.address != recipient.address)) {
+            if (callManager.isPreOffer() && (preOffer == null || preOffer.callId != callId || preOffer.recipient != address)) {
                 Log.d(TAG, "Incoming ring from non-matching pre-offer")
                 return@execute
             }
 
-            callManager.onIncomingRing(sdp, callId, recipient, callTime) {
+            callManager.onIncomingRing(sdp, callId, address, callTime) {
                 if (_hasAcceptedCall.value) {
-                    setCallNotification(TYPE_INCOMING_CONNECTING, recipient)
+                    setCallNotification(TYPE_INCOMING_CONNECTING, address)
                 } else {
                     //No need to do anything here as this case is already taken care of from the pre offer that came before
                 }
@@ -238,7 +246,7 @@ class WebRtcCallBridge @Inject constructor(
         }
     }
 
-    fun handleOutgoingCall(recipient: Recipient) {
+    fun handleOutgoingCall(recipient: Address) {
         serviceExecutor.execute {
             if (!callManager.isIdle()) return@execute
 
@@ -268,9 +276,10 @@ class WebRtcCallBridge @Inject constructor(
                 val expectedState = callManager.currentConnectionState
                 val expectedCallId = callManager.callId
 
-                try {
-                    val offerFuture = callManager.onOutgoingCall(context)
-                    offerFuture.fail { e ->
+                scope.launch {
+                    try {
+                        callManager.onOutgoingCall(context)
+                    } catch (e: Exception) {
                         if (isConsistentState(
                                 expectedState,
                                 expectedCallId,
@@ -278,16 +287,13 @@ class WebRtcCallBridge @Inject constructor(
                                 callManager.callId
                             )
                         ) {
-                            Log.e(TAG, e)
                             callManager.postViewModelState(CallViewModel.State.NETWORK_FAILURE)
-                            callManager.postConnectionError()
-                            terminate()
                         }
+
+                        Log.e(TAG, e)
+                        callManager.postConnectionError()
+                        terminate()
                     }
-                } catch (e: Exception) {
-                    Log.e(TAG, e)
-                    callManager.postConnectionError()
-                    terminate()
                 }
             }
         }
@@ -348,9 +354,12 @@ class WebRtcCallBridge @Inject constructor(
                 val expectedState = callManager.currentConnectionState
                 val expectedCallId = callManager.callId
 
-                try {
-                    val answerFuture = callManager.onIncomingCall(context)
-                    answerFuture.fail { e ->
+                scope.launch {
+                    try {
+                        callManager.onIncomingCall(context)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "incoming call error: $e")
+
                         if (isConsistentState(
                                 expectedState,
                                 expectedCallId,
@@ -358,19 +367,15 @@ class WebRtcCallBridge @Inject constructor(
                                 callManager.callId
                             )
                         ) {
-                            Log.e(TAG, "incoming call error: $e")
                             insertMissedCall(
                                 recipient,
                                 true
                             ) //todo PHONE do we want a missed call in this case? Or just [xxx] called you ?
-                            callManager.postConnectionError()
-                            terminate()
                         }
+
+                        callManager.postConnectionError()
+                        terminate()
                     }
-                } catch (e: Exception) {
-                    Log.e(TAG, e)
-                    callManager.postConnectionError()
-                    terminate()
                 }
             }
         }
@@ -390,7 +395,7 @@ class WebRtcCallBridge @Inject constructor(
         }
     }
 
-    fun handleLocalHangup(recipient: Recipient?) {
+    fun handleLocalHangup(recipient: Address?) {
         serviceExecutor.execute {
             callManager.handleLocalHangup(recipient)
             terminate()
@@ -418,23 +423,28 @@ class WebRtcCallBridge @Inject constructor(
 
     fun handleAnswerIncoming(address: Address, sdp: String, callId: UUID) {
         serviceExecutor.execute {
-            try {
-                val recipient = getRecipientFromAddress(address)
-                if (recipient.isLocalNumber && callManager.currentConnectionState in CallState.CAN_DECLINE_STATES) {
-                    handleLocalHangup(recipient)
-                    return@execute
+            val state = callManager.currentConnectionState
+            val isInitiator = callManager.isInitiator()
+
+            // If we receive a self-synced ANSWER:
+            if (address.isLocalNumber) {
+                // Only act if this device was in an INCOMING ring state (answered elsewhere).
+                if (!isInitiator && state in arrayOf(CallState.RemotePreOffer, CallState.RemoteRing)) {
+                    // Stop ringing / update UI, but DO NOT hang up the remote.
+                    callManager.silenceIncomingRinger()
+                    callManager.handleIgnoreCall()  
+                    terminate()
+                } else {
+                    // We’re the caller or already past ring → ignore self-answer
+                    Log.w(TAG, "Ignoring self-synced ANSWER in state=$state (isInitiator=$isInitiator)")
                 }
-
-                callManager.postViewModelState(CallViewModel.State.CALL_ANSWER_OUTGOING)
-
-                callManager.handleResponseMessage(
-                    recipient,
-                    callId,
-                    SessionDescription(SessionDescription.Type.ANSWER, sdp)
-                )
-            } catch (e: PeerConnectionException) {
-                terminate()
+                return@execute
             }
+
+            callManager.postViewModelState(CallViewModel.State.CALL_ANSWER_OUTGOING)
+            callManager.handleResponseMessage(
+                address, callId, SessionDescription(SessionDescription.Type.ANSWER, sdp)
+            )
         }
     }
 
@@ -523,7 +533,7 @@ class WebRtcCallBridge @Inject constructor(
      * - Directly sent by the notification manager
      * - Displayed as part of a foreground Service
      */
-    private fun setCallNotification(type: Int, recipient: Recipient?) {
+    private fun setCallNotification(type: Int, recipient: Address?) {
         // send appropriate notification if we have permission
         if (
             ActivityCompat.checkSelfPermission(
@@ -553,10 +563,10 @@ class WebRtcCallBridge @Inject constructor(
     }
 
     @SuppressLint("MissingPermission")
-    private fun sendNotification(type: Int, recipient: Recipient?){
+    private fun sendNotification(type: Int, recipient: Address?){
         NotificationManagerCompat.from(context).notify(
             WEBRTC_NOTIFICATION,
-            CallNotificationBuilder.getCallInProgressNotification(context, type, recipient)
+            CallNotificationBuilder.getCallInProgressNotification(context, type, recipient?.let(recipientRepository::getRecipientSync))
         )
     }
 
@@ -564,7 +574,7 @@ class WebRtcCallBridge @Inject constructor(
      * This will attempt to start a service with an attached notification,
      * if the service fails to start a manual notification will be sent
      */
-    private fun startServiceOrShowNotification(type: Int, recipient: Recipient?){
+    private fun startServiceOrShowNotification(type: Int, recipient: Address?){
         try {
             ContextCompat.startForegroundService(context, CallForegroundService.startIntent(context, type, recipient))
         } catch (e: Exception) {
@@ -573,9 +583,7 @@ class WebRtcCallBridge @Inject constructor(
         }
     }
 
-    private fun getRecipientFromAddress(address: Address): Recipient = Recipient.from(context, address, true)
-
-    private fun insertMissedCall(recipient: Recipient, signal: Boolean) {
+    private fun insertMissedCall(recipient: Address, signal: Boolean) {
         callManager.insertCallMessage(
             threadPublicKey = recipient.address.toString(),
             callMessageType = CallMessageType.CALL_MISSED,

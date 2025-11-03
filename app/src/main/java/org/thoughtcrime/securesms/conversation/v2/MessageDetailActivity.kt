@@ -69,6 +69,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -83,12 +84,14 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GenericProCTA
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.HorizontalPagerIndicator
-import org.thoughtcrime.securesms.ui.LargeItemButton
+import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.LongMessageProCTA
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.ProCTAFeature
 import org.thoughtcrime.securesms.ui.TitledText
+import org.thoughtcrime.securesms.ui.UserProfileModal
 import org.thoughtcrime.securesms.ui.components.Avatar
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -101,6 +104,7 @@ import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.ui.theme.monospace
 import org.thoughtcrime.securesms.util.ActivityDispatcher
+import org.thoughtcrime.securesms.util.AvatarBadge
 import org.thoughtcrime.securesms.util.push
 import javax.inject.Inject
 
@@ -321,13 +325,18 @@ fun CellMetadata(
                 TitledErrorText(error)
                 senderInfo?.let { sender ->
                     TitledView(state.fromTitle) {
-                        Row {
+                        Row(
+                            modifier = Modifier.clickable{
+                                sendCommand(Commands.ShowUserProfileModal)
+                            }
+                        ) {
                             senderAvatarData?.let {
                                 Avatar(
                                     modifier = Modifier
                                         .align(Alignment.CenterVertically),
                                     size = LocalDimensions.current.iconLarge,
-                                    data = senderAvatarData
+                                    data = senderAvatarData,
+                                    badge = if (state.senderHasAdminCrown) { AvatarBadge.Admin } else AvatarBadge.None
                                 )
                                 Spacer(modifier = Modifier.width(LocalDimensions.current.smallSpacing))
                             }
@@ -344,9 +353,12 @@ fun CellMetadata(
                                 )
 
                                 sender.text?.let {
+                                    val addressColor = if(state.senderIsBlinded) LocalColors.current.textSecondary else LocalColors.current.text
                                     Text(
                                         text = it,
-                                        style = LocalType.current.base.monospace()
+                                        style = LocalType.current.base.monospace().copy(
+                                            color = addressColor
+                                        )
                                     )
                                 }
                             }
@@ -379,7 +391,9 @@ fun MessageProFeatures(
         )
 
         Text(
-            text = stringResource(id = R.string.proMessageInfoFeatures),
+            text = Phrase.from(LocalContext.current,R.string.proMessageInfoFeatures)
+                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                .format().toString(),
             style = LocalType.current.large
         )
 
@@ -389,7 +403,7 @@ fun MessageProFeatures(
                 padding = PaddingValues(),
                 data = CTAFeature.Icon(
                     text = when(it){
-                        ProStatusManager.MessageProFeature.ProBadge -> Phrase.from(LocalContext.current, R.string.proBadge)
+                        ProStatusManager.MessageProFeature.ProBadge -> Phrase.from(LocalContext.current, R.string.appProBadge)
                             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                             .format()
                             .toString()
@@ -429,42 +443,42 @@ fun CellButtons(
     Cell(modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)) {
         Column {
             onReply?.let {
-                LargeItemButton(
-                    R.string.reply,
+                ItemButton(
+                    annotatedStringResource(R.string.reply),
                     R.drawable.ic_reply,
                     onClick = it
                 )
                 Divider()
             }
 
-            LargeItemButton(
-                R.string.copy,
-                R.drawable.ic_copy,
-                onClick = onCopy
-            )
-            Divider()
-
-            onSave?.let {
-                LargeItemButton(
-                    R.string.save,
-                    R.drawable.ic_arrow_down_to_line,
-                    onClick = it
-                )
-                Divider()
-            }
-
             onResend?.let {
-                LargeItemButton(
-                    R.string.resend,
+                ItemButton(
+                    annotatedStringResource(R.string.resend),
                     R.drawable.ic_repeat_2,
                     onClick = it
                 )
                 Divider()
             }
 
+            ItemButton(
+                annotatedStringResource(R.string.messageCopy),
+                R.drawable.ic_copy,
+                onClick = onCopy
+            )
+            Divider()
+
+            onSave?.let {
+                ItemButton(
+                    annotatedStringResource(R.string.save),
+                    R.drawable.ic_arrow_down_to_line,
+                    onClick = it
+                )
+                Divider()
+            }
+
             onDelete?.let {
-                LargeItemButton(
-                    R.string.delete,
+                ItemButton(
+                    annotatedStringResource(R.string.delete),
                     R.drawable.ic_trash_2,
                     colors = dangerButtonColors(),
                     onClick = it
@@ -692,13 +706,35 @@ fun MessageDetailDialogs(
     if(state.proBadgeCTA != null){
         when(state.proBadgeCTA){
             is ProBadgeCTA.Generic ->
-                GenericProCTA(onDismissRequest = {sendCommand(Commands.HideProBadgeCTA)})
+                GenericProCTA(
+                    proSubscription = state.proBadgeCTA.proSubscription,
+                    onDismissRequest = {sendCommand(Commands.HideProBadgeCTA)}
+                )
 
             is ProBadgeCTA.LongMessage ->
-                LongMessageProCTA(onDismissRequest = {sendCommand(Commands.HideProBadgeCTA)})
+                LongMessageProCTA(
+                    proSubscription = state.proBadgeCTA.proSubscription,
+                    onDismissRequest = {sendCommand(Commands.HideProBadgeCTA)}
+                )
 
             is ProBadgeCTA.AnimatedProfile ->
-                AnimatedProfilePicProCTA(onDismissRequest = {sendCommand(Commands.HideProBadgeCTA)})
+                AnimatedProfilePicProCTA(
+                    proSubscription = state.proBadgeCTA.proSubscription,
+                    onDismissRequest = {sendCommand(Commands.HideProBadgeCTA)}
+                )
         }
+    }
+
+    // user profile modal
+    if(state.userProfileModal != null){
+        UserProfileModal(
+            data = state.userProfileModal,
+            onDismissRequest = {
+                sendCommand(Commands.HideUserProfileModal)
+            },
+            sendCommand = {
+                sendCommand(Commands.HandleUserProfileCommand(it))
+            },
+        )
     }
 }

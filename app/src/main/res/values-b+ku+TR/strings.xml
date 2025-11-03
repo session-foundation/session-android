@@ -36,11 +36,16 @@
     <string name="adminRemovedUser"><b>{name}</b> لە بەڕێوەبەری لابرا.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> و <b>{count} کەس دیکە</b> وەرگیندران وەک بەڕێوەبەر.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> و <b>{other_name}</b> وەرگیندران وەک بەڕێوەبەر.</string>
+    <plurals name="adminSendingPromotion">
+        <item quantity="one">ناردنی پرۆمۆشنی ئەدمین</item>
+        <item quantity="other">ناردنی پرۆمۆشنی ئەدمین</item>
+    </plurals>
     <string name="adminSettings">ڕێکخستنەکانی بەڕێوەبەر</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> و <b>{other_name}</b> بە بەڕێوەبەر هەڵبژێردران.</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">بێناونیشان</string>
-    <string name="appearanceAutoDarkMode">ئۆتۆ مود - تەختە</string>
+    <string name="appIcon">ئایکۆنی ئەپ</string>
+    <string name="appIconSelect">ئایکۆن ئەپی جێگرەوە هەڵبژێرە</string>
     <string name="appearanceHideMenuBar">شارەوەی منیووبار</string>
     <string name="appearanceLanguage">زمان</string>
     <string name="appearanceLanguageDescription">{app_name} ئەنجومەنی دەبیو بە کراوەکردنی {app_name} بگۆڕە</string>
@@ -122,6 +127,7 @@
     <string name="banUser">دەسەڵاتدانە کەسی</string>
     <string name="banUserBanned">بەکارهێنەر بەرچاوکرا</string>
     <string name="block">دووری دەخەیتەوە‬</string>
+    <string name="blockBlockedDescription">ئەم پەیوەندە لابردن بۆ بریتیە لە ناردنی پەیامێک.</string>
     <string name="blockBlockedNone">هیچ پەیوەندیکەرێکی بڵاوکراو نییە</string>
     <string name="blockBlockedUser">{name} دوورکرایەوە</string>
     <string name="blockDescription">دڵنیایت لەوەی ناو بەچەندەی <b>{name} </b>? بەچەندەکانی بەچەرمی نەتوانێ بمەMarker دووبارە.</string>
@@ -152,7 +158,6 @@
     <string name="callsSettings">پەیوەندیدانەکان (بهێڵه‌ی نوێ)</string>
     <string name="callsVoiceAndVideo">پەیوەندیە دەنگی و ڤیدیۆکان</string>
     <string name="callsVoiceAndVideoBeta">پەیوەندیە دەنگی و ڤیدیۆ (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">پته‌ی IP ی تۆ بۆ شەریکەکەی تیپە و سێروێری Oxen Foundation پشت بە پشت ڕەنگە بونی بوو بێت کاتێک بەکارهێنانی بەتاکوڵ بوون بوزیەکان.</string>
     <string name="callsVoiceAndVideoToggleDescription">کێیشە دەنگی و ڤیدیۆ ئەو کارانە وەکدی بزانی بۆ وەڵامی دیکە بەکارهێنەران.</string>
     <string name="callsYouCalled">تۆ تێڵەی تەلەفۆنی کردی بۆ {name}</string>
     <string name="callsYouMissedCallPermissions">تۆ تێڵەیەک لە <b>{name}</b>ێت هەڵوتە چونکە دەسەڵاتی <b>پەیوەندی دەنگی و ڤیدیۆ</b> لە رێکخستنی تایبەتی دان نەبەیت.</string>
@@ -234,16 +239,11 @@
     <string name="conversationsDeleted">گفتوگۆ سڕایەوە</string>
     <string name="conversationsEmpty">هیچ پەیامێک نیە لە {conversation_name}.</string>
     <string name="conversationsEnter">کلیدەکە بنووسە</string>
-    <string name="conversationsEnterDescription">فەرمیۆنی لەگەڵ داخستنی کلیلەکەرە</string>
-    <string name="conversationsEnterNewLine">SHIFT + ENTER (وێنەی هاوبەش بە ناوی کانفرم ، ENTER (نوێ دەستەکی.</string>
-    <string name="conversationsEnterSends">ENTER نامەیەک نێردە، SHIFT + ENTER هێڵەکی تازە دەستپێبکات</string>
     <string name="conversationsGroups">گروپەکان</string>
     <string name="conversationsMessageTrimming">بڕینی نامە</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Trim Communities</string>
-    <string name="conversationsMessageTrimmingTrimCommunitiesDescription">سڕینەوەی پەیامەکان لەلایەن گفتوگۆیی کۆمەڵگا ئێستا لە 6 مانگان زووتر، و هەڵەتوان زۆربەی 2,000 پەیام هەبێت.</string>
     <string name="conversationsNew">گفتوگۆی نوێ</string>
     <string name="conversationsNone">تۆ هیچ گفتگووەکت نییە یەکەوە</string>
-    <string name="conversationsSendWithEnterKey">ناردن بە کلیلی ئێنتر</string>
     <string name="conversationsSendWithEnterKeyDescription">فەرمی پەیوەندیدانی کردنی کلیکی  ئەنتەر پەیامیەک دەنێریت لە کاتی گۆڕینی هێڵی نوێ.</string>
     <string name="conversationsSettingsAllMedia">هەموو میدیایەکان</string>
     <string name="conversationsSpellCheck">پشکنینی ڕستەكان</string>
@@ -278,12 +278,20 @@
         <item quantity="one">سڕینەوەی پەیام</item>
         <item quantity="other">سڕینەوەی پەیامەکان</item>
     </plurals>
+    <plurals name="deleteMessageConfirm">
+        <item quantity="one">دڵنیایت دەتەوێت ئەم پەیامە بسڕیتەوە؟</item>
+        <item quantity="other">دڵنیایت دەتەوێت ئەم پەیامانە بسڕیتەوە؟</item>
+    </plurals>
     <plurals name="deleteMessageDeleted">
         <item quantity="one">نامە سڕا</item>
         <item quantity="other">نامەکان بسڕانەوە</item>
     </plurals>
     <string name="deleteMessageDeletedGlobally">ئەم پەیامە سڕاوە</string>
     <string name="deleteMessageDeletedLocally">ئەم پەیامە سڕاوە لەسەر ئەم ئامێرەیە</string>
+    <plurals name="deleteMessageDescriptionDevice">
+        <item quantity="one">ئایا دڵنیای کە دەتەوێت ئەم پەیامە تەنها لەم ئامێرە بسڕیتەوە؟</item>
+        <item quantity="other">ئایا دڵنیای کە دەتەوێت ئەم پەیامە تەنها لەم ئامێرە بسڕیتەوە؟</item>
+    </plurals>
     <string name="deleteMessageDescriptionEveryone">دڵنیایت دەتەوێت ئەم پەیامە بسڕیتەوە بۆ هەموو کەسان؟</string>
     <string name="deleteMessageDeviceOnly">تەنها لەسەر ئەم ئامێرەدا سڕینەوە</string>
     <string name="deleteMessageDevicesAll">سڕینەوە لە هەموو ئاڵاتەکانم</string>
@@ -291,6 +299,14 @@
     <plurals name="deleteMessageFailed">
         <item quantity="one">شکستی هەندەڵکردنی پەیام</item>
         <item quantity="other">شکستی هەندەڵکردنی پەیامەکان</item>
+    </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">ئەم پەیامە ناتوانرێت لە هەموو ئامێرەکانت بسڕدرێتەوە</item>
+        <item quantity="other">هەندێک لەو نامانەی کە هەڵتبژاردووە ناتوانرێت لە هەموو ئامێرەکانت بسڕدرێنەوە</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="one">ئەم پەیامە بۆ هەموو کەسێک ناسڕدرێتەوە</item>
+        <item quantity="other">هەندێک لەو نامانەی کە هەڵتبژاردووە ناتوانرێت بۆ هەموو کەسێک بسڕدرێتەوە</item>
     </plurals>
     <string name="deleteMessagesDescriptionEveryone">دڵنیایت بۆ سڕینەوەی ئەم پەیامەکان بۆ هەموو ؟</string>
     <string name="deleting">سڕینەوە</string>
@@ -375,7 +391,6 @@
     <string name="failures">هەڵەکان</string>
     <string name="file">فایل</string>
     <string name="files">فایلەکان</string>
-    <string name="followSystemSettings">شیاوی سیستەمەکان</string>
     <string name="from">لە</string>
     <string name="fullScreenToggle">فول سکرین گۆڕین</string>
     <string name="gif">GIF</string>
@@ -397,6 +412,10 @@
     <string name="groupInviteFailedMultiple">{name} و {count} هاڕاوەکانت و هاووپەیوانەت بۆ {group_name} بانگخستند شکستی هێنا</string>
     <string name="groupInviteFailedTwo">{name} و {other_name} بۆ {group_name} بانگخستند شکستی هێنا</string>
     <string name="groupInviteFailedUser">{name} بۆ {group_name} بانگخستند شکستی هێنا</string>
+    <plurals name="groupInviteSending">
+        <item quantity="one">ناردنی بانگ</item>
+        <item quantity="other">ناردنی بانگه کان</item>
+    </plurals>
     <string name="groupInviteSent">بانێ ناردکراوە</string>
     <string name="groupInviteSuccessful">دعوتنامەی گروپ سەرکەوتوو بوو</string>
     <string name="groupInviteVersion">بەکارهێنەران پێویستە نوێترین وەشانی بەکار بیهنە بۆ وەرگرتنی بانگەشەکان</string>
@@ -450,24 +469,30 @@
     <string name="groupSetDisplayPicture">دانانی وێنەی پیشانده‌رەوی گروپ</string>
     <string name="groupUnknown">گروپی نەناسراو</string>
     <string name="groupUpdated">گروپ نوێکرایەوە</string>
+    <string name="handlingConnectionCandidates">مامەڵەکردن لەگەڵ کاندیدەکانی پەیوەندی</string>
     <string name="helpFAQ">پرسەکان</string>
     <string name="helpHelpUsTranslateSession">یارمەتی پێ بدە بۆ وەرگێڕان {app_name}</string>
-    <string name="helpReportABug">راپۆرتی هەڵە</string>
     <string name="helpReportABugDescription">کورتە بازەشەکان هاوبەش بەرز بن و چاره‌که‌کن ئاڵۆزی کانتانە داده‌مێ. پارەگەڕەکانی گەیاندنەوە بە ناوی {app_name} بەیاری نوو و ئاڵۆزی گودان.</string>
     <string name="helpReportABugExportLogs">هاوردەکردنی تۆمارەکان</string>
     <string name="helpReportABugExportLogsDescription">تۆمارەکانت هاوردەکە، دوایەوە فایلی تێبینیان لە ڕێی {app_name}ی پەڕەی هاوکاری پاشەکەوتەبە.</string>
     <string name="helpReportABugExportLogsSaveToDesktop">پاشەکەوت بکە بە ئۆفیس</string>
-    <string name="helpReportABugExportLogsSaveToDesktopDescription">ئەم فایلە پاشەکەوت بکە لە سەر ئۆفیسەکەت، پاشان بهێنە گیاندن بە پەرەودەکارانی {app_name}.</string>
     <string name="helpSupport">پشتیوانی</string>
     <string name="helpWedLoveYourFeedback">فێدباکت دەبێت</string>
     <string name="hide">شارەوە</string>
-    <string name="hideMenuBarDescription">چالاکی بینینی پەڕەی سیستەم</string>
     <string name="hideOthers">شاردنەوەی تر</string>
     <string name="image">وێنە</string>
     <string name="incognitoKeyboard">تایبەتی سیفری کلیلۆرد</string>
     <string name="incognitoKeyboardDescription">داواکاری کردن بۆ ڕێژیمی Incognito ئەگەر بەردەست بێت. پێویستە ھەموو جلەکان ڕێگە بدەن.</string>
     <string name="info">زانیاری</string>
     <string name="invalidShortcut">شارتی ناکرێنەکان</string>
+    <plurals name="inviteFailed">
+        <item quantity="one">بانگهێشتکردن شکستی هێنا</item>
+        <item quantity="other">بانگهێشتەکان شکستی هێنا</item>
+    </plurals>
+    <plurals name="inviteFailedDescription">
+        <item quantity="one">بانگهێشتنامەکە نەتوانرا بنێردرێت. حەز دەکەیت هەوڵی دووبارە بدەیتەوە؟</item>
+        <item quantity="other">بانگهێشتنامەکان نەتوانرا بنێردرێت. حەز دەکەیت هەوڵی دووبارە بدەیتەوە؟</item>
+    </plurals>
     <string name="join">به‌ kidllax</string>
     <string name="later">له ڕاستەدەی</string>
     <string name="learnMore">فوکی لە زانیاری</string>
@@ -644,25 +669,17 @@
     <string name="open">کردنەوە</string>
     <string name="other">ئەوی تر</string>
     <string name="passwordChange">وشەی نهێنی بگۆڕە</string>
-    <string name="passwordChangeDescription">{app_name} وشە نهێنی بگۆڕە بۆ کردنەوەی</string>
-    <string name="passwordChangedDescription">وشەی پەرەسەدت گۆڕدرا. تکایە ئەوە بەندەن پارێزەر بێت.</string>
     <string name="passwordConfirm">پشتڕاستکردنەوەی تێپەڕوشە</string>
-    <string name="passwordCreate">تێپەڕوشەکەت دروست بکە</string>
     <string name="passwordCurrentIncorrect">تێپەڕەوەی ڕاستە پەیوەندە نەدرێت.</string>
-    <string name="passwordDescription">پێویستە تێپەڕەوشە بکرێتە کار {app_name}.</string>
     <string name="passwordEnter">وشەی تێپەڕ بنووسە</string>
     <string name="passwordEnterCurrent">تکایە لەبەشی حالەتی تێپەڕەوشەوە بنووسە</string>
     <string name="passwordEnterNew">تکایە تێپەڕەوشەی نوێت بنووسە</string>
     <string name="passwordError">پەیامەکان تەنها دەبێ سەرنج amin FischerAzadhace.</string>
-    <string name="passwordErrorLength">تێپەڕبووی تێپەڕاندەکانی تێپەڕەبە دووبارە بکەوە دەگل ناچێ.</string>
     <string name="passwordErrorMatch">تێپەڕبووان وەک یەک نین</string>
     <string name="passwordFailed">شکستی دانانی وشەی نهێنی</string>
     <string name="passwordIncorrect">وشەی نهێنیکردنەوەی نەگونجاو</string>
     <string name="passwordRemove">لابردنی پەیامێکی پاراستوو</string>
-    <string name="passwordRemoveDescription">لابردنی تێپەڕەوشەی پێویست بۆ کردنەوەی {app_name}.</string>
-    <string name="passwordRemovedDescription">وشەی پەرەسەدت وەکبێژاند.</string>
     <string name="passwordSet">دانشتنی تێپەڕ ئەو ناو</string>
-    <string name="passwordSetDescription">وشەی پەرەسەدت دابینکرا. تکایە ئەوە بەندەن پارێزەر بێت.</string>
     <string name="paste">پەیامەکان تەنها دەبێ قەبارە بنووسە</string>
     <string name="permissionMusicAudioDenied">بەرنامەی {app_name} پێویستی بە ڕێزەنامەی موسیقا و ئاواز بەدەستەکان بۆ ناردن پەیوەندەکان، موسیقا و ئاواز، بەڵام ئەمەدا دیاری کراوە. تکایە ئیش بکە لە ڕێکەوتەکان → ڕێگەدانەکان، و \"موسیقا و ئاواز\" بەرە چاودێر بکە.</string>
     <string name="permissionsAppleMusic">{app_name} پێویستە بە پارێزمەنیی ژمارەی تەلەفۆنەکان بۆ بەکردنەوەی هەموو پەیوەستەکان.</string>
@@ -671,7 +688,6 @@
     <string name="permissionsCameraDenied">{app_name} ڕوونکردنەوەی کامێرا پێویستی بۆ گرتنی وێنەکان و ڤیدیۆکان، بەڵام هەڵەیەکی هەمیشەیی روویدا. تکایە بڕۆ بۆ ڕێکخستنەکانی بەرنامە، \"ڕێگەدانەکان\" هەلبژێرە و \"کامێرا\" چارەسه‌ر بکە.</string>
     <string name="permissionsFaceId">فەرمۆن جێگیرکردنی تابلەکردنی سکرین ناستەوەی {app_name} پێی ئەنجامدەدرێت.</string>
     <string name="permissionsKeepInSystemTray">ژنوریور سیستەم کریدە کردنی خاو</string>
-    <string name="permissionsKeepInSystemTrayDescription">{app_name} هەموو دایما کار دەکات لە پاشچاوە ڕوونکردنی دەروازەکان</string>
     <string name="permissionsLibrary">{app_name} پێویستە بەکاربردنی کتێبی وێنەکان بۆ بەردەوام بوون. دەتوانیت بەکاربردنی کتێبەکان تێکڕە کەڵکەوە کرد.</string>
     <string name="permissionsMicrophone">میکروفۆن</string>
     <string name="permissionsMicrophoneAccessRequired">{app_name} پێویستە دەستی هەبی بە وەرگیراوی میکڕۆفۆن بۆ گەیشتن بەتەلەفۆنەکان و ناردنی پەیامەکانی دەنگە، بەڵام ئەم ڕووت بە نارضایە. کرتە بکە بەسەر ڕێکخستنەکان → ڕێگەدانەکان، و وەرگیراوی «میکڕۆفۆن» بکرێتەوە.</string>
@@ -709,10 +725,11 @@
     <string name="readReceipts">وەڵامە خوێندراوەکان</string>
     <string name="readReceiptsDescription">خوان پارەقە بۆ هەمو پەیامەکانی.</string>
     <string name="received">وەردەگریت:</string>
+    <string name="receivedAnswer">وەڵامی وەرگیراو</string>
+    <string name="receivingCallOffer">پێشنیاری پەیوەندی بنێرە</string>
     <string name="recommended">پێشنیارەکان</string>
     <string name="recoveryPasswordBannerDescription">تێپەڕەوشەی گەڕانەوەی خۆت پاشەکەوت بکە بۆ دڵنیایی نەکردنی دەستی پەیوەندیکردنەوە بەرزەکاڵ.</string>
     <string name="recoveryPasswordBannerTitle">پاشەکەوتی تێپەڕەوشەی گەڕانەوە</string>
-    <string name="recoveryPasswordDescription">بەکارھێنانی تێپەڕەوشەی گەڕاندنەکەت بۆ بارکردنی هەژمارەکەت لەسەر ئامێرە نوێکان.\n\nئەکاونتەکەت بێ بەکردنی تێپەڕەوشەی گەڕاندنەکەت ناتواندرێت بەسەردەبڕێت. پێویستەوە تەواوەتی پارێزگای دەستیفێڵ بکەیت و وتاپیشت نیبیت.</string>
     <string name="recoveryPasswordEnter">وشەی تێپەڕی Recovery بنووسە</string>
     <string name="recoveryPasswordErrorMessageGeneric">پەیامی دەبێ پەیامی زانیاری بکە و دووبارە بکەوە.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">ژینەگوڕ</string>
@@ -721,11 +738,9 @@
     <string name="recoveryPasswordExplanation">بۆ بارکردنی هەژمارەکەت، تێپەڕەوشەی گەڕاندنەکەت بنووسە.</string>
     <string name="recoveryPasswordHidePermanently">بۆ هەورە کردنەوە وشەی نهێنیکردنەوەی بە طوری نەهێندر</string>
     <string name="recoveryPasswordHidePermanentlyDescription1">بێ وشەی پاراستنی تۆ ناتوانی هەژمارەکەت لەسەر ئامرازە نوێکان باربکە.\n\nماوەی سبکە بۆ حەلەکان و ئەم پێشانگەکە دەستکاریبکە دەخەیتە پەیوەندیدان و دانانی وشەی نهێنی.</string>
-    <string name="recoveryPasswordHidePermanentlyDescription2">دڵنیایت دەتەوێت تەنها نهێنی کلید وشەی گەڕاندنەوە لەسەر ئەم چەشەمەیە بسڕیتەوە؟ ئەمە بشێوی چارنەماوە.</string>
     <string name="recoveryPasswordHideRecoveryPassword">شاردنەوەی وشەی نهێنیکردنەوە</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">وشەی تێپەڕەوشەی گەرانەوە بە چینەوەی هەمیشەیی لەم ئامێرەیە.</string>
     <string name="recoveryPasswordRestoreDescription">وشەی تێپەڕی Recovery بنووسە تا ئەژمێری خۆت بار بکرێ. ئەگەر نەتوانیت پارستنی پێی بکەیت، دەتوانیت لە ڕێکخستنەکانی بەرنامەیەکەتدا بدۆزیتەوە.</string>
-    <string name="recoveryPasswordView">بینینی وشەی نهێنی</string>
     <string name="recoveryPasswordWarningSendDescription">ئەمە رمزە هێنانی هەژمارەکەتە. ئەگەر تەقسیم بکەیت، ئێوە دەستنیشانیەکانی هەژمارەکەت دادەنەوە.</string>
     <string name="redo">کردنەوەی نوێتەوە</string>
     <string name="remove">لابردن</string>
@@ -762,6 +777,7 @@
     <string name="send">ناردن</string>
     <string name="sending">ناردن دەکات</string>
     <string name="sendingCallOffer">پێشنیاری پەیوەندی بنێرە</string>
+    <string name="sendingConnectionCandidates">ناردنی کاندیدەکانی پەیوەندی</string>
     <string name="sent">نارد:</string>
     <string name="sessionAppearance">نماوە</string>
     <string name="sessionClearData">سڕینەوەی داتا</string>
@@ -776,6 +792,7 @@
     <string name="sessionSettings">کانف.*?) دابنێ. هاوکێشە ، دان بە کۆنفرمەکردنی بەکوپی دەنێ. تەرکیبەکانی داپەش-پلانە دێ بەرز بتە. süstee دانە بەرەڤداستور ئەپە دییانە ^ کانسەش.</string>
     <string name="set">دان راوکردن</string>
     <string name="settingsRestartDescription">پێویستە {app_name} پڕۆگرام بکەیتەوە بۆ بەکاربردنی ڕێکخستنی نووەت.</string>
+    <string name="settingsScreenSecurityDesktop">پاراستنی پردە</string>
     <string name="share">هاوبەشی زاد</string>
     <string name="shareAccountIdDescription">دوستەکانت بگەرێنە چات کردن لە {app_name} بە بەشکردنی ناسنامەی ئەژماریت.</string>
     <string name="shareAccountIdDescriptionCopied">هاوبەشەكە وەكFAB وێبی هرێ ئاڵۆزە.</string>

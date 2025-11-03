@@ -1,22 +1,25 @@
 package org.session.libsession.snode
 
+import android.app.Application
+import dagger.Lazy
 import org.session.libsession.utilities.Environment
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.Broadcaster
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class SnodeModule(
-    val storage: LokiAPIDatabaseProtocol, val broadcaster: Broadcaster, val environment: Environment
+@Singleton
+class SnodeModule @Inject constructor(
+    val storage: LokiAPIDatabaseProtocol,
+    prefs: TextSecurePreferences,
 ) {
+    val environment: Environment = prefs.getEnvironment()
 
     companion object {
+        lateinit var sharedLazy: Lazy<SnodeModule>
+
         @Deprecated("Use properly DI components instead")
-        lateinit var shared: SnodeModule
-
-        val isInitialized: Boolean get() = Companion::shared.isInitialized
-
-        fun configure(storage: LokiAPIDatabaseProtocol, broadcaster: Broadcaster, environment: Environment) {
-            if (isInitialized) { return }
-            shared = SnodeModule(storage, broadcaster, environment)
-        }
+        val shared: SnodeModule get() = sharedLazy.get()
     }
 }

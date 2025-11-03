@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -36,6 +37,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
@@ -48,6 +50,8 @@ import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
+import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.bold
 
 data class DialogButtonData(
@@ -147,7 +151,7 @@ fun AlertDialogContent(
                 Icon(
                     painter = painterResource(id = R.drawable.ic_x),
                     tint = LocalColors.current.text,
-                    contentDescription = "back"
+                    contentDescription = stringResource(R.string.close)
                 )
             }
         }
@@ -291,12 +295,14 @@ fun DialogButton(
 
 @Composable
 fun DialogBg(
+    modifier: Modifier = Modifier,
+    bgColor: Color = LocalColors.current.backgroundSecondary,
     content: @Composable BoxScope.() -> Unit
 ){
     Box(
-        modifier = Modifier
+        modifier = modifier
             .background(
-                color = LocalColors.current.backgroundSecondary,
+                color = bgColor,
                 shape = MaterialTheme.shapes.small
             )
             .border(
@@ -430,6 +436,72 @@ fun PreviewLoadingDialog() {
     PreviewTheme {
         LoadingDialog(
             title = stringResource(R.string.warning)
+        )
+    }
+}
+
+@Composable
+fun TCPolicyDialog(
+    tcsUrl: String,
+    privacyUrl: String,
+    onDismissRequest: () -> Unit
+){
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = stringResource(R.string.urlOpen),
+        text = stringResource(R.string.urlOpenBrowser),
+        showCloseButton = true,
+        content = {
+            Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
+            Cell(
+                bgColor = LocalColors.current.backgroundTertiary
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    val context = LocalContext.current
+                    val spacing = LocalDimensions.current.xsSpacing
+
+                    IconActionRowItem(
+                        title = annotatedStringResource(tcsUrl),
+                        textStyle = LocalType.current.large.bold(),
+                        icon = R.drawable.ic_square_arrow_up_right,
+                        iconSize = LocalDimensions.current.iconSmall,
+                        paddingValues = PaddingValues(start = spacing),
+                        qaTag = R.string.AccessibilityId_onboardingTos,
+                        onClick = {
+                            context.openUrl(tcsUrl)
+                        }
+                    )
+                    Divider(paddingValues = PaddingValues(horizontal = spacing))
+
+                    IconActionRowItem(
+                        title = annotatedStringResource(privacyUrl),
+                        textStyle = LocalType.current.large.bold(),
+                        icon = R.drawable.ic_square_arrow_up_right,
+                        iconSize = LocalDimensions.current.iconSmall,
+                        paddingValues = PaddingValues(start = spacing),
+                        qaTag = R.string.AccessibilityId_onboardingPrivacy,
+                        onClick = {
+                            context.openUrl(privacyUrl)
+                        }
+                    )
+                }
+            }
+        }
+    )
+}
+
+@Preview
+@Composable
+private fun PreviewCPolicyDialog(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        TCPolicyDialog(
+            tcsUrl = "https://getsession.org/",
+            privacyUrl = "https://getsession.org/",
+            onDismissRequest = {}
         )
     }
 }

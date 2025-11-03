@@ -40,7 +40,6 @@
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> و <b>{other_name}</b> به مدیر ارتقاء یافتند.</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">ناشناس</string>
-    <string name="appearanceAutoDarkMode">حالت تیرهٔ خودکار</string>
     <string name="appearanceHideMenuBar">پنهان کردن نوار منو</string>
     <string name="appearanceLanguage">زبان</string>
     <string name="appearanceLanguageDescription">تنظیم زبان خود را برای {app_name} انتخاب کنید. هنگامی که تنظیم زبان خود را تغییر دهید، {app_name} مجدداً راه‌اندازی خواهد شد.</string>
@@ -122,6 +121,7 @@
     <string name="banUser">مسدود کردن کاربر</string>
     <string name="banUserBanned">کاربر ممنوع شد</string>
     <string name="block">مسدود کردن</string>
+    <string name="blockBlockedDescription">برای ارسال پیام،‌ ابتدا این مخاطب را از مسدود بودن درآورید!</string>
     <string name="blockBlockedNone">هیج مخاطبی مسدود نشده</string>
     <string name="blockBlockedUser">مسدود شد {name}</string>
     <string name="blockDescription">آیا مطمئنید می‌خواهید <b>{name} را مسدود کنید؟</b> کاربران مسدود شده نمی‌توانند درخواست پیام، دعوت گروهی یا تماس ارسال کنند.</string>
@@ -150,7 +150,6 @@
     <string name="callsSettings">تماس‌ها (بتا)</string>
     <string name="callsVoiceAndVideo">تماس‌های صوتی و تصویری</string>
     <string name="callsVoiceAndVideoBeta">تماس‌های صوتی و تصویری (بتا)</string>
-    <string name="callsVoiceAndVideoModalDescription">آدرس IP شما برای مخاطب تماس شما و همچنین سرور Oxen Foundation در هنگام استفاده از تماس آزمایشی مشخص خواهد بود.</string>
     <string name="callsVoiceAndVideoToggleDescription">دریافت و ارسال تماس های صوتی و تصویری به سایر کاربران را فعال کنید.</string>
     <string name="callsYouCalled">تماس شما با {name}</string>
     <string name="callsYouMissedCallPermissions">شما تماسی را از <b>{name}</b> از دست دادید زیرا <b>تماس‌های صوتی و تصویری</b> را در تنظیمات حریم خصوصی فعال نکرده‌اید.</string>
@@ -232,16 +231,11 @@
     <string name="conversationsDeleted">مکالمه حذف شد</string>
     <string name="conversationsEmpty">هیچ پیامی در {conversation_name} وجود ندارد.</string>
     <string name="conversationsEnter">کلید را وارد کنید</string>
-    <string name="conversationsEnterDescription">ویژگی کلید Enter در هنگام تایپ در یک مکالمه.</string>
-    <string name="conversationsEnterNewLine">SHIFT + ENTER ارسال پیام، ENTER خط جدید آغاز می‌کند</string>
-    <string name="conversationsEnterSends">کلید Enter پیام را ارسال می‌کند، SHIFT + ENTER یک خط جدید شروع می‌کند</string>
     <string name="conversationsGroups">گروه‌ها</string>
     <string name="conversationsMessageTrimming">پیرایش پیام</string>
     <string name="conversationsMessageTrimmingTrimCommunities">کوتاه‌سازی انجمن‌ها</string>
-    <string name="conversationsMessageTrimmingTrimCommunitiesDescription">حذف پیام از انجمن‌های قدیمی تر از ۶ ماه و انجمن‌هایی با بیش از 2000 پیام.</string>
     <string name="conversationsNew">مکالمه جدید</string>
     <string name="conversationsNone">شما هنوز هیچ مکالمه‌ای ندارید</string>
-    <string name="conversationsSendWithEnterKey">ارسال با کلید Enter</string>
     <string name="conversationsSendWithEnterKeyDescription">ضربه زدن روی کلید Enter به جای شروع یک خط جدید، پیام را ارسال خواهد کرد.</string>
     <string name="conversationsSettingsAllMedia">تمام مدیا</string>
     <string name="conversationsSpellCheck">بررسی املا</string>
@@ -289,6 +283,10 @@
     <plurals name="deleteMessageFailed">
         <item quantity="one">خطا در حذف پیام</item>
         <item quantity="other">خطا در حذف پیام ها</item>
+    </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">پرشین</item>
+        <item quantity="other">برخی از پیام‌هایی که انتخاب کرده‌اید، نمی‌توانند از همهٔ دستگاه‌های شما پاک شوند</item>
     </plurals>
     <plurals name="deleteMessageWarning">
         <item quantity="one">این پیام قابل حذف برای همه نیست</item>
@@ -377,7 +375,6 @@
     <string name="failures">خرابی‌ها</string>
     <string name="file">فایل</string>
     <string name="files">فایل‌ها</string>
-    <string name="followSystemSettings">مطابق با تنظیمات سیستم</string>
     <string name="from">از:</string>
     <string name="fullScreenToggle">تاگل فول اسکرین</string>
     <string name="gif">گیف</string>
@@ -457,16 +454,13 @@
     <string name="groupUpdated">گروه به‌روزرسانی شد</string>
     <string name="helpFAQ">سؤالات متداول</string>
     <string name="helpHelpUsTranslateSession">به ما در ترجمهٔ {app_name} کمک کنید</string>
-    <string name="helpReportABug">گزارش خرابی</string>
     <string name="helpReportABugDescription">برخی از جزئیات را برای کمک به حل مسئله شما به اشتراک بگذارید. لوگ های خود را صادر کنید و سپس فایل را از طریق مرکز راهنمایی {app_name} بارگذاری کنید.</string>
     <string name="helpReportABugExportLogs">صدور گزارش‌ها</string>
     <string name="helpReportABugExportLogsDescription">گزارش‌های خود را صادر کنید، سپس فایل را از طریق {app_name}\'s Help Desk آپلود کنید.</string>
     <string name="helpReportABugExportLogsSaveToDesktop">ذخیره در دسکتاپ</string>
-    <string name="helpReportABugExportLogsSaveToDesktopDescription">این فایل را در دسکتاپ خود ذخیره کنید، سپس آن را با توسعه‌دهندگان {app_name} به اشتراک بگذارید.</string>
     <string name="helpSupport">پشتیبانی</string>
     <string name="helpWedLoveYourFeedback">از بازخوردهای شما استقبال می‌کنیم</string>
     <string name="hide">پنهان کردن</string>
-    <string name="hideMenuBarDescription">تغییر نمایش نوار منوی سیستم</string>
     <string name="hideOthers">مخفی سازی سایرین</string>
     <string name="image">تصویر</string>
     <string name="incognitoKeyboard">صفحه‌کلید ناشناس</string>
@@ -649,25 +643,17 @@
     <string name="open">باز کن</string>
     <string name="other">دیگر</string>
     <string name="passwordChange">تغییر گذرواژه</string>
-    <string name="passwordChangeDescription">رمز عبور مورد نیاز برای باز کردن {app_name} را تغییر بده.</string>
-    <string name="passwordChangedDescription">رمز عبور شما تغییر کرد. لطفا آن را در جای امنی نگهداری کنید.</string>
     <string name="passwordConfirm">تأیید کلمه‌ی عبور</string>
-    <string name="passwordCreate">تغییر گذرواژه</string>
     <string name="passwordCurrentIncorrect">رمز عبور فعلی شما نادرست است.</string>
-    <string name="passwordDescription">برای بازشدن قفل {app_name} به رمز نیاز است.</string>
     <string name="passwordEnter">رمز عبور را وارد کنید</string>
     <string name="passwordEnterCurrent">لطفا پسورد فعلی خود را وارد کنید</string>
     <string name="passwordEnterNew">لطفا گذرواژه‌ی جدید خودت رو وارد کن</string>
     <string name="passwordError">رمز عبور باید فقط شامل حروف، اعداد و نشان‌ها باشد</string>
-    <string name="passwordErrorLength">طول رمز عبور باید بین ۶ تا ۶۴ کاراکتر باشد</string>
     <string name="passwordErrorMatch">رمزهای عبور مطابقت ندارند</string>
     <string name="passwordFailed">تنظیم رمز عبور شکست خورد</string>
     <string name="passwordIncorrect">رمز عبور نادرست است</string>
     <string name="passwordRemove">حذف رمز عبور</string>
-    <string name="passwordRemoveDescription">رمز عبور مورد نیاز برای باز کردن {app_name} را حذف کن.</string>
-    <string name="passwordRemovedDescription">گذرواژه شما حذف شده است.</string>
     <string name="passwordSet">تنظیم رمز عبور</string>
-    <string name="passwordSetDescription">رمز عبور شما فعال شد. لطفا آن را در جای امنی ذخیره کنید.</string>
     <string name="paste">پیست</string>
     <string name="permissionMusicAudioDenied">{app_name} برای فرستادن فایل، آهنگ و صوت نیاز به دسترسی به آهنگ و صدا دارد، اما این دسترسی به طور دائم رد شده است. به تنظیمات → مجوز‌ها رفته و «صدا و آهنگ» را فعال کنید.</string>
     <string name="permissionsAppleMusic">{app_name} باید از Apple Music برای پخش پیوست‌های رسانه‌ای استفاده کند.</string>
@@ -676,7 +662,6 @@
     <string name="permissionsCameraDenied">{app_name} برای گرفتن عکس‌ و ویدئو‌ نیاز به دسترسی دوربین دارد، اما این دسترسی به طور دائم رد شده است. به تنظیمات → مجوز‌ها رفته و «دوربین» را فعال کنید.</string>
     <string name="permissionsFaceId">ویژگی قفل صفحه در {app_name} از Face ID استفاده می‌کند.</string>
     <string name="permissionsKeepInSystemTray">در ناحيه سمت راستِ task bar نگه دارید</string>
-    <string name="permissionsKeepInSystemTrayDescription">{app_name} با بستن پنجره، همچنان در پس‌زمینه اجرا می‌شود.</string>
     <string name="permissionsLibrary">{app_name} برای ادامه نیاز به دسترسی به گالری عکس دارد. می‌توانید دسترسی را در تنظیمات iOS فعال کنید.</string>
     <string name="permissionsMicrophone">میکروفون</string>
     <string name="permissionsMicrophoneAccessRequired">{app_name} به دسترسی به میکروفون نیاز دارد تا بتواند مکالمه را اغاز کند و پیام های صوتی بفرستد اما دسترسی به صورت دایمی سلب شده است. روی تنظیمات→بزنید سپس روی اجازه ها بزنید و گزینه ی میکروفون را فعال کنید.</string>
@@ -717,7 +702,6 @@
     <string name="recommended">توصیه شده</string>
     <string name="recoveryPasswordBannerDescription">رمز عبور بازیابی خود را ذخیره کنید تا مطمئن شوید دسترسی به حساب کاربری خود را از دست ندهید.</string>
     <string name="recoveryPasswordBannerTitle">رمز عبور بازیابی خود را ذخیره کنید</string>
-    <string name="recoveryPasswordDescription">از گذرواژه بازیابی خود برای بارگذاری حساب کاربری خود در دستگاه‌های جدید استفاده کنید.\n\nحساب شما بدون گذرواژه بازیابی‌تان بازیابی نخواهد شد. مطمئن شوید که آن را در مکانی امن ذخیره کرده‌اید و با کسی به اشتراک نگذارید.</string>
     <string name="recoveryPasswordEnter">رمز بازیابی خود را وارد کنید</string>
     <string name="recoveryPasswordErrorMessageGeneric">لطفاً شناسه بازیابی خود را بررسی و دوباره تلاش کنید.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">برخی از کلمات در رمز بازیابی شما نادرست است. لطفاً بررسی کنید و دوباره تلاش کنید.</string>
@@ -726,11 +710,9 @@
     <string name="recoveryPasswordExplanation">برای بارگیری حساب کاربری، رمز بازیابی خود را وارد کنید.</string>
     <string name="recoveryPasswordHidePermanently">گذرواژه بازیابی خود را به طور دایم مخفی کنید</string>
     <string name="recoveryPasswordHidePermanentlyDescription1">بدون رمز عبور بازیابی، نمی‌توانید حساب خود را در دستگاه‌های جدید بارگیری کنید. \n\nما قویاً توصیه می‌کنیم گذرواژه بازیابی خود را قبل از ادامه در مکانی امن و مطمئن ذخیره کنید.</string>
-    <string name="recoveryPasswordHidePermanentlyDescription2">آیا مطمئن هستید که می‌خواهید گذرواژه بازیابی خود را روی این دستگاه به صورت دائمی پنهان کنید؟ این کار قابل برگشت نیست.</string>
     <string name="recoveryPasswordHideRecoveryPassword">گذرواژه بازیابی خود را مخفی کنید</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">بازیابی رمز عبور خود را در این دستگاه برای همیشه پنهان کنید.</string>
     <string name="recoveryPasswordRestoreDescription">برای بارگذاری حساب خود، رمز بازیابی خود را وارد کنید. اگر آن را ذخیره نکرده‌اید، می‌توانید آن را در تنظیمات برنامه خود پیدا کنید.</string>
-    <string name="recoveryPasswordView">نمایش گذرواژه</string>
     <string name="recoveryPasswordWarningSendDescription">این رمز بازیابی شماست. اگر آن را برای کسی ارسال کنید، آن‌ها به حساب شما دستری کامل خواهند داشت.</string>
     <string name="redo">انجام دوباره</string>
     <string name="remove">حذف</string>
@@ -780,6 +762,7 @@
     <string name="sessionSettings">تنظیمات</string>
     <string name="set">تنظیم</string>
     <string name="settingsRestartDescription">برای اعمال تنظیمات جدید نیاز است {app_name} را دوباره راه‌اندازی کنید.</string>
+    <string name="settingsScreenSecurityDesktop">امنیت صفحه نمایش</string>
     <string name="share">به اشتراک گذاری</string>
     <string name="shareAccountIdDescription">از دوست ات دعوت کن تا با تو در {app_name} با اشتراک گذاری شناسه کاربری ات چت کند.</string>
     <string name="shareAccountIdDescriptionCopied">با دوستان خود به اشتراک بگذارید هرجا که معمولاً با آنها صحبت می‌کنید — سپس مکالمه را به اینجا منتقل کنید.</string>

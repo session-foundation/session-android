@@ -6,42 +6,35 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.ExpiryMode
+import network.loki.messenger.libsession_util.util.GroupInfo
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
-import org.mockito.Mockito
 import org.mockito.junit.MockitoJUnitRunner
-import org.mockito.kotlin.any
-import org.mockito.kotlin.whenever
-import org.session.libsession.messaging.messages.ExpirationConfiguration
-import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.GroupRecord
-import org.session.libsession.utilities.GroupUtil
-import org.session.libsession.utilities.TextSecurePreferences
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
+import org.session.libsession.utilities.Address.Companion.toAddress
+import org.session.libsession.utilities.recipients.ProStatus
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.utilities.guava.Optional
+import org.session.libsession.utilities.recipients.RecipientData
 import org.thoughtcrime.securesms.BaseViewModelTest
 import org.thoughtcrime.securesms.MainCoroutineRule
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.ExpiryRadioOption
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.UiState
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsNavigator
-import org.thoughtcrime.securesms.database.GroupDatabase
-import org.thoughtcrime.securesms.database.Storage
-import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OptionsCardData
+import org.thoughtcrime.securesms.ui.UINavigator
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
-private const val THREAD_ID = 1L
-private const val LOCAL_NUMBER = "05---local---address"
-private val LOCAL_ADDRESS = Address.fromSerialized(LOCAL_NUMBER)
-private const val GROUP_NUMBER = "${GroupUtil.COMMUNITY_PREFIX}4133"
-private val GROUP_ADDRESS = Address.fromSerialized(GROUP_NUMBER)
+private val STANDARD_ADDRESS = "0538e63512fd78c04d45b83ec7f0f3d593f60276ce535d1160eb589a00cca7db59".toAddress()
+private val GROUP_ADDRESS = "0338e63512fd78c04d45b83ec7f0f3d593f60276ce535d1160eb589a00cca7db59".toAddress()
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(MockitoJUnitRunner::class)
@@ -51,20 +44,15 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
     var mainCoroutineRule = MainCoroutineRule()
 
     @Mock lateinit var application: Application
-    @Mock lateinit var textSecurePreferences: TextSecurePreferences
     @Mock lateinit var disappearingMessages: DisappearingMessages
-    @Mock lateinit var threadDb: ThreadDatabase
-    @Mock lateinit var groupDb: GroupDatabase
-    @Mock lateinit var storage: Storage
-    @Mock lateinit var navigator: ConversationSettingsNavigator
-    @Mock lateinit var recipient: Recipient
-    @Mock lateinit var groupRecord: GroupRecord
+    @Mock lateinit var navigator: UINavigator<ConversationSettingsDestination>
 
     @Test
     fun `note to self, off, new config`() = runTest {
-        mock1on1(ExpiryMode.NONE, LOCAL_ADDRESS)
-
-        val viewModel = createViewModel()
+        val viewModel = createViewModel(Recipient(
+            address = STANDARD_ADDRESS,
+            data = RecipientData.Self(name = "Myself", avatar = null, expiryMode = ExpiryMode.NONE, priority = 1, proStatus = ProStatus.None,  profileUpdatedAt = null),
+        ))
 
         advanceUntilIdle()
 
@@ -74,7 +62,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
             State(
                 isGroup = false,
                 isSelfAdmin = true,
-                address = LOCAL_ADDRESS,
+                address = STANDARD_ADDRESS,
                 isNoteToSelf = true,
                 expiryMode = ExpiryMode.NONE,
                 isNewConfigEnabled = true,
@@ -103,9 +91,44 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
 
     @Test
     fun `group, off, admin, new config`() = runTest {
-        mockGroup(ExpiryMode.NONE, isAdmin = true)
+        val recipient = Recipient(
+            address = GROUP_ADDRESS,
+            data = RecipientData.Group(
+                partial = RecipientData.PartialGroup(
+                    name = "Group Name",
+                    avatar = null,
+                    expiryMode = ExpiryMode.NONE,
+                    groupInfo = GroupInfo.ClosedGroupInfo(
+                        groupAccountId = GROUP_ADDRESS.address,
+                        adminKey = Bytes(ByteArray(32)),
+                        authData = Bytes(ByteArray(32)),
+                        priority = 1,
+                        invited = false,
+                        name = "Group Name",
+                        kicked = false,
+                        destroyed = false,
+                        joinedAtSecs = System.currentTimeMillis() / 1000L,
+                    ),
+                    proStatus = ProStatus.None,
+                    members = listOf(),
+                    description = null,
+                ),
+                firstMember = Recipient(
+                    address = STANDARD_ADDRESS,
+                    data = RecipientData.Self(
+                        name = "Myself",
+                        avatar = null,
+                        expiryMode = ExpiryMode.NONE,
+                        priority = 1,
+                        proStatus = ProStatus.None,
+                        profileUpdatedAt = null
+                    )
+                ),
+                secondMember = null,
+            ),
+        )
 
-        val viewModel = createViewModel()
+        val viewModel = createViewModel(recipient)
 
         advanceUntilIdle()
 
@@ -145,9 +168,44 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
 
     @Test
     fun `group, off, not admin, new config`() = runTest {
-        mockGroup(ExpiryMode.NONE, isAdmin = false)
+        val recipient = Recipient(
+            address = GROUP_ADDRESS,
+            data = RecipientData.Group(
+                partial = RecipientData.PartialGroup(
+                    name = "Group Name",
+                    avatar = null,
+                    expiryMode = ExpiryMode.NONE,
+                    groupInfo = GroupInfo.ClosedGroupInfo(
+                        groupAccountId = GROUP_ADDRESS.address,
+                        adminKey = null,
+                        authData = Bytes(ByteArray(32)),
+                        priority = 1,
+                        invited = false,
+                        name = "Group Name",
+                        kicked = false,
+                        destroyed = false,
+                        joinedAtSecs = System.currentTimeMillis() / 1000L,
+                    ),
+                    proStatus = ProStatus.None,
+                    members = listOf(),
+                    description = null,
+                ),
+                firstMember = Recipient(
+                    address = STANDARD_ADDRESS,
+                    data = RecipientData.Self(
+                        name = "Myself",
+                        avatar = null,
+                        expiryMode = ExpiryMode.NONE,
+                        priority = 1,
+                        proStatus = ProStatus.None,
+                        profileUpdatedAt = null
+                    )
+                ),
+                secondMember = null,
+            ),
+        )
 
-        val viewModel = createViewModel()
+        val viewModel = createViewModel(recipient)
 
         advanceUntilIdle()
 
@@ -188,10 +246,22 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
 
     @Test
     fun `1-1 conversation, off, new config`() = runTest {
-        val someAddress = Address.fromSerialized("05---SOME---ADDRESS")
-        mock1on1(ExpiryMode.NONE, someAddress)
-
-        val viewModel = createViewModel()
+        val viewModel = createViewModel(Recipient(
+            address = STANDARD_ADDRESS,
+            data = RecipientData.Contact(
+                name = "Contact",
+                nickname = null,
+                avatar = null,
+                approved = true,
+                approvedMe = true,
+                blocked = false,
+                expiryMode = ExpiryMode.NONE,
+                priority = 1,
+                proStatus = ProStatus.None,
+                profileUpdatedAt = null
+            )
+        )
+        )
 
         advanceUntilIdle()
 
@@ -201,7 +271,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
             State(
                 isGroup = false,
                 isSelfAdmin = true,
-                address = someAddress,
+                address = STANDARD_ADDRESS,
                 isNoteToSelf = false,
                 expiryMode = ExpiryMode.NONE,
                 isNewConfigEnabled = true,
@@ -229,10 +299,23 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
     @Test
     fun `1-1 conversation, 12 hours after send, new config`() = runTest {
         val time = 12.hours
-        val someAddress = Address.fromSerialized("05---SOME---ADDRESS")
-        mock1on1AfterSend(time, someAddress)
 
-        val viewModel = createViewModel()
+        val viewModel = createViewModel(Recipient(
+            address = STANDARD_ADDRESS,
+            data = RecipientData.Contact(
+                name = "Contact",
+                nickname = null,
+                avatar = null,
+                approved = true,
+                approvedMe = true,
+                blocked = false,
+                expiryMode = ExpiryMode.AfterSend(time.inWholeSeconds),
+                priority = 1,
+                proStatus = ProStatus.None,
+                profileUpdatedAt = null
+            )
+        )
+        )
 
         advanceUntilIdle()
 
@@ -242,7 +325,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
             State(
                 isGroup = false,
                 isSelfAdmin = true,
-                address = someAddress,
+                address = STANDARD_ADDRESS,
                 isNoteToSelf = false,
                 expiryMode = ExpiryMode.AfterSend(12.hours.inWholeSeconds),
                 isNewConfigEnabled = true,
@@ -277,10 +360,23 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
     @Test
     fun `1-1 conversation, 1 day after send, new config`() = runTest {
         val time = 1.days
-        val someAddress = Address.fromSerialized("05---SOME---ADDRESS")
-        mock1on1AfterSend(time, someAddress)
 
-        val viewModel = createViewModel()
+        val viewModel = createViewModel(Recipient(
+            address = STANDARD_ADDRESS,
+            data = RecipientData.Contact(
+                name = "Contact",
+                nickname = null,
+                avatar = null,
+                approved = true,
+                approvedMe = true,
+                blocked = false,
+                expiryMode = ExpiryMode.AfterSend(time.inWholeSeconds),
+                priority = 1,
+                proStatus = ProStatus.None,
+                profileUpdatedAt = null
+            )
+        )
+        )
 
         advanceUntilIdle()
 
@@ -290,7 +386,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
             State(
                 isGroup = false,
                 isSelfAdmin = true,
-                address = someAddress,
+                address = STANDARD_ADDRESS,
                 isNoteToSelf = false,
                 expiryMode = ExpiryMode.AfterSend(1.days.inWholeSeconds),
                 isNewConfigEnabled = true,
@@ -325,11 +421,23 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
     @Test
     fun `1-1 conversation, 1 day after read, new config`() = runTest {
         val time = 1.days
-        val someAddress = Address.fromSerialized("05---SOME---ADDRESS")
 
-        mock1on1AfterRead(time, someAddress)
-
-        val viewModel = createViewModel()
+        val viewModel = createViewModel(Recipient(
+            address = STANDARD_ADDRESS,
+            data = RecipientData.Contact(
+                name = "Contact",
+                nickname = null,
+                avatar = null,
+                approved = true,
+                approvedMe = true,
+                blocked = false,
+                expiryMode = ExpiryMode.AfterRead(time.inWholeSeconds),
+                priority = 1,
+                proStatus = ProStatus.None,
+                profileUpdatedAt = null
+            )
+        )
+        )
 
         advanceUntilIdle()
 
@@ -339,7 +447,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
             State(
                 isGroup = false,
                 isSelfAdmin = true,
-                address = someAddress,
+                address = STANDARD_ADDRESS,
                 isNoteToSelf = false,
                 expiryMode = ExpiryMode.AfterRead(1.days.inWholeSeconds),
                 isNewConfigEnabled = true,
@@ -376,11 +484,23 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
     @Test
     fun `1-1 conversation, init 12 hours after read, then select after send, new config`() = runTest {
         val time = 12.hours
-        val someAddress = Address.fromSerialized("05---SOME---ADDRESS")
 
-        mock1on1AfterRead(time, someAddress)
-
-        val viewModel = createViewModel()
+        val viewModel = createViewModel(Recipient(
+            address = STANDARD_ADDRESS,
+            data = RecipientData.Contact(
+                name = "Contact",
+                nickname = null,
+                avatar = null,
+                approved = true,
+                approvedMe = true,
+                blocked = false,
+                expiryMode = ExpiryMode.AfterRead(time.inWholeSeconds),
+                priority = 1,
+                proStatus = ProStatus.None,
+                profileUpdatedAt = null
+            )
+        )
+        )
 
         advanceUntilIdle()
 
@@ -394,7 +514,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
             State(
                 isGroup = false,
                 isSelfAdmin = true,
-                address = someAddress,
+                address = STANDARD_ADDRESS,
                 isNoteToSelf = false,
                 expiryMode = afterSendMode(1.days),
                 isNewConfigEnabled = true,
@@ -441,58 +561,17 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
     private fun afterSendMode(time: Duration) = ExpiryMode.AfterSend(time.inWholeSeconds)
     private fun afterReadMode(time: Duration) = ExpiryMode.AfterRead(time.inWholeSeconds)
 
-    private fun mock1on1AfterRead(time: Duration, someAddress: Address) {
-        mock1on1(ExpiryType.AFTER_READ.mode(time), someAddress)
-    }
 
-    private fun mock1on1AfterSend(time: Duration, someAddress: Address) {
-        mock1on1(ExpiryType.AFTER_SEND.mode(time), someAddress)
-    }
-
-    private fun mock1on1(mode: ExpiryMode, someAddress: Address) {
-        mockStuff(mode)
-
-        whenever(recipient.address).thenReturn(someAddress)
-    }
-
-    private fun mockGroup(mode: ExpiryMode, isAdmin: Boolean) {
-        mockStuff(mode)
-
-        whenever(recipient.address).thenReturn(GROUP_ADDRESS)
-        whenever(recipient.isLegacyGroupRecipient).thenReturn(true)
-        whenever(recipient.isGroupRecipient).thenReturn(true)
-        whenever(groupDb.getGroup(any<String>())).thenReturn(Optional.of(groupRecord))
-        whenever(groupRecord.admins).thenReturn(
-            buildList {
-                if (isAdmin) add(LOCAL_ADDRESS)
-            }
-        )
-    }
-
-    private fun mockStuff(mode: ExpiryMode) {
-        val config = config(mode)
-        whenever(threadDb.getRecipientForThreadId(Mockito.anyLong())).thenReturn(recipient)
-        whenever(storage.getExpirationConfiguration(Mockito.anyLong())).thenReturn(config)
-        whenever(textSecurePreferences.getLocalNumber()).thenReturn(LOCAL_NUMBER)
-    }
-
-    private fun config(mode: ExpiryMode) = ExpirationConfiguration(
-        threadId = THREAD_ID,
-        expiryMode = mode,
-        updatedTimestampMs = 0
-    )
-
-    private fun createViewModel(isNewConfigEnabled: Boolean = true) = DisappearingMessagesViewModel(
-        threadId = THREAD_ID,
+    private fun createViewModel(recipient: Recipient) = DisappearingMessagesViewModel(
+        address = recipient.address,
         context = application,
-        textSecurePreferences = textSecurePreferences,
         disappearingMessages = disappearingMessages,
-        threadDb = threadDb,
-        groupDb = groupDb,
-        storage = storage,
         navigator = navigator,
-        isNewConfigEnabled = isNewConfigEnabled,
-        showDebugOptions = false
+        isNewConfigEnabled = true,
+        showDebugOptions = false,
+        recipientRepository = mock {
+            onBlocking { getRecipient(recipient.address) } doReturn recipient
+        }
     )
 }
 

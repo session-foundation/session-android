@@ -23,13 +23,34 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.bold
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DropDown(
     modifier: Modifier = Modifier,
     selectedText: String,
     values: List<String>,
     onValueSelected: (String) -> Unit
+) {
+    DropDown(
+        modifier = modifier,
+        selected = selectedText,
+        values = values,
+        onValueSelected = {
+            onValueSelected(it!!)
+        },
+        labeler = { it.orEmpty() },
+        allowSelectingNullValue = false,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun <T> DropDown(
+    modifier: Modifier = Modifier,
+    selected: T?,
+    values: List<T>,
+    onValueSelected: (T?) -> Unit,
+    labeler: (T?) -> String,
+    allowSelectingNullValue: Boolean
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -41,7 +62,7 @@ fun DropDown(
         }
     ) {
         TextField(
-            value = selectedText,
+            value = labeler(selected),
             onValueChange = {},
             readOnly = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
@@ -76,11 +97,12 @@ fun DropDown(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
-            values.forEach { item ->
+            (if (allowSelectingNullValue) (listOf(null) + values) else values)
+                .forEach { item ->
                 DropdownMenuItem(
                     text = {
                         Text(
-                            text = item,
+                            text = labeler(item),
                             style = LocalType.current.base
                         )
                     },
@@ -96,6 +118,7 @@ fun DropDown(
         }
     }
 }
+
 
 @Preview
 @Composable

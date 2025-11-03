@@ -3,9 +3,9 @@ package org.thoughtcrime.securesms.groups.handler
 import android.content.Context
 import com.google.protobuf.ByteString
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
@@ -19,6 +19,7 @@ import network.loki.messenger.libsession_util.util.GroupMember
 import network.loki.messenger.libsession_util.util.MultiEncrypt
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.groups.GroupScope
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.sending_receiving.MessageSender
@@ -38,7 +39,8 @@ import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
-import org.session.libsession.messaging.groups.GroupScope
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -52,16 +54,17 @@ private const val TAG = "RemoveGroupMemberHandler"
 @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 @Singleton
 class RemoveGroupMemberHandler @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val configFactory: ConfigFactoryProtocol,
     private val textSecurePreferences: TextSecurePreferences,
     private val clock: SnodeClock,
     private val messageDataProvider: MessageDataProvider,
     private val storage: StorageProtocol,
     private val groupScope: GroupScope,
-) {
+    @ManagerScope scope: CoroutineScope,
+) : OnAppStartupComponent {
     init {
-        GlobalScope.launch {
+        scope.launch {
             textSecurePreferences
                 .watchLocalNumber()
                 .flatMapLatest { localNumber ->

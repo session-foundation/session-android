@@ -37,7 +37,7 @@ import org.thoughtcrime.securesms.database.model.content.MessageContent;
 
 public abstract class DisplayRecord {
   protected final long type;
-  private final Recipient  recipient;
+  private final Recipient recipient;
   private final long       dateSent;
   private final long       dateReceived;
   private final long       threadId;

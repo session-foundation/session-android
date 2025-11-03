@@ -16,6 +16,7 @@ import android.widget.TextView
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import com.bumptech.glide.RequestManager
+import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewInputBarBinding
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
@@ -30,10 +31,12 @@ import org.thoughtcrime.securesms.conversation.v2.components.LinkPreviewDraftVie
 import org.thoughtcrime.securesms.conversation.v2.components.LinkPreviewDraftViewDelegate
 import org.thoughtcrime.securesms.conversation.v2.messages.QuoteView
 import org.thoughtcrime.securesms.conversation.v2.messages.QuoteViewDelegate
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.util.addTextChangedListener
 import org.thoughtcrime.securesms.util.contains
+import javax.inject.Inject
 
 // TODO: A lot of the logic regarding voice messages is currently performed in the ConversationActivity
 // TODO: and here - it would likely be best to move this into the CA's ViewModel.
@@ -47,6 +50,7 @@ enum class VoiceRecorderState {
     ShuttingDownAfterRecord
 }
 
+@AndroidEntryPoint
 @SuppressLint("ClickableViewAccessibility")
 class InputBar @JvmOverloads constructor(
     context: Context,
@@ -91,6 +95,9 @@ class InputBar @JvmOverloads constructor(
     }
 
     var voiceRecorderState = VoiceRecorderState.Idle
+
+    @Inject
+    lateinit var recipientRepository: RecipientRepository
 
     private val attachmentsButton = InputBarButton(context, R.drawable.ic_plus).apply {
         contentDescription = context.getString(R.string.AccessibilityId_attachmentsButton)
@@ -242,7 +249,7 @@ class InputBar @JvmOverloads constructor(
             binding.inputBarAdditionalContentContainer.addView(layout)
             val attachments = (message as? MmsMessageRecord)?.slideDeck
             val sender =
-                if (message.isOutgoing) Recipient.from(context, Address.fromSerialized(TextSecurePreferences.getLocalNumber(context)!!), false)
+                if (message.isOutgoing) recipientRepository.getRecipientSync(Address.fromSerialized(TextSecurePreferences.getLocalNumber(context)!!))
                 else message.individualRecipient
             it.bind(sender, message.body, attachments, thread, true, message.isOpenGroupInvitation, message.threadId, false, glide)
         }
@@ -329,6 +336,9 @@ class InputBar @JvmOverloads constructor(
             is InputBarContentState.Disabled ->{
                 isVisible = true
                 binding.inputBarEditText.isVisible = false
+                binding.inputBarAdditionalContentContainer.isVisible = false
+                binding.inputBarEditText.text?.clear()
+                inputBarEditTextContentChanged("")
                 binding.disabledBanner.isVisible = true
                 binding.disabledText.text = state.contentState.text
                 if(state.contentState.onClick == null){
@@ -343,22 +353,25 @@ class InputBar @JvmOverloads constructor(
             else -> {
                 isVisible = true
                 binding.inputBarEditText.isVisible = true
+                binding.inputBarAdditionalContentContainer.isVisible = true
                 binding.disabledBanner.isVisible = false
             }
         }
 
         // handle buttons state
         allowAttachMultimediaButtons = state.enableAttachMediaControls
+    }
 
+    fun setCharLimitState(state: InputbarViewModel.InputBarCharLimitState?) {
         // handle char limit
-        if(state.charLimitState != null){
-            binding.characterLimitText.text = state.charLimitState.countFormatted
-            binding.characterLimitText.setTextColor(if(state.charLimitState.danger) dangerColor else textColor)
+        if(state != null){
+            binding.characterLimitText.text = state.count.toString()
+            binding.characterLimitText.setTextColor(if(state.danger) dangerColor else textColor)
             binding.characterLimitContainer.setOnClickListener {
                 delegate?.onCharLimitTapped()
             }
 
-            binding.badgePro.isVisible = state.charLimitState.showProBadge
+            binding.badgePro.isVisible = state.showProBadge
 
             binding.characterLimitContainer.isVisible = true
         } else {

@@ -22,9 +22,8 @@ import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
+
 import androidx.annotation.NonNull;
-import java.util.List;
-import java.util.Objects;
 import androidx.annotation.Nullable;
 
 import org.session.libsession.messaging.MessagingModuleConfiguration;
@@ -32,6 +31,8 @@ import org.session.libsession.messaging.calls.CallMessageType;
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage;
 import org.session.libsession.messaging.utilities.UpdateMessageBuilder;
 import org.session.libsession.messaging.utilities.UpdateMessageData;
+import org.session.libsession.utilities.Address;
+import org.session.libsession.utilities.AddressKt;
 import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.NetworkFailure;
 import org.session.libsession.utilities.ThemeUtil;
@@ -40,6 +41,9 @@ import org.session.libsignal.utilities.AccountId;
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate;
 import org.thoughtcrime.securesms.database.model.content.MessageContent;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
+
+import java.util.List;
+import java.util.Objects;
 
 import network.loki.messenger.R;
 
@@ -52,7 +56,7 @@ import network.loki.messenger.R;
  *
  */
 public abstract class MessageRecord extends DisplayRecord {
-  private final Recipient                 individualRecipient;
+  private final Recipient individualRecipient;
   private final List<IdentityKeyMismatch> mismatches;
   private final List<NetworkFailure>      networkFailures;
   private final long                      expiresIn;
@@ -135,7 +139,7 @@ public abstract class MessageRecord extends DisplayRecord {
   public CharSequence getDisplayBody(@NonNull Context context) {
     if (isGroupUpdateMessage()) {
       UpdateMessageData updateMessageData = getGroupUpdateMessage();
-      Recipient groupRecipient = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId());
+      Address groupRecipient = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId());
 
       if (updateMessageData == null || groupRecipient == null) {
         return "";
@@ -143,7 +147,7 @@ public abstract class MessageRecord extends DisplayRecord {
 
       SpannableString text = new SpannableString(UpdateMessageBuilder.buildGroupUpdateMessage(
               context,
-              groupRecipient.isGroupV2Recipient() ? new AccountId(groupRecipient.getAddress().toString()) : null, // accountId is only used for GroupsV2
+              AddressKt.isGroupV2(groupRecipient) ? new AccountId(groupRecipient.toString()) : null, // accountId is only used for GroupsV2
               updateMessageData,
               MessagingModuleConfiguration.getShared().getConfigFactory(),
               isOutgoing(),
@@ -159,9 +163,9 @@ public abstract class MessageRecord extends DisplayRecord {
 
       return text;
     } else if (getMessageContent() instanceof DisappearingMessageUpdate) {
-      Recipient rec = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId());
-      if(rec == null) return "";
-      boolean isGroup = rec.isGroupOrCommunityRecipient();
+        Address rec = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId());
+        if(rec == null) return "";
+        boolean isGroup = AddressKt.isGroupOrCommunity(rec);
       return UpdateMessageBuilder.INSTANCE
               .buildExpirationTimerMessage(context, ((DisappearingMessageUpdate) getMessageContent()).getExpiryMode(), isGroup, getIndividualRecipient().getAddress().toString(), isOutgoing());
     } else if (isDataExtractionNotification()) {

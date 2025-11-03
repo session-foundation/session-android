@@ -24,7 +24,6 @@
     <string name="adminSettings">ການຕັ້ງຄ່າຂອງ​ຜູ້ຄຸ້ມຄອງ</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> และ<b>{other_name}</b> ໄດ້ຮັບການເລື່ອນຊັ້ນເປັນAdmin.</string>
     <string name="anonymous">ບໍ່ຮູ້ຈັກ</string>
-    <string name="appearanceAutoDarkMode">ໂໂມດມືດອັດຕະໂນມັດ</string>
     <string name="appearanceLanguageDescription">ເລືອກຕັ້ງຄ່າພາສາຂອງທ່ານສຳຫຼັບ {app_name}. {app_name} ຈະຟື້ນຄືນໃໝ່ເມື່ອທ່ານປ່ຽນຕັ້ງຄ່າພາສາ.</string>
     <string name="appearanceThemesClassicDark">Classic Dark</string>
     <string name="appearanceThemesClassicLight">ຄລາສສິກແສງ</string>
@@ -121,8 +120,6 @@
     <string name="conversationsDeleteDescription">ທ່ານແນ່ໃຈບໍ່ວ່າທ່ານຕ້ອງການລຶບການສົນທະນາຂອງທ່ານກັບ <b>{name}</b>? ຂໍ້ຄວາມໃໝ່ຈາກ <b>{name}</b> ຈະເລີ່ມການສົນທະນາໃໝ່.</string>
     <string name="conversationsDeleted">ລຶບຫຼາຍເເລ້ວ</string>
     <string name="conversationsEnter">ປ້ອນປຸມ Enter</string>
-    <string name="conversationsEnterSends">ENTER ສົ່ງຂໍ້ຄວາມ, SHIFT + ENTER ເລີ່ມແຖວໃຫມ່</string>
-    <string name="conversationsMessageTrimmingTrimCommunitiesDescription">ລຶບຂໍ້ຄວາມຈາກການສົນທະນາຂອງ Community ເກີນຫົກເດືອນ, ແລະມີເກີນສອງພັນຂໍ້ຄວາມ</string>
     <string name="conversationsSettingsAllMedia">ສື່ທັງໝົດ</string>
     <string name="copied">ຄັດລອກເເລ້ວ</string>
     <string name="copy">ເສັກກີ້າບ</string>
@@ -224,14 +221,11 @@
     <string name="onionRoutingPathDestination">ຈຸດໝາຍ</string>
     <string name="onionRoutingPathEntryNode">ເນົດເຂົ້າ</string>
     <string name="passwordChange">ປ່ຽນລະຫັດຜ່ານ</string>
-    <string name="passwordChangeDescription">ປ່ຽນລະຫັດຕົກທາງທີ່ຈະເຜີດ {app_name}.</string>
     <string name="passwordConfirm">ຢັນໄຮ</string>
-    <string name="passwordCreate">ເກີງແທ</string>
     <string name="passwordEnter">ປ້ອນລະຫັດຜ່ານ</string>
     <string name="permissionsAppleMusic">{app_name} ຕ້ອງໃຊ້ Apple Music ເພື່ອປ່ອຍແນບສື່ມວນຊົນ.</string>
     <string name="permissionsAutoUpdate">ການອັບເດດອັດຕະໂນມັດ</string>
     <string name="permissionsAutoUpdateDescription">ກວດເຊັກການອັບເດດອັດຕະໂນມັດໃນຕອນທີ່ກົດເຂົ້າຮຽຍ ASFREEN</string>
-    <string name="permissionsKeepInSystemTrayDescription">{app_name} ໄດ້ດໍາເນີນການຕໍ່ໄປໃນພື້ນຫລັງໃນຂະນະທີ່ທ່ານປິດປ່ອງ</string>
     <string name="permissionsLibrary">{app_name} ຕ້ອງການເຂົ້າເຖິງຄັງຮູບເພື່ອສືບຕໍ່. ເຈົ້າສາມາດເປີດເຂົ້າໄດ້ໃນການຕັ້ງຄ່າ iOS.</string>
     <string name="permissionsMicrophoneAccessRequiredIos">{app_name} ຕ້ອງການເຂົ້າເຖິງໄມໂຄໂຟນເພື່ອໂທແລະບັນທຶກເສັຽງຂໍ້ຄວາມສຽງ.</string>
     <string name="permissionsStorageSave">{app_name} ຕ້ອງການເຂົ້າເຖິງຟາຍເພື່ອບັນທຶກຢາງແລະວິດີໂອ.</string>
@@ -239,7 +233,6 @@
     <string name="permissionsStorageSend">{app_name} ຕ້ອງການເຂົ້າເຖິງຟາຍເພື່ອສົ່ງຮູບແລະວິດີໂອ.</string>
     <string name="profileDisplayPicture">ຮູບພາບສະແດງ</string>
     <string name="recoveryPasswordEnter">ປ້ອນລະຫັດການຟື້ນຄືນຂອງທ່ານ</string>
-    <string name="recoveryPasswordHidePermanentlyDescription2">ທ່ານຫມັ່ນໃຈບໍ່ວ່າທ່ານຈະເມືອນຊົ່ວຫມົດ Recovery password ຂອງທ່ານເລັວ? ການນັ້ນບໍ່ສາມາດຖືກຄືນໄດ້.</string>
     <string name="recoveryPasswordRestoreDescription">ປ້ອນລະຫັດການຟື້ນຄືນຂອງທ່ານເພື່ອດາວໂຫຼດບັນດານຂອງທ່ານ. ຖ້າທ່ານຍັງບໍ່ໄດ້ຟອມມັນ, ທ່ານສາມາດຫາມັນໄດ້ໃນການຕັ້ງຄ່າແອັບຂອງທ່ານ.</string>
     <string name="screenshotTaken"><b>{name}</b>ໄດ້ຮອບພາບເຊັນຈໍ (screenshot).</string>
     <string name="sessionAppearance">ຮູບລັກສະນະ</string>

@@ -12,8 +12,12 @@ import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import org.session.libsession.messaging.groups.GroupScope
 import org.session.libsession.messaging.messages.control.GroupUpdated
+import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.Address
@@ -24,9 +28,10 @@ import org.session.libsignal.protos.SignalServiceProtos.DataMessage
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMessage
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.notifications.PushRegistryV2
 
 @HiltWorker
 class GroupLeavingWorker @AssistedInject constructor(
@@ -35,7 +40,8 @@ class GroupLeavingWorker @AssistedInject constructor(
     private val storage: Storage,
     private val configFactory: ConfigFactory,
     private val groupScope: GroupScope,
-    private val lokiAPIDatabase: LokiAPIDatabase,
+    private val tokenFetcher: TokenFetcher,
+    private val pushRegistryV2: PushRegistryV2,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val groupId = requireNotNull(inputData.getString(KEY_GROUP_ID)) {
@@ -51,6 +57,32 @@ class GroupLeavingWorker @AssistedInject constructor(
             storage.deleteGroupInfoMessages(groupId, UpdateMessageData.Kind.GroupLeaving::class.java)
             storage.insertGroupInfoLeaving(groupId)
 
+            // Best effort to unsubscribe ourselves from the registration server.
+            // Note that this process can only be done on the device that is leaving the group,
+            // on a linked device, we might not have the credentials to do so.
+            val currentToken = tokenFetcher.token.value
+            if (currentToken != null) {
+                try {
+                    val groupAuth = configFactory.getGroupAuth(groupId)
+
+                    if (groupAuth != null) {
+                        val resp = pushRegistryV2.unregister(listOf(
+                            pushRegistryV2.buildUnregisterRequest(currentToken, groupAuth)
+                        )).firstOrNull()
+
+                        check(resp?.success == true) {
+                            "Unsubscription failed: code = ${resp?.error}, message = ${resp?.message}"
+                        }
+                        Log.d(TAG, "Unsubscribed from group $groupId successfully")
+                    }
+
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to unsubscribe from group $groupId", e)
+                }
+            }
+
             try {
                 if (group?.destroyed != true) {
                     // Only send the left/left notification group message when we are not kicked and we are not the only admin (only admin has a special treatment)
@@ -63,6 +95,7 @@ class GroupLeavingWorker @AssistedInject constructor(
 
                     if (group != null && !group.kicked && !weAreTheOnlyAdmin) {
                         val address = Address.fromSerialized(groupId.hexString)
+                        val statusChannel = Channel<kotlin.Result<Unit>>()
 
                         // Always send a "XXX left" message to the group if we can
                         MessageSender.send(
@@ -71,10 +104,12 @@ class GroupLeavingWorker @AssistedInject constructor(
                                     .setMemberLeftNotificationMessage(DataMessage.GroupUpdateMemberLeftNotificationMessage.getDefaultInstance())
                                     .build()
                             ),
-                            address
+                            address,
+                            statusCallback = statusChannel,
                         )
 
                         // If we are not the only admin, send a left message for other admin to handle the member removal
+                        // We'll have to wait for this message to be sent before going ahead to delete the group
                         MessageSender.send(
                             GroupUpdated(
                                 GroupUpdateMessage.newBuilder()
@@ -82,7 +117,13 @@ class GroupLeavingWorker @AssistedInject constructor(
                                     .build()
                             ),
                             address,
+                            statusCallback = statusChannel
                         )
+
+                        // Wait for both messages to be sent
+                        repeat(2) {
+                            statusChannel.receive().getOrThrow()
+                        }
                     }
 
                     // If we are the only admin, leaving this group will destroy the group
@@ -99,11 +140,7 @@ class GroupLeavingWorker @AssistedInject constructor(
                 }
 
                 // Delete conversation and group configs
-                storage.getThreadId(Address.fromSerialized(groupId.hexString))
-                    ?.let(storage::deleteConversation)
                 configFactory.removeGroup(groupId)
-                lokiAPIDatabase.clearLastMessageHashes(groupId.hexString)
-                lokiAPIDatabase.clearReceivedMessageHashValues(groupId.hexString)
                 Log.d(TAG, "Group $groupId left successfully")
                 Result.success()
             } catch (e: CancellationException) {

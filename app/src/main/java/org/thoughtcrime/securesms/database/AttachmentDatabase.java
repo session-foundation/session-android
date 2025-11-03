@@ -53,7 +53,6 @@ import org.thoughtcrime.securesms.crypto.ModernDecryptingPartInputStream;
 import org.thoughtcrime.securesms.crypto.ModernEncryptingPartOutputStream;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.database.model.MmsAttachmentInfo;
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.mms.MediaStream;
 import org.thoughtcrime.securesms.mms.MmsException;
 import org.thoughtcrime.securesms.mms.PartAuthority;
@@ -69,6 +68,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -83,6 +83,10 @@ import java.util.concurrent.ExecutorService;
 import javax.inject.Provider;
 
 import kotlin.jvm.Synchronized;
+import kotlinx.coroutines.channels.BufferOverflow;
+import kotlinx.coroutines.flow.MutableSharedFlow;
+import kotlinx.coroutines.flow.SharedFlow;
+import kotlinx.coroutines.flow.SharedFlowKt;
 
 public class AttachmentDatabase extends Database {
   
@@ -159,9 +163,18 @@ public class AttachmentDatabase extends Database {
 
   private final AttachmentSecret attachmentSecret;
 
+  private final MutableSharedFlow<Object> mutableChangesNotification = SharedFlowKt.MutableSharedFlow(
+          0, 100, BufferOverflow.DROP_OLDEST
+  );
+
   public AttachmentDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper, AttachmentSecret attachmentSecret) {
     super(context, databaseHelper);
     this.attachmentSecret = attachmentSecret;
+  }
+
+  @NonNull
+  public SharedFlow<Object> getChangesNotification() {
+    return mutableChangesNotification;
   }
 
   public @NonNull InputStream getAttachmentStream(AttachmentId attachmentId, long offset)
@@ -267,74 +280,32 @@ public class AttachmentDatabase extends Database {
     return attachments;
   }
 
-  void deleteAttachmentsForMessages(String[] messageIds) {
-    StringBuilder queryBuilder = new StringBuilder();
-    for (int i = 0; i < messageIds.length; i++) {
-      queryBuilder.append(MMS_ID+" = ").append(messageIds[i]);
-      if (i+1 < messageIds.length) {
-        queryBuilder.append(" OR ");
+  void deleteAttachmentsForMessages(@NonNull Collection<Long> mmsMessageIDs) {
+    final String sql = "DELETE FROM " + TABLE_NAME + " " +
+            "WHERE " + MMS_ID + " IN (SELECT value FROM json_each(?)) " +
+            "RETURNING " + DATA + ", " + THUMBNAIL + ", " + CONTENT_TYPE;
+
+    final String arg = new JSONArray(mmsMessageIDs).toString();
+
+    final List<MmsAttachmentInfo> deletedAttachments;
+
+    try (final Cursor cursor = getWritableDatabase().rawQuery(sql, arg)) {
+      deletedAttachments = new ArrayList<>(cursor.getCount());
+      while (cursor.moveToNext()) {
+          deletedAttachments.add(new MmsAttachmentInfo(cursor.getString(0), cursor.getString(1), cursor.getString(2)));
       }
     }
-    String idsAsString = queryBuilder.toString();
-    SQLiteDatabase database = getReadableDatabase();
-    Cursor cursor = null;
-    List<MmsAttachmentInfo> attachmentInfos = new ArrayList<>();
-    try {
-      cursor = database.query(TABLE_NAME, new String[] { DATA, THUMBNAIL, CONTENT_TYPE}, idsAsString, null, null, null, null);
-      while (cursor != null && cursor.moveToNext()) {
-        attachmentInfos.add(new MmsAttachmentInfo(cursor.getString(0), cursor.getString(1), cursor.getString(2)));
-      }
-    } finally {
-      if (cursor != null) {
-        cursor.close();
-      }
+
+    deleteAttachmentsOnDisk(deletedAttachments);
+
+    for (final Long mmsId : mmsMessageIDs) {
+      mutableChangesNotification.tryEmit(mmsId);
     }
-    deleteAttachmentsOnDisk(attachmentInfos);
-    database.delete(TABLE_NAME, idsAsString, null);
-    notifyAttachmentListeners();
   }
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
   void deleteAttachmentsForMessage(long mmsId) {
-    SQLiteDatabase database = getWritableDatabase();
-    Cursor cursor           = null;
-
-    try {
-      cursor = database.query(TABLE_NAME, new String[] {DATA, THUMBNAIL, CONTENT_TYPE}, MMS_ID + " = ?",
-                              new String[] {mmsId+""}, null, null, null);
-
-      while (cursor != null && cursor.moveToNext()) {
-        deleteAttachmentOnDisk(cursor.getString(0), cursor.getString(1), cursor.getString(2));
-      }
-    } finally {
-      if (cursor != null)
-        cursor.close();
-    }
-
-    database.delete(TABLE_NAME, MMS_ID + " = ?", new String[] {mmsId + ""});
-    notifyAttachmentListeners();
-  }
-
-  @SuppressWarnings("ResultOfMethodCallIgnored")
-  void deleteAttachmentsForMessages(long[] mmsIds) {
-    SQLiteDatabase database = getWritableDatabase();
-    Cursor cursor           = null;
-    String mmsIdString = StringUtils.join(mmsIds, ',');
-
-    try {
-      cursor = database.query(TABLE_NAME, new String[] {DATA, THUMBNAIL, CONTENT_TYPE}, MMS_ID + " IN (?)",
-              new String[] {mmsIdString}, null, null, null);
-
-      while (cursor != null && cursor.moveToNext()) {
-        deleteAttachmentOnDisk(cursor.getString(0), cursor.getString(1), cursor.getString(2));
-      }
-    } finally {
-      if (cursor != null)
-        cursor.close();
-    }
-
-    database.delete(TABLE_NAME, MMS_ID + " IN (?)", new String[] {mmsIdString});
-    notifyAttachmentListeners();
+    deleteAttachmentsForMessages(Collections.singletonList(mmsId));
   }
 
   public void deleteAttachment(@NonNull AttachmentId id) {
@@ -358,7 +329,7 @@ public class AttachmentDatabase extends Database {
 
       database.delete(TABLE_NAME, PART_ID_WHERE, id.toStrings());
       deleteAttachmentOnDisk(data, thumbnail, contentType);
-      notifyAttachmentListeners();
+      mutableChangesNotification.tryEmit(id);
     }
   }
 
@@ -430,8 +401,7 @@ public class AttachmentDatabase extends Database {
       //noinspection ResultOfMethodCallIgnored
       dataInfo.file.delete();
     } else {
-      notifyConversationListeners(DatabaseComponent.get(context).mmsDatabase().getThreadIdForMessage(mmsId));
-      notifyConversationListListeners();
+      mutableChangesNotification.tryEmit(attachmentId);
     }
 
     thumbnailExecutor.submit(new ThumbnailFetchCallable(attachmentId));
@@ -543,24 +513,14 @@ public class AttachmentDatabase extends Database {
                                   databaseAttachment.getAudioDurationMs());
   }
 
-  public void markAttachmentUploaded(long messageId, Attachment attachment) {
-    ContentValues  values   = new ContentValues(1);
-    SQLiteDatabase database = getWritableDatabase();
-
-    values.put(TRANSFER_STATE, AttachmentState.DONE.getValue());
-    database.update(TABLE_NAME, values, PART_ID_WHERE, ((DatabaseAttachment)attachment).getAttachmentId().toStrings());
-
-    notifyConversationListeners(DatabaseComponent.get(context).mmsDatabase().getThreadIdForMessage(messageId));
-    ((DatabaseAttachment) attachment).setUploaded(true);
-  }
-
-  public void setTransferState(long messageId, @NonNull AttachmentId attachmentId, int transferState) {
+  public void setTransferState(@NonNull AttachmentId attachmentId, int transferState) {
     final ContentValues  values   = new ContentValues(1);
     final SQLiteDatabase database = getWritableDatabase();
 
     values.put(TRANSFER_STATE, transferState);
-    database.update(TABLE_NAME, values, PART_ID_WHERE, attachmentId.toStrings());
-    notifyConversationListeners(DatabaseComponent.get(context).mmsDatabase().getThreadIdForMessage(messageId));
+    if (database.update(TABLE_NAME, values, PART_ID_WHERE, attachmentId.toStrings()) > 0) {
+      mutableChangesNotification.tryEmit(attachmentId);
+    }
   }
 
   @SuppressWarnings("WeakerAccess")
@@ -813,6 +773,8 @@ public class AttachmentDatabase extends Database {
       }
     }
 
+    mutableChangesNotification.tryEmit(attachmentId);
+
     return attachmentId;
   }
 
@@ -834,15 +796,7 @@ public class AttachmentDatabase extends Database {
 
     database.update(TABLE_NAME, values, PART_ID_WHERE, attachmentId.toStrings());
 
-    Cursor cursor = database.query(TABLE_NAME, new String[] {MMS_ID}, PART_ID_WHERE, attachmentId.toStrings(), null, null, null);
-
-    try {
-      if (cursor != null && cursor.moveToFirst()) {
-        notifyConversationListeners(DatabaseComponent.get(context).mmsDatabase().getThreadIdForMessage(cursor.getLong(cursor.getColumnIndexOrThrow(MMS_ID))));
-      }
-    } finally {
-      if (cursor != null) cursor.close();
-    }
+    mutableChangesNotification.tryEmit(attachmentId);
   }
 
   /**
@@ -876,7 +830,7 @@ public class AttachmentDatabase extends Database {
    * @return true if the update operation was successful.
    */
   @Synchronized
-  public boolean setAttachmentAudioExtras(@NonNull DatabaseAttachmentAudioExtras extras, long threadId) {
+  public boolean setAttachmentAudioExtras(@NonNull DatabaseAttachmentAudioExtras extras) {
     ContentValues values = new ContentValues();
     values.put(AUDIO_VISUAL_SAMPLES, extras.getVisualSamples());
     values.put(AUDIO_DURATION, extras.getDurationMs());
@@ -886,8 +840,8 @@ public class AttachmentDatabase extends Database {
       PART_ID_WHERE + " AND " + PART_AUDIO_ONLY_WHERE,
       extras.getAttachmentId().toStrings());
 
-    if (threadId >= 0) {
-      notifyConversationListeners(threadId);
+    if (alteredRows > 0) {
+      mutableChangesNotification.tryEmit(extras.getAttachmentId());
     }
 
     return alteredRows > 0;

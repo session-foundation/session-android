@@ -14,8 +14,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -36,6 +38,9 @@ import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
+import org.thoughtcrime.securesms.ui.theme.ThemeColors
 
 private const val SESSION_FEEDBACK_BASE_URL = "https://getsession.org/feedback?platform=android"
 
@@ -123,6 +128,8 @@ private fun InAppReviewDialog(
     message: String,
     positiveButtonText: String,
     negativeButtonText: String,
+    positiveButtonQaTag: String,
+    negativeButtonQaTag: String,
     sendCommands: (InAppReviewViewModel.UiCommand) -> Unit,
 ) {
     AlertDialogContent(
@@ -133,7 +140,8 @@ private fun InAppReviewDialog(
         buttons = listOf(
             DialogButtonData(
                 text = GetString.FromString(positiveButtonText),
-                color = LocalColors.current.accent,
+                color = LocalColors.current.accentText,
+                qaTag = positiveButtonQaTag,
                 dismissOnClick = false
             ) {
                 sendCommands(InAppReviewViewModel.UiCommand.PositiveButtonClicked)
@@ -141,6 +149,7 @@ private fun InAppReviewDialog(
 
             DialogButtonData(
                 text = GetString.FromString(negativeButtonText),
+                qaTag = negativeButtonQaTag,
                 dismissOnClick = false
             ) {
                 sendCommands(InAppReviewViewModel.UiCommand.NegativeButtonClicked)
@@ -150,7 +159,6 @@ private fun InAppReviewDialog(
 }
 
 @Composable
-@Preview
 private fun InAppReviewStartPrompt(
     sendCommands: (InAppReviewViewModel.UiCommand) -> Unit = {}
 ) {
@@ -173,12 +181,13 @@ private fun InAppReviewStartPrompt(
             .put(EMOJI_KEY, "\uD83D\uDE15")
             .format()
             .toString(),
+        positiveButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_great),
+        negativeButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_work),
         sendCommands = sendCommands
     )
 }
 
 @Composable
-@Preview
 private fun InAppReviewPositivePrompt(
     storeReviewManager: StoreReviewManager? = null,
     sendCommands: (InAppReviewViewModel.UiCommand) -> Unit = {}
@@ -197,15 +206,17 @@ private fun InAppReviewPositivePrompt(
             .toString(),
         positiveButtonText = context.getString(R.string.rateSessionApp),
         negativeButtonText = context.getString(R.string.notNow),
+        positiveButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_rate),
+        negativeButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_not_now),
         sendCommands = sendCommands
     )
 }
 
 @Composable
-@Preview
 private fun InAppReviewNegativePrompt(
     sendCommands: (InAppReviewViewModel.UiCommand) -> Unit = {}
 ) {
+
     val context = LocalContext.current
 
     InAppReviewDialog(
@@ -216,6 +227,18 @@ private fun InAppReviewNegativePrompt(
             .toString(),
         positiveButtonText = context.getString(R.string.openSurvey),
         negativeButtonText = context.getString(R.string.notNow),
+        positiveButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_survey),
+        negativeButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_not_now),
         sendCommands = sendCommands
     )
+}
+
+@Composable
+@Preview
+fun PreviewInAppReviewPrompt(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+){
+    PreviewTheme(colors = colors) {
+        InAppReviewStartPrompt()
+    }
 }

@@ -10,9 +10,6 @@ import org.session.libsession.messaging.messages.visible.OpenGroupInvitation;
 import org.session.libsession.messaging.messages.visible.VisibleMessage;
 import org.session.libsession.messaging.utilities.UpdateMessageData;
 import org.session.libsession.utilities.Address;
-import org.session.libsession.utilities.GroupUtil;
-import org.session.libsignal.messages.SignalServiceGroup;
-import org.session.libsignal.utilities.Hex;
 import org.session.libsignal.utilities.guava.Optional;
 
 public class IncomingTextMessage implements Parcelable {
@@ -38,7 +35,7 @@ public class IncomingTextMessage implements Parcelable {
   private final boolean replyPathPresent;
   private final String  pseudoSubject;
   private final long    sentTimestampMillis;
-  private final Address groupId;
+  private final Address.GroupLike groupId;
   private final boolean push;
   private final int     subscriptionId;
   private final long    expiresInMillis;
@@ -50,19 +47,19 @@ public class IncomingTextMessage implements Parcelable {
   private boolean isOpenGroupInvitation = false;
 
   public IncomingTextMessage(Address sender, int senderDeviceId, long sentTimestampMillis,
-                           String encodedBody, Optional<SignalServiceGroup> group,
-                           long expiresInMillis, long expireStartedAt, boolean unidentified, boolean hasMention) {
+                             String encodedBody, Optional<Address.GroupLike> group,
+                             long expiresInMillis, long expireStartedAt, boolean unidentified, boolean hasMention) {
     this(sender, senderDeviceId, sentTimestampMillis, encodedBody, group, expiresInMillis, expireStartedAt, unidentified, -1, hasMention);
   }
 
   public IncomingTextMessage(Address sender, int senderDeviceId, long sentTimestampMillis,
-                             String encodedBody, Optional<SignalServiceGroup> group,
+                             String encodedBody, Optional<Address.GroupLike> group,
                              long expiresInMillis, long expireStartedAt, boolean unidentified, int callType, boolean hasMention) {
     this(sender, senderDeviceId, sentTimestampMillis, encodedBody, group, expiresInMillis, expireStartedAt, unidentified, callType, hasMention, true);
   }
 
   public IncomingTextMessage(Address sender, int senderDeviceId, long sentTimestampMillis,
-                             String encodedBody, Optional<SignalServiceGroup> group,
+                             String encodedBody, Optional<Address.GroupLike> group,
                              long expiresInMillis, long expireStartedAt, boolean unidentified, int callType, boolean hasMention, boolean isPush) {
     this.message              = encodedBody;
     this.sender               = sender;
@@ -79,19 +76,7 @@ public class IncomingTextMessage implements Parcelable {
     this.unidentified         = unidentified;
     this.callType             = callType;
     this.hasMention           = hasMention;
-
-    if (group.isPresent()) {
-      SignalServiceGroup groupObject = group.get();
-      if (groupObject.isGroupV2()) {
-        // new closed group 03..etc..
-        this.groupId = Address.fromSerialized(Hex.toStringCondensed(groupObject.getGroupId()));
-      } else {
-        // old closed group or open group
-        this.groupId = Address.fromSerialized(GroupUtil.getEncodedId(group.get()));
-      }
-    } else {
-      this.groupId = null;
-    }
+    this.groupId = group.orNull();
   }
 
   public IncomingTextMessage(Parcel in) {
@@ -136,7 +121,7 @@ public class IncomingTextMessage implements Parcelable {
 
   public static IncomingTextMessage from(VisibleMessage message,
                                          Address sender,
-                                         Optional<SignalServiceGroup> group,
+                                         Optional<Address.GroupLike> group,
                                          long expiresInMillis,
                                          long expireStartedAt)
   {
@@ -160,7 +145,7 @@ public class IncomingTextMessage implements Parcelable {
 
   public static IncomingTextMessage fromCallInfo(CallMessageType callMessageType,
                                                  Address sender,
-                                                 Optional<SignalServiceGroup> group,
+                                                 Optional<Address.GroupLike> group,
                                                  long sentTimestamp,
                                                  long expiresInMillis,
                                                  long expireStartedAt) {
@@ -219,7 +204,7 @@ public class IncomingTextMessage implements Parcelable {
     return push;
   }
 
-  public @Nullable Address getGroupId() {
+  public @Nullable Address.GroupLike getGroupId() {
     return groupId;
   }
 

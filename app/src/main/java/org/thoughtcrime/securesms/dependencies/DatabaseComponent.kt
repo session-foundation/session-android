@@ -29,25 +29,10 @@ interface DatabaseComponent {
     fun mediaDatabase(): MediaDatabase
     fun threadDatabase(): ThreadDatabase
     fun mmsSmsDatabase(): MmsSmsDatabase
-    fun draftDatabase(): DraftDatabase
-    fun pushDatabase(): PushDatabase
     fun groupDatabase(): GroupDatabase
     fun recipientDatabase(): RecipientDatabase
-    fun groupReceiptDatabase(): GroupReceiptDatabase
-    fun searchDatabase(): SearchDatabase
     fun lokiAPIDatabase(): LokiAPIDatabase
     fun lokiMessageDatabase(): LokiMessageDatabase
-    fun lokiThreadDatabase(): LokiThreadDatabase
-    fun lokiUserDatabase(): LokiUserDatabase
-    fun lokiBackupFilesDatabase(): LokiBackupFilesDatabase
-    fun sessionJobDatabase(): SessionJobDatabase
-    fun sessionContactDatabase(): SessionContactDatabase
     fun reactionDatabase(): ReactionDatabase
-    fun emojiSearchDatabase(): EmojiSearchDatabase
     fun storage(): Storage
-    fun attachmentProvider(): MessageDataProvider
-    fun blindedIdMappingDatabase(): BlindedIdMappingDatabase
-    fun groupMemberDatabase(): GroupMemberDatabase
-    fun expirationConfigurationDatabase(): ExpirationConfigurationDatabase
-    fun configDatabase(): ConfigDatabase
 }

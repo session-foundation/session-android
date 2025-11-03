@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
@@ -99,7 +100,8 @@ fun RadioButtonIndicator(
     selected: Boolean,
     enabled: Boolean,
     modifier: Modifier = Modifier,
-    size: Dp = LocalDimensions.current.iconMedium
+    size: Dp = LocalDimensions.current.iconMedium,
+    colors: RadioIndicatorColors = radioButtonColors()
 ) {
     Box(modifier = modifier) {
         AnimatedVisibility(
@@ -115,7 +117,7 @@ fun RadioButtonIndicator(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
-                        color = if (enabled) LocalColors.current.accent else LocalColors.current.disabled,
+                        color = if (enabled) colors.selectedDot else colors.disabledDot,
                         shape = CircleShape
                     )
             )
@@ -126,12 +128,39 @@ fun RadioButtonIndicator(
                 .aspectRatio(1f)
                 .border(
                     width = LocalDimensions.current.borderStroke,
-                    color = if (enabled) LocalColors.current.text else LocalColors.current.disabled,
+                    color = when {
+                        !enabled -> colors.disabledBorder
+                        selected -> colors.selectedBorder
+                        else -> colors.unselectedBorder
+                    },
                     shape = CircleShape
                 )
         ) {}
     }
 }
+
+@Composable
+fun radioButtonColors(
+    selectedDot: Color = LocalColors.current.accent,
+    disabledDot: Color = LocalColors.current.disabled,
+    unselectedBorder: Color = LocalColors.current.text,
+    selectedBorder: Color = LocalColors.current.text,
+    disabledBorder: Color = LocalColors.current.disabled
+) = RadioIndicatorColors(
+    selectedDot = selectedDot,
+    disabledDot = disabledDot,
+    unselectedBorder = unselectedBorder,
+    selectedBorder = selectedBorder,
+    disabledBorder = disabledBorder
+)
+
+data class RadioIndicatorColors(
+    val selectedDot: Color,
+    val disabledDot: Color,
+    val unselectedBorder: Color,
+    val selectedBorder: Color,
+    val disabledBorder: Color
+)
 
 /**
  * Convenience access for a TitledRadiobutton used in dialogs

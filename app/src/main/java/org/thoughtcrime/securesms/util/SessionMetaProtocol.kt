@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.util
 
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.messages.SignalServiceDataMessage
 
@@ -47,13 +48,9 @@ object SessionMetaProtocol {
         return hasBody || hasAttachment || hasLinkPreview
     }
 
-    @JvmStatic
-    fun shouldSendReadReceipt(recipient: Recipient): Boolean {
-        return !recipient.isGroupOrCommunityRecipient && recipient.isApproved && !recipient.isBlocked
-    }
 
     @JvmStatic
     fun shouldSendTypingIndicator(recipient: Recipient): Boolean {
-        return !recipient.isGroupOrCommunityRecipient && recipient.isApproved && !recipient.isBlocked
+        return !recipient.isGroupOrCommunityRecipient && recipient.approved && !recipient.blocked
     }
 }

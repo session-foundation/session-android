@@ -24,22 +24,27 @@ import static org.session.libsession.utilities.StringSubstitutionConstants.MESSA
 import static org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY;
 
 import android.content.Context;
-import android.net.Uri;
 import android.text.SpannableString;
 import android.text.TextUtils;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
 import com.squareup.phrase.Phrase;
-import kotlin.Pair;
-import network.loki.messenger.R;
+
 import org.session.libsession.messaging.utilities.UpdateMessageData;
+import org.session.libsession.utilities.AddressKt;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.recipients.RecipientNamesKt;
 import org.thoughtcrime.securesms.database.MmsSmsColumns;
 import org.thoughtcrime.securesms.database.SmsDatabase;
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate;
 import org.thoughtcrime.securesms.database.model.content.MessageContent;
 import org.thoughtcrime.securesms.ui.UtilKt;
+
+import kotlin.Pair;
+import network.loki.messenger.R;
 
 /**
  * The message record model which represents thread heading messages.
@@ -49,51 +54,40 @@ import org.thoughtcrime.securesms.ui.UtilKt;
  */
 public class ThreadRecord extends DisplayRecord {
 
-  private @Nullable final Uri     snippetUri;
   public @Nullable  final MessageRecord lastMessage;
   private           final long    count;
   private           final int     unreadCount;
   private           final int     unreadMentionCount;
-  private           final int     distributionType;
-  private           final boolean archived;
-  private           final long    expiresIn;
   private           final long    lastSeen;
-  private           final boolean pinned;
-  private           final int initialRecipientHash;
   private           final String invitingAdminId;
-  private           final long    dateSent;
+  private           final boolean isUnread;
 
   @NonNull
   private           final GroupThreadStatus groupThreadStatus;
 
-  public ThreadRecord(@NonNull String body, @Nullable Uri snippetUri,
+  public ThreadRecord(@NonNull String body,
                       @Nullable MessageRecord lastMessage, @NonNull Recipient recipient, long date, long count, int unreadCount,
                       int unreadMentionCount, long threadId, int deliveryReceiptCount, int status,
-                      long snippetType, int distributionType, boolean archived, long expiresIn,
-                      long lastSeen, int readReceiptCount, boolean pinned, String invitingAdminId,
-                      @NonNull GroupThreadStatus groupThreadStatus, @Nullable MessageContent messageContent)
+                      long snippetType,
+                      long lastSeen, int readReceiptCount, String invitingAdminId,
+                      @NonNull GroupThreadStatus groupThreadStatus,
+                      @Nullable MessageContent messageContent,
+                      boolean isUnread)
   {
     super(body, recipient, date, date, threadId, status, deliveryReceiptCount, snippetType, readReceiptCount, messageContent);
-    this.snippetUri         = snippetUri;
     this.lastMessage        = lastMessage;
     this.count              = count;
     this.unreadCount        = unreadCount;
     this.unreadMentionCount = unreadMentionCount;
-    this.distributionType   = distributionType;
-    this.archived           = archived;
-    this.expiresIn          = expiresIn;
     this.lastSeen           = lastSeen;
-    this.pinned             = pinned;
-    this.initialRecipientHash = recipient.hashCode();
     this.invitingAdminId    = invitingAdminId;
-    this.dateSent           = date;
     this.groupThreadStatus  = groupThreadStatus;
+    this.isUnread = isUnread;
   }
 
     private String getName() {
-        return getRecipient().getName();
+        return RecipientNamesKt.displayName(getRecipient());
     }
-
 
     @Override
     public CharSequence getDisplayBody(@NonNull Context context) {
@@ -201,7 +195,7 @@ public class ThreadRecord extends DisplayRecord {
         // The logic will differ depending on the type.
         // 1-1, note to self and control messages (we shouldn't have any in here, but leaving the
         // logic to be safe) do not need author details
-        if (recipient.isLocalNumber() || recipient.is1on1() ||
+        if (recipient.isLocalNumber() || !AddressKt.isGroupOrCommunity(recipient.getAddress()) ||
                 (lastMessage != null && lastMessage.isControlMessage())
         ) {
             return getBody();
@@ -211,7 +205,7 @@ public class ThreadRecord extends DisplayRecord {
                 prefix = context.getString(R.string.you);
             }
             else if(lastMessage != null){
-                prefix = lastMessage.getIndividualRecipient().getName();
+                prefix = RecipientNamesKt.displayName(lastMessage.getIndividualRecipient());
             }
 
             return Phrase.from(context.getString(R.string.messageSnippetGroup))
@@ -234,19 +228,15 @@ public class ThreadRecord extends DisplayRecord {
 
     public long getDate()                { return getDateReceived(); }
 
-    public boolean isArchived()          { return archived; }
-
-    public int getDistributionType()     { return distributionType; }
-
-    public long getExpiresIn()           { return expiresIn; }
-
     public long getLastSeen()            { return lastSeen; }
 
-    public boolean isPinned()            { return pinned; }
-
-    public int getInitialRecipientHash() { return initialRecipientHash; }
+    public boolean isPinned()            { return getRecipient().isPinned(); }
 
     public String getInvitingAdminId() {
         return invitingAdminId;
+    }
+
+    public boolean isUnread() {
+        return isUnread;
     }
 }

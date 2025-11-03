@@ -3,7 +3,7 @@ package org.thoughtcrime.securesms.logging
 import android.content.Context
 import android.net.Uri
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
@@ -13,8 +13,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.session.libsignal.utilities.Log.Logger
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import java.io.File
-import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.regex.Pattern
@@ -29,8 +30,9 @@ import kotlin.time.Duration.Companion.milliseconds
  */
 @Singleton
 class PersistentLogger @Inject constructor(
-    @param:ApplicationContext private val context: Context
-) : Logger() {
+    @param:ApplicationContext private val context: Context,
+    @ManagerScope scope: CoroutineScope,
+) : Logger(), OnAppStartupComponent {
     private val freeLogEntryPool = LogEntryPool()
     private val logEntryChannel: SendChannel<LogEntry>
     private val logChannelIdleSignal = MutableSharedFlow<Unit>()
@@ -51,7 +53,7 @@ class PersistentLogger @Inject constructor(
         val channel = Channel<LogEntry>(capacity = MAX_PENDING_LOG_ENTRIES)
         logEntryChannel = channel
 
-        GlobalScope.launch {
+        scope.launch {
             val bulk = ArrayList<LogEntry>()
             var logWriter: LogFile.Writer? = null
             val entryBuilder = StringBuilder()

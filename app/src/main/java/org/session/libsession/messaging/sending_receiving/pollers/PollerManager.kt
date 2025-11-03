@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -27,7 +28,7 @@ import javax.inject.Singleton
 class PollerManager @Inject constructor(
     prefers: TextSecurePreferences,
     provider: Poller.Factory,
-) {
+) : OnAppStartupComponent {
     @OptIn(DelicateCoroutinesApi::class)
     private val currentPoller: StateFlow<Poller?> = channelFlow {
         prefers.watchLocalNumber()

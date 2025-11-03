@@ -36,6 +36,13 @@ interface ButtonStyle {
 
     val minHeight: Dp
 
+    object XLarge: ButtonStyle {
+        @Composable
+        override fun textStyle() = LocalType.current.large
+            .copy(textAlign = TextAlign.Center)
+        override val minHeight = 50.dp
+    }
+
     object Large: ButtonStyle {
         @Composable
         override fun textStyle() = LocalType.current.base.bold()
@@ -45,7 +52,7 @@ interface ButtonStyle {
 
     object Slim: ButtonStyle {
         @Composable
-        override fun textStyle() = LocalType.current.extraSmall.bold()
+        override fun textStyle() = LocalType.current.small.bold()
             .copy(textAlign = TextAlign.Center)
         override val minHeight = 29.dp
     }

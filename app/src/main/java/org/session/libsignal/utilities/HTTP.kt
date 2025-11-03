@@ -2,6 +2,8 @@ package org.session.libsignal.utilities
 
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import okhttp3.Call
 import okhttp3.MediaType.Companion.toMediaType
@@ -73,7 +75,8 @@ object HTTP {
 
     open class HTTPRequestFailedException(
         val statusCode: Int,
-        val json: Map<*, *>?,
+        val json: Map<*, *>? = null,
+        val body: String? = null,
         message: String = "HTTP request failed with status code $statusCode"
     ) : kotlin.Exception(message)
     class HTTPNoNetworkException : HTTPRequestFailedException(0, null, "No network connection")
@@ -131,10 +134,10 @@ object HTTP {
                 else -> defaultConnection
             }.newCall(request.build()).await().use { response ->
                 when (val statusCode = response.code) {
-                    200 -> response.body!!.bytes()
+                    in 200..299 -> response.body.bytes()
                     else -> {
                         Log.d("Loki", "${verb.rawValue} request to $url failed with status code: $statusCode.")
-                        throw HTTPRequestFailedException(statusCode, null)
+                        throw HTTPRequestFailedException(statusCode, body = response.body.string())
                     }
                 }
             }
@@ -143,17 +146,26 @@ object HTTP {
 
             if (!isConnectedToNetwork()) { throw HTTPNoNetworkException() }
 
-            // Override the actual error so that we can correctly catch failed requests in OnionRequestAPI
-            throw HTTPRequestFailedException(0, null, "HTTP request failed due to: ${exception.message}")
+            if (exception !is HTTPRequestFailedException) {
+
+                // Override the actual error so that we can correctly catch failed requests in OnionRequestAPI
+                throw HTTPRequestFailedException(
+                    statusCode = 0,
+                    message = "HTTP request failed due to: ${exception.message}"
+                )
+            } else {
+                throw exception
+            }
         }
     }
 
-    @Suppress("OPT_IN_USAGE")
-    private val httpCallDispatcher = Dispatchers.IO.limitedParallelism(15)
+    private val httpCallSemaphore = Semaphore(20)
 
     private suspend fun Call.await(): Response {
-        return withContext(httpCallDispatcher) {
-            execute()
+        return withContext(Dispatchers.IO) {
+            httpCallSemaphore.withPermit {
+                execute()
+            }
         }
     }
 }

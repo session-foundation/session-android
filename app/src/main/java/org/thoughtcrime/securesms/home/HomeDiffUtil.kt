@@ -57,11 +57,7 @@ class HomeDiffUtil(
         if (isSameItem) { isSameItem = (oldItem.isPinned == newItem.isPinned) }
         if (isSameItem) { isSameItem = (oldItem.isRead == newItem.isRead) }
 
-        // The recipient is passed as a reference and changes to recipients update the reference so we
-        // need to cache the hashCode for the recipient and use that for diffing - unfortunately
-        // recipient data is also loaded asyncronously which means every thread will refresh at least
-        // once when the initial recipient data is loaded
-        if (isSameItem) { isSameItem = (oldItem.initialRecipientHash == newItem.initialRecipientHash) }
+        if (isSameItem) { isSameItem = (oldItem.recipient == newItem.recipient) }
 
         // Note: Two instances of 'SpannableString' may not equate even though their content matches
         if (isSameItem) { isSameItem = (oldItem.getDisplayBody(context).toString() == newItem.getDisplayBody(context).toString()) }
@@ -73,7 +69,7 @@ class HomeDiffUtil(
                 oldItem.isSent == newItem.isSent &&
                 oldItem.isPending == newItem.isPending &&
                 oldItem.lastSeen == newItem.lastSeen &&
-                !configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(newItem) } &&
+                oldItem.isUnread == newItem.isUnread &&
                 old.isTyping == new.isTyping
             )
         }

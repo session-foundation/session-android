@@ -83,12 +83,6 @@ class HomeAdapter(
         }
     }
 
-    override fun onViewRecycled(holder: RecyclerView.ViewHolder) {
-        if (holder is ConversationViewHolder) {
-            holder.view.recycle()
-        }
-    }
-
     override fun getItemViewType(position: Int): Int = when (data.items[position]) {
         is HomeViewModel.Item.MessageRequests -> ITEM_TYPE_MESSAGE_REQUESTS
         is HomeViewModel.Item.Thread -> ITEM_TYPE_CONVO

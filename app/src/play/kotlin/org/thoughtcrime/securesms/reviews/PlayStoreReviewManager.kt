@@ -38,7 +38,7 @@ class PlayStoreReviewManager @Inject constructor(
         manager.launchReview(activity, info)
 
         val hasLaunchedSomething = withTimeoutOrNull(500.milliseconds) {
-            currentActivityObserver.currentActivity.first { it != requestedOnActivity }
+            currentActivityObserver.currentActivity.first { it != null && it != requestedOnActivity }
         } != null
 
         require(hasLaunchedSomething) {

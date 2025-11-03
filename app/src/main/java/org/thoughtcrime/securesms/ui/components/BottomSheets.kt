@@ -1,5 +1,8 @@
 package org.thoughtcrime.securesms.ui.components
 
+import android.app.Activity
+import android.graphics.Color
+import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
@@ -20,13 +23,18 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.window.DialogWindowProvider
+import androidx.core.view.WindowCompat
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -45,20 +53,43 @@ import org.thoughtcrime.securesms.ui.theme.ThemeColors
 fun BaseBottomSheet(
     sheetState: SheetState,
     onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
     dragHandle: @Composable (() -> Unit)? = { BottomSheetDefaults.DragHandle() },
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable ColumnScope.() -> Unit,
 ){
     ModalBottomSheet(
+        modifier = modifier,
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
         shape = RoundedCornerShape(
-            topStart = LocalDimensions.current.xsSpacing,
-            topEnd = LocalDimensions.current.xsSpacing
+            topStart = LocalDimensions.current.contentSpacing,
+            topEnd = LocalDimensions.current.contentSpacing
         ),
         dragHandle = dragHandle,
-        containerColor = LocalColors.current.backgroundSecondary,
-        content = content
-    )
+        containerColor = LocalColors.current.backgroundSecondary
+    ){
+        // make sure the status and navigation bars follow our theme color's light vs dark
+        val view = LocalView.current
+        val isLight = LocalColors.current.isLight
+
+        DisposableEffect(Unit) {
+            val window = (view.parent as? DialogWindowProvider)?.window
+            if (window != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val prev = window.isNavigationBarContrastEnforced
+                window.isNavigationBarContrastEnforced = false
+                // Set status bar color
+                WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = isLight
+                // Set navigation bar color
+                WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = isLight
+
+                onDispose { window.isNavigationBarContrastEnforced = prev }
+            } else {
+                onDispose { }
+            }
+        }
+
+        content()
+    }
 }
 
 
@@ -75,14 +106,16 @@ fun BaseBottomSheet(
 @Composable
 fun <T> ActionSheet(
     options: Collection<T>,
-    sheetState: SheetState = rememberModalBottomSheetState(),
     onDismissRequest: () -> Unit,
     onOptionClick: (T) -> Unit,
     optionTitle: (T) -> String,
     optionQaTag: (T) -> Int,
     optionIconRes: (T) -> Int,
+    modifier: Modifier = Modifier,
+    sheetState: SheetState = rememberModalBottomSheetState(),
 ) {
     BaseBottomSheet(
+        modifier = modifier,
         sheetState = sheetState,
         dragHandle = null,
         onDismissRequest = onDismissRequest

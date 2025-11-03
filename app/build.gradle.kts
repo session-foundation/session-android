@@ -12,6 +12,7 @@ plugins {
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.dependency.analysis)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.protobuf.compiler)
 
     id("generate-ip-country-data")
     id("rename-apk")
@@ -25,8 +26,8 @@ configurations.configureEach {
     exclude(module = "commons-logging")
 }
 
-val canonicalVersionCode = 416
-val canonicalVersionName = "1.27.0"
+val canonicalVersionCode = 430
+val canonicalVersionName = "1.30.0"
 
 val postFixSize = 10
 val abiPostFix = mapOf(
@@ -47,6 +48,7 @@ val getGitHash = providers
 
 val firebaseEnabledVariants = listOf("play", "fdroid")
 val nonPlayVariants = listOf("fdroid", "website") + if (huaweiEnabled) listOf("huawei") else emptyList()
+val nonDebugBuildTypes = listOf("release", "releaseWithDebugMenu", "qa", "automaticQa")
 
 fun VariantDimension.devNetDefaultOn(defaultOn: Boolean) {
     val fqEnumClass = "org.session.libsession.utilities.Environment"
@@ -84,6 +86,23 @@ kotlin {
     }
 }
 
+protobuf {
+    protoc {
+        artifact = libs.protoc.get().toString()
+    }
+
+    plugins {
+        generateProtoTasks {
+            all().forEach {
+                it.builtins {
+                    create("java") {
+                    }
+                }
+            }
+        }
+    }
+}
+
 android {
     namespace = "network.loki.messenger"
     useLibrary("org.apache.http.legacy")
@@ -112,10 +131,6 @@ android {
     buildFeatures {
         viewBinding = true
         buildConfig = true
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.kotlinComposeCompilerVersion.get()
     }
 
     defaultConfig {
@@ -154,19 +169,24 @@ android {
             setAuthorityPostfix("")
         }
 
+        create("releaseWithDebugMenu") {
+            initWith(getByName("release"))
+
+            matchingFallbacks += "release"
+        }
+
         create("qa") {
             initWith(getByName("release"))
 
             matchingFallbacks += "release"
 
             signingConfig = signingConfigs.getByName("debug")
-            applicationIdSuffix = ".$name"
 
             devNetDefaultOn(false)
             enablePermissiveNetworkSecurityConfig(true)
 
             setAlternativeAppName("Session QA")
-            setAuthorityPostfix(".qa")
+            setAuthorityPostfix("")
         }
 
         create("automaticQa") {
@@ -206,6 +226,14 @@ android {
             maybeCreate(variant).apply {
                 java.srcDirs("$nonPlayCommonDir/kotlin")
                 resources.srcDirs("$nonPlayCommonDir/resources")
+            }
+        }
+
+        val nonDebugDir = "src/nonDebug"
+        nonDebugBuildTypes.forEach { buildType ->
+            maybeCreate(buildType).apply {
+                java.srcDirs("$nonDebugDir/kotlin")
+                resources.srcDirs("$nonDebugDir/resources")
             }
         }
     }
@@ -329,6 +357,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.interpolator)
 
     // Add firebase dependencies to specific variants
     for (variant in firebaseEnabledVariants) {
@@ -355,14 +384,12 @@ dependencies {
     implementation(libs.android)
     implementation(libs.photoview)
     implementation(libs.glide)
-    implementation(libs.compose)
-    implementation(libs.eventbus)
+    implementation(libs.glide.compose)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.gif)
     implementation(libs.android.image.cropper)
     implementation(libs.subsampling.scale.image.view) {
         exclude(group = "com.android.support", module = "support-annotations")
-    }
-    implementation(libs.tooltips) {
-        exclude(group = "com.android.support", module = "appcompat-v7")
     }
     implementation(libs.stream)
     implementation(libs.androidx.sqlite.ktx)
@@ -374,6 +401,7 @@ dependencies {
     implementation(libs.phrase)
     implementation(libs.copper.flow)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.guava)
     implementation(libs.kovenant)
     implementation(libs.kovenant.android)
     implementation(libs.opencsv)
@@ -450,6 +478,11 @@ dependencies {
     implementation(libs.zxing.core)
 
     implementation(libs.androidx.biometric)
+
+    playImplementation(libs.android.billing)
+    playImplementation(libs.android.billing.ktx)
+
+    debugImplementation(libs.sqlite.web.viewer)
 }
 
 fun getLastCommitTimestamp(): String {

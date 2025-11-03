@@ -19,12 +19,11 @@ import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
-import org.thoughtcrime.securesms.database.model.content.MessageContent
 import org.thoughtcrime.securesms.groups.GroupManagerV2Impl
 import org.thoughtcrime.securesms.notifications.OptimizedMessageNotifier
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.repository.DefaultConversationRepository
-import org.thoughtcrime.securesms.sskenvironment.ProfileManager
+import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.tokenpage.TokenRepository
 import org.thoughtcrime.securesms.tokenpage.TokenRepositoryImpl
 import javax.inject.Singleton
@@ -37,6 +36,7 @@ class AppModule {
     fun provideJson(modules: Set<@JvmSuppressWildcards SerializersModule>): Json {
         return Json {
             ignoreUnknownKeys = true
+            isLenient = true
             serializersModule += SerializersModule {
                 modules.forEach { include(it) }
             }
@@ -67,13 +67,13 @@ abstract class AppBindings {
     abstract fun bindGroupManager(groupManager: GroupManagerV2Impl): GroupManagerV2
 
     @Binds
-    abstract fun bindProfileManager(profileManager: ProfileManager): SSKEnvironment.ProfileManagerProtocol
-
-    @Binds
     abstract fun bindConfigFactory(configFactory: ConfigFactory): ConfigFactoryProtocol
 
     @Binds
     abstract fun bindMessageNotifier(notifier: OptimizedMessageNotifier): MessageNotifier
+
+    @Binds
+    abstract fun bindTypingIndicators(typingIndicators: TypingStatusRepository): SSKEnvironment.TypingIndicatorsProtocol
 
 }
 

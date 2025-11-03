@@ -22,7 +22,7 @@
             android:layout_gravity="center"/>
     </FrameLayout>
 
-    <org.thoughtcrime.securesms.components.ProfilePictureView
+    <androidx.compose.ui.platform.ComposeView
         android:id="@+id/userAvatar"
         app:layout_constraintStart_toStartOf="@id/fullscreen_renderer_container"
         app:layout_constraintEnd_toEndOf="@id/fullscreen_renderer_container"
@@ -33,7 +33,7 @@
         android:layout_height="@dimen/extra_large_profile_picture_size"
         android:visibility="gone"/>
 
-    <org.thoughtcrime.securesms.components.ProfilePictureView
+    <androidx.compose.ui.platform.ComposeView
         android:id="@+id/contactAvatar"
         app:layout_constraintStart_toStartOf="@id/fullscreen_renderer_container"
         app:layout_constraintEnd_toEndOf="@id/fullscreen_renderer_container"
@@ -180,7 +180,7 @@
         android:id="@+id/enableCameraButton"
         android:background="@drawable/call_controls_background"
         app:tint="@color/state_list_call_action_foreground"
-        android:src="@drawable/ic_video"
+        android:src="@drawable/state_list_ic_video"
         android:padding="@dimen/medium_spacing"
         android:layout_width="@dimen/large_button_height"
         android:layout_height="@dimen/large_button_height"
@@ -195,7 +195,7 @@
         android:layout_width="@dimen/large_button_height"
         android:layout_height="@dimen/large_button_height"
         android:padding="@dimen/medium_spacing"
-        android:src="@drawable/ic_mic_off"
+        android:src="@drawable/state_list_ic_mic"
         android:layout_marginBottom="@dimen/large_spacing"
         app:layout_constraintBottom_toTopOf="@+id/endCallButton"
         android:background="@drawable/call_controls_mic_background"
@@ -223,7 +223,7 @@
         android:src="@drawable/ic_phone_fill_answer_custom"
         android:padding="10dp"
         app:tint="@color/white"
-        android:backgroundTint="?colorAccent"
+        android:backgroundTint="@color/accent_green"
         android:layout_width="@dimen/large_button_height"
         android:layout_height="@dimen/large_button_height"
         android:layout_marginBottom="@dimen/very_large_spacing"

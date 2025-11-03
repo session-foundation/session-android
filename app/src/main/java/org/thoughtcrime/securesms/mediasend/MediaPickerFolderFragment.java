@@ -2,31 +2,37 @@ package org.thoughtcrime.securesms.mediasend;
 
 import static org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY;
 
-import androidx.appcompat.app.ActionBar;
-import androidx.lifecycle.ViewModelProvider;
-
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Point;
 import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.appcompat.widget.Toolbar;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.MenuHost;
+import androidx.core.view.MenuProvider;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.squareup.phrase.Phrase;
 
 import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.recipients.RecipientNamesKt;
 import org.session.libsignal.utilities.Log;
-import org.session.libsignal.utilities.guava.Optional;
+import org.thoughtcrime.securesms.conversation.v2.utilities.AttachmentManager;
 import org.thoughtcrime.securesms.util.ViewUtilitiesKt;
 
 import dagger.hilt.android.AndroidEntryPoint;
@@ -45,13 +51,13 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
   private Controller         controller;
   private GridLayoutManager  layoutManager;
 
-  public static @NonNull MediaPickerFolderFragment newInstance(@NonNull Recipient recipient) {
-    String name = Optional.fromNullable(recipient.getName())
-                          .or(Optional.fromNullable(recipient.getProfileName()))
-                          .or(recipient.getName());
+  MediaPickerFolderAdapter adapter;
 
+  private MenuProvider manageMenuProvider;
+
+  public static @NonNull MediaPickerFolderFragment newInstance(@NonNull Recipient recipient) {
     Bundle args = new Bundle();
-    args.putString(KEY_RECIPIENT_NAME, name);
+    args.putString(KEY_RECIPIENT_NAME, RecipientNamesKt.displayName(recipient));
 
     MediaPickerFolderFragment fragment = new MediaPickerFolderFragment();
     fragment.setArguments(args);
@@ -89,7 +95,7 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
     ViewUtilitiesKt.applySafeInsetsPaddings(view);
 
     RecyclerView             list    = view.findViewById(R.id.mediapicker_folder_list);
-    MediaPickerFolderAdapter adapter = new MediaPickerFolderAdapter(Glide.with(this), this);
+    adapter = new MediaPickerFolderAdapter(Glide.with(this), this);
 
     layoutManager = new GridLayoutManager(requireContext(), 2);
     onScreenWidthChanged(getScreenWidth());
@@ -101,7 +107,7 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
 
     initToolbar(view.findViewById(R.id.mediapicker_toolbar));
   }
-
+  
   @Override
   public void onResume() {
     super.onResume();
@@ -126,6 +132,45 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
       actionBar.setDisplayHomeAsUpEnabled(true);
       actionBar.setHomeButtonEnabled(true);
       toolbar.setNavigationOnClickListener(v -> requireActivity().onBackPressed());
+    }
+
+    initToolbarOptions();
+  }
+
+  private void initToolbarOptions() {
+    MenuHost menuHost = (MenuHost) requireActivity();
+
+    // Always remove current provider first (if any)
+    if (manageMenuProvider != null) {
+      menuHost.removeMenuProvider(manageMenuProvider);
+      manageMenuProvider = null;
+    }
+
+    if (AttachmentManager.shouldShowManagePhoto(requireActivity())) {
+      manageMenuProvider = new MenuProvider() {
+        @Override
+        public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+          inflater.inflate(R.menu.menu_media_add, menu);
+        }
+
+        @Override
+        public boolean onMenuItemSelected(@NonNull MenuItem item) {
+          if (item.getItemId() == R.id.mediapicker_menu_add) {
+            AttachmentManager.managePhotoAccess(requireActivity(), () -> {
+              if (!isAdded()) return;
+
+              viewModel.getFolders(requireContext())
+                      .observe(getViewLifecycleOwner(), adapter::setFolders);
+
+              initToolbarOptions();
+            });
+            return true;
+          }
+          return false;
+        }
+      };
+
+      menuHost.addMenuProvider(manageMenuProvider, getViewLifecycleOwner(), Lifecycle.State.STARTED);
     }
   }
 

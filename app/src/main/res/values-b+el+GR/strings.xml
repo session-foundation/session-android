@@ -36,11 +36,14 @@
     <string name="adminRemovedUser"><b>{name}</b> αφαιρέθηκε ως Διαχειριστής.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> και <b>{count} άλλοι</b> αφαιρέθηκαν ως Διαχειριστές.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> και <b>{other_name}</b> αφαιρέθηκαν ως Διαχειριστές.</string>
+    <plurals name="adminSendingPromotion">
+        <item quantity="one">Στέλνεται προαγωγή διαχειριστή</item>
+        <item quantity="other">Στέλνονται προαγωγές διαχειριστή</item>
+    </plurals>
     <string name="adminSettings">Ρυθμίσεις Διαχειριστή</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> και <b>{other_name}</b> προωθήθηκαν στο Admin.</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Ανώνυμος</string>
-    <string name="appearanceAutoDarkMode">Αυτόματη σκοτεινή λειτουργία</string>
     <string name="appearanceHideMenuBar">Απόκρυψη Γραμμής Μενού</string>
     <string name="appearanceLanguage">Γλώσσα</string>
     <string name="appearanceLanguageDescription">Επιλέξτε τις γλωσσικές ρυθμίσεις για το {app_name}. Το {app_name} θα επανεκκινήσει όταν αλλάξετε τις γλωσσικές σας ρυθμίσεις.</string>
@@ -122,6 +125,7 @@
     <string name="banUser">Αποκλεισμός Χρήστη</string>
     <string name="banUserBanned">Ο χρήστης αποκλείστηκε</string>
     <string name="block">Φραγή</string>
+    <string name="blockBlockedDescription">Καταργήστε τη φραγή αυτής τη επαφής για να στείλετε ένα μήνυμα</string>
     <string name="blockBlockedNone">Καμία μπλοκαρισμένη επαφή</string>
     <string name="blockBlockedUser">Σε φραγή {name}</string>
     <string name="blockDescription">Είστε σίγουροι ότι θέλετε να θέσετε σε φραγή <b>{name}</b>; Οι μπλοκαρισμένοι χρήστες δεν μπορούν να σας στείλουν αιτήματα μηνύματα, προσκλήσεις ομάδας ή να σας καλέσουν.</string>
@@ -153,7 +157,6 @@
     <string name="callsSettings">Κλήσεις (Beta)</string>
     <string name="callsVoiceAndVideo">Κλήσεις Φωνής και Βίντεο</string>
     <string name="callsVoiceAndVideoBeta">Κλήσεις Φωνής και Βίντεο (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Η διεύθυνση IP σας είναι ορατή στον συνομιλητή σας και σε έναν διακομιστή του Oxen Foundation κατά τη χρήση κλήσεων beta.</string>
     <string name="callsVoiceAndVideoToggleDescription">Επιτρέπει κλήσεις φωνής και βίντεο από και προς άλλους χρήστες.</string>
     <string name="callsYouCalled">Καλέσατε {name}</string>
     <string name="callsYouMissedCallPermissions">Χάσατε μια κλήση από <b>{name}</b> επειδή δεν έχετε ενεργοποιήσει τις <b>Κλήσεις Φωνής και Βίντεο</b> στις Ρυθμίσεις Απορρήτου.</string>
@@ -235,16 +238,11 @@
     <string name="conversationsDeleted">Η συνομιλία διαγράφηκε</string>
     <string name="conversationsEmpty">Δεν υπάρχουν μηνύματα σε {conversation_name}.</string>
     <string name="conversationsEnter">Εισαγάγετε Key</string>
-    <string name="conversationsEnterDescription">Λειτουργία του πλήκτρου εισαγωγής κατά την πληκτρολόγηση σε συνομιλία.</string>
-    <string name="conversationsEnterNewLine">SHIFT + ENTER στέλνει ένα μήνυμα, ENTER ξεκινά μια νέα γραμμή</string>
-    <string name="conversationsEnterSends">ENTER στέλνει ένα μήνυμα, SHIFT + ENTER ξεκινάει μια νέα γραμμή</string>
     <string name="conversationsGroups">Ομάδες</string>
     <string name="conversationsMessageTrimming">Περικοπή μηνυμάτων</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Περικοπή Κοινοτήτων</string>
-    <string name="conversationsMessageTrimmingTrimCommunitiesDescription">Διαγραφή μηνυμάτων από Community συνομιλίες άνω των 6 μηνών και όπου υπάρχουν πάνω από 2,000 μηνύματα.</string>
     <string name="conversationsNew">Νέα Συνομιλία</string>
     <string name="conversationsNone">Δεν έχετε συνομιλίες ακόμα</string>
-    <string name="conversationsSendWithEnterKey">Αποστολή με το πλήκτρο Enter</string>
     <string name="conversationsSendWithEnterKeyDescription">Πατώντας το πλήκτρο Enter θα σταλεί μήνυμα αντί να ξεκινήσει μια νέα γραμμή.</string>
     <string name="conversationsSettingsAllMedia">Όλα τα πολυμέσα</string>
     <string name="conversationsSpellCheck">Ορθογραφικός Έλεγχος</string>
@@ -254,6 +252,7 @@
     <string name="copy">Αντιγραφή</string>
     <string name="create">Δημιουργία</string>
     <string name="cut">Αποκοπή</string>
+    <string name="databaseErrorGeneric">Παρουσιάστηκε σφάλμα βάσης δεδομένων.\n\nΕξαγάγετε τα αρχεία καταγραφής της εφαρμογής σας για κοινή χρήση στην αντιμετώπιση προβλημάτων. Αν αυτό δεν είναι επιτυχές, επανεγκαταστήστε το {app_name} και επαναφέρετε τον λογαριασμό σας.</string>
     <string name="databaseErrorTimeout">Παρατηρήσαμε ότι το {app_name} χρειάζεται πολύ χρόνο για να ξεκινήσει.\n\nΜπορείτε να συνεχίσετε να περιμένετε, να εξάγετε τα αρχεία καταγραφής της συσκευής σας για να τα μοιραστείτε για την αντιμετώπιση προβλημάτων ή να επανεκκινήσετε το {app_name}.</string>
     <string name="databaseErrorUpdate">Η βάση δεδομένων της εφαρμογής σας δεν είναι συμβατή με αυτήν την έκδοση του {app_name}. Επανεγκαταστήστε την εφαρμογή και αποκαταστήστε τον λογαριασμό σας για να δημιουργήσετε μια νέα βάση δεδομένων και να συνεχίσετε να χρησιμοποιείτε το {app_name}.\n\nΠροειδοποίηση: Αυτό θα έχει ως αποτέλεσμα την απώλεια όλων των μηνυμάτων και των συνημμένων που είναι παλαιότερα των δύο εβδομάδων.</string>
     <string name="databaseOptimizing">Βελτιστοποίηση Βάσης Δεδομένων</string>
@@ -279,12 +278,20 @@
         <item quantity="one">Διαγραφή Μηνύματος</item>
         <item quantity="other">Διαγραφή Μηνυμάτων</item>
     </plurals>
+    <plurals name="deleteMessageConfirm">
+        <item quantity="one">Είστε σίγουρος ότι θέλετε να διαγράψετε αυτό το μήνυμα;</item>
+        <item quantity="other">Είστε σίγουρος ότι θέλετε να διαγράψετε αυτά τα μηνύματα;</item>
+    </plurals>
     <plurals name="deleteMessageDeleted">
         <item quantity="one">Το μήνυμα διαγράφηκε</item>
         <item quantity="other">Τα μηνύματα διαγράφηκαν</item>
     </plurals>
     <string name="deleteMessageDeletedGlobally">Αυτό το μήνυμα έχει διαγραφεί</string>
     <string name="deleteMessageDeletedLocally">Αυτό το μήνυμα έχει διαγραφεί σε αυτή τη συσκευή</string>
+    <plurals name="deleteMessageDescriptionDevice">
+        <item quantity="one">Είστε σίγουρος ότι θέλετε να διαγράψετε αυτό το μήνυμα μόνο από αυτή τη συσκευή;</item>
+        <item quantity="other">Είστε σίγουρος ότι θέλετε να διαγράψετε αυτά τα μηνύματα μόνο από αυτή τη συσκευή;</item>
+    </plurals>
     <string name="deleteMessageDescriptionEveryone">Σίγουρα θέλετε να διαγράψετε αυτό το μήνυμα για όλους;</string>
     <string name="deleteMessageDeviceOnly">Διαγραφή μόνο σε αυτή τη συσκευή</string>
     <string name="deleteMessageDevicesAll">Διαγραφή από όλες τις συσκευές μου</string>
@@ -385,7 +392,6 @@
     <string name="failures">Αποτυχίες</string>
     <string name="file">Αρχείο</string>
     <string name="files">Αρχεία</string>
-    <string name="followSystemSettings">Αντιστοίχιση ρυθμίσεων συστήματος</string>
     <string name="from">Από:</string>
     <string name="fullScreenToggle">Εναλλαγή Πλήρους Οθόνης</string>
     <string name="gif">GIF</string>
@@ -395,6 +401,7 @@
     <string name="groupCreate">Δημιουργία Ομάδας</string>
     <string name="groupCreateErrorNoMembers">Παρακαλώ επιλέξτε τουλάχιστον 1 μέλος ομάδας.</string>
     <string name="groupDelete">Διαγραφή Ομάδας</string>
+    <string name="groupDeleteDescription">Είστε βέβαιοι ότι θέλετε να διαγράψετε το <b>{group_name}</b>?\n\nΑυτό θα αφαιρέσει όλα τα μέλη και θα διαγράψει όλο το περιεχόμενο της ομάδας.</string>
     <string name="groupDescriptionEnter">Εισαγάγετε μια περιγραφή ομάδας</string>
     <string name="groupDisplayPictureUpdated">Η εικόνα προβολής της ομάδας ενημερώθηκε.</string>
     <string name="groupEdit">Επεξεργασία Ομάδας</string>
@@ -409,6 +416,10 @@
     <string name="groupInviteFailedUser">Αποτυχία πρόσκλησης {name} στο {group_name}</string>
     <string name="groupInviteReinvite"><b>{name}</b> σας προσκάλεσε να επανενωθείτε με την ομάδα <b>{group_name}</b>, όπου είστε Διαχειριστής.</string>
     <string name="groupInviteReinviteYou">Προσκληθήκατε να επανενταχθείτε στην ομάδα <b>{group_name}</b>, όπου είστε διαχειριστής.</string>
+    <plurals name="groupInviteSending">
+        <item quantity="one">Στέλνεται πρόσκληση</item>
+        <item quantity="other">Στέλνονται προσκλήσεις</item>
+    </plurals>
     <string name="groupInviteSent">Η πρόσκληση στάλθηκε</string>
     <string name="groupInviteSuccessful">Η πρόσκληση στην ομάδα ήταν επιτυχής</string>
     <string name="groupInviteVersion">Οι χρήστες πρέπει να έχουν την τελευταία έκδοση για να λάβουν προσκλήσεις</string>
@@ -467,22 +478,27 @@
     <string name="groupUpdated">Η ομάδα ενημερώθηκε</string>
     <string name="helpFAQ">Συχνές Ερωτήσεις</string>
     <string name="helpHelpUsTranslateSession">Βοηθήστε μας να μεταφράσουμε το {app_name}</string>
-    <string name="helpReportABug">Αναφορά Σφάλματος</string>
     <string name="helpReportABugDescription">Κοινοποιήστε κάποια στοιχεία για να μας βοηθήσετε να επιλύσουμε το ζήτημά σας. Εξαγάγετε τους καταγραφές σας και στη συνέχεια ανεβάστε το αρχείο μέσω του Help Desk του {app_name}.</string>
     <string name="helpReportABugExportLogs">Εξαγωγή Αρχείων Καταγραφής</string>
     <string name="helpReportABugExportLogsDescription">Εξαγάγετε τα αρχεία καταγραφής σας και στη συνέχεια μεταφορτώστε το αρχείο μέσω του {app_name}\'s Help Desk.</string>
     <string name="helpReportABugExportLogsSaveToDesktop">Αποθήκευση στην επιφάνεια εργασίας</string>
-    <string name="helpReportABugExportLogsSaveToDesktopDescription">Αποθηκεύστε αυτό το αρχείο στην επιφάνεια εργασίας σας, και μετά κοινοποιήστε το στους προγραμματιστές του {app_name}.</string>
     <string name="helpSupport">Υποστήριξη</string>
     <string name="helpWedLoveYourFeedback">Θα θέλαμε πολύ τα σχόλιά σας</string>
     <string name="hide">Απόκρυψη</string>
-    <string name="hideMenuBarDescription">Εναλλαγή προβολής γραμμής μενού συστήματος</string>
     <string name="hideOthers">Απόκρυψη Άλλων</string>
     <string name="image">Εικόνα</string>
     <string name="incognitoKeyboard">Απόρρητο πληκτρολόγιο</string>
     <string name="incognitoKeyboardDescription">Ζητήστε ανώνυμη λειτουργία αν είναι διαθέσιμη. Ανάλογα με το πληκτρολόγιο που χρησιμοποιείτε, το πληκτρολόγιο σας μπορεί να αγνοήσει αυτό το αίτημα.</string>
     <string name="info">Πληροφορίες</string>
     <string name="invalidShortcut">Μη έγκυρη συντόμευση</string>
+    <plurals name="inviteFailed">
+        <item quantity="one">Η πρόσκληση απέτυχε</item>
+        <item quantity="other">Οι προσκλήσεις απέτυχαν</item>
+    </plurals>
+    <plurals name="inviteFailedDescription">
+        <item quantity="one">Η πρόσκληση δεν μπορούσε να σταλθεί. Θέλετε να προσπαθήσετε ξανά;</item>
+        <item quantity="other">Οι προσκλήσεις δεν μπορούσαν να σταλθούν. Θέλετε να προσπαθήσετε ξανά;</item>
+    </plurals>
     <string name="join">Γίνετε μέλος</string>
     <string name="later">Αργότερα</string>
     <string name="learnMore">Μάθετε Περισσότερα</string>
@@ -557,6 +573,10 @@
         <item quantity="one">Έχετε νέο μήνυμα.</item>
         <item quantity="other">Έχετε %1$d νέα μηνύματα.</item>
     </plurals>
+    <plurals name="messageNewYouveGotGroup">
+        <item quantity="one">Έχετε νέο μήνυμα στο %1$s.</item>
+        <item quantity="other">Έχετε %1$d νέα μηνύματα στο %2$s.</item>
+    </plurals>
     <string name="messageReplyingTo">Απάντηση σε</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> σας προσκάλεσε να συμμετάσχετε στην ομάδα <b>{group_name}</b>.</string>
     <string name="messageRequestGroupInviteDescription">Η αποστολή μηνύματος σε αυτή την ομάδα θα αποδεχτεί αυτόματα την πρόσκληση της ομάδας.</string>
@@ -585,6 +605,10 @@
     <string name="messageVoiceSnippetGroup">{author}: {emoji} Ηχητικό μήνυμα</string>
     <string name="messages">Μηνύματα</string>
     <string name="minimize">Ελαχιστοποίηση</string>
+    <plurals name="modalMessageCharacterDisplayDescription">
+        <item quantity="one">Τα μηνύματα έχουν όριο %1$s χαρακτήρων. Σας απομένει %2$d χαρακτήρας.</item>
+        <item quantity="other">Τα μηνύματα έχουν όριο %1$s χαρακτήρων. Σας απομένουν %2$d χαρακτήρες.</item>
+    </plurals>
     <string name="next">Επόμενο</string>
     <string name="nicknameDescription">Επιλέξτε ένα ψευδώνυμο για <b>{name}</b>. Αυτό θα εμφανιστεί σε εσάς στις προσωπικές και ομαδικές συνομιλίες σας.</string>
     <string name="nicknameEnter">Εισαγάγετε ένα ψευδώνυμο</string>
@@ -660,25 +684,17 @@
     <string name="open">Άνοιγμα</string>
     <string name="other">Άλλο</string>
     <string name="passwordChange">Αλλαγή Κωδικού Πρόσβασης</string>
-    <string name="passwordChangeDescription">Αλλαγή του κωδικού πρόσβασης που απαιτείται για το ξεκλείδωμα του {app_name}.</string>
-    <string name="passwordChangedDescription">Ο κωδικός πρόσβασής σας έχει αλλάξει. Παρακαλώ κρατήστε τον ασφαλή.</string>
     <string name="passwordConfirm">Επιβεβαίωση κωδικού πρόσβασης</string>
-    <string name="passwordCreate">Δημιουργήστε τον κωδικό σας πρόσβασης</string>
     <string name="passwordCurrentIncorrect">Ο τρέχων κωδικός πρόσβασής σας είναι λανθασμένος.</string>
-    <string name="passwordDescription">Να απαιτείται κωδικός πρόσβασης για το ξεκλείδωμα του {app_name}.</string>
     <string name="passwordEnter">Εισαγάγετε τον Κωδικό Πρόσβασης</string>
     <string name="passwordEnterCurrent">Παρακαλώ εισαγάγετε τον τρέχον σας κωδικό πρόσβασης</string>
     <string name="passwordEnterNew">Παρακαλώ εισαγάγετε τον νέο σας κωδικό πρόσβασης</string>
     <string name="passwordError">Ο κωδικός πρόσβασης πρέπει να περιέχει μόνο γράμματα, αριθμούς και σύμβολα</string>
-    <string name="passwordErrorLength">Ο κωδικός πρόσβασης πρέπει να αποτελείται από 6 έως 64 χαρακτήρες</string>
     <string name="passwordErrorMatch">Οι Κωδικοί Πρόσβασης δεν ταιριάζουν</string>
     <string name="passwordFailed">Αποτυχία ορισμού κωδικού πρόσβασης</string>
     <string name="passwordIncorrect">Λάθος κωδικός πρόσβασης</string>
     <string name="passwordRemove">Αφαίρεση Κωδικού Πρόσβασης</string>
-    <string name="passwordRemoveDescription">Αφαίρεση του κωδικού πρόσβασης που απαιτείται για το ξεκλείδωμα του {app_name}.</string>
-    <string name="passwordRemovedDescription">Ο κωδικός πρόσβασής σας έχει αφαιρεθεί.</string>
     <string name="passwordSet">Ορισμός Κωδικού Πρόσβασης</string>
-    <string name="passwordSetDescription">Ο κωδικός πρόσβασής σας έχει οριστεί. Παρακαλώ κρατήστε τον ασφαλή.</string>
     <string name="paste">Επικόλληση</string>
     <string name="permissionMusicAudioDenied">{app_name} χρειάζεται πρόσβαση στη μουσική και τον ήχο για να στείλει αρχεία, μουσική και ήχο, αλλά η πρόσβαση έχει απορριφθεί μόνιμα. Πατήστε Ρυθμίσεις → Δικαιώματα, και ενεργοποιήστε το \"Μουσική και ήχος\".</string>
     <string name="permissionsAppleMusic">Το {app_name} χρειάζεται πρόσβαση στο Apple Music για αναπαραγωγή συνημμένων πολυμέσων.</string>
@@ -687,7 +703,7 @@
     <string name="permissionsCameraDenied">Το {app_name} χρειάζεται πρόσβαση στην κάμερα για τη λήψη φωτογραφιών και βίντεο, αλλά έχει απορριφθεί μόνιμα. Πατήστε Ρυθμίσεις → Άδειες, και ενεργοποιήστε την \"Κάμερα\".</string>
     <string name="permissionsFaceId">Η λειτουργία κλειδώματος οθόνης στο {app_name} χρησιμοποιεί το Face ID.</string>
     <string name="permissionsKeepInSystemTray">Διατήρηση στην Περιοχή Ειδοποιήσεων</string>
-    <string name="permissionsKeepInSystemTrayDescription">Το {app_name} συνεχίζει να εκτελείται στο παρασκήνιο όταν κλείνετε το παράθυρο</string>
+    <string name="permissionsKeepInSystemTrayDescription">Το {app_name} συνεχίζει να εκτελείται στο παρασκήνιο όταν κλείνετε το παράθυρο.</string>
     <string name="permissionsLibrary">Το {app_name} χρειάζεται πρόσβαση στη φωτογραφική βιβλιοθήκη για να συνεχίσει. Μπορείτε να ενεργοποιήσετε την πρόσβαση στις ρυθμίσεις του iOS.</string>
     <string name="permissionsMicrophone">Μικρόφωνο</string>
     <string name="permissionsMicrophoneAccessRequired">{app_name} χρειάζεται πρόσβαση στο μικρόφωνο για να πραγματοποιήσει κλήσεις και να στείλει ηχητικά μηνύματα, αλλά έχει απορριφθεί μόνιμα. Πατήστε Ρυθμίσεις → Άδειες, και ενεργοποιήστε το \"Μικρόφωνο\".</string>
@@ -706,6 +722,22 @@
     <string name="pinUnpin">Ξεκαρφίτσωμα</string>
     <string name="pinUnpinConversation">Ξεκαρφίτσωμα Συνομιλίας</string>
     <string name="preview">Προεπισκόπηση</string>
+    <plurals name="proBadgesSent">
+        <item quantity="one">%1$s %2$s Σήμα στάλθηκε</item>
+        <item quantity="other">%1$s %2$s Εμβλήματα στάλθηκαν</item>
+    </plurals>
+    <plurals name="proGroupsUpgraded">
+        <item quantity="one">Αναβαθμίστηκε η %1$s ομάδα</item>
+        <item quantity="other">Αναβαθμίστηκαν %1$s ομάδες</item>
+    </plurals>
+    <plurals name="proLongerMessagesSent">
+        <item quantity="one">%1$s Μεγαλύτερο Μήνυμα εστάλη</item>
+        <item quantity="other">%1$s Μεγαλύτερο Μήνυμα εστάλησαν</item>
+    </plurals>
+    <plurals name="proPinnedConversations">
+        <item quantity="one">%1$s Καρφιτσωμένη Συνομιλία</item>
+        <item quantity="other">%1$s Καρφιτσωμένες Συνομιλίες</item>
+    </plurals>
     <string name="profile">Προφίλ</string>
     <string name="profileDisplayPicture">Display Picture</string>
     <string name="profileDisplayPictureRemoveError">Αποτυχία κατάργησης εικόνας εμφάνισης.</string>
@@ -713,6 +745,14 @@
     <string name="profileDisplayPictureSizeError">Παρακαλώ επιλέξτε ένα μικρότερο αρχείο.</string>
     <string name="profileErrorUpdate">Αποτυχία ενημέρωσης προφίλ.</string>
     <string name="promote">Προώθηση</string>
+    <plurals name="promotionFailed">
+        <item quantity="one">Η προώθηση απέτυχε</item>
+        <item quantity="other">Οι προωθήσεις απέτυχαν</item>
+    </plurals>
+    <plurals name="promotionFailedDescription">
+        <item quantity="one">Η προώθηση δεν ήταν δυνατό να εφαρμοστεί. Θέλετε να προσπαθήσετε ξανά;</item>
+        <item quantity="other">Οι προωθήσεις δεν ήταν δυνατό να εφαρμοστούν. Θέλετε να προσπαθήσετε ξανά;</item>
+    </plurals>
     <string name="qrCode">Κωδικός QR</string>
     <string name="qrNotAccountId">Αυτός ο κωδικός QR δεν περιέχει ID λογαριασμού</string>
     <string name="qrNotRecoveryPassword">Αυτός ο κωδικός QR δεν περιέχει κωδικό ανάκτησης</string>
@@ -728,7 +768,6 @@
     <string name="recommended">Προτείνεται</string>
     <string name="recoveryPasswordBannerDescription">Αποθηκεύστε τον κωδικό σας ανάκτησης για να βεβαιωθείτε ότι δεν θα χάσετε την πρόσβαση στον λογαριασμό σας.</string>
     <string name="recoveryPasswordBannerTitle">Αποθηκεύστε τον κωδικό σας ανάκτησης</string>
-    <string name="recoveryPasswordDescription">Χρησιμοποιήστε τον κωδικό ανάκτησης για να φορτώσετε τον λογαριασμό σας σε νέες συσκευές.\n\nΟ λογαριασμός σας δεν μπορεί να ανακτηθεί χωρίς τον κωδικό ανάκτησης. Βεβαιωθείτε ότι τον αποθηκεύσατε σε ασφαλές μέρος — και μην τον μοιραστείτε με κανέναν.</string>
     <string name="recoveryPasswordEnter">Εισαγάγετε τον κωδικό σας ανάκτησης</string>
     <string name="recoveryPasswordErrorMessageGeneric">Παρακαλώ ελέγξτε τον κωδικό πρόσβασης για ανάκτηση και προσπαθήστε ξανά.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Κάποιες από τις λέξεις στον Κωδικό Ανάκτησης σας είναι λανθασμένες. Παρακαλώ ελέγξτε και προσπαθήστε ξανά.</string>
@@ -737,13 +776,15 @@
     <string name="recoveryPasswordExplanation">Για να φορτώσετε τον λογαριασμό σας, εισαγάγετε τον κωδικό ανάκτησης.</string>
     <string name="recoveryPasswordHidePermanently">Απόκρυψη του Κωδικού Ανάκτησης Μόνιμα</string>
     <string name="recoveryPasswordHidePermanentlyDescription1">Χωρίς τον κωδικό ανάκτησης, δεν μπορείτε να φορτώσετε τον λογαριασμό σας σε νέες συσκευές.\n\nΣυνιστούμε ανεπιφύλακτα να αποθηκεύσετε τον κωδικό ανάκτησης σε ένα ασφαλές και σίγουρο μέρος πριν συνεχίσετε.</string>
-    <string name="recoveryPasswordHidePermanentlyDescription2">Είστε βέβαιοι ότι θέλετε να αποκρύψετε μόνιμα τον κωδικό σας ανάκτησης σε αυτήν τη συσκευή; Αυτό δεν μπορεί να αναιρεθεί.</string>
     <string name="recoveryPasswordHideRecoveryPassword">Απόκρυψη Κωδικού Ανάκτησης</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Μόνιμη απόκρυψη του κωδικού ανάκτησης σε αυτή τη συσκευή.</string>
     <string name="recoveryPasswordRestoreDescription">Εισαγάγετε τον κωδικό σας ανάκτησης για να φορτώσετε τον λογαριασμό σας. Αν δεν τον έχετε αποθηκεύσει, μπορείτε να τον βρείτε στις ρυθμίσεις της εφαρμογής.</string>
-    <string name="recoveryPasswordView">Προβολή Κωδικού</string>
     <string name="recoveryPasswordWarningSendDescription">Αυτός είναι ο κωδικός ανάκτησής σας. Αν τον στείλετε σε κάποιον, θα έχει πλήρη πρόσβαση στον λογαριασμό σας.</string>
     <string name="redo">Επανάληψη</string>
+    <plurals name="remainingCharactersTooltip">
+        <item quantity="one">%1$d χαρακτήρας απομένει</item>
+        <item quantity="other">%1$d χαρακτήρες απομένουν</item>
+    </plurals>
     <string name="remove">Αφαίρεση</string>
     <string name="removePasswordFail">Αποτυχία κατάργησης κωδικού πρόσβασης</string>
     <string name="reply">Απάντηση</string>
@@ -791,6 +832,7 @@
     <string name="sessionSettings">Ρυθμίσεις</string>
     <string name="set">Ορισμός</string>
     <string name="settingsRestartDescription">Πρέπει να επανεκκινήσετε το {app_name} για να εφαρμόσετε τις νέες ρυθμίσεις σας.</string>
+    <string name="settingsScreenSecurityDesktop">Ασφάλεια Οθόνης</string>
     <string name="share">Κοινοποίηση</string>
     <string name="shareAccountIdDescription">Προσκαλέστε τον φίλο σας να συνομιλήσει μαζί σας στο {app_name} μοιράζοντας το Account ID σας με αυτόν.</string>
     <string name="shareAccountIdDescriptionCopied">Μοιραστείτε με τους φίλους σας όπου και αν μιλάτε συνήθως μαζί τους — στη συνέχεια μετακινήστε τη συζήτηση εδώ.</string>
@@ -816,6 +858,7 @@
     <string name="updateError">Αδυναμία Ενημέρωσης</string>
     <string name="updateErrorDescription">Το {app_name} απέτυχε να ενημερωθεί. Παρακαλώ πηγαίνετε στο {session_download_url} και εγκαταστήστε τη νέα έκδοση χειροκίνητα, στη συνέχεια επικοινωνήστε με το Κέντρο Βοήθειας για να μας ενημερώσετε για αυτό το πρόβλημα.</string>
     <string name="updateNewVersion">Μια νέα έκδοση της εφαρμογής {app_name} είναι διαθέσιμη, πατήστε για ενημέρωση</string>
+    <string name="updateNewVersionDescription">Μια νέα έκδοση ({version}) της εφαρμογής {app_name} είναι διαθέσιμη.</string>
     <string name="updateReleaseNotes">Μετάβαση στις Σημειώσεις Έκδοσης</string>
     <string name="updateSession">Ενημέρωση {app_name}</string>
     <string name="updateVersion">Έκδοση {version}</string>

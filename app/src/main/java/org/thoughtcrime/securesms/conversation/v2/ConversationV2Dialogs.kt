@@ -28,7 +28,7 @@ import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.MarkAsDeletedForEveryone
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.MarkAsDeletedLocally
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ShowOpenUrlDialog
-import org.thoughtcrime.securesms.groups.compose.CreateGroupScreen
+import org.thoughtcrime.securesms.home.startconversation.group.CreateGroupScreen
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
@@ -48,7 +48,8 @@ fun ConversationV2Dialogs(
     dialogsState: ConversationViewModel.DialogsState,
     inputBarDialogsState: InputbarViewModel.InputBarDialogsState,
     sendCommand: (ConversationViewModel.Commands) -> Unit,
-    sendInputBarCommand: (InputbarViewModel.Commands) -> Unit
+    sendInputBarCommand: (InputbarViewModel.Commands) -> Unit,
+    onPostUserProfileModalAction: () -> Unit // a function called in the User Profile Modal once an action has been taken
 ){
     SessionMaterialTheme {
         // inputbar dialogs
@@ -233,6 +234,7 @@ fun ConversationV2Dialogs(
                 sendCommand = {
                     sendCommand(ConversationViewModel.Commands.HandleUserProfileCommand(it))
                 },
+                onPostAction = onPostUserProfileModalAction
             )
         }
     }
@@ -248,7 +250,8 @@ fun PreviewURLDialog(){
             ),
             inputBarDialogsState = InputbarViewModel.InputBarDialogsState(),
             sendCommand = {},
-            sendInputBarCommand = {}
+            sendInputBarCommand = {},
+            onPostUserProfileModalAction = {}
         )
     }
 }

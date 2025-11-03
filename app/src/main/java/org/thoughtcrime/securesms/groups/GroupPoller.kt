@@ -1,5 +1,8 @@
 package org.thoughtcrime.securesms.groups
 
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -13,6 +16,8 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
@@ -37,14 +42,16 @@ import java.time.Instant
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.days
 
-class GroupPoller(
-    scope: CoroutineScope,
-    private val groupId: AccountId,
+class GroupPoller @AssistedInject constructor(
+    @Assisted scope: CoroutineScope,
+    @Assisted private val groupId: AccountId,
+    @Assisted private val pollSemaphore: Semaphore,
     private val configFactoryProtocol: ConfigFactoryProtocol,
     private val lokiApiDatabase: LokiAPIDatabaseProtocol,
     private val clock: SnodeClock,
     private val appVisibilityManager: AppVisibilityManager,
     private val groupRevokedMessageHandler: GroupRevokedMessageHandler,
+    private val batchMessageReceiveJobFactory: BatchMessageReceiveJob.Factory,
 ) {
     companion object {
         private const val POLL_INTERVAL = 3_000L
@@ -103,7 +110,9 @@ class GroupPoller(
 
             lastState = lastState.copy(inProgress = true).also { emit(it) }
 
-            val pollResult = doPollOnce(internalPollState)
+            val pollResult = pollSemaphore.withPermit {
+                doPollOnce(internalPollState)
+            }
 
             lastState = lastState.copy(
                 hadAtLeastOneSuccessfulPoll = lastState.hadAtLeastOneSuccessfulPoll || pollResult.result.isSuccess,
@@ -446,8 +455,10 @@ class GroupPoller(
         }
 
         parameters.chunked(BatchMessageReceiveJob.BATCH_DEFAULT_NUMBER).forEach { chunk ->
-            val job = BatchMessageReceiveJob(chunk)
-            JobQueue.shared.add(job)
+            JobQueue.shared.add(batchMessageReceiveJobFactory.create(
+                messages = chunk,
+                fromCommunity = null
+            ))
         }
 
         if (messages.isNotEmpty()) {
@@ -460,4 +471,9 @@ class GroupPoller(
      * one token will trigger one poll, as the poller may batch multiple requests together.
      */
     private data class PollOnceToken(val resultCallback: SendChannel<PollResult>)
+
+    @AssistedFactory
+    interface Factory {
+        fun create(scope: CoroutineScope, groupId: AccountId, pollSemaphore: Semaphore): GroupPoller
+    }
 }

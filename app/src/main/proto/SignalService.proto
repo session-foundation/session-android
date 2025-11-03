@@ -1,0 +1,316 @@
+syntax = "proto2";
+
+package signalservice;
+
+option java_package = "org.session.libsignal.protos";
+option java_outer_classname = "SignalServiceProtos";
+
+message Envelope {
+
+  enum Type {
+    SESSION_MESSAGE      = 6;
+    CLOSED_GROUP_MESSAGE = 7;
+  }
+
+  // @required
+  required Type   type            = 1;
+  optional string source          = 2;
+  optional uint32 sourceDevice    = 7;
+  // @required
+  required uint64 timestampMs       = 5;
+  optional bytes  content         = 8;
+  optional uint64 serverTimestampMs = 10;
+}
+
+message TypingMessage {
+
+    enum Action {
+        STARTED = 0;
+        STOPPED = 1;
+    }
+
+    // @required
+    required uint64 timestampMs = 1;
+    // @required
+    required Action action    = 2;
+}
+
+message UnsendRequest {
+  // @required
+  required uint64 timestampMs = 1;
+  // @required
+  required string author    = 2;
+}
+
+message Content {
+  enum ExpirationType {
+    UNKNOWN = 0;
+    DELETE_AFTER_READ = 1;
+    DELETE_AFTER_SEND = 2;
+  }
+
+  optional DataMessage                dataMessage                = 1;
+  optional CallMessage                callMessage                = 3;
+  optional ReceiptMessage             receiptMessage             = 5;
+  optional TypingMessage              typingMessage              = 6;
+  optional DataExtractionNotification dataExtractionNotification = 8;
+  optional UnsendRequest              unsendRequest              = 9;
+  optional MessageRequestResponse     messageRequestResponse     = 10;
+  optional ExpirationType             expirationType             = 12;
+  optional uint32                     expirationTimerSeconds     = 13;
+  optional uint64                     sigTimestampMs             = 15;
+
+  reserved 14;
+  reserved 11; // Used to be a "sharedConfigMessage" but no longer used
+  reserved 7; // Used to be a "configurationMessage" but it has been deleted
+}
+
+message KeyPair {
+  // @required
+  required bytes publicKey  = 1;
+  // @required
+  required bytes privateKey = 2;
+}
+
+message DataExtractionNotification {
+
+  enum Type {
+    SCREENSHOT  = 1;
+    MEDIA_SAVED = 2; // timestamp
+  }
+
+  // @required
+  required Type   type      = 1;
+  optional uint64 timestampMs = 2;
+}
+
+message DataMessage {
+
+  enum Flags {
+    EXPIRATION_TIMER_UPDATE = 2;
+  }
+
+  message Quote {
+
+    message QuotedAttachment {
+
+      enum Flags {
+        VOICE_MESSAGE = 1;
+      }
+
+      optional string            contentType = 1;
+      optional string            fileName    = 2;
+      optional AttachmentPointer thumbnail   = 3;
+      optional uint32            flags       = 4;
+    }
+
+    // @required
+    required uint64            id          = 1;
+    // @required
+    required string            author      = 2;
+    optional string            text        = 3;
+    repeated QuotedAttachment  attachments = 4;
+  }
+
+  message Preview {
+    // @required
+    required string            url   = 1;
+    optional string            title = 2;
+    optional AttachmentPointer image = 3;
+  }
+
+  message LokiProfile {
+    optional string displayName = 1;
+    optional string profilePicture = 2;
+    optional uint64 lastProfileUpdateSeconds = 3;
+  }
+
+  message OpenGroupInvitation {
+    // @required
+    required string url = 1;
+    // @required
+    required string name = 3;
+  }
+
+  // New closed group update messages
+  message GroupUpdateMessage {
+    optional GroupUpdateInviteMessage               inviteMessage          = 1;
+    optional GroupUpdateInfoChangeMessage           infoChangeMessage      = 2;
+    optional GroupUpdateMemberChangeMessage         memberChangeMessage    = 3;
+    optional GroupUpdatePromoteMessage              promoteMessage         = 4;
+    optional GroupUpdateMemberLeftMessage           memberLeftMessage      = 5;
+    optional GroupUpdateInviteResponseMessage       inviteResponse         = 6;
+    optional GroupUpdateDeleteMemberContentMessage  deleteMemberContent    = 7;
+    optional GroupUpdateMemberLeftNotificationMessage  memberLeftNotificationMessage = 8;
+  }
+
+  // New closed groups
+  message GroupUpdateInviteMessage {
+    // @required
+    required string         groupSessionId         = 1; // The `groupIdentityPublicKey` with a `03` prefix
+    // @required
+    required string         name                   = 2;
+    // @required
+    required bytes          memberAuthData         = 3;
+    // @required
+    required bytes          adminSignature         = 4;
+  }
+
+  message GroupUpdateDeleteMessage {
+    repeated string memberSessionIds = 1;
+    // @required
+    // signature of "DELETE" || timestamp || sessionId[0] || ... || sessionId[n]
+    required bytes          adminSignature          = 2;
+  }
+
+  message GroupUpdatePromoteMessage {
+    // @required
+    required bytes          groupIdentitySeed       = 1;
+    // @required
+    required string         name                    = 2;
+  }
+
+  message GroupUpdateInfoChangeMessage {
+    enum Type {
+      NAME                  = 1;
+      AVATAR                = 2;
+      DISAPPEARING_MESSAGES = 3;
+    }
+
+    // @required
+    required Type     type              = 1;
+    optional string   updatedName       = 2;
+    optional uint32   updatedExpirationSeconds = 3;
+    // @required
+    // "INFO_CHANGE" || type || timestamp
+    required bytes adminSignature = 4;
+  }
+
+  message GroupUpdateMemberChangeMessage {
+    enum Type {
+      ADDED    = 1;
+      REMOVED  = 2;
+      PROMOTED = 3;
+    }
+
+    // @required
+    required Type   type               = 1;
+    repeated string memberSessionIds   = 2;
+    optional bool historyShared        = 3;
+    // @required
+    // "MEMBER_CHANGE" || type || timestamp
+    required bytes adminSignature      = 4;
+  }
+
+  message GroupUpdateMemberLeftMessage {
+    // the pubkey of the member left is included as part of the closed group encryption logic (senderIdentity on desktop)
+  }
+
+  message GroupUpdateInviteResponseMessage {
+    // @required
+    required bool                      isApproved                = 1; // Whether the request was approved
+  }
+
+  message GroupUpdateDeleteMemberContentMessage {
+    repeated string memberSessionIds   = 1;
+    repeated string messageHashes = 2;
+    optional bytes  adminSignature = 3;
+  }
+
+  message GroupUpdateMemberLeftNotificationMessage {
+    // the pubkey of the member left is included as part of the closed group encryption logic (senderIdentity on desktop)
+  }
+
+  message Reaction {
+    enum Action {
+      REACT = 0;
+      REMOVE = 1;
+    }
+    // @required
+    required uint64 id        = 1;
+    // @required
+    required string author    = 2;
+    optional string emoji     = 3;
+    // @required
+    required Action action    = 4;
+  }
+
+  optional string                    body                           = 1;
+  repeated AttachmentPointer         attachments                    = 2;
+  optional uint32                    flags                          = 4;
+  optional uint32                    expireTimerSeconds             = 5;
+  optional bytes                     profileKey                     = 6;
+  optional uint64                    timestamp                      = 7;
+  optional Quote                     quote                          = 8;
+  repeated Preview                   preview                        = 10;
+  optional Reaction                  reaction                       = 11;
+  optional LokiProfile               profile                        = 101;
+  optional OpenGroupInvitation       openGroupInvitation            = 102;
+  optional string                    syncTarget                     = 105;
+  optional bool                      blocksCommunityMessageRequests = 106;
+  optional GroupUpdateMessage        groupUpdateMessage             = 120;
+
+  reserved 104; // Used to be "closedGroupControlMessage" but it has been deleted
+}
+
+message CallMessage {
+
+  enum Type {
+    PRE_OFFER          = 6;
+    OFFER              = 1;
+    ANSWER             = 2;
+    PROVISIONAL_ANSWER = 3;
+    ICE_CANDIDATES     = 4;
+    END_CALL           = 5;
+  }
+
+  // Multiple ICE candidates may be batched together for performance
+
+  // @required
+  required Type   type            = 1;
+  repeated string sdps            = 2;
+  repeated uint32 sdpMLineIndexes = 3;
+  repeated string sdpMids         = 4;
+  // @required
+  required string uuid            = 5;
+}
+
+message MessageRequestResponse {
+  // @required
+  required bool                    isApproved = 1;
+  optional bytes                   profileKey = 2;
+  optional DataMessage.LokiProfile profile    = 3;
+}
+
+message ReceiptMessage {
+
+  enum Type {
+    DELIVERY = 0;
+    READ     = 1;
+  }
+
+  // @required
+  required Type   type      = 1;
+  repeated uint64 timestampMs = 2;
+}
+
+message AttachmentPointer {
+
+  enum Flags {
+    VOICE_MESSAGE = 1;
+  }
+
+  // @required
+  required fixed64 id          = 1;
+  optional string  contentType = 2;
+  optional bytes   key         = 3;
+  optional uint32  size        = 4;
+  optional bytes   thumbnail   = 5;
+  optional bytes   digest      = 6;
+  optional string  fileName    = 7;
+  optional uint32  flags       = 8;
+  optional uint32  width       = 9;
+  optional uint32  height      = 10;
+  optional string  caption     = 11;
+  optional string  url         = 101;
+}

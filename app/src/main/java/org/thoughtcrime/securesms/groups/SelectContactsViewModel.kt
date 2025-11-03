@@ -8,29 +8,31 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
+import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.utilities.AccountId
+import org.session.libsession.utilities.recipients.shouldShowProBadge
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.home.search.getSearchName
+import org.thoughtcrime.securesms.home.search.searchName
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 
@@ -40,41 +42,62 @@ open class SelectContactsViewModel @AssistedInject constructor(
     private val configFactory: ConfigFactory,
     private val avatarUtils: AvatarUtils,
     private val proStatusManager: ProStatusManager,
-    @ApplicationContext private val appContext: Context,
-    @Assisted private val excludingAccountIDs: Set<AccountId>,
-    @Assisted private val applyDefaultFiltering: Boolean, // true by default - If true will filter out blocked and unapproved contacts
-    @Assisted private val scope: CoroutineScope,
+    @Assisted private val excludingAccountIDs: Set<Address>,
+    @Assisted private val contactFiltering: (Recipient) -> Boolean, //  default will filter out blocked and unapproved contacts
+    private val recipientRepository: RecipientRepository,
+    @param:ApplicationContext private val context: Context,
 ) : ViewModel() {
     // Input: The search query
     private val mutableSearchQuery = MutableStateFlow("")
 
     // Input: The selected contact account IDs
-    private val mutableSelectedContactAccountIDs = MutableStateFlow(emptySet<AccountId>())
+    private val mutableSelectedContactAccountIDs = MutableStateFlow(emptySet<Address>())
 
     // Input: The manually added items to select from. This will be combined (and deduped) with the contacts
     // the user has. This is useful for selecting contacts that are not in the user's contacts list.
-    private val mutableManuallyAddedContacts = MutableStateFlow(emptySet<AccountId>())
+    private val mutableManuallyAddedContacts = MutableStateFlow(emptySet<Address>())
 
     // Output: The search query
     val searchQuery: StateFlow<String> get() = mutableSearchQuery
 
+    private val contactsFlow = observeContacts()
+
     // Output: the contact items to display and select from
     val contacts: StateFlow<List<ContactItem>> = combine(
-        observeContacts(),
+        contactsFlow,
         mutableSearchQuery.debounce(100L),
         mutableSelectedContactAccountIDs,
         ::filterContacts
     ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
+    val hasContacts: StateFlow<Boolean> = contactsFlow
+            .map { it.isNotEmpty() }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     // Output
-    val currentSelected: Set<AccountId>
+    val currentSelected: Set<Address>
         get() = mutableSelectedContactAccountIDs.value
 
-    override fun onCleared() {
-        super.onCleared()
+    private val footerCollapsed = MutableStateFlow(false)
 
-        scope.cancel()
-    }
+    val collapsibleFooterState: StateFlow<CollapsibleFooterState> =
+        combine(mutableSelectedContactAccountIDs, footerCollapsed) { selected, isCollapsed ->
+            val count = selected.size
+            val visible = count > 0
+            val title = if (count == 0) GetString("")
+            else GetString(
+                context.resources.getQuantityString(R.plurals.contactSelected, count, count)
+            )
+
+            CollapsibleFooterState(
+                visible = visible,
+                // auto-expand when nothing is selected, otherwise keep user's choice
+                collapsed = if (!visible) false else isCollapsed,
+                footerActionTitle = title
+            )
+        }
+            .distinctUntilChanged()
+            .stateIn(viewModelScope, SharingStarted.Eagerly, CollapsibleFooterState())
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeContacts() = (configFactory.configUpdateNotifications as Flow<Any>)
@@ -86,45 +109,38 @@ open class SelectContactsViewModel @AssistedInject constructor(
                     val allContacts =
                         (configFactory.withUserConfigs { configs -> configs.contacts.all() }
                             .asSequence()
-                            .map { AccountId(it.id) } + manuallyAdded)
+                            .map { Address.fromSerialized(it.id) } + manuallyAdded)
 
                     val recipientContacts = if (excludingAccountIDs.isEmpty()) {
                         allContacts.toSet()
                     } else {
                         allContacts.filterNotTo(mutableSetOf()) { it in excludingAccountIDs }
                     }.map {
-                        Recipient.from(
-                            appContext,
-                            Address.fromSerialized(it.hexString),
-                            false
-                        )
+                        recipientRepository.getRecipient(it)
                     }
 
-                    if(applyDefaultFiltering){
-                        recipientContacts.filter { !it.isBlocked && it.isApproved } // filter out blocked contacts and unapproved contacts
-                    } else recipientContacts
+                    recipientContacts.filter(contactFiltering)
                 }
             }
         }
 
 
-    private suspend fun filterContacts(
+    private fun filterContacts(
         contacts: Collection<Recipient>,
         query: String,
-        selectedAccountIDs: Set<AccountId>
+        selectedAccountIDs: Set<Address>
     ): List<ContactItem> {
         val items = mutableListOf<ContactItem>()
         for (contact in contacts) {
-            if (query.isBlank() || contact.getSearchName().contains(query, ignoreCase = true)) {
-                val accountId = AccountId(contact.address.toString())
+            if (query.isBlank() || contact.searchName.contains(query, ignoreCase = true)) {
                 val avatarData = avatarUtils.getUIDataFromRecipient(contact)
                 items.add(
                     ContactItem(
-                        name = contact.getSearchName(),
-                        accountID = accountId,
+                        name = contact.searchName,
+                        address = contact.address,
                         avatarUIData = avatarData,
-                        selected = selectedAccountIDs.contains(accountId),
-                        showProBadge = proStatusManager.shouldShowProBadge(contact.address)
+                        selected = selectedAccountIDs.contains(contact.address),
+                        showProBadge = contact.proStatus.shouldShowProBadge()
                     )
                 )
             }
@@ -132,7 +148,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
         return items.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
     }
 
-    fun setManuallyAddedContacts(accountIDs: Set<AccountId>) {
+    fun setManuallyAddedContacts(accountIDs: Set<Address>) {
         mutableManuallyAddedContacts.value = accountIDs
     }
 
@@ -140,15 +156,15 @@ open class SelectContactsViewModel @AssistedInject constructor(
         mutableSearchQuery.value = query
     }
 
-    fun onContactItemClicked(accountID: AccountId) {
+    open fun onContactItemClicked(address: Address) {
         val newSet = mutableSelectedContactAccountIDs.value.toHashSet()
-        if (!newSet.remove(accountID)) {
-            newSet.add(accountID)
+        if (!newSet.remove(address)) {
+            newSet.add(address)
         }
         mutableSelectedContactAccountIDs.value = newSet
     }
 
-    fun selectAccountIDs(accountIDs: Set<AccountId>) {
+    fun selectAccountIDs(accountIDs: Set<Address>) {
         mutableSelectedContactAccountIDs.value += accountIDs
     }
 
@@ -156,18 +172,31 @@ open class SelectContactsViewModel @AssistedInject constructor(
         mutableSelectedContactAccountIDs.value = emptySet()
     }
 
+    fun toggleFooter() {
+        footerCollapsed.update { !it }
+    }
+
+    data class CollapsibleFooterState(
+        val visible: Boolean = false,
+        val collapsed: Boolean = false,
+        val footerActionTitle : GetString = GetString("")
+    )
+
     @AssistedFactory
     interface Factory {
         fun create(
-            excludingAccountIDs: Set<AccountId> = emptySet(),
-            applyDefaultFiltering: Boolean = true,
-            scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
+            excludingAccountIDs: Set<Address> = emptySet(),
+            contactFiltering: (Recipient) -> Boolean = defaultFiltering,
         ): SelectContactsViewModel
+
+        companion object {
+            val defaultFiltering: (Recipient) -> Boolean = { !it.blocked && it.approved }
+        }
     }
 }
 
 data class ContactItem(
-    val accountID: AccountId,
+    val address: Address,
     val name: String,
     val avatarUIData: AvatarUIData,
     val selected: Boolean,

@@ -22,7 +22,7 @@ class ReadReceipt() : ControlMessage() {
         fun fromProto(proto: SignalServiceProtos.Content): ReadReceipt? {
             val receiptProto = if (proto.hasReceiptMessage()) proto.receiptMessage else return null
             if (receiptProto.type != SignalServiceProtos.ReceiptMessage.Type.READ) return null
-            val timestamps = receiptProto.timestampList
+            val timestamps = receiptProto.timestampMsList
             if (timestamps.isEmpty()) return null
             return ReadReceipt(timestamps = timestamps)
                     .copyExpiration(proto)
@@ -45,7 +45,7 @@ class ReadReceipt() : ControlMessage() {
                 .setReceiptMessage(
                     SignalServiceProtos.ReceiptMessage.newBuilder()
                         .setType(SignalServiceProtos.ReceiptMessage.Type.READ)
-                        .addAllTimestamp(timestamps.asIterable()).build()
+                        .addAllTimestampMs(timestamps.asIterable()).build()
                 ).applyExpiryMode()
                 .build()
         } catch (e: Exception) {

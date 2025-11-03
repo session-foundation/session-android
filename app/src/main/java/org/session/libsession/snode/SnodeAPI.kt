@@ -8,8 +8,11 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
@@ -55,8 +58,6 @@ import kotlin.properties.Delegates.observable
 object SnodeAPI {
     internal val database: LokiAPIDatabaseProtocol
         get() = SnodeModule.shared.storage
-    private val broadcaster: Broadcaster
-        get() = SnodeModule.shared.broadcaster
 
     private var snodeFailureCount: MutableMap<Snode, Int> = mutableMapOf()
 
@@ -243,7 +244,7 @@ object SnodeAPI {
     }
 
     // Public API
-    fun getAccountID(onsName: String): Promise<String, Exception> = scope.asyncPromise {
+    suspend fun getAccountID(onsName: String): String  {
         val validationCount = 3
         val accountIDByteCount = 33
         // Hash the ONS name using BLAKE2b
@@ -256,15 +257,17 @@ object SnodeAPI {
                 this["name_hash"] = Base64.encodeBytes(Hash.hash32(onsName.toByteArray()))
             }
         }
-        val promises = List(validationCount) {
-            getRandomSnode().bind { snode ->
-                retryIfNeeded(maxRetryCount) {
-                    invoke(Snode.Method.OxenDaemonRPCCall, snode, parameters)
+
+        return List(validationCount) {
+            scope.async {
+                retryWithUniformInterval(
+                    maxRetryCount = maxRetryCount,
+                ) {
+                    val snode = getRandomSnode().await()
+                    invoke(Snode.Method.OxenDaemonRPCCall, snode, parameters).await()
                 }
             }
-        }
-        all(promises).map { results ->
-            results.map { json ->
+        }.awaitAll().map { json ->
                 val intermediate = json["result"] as? Map<*, *> ?: throw Error.Generic
                 val hexEncodedCiphertext = intermediate["encrypted_value"] as? String ?: throw Error.Generic
                 val ciphertext = Hex.fromStringCondensed(hexEncodedCiphertext)
@@ -276,8 +279,7 @@ object SnodeAPI {
                 )
             }.takeIf { it.size == validationCount && it.toSet().size == 1 }?.first()
                 ?: throw Error.ValidationFailed
-        }
-    }.unwrap()
+    }
 
     // the list of snodes that represent the swarm for that pubkey
     fun getSwarm(publicKey: String): Promise<Set<Snode>, Exception> =
@@ -1084,7 +1086,6 @@ object SnodeAPI {
             400, 500, 502, 503 -> handleBadSnode()
             406 -> {
                 Log.d("Loki", "The user's clock is out of sync with the service node network.")
-                broadcaster.broadcast("clockOutOfSync")
                 throw Error.ClockOutOfSync
             }
             421 -> {

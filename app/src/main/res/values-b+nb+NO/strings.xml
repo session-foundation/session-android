@@ -36,11 +36,14 @@
     <string name="adminRemovedUser"><b>{name}</b> ble fjernet som Admin.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> og <b>{count} andre</b> ble fjernet som Admin.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> og <b>{other_name}</b> ble fjernet som Admin.</string>
+    <plurals name="adminSendingPromotion">
+        <item quantity="one">Sender adminforfremmelse</item>
+        <item quantity="other">Sender adminforfremmelser</item>
+    </plurals>
     <string name="adminSettings">Admin Innstillinger</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> og <b>{other_name}</b> ble forfremmet til Admin.</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonym</string>
-    <string name="appearanceAutoDarkMode">Automatisk mørk-modus</string>
     <string name="appearanceHideMenuBar">Skjul menylinjen</string>
     <string name="appearanceLanguage">Språk</string>
     <string name="appearanceLanguageDescription">Velg språkinnstilling for {app_name}. {app_name} vil starte på nytt når du endrer språkinnstillingen.</string>
@@ -122,6 +125,7 @@
     <string name="banUser">Utesteng bruker</string>
     <string name="banUserBanned">Bruker utestengt</string>
     <string name="block">Blokker</string>
+    <string name="blockBlockedDescription">Avblokker denne kontakten for å sende en beskjed.</string>
     <string name="blockBlockedNone">Ingen blokkerte kontakter</string>
     <string name="blockBlockedUser">Blokkerte {name}</string>
     <string name="blockDescription">Er du sikker på at du vil blokkere <b>{name} </b>? Blokkerte brukere kan ikke sende deg meldingsforespørsler, gruppeinvitasjoner eller ringe deg.</string>
@@ -152,7 +156,6 @@
     <string name="callsSettings">Samtaler (Beta)</string>
     <string name="callsVoiceAndVideo">Lyd- og videosamtaler</string>
     <string name="callsVoiceAndVideoBeta">Lyd- og videosamtaler (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">IP-adressen din er synlig for samtalepartneren din og en Oxen Foundation-server mens du bruker betasamtaler.</string>
     <string name="callsVoiceAndVideoToggleDescription">Aktiverer tale- og videosamtaler til og fra andre brukere.</string>
     <string name="callsYouCalled">Du ringte {name}</string>
     <string name="callsYouMissedCallPermissions">Du gikk glipp av en samtale fra <b>{name}</b> fordi du ikke har aktivert <b>Tal &amp; Video-samtaler</b> i Personverninnstillingene.</string>
@@ -234,16 +237,11 @@
     <string name="conversationsDeleted">Samtalen slettet</string>
     <string name="conversationsEmpty">Det er ingen meldinger i {conversation_name}.</string>
     <string name="conversationsEnter">Skriv inn nøkkel</string>
-    <string name="conversationsEnterDescription">Funksjon til enter-tasten når man skriver i en samtale.</string>
-    <string name="conversationsEnterNewLine">SHIFT + ENTER sender en melding, ENTER starter en ny linje</string>
-    <string name="conversationsEnterSends">ENTER sender en melding, SHIFT + ENTER starter en ny linje</string>
     <string name="conversationsGroups">Grupper</string>
     <string name="conversationsMessageTrimming">Automatisk sletting</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Trim Communities</string>
-    <string name="conversationsMessageTrimmingTrimCommunitiesDescription">Slett meldinger fra Community-samtaler eldre enn 6 måneder, og der det er over 2,000 meldinger.</string>
     <string name="conversationsNew">Ny samtale</string>
     <string name="conversationsNone">Du har ingen samtaler ennå</string>
-    <string name="conversationsSendWithEnterKey">Send med Enter Key</string>
     <string name="conversationsSendWithEnterKeyDescription">Ved å trykke på Enter nøkkel vil sende melding i stedet for å starte en ny linje.</string>
     <string name="conversationsSettingsAllMedia">Alle medier</string>
     <string name="conversationsSpellCheck">Stavekontroll</string>
@@ -253,6 +251,7 @@
     <string name="copy">Kopier</string>
     <string name="create">Opprett</string>
     <string name="cut">Klipp ut</string>
+    <string name="databaseErrorGeneric">En databasefeil har oppstått.\n\n Eksporter dine applikasjon logger for å dele feilsøkingen. Hvis dette ikke vellykkes, installer {app_name} på nytt og gjenopprett kontoen din.</string>
     <string name="databaseErrorTimeout">Vi har lagt merke til at {app_name} tar lang tid å starte.\n\nDu kan vente videre, eksportere loggene på enheten din for å dele for feilsøking, eller prøve å starte {app_name} på nytt.</string>
     <string name="databaseErrorUpdate">App-databasen din er inkompatibel med denne versjonen av {app_name}. Installer appen på nytt og gjenopprett kontoen din for å generere en ny database og fortsette å bruke {app_name}.\n\nAdvarsel: Dette vil resultere i tap av alle meldinger og vedlegg eldre enn to uker.</string>
     <string name="databaseOptimizing">Optimaliserer databasen</string>
@@ -278,12 +277,20 @@
         <item quantity="one">Slett melding</item>
         <item quantity="other">Slett meldinger</item>
     </plurals>
+    <plurals name="deleteMessageConfirm">
+        <item quantity="one">Er du sikker på at du vil slette denne meldingen?</item>
+        <item quantity="other">Er du sikker på at du vil slette disse meldingene?</item>
+    </plurals>
     <plurals name="deleteMessageDeleted">
         <item quantity="one">Melding slettet</item>
         <item quantity="other">Meldinger slettet</item>
     </plurals>
     <string name="deleteMessageDeletedGlobally">Denne meldingen har blitt slettet</string>
     <string name="deleteMessageDeletedLocally">Denne meldingen ble slettet på denne enheten</string>
+    <plurals name="deleteMessageDescriptionDevice">
+        <item quantity="one">Er du sikker på du vil slette denne beskjeden fra denne enheten bare?</item>
+        <item quantity="other">Er du sikker du vil slette dem her beskjedene fra denne enheten bare?</item>
+    </plurals>
     <string name="deleteMessageDescriptionEveryone">Er du sikker på at du vil slette denne meldingen for alle?</string>
     <string name="deleteMessageDeviceOnly">Slett kun på denne enheten</string>
     <string name="deleteMessageDevicesAll">Slett på alle enheter</string>
@@ -292,9 +299,13 @@
         <item quantity="one">Kunne ikke slette meldingen</item>
         <item quantity="other">Kunne ikke slette meldinger</item>
     </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">Denne meldingen kan ikke bli slettet fra alle dine enheter</item>
+        <item quantity="other">Noen av meldingene du valgte kan ikke bli slettet fra alle dine enheter</item>
+    </plurals>
     <plurals name="deleteMessageWarning">
-        <item quantity="one">Diese Nachricht kann nicht gelöscht werden</item>
-        <item quantity="other">Ein paar Nachrichten könnten nicht gelöscht werden</item>
+        <item quantity="one">Denne meldingen kan ikke bli slettet for alle</item>
+        <item quantity="other">Noen av meldingene du valgte kan ikke bli slettet for alle</item>
     </plurals>
     <string name="deleteMessagesDescriptionEveryone">Er du sikker på at du vil slette disse meldingene for alle?</string>
     <string name="deleting">Sletter</string>
@@ -379,7 +390,6 @@
     <string name="failures">Feil</string>
     <string name="file">Fil</string>
     <string name="files">Filer</string>
-    <string name="followSystemSettings">Følg systeminnstillinger</string>
     <string name="from">Fra:</string>
     <string name="fullScreenToggle">Skru av/på Fullskjerm</string>
     <string name="gif">GIF</string>
@@ -389,6 +399,7 @@
     <string name="groupCreate">Opprett gruppe</string>
     <string name="groupCreateErrorNoMembers">Vennligst velg minst ett annet gruppemedlem.</string>
     <string name="groupDelete">Slette gruppe</string>
+    <string name="groupDeleteDescription">Er du sikker på at du vil slette <b>{group_name}</b>?\n\nDette vil fjerne alle medlemmer og slette alt av innholdet i gruppen.</string>
     <string name="groupDescriptionEnter">Skriv inn en gruppebeskrivelse</string>
     <string name="groupDisplayPictureUpdated">Gruppeprofilbildet oppdatert.</string>
     <string name="groupEdit">Rediger gruppe</string>
@@ -401,7 +412,12 @@
     <string name="groupInviteFailedMultiple">Kunne ikke invitere {name} og {count} andre til {group_name}</string>
     <string name="groupInviteFailedTwo">Kunne ikke invitere {name} og {other_name} til {group_name}</string>
     <string name="groupInviteFailedUser">Kunne ikke invitere {name} til {group_name}</string>
+    <plurals name="groupInviteSending">
+        <item quantity="one">Sender invitasjon</item>
+        <item quantity="other">Sender invitasjoner</item>
+    </plurals>
     <string name="groupInviteSent">Invitasjon sendt</string>
+    <string name="groupInviteStatusUnknown">Status på invitasjonen er ukjent</string>
     <string name="groupInviteSuccessful">Gruppeinvitasjonen vellykket</string>
     <string name="groupInviteVersion">Brukere må ha den nyeste versjonen for å motta invitasjoner</string>
     <string name="groupInviteYou"><b>Du</b> ble invitert til å bli med i gruppen.</string>
@@ -456,22 +472,28 @@
     <string name="groupUpdated">Gruppe oppdatert</string>
     <string name="helpFAQ">Ofte Stilte Spørsmål</string>
     <string name="helpHelpUsTranslateSession">Hjelp oss med å oversette {app_name}</string>
-    <string name="helpReportABug">Rapporter en feil</string>
     <string name="helpReportABugDescription">Del noen detaljer for å hjelpe oss med å løse problemet ditt. Eksporter loggene dine, og last deretter opp filen gjennom Hjelpesenteret til {app_name}.</string>
     <string name="helpReportABugExportLogs">Eksportlogger</string>
     <string name="helpReportABugExportLogsDescription">Eksporter logger, deretter last opp filen gjennom {app_name}\'s Help Desk.</string>
     <string name="helpReportABugExportLogsSaveToDesktop">Lagre til skrivebordet</string>
-    <string name="helpReportABugExportLogsSaveToDesktopDescription">Lagre denne filen til skrivebordet, deretter del den med {app_name}-utviklerne.</string>
+    <string name="helpReportABugExportLogsSaveToDesktopDescription">Lagre denne filen, så del den med {app_name}-utviklerne.</string>
     <string name="helpSupport">Brukerstøtte</string>
     <string name="helpWedLoveYourFeedback">Vi ønsker gjerne dine tilbakemeldinger</string>
     <string name="hide">Skjul</string>
-    <string name="hideMenuBarDescription">Vis eller skjul menylinjen</string>
     <string name="hideOthers">Skjul andre</string>
     <string name="image">Bilde</string>
     <string name="incognitoKeyboard">Inkognito-tastatur</string>
     <string name="incognitoKeyboardDescription">Be om inkognitomodus hvis tilgjengelig. Avhengig av tastaturet du bruker, kan det hende tastaturet ignorerer denne forespørselen.</string>
     <string name="info">Info</string>
     <string name="invalidShortcut">Ugyldig snarvei</string>
+    <plurals name="inviteFailed">
+        <item quantity="one">Invitasjon mislykket</item>
+        <item quantity="other">Invitasjoner mislykket</item>
+    </plurals>
+    <plurals name="inviteFailedDescription">
+        <item quantity="one">Invitasjon kunne ikke bli sent. Vil du prøve på nytt?</item>
+        <item quantity="other">Invitasjoner kunne ikke bli sent. Vil du prøve på nytt?</item>
+    </plurals>
     <string name="join">Bli med</string>
     <string name="later">Senere</string>
     <string name="learnMore">Lær mer</string>
@@ -546,6 +568,10 @@
         <item quantity="one">Du har fått en ny melding.</item>
         <item quantity="other">Du har %1$d nye meldinger.</item>
     </plurals>
+    <plurals name="messageNewYouveGotGroup">
+        <item quantity="one">Du har fått en ny melding i %1$s.</item>
+        <item quantity="other">Du har fått %1$d nye meldinger i %2$s.</item>
+    </plurals>
     <string name="messageReplyingTo">Svarer på</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> inviterte deg til å bli med i <b>{group_name}</b>.</string>
     <string name="messageRequestGroupInviteDescription">Ved å sende en melding til denne gruppen medfører det at du automatisk godtar gruppeinnbydelsen.</string>
@@ -574,6 +600,10 @@
     <string name="messageVoiceSnippetGroup">{author}: {emoji} Talemelding</string>
     <string name="messages">Meldinger</string>
     <string name="minimize">Minimer</string>
+    <plurals name="modalMessageCharacterDisplayDescription">
+        <item quantity="one">Meldinger har en tegngrense på %1$s tegn. Du har %2$d tegn igjen.</item>
+        <item quantity="other">Meldinger har en tegngrense på %1$s tegn. Du har %2$d tegn igjen.</item>
+    </plurals>
     <string name="next">Neste</string>
     <string name="nicknameDescription">Velg et kallenavn for <b>{name}</b>. Dette vil vises for deg i dine en-til-en og gruppekonversasjoner.</string>
     <string name="nicknameEnter">Skriv inn et kallenavn</string>
@@ -648,25 +678,17 @@
     <string name="open">Åpne</string>
     <string name="other">Annet</string>
     <string name="passwordChange">Forandre passord</string>
-    <string name="passwordChangeDescription">Endre passordet som kreves for å låse opp {app_name}.</string>
-    <string name="passwordChangedDescription">Passordet ditt er endret. Vennligst oppbevar det trygt.</string>
     <string name="passwordConfirm">Bekreft passordet</string>
-    <string name="passwordCreate">Opprett passordet ditt</string>
     <string name="passwordCurrentIncorrect">Ditt nåværende passord er feil.</string>
-    <string name="passwordDescription">Krev passord for å låse opp {app_name}.</string>
     <string name="passwordEnter">Skriv inn passord</string>
     <string name="passwordEnterCurrent">Vennligst tast inn ditt nåværende passord</string>
     <string name="passwordEnterNew">Vennligst tast inn ditt nye passord</string>
     <string name="passwordError">Passordet kan kun inneholde bokstaver, tall og symboler</string>
-    <string name="passwordErrorLength">Passordet må være mellom 6 og 64 tegn langt</string>
     <string name="passwordErrorMatch">Passordene stemmer ikke overens</string>
     <string name="passwordFailed">Kunne ikke stille passordet</string>
     <string name="passwordIncorrect">Galt passord</string>
     <string name="passwordRemove">Fjern passord</string>
-    <string name="passwordRemoveDescription">Fjern passordet som kreves for å låse opp {app_name}.</string>
-    <string name="passwordRemovedDescription">Passordet ditt er fjernet.</string>
     <string name="passwordSet">Still passord</string>
-    <string name="passwordSetDescription">Passordet ditt er stilt. Vennligst oppbevar det trygt.</string>
     <string name="paste">Lim inn</string>
     <string name="permissionMusicAudioDenied">{app_name} trenger tilgang til musikk og lyd for å sende filer, musikk og lyd, men det har blitt permanent nektet. Trykk på Innstillinger → Tillatelser, og slå på \'Musikk og lyd\'.</string>
     <string name="permissionsAppleMusic">{app_name} trenger å bruke Apple Music for å spille av mediavedlegg.</string>
@@ -675,7 +697,7 @@
     <string name="permissionsCameraDenied">{app_name} trenger kameratilgang for å ta bilder og videoer, men det har blitt permanent nektet. Trykk på Innstillinger → Tillatelser, og slå på \'Kamera\'.</string>
     <string name="permissionsFaceId">Skjermlåsfunksjonen på {app_name} bruker Face ID.</string>
     <string name="permissionsKeepInSystemTray">Behold i systemstatusfeltet</string>
-    <string name="permissionsKeepInSystemTrayDescription">{app_name} fortsetter å kjøre i bakgrunnen når du lukker vinduet</string>
+    <string name="permissionsKeepInSystemTrayDescription">{app_name} fortsetter å kjøre i bakgrunnen når du lukker vinduet.</string>
     <string name="permissionsLibrary">{app_name} trenger tilgang til bildebiblioteket for å fortsette. Du kan aktivere tilgang i iOS-innstillingene.</string>
     <string name="permissionsMicrophone">Mikrofon</string>
     <string name="permissionsMicrophoneAccessRequired">{app_name} trenger mikrofontilgang for å ringe og sende lydmeldinger, men det har blitt permanent nektet. Trykk innstillinger → Tillatelser, og slå på \"Mikrofon\".</string>
@@ -694,6 +716,22 @@
     <string name="pinUnpin">Løsne</string>
     <string name="pinUnpinConversation">Løsne samtale</string>
     <string name="preview">Forhåndsvisning</string>
+    <plurals name="proBadgesSent">
+        <item quantity="one">%1$s %2$s Merke Sendt</item>
+        <item quantity="other">%1$s %2$s Merker Sendt</item>
+    </plurals>
+    <plurals name="proGroupsUpgraded">
+        <item quantity="one">%1$s Gruppe Oppgradert</item>
+        <item quantity="other">%1$s Grupper Oppgradert</item>
+    </plurals>
+    <plurals name="proLongerMessagesSent">
+        <item quantity="one">%1$s Lengre Melding Sendt</item>
+        <item quantity="other">%1$s Lengre Meldinger Sendt</item>
+    </plurals>
+    <plurals name="proPinnedConversations">
+        <item quantity="one">%1$s Samtale Festet</item>
+        <item quantity="other">%1$s Samtaler Festet</item>
+    </plurals>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Visningsbilde</string>
     <string name="profileDisplayPictureRemoveError">Kunne ikke fjerne profilbilde.</string>
@@ -701,6 +739,14 @@
     <string name="profileDisplayPictureSizeError">Vennligst velg en mindre fil.</string>
     <string name="profileErrorUpdate">Kunne ikke oppdatere profil.</string>
     <string name="promote">Promotere</string>
+    <plurals name="promotionFailed">
+        <item quantity="one">Forfremmelse mislykket</item>
+        <item quantity="other">Forfremmelser mislykket</item>
+    </plurals>
+    <plurals name="promotionFailedDescription">
+        <item quantity="one">Forfremmelsen kunne ikke bli påført. Vil du prøve på nytt?</item>
+        <item quantity="other">Forfremmelser kunne ikke bli påført. Vil du prøve på nytt?</item>
+    </plurals>
     <string name="qrCode">QR-kode</string>
     <string name="qrNotAccountId">Denne QR-koden inneholder ikke en Account ID</string>
     <string name="qrNotRecoveryPassword">Denne QR-koden inneholder ikke en Gjenopprettingsfrase</string>
@@ -717,8 +763,8 @@
     <string name="recommended">Anbefalt</string>
     <string name="recoveryPasswordBannerDescription">Lagre ditt gjenopprettingspassord for å sikre at du ikke mister tilgang til kontoen din.</string>
     <string name="recoveryPasswordBannerTitle">Lagre ditt gjenopprettingspassord</string>
-    <string name="recoveryPasswordDescription">Bruk din Recovery password for å laste inn kontoen din på nye enheter.\n\nKontot kan ikke gjenopprettes uten din Recovery password. Sørg for at den er lagret et trygt og sikkert sted — og ikke del den med noen.</string>
     <string name="recoveryPasswordEnter">Angi ditt gjenopprettingspassord</string>
+    <string name="recoveryPasswordErrorLoad">En feil oppstod når ditt gjenopprettingspassord forsøkte å laste.\n\nVennligst eksporter loggene dine, så opplast filen gjennom Hjelpesenteret til {app_name}.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Sjekk gjenopprettingspassordet ditt og prøv igjen.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Noen av ordene i gjenopprettingspassordet ditt er feil. Vennligst sjekk og prøv igjen.</string>
     <string name="recoveryPasswordErrorMessageShort">Gjenopprettingspassordet du oppga er ikke langt nok. Vennligst sjekk og prøv igjen.</string>
@@ -726,13 +772,18 @@
     <string name="recoveryPasswordExplanation">For å laste din konto, skriv inn din gjenopprettingsfrase.</string>
     <string name="recoveryPasswordHidePermanently">Skjul Recovery Password permanent</string>
     <string name="recoveryPasswordHidePermanentlyDescription1">Uten gjenopprettingspassordet kan du ikke laste kontoen din på nye enheter. \n\nVi anbefaler sterkt at du lagrer gjenopprettingspassordet ditt på et trygt og sikkert sted før du fortsetter.</string>
-    <string name="recoveryPasswordHidePermanentlyDescription2">Er du sikker på at du vil permanent skjule ditt Recovery Password på denne enheten? Dette kan ikke angres.</string>
+    <string name="recoveryPasswordHidePermanentlyDescription2">Er du sikker på at du har lyst til å permanent skjule gjenopprettingspassordet ditt?\n\nDette kan ikke angres.</string>
     <string name="recoveryPasswordHideRecoveryPassword">Skjul Recovery Password</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Skjul gjenopprettingspassord permanent på denne enheten.</string>
     <string name="recoveryPasswordRestoreDescription">Skriv inn ditt gjenopprettingspassord for å laste kontoen din. Hvis du ikke har lagret det, kan du finne det i app-innstillingene dine.</string>
-    <string name="recoveryPasswordView">Vis Password</string>
+    <string name="recoveryPasswordView">Vis Gjenopprettingspassord</string>
+    <string name="recoveryPasswordVisibility">Gjenopprettingspassord Synlighet</string>
     <string name="recoveryPasswordWarningSendDescription">Dette er din gjenopprettingsfrase. Hvis du sender den til noen vil de ha full tilgang til din konto.</string>
     <string name="redo">Gjenta</string>
+    <plurals name="remainingCharactersTooltip">
+        <item quantity="one">%1$d tegn igjen</item>
+        <item quantity="other">%1$d tegn igjen</item>
+    </plurals>
     <string name="remove">Fjern</string>
     <string name="removePasswordFail">Kunne ikke fjerne passord</string>
     <string name="reply">Svare</string>
@@ -780,6 +831,7 @@
     <string name="sessionSettings">Innstillinger</string>
     <string name="set">Sett</string>
     <string name="settingsRestartDescription">Du må starte {app_name} på nytt for å ta i bruk dine nye innstillinger.</string>
+    <string name="settingsScreenSecurityDesktop">Skjermsikkerhet</string>
     <string name="share">Del</string>
     <string name="shareAccountIdDescription">Inviter vennen din til å chatte med deg på {app_name} ved å dele Account ID-en din med dem.</string>
     <string name="shareAccountIdDescriptionCopied">Del med vennene dine der du vanligvis snakker med dem — flytt deretter samtalen hit.</string>
@@ -805,6 +857,7 @@
     <string name="updateError">Kan ikke oppdatere</string>
     <string name="updateErrorDescription">{app_name} kunne ikke oppdateres. Gå til {session_download_url} og installer den nye versjonen manuelt, og kontakt vårt hjelpesenter for å informere oss om dette problemet.</string>
     <string name="updateNewVersion">En ny versjon av {app_name} er tilgjengelig, trykk for å oppdatere</string>
+    <string name="updateNewVersionDescription">En ny versjon ({version}) av {app_name} er tilgjengelig.</string>
     <string name="updateReleaseNotes">Gå til utgivelsesmerknader</string>
     <string name="updateSession">{app_name}-oppdatering</string>
     <string name="updateVersion">Versjon {version}</string>
@@ -823,4 +876,5 @@
     <string name="window">Vindu</string>
     <string name="yes">Ja</string>
     <string name="you">Du</string>
+    <string name="yourRecoveryPassword">Ditt Gjenopprettingspassord</string>
 </resources>

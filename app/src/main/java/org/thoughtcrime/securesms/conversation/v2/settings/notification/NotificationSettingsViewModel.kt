@@ -13,38 +13,36 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.LocalisedTimeUtil
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_TIME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_LARGE_KEY
 import org.session.libsession.utilities.recipients.Recipient
-import org.thoughtcrime.securesms.database.RecipientDatabase
-import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_ALL
-import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_MENTIONS
-import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_NONE
-import org.thoughtcrime.securesms.repository.ConversationRepository
+import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
+import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OptionsCardData
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.DateUtils
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import org.thoughtcrime.securesms.util.DateUtils.Companion.millsToInstant
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
 
 @HiltViewModel(assistedFactory = NotificationSettingsViewModel.Factory::class)
 class NotificationSettingsViewModel @AssistedInject constructor(
-    @Assisted private val threadId: Long,
-    @ApplicationContext private val context: Context,
-    private val recipientDatabase: RecipientDatabase,
-    private val repository: ConversationRepository,
+    @Assisted private val address: Address,
+    @param:ApplicationContext private val context: Context,
+    private val recipientDatabase: RecipientSettingsDatabase,
     private val dateUtils: DateUtils,
+    private val recipientRepository: RecipientRepository,
 ) : ViewModel() {
     private var thread: Recipient? = null
 
@@ -64,16 +62,16 @@ class NotificationSettingsViewModel @AssistedInject constructor(
     init {
         // update data when we have a recipient and update when there are changes from the thread or recipient
         viewModelScope.launch(Dispatchers.Default) {
-            repository.recipientUpdateFlow(threadId).collect {
+            recipientRepository.observeRecipient(address).collectLatest {
                 thread = it
 
                 // update the user's current choice of notification
-                currentMutedUntil = if(it?.isMuted == true) it.mutedUntil else null
+                currentMutedUntil = if(it?.isMuted() == true) it.mutedUntilMills else null
                 val hasMutedUntil = currentMutedUntil != null && currentMutedUntil!! > 0L
 
                 currentOption = when{
                     hasMutedUntil -> NotificationType.Mute
-                    it?.notifyType == NOTIFY_TYPE_MENTIONS -> NotificationType.MentionsOnly
+                    it?.notifyType == NotifyType.MENTIONS -> NotificationType.MentionsOnly
                     else -> NotificationType.All
                 }
 
@@ -197,7 +195,7 @@ class NotificationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun formatTime(timestamp: Long): String{
-        return dateUtils.formatTime(timestamp, "HH:mm dd/MM/yy")
+        return DateUtils.formatTime(timestamp, "HH:mm dd/MM/yy")
     }
 
     private fun shouldEnableSetButton(): Boolean {
@@ -250,21 +248,27 @@ class NotificationSettingsViewModel @AssistedInject constructor(
     private suspend fun unmute() {
         val conversation = thread ?: return
         withContext(Dispatchers.Default) {
-            recipientDatabase.setMuted(conversation, 0)
+            recipientDatabase.save(conversation.address) {
+                it.copy(muteUntil = null)
+            }
         }
     }
 
     private suspend fun mute(until: Long) {
         val conversation = thread ?: return
         withContext(Dispatchers.Default) {
-            recipientDatabase.setMuted(conversation, until)
+            recipientDatabase.save(conversation.address) {
+                it.copy(muteUntil = until.millsToInstant())
+            }
         }
     }
 
-    private suspend fun setNotifyType(notifyType: Int) {
+    private suspend fun setNotifyType(notifyType: NotifyType) {
         val conversation = thread ?: return
         withContext(Dispatchers.Default) {
-            recipientDatabase.setNotifyType(conversation, notifyType)
+            recipientDatabase.save(conversation.address) {
+                it.copy(notifyType = notifyType)
+            }
         }
     }
 
@@ -274,10 +278,10 @@ class NotificationSettingsViewModel @AssistedInject constructor(
         val enableButton: Boolean = false,
     )
 
-    sealed class NotificationType(val notifyType: Int) {
-        data object All: NotificationType(NOTIFY_TYPE_ALL)
-        data object MentionsOnly: NotificationType(NOTIFY_TYPE_MENTIONS)
-        data object Mute: NotificationType(NOTIFY_TYPE_NONE)
+    sealed class NotificationType(val notifyType: NotifyType) {
+        data object All: NotificationType(NotifyType.ALL)
+        data object MentionsOnly: NotificationType(NotifyType.MENTIONS)
+        data object Mute: NotificationType(NotifyType.NONE)
     }
 
     private val debugMuteDurations = listOf(
@@ -295,6 +299,6 @@ class NotificationSettingsViewModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(threadId: Long): NotificationSettingsViewModel
+        fun create(address: Address): NotificationSettingsViewModel
     }
 }

@@ -3,22 +3,21 @@ package org.thoughtcrime.securesms.reactions;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import org.thoughtcrime.securesms.components.ProfilePictureView;
 import org.thoughtcrime.securesms.components.emoji.EmojiImageView;
 import org.thoughtcrime.securesms.database.model.MessageId;
+import org.thoughtcrime.securesms.util.AvatarUtils;
 
 import java.util.Collections;
 import java.util.List;
 
 import network.loki.messenger.R;
 
-final class ReactionRecipientsAdapter extends RecyclerView.Adapter<ReactionRecipientsAdapter.ViewHolder> {
+public final class ReactionRecipientsAdapter extends RecyclerView.Adapter<ReactionRecipientsAdapter.ViewHolder> {
 
   private static final int MAX_REACTORS = 5;
   private static final int HEADER_COUNT = 1;
@@ -32,14 +31,16 @@ final class ReactionRecipientsAdapter extends RecyclerView.Adapter<ReactionRecip
   private static final int FOOTER_TYPE = 2;
 
   private ReactionViewPagerAdapter.Listener callback;
+  private final AvatarUtils avatarUtils;
   private List<ReactionDetails> data = Collections.emptyList();
   private MessageId messageId;
   private boolean isUserModerator;
   private EmojiCount emojiData;
   private final boolean canRemove;
 
-  public ReactionRecipientsAdapter(ReactionViewPagerAdapter.Listener callback, boolean canRemove) {
+  public ReactionRecipientsAdapter(ReactionViewPagerAdapter.Listener callback, AvatarUtils avatarUtils, boolean canRemove) {
     this.callback = callback;
+      this.avatarUtils = avatarUtils;
       this.canRemove = canRemove;
   }
 
@@ -72,7 +73,12 @@ final class ReactionRecipientsAdapter extends RecyclerView.Adapter<ReactionRecip
       case FOOTER_TYPE:
         return new FooterViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.reactions_bottom_sheet_dialog_fragment_recycler_footer, parent, false));
       default:
-        return new RecipientViewHolder(callback, LayoutInflater.from(parent.getContext()).inflate(R.layout.reactions_bottom_sheet_dialog_fragment_recipient_item, parent, false), canRemove);
+        return new RecipientViewHolder(
+                avatarUtils,
+                callback,
+                network.loki.messenger.databinding.ReactionsBottomSheetDialogFragmentRecipientItemBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false),
+                canRemove
+        );
     }
   }
 
@@ -105,7 +111,7 @@ final class ReactionRecipientsAdapter extends RecyclerView.Adapter<ReactionRecip
     }
   }
 
-  static class ViewHolder extends RecyclerView.ViewHolder {
+  static public class ViewHolder extends RecyclerView.ViewHolder {
     public ViewHolder(@NonNull View itemView) {
       super(itemView);
     }
@@ -131,46 +137,6 @@ final class ReactionRecipientsAdapter extends RecyclerView.Adapter<ReactionRecip
       TextView count = itemView.findViewById(R.id.header_view_emoji_count);
       count.setText(String.format(" •  %s", emoji.getCount()));
     }
-  }
-
-  static final class RecipientViewHolder extends ViewHolder {
-
-    private ReactionViewPagerAdapter.Listener callback;
-    private final ProfilePictureView avatar;
-    private final TextView recipient;
-    private final ImageView remove;
-    private final boolean canRemove;
-
-    public RecipientViewHolder(ReactionViewPagerAdapter.Listener callback, @NonNull View itemView, boolean canRemove) {
-      super(itemView);
-      this.callback = callback;
-        this.canRemove = canRemove;
-      avatar = itemView.findViewById(R.id.reactions_bottom_view_avatar);
-      recipient = itemView.findViewById(R.id.reactions_bottom_view_recipient_name);
-      remove = itemView.findViewById(R.id.reactions_bottom_view_recipient_remove);
-    }
-
-    void bind(@NonNull ReactionDetails reaction) {
-      this.remove.setOnClickListener((v) -> {
-        callback.onRemoveReaction(reaction.getBaseEmoji(), reaction.getLocalId(), reaction.getTimestamp());
-      });
-
-      this.avatar.update(reaction.getSender());
-
-      if (reaction.getSender().isLocalNumber()) {
-        this.recipient.setText(R.string.you);
-        this.remove.setVisibility(canRemove ? View.VISIBLE : View.GONE);
-      } else {
-        String name = reaction.getSender().getName();
-        this.recipient.setText(name);
-        this.remove.setVisibility(View.GONE);
-      }
-    }
-
-    void unbind() {
-      avatar.recycle();
-    }
-
   }
 
   static class FooterViewHolder extends ViewHolder {

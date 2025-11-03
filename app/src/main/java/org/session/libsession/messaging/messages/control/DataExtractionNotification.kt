@@ -31,7 +31,7 @@ class DataExtractionNotification() : ControlMessage() {
             val kind: Kind = when(dataExtractionNotification.type) {
                 SignalServiceProtos.DataExtractionNotification.Type.SCREENSHOT -> Kind.Screenshot()
                 SignalServiceProtos.DataExtractionNotification.Type.MEDIA_SAVED -> {
-                    val timestamp = if (dataExtractionNotification.hasTimestamp()) dataExtractionNotification.timestamp else return null
+                    val timestamp = if (dataExtractionNotification.hasTimestampMs()) dataExtractionNotification.timestampMs else return null
                     Kind.MediaSaved(timestamp)
                 }
             }
@@ -65,7 +65,7 @@ class DataExtractionNotification() : ControlMessage() {
                 is Kind.Screenshot -> dataExtractionNotification.type = SignalServiceProtos.DataExtractionNotification.Type.SCREENSHOT
                 is Kind.MediaSaved -> {
                     dataExtractionNotification.type = SignalServiceProtos.DataExtractionNotification.Type.MEDIA_SAVED
-                    dataExtractionNotification.timestamp = kind.timestamp
+                    dataExtractionNotification.timestampMs = kind.timestamp
                 }
             }
             return SignalServiceProtos.Content.newBuilder()

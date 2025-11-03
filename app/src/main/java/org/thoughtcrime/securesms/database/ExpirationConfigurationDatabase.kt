@@ -1,22 +1,21 @@
 package org.thoughtcrime.securesms.database
 
-import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
-import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.ExpirationDatabaseMetadata
-import org.session.libsession.utilities.GroupUtil.LEGACY_CLOSED_GROUP_PREFIX
 import org.session.libsession.utilities.GroupUtil.COMMUNITY_INBOX_PREFIX
 import org.session.libsession.utilities.GroupUtil.COMMUNITY_PREFIX
+import org.session.libsession.utilities.GroupUtil.LEGACY_CLOSED_GROUP_PREFIX
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import javax.inject.Provider
 
+@Deprecated("We no longer store the expiration configuration in the database. ")
 class ExpirationConfigurationDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) : Database(context, helper) {
 
     companion object {
-        const val TABLE_NAME = "expiration_configuration"
-        const val THREAD_ID = "thread_id"
-        const val UPDATED_TIMESTAMP_MS = "updated_timestamp_ms"
+        private const val TABLE_NAME = "expiration_configuration"
+        private const val THREAD_ID = "thread_id"
+        private const val UPDATED_TIMESTAMP_MS = "updated_timestamp_ms"
 
         @JvmField
         val CREATE_EXPIRATION_CONFIGURATION_TABLE_COMMAND = """
@@ -44,43 +43,7 @@ class ExpirationConfigurationDatabase(context: Context, helper: Provider<SQLCiph
             AND EXISTS (SELECT ${RecipientDatabase.EXPIRE_MESSAGES} FROM ${RecipientDatabase.TABLE_NAME} WHERE ${ThreadDatabase.TABLE_NAME}.${ThreadDatabase.ADDRESS} = ${RecipientDatabase.TABLE_NAME}.${RecipientDatabase.ADDRESS} AND ${RecipientDatabase.EXPIRE_MESSAGES} > 0)
         """.trimIndent()
 
-        private fun readExpirationConfiguration(cursor: Cursor): ExpirationDatabaseMetadata {
-            return ExpirationDatabaseMetadata(
-                threadId = cursor.getLong(cursor.getColumnIndexOrThrow(THREAD_ID)),
-                updatedTimestampMs = cursor.getLong(cursor.getColumnIndexOrThrow(UPDATED_TIMESTAMP_MS))
-            )
-        }
+        @JvmField
+        val DROP_TABLE_COMMAND = "DROP TABLE $TABLE_NAME"
     }
-
-    fun getExpirationConfiguration(threadId: Long): ExpirationDatabaseMetadata? {
-        val query = "$THREAD_ID = ?"
-        val args = arrayOf("$threadId")
-
-        val configurations: MutableList<ExpirationDatabaseMetadata> = mutableListOf()
-
-        readableDatabase.query(TABLE_NAME, null, query, args, null, null, null).use { cursor ->
-            while (cursor.moveToNext()) {
-                configurations += readExpirationConfiguration(cursor)
-            }
-        }
-
-        return configurations.firstOrNull()
-    }
-
-    fun setExpirationConfiguration(configuration: ExpirationConfiguration) {
-        writableDatabase.beginTransaction()
-        try {
-            val values = ContentValues().apply {
-                put(THREAD_ID, configuration.threadId)
-                put(UPDATED_TIMESTAMP_MS, configuration.updatedTimestampMs)
-            }
-
-            writableDatabase.insert(TABLE_NAME, null, values)
-            writableDatabase.setTransactionSuccessful()
-            notifyConversationListeners(configuration.threadId)
-        } finally {
-            writableDatabase.endTransaction()
-        }
-    }
-
 }
