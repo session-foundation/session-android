@@ -3,6 +3,12 @@ package org.thoughtcrime.securesms.groups.compose
 import android.R.attr.data
 import android.R.attr.name
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,6 +37,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
@@ -141,8 +148,6 @@ fun EditGroup(
         mutableStateOf<GroupMemberState?>(null)
     }
 
-    val maxNameWidth = 240.dp
-
     val optionsList: List<EditGroupViewModel.OptionsItem> = listOf(
         EditGroupViewModel.OptionsItem(
             name = LocalResources.current.getString(R.string.membersInvite),
@@ -169,7 +174,20 @@ fun EditGroup(
             .padding(paddingValues)
             .consumeWindowInsets(paddingValues)) {
 
-            if(showAddMembers){
+            AnimatedVisibility(
+                // show only when add-members is enabled AND search is not focused
+                visible = showAddMembers && !searchFocused,
+                enter = fadeIn(animationSpec = tween(150)) +
+                        expandVertically(
+                            animationSpec = tween(200),
+                            expandFrom = Alignment.Top
+                        ),
+                exit = fadeOut(animationSpec = tween(150)) +
+                        shrinkVertically(
+                            animationSpec = tween(180),
+                            shrinkTowards = Alignment.Top
+                        )
+            ) {
                 Cell(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -189,56 +207,23 @@ fun EditGroup(
                                 onClick = option.onClick,
                             )
 
-                            if(index != optionsList.lastIndex) Divider()
+                            if (index != optionsList.lastIndex) Divider()
                         }
                     }
                 }
             }
 
-            // Group name title
-//            Text(
-//                text = groupName,
-//                style = LocalType.current.h4,
-//                textAlign = TextAlign.Center,
-//                modifier = Modifier
-//                    .align(CenterHorizontally)
-//                    .widthIn(max = maxNameWidth)
-//                    .padding(vertical = LocalDimensions.current.smallSpacing),
-//            )
-
-            // Header & Add member button
-//            Row(
-//                modifier = Modifier.padding(
-//                    horizontal = LocalDimensions.current.smallSpacing,
-//                    vertical = LocalDimensions.current.xxsSpacing
-//                ),
-//                verticalAlignment = CenterVertically
-//            ) {
-//                Text(
-//                    stringResource(R.string.groupMembers),
-//                    modifier = Modifier.weight(1f),
-//                    style = LocalType.current.large,
-//                    color = LocalColors.current.text
-//                )
-//
-//                if (showAddMembers) {
-//                    AccentOutlineButton(
-//                        stringResource(R.string.membersInvite),
-//                        onClick = onAddMemberClick,
-//                        modifier = Modifier.qaTag(R.string.AccessibilityId_membersInvite)
-//                    )
-//                }
-//            }
-
-            Text(
-                modifier = Modifier.padding(
-                    start = LocalDimensions.current.mediumSpacing,
-                    bottom = LocalDimensions.current.smallSpacing
-                ),
-                text = LocalResources.current.getString(R.string.membersNonAdmins),
-                style = LocalType.current.base,
-                color = LocalColors.current.textSecondary
-            )
+            if (!searchFocused) {
+                Text(
+                    modifier = Modifier.padding(
+                        start = LocalDimensions.current.mediumSpacing,
+                        bottom = LocalDimensions.current.smallSpacing
+                    ),
+                    text = LocalResources.current.getString(R.string.membersNonAdmins),
+                    style = LocalType.current.base,
+                    color = LocalColors.current.textSecondary
+                )
+            }
 
             SearchBarWithCancel(
                 query = searchQuery,
