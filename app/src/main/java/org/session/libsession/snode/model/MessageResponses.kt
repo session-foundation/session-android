@@ -1,41 +1,33 @@
 package org.session.libsession.snode.model
 
 import android.util.Base64
-import com.fasterxml.jackson.annotation.JsonCreator
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import com.fasterxml.jackson.databind.util.StdConverter
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import org.session.libsession.utilities.serializable.InstantAsMillisSerializer
+import java.time.Instant
 
-data class StoreMessageResponse @JsonCreator constructor(
-    @JsonProperty("hash") val hash: String,
-    @JsonProperty("t") val timestamp: Long,
+@Serializable
+data class StoreMessageResponse(
+    val hash: String,
+    @Serializable(InstantAsMillisSerializer::class)
+    @SerialName("t") val timestamp: Instant,
 )
 
-class RetrieveMessageResponse @JsonCreator constructor(
-    @JsonProperty("messages")
-    // Apply converter to the element so that if one of the message fails to deserialize, it will
-    // be a null value instead of failing the whole list.
-    @JsonDeserialize(contentConverter = RetrieveMessageConverter::class)
-    val messages: List<Message?>,
+@Serializable
+data class RetrieveMessageResponse(
+    val messages: List<Message>,
 ) {
-    class Message(
+    @Serializable
+    data class Message(
         val hash: String,
-        val timestamp: Long?,
-        val data: ByteArray,
-    )
-}
-
-internal class RetrieveMessageConverter : StdConverter<JsonNode, RetrieveMessageResponse.Message?>() {
-    override fun convert(value: JsonNode?): RetrieveMessageResponse.Message? {
-        value ?: return null
-
-        val hash = value.get("hash")?.asText()?.takeIf { it.isNotEmpty() } ?: return null
-        val timestamp = value.get("t")?.asLong()?.takeIf { it > 0 }
-        val data = runCatching {
-            Base64.decode(value.get("data")?.asText().orEmpty(), Base64.DEFAULT)
-        }.getOrNull() ?: return null
-
-        return RetrieveMessageResponse.Message(hash, timestamp, data)
+        @Serializable(InstantAsMillisSerializer::class)
+        @SerialName("t")
+        val timestamp: Instant,
+        @SerialName("data")
+        val dataB64: String? = null,
+    ) {
+        val data: ByteArray by lazy(LazyThreadSafetyMode.NONE) {
+            Base64.decode(dataB64, Base64.DEFAULT)
+        }
     }
 }

@@ -27,19 +27,18 @@ import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
-import org.session.libsession.snode.RawResponse
 import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.SnodeClock
+import org.session.libsession.snode.model.RetrieveMessageResponse
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigMessage
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
-import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.util.AppVisibilityManager
@@ -58,6 +57,7 @@ class Poller @AssistedInject constructor(
     private val appVisibilityManager: AppVisibilityManager,
     private val networkConnectivity: NetworkConnectivity,
     private val batchMessageReceiveJobFactory: BatchMessageReceiveJob.Factory,
+    private val snodeClock: SnodeClock,
     @Assisted scope: CoroutineScope
 ) {
     private val userPublicKey: String
@@ -208,38 +208,58 @@ class Poller @AssistedInject constructor(
         }
     }
 
-    private fun processPersonalMessages(snode: Snode, rawMessages: RawResponse) {
-        val messages = SnodeAPI.parseRawMessagesResponse(rawMessages, snode, userPublicKey)
-        val parameters = messages.map { (envelope, serverHash) ->
-            MessageReceiveParameters(envelope.toByteArray(), serverHash = serverHash)
+    private fun processPersonalMessages(snode: Snode, messages: List<RetrieveMessageResponse.Message>) {
+        if (messages.isEmpty()) {
+            return
         }
-        parameters.chunked(BatchMessageReceiveJob.BATCH_DEFAULT_NUMBER).forEach { chunk ->
-            JobQueue.shared.add(batchMessageReceiveJobFactory.create(
-                messages = chunk,
-                fromCommunity = null
-            ))
-        }
+
+        lokiApiDatabase.setLastMessageHashValue(
+            snode = snode,
+            publicKey = userPublicKey,
+            newValue = messages.maxBy { it.timestamp }.hash,
+            namespace = Namespace.DEFAULT()
+        )
+
+        SnodeAPI.removeDuplicates(
+            publicKey = userPublicKey,
+            messages = messages,
+            messageHashGetter = { it.hash },
+            namespace = Namespace.DEFAULT(),
+            updateStoredHashes = true
+        ).asSequence()
+            .map { msg ->
+                MessageReceiveParameters(
+                    data = msg.data,
+                    serverHash = msg.hash,
+                )
+            }
+            .chunked(BatchMessageReceiveJob.BATCH_DEFAULT_NUMBER)
+            .forEach { chunk ->
+                JobQueue.shared.add(batchMessageReceiveJobFactory.create(
+                    messages = chunk,
+                    fromCommunity = null
+                ))
+            }
     }
 
-    private fun processConfig(snode: Snode, rawMessages: RawResponse, forConfig: UserConfigType) {
-        Log.d(TAG, "Received ${rawMessages.size} messages for $forConfig")
-        val messages = rawMessages["messages"] as? List<*>
+    private fun processConfig(snode: Snode, messages: List<RetrieveMessageResponse.Message>, forConfig: UserConfigType) {
+        Log.d(TAG, "Received ${messages.size} messages for $forConfig")
         val namespace = forConfig.namespace
-        val processed = if (!messages.isNullOrEmpty()) {
-            SnodeAPI.updateLastMessageHashValueIfPossible(snode, userPublicKey, messages, namespace)
+        val processed = if (messages.isNotEmpty()) {
+            lokiApiDatabase.setLastMessageHashValue(
+                snode = snode,
+                publicKey = userPublicKey,
+                newValue = messages.maxBy { it.timestamp }.hash,
+                namespace = namespace
+            )
             SnodeAPI.removeDuplicates(
                 publicKey = userPublicKey,
                 messages = messages,
-                messageHashGetter = { (it as? Map<*, *>)?.get("hash") as? String },
+                messageHashGetter = { it.hash },
                 namespace = namespace,
                 updateStoredHashes = true
-            ).mapNotNull { rawMessageAsJSON ->
-                rawMessageAsJSON as Map<*, *> // removeDuplicates should have ensured this is always a map
-                val hashValue = rawMessageAsJSON["hash"] as? String ?: return@mapNotNull null
-                val b64EncodedBody = rawMessageAsJSON["data"] as? String ?: return@mapNotNull null
-                val timestamp = rawMessageAsJSON["t"] as? Long ?: SnodeAPI.nowWithOffset
-                val body = Base64.decode(b64EncodedBody)
-                ConfigMessage(data = body, hash = hashValue, timestamp = timestamp)
+            ).map { m ->
+                ConfigMessage(data = m.data, hash = m.hash, timestamp = m.timestamp.toEpochMilli())
             }
         } else emptyList()
 
@@ -261,7 +281,7 @@ class Poller @AssistedInject constructor(
 
 
     private suspend fun poll(snode: Snode, pollOnlyUserProfileConfig: Boolean) = supervisorScope {
-        val userAuth = requireNotNull(MessagingModuleConfiguration.shared.storage.userAuth)
+        val userAuth = requireNotNull(storage.userAuth)
 
         // Get messages call wrapped in an async
         val fetchMessageTask = if (!pollOnlyUserProfileConfig) {
@@ -280,7 +300,7 @@ class Poller @AssistedInject constructor(
                         snode = snode,
                         publicKey = userPublicKey,
                         request = request,
-                        responseType = Map::class.java
+                        responseType = RetrieveMessageResponse.serializer()
                     )
                 }
             }
@@ -314,7 +334,12 @@ class Poller @AssistedInject constructor(
 
                     this.async {
                         type to runCatching {
-                            SnodeAPI.sendBatchRequest(snode, userPublicKey, request, Map::class.java)
+                            SnodeAPI.sendBatchRequest(
+                                snode = snode,
+                                publicKey = userPublicKey,
+                                request = request,
+                                responseType = RetrieveMessageResponse.serializer()
+                            )
                         }
                     }
                 }
@@ -329,7 +354,7 @@ class Poller @AssistedInject constructor(
                         SnodeAPI.buildAuthenticatedAlterTtlBatchRequest(
                             messageHashes = hashesToExtend.toList(),
                             auth = userAuth,
-                            newExpiry = SnodeAPI.nowWithOffset + 14.days.inWholeMilliseconds,
+                            newExpiry = snodeClock.currentTimeMills() + 14.days.inWholeMilliseconds,
                             extend = true
                         )
                     )
@@ -350,7 +375,7 @@ class Poller @AssistedInject constructor(
                 continue
             }
 
-            processConfig(snode, result.getOrThrow(), configType)
+            processConfig(snode, result.getOrThrow().messages, configType)
         }
 
         // Process the messages if we requested them
@@ -359,7 +384,7 @@ class Poller @AssistedInject constructor(
             if (result.isFailure) {
                 Log.e(TAG, "Error while fetching messages", result.exceptionOrNull())
             } else {
-                processPersonalMessages(snode, result.getOrThrow())
+                processPersonalMessages(snode, result.getOrThrow().messages)
             }
         }
     }

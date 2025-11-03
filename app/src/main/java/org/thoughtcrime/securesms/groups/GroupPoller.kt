@@ -6,6 +6,7 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.delay
@@ -23,7 +24,6 @@ import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
 import org.session.libsession.messaging.messages.Destination
-import org.session.libsession.snode.RawResponse
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.model.BatchResponse
@@ -244,8 +244,8 @@ class GroupPoller @AssistedInject constructor(
                             namespace = Namespace.REVOKED_GROUP_MESSAGES(),
                             maxSize = null,
                         ),
-                        RetrieveMessageResponse::class.java
-                    ).messages.filterNotNull()
+                        RetrieveMessageResponse.serializer()
+                    ).messages
                 }
 
                 if (configHashesToExtends.isNotEmpty() && adminKey != null) {
@@ -281,7 +281,7 @@ class GroupPoller @AssistedInject constructor(
                             namespace = Namespace.GROUP_MESSAGES(),
                             maxSize = null,
                         ),
-                        responseType = Map::class.java
+                        responseType = RetrieveMessageResponse.serializer()
                     )
                 }
 
@@ -304,7 +304,7 @@ class GroupPoller @AssistedInject constructor(
                                 namespace = ns,
                                 maxSize = null,
                             ),
-                            responseType = RetrieveMessageResponse::class.java
+                            responseType = RetrieveMessageResponse.serializer()
                         ).messages.filterNotNull()
                     }
                 }
@@ -314,7 +314,7 @@ class GroupPoller @AssistedInject constructor(
                 // must be processed first.
                 pollingTasks += "polling and handling group config keys and messages" to async {
                     val result = runCatching {
-                        val (keysMessage, infoMessage, membersMessage) = groupConfigRetrieval.map { it.await() }
+                        val (keysMessage, infoMessage, membersMessage) = groupConfigRetrieval.awaitAll()
                         handleGroupConfigMessages(keysMessage, infoMessage, membersMessage)
                         saveLastMessageHash(snode, keysMessage, Namespace.GROUP_KEYS())
                         saveLastMessageHash(snode, infoMessage, Namespace.GROUP_INFO())
@@ -325,7 +325,7 @@ class GroupPoller @AssistedInject constructor(
                         }
 
                         val regularMessages = groupMessageRetrieval.await()
-                        handleMessages(regularMessages, snode)
+                        handleMessages(regularMessages.messages, snode)
                     }
 
                     // Revoke message must be handled regardless, and at the end
@@ -370,7 +370,7 @@ class GroupPoller @AssistedInject constructor(
 
                 if (badResponse != null) {
                     Log.e(TAG, "Group polling failed due to a server error", badResponse)
-                    pollState.swarmNodes -= currentSnode!!
+                    pollState.swarmNodes -= currentSnode
                 }
             }
         }
@@ -386,7 +386,7 @@ class GroupPoller @AssistedInject constructor(
     }
 
     private fun RetrieveMessageResponse.Message.toConfigMessage(): ConfigMessage {
-        return ConfigMessage(hash, data, timestamp ?: clock.currentTimeMills())
+        return ConfigMessage(hash, data, timestamp.toEpochMilli())
     }
 
     private fun saveLastMessageHash(
@@ -432,34 +432,41 @@ class GroupPoller @AssistedInject constructor(
         )
     }
 
-    private fun handleMessages(body: RawResponse, snode: Snode) {
-        val messages = configFactoryProtocol.withGroupConfigs(groupId) {
-            SnodeAPI.parseRawMessagesResponse(
-                rawResponse = body,
-                snode = snode,
-                publicKey = groupId.hexString,
-                decrypt = { data ->
-                    val (decrypted, sender) = it.groupKeys.decrypt(data) ?: return@parseRawMessagesResponse null
-                    decrypted to AccountId(sender)
-                },
-                namespace = Namespace.GROUP_MESSAGES(),
-            )
+    private fun handleMessages(messages: List<RetrieveMessageResponse.Message>, snode: Snode) {
+        if (messages.isEmpty()) {
+            return
         }
 
-        val parameters = messages.map { (envelope, serverHash) ->
-            MessageReceiveParameters(
-                envelope.toByteArray(),
-                serverHash = serverHash,
-                closedGroup = Destination.ClosedGroup(groupId.hexString)
-            )
-        }
+        lokiApiDatabase.setLastMessageHashValue(
+            snode = snode,
+            publicKey = groupId.hexString,
+            newValue = messages.maxBy { it.timestamp }.hash,
+            namespace = Namespace.GROUP_MESSAGES()
+        )
 
-        parameters.chunked(BatchMessageReceiveJob.BATCH_DEFAULT_NUMBER).forEach { chunk ->
-            JobQueue.shared.add(batchMessageReceiveJobFactory.create(
-                messages = chunk,
-                fromCommunity = null
-            ))
-        }
+        SnodeAPI.removeDuplicates(
+            publicKey = groupId.hexString,
+            namespace = Namespace.GROUP_MESSAGES(),
+            messages = messages,
+            messageHashGetter = { it.hash },
+            updateStoredHashes = true
+        ).asSequence()
+            .map { msg ->
+                MessageReceiveParameters(
+                    data = msg.data,
+                    serverHash = msg.hash,
+                    closedGroup = Destination.ClosedGroup(groupId.hexString),
+                )
+            }
+            .chunked(BatchMessageReceiveJob.BATCH_DEFAULT_NUMBER)
+            .forEach { chunk ->
+                JobQueue.shared.add(
+                    batchMessageReceiveJobFactory.create(
+                        messages = chunk,
+                        fromCommunity = null
+                    )
+                )
+            }
 
         if (messages.isNotEmpty()) {
             Log.d(TAG, "Received and handled ${messages.size} group messages")
