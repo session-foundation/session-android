@@ -54,7 +54,6 @@ import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.dependencies.DatabaseModule.init
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponents
-import org.thoughtcrime.securesms.emoji.EmojiSource.Companion.refresh
 import org.thoughtcrime.securesms.glide.RemoteFileLoader
 import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint
 import org.thoughtcrime.securesms.logging.AndroidLogger
@@ -145,7 +144,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
 
         initializeWebRtc()
         initializeBlobProvider()
-        refresh()
 
         val networkConstraint = NetworkConstraint.Factory(this).create()
         isConnectedToNetwork = { networkConstraint.isMet }

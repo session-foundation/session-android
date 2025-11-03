@@ -4,22 +4,23 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="horizontal"
     android:layout_width="wrap_content"
-    android:layout_height="22dp"
-    android:paddingStart="8dp"
-    android:paddingEnd="8dp"
-    android:gravity="center">
+    android:layout_height="wrap_content"
+    android:paddingVertical="2dp"
+    android:paddingHorizontal="@dimen/small_spacing">
 
-  <org.thoughtcrime.securesms.components.emoji.EmojiImageView
+  <TextView
       android:scaleType="centerInside"
       android:id="@+id/reactions_pill_emoji"
-      android:layout_width="13dp"
-      android:layout_height="13dp"
-      android:layout_gravity="center_vertical"/>
+      android:textSize="11sp"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="center_vertical"
+      tools:text="🩷"/>
 
   <View
       android:id="@+id/reactions_pill_spacer"
       android:layout_width="6dp"
-      android:layout_height="wrap_content" />
+      android:layout_height="6dp" />
 
   <TextView
       android:id="@+id/reactions_pill_count"

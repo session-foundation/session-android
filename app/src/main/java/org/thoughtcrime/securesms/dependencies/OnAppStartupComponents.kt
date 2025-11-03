@@ -9,7 +9,6 @@ import org.thoughtcrime.securesms.configs.ConfigToDatabaseSync
 import org.thoughtcrime.securesms.configs.ConfigUploader
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.disguise.AppDisguiseManager
-import org.thoughtcrime.securesms.emoji.EmojiIndexLoader
 import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.GroupPollerManager
 import org.thoughtcrime.securesms.groups.handler.AdminStateSync
@@ -65,7 +64,6 @@ class OnAppStartupComponents private constructor(
         tokenFetcher: TokenFetcher,
         versionDataFetcher: VersionDataFetcher,
         threadDatabase: ThreadDatabase,
-        emojiIndexLoader: EmojiIndexLoader,
         subscriptionCoordinator: SubscriptionCoordinator,
         avatarUploadManager: AvatarUploadManager,
         configToDatabaseSync: ConfigToDatabaseSync,
@@ -97,7 +95,6 @@ class OnAppStartupComponents private constructor(
             tokenFetcher,
             versionDataFetcher,
             threadDatabase,
-            emojiIndexLoader,
             subscriptionCoordinator,
             avatarUploadManager,
             configToDatabaseSync,
