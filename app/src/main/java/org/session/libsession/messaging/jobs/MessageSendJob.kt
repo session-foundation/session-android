@@ -89,15 +89,15 @@ class MessageSendJob @AssistedInject constructor(
         val isSync = destination is Destination.Contact && destination.publicKey == storage.getUserPublicKey()
 
         try {
-            withTimeout(20_000L) {
-                // Shouldn't send message to group when the group has no keys available
-                if (destination is Destination.ClosedGroup) {
+            // Shouldn't send message to group when the group has no keys available
+            if (destination is Destination.ClosedGroup) {
+                withTimeout(20_000L) {
                     configFactory
                         .waitForGroupEncryptionKeys(AccountId(destination.publicKey))
                 }
-
-                MessageSender.sendNonDurably(this@MessageSendJob.message, destination, isSync)
             }
+
+            MessageSender.sendNonDurably(this@MessageSendJob.message, destination, isSync)
 
             this.handleSuccess(dispatcherName)
             statusCallback?.trySend(Result.success(Unit))

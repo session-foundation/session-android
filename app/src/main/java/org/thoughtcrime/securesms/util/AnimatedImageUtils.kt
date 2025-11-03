@@ -21,8 +21,12 @@ object AnimatedImageUtils {
     }
 
     fun isAnimated(rawImageData: ByteArray): Boolean {
+        if (isAnimatedGif(rawImageData)) {
+            return true
+        }
+
         return ByteArrayInputStream(rawImageData).source().buffer().use {
-            isAnimatedGif(it) || isAnimatedWebP(it)
+            isAnimatedWebP(it)
         }
     }
 
@@ -37,4 +41,6 @@ object AnimatedImageUtils {
     fun isAnimatedGif(buffer: BufferedSource): Boolean {
         return buffer.peek().inputStream().use(GifUtils::isAnimatedGif)
     }
+
+    fun isAnimatedGif(buffer: ByteArray): Boolean = GifUtils.isAnimatedGif(buffer)
 }
