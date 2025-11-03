@@ -1,10 +1,8 @@
 package org.session.libsession.messaging.jobs
 
-import android.content.Context
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import dagger.hilt.android.qualifiers.ApplicationContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.database.MessageDataProvider
@@ -16,7 +14,6 @@ import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.DecodedAudio
 import org.session.libsession.utilities.InputStreamMediaDataSource
@@ -252,21 +249,18 @@ class AttachmentDownloadJob @AssistedInject constructor(
         return KEY
     }
 
-    class DeserializeFactory(private val factory: Factory) : Job.DeserializeFactory<AttachmentDownloadJob> {
+    @AssistedFactory
+    abstract class Factory : Job.DeserializeFactory<AttachmentDownloadJob> {
+        abstract fun create(
+            @Assisted("attachmentID") attachmentID: Long,
+            mmsMessageId: Long
+        ): AttachmentDownloadJob
 
         override fun create(data: Data): AttachmentDownloadJob {
-            return factory.create(
+            return create(
                 attachmentID = data.getLong(ATTACHMENT_ID_KEY),
                 mmsMessageId = data.getLong(TS_INCOMING_MESSAGE_ID_KEY)
             )
         }
-    }
-
-    @AssistedFactory
-    interface Factory {
-        fun create(
-            @Assisted("attachmentID") attachmentID: Long,
-            mmsMessageId: Long
-        ): AttachmentDownloadJob
     }
 }

@@ -77,6 +77,9 @@ public class AndroidAutoReplyReceiver extends BroadcastReceiver {
   @Inject
   MessageNotifier messageNotifier;
 
+  @Inject
+  MarkReadProcessor markReadProcessor;
+
   @SuppressLint("StaticFieldLeak")
   @Override
   public void onReceive(final Context context, Intent intent)
@@ -129,7 +132,7 @@ public class AndroidAutoReplyReceiver extends BroadcastReceiver {
           List<MarkedMessageInfo> messageIds = threadDatabase.setRead(replyThreadId, true);
 
           messageNotifier.updateNotification(context);
-          MarkReadReceiver.process(context, messageIds);
+          markReadProcessor.process(messageIds);
 
           return null;
         }

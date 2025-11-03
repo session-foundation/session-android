@@ -76,6 +76,8 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
   SnodeClock clock;
   @Inject
   RecipientRepository recipientRepository;
+  @Inject
+  MarkReadProcessor markReadProcessor;
 
   @SuppressLint("StaticFieldLeak")
   @Override
@@ -129,7 +131,7 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
           List<MarkedMessageInfo> messageIds = threadDatabase.setRead(threadId, true);
 
           messageNotifier.updateNotification(context);
-          MarkReadReceiver.process(context, messageIds);
+          markReadProcessor.process(messageIds);
 
           return null;
         }

@@ -42,6 +42,7 @@ class GroupLeavingWorker @AssistedInject constructor(
     private val groupScope: GroupScope,
     private val tokenFetcher: TokenFetcher,
     private val pushRegistryV2: PushRegistryV2,
+    private val messageSender: MessageSender,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val groupId = requireNotNull(inputData.getString(KEY_GROUP_ID)) {
@@ -98,7 +99,7 @@ class GroupLeavingWorker @AssistedInject constructor(
                         val statusChannel = Channel<kotlin.Result<Unit>>()
 
                         // Always send a "XXX left" message to the group if we can
-                        MessageSender.send(
+                        messageSender.send(
                             GroupUpdated(
                                 GroupUpdateMessage.newBuilder()
                                     .setMemberLeftNotificationMessage(DataMessage.GroupUpdateMemberLeftNotificationMessage.getDefaultInstance())
@@ -110,7 +111,7 @@ class GroupLeavingWorker @AssistedInject constructor(
 
                         // If we are not the only admin, send a left message for other admin to handle the member removal
                         // We'll have to wait for this message to be sent before going ahead to delete the group
-                        MessageSender.send(
+                        messageSender.send(
                             GroupUpdated(
                                 GroupUpdateMessage.newBuilder()
                                     .setMemberLeftMessage(DataMessage.GroupUpdateMemberLeftMessage.getDefaultInstance())

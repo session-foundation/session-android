@@ -56,6 +56,7 @@ import org.thoughtcrime.securesms.database.model.content.MessageContent;
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
+import org.thoughtcrime.securesms.notifications.MarkReadProcessor;
 import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
 import org.thoughtcrime.securesms.util.SharedConfigUtilsKt;
 
@@ -239,6 +240,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
   private final Lazy<@NonNull MessageNotifier> messageNotifier;
   private final Lazy<@NonNull MmsDatabase> mmsDatabase;
   private final Lazy<@NonNull SmsDatabase> smsDatabase;
+  private final Lazy<@NonNull MarkReadProcessor> markReadProcessor;
 
   @Inject
   public ThreadDatabase(@dagger.hilt.android.qualifiers.ApplicationContext Context context,
@@ -249,6 +251,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
                         Lazy<@NonNull MessageNotifier> messageNotifier,
                         Lazy<@NonNull MmsDatabase> mmsDatabase,
                         Lazy<@NonNull SmsDatabase> smsDatabase,
+                        Lazy<@NonNull MarkReadProcessor> markReadProcessor,
                         TextSecurePreferences prefs,
                         Json json) {
     super(context, databaseHelper);
@@ -258,6 +261,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
     this.messageNotifier = messageNotifier;
     this.mmsDatabase = mmsDatabase;
     this.smsDatabase = smsDatabase;
+    this.markReadProcessor = markReadProcessor;
 
     this.json = json;
     this.prefs = prefs;
@@ -768,7 +772,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
   public boolean markAllAsRead(long threadId, long lastSeenTime, boolean force, boolean updateNotifications) {
     if (mmsSmsDatabase.get().getConversationCount(threadId) <= 0 && !force) return false;
     List<MarkedMessageInfo> messages = setRead(threadId, lastSeenTime);
-    MarkReadReceiver.process(context, messages);
+    markReadProcessor.get().process(context, messages);
     if(updateNotifications) messageNotifier.get().updateNotification(context, threadId);
     return setLastSeen(threadId, lastSeenTime);
   }

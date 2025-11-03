@@ -11,8 +11,10 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISI
 import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.database.MessageDataProvider
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.jobs.JobQueue
+import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.applyExpiryMode
@@ -31,9 +33,8 @@ import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeAPI.nowWithOffset
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.SSKEnvironment
-import org.session.libsignal.crypto.PushTransportDetails
-import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Hex
@@ -47,7 +48,15 @@ import kotlin.coroutines.cancellation.CancellationException
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview as SignalLinkPreview
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel as SignalQuote
 
-object MessageSender {
+@Singleton
+class MessageSender @Inject constructor(
+    private val storage: StorageProtocol,
+    private val configFactory: ConfigFactoryProtocol,
+    private val recipientRepository: RecipientRepository,
+    private val messageDataProvider: MessageDataProvider,
+    private val messageSendJobFactory: MessageSendJob.Factory,
+    private val messageExpirationManager: ExpiringMessageManager,
+) {
 
     // Error
     sealed class Error(val description: String) : Exception(description) {
@@ -81,8 +90,6 @@ object MessageSender {
     // One-on-One Chats & Closed Groups
     @Throws(Exception::class)
     fun buildWrappedMessageToSnode(destination: Destination, message: Message, isSyncMessage: Boolean): SnodeMessage {
-        val storage = MessagingModuleConfiguration.shared.storage
-        val configFactory = MessagingModuleConfiguration.shared.configFactory
         val userPublicKey = storage.getUserPublicKey()
         // Set the timestamp, sender and recipient
         val messageSendTime = nowWithOffset
@@ -193,8 +200,6 @@ object MessageSender {
 
     // One-on-One Chats & Closed Groups
     private suspend fun sendToSnodeDestination(destination: Destination, message: Message, isSyncMessage: Boolean = false) = supervisorScope {
-        val configFactory = MessagingModuleConfiguration.shared.configFactory
-
         // Set the failure handler (need it here already for precondition failure handling)
         fun handleFailure(error: Exception) {
             handleFailedMessageSend(message, error, isSyncMessage)
@@ -275,7 +280,7 @@ object MessageSender {
         return message.run {
             (if (isSyncMessage && this is VisibleMessage) syncTarget else recipient)
                 ?.let(Address::fromSerialized)
-                ?.let(MessagingModuleConfiguration.shared.recipientRepository::getRecipientSync)
+                ?.let(recipientRepository::getRecipientSync)
                 ?.expiryMode
                 ?.takeIf { it is ExpiryMode.AfterSend || isSyncMessage }
                 ?.expiryMillis
@@ -285,8 +290,6 @@ object MessageSender {
 
     // Open Groups
     private suspend fun sendToOpenGroupDestination(destination: Destination, message: Message) {
-        val storage = MessagingModuleConfiguration.shared.storage
-        val configFactory = MessagingModuleConfiguration.shared.configFactory
         if (message.sentTimestamp == null) {
             message.sentTimestamp = nowWithOffset
         }
@@ -296,7 +299,7 @@ object MessageSender {
                 message.blocksMessageRequests = !configs.userProfile.getCommunityMessageRequests()
             }
         }
-        val userEdKeyPair = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()!!
+        val userEdKeyPair = storage.getUserED25519KeyPair()!!
         var serverCapabilities = listOf<String>()
         var blindedPublicKey: ByteArray? = null
         when(destination) {
@@ -459,7 +462,7 @@ object MessageSender {
             storage.updateSentTimestamp(messageId, message.sentTimestamp!!)
 
             // Start the disappearing messages timer if needed
-            SSKEnvironment.shared.messageExpirationManager.onMessageSent(message)
+            messageExpirationManager.onMessageSent(message)
         } ?: run {
             storage.updateReactionIfNeeded(message, message.sender?:userPublicKey, openGroupSentTimestamp)
         }
@@ -483,12 +486,10 @@ object MessageSender {
     }
 
     fun handleFailedMessageSend(message: Message, error: Exception, isSyncMessage: Boolean = false) {
-        val storage = MessagingModuleConfiguration.shared.storage
-
         val messageId = message.id ?: return
 
         // no need to handle if message is marked as deleted
-        if(MessagingModuleConfiguration.shared.messageDataProvider.isDeletedMessage(messageId)){
+        if (messageDataProvider.isDeletedMessage(messageId)){
             return
         }
 
@@ -499,7 +500,6 @@ object MessageSender {
     // Convenience
     @JvmStatic
     fun send(message: VisibleMessage, address: Address, quote: SignalQuote?, linkPreview: SignalLinkPreview?) {
-        val messageDataProvider = MessagingModuleConfiguration.shared.messageDataProvider
         val messageId = message.id
         if (messageId?.mms == true) {
             message.attachmentIDs.addAll(messageDataProvider.getAttachmentIDsFor(messageId.id))
@@ -520,21 +520,21 @@ object MessageSender {
     @JvmStatic
     @JvmOverloads
     fun send(message: Message, address: Address, statusCallback: SendChannel<Result<Unit>>? = null) {
-        val threadID = MessagingModuleConfiguration.shared.storage.getThreadId(address)
+        val threadID = storage.getThreadId(address)
         message.applyExpiryMode(address)
         message.threadID = threadID
         val destination = Destination.from(address)
-        val job = MessagingModuleConfiguration.shared.messageSendJobFactory.create(message, destination, statusCallback)
+        val job = messageSendJobFactory.create(message, destination, statusCallback)
         JobQueue.shared.add(job)
 
         // if we are sending a 'Note to Self' make sure it is not hidden
         if( message is VisibleMessage &&
-            address.toString() == MessagingModuleConfiguration.shared.storage.getUserPublicKey() &&
+            address.toString() == storage.getUserPublicKey() &&
             // only show the NTS if it is currently marked as hidden
-            MessagingModuleConfiguration.shared.configFactory.withUserConfigs { it.userProfile.getNtsPriority() == PRIORITY_HIDDEN }
+            configFactory.withUserConfigs { it.userProfile.getNtsPriority() == PRIORITY_HIDDEN }
         ){
             // update config in case it was marked as hidden there
-            MessagingModuleConfiguration.shared.configFactory.withMutableUserConfigs {
+            configFactory.withMutableUserConfigs {
                 it.userProfile.setNtsPriority(PRIORITY_VISIBLE)
             }
         }
@@ -547,7 +547,7 @@ object MessageSender {
     }
 
     suspend fun sendNonDurably(message: Message, address: Address, isSyncMessage: Boolean) {
-        val threadID = MessagingModuleConfiguration.shared.storage.getThreadId(address)
+        val threadID = storage.getThreadId(address)
         message.threadID = threadID
         val destination = Destination.from(address)
         sendNonDurably(message, destination, isSyncMessage)

@@ -88,6 +88,8 @@ class GroupManagerV2Impl @Inject constructor(
     private val scope: GroupScope,
     private val groupPollerManager: GroupPollerManager,
     private val recipientRepository: RecipientRepository,
+    private val messageSender: MessageSender,
+    private val inviteContactJobFactory: InviteContactsJob.Factory,
 ) : GroupManagerV2 {
     private val dispatcher = Dispatchers.Default
 
@@ -201,7 +203,7 @@ class GroupManagerV2Impl @Inject constructor(
 
             // Invite members
             JobQueue.shared.add(
-                InviteContactsJob(
+                inviteContactJobFactory.create(
                     groupSessionId = groupId.hexString,
                     memberSessionIds = members.map { it.hexString }.toTypedArray()
                 )
@@ -321,9 +323,9 @@ class GroupManagerV2Impl @Inject constructor(
 
         // Send the invitation message to the new members
         JobQueue.shared.add(
-            InviteContactsJob(
-                group.hexString,
-                newMembers.map { it.hexString }.toTypedArray()
+            inviteContactJobFactory.create(
+                groupSessionId = group.hexString,
+                memberSessionIds = newMembers.map { it.hexString }.toTypedArray()
             )
         )
     }
@@ -355,7 +357,7 @@ class GroupManagerV2Impl @Inject constructor(
 
         storage.insertGroupInfoChange(updatedMessage, group)
 
-        MessageSender.send(updatedMessage, Address.fromSerialized(group.hexString))
+        messageSender.send(updatedMessage, Address.fromSerialized(group.hexString))
     }
 
     override suspend fun removeMembers(
@@ -394,7 +396,7 @@ class GroupManagerV2Impl @Inject constructor(
             updateMessage
         ).apply { sentTimestamp = timestamp }
 
-        MessageSender.send(message, Address.fromSerialized(groupAccountId.hexString))
+        messageSender.send(message, Address.fromSerialized(groupAccountId.hexString))
         storage.insertGroupInfoChange(message, groupAccountId)
     }
 
@@ -524,7 +526,7 @@ class GroupManagerV2Impl @Inject constructor(
             val promotionDeferred = members.associateWith { member ->
                 async {
                     // The promotion message shouldn't be persisted to avoid being retried automatically
-                    MessageSender.sendNonDurably(
+                    messageSender.sendNonDurably(
                         message = promoteMessage,
                         address = Address.fromSerialized(member.hexString),
                         isSyncMessage = false,
@@ -555,7 +557,7 @@ class GroupManagerV2Impl @Inject constructor(
 
 
             if (!isRepromote) {
-                MessageSender.sendAndAwait(message, Address.fromSerialized(group.hexString))
+                messageSender.sendAndAwait(message, Address.fromSerialized(group.hexString))
             }
         }
     }
@@ -659,7 +661,7 @@ class GroupManagerV2Impl @Inject constructor(
             val responseMessage = GroupUpdated(responseData.build(), profile = storage.getUserProfile())
             // this will fail the first couple of times :)
             runCatching {
-                MessageSender.sendNonDurably(
+                messageSender.sendNonDurably(
                     responseMessage,
                     Destination.ClosedGroup(group.groupAccountId),
                     isSyncMessage = false
@@ -926,7 +928,7 @@ class GroupManagerV2Impl @Inject constructor(
             }
 
             storage.insertGroupInfoChange(message, groupId)
-            MessageSender.sendAndAwait(message, Address.fromSerialized(groupId.hexString))
+            messageSender.sendAndAwait(message, Address.fromSerialized(groupId.hexString))
         }
 
     override suspend fun setDescription(groupId: AccountId, newDescription: String): Unit =
@@ -1008,7 +1010,7 @@ class GroupManagerV2Impl @Inject constructor(
             sentTimestamp = timestamp
         }
 
-        MessageSender.sendAndAwait(message, Address.fromSerialized(groupId.hexString))
+        messageSender.sendAndAwait(message, Address.fromSerialized(groupId.hexString))
     }
 
     override suspend fun handleDeleteMemberContent(
@@ -1141,7 +1143,7 @@ class GroupManagerV2Impl @Inject constructor(
             sentTimestamp = timestamp
         }
 
-        MessageSender.send(message, Address.fromSerialized(groupId.hexString))
+        messageSender.send(message, Address.fromSerialized(groupId.hexString))
 
         storage.deleteGroupInfoMessages(groupId, UpdateMessageData.Kind.GroupExpirationUpdated::class.java)
         storage.insertGroupInfoChange(message, groupId)
