@@ -46,6 +46,7 @@ class CreateGroupViewModel @AssistedInject constructor(
     excludingAccountIDs = emptySet(),
     contactFiltering = SelectContactsViewModel.Factory.defaultFiltering,
     recipientRepository = recipientRepository,
+    context = appContext
 ) {
     // Child view model to handle contact selection logic
 

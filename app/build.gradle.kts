@@ -181,13 +181,12 @@ android {
             matchingFallbacks += "release"
 
             signingConfig = signingConfigs.getByName("debug")
-            applicationIdSuffix = ".$name"
 
             devNetDefaultOn(false)
             enablePermissiveNetworkSecurityConfig(true)
 
             setAlternativeAppName("Session QA")
-            setAuthorityPostfix(".qa")
+            setAuthorityPostfix("")
         }
 
         create("automaticQa") {

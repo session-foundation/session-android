@@ -96,7 +96,6 @@ class SettingsViewModel @Inject constructor(
         hasPath = true,
         version = getVersionNumber(),
         recoveryHidden = prefs.getHidePassword(),
-        isPro = selfRecipient.value.proStatus.isPro(),
         isPostPro = proStatusManager.isPostPro(),
         subscriptionState = getDefaultSubscriptionStateData(),
     ))
@@ -111,7 +110,6 @@ class SettingsViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             username = recipient.displayName(attachesBlindedId = false),
-                            isPro = recipient.proStatus.isPro(),
                         )
                     }
                 }
@@ -633,7 +631,6 @@ class SettingsViewModel @Inject constructor(
         val showAnimatedProCTA: Boolean = false,
         val usernameDialog: UsernameDialogData? = null,
         val showSimpleDialog: SimpleDialogData? = null,
-        val isPro: Boolean,
         val isPostPro: Boolean,
         val subscriptionState: SubscriptionState,
     )

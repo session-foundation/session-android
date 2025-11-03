@@ -32,7 +32,7 @@ class ProSettingsActivity: FullComposeScreenLockActivity() {
         ) ?: ProSettingsDestination.Home
 
         ProSettingsNavHost(
-            hideHomeAppBar = false,
+            inSheet = false,
             startDestination = startDestination,
             onBack = this::finish
         )

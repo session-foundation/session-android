@@ -38,6 +38,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.ui.components.SlimAccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
@@ -51,6 +52,7 @@ import org.thoughtcrime.securesms.ui.theme.monospace
 import org.thoughtcrime.securesms.ui.theme.primaryRed
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
+import org.thoughtcrime.securesms.util.GenericCTAData
 import org.thoughtcrime.securesms.util.UserProfileModalCommands
 import org.thoughtcrime.securesms.util.UserProfileModalData
 
@@ -220,8 +222,9 @@ fun UserProfileModal(
     )
 
     // the pro CTA that comes with UPM
-    if(data.showProCTA){
+    if(data.showProCTA != null){
         GenericProCTA(
+            proSubscription = data.showProCTA.proSubscription,
             onDismissRequest = {
                 sendCommand(UserProfileModalCommands.HideSessionProCTA)
             },
@@ -250,7 +253,7 @@ private fun PreviewUPM(
                     enableMessage = true,
                     expandedAvatar = false,
                     showQR = false,
-                    showProCTA = false,
+                    showProCTA = null,
                     avatarUIData = AvatarUIData(
                         listOf(
                             AvatarUIElement(
@@ -270,10 +273,10 @@ private fun PreviewUPM(
             sendCommand = { command ->
                 when(command){
                     UserProfileModalCommands.ShowProCTA -> {
-                        data = data.copy(showProCTA = true)
+                        data = data.copy(showProCTA = GenericCTAData(SubscriptionType.NeverSubscribed))
                     }
                     UserProfileModalCommands.HideSessionProCTA -> {
-                        data = data.copy(showProCTA = false)
+                        data = data.copy(showProCTA = null)
                     }
                     UserProfileModalCommands.ToggleQR -> {
                         data = data.copy(showQR = !data.showQR)
@@ -310,7 +313,7 @@ private fun PreviewUPMResolved(
                     enableMessage = true,
                     expandedAvatar = false,
                     showQR = true,
-                    showProCTA = false,
+                    showProCTA = null,
                     avatarUIData = AvatarUIData(
                         listOf(
                             AvatarUIElement(
@@ -330,10 +333,10 @@ private fun PreviewUPMResolved(
             sendCommand = { command ->
                 when(command){
                     UserProfileModalCommands.ShowProCTA -> {
-                        data = data.copy(showProCTA = true)
+                        data = data.copy(showProCTA = GenericCTAData(SubscriptionType.NeverSubscribed))
                     }
                     UserProfileModalCommands.HideSessionProCTA -> {
-                        data = data.copy(showProCTA = false)
+                        data = data.copy(showProCTA = null)
                     }
                     UserProfileModalCommands.ToggleQR -> {
                         data = data.copy(showQR = !data.showQR)
@@ -371,7 +374,7 @@ private fun PreviewUPMQR(
                     enableMessage = false,
                     expandedAvatar = false,
                     showQR = false,
-                    showProCTA = false,
+                    showProCTA = null,
                     avatarUIData = AvatarUIData(
                         listOf(
                             AvatarUIElement(
@@ -413,7 +416,7 @@ private fun PreviewUPMCTA(
                 enableMessage = false,
                 expandedAvatar = true,
                 showQR = false,
-                showProCTA = true,
+                showProCTA = GenericCTAData(SubscriptionType.NeverSubscribed),
                 avatarUIData = AvatarUIData(
                     listOf(
                         AvatarUIElement(

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name" translatable="false">Session</string>
+    <string name="NoNonAdminsInGroup">There are no non-admin members in this group.</string>
     <string name="about">About</string>
     <string name="accept">Accept</string>
     <string name="accountIDCopy">Copy Account ID</string>
@@ -16,8 +17,13 @@
     <string name="accountIdYoursDescription">This is your Account ID. Other users can scan it to start a conversation with you.</string>
     <string name="actualSize">Actual Size</string>
     <string name="add">Add</string>
+    <plurals name="addAdmin">
+        <item quantity="one">Add Admin</item>
+        <item quantity="other">Add Admins</item>
+    </plurals>
     <string name="addAdmins">Add Admins</string>
     <string name="addAdminsDescription">Enter the Account ID of the user you are promoting to admin.\n\nTo add multiple users, enter each Account ID separated by a comma. Up to 20 Account IDs can be specified at a time.</string>
+    <string name="adminCannotBeDemoted">Admins cannot be demoted or removed from the group.</string>
     <string name="adminCannotBeRemoved">Admins cannot be removed.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> and <b>{count} others</b> were promoted to Admin.</string>
     <string name="adminPromote">Promote Admins</string>
@@ -42,12 +48,18 @@
     <string name="adminRemovedUser"><b>{name}</b> was removed as Admin.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> and <b>{count} others</b> were removed as Admin.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> and <b>{other_name}</b> were removed as Admin.</string>
+    <plurals name="adminSelected">
+        <item quantity="one">%1$d Admin Selected</item>
+        <item quantity="other">%1$d Admins Selected</item>
+    </plurals>
     <plurals name="adminSendingPromotion">
         <item quantity="one">Sending admin promotion</item>
         <item quantity="other">Sending admin promotions</item>
     </plurals>
     <string name="adminSettings">Admin Settings</string>
+    <string name="adminStatusYou">You cannot change your admin status. To leave the group, open the conversation settings and select Leave Group.</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> and <b>{other_name}</b> were promoted to Admin.</string>
+    <string name="admins">Admins</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonymous</string>
     <string name="appIcon">App Icon</string>
@@ -274,11 +286,17 @@
     <string name="communityUrl">Community URL</string>
     <string name="communityUrlCopy">Copy Community URL</string>
     <string name="confirm">Confirm</string>
+    <string name="confirmPromotion">Confirm Promotion</string>
+    <string name="confirmPromotionDescription">Are you sure? Admins cannot be demoted or removed from the group.</string>
     <string name="contactContacts">Contacts</string>
     <string name="contactDelete">Delete Contact</string>
     <string name="contactDeleteDescription">Are you sure you want to delete <b>{name}</b> from your contacts? New messages from <b>{name}</b> will arrive as a message request.</string>
     <string name="contactNone">You don\'t have any contacts yet</string>
     <string name="contactSelect">Select Contacts</string>
+    <plurals name="contactSelected">
+        <item quantity="one">%1$d Contact Selected</item>
+        <item quantity="other">%1$d Contacts Selected</item>
+    </plurals>
     <string name="contactUserDetails">User Details</string>
     <string name="contentDescriptionCamera">Camera</string>
     <string name="contentDescriptionChooseConversationType">Choose an action to start a conversation</string>
@@ -486,7 +504,12 @@
     <string name="errorDatabase">Database Error</string>
     <string name="errorGeneric">Something went wrong. Please try again later.</string>
     <string name="errorLoadingProAccess">Error loading {pro} access</string>
+    <string name="errorNoLookupOns">{app_name} was unable to search for this ONS. Please check your network connection and try again.</string>
     <string name="errorUnknown">An unknown error occurred.</string>
+    <string name="errorUnregisteredOns">This ONS is not registered. Please check it is correct and try again.</string>
+    <string name="failedResendInvite">Failed to resend invite to <b>{name}</b> in <b>{group_name}</b></string>
+    <string name="failedResendInviteMultiple">Failed to resend invite to <b>{name}</b> and <b>{count} others</b> in <b>{group_name}</b></string>
+    <string name="failedResendInviteTwo">Failed to resend invite to <b>{name}</b> and <b>{other_name}</b> in <b>{group_name}</b></string>
     <string name="failedToDownload">Failed to download</string>
     <string name="failures">Failures</string>
     <string name="feedback">Feedback</string>
@@ -540,6 +563,9 @@
     <string name="groupLeaveDescription">Are you sure you want to leave <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Are you sure you want to leave <b>{group_name}</b>?\n\nThis will remove all members and delete all group content.</string>
     <string name="groupLeaveErrorFailed">Failed to leave {group_name}</string>
+    <string name="groupMemberInvitedHistory"><b>{name}</b> was invited to join the group. Chat history from the last 14 days was shared.</string>
+    <string name="groupMemberInvitedHistoryMultiple"><b>{name}</b> and <b>{count}</b> others were invited to join the group. Chat history from the last 14 days was shared.</string>
+    <string name="groupMemberInvitedHistoryTwo"><b>{name}</b> and <b>{other_name}</b> were invited to join the group. Chat history from the last 14 days was shared.</string>
     <string name="groupMemberLeft"><b>{name}</b> left the group.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> and <b>{count} others</b> left the group.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> and <b>{other_name}</b> left the group.</string>
@@ -551,6 +577,9 @@
     <string name="groupMemberNewTwo"><b>{name}</b> and <b>{other_name}</b> were invited to join the group.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>You</b> and <b>{count} others</b> were invited to join the group. Chat history was shared.</string>
     <string name="groupMemberNewYouHistoryTwo"><b>You</b> and <b>{other_name}</b> were invited to join the group. Chat history was shared.</string>
+    <string name="groupMemberRemoveFailed">Failed to remove <b>{name}</b> from <b>{group_name}</b></string>
+    <string name="groupMemberRemoveFailedMultiple">Failed to remove <b>{name}</b> and <b>{count} others</b> from <b>{group_name}</b></string>
+    <string name="groupMemberRemoveFailedOther">Failed to remove <b>{name}</b> and <b>{other_name}</b> from <b>{group_name}</b></string>
     <string name="groupMemberYouLeft"><b>You</b> left the group.</string>
     <string name="groupMembers">Group Members</string>
     <string name="groupMembersNone">There are no other members in this group.</string>
@@ -564,6 +593,7 @@
     <string name="groupNoMessages">You have no messages from <b>{group_name}</b>. Send a message to start the conversation!</string>
     <string name="groupNotUpdatedWarning">This group has not been updated in over 30 days. You may experience issues sending messages or viewing group information.</string>
     <string name="groupOnlyAdmin">You are the only admin in <b>{group_name}</b>.\n\nGroup members and settings cannot be changed without an admin.</string>
+    <string name="groupOnlyAdminLeave">You are the only admin in <b>{group_name}</b>.\n\nGroup members and settings cannot be changed without an admin. To leave the group without deleting it, please add a new admin first</string>
     <string name="groupPendingRemoval">Pending removal</string>
     <string name="groupPromotedYou"><b>You</b> were promoted to Admin.</string>
     <string name="groupPromotedYouMultiple"><b>You</b> and <b>{count} others</b> were promoted to Admin.</string>
@@ -613,6 +643,10 @@
     <string name="incognitoKeyboardDescription">Request incognito mode if available. Depending on the keyboard you are using, your keyboard may ignore this request.</string>
     <string name="info">Info</string>
     <string name="invalidShortcut">Invalid shortcut</string>
+    <plurals name="inviteContactsPlural">
+        <item quantity="one">Invite Contact</item>
+        <item quantity="other">Invite Contacts</item>
+    </plurals>
     <plurals name="inviteFailed">
         <item quantity="one">Invite Failed</item>
         <item quantity="other">Invites Failed</item>
@@ -621,6 +655,11 @@
         <item quantity="one">The invite could not be sent. Would you like to try again?</item>
         <item quantity="other">The invites could not be sent. Would you like to try again?</item>
     </plurals>
+    <plurals name="inviteMembers">
+        <item quantity="one">Invite Member</item>
+        <item quantity="other">Invite Members</item>
+    </plurals>
+    <string name="inviteNewMemberGroupLink">Invite a new member to the group by entering your friend\'s Account ID, ONS or scanning their QR code {icon}</string>
     <string name="join">Join</string>
     <string name="later">Later</string>
     <string name="launchOnStartDescriptionDesktop">Launch {app_name} automatically when your computer starts up.</string>
@@ -664,10 +703,15 @@
     <string name="lockAppUnlock">Tap to unlock</string>
     <string name="lockAppUnlocked">{app_name} is unlocked</string>
     <string name="logs">Logs</string>
+    <string name="manageAdmins">Manage Admins</string>
     <string name="manageMembers">Manage Members</string>
     <string name="managePro">Manage {pro}</string>
     <string name="max">Max</string>
     <string name="media">Media</string>
+    <plurals name="memberSelected">
+        <item quantity="one">%1$d Member Selected</item>
+        <item quantity="other">%1$d Members Selected</item>
+    </plurals>
     <plurals name="members">
         <item quantity="one">%1$d member</item>
         <item quantity="other">%1$d members</item>
@@ -677,7 +721,10 @@
         <item quantity="other">%1$d active members</item>
     </plurals>
     <string name="membersAddAccountIdOrOns">Add Account ID or ONS</string>
+    <string name="membersGroupPromotionAcceptInvite">Members can only be promoted once they\'ve&amp;#13;
+accepted an invite to join the group.</string>
     <string name="membersInvite">Invite Contacts</string>
+    <string name="membersInviteNoContacts">You don’t have any contacts to invite to this group.\nGo back and invite members using their Account ID or ONS.</string>
     <plurals name="membersInviteSend">
         <item quantity="one">Send Invite</item>
         <item quantity="other">Send Invites</item>
@@ -686,8 +733,11 @@
     <string name="membersInviteShareDescriptionMultiple">Would you like to share group message history with <b>{name}</b> and <b>{count} others</b>?</string>
     <string name="membersInviteShareDescriptionTwo">Would you like to share group message history with <b>{name}</b> and <b>{other_name}</b>?</string>
     <string name="membersInviteShareMessageHistory">Share message history</string>
+    <string name="membersInviteShareMessageHistoryDays">Share message history from last&amp;#13;
+14 days</string>
     <string name="membersInviteShareNewMessagesOnly">Share new messages only</string>
     <string name="membersInviteTitle">Invite</string>
+    <string name="membersNonAdmins">Members (Non-Admins)</string>
     <string name="menuBar">Menu Bar</string>
     <string name="message">Message</string>
     <string name="messageBubbleReadMore">Read more</string>
@@ -706,6 +756,7 @@
     </plurals>
     <string name="messageNewDescriptionDesktop">Start a new conversation by entering your friend\'s Account ID or ONS.</string>
     <string name="messageNewDescriptionMobile">Start a new conversation by entering your friend\'s Account ID, ONS or scanning their QR code.</string>
+    <string name="messageNewDescriptionMobileLink">Start a new conversation by entering your friend\'s Account ID, ONS or scanning their QR code {icon}</string>
     <plurals name="messageNewYouveGot">
         <item quantity="one">You\'ve got a new message.</item>
         <item quantity="other">You\'ve got %1$d new messages.</item>
@@ -976,7 +1027,7 @@
     <string name="proCancellation">Cancellation</string>
     <string name="proCancellationDescription">Canceling {pro} access will prevent automatic renewal from occurring before {pro} access expires. Canceling {pro} does <b>not</b> result in a refund. You will continue to be able to use {app_pro} features until your {pro} access expires.\n\nBecause you originally signed up for {app_pro} using your <b>{platform_account}</b>, you\'ll need to use the same {platform_account} to cancel {pro}.</string>
     <string name="proCancellationOptions">Two ways to cancel your {pro} access:</string>
-    <string name="proCancellationShortDescription">Canceling {pro} access will prevent will prevent automatic renewal from occurring before {pro} expires.\n\nCanceling {pro} does <b>not</b> result in a refund. You will continue to be able to use {app_pro} features until your {pro} access expires.</string>
+    <string name="proCancellationShortDescription">Canceling {pro} access will prevent automatic renewal from occurring before {pro} expires.\n\nCanceling {pro} does <b>not</b> result in a refund. You will continue to be able to use {app_pro} features until your {pro} access expires.</string>
     <string name="proChooseAccess">Choose the {pro} access option that\'s right for you.\nLonger access means bigger discounts.</string>
     <string name="proClearAllDataDevice">Are you sure you want to delete your data from this device?\n\n<b>{app_pro}</b> cannot be transferred to another account. Please save your Recovery Password to ensure you can restore your {pro} access later.</string>
     <string name="proClearAllDataNetwork">Are you sure you want to delete your data from the network? If you continue, you will not be able to restore your messages or contacts.\n\n<b>{app_pro}</b> cannot be transferred to another account. Please save your Recovery Password to ensure you can restore your {pro} access later.</string>
@@ -1044,7 +1095,7 @@
     <string name="proRenewLongerMessages">Want to send longer messages again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
     <string name="proRenewMaxPotential">Want to use {app_name} to its max potential again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
     <string name="proRenewPinFiveConversations">Want to pin more than 5 conversations again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
-    <string name="proRenewPinMoreConversations">Want to more pin more conversations again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
+    <string name="proRenewPinMoreConversations">Want to pin more conversations again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
     <string name="proRenewTosPrivacy">By renewing, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
     <string name="proRenewalUnsuccessful">Pro renewal unsuccessful, retrying soon</string>
     <string name="proRenewingNoAccessBilling">Currently, {pro} access can only be purchased and renewed via the {platform_store} or {platform_store_other}. Because you installed {app_name} using the {build_variant}, you\'re not able to renew here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the {platform_store} and {platform_store_other}.<b> {pro} Roadmap</b> {icon}</string>
@@ -1076,7 +1127,7 @@
     <string name="proUpgradeNoAccessBilling">Currently, {pro} access can only be purchased via the {platform_store} or {platform_store_other}. Because you installed {app_name} using the {build_variant}, you\'re not able to upgrade to {pro} here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the {platform_store} and {platform_store_other}.<b> {pro} Roadmap</b> {icon}</string>
     <string name="proUpgradeOption">For now, there is only one way to upgrade:</string>
     <string name="proUpgradeOptionsTwo">For now, there are two ways to upgrade:</string>
-    <string name="proUpgraded">You have upgraded to {app_pro}!\n\nThank you for supporting the {network_name}.</string>
+    <string name="proUpgraded">You have upgraded to {app_pro}!\nThank you for supporting the {network_name}.</string>
     <string name="proUpgradingTo">Upgrading to {pro}</string>
     <string name="proUpgradingTosPrivacy">By upgrading, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
     <string name="proUserProfileModalCallToAction">Want to get more out of {app_name}? Upgrade to {app_pro} for a more powerful messaging experience.</string>
@@ -1088,6 +1139,11 @@
     <string name="profileDisplayPictureSizeError">Please pick a smaller file.</string>
     <string name="profileErrorUpdate">Failed to update profile.</string>
     <string name="promote">Promote</string>
+    <string name="promoteAdminsWarning">Admins will be able to see the last 14 days of message history and cannot be demoted or removed from the group.</string>
+    <plurals name="promoteMember">
+        <item quantity="one">Promote Member</item>
+        <item quantity="other">Promote Members</item>
+    </plurals>
     <plurals name="promotionFailed">
         <item quantity="one">Promotion Failed</item>
         <item quantity="other">Promotions Failed</item>
@@ -1145,14 +1201,42 @@
     </plurals>
     <string name="remindMeLater">Remind Me Later</string>
     <string name="remove">Remove</string>
+    <plurals name="removeMember">
+        <item quantity="one">Remove Member</item>
+        <item quantity="other">Remove Members</item>
+    </plurals>
+    <plurals name="removeMemberMessages">
+        <item quantity="one">Remove member and their messages</item>
+        <item quantity="other">Remove member and their messages</item>
+    </plurals>
     <string name="removePasswordFail">Failed to remove password</string>
     <string name="removePasswordModalDescription">Remove your current password for {app_name}. Locally stored data will be re-encrypted with a randomly generated key, stored on your device.</string>
+    <plurals name="removingMember">
+        <item quantity="one">Removing member</item>
+        <item quantity="other">Removing members</item>
+    </plurals>
     <string name="renew">Renew</string>
     <string name="renewingPro">Renewing {pro}</string>
     <string name="reply">Reply</string>
     <string name="requestRefund">Request Refund</string>
     <string name="requestRefundPlatformWebsite">Request a refund on the <b><font color="0">{platform} website</font></b>, using the {platform_account} you signed up for {pro} with.</string>
     <string name="resend">Resend</string>
+    <plurals name="resendInvite">
+        <item quantity="one">Resend Invite</item>
+        <item quantity="other">Resend Invites</item>
+    </plurals>
+    <plurals name="resendPromotion">
+        <item quantity="one">Resend Promotion</item>
+        <item quantity="other">Resend Promotions</item>
+    </plurals>
+    <plurals name="resendingInvite">
+        <item quantity="one">Resending invite</item>
+        <item quantity="other">Resending invites</item>
+    </plurals>
+    <plurals name="resendingPromotion">
+        <item quantity="one">Resending promotion</item>
+        <item quantity="other">Resending promotions</item>
+    </plurals>
     <string name="resolving">Loading country information...</string>
     <string name="restart">Restart</string>
     <string name="resync">Resync</string>
