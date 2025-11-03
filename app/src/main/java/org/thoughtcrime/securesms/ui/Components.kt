@@ -99,6 +99,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -762,6 +764,96 @@ fun SearchBar(
 }
 
 /**
+ * Search with the cancel action
+ */
+
+@Composable
+fun SearchBarWithCancel(
+    query: String,
+    onValueChanged: (String) -> Unit,
+    onClear: () -> Unit,
+    isFocused: Boolean,
+    modifier: Modifier = Modifier,
+    placeholder: String? = null,
+    enabled: Boolean = true,
+    backgroundColor: Color = LocalColors.current.backgroundSecondary,
+) {
+    val focusManager = LocalFocusManager.current
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        // Search field
+        BasicTextField(
+            singleLine = true,
+            value = query,
+            onValueChange = onValueChanged,
+            enabled = enabled,
+            textStyle = LocalType.current.base.copy(color = LocalColors.current.text),
+            cursorBrush = SolidColor(LocalColors.current.text),
+            modifier = Modifier
+                .weight(1f) // leave room on the right for the cancel button
+                .heightIn(min = LocalDimensions.current.minSearchInputHeight)
+                .background(backgroundColor, MaterialTheme.shapes.small),
+            decorationBox = { innerTextField ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_search),
+                        contentDescription = null,
+                        colorFilter = ColorFilter.tint(LocalColors.current.textSecondary),
+                        modifier = Modifier
+                            .padding(
+                                horizontal = LocalDimensions.current.smallSpacing,
+                                vertical = LocalDimensions.current.xxsSpacing
+                            )
+                            .size(LocalDimensions.current.iconSmall)
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = LocalDimensions.current.smallSpacing)
+                    ) {
+                        innerTextField()
+                        if (query.isEmpty() && placeholder != null) {
+                            Text(
+                                modifier = Modifier.qaTag(R.string.qa_conversation_search_input),
+                                text = placeholder,
+                                color = LocalColors.current.textSecondary,
+                                style = LocalType.current.xl
+                            )
+                        }
+                    }
+                }
+            }
+        )
+
+        // Right-side Cancel (outside the search field)
+        AnimatedVisibility(visible = isFocused) {
+            Text(
+                text = LocalResources.current.getString(R.string.cancel),
+                style = LocalType.current.base,
+                color = LocalColors.current.text,
+                modifier = Modifier
+                    .clickable {
+                        onClear()
+                        focusManager.clearFocus(force = true)
+                    }
+                    .padding(
+                        horizontal = LocalDimensions.current.smallSpacing,
+                        vertical = LocalDimensions.current.xxsSpacing
+                    )
+            )
+        }
+    }
+}
+
+/**
  * CollapsibleFooterAction
  */
 @Composable
@@ -938,7 +1030,9 @@ private fun CollapsibleFooterActions(
                             modifier = Modifier
                                 .padding(start = LocalDimensions.current.smallSpacing)
                                 .then(
-                                    if (single) Modifier.wrapContentWidth().widthIn(max = capDp)
+                                    if (single) Modifier
+                                        .wrapContentWidth()
+                                        .widthIn(max = capDp)
                                     else Modifier.width(equalWidthDp)
                                 )
                         ) {
@@ -1482,5 +1576,23 @@ fun PreviewActionRowItems() {
                 qaTag = 0
             )
         }
+    }
+}
+
+
+@Preview
+@Composable
+fun PreviewSearchWithCancel(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        SearchBarWithCancel(
+            query = "Test Query",
+            onValueChanged = {  },
+            onClear = {  },
+            placeholder = "Search",
+            enabled = true,
+            isFocused = true
+        )
     }
 }

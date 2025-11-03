@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.only
@@ -59,6 +60,7 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.LoadingDialog
+import org.thoughtcrime.securesms.ui.SearchBarWithCancel
 import org.thoughtcrime.securesms.ui.components.ActionSheet
 import org.thoughtcrime.securesms.ui.components.ActionSheetItemData
 import org.thoughtcrime.securesms.ui.components.BackAppBar
@@ -216,13 +218,25 @@ fun EditGroup(
 
             Text(
                 modifier = Modifier.padding(
-                    start = LocalDimensions.current.smallSpacing,
+                    start = LocalDimensions.current.mediumSpacing,
                     bottom = LocalDimensions.current.smallSpacing
                 ),
                 text = LocalResources.current.getString(R.string.membersNonAdmins),
                 style = LocalType.current.base,
                 color = LocalColors.current.textSecondary
             )
+
+            SearchBarWithCancel(
+                query = "",
+                onValueChanged = {  },
+                onClear = {  },
+                placeholder = "Search",
+                enabled = true,
+                isFocused = false,
+                modifier = Modifier.padding(horizontal =LocalDimensions.current.smallSpacing)
+            )
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
             // List of members
             LazyColumn(modifier = Modifier
