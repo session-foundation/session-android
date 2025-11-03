@@ -1,7 +1,6 @@
 package org.session.libsession.messaging.sending_receiving.pollers
 
 import com.fasterxml.jackson.core.type.TypeReference
-import com.google.protobuf.ByteString
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -42,7 +41,6 @@ import org.session.libsession.messaging.sending_receiving.ReceivedMessageHandler
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.HTTP.Verb.GET
@@ -52,7 +50,6 @@ import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.CommunityDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
-import java.util.concurrent.TimeUnit
 
 private typealias PollRequestToken = Channel<Result<List<String>>>
 
@@ -332,22 +329,16 @@ class OpenGroupPoller @AssistedInject constructor(
             storage.setLastInboxMessageId(server, lastMessageId)
         }
         sortedMessages.forEach {
-            val encodedMessage = Base64.decode(it.message)
-            val envelope = SignalServiceProtos.Envelope.newBuilder()
-                .setTimestampMs(TimeUnit.SECONDS.toMillis(it.postedAt))
-                .setType(SignalServiceProtos.Envelope.Type.SESSION_MESSAGE)
-                .setContent(ByteString.copyFrom(encodedMessage))
-                .setSource(it.sender)
-                .build()
             try {
-                val (message, proto) = messageReceiver.parse(
-                    envelope.toByteArray(),
-                    null,
-                    fromOutbox,
-                    if (fromOutbox) it.recipient else it.sender,
-                    serverPublicKey,
-                    emptySet() // this shouldn't be necessary as we are polling open groups here
+                val parsed = messageReceiver.parseCommunityInboxMessage(
+                    data = Base64.decode(it.message),
+                    isOutgoing = fromOutbox,
+                    otherBlindedPublicKey = if (fromOutbox) it.recipient else it.sender,
+                    communityServerPubKeyHex = serverPublicKey,
                 )
+
+                val message = parsed.message
+
                 if (fromOutbox) {
                     val syncTarget = blindMappingRepository.getMapping(
                         serverUrl = server,
@@ -369,7 +360,7 @@ class OpenGroupPoller @AssistedInject constructor(
                 val threadId = threadDatabase.getThreadIdIfExistsFor(threadAddress)
                 receivedMessageHandler.handle(
                     message = message,
-                    proto = proto,
+                    proto = parsed.proto,
                     threadId = threadId,
                     threadAddress = threadAddress,
                 )
@@ -383,31 +374,24 @@ class OpenGroupPoller @AssistedInject constructor(
         val threadAddress = Address.Community(serverUrl = server, room = roomToken)
         // check thread still exists
         val threadId = storage.getThreadId(threadAddress) ?: return
-        val envelopes =  mutableListOf<Triple<Long?, SignalServiceProtos.Envelope, Map<String, OpenGroupApi.Reaction>?>>()
-        messages.sortedBy { it.serverID!! }.forEach { message ->
-            if (!message.base64EncodedData.isNullOrEmpty()) {
-                val envelope = SignalServiceProtos.Envelope.newBuilder()
-                    .setType(SignalServiceProtos.Envelope.Type.SESSION_MESSAGE)
-                    .setSource(message.sender!!)
-                    .setSourceDevice(1)
-                    .setContent(message.toProto().toByteString())
-                    .setTimestampMs(message.sentTimestamp)
-                    .build()
-                envelopes.add(Triple( message.serverID, envelope, message.reactions))
-            }
-        }
 
-        envelopes.chunked(BatchMessageReceiveJob.BATCH_DEFAULT_NUMBER).forEach { list ->
-            val parameters = list.map { (serverId, message, reactions) ->
-                MessageReceiveParameters(message.toByteArray(), openGroupMessageServerID = serverId, reactions = reactions)
+        messages.asSequence()
+            .map { msg ->
+                MessageReceiveParameters(
+                    data = Base64.decode(msg.base64EncodedData),
+                    openGroupMessageServerID = msg.serverID,
+                    reactions = msg.reactions,
+                )
             }
-            JobQueue.shared.add(batchMessageJobFactory.create(
-                parameters,
-                fromCommunity = threadAddress
-            ))
-        }
+            .chunked(BatchMessageReceiveJob.BATCH_DEFAULT_NUMBER)
+            .forEach { params ->
+                JobQueue.shared.add(batchMessageJobFactory.create(
+                    params,
+                    fromCommunity = threadAddress
+                ))
+            }
 
-        if (envelopes.isNotEmpty()) {
+        if (messages.isNotEmpty()) {
             JobQueue.shared.add(trimThreadJobFactory.create(threadId))
         }
     }

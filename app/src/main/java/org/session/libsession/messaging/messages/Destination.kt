@@ -8,12 +8,6 @@ sealed class Destination {
     data class Contact(var publicKey: String) : Destination() {
         internal constructor(): this("")
     }
-    data class LegacyClosedGroup(var groupPublicKey: String) : Destination() {
-        internal constructor(): this("")
-    }
-    data class LegacyOpenGroup(var roomToken: String, var server: String) : Destination() {
-        internal constructor(): this("", "")
-    }
     data class ClosedGroup(var publicKey: String): Destination() {
         internal constructor(): this("")
     }
@@ -39,9 +33,6 @@ sealed class Destination {
                 is Address.Standard -> {
                     Contact(address.address)
                 }
-                is Address.LegacyGroup -> {
-                    LegacyClosedGroup(address.groupPublicKeyHex)
-                }
                 is Address.Community -> {
                     OpenGroup(roomToken = address.room, server = address.serverUrl, fileIds = fileIds)
                 }
@@ -63,9 +54,10 @@ sealed class Destination {
                 is Address.Group -> {
                     ClosedGroup(address.accountId.hexString)
                 }
-                else -> {
-                    throw Exception("TODO: Handle legacy closed groups.")
-                }
+
+                is Address.Blinded,
+                is Address.LegacyGroup,
+                is Address.Unknown -> error("Unsupported address as destination: $address")
             }
         }
     }

@@ -705,16 +705,6 @@ open class Storage @Inject constructor(
         return lokiAPIDatabase.getLatestClosedGroupEncryptionKeyPair(groupPublicKey)
     }
 
-    override fun getAllLegacyGroupPublicKeys(): Set<String> {
-        return lokiAPIDatabase.getAllClosedGroupPublicKeys()
-    }
-
-    override fun getAllActiveClosedGroupPublicKeys(): Set<String> {
-        return lokiAPIDatabase.getAllClosedGroupPublicKeys().filter {
-            getGroup(GroupUtil.doubleEncodeGroupID(it))?.isActive == true
-        }.toSet()
-    }
-
     override fun addClosedGroupPublicKey(groupPublicKey: String) {
         lokiAPIDatabase.addClosedGroupPublicKey(groupPublicKey)
     }

@@ -113,8 +113,6 @@ interface StorageProtocol {
     fun setActive(groupID: String, value: Boolean)
     fun removeMember(groupID: String, member: Address)
     fun updateMembers(groupID: String, members: List<Address>)
-    fun getAllLegacyGroupPublicKeys(): Set<String>
-    fun getAllActiveClosedGroupPublicKeys(): Set<String>
     fun addClosedGroupPublicKey(groupPublicKey: String)
     fun removeClosedGroupPublicKey(groupPublicKey: String)
     fun addClosedGroupEncryptionKeyPair(encryptionKeyPair: ECKeyPair, groupPublicKey: String, timestamp: Long)

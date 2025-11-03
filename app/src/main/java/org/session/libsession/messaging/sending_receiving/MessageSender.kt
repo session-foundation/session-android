@@ -1,7 +1,6 @@
 package org.session.libsession.messaging.sending_receiving
 
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
@@ -9,6 +8,7 @@ import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.Namespace
+import network.loki.messenger.libsession_util.protocol.SessionProtocol
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.MessageDataProvider
@@ -28,22 +28,21 @@ import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.open_groups.OpenGroupApi.Capability
 import org.session.libsession.messaging.open_groups.OpenGroupMessage
-import org.session.libsession.messaging.utilities.MessageWrapper
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeAPI.nowWithOffset
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.defaultRequiresAuth
-import org.session.libsignal.utilities.hasNamespaces
-import org.session.libsignal.utilities.hexEncodedPublicKey
+import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.service.ExpiringMessageManager
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview as SignalLinkPreview
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel as SignalQuote
@@ -80,7 +79,7 @@ class MessageSender @Inject constructor(
 
     // Convenience
     suspend fun sendNonDurably(message: Message, destination: Destination, isSyncMessage: Boolean) {
-        return if (destination is Destination.LegacyOpenGroup || destination is Destination.OpenGroup || destination is Destination.OpenGroupInbox) {
+        return if (destination is Destination.OpenGroup || destination is Destination.OpenGroupInbox) {
             sendToOpenGroupDestination(destination, message)
         } else {
             sendToSnodeDestination(destination, message, isSyncMessage)
@@ -91,6 +90,9 @@ class MessageSender @Inject constructor(
     @Throws(Exception::class)
     fun buildWrappedMessageToSnode(destination: Destination, message: Message, isSyncMessage: Boolean): SnodeMessage {
         val userPublicKey = storage.getUserPublicKey()
+        val userEd25519PrivKey = requireNotNull(storage.getUserED25519KeyPair()?.secretKey?.data) {
+            "Missing user key"
+        }
         // Set the timestamp, sender and recipient
         val messageSendTime = nowWithOffset
         if (message.sentTimestamp == null) {
@@ -102,9 +104,9 @@ class MessageSender @Inject constructor(
         // SHARED CONFIG
         when (destination) {
             is Destination.Contact -> message.recipient = destination.publicKey
-            is Destination.LegacyClosedGroup -> message.recipient = destination.groupPublicKey
             is Destination.ClosedGroup -> message.recipient = destination.publicKey
-            else -> throw IllegalStateException("Destination should not be an open group.")
+            is Destination.OpenGroup,
+            is Destination.OpenGroupInbox -> error("Destination should not be an open group.")
         }
 
         val isSelfSend = (message.recipient == userPublicKey)
@@ -140,59 +142,38 @@ class MessageSender @Inject constructor(
         // Set the timestamp on the content so it can be verified against envelope timestamp
         proto.setSigTimestampMs(message.sentTimestamp!!)
 
-        // Serialize the protobuf
-        val plaintext = PushTransportDetails.getPaddedMessageBody(proto.build().toByteArray())
-
-        // Envelope information
-        val kind: SignalServiceProtos.Envelope.Type
-        val senderPublicKey: String
-        when (destination) {
+        val messageContent = when (destination) {
             is Destination.Contact -> {
-                kind = SignalServiceProtos.Envelope.Type.SESSION_MESSAGE
-                senderPublicKey = ""
+                SessionProtocol.encodeFor1o1(
+                    plaintext = proto.build().toByteArray(),
+                    myEd25519PrivKey = userEd25519PrivKey,
+                    timestampMs = message.sentTimestamp!!,
+                    recipientPubKey = Hex.fromStringCondensed(destination.publicKey),
+                    proRotatingEd25519PrivKey = null,
+                )
             }
-            is Destination.LegacyClosedGroup -> {
-                kind = SignalServiceProtos.Envelope.Type.CLOSED_GROUP_MESSAGE
-                senderPublicKey = destination.groupPublicKey
-            }
+
             is Destination.ClosedGroup -> {
-                kind = SignalServiceProtos.Envelope.Type.CLOSED_GROUP_MESSAGE
-                senderPublicKey = destination.publicKey
+                SessionProtocol.encodeForGroup(
+                    plaintext = proto.build().toByteArray(),
+                    myEd25519PrivKey = userEd25519PrivKey,
+                    timestampMs = message.sentTimestamp!!,
+                    groupEd25519PublicKey = Hex.fromStringCondensed(destination.publicKey),
+                    groupEd25519PrivateKey = configFactory.withGroupConfigs(AccountId(destination.publicKey)) {
+                        it.groupKeys.groupEncKey()
+                    },
+                    proRotatingEd25519PrivKey = null
+                )
             }
-            else -> throw IllegalStateException("Destination should not be open group.")
+
+            is Destination.OpenGroup,
+            is Destination.OpenGroupInbox -> error("Destination should not be an open group.")
         }
 
-        // Encrypt the serialized protobuf
-        val ciphertext = when (destination) {
-            is Destination.Contact -> MessageEncrypter.encrypt(plaintext, destination.publicKey)
-            is Destination.LegacyClosedGroup -> {
-                val encryptionKeyPair =
-                    MessagingModuleConfiguration.shared.storage.getLatestClosedGroupEncryptionKeyPair(
-                        destination.groupPublicKey
-                    )!!
-                MessageEncrypter.encrypt(plaintext, encryptionKeyPair.hexEncodedPublicKey)
-            }
-            is Destination.ClosedGroup -> {
-                val envelope = MessageWrapper.createEnvelope(kind, message.sentTimestamp!!, senderPublicKey, proto.build().toByteArray())
-                configFactory.withGroupConfigs(AccountId(destination.publicKey)) {
-                    it.groupKeys.encrypt(envelope.toByteArray())
-                }
-            }
-            else -> throw IllegalStateException("Destination should not be open group.")
-        }
-        // Wrap the result using envelope information
-        val wrappedMessage = when (destination) {
-            is Destination.ClosedGroup -> {
-                // encrypted bytes from the above closed group encryption and envelope steps
-                ciphertext
-            }
-            else -> MessageWrapper.wrap(kind, message.sentTimestamp!!, senderPublicKey, ciphertext)
-        }
-        val base64EncodedData = Base64.encodeBytes(wrappedMessage)
         // Send the result
         return SnodeMessage(
             message.recipient!!,
-            base64EncodedData,
+            data = Base64.encodeBytes(messageContent),
             ttl = getSpecifiedTtl(message, isSyncMessage) ?: message.ttl,
             messageSendTime
         )
@@ -207,57 +188,39 @@ class MessageSender @Inject constructor(
 
         try {
             val snodeMessage = buildWrappedMessageToSnode(destination, message, isSyncMessage)
-            // TODO: this might change in future for config messages
-            val forkInfo = SnodeAPI.forkInfo
-            val namespaces: List<Int> = when {
-                destination is Destination.LegacyClosedGroup
-                        && forkInfo.defaultRequiresAuth() -> listOf(Namespace.UNAUTHENTICATED_CLOSED_GROUP())
+            val sendResult = runCatching {
+                when (destination) {
+                    is Destination.ClosedGroup -> {
+                        val groupAuth = requireNotNull(configFactory.getGroupAuth(AccountId(destination.publicKey))) {
+                            "Unable to authorize group message send"
+                        }
 
-                destination is Destination.LegacyClosedGroup
-                        && forkInfo.hasNamespaces() -> listOf(
-                    Namespace.UNAUTHENTICATED_CLOSED_GROUP(),
-                    Namespace.DEFAULT
-                ())
-                destination is Destination.ClosedGroup -> listOf(Namespace.GROUP_MESSAGES())
-
-                else -> listOf(Namespace.DEFAULT())
-            }
-
-            val sendTasks = namespaces.map { namespace ->
-                if (destination is Destination.ClosedGroup) {
-                    val groupAuth = requireNotNull(configFactory.getGroupAuth(AccountId(destination.publicKey))) {
-                        "Unable to authorize group message send"
-                    }
-
-                    async {
                         SnodeAPI.sendMessage(
                             auth = groupAuth,
                             message = snodeMessage,
-                            namespace = namespace,
+                            namespace = Namespace.GROUP_MESSAGES(),
                         )
                     }
-                } else {
-                    async {
-                        SnodeAPI.sendMessage(snodeMessage, auth = null, namespace = namespace)
+                    is Destination.Contact -> {
+                        SnodeAPI.sendMessage(snodeMessage, auth = null, namespace = Namespace.DEFAULT())
                     }
+                    is Destination.OpenGroup,
+                    is Destination.OpenGroupInbox -> throw IllegalStateException("Destination should not be an open group.")
                 }
             }
 
-            val sendTaskResults = sendTasks.map {
-                runCatching { it.await() }
-            }
 
-            val firstSuccess = sendTaskResults.firstOrNull { it.isSuccess }?.getOrNull()
-
-            if (firstSuccess != null) {
-                message.serverHash = firstSuccess.hash
+            if (sendResult.isSuccess) {
+                message.serverHash = sendResult.getOrThrow().hash
                 handleSuccessfulMessageSend(message, destination, isSyncMessage)
             } else {
-                // If all tasks failed, throw the first exception
-                throw sendTaskResults.first().exceptionOrNull()!!
+                throw sendResult.exceptionOrNull()!!
             }
         } catch (exception: Exception) {
-            handleFailure(exception)
+            if (exception !is CancellationException) {
+                handleFailure(exception)
+            }
+
             throw exception
         }
     }
@@ -302,7 +265,7 @@ class MessageSender @Inject constructor(
         val userEdKeyPair = storage.getUserED25519KeyPair()!!
         var serverCapabilities = listOf<String>()
         var blindedPublicKey: ByteArray? = null
-        when(destination) {
+        when (destination) {
             is Destination.OpenGroup -> {
                 serverCapabilities = storage.getServerCapabilities(destination.server).orEmpty()
                 storage.getOpenGroupPublicKey(destination.server)?.let {
@@ -319,16 +282,9 @@ class MessageSender @Inject constructor(
                     serverPubKey = Hex.fromStringCondensed(destination.serverPublicKey),
                 )?.pubKey?.data
             }
-            is Destination.LegacyOpenGroup -> {
-                serverCapabilities = storage.getServerCapabilities(destination.server).orEmpty()
-                storage.getOpenGroupPublicKey(destination.server)?.let {
-                    blindedPublicKey = BlindKeyAPI.blind15KeyPairOrNull(
-                        ed25519SecretKey = userEdKeyPair.secretKey.data,
-                        serverPubKey = Hex.fromStringCondensed(it),
-                    )?.pubKey?.data
-                }
-            }
-            else -> {}
+
+            is Destination.ClosedGroup,
+            is Destination.Contact -> error("Destination must be an open group.")
         }
         val messageSender = if (serverCapabilities.contains(Capability.BLIND.name.lowercase()) && blindedPublicKey != null) {
             AccountId(IdPrefix.BLINDED, blindedPublicKey).hexString
@@ -354,8 +310,11 @@ class MessageSender @Inject constructor(
                     if (message !is VisibleMessage || !message.isValid()) {
                         throw Error.InvalidMessage
                     }
-                    val messageBody = content.toByteArray()
-                    val plaintext = PushTransportDetails.getPaddedMessageBody(messageBody)
+                    val plaintext = SessionProtocol.encodeForCommunity(
+                        plaintext = content.toByteArray(),
+                        proRotatingEd25519PrivKey = null
+                    )
+
                     val openGroupMessage = OpenGroupMessage(
                         sender = message.sender,
                         sentTimestamp = message.sentTimestamp!!,
@@ -381,13 +340,15 @@ class MessageSender @Inject constructor(
                     if (message !is VisibleMessage || !message.isValid()) {
                         throw Error.InvalidMessage
                     }
-                    val messageBody = content.toByteArray()
-                    val plaintext = PushTransportDetails.getPaddedMessageBody(messageBody)
-                    val ciphertext = MessageEncrypter.encryptBlinded(
-                        plaintext,
-                        destination.blindedPublicKey,
-                        destination.serverPublicKey
+                    val ciphertext = SessionProtocol.encodeForCommunityInbox(
+                        plaintext = content.toByteArray(),
+                        myEd25519PrivKey = userEdKeyPair.secretKey.data,
+                        timestampMs = message.sentTimestamp!!,
+                        recipientPubKey = Hex.fromStringCondensed(destination.blindedPublicKey),
+                        communityServerPubKey = Hex.fromStringCondensed(destination.serverPublicKey),
+                        proRotatingEd25519PrivKey = null,
                     )
+
                     val base64EncodedData = Base64.encodeBytes(ciphertext)
                     val response = OpenGroupApi.sendDirectMessage(
                         base64EncodedData,
@@ -408,8 +369,7 @@ class MessageSender @Inject constructor(
     }
 
     // Result Handling
-    fun handleSuccessfulMessageSend(message: Message, destination: Destination, isSyncMessage: Boolean = false, openGroupSentTimestamp: Long = -1) {
-        val storage = MessagingModuleConfiguration.shared.storage
+    private fun handleSuccessfulMessageSend(message: Message, destination: Destination, isSyncMessage: Boolean = false, openGroupSentTimestamp: Long = -1) {
         val userPublicKey = storage.getUserPublicKey()!!
         // Ignore future self-sends
         storage.addReceivedMessageTimestamp(message.sentTimestamp!!)
@@ -430,21 +390,9 @@ class MessageSender @Inject constructor(
             storage.clearErrorMessage(messageId)
 
             // Track the open group server message ID
-            val messageIsAddressedToCommunity = message.openGroupServerMessageID != null && (destination is Destination.LegacyOpenGroup || destination is Destination.OpenGroup)
+            val messageIsAddressedToCommunity = message.openGroupServerMessageID != null && (destination is Destination.OpenGroup)
             if (messageIsAddressedToCommunity) {
-                val address = when (destination) {
-                    is Destination.LegacyOpenGroup -> {
-                        Address.Community(destination.server, destination.roomToken)
-                    }
-
-                    is Destination.OpenGroup -> {
-                        Address.Community(destination.server, destination.roomToken)
-                    }
-
-                    else -> {
-                        throw Exception("Destination was a different destination than we were expecting")
-                    }
-                }
+                val address = Address.Community(destination.server, destination.roomToken)
                 val communityThreadID = storage.getThreadId(address)
                 if (communityThreadID != null && communityThreadID >= 0) {
                     storage.setOpenGroupServerMessageID(
@@ -498,7 +446,6 @@ class MessageSender @Inject constructor(
     }
 
     // Convenience
-    @JvmStatic
     fun send(message: VisibleMessage, address: Address, quote: SignalQuote?, linkPreview: SignalLinkPreview?) {
         val messageId = message.id
         if (messageId?.mms == true) {
@@ -517,7 +464,6 @@ class MessageSender @Inject constructor(
         send(message, address)
     }
 
-    @JvmStatic
     @JvmOverloads
     fun send(message: Message, address: Address, statusCallback: SendChannel<Result<Unit>>? = null) {
         val threadID = storage.getThreadId(address)

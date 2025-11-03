@@ -36,6 +36,7 @@ import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsignal.protos.UtilProtos
+import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -43,7 +44,7 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import kotlin.math.max
 
-data class MessageReceiveParameters(
+class MessageReceiveParameters(
     val data: ByteArray,
     val serverHash: String? = null,
     val openGroupMessageServerID: Long? = null,
@@ -152,29 +153,49 @@ class BatchMessageReceiveJob @AssistedInject constructor(
     suspend fun executeAsync(dispatcherName: String) {
         val threadMap = mutableMapOf<Long, Pair<Address.Conversable, MutableList<ParsedMessage>>>()
         val localUserPublicKey = storage.getUserPublicKey()
-        val serverPublicKey = fromCommunity?.let { storage.getOpenGroupPublicKey(it.serverUrl) }
-        val currentClosedGroups = storage.getAllActiveClosedGroupPublicKeys()
 
         // parse and collect IDs
-        messages.forEach { messageParameters ->
-            val (data, serverHash, openGroupMessageServerID) = messageParameters
+        messages.forEach { params ->
             try {
-                val (message, proto) = messageReceiver.parse(
-                    data,
-                    openGroupMessageServerID,
-                    openGroupPublicKey = serverPublicKey,
-                    currentClosedGroups = currentClosedGroups,
-                    closedGroupSessionId = messageParameters.closedGroup?.publicKey
-                )
-                message.serverHash = serverHash
-                val parsedParams = ParsedMessage(messageParameters, message, proto)
+                val parsedParams = when {
+                    fromCommunity != null -> {
+                        messageReceiver.parseCommunityMessage(
+                            data = params.data,
+                            messageServerId = requireNotNull(params.openGroupMessageServerID) {
+                                "Open group message must have server ID"
+                            },
+                            communityServerPubKeyHex = requireNotNull(storage.getOpenGroupPublicKey(fromCommunity.serverUrl)) {
+                                "Given message doesn't have a valid community server public key or the group has been deleted"
+                            }
+                        )
+                    }
 
-                if(isHidden(message)) return@forEach
+                    params.closedGroup != null -> {
+                        messageReceiver.parseGroupMessage(
+                            data = params.data,
+                            serverHash = requireNotNull(params.serverHash) {
+                                "Closed group message must have server hash"
+                            },
+                            groupId = AccountId(params.closedGroup.publicKey)
+                        )
+                    }
+
+                    else -> {
+                        messageReceiver.parse1o1Message(
+                            data = params.data,
+                            serverHash = requireNotNull(params.serverHash) {
+                                "1on1 message must have server hash"
+                            }
+                        )
+                    }
+                }
+
+                if(isHidden(parsedParams.message)) return@forEach
 
                 val threadAddress = when {
                     fromCommunity != null -> fromCommunity
-                    message.groupPublicKey != null -> message.groupPublicKey!!.toAddress()
-                    else -> message.senderOrSync.toAddress()
+                    parsedParams.message.groupPublicKey != null -> parsedParams.message.groupPublicKey!!.toAddress()
+                    else -> parsedParams.message.senderOrSync.toAddress()
                 } as Address.Conversable
 
                 val threadID = if (shouldCreateThread(parsedParams)) {
@@ -194,12 +215,12 @@ class BatchMessageReceiveJob @AssistedInject constructor(
                         }
                         else {
                             Log.e(TAG, "Couldn't receive message, failed (id: $id)", e)
-                            failures += messageParameters
+                            failures += params
                         }
                     }
                     else -> {
                         Log.e(TAG, "Couldn't receive message, failed (id: $id)", e)
-                        failures += messageParameters
+                        failures += params
                     }
                 }
             }
@@ -218,9 +239,9 @@ class BatchMessageReceiveJob @AssistedInject constructor(
 
             val communityReactions = mutableMapOf<MessageId, MutableList<ReactionRecord>>()
 
-            messages.forEach { (parameters, message, proto) ->
+            messages.forEach { msg ->
                 try {
-                    when (message) {
+                    when (val message = msg.message) {
                         is VisibleMessage -> {
                             val isUserBlindedSender =
                                 message.sender == handlerContext.userBlindedKey
@@ -231,7 +252,7 @@ class BatchMessageReceiveJob @AssistedInject constructor(
                             }
                             val messageId = receivedMessageHandler.handleVisibleMessage(
                                 message = message,
-                                proto = proto,
+                                proto = msg.proto,
                                 context = handlerContext,
                                 runThreadUpdate = false,
                                 runProfileUpdate = true
@@ -244,11 +265,11 @@ class BatchMessageReceiveJob @AssistedInject constructor(
                                 )
                             }
 
-                            parameters.openGroupMessageServerID?.let {
+                            msg.parameters.openGroupMessageServerID?.let {
                                 constructReactionRecords(
                                     openGroupMessageServerID = it,
                                     context = handlerContext,
-                                    reactions = parameters.reactions,
+                                    reactions = msg.parameters.reactions,
                                     out = communityReactions
                                 )
                             }
@@ -265,7 +286,7 @@ class BatchMessageReceiveJob @AssistedInject constructor(
 
                         else -> receivedMessageHandler.handle(
                             message = message,
-                            proto = proto,
+                            proto = msg.proto,
                             threadId = threadId,
                             threadAddress = threadAddress
                         )
@@ -276,7 +297,7 @@ class BatchMessageReceiveJob @AssistedInject constructor(
                         Log.e(TAG, "Message failed permanently (id: $id)", e)
                     } else {
                         Log.e(TAG, "Message failed (id: $id)", e)
-                        failures += parameters
+                        failures += msg.parameters
                     }
                 }
             }
