@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -26,8 +27,12 @@ fun <T>BaseStateProScreen(
     when (state) {
         is State.Error -> {
             // show a toast and go back to pro settings home screen
-            Toast.makeText(LocalContext.current, R.string.errorGeneric, Toast.LENGTH_LONG).show()
-            onBack()
+            val context = LocalContext.current
+
+            LaunchedEffect(Unit) {
+                Toast.makeText(context, R.string.errorGeneric, Toast.LENGTH_LONG).show()
+                onBack()
+            }
         }
 
         is State.Loading -> {
