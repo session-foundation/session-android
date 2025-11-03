@@ -806,7 +806,6 @@
     <string name="proAnimatedDisplayPicturesNonProModalDescription">GIFをアップロード（PRO）</string>
     <string name="proCallToActionLongerMessages">長文を送りたいですか？{app_pro}でより多くのテキストを送り、プレミアム機能を解除しましょう。</string>
     <string name="proCallToActionPinnedConversations">さらにピン留めしますか？{app_pro}でチャットを整理して、プレミアム機能を解除しましょう</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">5件以上ピン留めしたいですか？{app_pro}でチャットを整理して、プレミアム機能を解除しましょう</string>
     <string name="proFeatureListAnimatedDisplayPicture">GIFとWebPのディスプレイ画像をアップロード</string>
     <string name="proFeatureListLargerGroups">最大300人の大型グループチャット</string>
     <string name="proFeatureListLoadsMore">さらに多数の限定機能</string>

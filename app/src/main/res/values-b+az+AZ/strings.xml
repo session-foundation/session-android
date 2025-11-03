@@ -911,7 +911,6 @@
     <string name="proBilledQuarterly">{price} - rüblük haqq</string>
     <string name="proCallToActionLongerMessages">Daha uzun mesajlar göndərmək istəyirsiniz? {app_pro} ilə daha çox mətn göndərin və premium özəlliklərin kilidini açın</string>
     <string name="proCallToActionPinnedConversations">Daha çoxunu sancmaq istəyirsiniz? {app_pro} ilə söhbətlərinizi təşkil edin və premium özəlliklərin kilidini açın</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">5-dən çoxunu sancmaq istəyirsiniz? {app_pro} ilə söhbətlərinizi təşkil edin və premium özəlliklərin kilidini açın</string>
     <string name="proErrorRefreshingStatus">{pro} statusunu təzələmə xətası</string>
     <string name="proExpired">Müddəti bitib</string>
     <string name="proExpiringSoon">Tezliklə bitir</string>
