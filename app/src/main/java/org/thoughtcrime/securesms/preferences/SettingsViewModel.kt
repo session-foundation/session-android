@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.preferences
 
 import android.content.Context
 import android.net.Uri
+import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
@@ -28,6 +29,7 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.UserPic
+import okio.blackholeSink
 import okio.buffer
 import okio.source
 import org.session.libsession.database.StorageProtocol
@@ -51,6 +53,8 @@ import org.thoughtcrime.securesms.attachments.AvatarUploadManager
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.mms.MediaConstraints
+import org.thoughtcrime.securesms.mms.PushMediaConstraints
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
@@ -199,16 +203,33 @@ class SettingsViewModel @Inject constructor(
     fun onAvatarPicked(uri: Uri) {
         Log.i(TAG,  "Picked a new avatar: $uri")
 
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             try {
-                val bytes = context.contentResolver.openInputStream(uri)!!.source().buffer().use { data ->
-                    attachmentProcessor
-                        .processAvatar(
-                            data = data,
-                            dataSizeHint = null
-                        )
-                        ?.data
-                        ?: data.readByteArray()
+                // Query the content resolver for the size of this image
+                val contentSize = withContext(Dispatchers.IO) {
+                    context.contentResolver.query(uri, arrayOf(OpenableColumns.SIZE), null, null, null)
+                        ?.use { cursor ->
+                            if (cursor.moveToFirst()) {
+                                val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+                                cursor.getLong(sizeIndex)
+                            } else {
+                                null
+                            }
+                        }
+                        ?: context.contentResolver.openInputStream(uri)!!.source().buffer().use { it.readAll(blackholeSink()) }
+                }
+
+                if (contentSize > MediaConstraints.getPushMediaConstraints().getImageMaxSize(context).toLong()) {
+                    Log.e(TAG, "Selected avatar image is too large: $contentSize bytes")
+                    Toast.makeText(context, R.string.profileDisplayPictureSizeError, Toast.LENGTH_LONG).show()
+                    return@launch
+                }
+
+
+                val bytes = withContext(Dispatchers.IO) {
+                    context.contentResolver.openInputStream(uri)!!.use {
+                        it.readBytes()
+                    }
                 }
 
                 _uiState.update {
@@ -221,13 +242,10 @@ class SettingsViewModel @Inject constructor(
                     )
                 }
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Log.e(TAG, "Error reading avatar bytes", e)
-                if (e !is CancellationException) {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG)
-                            .show()
-                    }
-                }
+                Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG)
+                    .show()
             }
         }
     }
@@ -317,7 +335,11 @@ class SettingsViewModel @Inject constructor(
                     // update dialog state
                     _uiState.update { it.copy(avatarDialogState = AvatarDialogState.NoAvatar) }
                 } else {
-                    avatarUploadManager.uploadAvatar(profilePicture, isReupload = false)
+                    val processed = withContext(Dispatchers.Default) {
+                        attachmentProcessor.processAvatar(profilePicture)
+                    }?.data ?: profilePicture
+
+                    avatarUploadManager.uploadAvatar(processed, isReupload = false)
 
                     // We'll have to refetch the recipient to get the new avatar
                     val selfRecipient = recipientRepository.getSelf()

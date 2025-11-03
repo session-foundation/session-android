@@ -8,7 +8,6 @@ import coil3.BitmapImage
 import coil3.ImageLoader
 import coil3.decode.DataSource
 import coil3.decode.ImageSource
-import coil3.fetch.FetchResult
 import coil3.fetch.Fetcher
 import coil3.fetch.SourceFetchResult
 import coil3.request.CachePolicy
@@ -25,7 +24,8 @@ import network.loki.messenger.libsession_util.image.GifUtils
 import network.loki.messenger.libsession_util.image.WebPUtils
 import okio.BufferedSource
 import okio.FileSystem
-import okio.blackholeSink
+import okio.buffer
+import okio.source
 import org.session.libsession.utilities.Util
 import org.session.libsignal.streams.AttachmentCipherInputStream
 import org.session.libsignal.streams.AttachmentCipherOutputStream
@@ -37,6 +37,7 @@ import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.util.AnimatedImageUtils
 import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.ImageUtils
+import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.security.MessageDigest
 import java.util.concurrent.TimeoutException
@@ -63,13 +64,13 @@ class AttachmentProcessor @Inject constructor(
     )
 
     suspend fun processAvatar(
-        data: BufferedSource,
-        dataSizeHint: Long?,
+        data: ByteArray,
     ): ProcessResult? {
+        val buffer = ByteArrayInputStream(data).source().buffer()
         return when {
-            AnimatedImageUtils.isAnimatedWebP(data) -> {
+            AnimatedImageUtils.isAnimatedWebP(buffer) -> {
                 val convertResult = runCatching {
-                    data.peek().use {
+                    buffer.peek().use {
                         processAnimatedWebP(
                             data = it,
                             maxImageResolution = MAX_AVATAR_SIZE_PX,
@@ -88,11 +89,10 @@ class AttachmentProcessor @Inject constructor(
                     else -> throw convertResult.exceptionOrNull()!!
                 }
 
-                val dataSize = dataSizeHint ?: data.readAll(blackholeSink())
-                if (dataSize < processResult.data.size) {
+                if (processResult.data.size > data.size) {
                     Log.d(
                         TAG,
-                        "Avatar processing increased size from $dataSize to ${processResult.data.size}, skipped result"
+                        "Avatar processing increased size from ${data.size} to ${processResult.data.size}, skipped result"
                     )
                     return null
                 } else {
@@ -101,7 +101,7 @@ class AttachmentProcessor @Inject constructor(
             }
 
             AnimatedImageUtils.isAnimatedGif(data) -> {
-                val origSize = data.peek().inputStream().use(BitmapUtil::getDimensions)
+                val origSize = ByteArrayInputStream(data).use(BitmapUtil::getDimensions)
                     .let { pair -> IntSize(pair.first, pair.second) }
 
                 val targetSize = if (origSize.width <= MAX_AVATAR_SIZE_PX.width &&
@@ -113,25 +113,39 @@ class AttachmentProcessor @Inject constructor(
 
                 // First try to convert to webp in 5 seconds
                 val convertResult = runCatching {
-                    data.peek().inputStream().use { input ->
-                        WebPUtils.encodeGifToWebP(
-                            input = input, 5_000L,
-                            targetWidth = targetSize.width, targetHeight = targetSize.height
+                    "image/webp" to WebPUtils.encodeGifToWebP(
+                        input = data,
+                        timeoutMills = 5_000L,
+                        targetWidth = targetSize.width, targetHeight = targetSize.height
+                    )
+                }.recoverCatching { e ->
+                    if (e is TimeoutException) {
+                        // If we timed out, try re-encoding as GIF in 2 seconds
+                        Log.w(TAG, "WebP conversion timed out, trying GIF re-encoding as fallback")
+                        "image/gif" to GifUtils.reencodeGif(
+                            input = data,
+                            timeoutMills = 2_000L,
+                            targetWidth = targetSize.width,
+                            targetHeight = targetSize.height
                         )
+                    } else {
+                        throw e
                     }
                 }
 
                 val processResult = when {
-                    convertResult.isSuccess -> ProcessResult(
-                        data = convertResult.getOrThrow(),
-                        mimeType = "image/webp",
-                        imageSize = targetSize
-                    )
+                    convertResult.isSuccess -> {
+                        val (mimeType, result) = convertResult.getOrThrow()
+                        ProcessResult(
+                            data = result,
+                            mimeType = mimeType,
+                            imageSize = targetSize
+                        )
+                    }
 
                     convertResult.exceptionOrNull() is TimeoutException -> {
-                        Log.w(TAG, "WebP conversion timed out, falling back to GIF re-encoding")
-                        // Fallback to re-encoding as GIF
-                        processGif(data.peek(), MAX_AVATAR_SIZE_PX)
+                        Log.w(TAG, "All operation times out, skipping avatar processing")
+                        null
                     }
 
                     else -> {
@@ -139,15 +153,9 @@ class AttachmentProcessor @Inject constructor(
                     }
                 }
 
-                if (processResult != null) {
-                    val dataSize = dataSizeHint ?: data.readAll(blackholeSink())
-                    if (dataSize < processResult.data.size) {
-                        Log.d(
-                            TAG,
-                            "Avatar processing increased size from $dataSize to ${processResult.data.size}, skipped result"
-                        )
-                        return null
-                    }
+                if (processResult != null && processResult.data.size > data.size) {
+                    Log.d(TAG, "Avatar processing increased size from ${data.size} to ${processResult.data.size}, skipped result")
+                    return null
                 }
 
                 processResult
@@ -463,14 +471,12 @@ class AttachmentProcessor @Inject constructor(
             ).first
         }
 
-        val reencoded = data.peek().inputStream().use { input ->
-            GifUtils.reencodeGif(
-                input = input,
-                targetWidth = targetSize.width,
-                targetHeight = targetSize.height,
-                timeoutMills = 10_000L,
-            )
-        }
+        val reencoded = GifUtils.reencodeGif(
+            input = data.readByteArray(),
+            targetWidth = targetSize.width,
+            targetHeight = targetSize.height,
+            timeoutMills = 10_000L,
+        )
 
         Log.d(
             TAG,
@@ -494,14 +500,12 @@ class AttachmentProcessor @Inject constructor(
             options: Options,
             imageLoader: ImageLoader
         ): Fetcher {
-            return object : Fetcher {
-                override suspend fun fetch(): FetchResult? {
-                    return SourceFetchResult(
-                        source = ImageSource(data, FileSystem.SYSTEM),
-                        mimeType = null,
-                        dataSource = DataSource.MEMORY
-                    )
-                }
+            return Fetcher {
+                SourceFetchResult(
+                    source = ImageSource(data, FileSystem.SYSTEM),
+                    mimeType = null,
+                    dataSource = DataSource.MEMORY
+                )
             }
         }
     }

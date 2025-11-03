@@ -17,9 +17,7 @@ import dagger.Lazy
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.BuildConfig
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -33,7 +31,6 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
@@ -108,8 +105,7 @@ class AvatarReuploadWorker @AssistedInject constructor(
             if ((lastUpdated != null && needsReProcessing(source)) || lastUpdated == null) {
                 logAndToast("About to start reuploading avatar.")
                 val attachment = attachmentProcessor.processAvatar(
-                    data = source,
-                    dataSizeHint = null,
+                    data = source.use { it.readByteArray() },
                 ) ?: return Result.failure()
 
                 Log.d(TAG, "Reuploading avatar with mimeType=${attachment.mimeType}, size=${attachment.imageSize}")
