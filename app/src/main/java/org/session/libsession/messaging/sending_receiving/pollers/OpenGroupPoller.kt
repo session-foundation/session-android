@@ -75,6 +75,7 @@ class OpenGroupPoller @AssistedInject constructor(
     private val trimThreadJobFactory: TrimThreadJob.Factory,
     private val openGroupDeleteJobFactory: OpenGroupDeleteJob.Factory,
     private val communityDatabase: CommunityDatabase,
+    private val messageReceiver: MessageReceiver,
     @Assisted private val server: String,
     @Assisted private val scope: CoroutineScope,
     @Assisted private val pollerSemaphore: Semaphore,
@@ -339,7 +340,7 @@ class OpenGroupPoller @AssistedInject constructor(
                 .setSource(it.sender)
                 .build()
             try {
-                val (message, proto) = MessageReceiver.parse(
+                val (message, proto) = messageReceiver.parse(
                     envelope.toByteArray(),
                     null,
                     fromOutbox,

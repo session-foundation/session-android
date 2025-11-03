@@ -62,6 +62,7 @@ class BatchMessageReceiveJob @AssistedInject constructor(
     private val messageNotifier: MessageNotifier,
     private val threadDatabase: ThreadDatabase,
     private val recipientRepository: RecipientRepository,
+    private val messageReceiver: MessageReceiver,
 ) : Job {
 
     override var delegate: JobDelegate? = null
@@ -105,6 +106,7 @@ class BatchMessageReceiveJob @AssistedInject constructor(
             fromCommunity = fromCommunity,
             threadDatabase = threadDatabase,
             recipientRepository = recipientRepository,
+            messageReceiver = messageReceiver,
         )
     }
 
@@ -157,7 +159,7 @@ class BatchMessageReceiveJob @AssistedInject constructor(
         messages.forEach { messageParameters ->
             val (data, serverHash, openGroupMessageServerID) = messageParameters
             try {
-                val (message, proto) = MessageReceiver.parse(
+                val (message, proto) = messageReceiver.parse(
                     data,
                     openGroupMessageServerID,
                     openGroupPublicKey = serverPublicKey,
