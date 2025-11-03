@@ -67,6 +67,14 @@ class EditGroupViewModel @AssistedInject constructor(
     val excludingAccountIDsFromContactSelection: Set<String>
         get() = groupInfo.value?.second?.mapTo(hashSetOf()) { it.accountId.hexString }.orEmpty()
 
+//     Output: Intermediate states
+    private val mutableSearchFocused = MutableStateFlow(false)
+    val searchFocused: StateFlow<Boolean> get() = mutableSearchFocused
+
+    fun onSearchFocusChanged(isFocused :Boolean){
+        mutableSearchFocused.value = isFocused
+    }
+
     fun onContactSelected(contacts: Set<Address>) {
         performGroupOperation(
             showLoading = false,

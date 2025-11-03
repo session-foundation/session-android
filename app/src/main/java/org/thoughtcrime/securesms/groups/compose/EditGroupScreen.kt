@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.groups.compose
 
 import android.R.attr.data
+import android.R.attr.name
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -103,6 +104,11 @@ fun EditGroupScreen(
         hideActionSheet = viewModel::hideActionBottomSheet,
         clickedMember = viewModel.clickedMember.collectAsState().value,
         showLoading = viewModel.inProgress.collectAsState().value,
+        searchQuery= viewModel.searchQuery.collectAsState().value,
+        searchFocused = viewModel.searchFocused.collectAsState().value,
+        onSearchQueryChanged = viewModel::onSearchQueryChanged,
+        onSearchFocusChanged = viewModel::onSearchFocusChanged,
+        onSearchQueryClear = {viewModel.onSearchQueryChanged("") }
     )
 }
 
@@ -117,6 +123,11 @@ fun EditGroup(
     onPromoteClick: (accountId: AccountId) -> Unit,
     onRemoveClick: (accountId: AccountId, removeMessages: Boolean) -> Unit,
     onMemberClicked: (GroupMemberState) -> Unit,
+    onSearchFocusChanged : (isFocused : Boolean) -> Unit,
+    searchFocused : Boolean,
+    searchQuery: String,
+    onSearchQueryChanged: (String) -> Unit,
+    onSearchQueryClear: () -> Unit,
     hideActionSheet: () -> Unit,
     clickedMember: GroupMemberState?,
     groupName: String,
@@ -158,25 +169,28 @@ fun EditGroup(
             .padding(paddingValues)
             .consumeWindowInsets(paddingValues)) {
 
-            Cell(
-                modifier = Modifier.fillMaxWidth()
-                    .padding(LocalDimensions.current.smallSpacing),
-            ) {
-                Column {
-                    optionsList.forEachIndexed { index, option ->
-                        ItemButton(
-                            modifier = Modifier.qaTag(option.qaTag),
-                            text = annotatedStringResource(option.name),
-                            iconRes = option.icon,
-                            shape = when (index) {
-                                0 -> getCellTopShape()
-                                optionsList.lastIndex -> getCellBottomShape()
-                                else -> RectangleShape
-                            },
-                            onClick = option.onClick,
-                        )
+            if(showAddMembers){
+                Cell(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(LocalDimensions.current.smallSpacing),
+                ) {
+                    Column {
+                        optionsList.forEachIndexed { index, option ->
+                            ItemButton(
+                                modifier = Modifier.qaTag(option.qaTag),
+                                text = annotatedStringResource(option.name),
+                                iconRes = option.icon,
+                                shape = when (index) {
+                                    0 -> getCellTopShape()
+                                    optionsList.lastIndex -> getCellBottomShape()
+                                    else -> RectangleShape
+                                },
+                                onClick = option.onClick,
+                            )
 
-                        if(index != optionsList.lastIndex) Divider()
+                            if(index != optionsList.lastIndex) Divider()
+                        }
                     }
                 }
             }
@@ -227,13 +241,14 @@ fun EditGroup(
             )
 
             SearchBarWithCancel(
-                query = "",
-                onValueChanged = {  },
-                onClear = {  },
+                query = searchQuery,
+                onValueChanged = onSearchQueryChanged,
+                onClear = onSearchQueryClear,
                 placeholder = "Search",
                 enabled = true,
-                isFocused = false,
-                modifier = Modifier.padding(horizontal =LocalDimensions.current.smallSpacing)
+                isFocused = searchFocused,
+                modifier = Modifier.padding(horizontal =LocalDimensions.current.smallSpacing),
+                onFocusChanged = onSearchFocusChanged
             )
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
@@ -532,6 +547,11 @@ private fun EditGroupPreviewSheet() {
             hideActionSheet = {},
             clickedMember = oneMember,
             showLoading = false,
+            searchQuery = "Test",
+            onSearchQueryChanged = { },
+            onSearchFocusChanged = { },
+            searchFocused = false,
+            onSearchQueryClear = {},
         )
     }
 }
@@ -627,6 +647,11 @@ private fun EditGroupEditNamePreview(
             hideActionSheet = {},
             clickedMember = null,
             showLoading = false,
+            searchQuery = "",
+            onSearchQueryChanged = { },
+            onSearchFocusChanged = {},
+            searchFocused = true,
+            onSearchQueryClear = {},
         )
     }
 }

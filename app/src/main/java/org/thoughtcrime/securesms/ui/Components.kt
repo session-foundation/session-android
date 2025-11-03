@@ -82,6 +82,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
@@ -773,6 +774,7 @@ fun SearchBarWithCancel(
     onValueChanged: (String) -> Unit,
     onClear: () -> Unit,
     isFocused: Boolean,
+    onFocusChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     placeholder: String? = null,
     enabled: Boolean = true,
@@ -795,7 +797,8 @@ fun SearchBarWithCancel(
             modifier = Modifier
                 .weight(1f) // leave room on the right for the cancel button
                 .heightIn(min = LocalDimensions.current.minSearchInputHeight)
-                .background(backgroundColor, MaterialTheme.shapes.small),
+                .background(backgroundColor, MaterialTheme.shapes.small)
+                .onFocusChanged { onFocusChanged(it.isFocused) },
             decorationBox = { innerTextField ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -1592,7 +1595,8 @@ fun PreviewSearchWithCancel(
             onClear = {  },
             placeholder = "Search",
             enabled = true,
-            isFocused = true
+            isFocused = true,
+            onFocusChanged = {}
         )
     }
 }
