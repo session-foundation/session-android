@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.ui
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutLinearInEasing
@@ -639,11 +640,15 @@ fun LaunchedEffectAsync(block: suspend CoroutineScope.() -> Unit) {
 
 @Composable
 fun LoadingArcOr(loading: Boolean, content: @Composable () -> Unit) {
-    AnimatedVisibility(loading) {
-        SmallCircularProgressIndicator(color = LocalContentColor.current)
-    }
-    AnimatedVisibility(!loading) {
-        content()
+    Crossfade(loading) { isLoading ->
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            if (isLoading) {
+                SmallCircularProgressIndicator(color = LocalContentColor.current)
+            } else {
+                content()
+            }
+        }
+
     }
 }
 

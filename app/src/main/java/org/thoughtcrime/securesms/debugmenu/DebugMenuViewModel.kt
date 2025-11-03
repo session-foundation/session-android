@@ -110,6 +110,7 @@ class DebugMenuViewModel @Inject constructor(
                 .flatMap { it.availablePlans.asSequence().map { plan -> DebugProPlan(it, plan) } }
                 .toList(),
             forceNoBilling = textSecurePreferences.getDebugForceNoBilling(),
+            withinQuickRefund = textSecurePreferences.getDebugIsWithinQuickRefund(),
             availableAltFileServers = TEST_FILE_SERVERS,
             alternativeFileServer = textSecurePreferences.alternativeFileServer,
         )
@@ -285,6 +286,13 @@ class DebugMenuViewModel @Inject constructor(
                 }
             }
 
+            is Commands.WithinQuickRefund -> {
+                textSecurePreferences.setDebugIsWithinQuickRefund(command.set)
+                _uiState.update {
+                    it.copy(withinQuickRefund = command.set)
+                }
+            }
+
             is Commands.ForcePostPro -> {
                 textSecurePreferences.setForcePostPro(command.set)
                 _uiState.update {
@@ -333,7 +341,9 @@ class DebugMenuViewModel @Inject constructor(
             }
 
             is Commands.PurchaseDebugPlan -> {
-                command.plan.apply { manager.purchasePlan(plan) }
+                viewModelScope.launch {
+                    command.plan.apply { manager.purchasePlan(plan) }
+                }
             }
 
             is Commands.ToggleDeterministicEncryption -> {
@@ -469,6 +479,7 @@ class DebugMenuViewModel @Inject constructor(
         val selectedDebugProPlanStatus: DebugProPlanStatus,
         val debugProPlans: List<DebugProPlan>,
         val forceNoBilling: Boolean,
+        val withinQuickRefund: Boolean,
         val alternativeFileServer: FileServer? = null,
         val availableAltFileServers: List<FileServer> = emptyList(),
     )
@@ -509,6 +520,7 @@ class DebugMenuViewModel @Inject constructor(
         data class ForceOtherUsersAsPro(val set: Boolean) : Commands()
         data class ForceIncomingMessagesAsPro(val set: Boolean) : Commands()
         data class ForceNoBilling(val set: Boolean) : Commands()
+        data class WithinQuickRefund(val set: Boolean) : Commands()
         data class ForcePostPro(val set: Boolean) : Commands()
         data class ForceShortTTl(val set: Boolean) : Commands()
         data class SetMessageProFeature(val feature: ProStatusManager.MessageProFeature, val set: Boolean) : Commands()
