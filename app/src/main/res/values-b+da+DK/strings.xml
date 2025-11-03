@@ -145,6 +145,7 @@
     <string name="banUserBanned">Bruger bandlyst</string>
     <string name="banUserDescription">Indtast konto-ID\'et for den bruger, du vil blokere</string>
     <string name="block">Bloker</string>
+    <string name="blockBlockedDescription">Fjern blokering af denne kontakt for at sende en besked</string>
     <string name="blockBlockedNone">Ingen blokerede kontakter</string>
     <string name="blockBlockedUser">Blokeret {name}</string>
     <string name="blockDescription">Er du sikker på, at du vil blokere <b>{name}?</b> Blokerede brugere kan ikke sende dig beskedanmodninger, gruppeinvitationer eller ringe til dig.</string>
@@ -177,7 +178,6 @@
     <string name="callsSettings">Opkald (Beta)</string>
     <string name="callsVoiceAndVideo">Lyd- og videoopkald</string>
     <string name="callsVoiceAndVideoBeta">Lyd- og videoopkald (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Din IP synlig for din opkaldspartner og en Oxen Foundation-server, mens du bruger betaopkald.</string>
     <string name="callsVoiceAndVideoToggleDescription">Aktiverer lyd- og videoopkald til og fra andre brugere.</string>
     <string name="callsYouCalled">Du ringede til {name}</string>
     <string name="callsYouMissedCallPermissions">Du gik glip af et opkald fra <b>{name}</b>, fordi du ikke har aktiveret <b>Stemmen- og videoopkald</b> i privatindstillinger.</string>
@@ -267,7 +267,6 @@
     <string name="conversationsDeleted">Samtale slettet</string>
     <string name="conversationsEmpty">Der er ingen beskeder i {conversation_name}.</string>
     <string name="conversationsEnter">Indtast nøgle</string>
-    <string name="conversationsEnterDescription">Funktion af enter-tasten, når du skriver i en samtale.</string>
     <string name="conversationsGroups">Grupper</string>
     <string name="conversationsMessageTrimming">Trimning af beskeder</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Trim Communities</string>
@@ -736,8 +735,6 @@
     <string name="open">Åben</string>
     <string name="other">Andet</string>
     <string name="passwordChange">Skift adgangskode</string>
-    <string name="passwordChangeDescription">Skift adgangskoden, der kræves for at låse {app_name} op.</string>
-    <string name="passwordChangedDescription">Din adgangskode er blevet ændret. Venligst hold den sikker.</string>
     <string name="passwordConfirm">Bekræft kodeord</string>
     <string name="passwordCurrentIncorrect">Din nuværende adgangskode er forkert.</string>
     <string name="passwordEnter">Indtast adgangskode</string>
@@ -748,7 +745,6 @@
     <string name="passwordFailed">Opdatering af adgangskode mislykkedes</string>
     <string name="passwordIncorrect">Forkert adgangskode</string>
     <string name="passwordRemove">Fjern adgangskode</string>
-    <string name="passwordRemovedDescription">Din adgangskode er blevet fjernet.</string>
     <string name="passwordSet">Indstil adgangskode</string>
     <string name="paste">Indsæt</string>
     <string name="permissionChange">Ændring af adgange</string>
@@ -833,7 +829,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Skjul Recovery Password</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Permanent skjul din gendannelsessætning på denne enhed.</string>
     <string name="recoveryPasswordRestoreDescription">Indtast din gendannelsesadgangskode for at indlæse din konto. Hvis du ikke har gemt den, kan du finde den i dine app-indstillinger.</string>
-    <string name="recoveryPasswordView">Vis adgangskode</string>
     <string name="recoveryPasswordWarningSendDescription">Det her er din gendannelsessætning. Hvis du sender den til nogen vil de have fuld adgang til din konto.</string>
     <string name="recreateGroup">Genskab gruppe</string>
     <string name="redo">Gentag</string>
@@ -887,6 +882,7 @@
     <string name="set">Indstil</string>
     <string name="setCommunityDisplayPicture">Vælg billede til fællesskabet</string>
     <string name="settingsRestartDescription">Du skal genstarte {app_name} for at anvende dine nye indstillinger.</string>
+    <string name="settingsScreenSecurityDesktop">Skærmsikkerhed</string>
     <string name="share">Del</string>
     <string name="shareAccountIdDescription">Invite din ven til at chatte med dig på {app_name} ved at dele din Account ID med dem.</string>
     <string name="shareAccountIdDescriptionCopied">Del med dine venner, uanset hvor du normalt taler med dem — og fortsæt samtalen her.</string>

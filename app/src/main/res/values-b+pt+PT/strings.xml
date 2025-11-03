@@ -184,7 +184,6 @@
     <string name="callsSettings">Chamadas (Beta)</string>
     <string name="callsVoiceAndVideo">Chamadas de Voz/Vídeo</string>
     <string name="callsVoiceAndVideoBeta">Chamadas de Voz/Vídeo (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">O seu IP está visível para seu parceiro de chamada e para um servidor Oxen Foundation enquanto usa chamadas beta.</string>
     <string name="callsVoiceAndVideoToggleDescription">Permitir chamadas de voz e vídeo para e a partir de outros utilizadores.</string>
     <string name="callsYouCalled">Ligou para {name}</string>
     <string name="callsYouMissedCallPermissions">Perdeu uma chamada de <b>{name}</b> porque não ativou <b>Chamadas de Voz e Vídeo</b> nas Configurações de Privacidade.</string>
@@ -278,7 +277,6 @@
     <string name="conversationsDeleted">Conversa excluída</string>
     <string name="conversationsEmpty">Não existem mensagens em {conversation_name}.</string>
     <string name="conversationsEnter">Inserir ENTER</string>
-    <string name="conversationsEnterDescription">Função da tecla Enter numa conversa.</string>
     <string name="conversationsGroups">Grupos</string>
     <string name="conversationsMessageTrimming">Redução do tamanho de mensagem</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Aparar Comunidades</string>
@@ -770,8 +768,6 @@
     <string name="openSurvey">Abrir questionário</string>
     <string name="other">Outro</string>
     <string name="passwordChange">Alterar Palavra-passe</string>
-    <string name="passwordChangeDescription">Altere a palavra-passe, necessária para desbloquear {app_name}.</string>
-    <string name="passwordChangedDescription">A sua palavra-passe foi alterada. Por favor, mantenha-a segura.</string>
     <string name="passwordConfirm">Confirmar palavra-passe</string>
     <string name="passwordCurrentIncorrect">A sua palavra-passe atual está incorreta.</string>
     <string name="passwordEnter">Introduza a palavra-passe</string>
@@ -783,7 +779,6 @@
     <string name="passwordFailed">Falha ao definir palavra-passe</string>
     <string name="passwordIncorrect">Palavra-passe Incorreta</string>
     <string name="passwordRemove">Remover Palavra-passe</string>
-    <string name="passwordRemovedDescription">A sua palavra-passe foi removida.</string>
     <string name="passwordSet">Configurar palavra-passe</string>
     <string name="paste">Colar</string>
     <string name="permissionChange">Alteração de permissão</string>
@@ -831,7 +826,6 @@
     <string name="proAnimatedDisplayPictureFeature">Imagem de exibição animada</string>
     <string name="proAnimatedDisplayPictureModalDescription">os utilizadores podem carregar GIFs</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Carregue GIFs com</string>
-    <string name="proBadge">Distintivo {app_pro}</string>
     <string name="proCallToActionLongerMessages">Quer enviar mensagens mais longas? Envie mais texto e desbloqueie funcionalidades premium com {app_pro}</string>
     <string name="proCallToActionPinnedConversations">Quer fixar mais conversas? Organize os seus chats e desbloqueie funcionalidades premium com o {app_pro}</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Quer fixar mais de 5 conversas? Organize os seus chats e desbloqueie funcionalidades premium com {app_pro}</string>
@@ -895,7 +889,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Ocultar Chave de Recuperação</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Esconder permanentemente a sua palavra-passe de recuperação neste dispositivo.</string>
     <string name="recoveryPasswordRestoreDescription">Insira a sua chave de recuperação para carregar a sua conta. Se não a salvou, pode encontrá-la nas configurações da aplicação.</string>
-    <string name="recoveryPasswordView">Ver Palavra-passe</string>
     <string name="recoveryPasswordWarningSendDescription">Esta é a sua chave de recuperação. Se você enviá-la para alguém, essa pessoa terá acesso total à sua conta.</string>
     <string name="recreateGroup">Recriar grupo</string>
     <string name="redo">Refazer</string>
@@ -967,6 +960,7 @@
     <string name="set">Configurar</string>
     <string name="setCommunityDisplayPicture">Definir imagem de exibição da Comunidade</string>
     <string name="settingsRestartDescription">Tem que reiniciar o {app_name} de modo a aplicar as novas definições.</string>
+    <string name="settingsScreenSecurityDesktop">Segurança de ecrã</string>
     <string name="share">Partilhar</string>
     <string name="shareAccountIdDescription">Convide os seus amigos para conversarem consigo no {app_name} partilhando o ID da sua Conta com eles.</string>
     <string name="shareAccountIdDescriptionCopied">Partilhe com seus amigos onde você geralmente conversa com eles — depois mova a conversa para cá.</string>

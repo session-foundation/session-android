@@ -5,9 +5,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
-import android.text.TextPaint;
 import android.text.TextUtils;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -17,7 +15,7 @@ import org.session.libsession.utilities.NotificationPrivacyPreference;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.Recipient;
-import org.session.libsession.utilities.recipients.Recipient.VibrateState;
+import org.session.libsession.utilities.recipients.RecipientNamesKt;
 
 import network.loki.messenger.R;
 
@@ -44,25 +42,19 @@ public abstract class AbstractNotificationBuilder extends NotificationCompat.Bui
 
   protected CharSequence getStyledMessage(@NonNull Recipient recipient, @Nullable CharSequence message) {
     SpannableStringBuilder builder = new SpannableStringBuilder();
-    builder.append(Util.getBoldedString(recipient.getName()));
+    builder.append(Util.getBoldedString(RecipientNamesKt.displayName(recipient)));
     builder.append(": ");
     builder.append(message == null ? "" : message);
 
     return builder;
   }
 
-  public void setAlarms(@Nullable Uri ringtone, VibrateState vibrate) {
+  public void setAlarms(@Nullable Uri ringtone) {
     Uri     defaultRingtone = NotificationChannels.getMessageRingtone(context);
     boolean defaultVibrate  = NotificationChannels.getMessageVibrate(context);
 
     if      (ringtone == null && !TextUtils.isEmpty(defaultRingtone.toString())) setSound(defaultRingtone);
     else if (ringtone != null && !ringtone.toString().isEmpty())                 setSound(ringtone);
-
-    if (vibrate == VibrateState.ENABLED ||
-        (vibrate == VibrateState.DEFAULT && defaultVibrate))
-    {
-      setDefaults(Notification.DEFAULT_VIBRATE);
-    }
   }
 
   private void setLed() {

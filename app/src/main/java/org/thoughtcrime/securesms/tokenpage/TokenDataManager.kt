@@ -1,7 +1,7 @@
 package org.thoughtcrime.securesms.tokenpage
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,14 +11,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class TokenDataManager @Inject constructor(
     private val textSecurePreferences: TextSecurePreferences,
-    private val tokenRepository: TokenRepository
-) {
+    private val tokenRepository: TokenRepository,
+    @param:ManagerScope private val scope: CoroutineScope
+) : OnAppStartupComponent {
     private val TAG = "TokenDataManager"
 
     // Cached infoResponse in memory
@@ -34,9 +37,9 @@ class TokenDataManager @Inject constructor(
     // jank when the UI switches to "Loading..." and then near-instantly updates to the given values.
     private val MINIMUM_SERVER_RESPONSE_DELAY_MS = 500L
 
-    fun getTokenDataWhenLoggedIn() {
+    override fun onPostAppStarted() {
         // we want to preload the data as soon as the user is logged in
-        GlobalScope.launch {
+        scope.launch {
             textSecurePreferences.watchLocalNumber()
                 .map { it != null }
                 .distinctUntilChanged()

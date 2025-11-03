@@ -1,6 +1,6 @@
 package org.thoughtcrime.securesms.webrtc
 
-import org.session.libsession.utilities.recipients.Recipient
-import java.util.*
+import org.session.libsession.utilities.Address
+import java.util.UUID
 
-data class PreOffer(val callId: UUID, val recipient: Recipient)
+data class PreOffer(val callId: UUID, val recipient: Address)

@@ -1,32 +1,26 @@
 package org.thoughtcrime.securesms.home
 
-import android.content.ContentResolver
 import android.content.Context
-import androidx.annotation.AttrRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -36,41 +30,43 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDD
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.UsernameUtils
-import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.displayName
+import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.database.DatabaseContentProviders
-import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.SubscriptionType
+import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
+import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.UserProfileModalCommands
 import org.thoughtcrime.securesms.util.UserProfileModalData
 import org.thoughtcrime.securesms.util.UserProfileUtils
-import org.thoughtcrime.securesms.util.observeChanges
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    @param:ApplicationContext
-    private val context: Context,
-    private val threadDb: ThreadDatabase,
-    private val contentResolver: ContentResolver,
+    @param:ApplicationContext private val context: Context,
     private val prefs: TextSecurePreferences,
     private val typingStatusRepository: TypingStatusRepository,
     private val configFactory: ConfigFactory,
-    private val callManager: CallManager,
-    private val usernameUtils: UsernameUtils,
+    callManager: CallManager,
     private val storage: StorageProtocol,
     private val groupManager: GroupManagerV2,
+    private val conversationRepository: ConversationRepository,
     private val proStatusManager: ProStatusManager,
     private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
+    private val recipientRepository: RecipientRepository,
+    private val dateUtils: DateUtils
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
@@ -93,56 +89,113 @@ class HomeViewModel @Inject constructor(
     private val _dialogsState = MutableStateFlow(DialogsState())
     val dialogsState: StateFlow<DialogsState> = _dialogsState
 
+    private val _uiEvents = MutableSharedFlow<UiEvent>(
+        replay = 0,
+        extraBufferCapacity = 1
+    )
+    val uiEvents: SharedFlow<UiEvent> = _uiEvents
+
     /**
      * A [StateFlow] that emits the list of threads and the typing status of each thread.
      *
      * This flow will emit whenever the user asks us to reload the conversation list or
      * whenever the conversation list changes.
      */
-    val data: StateFlow<Data?> = combine(
-        observeConversationList(),
+    @Suppress("OPT_IN_USAGE")
+    val data: StateFlow<Data?> = (combine(
+        // First flow: conversation list and unapproved conversation count
+        manualReloadTrigger
+            .onStart { emit(Unit) }
+            .flatMapLatest {
+                conversationRepository.observeConversationList()
+            }
+            .map { convos ->
+                val (approved, unapproved) = convos
+                    .asSequence()
+                    .filter { !it.recipient.blocked } // We don't display blocked convo
+                    .filter { it.recipient.priority != PRIORITY_HIDDEN } // We don't show hidden convo
+                    .partition { it.recipient.approved }
+                val unreadUnapproved = unapproved
+                    .count { it.unreadCount > 0 || it.unreadMentionCount > 0 }
+                unreadUnapproved to approved.sortedWith(CONVERSATION_COMPARATOR)
+            },
+
+        // Second flow: typing status of threads
         observeTypingStatus(),
-        messageRequests(),
-        hasHiddenNoteToSelf()
-    ) { threads, typingStatus, messageRequests, hideNoteToSelf ->
+
+        // Third flow: whether the user has marked message requests as hidden
+        (TextSecurePreferences.events.filter { it == TextSecurePreferences.HAS_HIDDEN_MESSAGE_REQUESTS } as Flow<*>)
+            .onStart { emit(Unit) }
+            .map { prefs.hasHiddenMessageRequests() }
+    ) { (unapproveConvoCount, convoList), typingStatus, hiddenMessageRequest ->
         Data(
             items = buildList {
-                messageRequests?.let { add(it) }
+                if (unapproveConvoCount > 0 && !hiddenMessageRequest) {
+                    add(Item.MessageRequests(unapproveConvoCount))
+                }
 
-                threads.mapNotNullTo(this) { thread ->
-                    // if the note to self is marked as hidden,
-                    // or if the contact is blocked, do not add it
-                    if (
-                        thread.recipient.isLocalNumber && hideNoteToSelf ||
-                        thread.recipient.isBlocked
-                    ) {
-                        return@mapNotNullTo null
-                    }
-
+                convoList.mapTo(this) { thread ->
                     Item.Thread(
                         thread = thread,
                         isTyping = typingStatus.contains(thread.threadId),
                     )
                 }
             }
-        ) as? Data?
-    }.catch { err ->
+        )
+    } as Flow<Data?>).catch { err ->
         Log.e("HomeViewModel", "Error loading conversation list", err)
         emit(null)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+    val shouldShowCurrentUserProBadge: StateFlow<Boolean> = recipientRepository
+        .observeSelf()
+        .map { it.proStatus.shouldShowProBadge() }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     private var userProfileModalJob: Job? = null
     private var userProfileModalUtils: UserProfileUtils? = null
 
-    private fun hasHiddenMessageRequests() = TextSecurePreferences.events
-        .filter { it == TextSecurePreferences.HAS_HIDDEN_MESSAGE_REQUESTS }
-        .map { prefs.hasHiddenMessageRequests() }
-        .onStart { emit(prefs.hasHiddenMessageRequests()) }
+    init {
+        // observe subscription status
+        viewModelScope.launch {
+            proStatusManager.subscriptionState.collect { subscription ->
+                // show a CTA (only once per install) when
+                // - subscription is expiring in less than 7 days
+                // - subscription expired less than 30 days ago
+                val now = Instant.now()
 
-    private fun hasHiddenNoteToSelf() = TextSecurePreferences.events
-        .filter { it == TextSecurePreferences.HAS_HIDDEN_NOTE_TO_SELF }
-        .map { prefs.hasHiddenNoteToSelf() }
-        .onStart { emit(prefs.hasHiddenNoteToSelf()) }
+                if(subscription.type is SubscriptionType.Active.Expiring
+                    && !prefs.hasSeenProExpiring()
+                ){
+                    val validUntil = subscription.type.proStatus.validUntil ?: return@collect
+
+                    if (validUntil.isBefore(now.plus(7, ChronoUnit.DAYS))) {
+                        _dialogsState.update { state ->
+                            state.copy(
+                                proExpiringCTA = ProExpiringCTA(
+                                    dateUtils.getExpiryString(
+                                        subscription.type.proStatus.validUntil
+                                    )
+                                )
+                            )
+                        }
+                    }
+                }
+                else if(subscription.type is SubscriptionType.Expired
+                    && !prefs.hasSeenProExpired()) {
+                    val validUntil = subscription.type.expiredAt
+
+                    // Check if now is within 30 days after expiry
+                    if (now.isBefore(validUntil.plus(30, ChronoUnit.DAYS))) {
+
+                        _dialogsState.update { state ->
+                            state.copy(proExpiredCTA = true)
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     private fun observeTypingStatus(): Flow<Set<Long>> = typingStatusRepository
         .typingThreads
@@ -150,35 +203,6 @@ class HomeViewModel @Inject constructor(
         .onStart { emit(emptySet()) }
         .distinctUntilChanged()
 
-    private fun messageRequests() = combine(
-        unapprovedConversationCount(),
-        hasHiddenMessageRequests(),
-        ::createMessageRequests
-    ).flowOn(Dispatchers.Default)
-
-    private fun unapprovedConversationCount() = reloadTriggersAndContentChanges()
-        .map {
-            threadDb.getUnapprovedUnreadConversationCount().toInt()
-        }
-
-    @Suppress("OPT_IN_USAGE")
-    private fun observeConversationList(): Flow<List<ThreadRecord>> =
-        reloadTriggersAndContentChanges()
-            .mapLatest { _ ->
-                threadDb.approvedConversationList.use { openCursor ->
-                    threadDb.readerFor(openCursor).run { generateSequence { next }.toList() }
-                }
-            }
-            .flowOn(Dispatchers.IO)
-
-    @OptIn(FlowPreview::class)
-    private fun reloadTriggersAndContentChanges(): Flow<*> = merge(
-        manualReloadTrigger,
-        contentResolver.observeChanges(DatabaseContentProviders.ConversationList.CONTENT_URI),
-        configFactory.configUpdateNotifications.filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
-    )
-        .debounce(CHANGE_NOTIFICATION_DEBOUNCE_MILLS)
-        .onStart { emit(Unit) }
 
     fun tryReload() = manualReloadTrigger.tryEmit(Unit)
 
@@ -203,11 +227,6 @@ class HomeViewModel @Inject constructor(
         val items: List<Item>,
     )
 
-    data class MessageSnippetOverride(
-        val text: CharSequence,
-        @AttrRes val colorAttr: Int,
-    )
-
     sealed interface Item {
         data class Thread(
             val thread: ThreadRecord,
@@ -217,32 +236,15 @@ class HomeViewModel @Inject constructor(
         data class MessageRequests(val count: Int) : Item
     }
 
-    private fun createMessageRequests(
-        count: Int,
-        hidden: Boolean
-    ) = if (count > 0 && !hidden) Item.MessageRequests(count) else null
-
-
-    fun hideNoteToSelf() {
-        prefs.setHasHiddenNoteToSelf(true)
-        configFactory.withMutableUserConfigs {
-            it.userProfile.setNtsPriority(PRIORITY_HIDDEN)
-        }
-    }
-
-    fun getCurrentUsername() = usernameUtils.getCurrentUsernameWithAccountIdFallback()
 
     fun blockContact(accountId: String) {
         viewModelScope.launch(Dispatchers.Default) {
-            val recipient = Recipient.from(context, Address.fromSerialized(accountId), false)
-            storage.setBlocked(listOf(recipient), isBlocked = true)
+            storage.setBlocked(listOf(Address.fromSerialized(accountId)), isBlocked = true)
         }
     }
 
-    fun deleteContact(accountId: String) {
-        viewModelScope.launch(Dispatchers.Default) {
-            storage.deleteContactAndSyncConfig(accountId)
-        }
+    fun deleteContact(address: Address.WithAccountId) {
+        configFactory.removeContactOrBlindedContact(address)
     }
 
     fun leaveGroup(accountId: AccountId) {
@@ -251,20 +253,23 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun setPinned(threadId: Long, pinned: Boolean) {
+    fun setPinned(address: Address, pinned: Boolean) {
         // check the pin limit before continuing
         val totalPins = storage.getTotalPinned()
-        val maxPins = proStatusManager.getPinnedConversationLimit()
+        val maxPins = proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().proStatus)
         if (pinned && totalPins >= maxPins) {
             // the user has reached the pin limit, show the CTA
             _dialogsState.update {
                 it.copy(
-                    pinCTA = PinProCTA(overTheLimit = totalPins > maxPins)
+                    pinCTA = PinProCTA(
+                        overTheLimit = totalPins > maxPins,
+                        proSubscription = proStatusManager.subscriptionState.value.type
+                    )
                 )
             }
         } else {
             viewModelScope.launch(Dispatchers.Default) {
-                storage.setPinned(threadId, pinned)
+                storage.setPinned(address, pinned)
             }
         }
     }
@@ -282,14 +287,42 @@ class HomeViewModel @Inject constructor(
             is Commands.HandleUserProfileCommand -> {
                 userProfileModalUtils?.onCommand(command.upmCommand)
             }
+
+            is Commands.ShowStartConversationSheet -> {
+                _dialogsState.update { it.copy(showStartConversationSheet =
+                    StartConversationSheetData(
+                        accountId = prefs.getLocalNumber()!!
+                    )
+                ) }
+            }
+
+            is Commands.HideStartConversationSheet -> {
+                _dialogsState.update { it.copy(showStartConversationSheet = null) }
+            }
+
+            is Commands.HideExpiringCTADialog -> {
+                prefs.setHasSeenProExpiring()
+                _dialogsState.update { it.copy(proExpiringCTA = null) }
+            }
+
+            is Commands.HideExpiredCTADialog -> {
+                prefs.setHasSeenProExpired()
+                _dialogsState.update { it.copy(proExpiredCTA = false) }
+            }
+
+            is Commands.GotoProSettings -> {
+                viewModelScope.launch {
+                    _uiEvents.emit(UiEvent.OpenProSettings(command.destination))
+                }
+            }
         }
     }
 
     fun showUserProfileModal(thread: ThreadRecord) {
         // get the helper class for the selected user
         userProfileModalUtils = upmFactory.create(
-            recipient = thread.recipient,
-            threadId = thread.threadId,
+            userAddress = thread.recipient.address,
+            threadAddress = thread.recipient.address as Address.Conversable,
             scope = viewModelScope
         )
 
@@ -302,28 +335,53 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun shouldShowCurrentUserProBadge() : Boolean {
-        return proStatusManager.shouldShowProBadge(Address.fromSerialized(prefs.getLocalNumber()!!))
-    }
-
     data class DialogsState(
         val pinCTA: PinProCTA? = null,
-        val userProfileModal: UserProfileModalData? = null
+        val userProfileModal: UserProfileModalData? = null,
+        val showStartConversationSheet: StartConversationSheetData? = null,
+        val proExpiringCTA: ProExpiringCTA? = null,
+        val proExpiredCTA: Boolean = false
     )
 
     data class PinProCTA(
-        val overTheLimit: Boolean
+        val overTheLimit: Boolean,
+        val proSubscription: SubscriptionType
     )
+
+    data class ProExpiringCTA(
+        val expiry: String
+    )
+
+    data class StartConversationSheetData(
+        val accountId: String
+    )
+
+    sealed interface UiEvent {
+        data class OpenProSettings(val start: ProSettingsDestination) : UiEvent
+    }
 
     sealed interface Commands {
         data object HidePinCTADialog : Commands
+        data object HideExpiringCTADialog : Commands
+        data object HideExpiredCTADialog : Commands
         data object HideUserProfileModal : Commands
         data class HandleUserProfileCommand(
             val upmCommand: UserProfileModalCommands
         ) : Commands
+
+        data object ShowStartConversationSheet : Commands
+        data object HideStartConversationSheet : Commands
+
+        data class GotoProSettings(
+            val destination: ProSettingsDestination
+        ): Commands
     }
 
     companion object {
-        private const val CHANGE_NOTIFICATION_DEBOUNCE_MILLS = 100L
+        private val CONVERSATION_COMPARATOR = compareByDescending<ThreadRecord> { it.recipient.isPinned }
+            .thenByDescending { it.recipient.priority }
+            .thenByDescending { it.lastMessage?.timestamp ?: 0L }
+            .thenByDescending { it.date }
+            .thenBy { it.recipient.displayName() }
     }
 }

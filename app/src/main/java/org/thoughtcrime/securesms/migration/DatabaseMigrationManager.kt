@@ -5,12 +5,12 @@ import android.os.SystemClock
 import androidx.annotation.StringRes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
 import net.zetetic.database.sqlcipher.SQLiteConnection
 import net.zetetic.database.sqlcipher.SQLiteDatabase
 import net.zetetic.database.sqlcipher.SQLiteDatabaseHook
@@ -19,7 +19,10 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.crypto.DatabaseSecretProvider
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 
 @Singleton
@@ -27,9 +30,9 @@ class DatabaseMigrationManager @Inject constructor(
     private val application: Application,
     private val prefs: TextSecurePreferences,
     private val databaseSecretProvider: DatabaseSecretProvider,
-) {
-    private val scope: CoroutineScope = GlobalScope
-
+    jsonProvider: Provider<Json>,
+    @param:ManagerScope private val scope: CoroutineScope,
+) : OnAppStartupComponent {
     private val dbSecret by lazy {
         databaseSecretProvider.getOrCreateDatabaseSecret()
     }
@@ -49,7 +52,7 @@ class DatabaseMigrationManager @Inject constructor(
             }
         }
 
-        SQLCipherOpenHelper(application, dbSecret)
+        SQLCipherOpenHelper(application, dbSecret, jsonProvider)
     }
 
     private val mutableMigrationState = MutableStateFlow<MigrationState>(MigrationState.Idle)
@@ -213,13 +216,7 @@ class DatabaseMigrationManager @Inject constructor(
     }
 
     fun requestMigration(fromRetry: Boolean) {
-        val dispatcher = if (fromRetry) {
-            Dispatchers.IO
-        } else {
-            Dispatchers.Default
-        }
-
-        scope.launch(dispatcher) {
+        scope.launch(Dispatchers.IO) {
             migrateDatabaseIfNeeded(fromRetry)
         }
     }
@@ -235,6 +232,10 @@ class DatabaseMigrationManager @Inject constructor(
 
         val action: (fromRetry: Boolean) -> Unit,
     )
+
+    override fun onPostAppStarted() {
+        requestMigration(fromRetry = false)
+    }
 
     data class ProgressStep(
         val title: String,

@@ -12,14 +12,15 @@ import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.FragmentConversationBottomSheetBinding
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.GroupDatabase
-import org.thoughtcrime.securesms.database.RecipientDatabase
+import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.util.getConversationUnread
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -73,6 +74,8 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         }
     }
 
+    private val Recipient.canBlock: Boolean get() = address is Address.Standard
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         if (!this::thread.isInitialized) { return dismiss() }
@@ -82,8 +85,8 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
 
         if (!recipient.isGroupOrCommunityRecipient && !recipient.isLocalNumber) {
             binding.detailsTextView.visibility = View.VISIBLE
-            binding.unblockTextView.visibility = if (recipient.isBlocked) View.VISIBLE else View.GONE
-            binding.blockTextView.visibility = if (recipient.isBlocked) View.GONE else View.VISIBLE
+            binding.unblockTextView.visibility = if (recipient.canBlock && recipient.blocked) View.VISIBLE else View.GONE
+            binding.blockTextView.visibility = if (recipient.canBlock && !recipient.blocked) View.VISIBLE else View.GONE
             binding.detailsTextView.setOnClickListener(this)
             binding.blockTextView.setOnClickListener(this)
             binding.unblockTextView.setOnClickListener(this)
@@ -103,8 +106,8 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         binding.copyCommunityUrl.setOnClickListener(this)
 
         val notificationIconRes = when{
-            recipient.isMuted -> R.drawable.ic_volume_off
-            recipient.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS ->
+            recipient.isMuted() -> R.drawable.ic_volume_off
+            recipient.notifyType == NotifyType.MENTIONS ->
                 R.drawable.ic_at_sign
             else -> R.drawable.ic_volume_2
         }
@@ -185,7 +188,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
 
         // We have three states for a conversation:
         // 1. The conversation has unread messages
-        // 2. The conversation is marked as unread (which is different from having unread messages)
+        // 2. The conversation is marked as unread from the config (which is different from having unread messages)
         // 3. The conversation is up to date
         // Case 1 and 2 should show the 'mark as read' button while case 3 should show 'mark as unread'
 
@@ -193,16 +196,20 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         val hasUnreadMessages = thread.unreadCount > 0
 
         // case 2
-        val isMarkedAsUnread = configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) } || !thread.isRead
+        val isMarkedAsUnread = thread.isUnread
 
         val showMarkAsReadButton = hasUnreadMessages || isMarkedAsUnread
 
         binding.markAllAsReadTextView.isVisible = showMarkAsReadButton && !isDeprecatedLegacyGroup
         binding.markAllAsReadTextView.setOnClickListener(this)
-        binding.markAsUnreadTextView.isVisible = !showMarkAsReadButton  && !isDeprecatedLegacyGroup
+        binding.markAsUnreadTextView.isVisible = !showMarkAsReadButton
+                && !isDeprecatedLegacyGroup
+                && recipient.address !is Address.CommunityBlindedId
         binding.markAsUnreadTextView.setOnClickListener(this)
         binding.pinTextView.isVisible = !thread.isPinned && !isDeprecatedLegacyGroup
+                && recipient.address !is Address.CommunityBlindedId
         binding.unpinTextView.isVisible = thread.isPinned
+                && recipient.address !is Address.CommunityBlindedId
         binding.pinTextView.setOnClickListener(this)
         binding.unpinTextView.setOnClickListener(this)
     }

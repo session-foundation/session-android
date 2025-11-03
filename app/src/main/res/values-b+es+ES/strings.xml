@@ -184,7 +184,6 @@
     <string name="callsSettings">Llamadas (beta)</string>
     <string name="callsVoiceAndVideo">Llamadas de voz y video</string>
     <string name="callsVoiceAndVideoBeta">Llamadas de Voz y Video (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Tu IP es visible para tu socio de llamada y un servidor de Oxen Foundation mientras usas las llamadas beta.</string>
     <string name="callsVoiceAndVideoToggleDescription">Permite llamadas de voz y vídeo de y hacia otros usuarios.</string>
     <string name="callsYouCalled">Has llamado a {name}</string>
     <string name="callsYouMissedCallPermissions">Perdiste una llamada de <b>{name}</b> porque no has habilitado <b>Voice and Video Calls</b> en configuraciones de privacidad.</string>
@@ -278,12 +277,13 @@
     <string name="conversationsDeleted">Conversación eliminada</string>
     <string name="conversationsEmpty">No hay mensajes en {conversation_name}.</string>
     <string name="conversationsEnter">Introducir Clave</string>
-    <string name="conversationsEnterDescription">Función de la tecla Enter al escribir en una conversación.</string>
+    <string name="conversationsEnterSends">ENTER envía un mensaje, SHIFT + ENTER inicia una nueva línea.</string>
     <string name="conversationsGroups">Grupos</string>
     <string name="conversationsMessageTrimming">Recorte de mensajes en chats</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Recortar Comunidades</string>
     <string name="conversationsNew">Nueva conversación</string>
     <string name="conversationsNone">Aún no tienes conversaciones</string>
+    <string name="conversationsSendWithEnterKey">Enter para enviar</string>
     <string name="conversationsSendWithEnterKeyDescription">Pulsar la tecla Intro enviará el mensaje en lugar de empezar una nueva línea.</string>
     <string name="conversationsSettingsAllMedia">Adjuntos</string>
     <string name="conversationsSpellCheck">Revisión ortográfica</string>
@@ -770,8 +770,7 @@
     <string name="openSurvey">Abrir encuesta</string>
     <string name="other">Otro</string>
     <string name="passwordChange">Cambiar Contraseña</string>
-    <string name="passwordChangeDescription">Cambiar la contraseña requerida para desbloquear {app_name}.</string>
-    <string name="passwordChangedDescription">Tu contraseña ha sido cambiada. Por favor, manténla segura.</string>
+    <string name="passwordChangedDescriptionToast">Tu contraseña ha sido cambiada. Por favor, guárdala en un lugar seguro.</string>
     <string name="passwordConfirm">Confirmar contraseña</string>
     <string name="passwordCurrentIncorrect">Tu contraseña actual es incorrecta.</string>
     <string name="passwordEnter">Introducir contraseña</string>
@@ -783,7 +782,6 @@
     <string name="passwordFailed">Error al establecer la contraseña</string>
     <string name="passwordIncorrect">Contraseña incorrecta</string>
     <string name="passwordRemove">Eliminar Contraseña</string>
-    <string name="passwordRemovedDescription">Has eliminado tu contraseña.</string>
     <string name="passwordSet">Establecer Contraseña</string>
     <string name="paste">Pegar</string>
     <string name="permissionChange">Cambio de permiso</string>
@@ -823,6 +821,7 @@
     <string name="pinConversation">Anclar conversación</string>
     <string name="pinUnpin">Desfijar</string>
     <string name="pinUnpinConversation">Desanclar conversación</string>
+    <string name="preferences">Preferencias</string>
     <string name="preview">Previsualizar</string>
     <string name="proActivated">Activado</string>
     <string name="proAlreadyPurchased">Ya tienes</string>
@@ -831,7 +830,6 @@
     <string name="proAnimatedDisplayPictureFeature">Imagen de perfil animada</string>
     <string name="proAnimatedDisplayPictureModalDescription">los usuarios pueden subir GIFs</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Sube GIFs con</string>
-    <string name="proBadge">Insignia de {app_pro}</string>
     <string name="proCallToActionLongerMessages">¿Quieres enviar mensajes más largos? Envía más texto y desbloquea funciones premium con {app_pro}</string>
     <string name="proCallToActionPinnedConversations">¿Quieres más conversaciones fijadas? Organiza tus chats y desbloquea funciones premium con {app_pro}</string>
     <string name="proCallToActionPinnedConversationsMoreThan">¿Quieres más de 5 conversaciones fijadas? Organiza tus chats y desbloquea funciones premium con {app_pro}</string>
@@ -895,7 +893,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Ocultar Clave de Recuperación</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Oculta permanentemente tu clave de recuperación en este dispositivo.</string>
     <string name="recoveryPasswordRestoreDescription">Ingrese su clave de recuperación para cargar su cuenta. Si no la ha guardado, puede encontrarla en la configuración de la aplicación.</string>
-    <string name="recoveryPasswordView">Ver contraseña</string>
     <string name="recoveryPasswordWarningSendDescription">Esta es tu contraseña de recuperación. Si la envías a alguien, tendrá acceso completo a tu cuenta.</string>
     <string name="recreateGroup">Volver a crear grupo</string>
     <string name="redo">Rehacer</string>
@@ -967,6 +964,7 @@
     <string name="set">Definir</string>
     <string name="setCommunityDisplayPicture">Establecer imagen de perfil de la Comunidad</string>
     <string name="settingsRestartDescription">Debes reiniciar {app_name} para aplicar las nuevas configuraciones.</string>
+    <string name="settingsScreenSecurityDesktop">Seguridad de pantalla</string>
     <string name="share">Compartir</string>
     <string name="shareAccountIdDescription">Invita a tu amigo a hablar contigo en {app_name} compartiendo tu ID de Cuenta con él.</string>
     <string name="shareAccountIdDescriptionCopied">Comparte con tus amigos dondequiera que hables con ellos — luego mueve la conversación aquí.</string>
@@ -1007,6 +1005,7 @@
     <string name="updateGroupInformationEnterShorterDescription">Por favor, ingresa una descripción del grupo más corta</string>
     <string name="updateNewVersion">Hay una nueva versión de {app_name} disponible, toca para actualizar</string>
     <string name="updateNewVersionDescription">Hay disponible una nueva versión ({version}) de {app_name}.</string>
+    <string name="updateProfileInformation">Actualizar información de perfil</string>
     <string name="updateReleaseNotes">Ir a las notas de versión</string>
     <string name="updateSession">Actualización de {app_name}</string>
     <string name="updateVersion">Versión {version}</string>

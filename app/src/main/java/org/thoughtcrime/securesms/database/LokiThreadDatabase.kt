@@ -1,14 +1,7 @@
 package org.thoughtcrime.securesms.database
 
-import android.content.ContentValues
-import android.content.Context
-import android.database.Cursor
-import org.session.libsession.messaging.open_groups.OpenGroup
-import org.session.libsignal.utilities.JsonUtil
-import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
-import javax.inject.Provider
-
-class LokiThreadDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) : Database(context, helper) {
+@Deprecated("Exist only for migration purposes")
+class LokiThreadDatabase {
 
     companion object {
         private val sessionResetTable = "loki_thread_session_reset_database"
@@ -20,62 +13,6 @@ class LokiThreadDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>
         val createSessionResetTableCommand = "CREATE TABLE $sessionResetTable ($threadID INTEGER PRIMARY KEY, $sessionResetStatus INTEGER DEFAULT 0);"
         @JvmStatic
         val createPublicChatTableCommand = "CREATE TABLE $publicChatTable ($threadID INTEGER PRIMARY KEY, $publicChat TEXT);"
-    }
-
-    fun getAllOpenGroups(): Map<Long, OpenGroup> {
-        val database = readableDatabase
-        var cursor: Cursor? = null
-        val result = mutableMapOf<Long, OpenGroup>()
-        try {
-            cursor = database.rawQuery("select * from $publicChatTable", null)
-            while (cursor != null && cursor.moveToNext()) {
-                val threadID = cursor.getLong(threadID)
-                val string = cursor.getString(publicChat)
-                val openGroup = OpenGroup.fromJSON(string)
-                if (openGroup != null) result[threadID] = openGroup
-            }
-        } catch (e: Exception) {
-            // do nothing
-        } finally {
-            cursor?.close()
-        }
-        return result
-    }
-
-    fun getOpenGroupChat(threadID: Long): OpenGroup? {
-        if (threadID < 0) {
-            return null
-        }
-        val database = readableDatabase
-        return database.get(publicChatTable, "${Companion.threadID} = ?", arrayOf(threadID.toString())) { cursor ->
-            val json = cursor.getString(publicChat)
-            OpenGroup.fromJSON(json)
-        }
-    }
-
-    fun getThreadId(openGroup: OpenGroup): Long? {
-        val database = readableDatabase
-        return database.get(publicChatTable, "$publicChat = ?", arrayOf(JsonUtil.toJson(openGroup.toJson()))) { cursor ->
-            cursor.getLong(threadID)
-        }
-    }
-
-    fun setOpenGroupChat(openGroup: OpenGroup, threadID: Long) {
-        if (threadID < 0) {
-            return
-        }
-        val database = writableDatabase
-        val contentValues = ContentValues(2)
-        contentValues.put(Companion.threadID, threadID)
-        contentValues.put(publicChat, JsonUtil.toJson(openGroup.toJson()))
-        database.insertOrUpdate(publicChatTable, contentValues, "${Companion.threadID} = ?", arrayOf(threadID.toString()))
-    }
-
-    fun removeOpenGroupChat(threadID: Long) {
-        if (threadID < 0) return
-
-        val database = writableDatabase
-        database.delete(publicChatTable,"${Companion.threadID} = ?", arrayOf(threadID.toString()))
     }
 
 }

@@ -58,8 +58,6 @@ import kotlin.properties.Delegates.observable
 object SnodeAPI {
     internal val database: LokiAPIDatabaseProtocol
         get() = SnodeModule.shared.storage
-    private val broadcaster: Broadcaster
-        get() = SnodeModule.shared.broadcaster
 
     private var snodeFailureCount: MutableMap<Snode, Int> = mutableMapOf()
 
@@ -1088,7 +1086,6 @@ object SnodeAPI {
             400, 500, 502, 503 -> handleBadSnode()
             406 -> {
                 Log.d("Loki", "The user's clock is out of sync with the service node network.")
-                broadcaster.broadcast("clockOutOfSync")
                 throw Error.ClockOutOfSync
             }
             421 -> {

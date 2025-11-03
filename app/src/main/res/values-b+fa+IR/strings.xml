@@ -121,6 +121,7 @@
     <string name="banUser">مسدود کردن کاربر</string>
     <string name="banUserBanned">کاربر ممنوع شد</string>
     <string name="block">مسدود کردن</string>
+    <string name="blockBlockedDescription">برای ارسال پیام،‌ ابتدا این مخاطب را از مسدود بودن درآورید!</string>
     <string name="blockBlockedNone">هیج مخاطبی مسدود نشده</string>
     <string name="blockBlockedUser">مسدود شد {name}</string>
     <string name="blockDescription">آیا مطمئنید می‌خواهید <b>{name} را مسدود کنید؟</b> کاربران مسدود شده نمی‌توانند درخواست پیام، دعوت گروهی یا تماس ارسال کنند.</string>
@@ -149,7 +150,6 @@
     <string name="callsSettings">تماس‌ها (بتا)</string>
     <string name="callsVoiceAndVideo">تماس‌های صوتی و تصویری</string>
     <string name="callsVoiceAndVideoBeta">تماس‌های صوتی و تصویری (بتا)</string>
-    <string name="callsVoiceAndVideoModalDescription">آدرس IP شما برای مخاطب تماس شما و همچنین سرور Oxen Foundation در هنگام استفاده از تماس آزمایشی مشخص خواهد بود.</string>
     <string name="callsVoiceAndVideoToggleDescription">دریافت و ارسال تماس های صوتی و تصویری به سایر کاربران را فعال کنید.</string>
     <string name="callsYouCalled">تماس شما با {name}</string>
     <string name="callsYouMissedCallPermissions">شما تماسی را از <b>{name}</b> از دست دادید زیرا <b>تماس‌های صوتی و تصویری</b> را در تنظیمات حریم خصوصی فعال نکرده‌اید.</string>
@@ -231,7 +231,6 @@
     <string name="conversationsDeleted">مکالمه حذف شد</string>
     <string name="conversationsEmpty">هیچ پیامی در {conversation_name} وجود ندارد.</string>
     <string name="conversationsEnter">کلید را وارد کنید</string>
-    <string name="conversationsEnterDescription">ویژگی کلید Enter در هنگام تایپ در یک مکالمه.</string>
     <string name="conversationsGroups">گروه‌ها</string>
     <string name="conversationsMessageTrimming">پیرایش پیام</string>
     <string name="conversationsMessageTrimmingTrimCommunities">کوتاه‌سازی انجمن‌ها</string>
@@ -284,6 +283,10 @@
     <plurals name="deleteMessageFailed">
         <item quantity="one">خطا در حذف پیام</item>
         <item quantity="other">خطا در حذف پیام ها</item>
+    </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">پرشین</item>
+        <item quantity="other">برخی از پیام‌هایی که انتخاب کرده‌اید، نمی‌توانند از همهٔ دستگاه‌های شما پاک شوند</item>
     </plurals>
     <plurals name="deleteMessageWarning">
         <item quantity="one">این پیام قابل حذف برای همه نیست</item>
@@ -640,8 +643,6 @@
     <string name="open">باز کن</string>
     <string name="other">دیگر</string>
     <string name="passwordChange">تغییر گذرواژه</string>
-    <string name="passwordChangeDescription">رمز عبور مورد نیاز برای باز کردن {app_name} را تغییر بده.</string>
-    <string name="passwordChangedDescription">رمز عبور شما تغییر کرد. لطفا آن را در جای امنی نگهداری کنید.</string>
     <string name="passwordConfirm">تأیید کلمه‌ی عبور</string>
     <string name="passwordCurrentIncorrect">رمز عبور فعلی شما نادرست است.</string>
     <string name="passwordEnter">رمز عبور را وارد کنید</string>
@@ -652,7 +653,6 @@
     <string name="passwordFailed">تنظیم رمز عبور شکست خورد</string>
     <string name="passwordIncorrect">رمز عبور نادرست است</string>
     <string name="passwordRemove">حذف رمز عبور</string>
-    <string name="passwordRemovedDescription">گذرواژه شما حذف شده است.</string>
     <string name="passwordSet">تنظیم رمز عبور</string>
     <string name="paste">پیست</string>
     <string name="permissionMusicAudioDenied">{app_name} برای فرستادن فایل، آهنگ و صوت نیاز به دسترسی به آهنگ و صدا دارد، اما این دسترسی به طور دائم رد شده است. به تنظیمات → مجوز‌ها رفته و «صدا و آهنگ» را فعال کنید.</string>
@@ -713,7 +713,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">گذرواژه بازیابی خود را مخفی کنید</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">بازیابی رمز عبور خود را در این دستگاه برای همیشه پنهان کنید.</string>
     <string name="recoveryPasswordRestoreDescription">برای بارگذاری حساب خود، رمز بازیابی خود را وارد کنید. اگر آن را ذخیره نکرده‌اید، می‌توانید آن را در تنظیمات برنامه خود پیدا کنید.</string>
-    <string name="recoveryPasswordView">نمایش گذرواژه</string>
     <string name="recoveryPasswordWarningSendDescription">این رمز بازیابی شماست. اگر آن را برای کسی ارسال کنید، آن‌ها به حساب شما دستری کامل خواهند داشت.</string>
     <string name="redo">انجام دوباره</string>
     <string name="remove">حذف</string>
@@ -763,6 +762,7 @@
     <string name="sessionSettings">تنظیمات</string>
     <string name="set">تنظیم</string>
     <string name="settingsRestartDescription">برای اعمال تنظیمات جدید نیاز است {app_name} را دوباره راه‌اندازی کنید.</string>
+    <string name="settingsScreenSecurityDesktop">امنیت صفحه نمایش</string>
     <string name="share">به اشتراک گذاری</string>
     <string name="shareAccountIdDescription">از دوست ات دعوت کن تا با تو در {app_name} با اشتراک گذاری شناسه کاربری ات چت کند.</string>
     <string name="shareAccountIdDescriptionCopied">با دوستان خود به اشتراک بگذارید هرجا که معمولاً با آنها صحبت می‌کنید — سپس مکالمه را به اینجا منتقل کنید.</string>

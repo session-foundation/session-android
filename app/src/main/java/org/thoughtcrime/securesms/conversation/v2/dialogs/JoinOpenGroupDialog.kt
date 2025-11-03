@@ -50,24 +50,19 @@ class JoinOpenGroupDialog(private val name: String, private val url: String) : D
 
     private fun join() {
         val openGroup = OpenGroupUrlParser.parseUrl(url)
-        val activity = requireActivity()
+        val app = requireActivity().application
 
         // Must run on a bigger scope, as we are dismissing the dialog right after
         GlobalScope.launch(Dispatchers.Main) {
             try {
-                withContext(Dispatchers.Default) {
-                    openGroupManager.add(
-                        server = openGroup.server,
-                        room = openGroup.room,
-                        publicKey = openGroup.serverPublicKey,
-                        context = activity
-                    )
-
-                    storage.onOpenGroupAdded(openGroup.server, openGroup.room)
-                }
+                openGroupManager.add(
+                    server = openGroup.server,
+                    room = openGroup.room,
+                    publicKey = openGroup.serverPublicKey,
+                )
             } catch (e: Exception) {
                 Log.e("JoinOpenGroupDialog", "Error joining community", e)
-                Toast.makeText(activity, R.string.communityErrorDescription, Toast.LENGTH_SHORT).show()
+                Toast.makeText(app, R.string.communityErrorDescription, Toast.LENGTH_SHORT).show()
             }
         }
 

@@ -94,7 +94,6 @@ fun  MemberItem(
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
         ) {
             ProBadgeText(
-                modifier = Modifier.qaTag(R.string.AccessibilityId_contact),
                 text = title,
                 textStyle = LocalType.current.h8.copy(color = LocalColors.current.text),
                 showBadge = showProBadge

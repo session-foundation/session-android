@@ -1,15 +1,17 @@
 package org.thoughtcrime.securesms.groups.handler
 
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.UserConfigType
+import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import java.util.EnumSet
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -25,15 +27,15 @@ import javax.inject.Singleton
 class AdminStateSync @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val preferences: TextSecurePreferences,
-) {
+    @param:ManagerScope private val scope: CoroutineScope
+) : OnAppStartupComponent {
     private var job: Job? = null
 
-    fun start() {
+    override fun onPostAppStarted() {
         require(job == null) { "Already started" }
 
-        job = GlobalScope.launch {
-            configFactory.configUpdateNotifications
-                .filter { it is ConfigUpdateNotification.UserConfigsMerged || it == ConfigUpdateNotification.UserConfigsModified }
+        job = scope.launch {
+            configFactory.userConfigsChanged(onlyConfigTypes = setOf(UserConfigType.USER_GROUPS))
                 .collect {
                     val localNumber = preferences.getLocalNumber() ?: return@collect
 

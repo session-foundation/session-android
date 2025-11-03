@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.preferences
 
+import android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP
 import android.os.Bundle
 import android.view.View
 import androidx.compose.foundation.background
@@ -13,9 +14,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updatePadding
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -23,11 +21,9 @@ import kotlinx.coroutines.flow.asSharedFlow
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.PublicKeyValidation
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.database.threadDatabase
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.ui.components.QRScannerScreen
 import org.thoughtcrime.securesms.ui.components.QrImage
@@ -38,7 +34,6 @@ import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
-import org.thoughtcrime.securesms.util.start
 
 private val TITLES = listOf(R.string.view, R.string.scan)
 
@@ -73,13 +68,13 @@ class QRCodeActivity : ScreenLockActionBarActivity() {
         if (!PublicKeyValidation.isValid(string)) {
             errors.tryEmit(getString(R.string.qrNotAccountId))
         } else if (!isFinishing) {
-            val recipient = Recipient.from(this, Address.fromSerialized(string), false)
-            start<ConversationActivityV2> {
-                putExtra(ConversationActivityV2.ADDRESS, recipient.address)
-                setDataAndType(intent.data, intent.type)
-                val existingThread = threadDatabase().getThreadIdIfExistsFor(recipient)
-                putExtra(ConversationActivityV2.THREAD_ID, existingThread)
-            }
+            val address = Address.fromSerialized(string) as Address.Conversable
+            startActivity(
+                ConversationActivityV2.createIntent(this, address = address)
+                    .setDataAndType(intent.data, intent.type)
+                    .addFlags(FLAG_ACTIVITY_SINGLE_TOP)
+            )
+
             finish()
         }
     }

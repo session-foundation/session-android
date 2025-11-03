@@ -121,6 +121,7 @@
     <string name="banUser">ব্যবহারকারীকে ব্যান করুন</string>
     <string name="banUserBanned">ইউজার ব্যান করা হয়েছে</string>
     <string name="block">ব্লক</string>
+    <string name="blockBlockedDescription">মেসেজ পাঠাতে এই কন্টাক্টটি আনব্লক করুন।</string>
     <string name="blockBlockedNone">কোনো ব্লক করা যোগাযোগ নেই</string>
     <string name="blockBlockedUser">{name} কে ব্লক করবেন</string>
     <string name="blockDescription">আপনি কি নিশ্চিত যে আপনি <b>{name}</b> কে ব্লক করতে চান? ব্লক করা ব্যবহারকারীরা আপনাকে বার্তা অনুরোধ, গ্রুপ আমন্ত্রণ বা কল করতে পারবেন না।</string>
@@ -151,7 +152,6 @@
     <string name="callsSettings">কলস (বেটা)</string>
     <string name="callsVoiceAndVideo">ভয়েস এবং ভিডিও কল</string>
     <string name="callsVoiceAndVideoBeta">ভয়েস এবং ভিডিও কল (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">বেটা কলগুলি ব্যবহার করার সময় আপনার আইপি আপনার কল পার্টনার এবং একটি Oxen Foundation সার্ভারের কাছে দৃশ্যমান হবে।</string>
     <string name="callsVoiceAndVideoToggleDescription">অন্য ব্যবহারকারীদের সাথে এবং তাদের থেকে ভয়েস এবং ভিডিও কল সক্রিয় করুন।</string>
     <string name="callsYouCalled">You called {name}</string>
     <string name="callsYouMissedCallPermissions">আপনি <b>{name}</b> এর একটি কল মিস করেছেন কারণ আপনি প্রাইভেসি সেটিংসে <b>ভয়েস এবং ভিডিও কল</b> সক্ষম করেননি।</string>
@@ -233,7 +233,6 @@
     <string name="conversationsDeleted">কথোপকথন মুছে ফেলা হয়েছে</string>
     <string name="conversationsEmpty">{conversation_name} এ কোনো মেসেজ নেই।</string>
     <string name="conversationsEnter">কী লিখুন</string>
-    <string name="conversationsEnterDescription">কথোপকথনে টাইপ করার সময় এন্টার কী এর ফাংশন।</string>
     <string name="conversationsGroups">গ্রুপস</string>
     <string name="conversationsMessageTrimming">বার্তা সংক্ষিপ্তকরণ</string>
     <string name="conversationsMessageTrimmingTrimCommunities">কমিউনিটিস ট্রিম করুন</string>
@@ -635,8 +634,6 @@
     <string name="open">ওপেন</string>
     <string name="other">অন্যান্য</string>
     <string name="passwordChange">পাসওয়ার্ড পরিবর্তন করুন</string>
-    <string name="passwordChangeDescription">{app_name} আনলক করতে প্রয়োজনীয় পাসওয়ার্ড পরিবর্তন করুন।</string>
-    <string name="passwordChangedDescription">আপনার পাসওয়ার্ড পরিবর্তন করা হয়েছে। দয়া করে এটি নিরাপদ রাখুন।</string>
     <string name="passwordConfirm">পাসওয়ার্ড নিশ্চিত করুন</string>
     <string name="passwordCurrentIncorrect">আপনার বর্তমান পাসওয়ার্ডটি ভুল।</string>
     <string name="passwordEnter">পাসওয়ার্ড লিখুন</string>
@@ -647,7 +644,6 @@
     <string name="passwordFailed">পাসওয়ার্ড সেট করতে ব্যর্থ হয়েছে</string>
     <string name="passwordIncorrect">পাসওয়ার্ড ভুল হয়েছে</string>
     <string name="passwordRemove">পাসওয়ার্ড সরান</string>
-    <string name="passwordRemovedDescription">আপনার পাসওয়ার্ড সরানো হয়েছে।</string>
     <string name="passwordSet">পাসওয়ার্ড সেট করুন</string>
     <string name="paste">পেস্ট</string>
     <string name="permissionMusicAudioDenied">{app_name} এর ফাইল, সঙ্গীত এবং অডিও পাঠানোর জন্য সঙ্গীত ও অডিও অ্যাক্সেস প্রয়োজন, কিন্তু এটি স্থায়ীভাবে প্রত্যাখ্যান করা হয়েছে। Tap Settings → Permissions, and turn \"Music and audio\" on.</string>
@@ -708,7 +704,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Recovery Password গোপন করুন</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">এই ডিভাইসে আপনার পুনরুদ্ধার পাসওয়ার্ড স্থায়ীভাবে লুকিয়ে রাখুন।</string>
     <string name="recoveryPasswordRestoreDescription">আপনার একাউন্ট লোড করার জন্য আপনার recovery password লিখুন। যদি আপনি এটি সংরক্ষণ না করে থাকেন, আপনি এটি আপনার অ্যাপ সেটিংসে খুঁজে পেতে পারেন।</string>
-    <string name="recoveryPasswordView">পাসওয়ার্ড দেখুন</string>
     <string name="recoveryPasswordWarningSendDescription">এটি আপনার রিকভারি পাসওয়ার্ড। আপনি যদি এটি কাউকে পাঠান তবে তাদের কাছে আপনার অ্যাকাউন্টের সম্পূর্ণ অ্যাক্সেস থাকবে।</string>
     <string name="redo">রিডো</string>
     <string name="remove">অপসারণ</string>
@@ -758,6 +753,7 @@
     <string name="sessionSettings">সেটিংস</string>
     <string name="set">সেট করুন</string>
     <string name="settingsRestartDescription">আপনার নতুন সেটিংস প্রয়োগ করতে আপনাকে {app_name} পুনরায় চালু করতে হবে।</string>
+    <string name="settingsScreenSecurityDesktop">স্ক্রীন সিকিউরিটি</string>
     <string name="share">শেয়ার করুন</string>
     <string name="shareAccountIdDescription">প্রত্যেককে আপনার অ্যাকাউন্ট আইডি শেয়ার করে {app_name} এ আপনাকে চ্যাট করার জন্য আমন্ত্রণ জানান।</string>
     <string name="shareAccountIdDescriptionCopied">আপনার বন্ধুদের সাথে সেখানেই শেয়ার করুন যেখানে আপনি সাধারণত কথা বলেন — তারপর কথোপকথনটি এখানে সরান।</string>

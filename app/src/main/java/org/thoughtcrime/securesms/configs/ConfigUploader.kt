@@ -39,11 +39,13 @@ import org.session.libsession.utilities.MutableGroupConfigs
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.getGroup
+import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.retryWithUniformInterval
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import javax.inject.Inject
 
@@ -66,7 +68,7 @@ class ConfigUploader @Inject constructor(
     private val clock: SnodeClock,
     private val networkConnectivity: NetworkConnectivity,
     private val textSecurePreferences: TextSecurePreferences,
-) {
+) : OnAppStartupComponent {
     private var job: Job? = null
 
     /**
@@ -93,7 +95,7 @@ class ConfigUploader @Inject constructor(
 
 
     @OptIn(DelicateCoroutinesApi::class, FlowPreview::class, ExperimentalCoroutinesApi::class)
-    fun start() {
+    override fun onPostAppStarted() {
         require(job == null) { "Already started" }
 
         job = GlobalScope.launch {
@@ -108,8 +110,8 @@ class ConfigUploader @Inject constructor(
                             if (loggedIn) {
                                 merge(
                                     pathBecomesAvailable(),
-                                    configFactory.configUpdateNotifications
-                                        .filterIsInstance<ConfigUpdateNotification.UserConfigsModified>()
+                                    configFactory.userConfigsChanged()
+                                        .filter { !it.fromMerge }
                                         .debounce(1000L)
                                 )
                             } else {

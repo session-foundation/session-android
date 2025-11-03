@@ -33,7 +33,7 @@
         android:gravity="bottom"
         android:paddingBottom="@dimen/small_spacing">
 
-        <org.thoughtcrime.securesms.components.ProfilePictureView
+        <androidx.compose.ui.platform.ComposeView
             android:id="@+id/profilePictureView"
             android:layout_marginBottom="@dimen/small_spacing"
             android:layout_marginEnd="@dimen/small_spacing"
@@ -118,7 +118,7 @@
 
             <TextView
                 android:id="@+id/messageStatusTextView"
-                android:contentDescription="@string/AccessibilityId_sent"
+                android:contentDescription="@string/AccessibilityId_send_status"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="2dp"

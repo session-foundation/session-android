@@ -183,7 +183,6 @@
     <string name="callsSettings">通話 (Beta)</string>
     <string name="callsVoiceAndVideo">語音和視訊通話</string>
     <string name="callsVoiceAndVideoBeta">語音和視訊通話 (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">您在使用測試版通話時，您的 IP 將會被通話夥伴和 Oxen Foundation 伺服器看到。</string>
     <string name="callsVoiceAndVideoToggleDescription">啟用語音通話和視像通話功能。</string>
     <string name="callsYouCalled">您撥打給 {name}</string>
     <string name="callsYouMissedCallPermissions">您錯過了<b>{name} </b>的一個通話，因為您沒有在隱私設定中啟用<b>語音和視頻通話</b>。</string>
@@ -276,7 +275,6 @@
     <string name="conversationsDeleted">對話已刪除</string>
     <string name="conversationsEmpty">{conversation_name} 中沒有訊息。</string>
     <string name="conversationsEnter">回車鍵</string>
-    <string name="conversationsEnterDescription">在對話中鍵入時回車鍵的功能。</string>
     <string name="conversationsGroups">群組</string>
     <string name="conversationsMessageTrimming">訊息清理</string>
     <string name="conversationsMessageTrimmingTrimCommunities">刪裁社群舊訊息</string>
@@ -748,8 +746,6 @@
     <string name="openSurvey">開啟問卷</string>
     <string name="other">其他</string>
     <string name="passwordChange">變更密碼</string>
-    <string name="passwordChangeDescription">更改解鎖 {app_name} 所需的密碼。</string>
-    <string name="passwordChangedDescription">您的密碼變更完成。請注意保管。</string>
     <string name="passwordConfirm">確認密碼</string>
     <string name="passwordCurrentIncorrect">您目前的密碼不正確。</string>
     <string name="passwordEnter">輸入密碼</string>
@@ -761,7 +757,6 @@
     <string name="passwordFailed">設定密碼失敗</string>
     <string name="passwordIncorrect">密碼錯誤</string>
     <string name="passwordRemove">移除密碼</string>
-    <string name="passwordRemovedDescription">已移除密碼。</string>
     <string name="passwordSet">設定密碼</string>
     <string name="paste">貼上</string>
     <string name="permissionChange">權限變更</string>
@@ -809,7 +804,6 @@
     <string name="proAnimatedDisplayPictureFeature">動畫顯示圖片</string>
     <string name="proAnimatedDisplayPictureModalDescription">用戶可以上傳 GIF</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">使用 {app_pro} 上傳 GIF 圖片</string>
-    <string name="proBadge">{app_pro} 徽章</string>
     <string name="proCallToActionLongerMessages">想傳送更長的訊息嗎？與 {app_pro} 一起傳送更多文字並解鎖進階功能</string>
     <string name="proCallToActionPinnedConversations">想要釘選更多對話嗎？使用 {app_pro} 整理您的聊天並解鎖進階功能</string>
     <string name="proCallToActionPinnedConversationsMoreThan">想要釘選超過 5 則對話嗎？使用 {app_pro} 整理您的聊天並解鎖進階功能</string>
@@ -871,7 +865,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">隱藏恢復密碼</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">在此設備上永久隱藏您的恢復密碼。</string>
     <string name="recoveryPasswordRestoreDescription">輸入您的恢復密碼以載入您的帳戶。如果您尚未保存它，可以在應用設置中找到。</string>
-    <string name="recoveryPasswordView">檢視密碼</string>
     <string name="recoveryPasswordWarningSendDescription">這是你的恢復密碼。獲得這段復密碼的任何人都可以全權存取你的帳戶。</string>
     <string name="recreateGroup">重新建立群組</string>
     <string name="redo">重做</string>
@@ -941,6 +934,7 @@
     <string name="set">設定</string>
     <string name="setCommunityDisplayPicture">設定社群顯示圖片</string>
     <string name="settingsRestartDescription">您必須重新啓動 {app_name} 以應用您的新設定。</string>
+    <string name="settingsScreenSecurityDesktop">螢幕安全性</string>
     <string name="share">分享</string>
     <string name="shareAccountIdDescription">分享您的帳號 ID 來邀請好友在 {app_name} 上聊天。</string>
     <string name="shareAccountIdDescriptionCopied">在任何與朋友連線的地方與他們分享, 然後將你們的對話轉移至此。</string>

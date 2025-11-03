@@ -1,13 +1,13 @@
 package org.thoughtcrime.securesms.components;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
-
 
 import org.session.libsession.messaging.messages.control.TypingIndicator;
 import org.session.libsession.messaging.sending_receiving.MessageSender;
+import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.Recipient;
+import org.thoughtcrime.securesms.database.RecipientRepository;
 import org.thoughtcrime.securesms.database.ThreadDatabase;
 import org.thoughtcrime.securesms.util.SessionMetaProtocol;
 
@@ -27,10 +27,12 @@ public class TypingStatusSender {
 
   private final Map<Long, TimerPair> selfTypingTimers;
   private final ThreadDatabase       threadDatabase;
+  private final RecipientRepository  recipientRepository;
 
   @Inject
-  public TypingStatusSender(ThreadDatabase threadDatabase) {
+  public TypingStatusSender(ThreadDatabase threadDatabase, RecipientRepository recipientRepository) {
       this.threadDatabase = threadDatabase;
+      this.recipientRepository = recipientRepository;
       this.selfTypingTimers = new HashMap<>();
   }
 
@@ -80,8 +82,11 @@ public class TypingStatusSender {
   }
 
   private void sendTyping(long threadId, boolean typingStarted) {
-    Recipient recipient = threadDatabase.getRecipientForThreadId(threadId);
+    Address address = threadDatabase.getRecipientForThreadId(threadId);
+    if (address == null) { return; }
+    Recipient recipient = recipientRepository.getRecipientSync(address);
     if (recipient == null) { return; }
+
     if (!SessionMetaProtocol.shouldSendTypingIndicator(recipient)) { return; }
     TypingIndicator typingIndicator;
     if (typingStarted) {

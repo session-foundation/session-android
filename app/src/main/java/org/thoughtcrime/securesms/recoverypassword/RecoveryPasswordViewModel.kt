@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import org.session.libsession.utilities.AppTextSecurePreferences
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.MnemonicCodec
 import org.session.libsignal.utilities.hexEncodedPrivateKey
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
@@ -23,9 +23,9 @@ import org.thoughtcrime.securesms.crypto.MnemonicUtilities
 
 @HiltViewModel
 class RecoveryPasswordViewModel @Inject constructor(
-    private val application: Application
+    private val application: Application,
+    private val prefs: TextSecurePreferences,
 ): AndroidViewModel(application) {
-    val prefs = AppTextSecurePreferences(application)
 
     val seed = MutableStateFlow<String?>(null)
     val mnemonic = seed.filterNotNull()

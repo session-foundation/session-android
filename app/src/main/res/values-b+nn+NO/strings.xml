@@ -121,7 +121,7 @@
     <string name="banUser">Bannlys brukar</string>
     <string name="banUserBanned">Bruker utestengt</string>
     <string name="block">Blokker</string>
-    <string name="blockBlockedDescription">Opphev blokkeringen på denne kontakten for å sende en melding.</string>
+    <string name="blockBlockedDescription">Opphev blokkeringen på denne kontakten for å sende en melding</string>
     <string name="blockBlockedNone">Ingen blokkerte kontakter</string>
     <string name="blockBlockedUser">Blokkert {name}</string>
     <string name="blockDescription">Er du sikker på at du vil blokkera <b>{name}</b>? Blokkerte brukere kan ikkje senda deg meldingsforespørsler, gruppeinvitasjonar eller ringa deg.</string>
@@ -152,7 +152,6 @@
     <string name="callsSettings">Samtaler (Beta)</string>
     <string name="callsVoiceAndVideo">Lyd- og videosamtaler</string>
     <string name="callsVoiceAndVideoBeta">Lyd- og videosamtaler (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">IP-adressa di er synlig for samtalepartnaren din og ein Oxen Foundation-server mens du bruker beta-samtaler.</string>
     <string name="callsVoiceAndVideoToggleDescription">Aktiverer tale- og videosamtaler til og frå andre brukarar.</string>
     <string name="callsYouCalled">Du ringte {name}</string>
     <string name="callsYouMissedCallPermissions">Du missa ein samtale frå <b>{name}</b> fordi du ikkje har aktivert <b>tale- og videosamtalar</b> i personverninnstillingane.</string>
@@ -234,7 +233,6 @@
     <string name="conversationsDeleted">Konversasjonen sletta</string>
     <string name="conversationsEmpty">Det er ingen meldinger i {conversation_name}.</string>
     <string name="conversationsEnter">Skriv inn Tast</string>
-    <string name="conversationsEnterDescription">Funksjon for enter-tasten ved skriving i samtale.</string>
     <string name="conversationsGroups">Grupper</string>
     <string name="conversationsMessageTrimming">Meldingsbeskjæring</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Trim Samfunn</string>
@@ -640,8 +638,6 @@
     <string name="open">Åpne</string>
     <string name="other">Annan</string>
     <string name="passwordChange">Endre passord</string>
-    <string name="passwordChangeDescription">Endre passordet som krevst for å låsa opp {app_name}.</string>
-    <string name="passwordChangedDescription">Passordet ditt er blitt endra. Vennligst oppbevar det trygt.</string>
     <string name="passwordConfirm">Bekreft passordet</string>
     <string name="passwordCurrentIncorrect">Ditt nåværande passord er feil.</string>
     <string name="passwordEnter">Skriv inn passord</string>
@@ -652,7 +648,6 @@
     <string name="passwordFailed">Kunne ikkje stilla passordet</string>
     <string name="passwordIncorrect">Galt passord</string>
     <string name="passwordRemove">Fjern passord</string>
-    <string name="passwordRemovedDescription">Passordet ditt er blitt fjerna.</string>
     <string name="passwordSet">Set Password</string>
     <string name="paste">Lim inn</string>
     <string name="permissionMusicAudioDenied">{app_name} trenger musikk- og lydtilgang for å sende filer, musikk og lyd, men tilgangen er permanent avslått. Trykk Innstillinger → Tillatelser, og slå på \"Musikk og lyd\".</string>
@@ -714,7 +709,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Skjul Recovery Password</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Permanently hide your recovery password on this device.</string>
     <string name="recoveryPasswordRestoreDescription">Skriv inn gjenopprettingspassordet ditt for å lasta inn kontoen din. Om du ikkje har lagra det, kan du finna det i appinnstillingane dine.</string>
-    <string name="recoveryPasswordView">Vis passord</string>
     <string name="recoveryPasswordWarningSendDescription">Dette er ditt gjenopprettingspassord. Hvis du sender det til noen, vil de få full tilgang til kontoen din.</string>
     <string name="redo">Gjenta</string>
     <string name="remove">Fjern</string>
@@ -764,6 +758,7 @@
     <string name="sessionSettings">Innstillingar</string>
     <string name="set">Set</string>
     <string name="settingsRestartDescription">Du må starte {app_name} på nytt for å bruke dei nye innstillingane dine.</string>
+    <string name="settingsScreenSecurityDesktop">Skjermtryggleik</string>
     <string name="share">Del</string>
     <string name="shareAccountIdDescription">Inviter vennen din til å chatte med deg på {app_name} ved å dele din Account ID med dei.</string>
     <string name="shareAccountIdDescriptionCopied">Del med vennane dine der du vanlegvis pratar med dei — så flyttar du samtalen hit.</string>

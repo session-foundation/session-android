@@ -13,9 +13,7 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
-import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.home.HomeActivity
 
 class ShortcutLauncherActivity : AppCompatActivity() {
@@ -37,15 +35,11 @@ class ShortcutLauncherActivity : AppCompatActivity() {
 
         // start the appropriate conversation activity and finish this one
         lifecycleScope.launch(Dispatchers.Default) {
-            val context = this@ShortcutLauncherActivity
-
             val address = fromSerialized(serializedAddress)
-            val recipient = Recipient.from(context, address, true)
-            val threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient)
-
-            val intent = Intent(context, ConversationActivityV2::class.java)
-            intent.putExtra(ConversationActivityV2.ADDRESS, recipient.address)
-            intent.putExtra(ConversationActivityV2.THREAD_ID, threadId)
+            val intent = ConversationActivityV2.createIntent(
+                this@ShortcutLauncherActivity,
+                address = address as Address.Conversable
+            )
 
             backStack.addNextIntent(intent)
             backStack.startActivities()

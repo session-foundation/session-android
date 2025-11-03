@@ -12,19 +12,16 @@ import androidx.core.content.edit
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
+import kotlinx.serialization.json.Json
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.file_server.FileServer
 import org.session.libsession.utilities.TextSecurePreferences.Companion.AUTOPLAY_AUDIO_MESSAGES
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_DARK
@@ -33,7 +30,8 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONM
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FORCED_SHORT_TTL
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_MESSAGE_REQUESTS
-import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_NOTE_TO_SELF
+import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN_PRO_EXPIRED
+import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN_PRO_EXPIRING
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HIDE_PASSWORD
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VACUUM_TIME
@@ -51,6 +49,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CA
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_WARNING
 import org.session.libsession.utilities.TextSecurePreferences.Companion._events
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import java.io.IOException
 import java.time.ZonedDateTime
@@ -101,14 +100,6 @@ interface TextSecurePreferences {
     fun setHasSeenGIFMetaDataWarning()
     fun isGifSearchInGridLayout(): Boolean
     fun setIsGifSearchInGridLayout(isGrid: Boolean)
-    fun getProfileKey(): String?
-    fun setProfileKey(key: String?)
-    fun setProfileName(name: String?)
-    fun getProfileName(): String?
-    fun setProfileAvatarId(id: Int)
-    fun getProfileAvatarId(): Int
-    fun setProfilePictureURL(url: String?)
-    fun getProfilePictureURL(): String?
     fun getNotificationPriority(): Int
     fun getMessageBodyTextSize(): Int
     fun setPreferredCameraDirection(value: CameraSelector)
@@ -171,12 +162,8 @@ interface TextSecurePreferences {
     fun setHasViewedSeed(hasViewedSeed: Boolean)
     fun setRestorationTime(time: Long)
     fun getRestorationTime(): Long
-    fun getLastProfilePictureUpload(): Long
-    fun setLastProfilePictureUpload(newValue: Long)
     fun getLastSnodePoolRefreshDate(): Long
     fun setLastSnodePoolRefreshDate(date: Date)
-    fun shouldUpdateProfile(profileUpdateTime: Long): Boolean
-    fun setLastProfileUpdateTime(profileUpdateTime: Long)
     fun getLastOpenTimeDate(): Long
     fun setLastOpenDate()
     fun hasSeenLinkPreviewSuggestionDialog(): Boolean
@@ -184,7 +171,6 @@ interface TextSecurePreferences {
     fun hasHiddenMessageRequests(): Boolean
     fun setHasHiddenMessageRequests(hidden: Boolean)
     fun forceCurrentUserAsPro(): Boolean
-    fun watchProStatus(): StateFlow<Boolean>
     fun setForceCurrentUserAsPro(isPro: Boolean)
     fun forceOtherUsersAsPro(): Boolean
     fun setForceOtherUsersAsPro(isPro: Boolean)
@@ -192,9 +178,11 @@ interface TextSecurePreferences {
     fun setForceIncomingMessagesAsPro(isPro: Boolean)
     fun forcePostPro(): Boolean
     fun setForcePostPro(postPro: Boolean)
+    fun hasSeenProExpiring(): Boolean
+    fun setHasSeenProExpiring()
+    fun hasSeenProExpired(): Boolean
+    fun setHasSeenProExpired()
     fun watchPostProStatus(): StateFlow<Boolean>
-    fun hasHiddenNoteToSelf(): Boolean
-    fun setHasHiddenNoteToSelf(hidden: Boolean)
     fun setShownCallWarning(): Boolean
     fun setShownCallNotification(): Boolean
     fun isCallNotificationsEnabled(): Boolean
@@ -228,6 +216,18 @@ interface TextSecurePreferences {
     fun  getDebugMessageFeatures(): Set<ProStatusManager.MessageProFeature>
     fun  setDebugMessageFeatures(features: Set<ProStatusManager.MessageProFeature>)
 
+    fun getDebugSubscriptionType(): DebugMenuViewModel.DebugSubscriptionStatus?
+    fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?)
+    fun getDebugProPlanStatus(): DebugMenuViewModel.DebugProPlanStatus?
+    fun setDebugProPlanStatus(status: DebugMenuViewModel.DebugProPlanStatus?)
+    fun getDebugForceNoBilling(): Boolean
+    fun setDebugForceNoBilling(hasBilling: Boolean)
+    fun getDebugIsWithinQuickRefund(): Boolean
+    fun setDebugIsWithinQuickRefund(isWithin: Boolean)
+
+    fun setSubscriptionProvider(provider: String)
+    fun getSubscriptionProvider(): String?
+
     var deprecationStateOverride: String?
     var deprecatedTimeOverride: ZonedDateTime?
     var deprecatingStartTimeOverride: ZonedDateTime?
@@ -240,6 +240,10 @@ interface TextSecurePreferences {
     var selectedActivityAliasName: String?
 
     var inAppReviewState: String?
+    var forcesDeterministicAttachmentEncryption: Boolean
+    var debugAvatarReupload: Boolean
+    var alternativeFileServer: FileServer?
+
 
     companion object {
         val TAG = TextSecurePreferences::class.simpleName
@@ -286,10 +290,6 @@ interface TextSecurePreferences {
         const val MEDIA_DOWNLOAD_WIFI_PREF = "pref_media_download_wifi"
         const val MEDIA_DOWNLOAD_ROAMING_PREF = "pref_media_download_roaming"
         const val DIRECT_CAPTURE_CAMERA_ID = "pref_direct_capture_camera_id"
-        const val PROFILE_KEY_PREF = "pref_profile_key"
-        const val PROFILE_NAME_PREF = "pref_profile_name"
-        const val PROFILE_AVATAR_ID_PREF = "pref_profile_avatar_id"
-        const val PROFILE_AVATAR_URL_PREF = "pref_profile_avatar_url"
         const val READ_RECEIPTS_PREF = "pref_read_receipts"
         const val INCOGNITO_KEYBORAD_PREF = "pref_incognito_keyboard"
         const val DATABASE_ENCRYPTED_SECRET = "pref_database_encrypted_secret"
@@ -316,15 +316,15 @@ interface TextSecurePreferences {
         const val GIF_GRID_LAYOUT = "pref_gif_grid_layout"
         val IS_PUSH_ENABLED get() = "pref_is_using_fcm$pushSuffix"
         const val CONFIGURATION_SYNCED = "pref_configuration_synced"
-        const val LAST_PROFILE_UPDATE_TIME = "pref_last_profile_update_time"
         const val PROFILE_PIC_EXPIRY = "profile_pic_expiry"
         const val LAST_OPEN_DATE = "pref_last_open_date"
         const val HAS_HIDDEN_MESSAGE_REQUESTS = "pref_message_requests_hidden"
-        const val HAS_HIDDEN_NOTE_TO_SELF = "pref_note_to_self_hidden"
         const val SET_FORCE_CURRENT_USER_PRO = "pref_force_current_user_pro"
         const val SET_FORCE_OTHER_USERS_PRO = "pref_force_other_users_pro"
         const val SET_FORCE_INCOMING_MESSAGE_PRO = "pref_force_incoming_message_pro"
         const val SET_FORCE_POST_PRO = "pref_force_post_pro"
+        const val HAS_SEEN_PRO_EXPIRING = "has_seen_pro_expiring"
+        const val HAS_SEEN_PRO_EXPIRED = "has_seen_pro_expired"
         const val CALL_NOTIFICATIONS_ENABLED = "pref_call_notifications_enabled"
         const val SHOWN_CALL_WARNING = "pref_shown_call_warning" // call warning is user-facing warning of enabling calls
         const val SHOWN_CALL_NOTIFICATION = "pref_shown_call_notification" // call notification is a prompt to check privacy settings
@@ -387,6 +387,13 @@ interface TextSecurePreferences {
         const val IN_APP_REVIEW_STATE = "in_app_review_state"
 
         const val DEBUG_MESSAGE_FEATURES = "debug_message_features"
+        const val DEBUG_SUBSCRIPTION_STATUS = "debug_subscription_status"
+        const val DEBUG_PRO_PLAN_STATUS = "debug_pro_plan_status"
+        const val DEBUG_FORCE_NO_BILLING = "debug_pro_has_billing"
+        const val DEBUG_WITHIN_QUICK_REFUND = "debug_within_quick_refund"
+
+        const val SUBSCRIPTION_PROVIDER = "session_subscription_provider"
+        const val DEBUG_AVATAR_REUPLOAD = "debug_avatar_reupload"
 
         @JvmStatic
         fun getConfigurationMessageSynced(context: Context): Boolean {
@@ -574,46 +581,6 @@ interface TextSecurePreferences {
         @JvmStatic
         fun setIsGifSearchInGridLayout(context: Context, isGrid: Boolean) {
             setBooleanPreference(context, GIF_GRID_LAYOUT, isGrid)
-        }
-
-        @JvmStatic
-        fun getProfileKey(context: Context): String? {
-            return getStringPreference(context, PROFILE_KEY_PREF, null)
-        }
-
-        @JvmStatic
-        fun setProfileKey(context: Context, key: String?) {
-            setStringPreference(context, PROFILE_KEY_PREF, key)
-        }
-
-        @JvmStatic
-        fun setProfileName(context: Context, name: String?) {
-            setStringPreference(context, PROFILE_NAME_PREF, name)
-            _events.tryEmit(PROFILE_NAME_PREF)
-        }
-
-        @JvmStatic
-        fun getProfileName(context: Context): String? {
-            return getStringPreference(context, PROFILE_NAME_PREF, null)
-        }
-
-        @JvmStatic
-        fun setProfileAvatarId(context: Context, id: Int) {
-            setIntegerPreference(context, PROFILE_AVATAR_ID_PREF, id)
-        }
-
-        @JvmStatic
-        fun getProfileAvatarId(context: Context): Int {
-            return getIntegerPreference(context, PROFILE_AVATAR_ID_PREF, 0)
-        }
-
-        fun setProfilePictureURL(context: Context, url: String?) {
-            setStringPreference(context, PROFILE_AVATAR_URL_PREF, url)
-        }
-
-        @JvmStatic
-        fun getProfilePictureURL(context: Context): String? {
-            return getStringPreference(context, PROFILE_AVATAR_URL_PREF, null)
         }
 
         @JvmStatic
@@ -910,24 +877,10 @@ interface TextSecurePreferences {
             return getLongPreference(context, "restoration_time", 0)
         }
 
-        @JvmStatic
-        fun getLastProfilePictureUpload(context: Context): Long {
-            return getLongPreference(context, "last_profile_picture_upload", 0)
-        }
-
-        @JvmStatic
-        fun setLastProfilePictureUpload(context: Context, newValue: Long) {
-            setLongPreference(context, "last_profile_picture_upload", newValue)
-        }
-
+        @Deprecated("We no longer keep the profile expiry in prefs, we write them in the file instead. Keeping it here for migration purposes")
         @JvmStatic
         fun getProfileExpiry(context: Context): Long{
             return getLongPreference(context, PROFILE_PIC_EXPIRY, 0)
-        }
-
-        @JvmStatic
-        fun setProfileExpiry(context: Context, newValue: Long){
-            setLongPreference(context, PROFILE_PIC_EXPIRY, newValue)
         }
 
         fun getLastSnodePoolRefreshDate(context: Context?): Long {
@@ -937,17 +890,6 @@ interface TextSecurePreferences {
         fun setLastSnodePoolRefreshDate(context: Context?, date: Date) {
             setLongPreference(context!!, "last_snode_pool_refresh_date", date.time)
         }
-
-        @JvmStatic
-        fun shouldUpdateProfile(context: Context, profileUpdateTime: Long): Boolean {
-            return profileUpdateTime > getLongPreference(context, LAST_PROFILE_UPDATE_TIME, 0)
-        }
-
-        @JvmStatic
-        fun setLastProfileUpdateTime(context: Context, profileUpdateTime: Long) {
-            setLongPreference(context, LAST_PROFILE_UPDATE_TIME, profileUpdateTime)
-        }
-
         fun getLastOpenTimeDate(context: Context): Long {
             return getLongPreference(context, LAST_OPEN_DATE, 0)
         }
@@ -1011,12 +953,6 @@ interface TextSecurePreferences {
             setBooleanPreference(context, FINGERPRINT_KEY_GENERATED, true)
         }
 
-        @JvmStatic
-        fun clearAll(context: Context) {
-            getDefaultSharedPreferences(context).edit().clear().commit()
-        }
-
-
         // ----- Get / set methods for if we have already warned the user that saving attachments will allow other apps to access them -----
         // Note: We only ever show the warning dialog about this ONCE - when the user accepts this fact we write true to the flag & never show again.
         @JvmStatic
@@ -1048,10 +984,10 @@ interface TextSecurePreferences {
 
 @Singleton
 class AppTextSecurePreferences @Inject constructor(
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context,
+    private val json: Json,
 ): TextSecurePreferences {
     private val localNumberState = MutableStateFlow(getStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, null))
-    private val proState = MutableStateFlow(getBooleanPreference(SET_FORCE_CURRENT_USER_PRO, false))
     private val postProLaunchState = MutableStateFlow(getBooleanPreference(SET_FORCE_POST_PRO, false))
     private val hiddenPasswordState = MutableStateFlow(getBooleanPreference(HIDE_PASSWORD, false))
 
@@ -1231,39 +1167,6 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setIsGifSearchInGridLayout(isGrid: Boolean) {
         setBooleanPreference(TextSecurePreferences.GIF_GRID_LAYOUT, isGrid)
-    }
-
-    override fun getProfileKey(): String? {
-        return getStringPreference(TextSecurePreferences.PROFILE_KEY_PREF, null)
-    }
-
-    override fun setProfileKey(key: String?) {
-        setStringPreference(TextSecurePreferences.PROFILE_KEY_PREF, key)
-    }
-
-    override fun setProfileName(name: String?) {
-        setStringPreference(TextSecurePreferences.PROFILE_NAME_PREF, name)
-        _events.tryEmit(TextSecurePreferences.PROFILE_NAME_PREF)
-    }
-
-    override fun getProfileName(): String? {
-        return getStringPreference(TextSecurePreferences.PROFILE_NAME_PREF, null)
-    }
-
-    override fun setProfileAvatarId(id: Int) {
-        setIntegerPreference(TextSecurePreferences.PROFILE_AVATAR_ID_PREF, id)
-    }
-
-    override fun getProfileAvatarId(): Int {
-        return getIntegerPreference(TextSecurePreferences.PROFILE_AVATAR_ID_PREF, 0)
-    }
-
-    override fun setProfilePictureURL(url: String?) {
-        setStringPreference(TextSecurePreferences.PROFILE_AVATAR_URL_PREF, url)
-    }
-
-    override fun getProfilePictureURL(): String? {
-        return getStringPreference(TextSecurePreferences.PROFILE_AVATAR_URL_PREF, null)
     }
 
     override fun getNotificationPriority(): Int {
@@ -1551,28 +1454,12 @@ class AppTextSecurePreferences @Inject constructor(
         return getLongPreference("restoration_time", 0)
     }
 
-    override fun getLastProfilePictureUpload(): Long {
-        return getLongPreference("last_profile_picture_upload", 0)
-    }
-
-    override fun setLastProfilePictureUpload(newValue: Long) {
-        setLongPreference("last_profile_picture_upload", newValue)
-    }
-
     override fun getLastSnodePoolRefreshDate(): Long {
         return getLongPreference("last_snode_pool_refresh_date", 0)
     }
 
     override fun setLastSnodePoolRefreshDate(date: Date) {
         setLongPreference("last_snode_pool_refresh_date", date.time)
-    }
-
-    override fun shouldUpdateProfile(profileUpdateTime: Long): Boolean {
-        return profileUpdateTime > getLongPreference(TextSecurePreferences.LAST_PROFILE_UPDATE_TIME, 0)
-    }
-
-    override fun setLastProfileUpdateTime(profileUpdateTime: Long) {
-        setLongPreference(TextSecurePreferences.LAST_PROFILE_UPDATE_TIME, profileUpdateTime)
     }
 
     override fun getLastOpenTimeDate(): Long {
@@ -1653,27 +1540,13 @@ class AppTextSecurePreferences @Inject constructor(
         setBooleanPreference(HAS_HIDDEN_MESSAGE_REQUESTS, hidden)
         _events.tryEmit(HAS_HIDDEN_MESSAGE_REQUESTS)
     }
-
-    override fun hasHiddenNoteToSelf(): Boolean {
-        return getBooleanPreference(HAS_HIDDEN_NOTE_TO_SELF, false)
-    }
-
-    override fun setHasHiddenNoteToSelf(hidden: Boolean) {
-        setBooleanPreference(HAS_HIDDEN_NOTE_TO_SELF, hidden)
-        _events.tryEmit(HAS_HIDDEN_NOTE_TO_SELF)
-    }
-
     override fun forceCurrentUserAsPro(): Boolean {
         return getBooleanPreference(SET_FORCE_CURRENT_USER_PRO, false)
     }
 
     override fun setForceCurrentUserAsPro(isPro: Boolean) {
         setBooleanPreference(SET_FORCE_CURRENT_USER_PRO, isPro)
-        proState.update { isPro }
-    }
-
-    override fun watchProStatus(): StateFlow<Boolean> {
-        return proState
+        _events.tryEmit(SET_FORCE_CURRENT_USER_PRO)
     }
 
     override fun forceOtherUsersAsPro(): Boolean {
@@ -1682,6 +1555,7 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setForceOtherUsersAsPro(isPro: Boolean) {
         setBooleanPreference(SET_FORCE_OTHER_USERS_PRO, isPro)
+        _events.tryEmit(SET_FORCE_OTHER_USERS_PRO)
     }
 
     override fun forceIncomingMessagesAsPro(): Boolean {
@@ -1699,6 +1573,23 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setForcePostPro(postPro: Boolean) {
         setBooleanPreference(SET_FORCE_POST_PRO, postPro)
         postProLaunchState.update { postPro }
+        _events.tryEmit(SET_FORCE_POST_PRO)
+    }
+
+    override fun hasSeenProExpiring(): Boolean {
+        return getBooleanPreference(HAS_SEEN_PRO_EXPIRING, false)
+    }
+
+    override fun setHasSeenProExpiring() {
+        setBooleanPreference(HAS_SEEN_PRO_EXPIRING, true)
+    }
+
+    override fun hasSeenProExpired(): Boolean {
+        return getBooleanPreference(HAS_SEEN_PRO_EXPIRED, false)
+    }
+
+    override fun setHasSeenProExpired() {
+        setBooleanPreference(HAS_SEEN_PRO_EXPIRED, true)
     }
 
     override fun watchPostProStatus(): StateFlow<Boolean> {
@@ -1799,8 +1690,16 @@ class AppTextSecurePreferences @Inject constructor(
         return getBooleanPreference(AUTOPLAY_AUDIO_MESSAGES, false)
     }
 
+    /**
+     * Clear all prefs and reset our observables
+     */
     override fun clearAll() {
-        getDefaultSharedPreferences(context).edit().clear().commit()
+        pushEnabled.update { false }
+        localNumberState.update { null }
+        postProLaunchState.update { false }
+        hiddenPasswordState.update { false }
+
+        getDefaultSharedPreferences(context).edit(commit = true) { clear() }
     }
 
     override fun getHidePassword() = getBooleanPreference(HIDE_PASSWORD, false)
@@ -1863,7 +1762,6 @@ class AppTextSecurePreferences @Inject constructor(
                 setStringPreference(TextSecurePreferences.DEPRECATING_START_TIME_OVERRIDE, value.toString())
             }
         }
-
     override fun getDebugMessageFeatures(): Set<ProStatusManager.MessageProFeature> {
         return getStringSetPreference( TextSecurePreferences.DEBUG_MESSAGE_FEATURES, emptySet())
             ?.map { ProStatusManager.MessageProFeature.valueOf(it) }?.toSet() ?: emptySet()
@@ -1872,4 +1770,76 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setDebugMessageFeatures(features: Set<ProStatusManager.MessageProFeature>) {
         setStringSetPreference(TextSecurePreferences.DEBUG_MESSAGE_FEATURES, features.map { it.name }.toSet())
     }
+
+    override fun getDebugSubscriptionType(): DebugMenuViewModel.DebugSubscriptionStatus? {
+        return getStringPreference(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS, null)?.let {
+            DebugMenuViewModel.DebugSubscriptionStatus.valueOf(it)
+        }
+    }
+
+    override fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?) {
+        setStringPreference(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS, status?.name)
+        _events.tryEmit(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS)
+    }
+
+    override fun getDebugProPlanStatus(): DebugMenuViewModel.DebugProPlanStatus? {
+        return getStringPreference(TextSecurePreferences.DEBUG_PRO_PLAN_STATUS, null)?.let {
+            DebugMenuViewModel.DebugProPlanStatus.valueOf(it)
+        }
+    }
+
+    override fun setDebugProPlanStatus(status: DebugMenuViewModel.DebugProPlanStatus?) {
+        setStringPreference(TextSecurePreferences.DEBUG_PRO_PLAN_STATUS, status?.name)
+        _events.tryEmit(TextSecurePreferences.DEBUG_PRO_PLAN_STATUS)
+    }
+
+    override fun getDebugForceNoBilling(): Boolean {
+        return getBooleanPreference(TextSecurePreferences.DEBUG_FORCE_NO_BILLING, false)
+    }
+
+    override fun setDebugForceNoBilling(hasBilling: Boolean) {
+        setBooleanPreference(TextSecurePreferences.DEBUG_FORCE_NO_BILLING, hasBilling)
+        _events.tryEmit(TextSecurePreferences.DEBUG_FORCE_NO_BILLING)
+    }
+
+    override fun getDebugIsWithinQuickRefund(): Boolean {
+        return getBooleanPreference(TextSecurePreferences.DEBUG_WITHIN_QUICK_REFUND, false)
+    }
+
+    override fun setDebugIsWithinQuickRefund(isWithin: Boolean) {
+        setBooleanPreference(TextSecurePreferences.DEBUG_WITHIN_QUICK_REFUND, isWithin)
+        _events.tryEmit(TextSecurePreferences.DEBUG_FORCE_NO_BILLING)
+    }
+
+    override fun getSubscriptionProvider(): String? {
+        return getStringPreference(TextSecurePreferences.SUBSCRIPTION_PROVIDER, null)
+    }
+
+    override fun setSubscriptionProvider(provider: String) {
+        setStringPreference(TextSecurePreferences.SUBSCRIPTION_PROVIDER, provider)
+    }
+
+    override var forcesDeterministicAttachmentEncryption: Boolean
+        get() = getBooleanPreference("forces_deterministic_attachment_upload", false)
+        set(value) {
+            setBooleanPreference("forces_deterministic_attachment_upload", value)
+        }
+
+    override var debugAvatarReupload: Boolean
+        get() = getBooleanPreference(TextSecurePreferences.DEBUG_AVATAR_REUPLOAD, false)
+        set(value) {
+            setBooleanPreference(TextSecurePreferences.DEBUG_AVATAR_REUPLOAD, value)
+            _events.tryEmit(TextSecurePreferences.DEBUG_AVATAR_REUPLOAD)
+        }
+
+    override var alternativeFileServer: FileServer?
+        get() = getStringPreference("alternative_file_server", null)?.let {
+            json.decodeFromString(it)
+        }
+
+        set(value) {
+            setStringPreference("alternative_file_server", value?.let {
+                json.encodeToString(it)
+            })
+        }
 }

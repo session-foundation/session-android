@@ -15,6 +15,7 @@ import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.crypto.DatabaseSecret;
 import org.thoughtcrime.securesms.database.AttachmentDatabase;
 import org.thoughtcrime.securesms.database.BlindedIdMappingDatabase;
+import org.thoughtcrime.securesms.database.CommunityDatabase;
 import org.thoughtcrime.securesms.database.ConfigDatabase;
 import org.thoughtcrime.securesms.database.DraftDatabase;
 import org.thoughtcrime.securesms.database.ExpirationConfigurationDatabase;
@@ -27,15 +28,22 @@ import org.thoughtcrime.securesms.database.LokiMessageDatabase;
 import org.thoughtcrime.securesms.database.LokiThreadDatabase;
 import org.thoughtcrime.securesms.database.LokiUserDatabase;
 import org.thoughtcrime.securesms.database.MmsDatabase;
+import org.thoughtcrime.securesms.database.MmsSmsDatabase;
 import org.thoughtcrime.securesms.database.PushDatabase;
+import org.thoughtcrime.securesms.database.PushRegistrationDatabase;
 import org.thoughtcrime.securesms.database.ReactionDatabase;
 import org.thoughtcrime.securesms.database.RecipientDatabase;
+import org.thoughtcrime.securesms.database.RecipientSettingsDatabase;
 import org.thoughtcrime.securesms.database.SearchDatabase;
 import org.thoughtcrime.securesms.database.SessionContactDatabase;
 import org.thoughtcrime.securesms.database.SessionJobDatabase;
 import org.thoughtcrime.securesms.database.SmsDatabase;
 import org.thoughtcrime.securesms.database.ThreadDatabase;
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities;
+
+import javax.inject.Provider;
+
+import kotlinx.serialization.json.Json;
 
 public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
@@ -89,13 +97,19 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int lokiV49                          = 70;
   private static final int lokiV50                          = 71;
   private static final int lokiV51                          = 72;
+  private static final int lokiV52                          = 73;
+  private static final int lokiV53                          = 74;
+  private static final int lokiV54                          = 75;
+  private static final int lokiV55                          = 76;
 
   // Loki - onUpgrade(...) must be updated to use Loki version numbers if Signal makes any database changes
-  private static final int    DATABASE_VERSION         = lokiV51;
+  private static final int    DATABASE_VERSION         = lokiV55;
   private static final int    MIN_DATABASE_VERSION     = lokiV7;
   public static final String  DATABASE_NAME            = "session.db";
 
-  public SQLCipherOpenHelper(@NonNull Context context, @NonNull DatabaseSecret databaseSecret) {
+  private final Provider<Json> jsonProvider;
+
+  public SQLCipherOpenHelper(@NonNull Context context, @NonNull DatabaseSecret databaseSecret, Provider<Json> jsonProvider) {
     super(
       context,
       DATABASE_NAME,
@@ -129,6 +143,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       // incomplete migrations
       false
     );
+
+    this.jsonProvider = jsonProvider;
+
+    Log.d(TAG, "SQLCipherOpenHelper created with database secret: " + databaseSecret.asString());
   }
 
   @Override
@@ -230,6 +248,22 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(MmsDatabase.ADD_IS_GROUP_UPDATE_COLUMN);
     db.execSQL(MmsDatabase.ADD_MESSAGE_CONTENT_COLUMN);
     db.execSQL(ThreadDatabase.ADD_SNIPPET_CONTENT_COLUMN);
+
+    executeStatements(db, RecipientSettingsDatabase.Companion.getMIGRATION_CREATE_TABLE());
+    ReactionDatabase.Companion.migrateToDropForeignConstraint(db);
+    db.execSQL(RecipientSettingsDatabase.MIGRATE_DROP_OLD_TABLE);
+    db.execSQL(BlindedIdMappingDatabase.DROP_TABLE_COMMAND);
+    db.execSQL(ExpirationConfigurationDatabase.DROP_TABLE_COMMAND);
+    db.execSQL(SessionContactDatabase.getDropTableCommand());
+    executeStatements(db, ThreadDatabase.CREATE_ADDRESS_INDEX);
+
+    db.execSQL(CommunityDatabase.MIGRATE_CREATE_TABLE);
+    executeStatements(db, CommunityDatabase.Companion.getMIGRATE_DROP_OLD_TABLES());
+
+    db.execSQL(SmsDatabase.ADD_LAST_MESSAGE_INDEX);
+    db.execSQL(MmsDatabase.ADD_LAST_MESSAGE_INDEX);
+
+    executeStatements(db, PushRegistrationDatabase.Companion.createTableStatements());
   }
 
   @Override
@@ -528,6 +562,40 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         db.execSQL(MmsDatabase.ADD_MESSAGE_CONTENT_COLUMN);
         db.execSQL(MmsDatabase.MIGRATE_EXPIRY_CONTROL_MESSAGES);
         db.execSQL(ThreadDatabase.ADD_SNIPPET_CONTENT_COLUMN);
+      }
+
+      if (oldVersion < lokiV52) {
+        // The recipient database must be migrated BEFORE the thread db as it contains lookup into
+        // the pre-migrated thread data.
+        RecipientDatabase.migrateOldCommunityAddresses(db);
+        ThreadDatabase.migrateLegacyCommunityAddresses(db);
+        MmsSmsDatabase.migrateLegacyCommunityAddresses(db);
+
+        executeStatements(db, RecipientSettingsDatabase.Companion.getMIGRATION_CREATE_TABLE());
+        db.execSQL(RecipientSettingsDatabase.MIGRATE_MOVE_DATA_FROM_OLD_TABLE);
+        ReactionDatabase.Companion.migrateToDropForeignConstraint(db);
+        db.execSQL(RecipientSettingsDatabase.MIGRATE_DROP_OLD_TABLE);
+        db.execSQL(BlindedIdMappingDatabase.DROP_TABLE_COMMAND);
+        db.execSQL(ExpirationConfigurationDatabase.DROP_TABLE_COMMAND);
+        db.execSQL(SessionContactDatabase.getDropTableCommand());
+        executeStatements(db, ThreadDatabase.CREATE_ADDRESS_INDEX);
+
+        db.execSQL(CommunityDatabase.MIGRATE_CREATE_TABLE);
+        CommunityDatabase.Companion.migrateFromOldTables(jsonProvider.get(), db);
+        executeStatements(db, CommunityDatabase.Companion.getMIGRATE_DROP_OLD_TABLES());
+      }
+
+      if (oldVersion < lokiV53) {
+        MmsSmsDatabase.migrateLegacyCommunityAddresses2(db);
+      }
+
+      if (oldVersion < lokiV54) {
+        db.execSQL(SmsDatabase.ADD_LAST_MESSAGE_INDEX);
+        db.execSQL(MmsDatabase.ADD_LAST_MESSAGE_INDEX);
+      }
+
+      if (oldVersion < lokiV55) {
+        executeStatements(db, PushRegistrationDatabase.Companion.createTableStatements());
       }
 
       db.setTransactionSuccessful();

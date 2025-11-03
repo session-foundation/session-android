@@ -13,8 +13,7 @@ import android.widget.TextView
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import androidx.core.os.BundleCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
@@ -27,23 +26,21 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewpager.widget.ViewPager.SimpleOnPageChangeListener
 import com.bumptech.glide.Glide
 import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.lifecycle.withCreationCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import network.loki.messenger.databinding.MediasendFragmentBinding
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.MediaTypes
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.InputBarDialogs
-import org.thoughtcrime.securesms.conversation.v2.ConversationV2Dialogs
 import org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarDelegate
 import org.thoughtcrime.securesms.conversation.v2.mention.MentionViewModel
-import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.mediapreview.MediaRailAdapter
 import org.thoughtcrime.securesms.mediapreview.MediaRailAdapter.RailItemListener
 import org.thoughtcrime.securesms.providers.BlobUtils
@@ -54,7 +51,6 @@ import org.thoughtcrime.securesms.util.hideKeyboard
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
-import javax.inject.Inject
 
 /**
  * Allows the user to edit and caption a set of media items before choosing to send them.
@@ -71,14 +67,16 @@ class MediaSendFragment : Fragment(), RailItemListener, InputBarDelegate {
     private val controller: Controller
         get() = (parentFragment as? Controller) ?: requireActivity() as Controller
 
-    // Mentions
-    private val threadId: Long
-        get() = arguments?.getLong(KEY_THREADID) ?: -1L
+    private val address: Address
+        get() = requireNotNull(BundleCompat.getParcelable(requireArguments(), KEY_ADDRESS, Address::class.java)) {
+            "Address is not provided in arguments"
+        }
 
-    @Inject lateinit var mentionViewModelFactory: MentionViewModel.AssistedFactory
-    private val mentionViewModel: MentionViewModel by viewModels {
-        mentionViewModelFactory.create(threadId)
-    }
+    private val mentionViewModel: MentionViewModel by viewModels(extrasProducer = {
+        defaultViewModelCreationExtras.withCreationCallback<MentionViewModel.Factory> {
+            it.create(address)
+        }
+    })
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -415,12 +413,10 @@ class MediaSendFragment : Fragment(), RailItemListener, InputBarDelegate {
         private val TAG: String = MediaSendFragment::class.java.simpleName
 
         private const val KEY_ADDRESS = "address"
-        private const val KEY_THREADID = "threadid"
 
-        fun newInstance(recipient: Recipient, threadId: Long): MediaSendFragment {
-            val args = Bundle()
-            args.putParcelable(KEY_ADDRESS, recipient.address)
-            args.putLong(KEY_THREADID, threadId)
+        fun newInstance(address: Address): MediaSendFragment {
+            val args = Bundle(1)
+            args.putParcelable(KEY_ADDRESS, address)
 
             val fragment = MediaSendFragment()
             fragment.arguments = args

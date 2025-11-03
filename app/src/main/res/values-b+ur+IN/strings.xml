@@ -121,6 +121,7 @@
     <string name="banUser">صارف کو بین کریں</string>
     <string name="banUserBanned">صارف بین کیا گیا</string>
     <string name="block">بلاک کریں</string>
+    <string name="blockBlockedDescription">پیغام بھیجنے کے لیے اس رابطے کو ان بلاک کریں</string>
     <string name="blockBlockedNone">کوئی بلاک شدہ رابطہ نہیں ہے</string>
     <string name="blockBlockedUser">{name} کو بلاک کر دیا گیا</string>
     <string name="blockDescription">کیا آپ واقعی <b>{name}</b> کو بلاک کرنا چاہتے ہیں؟ بلاک کئے گئے صارفین آپ کو میسیج کی درخواستیں، گروپ دعوتیں یا کال نہیں بھیج سکتے۔</string>
@@ -149,7 +150,6 @@
     <string name="callsSettings">کالز (بیٹا)</string>
     <string name="callsVoiceAndVideo">وائس اور ویڈیو کالز</string>
     <string name="callsVoiceAndVideoBeta">وائس اور ویڈیو کالز (بیٹا)</string>
-    <string name="callsVoiceAndVideoModalDescription">بیٹا کالز استعمال کرتے وقت آپ کا آئی پی آپ کے کال پارٹنر اور ایک اوکسن فاؤنڈیشن سرور کو نظر آئے گا۔</string>
     <string name="callsVoiceAndVideoToggleDescription">دیگر صارفین کے ساتھ وائس اور ویڈیو کالز کو فعال کریں.</string>
     <string name="callsYouCalled">آپ نے {name} کو کال کی</string>
     <string name="callsYouMissedCallPermissions">آپ نے ایک کال یاد کر دی <b>{name}</b> کی وجہ سے کیونکہ آپ نے <b>وائس اور ویڈیو کالز</b> کو پرائیویسی سیٹنگز میں فعال نہیں کیا ہے۔</string>
@@ -231,7 +231,6 @@
     <string name="conversationsDeleted">مکالمہ حذف کردیا گیا</string>
     <string name="conversationsEmpty">{conversation_name} میں کوئی پیغامات نہیں ہیں۔</string>
     <string name="conversationsEnter">کلید درج کریں</string>
-    <string name="conversationsEnterDescription">گفتگو میں ٹائپ کرتے وقت انٹر کی کلید کا فنکشن</string>
     <string name="conversationsGroups">گروپس</string>
     <string name="conversationsMessageTrimming">پیغام کی کانٹ چھانٹ</string>
     <string name="conversationsMessageTrimmingTrimCommunities">کمیونٹیز  ٹرم کریں</string>
@@ -647,8 +646,6 @@
     <string name="open">کھولیں</string>
     <string name="other">دیگر</string>
     <string name="passwordChange">پاس ورڈ تبدیل کریں</string>
-    <string name="passwordChangeDescription">{app_name} کو ان لاک کرنے کے لیے مطلوبہ پاس ورڈ تبدیل کریں۔</string>
-    <string name="passwordChangedDescription">آپ کا پاس ورڈ تبدیل ہو گیا ہے۔ براہ کرم اسے محفوظ رکھیں۔</string>
     <string name="passwordConfirm">پاس ورڈ کی تصدیق کریں</string>
     <string name="passwordCurrentIncorrect">آپ کا موجودہ پاس ورڈ غلط ہے۔</string>
     <string name="passwordEnter">پاس ورڈ درج کریں</string>
@@ -659,7 +656,6 @@
     <string name="passwordFailed">پاس ورڈ سیٹ کرنے میں ناکامی</string>
     <string name="passwordIncorrect">غلط پاس ورڈ</string>
     <string name="passwordRemove">پاس ورڈ ہٹا دیں</string>
-    <string name="passwordRemovedDescription">آپ کا پاس ورڈ ہٹا دیا گیا ہے۔</string>
     <string name="passwordSet">پاس ورڈ سیٹ کریں</string>
     <string name="paste">چسپاں کریں</string>
     <string name="permissionMusicAudioDenied">{app_name} کو فائلز، میوزک، اور آڈیو بھیجنے کے لیے میوزک اور آڈیو کی رسائی کی ضرورت ہے، مگر اسے مستقل طور پر انکار کر دیا گیا ہے۔ سیٹنگز پر ٹیپ کریں → اجازتیں، اور \"موسیقی اور آڈیو\" کو آن کریں۔</string>
@@ -720,7 +716,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Recovery Password چھپائیں</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">اپنے ریکوری پاس ورڈ کو اس ڈیوائس پر مستقل طور پر چھپائیں۔</string>
     <string name="recoveryPasswordRestoreDescription">اپنے اکاؤنٹ کو لوڈ کرنے کے لیے اپنا بازیابی پاس ورڈ درج کریں۔ اگر آپ نے اسے محفوظ نہیں کیا ہے، تو آپ اسے اپنے ایپ سیٹنگز میں دیکھ سکتے ہیں۔</string>
-    <string name="recoveryPasswordView">پاس ورڈ دیکھیں</string>
     <string name="recoveryPasswordWarningSendDescription">یہ آپ کا بازیابی پاس ورڈ ہے۔ اگر آپ اسے کسی کو بھیجتے ہیں تو ان کے پاس آپ کے اکاؤنٹ تک مکمل رسائی ہوگی۔</string>
     <string name="redo">دوبارہ کریں</string>
     <string name="remove">حذف کریں</string>
@@ -770,6 +765,7 @@
     <string name="sessionSettings">سیٹنگز</string>
     <string name="set">سیٹ</string>
     <string name="settingsRestartDescription">آپ کو نئی سیٹنگز کے اطلاق کے لئے {app_name} کو دوبارہ شروع کرنا ضروری ہے۔</string>
+    <string name="settingsScreenSecurityDesktop">سکرین سیکیورٹی</string>
     <string name="share">شیئر</string>
     <string name="shareAccountIdDescription">اپنے دوست کو اپنی Account ID شئیر کر کے {app_name} پر آپ کے ساتھ بات چیت کرنے کی دعوت دیں۔</string>
     <string name="shareAccountIdDescriptionCopied">اپنے دوستوں کے ساتھ جہاں آپ معمول کے مطابق بات کرتے ہیں شیئر کریں — پھر یہاں گفتگو کو منتقل کریں۔</string>

@@ -17,7 +17,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -75,9 +78,7 @@ fun ConversationAppBar(
     onAvatarPressed: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box (
-        modifier = modifier
-    ) {
+    Box(modifier = modifier) {
         // cross fade between the default app bar and the search bar
         Crossfade(targetState = data.showSearch) { showSearch ->
             when(showSearch){
@@ -85,7 +86,6 @@ fun ConversationAppBar(
                     val pagerState = rememberPagerState(pageCount = { data.pagerData.size })
 
                     CenterAlignedTopAppBar(
-                        windowInsets = WindowInsets(0, 0, 0, 0),
                         title = {
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally
@@ -163,7 +163,9 @@ fun ConversationAppBar(
 
                 true -> {
                     Row(
-                        modifier = Modifier.padding(horizontal = LocalDimensions.current.smallSpacing)
+                        modifier = Modifier
+                            .statusBarsPadding()
+                            .padding(horizontal = LocalDimensions.current.smallSpacing)
                             .heightIn(min = LocalDimensions.current.appBarHeight),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {

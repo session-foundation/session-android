@@ -7,11 +7,11 @@ import org.session.libsession.messaging.messages.visible.VisibleMessage;
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview;
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel;
+import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.Contact;
 import org.session.libsession.utilities.DistributionTypes;
 import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.NetworkFailure;
-import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.database.model.content.MessageContent;
 
 import java.util.Collections;
@@ -27,7 +27,7 @@ import java.util.List;
  */
 public class OutgoingMediaMessage {
 
-  private   final Recipient                 recipient;
+  private   final Address                   recipient;
   protected final String                    body;
   protected final List<Attachment>          attachments;
   private   final long                      sentTimeMillis;
@@ -44,7 +44,7 @@ public class OutgoingMediaMessage {
   private   final List<Contact>             contacts              = new LinkedList<>();
   private   final List<LinkPreview>         linkPreviews          = new LinkedList<>();
 
-  public OutgoingMediaMessage(Recipient recipient, String message,
+  public OutgoingMediaMessage(Address recipient, String message,
                               List<Attachment> attachments, long sentTimeMillis,
                               int subscriptionId, long expiresIn, long expireStartedAt,
                               int distributionType,
@@ -91,7 +91,7 @@ public class OutgoingMediaMessage {
   }
 
   public static OutgoingMediaMessage from(VisibleMessage message,
-                                          Recipient recipient,
+                                          Address recipient,
                                           List<Attachment> attachments,
                                           @Nullable QuoteModel outgoingQuote,
                                           @Nullable LinkPreview linkPreview,
@@ -112,7 +112,7 @@ public class OutgoingMediaMessage {
     return messageContent;
   }
 
-  public Recipient getRecipient() {
+  public Address getRecipient() {
     return recipient;
   }
 

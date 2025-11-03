@@ -14,8 +14,13 @@ import org.session.libsession.utilities.TextSecurePreferences
 import java.time.Duration
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class LegacyGroupDeprecationManager(private val prefs: TextSecurePreferences)  {
+@Singleton
+class LegacyGroupDeprecationManager
+    @Inject constructor(private val prefs: TextSecurePreferences
+)  {
     private val mutableDeprecationStateOverride = MutableStateFlow(
         DeprecationState.entries.firstOrNull { it.name == prefs.deprecationStateOverride }
     )

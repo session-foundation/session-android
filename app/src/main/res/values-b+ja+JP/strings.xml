@@ -183,7 +183,6 @@
     <string name="callsSettings">通話 (ベータ版)</string>
     <string name="callsVoiceAndVideo">音声とビデオ通話</string>
     <string name="callsVoiceAndVideoBeta">音声通話とビデオ通話 (ベータ版)</string>
-    <string name="callsVoiceAndVideoModalDescription">音声通話とビデオ通話の使用中、あなたのIPはあなたの通話相手とOxen Foundationサーバーに表示されます。</string>
     <string name="callsVoiceAndVideoToggleDescription">他のユーザーとの音声通話やビデオ通話を有効にします</string>
     <string name="callsYouCalled">{name} に発信</string>
     <string name="callsYouMissedCallPermissions"><b>{name}</b>さんからの通話を逃しました。プライバシー設定で<b>音声通話とビデオ通話</b>を有効にしていません。</string>
@@ -276,7 +275,6 @@
     <string name="conversationsDeleted">会話を削除しました</string>
     <string name="conversationsEmpty">{conversation_name} にはメッセージがありません。</string>
     <string name="conversationsEnter">キーを入力</string>
-    <string name="conversationsEnterDescription">会話中のEnterキーの機能</string>
     <string name="conversationsGroups">グループ</string>
     <string name="conversationsMessageTrimming">メッセージの削減</string>
     <string name="conversationsMessageTrimmingTrimCommunities">コミュニティをトリムする</string>
@@ -293,8 +291,7 @@
     <string name="creatingCall">通話を作成中</string>
     <string name="cut">切り取り</string>
     <string name="databaseErrorClearDataWarning">このデバイス上のすべてのメッセージ、添付ファイル、アカウントデータを削除し、新しいアカウントを作成してもよろしいですか？</string>
-    <string name="databaseErrorGeneric">データベースエラーが発生しました。\n\n
-トラブルシューティングのために、アプリのログをエクスポートして共有してください。この操作が失敗した場合は、{app_name} を再インストールし、アカウントを復元してください。</string>
+    <string name="databaseErrorGeneric">データベースエラーが発生しました。\n\nトラブルシューティングのために、アプリのログをエクスポートして共有してください。この操作が失敗した場合は、{app_name} を再インストールし、アカウントを復元してください。</string>
     <string name="databaseErrorRestoreDataWarning">このデバイス上のすべてのメッセージ、添付ファイル、アカウントデータを削除し、ネットワークからアカウントを復元してもよろしいですか？</string>
     <string name="databaseErrorTimeout">{app_name}が起動するのに時間がかかっていることを確認しました。\n\n引き続きお待ちいただくか、トラブルシューティングのためにデバイスログをエクスポートして共有するか、{app_name}を再起動してみてください。</string>
     <string name="databaseErrorUpdate">お使いのアプリデータベースはこのバージョンの {app_name} と互換性がありません。アプリを再インストールしてアカウントを復元し、新しいデータベースを生成して {app_name} を使用し続けてください。\n\n警告: これにより、2週間以上前のすべてのメッセージと添付ファイルが失われます。</string>
@@ -749,8 +746,6 @@
     <string name="openSurvey">アンケートを開く</string>
     <string name="other">その他</string>
     <string name="passwordChange">パスワードを変更</string>
-    <string name="passwordChangeDescription">{app_name}のロック解除に必要なパスワードを変更します</string>
-    <string name="passwordChangedDescription">パスワードが変更されました。安全に保管してください。</string>
     <string name="passwordConfirm">パスワードを再確認</string>
     <string name="passwordCurrentIncorrect">現在のパスワードが間違っています。</string>
     <string name="passwordEnter">パスワードを入力してください</string>
@@ -762,7 +757,6 @@
     <string name="passwordFailed">パスワードの設定に失敗しました</string>
     <string name="passwordIncorrect">パスワードが正しくありません</string>
     <string name="passwordRemove">パスワードを削除</string>
-    <string name="passwordRemovedDescription">パスワードを削除しました。</string>
     <string name="passwordSet">パスワードをセット</string>
     <string name="paste">貼り付け</string>
     <string name="permissionChange">権限の変更</string>
@@ -810,7 +804,6 @@
     <string name="proAnimatedDisplayPictureFeature">アニメーション表示画像</string>
     <string name="proAnimatedDisplayPictureModalDescription">ユーザーはGIFをアップロードできます</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">GIFをアップロード（PRO）</string>
-    <string name="proBadge">{app_pro} バッジ</string>
     <string name="proCallToActionLongerMessages">長文を送りたいですか？{app_pro}でより多くのテキストを送り、プレミアム機能を解除しましょう。</string>
     <string name="proCallToActionPinnedConversations">さらにピン留めしますか？{app_pro}でチャットを整理して、プレミアム機能を解除しましょう</string>
     <string name="proCallToActionPinnedConversationsMoreThan">5件以上ピン留めしたいですか？{app_pro}でチャットを整理して、プレミアム機能を解除しましょう</string>
@@ -872,7 +865,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">リカバリパスワードを隠す</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">このデバイスでリカバリーパスワードを永久に非表示にします</string>
     <string name="recoveryPasswordRestoreDescription">アカウントを読み込むためにリカバリーフレーズを入力してください。 保存していない場合は、アプリの設定で確認できます。</string>
-    <string name="recoveryPasswordView">パスワードを見る</string>
     <string name="recoveryPasswordWarningSendDescription">これはあなたのリカバリーパスワードです。誰かに送信すると、その人はあなたのアカウントにフルアクセスできます。</string>
     <string name="recreateGroup">グループを再作成</string>
     <string name="redo">やり直す</string>
@@ -942,6 +934,7 @@
     <string name="set">セット</string>
     <string name="setCommunityDisplayPicture">コミュニティのプロフィール写真を設定</string>
     <string name="settingsRestartDescription">新しい設定を適用するために {app_name} を再起動する必要があります.</string>
+    <string name="settingsScreenSecurityDesktop">スクリーンセキュリティ</string>
     <string name="share">共有</string>
     <string name="shareAccountIdDescription">友達を{app_name} に招待して、チャットを始めましょう。アカウントIDを共有して招待できます。</string>
     <string name="shareAccountIdDescriptionCopied">いつでもどこでも友達と共有 — ここで会話を始めましょう</string>

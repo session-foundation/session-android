@@ -121,6 +121,7 @@
     <string name="banUser">Забараніць карыстальніка</string>
     <string name="banUserBanned">Карыстальнік забаронены</string>
     <string name="block">Заблакіраваць</string>
+    <string name="blockBlockedDescription">Разблакуйце гэты кантакт, каб адправіць паведамленне</string>
     <string name="blockBlockedNone">Няма заблакіраваных кантактаў</string>
     <string name="blockBlockedUser">Заблакавана {name}</string>
     <string name="blockDescription">Вы ўпэўненыя, што жадаеце заблакіраваць <b>{name}?</b> Заблакіраваныя карыстальнікі не могуць адпраўляць вам запыты на паведамленні, запрашэнні ў групы ці тэлефанаваць вам.</string>
@@ -151,7 +152,6 @@
     <string name="callsSettings">Званкі (бэта)</string>
     <string name="callsVoiceAndVideo">Галасавыя і відэазванкі</string>
     <string name="callsVoiceAndVideoBeta">Галасавыя і відэазванкі (бэта)</string>
-    <string name="callsVoiceAndVideoModalDescription">Ваш IP будзе бачныя вашаму партнёру па званках і серверу Oxen Foundation падчас выкарыстання бэта-званкоў.</string>
     <string name="callsVoiceAndVideoToggleDescription">Дазваляе рабіць галасавыя і відэазванкі іншым карыстальнікам.</string>
     <string name="callsYouCalled">Вы патэлефанавалі {name}</string>
     <string name="callsYouMissedCallPermissions">Вы прапусцілі званок ад <b>{name}</b>, таму што не ўключылі <b>Галасавыя і відэазванкі</b> у наладах прыватнасці.</string>
@@ -235,7 +235,6 @@
     <string name="conversationsDeleted">Гутарка выдалена</string>
     <string name="conversationsEmpty">У {conversation_name} няма паведамленняў.</string>
     <string name="conversationsEnter">Увядзіце Key</string>
-    <string name="conversationsEnterDescription">Функцыя клавішы Enter пры наборы тэксту ў гутарцы.</string>
     <string name="conversationsGroups">Групы</string>
     <string name="conversationsMessageTrimming">Абрэзка паведамленняў</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Абрэжце супольніцтва</string>
@@ -659,8 +658,6 @@
     <string name="open">Адкрыць</string>
     <string name="other">Іншае</string>
     <string name="passwordChange">Змяніць пароль</string>
-    <string name="passwordChangeDescription">Змяніць пароль для разблакоўкі {app_name}.</string>
-    <string name="passwordChangedDescription">Ваш пароль быў зменены. Захавайце яго ў бяспецы.</string>
     <string name="passwordConfirm">Пацвердзіць пароль</string>
     <string name="passwordCurrentIncorrect">Ваш бягучы пароль няправільны.</string>
     <string name="passwordEnter">Увядзіце пароль</string>
@@ -671,7 +668,6 @@
     <string name="passwordFailed">Не атрымалася ўсталяваць пароль</string>
     <string name="passwordIncorrect">Няправільны пароль</string>
     <string name="passwordRemove">Выдаліць пароль</string>
-    <string name="passwordRemovedDescription">Ваш пароль быў выдалены.</string>
     <string name="passwordSet">Задаць пароль</string>
     <string name="paste">Уставіць</string>
     <string name="permissionMusicAudioDenied">{app_name} патрабуе доступу да музыкі і аўдыё для адпраўкі файлаў, музыкі і аўдыё, але доступ быў пастаянна забаронены. Націсніце «Налады» → «Дазволы» і актывуйце «Музыка і аўдыё».</string>
@@ -732,7 +728,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Схаваць Recovery Password</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Схавайце ваш пароль для аднаўлення на гэтай прыладзе назаўжды.</string>
     <string name="recoveryPasswordRestoreDescription">Увядзіце recovery password для загрузкі Вашага ўліковага запісу. Калі вы не захавалі гэта, то можаце знайсці ў наладах праграмы.</string>
-    <string name="recoveryPasswordView">Паказаць пароль</string>
     <string name="recoveryPasswordWarningSendDescription">This is your recovery password. If you send it to someone they\'ll have full access to your account.</string>
     <string name="redo">Паўтарыць</string>
     <string name="remove">Выдаліць</string>
@@ -784,6 +779,7 @@
     <string name="sessionSettings">Налады</string>
     <string name="set">Задаць</string>
     <string name="settingsRestartDescription">Вам неабходна перазапусціць {app_name} для прымянення новых налад.</string>
+    <string name="settingsScreenSecurityDesktop">Бяспека экрану</string>
     <string name="share">Абагуліць</string>
     <string name="shareAccountIdDescription">Запрасіце сябра пагутарыць у {app_name}, пры дапамозе вашага Account ID.</string>
     <string name="shareAccountIdDescriptionCopied">Падзяліцеся сваім ID акаўнта з сябрамі ў месцы, дзе вы звычайна з імі размаўляеце, а потым перанясіце гутарку сюды.</string>

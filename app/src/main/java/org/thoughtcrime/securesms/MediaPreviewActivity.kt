@@ -36,6 +36,7 @@ import android.view.ViewTreeObserver
 import android.view.Window
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.core.content.IntentCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.util.Pair
@@ -43,8 +44,10 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.Loader
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -57,6 +60,11 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import network.loki.messenger.R
 import network.loki.messenger.databinding.MediaPreviewActivityBinding
 import network.loki.messenger.databinding.MediaViewPageBinding
@@ -68,19 +76,19 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.snode.SnodeAPI.nowWithOffset
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
-import org.session.libsession.utilities.Util.runOnMain
 import org.session.libsession.utilities.getColorFromAttr
+import org.session.libsession.utilities.isGroupOrCommunity
+import org.session.libsession.utilities.isLegacyGroup
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.recipients.RecipientModifiedListener
+import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.ShareActivity
 import org.thoughtcrime.securesms.components.MediaView
 import org.thoughtcrime.securesms.components.dialogs.DeleteMediaPreviewDialog
-import org.thoughtcrime.securesms.conversation.v2.DimensionUnit
 import org.thoughtcrime.securesms.database.MediaDatabase.MediaRecord
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.loaders.PagingMediaLoader
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
-import org.thoughtcrime.securesms.media.MediaOverviewActivity.Companion.createIntent
+import org.thoughtcrime.securesms.media.MediaOverviewActivity
 import org.thoughtcrime.securesms.mediapreview.MediaPreviewViewModel
 import org.thoughtcrime.securesms.mediapreview.MediaPreviewViewModel.PreviewData
 import org.thoughtcrime.securesms.mediapreview.MediaRailAdapter
@@ -93,7 +101,6 @@ import org.thoughtcrime.securesms.util.FilenameUtils.getFilenameFromUri
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
 import org.thoughtcrime.securesms.util.SaveAttachmentTask.Companion.showOneTimeWarningDialogOrSave
 import java.io.IOException
-import java.util.Locale
 import java.util.WeakHashMap
 import javax.inject.Inject
 import kotlin.math.max
@@ -103,7 +110,7 @@ import kotlin.math.min
  * Activity for displaying media attachments in-app
  */
 @AndroidEntryPoint
-class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedListener,
+class MediaPreviewActivity : ScreenLockActionBarActivity(),
     LoaderManager.LoaderCallbacks<Pair<Cursor, Int>?>,
     RailItemListener, MediaView.FullscreenToggleListener {
     private lateinit var binding: MediaPreviewActivityBinding
@@ -111,11 +118,13 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
     private var initialMediaType: String? = null
     private var initialMediaSize: Long = 0
     private var initialCaption: String? = null
-    private var conversationRecipient: Recipient? = null
+    private var conversationAddress: Address? = null
     private var leftIsRecent = false
     private val viewModel: MediaPreviewViewModel by viewModels()
     private var viewPagerListener: ViewPagerListener? = null
-    
+
+    private val currentSelectedRecipient = MutableStateFlow<Address?>(null)
+
     @Inject
     lateinit var deprecationManager: LegacyGroupDeprecationManager
 
@@ -124,6 +133,9 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
     @Inject
     lateinit var dateUtils: DateUtils
 
+    @Inject
+    lateinit var recipientRepository: RecipientRepository
+
     override val applyDefaultWindowInsets: Boolean
         get() = false
 
@@ -131,8 +143,8 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
     private var albumRailAdapter: MediaRailAdapter? = null
 
     private var windowInsetBottom = 0
-    private var railHeight = 0
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun onCreate(bundle: Bundle?, ready: Boolean) {
         binding = MediaPreviewActivityBinding.inflate(
             layoutInflater
@@ -159,7 +171,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
             windowInsetBottom = insets.bottom
 
             binding.toolbar.updatePadding(top = insets.top)
-            binding.mediaPreviewAlbumRailContainer.updatePadding(bottom = max(insets.bottom, binding.mediaPreviewAlbumRailContainer.paddingBottom))
+            binding.mediaPreviewAlbumRailContainer.updatePadding(bottom = insets.bottom)
 
             updateControlsPosition()
 
@@ -173,6 +185,17 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
             windowInsets.inset(insets)
         }
 
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                currentSelectedRecipient
+                    .flatMapLatest { address ->
+                        address?.let(recipientRepository::observeRecipient) ?: flowOf(null)
+                    }
+                    .collectLatest { recipient ->
+                        updateActionBar(currentMediaItem, recipient)
+                    }
+            }
+        }
 
         // Set up system UI visibility listener
         window.decorView.setOnSystemUiVisibilityChangeListener { visibility ->
@@ -189,12 +212,9 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
      * Updates the media controls' position based on the rail's position
      */
     private fun updateControlsPosition() {
-        // the ypos of the controls is either the window bottom inset, or the rail height if there is a rail
-        // since the rail height takes the window inset into account with its padding
-        val totalBottomPadding = max(
-            windowInsetBottom,
-            railHeight + resources.getDimensionPixelSize(R.dimen.medium_spacing)
-        )
+        val totalBottomPadding = windowInsetBottom +
+                binding.mediaPreviewAlbumRail.height+
+                resources.getDimensionPixelSize(R.dimen.medium_spacing)
 
         adapter?.setControlsYPosition(totalBottomPadding)
     }
@@ -257,10 +277,6 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults)
     }
 
-    override fun onModified(recipient: Recipient) {
-        runOnMain { this.updateActionBar() }
-    }
-
     override fun onRailItemClicked(distanceFromActive: Int) {
         binding.mediaPager.currentItem = binding.mediaPager.currentItem + distanceFromActive
     }
@@ -269,9 +285,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         throw UnsupportedOperationException("Callback unsupported.")
     }
 
-    private fun updateActionBar() {
-        val mediaItem = currentMediaItem
-
+    private fun updateActionBar(mediaItem: MediaItem?, recipient: Recipient?) {
         if (mediaItem != null) {
             val relativeTimeSpan: CharSequence = if (mediaItem.date > 0) {
                 dateUtils.getDisplayFormattedTimeSpanString(mediaItem.date)
@@ -280,8 +294,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
             }
 
             if (mediaItem.outgoing) supportActionBar?.title = getString(R.string.you)
-            else if (mediaItem.recipient != null) supportActionBar?.title =
-                mediaItem.recipient.name
+            else if (recipient != null) supportActionBar?.title = recipient.displayName()
             else supportActionBar?.title = ""
 
             supportActionBar?.subtitle = relativeTimeSpan
@@ -303,6 +316,32 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         super.onNewIntent(intent)
         setIntent(intent)
         initializeResources()
+        handleNewPreviewTargetOrReload()
+    }
+
+    private fun handleNewPreviewTargetOrReload() {
+        val targetUri = initialMediaUri
+        val targetType = initialMediaType
+        val targetAddress = conversationAddress
+
+        if (!isContentTypeSupported(targetType) || targetUri == null || targetAddress == null) {
+            initializeMedia()
+            return
+        }
+
+        val adapter = this.adapter
+        if (adapter != null) {
+            val pos = adapter.findAdapterIndexByUri(targetUri)
+            if (pos != -1) {
+                binding.mediaPager.setCurrentItem(pos, false)
+                viewModel.setActiveAlbumRailItem(this, pos)
+                currentSelectedRecipient.value = adapter.getMediaItemFor(pos).recipientAddress
+                return
+            }
+        }
+
+        // Fallback: reload (new thread or item not currently in cursor)
+        initializeMedia()
     }
 
     fun onMediaPaused(videoUri: Uri, position: Long){
@@ -333,8 +372,9 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
     }
 
     private fun initializeResources() {
-        val address = intent.getParcelableExtra<Address>(
-            ADDRESS_EXTRA
+        conversationAddress = IntentCompat.getParcelableExtra(intent,
+            ADDRESS_EXTRA,
+            Address::class.java
         )
 
         initialMediaUri = intent.data
@@ -342,16 +382,6 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         initialMediaSize = intent.getLongExtra(SIZE_EXTRA, 0)
         initialCaption = intent.getStringExtra(CAPTION_EXTRA)
         leftIsRecent = intent.getBooleanExtra(LEFT_IS_RECENT_EXTRA, false)
-
-        conversationRecipient = if (address != null) {
-            Recipient.from(
-                this,
-                address,
-                true
-            )
-        } else {
-            null
-        }
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -397,7 +427,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
                                 binding.mediaPreviewAlbumRailContainer.viewTreeObserver.removeOnGlobalLayoutListener(
                                     this
                                 )
-                                railHeight = binding.mediaPreviewAlbumRailContainer.height
+
                                 updateControlsPosition()
                             }
                         }
@@ -424,7 +454,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
             "Loading Part URI: $initialMediaUri"
         )
 
-        if (conversationRecipient != null) {
+        if (conversationAddress != null) {
             LoaderManager.getInstance(this).restartLoader(0, null, this)
         } else {
             finish()
@@ -432,7 +462,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
     }
 
     private fun showOverview() {
-        conversationRecipient?.address?.let { startActivity(createIntent(this, it)) }
+        conversationAddress?.let { startActivity(MediaOverviewActivity.createIntent(this, it)) }
     }
 
     private fun forward() {
@@ -516,13 +546,13 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
             .format().toString()
 
     private fun sendMediaSavedNotificationIfNeeded() {
-        if (conversationRecipient == null || conversationRecipient?.isGroupOrCommunityRecipient == true) return
+        if (conversationAddress == null || conversationAddress?.isGroupOrCommunity == true) return
         val message = DataExtractionNotification(
             MediaSaved(
                 nowWithOffset
             )
         )
-        send(message, conversationRecipient!!.address)
+        send(message, conversationAddress!!)
     }
 
     @SuppressLint("StaticFieldLeak")
@@ -547,8 +577,8 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         val inflater = this.menuInflater
         inflater.inflate(R.menu.media_preview, menu)
 
-        val isDeprecatedLegacyGroup = conversationRecipient != null &&
-                conversationRecipient?.isLegacyGroupRecipient ==  true &&
+        val isDeprecatedLegacyGroup = conversationAddress != null &&
+                conversationAddress?.isLegacyGroup == true &&
                 deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
 
         if (!isMediaInDb || isDeprecatedLegacyGroup) {
@@ -593,7 +623,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
     }
 
     private val isMediaInDb: Boolean
-        get() = conversationRecipient != null
+        get() = conversationAddress != null
 
     private val currentMediaItem: MediaItem?
         get() {
@@ -610,7 +640,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
     override fun onCreateLoader(id: Int, args: Bundle?): Loader<Pair<Cursor, Int>?> {
         return PagingMediaLoader(
             this,
-            conversationRecipient!!, initialMediaUri!!, leftIsRecent
+            conversationAddress!!, initialMediaUri!!, leftIsRecent
         )
     }
 
@@ -661,9 +691,8 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
 
             try {
                 val item = adapter!!.getMediaItemFor(position)
-                if (item.recipient != null) item.recipient.addListener(this@MediaPreviewActivity)
                 viewModel.setActiveAlbumRailItem(this@MediaPreviewActivity, position)
-                updateActionBar()
+                currentSelectedRecipient.value = item.recipientAddress
             } catch (e: Exception){
                 finish()
             }
@@ -675,7 +704,6 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
 
             try {
                 val item = adapter!!.getMediaItemFor(position)
-                if (item.recipient != null) item.recipient.removeListener(this@MediaPreviewActivity)
             } catch (e: CursorIndexOutOfBoundsException) {
                 throw RuntimeException("position = $position leftIsRecent = $leftIsRecent", e)
             } catch (e: Exception){
@@ -697,8 +725,9 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         }
     }
 
-    private class CursorPagerAdapter(
-        context: Context, private val glideRequests: RequestManager,
+    private inner class CursorPagerAdapter(
+        context: Context,
+        private val glideRequests: RequestManager,
         private val window: Window, private val cursor: Cursor, private var autoPlayPosition: Int,
         private val leftIsRecent: Boolean
     ) : MediaItemAdapter() {
@@ -760,7 +789,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
             if (mediaRecord.attachment.dataUri == null) throw AssertionError()
 
             return MediaItem(
-                if (address != null) Recipient.from(context, address, true) else null,
+                address,
                 mediaRecord.attachment,
                 mediaRecord.attachment.dataUri!!,
                 mediaRecord.contentType,
@@ -795,10 +824,22 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
                 mediaView.setControlsYPosition(position)
             }
         }
+
+        fun findAdapterIndexByUri(target: Uri): Int {
+            val cursorCount = itemCount
+            for (i in 0 until cursorCount) {
+                val cursorPosition = getCursorPosition(i)
+                cursor.moveToPosition(cursorPosition)
+                val record = MediaRecord.from(context, cursor)
+                val uri = record.attachment.dataUri
+                if (uri != null && uri == target) return i
+            }
+            return -1
+        }
     }
 
     class MediaItem(
-        val recipient: Recipient?,
+        val recipientAddress: Address?,
         val attachment: DatabaseAttachment?,
         val uri: Uri,
         val mimeType: String,
@@ -827,7 +868,8 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         fun getPreviewIntent(context: Context?, args: MediaPreviewArgs): Intent? {
             return getPreviewIntent(
                 context, args.slide,
-                args.mmsRecord, args.thread
+                args.mmsRecord,
+                args.conversationAddress
             )
         }
 
@@ -835,14 +877,14 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
             context: Context?,
             slide: Slide,
             mms: MmsMessageRecord,
-            threadRecipient: Recipient
+            threadRecipient: Address
         ): Intent? {
             var previewIntent: Intent? = null
             if (isContentTypeSupported(slide.contentType) && slide.uri != null) {
                 previewIntent = Intent(context, MediaPreviewActivity::class.java)
                 previewIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     .setDataAndType(slide.uri, slide.contentType)
-                    .putExtra(ADDRESS_EXTRA, threadRecipient.address)
+                    .putExtra(ADDRESS_EXTRA, threadRecipient)
                     .putExtra(OUTGOING_EXTRA, mms.isOutgoing)
                     .putExtra(DATE_EXTRA, mms.timestamp)
                     .putExtra(SIZE_EXTRA, slide.asAttachment().size)

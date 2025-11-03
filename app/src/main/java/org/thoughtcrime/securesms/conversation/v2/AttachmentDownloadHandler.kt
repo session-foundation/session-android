@@ -99,7 +99,10 @@ class AttachmentDownloadHandler @AssistedInject constructor(
         val threadID = storage.getThreadIdForMms(attachment.mmsId)
 
         return AttachmentDownloadJob.eligibleForDownload(
-            threadID, storage, messageDataProvider, attachment.mmsId,
+            threadID = threadID,
+            storage = storage,
+            messageDataProvider = messageDataProvider,
+            mmsId = attachment.mmsId,
         )
     }
 

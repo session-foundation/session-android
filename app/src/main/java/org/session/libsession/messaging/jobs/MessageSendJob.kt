@@ -20,7 +20,6 @@ import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.Data
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsignal.utilities.AccountId
@@ -90,15 +89,15 @@ class MessageSendJob @AssistedInject constructor(
         val isSync = destination is Destination.Contact && destination.publicKey == storage.getUserPublicKey()
 
         try {
-            withTimeout(20_000L) {
-                // Shouldn't send message to group when the group has no keys available
-                if (destination is Destination.ClosedGroup) {
+            // Shouldn't send message to group when the group has no keys available
+            if (destination is Destination.ClosedGroup) {
+                withTimeout(20_000L) {
                     configFactory
                         .waitForGroupEncryptionKeys(AccountId(destination.publicKey))
                 }
-
-                MessageSender.sendNonDurably(this@MessageSendJob.message, destination, isSync).await()
             }
+
+            MessageSender.sendNonDurably(this@MessageSendJob.message, destination, isSync)
 
             this.handleSuccess(dispatcherName)
             statusCallback?.trySend(Result.success(Unit))

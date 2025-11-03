@@ -153,7 +153,6 @@
     <string name="callsSettings">Puhelut (beta)</string>
     <string name="callsVoiceAndVideo">Ääni- ja videopuhelut</string>
     <string name="callsVoiceAndVideoBeta">Ääni- ja videopuhelut (beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">IP-osoitteesi on näkyvissä puhelun aikana vastaanottajalle ja Oxen Foundation palvelimelle, kun käytät beta-puheluita.</string>
     <string name="callsVoiceAndVideoToggleDescription">Mahdollistaa ääni- ja videopuheluiden soiton ja vastaanoton.</string>
     <string name="callsYouCalled">Soitit käyttäjälle {name}</string>
     <string name="callsYouMissedCallPermissions">Missasit puhelun käyttäjältä <b>{name}</b>, koska et ole ottanut käyttöön <b>Ääni ja videopuheluita</b> tietosuoja-asetuksissa.</string>
@@ -235,7 +234,6 @@
     <string name="conversationsDeleted">Keskustelu poistettu</string>
     <string name="conversationsEmpty">Keskustelussa {conversation_name} ei ole viestejä.</string>
     <string name="conversationsEnter">Syötä avain</string>
-    <string name="conversationsEnterDescription">Enter-näppäimen toiminto keskustelussa kirjoittaessa.</string>
     <string name="conversationsGroups">Ryhmät</string>
     <string name="conversationsMessageTrimming">Keskustelujen tiivistys</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Tiivistä yhteisöt</string>
@@ -656,8 +654,6 @@
     <string name="open">Avaa</string>
     <string name="other">Muu</string>
     <string name="passwordChange">Vaihda salasana</string>
-    <string name="passwordChangeDescription">Vaihda {app_name} in avaukseen käytettävä salasana.</string>
-    <string name="passwordChangedDescription">Salasanasi on vaihdettu. Pidä se turvassa.</string>
     <string name="passwordConfirm">Vahvista salasana</string>
     <string name="passwordCurrentIncorrect">Nykyinen salasanasi on virheellinen.</string>
     <string name="passwordEnter">Syötä salasana</string>
@@ -668,7 +664,6 @@
     <string name="passwordFailed">Salasanan asetus epäonnistui</string>
     <string name="passwordIncorrect">Virheellinen salasana</string>
     <string name="passwordRemove">Poista salasana</string>
-    <string name="passwordRemovedDescription">Salasanasi on on poistettu.</string>
     <string name="passwordSet">Aseta salasana</string>
     <string name="paste">Liitä</string>
     <string name="permissionMusicAudioDenied">{app_name} tarvitsee pääsyn musiikkiin ja ääniin, jotta se voi lähettää tiedostoja, musiikkia ja ääntä, mutta pääsy on pysyvästi estetty. Napauta Asetukset → Luvat ja salli \"Musiikki ja äänet\".</string>
@@ -729,7 +724,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Piilota Recovery Password</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Piilota palautuslause pysyvästi tällä laitteella.</string>
     <string name="recoveryPasswordRestoreDescription">Syötä palautussalasanasi ladataksesi tilisi. Jos et ole tallentanut sitä, löydät sen sovelluksen asetuksista.</string>
-    <string name="recoveryPasswordView">Näytä salasana</string>
     <string name="recoveryPasswordWarningSendDescription">Tämä on palautussalasanasi. Jos lähetät sen jollekulle, he saavat täyden pääsyn tilillesi.</string>
     <string name="redo">Tee uudelleen</string>
     <string name="remove">Poista</string>
@@ -779,6 +773,7 @@
     <string name="sessionSettings">Asetukset</string>
     <string name="set">Aseta</string>
     <string name="settingsRestartDescription">Sinun on käynnistettävä {app_name} uudelleen, jotta uudet asetuksesi tulevat voimaan.</string>
+    <string name="settingsScreenSecurityDesktop">Näytön suojaus</string>
     <string name="share">Jaa</string>
     <string name="shareAccountIdDescription">Kutsu ystäväsi keskustelemaan kanssasi {app_name}-sovelluksessa jakamalla heille tilisi ID:n.</string>
     <string name="shareAccountIdDescriptionCopied">Jaa ystävien kanssa missä yleensä puhut heidän kanssaan - siirrä sitten keskustelu tänne.</string>

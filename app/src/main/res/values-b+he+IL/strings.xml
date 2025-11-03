@@ -121,6 +121,7 @@
     <string name="banUser">חסום משתמש</string>
     <string name="banUserBanned">משתמש נחסם</string>
     <string name="block">חסום</string>
+    <string name="blockBlockedDescription">בטל חסימה של איש קשר זה כדי לשלוח הודעה</string>
     <string name="blockBlockedNone">אין אנשי קשר חסומים</string>
     <string name="blockBlockedUser">נחסם {name}</string>
     <string name="blockDescription">האם אתה בטוח שברצונך לחסום את <b>{name}?</b> משתמשים חסומים אינם יכולים לשלוח לך בקשות הודעות, הזמנות לקבוצות או להתקשר אליך.</string>
@@ -151,7 +152,6 @@
     <string name="callsSettings">שיחות (בטא)</string>
     <string name="callsVoiceAndVideo">שיחות קוליות ווידיאו</string>
     <string name="callsVoiceAndVideoBeta">שיחות קוליות ווידיאו (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">כתובת ה-IP שלך גלויה לשותפת השיחה שלך ולשרת קרן Oxen בעת שימוש בשיחות בטא.</string>
     <string name="callsVoiceAndVideoToggleDescription">מאפשר שיחות קוליות ווידאו אל משתמשים אחרים ומאתם.</string>
     <string name="callsYouCalled">התקשרת אל {name}</string>
     <string name="callsYouMissedCallPermissions">פספסת שיחה מ<b>{name}</b> כי לא הפעלת <b>שיחות שמע ווידאו</b> בהגדרות פרטיות.</string>
@@ -235,7 +235,6 @@
     <string name="conversationsDeleted">השיחה נמחקה</string>
     <string name="conversationsEmpty">אין הודעות ב-{conversation_name}.</string>
     <string name="conversationsEnter">הזן מקש</string>
-    <string name="conversationsEnterDescription">פונקציה של מקש ה-Enter בעת הקלדה בשיחה.</string>
     <string name="conversationsGroups">קבוצות</string>
     <string name="conversationsMessageTrimming">קיצוץ הודעה</string>
     <string name="conversationsMessageTrimmingTrimCommunities">חתוך Communities</string>
@@ -659,8 +658,6 @@
     <string name="open">פתח</string>
     <string name="other">אחר</string>
     <string name="passwordChange">שנה סיסמה</string>
-    <string name="passwordChangeDescription">שנה את הסיסמה הנדרשת לפתיחת {app_name}.</string>
-    <string name="passwordChangedDescription">הסיסמה שלך השתנתה. שמור עליה בבטחה.</string>
     <string name="passwordConfirm">אשר סיסמה</string>
     <string name="passwordCurrentIncorrect">הסיסמה הנוכחית שלך לא נכונה.</string>
     <string name="passwordEnter">הזן סיסמה</string>
@@ -671,7 +668,6 @@
     <string name="passwordFailed">נכשל לקבוע סיסמה</string>
     <string name="passwordIncorrect">סיסמה שגויה</string>
     <string name="passwordRemove">הסר סיסמה</string>
-    <string name="passwordRemovedDescription">הסיסמה שלך הוסרה.</string>
     <string name="passwordSet">הגדר סיסמה</string>
     <string name="paste">הדבק</string>
     <string name="permissionMusicAudioDenied">{app_name} זקוק לגישה למוזיקה ואודיו על מנת לשלוח קבצים, מוזיקה ואודיו, אבל היא נדחתה לצמיתות. Tap Settings → Permissions, and turn \"Music and audio\" on.</string>
@@ -732,7 +728,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">הסתר את Recovery Password</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">להסתיר את סיסמת השחזור במכשיר זה לצמיתות.</string>
     <string name="recoveryPasswordRestoreDescription">Enter your recovery password to load your account. If you haven\'t saved it, you can find it in your app settings.</string>
-    <string name="recoveryPasswordView">הצג סיסמא</string>
     <string name="recoveryPasswordWarningSendDescription">זו סיסמת ההחלמה שלך. אם תשלח אותה למישהו, תהיה לו גישה מלאה לחשבון שלך.</string>
     <string name="redo">עשה מחדש</string>
     <string name="remove">הסר</string>
@@ -784,6 +779,7 @@
     <string name="sessionSettings">הגדרות</string>
     <string name="set">הגדר</string>
     <string name="settingsRestartDescription">עליך להפעיל מחדש את {app_name} כדי להחיל את ההגדרות החדשות שלך.</string>
+    <string name="settingsScreenSecurityDesktop">אבטחת מסך</string>
     <string name="share">שיתוף</string>
     <string name="shareAccountIdDescription">הזמן את חברך לשוחח איתך על {app_name} על ידי שיתוף מספר הזיהוי שלך איתו.</string>
     <string name="shareAccountIdDescriptionCopied">שתף עם חבריך היכן שאתה מדבר איתם בדרך כלל - ואז העבר את השיחה לכאן.</string>

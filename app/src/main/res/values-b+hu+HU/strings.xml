@@ -183,7 +183,6 @@
     <string name="callsSettings">Hívások (béta)</string>
     <string name="callsVoiceAndVideo">Hang és videó hívások</string>
     <string name="callsVoiceAndVideoBeta">Hang és videó hívások (béta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Az IP címed látható a hívópartner és egy Oxen Foundation szerver számára a béta hívások használata közben.</string>
     <string name="callsVoiceAndVideoToggleDescription">Lehetővé teszi a hang- és videohívásokat más felhasználókkal.</string>
     <string name="callsYouCalled">Felhívtad őt: {name}</string>
     <string name="callsYouMissedCallPermissions">Elmulasztottad <b>{name}</b> hívását, mert a <b>hang- és videó hívások</b> funkció nincs engedélyezve az adatvédelmi beállításokban.</string>
@@ -274,7 +273,6 @@
     <string name="conversationsDeleted">Beszélgetés törölve</string>
     <string name="conversationsEmpty">A {conversation_name} beszélgetésben nincsenek további üzenetek.</string>
     <string name="conversationsEnter">Enter billentyű</string>
-    <string name="conversationsEnterDescription">Az Enter billentyű funkciója beszélgetés közben.</string>
     <string name="conversationsGroups">Csoportok</string>
     <string name="conversationsMessageTrimming">Üzenetek rövidítése</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Közösségek rövidítése</string>
@@ -759,8 +757,6 @@
     <string name="open">Megnyitás</string>
     <string name="other">Egyéb</string>
     <string name="passwordChange">Jelszó megváltoztatása</string>
-    <string name="passwordChangeDescription">{app_name} alkalmazás jelszavának megváltoztatása.</string>
-    <string name="passwordChangedDescription">A jelszó megváltozott. Tartsd biztonságos helyen!</string>
     <string name="passwordConfirm">Jelszó megerősítése</string>
     <string name="passwordCurrentIncorrect">Az aktuális jelszavad helytelen.</string>
     <string name="passwordEnter">Jelszó megadása</string>
@@ -771,7 +767,6 @@
     <string name="passwordFailed">Jelszó frissítése sikertelen</string>
     <string name="passwordIncorrect">Hibás jelszó</string>
     <string name="passwordRemove">Jelszó eltávolítása</string>
-    <string name="passwordRemovedDescription">A jelszavadat eltávolítottuk.</string>
     <string name="passwordSet">Jelszó beállítása</string>
     <string name="paste">Beillesztés</string>
     <string name="permissionChange">Engedélyváltozás</string>
@@ -862,7 +857,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Visszaállítási jelszó elrejtése</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">A visszaállítási jelszó végleges elrejtése ezen az eszközön.</string>
     <string name="recoveryPasswordRestoreDescription">Írd be a visszaállítási jelszavad a fiókod betöltéséhez. Ha nem mentetted el, az alkalmazás beállításai között találhatod meg.</string>
-    <string name="recoveryPasswordView">Jelszó megtekintése</string>
     <string name="recoveryPasswordWarningSendDescription">Ez a visszaállítási jelszavad. Ha elküldöd valakinek, teljes hozzáférést kap a fiókodhoz.</string>
     <string name="recreateGroup">Csoport újra-létrehozása</string>
     <string name="redo">Újra</string>
@@ -932,6 +926,7 @@
     <string name="set">Beállít</string>
     <string name="setCommunityDisplayPicture">Közösség megjelenítendő képének beállítása</string>
     <string name="settingsRestartDescription">Újra kell indítanod a {app_name}-t a beállítások érvényesítéséhez.</string>
+    <string name="settingsScreenSecurityDesktop">Képernyőbiztonság</string>
     <string name="share">Megosztás</string>
     <string name="shareAccountIdDescription">Oszd meg a Felhasználó ID-dat ismerőseiddel, hogy a {app_name} alkalmazáson csevegjetek.</string>
     <string name="shareAccountIdDescriptionCopied">Ossza meg barátaival ott, ahol általában beszélgetni szokott velük - majd helyezze át a beszélgetést ide.</string>

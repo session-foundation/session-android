@@ -121,6 +121,7 @@
     <string name="banUser">Забрани корисник</string>
     <string name="banUserBanned">Корисникот е забранет</string>
     <string name="block">Блокирај</string>
+    <string name="blockBlockedDescription">Одблокирај го овој контакт за да испратиш порака</string>
     <string name="blockBlockedNone">Нема блокирани контакти</string>
     <string name="blockBlockedUser">Корисникот {name} е блокиран</string>
     <string name="blockDescription">Дали сте сигурни дека сакате да го блокирате <b>{name}?</b> Блокираните корисници не можат да ви испраќаат барања за пораки, покани за групи или да ве повикуваат.</string>
@@ -151,7 +152,6 @@
     <string name="callsSettings">Повици (Бета)</string>
     <string name="callsVoiceAndVideo">Гласовни и видео повици</string>
     <string name="callsVoiceAndVideoBeta">Гласовни и видео повици (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Вашето IP е видливо за вашиот партнер за повик и серверот на Oxen Foundation додека користите бета повици.</string>
     <string name="callsVoiceAndVideoToggleDescription">Овозможува гласовни и видео повици до и од други корисници.</string>
     <string name="callsYouCalled">Го повикавте {name}</string>
     <string name="callsYouMissedCallPermissions">Пропуштивте повик од <b>{name}</b> бидејќи немате овозможено <b>Гласовни и Видео повици</b> во Поставки на приватност.</string>
@@ -233,7 +233,6 @@
     <string name="conversationsDeleted">Разговорот е избришан</string>
     <string name="conversationsEmpty">Нема пораки во {conversation_name}.</string>
     <string name="conversationsEnter">Внесете клуч</string>
-    <string name="conversationsEnterDescription">Функција на Enter копчето при пишување во разговор.</string>
     <string name="conversationsGroups">Групи</string>
     <string name="conversationsMessageTrimming">Сечење на пораки</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Тримување на заедници</string>
@@ -635,8 +634,6 @@
     <string name="open">Отвори</string>
     <string name="other">Други</string>
     <string name="passwordChange">Смени лозинка</string>
-    <string name="passwordChangeDescription">Смени ја лозинката што е потребна за отклучување {app_name}.</string>
-    <string name="passwordChangedDescription">Вашата лозинка е променета. Ве молиме чувајте ја безбедно.</string>
     <string name="passwordConfirm">Потврди лозинка</string>
     <string name="passwordCurrentIncorrect">Вашата тековна лозинка е неточна.</string>
     <string name="passwordEnter">Внесете лозинка</string>
@@ -647,7 +644,6 @@
     <string name="passwordFailed">Неуспешно поставување лозинка</string>
     <string name="passwordIncorrect">Неправилна лозинка</string>
     <string name="passwordRemove">Отстрани лозинка</string>
-    <string name="passwordRemovedDescription">Вашата лозинка е отстранета.</string>
     <string name="passwordSet">Постави Лозинка</string>
     <string name="paste">Залепи</string>
     <string name="permissionMusicAudioDenied">{app_name} има потреба од пристап до музика и аудио за да може да испраќа датотеки, музика и аудио, но пристапот е трајно одбиен. Допрете Поставки → Дозволи, и вклучете \"Музика и аудио\".</string>
@@ -708,7 +704,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Сокриј Лозинка за обновување</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Трајно сокриј ја вашата лозинка за обновување на овој уред.</string>
     <string name="recoveryPasswordRestoreDescription">Внесете ја вашата лозинка за враќање за да ја вчитате вашата сметка. Ако не ја имате зачувано, можете да ја најдете во поставките на вашата апликација.</string>
-    <string name="recoveryPasswordView">Преглед на лозинка</string>
     <string name="recoveryPasswordWarningSendDescription">Ова е вашата лозинка за опоравка. Ако ја испратите на некого, ќе имаат целосен пристап до вашата сметка.</string>
     <string name="redo">Повтори</string>
     <string name="remove">Отстрани</string>
@@ -758,6 +753,7 @@
     <string name="sessionSettings">Поставки</string>
     <string name="set">Постави</string>
     <string name="settingsRestartDescription">Морате повторно да го вклучите {app_name} за да ги примените новите поставки.</string>
+    <string name="settingsScreenSecurityDesktop">Екранска Безбедност</string>
     <string name="share">Сподели</string>
     <string name="shareAccountIdDescription">Поканете го пријателот да разговара со вас на {app_name} споделувајќи ја вашата ИД на сметка.</string>
     <string name="shareAccountIdDescriptionCopied">Сподели со твоите пријатели каде што вообичаено разговараш со нив — потоа премести ја конверзацијата овде.</string>

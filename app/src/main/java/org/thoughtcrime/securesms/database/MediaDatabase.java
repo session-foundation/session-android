@@ -73,7 +73,6 @@ public class MediaDatabase extends Database {
   public Cursor getGalleryMediaForThread(long threadId) {
     SQLiteDatabase database = getReadableDatabase();
     Cursor cursor = database.rawQuery(GALLERY_MEDIA_QUERY, new String[]{threadId+""});
-    setNotifyConversationListeners(cursor, threadId);
     return cursor;
   }
 
@@ -88,7 +87,6 @@ public class MediaDatabase extends Database {
   public Cursor getDocumentMediaForThread(long threadId) {
     SQLiteDatabase database = getReadableDatabase();
     Cursor cursor = database.rawQuery(DOCUMENT_MEDIA_QUERY, new String[]{threadId+""});
-    setNotifyConversationListeners(cursor, threadId);
     return cursor;
   }
 

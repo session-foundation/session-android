@@ -1,7 +1,7 @@
 package org.session.libsession.snode
 
 import android.os.SystemClock
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,7 +10,11 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.session.libsession.snode.utilities.await
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import java.util.Date
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * A class that manages the network time by querying the network time from a random snode. The
@@ -20,14 +24,17 @@ import java.util.Date
  * Before the first network query is successfully, calling [currentTimeMills] will return the current
  * system time.
  */
-class SnodeClock() {
+@Singleton
+class SnodeClock @Inject constructor(
+    @param:ManagerScope private val scope: CoroutineScope
+) : OnAppStartupComponent {
     private val instantState = MutableStateFlow<Instant?>(null)
     private var job: Job? = null
 
-    fun start() {
+    override fun onPostAppStarted() {
         require(job == null) { "Already started" }
 
-        job = GlobalScope.launch {
+        job = scope.launch {
             while (true) {
                 try {
                     val node = SnodeAPI.getRandomSnode().await()

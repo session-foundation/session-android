@@ -121,6 +121,7 @@
     <string name="banUser">Zakázať používateľa</string>
     <string name="banUserBanned">Používateľ zakázaný</string>
     <string name="block">Blokovať</string>
+    <string name="blockBlockedDescription">Pre odoslanie správy kontakt odblokujte</string>
     <string name="blockBlockedNone">Žiadne zablokované kontakty</string>
     <string name="blockBlockedUser">Zablokovaný {name}</string>
     <string name="blockDescription">Ste si istý, že chcete zablokovať <b>{name}</b>? Zablokovaní používatelia vám nemôžu posielať žiadosti o správy, pozvánky do skupín alebo vám volať.</string>
@@ -152,7 +153,6 @@
     <string name="callsSettings">Hovory (Beta)</string>
     <string name="callsVoiceAndVideo">Hlasové a video hovory</string>
     <string name="callsVoiceAndVideoBeta">Hlasové a video hovory (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Vaša IP adresa je viditeľná vášmu volajúcemu partnerovi a serveru Oxen Foundation pri používaní beta hovory.</string>
     <string name="callsVoiceAndVideoToggleDescription">Umožňuje hlasové a video hovory s inými používateľmi a od nich.</string>
     <string name="callsYouCalled">Volali ste {name}</string>
     <string name="callsYouMissedCallPermissions">Zmeškali ste hovor od <b>{name}</b>, pretože ste nepovolili <b>Hlasové a video hovory</b> v nastaveniach súkromia.</string>
@@ -236,7 +236,6 @@
     <string name="conversationsDeleted">Konverzácia úspešne zmazaná</string>
     <string name="conversationsEmpty">V {conversation_name} nie sú žiadne správy.</string>
     <string name="conversationsEnter">Zadajte Kľúč</string>
-    <string name="conversationsEnterDescription">Funkcia klávesy Enter pri písaní v konverzácii.</string>
     <string name="conversationsGroups">Skupiny</string>
     <string name="conversationsMessageTrimming">Prečistenie správ</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Prečistiť komunity</string>
@@ -660,8 +659,6 @@
     <string name="open">Otvoriť</string>
     <string name="other">Iné</string>
     <string name="passwordChange">Zmeniť heslo</string>
-    <string name="passwordChangeDescription">Zmeňte heslo potrebné na odomknutie {app_name}.</string>
-    <string name="passwordChangedDescription">Vaše heslo bolo zmenené. Uchovajte ho prosím v bezpečí.</string>
     <string name="passwordConfirm">Potvrdiť heslo</string>
     <string name="passwordCurrentIncorrect">Vaše aktuálne heslo je nesprávne.</string>
     <string name="passwordEnter">Zadajte heslo</string>
@@ -672,7 +669,6 @@
     <string name="passwordFailed">Nepodarilo sa nastaviť heslo</string>
     <string name="passwordIncorrect">Nesprávne heslo</string>
     <string name="passwordRemove">Odstrániť heslo</string>
-    <string name="passwordRemovedDescription">Vaše heslo bolo odstránené.</string>
     <string name="passwordSet">Nastaviť heslo</string>
     <string name="paste">Vložiť</string>
     <string name="permissionMusicAudioDenied">{app_name} potrebuje prístup k hudbe a zvukom na odosielanie súborov, hudby a zvukov, ale bol natrvalo odmietnutý. Tap Settings → Permissions, and turn \"Music and audio\" on.</string>
@@ -733,7 +729,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Skryť frázu pre obnovenie</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Natrvalo skryť frázu na obnovenie na tomto zariadení.</string>
     <string name="recoveryPasswordRestoreDescription">Zadajte frázu pre obnovenie na načítanie účtu. Ak ste ju neuložili, nájdete ju v nastaveniach aplikácie.</string>
-    <string name="recoveryPasswordView">Zobraziť heslo</string>
     <string name="recoveryPasswordWarningSendDescription">Toto je vaše heslo na obnovenie. Ak ho niekomu pošlete, získa plný prístup do vášho účtu.</string>
     <string name="redo">Znova</string>
     <string name="remove">Odstrániť</string>
@@ -785,6 +780,7 @@
     <string name="sessionSettings">Nastavenia</string>
     <string name="set">Nastaviť</string>
     <string name="settingsRestartDescription">Ak chcete použiť nové nastavenia, musíte reštartovať {app_name}.</string>
+    <string name="settingsScreenSecurityDesktop">Zabezpečenie obrazovky</string>
     <string name="share">Zdieľať</string>
     <string name="shareAccountIdDescription">Pozvite svojho priateľa, aby s vami chatoval v {app_name} zdieľaním svojho Account ID s ním.</string>
     <string name="shareAccountIdDescriptionCopied">Podeľte sa oň so svojimi priateľmi tam, kde s nimi zvyčajne komunikujete — a potom sem presuňte konverzáciu.</string>

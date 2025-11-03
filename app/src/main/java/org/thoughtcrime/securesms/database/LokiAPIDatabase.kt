@@ -70,7 +70,8 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
         private val lastDeletionServerID = "last_deletion_server_id"
         @JvmStatic val createLastDeletionServerIDTableCommand = "CREATE TABLE $lastDeletionServerIDTable ($lastDeletionServerIDTableIndex STRING PRIMARY KEY, $lastDeletionServerID INTEGER DEFAULT 0);"
         // User counts
-        private val userCountTable = "loki_user_count_cache"
+        @Deprecated("This table is no longer used")
+        val userCountTable = "loki_user_count_cache"
         private val publicChatID = "public_chat_id"
         private val userCount = "user_count"
         @JvmStatic val createUserCountTableCommand = "CREATE TABLE $userCountTable ($publicChatID STRING PRIMARY KEY, $userCount INTEGER DEFAULT 0);"
@@ -456,21 +457,6 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
         }
     }
 
-    fun getUserCount(room: String, server: String): Int? {
-        val database = readableDatabase
-        val index = "$server.$room"
-        return database.get(userCountTable, "$publicChatID = ?", wrap(index)) { cursor ->
-            cursor.getInt(userCount)
-        }?.toInt()
-    }
-
-    override fun setUserCount(room: String, server: String, newValue: Int) {
-        val database = writableDatabase
-        val index = "$server.$room"
-        val row = wrap(mapOf( publicChatID to index, userCount to newValue.toString() ))
-        database.insertOrUpdate(userCountTable, row, "$publicChatID = ?", wrap(index))
-    }
-
     override fun getOpenGroupPublicKey(server: String): String? {
         val database = readableDatabase
         return database.get(openGroupPublicKeyTable, "${LokiAPIDatabase.server} = ?", wrap(server)) { cursor ->
@@ -559,11 +545,11 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
         database.insertOrUpdate(serverCapabilitiesTable, row, "$server = ?", wrap(serverName))
     }
 
-    fun getServerCapabilities(serverName: String): List<String> {
+    fun getServerCapabilities(serverName: String): List<String>? {
         val database = readableDatabase
         return database.get(serverCapabilitiesTable, "$server = ?", wrap(serverName)) { cursor ->
             cursor.getString(capabilities)
-        }?.split(",") ?: emptyList()
+        }?.split(",")
     }
 
     fun setLastInboxMessageId(serverName: String, newValue: Long) {

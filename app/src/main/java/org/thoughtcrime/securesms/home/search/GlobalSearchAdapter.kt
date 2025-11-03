@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.home.search
 
-import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,8 +10,11 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewGlobalSearchHeaderBinding
 import network.loki.messenger.databinding.ViewGlobalSearchResultBinding
 import network.loki.messenger.databinding.ViewGlobalSearchSubheaderBinding
+import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.ui.GetString
@@ -113,9 +115,6 @@ class GlobalSearchAdapter(
     }
 
     override fun onViewRecycled(holder: RecyclerView.ViewHolder) {
-        if (holder is ContentView) {
-            holder.binding.searchResultProfilePicture.recycle()
-        }
     }
 
     class ContentView(
@@ -132,7 +131,6 @@ class GlobalSearchAdapter(
         }
 
         fun bind(query: String, model: Model) {
-            binding.searchResultProfilePicture.recycle()
             when (model) {
                 is Model.GroupConversation -> bindModel(query, model)
                 is Model.Contact -> bindModel(query, model)
@@ -164,9 +162,9 @@ class GlobalSearchAdapter(
         }
 
         data class SavedMessages(val currentUserPublicKey: String): Model // Note: "Note to Self" counts as SavedMessages rather than a Contact where `isSelf` is true.
-        data class Contact(val contact: AccountId, val name: String, val isSelf: Boolean, val showProBadge: Boolean) : Model {
-            constructor(contact: org.session.libsession.messaging.contacts.Contact, isSelf: Boolean, showProBadge: Boolean):
-                    this(AccountId(contact.accountID), contact.getSearchName(), isSelf, showProBadge)
+        data class Contact(val contact: Address.Conversable, val name: String, val isSelf: Boolean, val showProBadge: Boolean) : Model {
+            constructor(contact: Recipient, isSelf: Boolean, showProBadge: Boolean):
+                    this(contact.address as Address.Conversable, contact.displayName(false), isSelf, showProBadge)
         }
         data class GroupConversation(
             val isLegacy: Boolean,
@@ -175,14 +173,16 @@ class GlobalSearchAdapter(
             val legacyMembersString: String?,
             val showProBadge: Boolean
         ) : Model {
-            constructor(context: Context, groupRecord: GroupRecord, showProBadge: Boolean):
+            constructor(groupRecord: GroupRecord, showProBadge: Boolean):
                     this(
                         isLegacy = groupRecord.isLegacyGroup,
                         groupId = groupRecord.encodedId,
                         title = groupRecord.title,
                         legacyMembersString = if (groupRecord.isLegacyGroup) {
-                            val recipients = groupRecord.members.map { Recipient.from(context, it, false) }
-                            recipients.joinToString(transform = Recipient::getSearchName)
+                            val recipients = groupRecord.members.map {
+                                MessagingModuleConfiguration.shared.recipientRepository.getRecipientSync(it)
+                            }
+                            recipients.joinToString(transform = { it.searchName })
                         } else {
                             null
                         },

@@ -138,6 +138,7 @@
     <string name="banUser">Cấm người dùng</string>
     <string name="banUserBanned">Người dùng bị cấm</string>
     <string name="block">Chặn</string>
+    <string name="blockBlockedDescription">Mở khóa người (liên lạc) này để gởi thông báo</string>
     <string name="blockBlockedNone">Không có liên lạc bị chặn</string>
     <string name="blockBlockedUser">Đã chặn {name}</string>
     <string name="blockDescription">Bạn có chắc chắn rằng bạn muốn chặn <b>{name}?</b> Người dùng bị chặn không thể gửi yêu cầu tin nhắn, lời mời nhóm hoặc gọi cho bạn.</string>
@@ -170,7 +171,6 @@
     <string name="callsSettings">Cuộc gọi (Beta)</string>
     <string name="callsVoiceAndVideo">Cuộc gọi thoại và video</string>
     <string name="callsVoiceAndVideoBeta">Các cuộc gọi giọng nói và video (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Địa chỉ IP của bạn hiển thị với đối tác cuộc gọi và máy chủ Oxen Foundation trong khi sử dụng cuộc gọi beta.</string>
     <string name="callsVoiceAndVideoToggleDescription">Cho phép thực hiện cuộc gọi giọng nói và video với người dùng khác.</string>
     <string name="callsYouCalled">Bạn đã gọi {name}</string>
     <string name="callsYouMissedCallPermissions">Bạn đã bỏ lỡ cuộc gọi từ <b>{name}</b> vì bạn chưa bật <b>Cuộc gọi Điện thoại và Video</b> trong Cài đặt Quyền riêng tư.</string>
@@ -253,7 +253,6 @@
     <string name="conversationsDeleted">Cuộc hội thoại đã được xoá</string>
     <string name="conversationsEmpty">Không có tin nhắn nào trong {conversation_name}.</string>
     <string name="conversationsEnter">Nhập Key</string>
-    <string name="conversationsEnterDescription">Chức năng của phím enter khi nhập nội dung trong cuộc trò chuyện.</string>
     <string name="conversationsGroups">Nhóm</string>
     <string name="conversationsMessageTrimming">Thu gọn tin nhắn</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Cắt bớt Communities</string>
@@ -696,8 +695,6 @@
     <string name="open">Mở</string>
     <string name="other">Khác</string>
     <string name="passwordChange">Đổi mật khẩu</string>
-    <string name="passwordChangeDescription">Đổi mật khẩu cần thiết để mở khóa {app_name}.</string>
-    <string name="passwordChangedDescription">Mật khẩu của bạn đã được đổi. Hãy giữ nó cẩn thận.</string>
     <string name="passwordConfirm">Xác nhận mật khẩu</string>
     <string name="passwordCurrentIncorrect">Mật khẩu hiện tại của bạn không chính xác.</string>
     <string name="passwordEnter">Nhập mật khẩu</string>
@@ -708,7 +705,6 @@
     <string name="passwordFailed">Đặt mật khẩu thất bại</string>
     <string name="passwordIncorrect">Mật khẩu không chính xác</string>
     <string name="passwordRemove">Xóa mật khẩu</string>
-    <string name="passwordRemovedDescription">Mật khẩu của bạn đã được gỡ bỏ.</string>
     <string name="passwordSet">Đặt Mật khẩu</string>
     <string name="paste">Dán</string>
     <string name="permissionChange">Thay đổi quyền hạn</string>
@@ -781,7 +777,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Ẩn Recovery Password</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Ẩn mật khẩu khôi phục trên thiết bị này vĩnh viễn.</string>
     <string name="recoveryPasswordRestoreDescription">Nhập mật khẩu khôi phục của bạn để nạp tài khoản. Nếu chưa lưu, bạn có thể tìm thấy nó trong cài đặt của ứng dụng.</string>
-    <string name="recoveryPasswordView">Xem Mật khẩu</string>
     <string name="recoveryPasswordWarningSendDescription">Đây là Mật khẩu Khôi phục của bạn. Nếu bạn gửi nó cho ai đó, họ sẽ có toàn quyền truy cập vào tài khoản của bạn.</string>
     <string name="recreateGroup">Tạo lại nhóm</string>
     <string name="redo">Hoàn tác</string>
@@ -832,6 +827,7 @@
     <string name="sessionSettings">Cài Đặt</string>
     <string name="set">Thiết Lập</string>
     <string name="settingsRestartDescription">Bạn phải khởi động lại {app_name} để áp dụng các cài đặt mới của mình.</string>
+    <string name="settingsScreenSecurityDesktop">An ninh màn hình</string>
     <string name="share">Chia sẻ</string>
     <string name="shareAccountIdDescription">Mời bạn bè để trò chuyện với bạn trên {app_name} bằng cách chia sẻ Account ID của bạn với họ.</string>
     <string name="shareAccountIdDescriptionCopied">Chia sẻ với bạn bè của bạn bất cứ nơi nào bạn thường nói chuyện với họ — sau đó chuyển cuộc trò chuyện đến đây.</string>

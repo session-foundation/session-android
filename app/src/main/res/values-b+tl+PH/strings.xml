@@ -121,6 +121,7 @@
     <string name="banUser">I-ban ang user</string>
     <string name="banUserBanned">Na-ban ang user</string>
     <string name="block">I-block</string>
+    <string name="blockBlockedDescription">I-unblock ang contact na ito upang magpadala ng mensahe</string>
     <string name="blockBlockedNone">Walang naka-block na contact</string>
     <string name="blockBlockedUser">Naka-block {name}</string>
     <string name="blockDescription">Sigurado ka bang gusto mong i-block si <b>{name}?</b> Ang mga na-block na gumagamit ay hindi maaaring magpadala sa iyo ng mga kahilingan sa mensahe, mga paanyaya sa grupo, o tumawag sa iyo.</string>
@@ -152,7 +153,6 @@
     <string name="callsSettings">Mga Tawag (Beta)</string>
     <string name="callsVoiceAndVideo">Mga Voice at Video Call</string>
     <string name="callsVoiceAndVideoBeta">Mga Voice at Video Call (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Nakikita ang iyong IP sa iyong kasama sa tawag at sa server ng Oxen Foundation habang gumagamit ng beta calls.</string>
     <string name="callsVoiceAndVideoToggleDescription">Ini-enable ang mga voice at video call papunta at mula sa iba pang mga user.</string>
     <string name="callsYouCalled">Tinawagan mo si {name}</string>
     <string name="callsYouMissedCallPermissions">Namiss mo ang tawag mula kay <b>{name}</b> dahil hindi mo pinagana ang <b>Mga Tawag sa Boses at Video</b> sa Privacy Settings.</string>
@@ -234,7 +234,6 @@
     <string name="conversationsDeleted">Na-delete na ang usapan</string>
     <string name="conversationsEmpty">Walang mensahe sa {conversation_name}.</string>
     <string name="conversationsEnter">Ilagay ang Key</string>
-    <string name="conversationsEnterDescription">Gamit ang Enter Key kapag nagta-type sa isang usapan.</string>
     <string name="conversationsGroups">Mga grupo</string>
     <string name="conversationsMessageTrimming">Pag-trim ng Mensahe</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Burahin ang Mga Mensaheng Nagtagal ng Higit sa 6 (na) Buwan</string>
@@ -636,8 +635,6 @@
     <string name="open">Buksan</string>
     <string name="other">Iba pa</string>
     <string name="passwordChange">Palitan ang Password</string>
-    <string name="passwordChangeDescription">Palitan ang password na kailangan para i-unlock ang {app_name}.</string>
-    <string name="passwordChangedDescription">Ang iyong password ay nabago na. Mangyaring itago ito ng ligtas.</string>
     <string name="passwordConfirm">Kumpirmahin ang password</string>
     <string name="passwordCurrentIncorrect">Mali ang iyong kasalukuyang password.</string>
     <string name="passwordEnter">Ilagay ang password</string>
@@ -648,7 +645,6 @@
     <string name="passwordFailed">Nabigong mag-set ng password</string>
     <string name="passwordIncorrect">Maling password</string>
     <string name="passwordRemove">Tanggalin ang Password</string>
-    <string name="passwordRemovedDescription">Tinanggal ang iyong password.</string>
     <string name="passwordSet">Itakda ang Password</string>
     <string name="paste">Idikit</string>
     <string name="permissionMusicAudioDenied">Kailangan ng {app_name} ng access sa musika at audio upang makapagpadala ng mga file, musika at audio, ngunit ito ay permanenteng tinanggihan. Pindutin ang Settings → Permissions, at i-on ang \"Musika at audio\".</string>
@@ -709,7 +705,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Itago ang Recovery Password</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Permanente ang pag-tago ng iyong recovery password sa device na ito.</string>
     <string name="recoveryPasswordRestoreDescription">Ilagay ang recovery password mo para i-load ang account mo. Kung hindi mo ito nai-save, mahahanap mo ito sa mga settings ng app mo.</string>
-    <string name="recoveryPasswordView">Tingnan ang Password</string>
     <string name="recoveryPasswordWarningSendDescription">Ito ang recovery password mo. Kung ise-send mo ito sa ibang tao, magkakaroon sila ng buong access sa iyong account.</string>
     <string name="redo">Gawin muli</string>
     <string name="remove">Tanggalin</string>
@@ -759,6 +754,7 @@
     <string name="sessionSettings">Mga Settings</string>
     <string name="set">Itakda</string>
     <string name="settingsRestartDescription">Dapat mong i-restart ang {app_name} upang ipatupad ang iyong mga bagong setting.</string>
+    <string name="settingsScreenSecurityDesktop">Seguridad ng Screen</string>
     <string name="share">I-share</string>
     <string name="shareAccountIdDescription">Imbitahan ang kaibigan mo na makipag-chat sa iyo sa {app_name} sa pamamagitan ng pagbabahagi ng iyong Account ID.</string>
     <string name="shareAccountIdDescriptionCopied">I-share sa iyong mga kaibigan kahit saan mo sila karaniwang kinakausap — pagkatapos ay ilipat ang pag-uusap dito.</string>

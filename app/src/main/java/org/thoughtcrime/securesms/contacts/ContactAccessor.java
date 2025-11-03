@@ -29,6 +29,9 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import network.loki.messenger.R;
 
 /**
@@ -43,19 +46,21 @@ import network.loki.messenger.R;
  * @author Moxie Marlinspike
  */
 
+@Singleton
 public class ContactAccessor {
+  private final GroupDatabase groupDatabase;
 
-  private static final ContactAccessor instance = new ContactAccessor();
-
-  public static synchronized ContactAccessor getInstance() {
-    return instance;
+  @Inject
+  public ContactAccessor(GroupDatabase groupDatabase) {
+      this.groupDatabase = groupDatabase;
   }
 
-  public List<String> getNumbersForThreadSearchFilter(Context context, String constraint) {
+
+    public List<String> getNumbersForThreadSearchFilter(Context context, String constraint) {
     LinkedList<String> numberList = new LinkedList<>();
 
     GroupRecord record;
-    try (GroupDatabase.Reader reader = DatabaseComponent.get(context).groupDatabase().getGroupsFilteredByTitle(constraint)) {
+    try (GroupDatabase.Reader reader = groupDatabase.getGroupsFilteredByTitle(constraint)) {
       while ((record = reader.getNext()) != null) {
         numberList.add(record.getEncodedId());
       }

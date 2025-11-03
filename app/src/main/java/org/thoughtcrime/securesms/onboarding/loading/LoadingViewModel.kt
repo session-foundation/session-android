@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.onboarding.loading
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
@@ -16,19 +15,19 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.UserConfigType
+import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.util.castAwayType
+import java.util.EnumSet
 import javax.inject.Inject
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -74,8 +73,9 @@ internal class LoadingViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                (configFactory.configUpdateNotifications
-                    .filterIsInstance<ConfigUpdateNotification.UserConfigsMerged>() as Flow<*>)
+                configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_PROFILE))
+                    .filter { it.fromMerge }
+                    .castAwayType()
                     .onStart { emit(Unit) }
                     .filter {
                         prefs.getLocalNumber() != null &&

@@ -55,60 +55,55 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.squareup.phrase.Phrase
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
+import org.session.libsession.utilities.recipients.ProStatus
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.TempAvatar
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.UserAvatar
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ClearData
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideAnimatedProCTA
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideAvatarPickerOptions
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideClearDataDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideUrlDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideUsernameDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.OnAvatarDialogDismissed
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.OnDonateClicked
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.RemoveAvatar
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.SaveAvatar
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.SetUsername
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowAnimatedProCTA
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowAvatarDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowClearDataDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowUrlDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowUsernameDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.UpdateUsername
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsActivity
+import org.thoughtcrime.securesms.pro.SubscriptionDetails
+import org.thoughtcrime.securesms.pro.SubscriptionState
+import org.thoughtcrime.securesms.pro.SubscriptionType
+import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.tokenpage.TokenPageActivity
 import org.thoughtcrime.securesms.ui.AccountIdHeader
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.AnimatedProfilePicProCTA
-import org.thoughtcrime.securesms.ui.AnimatedSessionProActivatedCTA
+import org.thoughtcrime.securesms.ui.CTAAnimatedImages
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.LargeItemButton
-import org.thoughtcrime.securesms.ui.LargeItemButtonWithDrawable
+import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.PathDot
+import org.thoughtcrime.securesms.ui.ProBadge
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.RadioOption
+import org.thoughtcrime.securesms.ui.SessionProCTA
 import org.thoughtcrime.securesms.ui.components.AcccentOutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
+import org.thoughtcrime.securesms.ui.components.AnnotatedTextWithIcon
 import org.thoughtcrime.securesms.ui.components.AppBarCloseIcon
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
@@ -117,7 +112,10 @@ import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.proBadgeColorDisabled
+import org.thoughtcrime.securesms.ui.proBadgeColorStandard
 import org.thoughtcrime.securesms.ui.qaTag
+import org.thoughtcrime.securesms.ui.safeContentWidth
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -132,7 +130,10 @@ import org.thoughtcrime.securesms.ui.theme.primaryGreen
 import org.thoughtcrime.securesms.ui.theme.primaryYellow
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
+import org.thoughtcrime.securesms.util.State
 import org.thoughtcrime.securesms.util.push
+import java.time.Duration
+import java.time.Instant
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -243,7 +244,8 @@ fun Settings(
                             .padding(LocalDimensions.current.xxxsSpacing)
                             .align(Alignment.BottomEnd)
                         ,
-                        painter = painterResource(id = R.drawable.ic_plus),
+                        painter = painterResource(id = if(avatarData.elements.first().remoteFile == null) R.drawable.ic_plus
+                        else R.drawable.ic_pencil),
                         contentDescription = null,
                         colorFilter = ColorFilter.tint(Color.Black)
                     )
@@ -253,8 +255,10 @@ fun Settings(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             // name
-            ProBadgeText(
+            AnnotatedTextWithIcon(
                 modifier = Modifier.qaTag(R.string.AccessibilityId_displayName)
+                    .fillMaxWidth()
+                    .safeContentWidth()
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
@@ -262,7 +266,17 @@ fun Settings(
                         sendCommand(ShowUsernameDialog)
                     },
                 text = uiState.username,
-                showBadge = uiState.showProBadge,
+                iconSize = 53.sp to 24.sp,
+                content = if(uiState.subscriptionState.type !is SubscriptionType.NeverSubscribed){{ // if we are pro or expired
+                    ProBadge(
+                        modifier = Modifier.padding(start = 4.dp)
+                            .qaTag(stringResource(R.string.qa_pro_badge_icon)),
+                        colors = if(uiState.subscriptionState.type is SubscriptionType.Active)
+                            proBadgeColorStandard()
+                        else proBadgeColorDisabled()
+                    )
+                }} else null,
+                style = LocalType.current.h5,
             )
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
@@ -289,6 +303,7 @@ fun Settings(
                 recoveryHidden = uiState.recoveryHidden,
                 hasPaths = uiState.hasPath,
                 postPro = uiState.isPostPro,
+                subscriptionState = uiState.subscriptionState,
                 sendCommand = sendCommand
             )
 
@@ -321,6 +336,45 @@ fun Settings(
         }
 
         // DIALOGS AND SHEETS
+        //  Simple dialogs
+        if (uiState.showSimpleDialog != null) {
+            val colors = LocalColors.current
+            val buttons = remember(uiState.showSimpleDialog) {
+                buildList {
+                    uiState.showSimpleDialog.positiveText?.let { positiveText ->
+                        add(
+                            DialogButtonData(
+                                text = GetString(positiveText),
+                                color = if (uiState.showSimpleDialog.positiveStyleDanger) colors.danger
+                                else colors.text,
+                                qaTag = uiState.showSimpleDialog.positiveQaTag,
+                                onClick = uiState.showSimpleDialog.onPositive
+                            )
+                        )
+                    }
+                    uiState.showSimpleDialog.negativeText?.let { negativeText ->
+                        add(
+                            DialogButtonData(
+                                text = GetString(negativeText),
+                                qaTag = uiState.showSimpleDialog.negativeQaTag,
+                                onClick = uiState.showSimpleDialog.onNegative
+                            )
+                        )
+                    }
+                }
+            }
+
+            AlertDialog(
+                onDismissRequest = {
+                    // hide dialog
+                    sendCommand(HideSimpleDialog)
+                },
+                title = annotatedStringResource(uiState.showSimpleDialog.title),
+                text = annotatedStringResource(uiState.showSimpleDialog.message),
+                showCloseButton = uiState.showSimpleDialog.showXIcon,
+                buttons = buttons
+            )
+        }
 
         // loading
         if(uiState.showLoader) {
@@ -331,7 +385,7 @@ fun Settings(
         if(uiState.showAvatarDialog) {
             AvatarDialog(
                 state = uiState.avatarDialogState,
-                isPro = uiState.isPro,
+                isPro = uiState.subscriptionState.type is SubscriptionType.Active,
                 isPostPro = uiState.isPostPro,
                 sendCommand = sendCommand,
                 startAvatarSelection = startAvatarSelection
@@ -341,7 +395,7 @@ fun Settings(
         // Animated avatar CTA
         if(uiState.showAnimatedProCTA){
             AnimatedProCTA(
-                isPro = uiState.isPro,
+                proSubscription = uiState.subscriptionState.type,
                 sendCommand = sendCommand
             )
         }
@@ -428,6 +482,7 @@ fun Buttons(
     recoveryHidden: Boolean,
     hasPaths: Boolean,
     postPro: Boolean,
+    subscriptionState: SubscriptionState,
     sendCommand: (SettingsViewModel.Commands) -> Unit,
 ) {
     Column(
@@ -458,8 +513,8 @@ fun Buttons(
         // Add the debug menu in non release builds
         if (BuildConfig.BUILD_TYPE != "release") {
             Cell{
-                LargeItemButton(
-                    "Debug Menu",
+                ItemButton(
+                    annotatedStringResource("Debug Menu"),
                     R.drawable.ic_settings,
                 ) { activity?.push<DebugActivity>() }
             }
@@ -470,23 +525,52 @@ fun Buttons(
         Cell {
             Column {
                 if(postPro){
-                    LargeItemButtonWithDrawable(
-                        text = GetString(NonTranslatableStringConstants.APP_PRO),
-                        icon = R.drawable.ic_pro_badge,
-                        iconSize = LocalDimensions.current.iconLargeAvatar,
+                   ItemButton(
+                        text = annotatedStringResource(
+                            when (subscriptionState.type) {
+                                is SubscriptionType.Active -> Phrase.from(
+                                    LocalContext.current,
+                                    R.string.sessionProBeta
+                                )
+                                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                                    .format().toString()
+
+                                is SubscriptionType.NeverSubscribed -> Phrase.from(
+                                    LocalContext.current,
+                                    R.string.upgradeSession
+                                )
+                                    .put(APP_NAME_KEY, stringResource(R.string.app_name))
+                                    .format().toString()
+
+                                is SubscriptionType.Expired -> Phrase.from(
+                                    LocalContext.current,
+                                    R.string.proRenewBeta
+                                )
+                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                    .format().toString()
+                            }
+                        ),
+                        icon = {
+                            Image(
+                                modifier = Modifier.size(LocalDimensions.current.iconLargeAvatar)
+                                    .align(Alignment.Center),
+                                painter = painterResource(R.drawable.ic_pro_badge),
+                                contentDescription = null,
+                            )
+                        },
                         modifier = Modifier.qaTag(R.string.qa_settings_item_pro),
                         colors = accentTextButtonColors()
                     ) {
-                        activity?.push<ProSettingsActivity>()
+                       activity?.push<ProSettingsActivity>()
                     }
+
                     Divider()
                 }
 
-
                 // Invite a friend
-                LargeItemButton(
-                    textId = R.string.sessionInviteAFriend,
-                    icon = R.drawable.ic_user_round_plus,
+                ItemButton(
+                    text = annotatedStringResource(R.string.sessionInviteAFriend),
+                    iconRes = R.drawable.ic_user_round_plus,
                     modifier = Modifier.qaTag(R.string.AccessibilityId_sessionInviteAFriend)
                 ) { context.sendInvitationToUseSession() }
             }
@@ -497,9 +581,9 @@ fun Buttons(
         Cell {
             Column {
                 // Donate
-                LargeItemButtonWithDrawable(
-                    text = GetString(R.string.donate),
-                    icon = R.drawable.ic_heart,
+                ItemButton(
+                    text = annotatedStringResource(R.string.donate),
+                    iconRes = R.drawable.ic_heart,
                     iconTint = LocalColors.current.accent,
                     modifier = Modifier.qaTag(R.string.qa_settings_item_donate),
                 ) {
@@ -508,8 +592,9 @@ fun Buttons(
                 Divider()
 
                 Crossfade(if (hasPaths) primaryGreen else primaryYellow, label = "path") {
-                    LargeItemButton(
-                        AnnotatedString(stringResource(R.string.onionRoutingPath)),
+                    ItemButton(
+                        modifier = Modifier.qaTag(R.string.qa_settings_item_path),
+                        text = annotatedStringResource(R.string.onionRoutingPath),
                         icon = {
                             PathDot(
                                 modifier = Modifier.align(Alignment.Center),
@@ -522,10 +607,10 @@ fun Buttons(
                 Divider()
 
                 // Add the token page option.
-                LargeItemButton(
+                ItemButton(
                     modifier = Modifier.qaTag(R.string.qa_settings_item_session_network),
-                    text = NETWORK_NAME,
-                    icon = R.drawable.session_network_logo
+                    text = annotatedStringResource(NETWORK_NAME),
+                    iconRes = R.drawable.ic_sent_custom
                 ) { activity?.push<TokenPageActivity>() }
             }
         }
@@ -534,19 +619,24 @@ fun Buttons(
 
         Cell {
             Column {
-                LargeItemButton(R.string.sessionPrivacy, R.drawable.ic_lock_keyhole, Modifier.qaTag(R.string.AccessibilityId_sessionPrivacy)) { activity?.push<PrivacySettingsActivity>() }
+                ItemButton(annotatedStringResource(R.string.sessionPrivacy),
+                    R.drawable.ic_lock_keyhole, Modifier.qaTag(R.string.AccessibilityId_sessionPrivacy)) { activity?.push<PrivacySettingsActivity>() }
                 Divider()
 
-                LargeItemButton(R.string.sessionNotifications, R.drawable.ic_volume_2, Modifier.qaTag(R.string.AccessibilityId_notifications)) { activity?.push<NotificationSettingsActivity>() }
+                ItemButton(annotatedStringResource(R.string.sessionNotifications),
+                    R.drawable.ic_volume_2, Modifier.qaTag(R.string.AccessibilityId_notifications)) { activity?.push<NotificationSettingsActivity>() }
                 Divider()
 
-                LargeItemButton(R.string.sessionConversations, R.drawable.ic_users_round, Modifier.qaTag(R.string.AccessibilityId_sessionConversations)) { activity?.push<ChatSettingsActivity>() }
+                ItemButton(annotatedStringResource(R.string.sessionConversations),
+                    R.drawable.ic_users_round, Modifier.qaTag(R.string.AccessibilityId_sessionConversations)) { activity?.push<ChatSettingsActivity>() }
                 Divider()
 
-                LargeItemButton(R.string.sessionAppearance, R.drawable.ic_paintbrush_vertical, Modifier.qaTag(R.string.AccessibilityId_sessionAppearance)) { activity?.push<AppearanceSettingsActivity>() }
+                ItemButton(annotatedStringResource(R.string.sessionAppearance),
+                    R.drawable.ic_paintbrush_vertical, Modifier.qaTag(R.string.AccessibilityId_sessionAppearance)) { activity?.push<AppearanceSettingsActivity>() }
                 Divider()
 
-                LargeItemButton(R.string.sessionMessageRequests, R.drawable.ic_message_square_warning, Modifier.qaTag(R.string.AccessibilityId_sessionMessageRequests)) { activity?.push<MessageRequestsActivity>() }
+                ItemButton(annotatedStringResource(R.string.sessionMessageRequests),
+                    R.drawable.ic_message_square_warning, Modifier.qaTag(R.string.AccessibilityId_sessionMessageRequests)) { activity?.push<MessageRequestsActivity>() }
             }
         }
 
@@ -556,20 +646,21 @@ fun Buttons(
             Column {
                 // Only show the recovery password option if the user has not chosen to permanently hide it
                 if (!recoveryHidden) {
-                    LargeItemButton(
-                        R.string.sessionRecoveryPassword,
+                    ItemButton(
+                        annotatedStringResource(R.string.sessionRecoveryPassword),
                         R.drawable.ic_recovery_password_custom,
                         Modifier.qaTag(R.string.AccessibilityId_sessionRecoveryPasswordMenuItem)
                     ) { activity?.push<RecoveryPasswordActivity>() }
                     Divider()
                 }
 
-                LargeItemButton(R.string.sessionHelp, R.drawable.ic_question_custom, Modifier.qaTag(R.string.AccessibilityId_help)) { activity?.push<HelpSettingsActivity>() }
+                ItemButton(annotatedStringResource(R.string.sessionHelp),
+                    R.drawable.ic_question_custom, Modifier.qaTag(R.string.AccessibilityId_help)) { activity?.push<HelpSettingsActivity>() }
                 Divider()
 
-                LargeItemButton(
-                    textId = R.string.sessionClearData,
-                    icon = R.drawable.ic_trash_2,
+                ItemButton(
+                    text = annotatedStringResource(R.string.sessionClearData),
+                    iconRes = R.drawable.ic_trash_2,
                     modifier = Modifier.qaTag(R.string.AccessibilityId_sessionClearData),
                     colors = dangerButtonColors(),
                 ) {
@@ -587,6 +678,7 @@ fun ShowClearDataDialog(
     sendCommand: (SettingsViewModel.Commands) -> Unit
 ) {
     var deleteOnNetwork by remember { mutableStateOf(false)}
+    val context = LocalContext.current
 
     AlertDialog(
         modifier = modifier,
@@ -594,11 +686,28 @@ fun ShowClearDataDialog(
             // hide dialog
             sendCommand(HideClearDataDialog)
         },
-        title = stringResource(R.string.clearDataAll),
+        title = annotatedStringResource(R.string.clearDataAll),
         text = when(state){
-            is SettingsViewModel.ClearDataState.Error -> stringResource(R.string.clearDataErrorDescriptionGeneric)
-            is SettingsViewModel.ClearDataState.ConfirmNetwork -> stringResource(R.string.clearDeviceAndNetworkConfirm)
-            else -> stringResource(R.string.clearDataAllDescription)
+            is SettingsViewModel.ClearDataState.Clearing -> null
+            is SettingsViewModel.ClearDataState.Error -> annotatedStringResource(R.string.clearDataErrorDescriptionGeneric)
+            is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmNetwork -> annotatedStringResource(R.string.clearDeviceAndNetworkConfirm)
+            is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmDevicePro -> {
+                annotatedStringResource(
+                    Phrase.from(context.getText(R.string.proClearAllDataDevice))
+                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                        .format()
+                )
+            }
+            is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmNetworkPro -> {
+                annotatedStringResource(
+                    Phrase.from(context.getText(R.string.proClearAllDataNetwork))
+                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                        .format()
+                )
+            }
+            else -> annotatedStringResource(R.string.clearDataAllDescription)
         },
         content = {
             when(state) {
@@ -635,7 +744,10 @@ fun ShowClearDataDialog(
         },
         buttons = when(state){
             is SettingsViewModel.ClearDataState.Default,
-                 is SettingsViewModel.ClearDataState.ConfirmNetwork -> {
+                 is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmDevicePro,
+                 is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmNetwork,
+                 is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmNetworkPro,
+                      -> {
                 listOf(
                     DialogButtonData(
                         text = GetString(stringResource(id = R.string.clear)),
@@ -882,14 +994,13 @@ fun AvatarDialog(
 
 @Composable
 fun AnimatedProCTA(
-    isPro: Boolean,
+    proSubscription: SubscriptionType,
     sendCommand: (SettingsViewModel.Commands) -> Unit,
 ){
-    if(isPro) {
-        AnimatedSessionProActivatedCTA (
-            heroImageBg = R.drawable.cta_hero_animated_bg,
-            heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
+    if(proSubscription is SubscriptionType.Active) {
+        SessionProCTA (
             title = stringResource(R.string.proActivated),
+            badgeAtStart = true,
             textContent = {
                 ProBadgeText(
                     modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -909,10 +1020,19 @@ fun AnimatedProCTA(
                     )
                 )
             },
+            content = {
+                CTAAnimatedImages(
+                    heroImageBg = R.drawable.cta_hero_animated_bg,
+                    heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
+                )
+            },
+            positiveButtonText = null,
+            negativeButtonText = stringResource(R.string.close),
             onCancel = { sendCommand(HideAnimatedProCTA) }
         )
     } else {
         AnimatedProfilePicProCTA(
+            proSubscription = proSubscription,
             onDismissRequest = { sendCommand(HideAnimatedProCTA) },
         )
     }
@@ -942,9 +1062,25 @@ private fun SettingsScreenPreview() {
                         )
                     )
                 ),
-                isPro = false,
                 isPostPro = true,
-                showProBadge = true,
+                subscriptionState = SubscriptionState(
+                    type = SubscriptionType.Active.AutoRenewing(
+                        proStatus = ProStatus.Pro(
+                            visible = true,
+                            validUntil = Instant.now() + Duration.ofDays(14),
+                        ),
+                        duration = ProSubscriptionDuration.THREE_MONTHS,
+                        subscriptionDetails = SubscriptionDetails(
+                            device = "iOS",
+                            store = "Apple App Store",
+                            platform = "Apple",
+                            platformAccount = "Apple Account",
+                            subscriptionUrl = "https://www.apple.com/account/subscriptions",
+                            refundUrl = "https://www.apple.com/account/subscriptions",
+                        )
+                    ),
+                    refreshState = State.Success(Unit),
+                ),
                 username = "Atreyu",
                 accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
                 hasPath = true,

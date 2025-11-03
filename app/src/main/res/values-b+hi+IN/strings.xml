@@ -184,7 +184,6 @@
     <string name="callsSettings">कॉल्स (बेटा)</string>
     <string name="callsVoiceAndVideo">वॉइस और वीडियो कॉल</string>
     <string name="callsVoiceAndVideoBeta">वॉइस और वीडियो कॉल (बीटा)</string>
-    <string name="callsVoiceAndVideoModalDescription">अपने खाते में एन्क्रिप्टेड संदेश भेजते समय आपका IP आपके कॉल पार्टनर और Oxen Foundation सर्वर को दिखाई देगा।</string>
     <string name="callsVoiceAndVideoToggleDescription">अन्य उपयोगकर्ताओं से वॉयस और वीडियो कॉल सक्षम करता है।</string>
     <string name="callsYouCalled">आपने {name} को कॉल किया</string>
     <string name="callsYouMissedCallPermissions">आपको <b>प्राइवेसी सेटिंग्स</b> में <b>वॉइस और वीडियो कॉल्स</b> सक्षम नहीं करने के कारण <b>{name}</b> से कॉल छूट गया।</string>
@@ -278,7 +277,6 @@
     <string name="conversationsDeleted">बातचीत हटाई गई</string>
     <string name="conversationsEmpty">{conversation_name} में कोई संदेश नहीं हैं।</string>
     <string name="conversationsEnter">कुंजी दर्ज करें</string>
-    <string name="conversationsEnterDescription">बातचीत में टाइप करते समय एंटर कुंजी का कार्य।</string>
     <string name="conversationsGroups">समूह</string>
     <string name="conversationsMessageTrimming">संदेश ट्रिमिंग</string>
     <string name="conversationsMessageTrimmingTrimCommunities">समुदायों को ट्रिम करें</string>
@@ -770,8 +768,6 @@
     <string name="openSurvey">सर्वेक्षण खोलें</string>
     <string name="other">अन्य</string>
     <string name="passwordChange">पासवर्ड बदलें</string>
-    <string name="passwordChangeDescription">{app_name} को अनलॉक करने के लिए आवश्यक पासवर्ड बदलें।</string>
-    <string name="passwordChangedDescription">आपका पासवर्ड बदल दिया गया है। कृपया इसे सुरक्षित रखें।</string>
     <string name="passwordConfirm">पासवर्ड की पुष्टि करें</string>
     <string name="passwordCurrentIncorrect">आपका वर्तमान पासवर्ड गलत है।</string>
     <string name="passwordEnter">पासवर्ड दर्ज करें</string>
@@ -783,7 +779,6 @@
     <string name="passwordFailed">पासवर्ड सेट करने में विफल</string>
     <string name="passwordIncorrect">गलत पासवर्ड</string>
     <string name="passwordRemove">पासवर्ड हटाएं</string>
-    <string name="passwordRemovedDescription">आपका पासवर्ड हटा दिया गया है।</string>
     <string name="passwordSet">पासवर्ड सेट करें</string>
     <string name="paste">पेस्ट करें</string>
     <string name="permissionChange">अनुमति परिवर्तन</string>
@@ -831,7 +826,6 @@
     <string name="proAnimatedDisplayPictureFeature">एनिमेटेड डिस्प्ले तस्वीर</string>
     <string name="proAnimatedDisplayPictureModalDescription">उपयोगकर्ता GIF अपलोड कर सकते हैं</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">GIF अपलोड करें</string>
-    <string name="proBadge">{app_pro} बैज</string>
     <string name="proCallToActionLongerMessages">लंबे संदेश भेजना चाहते हैं? अधिक टेक्स्ट भेजें और {app_pro} के साथ प्रीमियम सुविधाओं का अनलॉक करें</string>
     <string name="proCallToActionPinnedConversations">अधिक पिन करना चाहते हैं? अपनी चैट व्यवस्थित करें और {app_pro} के साथ प्रीमियम सुविधाओं का अनलॉक करें</string>
     <string name="proCallToActionPinnedConversationsMoreThan">5 से अधिक पिन करना चाहते हैं? अपनी चैट व्यवस्थित करें और {app_pro} के साथ प्रीमियम सुविधाओं का अनलॉक करें</string>
@@ -895,7 +889,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Recovery Password छुपाएं</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">इस डिवाइस पर अपने पुनर्प्राप्ति पासवर्ड को स्थायी रूप से छिपाएँ।</string>
     <string name="recoveryPasswordRestoreDescription">अपना खाता लोड करने के लिए अपना पुनर्प्राप्ति पासवर्ड दर्ज करें। यदि आपने इसे सहेजा नहीं है, तो आप इसे अपनी ऐप सेटिंग में पा सकते हैं।</string>
-    <string name="recoveryPasswordView">पासवर्ड देखें</string>
     <string name="recoveryPasswordWarningSendDescription">यह आपका पुनर्प्राप्ति वाक्यांश है। अगर आप इसे किसी को भेजते हैं तो उनके पास आपके खाते की पूरी पहुंच होगी।</string>
     <string name="recreateGroup">समूह पुनः बनाएँ</string>
     <string name="redo">फिर से करें</string>
@@ -967,6 +960,7 @@
     <string name="set">सेट करें</string>
     <string name="setCommunityDisplayPicture">Community की डिस्प्ले तस्वीर सेट करें</string>
     <string name="settingsRestartDescription">अपनी नई सेटिंग्स लागू करने के लिए आपको {app_name} पुनः प्रारंभ करना होगा।</string>
+    <string name="settingsScreenSecurityDesktop">स्क्रीन सुरक्षा</string>
     <string name="share">शेयर करें</string>
     <string name="shareAccountIdDescription">अपने मित्र को अपने साथ {app_name} पर चैट करने के लिए Account ID साझा करके आमंत्रित करें।</string>
     <string name="shareAccountIdDescriptionCopied">अपने दोस्तों के साथ वहां साझा करें जहां आप आमतौर पर उनसे बात करते हैं - फिर यहां बातचीत को स्थानांतरित करें।</string>

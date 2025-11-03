@@ -20,10 +20,9 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import com.annimon.stream.Stream
+import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.apache.commons.lang3.StringUtils
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -38,22 +37,22 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Address.Companion.UNKNOWN
-import org.session.libsession.utilities.Address.Companion.fromExternal
 import org.session.libsession.utilities.Address.Companion.fromSerialized
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.Contact
 import org.session.libsession.utilities.IdentityKeyMismatch
 import org.session.libsession.utilities.IdentityKeyMismatchList
 import org.session.libsession.utilities.NetworkFailure
 import org.session.libsession.utilities.NetworkFailureList
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
+import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.toGroupString
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils.queue
-import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import org.session.libsignal.utilities.guava.Optional
+import org.thoughtcrime.securesms.database.MmsDatabase.Companion.MESSAGE_BOX
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -62,7 +61,6 @@ import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.Quote
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
 import org.thoughtcrime.securesms.database.model.content.MessageContent
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.mms.MmsException
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.util.asSequence
@@ -74,12 +72,18 @@ import javax.inject.Provider
 import javax.inject.Singleton
 
 @Singleton
-class MmsDatabase
-    @Inject constructor(
-        @ApplicationContext context: Context,
-        databaseHelper: Provider<SQLCipherOpenHelper>,
-        private val json: Json
-    ) : MessagingDatabase(context, databaseHelper) {
+class MmsDatabase @Inject constructor(
+    @ApplicationContext context: Context,
+    databaseHelper: Provider<SQLCipherOpenHelper>,
+    private val recipientRepository: RecipientRepository,
+    private val json: Json,
+    private val threadDatabase: ThreadDatabase,
+    private val groupReceiptDatabase: GroupReceiptDatabase,
+    private val attachmentDatabase: AttachmentDatabase,
+    private val reactionDatabase: ReactionDatabase,
+    private val mmsSmsDatabase: Lazy<MmsSmsDatabase>,
+    private val groupDatabase: GroupDatabase,
+) : MessagingDatabase(context, databaseHelper) {
     private val earlyDeliveryReceiptCache = EarlyReceiptCache()
     private val earlyReadReceiptCache = EarlyReceiptCache()
     override fun getTableName() = TABLE_NAME
@@ -184,10 +188,9 @@ class MmsDatabase
                                     columnName + " = " + columnName + " + 1 WHERE " + ID + " = ?",
                             arrayOf(id.toString())
                         )
-                        get(context).groupReceiptDatabase()
+                        groupReceiptDatabase
                             .update(ourAddress, id, status, timestamp)
-                        get(context).threadDatabase().update(threadId, false)
-                        notifyConversationListeners(threadId)
+                        threadDatabase.update(threadId, false)
                     }
                 }
             }
@@ -206,22 +209,6 @@ class MmsDatabase
         }
     }
 
-    fun updateInfoMessage(messageId: Long, body: String?, runThreadUpdate: Boolean = true) {
-        val threadId = getThreadIdForMessage(messageId)
-        val db = writableDatabase
-        db.execSQL(
-            "UPDATE $TABLE_NAME SET $BODY = ? WHERE $ID = ?",
-            arrayOf(body, messageId.toString())
-        )
-        with (get(context).threadDatabase()) {
-            setLastSeen(threadId, SnodeAPI.nowWithOffset)
-            setHasSent(threadId, true)
-            if (runThreadUpdate) {
-                update(threadId, true)
-            }
-        }
-    }
-
     fun updateSentTimestamp(messageId: Long, newTimestamp: Long) {
         val db = writableDatabase
         val threadId = db.rawQuery(
@@ -232,8 +219,6 @@ class MmsDatabase
             if (it.moveToFirst()) it.getLong(0) else null
         }
 
-        threadId?.let(::notifyConversationListeners)
-        notifyConversationListListeners()
     }
 
     fun getThreadIdForMessage(id: Long): Long {
@@ -261,7 +246,6 @@ class MmsDatabase
 
     fun getMessage(messageId: Long): Cursor {
         val cursor = rawQuery(RAW_ID_WHERE, arrayOf(messageId.toString()))
-        setNotifyConversationListeners(cursor, getThreadIdForMessage(messageId))
         return cursor
     }
 
@@ -306,7 +290,7 @@ class MmsDatabase
                     " WHERE " + ID + " = ?", arrayOf(id.toString() + "")
         )
         if (threadId.isPresent) {
-            get(context).threadDatabase().update(threadId.get(), false)
+            threadDatabase.update(threadId.get(), false)
         }
     }
 
@@ -321,7 +305,6 @@ class MmsDatabase
             baseType,
             Optional.of(threadId)
         )
-        notifyConversationListeners(threadId)
     }
 
     override fun markAsSyncing(messageId: Long) {
@@ -354,7 +337,6 @@ class MmsDatabase
         contentValues.put(HAS_MENTION, 0)
 
         database.update(TABLE_NAME, contentValues, ID_WHERE, arrayOf(messageId.toString()))
-        val attachmentDatabase = get(context).attachmentDatabase()
         queue { attachmentDatabase.deleteAttachmentsForMessage(messageId) }
         val threadId = getThreadIdForMessage(messageId)
 
@@ -369,8 +351,6 @@ class MmsDatabase
         contentValues.put(EXPIRE_STARTED, startedTimestamp)
         val db = writableDatabase
         db.update(TABLE_NAME, contentValues, ID_WHERE, arrayOf(messageId.toString()))
-        val threadId = getThreadIdForMessage(messageId)
-        notifyConversationListeners(threadId)
     }
 
     fun markAsNotified(id: Long) {
@@ -436,7 +416,6 @@ class MmsDatabase
 
     @Throws(MmsException::class, NoSuchMessageException::class)
     fun getOutgoingMessage(messageId: Long): OutgoingMediaMessage {
-        val attachmentDatabase = get(context).attachmentDatabase()
         var cursor: Cursor? = null
         try {
             cursor = rawQuery(RAW_ID_WHERE, arrayOf(messageId.toString()))
@@ -450,7 +429,7 @@ class MmsDatabase
                 val expireStartedAt = cursor.getLong(cursor.getColumnIndexOrThrow(EXPIRE_STARTED))
                 val address = cursor.getString(cursor.getColumnIndexOrThrow(ADDRESS))
                 val threadId = cursor.getLong(cursor.getColumnIndexOrThrow(THREAD_ID))
-                val distributionType = get(context).threadDatabase().getDistributionType(threadId)
+                val distributionType = threadDatabase.getDistributionType(threadId)
                 val mismatchDocument = cursor.getString(
                     cursor.getColumnIndexOrThrow(
                         MISMATCHED_IDENTITIES
@@ -478,7 +457,6 @@ class MmsDatabase
                     .asSequence()
                     .filterNot { obj: DatabaseAttachment -> obj.isQuote || contactAttachments.contains(obj) || previewAttachments.contains(obj) }
                     .toList()
-                val recipient = Recipient.from(context, fromSerialized(address), false)
                 var networkFailures: List<NetworkFailure?>? = LinkedList()
                 var mismatches: List<IdentityKeyMismatch?>? = LinkedList()
                 var quote: QuoteModel? = null
@@ -519,7 +497,7 @@ class MmsDatabase
                 }.getOrNull()
 
                 val message = OutgoingMediaMessage(
-                    recipient,
+                    fromSerialized(address),
                     body,
                     attachments,
                     timestamp,
@@ -677,12 +655,9 @@ class MmsDatabase
             linkPreviews = retrieved.linkPreviews,
             contentValues = contentValues,
         )
-        if (retrieved.messageContent !is DisappearingMessageUpdate) {
-            if (runThreadUpdate) {
-                get(context).threadDatabase().update(threadId, true)
-            }
+        if (runThreadUpdate) {
+            threadDatabase.update(threadId, true)
         }
-        notifyConversationListeners(threadId)
         return Optional.of(InsertResult(messageId, threadId))
     }
 
@@ -721,9 +696,6 @@ class MmsDatabase
         var type = MmsSmsColumns.Types.BASE_INBOX_TYPE or MmsSmsColumns.Types.SECURE_MESSAGE_BIT
         if (retrieved.isPushMessage) {
             type = type or MmsSmsColumns.Types.PUSH_MESSAGE_BIT
-        }
-        if (retrieved.isScreenshotDataExtraction) {
-            type = type or MmsSmsColumns.Types.SCREENSHOT_EXTRACTION_BIT
         }
         if (retrieved.isMediaSavedDataExtraction) {
             type = type or MmsSmsColumns.Types.MEDIA_SAVED_EXTRACTION_BIT
@@ -765,7 +737,7 @@ class MmsDatabase
         contentValues.put(SUBSCRIPTION_ID, message.subscriptionId)
         contentValues.put(EXPIRES_IN, message.expiresIn)
         contentValues.put(EXPIRE_STARTED, message.expireStartedAt)
-        contentValues.put(ADDRESS, message.recipient.address.toString())
+        contentValues.put(ADDRESS, message.recipient.toString())
         contentValues.put(
             DELIVERY_RECEIPT_COUNT,
             Stream.of(earlyDeliveryReceipts.values).mapToLong { obj: Long -> obj }
@@ -794,28 +766,26 @@ class MmsDatabase
             linkPreviews = message.linkPreviews,
             contentValues = contentValues,
         )
-        if (message.recipient.address.isGroupOrCommunity) {
-            val members = get(context).groupDatabase()
-                .getGroupMembers(message.recipient.address.toGroupString(), false)
-            val receiptDatabase = get(context).groupReceiptDatabase()
-            receiptDatabase.insert(Stream.of(members).map { obj: Recipient -> obj.address }
-                .toList(),
+        if (message.recipient.isGroupOrCommunity) {
+            val members = groupDatabase
+                .getGroupMembers(message.recipient.toGroupString(), false)
+            groupReceiptDatabase.insert(members,
                 messageId, GroupReceiptDatabase.STATUS_UNDELIVERED, message.sentTimeMillis
             )
-            for (address in earlyDeliveryReceipts.keys) receiptDatabase.update(
+            for (address in earlyDeliveryReceipts.keys) groupReceiptDatabase.update(
                 address,
                 messageId,
                 GroupReceiptDatabase.STATUS_DELIVERED,
                 -1
             )
-            for (address in earlyReadReceipts.keys) receiptDatabase.update(
+            for (address in earlyReadReceipts.keys) groupReceiptDatabase.update(
                 address,
                 messageId,
                 GroupReceiptDatabase.STATUS_READ,
                 -1
             )
         }
-        with (get(context).threadDatabase()) {
+        with (threadDatabase) {
             val lastSeen = getLastSeenAndHasSent(threadId).first()
             if (lastSeen < message.sentTimeMillis) {
                 setLastSeen(threadId, message.sentTimeMillis)
@@ -839,7 +809,7 @@ class MmsDatabase
         contentValues: ContentValues,
     ): Long {
         val db = writableDatabase
-        val partsDatabase = get(context).attachmentDatabase()
+        val partsDatabase = attachmentDatabase
         val allAttachments: MutableList<Attachment?> = LinkedList()
         val thumbnailJobs: MutableList<AttachmentId> = ArrayList()  // Collector for thumbnail jobs
 
@@ -912,91 +882,68 @@ class MmsDatabase
             db.endTransaction()
 
             // Process thumbnail jobs AFTER transaction commits
-            val attachmentDatabase = get(context).attachmentDatabase()
             thumbnailJobs.forEach { attachmentId ->
                 Log.i(TAG, "Submitting thumbnail generation job for attachment: $attachmentId")
                 attachmentDatabase.thumbnailExecutor.submit(
                     attachmentDatabase.ThumbnailFetchCallable(attachmentId)
                 )
             }
-
-            notifyConversationListeners(contentValues.getAsLong(THREAD_ID))
         }
     }
 
-    /**
-     * Delete all the messages in single queries where possible
-     * @param messageIds a String array representation of regularly Long types representing message IDs
-     */
-    private fun deleteMessages(messageIds: Array<String?>) {
-        if (messageIds.isEmpty()) {
-            Log.w(TAG, "No message Ids provided to MmsDatabase.deleteMessages - aborting delete operation!")
-            return
-        }
+    private fun doDeleteMessages(
+        updateThread: Boolean,
+        where: String,
+        vararg whereArgs: Any?): Boolean {
+        val deletedMessageIDs: MutableList<Long>
+        val deletedMessagesThreadIDs = hashSetOf<Long>()
 
-        // don't need thread IDs
-        val queryBuilder = StringBuilder()
-        for (i in messageIds.indices) {
-            queryBuilder.append("$TABLE_NAME.$ID").append(" = ").append(
-                messageIds[i]
-            )
-            if (i + 1 < messageIds.size) {
-                queryBuilder.append(" OR ")
+         writableDatabase.rawQuery(
+            "DELETE FROM $TABLE_NAME WHERE $where RETURNING $ID, $THREAD_ID",
+            *whereArgs
+        ).use { cursor ->
+            deletedMessageIDs = ArrayList(cursor.count)
+
+            while (cursor.moveToNext()) {
+                deletedMessageIDs += cursor.getLong(0)
+                deletedMessagesThreadIDs += cursor.getLong(1)
             }
         }
-        val idsAsString = queryBuilder.toString()
-        val attachmentDatabase = get(context).attachmentDatabase()
-        queue { attachmentDatabase.deleteAttachmentsForMessages(messageIds) }
-        val groupReceiptDatabase = get(context).groupReceiptDatabase()
-        groupReceiptDatabase.deleteRowsForMessages(messageIds)
-        val database = writableDatabase
-        database.delete(TABLE_NAME, idsAsString, null)
-        notifyConversationListListeners()
-        notifyStickerListeners()
-        notifyStickerPackListeners()
+
+        // Delete messages related data from other tables
+        if (!deletedMessageIDs.isEmpty()) {
+            attachmentDatabase.deleteAttachmentsForMessages(deletedMessageIDs)
+            groupReceiptDatabase.deleteRowsForMessages(deletedMessageIDs)
+
+            notifyStickerListeners()
+            notifyStickerPackListeners()
+        }
+
+        if (updateThread) {
+            for (threadId in deletedMessagesThreadIDs) {
+                threadDatabase.update(threadId, false)
+            }
+        }
+
+        return deletedMessageIDs.isNotEmpty()
     }
 
     override fun getTypeColumn(): String = MESSAGE_BOX
 
-    // Caution: The bool returned from `deleteMessage` is NOT "Was the message successfully deleted?"
-    // - it is "Was the thread deleted because removing that message resulted in an empty thread"!
-    override fun deleteMessage(messageId: Long): Boolean {
-        val threadId = getThreadIdForMessage(messageId)
-        val attachmentDatabase = get(context).attachmentDatabase()
-        queue { attachmentDatabase.deleteAttachmentsForMessage(messageId) }
-        val groupReceiptDatabase = get(context).groupReceiptDatabase()
-        groupReceiptDatabase.deleteRowsForMessage(messageId)
-        val database = writableDatabase
-        database!!.delete(TABLE_NAME, ID_WHERE, arrayOf(messageId.toString()))
-        val threadDeleted = get(context).threadDatabase().update(threadId, false)
-        notifyConversationListeners(threadId)
-        notifyStickerListeners()
-        notifyStickerPackListeners()
-        return threadDeleted
+    override fun deleteMessage(messageId: Long) {
+        doDeleteMessages(
+            updateThread = true,
+            where = "$ID = ?",
+            messageId
+        )
     }
 
-    override fun deleteMessages(messageIds: LongArray, threadId: Long): Boolean {
-        val argsArray = messageIds.map { "?" }
-        val argValues = messageIds.map { it.toString() }.toTypedArray()
-
-        val attachmentDatabase = get(context).attachmentDatabase()
-        val groupReceiptDatabase = get(context).groupReceiptDatabase()
-
-        queue { attachmentDatabase.deleteAttachmentsForMessages(messageIds) }
-        groupReceiptDatabase.deleteRowsForMessages(messageIds)
-
-        val db = writableDatabase
-        db.delete(
-            TABLE_NAME,
-            ID + " IN (" + StringUtils.join(argsArray, ',') + ")",
-            argValues
+    override fun deleteMessages(messageIds: Collection<Long>) {
+        doDeleteMessages(
+            updateThread = true,
+            where = "$ID IN (SELECT value FROM json_each(?))",
+            JSONArray(messageIds).toString()
         )
-
-        val threadDeleted = get(context).threadDatabase().update(threadId, false)
-        notifyConversationListeners(threadId)
-        notifyStickerListeners()
-        notifyStickerPackListeners()
-        return threadDeleted
     }
 
     override fun updateThreadId(fromId: Long, toId: Long) {
@@ -1005,8 +952,6 @@ class MmsDatabase
 
         val db = writableDatabase
         db.update(SmsDatabase.TABLE_NAME, contentValues, "$THREAD_ID = ?", arrayOf("$fromId"))
-        notifyConversationListeners(toId)
-        notifyConversationListListeners()
     }
 
     @Throws(NoSuchMessageException::class)
@@ -1016,64 +961,32 @@ class MmsDatabase
         }
     }
 
-    fun deleteThread(threadId: Long) {
-        deleteThreads(setOf(threadId))
+    fun deleteThread(threadId: Long, updateThread: Boolean) {
+        deleteThreads(listOf(threadId), updateThread)
     }
 
     fun deleteMediaFor(threadId: Long, fromUser: String? = null) {
-        val db = writableDatabase
-        val whereString =
-            if (fromUser == null) "$THREAD_ID = ? AND $LINK_PREVIEWS IS NULL"
-            else "$THREAD_ID = ? AND $ADDRESS = ? AND $LINK_PREVIEWS IS NULL"
-        val whereArgs = if (fromUser == null) arrayOf(threadId.toString()) else arrayOf(threadId.toString(), fromUser)
-        var cursor: Cursor? = null
-        try {
-            cursor = db.query(TABLE_NAME, arrayOf(ID), whereString, whereArgs, null, null, null, null)
-            val toDeleteStringMessageIds = mutableListOf<String>()
-            while (cursor.moveToNext()) {
-                toDeleteStringMessageIds += cursor.getLong(0).toString() // get the ID as a string
-            }
-            // TODO: this can probably be optimized out,
-            //  currently attachmentDB uses MmsID not threadID which makes it difficult to delete
-            //  and clean up on threadID alone
-            toDeleteStringMessageIds.toList().chunked(50).forEach { sublist ->
-                deleteMessages(sublist.toTypedArray())
-            }
-        } finally {
-            cursor?.close()
+        if (fromUser != null) {
+            doDeleteMessages(
+                updateThread = true,
+                where = "$THREAD_ID = ? AND $ADDRESS = ? AND $LINK_PREVIEWS IS NULL",
+                threadId, fromUser
+            )
+        } else {
+            doDeleteMessages(
+                updateThread = true,
+                where = "$THREAD_ID = ? AND $LINK_PREVIEWS IS NULL",
+                threadId
+            )
         }
-        val threadDb = get(context).threadDatabase()
-        threadDb.update(threadId, false)
-        notifyConversationListeners(threadId)
-        notifyStickerListeners()
-        notifyStickerPackListeners()
     }
 
     fun deleteMessagesFrom(threadId: Long, fromUser: String) { // copied from deleteThreads implementation
-        val db = writableDatabase
-        var cursor: Cursor? = null
-        val whereString = "$THREAD_ID = ? AND $ADDRESS = ?"
-        try {
-            cursor =
-                db!!.query(TABLE_NAME, arrayOf<String?>(ID), whereString, arrayOf(threadId.toString(), fromUser), null, null, null)
-            val toDeleteStringMessageIds = mutableListOf<String>()
-            while (cursor.moveToNext()) {
-                toDeleteStringMessageIds += cursor.getLong(0).toString() // get the ID as a string
-            }
-            // TODO: this can probably be optimized out,
-            //  currently attachmentDB uses MmsID not threadID which makes it difficult to delete
-            //  and clean up on threadID alone
-            toDeleteStringMessageIds.toList().chunked(50).forEach { sublist ->
-                deleteMessages(sublist.toTypedArray())
-            }
-        } finally {
-            cursor?.close()
-        }
-        val threadDb = get(context).threadDatabase()
-        threadDb.update(threadId, false)
-        notifyConversationListeners(threadId)
-        notifyStickerListeners()
-        notifyStickerPackListeners()
+        doDeleteMessages(
+            updateThread = true,
+            where = "$THREAD_ID = ? AND $ADDRESS = ?",
+            threadId, fromUser
+        )
     }
 
     private fun getSerializedSharedContacts(
@@ -1219,71 +1132,34 @@ class MmsDatabase
         return false
     }
 
-    private fun deleteThreads(threadIds: Set<Long>) {
-        val db = writableDatabase
-        val where = StringBuilder()
-        var cursor: Cursor? = null
-        for (threadId in threadIds) {
-            where.append(THREAD_ID).append(" = '").append(threadId).append("' OR ")
-        }
-        val whereString = where.substring(0, where.length - 4)
-        try {
-            cursor = db!!.query(TABLE_NAME, arrayOf<String?>(ID), whereString, null, null, null, null)
-            val toDeleteStringMessageIds = mutableListOf<String>()
-            while (cursor.moveToNext()) {
-                toDeleteStringMessageIds += cursor.getLong(0).toString()
-            }
-            // TODO: this can probably be optimized out,
-            //  currently attachmentDB uses MmsID not threadID which makes it difficult to delete
-            //  and clean up on threadID alone
-            toDeleteStringMessageIds.toList().chunked(50).forEach { sublist ->
-                deleteMessages(sublist.toTypedArray())
-            }
-        } finally {
-            cursor?.close()
-        }
-        val threadDb = get(context).threadDatabase()
-        for (threadId in threadIds) {
-            val threadDeleted = threadDb.update(threadId, false)
-            notifyConversationListeners(threadId)
-        }
-        notifyStickerListeners()
-        notifyStickerPackListeners()
+    fun deleteThreads(threadIds: Collection<Long>, updateThread: Boolean) {
+        doDeleteMessages(
+            updateThread = updateThread,
+            where = "$THREAD_ID IN (SELECT value FROM json_each(?))",
+            JSONArray(threadIds).toString()
+        )
     }
 
     /*package*/
     fun deleteMessagesInThreadBeforeDate(threadId: Long, date: Long, onlyMedia: Boolean) {
-        var cursor: Cursor? = null
-        try {
-            val db = readableDatabase
-            var where =
-                THREAD_ID + " = ? AND (CASE (" + MESSAGE_BOX + " & " + MmsSmsColumns.Types.BASE_TYPE_MASK + ") "
-            for (outgoingType in MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES) {
-                where += " WHEN $outgoingType THEN $DATE_SENT < $date"
-            }
-            where += " ELSE $DATE_RECEIVED < $date END)"
-            if (onlyMedia) where += " AND $PART_COUNT >= 1"
-            cursor = db.query(
-                TABLE_NAME,
-                arrayOf<String?>(ID),
-                where,
-                arrayOf<String?>(threadId.toString() + ""),
-                null,
-                null,
-                null
-            )
-            while (cursor != null && cursor.moveToNext()) {
-                Log.i("MmsDatabase", "Trimming: " + cursor.getLong(0))
-                deleteMessage(cursor.getLong(0))
-            }
-        } finally {
-            cursor?.close()
+        var where =
+            THREAD_ID + " = ? AND (CASE (" + MESSAGE_BOX + " & " + MmsSmsColumns.Types.BASE_TYPE_MASK + ") "
+
+        for (outgoingType in MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES) {
+            where += " WHEN $outgoingType THEN $DATE_SENT < $date"
         }
+
+        where += " ELSE $DATE_RECEIVED < $date END)"
+        if (onlyMedia) where += " AND $PART_COUNT >= 1"
+
+        doDeleteMessages(
+            updateThread = true,
+            where = where,
+            threadId
+        )
     }
 
     fun readerFor(cursor: Cursor?, getQuote: Boolean = true) = Reader(cursor, getQuote)
-
-    fun readerFor(message: OutgoingMediaMessage?, threadId: Long) = OutgoingMessageReader(message, threadId)
 
     fun setQuoteMissing(messageId: Long): Int {
         val contentValues = ContentValues()
@@ -1307,45 +1183,14 @@ class MmsDatabase
         } ?: ""
 
         val where = "$THREAD_ID = ? AND $MESSAGE_CONTENT->>'$.${MessageContent.DISCRIMINATOR}' == '${DisappearingMessageUpdate.TYPE_NAME}' " + outgoingClause
-        writableDatabase.delete(TABLE_NAME, where, arrayOf("$threadId"))
-        notifyConversationListeners(threadId)
+
+        doDeleteMessages(updateThread = true, where, threadId)
     }
 
     object Status {
         const val DOWNLOAD_INITIALIZED = 1
         const val DOWNLOAD_NO_CONNECTIVITY = 2
         const val DOWNLOAD_CONNECTING = 3
-    }
-
-    inner class OutgoingMessageReader(private val message: OutgoingMediaMessage?,
-                                      private val threadId: Long) {
-        private val id = SECURE_RANDOM.nextLong()
-        val current: MessageRecord
-            get() {
-                val slideDeck = SlideDeck(context, message!!.attachments)
-                return MediaMmsMessageRecord(
-                    id, message.recipient, message.recipient,
-                    1, SnodeAPI.nowWithOffset, SnodeAPI.nowWithOffset,
-                    0, threadId, message.body,
-                    slideDeck, slideDeck.slides.size,
-                    if (message.isSecure) MmsSmsColumns.Types.getOutgoingEncryptedMessageType() else MmsSmsColumns.Types.getOutgoingSmsMessageType(),
-                    LinkedList(),
-                    LinkedList(),
-                    message.subscriptionId,
-                    message.expiresIn,
-                    message.expireStartedAt, 0,
-                    if (message.outgoingQuote != null) Quote(
-                        message.outgoingQuote!!.id,
-                        message.outgoingQuote!!.author,
-                        message.outgoingQuote!!.text, // TODO: use the referenced message's content
-                        message.outgoingQuote!!.missing,
-                        SlideDeck(context, message.outgoingQuote!!.attachments!!)
-                    ) else null,
-                    message.sharedContacts, message.linkPreviews, listOf(), false,
-                    message.messageContent,
-                )
-            }
-
     }
 
     inner class Reader(private val cursor: Cursor?, private val getQuote: Boolean = true) : Closeable {
@@ -1382,7 +1227,7 @@ class MmsDatabase
             val recipient = getRecipientFor(address)
             val mismatches = getMismatchedIdentities(mismatchDocument)
             val networkFailures = getFailures(networkDocument)
-            val attachments = get(context).attachmentDatabase().getAttachment(
+            val attachments = attachmentDatabase.getAttachment(
                 cursor
             )
             val contacts: List<Contact?> = getSharedContacts(cursor, attachments)
@@ -1397,7 +1242,7 @@ class MmsDatabase
                     .filterNot { o: DatabaseAttachment? -> o in previewAttachments }
             )
             val quote = if (getQuote) getQuote(cursor) else null
-            val reactions = get(context).reactionDatabase().getReactions(cursor)
+            val reactions = reactionDatabase.getReactions(cursor)
             val messageContent = runCatching {
                 messageContentJson?.takeIf { it.isNotBlank() }
                     ?.let { json.decodeFromString<MessageContent>(it) }
@@ -1415,13 +1260,8 @@ class MmsDatabase
             )
         }
 
-        private fun getRecipientFor(serialized: String?): Recipient {
-            val address: Address = if (serialized.isNullOrEmpty() || "insert-address-token" == serialized) {
-                UNKNOWN
-            } else {
-                fromSerialized(serialized)
-            }
-            return Recipient.from(context, address, true)
+        private fun getRecipientFor(serialized: String): Recipient {
+            return recipientRepository.getRecipientSync(serialized.toAddress())
         }
 
         private fun getMismatchedIdentities(document: String?): List<IdentityKeyMismatch?>? {
@@ -1456,20 +1296,21 @@ class MmsDatabase
         private fun getQuote(cursor: Cursor): Quote? {
             val quoteId = cursor.getLong(cursor.getColumnIndexOrThrow(QUOTE_ID))
             val quoteAuthor = cursor.getString(cursor.getColumnIndexOrThrow(QUOTE_AUTHOR))
+            val threadId = cursor.getLong(cursor.getColumnIndexOrThrow(THREAD_ID))
             if (quoteId == 0L || quoteAuthor.isNullOrBlank()) return null
-            val retrievedQuote = get(context).mmsSmsDatabase().getMessageFor(quoteId, quoteAuthor, false)
+            val retrievedQuote = mmsSmsDatabase.get().getMessageFor(threadId, quoteId, quoteAuthor, false)
             val quoteText = retrievedQuote?.body
             val quoteMissing = retrievedQuote == null
             val quoteDeck = (
                 (retrievedQuote as? MmsMessageRecord)?.slideDeck ?:
-                Stream.of(get(context).attachmentDatabase().getAttachment(cursor))
+                Stream.of(attachmentDatabase.getAttachment(cursor))
                     .filter { obj: DatabaseAttachment? -> obj!!.isQuote }
                     .toList()
                     .let { SlideDeck(context, it) }
             )
             return Quote(
                 quoteId,
-                fromExternal(context, quoteAuthor),
+                recipientRepository.getRecipientSync(quoteAuthor.toAddress()),
                 quoteText,
                 quoteMissing,
                 quoteDeck
@@ -1608,6 +1449,9 @@ class MmsDatabase
                 $MESSAGE_BOX = $MESSAGE_BOX & ~${MmsSmsColumns.Types.EXPIRATION_TIMER_UPDATE_BIT}
             WHERE ($MESSAGE_BOX & ${MmsSmsColumns.Types.EXPIRATION_TIMER_UPDATE_BIT}) != 0;
         """
+
+        const val ADD_LAST_MESSAGE_INDEX: String =
+            "CREATE INDEX mms_thread_id_date_sent_index ON $TABLE_NAME ($THREAD_ID, $DATE_SENT)"
 
         private val MMS_PROJECTION: Array<String> = arrayOf(
             "$TABLE_NAME.$ID AS $ID",

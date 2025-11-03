@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -24,31 +25,33 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.getOrNull
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.isLegacyGroup
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.utilities.AccountId
+import org.session.libsession.utilities.recipients.RecipientData
+import org.session.libsession.utilities.recipients.displayName
+import org.session.libsession.utilities.recipients.isPro
+import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.MediaPreviewArgs
 import org.thoughtcrime.securesms.database.AttachmentDatabase
-import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
-import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
-import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.ImageSlide
 import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.pro.ProStatusManager.MessageProFeature.*
+import org.thoughtcrime.securesms.pro.ProStatusManager.MessageProFeature.AnimatedAvatar
+import org.thoughtcrime.securesms.pro.ProStatusManager.MessageProFeature.LongMessage
+import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.TitledText
 import org.thoughtcrime.securesms.util.AvatarUIData
@@ -57,7 +60,6 @@ import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.UserProfileModalCommands
 import org.thoughtcrime.securesms.util.UserProfileModalData
 import org.thoughtcrime.securesms.util.UserProfileUtils
-import org.thoughtcrime.securesms.util.observeChanges
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.text.Typography.ellipsis
@@ -70,16 +72,14 @@ class MessageDetailsViewModel @AssistedInject constructor(
     private val lokiMessageDatabase: LokiMessageDatabase,
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val threadDb: ThreadDatabase,
-    private val lokiThreadDb: LokiThreadDatabase,
     private val deprecationManager: LegacyGroupDeprecationManager,
     private val context: ApplicationContext,
     private val avatarUtils: AvatarUtils,
     private val dateUtils: DateUtils,
+    private val recipientRepository: RecipientRepository,
     private val proStatusManager: ProStatusManager,
-    private val openGroupManager: OpenGroupManager,
-    private val configFactory: ConfigFactoryProtocol,
     private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
-    attachmentDownloadHandlerFactory: AttachmentDownloadHandler.Factory
+    attachmentDownloadHandlerFactory: AttachmentDownloadHandler.Factory,
 ) : ViewModel() {
     private val state = MutableStateFlow(MessageDetailsState())
     val stateFlow = state.asStateFlow()
@@ -97,7 +97,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
 
     init {
         viewModelScope.launch {
-            val messageRecord =  withContext(Dispatchers.Default) {
+            val messageRecord = withContext(Dispatchers.Default) {
                 mmsSmsDatabase.getMessageById(messageId)
             }
 
@@ -107,7 +107,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
             }
 
             // listen to conversation and attachments changes
-            (context.contentResolver.observeChanges(DatabaseContentProviders.Conversation.getUriForThread(messageRecord.threadId)) as Flow<*>)
+            (threadDb.updateNotifications.filter { it == messageRecord.threadId } as Flow<*>)
                     .debounce(200L)
                     .map {
                         withContext(Dispatchers.Default) {
@@ -131,9 +131,9 @@ class MessageDetailsViewModel @AssistedInject constructor(
             state.value = messageRecord.run {
                 val slides = mmsRecord?.slideDeck?.slides ?: emptyList()
 
-                val conversation = threadDb.getRecipientForThreadId(threadId)!!
-                val isDeprecatedLegacyGroup = conversation.isLegacyGroupRecipient &&
-                        deprecationManager.isDeprecated
+                val conversationAddress = threadDb.getRecipientForThreadId(threadId) as Address.Conversable
+                val conversation = recipientRepository.getRecipient(conversationAddress)
+                val isDeprecatedLegacyGroup = conversationAddress.isLegacyGroup && deprecationManager.isDeprecated
 
 
                 val errorString = lokiMessageDatabase.getErrorMessage(messageId)
@@ -149,31 +149,21 @@ class MessageDetailsViewModel @AssistedInject constructor(
                 }
 
                 val sender = if(messageRecord.isOutgoing){
-                    Recipient.from(context, Address.fromSerialized(prefs.getLocalNumber() ?: ""), false)
+                    recipientRepository.getRecipient(Address.fromSerialized(prefs.getLocalNumber()!!))
                 } else individualRecipient
 
                 val attachments = slides.map(::Attachment)
 
-                val isAdmin: Boolean =  when {
-                    // for Groups V2
-                    conversation.isGroupV2Recipient -> configFactory.withGroupConfigs(AccountId(conversation.address.toString())) {
-                        it.groupMembers.getOrNull(sender.address.toString())?.admin == true
-                    }
-
-                    // for communities the the `isUserModerator` field
-                    conversation.isCommunityRecipient -> checkCommunityAdmin(sender, threadId)
-
-                    // false in other cases
-                    else -> false
-                }
+                val shouldShowAdminCrown: Boolean = sender.address is Address.WithAccountId  &&
+                    (conversation.data as? RecipientData.GroupLike)?.shouldShowAdminCrown(sender.address.accountId) == true
 
                 // we don't want to display image attachments in the carousel if their state isn't done
                 val imageAttachments = attachments.filter { it.isDownloaded && it.hasImage }
 
                 // get the helper class for the selected user
                 userProfileModalUtils = upmFactory.create(
-                    recipient = sender,
-                    threadId = threadId,
+                    userAddress = sender.address,
+                    threadAddress = conversationAddress,
                     scope = viewModelScope
                 )
 
@@ -205,38 +195,21 @@ class MessageDetailsViewModel @AssistedInject constructor(
                     status = status,
                     senderInfo = sender.run {
                         TitledText(
-                            if(messageRecord.isOutgoing) context.getString(R.string.you) else name,
+                            if(messageRecord.isOutgoing) context.getString(R.string.you) else displayName(),
                             address.toString()
                         )
                     },
                     senderAvatarData = avatarUtils.getUIDataFromRecipient(sender),
-                    senderShowProBadge = proStatusManager.shouldShowProBadge(sender.address),
-                    senderIsAdmin = isAdmin,
+                    senderShowProBadge = sender.proStatus.shouldShowProBadge(),
+                    senderHasAdminCrown = shouldShowAdminCrown,
                     senderIsBlinded = IdPrefix.fromValue(sender.address.toString())?.isBlinded() ?: false,
                     thread = conversation,
                     readOnly = isDeprecatedLegacyGroup,
                     proFeatures = proStatusManager.getMessageProFeatures(messageRecord.messageId),
-                    proBadgeClickable = !proStatusManager.isCurrentUserPro() // no badge click if the current user is pro
+                    proBadgeClickable = !recipientRepository.getSelf().proStatus.isPro() // no badge click if the current user is pro
                 )
             }
         }
-    }
-
-    private fun checkCommunityAdmin(sender: Recipient, threadId: Long): Boolean {
-        val senderAccountID = sender.address.toString()
-        val openGroup = lokiThreadDb.getOpenGroupChat(threadId) ?: return false
-        var standardPublicKey = ""
-        var blindedPublicKey: String? = null
-        if (IdPrefix.fromValue(senderAccountID)?.isBlinded() == true) {
-            blindedPublicKey = senderAccountID
-        } else {
-            standardPublicKey = senderAccountID
-        }
-        return openGroupManager.isUserModerator(
-            openGroup.groupId,
-            standardPublicKey,
-            blindedPublicKey
-        )
     }
 
     fun showUserProfileModal() {
@@ -292,7 +265,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
         if(state.thread == null) return
 
         viewModelScope.launch {
-            MediaPreviewArgs(slide, state.mmsRecord, state.thread)
+            MediaPreviewArgs(slide, state.mmsRecord, state.thread.address)
                 .let(Event::StartMediaPreview)
                 .let { event.send(it) }
         }
@@ -311,13 +284,14 @@ class MessageDetailsViewModel @AssistedInject constructor(
             is Commands.ShowProBadgeCTA -> {
                 val features = state.value.proFeatures
                 _dialogState.update {
+                    val proSubscription = proStatusManager.subscriptionState.value.type
                     it.copy(
                         proBadgeCTA = when{
-                            features.size > 1 -> ProBadgeCTA.Generic // always show the generic cta when there are more than 1 feature
+                            features.size > 1 -> ProBadgeCTA.Generic(proSubscription) // always show the generic cta when there are more than 1 feature
 
-                            features.contains(LongMessage) -> ProBadgeCTA.LongMessage
-                            features.contains(AnimatedAvatar) -> ProBadgeCTA.AnimatedProfile
-                            else -> null
+                            features.contains(LongMessage) -> ProBadgeCTA.LongMessage(proSubscription)
+                            features.contains(AnimatedAvatar) -> ProBadgeCTA.AnimatedProfile(proSubscription)
+                            else -> ProBadgeCTA.Generic(proSubscription)
                         }
                     )
                 }
@@ -375,7 +349,7 @@ data class MessageDetailsState(
     val status: MessageStatus? = null,
     val senderInfo: TitledText? = null,
     val senderAvatarData: AvatarUIData? = null,
-    val senderIsAdmin: Boolean = false,
+    val senderHasAdminCrown: Boolean = false,
     val senderShowProBadge: Boolean = false,
     val senderIsBlinded: Boolean = false,
     val thread: Recipient? = null,
@@ -384,14 +358,23 @@ data class MessageDetailsState(
     val proBadgeClickable: Boolean = false,
 ) {
     val fromTitle = GetString(R.string.from)
-    val canReply: Boolean get() = !readOnly && record?.isOpenGroupInvitation != true
+    // can reply if we:
+    // - are not read only
+    // - are not an open group invitation
+    // - do not have any errors
+    // - are not in a sending state
+    val canReply: Boolean get() = !readOnly
+            && record?.isOpenGroupInvitation != true
+            && error == null
+            && record?.isFailed == false
+            && record?.isSending == false
     val canDelete: Boolean get() = !readOnly
 }
 
-sealed interface ProBadgeCTA {
-    data object Generic: ProBadgeCTA
-    data object LongMessage: ProBadgeCTA
-    data object AnimatedProfile: ProBadgeCTA
+sealed class ProBadgeCTA(open val proSubscription: SubscriptionType) {
+    data class Generic(override val proSubscription: SubscriptionType): ProBadgeCTA(proSubscription)
+    data class LongMessage(override val proSubscription: SubscriptionType): ProBadgeCTA(proSubscription)
+    data class AnimatedProfile(override val proSubscription: SubscriptionType): ProBadgeCTA(proSubscription)
 }
 
 data class DialogsState(

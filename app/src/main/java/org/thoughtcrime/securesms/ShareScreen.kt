@@ -31,6 +31,7 @@ import org.thoughtcrime.securesms.groups.compose.MemberItem
 import org.thoughtcrime.securesms.ui.SearchBar
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.CircularProgressIndicator
+import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -47,10 +48,12 @@ fun ShareScreen(
     onBack: () -> Unit,
 ) {
     val state by viewModel.uiState.collectAsState()
+    val hasConversations by viewModel.hasAnyConversations.collectAsState()
 
     ShareList(
         state = state,
         contacts = viewModel.contacts.collectAsState().value,
+        hasConversations = hasConversations,
         onContactItemClicked = viewModel::onContactItemClicked,
         searchQuery = viewModel.searchQuery.collectAsState().value,
         onSearchQueryChanged = viewModel::onSearchQueryChanged,
@@ -64,6 +67,7 @@ fun ShareScreen(
 fun ShareList(
     state: ShareViewModel.UIState,
     contacts: List<ConversationItem>,
+    hasConversations: Boolean?,
     onContactItemClicked: (address: Address) -> Unit,
     searchQuery: String,
     onSearchQueryChanged: (String) -> Unit,
@@ -102,7 +106,7 @@ fun ShareList(
                         query = searchQuery,
                         onValueChanged = onSearchQueryChanged,
                         onClear = onSearchQueryClear,
-                        placeholder = stringResource(R.string.searchContacts),
+                        placeholder = stringResource(R.string.search),
                         modifier = Modifier
                             .padding(horizontal = LocalDimensions.current.smallSpacing)
                             .qaTag(R.string.AccessibilityId_groupNameSearch),
@@ -113,29 +117,41 @@ fun ShareList(
 
                     Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
-                    if (contacts.isEmpty() && searchQuery.isEmpty()) {
-                        Text(
-                            text = stringResource(id = R.string.conversationsNone),
-                            modifier = Modifier.padding(top = LocalDimensions.current.spacing)
-                                .align(Alignment.CenterHorizontally),
-                            style = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
-                        )
-                    } else {
-                        LazyColumn(
-                            state = scrollState,
-                            contentPadding = PaddingValues(bottom = paddings.calculateBottomPadding()),
-                        ) {
+                    when(hasConversations){
+                        // null means we don't yet have a result, so show a loader
+                        null -> {
+                            SmallCircularProgressIndicator(
+                                modifier = Modifier.padding(top = LocalDimensions.current.spacing)
+                                    .align(Alignment.CenterHorizontally),
+                            )
+                        }
 
-                            items(contacts) { contacts ->
-                                // Each member's view
-                                MemberItem(
-                                    address = contacts.address,
-                                    onClick = onContactItemClicked,
-                                    title = contacts.name,
-                                    showProBadge = contacts.showProBadge,
-                                    showAsAdmin = false,
-                                    avatarUIData = contacts.avatarUIData
-                                )
+                        false -> {
+                            Text(
+                                text = stringResource(id = R.string.conversationsNone),
+                                modifier = Modifier.padding(top = LocalDimensions.current.spacing)
+                                    .align(Alignment.CenterHorizontally),
+                                style = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
+                            )
+                        }
+
+                        true -> {
+                            LazyColumn(
+                                state = scrollState,
+                                contentPadding = PaddingValues(bottom = paddings.calculateBottomPadding()),
+                            ) {
+
+                                items(contacts) { contacts ->
+                                    // Each member's view
+                                    MemberItem(
+                                        address = contacts.address,
+                                        onClick = onContactItemClicked,
+                                        title = contacts.name,
+                                        showProBadge = contacts.showProBadge,
+                                        showAsAdmin = false,
+                                        avatarUIData = contacts.avatarUIData
+                                    )
+                                }
                             }
                         }
                     }
@@ -169,6 +185,7 @@ private fun PreviewSelectContacts() {
         ShareList(
             state = ShareViewModel.UIState(false),
             contacts = contacts,
+            hasConversations = true,
             onContactItemClicked = {},
             searchQuery = "",
             onSearchQueryChanged = {},
@@ -187,6 +204,26 @@ private fun PreviewSelectEmptyContacts() {
         ShareList(
             state = ShareViewModel.UIState(false),
             contacts = contacts,
+            hasConversations = false,
+            onContactItemClicked = {},
+            searchQuery = "",
+            onSearchQueryChanged = {},
+            onSearchQueryClear = {},
+            onBack = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewSelectFetchingContacts() {
+    val contacts = emptyList<ConversationItem>()
+
+    PreviewTheme {
+        ShareList(
+            state = ShareViewModel.UIState(false),
+            contacts = contacts,
+            hasConversations = null,
             onContactItemClicked = {},
             searchQuery = "",
             onSearchQueryChanged = {},
@@ -205,6 +242,7 @@ private fun PreviewSelectEmptyContactsWithSearch() {
         ShareList(
             state = ShareViewModel.UIState(true),
             contacts = contacts,
+            hasConversations = false,
             onContactItemClicked = {},
             searchQuery = "Test",
             onSearchQueryChanged = {},

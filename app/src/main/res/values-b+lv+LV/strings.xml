@@ -115,6 +115,7 @@
     <string name="banUser">Aizliegt lietotāju</string>
     <string name="banUserBanned">Lietotājs bloķēts</string>
     <string name="block">Bloķēt</string>
+    <string name="blockBlockedDescription">Atbloķējiet šo kontaktu, lai nosūtītu ziņojumu</string>
     <string name="blockBlockedNone">Nav bloķētu kontaktu</string>
     <string name="blockBlockedUser">Bloķēts {name}</string>
     <string name="blockDescription">Vai esat pārliecināts, ka vēlaties bloķēt <b>{name}?</b> Bloķētie lietotāji nevarēs jums nosūtīt ziņojumu pieprasījumus, grupu uzaicinājumus vai zvanīt jums.</string>
@@ -145,7 +146,6 @@
     <string name="callsSettings">Zvani (Beta)</string>
     <string name="callsVoiceAndVideo">Balss un video zvani</string>
     <string name="callsVoiceAndVideoBeta">Balss un video zvani (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Izmantojot beta zvanus, jūsu IP ir redzams jūsu zvana partnerim un Oxen Foundation serverim.</string>
     <string name="callsVoiceAndVideoToggleDescription">Iespējot balss un video zvanus uz un no citiem lietotājiem.</string>
     <string name="callsYouCalled">Jūs zvanījāt {name}</string>
     <string name="callsYouMissedCallPermissions">Jūs nokavējāt zvanu no <b>{name}</b>, jo jums nav iespējoti <b>Balss un video zvani</b> privātuma iestatījumos.</string>
@@ -225,7 +225,6 @@
     <string name="conversationsDeleted">Saruna izdzēsta</string>
     <string name="conversationsEmpty">Nav ziņojumu {conversation_name}.</string>
     <string name="conversationsEnter">Ievadiet atslēgu</string>
-    <string name="conversationsEnterDescription">Enter taustiņa funkcija, rakstot sarunā.</string>
     <string name="conversationsGroups">Grupas</string>
     <string name="conversationsMessageTrimming">Ziņu apgriešana</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Apgriezt kopienas</string>
@@ -586,8 +585,6 @@
     <string name="open">Atvērt</string>
     <string name="other">Cits</string>
     <string name="passwordChange">Mainīt paroli</string>
-    <string name="passwordChangeDescription">Mainīt paroli, kas nepieciešama {app_name} atbloķēšanai.</string>
-    <string name="passwordChangedDescription">Jūsu parole tika nomainīta. Lūdzu, saglabājiet to drošībā.</string>
     <string name="passwordConfirm">Apstipriniet paroli</string>
     <string name="passwordCurrentIncorrect">Jūsu pašreizējā parole ir nepareiza.</string>
     <string name="passwordEnter">Ievadiet paroli</string>
@@ -598,7 +595,6 @@
     <string name="passwordFailed">Neizdevās iestatīt paroli</string>
     <string name="passwordIncorrect">Nepareiza parole</string>
     <string name="passwordRemove">Noņemt paroli</string>
-    <string name="passwordRemovedDescription">Jūsu parole tika noņemta.</string>
     <string name="passwordSet">Iestatīt Paroli</string>
     <string name="paste">Ielīmēt</string>
     <string name="permissionsAppleMusic">{app_name} nepieciešams izmantot Apple Music, lai atskaņotu multivides pielikumus.</string>
@@ -654,7 +650,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Slēpt atgūšanas paroli</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Neatgriezeniski paslēpt savu atkopšanas paroli šajā ierīcē.</string>
     <string name="recoveryPasswordRestoreDescription">Ievadiet savu atjaunošanas paroli, lai ielādētu savu kontu. Ja jūsu atjaunošanas parole nav saglabāta, jūs varat atrast to lietotnes iestatījumos.</string>
-    <string name="recoveryPasswordView">Parādīt paroli</string>
     <string name="recoveryPasswordWarningSendDescription">Šī ir tava atjaunošanas parole. Ja kādam to nosūtīsi, tad viņš iegūs pilnas piekļuves tiesības tavam kontam.</string>
     <string name="redo">Atkārtot</string>
     <string name="remove">Noņemt</string>
@@ -705,6 +700,7 @@
     <string name="sessionSettings">Iestatījumi</string>
     <string name="set">Iestatīt</string>
     <string name="settingsRestartDescription">Lai lietotu jaunus iestatījumus, jums jārestartē {app_name}.</string>
+    <string name="settingsScreenSecurityDesktop">Ekrāna drošība</string>
     <string name="share">Dalīties</string>
     <string name="shareAccountIdDescription">Uzaiciniet savu draugu tērzēt ar jums {app_name}, daloties ar savu konta ID ar viņiem.</string>
     <string name="shareAccountIdDescriptionCopied">Dalies ar saviem draugiem, kur tu parasti saraksties ar viņiem — pēc tam pārcel sarunu šeit.</string>

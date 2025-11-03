@@ -153,7 +153,6 @@
     <string name="callsSettings">Panggilan (Beta)</string>
     <string name="callsVoiceAndVideo">Panggilan Suara dan Video</string>
     <string name="callsVoiceAndVideoBeta">Panggilan Suara dan Video (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Alamat IP anda boleh dilihat oleh rakan panggilan anda dan pelayan Oxen Foundation semasa menggunakan panggilan beta.</string>
     <string name="callsVoiceAndVideoToggleDescription">Membolehkan panggilan suara dan video ke dan dari pengguna lain.</string>
     <string name="callsYouCalled">Anda memanggil {name}</string>
     <string name="callsYouMissedCallPermissions">Anda terlepas panggilan daripada <b>{name}</b> kerana anda belum mengaktifkan <b>Panggilan Suara dan Video</b> dalam Tetapan Privasi.</string>
@@ -234,7 +233,6 @@
     <string name="conversationsDeleted">Perbualan dipadam</string>
     <string name="conversationsEmpty">Tiada mesej di dalam {conversation_name}.</string>
     <string name="conversationsEnter">Masukkan Key</string>
-    <string name="conversationsEnterDescription">Fungsi kekunci enter semasa menaip dalam perbualan.</string>
     <string name="conversationsGroups">Kumpulan</string>
     <string name="conversationsMessageTrimming">Pemangkasan Mesej</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Trim Komuniti</string>
@@ -638,8 +636,6 @@
     <string name="open">Buka</string>
     <string name="other">Lain-lain</string>
     <string name="passwordChange">Tukar Kata Laluan</string>
-    <string name="passwordChangeDescription">Tukar kata laluan yang diperlukan untuk membuka kunci {app_name}.</string>
-    <string name="passwordChangedDescription">Kata laluan anda telah ditukar. Sila simpan dengan selamat.</string>
     <string name="passwordConfirm">Sahkan kata laluan</string>
     <string name="passwordCurrentIncorrect">Kata laluan semasa anda tidak betul.</string>
     <string name="passwordEnter">Masukkan kata laluan</string>
@@ -650,7 +646,6 @@
     <string name="passwordFailed">Gagal menetapkan kata laluan</string>
     <string name="passwordIncorrect">Kata laluan tidak betul</string>
     <string name="passwordRemove">Alih Keluar Kata Laluan</string>
-    <string name="passwordRemovedDescription">Kata laluan anda telah dibuang.</string>
     <string name="passwordSet">Tetapkan Kata Laluan</string>
     <string name="paste">Tampal</string>
     <string name="permissionMusicAudioDenied">{app_name} memerlukan akses muzik dan audio untuk menghantar fail, muzik dan audio, tetapi ia telah ditolak secara kekal. Ketik Tetapan → Kebenaran, dan hidupkan \"Muzik dan audio\".</string>
@@ -711,7 +706,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Sembunyi Kata Laluan Pemulihan</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Sembunyikan kata laluan pemulihan anda secara kekal pada peranti ini.</string>
     <string name="recoveryPasswordRestoreDescription">Masukkan kata laluan pemulihan untuk memuatkan akaun anda. Jika anda belum menyimpannya, anda boleh menemukannya dalam tetapan aplikasi anda.</string>
-    <string name="recoveryPasswordView">Lihat Kata Laluan</string>
     <string name="recoveryPasswordWarningSendDescription">Ini adalah kata laluan pemulihan anda. Jika anda menghantarnya kepada seseorang, mereka akan mempunyai akses penuh ke akaun anda.</string>
     <string name="redo">Buat Semula</string>
     <string name="remove">Alih Keluar</string>
@@ -760,6 +754,7 @@
     <string name="sessionSettings">Tetapan</string>
     <string name="set">Tetapkan</string>
     <string name="settingsRestartDescription">Anda mesti memulakan semula {app_name} untuk menerapkan tetapan baru anda.</string>
+    <string name="settingsScreenSecurityDesktop">Keselamatan Skrin</string>
     <string name="share">Kongsi</string>
     <string name="shareAccountIdDescription">Jemput rakan anda untuk berbual dengan anda di {app_name} dengan berkongsi ID Akaun anda dengan mereka.</string>
     <string name="shareAccountIdDescriptionCopied">Kongsi dengan rakan-rakan anda di mana sahaja anda biasanya bercakap dengan mereka — kemudian pindahkan perbualan ke sini.</string>

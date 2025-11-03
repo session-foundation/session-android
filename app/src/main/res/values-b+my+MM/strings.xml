@@ -121,6 +121,7 @@
     <string name="banUser">သုံးစွဲသူကို ပိတ်ဆို့မည်</string>
     <string name="banUserBanned">အသုံးပြုသူကို ပိတ်မည်</string>
     <string name="block">ဘလော့ပါ</string>
+    <string name="blockBlockedDescription">မက်ဆေ့ချ် ပို့ရန်အတွက်ဤဆက်သွယ်မှုသို့ ဘလော့ကိုဖြေပါ။</string>
     <string name="blockBlockedNone">ဘလော့လုပ်ထားသော ဆက်သွယ်မှုမရှိ</string>
     <string name="blockBlockedUser">{name} မှ ဘလော့ ခံထားသည်</string>
     <string name="blockDescription">သင် <b>{name} </b> ကို ဘလော့ခ်ချင်တာ သေချာရဲ ့လား? ဘလော့ခ်ထားတဲ့ လူတွေက မက်ဆေ့ချ်လာပို့ခွင့်၊အဖွဲ့ခေါ်ခံရခွင့် နဲ့ဖုန်းခေါ်ရခွင့် ရနိုင်မှာမဟုတ်ပါဘူး။</string>
@@ -151,7 +152,6 @@
     <string name="callsSettings">ခေါ်ဆိုမှု(Beta)</string>
     <string name="callsVoiceAndVideo">အသံနှင့်ဗီဒီယိုကော</string>
     <string name="callsVoiceAndVideoBeta">အသံနှင့်ဗီဒီယိုကော (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">သင့် IP ကို ဖုန်းခေါ်စဉ်တွင် သင်၏ ချိန်းညွှန်းပါတနာများနှင့် Oxen Foundation ဆာဗာကို မြင်ရပါသည်။</string>
     <string name="callsVoiceAndVideoToggleDescription">အသုံးပြုသူများနှင့် အလွယ်တကူ အသံ ဖွင့်ခြင်းနှင့် ဗီဒီယိုခေါ်သည်</string>
     <string name="callsYouCalled">You called {name}</string>
     <string name="callsYouMissedCallPermissions">သင်သည် <b>{name}</b> ၏ ဖုန်းခေါ်ဆိုမှုကို လက်မခံနိုင်ပါနှင့်၊ သို့သော် သင် နှင့် ဖုန်းခေါ်မှု ဖွင့်ထားသော <b>Voice and Video Calls</b> ကို စနစ်ပြင်ဆင်မှုများတွင် ဖွင့်ထားလိုက်ပါ။</string>
@@ -232,7 +232,6 @@
     <string name="conversationsDeleted">စကားပြောဆိုမှု ဖျက်ပြီးပါပြီ</string>
     <string name="conversationsEmpty">{conversation_name} တွင် မက်ဆေ့ချ် မရှိပါ။</string>
     <string name="conversationsEnter">ခြေလှမ်းရွေးချယ်ပါ</string>
-    <string name="conversationsEnterDescription">စကားပြောမှာ enter key ရဲ့လုပ်ဆောင်ချက်</string>
     <string name="conversationsGroups">အုပ်စုများ</string>
     <string name="conversationsMessageTrimming">မဇ်ဆေ့ဂ ှ</string>
     <string name="conversationsMessageTrimmingTrimCommunities">ဖြတ်တောက်မှု အသိုင်းအဝိုင်းများ</string>
@@ -623,8 +622,6 @@
     <string name="open">ဖွင့်</string>
     <string name="other">အခြား</string>
     <string name="passwordChange">လျှို့ဝှက် စကားဝှက် ပြောင်းပါ</string>
-    <string name="passwordChangeDescription">{app_name} ဖြင့် လော့ခ်ဖွင့်ရန် လျှို့ဝှက် စကားဝှက် ပြောင်းပါ</string>
-    <string name="passwordChangedDescription">သင်၏ စကားဝှက် ပြောင်းလဲ ပြီးပါပြီ။ ထိန်းသိမ်းပါ။</string>
     <string name="passwordConfirm">စကားဝှက်ကို အတည်ပြုပါ</string>
     <string name="passwordCurrentIncorrect">သင့်လက်ရှိ စကားဝှက် မှား နေပါသည်။</string>
     <string name="passwordEnter">စကားဝှက်ထည့်ပါ</string>
@@ -635,7 +632,6 @@
     <string name="passwordFailed">စကားဝှက်တင်သွင်းမှု မအောင်မြင်ပါ</string>
     <string name="passwordIncorrect">စကားဝှက်မှားနေသည်</string>
     <string name="passwordRemove">စကားဝှက်ကို ဖယ်ရှားမည်</string>
-    <string name="passwordRemovedDescription">သင်၏ စကားဝှက် ဖယ်ရှားပြီးပါပြီ။</string>
     <string name="passwordSet">စကားဝှက်သတ်မှတ်မည်</string>
     <string name="paste">ကူးယူမည်</string>
     <string name="permissionMusicAudioDenied">{app_name} သည် ဂီတနှင့်အသံဖိုင်များ ပို့ရန် လိုအပ်ပါသည်၊ ပြသနာ မရရှိရှိအောင် နိုင်ပါတယ်၊ ကြော့ကာရှာဖွေခြင်းစင့်ခဲ့ရပါသည်။ မနည်းနည်းတော့ ကောဖောက်နွိုင့်ဆက်နွှင့်နွေးကူဆိုင်ရာ \'ပို့\'ထဲသို့သော \'ဂီတနှင့်အသံများ\' ကိုဖွင့်ပါ။</string>
@@ -696,7 +692,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Recovery Password ကို ဖျောက်ပါ</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">ဤကိရိယာတွင် သင်၏ပြန်လည်ရယူရန် စကားဝှက်ကို အပြီးတိုင် ဖျက်ပစ်ရန်</string>
     <string name="recoveryPasswordRestoreDescription">သင့်အကောင့်ကို load ပြုလုပ်ရန် Recovery စကားဝှက်ကို ထည့်ပါ။ သိမ်းထားမှုပြစ်သည်မှာ app ဆက်တင် တွင် ရှာဖွေကြည့်ပါ။</string>
-    <string name="recoveryPasswordView">Password ကြည့်ပါ</string>
     <string name="recoveryPasswordWarningSendDescription">ဤသည် သင့်၏ Recovery Password ဖြစ်သည်။ ၎င်းကို တစ်စုံတစ်ဉီး အವರಿಗೆပေးပို့ပါက သူတို့သည် သင့်အကောင့် အပြည့်အဝ အသုံးပြုနိုင်ပါသည်။</string>
     <string name="redo">ပြန်ပြင်လုပ်ခြင်း</string>
     <string name="remove">ဖယ်ရှားရန်</string>
@@ -745,6 +740,7 @@
     <string name="sessionSettings">ဆက်တင်များ</string>
     <string name="set">သတ်မှတ်မည်</string>
     <string name="settingsRestartDescription">သင့် အဆင်ပြေမှုကို အသုံးချရန် {app_name} ကို ပြန်စပြီး ကိရိယာများကို အသုံးပြုပြီးနောက် ပြန်လည်တင်ဆက်ထားပါ။</string>
+    <string name="settingsScreenSecurityDesktop">မျက်နှာပြင် လုံခြုံရေး</string>
     <string name="share">မျှဝေမည်</string>
     <string name="shareAccountIdDescription">သင့် သူငယ်ချင်းကို {app_name} တွင် ဆွေးနွေးရန် သင့် Account ID ကို ဝေမျှပြီး ဖိတ်ကြားပါ။</string>
     <string name="shareAccountIdDescriptionCopied">သင့်သူငယ်ခ်င်းကို မေးမြန်းရာမှာ စသည်မျှဝေ လောလောဆယ်တော့ ဒီနေရာတွင်စာဆက်ပြောပါ</string>

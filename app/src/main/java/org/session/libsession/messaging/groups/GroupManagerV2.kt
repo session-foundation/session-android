@@ -6,7 +6,6 @@ import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateDeleteMemberContentMessage
 import org.session.libsignal.utilities.AccountId
-import org.thoughtcrime.securesms.groups.GroupManagerV2Impl
 
 /**
  * Business logic handling group v2 operations like inviting members,
@@ -109,7 +108,7 @@ interface GroupManagerV2 {
         senderIsVerifiedAdmin: Boolean,
     )
 
-    fun setExpirationTimer(groupId: AccountId, mode: ExpiryMode, expiryChangeTimestampMs: Long)
+    fun setExpirationTimer(groupId: AccountId, mode: ExpiryMode)
 
     fun handleGroupInfoChange(message: GroupUpdated, groupId: AccountId)
 

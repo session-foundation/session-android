@@ -218,7 +218,7 @@
     <string name="AccessibilityId_deleteMessageDeleted">Deleted message</string>
     <string name="AccessibilityId_document">Document</string>
     <string name="AccessibilityId_message">Message body</string>
-    <string name="AccessibilityId_sent">Message sent status: Sent</string>
+    <string name="AccessibilityId_send_status">Message sent status: </string>
     <string name="AccessibilityId_reply">Reply to message</string>
     <string name="AccessibilityId_saveAttachment">Save attachment</string>
     <string name="AccessibilityId_select">Select</string>
@@ -250,6 +250,7 @@
     <string name="AccessibilityId_displayName">Display name</string>
     <string name="qa_settings_item_session_network">session-network-menu-item</string>
     <string name="qa_settings_item_donate">donate-menu-item</string>
+    <string name="qa_settings_item_path">path-menu-item</string>
     <string name="qa_settings_item_pro">pro-menu-item</string>
 
     <!-- In app review -->
@@ -259,6 +260,16 @@
     <string name="qa_inapp_review_dialog_button_not_now">not-now-button</string>
     <string name="qa_inapp_review_dialog_button_survey">open-survey-button</string>
 
+    <!-- Pro Settings -->
+    <string name="qa_pro_settings_action_update_plan">pro-settings-update-plan</string>
+    <string name="qa_pro_settings_action_show_badge">pro-settings-show-badge</string>
+    <string name="qa_pro_settings_action_request_refund">pro-settings-request-refund</string>
+    <string name="qa_pro_settings_action_cancel_plan">pro-settings-cancel-plan</string>
+    <string name="qa_pro_settings_action_renew_plan">pro-settings-renew-plan</string>
+    <string name="qa_pro_settings_action_recover_plan">pro-settings-recover-plan</string>
+    <string name="qa_pro_settings_action_faq">pro-settings-faq</string>
+    <string name="qa_pro_settings_action_support">pro-settings-support</string>
+
     <!-- Misc. -->
     <string name="AccessibilityId_navigateBack">Navigate back</string>
     <string name="AccessibilityId_close">Close Dialog</string>
@@ -266,10 +277,20 @@
     <string name="AccessibilityId_mediaMessage">Media message</string>
     <string name="AccessibilityId_save">Save</string>
     <string name="AccessibilityId_remove">Remove</string>
+    <string name="qa_icon_error">error-icon</string>
     <string name="qa_input_error">error-message</string>
     <string name="qa_button_submit">submit-button</string>
     <string name="qa_blocked_banner">blocked-banner</string>
     <string name="qa_delete_message_device_only">delete-only-on-this-device</string>
     <string name="qa_delete_message_everyone">delete-for-everyone</string>
+    <string name="qa_pro_badge_component">pro-badge-component</string>
+    <string name="qa_pro_badge_text">pro-badge-text</string>
+    <string name="qa_pro_badge_icon">pro-badge-icon</string>
+    <string name="qa_action_item_title">action-item-title</string>
+    <string name="qa_action_item_subtitle">action-item-subtitle</string>
+    <string name="qa_action_item_icon">action-item-icon</string>
+    <string name="qa_conversations_blocked_contact_item">qa-blocked-contacts-settings-item</string>
+
+    <string name="qa_collapsing_footer_action">qa-collapsing-footer-action</string>
 
 </resources>

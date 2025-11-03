@@ -21,7 +21,7 @@ class UnsendRequest(var timestamp: Long? = null, var author: String? = null): Co
         const val TAG = "UnsendRequest"
 
         fun fromProto(proto: SignalServiceProtos.Content): UnsendRequest? =
-            proto.takeIf { it.hasUnsendRequest() }?.unsendRequest?.run { UnsendRequest(timestamp, author) }?.copyExpiration(proto)
+            proto.takeIf { it.hasUnsendRequest() }?.unsendRequest?.run { UnsendRequest(timestampMs, author) }?.copyExpiration(proto)
     }
 
     override fun toProto(): SignalServiceProtos.Content? {
@@ -33,7 +33,7 @@ class UnsendRequest(var timestamp: Long? = null, var author: String? = null): Co
         }
         return try {
             SignalServiceProtos.Content.newBuilder()
-                .setUnsendRequest(SignalServiceProtos.UnsendRequest.newBuilder().setTimestamp(timestamp).setAuthor(author).build())
+                .setUnsendRequest(SignalServiceProtos.UnsendRequest.newBuilder().setTimestampMs(timestamp).setAuthor(author).build())
                 .applyExpiryMode()
                 .build()
         } catch (e: Exception) {

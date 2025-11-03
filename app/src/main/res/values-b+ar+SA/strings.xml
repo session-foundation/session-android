@@ -179,7 +179,6 @@
     <string name="callsSettings">المكالمات (نسخة تجريبية)</string>
     <string name="callsVoiceAndVideo">المكالمات الصوتية و المرئية</string>
     <string name="callsVoiceAndVideoBeta">المكالمات الصوتية والمرئية (تجريبي)</string>
-    <string name="callsVoiceAndVideoModalDescription">عنوان IP الخاص بك مرئي لشريك الاتصال وخادم Oxen Foundation أثناء استخدام المكالمات التجريبية.</string>
     <string name="callsVoiceAndVideoToggleDescription">تفعيل المكالمات الصوتية والمرئية من وإلى المستخدمين الآخرين.</string>
     <string name="callsYouCalled">لقد اتصلت بـ {name}</string>
     <string name="callsYouMissedCallPermissions">لقد فاتتك مكالمة من <b>{name}</b> لأنك لم تقم بتمكين <b>المكالمات الصوتية والمرئية</b> في إعدادات الخصوصية.</string>
@@ -266,7 +265,6 @@
     <string name="conversationsDeleted">تم حذف المحادثة</string>
     <string name="conversationsEmpty">لا توجد رسائل في {conversation_name}.</string>
     <string name="conversationsEnter">أدخل المفتاح</string>
-    <string name="conversationsEnterDescription">وظيفة مفتاح الإدخال عند الكتابة في محادثة.</string>
     <string name="conversationsGroups">مجموعات</string>
     <string name="conversationsMessageTrimming">تقليم الرسالة</string>
     <string name="conversationsMessageTrimmingTrimCommunities">تقليم المجتمعات</string>
@@ -777,8 +775,6 @@
     <string name="open">فتح</string>
     <string name="other">أخرى</string>
     <string name="passwordChange">تغيير كلمة السر</string>
-    <string name="passwordChangeDescription">تغيير كلمة السر المطلوبة لفتح {app_name}.</string>
-    <string name="passwordChangedDescription">تم تغيير كلمة المرور الخاصة بك. احفظها في مامن.</string>
     <string name="passwordConfirm">أَكِد كلمة المرور</string>
     <string name="passwordCurrentIncorrect">كلمة المرور الحالية غير صحيحة.</string>
     <string name="passwordEnter">أدخل كلمة السر</string>
@@ -789,7 +785,6 @@
     <string name="passwordFailed">فشل تعيين كلمة المرور</string>
     <string name="passwordIncorrect">كلمة المرور خاطئة</string>
     <string name="passwordRemove">إزالة كلمة السر</string>
-    <string name="passwordRemovedDescription">تمت إزالة كلمة السر الخاصة بك.</string>
     <string name="passwordSet">تعيين كلمة المرور</string>
     <string name="paste">لصق</string>
     <string name="permissionChange">تغيير الصَّلاحِيَة</string>
@@ -862,7 +857,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">إخفاء كلمة مرور الاسترداد</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">قم بإخفاء كلمة مرور الاسترداد بشكل دائم على هذا الجهاز.</string>
     <string name="recoveryPasswordRestoreDescription">أدخل كلمة مرور الاسترجاع لتحميل حسابك. إذا لم تقم بحفظها، يمكنك العثور عليها في إعدادات التطبيق.</string>
-    <string name="recoveryPasswordView">عرض كلمة المرور</string>
     <string name="recoveryPasswordWarningSendDescription">هذه هي عبارة الاسترداد الخاصة بك. إذا قمت بإرساله إلى شخص ما ، فسيكون لديه حق الوصول الكامل إلى حسابك.</string>
     <string name="recreateGroup">إعادة إنشاء المجموعة</string>
     <string name="redo">إعادة</string>
@@ -920,6 +914,7 @@
     <string name="sessionSettings">التعديلات</string>
     <string name="set">تعيين</string>
     <string name="settingsRestartDescription">يجب عليك إعادة تشغيل {app_name} لتطبيق الإعدادات الجديدة.</string>
+    <string name="settingsScreenSecurityDesktop">أمان الشاشة</string>
     <string name="share">مشاركة</string>
     <string name="shareAccountIdDescription">ادعُ صديقك للدردشة معك على {app_name} بمشاركة معرف حسابك معهم.</string>
     <string name="shareAccountIdDescriptionCopied">شارك مع أصدقائك حيثما تتحدث معهم عادةً — ثم نقل المحادثة هنا.</string>

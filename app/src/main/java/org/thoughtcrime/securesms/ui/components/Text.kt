@@ -259,8 +259,44 @@ fun AnnotatedTextWithIcon(
     style: TextStyle = LocalType.current.base,
     color: Color = Color.Unspecified,
     iconSize: Pair<TextUnit, TextUnit> = 12.sp to 12.sp,
-    iconPaddingValues: PaddingValues = PaddingValues(1.dp),
+    iconPaddingValues: PaddingValues = PaddingValues(start = style.lineHeight.value.dp * 0.2f),
     onIconClick: (() -> Unit)? = null
+) {
+    AnnotatedTextWithIcon(
+        text = text,
+        content = if(iconRes != null){
+            {
+                var iconModifier: Modifier = Modifier
+                if (onIconClick != null) {
+                    iconModifier = iconModifier.clickable {
+                        onIconClick()
+                    }
+                }
+
+                Icon(
+                    modifier = iconModifier.fillMaxSize()
+                        .padding(iconPaddingValues),
+                    painter = painterResource(id = iconRes),
+                    contentDescription = null,
+                    tint = color
+                )
+            }
+        } else null,
+        modifier = modifier,
+        style = style,
+        color = color,
+        iconSize = iconSize,
+    )
+}
+
+@Composable
+fun AnnotatedTextWithIcon(
+    text: String,
+    content: @Composable (() -> Unit)?,
+    modifier: Modifier = Modifier,
+    style: TextStyle = LocalType.current.base,
+    color: Color = Color.Unspecified,
+    iconSize: Pair<TextUnit, TextUnit> = 12.sp to 12.sp,
 ) {
     var inlineContent: Map<String, InlineTextContent> = mapOf()
 
@@ -268,7 +304,7 @@ fun AnnotatedTextWithIcon(
         append(text)
     }
 
-    if(iconRes != null) {
+    if(content != null) {
         val myId = "inlineContent"
 
         annotated = buildAnnotatedString {
@@ -286,20 +322,7 @@ fun AnnotatedTextWithIcon(
                         placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter
                     )
                 ) {
-                    var iconModifier: Modifier = Modifier
-                    if(onIconClick != null) {
-                        iconModifier = iconModifier.clickable {
-                            onIconClick()
-                        }
-                    }
-
-                    Icon(
-                        modifier = iconModifier.fillMaxSize()
-                            .padding(iconPaddingValues),
-                        painter = painterResource(id = iconRes),
-                        contentDescription = null,
-                        tint = color
-                    )
+                   content()
                 }
             )
         )

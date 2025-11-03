@@ -8,10 +8,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.lifecycle.withCreationCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.session.libsession.utilities.TextSecurePreferences
-import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.home.startHomeActivity
 import org.thoughtcrime.securesms.onboarding.messagenotifications.startMessageNotificationsActivity
@@ -25,15 +25,13 @@ private const val EXTRA_LOAD_FAILED = "extra_load_failed"
 class PickDisplayNameActivity : BaseActionBarActivity() {
 
     @Inject
-    internal lateinit var viewModelFactory: PickDisplayNameViewModel.AssistedFactory
-    @Inject
     internal lateinit var prefs: TextSecurePreferences
 
-    private val loadFailed get() = intent.getBooleanExtra(EXTRA_LOAD_FAILED, false)
-
-    private val viewModel: PickDisplayNameViewModel by viewModels {
-        viewModelFactory.create(loadFailed)
-    }
+    private val viewModel: PickDisplayNameViewModel by viewModels(extrasProducer = {
+        defaultViewModelCreationExtras.withCreationCallback<PickDisplayNameViewModel.Factory> {
+            it.create(intent.getBooleanExtra(EXTRA_LOAD_FAILED, false))
+        }
+    })
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

@@ -5,6 +5,8 @@ import android.content.Context;
 import android.database.Cursor;
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
+
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -48,7 +50,7 @@ public class DraftDatabase extends Database {
     db.delete(TABLE_NAME, THREAD_ID + " = ?", new String[] {threadId+""});
   }
 
-  void clearDrafts(Set<Long> threadIds) {
+  public void clearDrafts(Collection<Long> threadIds) {
     SQLiteDatabase db        = getWritableDatabase();
     StringBuilder  where     = new StringBuilder();
     List<String>   arguments = new LinkedList<>();

@@ -184,7 +184,6 @@
     <string name="callsSettings">Telefonades (Beta)</string>
     <string name="callsVoiceAndVideo">Telefonades de veu i de vídeo</string>
     <string name="callsVoiceAndVideoBeta">Telefonades de veu i de vídeo (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">La vostra IP és visible a la vostra parella de trucada i a un servidor de Oxen Foundation mentre utilitzeu trucades beta.</string>
     <string name="callsVoiceAndVideoToggleDescription">Permeteu telefonades de veu i de vídeo a i des d\'altres usuaris.</string>
     <string name="callsYouCalled">Heu telefonat a {name}</string>
     <string name="callsYouMissedCallPermissions">Heu rebut una trucada perduda de <b>{name}</b> perquè no heu activat <b>Trucades de veu i vídeo</b> en la Configuració de Privadesa.</string>
@@ -278,7 +277,6 @@
     <string name="conversationsDeleted">S\'ha suprimit la conversa</string>
     <string name="conversationsEmpty">No hi ha missatges a {conversation_name}.</string>
     <string name="conversationsEnter">Introdueix clau</string>
-    <string name="conversationsEnterDescription">Funció de la tecla d\'introducció durant l\'escriptura en una conversa.</string>
     <string name="conversationsGroups">Grups</string>
     <string name="conversationsMessageTrimming">Escapçament de missatges</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Limiteu comunitats</string>
@@ -769,8 +767,6 @@
     <string name="openSurvey">Enquesta oberta</string>
     <string name="other">Altres</string>
     <string name="passwordChange">Canvia la contrasenya</string>
-    <string name="passwordChangeDescription">Canvia la contrasenya requerida per desblocar {app_name}.</string>
-    <string name="passwordChangedDescription">La vostra contrasenya s\'ha definit. Mantingueu-la segura.</string>
     <string name="passwordConfirm">Confirma la contrasenya</string>
     <string name="passwordCurrentIncorrect">La vostra contrasenya actual és incorrecta.</string>
     <string name="passwordEnter">Introdueix contrasenya</string>
@@ -782,7 +778,6 @@
     <string name="passwordFailed">No s\'ha pogut canviar la contrasenya</string>
     <string name="passwordIncorrect">Contrasenya incorrecta</string>
     <string name="passwordRemove">Suprimeix la contrasenya</string>
-    <string name="passwordRemovedDescription">La vostra contrasenya s\'ha eliminat.</string>
     <string name="passwordSet">Definir contrasenya</string>
     <string name="paste">Enganxa</string>
     <string name="permissionChange">Canvi de permisos</string>
@@ -829,7 +824,6 @@
     <string name="proAnimatedDisplayPictureFeature">Imatge de pantalla animada</string>
     <string name="proAnimatedDisplayPictureModalDescription">els usuaris poden penjar GIFs</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Penja els gifs amb</string>
-    <string name="proBadge">{app_pro} Insígnia</string>
     <string name="proCallToActionLongerMessages">Voleu enviar missatges més llargs? Envia més text i desbloqueja funcions premium amb {app_pro}</string>
     <string name="proCallToActionPinnedConversations">Vols més pins? Organitzes els teus xats i desbloqueges les funcions premium amb {app_pro}</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Vols més de 5 pins? Organitzes els teus xats i desbloqueges les funcions premium amb {app_pro}</string>
@@ -891,7 +885,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">Amaga la contrasenya de recuperació</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Oculta permanentment la teva contrasenya de recuperació en aquest dispositiu.</string>
     <string name="recoveryPasswordRestoreDescription">Introdueix la teva contrasenya de recuperació per carregar el teu compte. Si no l\'has guardat, la pots trobar a la configuració de l\'aplicació.</string>
-    <string name="recoveryPasswordView">Mostra la contrasenya</string>
     <string name="recoveryPasswordWarningSendDescription">Aquesta és la vostra contrasenya de recuperació. Si l\'envieu a algú, tindrà accés complet al vostre compte.</string>
     <string name="recreateGroup">Recrea grup</string>
     <string name="redo">Refés</string>
@@ -963,6 +956,7 @@
     <string name="set">Definir</string>
     <string name="setCommunityDisplayPicture">Definiu la imatge de la comunitat</string>
     <string name="settingsRestartDescription">Heu de reiniciar {app_name} per aplicar la vostra nova configuració.</string>
+    <string name="settingsScreenSecurityDesktop">Seguretat de pantalla</string>
     <string name="share">Compartir</string>
     <string name="shareAccountIdDescription">Convideu el vostre amic a xatejar a {app_name} compartint el vostre ID de compte amb ell.</string>
     <string name="shareAccountIdDescriptionCopied">Compartiu amb els vostres amics allà on acostumeu a parlar-hi; després, traslladeu la conversa aquí.</string>

@@ -11,11 +11,8 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISI
 import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import nl.komponents.kovenant.Promise
-import nl.komponents.kovenant.deferred
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.applyExpiryMode
@@ -33,10 +30,7 @@ import org.session.libsession.messaging.utilities.MessageWrapper
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeAPI.nowWithOffset
 import org.session.libsession.snode.SnodeMessage
-import org.session.libsession.snode.SnodeModule
-import org.session.libsession.snode.utilities.asyncPromise
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsignal.crypto.PushTransportDetails
 import org.session.libsignal.protos.SignalServiceProtos
@@ -49,6 +43,7 @@ import org.session.libsignal.utilities.defaultRequiresAuth
 import org.session.libsignal.utilities.hasNamespaces
 import org.session.libsignal.utilities.hexEncodedPublicKey
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.cancellation.CancellationException
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview as SignalLinkPreview
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel as SignalQuote
 
@@ -75,13 +70,11 @@ object MessageSender {
     }
 
     // Convenience
-    fun sendNonDurably(message: Message, destination: Destination, isSyncMessage: Boolean): Promise<Unit, Exception> {
+    suspend fun sendNonDurably(message: Message, destination: Destination, isSyncMessage: Boolean) {
         return if (destination is Destination.LegacyOpenGroup || destination is Destination.OpenGroup || destination is Destination.OpenGroupInbox) {
             sendToOpenGroupDestination(destination, message)
         } else {
-            GlobalScope.asyncPromise {
-                sendToSnodeDestination(destination, message, isSyncMessage)
-            }
+            sendToSnodeDestination(destination, message, isSyncMessage)
         }
     }
 
@@ -138,7 +131,7 @@ object MessageSender {
         }
 
         // Set the timestamp on the content so it can be verified against envelope timestamp
-        proto.setSigTimestamp(message.sentTimestamp!!)
+        proto.setSigTimestampMs(message.sentTimestamp!!)
 
         // Serialize the protobuf
         val plaintext = PushTransportDetails.getPaddedMessageBody(proto.build().toByteArray())
@@ -200,19 +193,11 @@ object MessageSender {
 
     // One-on-One Chats & Closed Groups
     private suspend fun sendToSnodeDestination(destination: Destination, message: Message, isSyncMessage: Boolean = false) = supervisorScope {
-        val storage = MessagingModuleConfiguration.shared.storage
         val configFactory = MessagingModuleConfiguration.shared.configFactory
-        val userPublicKey = storage.getUserPublicKey()
-
-        // recipient will be set later, so initialize it as a function here
-        val isSelfSend = { message.recipient == userPublicKey }
 
         // Set the failure handler (need it here already for precondition failure handling)
         fun handleFailure(error: Exception) {
             handleFailedMessageSend(message, error, isSyncMessage)
-            if (destination is Destination.Contact && message is VisibleMessage && !isSelfSend()) {
-                SnodeModule.shared.broadcaster.broadcast("messageFailed", message.sentTimestamp!!)
-            }
         }
 
         try {
@@ -288,20 +273,18 @@ object MessageSender {
 
         // Otherwise the expiration configuration applies
         return message.run {
-            threadID ?: (if (isSyncMessage && this is VisibleMessage) syncTarget else recipient)
-                ?.let(Address.Companion::fromSerialized)
-                ?.let(MessagingModuleConfiguration.shared.storage::getThreadId)
+            (if (isSyncMessage && this is VisibleMessage) syncTarget else recipient)
+                ?.let(Address::fromSerialized)
+                ?.let(MessagingModuleConfiguration.shared.recipientRepository::getRecipientSync)
+                ?.expiryMode
+                ?.takeIf { it is ExpiryMode.AfterSend || isSyncMessage }
+                ?.expiryMillis
+                ?.takeIf { it > 0 }
         }
-            ?.let(MessagingModuleConfiguration.shared.storage::getExpirationConfiguration)
-            ?.takeIf { it.isEnabled }
-            ?.expiryMode
-            ?.takeIf { it is ExpiryMode.AfterSend || isSyncMessage }
-            ?.expiryMillis
     }
 
     // Open Groups
-    private fun sendToOpenGroupDestination(destination: Destination, message: Message): Promise<Unit, Exception> {
-        val deferred = deferred<Unit, Exception>()
+    private suspend fun sendToOpenGroupDestination(destination: Destination, message: Message) {
         val storage = MessagingModuleConfiguration.shared.storage
         val configFactory = MessagingModuleConfiguration.shared.configFactory
         if (message.sentTimestamp == null) {
@@ -318,50 +301,46 @@ object MessageSender {
         var blindedPublicKey: ByteArray? = null
         when(destination) {
             is Destination.OpenGroup -> {
-                serverCapabilities = storage.getServerCapabilities(destination.server)
-                storage.getOpenGroup(destination.roomToken, destination.server)?.let {
+                serverCapabilities = storage.getServerCapabilities(destination.server).orEmpty()
+                storage.getOpenGroupPublicKey(destination.server)?.let {
                     blindedPublicKey = BlindKeyAPI.blind15KeyPairOrNull(
                         ed25519SecretKey = userEdKeyPair.secretKey.data,
-                        serverPubKey = Hex.fromStringCondensed(it.publicKey),
+                        serverPubKey = Hex.fromStringCondensed(it),
                     )?.pubKey?.data
                 }
             }
             is Destination.OpenGroupInbox -> {
-                serverCapabilities = storage.getServerCapabilities(destination.server)
+                serverCapabilities = storage.getServerCapabilities(destination.server).orEmpty()
                 blindedPublicKey = BlindKeyAPI.blind15KeyPairOrNull(
                     ed25519SecretKey = userEdKeyPair.secretKey.data,
                     serverPubKey = Hex.fromStringCondensed(destination.serverPublicKey),
                 )?.pubKey?.data
             }
             is Destination.LegacyOpenGroup -> {
-                serverCapabilities = storage.getServerCapabilities(destination.server)
-                storage.getOpenGroup(destination.roomToken, destination.server)?.let {
+                serverCapabilities = storage.getServerCapabilities(destination.server).orEmpty()
+                storage.getOpenGroupPublicKey(destination.server)?.let {
                     blindedPublicKey = BlindKeyAPI.blind15KeyPairOrNull(
                         ed25519SecretKey = userEdKeyPair.secretKey.data,
-                        serverPubKey = Hex.fromStringCondensed(it.publicKey),
+                        serverPubKey = Hex.fromStringCondensed(it),
                     )?.pubKey?.data
                 }
             }
             else -> {}
         }
         val messageSender = if (serverCapabilities.contains(Capability.BLIND.name.lowercase()) && blindedPublicKey != null) {
-            AccountId(IdPrefix.BLINDED, blindedPublicKey!!).hexString
+            AccountId(IdPrefix.BLINDED, blindedPublicKey).hexString
         } else {
             AccountId(IdPrefix.UN_BLINDED, userEdKeyPair.pubKey.data).hexString
         }
         message.sender = messageSender
-        // Set the failure handler (need it here already for precondition failure handling)
-        fun handleFailure(error: Exception) {
-            handleFailedMessageSend(message, error)
-            deferred.reject(error)
-        }
+
         try {
             // Attach the user's profile if needed
             if (message is VisibleMessage) {
                 message.profile = storage.getUserProfile()
             }
             val content = message.toProto()!!.toBuilder()
-                .setSigTimestamp(message.sentTimestamp!!)
+                .setSigTimestampMs(message.sentTimestamp!!)
                 .build()
 
             when (destination) {
@@ -379,13 +358,19 @@ object MessageSender {
                         sentTimestamp = message.sentTimestamp!!,
                         base64EncodedData = Base64.encodeBytes(plaintext),
                     )
-                    OpenGroupApi.sendMessage(openGroupMessage, destination.roomToken, destination.server, destination.whisperTo, destination.whisperMods, destination.fileIds).success {
-                        message.openGroupServerMessageID = it.serverID
-                        handleSuccessfulMessageSend(message, destination, openGroupSentTimestamp = it.sentTimestamp)
-                        deferred.resolve(Unit)
-                    }.fail {
-                        handleFailure(it)
-                    }
+
+                    val response = OpenGroupApi.sendMessage(
+                        openGroupMessage,
+                        destination.roomToken,
+                        destination.server,
+                        destination.whisperTo,
+                        destination.whisperMods,
+                        destination.fileIds
+                    )
+
+                    message.openGroupServerMessageID = response.serverID
+                    handleSuccessfulMessageSend(message, destination, openGroupSentTimestamp = response.sentTimestamp)
+                    return
                 }
                 is Destination.OpenGroupInbox -> {
                     message.recipient = destination.blindedPublicKey
@@ -401,20 +386,22 @@ object MessageSender {
                         destination.serverPublicKey
                     )
                     val base64EncodedData = Base64.encodeBytes(ciphertext)
-                    OpenGroupApi.sendDirectMessage(base64EncodedData, destination.blindedPublicKey, destination.server).success {
-                        message.openGroupServerMessageID = it.id
-                        handleSuccessfulMessageSend(message, destination, openGroupSentTimestamp = TimeUnit.SECONDS.toMillis(it.postedAt))
-                        deferred.resolve(Unit)
-                    }.fail {
-                        handleFailure(it)
-                    }
+                    val response = OpenGroupApi.sendDirectMessage(
+                        base64EncodedData,
+                        destination.blindedPublicKey,
+                        destination.server
+                    )
+
+                    message.openGroupServerMessageID = response.id
+                    handleSuccessfulMessageSend(message, destination, openGroupSentTimestamp = TimeUnit.SECONDS.toMillis(response.postedAt))
+                    return
                 }
                 else -> throw IllegalStateException("Invalid destination.")
             }
         } catch (exception: Exception) {
-            handleFailure(exception)
+            if (exception !is CancellationException) handleFailedMessageSend(message, exception)
+            throw exception
         }
-        return deferred.promise
     }
 
     // Result Handling
@@ -442,23 +429,20 @@ object MessageSender {
             // Track the open group server message ID
             val messageIsAddressedToCommunity = message.openGroupServerMessageID != null && (destination is Destination.LegacyOpenGroup || destination is Destination.OpenGroup)
             if (messageIsAddressedToCommunity) {
-                val server: String
-                val room: String
-                when (destination) {
+                val address = when (destination) {
                     is Destination.LegacyOpenGroup -> {
-                        server = destination.server
-                        room = destination.roomToken
+                        Address.Community(destination.server, destination.roomToken)
                     }
+
                     is Destination.OpenGroup -> {
-                        server = destination.server
-                        room = destination.roomToken
+                        Address.Community(destination.server, destination.roomToken)
                     }
+
                     else -> {
                         throw Exception("Destination was a different destination than we were expecting")
                     }
                 }
-                val encoded = GroupUtil.getEncodedOpenGroupID("$server.$room".toByteArray())
-                val communityThreadID = storage.getThreadId(Address.fromSerialized(encoded))
+                val communityThreadID = storage.getThreadId(address)
                 if (communityThreadID != null && communityThreadID >= 0) {
                     storage.setOpenGroupServerMessageID(
                         messageID = messageId,
@@ -537,7 +521,7 @@ object MessageSender {
     @JvmOverloads
     fun send(message: Message, address: Address, statusCallback: SendChannel<Result<Unit>>? = null) {
         val threadID = MessagingModuleConfiguration.shared.storage.getThreadId(address)
-        threadID?.let(message::applyExpiryMode)
+        message.applyExpiryMode(address)
         message.threadID = threadID
         val destination = Destination.from(address)
         val job = MessagingModuleConfiguration.shared.messageSendJobFactory.create(message, destination, statusCallback)
@@ -549,8 +533,6 @@ object MessageSender {
             // only show the NTS if it is currently marked as hidden
             MessagingModuleConfiguration.shared.configFactory.withUserConfigs { it.userProfile.getNtsPriority() == PRIORITY_HIDDEN }
         ){
-            // make sure note to self is not hidden
-            MessagingModuleConfiguration.shared.preferences.setHasHiddenNoteToSelf(false)
             // update config in case it was marked as hidden there
             MessagingModuleConfiguration.shared.configFactory.withMutableUserConfigs {
                 it.userProfile.setNtsPriority(PRIORITY_VISIBLE)
@@ -564,10 +546,10 @@ object MessageSender {
         resultChannel.receive().getOrThrow()
     }
 
-    fun sendNonDurably(message: Message, address: Address, isSyncMessage: Boolean): Promise<Unit, Exception> {
+    suspend fun sendNonDurably(message: Message, address: Address, isSyncMessage: Boolean) {
         val threadID = MessagingModuleConfiguration.shared.storage.getThreadId(address)
         message.threadID = threadID
         val destination = Destination.from(address)
-        return sendNonDurably(message, destination, isSyncMessage)
+        sendNonDurably(message, destination, isSyncMessage)
     }
 }

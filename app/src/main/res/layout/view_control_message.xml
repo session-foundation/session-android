@@ -87,7 +87,7 @@
             android:background="@null"
             android:contentDescription="@string/AccessibilityId_disappearingMessagesFollowSetting"
             android:text="@string/disappearingMessagesFollowSetting"
-            android:textColor="@color/accent_green"
+            android:textColor="?attr/accentText"
             android:textSize="@dimen/very_small_font_size" />
 
     </LinearLayout>

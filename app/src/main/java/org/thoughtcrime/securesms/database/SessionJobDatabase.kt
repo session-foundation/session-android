@@ -7,8 +7,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import org.json.JSONArray
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
 import org.session.libsession.messaging.jobs.AttachmentUploadJob
-import org.session.libsession.messaging.jobs.BackgroundGroupAddJob
-import org.session.libsession.messaging.jobs.GroupAvatarDownloadJob
 import org.session.libsession.messaging.jobs.Job
 import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.jobs.SessionJobInstantiator
@@ -92,14 +90,6 @@ class SessionJobDatabase @Inject constructor(
         }
     }
 
-
-    fun getGroupAvatarDownloadJob(server: String, room: String, imageId: String?): GroupAvatarDownloadJob? {
-        val database = readableDatabase
-        return database.getAll(sessionJobTable, "$jobType = ?", arrayOf(GroupAvatarDownloadJob.KEY)) {
-            jobFromCursor(it) as GroupAvatarDownloadJob?
-        }.filterNotNull().find { it.server == server && it.room == room && (imageId == null || it.imageId == imageId) }
-    }
-
     fun cancelPendingMessageSendJobs(threadID: Long) {
         val database = writableDatabase
         val attachmentUploadJobKeys = mutableListOf<String>()
@@ -150,13 +140,6 @@ class SessionJobDatabase @Inject constructor(
         job.id = cursor.getString(jobID)
         job.failureCount = cursor.getInt(failureCount)
         return job
-    }
-
-    fun hasBackgroundGroupAddJob(groupJoinUrl: String): Boolean {
-        val database = readableDatabase
-        return database.getAll(sessionJobTable, "$jobType = ?", arrayOf(BackgroundGroupAddJob.KEY)) { cursor ->
-            jobFromCursor(cursor) as? BackgroundGroupAddJob
-        }.filterNotNull().any { it.joinUrl == groupJoinUrl }
     }
 }
 

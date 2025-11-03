@@ -121,6 +121,7 @@
     <string name="banUser">صارف کو پابندی لگائیں</string>
     <string name="banUserBanned">صارف پر پابندی عائد کر دی گئی</string>
     <string name="block">رکاوٹ</string>
+    <string name="blockBlockedDescription">پیغام بھیجنے کے لئے اس رابطہ کو غیر بلاک کریں۔</string>
     <string name="blockBlockedNone">هیچں بندکرتگ امدیدبونه یافت نه بیت</string>
     <string name="blockBlockedUser">{name} کو روکا گیا</string>
     <string name="blockDescription">کیا آپ یقیناً <b>{name}</b> کو بلاک کرنا چاہتے ہیں؟ بلاک شدہ صارفین آپ کو پیغام کی درخواستیں، گروپ دعوتیں نہیں بھیجیں گے یا آپ کو کال نہیں کریں گے۔</string>
@@ -151,7 +152,6 @@
     <string name="callsSettings">کالز (بیٹا)</string>
     <string name="callsVoiceAndVideo">وائس اور ویڈیو کالز</string>
     <string name="callsVoiceAndVideoBeta">وائس اور ویڈیو کالز (بیٹا)</string>
-    <string name="callsVoiceAndVideoModalDescription">ما گپ درخواست قبول کردی آپ کہ آئیں طرفه IP پدنی Oxen Foundation کہ سرورے ہ مغامیگیا.</string>
     <string name="callsVoiceAndVideoToggleDescription">دوسرے صارفین کو وائس اور ویڈیو کالز فعال کرتا ہے.</string>
     <string name="callsYouCalled">شمے {name} کال کد</string>
     <string name="callsYouMissedCallPermissions">ما گپ درخواست قبول کردی <b>{name}</b> سے کیونکہ تُ باقیneje <b>ویس اینڈ ویڈیو کوالیں</b> پرائیویسی تنظیمات میں فعال نہ کردی.</string>
@@ -233,7 +233,6 @@
     <string name="conversationsDeleted">گپ وڑی</string>
     <string name="conversationsEmpty">{conversation_name} میں کوئی پیغام نہیں.</string>
     <string name="conversationsEnter">کنجی درج بکنا</string>
-    <string name="conversationsEnterDescription">واژئے کُنجیء کارکردگی ہدباتءَ نیںّ گفتگوئے شتگ.</string>
     <string name="conversationsGroups">گروپاں</string>
     <string name="conversationsMessageTrimming">Message Trimming</string>
     <string name="conversationsMessageTrimmingTrimCommunities">کمیونٹیز کو تراشیں</string>
@@ -635,8 +634,6 @@
     <string name="open">گِس</string>
     <string name="other">دیگر</string>
     <string name="passwordChange">پاس ورڈ تبدیل کریں</string>
-    <string name="passwordChangeDescription">{app_name} کو ان لاک کرنے کے لئے درکار پاس ورڈ تبدیل کریں۔</string>
-    <string name="passwordChangedDescription">ما گپ درخواست قبول کردی بیک اپلیکیشن پاسکوڈ ناقض کردی. براہپس محفوظے کہ.</string>
     <string name="passwordConfirm">رمز اے تصدیق کر</string>
     <string name="passwordCurrentIncorrect">تُں حالء پاسکوڈ نادرستیت.</string>
     <string name="passwordEnter">پاسورڈ درج بکنا</string>
@@ -647,7 +644,6 @@
     <string name="passwordFailed">پاسورڈ مقرر کرنے میں ناکامی</string>
     <string name="passwordIncorrect">غلط پاس ورڈ</string>
     <string name="passwordRemove">پاسورڈ برس ک</string>
-    <string name="passwordRemovedDescription">ما گپ درخواست قبول کردی بیک پاسکوڈ ہٹاٹی.</string>
     <string name="passwordSet">رمز مقرر کـــــــن</string>
     <string name="paste">چسپاء</string>
     <string name="permissionMusicAudioDenied">{app_name} کی موسیقی اور آڈیو تک رسائی ضروری ہے تاکہ آپ فائلیں، موسیقی اور آڈیو بھیج سکیں، لیکن اسے مستقل طور پر ممنوع کر دیا گیا ہے۔ سیٹنگز ٹیپ کریں → اجازتیں، اور \"موسیقی اور آڈیو\" کو آن کریں۔</string>
@@ -708,7 +704,6 @@
     <string name="recoveryPasswordHideRecoveryPassword">ریکوری پاسورڈ ۏرپڑانی پاہ</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">شُمسا بازیابی رمز نا ایی دستگاهء بازگہد ثبت دائمی گماہ بکنیں.</string>
     <string name="recoveryPasswordRestoreDescription">اپنا اکاؤنٹ لوڈ کرنے کیلئے اپنا ریکوری پاسورڈ درج بکنا۔ اگر آپ نے اسے محفوظ نہیں کیا ہے، تو آپ اسے اپنی ایپ کی سیٹنگز میں پا سکتے ہیں۔</string>
-    <string name="recoveryPasswordView">پاس ورڈ دیکھیں</string>
     <string name="recoveryPasswordWarningSendDescription">یہ آپ کا ریکوری پاسورڈ ہی۔ اگے آپ اسے کسی کو بھیجتے ہوت، تو انہیں آپکے حساب تک پورا رسائی ہووستی.</string>
     <string name="redo">دوبارہ ک</string>
     <string name="remove">برس ک</string>
@@ -758,6 +753,7 @@
     <string name="sessionSettings">مدیریـــــــت</string>
     <string name="set">سیٹ</string>
     <string name="settingsRestartDescription">ما گپ درخواست قبول کردی {app_name} شروعین کار کنت کہ نویں تنظیماتاں اپنا بیوت.</string>
+    <string name="settingsScreenSecurityDesktop">سکرین سیکورٹی</string>
     <string name="share">پھریبندو</string>
     <string name="shareAccountIdDescription">{app_name} ءَ شُم تکگفتوں دیمانت سہراج بک عاليةکیک شُمسا اکاونٹ ID آئنتے.</string>
     <string name="shareAccountIdDescriptionCopied">لیستی گپتاری ککیانتو انتظام کھیت</string>

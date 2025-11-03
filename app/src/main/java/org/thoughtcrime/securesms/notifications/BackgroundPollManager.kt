@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,7 +29,7 @@ class BackgroundPollManager @Inject constructor(
     application: Application,
     appVisibilityManager: AppVisibilityManager,
     textSecurePreferences: TextSecurePreferences,
-) {
+) : OnAppStartupComponent {
     init {
         @Suppress("OPT_IN_USAGE")
         GlobalScope.launch {
