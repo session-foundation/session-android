@@ -278,6 +278,15 @@ fun DebugMenu(
                                 )
                             }
                         )
+
+                        Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+                        DebugSwitchRow(
+                            text = "Is Within Quick Refund Window",
+                            checked = uiState.withinQuickRefund,
+                            onCheckedChange = {
+                                sendCommand(DebugMenuViewModel.Commands.WithinQuickRefund(it))
+                            }
+                        )
                     }
                 }
 
@@ -831,6 +840,7 @@ fun PreviewDebugMenu() {
                 selectedDebugProPlanStatus = DebugMenuViewModel.DebugProPlanStatus.NORMAL,
                 debugProPlans = emptyList(),
                 forceNoBilling = false,
+                withinQuickRefund = true,
                 forceDeterministicEncryption = false,
                 debugAvatarReupload = true,
             ),

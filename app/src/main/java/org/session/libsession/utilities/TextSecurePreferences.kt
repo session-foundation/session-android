@@ -222,6 +222,8 @@ interface TextSecurePreferences {
     fun setDebugProPlanStatus(status: DebugMenuViewModel.DebugProPlanStatus?)
     fun getDebugForceNoBilling(): Boolean
     fun setDebugForceNoBilling(hasBilling: Boolean)
+    fun getDebugIsWithinQuickRefund(): Boolean
+    fun setDebugIsWithinQuickRefund(isWithin: Boolean)
 
     fun setSubscriptionProvider(provider: String)
     fun getSubscriptionProvider(): String?
@@ -388,6 +390,7 @@ interface TextSecurePreferences {
         const val DEBUG_SUBSCRIPTION_STATUS = "debug_subscription_status"
         const val DEBUG_PRO_PLAN_STATUS = "debug_pro_plan_status"
         const val DEBUG_FORCE_NO_BILLING = "debug_pro_has_billing"
+        const val DEBUG_WITHIN_QUICK_REFUND = "debug_within_quick_refund"
 
         const val SUBSCRIPTION_PROVIDER = "session_subscription_provider"
         const val DEBUG_AVATAR_REUPLOAD = "debug_avatar_reupload"
@@ -1796,6 +1799,15 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setDebugForceNoBilling(hasBilling: Boolean) {
         setBooleanPreference(TextSecurePreferences.DEBUG_FORCE_NO_BILLING, hasBilling)
+        _events.tryEmit(TextSecurePreferences.DEBUG_FORCE_NO_BILLING)
+    }
+
+    override fun getDebugIsWithinQuickRefund(): Boolean {
+        return getBooleanPreference(TextSecurePreferences.DEBUG_WITHIN_QUICK_REFUND, false)
+    }
+
+    override fun setDebugIsWithinQuickRefund(isWithin: Boolean) {
+        setBooleanPreference(TextSecurePreferences.DEBUG_WITHIN_QUICK_REFUND, isWithin)
         _events.tryEmit(TextSecurePreferences.DEBUG_FORCE_NO_BILLING)
     }
 

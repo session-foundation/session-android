@@ -8,7 +8,6 @@ import coil3.BitmapImage
 import coil3.ImageLoader
 import coil3.decode.DataSource
 import coil3.decode.ImageSource
-import coil3.fetch.FetchResult
 import coil3.fetch.Fetcher
 import coil3.fetch.SourceFetchResult
 import coil3.request.CachePolicy
@@ -18,12 +17,15 @@ import coil3.request.allowConversionToBitmap
 import coil3.request.allowHardware
 import coil3.request.allowRgb565
 import coil3.size.Precision
+import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.libsession_util.encrypt.Attachments
 import network.loki.messenger.libsession_util.image.GifUtils
 import network.loki.messenger.libsession_util.image.WebPUtils
 import okio.BufferedSource
 import okio.FileSystem
+import okio.buffer
+import okio.source
 import org.session.libsession.utilities.Util
 import org.session.libsignal.streams.AttachmentCipherInputStream
 import org.session.libsignal.streams.AttachmentCipherOutputStream
@@ -31,11 +33,14 @@ import org.session.libsignal.streams.PaddingInputStream
 import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.ByteArraySlice.Companion.view
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.util.AnimatedImageUtils
 import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.ImageUtils
+import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.security.MessageDigest
+import java.util.concurrent.TimeoutException
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -50,12 +55,123 @@ typealias DigestResult = ByteArray
 class AttachmentProcessor @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val imageLoader: Provider<ImageLoader>,
+    private val storage: Lazy<Storage>,
 ) {
     class ProcessResult(
         val data: ByteArray,
         val mimeType: String,
         val imageSize: IntSize
     )
+
+    suspend fun processAvatar(
+        data: ByteArray,
+    ): ProcessResult? {
+        val buffer = ByteArrayInputStream(data).source().buffer()
+        return when {
+            AnimatedImageUtils.isAnimatedWebP(buffer) -> {
+                val convertResult = runCatching {
+                    buffer.peek().use {
+                        processAnimatedWebP(
+                            data = it,
+                            maxImageResolution = MAX_AVATAR_SIZE_PX,
+                            timeoutMills = 5_000L,
+                        )
+                    }
+                }
+
+                val processResult = when {
+                    convertResult.isSuccess -> convertResult.getOrThrow() ?: return null
+                    convertResult.exceptionOrNull() is TimeoutException -> {
+                        Log.w(TAG, "Animated WebP processing timed out, skipping")
+                        return null
+                    }
+
+                    else -> throw convertResult.exceptionOrNull()!!
+                }
+
+                if (processResult.data.size > data.size) {
+                    Log.d(
+                        TAG,
+                        "Avatar processing increased size from ${data.size} to ${processResult.data.size}, skipped result"
+                    )
+                    return null
+                } else {
+                    processResult
+                }
+            }
+
+            AnimatedImageUtils.isAnimatedGif(data) -> {
+                val origSize = ByteArrayInputStream(data).use(BitmapUtil::getDimensions)
+                    .let { pair -> IntSize(pair.first, pair.second) }
+
+                val targetSize = if (origSize.width <= MAX_AVATAR_SIZE_PX.width &&
+                    origSize.height <= MAX_AVATAR_SIZE_PX.height) {
+                    origSize
+                } else {
+                    scaleToFit(origSize, MAX_AVATAR_SIZE_PX).first
+                }
+
+                // First try to convert to webp in 5 seconds
+                val convertResult = runCatching {
+                    "image/webp" to WebPUtils.encodeGifToWebP(
+                        input = data,
+                        timeoutMills = 5_000L,
+                        targetWidth = targetSize.width, targetHeight = targetSize.height
+                    )
+                }.recoverCatching { e ->
+                    if (e is TimeoutException) {
+                        // If we timed out, try re-encoding as GIF in 2 seconds
+                        Log.w(TAG, "WebP conversion timed out, trying GIF re-encoding as fallback")
+                        "image/gif" to GifUtils.reencodeGif(
+                            input = data,
+                            timeoutMills = 2_000L,
+                            targetWidth = targetSize.width,
+                            targetHeight = targetSize.height
+                        )
+                    } else {
+                        throw e
+                    }
+                }
+
+                val processResult = when {
+                    convertResult.isSuccess -> {
+                        val (mimeType, result) = convertResult.getOrThrow()
+                        ProcessResult(
+                            data = result,
+                            mimeType = mimeType,
+                            imageSize = targetSize
+                        )
+                    }
+
+                    convertResult.exceptionOrNull() is TimeoutException -> {
+                        Log.w(TAG, "All operation times out, skipping avatar processing")
+                        null
+                    }
+
+                    else -> {
+                        throw convertResult.exceptionOrNull()!!
+                    }
+                }
+
+                if (processResult != null && processResult.data.size > data.size) {
+                    Log.d(TAG, "Avatar processing increased size from ${data.size} to ${processResult.data.size}, skipped result")
+                    return null
+                }
+
+                processResult
+            }
+
+            else -> {
+                // All static images
+                val (data, size) = processStaticImage(data, MAX_AVATAR_SIZE_PX, Bitmap.CompressFormat.WEBP, 90)
+                ProcessResult(
+                    data = data,
+                    mimeType = "image/webp",
+                    imageSize = size
+                )
+            }
+        }
+    }
 
     /**
      * Process a file based on its mime type and the given constraints.
@@ -92,7 +208,11 @@ class AttachmentProcessor @Inject constructor(
                     return null
                 }
 
-                return processAnimatedWebP(data = data, maxImageResolution)
+                return processAnimatedWebP(
+                    data = data,
+                    maxImageResolution = maxImageResolution,
+                    timeoutMills = 30_000L
+                )
             }
 
             ImageUtils.isWebP(data) -> {
@@ -152,8 +272,16 @@ class AttachmentProcessor @Inject constructor(
      */
     fun encryptDeterministically(plaintext: ByteArray, domain: Attachments.Domain): EncryptResult {
         val cipherOut = ByteArray(Attachments.encryptedSize(plaintext.size.toLong()).toInt())
+        val privateKey = requireNotNull(storage.get().getUserED25519KeyPair()?.secretKey) {
+            "No user identity available"
+        }
+        check(privateKey.data.size == 64) {
+            "Invalid ED25519 private key size: ${privateKey.data.size}"
+        }
+        val seed = privateKey.data.sliceArray(0 until 32)
+
         val key = Attachments.encryptBytes(
-            seed = Util.getSecretBytes(32),
+            seed = seed,
             plaintextIn = plaintext,
             cipherOut = cipherOut,
             domain = domain,
@@ -250,17 +378,15 @@ class AttachmentProcessor @Inject constructor(
 
     private fun processAnimatedWebP(
         data: BufferedSource,
-        maxImageResolution: IntSize?,
+        maxImageResolution: IntSize,
+        timeoutMills: Long,
     ): ProcessResult? {
         val origSize = data.peek().inputStream().use(BitmapUtil::getDimensions)
             .let { pair -> IntSize(pair.first, pair.second) }
 
         val targetSize: IntSize
 
-        if (maxImageResolution == null || (
-                    origSize.width <= maxImageResolution.width &&
-                            origSize.height <= maxImageResolution.height)
-        ) {
+        if (origSize.width <= maxImageResolution.width && origSize.height <= maxImageResolution.height) {
             // No resizing needed hence no processing
             return null
         } else {
@@ -276,7 +402,7 @@ class AttachmentProcessor @Inject constructor(
             input = data.readByteArray(),
             targetWidth = targetSize.width,
             targetHeight = targetSize.height,
-            timeoutMills = 10_000L,
+            timeoutMills = timeoutMills,
         )
 
         Log.d(
@@ -345,14 +471,12 @@ class AttachmentProcessor @Inject constructor(
             ).first
         }
 
-        val reencoded = data.peek().inputStream().use { input ->
-            GifUtils.reencodeGif(
-                input = input,
-                targetWidth = targetSize.width,
-                targetHeight = targetSize.height,
-                timeoutMills = 10_000L,
-            )
-        }
+        val reencoded = GifUtils.reencodeGif(
+            input = data.readByteArray(),
+            targetWidth = targetSize.width,
+            targetHeight = targetSize.height,
+            timeoutMills = 10_000L,
+        )
 
         Log.d(
             TAG,
@@ -376,14 +500,12 @@ class AttachmentProcessor @Inject constructor(
             options: Options,
             imageLoader: ImageLoader
         ): Fetcher {
-            return object : Fetcher {
-                override suspend fun fetch(): FetchResult? {
-                    return SourceFetchResult(
-                        source = ImageSource(data, FileSystem.SYSTEM),
-                        mimeType = null,
-                        dataSource = DataSource.MEMORY
-                    )
-                }
+            return Fetcher {
+                SourceFetchResult(
+                    source = ImageSource(data, FileSystem.SYSTEM),
+                    mimeType = null,
+                    dataSource = DataSource.MEMORY
+                )
             }
         }
     }

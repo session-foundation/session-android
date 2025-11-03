@@ -261,7 +261,10 @@ class HomeViewModel @Inject constructor(
             // the user has reached the pin limit, show the CTA
             _dialogsState.update {
                 it.copy(
-                    pinCTA = PinProCTA(overTheLimit = totalPins > maxPins)
+                    pinCTA = PinProCTA(
+                        overTheLimit = totalPins > maxPins,
+                        proSubscription = proStatusManager.subscriptionState.value.type
+                    )
                 )
             }
         } else {
@@ -341,7 +344,8 @@ class HomeViewModel @Inject constructor(
     )
 
     data class PinProCTA(
-        val overTheLimit: Boolean
+        val overTheLimit: Boolean,
+        val proSubscription: SubscriptionType
     )
 
     data class ProExpiringCTA(

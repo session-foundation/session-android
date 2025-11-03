@@ -21,17 +21,23 @@ class NoOpSubscriptionManager @Inject constructor() : SubscriptionManager {
 
     override val quickRefundUrl = null
 
-    override fun purchasePlan(subscriptionDuration: ProSubscriptionDuration) {}
+    override suspend fun purchasePlan(subscriptionDuration: ProSubscriptionDuration): Result<Unit> {
+        return Result.success(Unit)
+    }
     override val availablePlans: List<ProSubscriptionDuration>
         get() = emptyList()
 
     override val purchaseEvents: SharedFlow<PurchaseEvent> = MutableSharedFlow()
 
-    override suspend fun hasValidSubscription(productId: String): Boolean {
+    override suspend fun hasValidSubscription(): Boolean {
         return false
     }
 
     override suspend fun isWithinQuickRefundWindow(): Boolean {
         return false
+    }
+
+    override suspend fun getSubscriptionPrices(): List<SubscriptionManager.SubscriptionPricing> {
+        return emptyList()
     }
 }

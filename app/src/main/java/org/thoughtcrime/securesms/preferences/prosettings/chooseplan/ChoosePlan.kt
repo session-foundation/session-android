@@ -6,7 +6,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -105,12 +104,6 @@ fun ChoosePlan(
 
         val context = LocalContext.current
         val title = when (planData.subscriptionType) {
-            is SubscriptionType.Expired ->
-                Phrase.from(context.getText(R.string.proAccessRenewStart))
-                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .format()
-
             is SubscriptionType.Active.Expiring -> Phrase.from(context.getText(R.string.proAccessActivatedNotAuto))
                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                 .put(DATE_KEY, planData.subscriptionType.duration.expiryFromNow())
@@ -128,7 +121,7 @@ fun ChoosePlan(
                 .put(DATE_KEY, planData.subscriptionType.duration.expiryFromNow())
                 .format()
 
-            is SubscriptionType.NeverSubscribed ->
+            else ->
                 Phrase.from(context.getText(R.string.proChooseAccess))
                     .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .format()
@@ -163,7 +156,7 @@ fun ChoosePlan(
                 proPlan = data,
                 badgePadding = badgeHeight / 2,
                 onBadgeLaidOut = { height -> badgeHeight = max(badgeHeight, height) },
-                enabled = !planData.loading,
+                enabled = !planData.purchaseInProgress,
                 onClick = {
                     sendCommand(SelectProPlan(data))
                 }
@@ -191,7 +184,7 @@ fun ChoosePlan(
                 sendCommand(GetProPlan)
             }
         ){
-            LoadingArcOr(loading = planData.loading) {
+            LoadingArcOr(loading = planData.purchaseInProgress) {
                 Text(text = buttonLabel)
             }
         }

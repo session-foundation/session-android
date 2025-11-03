@@ -439,7 +439,7 @@ public class SmsDatabase extends MessagingDatabase {
 
   public void updateSentTimestamp(long messageId, long newTimestamp) {
     SQLiteDatabase db = getWritableDatabase();
-    db.rawQuery("UPDATE " + TABLE_NAME + " SET " + DATE_SENT + " = ? " +
+    db.rawExecSQL("UPDATE " + TABLE_NAME + " SET " + DATE_SENT + " = ? " +
             "WHERE " + ID + " = ?", newTimestamp, messageId);
   }
 
