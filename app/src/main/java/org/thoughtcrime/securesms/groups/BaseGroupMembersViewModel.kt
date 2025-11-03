@@ -89,6 +89,16 @@ abstract class BaseGroupMembersViewModel(
         ::filterContacts
     ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
+    // Output: List of only NON-ADMINS
+    @OptIn(FlowPreview::class)
+    val nonAdminMembers: StateFlow<List<GroupMemberState>> = combine(
+        groupInfo.map { it?.second.orEmpty() },
+        mutableSearchQuery.debounce(100L),
+        ::filterContacts
+    )
+        .map { list -> list.filter { !it.showAsAdmin } }
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
     fun onSearchQueryChanged(query: String) {
         mutableSearchQuery.value = query
     }

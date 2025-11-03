@@ -784,7 +784,9 @@ fun SearchBarWithCancel(
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
+
     ) {
         // Search field
         BasicTextField(
@@ -848,7 +850,6 @@ fun SearchBarWithCancel(
                         focusManager.clearFocus(force = true)
                     }
                     .padding(
-                        horizontal = LocalDimensions.current.smallSpacing,
                         vertical = LocalDimensions.current.xxsSpacing
                     )
             )
