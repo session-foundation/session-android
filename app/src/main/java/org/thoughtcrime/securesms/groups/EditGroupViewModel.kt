@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.groups
 import android.content.Context
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.ui.platform.LocalResources
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -14,6 +15,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -27,6 +30,9 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.groups.SelectContactsViewModel.CollapsibleFooterState
+import org.thoughtcrime.securesms.ui.CollapsibleFooterItemData
+import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.util.AvatarUtils
 
 
@@ -74,6 +80,69 @@ class EditGroupViewModel @AssistedInject constructor(
 
     private val _mutableSelectedMemberAccountIds = MutableStateFlow(emptySet<AccountId>())
     val selectedMemberAccountIds: StateFlow<Set<AccountId>> = _mutableSelectedMemberAccountIds
+
+    val trayItems : List<CollapsibleFooterItemData> by lazy {
+        listOf(
+            CollapsibleFooterItemData(
+                label = GetString(context.resources.getQuantityString(R.plurals.resendInvite, selectedMemberAccountIds.value.size)),
+                buttonLabel = GetString(context.getString(R.string.resend)),
+                isDanger = false,
+                onClick = {}
+            ),
+            CollapsibleFooterItemData(
+                label = GetString(context.resources.getQuantityString(R.plurals.removeMember, selectedMemberAccountIds.value.size)),
+                buttonLabel = GetString(context.getString(R.string.remove)),
+                isDanger = false,
+                onClick = { }
+            )
+        )
+    }
+
+    private val footerCollapsed = MutableStateFlow(false)
+
+    val collapsibleFooterState: StateFlow<CollapsibleFooterState> =
+        combine(_mutableSelectedMemberAccountIds, footerCollapsed) { selected, isCollapsed ->
+            val count = selected.size
+            val visible = count > 0
+            val title = if (count == 0) GetString("")
+            else GetString(
+                context.resources.getQuantityString(R.plurals.memberSelected, count, count)
+            )
+
+            // build tray items
+            val trayItems = listOf(
+                CollapsibleFooterItemData(
+                    label = GetString(
+                        context.resources.getQuantityString(R.plurals.resendInvite, count, count)
+                    ),
+                    buttonLabel = GetString(context.getString(R.string.resend)),
+                    isDanger = false,
+                    onClick = {
+                        selected.forEach { onResendInviteClicked(it) }
+                    }
+                ),
+                CollapsibleFooterItemData(
+                    label = GetString(
+                        context.resources.getQuantityString(R.plurals.removeMember, count, count)
+                    ),
+                    buttonLabel = GetString(context.getString(R.string.remove)),
+                    isDanger = true,
+                    onClick = {
+                        selected.forEach { onRemoveContact(it, removeMessages = false) }
+                    }
+                )
+            )
+
+            CollapsibleFooterState(
+                visible = visible,
+                collapsed = if (!visible) false else isCollapsed,
+                footerActionTitle = title,
+                footerActionItems = trayItems
+            )
+        }
+            .distinctUntilChanged()
+            .stateIn(viewModelScope, SharingStarted.Eagerly, CollapsibleFooterState())
+
 
     fun onMemberItemClicked(accountId: AccountId) {
         val newSet = _mutableSelectedMemberAccountIds.value.toHashSet()
@@ -203,6 +272,22 @@ class EditGroupViewModel @AssistedInject constructor(
     fun hideActionBottomSheet(){
         _clickedMember.value = null
     }
+
+    fun clearSelection(){
+        _mutableSelectedMemberAccountIds.value = emptySet()
+    }
+
+    fun toggleFooter() {
+        footerCollapsed.update { !it }
+    }
+
+
+    data class CollapsibleFooterState(
+        val visible: Boolean = false,
+        val collapsed: Boolean = false,
+        val footerActionTitle : GetString = GetString(""),
+        val footerActionItems : List<CollapsibleFooterItemData> = emptyList()
+    )
 
     data class OptionsItem(
         val name: String,

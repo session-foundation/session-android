@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -21,8 +22,10 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -56,9 +59,13 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.EditGroupViewModel
+import org.thoughtcrime.securesms.groups.EditGroupViewModel.CollapsibleFooterState
 import org.thoughtcrime.securesms.groups.GroupMemberState
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
+import org.thoughtcrime.securesms.ui.CollapsibleFooterAction
+import org.thoughtcrime.securesms.ui.CollapsibleFooterActionData
+import org.thoughtcrime.securesms.ui.CollapsibleFooterItemData
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
@@ -107,6 +114,9 @@ fun EditGroupScreen(
         showLoading = viewModel.inProgress.collectAsState().value,
         searchQuery= viewModel.searchQuery.collectAsState().value,
         searchFocused = viewModel.searchFocused.collectAsState().value,
+        data = viewModel.collapsibleFooterState.collectAsState().value,
+        onToggleFooter = viewModel::toggleFooter,
+        onCloseFooter = viewModel::clearSelection,
         onSearchQueryChanged = viewModel::onSearchQueryChanged,
         onSearchFocusChanged = viewModel::onSearchFocusChanged,
         onSearchQueryClear = {viewModel.onSearchQueryChanged("") }
@@ -127,6 +137,9 @@ fun EditGroup(
     onSearchFocusChanged : (isFocused : Boolean) -> Unit,
     searchFocused : Boolean,
     searchQuery: String,
+    data: CollapsibleFooterState,
+    onToggleFooter: () -> Unit,
+    onCloseFooter: () -> Unit,
     onSearchQueryChanged: (String) -> Unit,
     onSearchQueryClear: () -> Unit,
     hideActionSheet: () -> Unit,
@@ -162,6 +175,25 @@ fun EditGroup(
                 title = stringResource(id = R.string.manageMembers),
                 onBack = onBack,
             )
+        },
+        bottomBar = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
+                    .imePadding()
+            ) {
+                CollapsibleFooterAction(
+                    data = CollapsibleFooterActionData(
+                        title = data.footerActionTitle,
+                        collapsed = data.collapsed,
+                        visible = data.visible,
+                        items = data.footerActionItems
+                    ),
+                    onCollapsedClicked = onToggleFooter,
+                    onClosedClicked = onCloseFooter
+                )
+            }
         },
         contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
     ) { paddingValues ->
@@ -224,7 +256,7 @@ fun EditGroup(
                 query = searchQuery,
                 onValueChanged = onSearchQueryChanged,
                 onClear = onSearchQueryClear,
-                placeholder = "Search",
+                placeholder = if(searchFocused) "" else LocalResources.current.getString(R.string.search),
                 enabled = true,
                 isFocused = searchFocused,
                 modifier = Modifier.padding(horizontal =LocalDimensions.current.smallSpacing),
@@ -437,6 +469,24 @@ fun EditMemberItem(
 @Preview
 @Composable
 private fun EditGroupPreviewSheet() {
+    val title = GetString("3 Members Selected")
+
+    // build tray items
+    val trayItems = listOf(
+        CollapsibleFooterItemData(
+            label = GetString("Resend"),
+            buttonLabel = GetString("Resend"),
+            isDanger = false,
+            onClick = {}
+        ),
+        CollapsibleFooterItemData(
+            label = GetString("Remove"),
+            buttonLabel = GetString("Remove"),
+            isDanger = true,
+            onClick = { }
+        )
+    )
+
     PreviewTheme {
         val oneMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"),
@@ -527,11 +577,19 @@ private fun EditGroupPreviewSheet() {
             onSearchQueryChanged = { },
             onSearchFocusChanged = { },
             searchFocused = false,
-            onSearchQueryClear = {}
+            onSearchQueryClear = {},
+            data = CollapsibleFooterState(
+                visible = true,
+                collapsed = false,
+                footerActionTitle = title,
+                footerActionItems = trayItems
+            ),
+            onToggleFooter = {},
+            onCloseFooter = {},
+            selectedAccountIds = emptySet()
         )
     }
 }
-
 
 
 @Preview
@@ -628,6 +686,28 @@ private fun EditGroupEditNamePreview(
             onSearchFocusChanged = {},
             searchFocused = true,
             onSearchQueryClear = {},
+            data  = CollapsibleFooterState(
+                visible = true,
+                collapsed = false,
+                footerActionTitle = GetString("3 Members Selected"),
+                footerActionItems = listOf(
+                    CollapsibleFooterItemData(
+                        label = GetString("Resend"),
+                        buttonLabel = GetString("1"),
+                        isDanger = false,
+                        onClick = {}
+                    ),
+                    CollapsibleFooterItemData(
+                        label = GetString("Remove"),
+                        buttonLabel = GetString("1"),
+                        isDanger = true,
+                        onClick = { }
+                    )
+                )
+            ),
+            onToggleFooter = {},
+            onCloseFooter = {},
+            selectedAccountIds = emptySet(),
         )
     }
 }

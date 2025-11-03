@@ -992,7 +992,7 @@ private fun CollapsibleFooterActions(
             SubcomposeLayout { parentConstraints ->
                 val measurables = subcompose("measureButtons") {
                     items.forEach { item ->
-                        SlimFillButtonRect(item.buttonLabel.string(), color = item.buttonColor) {}
+                        SlimFillButtonRect(item.buttonLabel.string(), color = LocalColors.current.accent) {}
                     }
                 }
                 val placeables = measurables.map { m ->
@@ -1043,7 +1043,7 @@ private fun CollapsibleFooterActions(
                             SlimFillButtonRect(
                                 modifier = if (single) Modifier else Modifier.fillMaxWidth(),
                                 text = item.buttonLabel.string(),
-                                color = item.buttonColor
+                                color = if(item.isDanger) LocalColors.current.danger else LocalColors.current.accent
                             ) { item.onClick() }
                         }
                     }
@@ -1063,7 +1063,7 @@ data class CollapsibleFooterActionData(
 data class CollapsibleFooterItemData(
     val label: GetString,
     val buttonLabel: GetString,
-    val buttonColor: Color,
+    val isDanger: Boolean,
     val onClick: () -> Unit
 )
 
@@ -1078,13 +1078,13 @@ fun PreviewCollapsibleActionTray(
             CollapsibleFooterItemData(
                 label = GetString("Invite "),
                 buttonLabel = GetString("Invite"),
-                buttonColor = LocalColors.current.accent,
+                isDanger = false,
                 onClick = {}
             ),
             CollapsibleFooterItemData(
                 label = GetString("Delete"),
                 buttonLabel = GetString("2"),
-                buttonColor = LocalColors.current.danger,
+                isDanger = true,
                 onClick = {}
             )
         )
@@ -1110,13 +1110,13 @@ fun PreviewCollapsibleActionTrayLongText(
             CollapsibleFooterItemData(
                 label = GetString("Looooooooooooooooooooooooooooooooooooooooooooooooooooooooong"),
                 buttonLabel = GetString("Long Looooooooooooooooooooong"),
-                buttonColor = LocalColors.current.accent,
+                isDanger = false,
                 onClick = {}
             ),
             CollapsibleFooterItemData(
                 label = GetString("Delete"),
                 buttonLabel = GetString("Delete"),
-                buttonColor = LocalColors.current.danger,
+                isDanger = true,
                 onClick = {}
             )
         )
