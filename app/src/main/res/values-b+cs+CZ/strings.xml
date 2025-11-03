@@ -565,18 +565,6 @@
     <string name="groupRemoveDescription">Chcete odstranit <b>{name}</b> ze skupiny <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Chcete odstranit <b>{name}</b> a <b>{count} dalších</b> ze skupiny <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Chcete odstranit <b>{name}</b> a <b>{other_name}</b> ze skupiny <b>{group_name}</b>?</string>
-    <plurals name="groupRemoveMessages">
-        <item quantity="one">Odstranit uživatele a jeho zprávy</item>
-        <item quantity="few">Odstranit uživatele a jejich zprávy</item>
-        <item quantity="many">Odstranit uživatele a jejich zprávy</item>
-        <item quantity="other">Odstranit uživatele a jejich zprávy</item>
-    </plurals>
-    <plurals name="groupRemoveUserOnly">
-        <item quantity="one">Odstranit uživatele</item>
-        <item quantity="few">Odstranit uživatele</item>
-        <item quantity="many">Odstranit uživatele</item>
-        <item quantity="other">Odstranit uživatele</item>
-    </plurals>
     <string name="groupRemoved"><b>{name}</b> byl odebrán ze skupiny.</string>
     <string name="groupRemovedMultiple"><b>{name}</b> a <b>{count} dalších</b> byli odebráni ze skupiny.</string>
     <string name="groupRemovedTwo"><b>{name}</b> a <b>{other_name}</b> byli odebráni ze skupiny.</string>
@@ -956,7 +944,6 @@
     <string name="proBilledQuarterly">{price} účtováno čtvrtletně</string>
     <string name="proCallToActionLongerMessages">Chcete posílat delší zprávy? Posílejte více textu odemknutím prémiových funkcí Session Pro</string>
     <string name="proCallToActionPinnedConversations">Chcete více připnutí? Organizujte své chaty a odemkněte prémiové funkce pomocí Session Pro</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">Chcete více než 5 připnutí? Organizujte své chaty a odemkněte prémiové funkce pomocí Session Pro</string>
     <string name="proCancellation">Zrušit</string>
     <string name="proErrorRefreshingStatus">Chyba obnovování stavu {pro}</string>
     <string name="proExpired">Platnost vypršela</string>

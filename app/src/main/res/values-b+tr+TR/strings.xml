@@ -824,7 +824,6 @@
     <string name="proAnimatedDisplayPicturesNonProModalDescription">ile GIF Yükleyin</string>
     <string name="proCallToActionLongerMessages">Daha uzun mesajlar mı göndermek istiyorsunuz? {app_pro} ile daha fazla metin gönderin ve premium özelliklerin kilidini açın</string>
     <string name="proCallToActionPinnedConversations">Daha fazla sabitleme mi istiyorsunuz? Sohbetlerinizi düzenleyin ve {app_pro} ile premium özelliklerin kilidini açın</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">5\'ten fazla sabitleme mi istiyorsunuz? Sohbetlerinizi düzenleyin ve {app_pro} ile premium özelliklerin kilidini açın</string>
     <string name="proFeatureListAnimatedDisplayPicture">GIF ve WebP profil resmi yükleme</string>
     <string name="proFeatureListLargerGroups">300 üyeye kadar daha büyük grup sohbetleri</string>
     <string name="proFeatureListLoadsMore">Ayrıca daha birçok özel özellik</string>

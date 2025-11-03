@@ -803,7 +803,6 @@
     <string name="proAnimatedDisplayPicturesNonProModalDescription">使用 PRO 上传 GIF</string>
     <string name="proCallToActionLongerMessages">想发送更长的消息？使用 {app_pro} 发送更多文本并解锁高级功能</string>
     <string name="proCallToActionPinnedConversations">想要固定更多对话？使用 {app_pro} 整理你的聊天并解锁高级功能</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">想要固定超过 5 个对话？使用 {app_pro} 整理你的聊天并解锁高级功能</string>
     <string name="proFeatureListAnimatedDisplayPicture">上传 GIF 和 WebP 头像</string>
     <string name="proFeatureListLargerGroups">更大的群组聊天，最多可容纳 300 名成员</string>
     <string name="proFeatureListLoadsMore">还有更多专属功能等你解锁</string>

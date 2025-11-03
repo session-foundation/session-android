@@ -948,7 +948,6 @@
     <string name="proBilledQuarterly">Opłata kwartalna: {price}</string>
     <string name="proCallToActionLongerMessages">Chcesz wysyłać dłuższe wiadomości? Wyślij więcej tekstu i odblokuj funkcje premium dzięki {app_pro}</string>
     <string name="proCallToActionPinnedConversations">Chcesz przypinać więcej czatów? Zorganizuj konwersacje i odblokuj funkcje premium dzięki {app_pro}</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">Chcesz przypiąć więcej niż 5 czatów? Zorganizuj konwersacje i odblokuj funkcje premium dzięki {app_pro}</string>
     <string name="proExpiringSoon">Niedługo wygaśnie</string>
     <string name="proFaq">FAQ {pro}</string>
     <string name="proFaqDescription">Znajdź odpowiedzi na często zadawane pytania w sekcji FAQ {app_pro}.</string>

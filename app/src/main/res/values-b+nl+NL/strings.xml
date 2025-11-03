@@ -902,7 +902,6 @@
     <string name="proBilledQuarterly">{price} per kwartaal gefactureerd</string>
     <string name="proCallToActionLongerMessages">Wil je langere berichten versturen? Verstuur meer tekst en ontgrendel premiumfuncties met {app_pro}</string>
     <string name="proCallToActionPinnedConversations">Wil je meer vastzetten? Organiseer je chats en ontgrendel premiumfuncties met {app_pro}</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">Wil je meer dan 5 vastgezette gesprekken? Organiseer je chats en ontgrendel premiumfuncties met {app_pro}</string>
     <string name="proExpired">Verlopen</string>
     <string name="proExpiringSoon">Verloopt binnenkort</string>
     <string name="proFaq">{pro} FAQ</string>
