@@ -5,7 +5,6 @@
     android:orientation="horizontal"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:foreground="@drawable/reaction_pill_dialog_foreground"
     android:paddingVertical="@dimen/very_small_spacing"
     android:paddingHorizontal="@dimen/small_spacing">
 
