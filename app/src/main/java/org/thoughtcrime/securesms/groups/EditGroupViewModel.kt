@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.getOrNull
@@ -71,6 +72,16 @@ class EditGroupViewModel @AssistedInject constructor(
     private val mutableSearchFocused = MutableStateFlow(false)
     val searchFocused: StateFlow<Boolean> get() = mutableSearchFocused
 
+    private val _mutableSelectedMemberAccountIds = MutableStateFlow(emptySet<AccountId>())
+    val selectedMemberAccountIds: StateFlow<Set<AccountId>> = _mutableSelectedMemberAccountIds
+
+    fun onMemberItemClicked(accountId: AccountId) {
+        val newSet = _mutableSelectedMemberAccountIds.value.toHashSet()
+        if (!newSet.remove(accountId)) {
+            newSet.add(accountId)
+        }
+        _mutableSelectedMemberAccountIds.value = newSet
+    }
     fun onSearchFocusChanged(isFocused :Boolean){
         mutableSearchFocused.value = isFocused
     }

@@ -150,7 +150,7 @@ abstract class BaseGroupMembersViewModel(
             showProBadge = proStatus.shouldShowProBadge(),
             avatarUIData = avatarUtils.getUIDataFromAccountId(memberAccountId.hexString),
             clickable = !isMyself,
-            statusLabel = getMemberLabel(status, context, amIAdmin),
+            statusLabel = getMemberLabel(status, context, amIAdmin)
         )
     }
 
@@ -205,7 +205,7 @@ data class GroupMemberState(
     val canRemove: Boolean,
     val canPromote: Boolean,
     val clickable: Boolean,
-    val statusLabel: String,
+    val statusLabel: String
 ) {
     val canEdit: Boolean get() = canRemove || canPromote || canResendInvite || canResendPromotion
 }

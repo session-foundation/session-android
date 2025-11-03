@@ -95,12 +95,13 @@ fun EditGroupScreen(
         onPromoteClick = viewModel::onPromoteContact,
         onRemoveClick = viewModel::onRemoveContact,
         members = viewModel.nonAdminMembers.collectAsState().value,
+        selectedAccountIds = viewModel.selectedMemberAccountIds.collectAsState().value,
         groupName = viewModel.groupName.collectAsState().value,
         showAddMembers = viewModel.showAddMembers.collectAsState().value,
         onResendPromotionClick = viewModel::onResendPromotionClicked,
         showingError = viewModel.error.collectAsState().value,
         onErrorDismissed = viewModel::onDismissError,
-        onMemberClicked = viewModel::onMemberClicked,
+        onMemberClicked = viewModel::onMemberItemClicked,
         hideActionSheet = viewModel::hideActionBottomSheet,
         clickedMember = viewModel.clickedMember.collectAsState().value,
         showLoading = viewModel.inProgress.collectAsState().value,
@@ -122,7 +123,7 @@ fun EditGroup(
     onResendPromotionClick: (accountId: AccountId) -> Unit,
     onPromoteClick: (accountId: AccountId) -> Unit,
     onRemoveClick: (accountId: AccountId, removeMessages: Boolean) -> Unit,
-    onMemberClicked: (GroupMemberState) -> Unit,
+    onMemberClicked: (accountId: AccountId) -> Unit,
     onSearchFocusChanged : (isFocused : Boolean) -> Unit,
     searchFocused : Boolean,
     searchQuery: String,
@@ -132,6 +133,7 @@ fun EditGroup(
     clickedMember: GroupMemberState?,
     groupName: String,
     members: List<GroupMemberState>,
+    selectedAccountIds: Set<AccountId> = emptySet(),
     showAddMembers: Boolean,
     showingError: String?,
     showLoading: Boolean,
@@ -240,7 +242,8 @@ fun EditGroup(
                     EditMemberItem(
                         modifier = Modifier.fillMaxWidth(),
                         member = member,
-                        onClick = { onMemberClicked(member) }
+                        onClick = { onMemberClicked(member.accountId) },
+                        selected = member.accountId in selectedAccountIds
                     )
                 }
 
@@ -409,9 +412,10 @@ private fun MemberActionSheet(
 fun EditMemberItem(
     member: GroupMemberState,
     onClick: (address: Address) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    selected: Boolean = false
 ) {
-    MemberItem(
+    RadioMemberItem(
         address = Address.fromSerialized(member.accountId.hexString),
         title = member.name,
         subtitle = member.statusLabel,
@@ -423,17 +427,11 @@ fun EditMemberItem(
         showAsAdmin = member.showAsAdmin,
         showProBadge = member.showProBadge,
         avatarUIData = member.avatarUIData,
-        onClick = if(member.clickable) onClick else null,
-        modifier = modifier
-    ){
-        if (member.canEdit) {
-            Icon(
-                painter = painterResource(R.drawable.ic_circle_dots_custom),
-                tint = LocalColors.current.text,
-                contentDescription = stringResource(R.string.AccessibilityId_sessionSettings)
-            )
-        }
-    }
+        onClick = onClick,
+        modifier = modifier,
+        enabled = true,
+        selected = selected
+    )
 }
 
 @Preview
@@ -460,7 +458,7 @@ private fun EditGroupPreviewSheet() {
             showAsAdmin = false,
             showProBadge = true,
             clickable = true,
-            statusLabel = "Invited"
+            statusLabel = "Invited",
         )
         val twoMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
@@ -529,7 +527,7 @@ private fun EditGroupPreviewSheet() {
             onSearchQueryChanged = { },
             onSearchFocusChanged = { },
             searchFocused = false,
-            onSearchQueryClear = {},
+            onSearchQueryClear = {}
         )
     }
 }
@@ -562,7 +560,7 @@ private fun EditGroupEditNamePreview(
             showAsAdmin = false,
             showProBadge = true,
             clickable = true,
-            statusLabel = "Invited"
+            statusLabel = "Invited",
         )
         val twoMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
