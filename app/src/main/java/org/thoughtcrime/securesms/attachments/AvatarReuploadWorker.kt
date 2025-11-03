@@ -17,9 +17,7 @@ import dagger.Lazy
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.BuildConfig
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -33,7 +31,6 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
@@ -92,6 +89,8 @@ class AvatarReuploadWorker @AssistedInject constructor(
             return Result.success()
         }
 
+        val fileExpiry: Instant?
+
         // Check if the file exists and whether we need to do reprocessing, if we do, we reprocess and re-upload
         localEncryptedFileInputStreamFactory.create(localFile).use { stream ->
             if (stream.meta.hasPermanentDownloadError) {
@@ -99,15 +98,17 @@ class AvatarReuploadWorker @AssistedInject constructor(
                 return Result.success()
             }
 
+            fileExpiry = stream.meta.expiryTime
+
             val source = stream.source().buffer()
 
             if ((lastUpdated != null && needsReProcessing(source)) || lastUpdated == null) {
                 logAndToast("About to start reuploading avatar.")
-                val attachment = attachmentProcessor.process(
-                    data = source,
-                    maxImageResolution = AttachmentProcessor.MAX_AVATAR_SIZE_PX,
-                    compressImage = true,
+                val attachment = attachmentProcessor.processAvatar(
+                    data = source.use { it.readByteArray() },
                 ) ?: return Result.failure()
+
+                Log.d(TAG, "Reuploading avatar with mimeType=${attachment.mimeType}, size=${attachment.imageSize}")
 
                 try {
                     avatarUploadManager.get().uploadAvatar(
@@ -141,11 +142,14 @@ class AvatarReuploadWorker @AssistedInject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            logAndToast("FileServer renew failed", e)
-
-            // If the server doesn't allow us to renew, and last updated is 12 days ago, then re-upload our avatar
+            // When renew fails, we will try to re-upload the avatar if:
+            // 1. The file is expired (we have the record of this file's expiry time), or
+            // 2. The last update was more than 12 days ago.
             if ((e is NonRetryableException || e is OnionRequestAPI.HTTPRequestFailedAtDestinationException)) {
-                if ((lastUpdated?.isBefore(Instant.now().minus(Duration.ofDays(12)))) == true) {
+                val now = Instant.now()
+                if (fileExpiry?.isBefore(now) == true ||
+                    (lastUpdated?.isBefore(now.minus(Duration.ofDays(12)))) == true) {
+                    logAndToast("FileServer renew failed, trying to upload", e)
                     val pictureData =
                         localEncryptedFileInputStreamFactory.create(localFile).use { stream ->
                             check(!stream.meta.hasPermanentDownloadError) {
@@ -172,9 +176,10 @@ class AvatarReuploadWorker @AssistedInject constructor(
                 }
 
                 return Result.success()
+            } else {
+                logAndToast("Error while renewing avatar. Retrying...", e)
+                return Result.retry()
             }
-
-            return Result.failure()
         }
 
         return Result.success()
@@ -185,6 +190,7 @@ class AvatarReuploadWorker @AssistedInject constructor(
             return true
         }
         val bounds = readImageBounds(source)
+        Log.d(TAG, "Old avatar bounds: $bounds")
         return bounds.width > AttachmentProcessor.MAX_AVATAR_SIZE_PX.width
                 || bounds.height > AttachmentProcessor.MAX_AVATAR_SIZE_PX.height
     }

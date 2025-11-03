@@ -14,21 +14,19 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.encrypt.Attachments
 import network.loki.messenger.libsession_util.util.Bytes
 import org.session.libsession.messaging.file_server.FileServerApi
+import org.session.libsession.utilities.AESGCM
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.Util
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
-import org.session.libsignal.streams.ProfileCipherOutputStream
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.util.castAwayType
-import java.io.ByteArrayOutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
 
 
@@ -90,15 +88,7 @@ class AvatarUploadManager @Inject constructor(
             )
         } else {
             val key = Util.getSecretBytes(PROFILE_KEY_LENGTH)
-            val ciphertext = ByteArrayOutputStream().use { outputStream ->
-                ProfileCipherOutputStream(outputStream, key).use {
-                    it.write(pictureData)
-                    it.flush()
-                }
-
-                outputStream.toByteArray()
-            }
-
+            val ciphertext = AESGCM.encrypt(pictureData, key)
             AttachmentProcessor.EncryptResult(ciphertext = ciphertext, key = key)
         }
 
