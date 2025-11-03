@@ -24,17 +24,17 @@ fun <T>BaseStateProScreen(
     onBack: () -> Unit,
     successContent: @Composable (T) -> Unit
 ) {
-    when (state) {
-        is State.Error -> {
+    // in the case of an error
+    val context = LocalContext.current
+    LaunchedEffect(state) {
+        if (state is State.Error) {
             // show a toast and go back to pro settings home screen
-            val context = LocalContext.current
-
-            LaunchedEffect(Unit) {
-                Toast.makeText(context, R.string.errorGeneric, Toast.LENGTH_LONG).show()
-                onBack()
-            }
+            Toast.makeText(context, R.string.errorGeneric, Toast.LENGTH_LONG).show()
+            onBack()
         }
+    }
 
+    when (state) {
         is State.Loading -> {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -48,5 +48,7 @@ fun <T>BaseStateProScreen(
         }
 
         is State.Success<T> -> successContent(state.value)
+
+        else -> {}
     }
 }
