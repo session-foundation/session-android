@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.groups.compose
 
+import android.R.attr.data
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -31,7 +32,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -50,14 +53,19 @@ import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.EditGroupViewModel
 import org.thoughtcrime.securesms.groups.GroupMemberState
 import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonData
+import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.components.ActionSheet
 import org.thoughtcrime.securesms.ui.components.ActionSheetItemData
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.getCellBottomShape
+import org.thoughtcrime.securesms.ui.getCellTopShape
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -65,7 +73,9 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
+import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
+import org.thoughtcrime.securesms.ui.theme.transparentButtonColors
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
 
@@ -120,6 +130,19 @@ fun EditGroup(
 
     val maxNameWidth = 240.dp
 
+    val optionsList: List<EditGroupViewModel.OptionsItem> = listOf(
+        EditGroupViewModel.OptionsItem(
+            name = LocalResources.current.getString(R.string.membersInvite),
+            icon = R.drawable.ic_user_round_plus,
+            onClick = { onAddMemberClick() }
+        ),
+        EditGroupViewModel.OptionsItem(
+            name = LocalResources.current.getString(R.string.accountIdOrOnsInvite),
+            icon = R.drawable.ic_user_round_search,
+            onClick = { onAddMemberClick() }
+        )
+    )
+
     Scaffold(
         topBar = {
             BackAppBar(
@@ -129,45 +152,82 @@ fun EditGroup(
         },
         contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
     ) { paddingValues ->
-        Column(modifier = Modifier.padding(paddingValues).consumeWindowInsets(paddingValues)) {
-            // Group name title
-            Text(
-                text = groupName,
-                style = LocalType.current.h4,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .align(CenterHorizontally)
-                    .widthIn(max = maxNameWidth)
-                    .padding(vertical = LocalDimensions.current.smallSpacing),
-            )
+        Column(modifier = Modifier
+            .padding(paddingValues)
+            .consumeWindowInsets(paddingValues)) {
 
-            // Header & Add member button
-            Row(
-                modifier = Modifier.padding(
-                    horizontal = LocalDimensions.current.smallSpacing,
-                    vertical = LocalDimensions.current.xxsSpacing
-                ),
-                verticalAlignment = CenterVertically
+            Cell(
+                modifier = Modifier.fillMaxWidth()
+                    .padding(LocalDimensions.current.smallSpacing),
             ) {
-                Text(
-                    stringResource(R.string.groupMembers),
-                    modifier = Modifier.weight(1f),
-                    style = LocalType.current.large,
-                    color = LocalColors.current.text
-                )
+                Column {
+                    optionsList.forEachIndexed { index, option ->
+                        ItemButton(
+                            modifier = Modifier.qaTag(option.qaTag),
+                            text = annotatedStringResource(option.name),
+                            iconRes = option.icon,
+                            shape = when (index) {
+                                0 -> getCellTopShape()
+                                optionsList.lastIndex -> getCellBottomShape()
+                                else -> RectangleShape
+                            },
+                            onClick = option.onClick,
+                        )
 
-                if (showAddMembers) {
-                    AccentOutlineButton(
-                        stringResource(R.string.membersInvite),
-                        onClick = onAddMemberClick,
-                        modifier = Modifier.qaTag(R.string.AccessibilityId_membersInvite)
-                    )
+                        if(index != optionsList.lastIndex) Divider()
+                    }
                 }
             }
 
+            // Group name title
+//            Text(
+//                text = groupName,
+//                style = LocalType.current.h4,
+//                textAlign = TextAlign.Center,
+//                modifier = Modifier
+//                    .align(CenterHorizontally)
+//                    .widthIn(max = maxNameWidth)
+//                    .padding(vertical = LocalDimensions.current.smallSpacing),
+//            )
+
+            // Header & Add member button
+//            Row(
+//                modifier = Modifier.padding(
+//                    horizontal = LocalDimensions.current.smallSpacing,
+//                    vertical = LocalDimensions.current.xxsSpacing
+//                ),
+//                verticalAlignment = CenterVertically
+//            ) {
+//                Text(
+//                    stringResource(R.string.groupMembers),
+//                    modifier = Modifier.weight(1f),
+//                    style = LocalType.current.large,
+//                    color = LocalColors.current.text
+//                )
+//
+//                if (showAddMembers) {
+//                    AccentOutlineButton(
+//                        stringResource(R.string.membersInvite),
+//                        onClick = onAddMemberClick,
+//                        modifier = Modifier.qaTag(R.string.AccessibilityId_membersInvite)
+//                    )
+//                }
+//            }
+
+            Text(
+                modifier = Modifier.padding(
+                    start = LocalDimensions.current.smallSpacing,
+                    bottom = LocalDimensions.current.smallSpacing
+                ),
+                text = LocalResources.current.getString(R.string.membersNonAdmins),
+                style = LocalType.current.base,
+                color = LocalColors.current.textSecondary
+            )
 
             // List of members
-            LazyColumn(modifier = Modifier.weight(1f).imePadding()) {
+            LazyColumn(modifier = Modifier
+                .weight(1f)
+                .imePadding()) {
                 items(members) { member ->
                     // Each member's view
                     EditMemberItem(

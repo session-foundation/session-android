@@ -1,6 +1,8 @@
 package org.thoughtcrime.securesms.groups
 
 import android.content.Context
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -182,6 +184,13 @@ class EditGroupViewModel @AssistedInject constructor(
     fun hideActionBottomSheet(){
         _clickedMember.value = null
     }
+
+    data class OptionsItem(
+        val name: String,
+        @DrawableRes val icon: Int,
+        @StringRes val qaTag: Int? = null,
+        val onClick: () -> Unit
+    )
 
     @AssistedFactory
     interface Factory {
