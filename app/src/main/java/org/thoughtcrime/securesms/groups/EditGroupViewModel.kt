@@ -178,6 +178,9 @@ class EditGroupViewModel @AssistedInject constructor(
                 MemberInvite(id = accountId, shareHistory = shareHistory)
             }
 
+            onSearchFocusChanged(false)
+            clearSelection()
+
             // Reinvite with per-member shareHistory
             groupManager.reinviteMembers(
                 group = groupId,

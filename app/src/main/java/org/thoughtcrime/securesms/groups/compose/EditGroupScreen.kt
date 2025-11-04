@@ -98,7 +98,6 @@ fun EditGroupScreen(
     EditGroup(
         onBack = onBack,
         onAddMemberClick = { navigateToInviteContact(viewModel.excludingAccountIDsFromContactSelection) },
-//        onResendInviteClick = viewModel::onResendInviteClicked,
         onPromoteClick = viewModel::onPromoteContact,
         onRemoveClick = viewModel::onRemoveContact,
         members = viewModel.nonAdminMembers.collectAsState().value,
@@ -129,7 +128,6 @@ fun EditGroupScreen(
 fun EditGroup(
     onBack: () -> Unit,
     onAddMemberClick: () -> Unit,
-//    onResendInviteClick: (accountId: AccountId) -> Unit,
     onResendPromotionClick: (accountId: AccountId) -> Unit,
     onPromoteClick: (accountId: AccountId) -> Unit,
     onRemoveClick: (accountId: AccountId, removeMessages: Boolean) -> Unit,
@@ -560,7 +558,6 @@ private fun EditGroupPreviewSheet() {
         EditGroup(
             onBack = {},
             onAddMemberClick = {},
-//            onResendInviteClick = {},
             onPromoteClick = {},
             onRemoveClick = { _, _ -> },
             members = listOf(oneMember, twoMember, threeMember),
@@ -668,7 +665,6 @@ private fun EditGroupEditNamePreview(
         EditGroup(
             onBack = {},
             onAddMemberClick = {},
-//            onResendInviteClick = {},
             onPromoteClick = {},
             onRemoveClick = { _, _ -> },
             members = listOf(oneMember, twoMember, threeMember),
