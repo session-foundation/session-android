@@ -179,6 +179,7 @@ class EditGroupViewModel @AssistedInject constructor(
             }
 
             onSearchFocusChanged(false)
+            onSearchQueryChanged("")
             clearSelection()
 
             // Reinvite with per-member shareHistory
