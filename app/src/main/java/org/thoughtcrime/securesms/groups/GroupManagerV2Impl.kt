@@ -4,7 +4,6 @@ import android.content.Context
 import com.google.protobuf.ByteString
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
@@ -70,8 +69,11 @@ import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.collections.map
 
 private const val TAG = "GroupManagerV2Impl"
+
+data class MemberInvite(val id: AccountId, val shareHistory: Boolean)
 
 @Singleton
 class GroupManagerV2Impl @Inject constructor(
@@ -218,45 +220,173 @@ class GroupManagerV2Impl @Inject constructor(
         }
     }
 
-
     override suspend fun inviteMembers(
         group: AccountId,
         newMembers: List<AccountId>,
         shareHistory: Boolean,
         isReinvite: Boolean
-    ): Unit = scope.launchAndWait(group, "Invite members") {
+    ): Unit = inviteMembersInternal(
+        group = group,
+        memberInvites = newMembers.map { MemberInvite(it, shareHistory) },
+        isReinvite = isReinvite
+    )
+
+    override suspend fun reinviteMembers(
+        group: AccountId,
+        invites: List<MemberInvite>
+    ): Unit = inviteMembersInternal(
+        group = group,
+        memberInvites = invites,
+        isReinvite = true
+    )
+
+//    override suspend fun inviteMembers(
+//        group: AccountId,
+//        newMembers: List<AccountId>,
+//        shareHistory: Boolean,
+//        isReinvite: Boolean
+//    ): Unit = scope.launchAndWait(group, "Invite members") {
+//        val adminKey = requireAdminAccess(group)
+//        val groupAuth = OwnedSwarmAuth.ofClosedGroup(group, adminKey)
+//
+//        val batchRequests = mutableListOf<SnodeAPI.SnodeBatchRequestInfo>()
+//
+//        // Construct the new members in our config
+//        val subAccountTokens = configFactory.withMutableGroupConfigs(group) { configs ->
+//            // Construct the new members in the config
+//            for (newMember in newMembers) {
+//                val toSet = configs.groupMembers.get(newMember.hexString)
+//                    ?.also { existing ->
+//                        val status = configs.groupMembers.status(existing)
+//                        if (status == GroupMember.Status.INVITE_FAILED || status == GroupMember.Status.INVITE_SENT) {
+//                            existing.setSupplement(shareHistory)
+//                        }
+//                    }
+//                    ?: configs.groupMembers.getOrConstruct(newMember.hexString).also { member ->
+//                        val contact = configFactory.withUserConfigs { configs ->
+//                            configs.contacts.get(newMember.hexString)
+//                        }
+//
+//                        member.setName(contact?.name.orEmpty())
+//                        member.setProfilePic(contact?.profilePicture ?: UserPic.DEFAULT)
+//                        member.setSupplement(shareHistory)
+//                    }
+//
+//                toSet.setInvited()
+//                configs.groupMembers.set(toSet)
+//            }
+//
+//            if (shareHistory) {
+//                val memberKey = configs.groupKeys.supplementFor(newMembers.map { it.hexString })
+//                batchRequests.add(
+//                    SnodeAPI.buildAuthenticatedStoreBatchInfo(
+//                        namespace = Namespace.GROUP_KEYS(),
+//                        message = SnodeMessage(
+//                            recipient = group.hexString,
+//                            data = Base64.encodeBytes(memberKey),
+//                            ttl = SnodeMessage.CONFIG_TTL,
+//                            timestamp = clock.currentTimeMills(),
+//                        ),
+//                        auth = groupAuth,
+//                    )
+//                )
+//            }
+//
+//            configs.rekey()
+//            newMembers.map { configs.groupKeys.getSubAccountToken(it.hexString) }
+//        }
+//
+//        // Call un-revocate API on new members, in case they have been removed before
+//        batchRequests += SnodeAPI.buildAuthenticatedUnrevokeSubKeyBatchRequest(
+//            groupAdminAuth = groupAuth,
+//            subAccountTokens = subAccountTokens
+//        )
+//
+//        // Call the API
+//        try {
+//            val swarmNode = SnodeAPI.getSingleTargetSnode(group.hexString).await()
+//            val response = SnodeAPI.getBatchResponse(swarmNode, group.hexString, batchRequests)
+//
+//            // Make sure every request is successful
+//            response.requireAllRequestsSuccessful("Failed to invite members")
+//
+//            // Wait for the group configs to be pushed
+//            configFactory.waitUntilGroupConfigsPushed(group)
+//        } catch (e: Exception) {
+//            // Update every member's status to "invite failed" and return group name
+//            val groupName = configFactory.withMutableGroupConfigs(group) { configs ->
+//                for (newMember in newMembers) {
+//                    configs.groupMembers.get(newMember.hexString)?.apply {
+//                        setInviteFailed()
+//                        configs.groupMembers.set(this)
+//                    }
+//                }
+//
+//                configs.groupInfo.getName().orEmpty()
+//            }
+//
+//            Log.w(TAG, "Failed to invite members to group $group", e)
+//
+//            throw GroupInviteException(
+//                isPromotion = false,
+//                inviteeAccountIds = newMembers.map { it.hexString },
+//                groupName = groupName,
+//                underlying = e
+//            )
+//        } finally {
+//            // Send a group update message to the group telling members someone has been invited
+//            if (!isReinvite) {
+//                sendGroupUpdateForAddingMembers(group, adminKey, newMembers)
+//            }
+//        }
+//
+//        // Send the invitation message to the new members
+//        JobQueue.shared.add(
+//            InviteContactsJob(
+//                group.hexString,
+//                newMembers.map { it.hexString }.toTypedArray()
+//            )
+//        )
+//    }
+
+    private suspend fun inviteMembersInternal(
+        group: AccountId,
+        memberInvites: List<MemberInvite>,
+        isReinvite: Boolean
+    ): Unit = scope.launchAndWait(group, if (isReinvite) "Reinvite members" else "Invite members") {
         val adminKey = requireAdminAccess(group)
         val groupAuth = OwnedSwarmAuth.ofClosedGroup(group, adminKey)
 
         val batchRequests = mutableListOf<SnodeAPI.SnodeBatchRequestInfo>()
 
-        // Construct the new members in our config
         val subAccountTokens = configFactory.withMutableGroupConfigs(group) { configs ->
-            // Construct the new members in the config
-            for (newMember in newMembers) {
-                val toSet = configs.groupMembers.get(newMember.hexString)
+            val shareHistoryHexes = mutableListOf<String>()
+
+            for ((id, shareHistory) in memberInvites) {
+                val hex = id.hexString
+
+                val toSet = configs.groupMembers.get(hex)
                     ?.also { existing ->
                         val status = configs.groupMembers.status(existing)
                         if (status == GroupMember.Status.INVITE_FAILED || status == GroupMember.Status.INVITE_SENT) {
                             existing.setSupplement(shareHistory)
                         }
                     }
-                    ?: configs.groupMembers.getOrConstruct(newMember.hexString).also { member ->
-                        val contact = configFactory.withUserConfigs { configs ->
-                            configs.contacts.get(newMember.hexString)
-                        }
-
+                    ?: configs.groupMembers.getOrConstruct(hex).also { member ->
+                        val contact = configFactory.withUserConfigs { it.contacts.get(hex) }
                         member.setName(contact?.name.orEmpty())
                         member.setProfilePic(contact?.profilePicture ?: UserPic.DEFAULT)
                         member.setSupplement(shareHistory)
                     }
 
+                if (shareHistory) shareHistoryHexes += hex
+
                 toSet.setInvited()
                 configs.groupMembers.set(toSet)
             }
 
-            if (shareHistory) {
-                val memberKey = configs.groupKeys.supplementFor(newMembers.map { it.hexString })
+            if (shareHistoryHexes.isNotEmpty()) {
+                val memberKey = configs.groupKeys.supplementFor(shareHistoryHexes)
                 batchRequests.add(
                     SnodeAPI.buildAuthenticatedStoreBatchInfo(
                         namespace = Namespace.GROUP_KEYS(),
@@ -272,7 +402,7 @@ class GroupManagerV2Impl @Inject constructor(
             }
 
             configs.rekey()
-            newMembers.map { configs.groupKeys.getSubAccountToken(it.hexString) }
+            memberInvites.map { configs.groupKeys.getSubAccountToken(it.id.hexString) }
         }
 
         // Call un-revocate API on new members, in case they have been removed before
@@ -281,7 +411,6 @@ class GroupManagerV2Impl @Inject constructor(
             subAccountTokens = subAccountTokens
         )
 
-        // Call the API
         try {
             val swarmNode = SnodeAPI.getSingleTargetSnode(group.hexString).await()
             val response = SnodeAPI.getBatchResponse(swarmNode, group.hexString, batchRequests)
@@ -294,13 +423,12 @@ class GroupManagerV2Impl @Inject constructor(
         } catch (e: Exception) {
             // Update every member's status to "invite failed" and return group name
             val groupName = configFactory.withMutableGroupConfigs(group) { configs ->
-                for (newMember in newMembers) {
-                    configs.groupMembers.get(newMember.hexString)?.apply {
+                for ((id, _) in memberInvites) {
+                    configs.groupMembers.get(id.hexString)?.apply {
                         setInviteFailed()
                         configs.groupMembers.set(this)
                     }
                 }
-
                 configs.groupInfo.getName().orEmpty()
             }
 
@@ -308,14 +436,14 @@ class GroupManagerV2Impl @Inject constructor(
 
             throw GroupInviteException(
                 isPromotion = false,
-                inviteeAccountIds = newMembers.map { it.hexString },
+                inviteeAccountIds = memberInvites.map { it.id.hexString },
                 groupName = groupName,
                 underlying = e
             )
         } finally {
             // Send a group update message to the group telling members someone has been invited
             if (!isReinvite) {
-                sendGroupUpdateForAddingMembers(group, adminKey, newMembers)
+                sendGroupUpdateForAddingMembers(group, adminKey, memberInvites.map { it.id })
             }
         }
 
@@ -323,10 +451,11 @@ class GroupManagerV2Impl @Inject constructor(
         JobQueue.shared.add(
             InviteContactsJob(
                 group.hexString,
-                newMembers.map { it.hexString }.toTypedArray()
+                memberInvites.map { it.id.hexString }.toTypedArray()
             )
         )
     }
+
 
     /**
      * Send a group update message to the group telling members someone has been invited.

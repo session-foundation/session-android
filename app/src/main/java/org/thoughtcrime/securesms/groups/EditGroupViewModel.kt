@@ -15,6 +15,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.all
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -81,23 +82,6 @@ class EditGroupViewModel @AssistedInject constructor(
     private val _mutableSelectedMemberAccountIds = MutableStateFlow(emptySet<AccountId>())
     val selectedMemberAccountIds: StateFlow<Set<AccountId>> = _mutableSelectedMemberAccountIds
 
-    val trayItems : List<CollapsibleFooterItemData> by lazy {
-        listOf(
-            CollapsibleFooterItemData(
-                label = GetString(context.resources.getQuantityString(R.plurals.resendInvite, selectedMemberAccountIds.value.size)),
-                buttonLabel = GetString(context.getString(R.string.resend)),
-                isDanger = false,
-                onClick = {}
-            ),
-            CollapsibleFooterItemData(
-                label = GetString(context.resources.getQuantityString(R.plurals.removeMember, selectedMemberAccountIds.value.size)),
-                buttonLabel = GetString(context.getString(R.string.remove)),
-                isDanger = false,
-                onClick = { }
-            )
-        )
-    }
-
     private val footerCollapsed = MutableStateFlow(false)
 
     val collapsibleFooterState: StateFlow<CollapsibleFooterState> =
@@ -117,9 +101,7 @@ class EditGroupViewModel @AssistedInject constructor(
                     ),
                     buttonLabel = GetString(context.getString(R.string.resend)),
                     isDanger = false,
-                    onClick = {
-                        selected.forEach { onResendInviteClicked(it) }
-                    }
+                    onClick = { onResendInviteClicked() }
                 ),
                 CollapsibleFooterItemData(
                     label = GetString(
@@ -175,7 +157,8 @@ class EditGroupViewModel @AssistedInject constructor(
         }
     }
 
-    fun onResendInviteClicked(contactSessionId: AccountId) {
+    fun onResendInviteClicked() {
+        if (selectedMemberAccountIds.value.isEmpty()) return
         performGroupOperation(
             showLoading = false,
             errorMessage = { err ->
@@ -186,15 +169,19 @@ class EditGroupViewModel @AssistedInject constructor(
                 }
             }
         ) {
-            val historyShared = configFactory.withGroupConfigs(groupId) {
-                it.groupMembers.getOrNull(contactSessionId.hexString)
-            }?.supplement == true
+            // Look up current member configs once
+            val membersCfg = configFactory.withGroupConfigs(groupId) { it.groupMembers }
 
-            groupManager.inviteMembers(
-                groupId,
-                listOf(contactSessionId),
-                shareHistory = historyShared,
-                isReinvite = true,
+            // Build per-member invites with their own shareHistory flag
+            val invites = selectedMemberAccountIds.value.distinct().map { accountId ->
+                val shareHistory = membersCfg?.getOrNull(accountId.hexString)?.supplement == true
+                MemberInvite(id = accountId, shareHistory = shareHistory)
+            }
+
+            // Reinvite with per-member shareHistory
+            groupManager.reinviteMembers(
+                group = groupId,
+                invites = invites
             )
         }
     }
