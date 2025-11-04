@@ -14,6 +14,7 @@ import okhttp3.Response
 import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import javax.net.ssl.SSLContext
 import javax.net.ssl.X509TrustManager
 
@@ -160,11 +161,18 @@ object HTTP {
     }
 
     private val httpCallSemaphore = Semaphore(20)
+    private val httpConcurrency = AtomicInteger(0)
 
     private suspend fun Call.await(): Response {
-        return withContext(Dispatchers.IO) {
-            httpCallSemaphore.withPermit {
-                execute()
+        Log.d("HTTP", "Current HTTP concurrency: ${httpConcurrency.get()}")
+        return httpCallSemaphore.withPermit {
+            withContext(Dispatchers.IO) {
+                httpConcurrency.incrementAndGet()
+                try {
+                    execute()
+                } finally {
+                    httpConcurrency.decrementAndGet()
+                }
             }
         }
     }

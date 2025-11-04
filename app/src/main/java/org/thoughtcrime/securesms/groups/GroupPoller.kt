@@ -226,6 +226,8 @@ class GroupPoller @AssistedInject constructor(
                     throw NonRetryableException("Group has been kicked")
                 }
 
+                Log.v(TAG, "Start polling group($groupId) message snode = ${snode.ip}")
+
                 val adminKey = group.adminKey
 
                 val pollingTasks = mutableListOf<Pair<String, Deferred<*>>>()
@@ -270,7 +272,6 @@ class GroupPoller @AssistedInject constructor(
                         Namespace.GROUP_MESSAGES()
                     ).orEmpty()
 
-                    Log.v(TAG, "Retrieving group($groupId) message since lastHash = $lastHash, snode = ${snode.publicKeySet}")
 
                     SnodeAPI.sendBatchRequest(
                         snode = snode,
@@ -355,6 +356,8 @@ class GroupPoller @AssistedInject constructor(
                 }
             }
         }
+
+        Log.d(TAG, "Group($groupId) polling completed, success = ${result.isSuccess}")
 
         if (result.isFailure) {
             val error = result.exceptionOrNull()
