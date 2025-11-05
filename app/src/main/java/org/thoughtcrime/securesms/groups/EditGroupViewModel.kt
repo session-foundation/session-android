@@ -71,6 +71,9 @@ class EditGroupViewModel @AssistedInject constructor(
     private val mutableError = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> get() = mutableError
 
+    private val _mutableResendString = MutableStateFlow<String?>(null)
+    val resendString: StateFlow<String?> = _mutableResendString
+
     // Output:
     val excludingAccountIDsFromContactSelection: Set<String>
         get() = groupInfo.value?.second?.mapTo(hashSetOf()) { it.accountId.hexString }.orEmpty()
@@ -182,6 +185,11 @@ class EditGroupViewModel @AssistedInject constructor(
             onSearchQueryChanged("")
             clearSelection()
 
+            _mutableResendString.value = context.resources.getQuantityString(
+                R.plurals.resendingInvite,
+                selectedMemberAccountIds.value.size
+            )
+
             // Reinvite with per-member shareHistory
             groupManager.reinviteMembers(
                 group = groupId,
@@ -271,6 +279,8 @@ class EditGroupViewModel @AssistedInject constructor(
     fun toggleFooter() {
         footerCollapsed.update { !it }
     }
+
+    fun onDismissResend() { _mutableResendString.value = null }
 
 
     data class CollapsibleFooterState(

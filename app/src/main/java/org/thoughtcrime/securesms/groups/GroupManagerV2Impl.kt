@@ -205,7 +205,8 @@ class GroupManagerV2Impl @Inject constructor(
             JobQueue.shared.add(
                 InviteContactsJob(
                     groupSessionId = groupId.hexString,
-                    memberSessionIds = members.map { it.hexString }.toTypedArray()
+                    memberSessionIds = members.map { it.hexString }.toTypedArray(),
+                    false
                 )
             )
 
@@ -438,7 +439,8 @@ class GroupManagerV2Impl @Inject constructor(
                 isPromotion = false,
                 inviteeAccountIds = memberInvites.map { it.id.hexString },
                 groupName = groupName,
-                underlying = e
+                underlying = e,
+                isReinvite = isReinvite
             )
         } finally {
             // Send a group update message to the group telling members someone has been invited
@@ -451,7 +453,7 @@ class GroupManagerV2Impl @Inject constructor(
         JobQueue.shared.add(
             InviteContactsJob(
                 group.hexString,
-                memberInvites.map { it.id.hexString }.toTypedArray()
+                memberInvites.map { it.id.hexString }.toTypedArray(), isReinvite
             )
         )
     }

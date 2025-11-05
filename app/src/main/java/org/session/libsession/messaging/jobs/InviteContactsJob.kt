@@ -22,7 +22,7 @@ import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateM
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 
-class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<String>) : Job {
+class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<String>, val isReinvite : Boolean) : Job {
 
     companion object {
         const val KEY = "InviteContactJob"
@@ -122,6 +122,7 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
                     inviteeAccountIds = failures.map { it.first },
                     groupName = groupName.orEmpty(),
                     underlying = firstError,
+                    isReinvite = isReinvite
                 ).format(MessagingModuleConfiguration.shared.context,
                     MessagingModuleConfiguration.shared.recipientRepository).let {
                     withContext(Dispatchers.Main) {

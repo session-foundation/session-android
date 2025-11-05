@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.groups.compose
 
+import android.R.attr.data
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -50,6 +51,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.squareup.phrase.Phrase
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
@@ -107,6 +109,8 @@ fun EditGroupScreen(
         onResendPromotionClick = viewModel::onResendPromotionClicked,
         showingError = viewModel.error.collectAsState().value,
         onErrorDismissed = viewModel::onDismissError,
+        showingResend = viewModel.resendString.collectAsState().value,
+        onResendDismissed = viewModel::onDismissResend,
         onMemberClicked = viewModel::onMemberItemClicked,
         hideActionSheet = viewModel::hideActionBottomSheet,
         clickedMember = viewModel.clickedMember.collectAsState().value,
@@ -147,6 +151,8 @@ fun EditGroup(
     selectedAccountIds: Set<AccountId> = emptySet(),
     showAddMembers: Boolean,
     showingError: String?,
+    showingResend:String?,
+    onResendDismissed: () -> Unit,
     showLoading: Boolean,
     onErrorDismissed: () -> Unit,
 ) {
@@ -287,6 +293,7 @@ fun EditGroup(
     }
 
     if (clickedMember != null) {
+        // TODO: Delete this in favor of the collapsible footer
         MemberActionSheet(
             onDismissRequest = hideActionSheet,
             onRemove = {
@@ -298,7 +305,6 @@ fun EditGroup(
                 hideActionSheet()
             },
             onResendInvite = {
-//                onResendInviteClick(clickedMember.accountId)
                 hideActionSheet()
             },
             onResendPromotion = {
@@ -330,6 +336,12 @@ fun EditGroup(
         if (showingError != null) {
             Toast.makeText(context, showingError, Toast.LENGTH_SHORT).show()
             onErrorDismissed()
+        }
+    }
+    LaunchedEffect(showingResend) {
+        if (showingResend != null) {
+            Toast.makeText(context, showingResend, Toast.LENGTH_SHORT).show()
+            onResendDismissed()
         }
     }
 }
@@ -583,7 +595,9 @@ private fun EditGroupPreviewSheet() {
             ),
             onToggleFooter = {},
             onCloseFooter = {},
-            selectedAccountIds = emptySet()
+            selectedAccountIds = emptySet(),
+            showingResend ="Resending Invite",
+            onResendDismissed = {}
         )
     }
 }
@@ -704,6 +718,8 @@ private fun EditGroupEditNamePreview(
             onToggleFooter = {},
             onCloseFooter = {},
             selectedAccountIds = emptySet(),
+            showingResend ="Resending Invite",
+            onResendDismissed = {}
         )
     }
 }
