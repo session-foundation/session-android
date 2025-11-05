@@ -121,7 +121,9 @@ class GroupPoller @AssistedInject constructor(
             ).also { emit(it) }
 
             // Notify all pending tokens
-            pendingTokens.forEach { it.resultCallback.send(pollResult) }
+            pendingTokens.forEach {
+                it.resultCallback.trySend(pollResult)
+            }
             pendingTokens.clear()
         }
     }.stateIn(scope, SharingStarted.Eagerly, State())
@@ -135,10 +137,12 @@ class GroupPoller @AssistedInject constructor(
                 appVisibilityManager.isAppVisible.first { visible -> visible }
 
                 // As soon as the app becomes visible, start polling
+                Log.d(TAG, "Requesting routine poll for group($groupId)")
                 if (requestPollOnce().hasNonRetryableError()) {
                     Log.v(TAG, "Error polling group $groupId and stopped polling")
                     break
                 }
+                Log.d(TAG, "Routine poll done once for group($groupId)")
 
                 // As long as the app is visible, keep polling
                 while (true) {
@@ -152,10 +156,14 @@ class GroupPoller @AssistedInject constructor(
                         break
                     }
 
+                    Log.d(TAG, "Requesting routine poll for group($groupId)")
+
                     if (requestPollOnce().hasNonRetryableError()) {
                         Log.v(TAG, "Error polling group $groupId and stopped polling")
                         return@launch
                     }
+
+                    Log.d(TAG, "Routine poll done once for group($groupId)")
                 }
             }
         }
