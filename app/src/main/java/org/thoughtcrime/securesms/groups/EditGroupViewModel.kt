@@ -3,8 +3,8 @@ package org.thoughtcrime.securesms.groups
 import android.content.Context
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.ui.platform.LocalResources
 import androidx.lifecycle.viewModelScope
+import com.squareup.phrase.Phrase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -15,7 +15,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.all
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -29,9 +28,13 @@ import org.session.libsession.messaging.groups.GroupInviteException
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.OTHER_NAME_KEY
+import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.RecipientRepository
-import org.thoughtcrime.securesms.groups.SelectContactsViewModel.CollapsibleFooterState
 import org.thoughtcrime.securesms.ui.CollapsibleFooterItemData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.util.AvatarUtils
@@ -82,13 +85,13 @@ class EditGroupViewModel @AssistedInject constructor(
     private val mutableSearchFocused = MutableStateFlow(false)
     val searchFocused: StateFlow<Boolean> get() = mutableSearchFocused
 
-    private val _mutableSelectedMemberAccountIds = MutableStateFlow(emptySet<AccountId>())
-    val selectedMemberAccountIds: StateFlow<Set<AccountId>> = _mutableSelectedMemberAccountIds
+    private val _mutableSelectedMembers = MutableStateFlow(emptySet<GroupMemberState>())
+    val selectedMembers: StateFlow<Set<GroupMemberState>> = _mutableSelectedMembers
 
     private val footerCollapsed = MutableStateFlow(false)
 
     val collapsibleFooterState: StateFlow<CollapsibleFooterState> =
-        combine(_mutableSelectedMemberAccountIds, footerCollapsed) { selected, isCollapsed ->
+        combine(_mutableSelectedMembers, footerCollapsed) { selected, isCollapsed ->
             val count = selected.size
             val visible = count > 0
             val title = if (count == 0) GetString("")
@@ -112,9 +115,7 @@ class EditGroupViewModel @AssistedInject constructor(
                     ),
                     buttonLabel = GetString(context.getString(R.string.remove)),
                     isDanger = true,
-                    onClick = {
-                        selected.forEach { onRemoveContact(it, removeMessages = false) }
-                    }
+                    onClick = {onCommand(Commands.ShowRemoveDialog)}
                 )
             )
 
@@ -128,13 +129,62 @@ class EditGroupViewModel @AssistedInject constructor(
             .distinctUntilChanged()
             .stateIn(viewModelScope, SharingStarted.Eagerly, CollapsibleFooterState())
 
+    private val showRemoveMember = MutableStateFlow(false)
+    val removeMembersState: StateFlow<RemoveMembersState> =
+        combine(
+            showRemoveMember,
+            selectedMembers,
+            groupName
+        ) { showRemove, selected, group ->
+            val count = selected.size
+            val firstMember = selected.firstOrNull()
 
-    fun onMemberItemClicked(accountId: AccountId) {
-        val newSet = _mutableSelectedMemberAccountIds.value.toHashSet()
-        if (!newSet.remove(accountId)) {
-            newSet.add(accountId)
+            val body =
+                when (count) {
+                    1 -> {
+                        Phrase.from(context, R.string.groupRemoveDescription)
+                            .put(NAME_KEY, firstMember?.name)
+                            .put(GROUP_NAME_KEY, group)
+                            .format()
+                    }
+
+                    2 -> {
+                        val secondMember = selected.elementAtOrNull(1)?.name
+                        Phrase.from(context, R.string.groupRemoveDescriptionTwo)
+                            .put(NAME_KEY, firstMember?.name)
+                            .put(OTHER_NAME_KEY, secondMember)
+                            .put(GROUP_NAME_KEY, group)
+                            .format()
+                    }
+
+                    0 -> ""
+                    else -> {
+                        Phrase.from(context, R.string.groupRemoveDescriptionMultiple)
+                            .put(NAME_KEY, firstMember?.name)
+                            .put(COUNT_KEY, count - 1)
+                            .put(GROUP_NAME_KEY, group)
+                            .format()
+                    }
+                }
+            val removeMemberOnly =
+                context.resources.getQuantityString(R.plurals.removeMember, count, count)
+            val removeMessages =
+                context.resources.getQuantityString(R.plurals.removeMemberMessages, count, count)
+
+            RemoveMembersState(
+                visible = showRemove,
+                removeMemberBody = body,
+                removeMemberText = removeMemberOnly,
+                removeMessagesText = removeMessages
+            )
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, RemoveMembersState())
+
+    fun onMemberItemClicked(member: GroupMemberState) {
+        val newSet = _mutableSelectedMembers.value.toHashSet()
+        if (!newSet.remove(member)) {
+            newSet.add(member)
         }
-        _mutableSelectedMemberAccountIds.value = newSet
+        _mutableSelectedMembers.value = newSet
     }
     fun onSearchFocusChanged(isFocused :Boolean){
         mutableSearchFocused.value = isFocused
@@ -161,7 +211,7 @@ class EditGroupViewModel @AssistedInject constructor(
     }
 
     fun onResendInviteClicked() {
-        if (selectedMemberAccountIds.value.isEmpty()) return
+        if (selectedMembers.value.isEmpty()) return
         performGroupOperation(
             showLoading = false,
             errorMessage = { err ->
@@ -176,9 +226,9 @@ class EditGroupViewModel @AssistedInject constructor(
             val membersCfg = configFactory.withGroupConfigs(groupId) { it.groupMembers }
 
             // Build per-member invites with their own shareHistory flag
-            val invites = selectedMemberAccountIds.value.distinct().map { accountId ->
-                val shareHistory = membersCfg?.getOrNull(accountId.hexString)?.supplement == true
-                MemberInvite(id = accountId, shareHistory = shareHistory)
+            val invites = selectedMembers.value.distinct().map { member ->
+                val shareHistory = membersCfg?.getOrNull(member.accountId.hexString)?.supplement == true
+                MemberInvite(id = member.accountId, shareHistory = shareHistory)
             }
 
             onSearchFocusChanged(false)
@@ -187,7 +237,7 @@ class EditGroupViewModel @AssistedInject constructor(
 
             _mutableResendString.value = context.resources.getQuantityString(
                 R.plurals.resendingInvite,
-                selectedMemberAccountIds.value.size
+                selectedMembers.value.size
             )
 
             // Reinvite with per-member shareHistory
@@ -204,11 +254,11 @@ class EditGroupViewModel @AssistedInject constructor(
         }
     }
 
-    fun onRemoveContact(contactSessionId: AccountId, removeMessages: Boolean) {
+    fun onRemoveContact(removeMessages: Boolean) {
         performGroupOperation(showLoading = false) {
             groupManager.removeMembers(
                 groupAccountId = groupId,
-                removedMembers = listOf(contactSessionId),
+                removedMembers = selectedMembers.value.map { it.accountId },
                 removeMessages = removeMessages
             )
         }
@@ -273,7 +323,7 @@ class EditGroupViewModel @AssistedInject constructor(
     }
 
     fun clearSelection(){
-        _mutableSelectedMemberAccountIds.value = emptySet()
+        _mutableSelectedMembers.value = emptySet()
     }
 
     fun toggleFooter() {
@@ -282,6 +332,23 @@ class EditGroupViewModel @AssistedInject constructor(
 
     fun onDismissResend() { _mutableResendString.value = null }
 
+    private fun toggleRemoveDialog(visible : Boolean){
+        showRemoveMember.value = visible
+    }
+
+    fun onCommand(command : Commands){
+        when (command){
+            is Commands.ShowRemoveDialog -> {
+                toggleRemoveDialog(true)
+            }
+            is Commands.DismissRemoveDialog -> {
+                toggleRemoveDialog(false)
+            }
+            is Commands.RemoveMembers -> {
+                onRemoveContact(command.removeMessages)
+            }
+        }
+    }
 
     data class CollapsibleFooterState(
         val visible: Boolean = false,
@@ -290,12 +357,25 @@ class EditGroupViewModel @AssistedInject constructor(
         val footerActionItems : List<CollapsibleFooterItemData> = emptyList()
     )
 
+    data class RemoveMembersState(
+        val visible : Boolean = false,
+        val removeMemberBody : CharSequence = "",
+        val removeMemberText : String = "",
+        val removeMessagesText : String = ""
+    )
+
     data class OptionsItem(
         val name: String,
         @DrawableRes val icon: Int,
         @StringRes val qaTag: Int? = null,
         val onClick: () -> Unit
     )
+
+    sealed interface Commands {
+        data object ShowRemoveDialog : Commands
+        data object DismissRemoveDialog : Commands
+        data class RemoveMembers(val removeMessages: Boolean) : Commands
+    }
 
     @AssistedFactory
     interface Factory {

@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.groups.compose
 
-import android.R.attr.data
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -8,18 +7,14 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -30,28 +25,24 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.CenterHorizontally
-import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.squareup.phrase.Phrase
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
@@ -73,10 +64,12 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.LoadingDialog
+import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.SearchBarWithCancel
 import org.thoughtcrime.securesms.ui.components.ActionSheet
 import org.thoughtcrime.securesms.ui.components.ActionSheetItemData
 import org.thoughtcrime.securesms.ui.components.BackAppBar
+import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.getCellBottomShape
 import org.thoughtcrime.securesms.ui.getCellTopShape
@@ -101,9 +94,8 @@ fun EditGroupScreen(
         onBack = onBack,
         onAddMemberClick = { navigateToInviteContact(viewModel.excludingAccountIDsFromContactSelection) },
         onPromoteClick = viewModel::onPromoteContact,
-        onRemoveClick = viewModel::onRemoveContact,
         members = viewModel.nonAdminMembers.collectAsState().value,
-        selectedAccountIds = viewModel.selectedMemberAccountIds.collectAsState().value,
+        selectedMembers = viewModel.selectedMembers.collectAsState().value,
         groupName = viewModel.groupName.collectAsState().value,
         showAddMembers = viewModel.showAddMembers.collectAsState().value,
         onResendPromotionClick = viewModel::onResendPromotionClicked,
@@ -115,14 +107,16 @@ fun EditGroupScreen(
         hideActionSheet = viewModel::hideActionBottomSheet,
         clickedMember = viewModel.clickedMember.collectAsState().value,
         showLoading = viewModel.inProgress.collectAsState().value,
-        searchQuery= viewModel.searchQuery.collectAsState().value,
+        searchQuery = viewModel.searchQuery.collectAsState().value,
         searchFocused = viewModel.searchFocused.collectAsState().value,
         data = viewModel.collapsibleFooterState.collectAsState().value,
         onToggleFooter = viewModel::toggleFooter,
         onCloseFooter = viewModel::clearSelection,
         onSearchQueryChanged = viewModel::onSearchQueryChanged,
         onSearchFocusChanged = viewModel::onSearchFocusChanged,
-        onSearchQueryClear = {viewModel.onSearchQueryChanged("") }
+        onSearchQueryClear = { viewModel.onSearchQueryChanged("") },
+        sendCommands = viewModel::onCommand,
+        removeMembersData = viewModel.removeMembersState.collectAsState().value
     )
 }
 
@@ -134,8 +128,7 @@ fun EditGroup(
     onAddMemberClick: () -> Unit,
     onResendPromotionClick: (accountId: AccountId) -> Unit,
     onPromoteClick: (accountId: AccountId) -> Unit,
-    onRemoveClick: (accountId: AccountId, removeMessages: Boolean) -> Unit,
-    onMemberClicked: (accountId: AccountId) -> Unit,
+    onMemberClicked: (member: GroupMemberState) -> Unit,
     onSearchFocusChanged : (isFocused : Boolean) -> Unit,
     searchFocused : Boolean,
     searchQuery: String,
@@ -148,17 +141,19 @@ fun EditGroup(
     clickedMember: GroupMemberState?,
     groupName: String,
     members: List<GroupMemberState>,
-    selectedAccountIds: Set<AccountId> = emptySet(),
+    selectedMembers: Set<GroupMemberState> = emptySet(),
     showAddMembers: Boolean,
     showingError: String?,
     showingResend:String?,
     onResendDismissed: () -> Unit,
     showLoading: Boolean,
     onErrorDismissed: () -> Unit,
+    sendCommands: (command : EditGroupViewModel.Commands) -> Unit,
+    removeMembersData: EditGroupViewModel.RemoveMembersState
 ) {
-    val (showingConfirmRemovingMember, setShowingConfirmRemovingMember) = remember {
-        mutableStateOf<GroupMemberState?>(null)
-    }
+//    val (showingConfirmRemovingMember, setShowingConfirmRemovingMember) = remember {
+//        mutableStateOf<GroupMemberState?>(null)
+//    }
 
     val optionsList: List<EditGroupViewModel.OptionsItem> = listOf(
         EditGroupViewModel.OptionsItem(
@@ -278,8 +273,8 @@ fun EditGroup(
                     EditMemberItem(
                         modifier = Modifier.fillMaxWidth(),
                         member = member,
-                        onClick = { onMemberClicked(member.accountId) },
-                        selected = member.accountId in selectedAccountIds
+                        onClick = { onMemberClicked(member) },
+                        selected = member in selectedMembers
                     )
                 }
 
@@ -291,38 +286,11 @@ fun EditGroup(
             }
         }
     }
-
-    if (clickedMember != null) {
-        // TODO: Delete this in favor of the collapsible footer
-        MemberActionSheet(
-            onDismissRequest = hideActionSheet,
-            onRemove = {
-                setShowingConfirmRemovingMember(clickedMember)
-                hideActionSheet()
-            },
-            onPromote = {
-                onPromoteClick(clickedMember.accountId)
-                hideActionSheet()
-            },
-            onResendInvite = {
-                hideActionSheet()
-            },
-            onResendPromotion = {
-                onResendPromotionClick(clickedMember.accountId)
-                hideActionSheet()
-            },
-            member = clickedMember,
-        )
-    }
-
-    if (showingConfirmRemovingMember != null) {
-        ConfirmRemovingMemberDialog(
-            onDismissRequest = {
-                setShowingConfirmRemovingMember(null)
-            },
-            onConfirmed = onRemoveClick,
-            member = showingConfirmRemovingMember,
-            groupName = groupName,
+    
+    if(removeMembersData.visible){
+        ShowRemoveMembersDialog(
+            state = removeMembersData,
+            sendCommand = sendCommands
         )
     }
 
@@ -346,21 +314,7 @@ fun EditGroup(
     }
 }
 
-@Composable
-private fun GroupNameContainer(content: @Composable RowScope.() -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 72.dp),
-        horizontalArrangement = Arrangement.spacedBy(
-            LocalDimensions.current.xxxsSpacing,
-            CenterHorizontally
-        ),
-        verticalAlignment = CenterVertically,
-        content = content
-    )
-}
-
+//todo : Delete after implementing collapsing bottom
 @Composable
 private fun ConfirmRemovingMemberDialog(
     onConfirmed: (accountId: AccountId, removeMessages: Boolean) -> Unit,
@@ -393,6 +347,7 @@ private fun ConfirmRemovingMemberDialog(
     )
 }
 
+// todo : delete after promote admin
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MemberActionSheet(
@@ -473,6 +428,63 @@ fun EditMemberItem(
         modifier = modifier,
         enabled = true,
         selected = selected
+    )
+}
+
+@Composable
+fun ShowRemoveMembersDialog(
+    state: EditGroupViewModel.RemoveMembersState,
+    modifier: Modifier = Modifier,
+    sendCommand: (EditGroupViewModel.Commands) -> Unit
+) {
+    var deleteMessages by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        modifier = modifier,
+        onDismissRequest = {
+            // hide dialog
+            sendCommand(EditGroupViewModel.Commands.DismissRemoveDialog)
+        },
+        title = annotatedStringResource(R.string.remove),
+        text = annotatedStringResource(state.removeMemberBody),
+        content = {
+            DialogTitledRadioButton(
+                option = RadioOption(
+                    value = Unit,
+                    title = GetString(state.removeMemberText),
+                    selected = !deleteMessages
+                )
+            ) {
+                deleteMessages = false
+            }
+
+            DialogTitledRadioButton(
+                option = RadioOption(
+                    value = Unit,
+                    title = GetString(state.removeMessagesText),
+                    selected = deleteMessages,
+                )
+            ) {
+                deleteMessages = true
+            }
+        },
+        buttons = listOf(
+            DialogButtonData(
+                text = GetString(stringResource(id = R.string.remove)),
+                color = LocalColors.current.danger,
+                dismissOnClick = false,
+                onClick = {
+                    sendCommand(EditGroupViewModel.Commands.DismissRemoveDialog)
+                    sendCommand(EditGroupViewModel.Commands.RemoveMembers(deleteMessages))
+                }
+            ),
+            DialogButtonData(
+                text = GetString(stringResource(R.string.cancel)),
+                onClick = {
+                    sendCommand(EditGroupViewModel.Commands.DismissRemoveDialog)
+                }
+            )
+        )
     )
 }
 
@@ -571,7 +583,6 @@ private fun EditGroupPreviewSheet() {
             onBack = {},
             onAddMemberClick = {},
             onPromoteClick = {},
-            onRemoveClick = { _, _ -> },
             members = listOf(oneMember, twoMember, threeMember),
             groupName = "Test ",
             showAddMembers = true,
@@ -595,9 +606,11 @@ private fun EditGroupPreviewSheet() {
             ),
             onToggleFooter = {},
             onCloseFooter = {},
-            selectedAccountIds = emptySet(),
-            showingResend ="Resending Invite",
-            onResendDismissed = {}
+            selectedMembers = emptySet(),
+            showingResend = "Resending Invite",
+            onResendDismissed = {},
+            sendCommands = {},
+            removeMembersData = EditGroupViewModel.RemoveMembersState()
         )
     }
 }
@@ -680,7 +693,6 @@ private fun EditGroupEditNamePreview(
             onBack = {},
             onAddMemberClick = {},
             onPromoteClick = {},
-            onRemoveClick = { _, _ -> },
             members = listOf(oneMember, twoMember, threeMember),
             groupName = "Test name that is very very long indeed because many words in it",
             showAddMembers = true,
@@ -696,7 +708,7 @@ private fun EditGroupEditNamePreview(
             onSearchFocusChanged = {},
             searchFocused = true,
             onSearchQueryClear = {},
-            data  = CollapsibleFooterState(
+            data = CollapsibleFooterState(
                 visible = true,
                 collapsed = false,
                 footerActionTitle = GetString("3 Members Selected"),
@@ -717,9 +729,11 @@ private fun EditGroupEditNamePreview(
             ),
             onToggleFooter = {},
             onCloseFooter = {},
-            selectedAccountIds = emptySet(),
-            showingResend ="Resending Invite",
-            onResendDismissed = {}
+            selectedMembers = emptySet(),
+            showingResend = "Resending Invite",
+            onResendDismissed = {},
+            sendCommands = {},
+            removeMembersData = EditGroupViewModel.RemoveMembersState()
         )
     }
 }
