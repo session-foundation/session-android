@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.database
 
 import android.content.Context
 import androidx.sqlite.db.SupportSQLiteDatabase
+import androidx.sqlite.db.transaction
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.serialization.json.Json
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
@@ -37,7 +38,7 @@ class ReceivedMessageHashDatabase @Inject constructor(
         writableDatabase.rawExecSQL("DELETE FROM received_messages WHERE 1")
     }
 
-    fun removeDuplicatedHashes(
+    private fun removeDuplicatedHashes(
         swarmPublicKey: String,
         namespace: Int,
         hashes: Collection<String>
@@ -46,32 +47,55 @@ class ReceivedMessageHashDatabase @Inject constructor(
 
         //language=roomsql
         return writableDatabase.rawQuery("""
-            INSERT OR IGNORE INTO received_messages (swarm_pub_key, namespace, hash)
-            SELECT ?, ?, value
-            FROM json_each(?)
-            RETURNING hash
-        """, swarmPublicKey, namespace, hashesAsJsonText).use { cursor ->
+            SELECT ea.value FROM json_each(?) ea
+            WHERE NOT EXISTS (
+                SELECT 1 FROM received_messages m
+                WHERE m.swarm_pub_key = ? AND m.namespace = ? AND m.hash = ea.value
+            )
+        """, hashesAsJsonText, swarmPublicKey, namespace).use { cursor ->
             cursor.asSequence()
                 .mapTo(hashSetOf()) { it.getString(0) }
         }
     }
 
-    fun <M> removeDuplicates(
+    /**
+     * Filters out messages with duplicate hashes from the provided list, performs the given action
+     * on the new messages, and then adds the new message hashes to the database.
+     */
+    fun <M, T> withRemovedDuplicateMessages(
         swarmPublicKey: String,
-        messages: List<M>,
-        messageHashGetter: (M) -> String?,
         namespace: Int,
-    ): List<M> {
-        val newMessageHashes = removeDuplicatedHashes(
-            swarmPublicKey = swarmPublicKey,
-            namespace = namespace,
-            hashes = messages.mapNotNull(messageHashGetter)
-        )
+        messages: List<M>,
+        messageHashGetter: (M) -> String,
+        performOnNewMessages: (List<M>) -> T,
+    ): T {
+        return writableDatabase.transaction {
+            val newMessageHashes = removeDuplicatedHashes(
+                swarmPublicKey = swarmPublicKey,
+                namespace = namespace,
+                hashes = messages.map(messageHashGetter)
+            )
 
-        return messages.filter { message ->
-            val hash = messageHashGetter(message)
-            hash != null && hash in newMessageHashes
+            val ret = performOnNewMessages(
+                messages.filter { m -> messageHashGetter(m) in newMessageHashes }
+            )
+
+            addHashes(
+                swarmPublicKey = swarmPublicKey,
+                namespace = namespace,
+                hashes = newMessageHashes
+            )
+
+            ret
         }
+    }
+
+    private fun addHashes(swarmPublicKey: String, namespace: Int, hashes: Collection<String>) {
+        //language=roomsql
+        writableDatabase.rawExecSQL("""
+            INSERT OR IGNORE INTO received_messages (swarm_pub_key, namespace, hash)
+            SELECT ?, ?, value FROM json_each(?)
+        """, swarmPublicKey, namespace, json.encodeToString(hashes))
     }
 
 

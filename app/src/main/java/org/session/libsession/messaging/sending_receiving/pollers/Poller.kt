@@ -211,74 +211,52 @@ class Poller @AssistedInject constructor(
         }
     }
 
-    private fun processPersonalMessages(snode: Snode, messages: List<RetrieveMessageResponse.Message>) {
+    private fun processPersonalMessages(messages: List<RetrieveMessageResponse.Message>) {
         if (messages.isEmpty()) {
+            Log.d(TAG, "No personal messages to process")
             return
         }
 
-        lokiApiDatabase.setLastMessageHashValue(
-            snode = snode,
-            publicKey = userPublicKey,
-            newValue = messages
-                .maxBy { it.timestamp }.hash,
-            namespace = Namespace.DEFAULT()
-        )
+        Log.d(TAG, "Received ${messages.size} personal messages from snode")
 
-        receivedMessageHashDatabase.removeDuplicates(
+        receivedMessageHashDatabase.withRemovedDuplicateMessages(
             swarmPublicKey = userPublicKey,
+            namespace = Namespace.DEFAULT(),
             messages = messages,
             messageHashGetter = { it.hash },
-            namespace = Namespace.DEFAULT(),
-        ).asSequence()
-            .map { msg ->
-                MessageReceiveParameters(
-                    data = msg.data,
-                    serverHash = msg.hash,
-                )
-            }
-            .chunked(BatchMessageReceiveJob.BATCH_DEFAULT_NUMBER)
-            .forEach { chunk ->
-                JobQueue.shared.add(batchMessageReceiveJobFactory.create(
-                    messages = chunk,
-                    fromCommunity = null
-                ))
-            }
+        ) { filtered ->
+            Log.d(TAG, "About to process ${filtered.size} new personal messages")
+        }
     }
 
-    private fun processConfig(snode: Snode, messages: List<RetrieveMessageResponse.Message>, forConfig: UserConfigType) {
-        Log.d(TAG, "Received ${messages.size} messages for $forConfig")
-        val namespace = forConfig.namespace
-        val processed = if (messages.isNotEmpty()) {
-            lokiApiDatabase.setLastMessageHashValue(
-                snode = snode,
-                publicKey = userPublicKey,
-                newValue = messages.maxBy { it.timestamp }.hash,
-                namespace = namespace
-            )
-            receivedMessageHashDatabase.removeDuplicates(
-                swarmPublicKey = userPublicKey,
-                messages = messages,
-                messageHashGetter = { it.hash },
-                namespace = namespace,
-            ).map { m ->
-                ConfigMessage(data = m.data, hash = m.hash, timestamp = m.timestamp.toEpochMilli())
-            }
-        } else emptyList()
-
-        Log.d(TAG, "About to process ${processed.size} messages for $forConfig")
-
-        if (processed.isEmpty()) return
+    private fun processConfig(messages: List<RetrieveMessageResponse.Message>, forConfig: UserConfigType) {
+        if (messages.isEmpty()) {
+            Log.d(TAG, "No messages to process for $forConfig")
+            return
+        }
 
         try {
-            configFactory.mergeUserConfigs(
-                userConfigType = forConfig,
-                messages = processed,
-            )
+            receivedMessageHashDatabase.withRemovedDuplicateMessages(
+                swarmPublicKey = userPublicKey,
+                namespace = forConfig.namespace,
+                messages = messages,
+                messageHashGetter = { it.hash },
+            ) { filtered ->
+                if (filtered.isNotEmpty()) {
+                    configFactory.mergeUserConfigs(
+                        userConfigType = forConfig,
+                        messages = filtered
+                            .mapTo(arrayListOf()) { m ->
+                                ConfigMessage(data = m.data, hash = m.hash, timestamp = m.timestamp.toEpochMilli())
+                            }
+                    )
+                }
+
+                Log.d(TAG, "Completed processing ${filtered.size} messages for $forConfig")
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error while merging user configs", e)
         }
-
-        Log.d(TAG, "Completed processing messages for $forConfig")
     }
 
 
@@ -377,7 +355,18 @@ class Poller @AssistedInject constructor(
                 continue
             }
 
-            processConfig(snode, result.getOrThrow().messages, configType)
+            val messages = result.getOrThrow().messages
+            processConfig(messages = messages, forConfig = configType)
+
+            if (messages.isNotEmpty()) {
+                lokiApiDatabase.setLastMessageHashValue(
+                    snode = snode,
+                    publicKey = userPublicKey,
+                    newValue = messages
+                        .maxBy { it.timestamp }.hash,
+                    namespace = configType.namespace
+                )
+            }
         }
 
         // Process the messages if we requested them
@@ -386,7 +375,18 @@ class Poller @AssistedInject constructor(
             if (result.isFailure) {
                 Log.e(TAG, "Error while fetching messages", result.exceptionOrNull())
             } else {
-                processPersonalMessages(snode, result.getOrThrow().messages)
+                val messages = result.getOrThrow().messages
+                processPersonalMessages(messages)
+
+                if (messages.isNotEmpty()) {
+                    lokiApiDatabase.setLastMessageHashValue(
+                        snode = snode,
+                        publicKey = userPublicKey,
+                        newValue = messages
+                            .maxBy { it.timestamp }.hash,
+                        namespace = Namespace.DEFAULT()
+                    )
+                }
             }
         }
     }

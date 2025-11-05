@@ -21,9 +21,6 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
-import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.jobs.MessageReceiveParameters
-import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.model.BatchResponse
@@ -327,7 +324,16 @@ class GroupPoller @AssistedInject constructor(
                         }
 
                         val regularMessages = groupMessageRetrieval.await()
-                        handleMessages(regularMessages.messages, snode)
+                        handleMessages(regularMessages.messages)
+
+                        if (regularMessages.messages.isNotEmpty()) {
+                            lokiApiDatabase.setLastMessageHashValue(
+                                snode = snode,
+                                publicKey = groupId.hexString,
+                                newValue = regularMessages.messages.maxBy { it.timestamp }.hash,
+                                namespace = Namespace.GROUP_MESSAGES()
+                            )
+                        }
                     }
 
                     // Revoke message must be handled regardless, and at the end
@@ -434,43 +440,19 @@ class GroupPoller @AssistedInject constructor(
         )
     }
 
-    private fun handleMessages(messages: List<RetrieveMessageResponse.Message>, snode: Snode) {
+    private fun handleMessages(messages: List<RetrieveMessageResponse.Message>) {
         if (messages.isEmpty()) {
             return
         }
 
-        lokiApiDatabase.setLastMessageHashValue(
-            snode = snode,
-            publicKey = groupId.hexString,
-            newValue = messages.maxBy { it.timestamp }.hash,
-            namespace = Namespace.GROUP_MESSAGES()
-        )
-
-        receivedMessageHashDatabase.removeDuplicates(
+        Log.d(TAG, "${groupId}: Received ${messages.size} group messages from snode")
+        receivedMessageHashDatabase.withRemovedDuplicateMessages(
             swarmPublicKey = groupId.hexString,
             namespace = Namespace.GROUP_MESSAGES(),
             messages = messages,
             messageHashGetter = { it.hash },
-        ).asSequence()
-            .map { msg ->
-                MessageReceiveParameters(
-                    data = msg.data,
-                    serverHash = msg.hash,
-                    closedGroup = Destination.ClosedGroup(groupId.hexString),
-                )
-            }
-            .chunked(BatchMessageReceiveJob.BATCH_DEFAULT_NUMBER)
-            .forEach { chunk ->
-                JobQueue.shared.add(
-                    batchMessageReceiveJobFactory.create(
-                        messages = chunk,
-                        fromCommunity = null
-                    )
-                )
-            }
-
-        if (messages.isNotEmpty()) {
-            Log.d(TAG, "Received and handled ${messages.size} group messages")
+        ) { newMessages ->
+            Log.d(TAG, "${groupId}: Handling ${newMessages.size} new group messages")
         }
     }
 
