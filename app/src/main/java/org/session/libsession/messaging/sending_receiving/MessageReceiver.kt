@@ -26,9 +26,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.abs
 
+@Deprecated("This class only exists so the old BatchMessageReceiver can function. New code should use MessageHandler directly.")
 @Singleton
 class MessageReceiver @Inject constructor(
-    private val configFactory: ConfigFactoryProtocol,
     private val storage: StorageProtocol,
 ) {
 

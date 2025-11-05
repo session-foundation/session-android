@@ -51,6 +51,7 @@ data class MessageReceiveParameters(
     val closedGroup: Destination.ClosedGroup? = null
 )
 
+@Deprecated("BatchMessageReceiveJob is now only here so that existing persisted jobs can be processed.")
 class BatchMessageReceiveJob @AssistedInject constructor(
     @Assisted private val messages: List<MessageReceiveParameters>,
     @Assisted val fromCommunity: Address.Community?, // The community the messages are received in, if any
@@ -360,7 +361,7 @@ class BatchMessageReceiveJob @AssistedInject constructor(
 
     @AssistedFactory
     abstract class Factory : Job.DeserializeFactory<BatchMessageReceiveJob> {
-        abstract fun create(
+        protected abstract fun create(
             messages: List<MessageReceiveParameters>,
             fromCommunity: Address.Community?,
         ): BatchMessageReceiveJob
