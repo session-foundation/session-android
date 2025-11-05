@@ -9,6 +9,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,10 +40,15 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
+import org.thoughtcrime.securesms.ui.SimpleDialogData
+import org.thoughtcrime.securesms.ui.findActivity
+import org.thoughtcrime.securesms.ui.isWhitelistedFromDoze
+import org.thoughtcrime.securesms.ui.requestDozeWhitelist
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.UserProfileModalCommands
 import org.thoughtcrime.securesms.util.UserProfileModalData
@@ -156,6 +162,37 @@ class HomeViewModel @Inject constructor(
     private var userProfileModalUtils: UserProfileUtils? = null
 
     init {
+        // check for white list status in case of slow mode
+        if(!prefs.hasCheckedDozeWhitelist() // the user has not yet seen the dialog
+            && !prefs.pushEnabled.value // the user is in slow mode
+            && !context.isWhitelistedFromDoze() // the user isn't yet whitelisted
+        ){
+           // prefs.setHasCheckedDozeWhitelist(true)
+            viewModelScope.launch {
+                delay(1500)
+                _dialogsState.update {
+                    it.copy(
+                        showSimpleDialog = SimpleDialogData(
+                            title = "Allow Session to work in the background",
+                            message = "Since you are using slow mode we recommend allowing Session to run in the background to help with receiving messages. Your system might still decide to slow down the process but this step might help getting messages more reliably. \nYou can set this later in the Settings > Notifications page.",
+                            positiveText = "Allow",
+                            negativeText = context.getString(R.string.cancel),
+                            positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_whitelist_confirm),
+                            negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_whitelist_cancel),
+                            positiveStyleDanger = false,
+                            onPositive = {
+                                // show system whitelist dialog
+                                viewModelScope.launch {
+                                    _uiEvents.emit(UiEvent.ShowWhiteListSystemDialog)
+                                }
+                            },
+                            onNegative = {}
+                        )
+                    )
+                }
+            }
+        }
+
         // observe subscription status
         viewModelScope.launch {
             proStatusManager.subscriptionState.collect { subscription ->
@@ -315,6 +352,10 @@ class HomeViewModel @Inject constructor(
                     _uiEvents.emit(UiEvent.OpenProSettings(command.destination))
                 }
             }
+
+            is Commands.HideSimpleDialog -> {
+                _dialogsState.update { it.copy(showSimpleDialog = null) }
+            }
         }
     }
 
@@ -340,7 +381,8 @@ class HomeViewModel @Inject constructor(
         val userProfileModal: UserProfileModalData? = null,
         val showStartConversationSheet: StartConversationSheetData? = null,
         val proExpiringCTA: ProExpiringCTA? = null,
-        val proExpiredCTA: Boolean = false
+        val proExpiredCTA: Boolean = false,
+        val showSimpleDialog: SimpleDialogData? = null,
     )
 
     data class PinProCTA(
@@ -358,6 +400,7 @@ class HomeViewModel @Inject constructor(
 
     sealed interface UiEvent {
         data class OpenProSettings(val start: ProSettingsDestination) : UiEvent
+        data object ShowWhiteListSystemDialog: UiEvent // once confirmed, this is for the system whitelist dialog
     }
 
     sealed interface Commands {
@@ -371,6 +414,8 @@ class HomeViewModel @Inject constructor(
 
         data object ShowStartConversationSheet : Commands
         data object HideStartConversationSheet : Commands
+
+        data object HideSimpleDialog: Commands
 
         data class GotoProSettings(
             val destination: ProSettingsDestination

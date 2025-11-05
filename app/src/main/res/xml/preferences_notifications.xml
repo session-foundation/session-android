@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <PreferenceCategory android:title="@string/notificationsStrategy">
 
@@ -10,8 +11,12 @@
             android:summary="@string/notificationsFastModeDescription"
             android:defaultValue="false" />
 
+        <Preference android:title="@string/temp_do_not_commit"
+            app:isPreferenceVisible="false"
+            android:key="whitelist_background" />
+
         <Preference android:title="@string/notificationsGoToDevice"
-            android:key="pref_notification_priority" />
+            android:key="system_notifications" />
 
     </PreferenceCategory>
 
@@ -46,5 +51,8 @@
             android:entryValues="@array/pref_notification_privacy_values" />
 
     </PreferenceCategory>
+
+    <org.thoughtcrime.securesms.preferences.widgets.ComposePreference
+        android:key="compose_data"/>
 
 </PreferenceScreen>

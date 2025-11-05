@@ -9,16 +9,32 @@ import android.os.AsyncTask
 import android.os.Bundle
 import android.provider.Settings
 import android.text.TextUtils
-import androidx.preference.ListPreference
+import android.widget.Toast
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.preference.Preference
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.components.SwitchPreferenceCompat
+import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HideSimpleDialog
 import org.thoughtcrime.securesms.notifications.NotificationChannels
+import org.thoughtcrime.securesms.preferences.widgets.ComposePreference
 import org.thoughtcrime.securesms.preferences.widgets.DropDownPreference
+import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.DialogButtonData
+import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.isWhitelistedFromDoze
+import org.thoughtcrime.securesms.ui.requestDozeWhitelist
+import org.thoughtcrime.securesms.ui.theme.LocalColors
 import java.util.Arrays
 import javax.inject.Inject
 
@@ -27,8 +43,30 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
     @Inject
     lateinit var prefs: TextSecurePreferences
 
+    var showWhitelistDialog by mutableStateOf(false)
+
     override fun onCreate(paramBundle: Bundle?) {
         super.onCreate(paramBundle)
+        // whitelist control
+        val whiteListControl = findPreference<Preference>("whitelist_background")!!
+        whiteListControl.onPreferenceClickListener =
+            Preference.OnPreferenceClickListener {
+                // if already whitelisted, show toast
+                if(requireContext().isWhitelistedFromDoze()){
+                    Toast.makeText(requireContext(), "Session is already whitelisted", Toast.LENGTH_SHORT).show()
+                } else {
+                    openSystemBgWhitelist()
+                }
+                true
+            }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                prefs.pushEnabled.collect { enabled ->
+                    whiteListControl.isVisible = !enabled
+                }
+            }
+        }
 
         // Set up FCM toggle
         val fcmKey = "pref_key_use_fcm"
@@ -36,6 +74,11 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
         fcmPreference.isChecked = prefs.pushEnabled.value
         fcmPreference.setOnPreferenceChangeListener { _: Preference, newValue: Any ->
                 prefs.setPushEnabled(newValue as Boolean)
+                // open whitelist dialog when setting to slow mode if first time
+                if(!newValue && !prefs.hasCheckedDozeWhitelist()){
+                    showWhitelistDialog = true
+                    //prefs.setHasCheckedDozeWhitelist(true)
+                }
                 true
             }
 
@@ -86,7 +129,7 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
                 true
             }
 
-        findPreference<Preference>(TextSecurePreferences.NOTIFICATION_PRIORITY_PREF)!!.onPreferenceClickListener =
+        findPreference<Preference>("system_notifications")!!.onPreferenceClickListener =
             Preference.OnPreferenceClickListener {
                 val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
                 intent.putExtra(
@@ -98,7 +141,40 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
                 true
             }
 
+        //set up compose content
+        findPreference<ComposePreference>("compose_data")!!.apply {
+            setContent {
+                if(showWhitelistDialog) {
+                    AlertDialog(
+                        onDismissRequest = {
+                            // hide dialog
+                            showWhitelistDialog = false
+                        },
+                        title = "Allow Session to work in the background",
+                        text = "Since you are using slow mode we recommend allowing Session to run in the background to help with receiving messages. Your system might still decide to slow down the process but this step might help getting messages more reliably. \nYou can set this later in the Settings > Notifications page.",
+                        buttons = listOf(
+                            DialogButtonData(
+                                text = GetString("Allow"),
+                                qaTag = getString(R.string.qa_conversation_settings_dialog_whitelist_confirm),
+                                onClick = {
+                                    openSystemBgWhitelist()
+                                }
+                            ),
+                            DialogButtonData(
+                                text = GetString(getString(R.string.cancel)),
+                                qaTag = getString(R.string.qa_conversation_settings_dialog_whitelist_cancel),
+                            ),
+                        )
+                    )
+                }
+            }
+        }
+
         initializeMessageVibrateSummary(findPreference<Preference>(TextSecurePreferences.VIBRATE_PREF) as SwitchPreferenceCompat?)
+    }
+
+    private fun openSystemBgWhitelist(){
+        requireActivity().requestDozeWhitelist()
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {

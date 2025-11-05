@@ -135,6 +135,8 @@
     <string name="qa_conversation_settings_dialog_hide_nts_cancel">hide-nts-cancel-button</string>
     <string name="qa_conversation_settings_dialog_show_nts_confirm">show-nts-confirm-button</string>
     <string name="qa_conversation_settings_dialog_show_nts_cancel">show-nts-cancel-button</string>
+    <string name="qa_conversation_settings_dialog_whitelist_confirm">whitelist-confirm-button</string>
+    <string name="qa_conversation_settings_dialog_whitelist_cancel">whitelist-cancel-button</string>
     <string name="qa_conversation_settings_dialog_block_confirm">block-user-confirm-button</string>
     <string name="qa_conversation_settings_dialog_block_cancel">block-user-cancel-button</string>
     <string name="qa_conversation_settings_dialog_unblock_confirm">unblock-user-confirm-button</string>

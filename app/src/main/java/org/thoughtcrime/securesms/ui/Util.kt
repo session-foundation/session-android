@@ -1,8 +1,13 @@
 package org.thoughtcrime.securesms.ui
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.Intent
+import android.net.Uri
+import android.os.PowerManager
+import android.provider.Settings
 import android.view.View
 import android.view.ViewTreeObserver
 import androidx.compose.animation.AnimatedVisibility
@@ -65,6 +70,25 @@ fun Context.findActivity(): Activity {
         context = context.baseContext
     }
     throw IllegalStateException("Permissions should be called in the context of an Activity")
+}
+
+fun Context.isWhitelistedFromDoze(): Boolean {
+    val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+    return pm.isIgnoringBatteryOptimizations(packageName)
+}
+
+fun Activity.requestDozeWhitelist() {
+    if (isWhitelistedFromDoze()) return
+
+    val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+        data = Uri.parse("package:$packageName")
+    }
+    try {
+        startActivity(intent) // shows the system dialog for this specific app
+    } catch (_: ActivityNotFoundException) {
+        // Fallback to the general settings list
+        startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+    }
 }
 
 inline fun <T : View> T.afterMeasured(crossinline block: T.() -> Unit) {
