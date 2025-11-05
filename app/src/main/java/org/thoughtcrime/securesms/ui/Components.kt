@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.ui
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.SizeTransform
@@ -23,6 +24,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -34,6 +36,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -640,15 +643,17 @@ fun LaunchedEffectAsync(block: suspend CoroutineScope.() -> Unit) {
 
 @Composable
 fun LoadingArcOr(loading: Boolean, content: @Composable () -> Unit) {
-    Crossfade(loading) { isLoading ->
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            if (isLoading) {
-                SmallCircularProgressIndicator(color = LocalContentColor.current)
-            } else {
-                content()
-            }
+    AnimatedContent(
+        targetState = loading,
+        transitionSpec = { fadeIn() togetherWith fadeOut() },
+        contentAlignment = Alignment.Center,
+        label = "LoadingArcOr"
+    ) { isLoading ->
+        if (isLoading) {
+            SmallCircularProgressIndicator(color = LocalContentColor.current)
+        } else {
+            content()
         }
-
     }
 }
 
