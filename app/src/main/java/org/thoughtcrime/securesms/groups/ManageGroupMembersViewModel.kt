@@ -32,7 +32,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.OTHER_NAME_KEY
-import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.ui.CollapsibleFooterItemData
@@ -40,8 +39,8 @@ import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.util.AvatarUtils
 
 
-@HiltViewModel(assistedFactory = EditGroupViewModel.Factory::class)
-class EditGroupViewModel @AssistedInject constructor(
+@HiltViewModel(assistedFactory = ManageGroupMembersViewModel.Factory::class)
+class ManageGroupMembersViewModel @AssistedInject constructor(
     @Assisted private val groupAddress: Address.Group,
     @param:ApplicationContext private val context: Context,
     storage: StorageProtocol,
@@ -379,6 +378,6 @@ class EditGroupViewModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(groupAddress: Address.Group): EditGroupViewModel
+        fun create(groupAddress: Address.Group): ManageGroupMembersViewModel
     }
 }

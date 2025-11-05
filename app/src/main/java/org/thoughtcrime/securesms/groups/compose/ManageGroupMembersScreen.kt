@@ -51,8 +51,8 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsignal.utilities.AccountId
-import org.thoughtcrime.securesms.groups.EditGroupViewModel
-import org.thoughtcrime.securesms.groups.EditGroupViewModel.CollapsibleFooterState
+import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel
+import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel.CollapsibleFooterState
 import org.thoughtcrime.securesms.groups.GroupMemberState
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
@@ -85,27 +85,22 @@ import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
 
 @Composable
-fun EditGroupScreen(
-    viewModel: EditGroupViewModel,
+fun ManageGroupMembersScreen(
+    viewModel: ManageGroupMembersViewModel,
     navigateToInviteContact: (Set<String>) -> Unit,
     onBack: () -> Unit,
 ) {
-    EditGroup(
+    ManageMembers(
         onBack = onBack,
         onAddMemberClick = { navigateToInviteContact(viewModel.excludingAccountIDsFromContactSelection) },
-        onPromoteClick = viewModel::onPromoteContact,
         members = viewModel.nonAdminMembers.collectAsState().value,
         selectedMembers = viewModel.selectedMembers.collectAsState().value,
-        groupName = viewModel.groupName.collectAsState().value,
         showAddMembers = viewModel.showAddMembers.collectAsState().value,
-        onResendPromotionClick = viewModel::onResendPromotionClicked,
         showingError = viewModel.error.collectAsState().value,
         onErrorDismissed = viewModel::onDismissError,
         showingResend = viewModel.resendString.collectAsState().value,
         onResendDismissed = viewModel::onDismissResend,
         onMemberClicked = viewModel::onMemberItemClicked,
-        hideActionSheet = viewModel::hideActionBottomSheet,
-        clickedMember = viewModel.clickedMember.collectAsState().value,
         showLoading = viewModel.inProgress.collectAsState().value,
         searchQuery = viewModel.searchQuery.collectAsState().value,
         searchFocused = viewModel.searchFocused.collectAsState().value,
@@ -123,11 +118,9 @@ fun EditGroupScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditGroup(
+fun ManageMembers(
     onBack: () -> Unit,
     onAddMemberClick: () -> Unit,
-    onResendPromotionClick: (accountId: AccountId) -> Unit,
-    onPromoteClick: (accountId: AccountId) -> Unit,
     onMemberClicked: (member: GroupMemberState) -> Unit,
     onSearchFocusChanged : (isFocused : Boolean) -> Unit,
     searchFocused : Boolean,
@@ -137,9 +130,6 @@ fun EditGroup(
     onCloseFooter: () -> Unit,
     onSearchQueryChanged: (String) -> Unit,
     onSearchQueryClear: () -> Unit,
-    hideActionSheet: () -> Unit,
-    clickedMember: GroupMemberState?,
-    groupName: String,
     members: List<GroupMemberState>,
     selectedMembers: Set<GroupMemberState> = emptySet(),
     showAddMembers: Boolean,
@@ -148,20 +138,16 @@ fun EditGroup(
     onResendDismissed: () -> Unit,
     showLoading: Boolean,
     onErrorDismissed: () -> Unit,
-    sendCommands: (command : EditGroupViewModel.Commands) -> Unit,
-    removeMembersData: EditGroupViewModel.RemoveMembersState
+    sendCommands: (command : ManageGroupMembersViewModel.Commands) -> Unit,
+    removeMembersData: ManageGroupMembersViewModel.RemoveMembersState
 ) {
-//    val (showingConfirmRemovingMember, setShowingConfirmRemovingMember) = remember {
-//        mutableStateOf<GroupMemberState?>(null)
-//    }
-
-    val optionsList: List<EditGroupViewModel.OptionsItem> = listOf(
-        EditGroupViewModel.OptionsItem(
+    val optionsList: List<ManageGroupMembersViewModel.OptionsItem> = listOf(
+        ManageGroupMembersViewModel.OptionsItem(
             name = LocalResources.current.getString(R.string.membersInvite),
             icon = R.drawable.ic_user_round_plus,
             onClick = { onAddMemberClick() }
         ),
-        EditGroupViewModel.OptionsItem(
+        ManageGroupMembersViewModel.OptionsItem(
             name = LocalResources.current.getString(R.string.accountIdOrOnsInvite),
             icon = R.drawable.ic_user_round_search,
             onClick = { onAddMemberClick() }
@@ -433,9 +419,9 @@ fun EditMemberItem(
 
 @Composable
 fun ShowRemoveMembersDialog(
-    state: EditGroupViewModel.RemoveMembersState,
+    state: ManageGroupMembersViewModel.RemoveMembersState,
     modifier: Modifier = Modifier,
-    sendCommand: (EditGroupViewModel.Commands) -> Unit
+    sendCommand: (ManageGroupMembersViewModel.Commands) -> Unit
 ) {
     var deleteMessages by remember { mutableStateOf(false) }
 
@@ -443,7 +429,7 @@ fun ShowRemoveMembersDialog(
         modifier = modifier,
         onDismissRequest = {
             // hide dialog
-            sendCommand(EditGroupViewModel.Commands.DismissRemoveDialog)
+            sendCommand(ManageGroupMembersViewModel.Commands.DismissRemoveDialog)
         },
         title = annotatedStringResource(R.string.remove),
         text = annotatedStringResource(state.removeMemberBody),
@@ -474,14 +460,14 @@ fun ShowRemoveMembersDialog(
                 color = LocalColors.current.danger,
                 dismissOnClick = false,
                 onClick = {
-                    sendCommand(EditGroupViewModel.Commands.DismissRemoveDialog)
-                    sendCommand(EditGroupViewModel.Commands.RemoveMembers(deleteMessages))
+                    sendCommand(ManageGroupMembersViewModel.Commands.DismissRemoveDialog)
+                    sendCommand(ManageGroupMembersViewModel.Commands.RemoveMembers(deleteMessages))
                 }
             ),
             DialogButtonData(
                 text = GetString(stringResource(R.string.cancel)),
                 onClick = {
-                    sendCommand(EditGroupViewModel.Commands.DismissRemoveDialog)
+                    sendCommand(ManageGroupMembersViewModel.Commands.DismissRemoveDialog)
                 }
             )
         )
@@ -579,19 +565,14 @@ private fun EditGroupPreviewSheet() {
 
         val (editingName, setEditingName) = remember { mutableStateOf<String?>(null) }
 
-        EditGroup(
+        ManageMembers(
             onBack = {},
             onAddMemberClick = {},
-            onPromoteClick = {},
             members = listOf(oneMember, twoMember, threeMember),
-            groupName = "Test ",
             showAddMembers = true,
-            onResendPromotionClick = {},
             showingError = "Error",
             onErrorDismissed = {},
             onMemberClicked = {},
-            hideActionSheet = {},
-            clickedMember = oneMember,
             showLoading = false,
             searchQuery = "Test",
             onSearchQueryChanged = { },
@@ -610,7 +591,7 @@ private fun EditGroupPreviewSheet() {
             showingResend = "Resending Invite",
             onResendDismissed = {},
             sendCommands = {},
-            removeMembersData = EditGroupViewModel.RemoveMembersState()
+            removeMembersData = ManageGroupMembersViewModel.RemoveMembersState()
         )
     }
 }
@@ -689,19 +670,14 @@ private fun EditGroupEditNamePreview(
             statusLabel = ""
         )
 
-        EditGroup(
+        ManageMembers(
             onBack = {},
             onAddMemberClick = {},
-            onPromoteClick = {},
             members = listOf(oneMember, twoMember, threeMember),
-            groupName = "Test name that is very very long indeed because many words in it",
             showAddMembers = true,
-            onResendPromotionClick = {},
             showingError = "Error",
             onErrorDismissed = {},
             onMemberClicked = {},
-            hideActionSheet = {},
-            clickedMember = null,
             showLoading = false,
             searchQuery = "",
             onSearchQueryChanged = { },
@@ -733,7 +709,7 @@ private fun EditGroupEditNamePreview(
             showingResend = "Resending Invite",
             onResendDismissed = {},
             sendCommands = {},
-            removeMembersData = EditGroupViewModel.RemoveMembersState()
+            removeMembersData = ManageGroupMembersViewModel.RemoveMembersState()
         )
     }
 }
