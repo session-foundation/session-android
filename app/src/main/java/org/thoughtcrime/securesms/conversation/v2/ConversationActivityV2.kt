@@ -121,12 +121,10 @@ import org.session.libsignal.utilities.hexEncodedPrivateKey
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.FullComposeActivity.Companion.applyCommonPropertiesForCompose
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
-import org.thoughtcrime.securesms.attachments.ScreenshotObserver
 import org.thoughtcrime.securesms.audio.AudioRecorderHandle
 import org.thoughtcrime.securesms.audio.recordAudio
 import org.thoughtcrime.securesms.components.TypingStatusSender
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
-import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnReactionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ShowOpenUrlDialog
@@ -152,6 +150,7 @@ import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDel
 import org.thoughtcrime.securesms.conversation.v2.search.SearchBottomBar
 import org.thoughtcrime.securesms.conversation.v2.search.SearchViewModel
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsActivity
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsActivity
 import org.thoughtcrime.securesms.conversation.v2.utilities.AttachmentManager
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
@@ -274,13 +273,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override val applyAutoScrimForNavigationBar: Boolean
         get() = false
 
-    private val screenshotObserver by lazy {
-        ScreenshotObserver(this, Handler(Looper.getMainLooper())) {
-            // post screenshot message
-            sendScreenshotNotification()
-        }
-    }
-
     private val screenWidth = Resources.getSystem().displayMetrics.widthPixels
     private val linkPreviewViewModel: LinkPreviewViewModel by lazy {
         ViewModelProvider(this, LinkPreviewViewModel.Factory(LinkPreviewRepository()))
@@ -288,9 +280,22 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private val address: Address.Conversable by lazy {
-        requireNotNull(IntentCompat.getParcelableExtra(intent, ADDRESS, Address.Conversable::class.java)) {
-            "Address must be provided in the intent extras to open a conversation"
+        val fromExtras =
+            IntentCompat.getParcelableExtra(intent, ADDRESS, Address.Conversable::class.java)
+        if (fromExtras != null) {
+            return@lazy fromExtras
         }
+
+        // Fallback: parse from URI
+        val serialized = intent.data?.getQueryParameter(ADDRESS)
+        if (!serialized.isNullOrEmpty()) {
+            val parsed = fromSerialized(serialized)
+            if (parsed is Address.Conversable) {
+                return@lazy parsed
+            }
+        }
+
+        throw IllegalArgumentException("Address must be provided in the intent extras or URI")
     }
 
     private val viewModel: ConversationViewModel by viewModels(extrasProducer = {
@@ -533,7 +538,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         super.onCreate(savedInstanceState, isReady)
 
         // Check if address is null before proceeding with initialization
-        if (IntentCompat.getParcelableExtra(intent, ADDRESS, Address.Conversable::class.java) == null) {
+        if (
+                IntentCompat.getParcelableExtra(
+                    intent,
+                    ADDRESS,
+                    Address.Conversable::class.java
+                ) == null &&
+                intent.data?.getQueryParameter(ADDRESS).isNullOrEmpty()
+        ) {
             Log.w(TAG, "ConversationActivityV2 launched without ADDRESS extra - Returning home")
             val intent = Intent(this, HomeActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -696,9 +708,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     }
 
                     is ConversationUiEvent.ShowDisappearingMessages -> {
-                        val intent = Intent(this@ConversationActivityV2, DisappearingMessagesActivity::class.java).apply {
-                            putExtra(DisappearingMessagesActivity.ARG_ADDRESS, event.address)
-                        }
+                        val intent = ConversationSettingsActivity.createIntent(
+                            context = this@ConversationActivityV2,
+                            address = event.address,
+                            startDestination = ConversationSettingsDestination.RouteDisappearingMessages
+                        )
                         startActivity(intent)
                     }
 
@@ -752,18 +766,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun onResume() {
         super.onResume()
         ApplicationContext.getInstance(this).messageNotifier.setVisibleThread(viewModel.threadId)
-
-        contentResolver.registerContentObserver(
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-            true,
-            screenshotObserver
-        )
     }
 
     override fun onPause() {
         super.onPause()
         ApplicationContext.getInstance(this).messageNotifier.setVisibleThread(-1)
-        contentResolver.unregisterContentObserver(screenshotObserver)
     }
 
     override fun getSystemService(name: String): Any? {
@@ -1815,7 +1822,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
             message.reaction = Reaction.from(
                 timestamp = originalMessage.timestamp,
-                author = originalAuthor.address, 
+                author = originalAuthor.address,
                 emoji = emoji,
                 react = false
             )
@@ -2716,14 +2723,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun destroyActionMode() {
         this.actionMode = null
-    }
-
-    private fun sendScreenshotNotification() {
-        val recipient = viewModel.recipient
-        if (recipient.isGroupOrCommunityRecipient) return
-        val kind = DataExtractionNotification.Kind.Screenshot()
-        val message = DataExtractionNotification(kind)
-        MessageSender.send(message, recipient.address)
     }
 
     private fun sendMediaSavedNotification() {

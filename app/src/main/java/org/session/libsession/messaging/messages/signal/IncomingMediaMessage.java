@@ -136,13 +136,6 @@ public class IncomingMediaMessage {
     return hasMention;
   }
 
-  public boolean isScreenshotDataExtraction() {
-    if (dataExtractionNotification == null) return false;
-    else {
-      return dataExtractionNotification.getKind() == DataExtractionNotificationInfoMessage.Kind.SCREENSHOT;
-    }
-  }
-
   public boolean isMediaSavedDataExtraction() {
     if (dataExtractionNotification == null) return false;
     else {

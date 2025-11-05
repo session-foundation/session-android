@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.preferences.prosettings
+package org.thoughtcrime.securesms.preferences.prosettings.chooseplan
 
 import android.icu.util.MeasureUnit
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -6,12 +6,23 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,6 +36,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -37,18 +49,23 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN_LENGTH_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
+import org.thoughtcrime.securesms.preferences.prosettings.BaseProSettingsScreen
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.GetProPlan
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.SelectProPlan
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowTCPolicyDialog
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlan
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlanBadge
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.expiryFromNow
+import org.thoughtcrime.securesms.ui.LoadingArcOr
 import org.thoughtcrime.securesms.ui.SpeechBubbleTooltip
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.RadioButtonIndicator
@@ -66,35 +83,6 @@ import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.util.DateUtils
 
-
-@OptIn(ExperimentalSharedTransitionApi::class)
-@Composable
-fun ChoosePlanScreen(
-    viewModel: ProSettingsViewModel,
-    onBack: () -> Unit,
-) {
-    val planData by viewModel.choosePlanState.collectAsState()
-
-    // there are different UI depending on the state
-    when {
-       // there is an active subscription but from a different platform
-        (planData.subscriptionType as? SubscriptionType.Active)?.nonOriginatingSubscription != null ->
-            ChoosePlanNonOriginating(
-                subscription = planData.subscriptionType as SubscriptionType.Active,
-                sendCommand = viewModel::onCommand,
-                onBack = onBack,
-            )
-
-        //todo PRO handle the case here when there are no SubscriptionManager available (for example fdroid builds)
-
-        // default plan chooser
-        else -> ChoosePlan(
-            planData = planData,
-            sendCommand = viewModel::onCommand,
-            onBack = onBack,
-        )
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
@@ -115,30 +103,28 @@ fun ChoosePlan(
         Spacer(Modifier.height(LocalDimensions.current.spacing))
 
         val context = LocalContext.current
-        val title = when(planData.subscriptionType) {
-            is SubscriptionType.Expired ->
-                Phrase.from(context.getText(R.string.proPlanRenewStart))
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .format()
-
-            is SubscriptionType.Active.Expiring -> Phrase.from(context.getText(R.string.proPlanActivatedNotAuto))
-                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                .put(DATE_KEY, planData.subscriptionType.duration.expiryFromNow())
-                .format()
-
-            is SubscriptionType.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proPlanActivatedAuto))
-                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                .put(CURRENT_PLAN_KEY, DateUtils.getLocalisedTimeDuration(
-                    context = context,
-                    amount = planData.subscriptionType.duration.duration.months,
-                    unit = MeasureUnit.MONTH
-                ))
-                .put(DATE_KEY, planData.subscriptionType.duration.expiryFromNow())
+        val title = when (planData.subscriptionType) {
+            is SubscriptionType.Active.Expiring -> Phrase.from(context.getText(R.string.proAccessActivatedNotAuto))
                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                .put(DATE_KEY, planData.subscriptionType.duration.expiryFromNow())
                 .format()
 
-            else -> ""
+            is SubscriptionType.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proAccessActivatesAuto))
+                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                .put(
+                    CURRENT_PLAN_LENGTH_KEY, DateUtils.getLocalisedTimeDuration(
+                        context = context,
+                        amount = planData.subscriptionType.duration.duration.months,
+                        unit = MeasureUnit.MONTH
+                    )
+                )
+                .put(DATE_KEY, planData.subscriptionType.duration.expiryFromNow())
+                .format()
+
+            else ->
+                Phrase.from(context.getText(R.string.proChooseAccess))
+                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                    .format()
         }
 
         Text(
@@ -148,21 +134,29 @@ fun ChoosePlan(
             style = LocalType.current.base,
             color = LocalColors.current.text,
 
-        )
+            )
 
         Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
 
         // SUBSCRIPTIONS
         planData.plans.forEachIndexed { index, data ->
-            if(index != 0){
-                Spacer(Modifier.height(if(data.badges.isNotEmpty()){
-                    max(LocalDimensions.current.xsSpacing, LocalDimensions.current.contentSpacing - badgeHeight/2)
-                } else LocalDimensions.current.contentSpacing))
+            if (index != 0) {
+                Spacer(
+                    Modifier.height(
+                        if (data.badges.isNotEmpty()) {
+                            max(
+                                LocalDimensions.current.xsSpacing,
+                                LocalDimensions.current.contentSpacing - badgeHeight / 2
+                            )
+                        } else LocalDimensions.current.contentSpacing
+                    )
+                )
             }
             PlanItem(
                 proPlan = data,
                 badgePadding = badgeHeight / 2,
                 onBadgeLaidOut = { height -> badgeHeight = max(badgeHeight, height) },
+                enabled = !planData.purchaseInProgress,
                 onClick = {
                     sendCommand(SelectProPlan(data))
                 }
@@ -171,23 +165,50 @@ fun ChoosePlan(
 
         Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
 
-        val buttonLabel = when(planData.subscriptionType) {
+        val buttonLabel = when (planData.subscriptionType) {
             is SubscriptionType.Expired -> context.getString(R.string.renew)
-            is SubscriptionType.Active.Expiring -> context.getString(R.string.updatePlan)
-            else -> context.getString(R.string.updatePlan)
+            is SubscriptionType.Active.Expiring -> Phrase.from(LocalContext.current, R.string.updateAccess)
+                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                .format().toString()
+            is SubscriptionType.NeverSubscribed -> stringResource(R.string.upgrade)
+            else -> Phrase.from(LocalContext.current, R.string.updateAccess)
+                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                .format().toString()
         }
 
         AccentFillButtonRect(
             modifier = Modifier.fillMaxWidth()
                 .widthIn(max = LocalDimensions.current.maxContentWidth),
-            text = buttonLabel,
             enabled = planData.enableButton,
             onClick = {
                 sendCommand(GetProPlan)
             }
-        )
+        ){
+            LoadingArcOr(loading = planData.purchaseInProgress) {
+                Text(text = buttonLabel)
+            }
+        }
 
         Spacer(Modifier.height(LocalDimensions.current.xxsSpacing))
+
+        val footer = when (planData.subscriptionType) {
+            is SubscriptionType.Expired ->
+                Phrase.from(LocalContext.current.getText(R.string.proRenewTosPrivacy))
+                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                    .put(ICON_KEY, iconExternalLink)
+                    .format()
+
+            is SubscriptionType.Active -> Phrase.from(LocalContext.current.getText(R.string.proTosPrivacy))
+                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                .put(ICON_KEY, iconExternalLink)
+                .format()
+
+            is SubscriptionType.NeverSubscribed ->
+                Phrase.from(LocalContext.current.getText(R.string.proUpgradingTosPrivacy))
+                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                    .put(ICON_KEY, iconExternalLink)
+                    .format()
+        }
 
         Text(
             modifier = Modifier.fillMaxWidth()
@@ -201,13 +222,7 @@ fun ChoosePlan(
                     vertical = LocalDimensions.current.xxsSpacing
                 )
                 .clip(MaterialTheme.shapes.extraSmall),
-            text = annotatedStringResource(
-                Phrase.from(LocalContext.current.getText(R.string.proTosPrivacy))
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .put(ICON_KEY, iconExternalLink)
-                    .put(ICON_KEY, iconExternalLink)
-                    .format()
-            ),
+            text = annotatedStringResource(footer),
             textAlign = TextAlign.Center,
             style = LocalType.current.small,
             color = LocalColors.current.text,
@@ -223,6 +238,7 @@ fun ChoosePlan(
 private fun PlanItem(
     proPlan: ProPlan,
     badgePadding: Dp,
+    enabled: Boolean,
     modifier: Modifier= Modifier,
     onBadgeLaidOut: (Dp) -> Unit,
     onClick: () -> Unit
@@ -245,9 +261,13 @@ private fun PlanItem(
                     shape = MaterialTheme.shapes.small
                 )
                 .clip(MaterialTheme.shapes.small)
-                .clickable(
-                    onClick = onClick
-                )
+                .then(
+                    if (enabled) Modifier.clickable(
+                        onClick = onClick
+                    )
+                    else Modifier
+                ),
+
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth()
@@ -272,7 +292,7 @@ private fun PlanItem(
 
                 RadioButtonIndicator(
                     selected = proPlan.selected,
-                    enabled = true,
+                    enabled = enabled,
                     colors = radioButtonColors(
                         unselectedBorder = LocalColors.current.borders,
                         selectedBorder = LocalColors.current.accent,
@@ -382,6 +402,7 @@ private fun PreviewUpdatePlanItems(
                 ),
                 badgePadding = 0.dp,
                 onBadgeLaidOut = {},
+                enabled = true,
                 onClick = {}
             )
 
@@ -398,26 +419,28 @@ private fun PreviewUpdatePlanItems(
                     ),
                 ),
                 badgePadding = 0.dp,
+                enabled = true,
                 onBadgeLaidOut = {},
                 onClick = {}
             )
 
             PlanItem(
-                proPlan = ProSettingsViewModel.ProPlan(
+                proPlan = ProPlan(
                     title = "Plan 1 with a very long title boo foo bar hello there",
                     subtitle = "Subtitle that is also very long and is allowed to go onto another line",
                     selected = true,
                     currentPlan = true,
                     durationType = ProSubscriptionDuration.TWELVE_MONTHS,
                     badges = listOf(
-                        ProSettingsViewModel.ProPlanBadge("Current Plan"),
-                        ProSettingsViewModel.ProPlanBadge(
+                        ProPlanBadge("Current Plan"),
+                        ProPlanBadge(
                             "20% Off but that is very long so we can test how this renders to be safe",
                             "This is a tooltip"
                         ),
                     ),
                 ),
                 badgePadding = 0.dp,
+                enabled = true,
                 onBadgeLaidOut = {},
                 onClick = {}
             )

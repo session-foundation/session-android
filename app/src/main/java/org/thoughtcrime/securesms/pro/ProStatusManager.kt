@@ -24,7 +24,6 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.util.State
 import java.time.Duration
@@ -43,12 +42,31 @@ class ProStatusManager @Inject constructor(
         recipientRepository.observeSelf(),
         (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS } as Flow<*>)
             .onStart { emit(Unit) }
-            .map { prefs.getDebugSubscriptionType() }
-    ){ selfRecipient, debugSubscription ->
+            .map { prefs.getDebugSubscriptionType() },
+        (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_PRO_PLAN_STATUS } as Flow<*>)
+            .onStart { emit(Unit) }
+            .map { prefs.getDebugProPlanStatus() },
+        (TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO } as Flow<*>)
+            .onStart { emit(Unit) }
+            .map { prefs.forceCurrentUserAsPro() },
+    ){ selfRecipient, debugSubscription, debugProPlanStatus, forceCurrentUserAsPro ->
         //todo PRO implement properly
 
         val subscriptionState = debugSubscription ?: DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE
-        SubscriptionState(
+        val proDataStatus = when(debugProPlanStatus){
+            DebugMenuViewModel.DebugProPlanStatus.LOADING -> State.Loading
+            DebugMenuViewModel.DebugProPlanStatus.ERROR -> State.Error(Exception())
+            else -> State.Success(Unit)
+        }
+
+        if(!forceCurrentUserAsPro){
+            //todo PRO this is where we should get the real state
+            SubscriptionState(
+                type = SubscriptionType.NeverSubscribed,
+                refreshState = proDataStatus
+            )
+        }
+        else SubscriptionState(
             type = when(subscriptionState){
                 DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> SubscriptionType.Active.AutoRenewing(
                     proStatus = ProStatus.Pro(
@@ -56,7 +74,14 @@ class ProStatusManager @Inject constructor(
                         validUntil = Instant.now() + Duration.ofDays(14),
                     ),
                     duration = ProSubscriptionDuration.THREE_MONTHS,
-                    nonOriginatingSubscription = null
+                    subscriptionDetails = SubscriptionDetails(
+                        device = "Android",
+                        store = "Google Play Store",
+                        platform = "Google",
+                        platformAccount = "Google account",
+                        subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
+                        refundUrl = "https://getsession.org/android-refund",
+                    )
                 )
 
                 DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> SubscriptionType.Active.Expiring(
@@ -65,7 +90,30 @@ class ProStatusManager @Inject constructor(
                         validUntil = Instant.now() + Duration.ofDays(2),
                     ),
                     duration = ProSubscriptionDuration.TWELVE_MONTHS,
-                    nonOriginatingSubscription = null
+                    subscriptionDetails = SubscriptionDetails(
+                        device = "Android",
+                        store = "Google Play Store",
+                        platform = "Google",
+                        platformAccount = "Google account",
+                        subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
+                        refundUrl = "https://getsession.org/android-refund",
+                    )
+                )
+
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER -> SubscriptionType.Active.Expiring(
+                    proStatus = ProStatus.Pro(
+                        visible = true,
+                        validUntil = Instant.now() + Duration.ofDays(40),
+                    ),
+                    duration = ProSubscriptionDuration.TWELVE_MONTHS,
+                    subscriptionDetails = SubscriptionDetails(
+                        device = "Android",
+                        store = "Google Play Store",
+                        platform = "Google",
+                        platformAccount = "Google account",
+                        subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
+                        refundUrl = "https://getsession.org/android-refund",
+                    )
                 )
 
                 DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> SubscriptionType.Active.AutoRenewing(
@@ -74,12 +122,13 @@ class ProStatusManager @Inject constructor(
                         validUntil = Instant.now() + Duration.ofDays(14),
                     ),
                     duration = ProSubscriptionDuration.ONE_MONTH,
-                    nonOriginatingSubscription = SubscriptionType.Active.NonOriginatingSubscription(
-                        device = "iPhone",
+                    subscriptionDetails = SubscriptionDetails(
+                        device = "iOS",
                         store = "Apple App Store",
                         platform = "Apple",
                         platformAccount = "Apple Account",
-                        urlSubscription = "https://www.apple.com/account/subscriptions",
+                        subscriptionUrl = "https://www.apple.com/account/subscriptions",
+                        refundUrl = "https://support.apple.com/118223",
                     )
                 )
 
@@ -89,19 +138,52 @@ class ProStatusManager @Inject constructor(
                         validUntil = Instant.now() + Duration.ofDays(2),
                     ),
                     duration = ProSubscriptionDuration.ONE_MONTH,
-                    nonOriginatingSubscription = SubscriptionType.Active.NonOriginatingSubscription(
-                        device = "iPhone",
+                    subscriptionDetails = SubscriptionDetails(
+                        device = "iOS",
                         store = "Apple App Store",
                         platform = "Apple",
                         platformAccount = "Apple Account",
-                        urlSubscription = "https://www.apple.com/account/subscriptions",
+                        subscriptionUrl = "https://www.apple.com/account/subscriptions",
+                        refundUrl = "https://support.apple.com/118223",
                     )
                 )
 
-                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> SubscriptionType.Expired
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> SubscriptionType.Expired(
+                    expiredAt = Instant.now() - Duration.ofDays(14),
+                    subscriptionDetails = SubscriptionDetails(
+                        device = "Android",
+                        store = "Google Play Store",
+                        platform = "Google",
+                        platformAccount = "Google account",
+                        subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
+                        refundUrl = "https://getsession.org/android-refund",
+                    )
+                )
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_EARLIER -> SubscriptionType.Expired(
+                    expiredAt = Instant.now() - Duration.ofDays(60),
+                    subscriptionDetails = SubscriptionDetails(
+                        device = "Android",
+                        store = "Google Play Store",
+                        platform = "Google",
+                        platformAccount = "Google account",
+                        subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
+                        refundUrl = "https://getsession.org/android-refund",
+                    )
+                )
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE -> SubscriptionType.Expired(
+                    expiredAt = Instant.now() - Duration.ofDays(14),
+                    subscriptionDetails = SubscriptionDetails(
+                        device = "iOS",
+                        store = "Apple App Store",
+                        platform = "Apple",
+                        platformAccount = "Apple Account",
+                        subscriptionUrl = "https://www.apple.com/account/subscriptions",
+                        refundUrl = "https://support.apple.com/118223",
+                    )
+                )
             },
-               // SubscriptionType.NeverSubscribed,
-            refreshState = State.Success(Unit),
+
+            refreshState = proDataStatus,
         )
 
     }.stateIn(GlobalScope, SharingStarted.Eagerly,
@@ -118,9 +200,6 @@ class ProStatusManager @Inject constructor(
             }
         }
     }
-
-    //todo PRO add "about to expire" CTA logic on app launch
-    //todo PRO add "expired" CTA logic on app launch
 
     /**
      * Logic to determine if we should animate the avatar for a user or freeze it on the first frame
@@ -199,8 +278,10 @@ class ProStatusManager @Inject constructor(
     companion object {
         const val MAX_CHARACTER_PRO = 10000 // max characters in a message for pro users
         private const val MAX_CHARACTER_REGULAR = 2000 // max characters in a message for non pro users
-        private const val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
+        const val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
 
         const val URL_PRO_SUPPORT = "https://getsession.org/pro-form"
+        const val DEFAULT_GOOGLE_STORE = "Google Play Store"
+        const val DEFAULT_APPLE_STORE = "Apple App Store"
     }
 }

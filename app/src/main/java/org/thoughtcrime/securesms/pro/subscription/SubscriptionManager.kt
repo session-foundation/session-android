@@ -1,17 +1,63 @@
 package org.thoughtcrime.securesms.pro.subscription
 
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
+import java.time.Instant
 
 /**
  * Represents the implementation details of a given subscription provider
  */
 interface SubscriptionManager: OnAppStartupComponent {
     val id: String
-    val displayName: String
+    val name: String
     val description: String
     val iconRes: Int?
 
+    val supportsBilling: StateFlow<Boolean>
+
+    // Optional. Some store can have a platform specific refund window and url
+    val quickRefundUrl: String?
+
     val availablePlans: List<ProSubscriptionDuration>
 
-    fun purchasePlan(subscriptionDuration: ProSubscriptionDuration)
+    sealed interface PurchaseEvent {
+        data object Success : PurchaseEvent
+        data object Cancelled : PurchaseEvent
+        data class Failed(val errorMessage: String? = null) : PurchaseEvent
+    }
+
+    // purchase events
+    val purchaseEvents: SharedFlow<PurchaseEvent>
+
+    suspend fun purchasePlan(subscriptionDuration: ProSubscriptionDuration): Result<Unit>
+
+    /**
+     * Returns true if a provider has a quick refunds and the current time since purchase is within that window
+     */
+    suspend fun isWithinQuickRefundWindow(): Boolean
+
+    /**
+     * Checks whether there is a valid subscription for the current user within this subscriber's billing API
+     */
+    suspend fun hasValidSubscription(): Boolean
+
+    /**
+     * Gets a list of pricing for the subscriptions
+     * @throws Exception in case of errors fetching prices
+     */
+    @Throws(Exception::class)
+    suspend fun getSubscriptionPrices(): List<SubscriptionPricing>
+
+    data class SubscriptionPricing(
+        val subscriptionDuration: ProSubscriptionDuration,
+        val priceAmountMicros: Long,
+        val priceCurrencyCode: String,
+        val billingPeriodIso: String,
+        val formattedTotal: String,
+    )
 }
+

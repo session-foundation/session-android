@@ -92,14 +92,25 @@ class DebugMenuViewModel @Inject constructor(
             debugSubscriptionStatuses = setOf(
                 DebugSubscriptionStatus.AUTO_GOOGLE,
                 DebugSubscriptionStatus.EXPIRING_GOOGLE,
+                DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER,
                 DebugSubscriptionStatus.AUTO_APPLE,
                 DebugSubscriptionStatus.EXPIRING_APPLE,
                 DebugSubscriptionStatus.EXPIRED,
+                DebugSubscriptionStatus.EXPIRED_EARLIER,
+                DebugSubscriptionStatus.EXPIRED_APPLE,
             ),
             selectedDebugSubscriptionStatus = textSecurePreferences.getDebugSubscriptionType() ?: DebugSubscriptionStatus.AUTO_GOOGLE,
+            debugProPlanStatus = setOf(
+                DebugProPlanStatus.NORMAL,
+                DebugProPlanStatus.LOADING,
+                DebugProPlanStatus.ERROR,
+            ),
+            selectedDebugProPlanStatus = textSecurePreferences.getDebugProPlanStatus() ?: DebugProPlanStatus.NORMAL,
             debugProPlans = subscriptionManagers.asSequence()
                 .flatMap { it.availablePlans.asSequence().map { plan -> DebugProPlan(it, plan) } }
                 .toList(),
+            forceNoBilling = textSecurePreferences.getDebugForceNoBilling(),
+            withinQuickRefund = textSecurePreferences.getDebugIsWithinQuickRefund(),
             availableAltFileServers = TEST_FILE_SERVERS,
             alternativeFileServer = textSecurePreferences.alternativeFileServer,
         )
@@ -268,6 +279,20 @@ class DebugMenuViewModel @Inject constructor(
                 }
             }
 
+            is Commands.ForceNoBilling -> {
+                textSecurePreferences.setDebugForceNoBilling(command.set)
+                _uiState.update {
+                    it.copy(forceNoBilling = command.set)
+                }
+            }
+
+            is Commands.WithinQuickRefund -> {
+                textSecurePreferences.setDebugIsWithinQuickRefund(command.set)
+                _uiState.update {
+                    it.copy(withinQuickRefund = command.set)
+                }
+            }
+
             is Commands.ForcePostPro -> {
                 textSecurePreferences.setForcePostPro(command.set)
                 _uiState.update {
@@ -308,8 +333,17 @@ class DebugMenuViewModel @Inject constructor(
                 }
             }
 
+            is Commands.SetDebugProPlanStatus -> {
+                textSecurePreferences.setDebugProPlanStatus(command.status)
+                _uiState.update {
+                    it.copy(selectedDebugProPlanStatus = command.status)
+                }
+            }
+
             is Commands.PurchaseDebugPlan -> {
-                command.plan.apply { manager.purchasePlan(plan) }
+                viewModelScope.launch {
+                    command.plan.apply { manager.purchasePlan(plan) }
+                }
             }
 
             is Commands.ToggleDeterministicEncryption -> {
@@ -441,7 +475,11 @@ class DebugMenuViewModel @Inject constructor(
         val dbInspectorState: DatabaseInspectorState,
         val debugSubscriptionStatuses: Set<DebugSubscriptionStatus>,
         val selectedDebugSubscriptionStatus: DebugSubscriptionStatus,
+        val debugProPlanStatus: Set<DebugProPlanStatus>,
+        val selectedDebugProPlanStatus: DebugProPlanStatus,
         val debugProPlans: List<DebugProPlan>,
+        val forceNoBilling: Boolean,
+        val withinQuickRefund: Boolean,
         val alternativeFileServer: FileServer? = null,
         val availableAltFileServers: List<FileServer> = emptyList(),
     )
@@ -454,10 +492,19 @@ class DebugMenuViewModel @Inject constructor(
 
     enum class DebugSubscriptionStatus(val label: String) {
         AUTO_GOOGLE("Auto Renewing (Google, 3 months)"),
-        EXPIRING_GOOGLE("Expiring/Cancelled (Google, 12 months)"),
+        EXPIRING_GOOGLE("Expiring/Cancelled (Expires in 14 days, Google, 12 months)"),
+        EXPIRING_GOOGLE_LATER("Expiring/Cancelled (Expires in 40 days, Google, 12 months)"),
         AUTO_APPLE("Auto Renewing (Apple, 1 months)"),
-        EXPIRING_APPLE("Expiring/Cancelled (Apple, 1 months)"),
-        EXPIRED("Expired"),
+        EXPIRING_APPLE("Expiring/Cancelled (Expires in 14 days, Apple, 1 months)"),
+        EXPIRED("Expired (Expired 2 days ago, Google)"),
+        EXPIRED_EARLIER("Expired (Expired 60 days ago, Google)"),
+        EXPIRED_APPLE("Expired (Expired 2 days ago, Apple)"),
+    }
+
+    enum class DebugProPlanStatus(val label: String){
+        NORMAL("Normal State"),
+        LOADING("Always Loading"),
+        ERROR("Always Erroring out"),
     }
 
     sealed class Commands {
@@ -472,6 +519,8 @@ class DebugMenuViewModel @Inject constructor(
         data class ForceCurrentUserAsPro(val set: Boolean) : Commands()
         data class ForceOtherUsersAsPro(val set: Boolean) : Commands()
         data class ForceIncomingMessagesAsPro(val set: Boolean) : Commands()
+        data class ForceNoBilling(val set: Boolean) : Commands()
+        data class WithinQuickRefund(val set: Boolean) : Commands()
         data class ForcePostPro(val set: Boolean) : Commands()
         data class ForceShortTTl(val set: Boolean) : Commands()
         data class SetMessageProFeature(val feature: ProStatusManager.MessageProFeature, val set: Boolean) : Commands()
@@ -484,6 +533,7 @@ class DebugMenuViewModel @Inject constructor(
         data class GenerateContacts(val prefix: String, val count: Int): Commands()
         data object ToggleDatabaseInspector : Commands()
         data class SetDebugSubscriptionStatus(val status: DebugSubscriptionStatus) : Commands()
+        data class SetDebugProPlanStatus(val status: DebugProPlanStatus) : Commands()
         data class PurchaseDebugPlan(val plan: DebugProPlan) : Commands()
         data object ToggleDeterministicEncryption : Commands()
         data object ToggleDebugAvatarReupload : Commands()

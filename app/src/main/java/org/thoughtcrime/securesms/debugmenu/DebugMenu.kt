@@ -278,8 +278,46 @@ fun DebugMenu(
                                 )
                             }
                         )
+
+                        Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+                        DebugSwitchRow(
+                            text = "Is Within Quick Refund Window",
+                            checked = uiState.withinQuickRefund,
+                            onCheckedChange = {
+                                sendCommand(DebugMenuViewModel.Commands.WithinQuickRefund(it))
+                            }
+                        )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+                Text(
+                    modifier = Modifier.padding(top = LocalDimensions.current.xxsSpacing),
+                    text = "Pro Data Status",
+                    style = LocalType.current.base
+                )
+                DropDown(
+                    modifier = Modifier.fillMaxWidth()
+                        .padding(top = LocalDimensions.current.xxsSpacing),
+                    selectedText = uiState.selectedDebugProPlanStatus.label,
+                    values = uiState.debugProPlanStatus.map { it.label },
+                    onValueSelected = { selection ->
+                        sendCommand(
+                            DebugMenuViewModel.Commands.SetDebugProPlanStatus(
+                                uiState.debugProPlanStatus.first { it.label == selection }
+                            )
+                        )
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+                DebugSwitchRow(
+                    text = "Force \"No Billing\" APIs",
+                    checked = uiState.forceNoBilling,
+                    onCheckedChange = {
+                        sendCommand(DebugMenuViewModel.Commands.ForceNoBilling(it))
+                    }
+                )
 
                 Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
                 DebugSwitchRow(
@@ -798,7 +836,11 @@ fun PreviewDebugMenu() {
                 dbInspectorState = DebugMenuViewModel.DatabaseInspectorState.STARTED,
                 debugSubscriptionStatuses = setOf(DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE),
                 selectedDebugSubscriptionStatus = DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE,
+                debugProPlanStatus = setOf(DebugMenuViewModel.DebugProPlanStatus.NORMAL),
+                selectedDebugProPlanStatus = DebugMenuViewModel.DebugProPlanStatus.NORMAL,
                 debugProPlans = emptyList(),
+                forceNoBilling = false,
+                withinQuickRefund = true,
                 forceDeterministicEncryption = false,
                 debugAvatarReupload = true,
             ),

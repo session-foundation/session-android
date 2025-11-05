@@ -878,7 +878,6 @@
     <string name="proAutoRenewTime">Automatische {pro} Erneuerung in <b>{time}</b></string>
     <string name="proCallToActionLongerMessages">Du möchtest längere Nachrichten senden? Sende mehr Text und schalte Premium-Funktionen mit {app_pro} frei</string>
     <string name="proCallToActionPinnedConversations">Mehr Anheftungen gewünscht? Organisiere deine Chats und schalte Premium-Funktionen mit {app_pro} frei</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">Mehr als 5 Anheftungen gewünscht? Organisiere deine Chats und schalte Premium-Funktionen mit {app_pro} frei</string>
     <string name="proExpired">Abgelaufen</string>
     <string name="proFaq">{pro} FAQ</string>
     <string name="proFeatureListAnimatedDisplayPicture">GIF- und WebP-Profilbilder hochladen</string>
