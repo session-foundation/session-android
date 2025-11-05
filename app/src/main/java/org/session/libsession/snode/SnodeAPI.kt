@@ -17,6 +17,7 @@ import kotlinx.coroutines.selects.select
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.decodeFromStream
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.Hash
 import network.loki.messenger.libsession_util.SessionEncrypt
@@ -159,13 +160,18 @@ object SnodeAPI {
         method: Snode.Method,
         snode: Snode,
         parameters: Map<String, Any>,
-        responseClass: Class<Res>,
+        responseDeserializationStrategy: DeserializationStrategy<Res>,
         publicKey: String? = null,
         version: Version = Version.V3
     ): Res = when {
         useOnionRequests -> {
             val resp = OnionRequestAPI.sendOnionRequest(method, parameters, snode, version, publicKey).await()
-            JsonUtil.fromJson(resp.body ?: throw Error.Generic, responseClass)
+            (resp.body ?: throw Error.Generic).inputStream().use { inputStream ->
+                MessagingModuleConfiguration.shared.json.decodeFromStream(
+                    deserializer = responseDeserializationStrategy,
+                    stream = inputStream
+                )
+            }
         }
 
         else -> HTTP.execute(
@@ -176,7 +182,10 @@ object SnodeAPI {
                 this["params"] = parameters
             }
         ).toString().let {
-            JsonUtil.fromJson(it, responseClass)
+            MessagingModuleConfiguration.shared.json.decodeFromString(
+                deserializer = responseDeserializationStrategy,
+                string = it
+            )
         }
     }
 
@@ -626,7 +635,7 @@ object SnodeAPI {
             method = if (sequence) Snode.Method.Sequence else Snode.Method.Batch,
             snode = snode,
             parameters = mapOf("requests" to requests),
-            responseClass = BatchResponse::class.java,
+            responseDeserializationStrategy = BatchResponse.serializer(),
             publicKey = publicKey
         ).also { resp ->
             // If there's a unsuccessful response, go through specific logic to handle

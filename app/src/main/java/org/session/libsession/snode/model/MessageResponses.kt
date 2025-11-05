@@ -22,7 +22,7 @@ data class RetrieveMessageResponse(
         val hash: String,
         @Serializable(InstantAsMillisSerializer::class)
         @SerialName("t")
-        val timestamp: Instant,
+        val timestamp: Instant? = null,
         @SerialName("data")
         val dataB64: String? = null,
     ) {

@@ -4,9 +4,6 @@ import android.content.Context
 import androidx.sqlite.db.SupportSQLiteDatabase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.serialization.json.Json
-import org.session.libsession.snode.SnodeAPI.database
-import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.prettifiedDescription
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.util.asSequence
 import javax.inject.Inject

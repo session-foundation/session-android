@@ -44,6 +44,7 @@ import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.NetworkConnectivity
+import java.time.Instant
 import kotlin.time.Duration.Companion.days
 
 private const val TAG = "Poller"
@@ -218,7 +219,8 @@ class Poller @AssistedInject constructor(
         lokiApiDatabase.setLastMessageHashValue(
             snode = snode,
             publicKey = userPublicKey,
-            newValue = messages.maxBy { it.timestamp }.hash,
+            newValue = messages
+                .maxBy { it.timestamp ?: Instant.EPOCH }.hash,
             namespace = Namespace.DEFAULT()
         )
 
@@ -250,7 +252,7 @@ class Poller @AssistedInject constructor(
             lokiApiDatabase.setLastMessageHashValue(
                 snode = snode,
                 publicKey = userPublicKey,
-                newValue = messages.maxBy { it.timestamp }.hash,
+                newValue = messages.maxBy { it.timestamp ?: Instant.EPOCH }.hash,
                 namespace = namespace
             )
             receivedMessageHashDatabase.removeDuplicates(
@@ -259,7 +261,7 @@ class Poller @AssistedInject constructor(
                 messageHashGetter = { it.hash },
                 namespace = namespace,
             ).map { m ->
-                ConfigMessage(data = m.data, hash = m.hash, timestamp = m.timestamp.toEpochMilli())
+                ConfigMessage(data = m.data, hash = m.hash, timestamp = m.timestamp!!.toEpochMilli())
             }
         } else emptyList()
 
