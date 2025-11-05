@@ -307,7 +307,7 @@ class GroupPoller @AssistedInject constructor(
                                 maxSize = null,
                             ),
                             responseType = RetrieveMessageResponse.serializer()
-                        ).messages.filterNotNull()
+                        ).messages
                     }
                 }
 
@@ -388,7 +388,7 @@ class GroupPoller @AssistedInject constructor(
     }
 
     private fun RetrieveMessageResponse.Message.toConfigMessage(): ConfigMessage {
-        return ConfigMessage(hash, data, timestamp!!.toEpochMilli())
+        return ConfigMessage(hash, data, timestamp.toEpochMilli())
     }
 
     private fun saveLastMessageHash(
@@ -442,7 +442,7 @@ class GroupPoller @AssistedInject constructor(
         lokiApiDatabase.setLastMessageHashValue(
             snode = snode,
             publicKey = groupId.hexString,
-            newValue = messages.maxBy { it.timestamp ?: Instant.EPOCH }.hash,
+            newValue = messages.maxBy { it.timestamp }.hash,
             namespace = Namespace.GROUP_MESSAGES()
         )
 
