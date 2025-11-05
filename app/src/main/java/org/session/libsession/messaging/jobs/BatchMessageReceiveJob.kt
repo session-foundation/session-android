@@ -361,7 +361,8 @@ class BatchMessageReceiveJob @AssistedInject constructor(
 
     @AssistedFactory
     abstract class Factory : Job.DeserializeFactory<BatchMessageReceiveJob> {
-        protected abstract fun create(
+        @Deprecated("New code should try to handle message directly instead of creating this job")
+        abstract fun create(
             messages: List<MessageReceiveParameters>,
             fromCommunity: Address.Community?,
         ): BatchMessageReceiveJob

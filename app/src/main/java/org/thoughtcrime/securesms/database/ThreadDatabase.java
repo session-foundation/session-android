@@ -772,7 +772,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
   public boolean markAllAsRead(long threadId, long lastSeenTime, boolean force, boolean updateNotifications) {
     if (mmsSmsDatabase.get().getConversationCount(threadId) <= 0 && !force) return false;
     List<MarkedMessageInfo> messages = setRead(threadId, lastSeenTime);
-    markReadProcessor.get().process(context, messages);
+    markReadProcessor.get().process(messages);
     if(updateNotifications) messageNotifier.get().updateNotification(context, threadId);
     return setLastSeen(threadId, lastSeenTime);
   }

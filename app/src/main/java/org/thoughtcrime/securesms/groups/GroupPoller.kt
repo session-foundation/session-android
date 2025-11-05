@@ -36,6 +36,7 @@ import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
+import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.getRootCause
 import java.time.Instant
@@ -52,6 +53,7 @@ class GroupPoller @AssistedInject constructor(
     private val appVisibilityManager: AppVisibilityManager,
     private val groupRevokedMessageHandler: GroupRevokedMessageHandler,
     private val batchMessageReceiveJobFactory: BatchMessageReceiveJob.Factory,
+    private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
 ) {
     companion object {
         private const val POLL_INTERVAL = 3_000L
@@ -444,12 +446,11 @@ class GroupPoller @AssistedInject constructor(
             namespace = Namespace.GROUP_MESSAGES()
         )
 
-        SnodeAPI.removeDuplicates(
-            publicKey = groupId.hexString,
+        receivedMessageHashDatabase.removeDuplicates(
+            swarmPublicKey = groupId.hexString,
             namespace = Namespace.GROUP_MESSAGES(),
             messages = messages,
             messageHashGetter = { it.hash },
-            updateStoredHashes = true
         ).asSequence()
             .map { msg ->
                 MessageReceiveParameters(

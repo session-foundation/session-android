@@ -4,6 +4,8 @@ import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroupApi.Capability
+import org.session.libsignal.crypto.PushTransportDetails
+import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Base64.decode
 import org.session.libsignal.utilities.Log
@@ -81,5 +83,10 @@ data class OpenGroupMessage(
         sender?.let { json["public_key"] = it }
         base64EncodedSignature?.let { json["signature"] = it }
         return json
+    }
+
+    fun toProto(): SignalServiceProtos.Content {
+        val data = decode(base64EncodedData).let(PushTransportDetails::getStrippedPaddingMessageBody)
+        return SignalServiceProtos.Content.parseFrom(data)
     }
 }

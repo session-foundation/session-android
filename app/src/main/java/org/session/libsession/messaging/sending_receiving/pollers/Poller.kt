@@ -41,6 +41,7 @@ import org.session.libsession.utilities.UserConfigType
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
+import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import kotlin.time.Duration.Companion.days
@@ -58,6 +59,7 @@ class Poller @AssistedInject constructor(
     private val networkConnectivity: NetworkConnectivity,
     private val batchMessageReceiveJobFactory: BatchMessageReceiveJob.Factory,
     private val snodeClock: SnodeClock,
+    private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     @Assisted scope: CoroutineScope
 ) {
     private val userPublicKey: String
@@ -119,7 +121,7 @@ class Poller @AssistedInject constructor(
             // To migrate to multi part config, we'll need to fetch all the config messages so we
             // get the chance to process those multipart messages again...
             lokiApiDatabase.clearLastMessageHashesByNamespaces(*allConfigNamespaces)
-            lokiApiDatabase.clearReceivedMessageHashValuesByNamespaces(*allConfigNamespaces)
+            receivedMessageHashDatabase.removeAllByNamespaces(*allConfigNamespaces)
 
             preferences.migratedToMultiPartConfig = true
         }
@@ -220,12 +222,11 @@ class Poller @AssistedInject constructor(
             namespace = Namespace.DEFAULT()
         )
 
-        SnodeAPI.removeDuplicates(
-            publicKey = userPublicKey,
+        receivedMessageHashDatabase.removeDuplicates(
+            swarmPublicKey = userPublicKey,
             messages = messages,
             messageHashGetter = { it.hash },
             namespace = Namespace.DEFAULT(),
-            updateStoredHashes = true
         ).asSequence()
             .map { msg ->
                 MessageReceiveParameters(
@@ -252,12 +253,11 @@ class Poller @AssistedInject constructor(
                 newValue = messages.maxBy { it.timestamp }.hash,
                 namespace = namespace
             )
-            SnodeAPI.removeDuplicates(
-                publicKey = userPublicKey,
+            receivedMessageHashDatabase.removeDuplicates(
+                swarmPublicKey = userPublicKey,
                 messages = messages,
                 messageHashGetter = { it.hash },
                 namespace = namespace,
-                updateStoredHashes = true
             ).map { m ->
                 ConfigMessage(data = m.data, hash = m.hash, timestamp = m.timestamp.toEpochMilli())
             }

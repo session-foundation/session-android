@@ -63,6 +63,7 @@ import org.thoughtcrime.securesms.configs.ConfigUploader
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -84,6 +85,7 @@ class GroupManagerV2Impl @Inject constructor(
     private val clock: SnodeClock,
     private val messageDataProvider: MessageDataProvider,
     private val lokiAPIDatabase: LokiAPIDatabase,
+    private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     private val configUploader: ConfigUploader,
     private val scope: GroupScope,
     private val groupPollerManager: GroupPollerManager,
@@ -885,7 +887,7 @@ class GroupManagerV2Impl @Inject constructor(
 
         // Clear all polling states
         lokiAPIDatabase.clearLastMessageHashes(groupId.hexString)
-        lokiAPIDatabase.clearReceivedMessageHashValues(groupId.hexString)
+        receivedMessageHashDatabase.removeAllByPublicKey(groupId.hexString)
         SessionMetaProtocol.clearReceivedMessages()
 
         configFactory.deleteGroupConfigs(groupId)
