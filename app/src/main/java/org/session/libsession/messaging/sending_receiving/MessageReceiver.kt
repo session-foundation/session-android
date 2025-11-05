@@ -1,6 +1,5 @@
 package org.session.libsession.messaging.sending_receiving
 
-import network.loki.messenger.libsession_util.protocol.SessionProtocol
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.messages.Message
@@ -12,11 +11,10 @@ import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.messages.control.TypingIndicator
 import org.session.libsession.messaging.messages.control.UnsendRequest
-import org.session.libsession.messaging.messages.visible.ParsedMessage
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsignal.crypto.PushTransportDetails
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.protos.SignalServiceProtos.Envelope
 import org.session.libsignal.utilities.AccountId
@@ -32,7 +30,6 @@ import kotlin.math.abs
 class MessageReceiver @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val storage: StorageProtocol,
-    private val snodeClock: SnodeClock,
 ) {
 
     internal sealed class Error(message: String) : Exception(message) {
@@ -61,46 +58,7 @@ class MessageReceiver @Inject constructor(
         }
     }
 
-    fun parse1o1Message(
-        data: ByteArray,
-        serverHash: String,
-    ): ParsedMessage {
-
-        SessionProtocol.decodeEnvelope()
-        TODO()
-
-        message.serverHash = serverHash
-    }
-
-    fun parseGroupMessage(
-        data: ByteArray,
-        serverHash: String,
-        groupId: AccountId,
-    ): ParsedMessage {
-        TODO()
-
-        message.serverHash = serverHash
-    }
-
-    fun parseCommunityMessage(
-        data: ByteArray,
-        messageServerId: Long,
-        communityServerPubKeyHex: String,
-    ): ParsedMessage {
-        TODO()
-    }
-
-    fun parseCommunityInboxMessage(
-        data: ByteArray,
-        isOutgoing: Boolean,
-        otherBlindedPublicKey: String,
-        communityServerPubKeyHex: String,
-    ): ParsedMessage {
-        TODO()
-    }
-
-    private fun parse(
-        proto: SignalServiceProtos.Content,
+    internal fun parse(
         data: ByteArray,
         openGroupServerID: Long?,
         isOutgoing: Boolean? = null,
@@ -109,85 +67,86 @@ class MessageReceiver @Inject constructor(
         currentClosedGroups: Set<String>?,
         closedGroupSessionId: String? = null,
     ): Pair<Message, SignalServiceProtos.Content> {
-//        val userPublicKey = storage.getUserPublicKey()
-//        val isOpenGroupMessage = (openGroupServerID != null)
-//        var plaintext: ByteArray? = null
-//        var sender: String? = null
-//        var groupPublicKey: String? = null
-//        // Parse the envelope
-//        val envelope = Envelope.parseFrom(data) ?: throw Error.InvalidMessage
-//        // Decrypt the contents
-//        val envelopeContent = envelope.content ?: run {
-//            throw Error.NoData
-//        }
-//
-//        if (isOpenGroupMessage) {
-//            plaintext = envelopeContent.toByteArray()
-//            sender = envelope.source
-//        } else {
-//            when (envelope.type) {
-//                SignalServiceProtos.Envelope.Type.SESSION_MESSAGE -> {
-//                    if (IdPrefix.fromValue(envelope.source)?.isBlinded() == true) {
-//                        openGroupPublicKey ?: throw Error.InvalidGroupPublicKey
-//                        otherBlindedPublicKey ?: throw Error.DecryptionFailed
-//                        val decryptionResult = MessageDecrypter.decryptBlinded(
-//                            envelopeContent.toByteArray(),
-//                            isOutgoing ?: false,
-//                            otherBlindedPublicKey,
-//                            openGroupPublicKey
-//                        )
-//                        plaintext = decryptionResult.first
-//                        sender = decryptionResult.second
-//                    } else {
-//                        val userX25519KeyPair = storage.getUserX25519KeyPair()
-//                        val decryptionResult = MessageDecrypter.decrypt(envelopeContent.toByteArray(), userX25519KeyPair)
-//                        plaintext = decryptionResult.first
-//                        sender = decryptionResult.second
-//                    }
-//                }
-//                SignalServiceProtos.Envelope.Type.CLOSED_GROUP_MESSAGE -> {
-//                    val hexEncodedGroupPublicKey = closedGroupSessionId ?: envelope.source
-//                    val sessionId = AccountId(hexEncodedGroupPublicKey)
-//                    if (sessionId.prefix == IdPrefix.GROUP) {
-//                        plaintext = envelopeContent.toByteArray()
-//                        sender = envelope.source
-//                        groupPublicKey = hexEncodedGroupPublicKey
-//                    } else {
-//                        if (!storage.isLegacyClosedGroup(hexEncodedGroupPublicKey)) {
-//                            throw Error.InvalidGroupPublicKey
-//                        }
-//                        val encryptionKeyPairs = storage.getClosedGroupEncryptionKeyPairs(hexEncodedGroupPublicKey)
-//                        if (encryptionKeyPairs.isEmpty()) {
-//                            throw Error.NoGroupKeyPair
-//                        }
-//                        // Loop through all known group key pairs in reverse order (i.e. try the latest key pair first (which'll more than
-//                        // likely be the one we want) but try older ones in case that didn't work)
-//                        var encryptionKeyPair = encryptionKeyPairs.removeAt(encryptionKeyPairs.lastIndex)
-//                        fun decrypt() {
-//                            try {
-//                                val decryptionResult = MessageDecrypter.decrypt(envelopeContent.toByteArray(), encryptionKeyPair)
-//                                plaintext = decryptionResult.first
-//                                sender = decryptionResult.second
-//                            } catch (e: Exception) {
-//                                if (encryptionKeyPairs.isNotEmpty()) {
-//                                    encryptionKeyPair = encryptionKeyPairs.removeAt(encryptionKeyPairs.lastIndex)
-//                                    decrypt()
-//                                } else {
-//                                    Log.e("Loki", "Failed to decrypt group message", e)
-//                                    throw e
-//                                }
-//                            }
-//                        }
-//                        groupPublicKey = hexEncodedGroupPublicKey
-//                        decrypt()
-//                    }
-//                }
-//                else -> {
-//                    throw Error.UnknownEnvelopeType
-//                }
-//            }
-//        }
-//        // Parse the proto
+        val userPublicKey = storage.getUserPublicKey()
+        val isOpenGroupMessage = (openGroupServerID != null)
+        var plaintext: ByteArray? = null
+        var sender: String? = null
+        var groupPublicKey: String? = null
+        // Parse the envelope
+        val envelope = Envelope.parseFrom(data) ?: throw Error.InvalidMessage
+        // Decrypt the contents
+        val envelopeContent = envelope.content ?: run {
+            throw Error.NoData
+        }
+
+        if (isOpenGroupMessage) {
+            plaintext = envelopeContent.toByteArray()
+            sender = envelope.source
+        } else {
+            when (envelope.type) {
+                SignalServiceProtos.Envelope.Type.SESSION_MESSAGE -> {
+                    if (IdPrefix.fromValue(envelope.source)?.isBlinded() == true) {
+                        openGroupPublicKey ?: throw Error.InvalidGroupPublicKey
+                        otherBlindedPublicKey ?: throw Error.DecryptionFailed
+                        val decryptionResult = MessageDecrypter.decryptBlinded(
+                            envelopeContent.toByteArray(),
+                            isOutgoing ?: false,
+                            otherBlindedPublicKey,
+                            openGroupPublicKey
+                        )
+                        plaintext = decryptionResult.first
+                        sender = decryptionResult.second
+                    } else {
+                        val userX25519KeyPair = storage.getUserX25519KeyPair()
+                        val decryptionResult = MessageDecrypter.decrypt(envelopeContent.toByteArray(), userX25519KeyPair)
+                        plaintext = decryptionResult.first
+                        sender = decryptionResult.second
+                    }
+                }
+                SignalServiceProtos.Envelope.Type.CLOSED_GROUP_MESSAGE -> {
+                    val hexEncodedGroupPublicKey = closedGroupSessionId ?: envelope.source
+                    val sessionId = AccountId(hexEncodedGroupPublicKey)
+                    if (sessionId.prefix == IdPrefix.GROUP) {
+                        plaintext = envelopeContent.toByteArray()
+                        sender = envelope.source
+                        groupPublicKey = hexEncodedGroupPublicKey
+                    } else {
+                        if (!storage.isLegacyClosedGroup(hexEncodedGroupPublicKey)) {
+                            throw Error.InvalidGroupPublicKey
+                        }
+                        val encryptionKeyPairs = storage.getClosedGroupEncryptionKeyPairs(hexEncodedGroupPublicKey)
+                        if (encryptionKeyPairs.isEmpty()) {
+                            throw Error.NoGroupKeyPair
+                        }
+                        // Loop through all known group key pairs in reverse order (i.e. try the latest key pair first (which'll more than
+                        // likely be the one we want) but try older ones in case that didn't work)
+                        var encryptionKeyPair = encryptionKeyPairs.removeAt(encryptionKeyPairs.lastIndex)
+                        fun decrypt() {
+                            try {
+                                val decryptionResult = MessageDecrypter.decrypt(envelopeContent.toByteArray(), encryptionKeyPair)
+                                plaintext = decryptionResult.first
+                                sender = decryptionResult.second
+                            } catch (e: Exception) {
+                                if (encryptionKeyPairs.isNotEmpty()) {
+                                    encryptionKeyPair = encryptionKeyPairs.removeAt(encryptionKeyPairs.lastIndex)
+                                    decrypt()
+                                } else {
+                                    Log.e("Loki", "Failed to decrypt group message", e)
+                                    throw e
+                                }
+                            }
+                        }
+                        groupPublicKey = hexEncodedGroupPublicKey
+                        decrypt()
+                    }
+                }
+                else -> {
+                    throw Error.UnknownEnvelopeType
+                }
+            }
+        }
+        // Parse the proto
+        val proto = SignalServiceProtos.Content.parseFrom(PushTransportDetails.getStrippedPaddingMessageBody(plaintext))
 
         // Verify the signature timestamp inside the content is the same as in envelope.
         // If the message is from an open group, 6 hours of difference is allowed.
@@ -238,7 +197,7 @@ class MessageReceiver @Inject constructor(
         message.sender = sender
         message.recipient = userPublicKey
         message.sentTimestamp = envelope.timestampMs
-        message.receivedTimestamp = if (envelope.hasServerTimestampMs()) envelope.serverTimestampMs else snodeClock.currentTimeMills()
+        message.receivedTimestamp = if (envelope.hasServerTimestampMs()) envelope.serverTimestampMs else SnodeAPI.nowWithOffset
         message.groupPublicKey = groupPublicKey
         message.openGroupServerMessageID = openGroupServerID
         // Validate
@@ -247,7 +206,12 @@ class MessageReceiver @Inject constructor(
         if (!isValid) {
             throw Error.InvalidMessage
         }
-
+        // If the message failed to process the first time around we retry it later (if the error is retryable). In this case the timestamp
+        // will already be in the database but we don't want to treat the message as a duplicate. The isRetry flag is a simple workaround
+        // for this issue.
+        if (groupPublicKey != null && groupPublicKey !in (currentClosedGroups ?: emptySet()) && IdPrefix.fromValue(groupPublicKey) != IdPrefix.GROUP) {
+            throw Error.NoGroupThread
+        }
         if (storage.isDuplicateMessage(envelope.timestampMs)) { throw Error.DuplicateMessage }
         storage.addReceivedMessageTimestamp(envelope.timestampMs)
         // Return
