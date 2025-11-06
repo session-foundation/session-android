@@ -71,13 +71,15 @@ import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LoadingDialog
+import org.thoughtcrime.securesms.ui.components.SlimFillButtonRect
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.Button
 import org.thoughtcrime.securesms.ui.components.ButtonType
 import org.thoughtcrime.securesms.ui.components.DropDown
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionSwitch
-import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
+import org.thoughtcrime.securesms.ui.components.SlimFillButtonRect
+import org.thoughtcrime.securesms.ui.components.SlimFillButtonRect
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -216,17 +218,34 @@ fun DebugMenu(
                 )
             }
 
-            if (uiState.dbInspectorState != DebugMenuViewModel.DatabaseInspectorState.NOT_AVAILABLE) {
-                DebugCell("Database inspector") {
-                    Button(
-                        onClick = {
-                            sendCommand(DebugMenuViewModel.Commands.ToggleDatabaseInspector)
-                        },
-                        text = if (uiState.dbInspectorState == DebugMenuViewModel.DatabaseInspectorState.STOPPED)
-                            "Start"
-                        else "Stop",
-                        type = ButtonType.AccentFill,
-                    )
+            // Debug Logger
+            DebugCell(
+                "Debug Logger",
+                verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
+
+                SlimFillButtonRect(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = "Show Debug Logs",
+                ) {
+                    sendCommand(DebugMenuViewModel.Commands.NavigateTo(DebugMenuDestination.DebugMenuLogs))
+                }
+
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+
+                Column {
+                    DebugLogGroup.entries.forEach { logGroup ->
+                        DebugSwitchRow(
+                            text = "Show toasts for ${logGroup.label}",
+                            checked = uiState.showToastForGroups[logGroup.label] == true,
+                            onCheckedChange = {
+                                sendCommand(DebugMenuViewModel.Commands.ToggleDebugLogGroup(
+                                    group = logGroup,
+                                    showToast = it)
+                                )
+                            }
+                        )
+                    }
                 }
             }
 
@@ -409,6 +428,20 @@ fun DebugMenu(
                 }
             }
 
+            if (uiState.dbInspectorState != DebugMenuViewModel.DatabaseInspectorState.NOT_AVAILABLE) {
+                DebugCell("Database inspector") {
+                    SlimFillButtonRect(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            sendCommand(DebugMenuViewModel.Commands.ToggleDatabaseInspector)
+                        },
+                        text = if (uiState.dbInspectorState == DebugMenuViewModel.DatabaseInspectorState.STOPPED)
+                            "Start"
+                        else "Stop",
+                    )
+                }
+            }
+
             // Fake contacts
             DebugCell("Generate fake contacts") {
                 var prefix by remember { mutableStateOf("User-") }
@@ -433,7 +466,7 @@ fun DebugMenu(
                     )
                 }
 
-                SlimOutlineButton(modifier = Modifier.fillMaxWidth(), text = "Generate") {
+                SlimFillButtonRect(modifier = Modifier.fillMaxWidth(), text = "Generate") {
                     sendCommand(
                         GenerateContacts(
                             prefix = prefix,
@@ -446,7 +479,7 @@ fun DebugMenu(
             // Session Token
             DebugCell("Session Token") {
                 // Schedule a test token-drop notification for 10 seconds from now
-                SlimOutlineButton(
+                SlimFillButtonRect(
                     modifier = Modifier.fillMaxWidth(),
                     text = "Schedule Token Page Notification (10s)",
                     onClick = { sendCommand(ScheduleTokenNotification) }
@@ -456,7 +489,7 @@ fun DebugMenu(
             // Keys
             DebugCell("User Details") {
 
-                SlimOutlineButton (
+                SlimFillButtonRect (
                     text = "Copy Account ID",
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
@@ -464,7 +497,7 @@ fun DebugMenu(
                     }
                 )
 
-                SlimOutlineButton(
+                SlimFillButtonRect(
                     text = "Copy 07-prefixed Version Blinded Public Key",
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
@@ -493,7 +526,7 @@ fun DebugMenu(
                     }
                 )
 
-                SlimOutlineButton(
+                SlimFillButtonRect(
                     modifier = Modifier.fillMaxWidth(),
                     text = "Clear All Trusted Downloads",
                 ) {
@@ -542,14 +575,14 @@ fun DebugMenu(
                     }
                 )
 
-                SlimOutlineButton(
+                SlimFillButtonRect(
                     modifier = Modifier.fillMaxWidth(),
                     text = "Reset Push Token",
                 ) {
                     sendCommand(DebugMenuViewModel.Commands.ResetPushToken)
                 }
 
-                SlimOutlineButton(
+                SlimFillButtonRect(
                     modifier = Modifier.fillMaxWidth(),
                     text = "Clear All Trusted Downloads",
                 ) {

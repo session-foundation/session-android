@@ -7,14 +7,17 @@ import android.os.Build
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -39,17 +42,20 @@ import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
+import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.util.ClearDataUtils
 import java.time.ZonedDateTime
 import javax.inject.Inject
 
 
-@HiltViewModel
-class DebugMenuViewModel @Inject constructor(
+@HiltViewModel(assistedFactory = DebugMenuViewModel.Factory::class)
+class DebugMenuViewModel @AssistedInject constructor(
+    @Assisted private val navigator: UINavigator<DebugMenuDestination>,
     @param:ApplicationContext private val context: Context,
     private val textSecurePreferences: TextSecurePreferences,
     private val tokenPageNotificationManager: TokenPageNotificationManager,
@@ -62,9 +68,15 @@ class DebugMenuViewModel @Inject constructor(
     private val conversationRepository: ConversationRepository,
     private val databaseInspector: DatabaseInspector,
     private val tokenFetcher: TokenFetcher,
+    private val debugLogger: DebugLogger,
     subscriptionManagers: Set<@JvmSuppressWildcards SubscriptionManager>,
 ) : ViewModel() {
     private val TAG = "DebugMenu"
+
+    @AssistedFactory
+    interface Factory {
+        fun create(navigator: UINavigator<DebugMenuDestination>): DebugMenuViewModel
+    }
 
     private val _uiState = MutableStateFlow(
         UIState(
@@ -113,10 +125,13 @@ class DebugMenuViewModel @Inject constructor(
             withinQuickRefund = textSecurePreferences.getDebugIsWithinQuickRefund(),
             availableAltFileServers = TEST_FILE_SERVERS,
             alternativeFileServer = textSecurePreferences.alternativeFileServer,
+            showToastForGroups = getDebugGroupToastPref()
         )
     )
     val uiState: StateFlow<UIState>
         get() = _uiState
+
+    val debugLogs = debugLogger.logs
 
     init {
         if (databaseInspector.available) {
@@ -368,7 +383,23 @@ class DebugMenuViewModel @Inject constructor(
                 _uiState.update { it.copy(alternativeFileServer = command.fileServer) }
                 textSecurePreferences.alternativeFileServer = command.fileServer
             }
+
+            is Commands.NavigateTo -> {
+                viewModelScope.launch {
+                    navigator.navigate(command.destination)
+                }
+            }
+
+            is Commands.ToggleDebugLogGroup -> {
+                debugLogger.showGroupToast(command.group, command.showToast)
+            }
         }
+    }
+
+    private fun getDebugGroupToastPref(): Map<String, Boolean> {
+        return DebugLogGroup.entries.associate { group ->
+                group.label to debugLogger.getGroupToastPreference(group)
+            }
     }
 
     private fun showEnvironmentWarningDialog(environment: String) {
@@ -482,6 +513,7 @@ class DebugMenuViewModel @Inject constructor(
         val withinQuickRefund: Boolean,
         val alternativeFileServer: FileServer? = null,
         val availableAltFileServers: List<FileServer> = emptyList(),
+        val showToastForGroups: Map<String, Boolean> = emptyMap(),
     )
 
     enum class DatabaseInspectorState {
@@ -539,6 +571,8 @@ class DebugMenuViewModel @Inject constructor(
         data object ToggleDebugAvatarReupload : Commands()
         data object ResetPushToken : Commands()
         data class SelectAltFileServer(val fileServer: FileServer?) : Commands()
+        data class NavigateTo(val destination: DebugMenuDestination) : Commands()
+        data class ToggleDebugLogGroup(val group: DebugLogGroup, val showToast: Boolean) : Commands()
     }
 
     companion object {
