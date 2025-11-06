@@ -1,6 +1,8 @@
 package org.thoughtcrime.securesms.groups.compose
 
+import android.R.attr.data
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -113,10 +115,10 @@ fun ManageGroupMembersScreen(
         onSearchFocusChanged = viewModel::onSearchFocusChanged,
         onSearchQueryClear = { viewModel.onSearchQueryChanged("") },
         sendCommands = viewModel::onCommand,
-        removeMembersData = viewModel.removeMembersState.collectAsState().value
+        removeMembersData = viewModel.removeMembersState.collectAsState().value,
+        removeSearchState = viewModel::removeSearchState
     )
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -141,7 +143,8 @@ fun ManageMembers(
     showLoading: Boolean,
     onErrorDismissed: () -> Unit,
     sendCommands: (command: ManageGroupMembersViewModel.Commands) -> Unit,
-    removeMembersData: ManageGroupMembersViewModel.RemoveMembersState
+    removeMembersData: ManageGroupMembersViewModel.RemoveMembersState,
+    removeSearchState: (clearSelection : Boolean) -> Unit
 ) {
     val optionsList: List<ManageGroupMembersViewModel.OptionsItem> = listOf(
         ManageGroupMembersViewModel.OptionsItem(
@@ -156,11 +159,21 @@ fun ManageMembers(
         )
     )
 
+    val handleBack: () -> Unit = {
+        when {
+            searchFocused -> removeSearchState(false)
+            else -> onBack()
+        }
+    }
+
+    // Intercept system back
+    BackHandler(enabled = true) { handleBack() }
+
     Scaffold(
         topBar = {
             BackAppBar(
                 title = stringResource(id = R.string.manageMembers),
-                onBack = onBack,
+                onBack = handleBack,
             )
         },
         bottomBar = {
@@ -610,7 +623,8 @@ private fun EditGroupPreviewSheet() {
             showingResend = "Resending Invite",
             onResendDismissed = {},
             sendCommands = {},
-            removeMembersData = ManageGroupMembersViewModel.RemoveMembersState()
+            removeMembersData = ManageGroupMembersViewModel.RemoveMembersState(),
+            removeSearchState = {}
         )
     }
 }
@@ -727,7 +741,8 @@ private fun EditGroupEditNamePreview(
             showingResend = "Resending Invite",
             onResendDismissed = {},
             sendCommands = {},
-            removeMembersData = ManageGroupMembersViewModel.RemoveMembersState()
+            removeMembersData = ManageGroupMembersViewModel.RemoveMembersState(),
+            removeSearchState = {  }
         )
     }
 }
@@ -777,7 +792,8 @@ private fun EditGroupEmptyPreview(
             showingResend = "Resending Invite",
             onResendDismissed = {},
             sendCommands = {},
-            removeMembersData = ManageGroupMembersViewModel.RemoveMembersState()
+            removeMembersData = ManageGroupMembersViewModel.RemoveMembersState(),
+            removeSearchState = {}
         )
     }
 }

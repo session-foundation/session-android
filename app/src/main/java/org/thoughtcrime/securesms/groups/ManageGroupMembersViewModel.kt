@@ -230,7 +230,7 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
                 MemberInvite(id = member.accountId, shareHistory = shareHistory)
             }
 
-            removeSearchState()
+            removeSearchState(true)
 
             _mutableOngoingAction.value = context.resources.getQuantityString(
                 R.plurals.resendingInvite,
@@ -246,10 +246,13 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         }
     }
 
-    private fun removeSearchState(){
+    fun removeSearchState(clearSelection : Boolean){
         onSearchFocusChanged(false)
         onSearchQueryChanged("")
-        clearSelection()
+
+        if(clearSelection){
+            clearSelection()
+        }
     }
 
     fun onPromoteContact(memberSessionId: AccountId) {
@@ -267,7 +270,7 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         performGroupOperation(showLoading = false) {
             val accountIdList = selectedMembers.value.map { it.accountId }
 
-            removeSearchState()
+            removeSearchState(true)
 
             groupManager.removeMembers(
                 groupAccountId = groupId,
