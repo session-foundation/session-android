@@ -102,13 +102,15 @@ class PushReceiver @Inject constructor(
                                     namespace = namespace,
                                     hash = pushData.metadata.msg_hash
                             )) {
-                                val (msg, proto) = messageParser.parseGroupMessage(
-                                    data = pushData.data,
-                                    serverHash = pushData.metadata.msg_hash,
-                                    groupId = groupId
-                                )
-
                                 receivedMessageProcessor.startProcessing { ctx ->
+                                    val (msg, proto) = messageParser.parseGroupMessage(
+                                        data = pushData.data,
+                                        serverHash = pushData.metadata.msg_hash,
+                                        groupId = groupId,
+                                        currentUserId = ctx.currentUserId,
+                                        currentUserEd25519PrivKey = ctx.currentUserEd25519KeyPair.secretKey.data
+                                    )
+
                                     receivedMessageProcessor.processEnvelopedMessage(
                                         threadAddress = Address.Group(groupId),
                                         message = msg,
@@ -168,12 +170,14 @@ class PushReceiver @Inject constructor(
                             namespace = Namespace.DEFAULT(),
                             hash = pushData.metadata.msg_hash
                     )) {
-                        val (message, proto) = messageParser.parse1o1Message(
-                            data = pushData.data,
-                            serverHash = pushData.metadata.msg_hash,
-                        )
-
                         receivedMessageProcessor.startProcessing { ctx ->
+                            val (message, proto) = messageParser.parse1o1Message(
+                                data = pushData.data,
+                                serverHash = pushData.metadata.msg_hash,
+                                currentUserId = ctx.currentUserId,
+                                currentUserEd25519PrivKey = ctx.currentUserEd25519KeyPair.secretKey.data,
+                            )
+
                             receivedMessageProcessor.processEnvelopedMessage(
                                 threadAddress = message.senderOrSync.toAddress() as Address.Conversable,
                                 message = message,

@@ -148,11 +148,11 @@ class MessageParser @Inject constructor(
     fun parse1o1Message(
         data: ByteArray,
         serverHash: String,
+        currentUserEd25519PrivKey: ByteArray,
+        currentUserId: AccountId,
     ): Pair<Message, SignalServiceProtos.Content> {
         val envelop = SessionProtocol.decodeFor1o1(
-            myEd25519PrivKey = requireNotNull(storage.getUserED25519KeyPair()?.secretKey?.data) {
-                "Couldn't find current user's key"
-            },
+            myEd25519PrivKey = currentUserEd25519PrivKey,
             payload = data,
             nowEpochMs = snodeClock.currentTimeMills(),
             proBackendPubKey = proBackendKey,
@@ -164,7 +164,7 @@ class MessageParser @Inject constructor(
             checkForBlockStatus = true,
             isForGroup = false,
             senderIdPrefix = IdPrefix.STANDARD,
-            currentUserId = AccountId(storage.getUserPublicKey()!!),
+            currentUserId = currentUserId,
             alternativeCurrentUserIds = emptyList(),
         ).also { (message, _) ->
             message.serverHash = serverHash
@@ -175,6 +175,8 @@ class MessageParser @Inject constructor(
         data: ByteArray,
         serverHash: String,
         groupId: AccountId,
+        currentUserEd25519PrivKey: ByteArray,
+        currentUserId: AccountId,
     ): Pair<Message, SignalServiceProtos.Content> {
         val keys = configFactory.withGroupConfigs(groupId) {
             it.groupKeys.groupKeys()
@@ -182,9 +184,7 @@ class MessageParser @Inject constructor(
 
         val decoded = SessionProtocol.decodeForGroup(
             payload = data,
-            myEd25519PrivKey = requireNotNull(storage.getUserED25519KeyPair()?.secretKey?.data) {
-                "Couldn't find current user's key"
-            },
+            myEd25519PrivKey = currentUserEd25519PrivKey,
             nowEpochMs = snodeClock.currentTimeMills(),
             groupEd25519PublicKey = groupId.pubKeyBytes,
             groupEd25519PrivateKeys = keys.toTypedArray(),
@@ -197,7 +197,7 @@ class MessageParser @Inject constructor(
             checkForBlockStatus = false,
             isForGroup = true,
             senderIdPrefix = IdPrefix.STANDARD,
-            currentUserId = AccountId(storage.getUserPublicKey()!!),
+            currentUserId = currentUserId,
             alternativeCurrentUserIds = emptyList(),
         ).also { (message, _) ->
             message.serverHash = serverHash

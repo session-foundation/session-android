@@ -49,17 +49,17 @@ class VisibleMessageHandler @Inject constructor(
     private val typingIndicators: SSKEnvironment.TypingIndicatorsProtocol,
 ){
     fun handleVisibleMessage(
+        ctx: ReceivedMessageProcessor.MessageProcessingContext,
         message: VisibleMessage,
         threadId: Long,
         threadAddress: Address.Conversable,
-        ctx: ReceivedMessageProcessor.MessageProcessingContext,
         proto: SignalServiceProtos.Content,
         runThreadUpdate: Boolean,
         runProfileUpdate: Boolean,
     ): MessageId? {
         val senderAddress = message.sender!!.toAddress()
 
-        messageRequestResponseHandler.handleVisibleMessage(message)
+        messageRequestResponseHandler.handleVisibleMessage(ctx, message)
 
         // Handle group invite response if new closed group
         if (threadAddress is Address.Group && senderAddress is Address.Standard) {

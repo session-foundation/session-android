@@ -7,7 +7,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase
+import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
+import network.loki.messenger.libsession_util.util.KeyPair
 import okio.withLock
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.userAuth
@@ -36,7 +38,9 @@ import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.getType
 import org.session.libsignal.protos.SignalServiceProtos
+import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -53,7 +57,6 @@ import javax.inject.Singleton
 class ReceivedMessageProcessor @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val recipientRepository: RecipientRepository,
-    private val messageParser: MessageParser,
     private val storage: Storage,
     private val configFactory: ConfigFactoryProtocol,
     private val threadDatabase: ThreadDatabase,
@@ -67,6 +70,7 @@ class ReceivedMessageProcessor @Inject constructor(
     private val notificationManager: MessageNotifier,
     private val messageRequestResponseHandler: Provider<MessageRequestResponseHandler>,
     private val visibleMessageHandler: Provider<VisibleMessageHandler>,
+    private val blindMappingRepository: BlindMappingRepository,
 ) {
     private val threadMutexes = ConcurrentHashMap<Address.Conversable, ReentrantLock>()
 
@@ -151,7 +155,7 @@ class ReceivedMessageProcessor @Inject constructor(
             }
             is DataExtractionNotification -> handleDataExtractionNotification(message)
             is UnsendRequest -> handleUnsendRequest(message)
-            is MessageRequestResponse -> messageRequestResponseHandler.get().handleExplicitRequestResponseMessage(message)
+            is MessageRequestResponse -> messageRequestResponseHandler.get().handleExplicitRequestResponseMessage(context, message)
             is VisibleMessage -> {
                 if (message.isSenderSelf &&
                     message.sentTimestamp != null &&
@@ -160,10 +164,10 @@ class ReceivedMessageProcessor @Inject constructor(
                 }
 
                 visibleMessageHandler.get().handleVisibleMessage(
+                    ctx = context,
                     message = message,
                     threadId = threadId,
                     threadAddress = threadAddress,
-                    ctx = context,
                     proto = proto,
                     runThreadUpdate = false,
                     runProfileUpdate = true,
@@ -324,18 +328,37 @@ class ReceivedMessageProcessor @Inject constructor(
                 messageTimestamp < ctx.contactConfigTimestamp
     }
 
-    inner class MessageProcessingContext(
-        val recipients: HashMap<Address.Conversable, Recipient> = hashMapOf(),
-        val threadIDs: HashMap<Address.Conversable, Long> = hashMapOf(),
-        val currentUserBlindedKeys: HashMap<Address.Community, List<String>> = hashMapOf(),
-        val currentUserPublicKey: String = requireNotNull(storage.getUserPublicKey()) {
+    inner class MessageProcessingContext {
+        val recipients: HashMap<Address.Conversable, Recipient> = hashMapOf()
+        val threadIDs: HashMap<Address.Conversable, Long> = hashMapOf()
+        val currentUserBlindedKeys: HashMap<Address.Community, List<String>> = hashMapOf()
+        val currentUserId: AccountId = AccountId(requireNotNull(storage.getUserPublicKey()) {
             "No current user available"
-        },
-        var maxOutgoingMessageTimestamp: Long = 0L,
-    ) {
+        })
+
+        var maxOutgoingMessageTimestamp: Long = 0L
+
+        val currentUserEd25519KeyPair: KeyPair by lazy(LazyThreadSafetyMode.NONE) {
+            requireNotNull(storage.getUserED25519KeyPair()) {
+                "No current user ED25519 key pair available"
+            }
+        }
+
+        val currentUserPublicKey: String get() = currentUserId.hexString
+
+
         val contactConfigTimestamp: Long by lazy(LazyThreadSafetyMode.NONE) {
             configFactory.getConfigTimestamp(UserConfigType.CONTACTS, currentUserPublicKey)
         }
+
+        private val blindIDMappingCache: HashMap<Address.Standard, List<Pair<BaseCommunityInfo, Address.Blinded>>> = hashMapOf()
+
+        fun getBlindIDMapping(address: Address.Standard): List<Pair<BaseCommunityInfo, Address.Blinded>> {
+            return blindIDMappingCache.getOrPut(address) {
+                blindMappingRepository.calculateReverseMappings(address)
+            }
+        }
+
 
         fun getThreadRecipient(threadAddress: Address.Conversable): Recipient {
             return recipients.getOrPut(threadAddress) {
@@ -345,13 +368,16 @@ class ReceivedMessageProcessor @Inject constructor(
 
         fun getCurrentUserBlindedKeysByThread(address: Address.Conversable): List<String> {
             if (address !is Address.Community) return emptyList()
+            val serverPubKey = requireNotNull(storage.getOpenGroupPublicKey(address.serverUrl)) {
+                "No open group public key for community ${address.debugString}"
+            }
             return currentUserBlindedKeys.getOrPut(address) {
                 BlindKeyAPI.blind15Ids(
                     sessionId = currentUserPublicKey,
-                    serverPubKey = requireNotNull(storage.getOpenGroupPublicKey(address.serverUrl)) {
-                        "No open group public key for community ${address.debugString}"
-                    }
-                )
+                    serverPubKey = serverPubKey
+                ) + BlindKeyAPI.blind25Id(
+                    sessionId = currentUserPublicKey,
+                    serverPubKey = serverPubKey                )
             }
         }
     }

@@ -47,6 +47,7 @@ import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.NetworkConnectivity
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.days
 
 private const val TAG = "Poller"
@@ -215,6 +216,8 @@ class Poller @AssistedInject constructor(
         }
     }
 
+    private val profiled = AtomicBoolean(true)
+
     private fun processPersonalMessages(messages: List<RetrieveMessageResponse.Message>) {
         if (messages.isEmpty()) {
             Log.d(TAG, "No personal messages to process")
@@ -224,6 +227,13 @@ class Poller @AssistedInject constructor(
         Log.d(TAG, "Received ${messages.size} personal messages from snode")
 
         val start = System.currentTimeMillis()
+
+        val shouldProfile = !profiled.getAndSet(true)
+
+        if (shouldProfile) {
+            Log.d(TAG, "Start method tracing on ${Thread.currentThread().name}")
+            android.os.Debug.startMethodTracingSampling("${System.currentTimeMillis()}", 10 * 1024 * 1024, 1)
+        }
 
         processor.startProcessing { ctx ->
             for (message in messages) {
@@ -239,7 +249,9 @@ class Poller @AssistedInject constructor(
                 try {
                     val (message, proto) = messageParser.parse1o1Message(
                         data = message.data,
-                        serverHash = message.hash
+                        serverHash = message.hash,
+                        currentUserEd25519PrivKey = ctx.currentUserEd25519KeyPair.secretKey.data,
+                        currentUserId = ctx.currentUserId
                     )
 
                     processor.processEnvelopedMessage(
@@ -256,6 +268,10 @@ class Poller @AssistedInject constructor(
                     )
                 }
             }
+        }
+
+        if (shouldProfile) {
+            android.os.Debug.stopMethodTracing()
         }
 
         Log.d(TAG, "Processed ${messages.size} personal messages in ${System.currentTimeMillis() - start} ms")

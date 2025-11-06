@@ -483,6 +483,8 @@ class GroupPoller @AssistedInject constructor(
                         data = message.data,
                         serverHash = message.hash,
                         groupId = groupId,
+                        currentUserId = ctx.currentUserId,
+                        currentUserEd25519PrivKey = ctx.currentUserEd25519KeyPair.secretKey.data,
                     )
 
                     receivedMessageProcessor.processEnvelopedMessage(
