@@ -392,6 +392,9 @@ class DebugMenuViewModel @AssistedInject constructor(
 
             is Commands.ToggleDebugLogGroup -> {
                 debugLogger.showGroupToast(command.group, command.showToast)
+                _uiState.update {
+                    it.copy(showToastForGroups = getDebugGroupToastPref())
+                }
             }
 
             is Commands.ClearAllDebugLogs -> {

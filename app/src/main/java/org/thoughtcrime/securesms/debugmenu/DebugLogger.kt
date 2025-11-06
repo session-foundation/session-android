@@ -3,12 +3,16 @@ package org.thoughtcrime.securesms.debugmenu
 import android.app.Application
 import android.widget.Toast
 import androidx.compose.ui.graphics.Color
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.ui.theme.primaryGreen
 import org.thoughtcrime.securesms.ui.theme.primaryOrange
 import org.thoughtcrime.securesms.util.DateUtils
@@ -23,7 +27,8 @@ import javax.inject.Singleton
 class DebugLogger @Inject constructor(
     private val application: Application,
     private val prefs: TextSecurePreferences,
-    private val dateUtils: DateUtils
+    private val dateUtils: DateUtils,
+    @ManagerScope private val scope: CoroutineScope
 ){
     private val prefPrefix: String = "debug_logger_"
 
@@ -59,7 +64,9 @@ class DebugLogger @Inject constructor(
 
         // show this as a toast if the prefs have this group toggled
         if(prefs.getBooleanPreference(prefPrefix + group.label, false)){
-            Toast.makeText(application, message, Toast.LENGTH_LONG).show()
+            scope.launch(Dispatchers.Main) {
+                Toast.makeText(application.applicationContext, message, Toast.LENGTH_LONG).show()
+            }
         }
     }
 
