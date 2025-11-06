@@ -27,13 +27,15 @@ import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
-import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
-import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.jobs.MessageReceiveParameters
+import org.session.libsession.messaging.messages.Message.Companion.senderOrSync
+import org.session.libsession.messaging.sending_receiving.MessageHandler
+import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.model.RetrieveMessageResponse
 import org.session.libsession.snode.utilities.await
+import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigMessage
 import org.session.libsession.utilities.TextSecurePreferences
@@ -42,9 +44,9 @@ import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.NetworkConnectivity
-import java.time.Instant
 import kotlin.time.Duration.Companion.days
 
 private const val TAG = "Poller"
@@ -58,9 +60,11 @@ class Poller @AssistedInject constructor(
     private val preferences: TextSecurePreferences,
     private val appVisibilityManager: AppVisibilityManager,
     private val networkConnectivity: NetworkConnectivity,
-    private val batchMessageReceiveJobFactory: BatchMessageReceiveJob.Factory,
     private val snodeClock: SnodeClock,
     private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
+    private val processor: ReceivedMessageProcessor,
+    private val messageHandler: MessageHandler,
+    private val threadDatabase: ThreadDatabase,
     @Assisted scope: CoroutineScope
 ) {
     private val userPublicKey: String
@@ -219,14 +223,49 @@ class Poller @AssistedInject constructor(
 
         Log.d(TAG, "Received ${messages.size} personal messages from snode")
 
-        receivedMessageHashDatabase.withRemovedDuplicateMessages(
-            swarmPublicKey = userPublicKey,
-            namespace = Namespace.DEFAULT(),
-            messages = messages,
-            messageHashGetter = { it.hash },
-        ) { filtered ->
-            Log.d(TAG, "About to process ${filtered.size} new personal messages")
+        val start = System.currentTimeMillis()
+
+        val processingContext = processor.createContext()
+
+        for (message in messages) {
+            if (receivedMessageHashDatabase.checkOrUpdateDuplicateState(
+                swarmPublicKey = userPublicKey,
+                namespace = Namespace.DEFAULT(),
+                hash = message.hash
+            )) {
+                Log.d(TAG, "Skipping duplicated message ${message.hash}")
+                continue
+            }
+
+            try {
+                val (message, proto) = messageHandler.parse1o1Message(
+                    data = message.data,
+                    serverHash = message.hash
+                )
+
+                processor.processEnvelopedMessage(
+                    threadAddress = message.senderOrSync.toAddress() as Address.Conversable,
+                    message = message,
+                    proto = proto,
+                    context = processingContext,
+                    runThreadUpdate = false,
+                    runProfileUpdate = true
+                )
+            } catch (ec: Exception) {
+                Log.e(
+                    TAG,
+                    "Error while processing personal message with hash ${message.hash}",
+                    ec
+                )
+            }
         }
+
+        // Bulk update threads at the end
+        for (thread in processingContext.threadIDs.values) {
+            threadDatabase.update(thread, true)
+        }
+
+        Log.d(TAG, "Processed ${messages.size} personal messages in ${System.currentTimeMillis() - start} ms")
     }
 
     private fun processConfig(messages: List<RetrieveMessageResponse.Message>, forConfig: UserConfigType) {
@@ -235,28 +274,36 @@ class Poller @AssistedInject constructor(
             return
         }
 
-        try {
-            receivedMessageHashDatabase.withRemovedDuplicateMessages(
-                swarmPublicKey = userPublicKey,
-                namespace = forConfig.namespace,
-                messages = messages,
-                messageHashGetter = { it.hash },
-            ) { filtered ->
-                if (filtered.isNotEmpty()) {
-                    configFactory.mergeUserConfigs(
-                        userConfigType = forConfig,
-                        messages = filtered
-                            .mapTo(arrayListOf()) { m ->
-                                ConfigMessage(data = m.data, hash = m.hash, timestamp = m.timestamp.toEpochMilli())
-                            }
-                    )
-                }
-
-                Log.d(TAG, "Completed processing ${filtered.size} messages for $forConfig")
+        val newMessages = messages
+            .asSequence()
+            .filterNot { msg ->
+                receivedMessageHashDatabase.checkOrUpdateDuplicateState(
+                    swarmPublicKey = userPublicKey,
+                    namespace = forConfig.namespace,
+                    hash = msg.hash
+                )
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error while merging user configs", e)
+            .map { m->
+                ConfigMessage(
+                    data = m.data,
+                    hash = m.hash,
+                    timestamp = m.timestamp.toEpochMilli()
+                )
+            }
+            .toList()
+
+        if (newMessages.isNotEmpty()) {
+            try {
+                configFactory.mergeUserConfigs(
+                    userConfigType = forConfig,
+                    messages = newMessages
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Error while merging user configs for $forConfig", e)
+            }
         }
+
+        Log.d(TAG, "Processed ${newMessages.size} new messages for config $forConfig")
     }
 
 
@@ -378,12 +425,11 @@ class Poller @AssistedInject constructor(
                 val messages = result.getOrThrow().messages
                 processPersonalMessages(messages)
 
-                if (messages.isNotEmpty()) {
+                messages.maxByOrNull { it.timestamp }?.let { newest ->
                     lokiApiDatabase.setLastMessageHashValue(
                         snode = snode,
                         publicKey = userPublicKey,
-                        newValue = messages
-                            .maxBy { it.timestamp }.hash,
+                        newValue = newest.hash,
                         namespace = Namespace.DEFAULT()
                     )
                 }

@@ -84,6 +84,7 @@ internal fun MessageReceiver.isBlocked(publicKey: String): Boolean {
     return recipient?.blocked == true
 }
 
+@Deprecated(replaceWith = ReplaceWith("ReceivedMessageProcessor"), message = "Use ReceivedMessageProcessor instead")
 @Singleton
 class ReceivedMessageHandler @Inject constructor(
     @param:ApplicationContext private val context: Context,

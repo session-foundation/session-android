@@ -1,12 +1,11 @@
 package org.thoughtcrime.securesms.database
 
 import android.content.Context
+import androidx.collection.LruCache
 import androidx.sqlite.db.SupportSQLiteDatabase
-import androidx.sqlite.db.transaction
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.serialization.json.Json
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
-import org.thoughtcrime.securesms.util.asSequence
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -17,7 +16,16 @@ class ReceivedMessageHashDatabase @Inject constructor(
     databaseHelper: Provider<SQLCipherOpenHelper>,
     private val json: Json,
 ) : Database(context, databaseHelper) {
+
+    private data class CacheKey(val publicKey: String, val namespace: Int, val hash: String)
+
+    private val cache = LruCache<CacheKey, Unit>(1024)
+
     fun removeAllByNamespaces(vararg namespaces: Int) {
+        synchronized(cache) {
+            cache.evictAll()
+        }
+
         //language=roomsql
         writableDatabase.rawExecSQL("""
             DELETE FROM received_messages
@@ -26,6 +34,10 @@ class ReceivedMessageHashDatabase @Inject constructor(
     }
 
     fun removeAllByPublicKey(publicKey: String) {
+        synchronized(cache) {
+            cache.evictAll()
+        }
+
         //language=roomsql
         writableDatabase.rawExecSQL("""
             DELETE FROM received_messages
@@ -34,70 +46,49 @@ class ReceivedMessageHashDatabase @Inject constructor(
     }
 
     fun removeAll() {
+        synchronized(cache) {
+            cache.evictAll()
+        }
+
         //language=roomsql
         writableDatabase.rawExecSQL("DELETE FROM received_messages WHERE 1")
     }
 
-    private fun removeDuplicatedHashes(
-        swarmPublicKey: String,
-        namespace: Int,
-        hashes: Collection<String>
-    ): Set<String> {
-        val hashesAsJsonText = json.encodeToString(hashes)
-
-        //language=roomsql
-        return writableDatabase.rawQuery("""
-            SELECT ea.value FROM json_each(?) ea
-            WHERE NOT EXISTS (
-                SELECT 1 FROM received_messages m
-                WHERE m.swarm_pub_key = ? AND m.namespace = ? AND m.hash = ea.value
-            )
-        """, hashesAsJsonText, swarmPublicKey, namespace).use { cursor ->
-            cursor.asSequence()
-                .mapTo(hashSetOf()) { it.getString(0) }
-        }
-    }
-
     /**
-     * Filters out messages with duplicate hashes from the provided list, performs the given action
-     * on the new messages, and then adds the new message hashes to the database.
+     * Checks if the given [hash] is already present in the database for the given
+     * [swarmPublicKey] and [namespace]. If not, adds it to the database.
+     *
+     * This implementation is atomic.
+     *
+     * @return true if the hash was already in the db
      */
-    fun <M, T> withRemovedDuplicateMessages(
+    fun checkOrUpdateDuplicateState(
         swarmPublicKey: String,
         namespace: Int,
-        messages: List<M>,
-        messageHashGetter: (M) -> String,
-        performOnNewMessages: (List<M>) -> T,
-    ): T {
-        return writableDatabase.transaction {
-            val newMessageHashes = removeDuplicatedHashes(
-                swarmPublicKey = swarmPublicKey,
-                namespace = namespace,
-                hashes = messages.map(messageHashGetter)
-            )
+        hash: String
+    ): Boolean {
+        val key = CacheKey(swarmPublicKey, namespace, hash)
+        synchronized(cache) {
+            if (cache[key] != null) {
+                return true
+            }
+        }
 
-            val ret = performOnNewMessages(
-                messages.filter { m -> messageHashGetter(m) in newMessageHashes }
-            )
-
-            addHashes(
-                swarmPublicKey = swarmPublicKey,
-                namespace = namespace,
-                hashes = newMessageHashes
-            )
-
-            ret
+        //language=roomsql
+        return writableDatabase.compileStatement("""
+            INSERT OR IGNORE INTO received_messages (swarm_pub_key, namespace, hash)
+            VALUES (?, ?, ?)
+        """).use { stmt ->
+            stmt.bindString(1, swarmPublicKey)
+            stmt.bindLong(2, namespace.toLong())
+            stmt.bindString(3, hash)
+            stmt.executeUpdateDelete() == 0
+        }.also {
+            synchronized(cache) {
+                cache.put(key, Unit)
+            }
         }
     }
-
-    private fun addHashes(swarmPublicKey: String, namespace: Int, hashes: Collection<String>) {
-        //language=roomsql
-        writableDatabase.rawExecSQL("""
-            INSERT OR IGNORE INTO received_messages (swarm_pub_key, namespace, hash)
-            SELECT ?, ?, value FROM json_each(?)
-        """, swarmPublicKey, namespace, json.encodeToString(hashes))
-    }
-
 
     companion object {
         fun createAndMigrateTable(db: SupportSQLiteDatabase) {

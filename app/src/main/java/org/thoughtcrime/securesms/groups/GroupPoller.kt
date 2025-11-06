@@ -20,11 +20,13 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import network.loki.messenger.libsession_util.Namespace
-import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
+import org.session.libsession.messaging.sending_receiving.MessageHandler
+import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.model.BatchResponse
 import org.session.libsession.snode.model.RetrieveMessageResponse
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigMessage
 import org.session.libsession.utilities.getGroup
@@ -34,6 +36,7 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.getRootCause
 import java.time.Instant
@@ -49,8 +52,10 @@ class GroupPoller @AssistedInject constructor(
     private val clock: SnodeClock,
     private val appVisibilityManager: AppVisibilityManager,
     private val groupRevokedMessageHandler: GroupRevokedMessageHandler,
-    private val batchMessageReceiveJobFactory: BatchMessageReceiveJob.Factory,
     private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
+    private val messageHandler: MessageHandler,
+    private val receivedMessageProcessor: ReceivedMessageProcessor,
+    private val threadDatabase: ThreadDatabase,
 ) {
     companion object {
         private const val POLL_INTERVAL = 3_000L
@@ -326,11 +331,11 @@ class GroupPoller @AssistedInject constructor(
                         val regularMessages = groupMessageRetrieval.await()
                         handleMessages(regularMessages.messages)
 
-                        if (regularMessages.messages.isNotEmpty()) {
+                        regularMessages.messages.maxByOrNull { it.timestamp }?.let { newest ->
                             lokiApiDatabase.setLastMessageHashValue(
                                 snode = snode,
                                 publicKey = groupId.hexString,
-                                newValue = regularMessages.messages.maxBy { it.timestamp }.hash,
+                                newValue = newest.hash,
                                 namespace = Namespace.GROUP_MESSAGES()
                             )
                         }
@@ -440,20 +445,54 @@ class GroupPoller @AssistedInject constructor(
         )
     }
 
+    /**
+     * @return The newest message handled, or null if no new messages were handled
+     */
     private fun handleMessages(messages: List<RetrieveMessageResponse.Message>) {
         if (messages.isEmpty()) {
             return
         }
 
-        Log.d(TAG, "${groupId}: Received ${messages.size} group messages from snode")
-        receivedMessageHashDatabase.withRemovedDuplicateMessages(
-            swarmPublicKey = groupId.hexString,
-            namespace = Namespace.GROUP_MESSAGES(),
-            messages = messages,
-            messageHashGetter = { it.hash },
-        ) { newMessages ->
-            Log.d(TAG, "${groupId}: Handling ${newMessages.size} new group messages")
+        val start = System.currentTimeMillis()
+        val threadAddress = Address.Group(groupId)
+        val processingContext = receivedMessageProcessor.createContext()
+
+        for (message in messages) {
+            if (receivedMessageHashDatabase.checkOrUpdateDuplicateState(
+                swarmPublicKey = groupId.hexString,
+                namespace = Namespace.GROUP_MESSAGES(),
+                hash = message.hash
+            )) {
+                Log.v(TAG, "Skipping duplicated group message ${message.hash} for group $groupId")
+                continue
+            }
+
+            try {
+                val (msg, proto) = messageHandler.parseGroupMessage(
+                    data = message.data,
+                    serverHash = message.hash,
+                    groupId = groupId,
+                )
+
+                receivedMessageProcessor.processEnvelopedMessage(
+                    threadAddress = threadAddress,
+                    message = msg,
+                    proto = proto,
+                    context = processingContext,
+                    runThreadUpdate = false,
+                    runProfileUpdate = true
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Error handling group message", e)
+            }
         }
+
+        // Update threads after processing all messages
+        processingContext.threadIDs.values.forEach { threadId ->
+            threadDatabase.update(threadId, true)
+        }
+
+        Log.d(TAG, "Handled ${messages.size} group messages for $groupId in ${System.currentTimeMillis() - start}ms")
     }
 
     /**

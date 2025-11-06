@@ -397,15 +397,17 @@ class OpenGroupPoller @AssistedInject constructor(
             }
         }
 
-        envelopes.chunked(BatchMessageReceiveJob.BATCH_DEFAULT_NUMBER).forEach { list ->
-            val parameters = list.map { (serverId, message, reactions) ->
-                MessageReceiveParameters(message.toByteArray(), openGroupMessageServerID = serverId, reactions = reactions)
-            }
-            JobQueue.shared.add(batchMessageJobFactory.create(
-                parameters,
-                fromCommunity = threadAddress
-            ))
-        }
+        //TODO: Re-enable community polling
+
+//        envelopes.chunked(BatchMessageReceiveJob.BATCH_DEFAULT_NUMBER).forEach { list ->
+//            val parameters = list.map { (serverId, message, reactions) ->
+//                MessageReceiveParameters(message.toByteArray(), openGroupMessageServerID = serverId, reactions = reactions)
+//            }
+//            JobQueue.shared.add(batchMessageJobFactory.create(
+//                parameters,
+//                fromCommunity = threadAddress
+//            ))
+//        }
 
         if (envelopes.isNotEmpty()) {
             JobQueue.shared.add(trimThreadJobFactory.create(threadId))

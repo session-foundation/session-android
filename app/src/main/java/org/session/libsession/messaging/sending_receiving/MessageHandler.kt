@@ -1,6 +1,6 @@
 package org.session.libsession.messaging.sending_receiving
 
-import network.loki.messenger.libsession_util.protocol.DecodedEnvelop
+import network.loki.messenger.libsession_util.protocol.DecodedEnvelope
 import network.loki.messenger.libsession_util.protocol.SessionProtocol
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.database.StorageProtocol
@@ -64,7 +64,7 @@ class MessageHandler @Inject constructor(
     }
 
     private fun parseMessage(
-        decodedEnvelop: DecodedEnvelop,
+        decodedEnvelope: DecodedEnvelope,
         relaxSignatureCheck: Boolean,
         checkForBlockStatus: Boolean,
         isForGroup: Boolean,
@@ -73,9 +73,9 @@ class MessageHandler @Inject constructor(
         senderIdPrefix: IdPrefix
     ): Pair<Message, SignalServiceProtos.Content> {
         return parseMessage(
-            sender = AccountId(senderIdPrefix, decodedEnvelop.senderX25519PubKey.data),
-            contentPlaintext = decodedEnvelop.contentPlainText.data,
-            messageTimestampMs = decodedEnvelop.timestamp.toEpochMilli(),
+            sender = AccountId(senderIdPrefix, decodedEnvelope.senderX25519PubKey.data),
+            contentPlaintext = decodedEnvelope.contentPlainText.data,
+            messageTimestampMs = decodedEnvelope.timestamp.toEpochMilli(),
             relaxSignatureCheck = relaxSignatureCheck,
             checkForBlockStatus = checkForBlockStatus,
             isForGroup = isForGroup,
@@ -159,7 +159,7 @@ class MessageHandler @Inject constructor(
         )
 
         return parseMessage(
-            decodedEnvelop = envelop,
+            decodedEnvelope = envelop,
             relaxSignatureCheck = false,
             checkForBlockStatus = true,
             isForGroup = false,
@@ -192,7 +192,7 @@ class MessageHandler @Inject constructor(
         )
 
         return parseMessage(
-            decodedEnvelop = decoded,
+            decodedEnvelope = decoded,
             relaxSignatureCheck = false,
             checkForBlockStatus = false,
             isForGroup = true,

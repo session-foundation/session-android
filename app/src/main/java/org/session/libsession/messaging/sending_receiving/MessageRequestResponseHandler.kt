@@ -33,7 +33,7 @@ class MessageRequestResponseHandler @Inject constructor(
     private val blindMappingRepository: BlindMappingRepository,
 ) {
 
-    suspend fun handleVisibleMessage(message: VisibleMessage) {
+    fun handleVisibleMessage(message: VisibleMessage) {
         val (sender, receiver) = fetchSenderAndReceiver(message) ?: return
 
         val allBlindedAddresses = blindMappingRepository.calculateReverseMappings(
@@ -61,7 +61,7 @@ class MessageRequestResponseHandler @Inject constructor(
         }
     }
 
-    suspend fun handleExplicitRequestResponseMessage(message: MessageRequestResponse) {
+    fun handleExplicitRequestResponseMessage(message: MessageRequestResponse) {
         val (sender, receiver) = fetchSenderAndReceiver(message) ?: return
         // Always handle explicit request response
         handleRequestResponse(
@@ -81,8 +81,8 @@ class MessageRequestResponseHandler @Inject constructor(
         }
     }
 
-    private suspend fun fetchSenderAndReceiver(message: Message): Pair<Recipient, Recipient>? {
-        val messageSender = recipientRepository.getRecipient(
+    private fun fetchSenderAndReceiver(message: Message): Pair<Recipient, Recipient>? {
+        val messageSender = recipientRepository.getRecipientSync(
             requireNotNull(message.sender) {
                 "MessageRequestResponse must have a sender"
             }.toAddress()
@@ -92,7 +92,7 @@ class MessageRequestResponseHandler @Inject constructor(
             Log.e(TAG, "MessageRequestResponse sender must be a standard address, but got: ${messageSender.address.debugString}")
             null
         } else {
-            messageSender to recipientRepository.getRecipient(
+            messageSender to recipientRepository.getRecipientSync(
                 requireNotNull(message.recipient) {
                     "MessageRequestResponse must have a receiver"
                 }.toAddress()
