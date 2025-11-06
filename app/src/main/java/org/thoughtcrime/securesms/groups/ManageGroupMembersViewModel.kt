@@ -234,7 +234,8 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
 
             _mutableOngoingAction.value = context.resources.getQuantityString(
                 R.plurals.resendingInvite,
-                selectedMembers.value.size
+                invites.size,
+                invites.size
             )
 
             // Reinvite with per-member shareHistory
