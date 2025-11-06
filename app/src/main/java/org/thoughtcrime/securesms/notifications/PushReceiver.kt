@@ -18,7 +18,7 @@ import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.SessionEncrypt
 import okio.ByteString.Companion.decodeHex
 import org.session.libsession.messaging.messages.Message.Companion.senderOrSync
-import org.session.libsession.messaging.sending_receiving.MessageHandler
+import org.session.libsession.messaging.sending_receiving.MessageParser
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
 import org.session.libsession.messaging.sending_receiving.notifications.PushNotificationMetadata
 import org.session.libsession.utilities.Address
@@ -48,7 +48,7 @@ class PushReceiver @Inject constructor(
     private val configFactory: ConfigFactory,
     private val groupRevokedMessageHandler: GroupRevokedMessageHandler,
     private val json: Json,
-    private val messageHandler: MessageHandler,
+    private val messageParser: MessageParser,
     private val receivedMessageProcessor: ReceivedMessageProcessor,
     private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     @param:ManagerScope private val scope: CoroutineScope,
@@ -102,20 +102,20 @@ class PushReceiver @Inject constructor(
                                     namespace = namespace,
                                     hash = pushData.metadata.msg_hash
                             )) {
-                                val (msg, proto) = messageHandler.parseGroupMessage(
+                                val (msg, proto) = messageParser.parseGroupMessage(
                                     data = pushData.data,
                                     serverHash = pushData.metadata.msg_hash,
                                     groupId = groupId
                                 )
 
-                                receivedMessageProcessor.processEnvelopedMessage(
-                                    threadAddress = Address.Group(groupId),
-                                    message = msg,
-                                    proto = proto,
-                                    context = receivedMessageProcessor.createContext(),
-                                    runThreadUpdate = true,
-                                    runProfileUpdate = true,
-                                )
+                                receivedMessageProcessor.startProcessing { ctx ->
+                                    receivedMessageProcessor.processEnvelopedMessage(
+                                        threadAddress = Address.Group(groupId),
+                                        message = msg,
+                                        proto = proto,
+                                        context = ctx,
+                                    )
+                                }
                             }
                         }
 
@@ -168,19 +168,19 @@ class PushReceiver @Inject constructor(
                             namespace = Namespace.DEFAULT(),
                             hash = pushData.metadata.msg_hash
                     )) {
-                        val (message, proto) = messageHandler.parse1o1Message(
+                        val (message, proto) = messageParser.parse1o1Message(
                             data = pushData.data,
                             serverHash = pushData.metadata.msg_hash,
                         )
 
-                        receivedMessageProcessor.processEnvelopedMessage(
-                            threadAddress = message.senderOrSync.toAddress() as Address.Conversable,
-                            message = message,
-                            proto = proto,
-                            context = receivedMessageProcessor.createContext(),
-                            runThreadUpdate = true,
-                            runProfileUpdate = true,
-                        )
+                        receivedMessageProcessor.startProcessing { ctx ->
+                            receivedMessageProcessor.processEnvelopedMessage(
+                                threadAddress = message.senderOrSync.toAddress() as Address.Conversable,
+                                message = message,
+                                proto = proto,
+                                context = ctx,
+                            )
+                        }
                     }
                 }
 

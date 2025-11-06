@@ -53,7 +53,7 @@ import javax.inject.Singleton
 class ReceivedMessageProcessor @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val recipientRepository: RecipientRepository,
-    private val messageHandler: MessageHandler,
+    private val messageParser: MessageParser,
     private val storage: Storage,
     private val configFactory: ConfigFactoryProtocol,
     private val threadDatabase: ThreadDatabase,
@@ -70,17 +70,35 @@ class ReceivedMessageProcessor @Inject constructor(
 ) {
     private val threadMutexes = ConcurrentHashMap<Address.Conversable, ReentrantLock>()
 
-    fun createContext(): MessageProcessingContext {
-        return MessageProcessingContext()
+
+    /**
+     * Start a message processing session, ensuring that thread updates and notifications are handled
+     * once the whole processing is complete.
+     *
+     * Note: the context passed to the block is not thread-safe, so it should not be shared between threads.
+     */
+    fun <T> startProcessing(block: (MessageProcessingContext) -> T): T {
+        val context = MessageProcessingContext()
+        try {
+            return block(context)
+        } finally {
+            for (threadId in context.threadIDs.values) {
+                if (context.maxOutgoingMessageTimestamp > 0L &&
+                    context.maxOutgoingMessageTimestamp > storage.getLastSeen(threadId)) {
+                    storage.markConversationAsRead(threadId, context.maxOutgoingMessageTimestamp, force = true)
+                }
+
+                storage.updateThread(threadId, true)
+                notificationManager.updateNotification(this.context, threadId)
+            }
+        }
     }
 
     fun processEnvelopedMessage(
+        context: MessageProcessingContext,
         threadAddress: Address.Conversable,
         message: Message,
         proto: SignalServiceProtos.Content,
-        context: MessageProcessingContext,
-        runThreadUpdate: Boolean,
-        runProfileUpdate: Boolean,
     ) = threadMutexes.getOrPut(threadAddress) { ReentrantLock() }.withLock {
         // The logic to check if the message should be discarded due to being from a hidden contact.
         if (threadAddress is Address.Standard &&
@@ -134,15 +152,24 @@ class ReceivedMessageProcessor @Inject constructor(
             is DataExtractionNotification -> handleDataExtractionNotification(message)
             is UnsendRequest -> handleUnsendRequest(message)
             is MessageRequestResponse -> messageRequestResponseHandler.get().handleExplicitRequestResponseMessage(message)
-            is VisibleMessage -> visibleMessageHandler.get().handleVisibleMessage(
-                message = message,
-                threadId = threadId,
-                threadAddress = threadAddress,
-                ctx = context,
-                proto = proto,
-                runThreadUpdate = runThreadUpdate,
-                runProfileUpdate = runProfileUpdate,
-            )
+            is VisibleMessage -> {
+                if (message.isSenderSelf &&
+                    message.sentTimestamp != null &&
+                    message.sentTimestamp!! > context.maxOutgoingMessageTimestamp) {
+                    context.maxOutgoingMessageTimestamp = message.sentTimestamp!!
+                }
+
+                visibleMessageHandler.get().handleVisibleMessage(
+                    message = message,
+                    threadId = threadId,
+                    threadAddress = threadAddress,
+                    ctx = context,
+                    proto = proto,
+                    runThreadUpdate = false,
+                    runProfileUpdate = true,
+                )
+            }
+
             is CallMessage -> handleCallMessage(message)
         }
 
@@ -304,6 +331,7 @@ class ReceivedMessageProcessor @Inject constructor(
         val currentUserPublicKey: String = requireNotNull(storage.getUserPublicKey()) {
             "No current user available"
         },
+        var maxOutgoingMessageTimestamp: Long = 0L,
     ) {
         val contactConfigTimestamp: Long by lazy(LazyThreadSafetyMode.NONE) {
             configFactory.getConfigTimestamp(UserConfigType.CONTACTS, currentUserPublicKey)

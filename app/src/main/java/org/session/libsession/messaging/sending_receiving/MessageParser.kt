@@ -29,7 +29,7 @@ import javax.inject.Singleton
 import kotlin.math.abs
 
 @Singleton
-class MessageHandler @Inject constructor(
+class MessageParser @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val storage: StorageProtocol,
     private val snodeClock: SnodeClock,

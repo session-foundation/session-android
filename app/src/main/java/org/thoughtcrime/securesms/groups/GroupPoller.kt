@@ -20,7 +20,7 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import network.loki.messenger.libsession_util.Namespace
-import org.session.libsession.messaging.sending_receiving.MessageHandler
+import org.session.libsession.messaging.sending_receiving.MessageParser
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
@@ -53,7 +53,7 @@ class GroupPoller @AssistedInject constructor(
     private val appVisibilityManager: AppVisibilityManager,
     private val groupRevokedMessageHandler: GroupRevokedMessageHandler,
     private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
-    private val messageHandler: MessageHandler,
+    private val messageParser: MessageParser,
     private val receivedMessageProcessor: ReceivedMessageProcessor,
     private val threadDatabase: ThreadDatabase,
 ) {
@@ -466,41 +466,35 @@ class GroupPoller @AssistedInject constructor(
 
         val start = System.currentTimeMillis()
         val threadAddress = Address.Group(groupId)
-        val processingContext = receivedMessageProcessor.createContext()
 
-        for (message in messages) {
-            if (receivedMessageHashDatabase.checkOrUpdateDuplicateState(
-                swarmPublicKey = groupId.hexString,
-                namespace = Namespace.GROUP_MESSAGES(),
-                hash = message.hash
-            )) {
-                Log.v(TAG, "Skipping duplicated group message ${message.hash} for group $groupId")
-                continue
+        receivedMessageProcessor.startProcessing { ctx ->
+            for (message in messages) {
+                if (receivedMessageHashDatabase.checkOrUpdateDuplicateState(
+                        swarmPublicKey = groupId.hexString,
+                        namespace = Namespace.GROUP_MESSAGES(),
+                        hash = message.hash
+                    )) {
+                    Log.v(TAG, "Skipping duplicated group message ${message.hash} for group $groupId")
+                    continue
+                }
+
+                try {
+                    val (msg, proto) = messageParser.parseGroupMessage(
+                        data = message.data,
+                        serverHash = message.hash,
+                        groupId = groupId,
+                    )
+
+                    receivedMessageProcessor.processEnvelopedMessage(
+                        threadAddress = threadAddress,
+                        message = msg,
+                        proto = proto,
+                        context = ctx,
+                    )
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error handling group message", e)
+                }
             }
-
-            try {
-                val (msg, proto) = messageHandler.parseGroupMessage(
-                    data = message.data,
-                    serverHash = message.hash,
-                    groupId = groupId,
-                )
-
-                receivedMessageProcessor.processEnvelopedMessage(
-                    threadAddress = threadAddress,
-                    message = msg,
-                    proto = proto,
-                    context = processingContext,
-                    runThreadUpdate = false,
-                    runProfileUpdate = true
-                )
-            } catch (e: Exception) {
-                Log.e(TAG, "Error handling group message", e)
-            }
-        }
-
-        // Update threads after processing all messages
-        processingContext.threadIDs.values.forEach { threadId ->
-            threadDatabase.update(threadId, true)
         }
 
         Log.d(TAG, "Handled ${messages.size} group messages for $groupId in ${System.currentTimeMillis() - start}ms")

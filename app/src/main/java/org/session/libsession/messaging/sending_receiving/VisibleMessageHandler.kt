@@ -57,7 +57,6 @@ class VisibleMessageHandler @Inject constructor(
         runThreadUpdate: Boolean,
         runProfileUpdate: Boolean,
     ): MessageId? {
-        val userPublicKey = storage.getUserPublicKey()
         val senderAddress = message.sender!!.toAddress()
 
         messageRequestResponseHandler.handleVisibleMessage(message)
@@ -84,7 +83,7 @@ class VisibleMessageHandler @Inject constructor(
             val quote = proto.dataMessage.quote
 
             val author = if (quote.author in ctx.getCurrentUserBlindedKeysByThread(threadAddress)) {
-                Address.fromSerialized(userPublicKey!!)
+                Address.fromSerialized(ctx.currentUserPublicKey)
             } else {
                 Address.fromSerialized(quote.author)
             }
@@ -174,7 +173,7 @@ class VisibleMessageHandler @Inject constructor(
             ) ?: return null
 
             // If we have previously "hidden" the sender, we should flip the flag back to visible
-            if (senderAddress is Address.Standard && senderAddress.address != userPublicKey) {
+            if (senderAddress is Address.Standard && senderAddress.address != ctx.currentUserPublicKey) {
                 val existingContact =
                     configFactory.withUserConfigs { it.contacts.get(senderAddress.accountId.hexString) }
 
@@ -222,7 +221,7 @@ class VisibleMessageHandler @Inject constructor(
 
             // Parse & persist attachments
             // Start attachment downloads if needed
-            if (messageID.mms && (threadRecipient.autoDownloadAttachments == true || senderAddress.address == userPublicKey)) {
+            if (messageID.mms && (threadRecipient.autoDownloadAttachments == true || senderAddress.address == ctx.currentUserPublicKey)) {
                 storage.getAttachmentsForMessage(messageID.id).iterator().forEach { attachment ->
                     attachment.attachmentId?.let { id ->
                         JobQueue.shared.add(

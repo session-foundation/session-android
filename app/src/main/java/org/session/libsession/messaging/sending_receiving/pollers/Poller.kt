@@ -28,7 +28,7 @@ import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.messages.Message.Companion.senderOrSync
-import org.session.libsession.messaging.sending_receiving.MessageHandler
+import org.session.libsession.messaging.sending_receiving.MessageParser
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
@@ -63,7 +63,7 @@ class Poller @AssistedInject constructor(
     private val snodeClock: SnodeClock,
     private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     private val processor: ReceivedMessageProcessor,
-    private val messageHandler: MessageHandler,
+    private val messageParser: MessageParser,
     private val threadDatabase: ThreadDatabase,
     @Assisted scope: CoroutineScope
 ) {
@@ -225,44 +225,37 @@ class Poller @AssistedInject constructor(
 
         val start = System.currentTimeMillis()
 
-        val processingContext = processor.createContext()
+        processor.startProcessing { ctx ->
+            for (message in messages) {
+                if (receivedMessageHashDatabase.checkOrUpdateDuplicateState(
+                        swarmPublicKey = userPublicKey,
+                        namespace = Namespace.DEFAULT(),
+                        hash = message.hash
+                    )) {
+                    Log.d(TAG, "Skipping duplicated message ${message.hash}")
+                    continue
+                }
 
-        for (message in messages) {
-            if (receivedMessageHashDatabase.checkOrUpdateDuplicateState(
-                swarmPublicKey = userPublicKey,
-                namespace = Namespace.DEFAULT(),
-                hash = message.hash
-            )) {
-                Log.d(TAG, "Skipping duplicated message ${message.hash}")
-                continue
+                try {
+                    val (message, proto) = messageParser.parse1o1Message(
+                        data = message.data,
+                        serverHash = message.hash
+                    )
+
+                    processor.processEnvelopedMessage(
+                        threadAddress = message.senderOrSync.toAddress() as Address.Conversable,
+                        message = message,
+                        proto = proto,
+                        context = ctx,
+                    )
+                } catch (ec: Exception) {
+                    Log.e(
+                        TAG,
+                        "Error while processing personal message with hash ${message.hash}",
+                        ec
+                    )
+                }
             }
-
-            try {
-                val (message, proto) = messageHandler.parse1o1Message(
-                    data = message.data,
-                    serverHash = message.hash
-                )
-
-                processor.processEnvelopedMessage(
-                    threadAddress = message.senderOrSync.toAddress() as Address.Conversable,
-                    message = message,
-                    proto = proto,
-                    context = processingContext,
-                    runThreadUpdate = false,
-                    runProfileUpdate = true
-                )
-            } catch (ec: Exception) {
-                Log.e(
-                    TAG,
-                    "Error while processing personal message with hash ${message.hash}",
-                    ec
-                )
-            }
-        }
-
-        // Bulk update threads at the end
-        for (thread in processingContext.threadIDs.values) {
-            threadDatabase.update(thread, true)
         }
 
         Log.d(TAG, "Processed ${messages.size} personal messages in ${System.currentTimeMillis() - start} ms")
