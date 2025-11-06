@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,6 +42,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import com.squareup.phrase.Phrase
@@ -122,8 +124,8 @@ fun ManageMembers(
     onBack: () -> Unit,
     onAddMemberClick: () -> Unit,
     onMemberClicked: (member: GroupMemberState) -> Unit,
-    onSearchFocusChanged : (isFocused : Boolean) -> Unit,
-    searchFocused : Boolean,
+    onSearchFocusChanged: (isFocused: Boolean) -> Unit,
+    searchFocused: Boolean,
     searchQuery: String,
     data: CollapsibleFooterState,
     onToggleFooter: () -> Unit,
@@ -134,11 +136,11 @@ fun ManageMembers(
     selectedMembers: Set<GroupMemberState> = emptySet(),
     showAddMembers: Boolean,
     showingError: String?,
-    showingResend:String?,
+    showingResend: String?,
     onResendDismissed: () -> Unit,
     showLoading: Boolean,
     onErrorDismissed: () -> Unit,
-    sendCommands: (command : ManageGroupMembersViewModel.Commands) -> Unit,
+    sendCommands: (command: ManageGroupMembersViewModel.Commands) -> Unit,
     removeMembersData: ManageGroupMembersViewModel.RemoveMembersState
 ) {
     val optionsList: List<ManageGroupMembersViewModel.OptionsItem> = listOf(
@@ -182,9 +184,11 @@ fun ManageMembers(
         },
         contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
     ) { paddingValues ->
-        Column(modifier = Modifier
-            .padding(paddingValues)
-            .consumeWindowInsets(paddingValues)) {
+        Column(
+            modifier = Modifier
+                .padding(paddingValues)
+                .consumeWindowInsets(paddingValues)
+        ) {
 
             AnimatedVisibility(
                 // show only when add-members is enabled AND search is not focused
@@ -225,50 +229,65 @@ fun ManageMembers(
                 }
             }
 
-            if (!searchFocused) {
+            if (members.isNotEmpty()) {
+                if (!searchFocused) {
+                    Text(
+                        modifier = Modifier.padding(
+                            start = LocalDimensions.current.mediumSpacing,
+                            bottom = LocalDimensions.current.smallSpacing
+                        ),
+                        text = LocalResources.current.getString(R.string.membersNonAdmins),
+                        style = LocalType.current.base,
+                        color = LocalColors.current.textSecondary
+                    )
+                }
+
+                SearchBarWithCancel(
+                    query = searchQuery,
+                    onValueChanged = onSearchQueryChanged,
+                    onClear = onSearchQueryClear,
+                    placeholder = if (searchFocused) "" else LocalResources.current.getString(R.string.search),
+                    enabled = true,
+                    isFocused = searchFocused,
+                    modifier = Modifier.padding(horizontal = LocalDimensions.current.smallSpacing),
+                    onFocusChanged = onSearchFocusChanged
+                )
+
+                Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
+
+                // List of members
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .imePadding()
+                ) {
+                    items(members) { member ->
+                        // Each member's view
+                        EditMemberItem(
+                            modifier = Modifier.fillMaxWidth(),
+                            member = member,
+                            onClick = { onMemberClicked(member) },
+                            selected = member in selectedMembers
+                        )
+                    }
+
+                    item {
+                        Spacer(
+                            modifier = Modifier.windowInsetsBottomHeight(WindowInsets.systemBars)
+                        )
+                    }
+                }
+            } else {
                 Text(
-                    modifier = Modifier.padding(
-                        start = LocalDimensions.current.mediumSpacing,
-                        bottom = LocalDimensions.current.smallSpacing
-                    ),
-                    text = LocalResources.current.getString(R.string.membersNonAdmins),
+                    modifier = Modifier
+                        .padding(horizontal = LocalDimensions.current.mediumSpacing)
+                        .fillMaxWidth()
+                        .wrapContentWidth(Alignment.CenterHorizontally),
+                    text = LocalResources.current.getString(R.string.NoNonAdminsInGroup),
+                    textAlign = TextAlign.Center,
                     style = LocalType.current.base,
                     color = LocalColors.current.textSecondary
                 )
-            }
-
-            SearchBarWithCancel(
-                query = searchQuery,
-                onValueChanged = onSearchQueryChanged,
-                onClear = onSearchQueryClear,
-                placeholder = if(searchFocused) "" else LocalResources.current.getString(R.string.search),
-                enabled = true,
-                isFocused = searchFocused,
-                modifier = Modifier.padding(horizontal =LocalDimensions.current.smallSpacing),
-                onFocusChanged = onSearchFocusChanged
-            )
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
-
-            // List of members
-            LazyColumn(modifier = Modifier
-                .weight(1f)
-                .imePadding()) {
-                items(members) { member ->
-                    // Each member's view
-                    EditMemberItem(
-                        modifier = Modifier.fillMaxWidth(),
-                        member = member,
-                        onClick = { onMemberClicked(member) },
-                        selected = member in selectedMembers
-                    )
-                }
-
-                item {
-                    Spacer(
-                        modifier = Modifier.windowInsetsBottomHeight(WindowInsets.systemBars)
-                    )
-                }
             }
         }
     }
@@ -596,7 +615,6 @@ private fun EditGroupPreviewSheet() {
     }
 }
 
-
 @Preview
 @Composable
 private fun EditGroupEditNamePreview(
@@ -687,6 +705,56 @@ private fun EditGroupEditNamePreview(
             data = CollapsibleFooterState(
                 visible = true,
                 collapsed = false,
+                footerActionTitle = GetString("3 Members Selected"),
+                footerActionItems = listOf(
+                    CollapsibleFooterItemData(
+                        label = GetString("Resend"),
+                        buttonLabel = GetString("1"),
+                        isDanger = false,
+                        onClick = {}
+                    ),
+                    CollapsibleFooterItemData(
+                        label = GetString("Remove"),
+                        buttonLabel = GetString("1"),
+                        isDanger = true,
+                        onClick = { }
+                    )
+                )
+            ),
+            onToggleFooter = {},
+            onCloseFooter = {},
+            selectedMembers = emptySet(),
+            showingResend = "Resending Invite",
+            onResendDismissed = {},
+            sendCommands = {},
+            removeMembersData = ManageGroupMembersViewModel.RemoveMembersState()
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun EditGroupEmptyPreview(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        ManageMembers(
+            onBack = {},
+            onAddMemberClick = {},
+            members = listOf(),
+            showAddMembers = true,
+            showingError = "Error",
+            onErrorDismissed = {},
+            onMemberClicked = {},
+            showLoading = false,
+            searchQuery = "",
+            onSearchQueryChanged = { },
+            onSearchFocusChanged = {},
+            searchFocused = true,
+            onSearchQueryClear = {},
+            data = CollapsibleFooterState(
+                visible = false,
+                collapsed = true,
                 footerActionTitle = GetString("3 Members Selected"),
                 footerActionItems = listOf(
                     CollapsibleFooterItemData(
