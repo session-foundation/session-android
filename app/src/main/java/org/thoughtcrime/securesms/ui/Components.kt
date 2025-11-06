@@ -75,6 +75,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -1000,7 +1001,7 @@ private fun CollapsibleFooterActions(
         val capDp = with(density) { capPx.toDp() }
 
         val single = items.size == 1
-        val measuredMaxButtonWidthPx = remember(items, capPx) { mutableIntStateOf(1) }
+        var equalWidthPx by rememberSaveable(capPx) { mutableIntStateOf(-1) }
 
         // Only do the offscreen equal width computation when we have 2+ buttons.
         if (!single) {
@@ -1013,7 +1014,7 @@ private fun CollapsibleFooterActions(
                 val placeables = measurables.map { m ->
                     m.measure(
                         Constraints(
-                            minWidth = 1,
+                            minWidth = 0,
                             maxWidth = capPx,
                             minHeight = 0,
                             maxHeight = parentConstraints.maxHeight
@@ -1021,12 +1022,11 @@ private fun CollapsibleFooterActions(
                     )
                 }
                 val natural = placeables.maxOfOrNull { it.width } ?: 1
-                measuredMaxButtonWidthPx.intValue = natural.coerceIn(1, capPx)
+                equalWidthPx = natural.coerceIn(0, capPx)
+
                 layout(0, 0) {}
             }
         }
-
-        val equalWidthDp = with(density) { measuredMaxButtonWidthPx.intValue.toDp() }
 
         Column(
             modifier = Modifier
@@ -1045,15 +1045,18 @@ private fun CollapsibleFooterActions(
                     onClick = {},
                     qaTag = R.string.qa_collapsing_footer_action,
                     endContent = {
+                        val widthMod =
+                            if (single) {
+                                Modifier.wrapContentWidth().widthIn(max = capDp)
+                            } else if (equalWidthPx >= 0) {
+                                Modifier.width(with(density) { equalWidthPx.toDp() })
+                            } else {
+                                Modifier.wrapContentWidth().widthIn(max = capDp)
+                            }
                         Box(
                             modifier = Modifier
                                 .padding(start = LocalDimensions.current.smallSpacing)
-                                .then(
-                                    if (single) Modifier
-                                        .wrapContentWidth()
-                                        .widthIn(max = capDp)
-                                    else Modifier.width(equalWidthDp)
-                                )
+                                .then(widthMod)
                         ) {
                             SlimFillButtonRect(
                                 modifier = if (single) Modifier else Modifier.fillMaxWidth(),

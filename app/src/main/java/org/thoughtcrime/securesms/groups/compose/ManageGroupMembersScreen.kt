@@ -482,7 +482,7 @@ private fun EditGroupPreviewSheet() {
     // build tray items
     val trayItems = listOf(
         CollapsibleFooterItemData(
-            label = GetString("Resend"),
+            label = GetString("Reseaand"),
             buttonLabel = GetString("Resend"),
             isDanger = false,
             onClick = {}
