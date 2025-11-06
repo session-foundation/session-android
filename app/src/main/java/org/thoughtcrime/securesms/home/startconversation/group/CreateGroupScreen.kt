@@ -65,8 +65,8 @@ fun CreateGroupScreen(
         viewModel.events.collect { event ->
             when (event) {
                 is CreateGroupEvent.NavigateToConversation -> {
-                    onClose()
                     onNavigateToConversationScreen(event.address)
+                    onClose()
                 }
 
                 is CreateGroupEvent.Error -> {
@@ -190,7 +190,9 @@ fun CreateGroup(
                     .padding(horizontal = LocalDimensions.current.spacing)
                     .qaTag(R.string.AccessibilityId_groupCreate)
             ) {
-                LoadingArcOr(loading = showLoading) {
+                LoadingArcOr(
+                    loading = showLoading
+                ) {
                     Text(stringResource(R.string.create))
                 }
             }

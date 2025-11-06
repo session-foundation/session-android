@@ -224,7 +224,7 @@
     <string name="changePasswordModalDescription">Change your password for {app_name}. Locally stored data will be re-encrypted with your new password.</string>
     <string name="checkingProStatus">Checking {pro} Status</string>
     <string name="checkingProStatusContinue">Checking your {pro} status. You\'ll be able to continue once this check is complete.</string>
-    <string name="checkingProStatusDescription">Checking your {pro} details. Some information on this page may be unavailable until this check is complete.</string>
+    <string name="checkingProStatusDescription">Checking your {pro} details. Some actions on this page may be unavailable until this check is complete.</string>
     <string name="checkingProStatusEllipsis">Checking {pro} Status...</string>
     <string name="checkingProStatusRenew">Checking your {pro} details. You cannot renew until this check is complete.</string>
     <string name="checkingProStatusUpgradeDescription">Checking your {pro} status. You\'ll be able to upgrade to {pro} once this check is complete.</string>
@@ -1022,7 +1022,7 @@ accepted an invite to join the group.</string>
     <string name="proBilledQuarterly">{price} Billed Quarterly</string>
     <string name="proCallToActionLongerMessages">Want to send longer messages? Send more text and unlock premium features with {app_pro}</string>
     <string name="proCallToActionPinnedConversations">Want more pins? Organize your chats and unlock premium features with {app_pro}</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">Want more than 5 pins? Organize your chats and unlock premium features with {app_pro}</string>
+    <string name="proCallToActionPinnedConversationsMoreThan">Want more than {limit} pins? Organize your chats and unlock premium features with {app_pro}</string>
     <string name="proCancelSorry">Sorry to see you cancel {pro}. Here\'s what you need to know before canceling your {pro} access.</string>
     <string name="proCancellation">Cancellation</string>
     <string name="proCancellationDescription">Canceling {pro} access will prevent automatic renewal from occurring before {pro} access expires. Canceling {pro} does <b>not</b> result in a refund. You will continue to be able to use {app_pro} features until your {pro} access expires.\n\nBecause you originally signed up for {app_pro} using your <b>{platform_account}</b>, you\'ll need to use the same {platform_account} to cancel {pro}.</string>

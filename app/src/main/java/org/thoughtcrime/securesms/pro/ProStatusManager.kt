@@ -278,7 +278,7 @@ class ProStatusManager @Inject constructor(
     companion object {
         const val MAX_CHARACTER_PRO = 10000 // max characters in a message for pro users
         private const val MAX_CHARACTER_REGULAR = 2000 // max characters in a message for non pro users
-        private const val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
+        const val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
 
         const val URL_PRO_SUPPORT = "https://getsession.org/pro-form"
         const val DEFAULT_GOOGLE_STORE = "Google Play Store"

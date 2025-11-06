@@ -828,7 +828,6 @@
     <string name="proAnimatedDisplayPicturesNonProModalDescription">GIF अपलोड करें</string>
     <string name="proCallToActionLongerMessages">लंबे संदेश भेजना चाहते हैं? अधिक टेक्स्ट भेजें और {app_pro} के साथ प्रीमियम सुविधाओं का अनलॉक करें</string>
     <string name="proCallToActionPinnedConversations">अधिक पिन करना चाहते हैं? अपनी चैट व्यवस्थित करें और {app_pro} के साथ प्रीमियम सुविधाओं का अनलॉक करें</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">5 से अधिक पिन करना चाहते हैं? अपनी चैट व्यवस्थित करें और {app_pro} के साथ प्रीमियम सुविधाओं का अनलॉक करें</string>
     <string name="proFeatureListAnimatedDisplayPicture">GIF और WebP डिस्प्ले तस्वीरें अपलोड करें</string>
     <string name="proFeatureListLargerGroups">300 सदस्यों तक बड़े समूह चैट</string>
     <string name="proFeatureListLoadsMore">साथ में कई और विशेष सुविधाएं</string>

@@ -125,7 +125,9 @@ class GroupPoller @AssistedInject constructor(
             ).also { emit(it) }
 
             // Notify all pending tokens
-            pendingTokens.forEach { it.resultCallback.send(pollResult) }
+            pendingTokens.forEach {
+                it.resultCallback.trySend(pollResult)
+            }
             pendingTokens.clear()
         }
     }.stateIn(scope, SharingStarted.Eagerly, State())
@@ -139,10 +141,12 @@ class GroupPoller @AssistedInject constructor(
                 appVisibilityManager.isAppVisible.first { visible -> visible }
 
                 // As soon as the app becomes visible, start polling
+                Log.d(TAG, "Requesting routine poll for group($groupId)")
                 if (requestPollOnce().hasNonRetryableError()) {
                     Log.v(TAG, "Error polling group $groupId and stopped polling")
                     break
                 }
+                Log.d(TAG, "Routine poll done once for group($groupId)")
 
                 // As long as the app is visible, keep polling
                 while (true) {
@@ -156,10 +160,14 @@ class GroupPoller @AssistedInject constructor(
                         break
                     }
 
+                    Log.d(TAG, "Requesting routine poll for group($groupId)")
+
                     if (requestPollOnce().hasNonRetryableError()) {
                         Log.v(TAG, "Error polling group $groupId and stopped polling")
                         return@launch
                     }
+
+                    Log.d(TAG, "Routine poll done once for group($groupId)")
                 }
             }
         }
@@ -230,6 +238,8 @@ class GroupPoller @AssistedInject constructor(
                     throw NonRetryableException("Group has been kicked")
                 }
 
+                Log.v(TAG, "Start polling group($groupId) message snode = ${snode.ip}")
+
                 val adminKey = group.adminKey
 
                 val pollingTasks = mutableListOf<Pair<String, Deferred<*>>>()
@@ -274,7 +284,6 @@ class GroupPoller @AssistedInject constructor(
                         Namespace.GROUP_MESSAGES()
                     ).orEmpty()
 
-                    Log.v(TAG, "Retrieving group($groupId) message since lastHash = $lastHash, snode = ${snode.publicKeySet}")
 
                     SnodeAPI.sendBatchRequest(
                         snode = snode,
@@ -368,6 +377,8 @@ class GroupPoller @AssistedInject constructor(
                 }
             }
         }
+
+        Log.d(TAG, "Group($groupId) polling completed, success = ${result.isSuccess}")
 
         if (result.isFailure) {
             val error = result.exceptionOrNull()

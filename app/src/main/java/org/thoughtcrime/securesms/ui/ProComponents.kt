@@ -84,9 +84,11 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.LIMIT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsNavHost
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.SubscriptionDetails
 import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
@@ -683,6 +685,7 @@ fun PinProCTA(
             .toString()
 
         else -> Phrase.from(context, R.string.proCallToActionPinnedConversationsMoreThan)
+            .put(LIMIT_KEY, ProStatusManager.MAX_PIN_REGULAR.toString())
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format()
             .toString()
