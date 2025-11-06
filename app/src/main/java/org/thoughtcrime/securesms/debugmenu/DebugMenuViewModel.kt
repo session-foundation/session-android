@@ -393,6 +393,44 @@ class DebugMenuViewModel @AssistedInject constructor(
             is Commands.ToggleDebugLogGroup -> {
                 debugLogger.showGroupToast(command.group, command.showToast)
             }
+
+            is Commands.ClearAllDebugLogs -> {
+                debugLogger.clearAllLogs()
+            }
+
+            is Commands.CopyAllLogs -> {
+                val logs = debugLogger.logs.value.joinToString("\n\n") {
+                    "${it.formattedDate}: ${it.message}"
+                }
+
+                val clip = ClipData.newPlainText("Debug Logs", logs)
+                clipboardManager.setPrimaryClip(ClipData(clip))
+
+                // Show a toast if the version is below Android 13
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                    Toast.makeText(
+                        context,
+                        "Copied Debug Logs to clipboard",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+
+            is Commands.CopyLog -> {
+                val log = "${command.log.formattedDate}: ${command.log.message}"
+
+                val clip = ClipData.newPlainText("Debug Log", log)
+                clipboardManager.setPrimaryClip(ClipData(clip))
+
+                // Show a toast if the version is below Android 13
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                    Toast.makeText(
+                        context,
+                        "Copied Debug Log to clipboard",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
         }
     }
 
@@ -573,6 +611,9 @@ class DebugMenuViewModel @AssistedInject constructor(
         data class SelectAltFileServer(val fileServer: FileServer?) : Commands()
         data class NavigateTo(val destination: DebugMenuDestination) : Commands()
         data class ToggleDebugLogGroup(val group: DebugLogGroup, val showToast: Boolean) : Commands()
+        data object ClearAllDebugLogs : Commands()
+        data object CopyAllLogs : Commands()
+        data class CopyLog(val log: DebugLogData) : Commands()
     }
 
     companion object {

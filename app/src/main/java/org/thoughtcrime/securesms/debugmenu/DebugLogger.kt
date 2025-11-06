@@ -72,6 +72,10 @@ class DebugLogger @Inject constructor(
     fun logE(message: String, group: DebugLogGroup, tag: String = "", throwable: Throwable? = null){
         log(message = message, group = group, tag = tag, throwable = throwable, logSeverity = LogSeverity.ERROR)
     }
+
+    fun clearAllLogs(){
+        _logs.update { emptyList() }
+    }
 }
 
 data class DebugLogData(
