@@ -182,14 +182,33 @@ abstract class BaseGroupMembersViewModel(
         }
     }
 
-    // Refer to notion doc for the sorting logic
+    // Refer to manage members/admin PRD for the sorting logic
     private fun sortMembers(members: List<GroupMemberState>, currentUserId: AccountId) =
         members.sortedWith(
-            compareBy<GroupMemberState>{ it.accountId != currentUserId } // Current user comes first
-                .thenBy { !it.showAsAdmin } // Admins come first
-                .thenComparing(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name }) // Sort by name (case insensitive)
-                .thenBy { it.accountId } // Last resort: sort by account ID
+            compareBy<GroupMemberState> { stateOrder(it.status) }
+                .thenBy { it.accountId != currentUserId }
+                .thenComparing(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
+                .thenBy { it.accountId }
         )
+}
+
+private fun stateOrder(status: GroupMember.Status?): Int = when (status) {
+    // 1. Invite failed
+    GroupMember.Status.INVITE_FAILED -> 0
+    // 2. Invite not sent
+    GroupMember.Status.INVITE_NOT_SENT -> 1
+    // 3. Sending invite
+    GroupMember.Status.INVITE_SENDING -> 2
+    // 4. Invite sent
+    GroupMember.Status.INVITE_SENT -> 3
+    // 5. Invite status unknown
+    GroupMember.Status.INVITE_UNKNOWN -> 4
+    // 6. Pending removal
+    GroupMember.Status.REMOVED,
+    GroupMember.Status.REMOVED_UNKNOWN,
+    GroupMember.Status.REMOVED_INCLUDING_MESSAGES -> 5
+    // 7. Member (everything else)
+    else -> 6
 }
 
 data class GroupMemberState(
