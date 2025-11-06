@@ -36,6 +36,7 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager.PurchaseEvent
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import java.time.Instant
@@ -49,10 +50,11 @@ import javax.inject.Singleton
 @Singleton
 class PlayStoreSubscriptionManager @Inject constructor(
     private val application: Application,
-    @param:ManagerScope private val scope: CoroutineScope,
     private val currentActivityObserver: CurrentActivityObserver,
-    private val prefs: TextSecurePreferences
-) : SubscriptionManager {
+    private val prefs: TextSecurePreferences,
+    proStatusManager: ProStatusManager,
+    @param:ManagerScope scope: CoroutineScope,
+) : SubscriptionManager(proStatusManager, scope) {
     override val id = "google_play_store"
     override val name = "Google Play Store"
     override val description = ""
@@ -74,29 +76,13 @@ class PlayStoreSubscriptionManager @Inject constructor(
 
     override val quickRefundUrl = "https://support.google.com/googleplay/workflow/9813244"
 
-    private val _purchaseEvents = MutableSharedFlow<PurchaseEvent>(
-        replay = 0,
-        extraBufferCapacity = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
-    )
-    override val purchaseEvents: SharedFlow<PurchaseEvent> = _purchaseEvents.asSharedFlow()
-
     private val billingClient by lazy {
         BillingClient.newBuilder(application)
             .setListener { result, purchases ->
                 Log.d(TAG, "onPurchasesUpdated: $result, $purchases")
                 if (result.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
                     purchases.firstOrNull()?.let{
-                        scope.launch {
-                           // signal that purchase was completed
-                            try {
-                                //todo PRO send confirmation to libsession
-                            } catch (e : Exception){
-                                _purchaseEvents.emit(PurchaseEvent.Failed())
-                            }
-
-                            _purchaseEvents.emit(PurchaseEvent.Success)
-                        }
+                        onPurchaseSuccessful()
                     }
                 } else {
                     Log.w(TAG, "Purchase failed or cancelled: $result")

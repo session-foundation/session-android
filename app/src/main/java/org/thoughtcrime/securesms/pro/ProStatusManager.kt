@@ -271,6 +271,13 @@ class ProStatusManager @Inject constructor(
         return emptySet()
     }
 
+    suspend fun appProPaymentToBackend() {
+        //todo PRO call AddProPaymentRequest in libsession
+
+        // we should `AddProPaymentRequest` with exponential backoff
+        // the call might fail until the back end has had time to acknowledge the payment
+    }
+
     enum class MessageProFeature {
         ProBadge, LongMessage, AnimatedAvatar
     }
