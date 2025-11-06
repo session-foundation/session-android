@@ -267,7 +267,7 @@ fun Settings(
                     },
                 text = uiState.username,
                 iconSize = 53.sp to 24.sp,
-                content = if(uiState.isPro){{
+                content = if(uiState.subscriptionState.type !is SubscriptionType.NeverSubscribed){{ // if we are pro or expired
                     ProBadge(
                         modifier = Modifier.padding(start = 4.dp)
                             .qaTag(stringResource(R.string.qa_pro_badge_icon)),
@@ -385,7 +385,7 @@ fun Settings(
         if(uiState.showAvatarDialog) {
             AvatarDialog(
                 state = uiState.avatarDialogState,
-                isPro = uiState.isPro,
+                isPro = uiState.subscriptionState.type is SubscriptionType.Active,
                 isPostPro = uiState.isPostPro,
                 sendCommand = sendCommand,
                 startAvatarSelection = startAvatarSelection
@@ -395,7 +395,7 @@ fun Settings(
         // Animated avatar CTA
         if(uiState.showAnimatedProCTA){
             AnimatedProCTA(
-                isPro = uiState.isPro,
+                proSubscription = uiState.subscriptionState.type,
                 sendCommand = sendCommand
             )
         }
@@ -994,10 +994,10 @@ fun AvatarDialog(
 
 @Composable
 fun AnimatedProCTA(
-    isPro: Boolean,
+    proSubscription: SubscriptionType,
     sendCommand: (SettingsViewModel.Commands) -> Unit,
 ){
-    if(isPro) {
+    if(proSubscription is SubscriptionType.Active) {
         SessionProCTA (
             title = stringResource(R.string.proActivated),
             badgeAtStart = true,
@@ -1032,6 +1032,7 @@ fun AnimatedProCTA(
         )
     } else {
         AnimatedProfilePicProCTA(
+            proSubscription = proSubscription,
             onDismissRequest = { sendCommand(HideAnimatedProCTA) },
         )
     }
@@ -1061,7 +1062,6 @@ private fun SettingsScreenPreview() {
                         )
                     )
                 ),
-                isPro = true,
                 isPostPro = true,
                 subscriptionState = SubscriptionState(
                     type = SubscriptionType.Active.AutoRenewing(

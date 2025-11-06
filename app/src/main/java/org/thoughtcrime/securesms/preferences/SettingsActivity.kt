@@ -2,6 +2,7 @@
 
 import android.Manifest
 import android.content.ActivityNotFoundException
+import android.graphics.Bitmap
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
@@ -10,14 +11,20 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
 import com.canhub.cropper.CropImageView
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.FullComposeScreenLockActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.util.FileProviderUtil
@@ -59,7 +66,12 @@ class SettingsActivity : FullComposeScreenLockActivity() {
              viewModel.hideAvatarPickerOptions() // close the bottom sheet
 
              val outputFile = Uri.fromFile(File(cacheDir, "cropped"))
-             cropImage(viewModel.getTempFile()?.let(Uri::fromFile), outputFile)
+             val inputFile = viewModel.getTempFile()?.let(Uri::fromFile)
+             if (inputFile == null) {
+                 Toast.makeText(this, R.string.errorUnknown, Toast.LENGTH_SHORT).show()
+                 return@registerForActivityResult
+             }
+             cropImage(inputFile, outputFile)
          } else {
              Toast.makeText(this, R.string.errorUnknown, Toast.LENGTH_SHORT).show()
          }
@@ -118,30 +130,47 @@ class SettingsActivity : FullComposeScreenLockActivity() {
             .execute()
     }
 
-    private fun cropImage(inputFile: Uri?, outputFile: Uri?){
-        onAvatarCropped.launch(
-            CropImageContractOptions(
-                uri = inputFile,
-                cropImageOptions = CropImageOptions(
-                    guidelines = CropImageView.Guidelines.ON,
-                    aspectRatioX = 1,
-                    aspectRatioY = 1,
-                    fixAspectRatio = true,
-                    cropShape = CropImageView.CropShape.OVAL,
-                    customOutputUri = outputFile,
-                    allowRotation = true,
-                    allowFlipping = true,
-                    backgroundColor = imageScrim,
-                    toolbarColor = bgColor,
-                    activityBackgroundColor = bgColor,
-                    toolbarTintColor = txtColor,
-                    toolbarBackButtonColor = txtColor,
-                    toolbarTitleColor = txtColor,
-                    activityMenuIconColor = txtColor,
-                    activityMenuTextColor = txtColor,
-                    activityTitle = activityTitle
+    private fun cropImage(inputFile: Uri, outputFile: Uri){
+        lifecycleScope.launch {
+            try {
+                val inputType = withContext(Dispatchers.Default) {
+                    contentResolver.getType(inputFile)
+                }
+
+                onAvatarCropped.launch(
+                    CropImageContractOptions(
+                        uri = inputFile,
+                        cropImageOptions = CropImageOptions(
+                            guidelines = CropImageView.Guidelines.ON,
+                            aspectRatioX = 1,
+                            aspectRatioY = 1,
+                            fixAspectRatio = true,
+                            cropShape = CropImageView.CropShape.OVAL,
+                            customOutputUri = outputFile,
+                            allowRotation = true,
+                            allowFlipping = true,
+                            backgroundColor = imageScrim,
+                            toolbarColor = bgColor,
+                            activityBackgroundColor = bgColor,
+                            toolbarTintColor = txtColor,
+                            toolbarBackButtonColor = txtColor,
+                            toolbarTitleColor = txtColor,
+                            activityMenuIconColor = txtColor,
+                            activityMenuTextColor = txtColor,
+                            activityTitle = activityTitle,
+                            outputCompressFormat = when {
+                                inputType?.startsWith("image/png") == true -> Bitmap.CompressFormat.PNG
+                                inputType?.startsWith("image/webp") == true -> Bitmap.CompressFormat.WEBP
+                                else -> Bitmap.CompressFormat.JPEG
+                            }
+                        )
+                    )
                 )
-            )
-        )
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                Log.e(TAG, "Error launching cropper", e)
+                Toast.makeText(this@SettingsActivity, R.string.errorUnknown, Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }

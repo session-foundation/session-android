@@ -806,7 +806,6 @@
     <string name="proAnimatedDisplayPicturesNonProModalDescription">使用 {app_pro} 上傳 GIF 圖片</string>
     <string name="proCallToActionLongerMessages">想傳送更長的訊息嗎？與 {app_pro} 一起傳送更多文字並解鎖進階功能</string>
     <string name="proCallToActionPinnedConversations">想要釘選更多對話嗎？使用 {app_pro} 整理您的聊天並解鎖進階功能</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">想要釘選超過 5 則對話嗎？使用 {app_pro} 整理您的聊天並解鎖進階功能</string>
     <string name="proFeatureListAnimatedDisplayPicture">上傳 GIF 和 WebP 顯示圖片</string>
     <string name="proFeatureListLargerGroups">最大支援 300 位成員的大型群組聊天室</string>
     <string name="proFeatureListLoadsMore">以及更多獨家功能</string>

@@ -12,6 +12,7 @@ import org.session.libsession.utilities.recipients.isPro
 import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.util.NumberUtil
 
@@ -94,7 +95,7 @@ abstract class InputbarViewModel(
 
     fun showSessionProCTA(){
         _inputBarStateDialogsState.update {
-            it.copy(sessionProCharLimitCTA = true)
+            it.copy(sessionProCharLimitCTA = CharLimitCTAData(proStatusManager.subscriptionState.value.type))
         }
     }
 
@@ -165,7 +166,7 @@ abstract class InputbarViewModel(
 
             is Commands.HideSessionProCTA -> {
                 _inputBarStateDialogsState.update {
-                    it.copy(sessionProCharLimitCTA = false)
+                    it.copy(sessionProCharLimitCTA = null)
                 }
             }
         }
@@ -195,7 +196,11 @@ abstract class InputbarViewModel(
 
     data class InputBarDialogsState(
         val showSimpleDialog: SimpleDialogData? = null,
-        val sessionProCharLimitCTA: Boolean = false
+        val sessionProCharLimitCTA: CharLimitCTAData? = null
+    )
+
+    data class CharLimitCTAData(
+        val proSubscription: SubscriptionType
     )
 
     sealed interface Commands {

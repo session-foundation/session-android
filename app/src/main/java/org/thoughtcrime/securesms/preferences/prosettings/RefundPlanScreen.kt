@@ -44,31 +44,33 @@ fun RefundPlanScreen(
     viewModel: ProSettingsViewModel,
     onBack: () -> Unit,
 ) {
-    val refundData by viewModel.refundPlanState.collectAsState()
-    val activePlan = refundData.subscriptionType as? SubscriptionType.Active
-    if (activePlan == null) {
-        onBack()
-        return
-    }
+    val state by viewModel.refundPlanState.collectAsState()
 
-    // there are different UI depending on the state
-    when {
-       // there is an active subscription but from a different platform
-        activePlan.subscriptionDetails.isFromAnotherPlatform() ->
-            RefundPlanNonOriginating(
-                subscription = activePlan,
+    BaseStateProScreen(
+        state = state,
+        onBack = onBack
+    ) { refundData ->
+        val activePlan = refundData.subscriptionType
+
+        // there are different UI depending on the state
+        when {
+            // there is an active subscription but from a different platform
+            activePlan.subscriptionDetails.isFromAnotherPlatform() ->
+                RefundPlanNonOriginating(
+                    subscription = activePlan,
+                    sendCommand = viewModel::onCommand,
+                    onBack = onBack,
+                )
+
+            // default refund screen
+            else -> RefundPlan(
+                data = activePlan,
+                isQuickRefund = refundData.isQuickRefund,
+                quickRefundUrl = refundData.quickRefundUrl,
                 sendCommand = viewModel::onCommand,
                 onBack = onBack,
             )
-
-        // default refund screen
-        else -> RefundPlan(
-            data = activePlan,
-            isQuickRefund = refundData.isQuickRefund,
-            quickRefundUrl = refundData.quickRefundUrl,
-            sendCommand = viewModel::onCommand,
-            onBack = onBack,
-        )
+        }
     }
 }
 

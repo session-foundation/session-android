@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -83,12 +84,16 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.LIMIT_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsNavHost
+import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.SubscriptionDetails
+import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
-import org.thoughtcrime.securesms.ui.components.FillButtonRect
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.TertiaryFillButtonRect
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -98,6 +103,8 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.util.AvatarUIData
+import java.time.Duration
+import java.time.Instant
 
 
 @Composable
@@ -362,15 +369,18 @@ fun SessionProCTA(
         ) {
             BoxWithConstraints(modifier = modifier) {
                 val topInset = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding()
-                val targetHeight =
-                    (this.maxHeight - topInset) * 0.94f // sheet should take up 94% of the height, without the status bar
+                val maxHeight =
+                    (this.maxHeight - topInset) * 0.85f // sheet should take up 80% of the height, without the status bar
+
                 Box(
-                    modifier = Modifier.height(targetHeight),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = maxHeight),
                     contentAlignment = Alignment.TopCenter
                 ) {
                     ProSettingsNavHost(
                         startDestination = ProSettingsDestination.Home,
-                        hideHomeAppBar = true,
+                        inSheet = true,
                         onBack = dismissSheet
                     )
 
@@ -548,13 +558,23 @@ fun CTAAnimatedImages(
 // Reusable generic Pro CTA
 @Composable
 fun GenericProCTA(
+    proSubscription: SubscriptionType,
     onDismissRequest: () -> Unit,
 ){
     val context = LocalContext.current
+    val expired = proSubscription is SubscriptionType.Expired
+
     AnimatedSessionProCTA(
         heroImageBg = R.drawable.cta_hero_generic_bg,
         heroImageAnimatedFg = R.drawable.cta_hero_generic_fg,
-        text = Phrase.from(context,R.string.proUserProfileModalCallToAction)
+        title = if(expired) stringResource(R.string.renew)
+        else stringResource(R.string.upgradeTo),
+        text = if(expired)  Phrase.from(context,R.string.proRenewMaxPotential)
+            .put(APP_NAME_KEY, context.getString(R.string.app_name))
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .format()
+            .toString()
+            else Phrase.from(context, R.string.proUserProfileModalCallToAction)
             .put(APP_NAME_KEY, context.getString(R.string.app_name))
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format()
@@ -573,11 +593,21 @@ fun GenericProCTA(
 // Reusable long message  Pro CTA
 @Composable
 fun LongMessageProCTA(
+    proSubscription: SubscriptionType,
     onDismissRequest: () -> Unit,
 ){
+    val expired = proSubscription is SubscriptionType.Expired
+    val context = LocalContext.current
+
     SimpleSessionProCTA(
         heroImage = R.drawable.cta_hero_char_limit,
-        text = Phrase.from(LocalContext.current, R.string.proCallToActionLongerMessages)
+        title = if(expired) stringResource(R.string.renew)
+        else stringResource(R.string.upgradeTo),
+        text = if(expired) Phrase.from(context,R.string.proRenewLongerMessages)
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .format()
+            .toString()
+        else Phrase.from(context, R.string.proCallToActionLongerMessages)
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format()
             .toString(),
@@ -595,12 +625,22 @@ fun LongMessageProCTA(
 // Reusable animated profile pic Pro CTA
 @Composable
 fun AnimatedProfilePicProCTA(
+    proSubscription: SubscriptionType,
     onDismissRequest: () -> Unit,
 ){
+    val expired = proSubscription is SubscriptionType.Expired
+    val context = LocalContext.current
+
     AnimatedSessionProCTA(
         heroImageBg = R.drawable.cta_hero_animated_bg,
         heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
-        text = Phrase.from(LocalContext.current, R.string.proAnimatedDisplayPictureCallToActionDescription)
+        title = if(expired) stringResource(R.string.renew)
+        else stringResource(R.string.upgradeTo),
+        text =if(expired)  Phrase.from(context,R.string.proRenewAnimatedDisplayPicture)
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .format()
+            .toString()
+        else  Phrase.from(context, R.string.proAnimatedDisplayPictureCallToActionDescription)
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format()
             .toString(),
@@ -621,24 +661,42 @@ fun AnimatedProfilePicProCTA(
 @Composable
 fun PinProCTA(
     overTheLimit: Boolean,
+    proSubscription: SubscriptionType,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
 ){
+    val expired = proSubscription is SubscriptionType.Expired
     val context = LocalContext.current
+
+    val title = when{
+        overTheLimit && expired -> Phrase.from(context, R.string.proRenewPinMoreConversations)
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .format()
+            .toString()
+
+        overTheLimit && !expired -> Phrase.from(context, R.string.proCallToActionPinnedConversations)
+            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+            .format()
+            .toString()
+
+        !overTheLimit && expired -> Phrase.from(context, R.string.proRenewPinFiveConversations)
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .format()
+            .toString()
+
+        else -> Phrase.from(context, R.string.proCallToActionPinnedConversationsMoreThan)
+            .put(LIMIT_KEY, ProStatusManager.MAX_PIN_REGULAR.toString())
+            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+            .format()
+            .toString()
+    }
     
     SimpleSessionProCTA(
         modifier = modifier,
         heroImage = R.drawable.cta_hero_pins,
-        text = if(overTheLimit)
-            Phrase.from(context, R.string.proCallToActionPinnedConversations)
-                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                .format()
-                .toString()
-        else
-            Phrase.from(context, R.string.proCallToActionPinnedConversationsMoreThan)
-                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                .format()
-                .toString(),
+        title = if(expired) stringResource(R.string.renew)
+        else stringResource(R.string.upgradeTo),
+        text = title,
         features = listOf(
             CTAFeature.Icon(stringResource(R.string.proFeatureListPinnedConversations)),
             CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),

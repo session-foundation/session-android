@@ -949,7 +949,6 @@
     <string name="proBilledQuarterly">{price} сплата щоквартально</string>
     <string name="proCallToActionLongerMessages">Хочете відправляти довші повідомлення? Надсилайте більше тексту та розблокуйте преміальні функції застосунку з Session Pro</string>
     <string name="proCallToActionPinnedConversations">Потрібно більше закріплених бесід? Впорядкуйте свої чати та розблокуйте преміальні функції з {app_pro}</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">Потрібно понад 5 закріплених бесід? Впорядкуйте свої бесіди та розблокуйте преміальні функції з {app_pro}</string>
     <string name="proExpired">Підписка сплила</string>
     <string name="proExpiringSoon">Невдовзі спливе підписка</string>
     <string name="proExpiringTime">{pro} спливає за <b>{time}</b></string>

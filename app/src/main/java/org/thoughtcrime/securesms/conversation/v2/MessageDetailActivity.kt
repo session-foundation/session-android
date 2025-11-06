@@ -706,13 +706,22 @@ fun MessageDetailDialogs(
     if(state.proBadgeCTA != null){
         when(state.proBadgeCTA){
             is ProBadgeCTA.Generic ->
-                GenericProCTA(onDismissRequest = {sendCommand(Commands.HideProBadgeCTA)})
+                GenericProCTA(
+                    proSubscription = state.proBadgeCTA.proSubscription,
+                    onDismissRequest = {sendCommand(Commands.HideProBadgeCTA)}
+                )
 
             is ProBadgeCTA.LongMessage ->
-                LongMessageProCTA(onDismissRequest = {sendCommand(Commands.HideProBadgeCTA)})
+                LongMessageProCTA(
+                    proSubscription = state.proBadgeCTA.proSubscription,
+                    onDismissRequest = {sendCommand(Commands.HideProBadgeCTA)}
+                )
 
             is ProBadgeCTA.AnimatedProfile ->
-                AnimatedProfilePicProCTA(onDismissRequest = {sendCommand(Commands.HideProBadgeCTA)})
+                AnimatedProfilePicProCTA(
+                    proSubscription = state.proBadgeCTA.proSubscription,
+                    onDismissRequest = {sendCommand(Commands.HideProBadgeCTA)}
+                )
         }
     }
 

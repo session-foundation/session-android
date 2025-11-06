@@ -909,7 +909,6 @@
     <string name="proBilledQuarterly">{price} facturé trimestriellement</string>
     <string name="proCallToActionLongerMessages">Vous voulez envoyer des messages plus longs ? Envoyez plus de messages et débloqué les fonctionnalités premium avec {app_pro}</string>
     <string name="proCallToActionPinnedConversations">Vous voulez plus de messages épinglés ? Organisez vos chats et débloquez les fonctionnalités premium avec {app_pro}</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">Vous voulez plus que 5 messages épinglés ? Organisez vos chats et débloquez les fonctionnalités premium avec {app_pro}</string>
     <string name="proExpired">Expiré</string>
     <string name="proExpiringSoon">Expiration imminente</string>
     <string name="proExpiringTime">{pro} expire dans <b>{time}</b></string>

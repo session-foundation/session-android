@@ -60,6 +60,7 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_NAME_
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.ui.UINavigator
@@ -734,7 +735,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         if(totalPins >= maxPins){
             // the user has reached the pin limit, show the CTA
             _dialogState.update {
-                it.copy(pinCTA = PinProCTA(overTheLimit = totalPins > maxPins))
+                it.copy(pinCTA = PinProCTA(
+                    overTheLimit = totalPins > maxPins,
+                    proSubscription = proStatusManager.subscriptionState.value.type
+                ))
             }
         } else {
             viewModelScope.launch {
@@ -1251,8 +1255,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             is Commands.ShowProBadgeCTA -> {
                 _dialogState.update {
                     it.copy(
-                        proBadgeCTA = if(recipient?.isGroupV2Recipient == true) ProBadgeCTA.Group
-                        else ProBadgeCTA.Generic
+                        proBadgeCTA = if(recipient?.isGroupV2Recipient == true) ProBadgeCTA.Group(proStatusManager.subscriptionState.value.type)
+                        else ProBadgeCTA.Generic(proStatusManager.subscriptionState.value.type)
                     )
                 }
             }
@@ -1456,12 +1460,13 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     )
 
     data class PinProCTA(
-        val overTheLimit: Boolean
+        val overTheLimit: Boolean,
+        val proSubscription: SubscriptionType
     )
 
-    sealed interface ProBadgeCTA {
-        data object Generic: ProBadgeCTA
-        data object Group: ProBadgeCTA
+    sealed class ProBadgeCTA(open val proSubscription: SubscriptionType) {
+        data class Generic(override val proSubscription: SubscriptionType): ProBadgeCTA(proSubscription)
+        data class Group(override val proSubscription: SubscriptionType): ProBadgeCTA(proSubscription)
     }
 
     data class NicknameDialogData(

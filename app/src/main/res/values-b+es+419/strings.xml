@@ -832,7 +832,6 @@
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Sube GIFs con</string>
     <string name="proCallToActionLongerMessages">¿Quieres enviar mensajes más largos? Envía más texto y desbloquea funciones premium con {app_pro}</string>
     <string name="proCallToActionPinnedConversations">¿Quieres más conversaciones fijadas? Organiza tus chats y desbloquea funciones premium con {app_pro}</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">¿Quieres más de 5 conversaciones fijadas? Organiza tus chats y desbloquea funciones premium con {app_pro}</string>
     <string name="proFeatureListAnimatedDisplayPicture">Sube imágenes de perfil en formato GIF y WebP</string>
     <string name="proFeatureListLargerGroups">Chats grupales más grandes de hasta 300 miembros</string>
     <string name="proFeatureListLoadsMore">Y muchas funciones exclusivas más</string>
