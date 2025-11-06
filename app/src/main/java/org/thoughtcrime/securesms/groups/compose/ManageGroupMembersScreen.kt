@@ -155,7 +155,9 @@ fun ManageMembers(
         ManageGroupMembersViewModel.OptionsItem(
             name = LocalResources.current.getString(R.string.accountIdOrOnsInvite),
             icon = R.drawable.ic_user_round_search,
-            onClick = { onAddMemberClick() }
+            onClick = {
+                // TODO: Navigate to invite via accountId or ONS screen
+            }
         )
     )
 
