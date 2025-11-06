@@ -98,7 +98,7 @@ fun ManageGroupMembersScreen(
         showAddMembers = viewModel.showAddMembers.collectAsState().value,
         showingError = viewModel.error.collectAsState().value,
         onErrorDismissed = viewModel::onDismissError,
-        showingResend = viewModel.resendString.collectAsState().value,
+        showingResend = viewModel.ongoingAction.collectAsState().value,
         onResendDismissed = viewModel::onDismissResend,
         onMemberClicked = viewModel::onMemberItemClicked,
         showLoading = viewModel.inProgress.collectAsState().value,

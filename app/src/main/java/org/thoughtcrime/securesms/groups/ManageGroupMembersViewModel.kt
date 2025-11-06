@@ -73,14 +73,14 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
     private val mutableError = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> get() = mutableError
 
-    private val _mutableResendString = MutableStateFlow<String?>(null)
-    val resendString: StateFlow<String?> = _mutableResendString
+    private val _mutableOngoingAction = MutableStateFlow<String?>(null)
+    val ongoingAction: StateFlow<String?> = _mutableOngoingAction
 
     // Output:
     val excludingAccountIDsFromContactSelection: Set<String>
         get() = groupInfo.value?.second?.mapTo(hashSetOf()) { it.accountId.hexString }.orEmpty()
 
-//     Output: Intermediate states
+    // Output: Intermediate states
     private val mutableSearchFocused = MutableStateFlow(false)
     val searchFocused: StateFlow<Boolean> get() = mutableSearchFocused
 
@@ -230,11 +230,9 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
                 MemberInvite(id = member.accountId, shareHistory = shareHistory)
             }
 
-            onSearchFocusChanged(false)
-            onSearchQueryChanged("")
-            clearSelection()
+            removeSearchState()
 
-            _mutableResendString.value = context.resources.getQuantityString(
+            _mutableOngoingAction.value = context.resources.getQuantityString(
                 R.plurals.resendingInvite,
                 selectedMembers.value.size
             )
@@ -247,6 +245,12 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         }
     }
 
+    private fun removeSearchState(){
+        onSearchFocusChanged(false)
+        onSearchQueryChanged("")
+        clearSelection()
+    }
+
     fun onPromoteContact(memberSessionId: AccountId) {
         performGroupOperation(showLoading = false) {
             groupManager.promoteMember(groupId, listOf(memberSessionId), isRepromote = false)
@@ -254,10 +258,19 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
     }
 
     fun onRemoveContact(removeMessages: Boolean) {
+        _mutableOngoingAction.value = context.resources.getQuantityString(
+            R.plurals.removingMember,
+            selectedMembers.value.size,
+            selectedMembers.value.size
+        )
         performGroupOperation(showLoading = false) {
+            val accountIdList = selectedMembers.value.map { it.accountId }
+
+            removeSearchState()
+
             groupManager.removeMembers(
                 groupAccountId = groupId,
-                removedMembers = selectedMembers.value.map { it.accountId },
+                removedMembers = accountIdList,
                 removeMessages = removeMessages
             )
         }
@@ -329,7 +342,7 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         footerCollapsed.update { !it }
     }
 
-    fun onDismissResend() { _mutableResendString.value = null }
+    fun onDismissResend() { _mutableOngoingAction.value = null }
 
     private fun toggleRemoveDialog(visible : Boolean){
         showRemoveMember.value = visible
