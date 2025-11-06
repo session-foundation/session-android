@@ -43,6 +43,10 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
     @Inject
     lateinit var prefs: TextSecurePreferences
 
+    //todo WHITELIST uncomment prefs after seeing the dialog
+//todo WHITELIST remove hardcoded strings
+//todo WHITELIST looks like there is a visible empty pref at the bottom from the compose one? << Might need to rebuild the whole thing in compose
+
     var showWhitelistDialog by mutableStateOf(false)
 
     override fun onCreate(paramBundle: Bundle?) {
