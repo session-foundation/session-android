@@ -222,12 +222,12 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
             }
         ) {
             // Look up current member configs once
-            val membersCfg = configFactory.withGroupConfigs(groupId) { it.groupMembers }
-
-            // Build per-member invites with their own shareHistory flag
-            val invites = selectedMembers.value.distinct().map { member ->
-                val shareHistory = membersCfg?.getOrNull(member.accountId.hexString)?.supplement == true
-                MemberInvite(id = member.accountId, shareHistory = shareHistory)
+            val invites: List<MemberInvite> = configFactory.withGroupConfigs(groupId) { cfg ->
+                selectedMembers.value.map { member ->
+                    val shareHistory =
+                        cfg.groupMembers.getOrNull(member.accountId.hexString)?.supplement == true
+                    MemberInvite(id = member.accountId, shareHistory = shareHistory)
+                }
             }
 
             removeSearchState(true)
