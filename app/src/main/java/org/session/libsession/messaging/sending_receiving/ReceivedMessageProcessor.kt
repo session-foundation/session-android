@@ -31,6 +31,7 @@ import org.session.libsession.messaging.sending_receiving.notifications.MessageN
 import org.session.libsession.messaging.utilities.WebRtcUtils
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.SSKEnvironment
@@ -41,6 +42,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.getType
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
@@ -199,6 +201,20 @@ class ReceivedMessageProcessor @Inject constructor(
             is CallMessage -> handleCallMessage(message)
         }
 
+    }
+
+    fun processCommunityInboxMessage(
+        context: MessageProcessingContext,
+        message: OpenGroupApi.DirectMessage
+    ) {
+        //TODO("Waiting for the implementation from libsession_util")
+    }
+
+    fun processCommunityOutboxMessage(
+        context: MessageProcessingContext,
+        message: OpenGroupApi.DirectMessage
+    ) {
+        //TODO("Waiting for the implementation from libsession_util")
     }
 
     fun processCommunityMessage(
@@ -446,7 +462,7 @@ class ReceivedMessageProcessor @Inject constructor(
     inner class MessageProcessingContext {
         private var recipients: HashMap<Address.Conversable, Recipient>? = null
         val threadIDs: HashMap<Address.Conversable, Long> = hashMapOf()
-        private var currentUserBlindedKeys: HashMap<Address.Community, List<AccountId>>? = null
+        private var currentUserBlindedKeysByCommunityServer: HashMap<String, List<AccountId>>? = null
         val currentUserId: AccountId = AccountId(requireNotNull(storage.getUserPublicKey()) {
             "No current user available"
         })
@@ -496,18 +512,17 @@ class ReceivedMessageProcessor @Inject constructor(
             }
         }
 
-        fun getCurrentUserBlindedIDsByThread(address: Address.Conversable): List<AccountId> {
-            if (address !is Address.Community) return emptyList()
-            val serverPubKey = requireNotNull(storage.getOpenGroupPublicKey(address.serverUrl)) {
-                "No open group public key for community ${address.debugString}"
+        fun getCurrentUserBlindedIDsByServer(serverUrl: String): List<AccountId> {
+            val serverPubKey = requireNotNull(storage.getOpenGroupPublicKey(serverUrl)) {
+                "No open group public key found"
             }
 
             val cache =
-                currentUserBlindedKeys ?: hashMapOf<Address.Community, List<AccountId>>().also {
-                    currentUserBlindedKeys = it
+                currentUserBlindedKeysByCommunityServer ?: hashMapOf<String, List<AccountId>>().also {
+                    currentUserBlindedKeysByCommunityServer = it
                 }
 
-            return cache.getOrPut(address) {
+            return cache.getOrPut(serverUrl) {
                 BlindKeyAPI.blind15Ids(
                     sessionId = currentUserPublicKey,
                     serverPubKey = serverPubKey
@@ -518,6 +533,12 @@ class ReceivedMessageProcessor @Inject constructor(
                     )
                 )
             }
+        }
+
+
+        fun getCurrentUserBlindedIDsByThread(address: Address.Conversable): List<AccountId> {
+            if (address !is Address.Community) return emptyList()
+            return getCurrentUserBlindedIDsByServer(address.serverUrl)
         }
 
         fun addPendingCommunityReaction(messageId: MessageId, reaction: ReactionRecord) {

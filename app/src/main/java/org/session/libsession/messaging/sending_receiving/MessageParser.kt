@@ -2,7 +2,6 @@ package org.session.libsession.messaging.sending_receiving
 
 import network.loki.messenger.libsession_util.protocol.DecodedEnvelope
 import network.loki.messenger.libsession_util.protocol.SessionProtocol
-import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.CallMessage
@@ -13,10 +12,8 @@ import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.messages.control.TypingIndicator
 import org.session.libsession.messaging.messages.control.UnsendRequest
-import org.session.libsession.messaging.messages.visible.ParsedMessage
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.OpenGroupApi
-import org.session.libsession.messaging.open_groups.OpenGroupMessage
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.exceptions.NonRetryableException
@@ -148,7 +145,7 @@ class MessageParser @Inject constructor(
 
     fun parse1o1Message(
         data: ByteArray,
-        serverHash: String,
+        serverHash: String?,
         currentUserEd25519PrivKey: ByteArray,
         currentUserId: AccountId,
     ): Pair<Message, SignalServiceProtos.Content> {
@@ -234,14 +231,5 @@ class MessageParser @Inject constructor(
         ).also { (message, _) ->
             message.openGroupServerMessageID = msg.id
         }
-    }
-
-    fun parseCommunityInboxMessage(
-        data: ByteArray,
-        isOutgoing: Boolean,
-        otherBlindedPublicKey: String,
-        communityServerPubKeyHex: String,
-    ): ParsedMessage {
-        TODO()
     }
 }
