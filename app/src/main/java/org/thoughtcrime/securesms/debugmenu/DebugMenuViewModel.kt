@@ -131,7 +131,7 @@ class DebugMenuViewModel @AssistedInject constructor(
     val uiState: StateFlow<UIState>
         get() = _uiState
 
-    val debugLogs = debugLogger.logs
+    val debugLogs = debugLogger.logSnapshots
 
     init {
         if (databaseInspector.available) {
@@ -402,7 +402,7 @@ class DebugMenuViewModel @AssistedInject constructor(
             }
 
             is Commands.CopyAllLogs -> {
-                val logs = debugLogger.logs.value.joinToString("\n\n") {
+                val logs = debugLogger.currentSnapshot().joinToString("\n\n") {
                     "${it.formattedDate}: ${it.message}"
                 }
 

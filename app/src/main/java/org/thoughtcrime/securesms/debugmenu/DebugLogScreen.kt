@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.debugmenu
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -17,7 +16,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -25,24 +23,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import network.loki.messenger.R
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.CopyAccountId
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.DropDown
-import org.thoughtcrime.securesms.ui.qaTag
-import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
@@ -59,7 +51,7 @@ fun DebugLogScreen(
     viewModel: DebugMenuViewModel,
     onBack: () -> Unit,
 ){
-    val logs by viewModel.debugLogs.collectAsState()
+    val logs by viewModel.debugLogs.collectAsStateWithLifecycle(initialValue = emptyList())
 
     DebugLogs(
         logs = logs,
