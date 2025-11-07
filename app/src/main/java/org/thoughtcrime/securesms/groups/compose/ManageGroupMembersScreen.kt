@@ -97,6 +97,7 @@ fun ManageGroupMembersScreen(
         onBack = onBack,
         onAddMemberClick = { navigateToInviteContact(viewModel.excludingAccountIDsFromContactSelection) },
         members = viewModel.nonAdminMembers.collectAsState().value,
+        hasMembers = viewModel.hasNonAdminMembers.collectAsState().value,
         selectedMembers = viewModel.selectedMembers.collectAsState().value,
         showAddMembers = viewModel.showAddMembers.collectAsState().value,
         showingError = viewModel.error.collectAsState().value,
@@ -134,6 +135,7 @@ fun ManageMembers(
     onSearchQueryChanged: (String) -> Unit,
     onSearchQueryClear: () -> Unit,
     members: List<GroupMemberState>,
+    hasMembers: Boolean = false,
     selectedMembers: Set<GroupMemberState> = emptySet(),
     showAddMembers: Boolean,
     showingError: String?,
@@ -243,7 +245,7 @@ fun ManageMembers(
                 }
             }
 
-            if (members.isNotEmpty()) {
+            if (hasMembers) {
                 if (!searchFocused) {
                     Text(
                         modifier = Modifier.padding(
