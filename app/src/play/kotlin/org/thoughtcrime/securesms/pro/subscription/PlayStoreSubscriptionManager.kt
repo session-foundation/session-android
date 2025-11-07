@@ -35,6 +35,7 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager.PurchaseEvent
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
@@ -51,7 +52,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
     private val application: Application,
     @param:ManagerScope private val scope: CoroutineScope,
     private val currentActivityObserver: CurrentActivityObserver,
-    private val prefs: TextSecurePreferences
+    private val prefs: TextSecurePreferences,
 ) : SubscriptionManager {
     override val id = "google_play_store"
     override val name = "Google Play Store"
@@ -84,7 +85,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
     private val billingClient by lazy {
         BillingClient.newBuilder(application)
             .setListener { result, purchases ->
-                Log.d(TAG, "onPurchasesUpdated: $result, $purchases")
+                Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "onPurchasesUpdated: $result, $purchases")
                 if (result.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
                     purchases.firstOrNull()?.let{
                         scope.launch {
@@ -99,7 +100,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
                         }
                     }
                 } else {
-                    Log.w(TAG, "Purchase failed or cancelled: $result")
+                    Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Purchase failed or cancelled: $result")
                     scope.launch {
                         _purchaseEvents.emit(PurchaseEvent.Cancelled)
                     }
@@ -156,7 +157,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
 
             // If user has an existing subscription, configure upgrade/downgrade
             if (existingPurchase != null) {
-                Log.d(TAG, "Found existing subscription, configuring upgrade/downgrade with WITHOUT_PRORATION")
+                Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Found existing subscription, configuring upgrade/downgrade with WITHOUT_PRORATION")
 
                 billingFlowParamsBuilder.setSubscriptionUpdateParams(
                     BillingFlowParams.SubscriptionUpdateParams.newBuilder()
@@ -183,7 +184,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Log.e(TAG, "Error purchase plan", e)
+            Log.e(DebugLogGroup.PRO_SUBSCRIPTION.label, "Error purchase plan", e)
 
             withContext(Dispatchers.Main) {
                 Toast.makeText(application, application.getString(R.string.errorGeneric), Toast.LENGTH_LONG).show()
@@ -218,7 +219,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
             }
 
             override fun onBillingSetupFinished(result: BillingResult) {
-                Log.d(TAG, "onBillingSetupFinished with $result")
+                Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "onBillingSetupFinished with $result")
                 if (result.responseCode == BillingClient.BillingResponseCode.OK) {
                     _playBillingAvailable.update { true }
                 }
@@ -243,7 +244,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
                 it.purchaseState == Purchase.PurchaseState.PURCHASED //todo PRO Should we also OR PENDING here?
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error querying existing subscription", e)
+            Log.e(DebugLogGroup.PRO_SUBSCRIPTION.label, "Error querying existing subscription", e)
             null
         }
     }
@@ -278,7 +279,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
 
         val productDetails = result.productDetailsList?.firstOrNull()
             ?: run {
-                Log.w(TAG, "No ProductDetails returned for product id session_pro")
+                Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "No ProductDetails returned for product id session_pro")
                 return emptyList()
             }
 
@@ -290,7 +291,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
         return availablePlans.mapNotNull { duration ->
             val offer = offersByBasePlan[duration.id]
             if (offer == null) {
-                Log.w(TAG, "No offer found for basePlanId=${duration.id}")
+                Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "No offer found for basePlanId=${duration.id}")
                 return@mapNotNull null
             }
 
