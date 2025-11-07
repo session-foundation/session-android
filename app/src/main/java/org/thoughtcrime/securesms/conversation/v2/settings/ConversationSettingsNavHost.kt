@@ -182,7 +182,7 @@ fun ConversationSettingsNavHost(
 
                 val viewModel =
                     hiltViewModel<ManageGroupMembersViewModel, ManageGroupMembersViewModel.Factory> { factory ->
-                        factory.create(data.groupAddress)
+                        factory.create(data.groupAddress, navigator)
                     }
 
                 ManageGroupMembersScreen(

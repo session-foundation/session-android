@@ -89,6 +89,7 @@ fun ManageGroupMembersScreen(
 ) {
     ManageMembers(
         onBack = onBack,
+        uiState = viewModel.uiState.collectAsState().value,
         onAddMemberClick = { navigateToInviteContact(viewModel.excludingAccountIDsFromContactSelection) },
         members = viewModel.nonAdminMembers.collectAsState().value,
         hasMembers = viewModel.hasNonAdminMembers.collectAsState().value,
@@ -109,6 +110,7 @@ fun ManageGroupMembersScreen(
 @Composable
 fun ManageMembers(
     onBack: () -> Unit,
+    uiState: ManageGroupMembersViewModel.UiState,
     onAddMemberClick: () -> Unit,
     searchFocused: Boolean,
     searchQuery: String,
@@ -123,20 +125,6 @@ fun ManageMembers(
     sendCommand: (command: ManageGroupMembersViewModel.Commands) -> Unit,
     removeMembersData: ManageGroupMembersViewModel.RemoveMembersState,
 ) {
-    val optionsList: List<ManageGroupMembersViewModel.OptionsItem> = listOf(
-        ManageGroupMembersViewModel.OptionsItem(
-            name = LocalResources.current.getString(R.string.membersInvite),
-            icon = R.drawable.ic_user_round_plus,
-            onClick = { onAddMemberClick() }
-        ),
-        ManageGroupMembersViewModel.OptionsItem(
-            name = LocalResources.current.getString(R.string.accountIdOrOnsInvite),
-            icon = R.drawable.ic_user_round_search,
-            onClick = {
-                // TODO: Navigate to invite via accountId or ONS screen
-            }
-        )
-    )
 
     val handleBack: () -> Unit = {
         when {
@@ -202,20 +190,20 @@ fun ManageMembers(
                         .padding(LocalDimensions.current.smallSpacing),
                 ) {
                     Column {
-                        optionsList.forEachIndexed { index, option ->
+                        uiState.options.forEachIndexed { index, option ->
                             ItemButton(
                                 modifier = Modifier.qaTag(option.qaTag),
                                 text = annotatedStringResource(option.name),
                                 iconRes = option.icon,
                                 shape = when (index) {
                                     0 -> getCellTopShape()
-                                    optionsList.lastIndex -> getCellBottomShape()
+                                    uiState.options.lastIndex -> getCellBottomShape()
                                     else -> RectangleShape
                                 },
                                 onClick = option.onClick,
                             )
 
-                            if (index != optionsList.lastIndex) Divider()
+                            if (index != uiState.options.lastIndex) Divider()
                         }
                     }
                 }
@@ -504,6 +492,8 @@ private fun EditGroupPreviewSheet() {
             showingResend = "Resending Invite",
             sendCommand = {},
             removeMembersData = ManageGroupMembersViewModel.RemoveMembersState(),
+            uiState = ManageGroupMembersViewModel.UiState(options = emptyList()),
+            hasMembers = true,
         )
     }
 }
@@ -613,6 +603,8 @@ private fun EditGroupEditNamePreview(
             showingResend = "Resending Invite",
             sendCommand = {},
             removeMembersData = ManageGroupMembersViewModel.RemoveMembersState(),
+            uiState = ManageGroupMembersViewModel.UiState(options = emptyList()),
+            hasMembers = true,
         )
     }
 }
@@ -655,6 +647,8 @@ private fun EditGroupEmptyPreview(
             showingResend = "Resending Invite",
             sendCommand = {},
             removeMembersData = ManageGroupMembersViewModel.RemoveMembersState(),
+            uiState = ManageGroupMembersViewModel.UiState(options = emptyList()),
+            hasMembers = true,
         )
     }
 }

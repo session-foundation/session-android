@@ -33,15 +33,18 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.OTHER_NAME_KEY
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.ui.CollapsibleFooterItemData
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.util.AvatarUtils
 
 
 @HiltViewModel(assistedFactory = ManageGroupMembersViewModel.Factory::class)
 class ManageGroupMembersViewModel @AssistedInject constructor(
     @Assisted private val groupAddress: Address.Group,
+    @Assisted private val navigator: UINavigator<ConversationSettingsDestination>,
     @param:ApplicationContext private val context: Context,
     storage: StorageProtocol,
     private val configFactory: ConfigFactoryProtocol,
@@ -84,6 +87,26 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
     val selectedMembers: StateFlow<Set<GroupMemberState>> = _mutableSelectedMembers
 
     private val footerCollapsed = MutableStateFlow(false)
+
+   private val optionsList: List<OptionsItem> by lazy {
+        listOf(
+            OptionsItem(
+                name = context.getString(R.string.membersInvite),
+                icon = R.drawable.ic_user_round_plus,
+                onClick = ::navigateInviteContacts
+            ),
+            OptionsItem(
+                name = context.getString(R.string.accountIdOrOnsInvite),
+                icon = R.drawable.ic_user_round_search,
+                onClick = {
+                    // TODO: Add navigation
+                }
+            )
+        )
+    }
+
+    private val _uiState = MutableStateFlow(UiState(options = optionsList))
+    val uiState: StateFlow<UiState> = _uiState
 
     val collapsibleFooterState: StateFlow<CollapsibleFooterState> =
         combine(_mutableSelectedMembers, footerCollapsed) { selected, isCollapsed ->
@@ -183,6 +206,17 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
     }
     fun onSearchFocusChanged(isFocused :Boolean){
         mutableSearchFocused.value = isFocused
+    }
+
+    private fun navigateInviteContacts() {
+        viewModelScope.launch {
+            navigator.navigate(
+                ConversationSettingsDestination.RouteInviteToGroup(
+                    groupAddress,
+                    excludingAccountIDsFromContactSelection.toList()
+                )
+            )
+        }
     }
 
     fun onContactSelected(contacts: Set<Address>) {
@@ -362,6 +396,9 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         }
     }
 
+    data class UiState(
+        val options : List<OptionsItem> = emptyList()
+    )
     data class CollapsibleFooterState(
         val visible: Boolean = false,
         val collapsed: Boolean = false,
@@ -409,6 +446,9 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(groupAddress: Address.Group): ManageGroupMembersViewModel
+        fun create(
+            groupAddress: Address.Group,
+            navigator: UINavigator<ConversationSettingsDestination>
+        ): ManageGroupMembersViewModel
     }
 }
