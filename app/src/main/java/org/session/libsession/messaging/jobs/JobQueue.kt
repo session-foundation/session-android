@@ -200,7 +200,6 @@ class JobQueue : JobDelegate {
         val pendingJobs = mutableListOf<Job>()
         for ((id, job) in allPendingJobs) {
             if (job == null) {
-                Log.e("JobQueue", "Dropping incompatible job type=$typeKey id=$id (deserialize returned null)")
                 // Job failed to deserialize, remove it from the DB
                 handleJobFailedPermanently(id)
             } else {
