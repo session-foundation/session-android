@@ -65,10 +65,6 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
     private val mutableInProgress = MutableStateFlow(false)
     val inProgress: StateFlow<Boolean> get() = mutableInProgress
 
-    // show action bottom sheet
-    private val _clickedMember: MutableStateFlow<GroupMemberState?> = MutableStateFlow(null)
-    val clickedMember: StateFlow<GroupMemberState?> get() = _clickedMember
-
     // Output: errors
     private val mutableError = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> get() = mutableError
@@ -322,20 +318,6 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
                 }
             }
         }
-    }
-
-    fun onMemberClicked(groupMember: GroupMemberState){
-        // if the member is clickable (ie, not 'you') but is an admin with no possible actions,
-        // show a toast mentioning they can't be removed
-        if(!groupMember.canEdit && groupMember.showAsAdmin){
-            mutableError.value = context.getString(R.string.adminCannotBeRemoved)
-        } else { // otherwise pass in the clicked member to display the action sheet
-            _clickedMember.value = groupMember
-        }
-    }
-
-    fun hideActionBottomSheet(){
-        _clickedMember.value = null
     }
 
     fun clearSelection(){
