@@ -51,7 +51,8 @@ fun DebugLogScreen(
     viewModel: DebugMenuViewModel,
     onBack: () -> Unit,
 ){
-    val logs by viewModel.debugLogs.collectAsStateWithLifecycle(initialValue = emptyList())
+    val flowLogs = remember { viewModel.debugLogs }
+    val logs by flowLogs.collectAsStateWithLifecycle(initialValue = emptyList())
 
     DebugLogs(
         logs = logs,

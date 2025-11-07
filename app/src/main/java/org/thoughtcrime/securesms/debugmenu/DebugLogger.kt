@@ -51,8 +51,15 @@ class DebugLogger @Inject constructor(
     private fun groupForTag(tag: String): DebugLogGroup? =
         DebugLogGroup.entries.firstOrNull { it.label.equals(tag, ignoreCase = true) }
 
-    val logSnapshots: Flow<List<DebugLogData>> =
-        logChanges.onStart { emit(Unit) }.map { currentSnapshot() }
+    val logSnapshots: Flow<List<DebugLogData>>
+        get() = logChanges.onStart { emit(Unit) }.map { currentSnapshot() }
+
+    // In-memory cache for toast prefs
+    private val toastEnabled = java.util.EnumMap<DebugLogGroup, Boolean>(DebugLogGroup::class.java).apply {
+        DebugLogGroup.entries.forEach { group ->
+            this[group] = prefs.getBooleanPreference(prefPrefix + group.label, false)
+        }
+    }
 
     fun currentSnapshot(): List<DebugLogData> =
         synchronized(buffer) { buffer.toList().asReversed() }
@@ -62,12 +69,13 @@ class DebugLogger @Inject constructor(
         logChanges.tryEmit(Unit)
     }
 
-    fun getGroupToastPreference(group: DebugLogGroup): Boolean =
-        prefs.getBooleanPreference(prefPrefix + group.label, false)
-
     fun showGroupToast(group: DebugLogGroup, showToast: Boolean) {
+        toastEnabled[group] = showToast
         prefs.setBooleanPreference(prefPrefix + group.label, showToast)
     }
+
+    fun getGroupToastPreference(group: DebugLogGroup): Boolean =
+        toastEnabled[group] == true
 
     // ---- Log.Logger overrides (no “level” logic) ----
     override fun v(tag: String, message: String?, t: Throwable?) = add(tag, message, t)
@@ -105,7 +113,7 @@ class DebugLogger @Inject constructor(
         logChanges.tryEmit(Unit)
 
         // Toast decision is independent from capture.
-        if (getGroupToastPreference(group)) {
+        if (toastEnabled[group] == true) {
             scope.launch(Dispatchers.Main) {
                 Toast.makeText(app, text, Toast.LENGTH_SHORT).show()
             }
