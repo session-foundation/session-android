@@ -4,8 +4,6 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -36,14 +34,12 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -711,7 +707,7 @@ fun SearchBar(
     modifier: Modifier = Modifier,
     placeholder: String? = null,
     enabled: Boolean = true,
-    backgroundColor: Color = LocalColors.current.background
+    backgroundColor: Color = LocalColors.current.background,
 ) {
     BasicTextField(
         singleLine = true,
@@ -778,11 +774,11 @@ fun SearchBar(
 }
 
 /**
- * Search with the cancel action
+ * Search with the close action for removing focus
  */
 
 @Composable
-fun SearchBarWithCancel(
+fun SearchBarWithClose(
     query: String,
     onValueChanged: (String) -> Unit,
     onClear: () -> Unit,
@@ -793,6 +789,7 @@ fun SearchBarWithCancel(
     enabled: Boolean = true,
     backgroundColor: Color = LocalColors.current.backgroundSecondary,
 ) {
+
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
@@ -814,65 +811,27 @@ fun SearchBarWithCancel(
         horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
 
     ) {
-        // Search field
-        BasicTextField(
-            singleLine = true,
-            value = query,
-            onValueChange = onValueChanged,
+        SearchBar(
+            query = query,
+            onValueChanged = onValueChanged,
+            onClear = onClear,
+            placeholder = placeholder,
             enabled = enabled,
-            textStyle = LocalType.current.base.copy(color = LocalColors.current.text),
-            cursorBrush = SolidColor(LocalColors.current.text),
+            backgroundColor = backgroundColor,
             modifier = Modifier
-                .weight(1f) // leave room on the right for the cancel button
-                .heightIn(min = LocalDimensions.current.minSearchInputHeight)
+                .weight(1f)
                 .background(backgroundColor, MaterialTheme.shapes.small)
-                .onFocusChanged { onFocusChanged(it.isFocused) },
-            decorationBox = { innerTextField ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_search),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(LocalColors.current.textSecondary),
-                        modifier = Modifier
-                            .padding(
-                                horizontal = LocalDimensions.current.smallSpacing,
-                                vertical = LocalDimensions.current.xxsSpacing
-                            )
-                            .size(LocalDimensions.current.iconSmall)
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(end = LocalDimensions.current.smallSpacing)
-                    ) {
-                        innerTextField()
-                        if (query.isEmpty() && placeholder != null) {
-                            Text(
-                                modifier = Modifier.qaTag(R.string.qa_conversation_search_input),
-                                text = placeholder,
-                                color = LocalColors.current.textSecondary,
-                                style = LocalType.current.xl
-                            )
-                        }
-                    }
-                }
-            }
+                .onFocusChanged { onFocusChanged(it.isFocused) }
         )
 
         // Right-side Cancel (outside the search field)
         AnimatedVisibility(visible = isFocused) {
             Text(
-                text = LocalResources.current.getString(R.string.cancel),
+                text = LocalResources.current.getString(R.string.close),
                 style = LocalType.current.base,
                 color = LocalColors.current.text,
                 modifier = Modifier
                     .clickable {
-                        onClear()
                         focusManager.clearFocus(force = true)
                     }
                     .padding(
@@ -1057,11 +1016,15 @@ private fun CollapsibleFooterActions(
                     endContent = {
                         val widthMod =
                             if (single) {
-                                Modifier.wrapContentWidth().widthIn(max = capDp)
+                                Modifier
+                                    .wrapContentWidth()
+                                    .widthIn(max = capDp)
                             } else if (equalWidthPx >= 0) {
                                 Modifier.width(with(density) { equalWidthPx.toDp() })
                             } else {
-                                Modifier.wrapContentWidth().widthIn(max = capDp)
+                                Modifier
+                                    .wrapContentWidth()
+                                    .widthIn(max = capDp)
                             }
                         Box(
                             modifier = Modifier
@@ -1618,7 +1581,7 @@ fun PreviewSearchWithCancel(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
     PreviewTheme(colors) {
-        SearchBarWithCancel(
+        SearchBarWithClose(
             query = "Test Query",
             onValueChanged = {  },
             onClear = {  },
