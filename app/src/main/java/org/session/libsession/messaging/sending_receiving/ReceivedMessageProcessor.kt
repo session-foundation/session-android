@@ -1,6 +1,8 @@
 package org.session.libsession.messaging.sending_receiving
 
 import android.content.Context
+import androidx.compose.runtime.saveable.autoSaver
+import androidx.compose.ui.geometry.Rect
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,7 +25,7 @@ import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.messages.control.TypingIndicator
 import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.VisibleMessage
-import org.session.libsession.messaging.open_groups.OpenGroupMessage
+import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.utilities.WebRtcUtils
@@ -45,6 +47,7 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.sskenvironment.ReadReceiptManager
 import java.util.concurrent.ConcurrentHashMap
@@ -71,6 +74,7 @@ class ReceivedMessageProcessor @Inject constructor(
     private val messageRequestResponseHandler: Provider<MessageRequestResponseHandler>,
     private val visibleMessageHandler: Provider<VisibleMessageHandler>,
     private val blindMappingRepository: BlindMappingRepository,
+    private val messageParser: MessageParser,
 ) {
     private val threadMutexes = ConcurrentHashMap<Address.Conversable, ReentrantLock>()
 
@@ -81,20 +85,34 @@ class ReceivedMessageProcessor @Inject constructor(
      *
      * Note: the context passed to the block is not thread-safe, so it should not be shared between threads.
      */
-    fun <T> startProcessing(block: (MessageProcessingContext) -> T): T {
+    fun <T> startProcessing(debugName: String, block: (MessageProcessingContext) -> T): T {
         val context = MessageProcessingContext()
+        val start = System.currentTimeMillis()
         try {
             return block(context)
         } finally {
             for (threadId in context.threadIDs.values) {
                 if (context.maxOutgoingMessageTimestamp > 0L &&
-                    context.maxOutgoingMessageTimestamp > storage.getLastSeen(threadId)) {
-                    storage.markConversationAsRead(threadId, context.maxOutgoingMessageTimestamp, force = true)
+                    context.maxOutgoingMessageTimestamp > storage.getLastSeen(threadId)
+                ) {
+                    storage.markConversationAsRead(
+                        threadId,
+                        context.maxOutgoingMessageTimestamp,
+                        force = true
+                    )
                 }
 
                 storage.updateThread(threadId, true)
                 notificationManager.updateNotification(this.context, threadId)
             }
+
+            // Handle pending community reactions
+            context.pendingCommunityReactions?.let { reactions ->
+                storage.addReactions(reactions, replaceAll = true, notifyUnread = false)
+                reactions.clear()
+            }
+
+            Log.d(TAG, "Processed messages for $debugName in ${System.currentTimeMillis() - start}ms")
         }
     }
 
@@ -118,21 +136,20 @@ class ReceivedMessageProcessor @Inject constructor(
         }
 
         // Get or create thread ID, if we aren't allowed to create it, and it doesn't exist, drop the message
-        val threadId = context.threadIDs[threadAddress] ?:
-            if (shouldCreateThread(message)) {
-                threadDatabase.getOrCreateThreadIdFor(threadAddress)
-                    .also { context.threadIDs[threadAddress] = it }
-            } else {
-                threadDatabase.getThreadIdIfExistsFor(threadAddress)
-                    .also { id ->
-                        if (id == -1L) {
-                            log { "Dropping message for non-existing thread ${threadAddress.debugString}" }
-                            return@withLock
-                        } else {
-                            context.threadIDs[threadAddress] = id
-                        }
+        val threadId = context.threadIDs[threadAddress] ?: if (shouldCreateThread(message)) {
+            threadDatabase.getOrCreateThreadIdFor(threadAddress)
+                .also { context.threadIDs[threadAddress] = it }
+        } else {
+            threadDatabase.getThreadIdIfExistsFor(threadAddress)
+                .also { id ->
+                    if (id == -1L) {
+                        log { "Dropping message for non-existing thread ${threadAddress.debugString}" }
+                        return@withLock
+                    } else {
+                        context.threadIDs[threadAddress] = id
                     }
-            }
+                }
+        }
 
         when (message) {
             is ReadReceipt -> handleReadReceipt(message)
@@ -141,6 +158,7 @@ class ReceivedMessageProcessor @Inject constructor(
                 message = message,
                 groupId = (threadAddress as? Address.Group)?.accountId
             )
+
             is ExpirationTimerUpdate -> {
                 // For groupsv2, there are dedicated mechanisms for handling expiration timers, and
                 // we want to avoid the 1-to-1 message format which is unauthenticated in a group settings.
@@ -153,13 +171,17 @@ class ReceivedMessageProcessor @Inject constructor(
                     handleExpirationTimerUpdate(message)
                 }
             }
+
             is DataExtractionNotification -> handleDataExtractionNotification(message)
             is UnsendRequest -> handleUnsendRequest(message)
-            is MessageRequestResponse -> messageRequestResponseHandler.get().handleExplicitRequestResponseMessage(context, message)
+            is MessageRequestResponse -> messageRequestResponseHandler.get()
+                .handleExplicitRequestResponseMessage(context, message)
+
             is VisibleMessage -> {
                 if (message.isSenderSelf &&
                     message.sentTimestamp != null &&
-                    message.sentTimestamp!! > context.maxOutgoingMessageTimestamp) {
+                    message.sentTimestamp!! > context.maxOutgoingMessageTimestamp
+                ) {
                     context.maxOutgoingMessageTimestamp = message.sentTimestamp!!
                 }
 
@@ -180,11 +202,86 @@ class ReceivedMessageProcessor @Inject constructor(
     }
 
     fun processCommunityMessage(
+        context: MessageProcessingContext,
         threadAddress: Address.Community,
-        message: OpenGroupMessage,
-        context: MessageProcessingContext
+        message: OpenGroupApi.Message,
     ) = threadMutexes.getOrPut(threadAddress) { ReentrantLock() }.withLock {
+        var messageId = messageParser.parseCommunityMessage(
+            msg = message,
+            currentUserId = context.currentUserId,
+            currentUserBlindedIDs = context.getCurrentUserBlindedIDsByThread(threadAddress)
+        )?.let { (msg, proto) ->
+            processEnvelopedMessage(
+                context = context,
+                threadAddress = threadAddress,
+                message = msg,
+                proto = proto
+            )
 
+            msg.id
+        }
+
+        // For community, we have a different way of handling reaction, this is outside of
+        // the normal enveloped message (even though enveloped message can also contain reaction,
+        // it's not used by anyone at the moment).
+        if (messageId == null) {
+            Log.d(TAG, "Handling reactions only message for community ${threadAddress.debugString}")
+            messageId = requireNotNull(
+                messageDataProvider.getMessageID(
+                serverId = message.id,
+                threadId = requireNotNull(storage.getThreadId(threadAddress)) {
+                    "No thread ID for community ${threadAddress.debugString}"
+                }
+            )) {
+                "No message persisted for community message ${message.id}"
+            }
+        }
+
+        val messageServerId = message.id.toString()
+
+        for ((emoji, reaction) in message.reactions.orEmpty()) {
+            // We only really want up to 5 reactors per reaction to avoid excessive database load
+            // Among the 5 reactors, we must include ourselves if we reacted to this message
+            val otherReactorsToAdd = if (reaction.you) {
+                context.addPendingCommunityReaction(
+                    messageId,
+                    ReactionRecord(
+                        messageId = messageId,
+                        author = context.currentUserPublicKey,
+                        emoji = emoji,
+                        serverId = messageServerId,
+                        count = reaction.count,
+                        sortId = 0,
+                    )
+                )
+
+                val myBlindedIDs = context.getCurrentUserBlindedIDsByThread(threadAddress)
+
+                reaction.reactors
+                    .asSequence()
+                    .filterNot { reactor -> reactor == context.currentUserPublicKey || myBlindedIDs.any { it.hexString == reactor } }
+                    .take(4)
+            } else {
+                reaction.reactors
+                    .asSequence()
+                    .take(5)
+            }
+
+
+            for (reactor in otherReactorsToAdd) {
+                context.addPendingCommunityReaction(
+                    messageId,
+                    ReactionRecord(
+                        messageId = messageId,
+                        author = reactor,
+                        emoji = emoji,
+                        serverId = messageServerId,
+                        count = reaction.count,
+                        sortId = reaction.index,
+                    )
+                )
+            }
+        }
     }
 
     private fun handleReadReceipt(message: ReadReceipt) {
@@ -204,7 +301,7 @@ class ReceivedMessageProcessor @Inject constructor(
 
     private fun showTypingIndicatorIfNeeded(senderPublicKey: String) {
         // We don't want to show other people's indicators if the toggle is off
-        if(!prefs.isTypingIndicatorsEnabled()) return
+        if (!prefs.isTypingIndicatorsEnabled()) return
 
         val address = Address.fromSerialized(senderPublicKey)
         val threadID = storage.getThreadId(address) ?: return
@@ -237,11 +334,18 @@ class ReceivedMessageProcessor @Inject constructor(
         if (message.groupPublicKey != null) return
         val senderPublicKey = message.sender!!
 
-        val notification: DataExtractionNotificationInfoMessage = when(message.kind) {
-            is DataExtractionNotification.Kind.MediaSaved -> DataExtractionNotificationInfoMessage(DataExtractionNotificationInfoMessage.Kind.MEDIA_SAVED)
+        val notification: DataExtractionNotificationInfoMessage = when (message.kind) {
+            is DataExtractionNotification.Kind.MediaSaved -> DataExtractionNotificationInfoMessage(
+                DataExtractionNotificationInfoMessage.Kind.MEDIA_SAVED
+            )
+
             else -> return
         }
-        storage.insertDataExtractionNotificationMessage(senderPublicKey, notification, message.sentTimestamp!!)
+        storage.insertDataExtractionNotificationMessage(
+            senderPublicKey,
+            notification,
+            message.sentTimestamp!!
+        )
     }
 
     fun handleUnsendRequest(message: UnsendRequest): MessageId? {
@@ -251,7 +355,7 @@ class ReceivedMessageProcessor @Inject constructor(
             var admin = false
             val groupID = doubleEncodeGroupID(key)
             val group = storage.getGroup(groupID)
-            if(group != null) {
+            if (group != null) {
                 admin = group.admins.map { it.toString() }.contains(message.sender)
             }
             admin
@@ -259,11 +363,14 @@ class ReceivedMessageProcessor @Inject constructor(
 
         // First we need to determine the validity of the UnsendRequest
         // It is valid if:
-        val requestIsValid = message.sender == message.author || //  the sender is the author of the message
-                message.author == userPublicKey || //  the sender is the current user
-                isLegacyGroupAdmin // sender is an admin of legacy group
+        val requestIsValid =
+            message.sender == message.author || //  the sender is the author of the message
+                    message.author == userPublicKey || //  the sender is the current user
+                    isLegacyGroupAdmin // sender is an admin of legacy group
 
-        if (!requestIsValid) { return null }
+        if (!requestIsValid) {
+            return null
+        }
 
         val timestamp = message.timestamp ?: return null
         val author = message.author ?: return null
@@ -286,7 +393,7 @@ class ReceivedMessageProcessor @Inject constructor(
 
         // the message is marked as deleted locally
         // except for 'note to self' where the message is completely deleted
-        if (messageType == MessageType.NOTE_TO_SELF){
+        if (messageType == MessageType.NOTE_TO_SELF) {
             messageDataProvider.deleteMessage(messageIdToDelete)
         } else {
             messageDataProvider.markMessageAsDeleted(
@@ -312,13 +419,14 @@ class ReceivedMessageProcessor @Inject constructor(
     }
 
 
-
     /**
      * Return true if the contact is marked as hidden for given message timestamp.
      */
-    private fun shouldDiscardForHiddenContact(ctx: MessageProcessingContext,
-                                              messageTimestamp: Long,
-                                              threadAddress: Address.Standard): Boolean {
+    private fun shouldDiscardForHiddenContact(
+        ctx: MessageProcessingContext,
+        messageTimestamp: Long,
+        threadAddress: Address.Standard
+    ): Boolean {
         val hidden = configFactory.withUserConfigs { configs ->
             configs.contacts.get(threadAddress.address)?.priority == ConfigBase.PRIORITY_HIDDEN
         }
@@ -328,10 +436,17 @@ class ReceivedMessageProcessor @Inject constructor(
                 messageTimestamp < ctx.contactConfigTimestamp
     }
 
+    /**
+     * A context object for processing received messages. This object is mostly used to store
+     * expensive data that are only valid for the duration of a processing session.
+     *
+     * It also tracks some deferred updates that should be applied once processing is complete,
+     * such as thread updates, reactions, and notifications.
+     */
     inner class MessageProcessingContext {
-        val recipients: HashMap<Address.Conversable, Recipient> = hashMapOf()
+        private var recipients: HashMap<Address.Conversable, Recipient>? = null
         val threadIDs: HashMap<Address.Conversable, Long> = hashMapOf()
-        val currentUserBlindedKeys: HashMap<Address.Community, List<String>> = hashMapOf()
+        private var currentUserBlindedKeys: HashMap<Address.Community, List<AccountId>>? = null
         val currentUserId: AccountId = AccountId(requireNotNull(storage.getUserPublicKey()) {
             "No current user available"
         })
@@ -351,34 +466,69 @@ class ReceivedMessageProcessor @Inject constructor(
             configFactory.getConfigTimestamp(UserConfigType.CONTACTS, currentUserPublicKey)
         }
 
-        private val blindIDMappingCache: HashMap<Address.Standard, List<Pair<BaseCommunityInfo, Address.Blinded>>> = hashMapOf()
+        private var blindIDMappingCache: HashMap<Address.Standard, List<Pair<BaseCommunityInfo, Address.Blinded>>>? =
+            null
+
+
+        var pendingCommunityReactions: HashMap<MessageId, MutableList<ReactionRecord>>? = null
+            private set
+
 
         fun getBlindIDMapping(address: Address.Standard): List<Pair<BaseCommunityInfo, Address.Blinded>> {
-            return blindIDMappingCache.getOrPut(address) {
+            val cache = blindIDMappingCache
+                ?: hashMapOf<Address.Standard, List<Pair<BaseCommunityInfo, Address.Blinded>>>().also {
+                    blindIDMappingCache = it
+                }
+
+            return cache.getOrPut(address) {
                 blindMappingRepository.calculateReverseMappings(address)
             }
         }
 
 
         fun getThreadRecipient(threadAddress: Address.Conversable): Recipient {
-            return recipients.getOrPut(threadAddress) {
+            val cache = recipients ?: hashMapOf<Address.Conversable, Recipient>().also {
+                recipients = it
+            }
+
+            return cache.getOrPut(threadAddress) {
                 recipientRepository.getRecipientSync(threadAddress)
             }
         }
 
-        fun getCurrentUserBlindedKeysByThread(address: Address.Conversable): List<String> {
+        fun getCurrentUserBlindedIDsByThread(address: Address.Conversable): List<AccountId> {
             if (address !is Address.Community) return emptyList()
             val serverPubKey = requireNotNull(storage.getOpenGroupPublicKey(address.serverUrl)) {
                 "No open group public key for community ${address.debugString}"
             }
-            return currentUserBlindedKeys.getOrPut(address) {
+
+            val cache =
+                currentUserBlindedKeys ?: hashMapOf<Address.Community, List<AccountId>>().also {
+                    currentUserBlindedKeys = it
+                }
+
+            return cache.getOrPut(address) {
                 BlindKeyAPI.blind15Ids(
                     sessionId = currentUserPublicKey,
                     serverPubKey = serverPubKey
-                ) + BlindKeyAPI.blind25Id(
-                    sessionId = currentUserPublicKey,
-                    serverPubKey = serverPubKey                )
+                ).map(::AccountId) + AccountId(
+                    BlindKeyAPI.blind25Id(
+                        sessionId = currentUserPublicKey,
+                        serverPubKey = serverPubKey
+                    )
+                )
             }
+        }
+
+        fun addPendingCommunityReaction(messageId: MessageId, reaction: ReactionRecord) {
+            val reactionsMap = pendingCommunityReactions
+                ?: hashMapOf<MessageId, MutableList<ReactionRecord>>().also {
+                    pendingCommunityReactions = it
+                }
+
+            reactionsMap.getOrPut(messageId) {
+                mutableListOf()
+            }.add(reaction)
         }
     }
 

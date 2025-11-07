@@ -102,7 +102,7 @@ class PushReceiver @Inject constructor(
                                     namespace = namespace,
                                     hash = pushData.metadata.msg_hash
                             )) {
-                                receivedMessageProcessor.startProcessing { ctx ->
+                                receivedMessageProcessor.startProcessing("GroupPushReceive($groupId)") { ctx ->
                                     val (msg, proto) = messageParser.parseGroupMessage(
                                         data = pushData.data,
                                         serverHash = pushData.metadata.msg_hash,
@@ -170,7 +170,7 @@ class PushReceiver @Inject constructor(
                             namespace = Namespace.DEFAULT(),
                             hash = pushData.metadata.msg_hash
                     )) {
-                        receivedMessageProcessor.startProcessing { ctx ->
+                        receivedMessageProcessor.startProcessing("PushReceiver") { ctx ->
                             val (message, proto) = messageParser.parse1o1Message(
                                 data = pushData.data,
                                 serverHash = pushData.metadata.msg_hash,

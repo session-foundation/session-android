@@ -467,7 +467,7 @@ class GroupPoller @AssistedInject constructor(
         val start = System.currentTimeMillis()
         val threadAddress = Address.Group(groupId)
 
-        receivedMessageProcessor.startProcessing { ctx ->
+        receivedMessageProcessor.startProcessing("GroupPoller($groupId)") { ctx ->
             for (message in messages) {
                 if (receivedMessageHashDatabase.checkOrUpdateDuplicateState(
                         swarmPublicKey = groupId.hexString,

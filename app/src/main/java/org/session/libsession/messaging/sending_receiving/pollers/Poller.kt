@@ -65,7 +65,6 @@ class Poller @AssistedInject constructor(
     private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     private val processor: ReceivedMessageProcessor,
     private val messageParser: MessageParser,
-    private val threadDatabase: ThreadDatabase,
     @Assisted scope: CoroutineScope
 ) {
     private val userPublicKey: String
@@ -235,7 +234,7 @@ class Poller @AssistedInject constructor(
             android.os.Debug.startMethodTracingSampling("${System.currentTimeMillis()}", 10 * 1024 * 1024, 1)
         }
 
-        processor.startProcessing { ctx ->
+        processor.startProcessing("Poller") { ctx ->
             for (message in messages) {
                 if (receivedMessageHashDatabase.checkOrUpdateDuplicateState(
                         swarmPublicKey = userPublicKey,

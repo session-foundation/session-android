@@ -15,6 +15,7 @@ import org.session.libsession.messaging.messages.control.TypingIndicator
 import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.ParsedMessage
 import org.session.libsession.messaging.messages.visible.VisibleMessage
+import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.open_groups.OpenGroupMessage
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -69,7 +70,7 @@ class MessageParser @Inject constructor(
         checkForBlockStatus: Boolean,
         isForGroup: Boolean,
         currentUserId: AccountId,
-        alternativeCurrentUserIds: List<AccountId>,
+        currentUserBlindedIDs: List<AccountId>,
         senderIdPrefix: IdPrefix
     ): Pair<Message, SignalServiceProtos.Content> {
         return parseMessage(
@@ -80,7 +81,7 @@ class MessageParser @Inject constructor(
             checkForBlockStatus = checkForBlockStatus,
             isForGroup = isForGroup,
             currentUserId = currentUserId,
-            alternativeCurrentUserIds = alternativeCurrentUserIds,
+            currentUserBlindedIDs = currentUserBlindedIDs,
         )
     }
 
@@ -92,7 +93,7 @@ class MessageParser @Inject constructor(
         checkForBlockStatus: Boolean,
         isForGroup: Boolean,
         currentUserId: AccountId,
-        alternativeCurrentUserIds: List<AccountId>,
+        currentUserBlindedIDs: List<AccountId>,
     ): Pair<Message, SignalServiceProtos.Content> {
         val proto = SignalServiceProtos.Content.parseFrom(contentPlaintext)
 
@@ -114,7 +115,7 @@ class MessageParser @Inject constructor(
         }
 
         // Valid self-send messages
-        val isSenderSelf = sender == currentUserId || sender in alternativeCurrentUserIds
+        val isSenderSelf = sender == currentUserId || sender in currentUserBlindedIDs
         if (isSenderSelf && !message.isSelfSendValid) {
             throw NonRetryableException("Ignoring self send message")
         }
@@ -165,7 +166,7 @@ class MessageParser @Inject constructor(
             isForGroup = false,
             senderIdPrefix = IdPrefix.STANDARD,
             currentUserId = currentUserId,
-            alternativeCurrentUserIds = emptyList(),
+            currentUserBlindedIDs = emptyList(),
         ).also { (message, _) ->
             message.serverHash = serverHash
         }
@@ -198,29 +199,28 @@ class MessageParser @Inject constructor(
             isForGroup = true,
             senderIdPrefix = IdPrefix.STANDARD,
             currentUserId = currentUserId,
-            alternativeCurrentUserIds = emptyList(),
+            currentUserBlindedIDs = emptyList(),
         ).also { (message, _) ->
             message.serverHash = serverHash
         }
     }
 
     fun parseCommunityMessage(
-        msg: OpenGroupMessage,
-        communityServerPubKeyHex: String,
-    ): Pair<Message, SignalServiceProtos.Content> {
+        msg: OpenGroupApi.Message,
+        currentUserId: AccountId,
+        currentUserBlindedIDs: List<AccountId>,
+    ): Pair<Message, SignalServiceProtos.Content>? {
+        if (msg.data.isNullOrBlank()) {
+            return null
+        }
+
         val decoded = SessionProtocol.decodeForCommunity(
-            payload = Base64.decode(msg.base64EncodedData.orEmpty()),
+            payload = Base64.decode(msg.data),
             nowEpochMs = snodeClock.currentTimeMills(),
             proBackendPubKey = proBackendKey,
         )
 
-        val sender = AccountId(msg.sender!!)
-
-        val keyPair = requireNotNull(storage.getUserED25519KeyPair()) {
-            "Couldn't find current user's key"
-        }
-
-        val currentUserId = AccountId(IdPrefix.STANDARD, keyPair.pubKey.data)
+        val sender = AccountId(msg.sessionId)
 
         return parseMessage(
             contentPlaintext = decoded.contentPlainText.data,
@@ -229,13 +229,10 @@ class MessageParser @Inject constructor(
             isForGroup = false,
             currentUserId = currentUserId,
             sender = sender,
-            messageTimestampMs = msg.sentTimestamp,
-            alternativeCurrentUserIds = BlindKeyAPI.blind15Ids(
-                sessionId = currentUserId.hexString,
-                serverPubKey = communityServerPubKeyHex,
-            ).map(::AccountId),
+            messageTimestampMs = (msg.posted * 1000).toLong(),
+            currentUserBlindedIDs = currentUserBlindedIDs,
         ).also { (message, _) ->
-            message.openGroupServerMessageID = msg.serverID
+            message.openGroupServerMessageID = msg.id
         }
     }
 

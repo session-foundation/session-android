@@ -82,10 +82,10 @@ class VisibleMessageHandler @Inject constructor(
         if (message.quote != null && proto.dataMessage.hasQuote()) {
             val quote = proto.dataMessage.quote
 
-            val author = if (quote.author in ctx.getCurrentUserBlindedKeysByThread(threadAddress)) {
-                Address.fromSerialized(ctx.currentUserPublicKey)
-            } else {
-                Address.fromSerialized(quote.author)
+            var author = quote.author.toAddress()
+
+            if (author is Address.WithAccountId && author.accountId in ctx.getCurrentUserBlindedIDsByThread(threadAddress)) {
+                author = Address.Standard(ctx.currentUserId)
             }
 
             val messageInfo = messageDataProvider.getMessageForQuote(threadId, quote.id, author)
@@ -149,7 +149,7 @@ class VisibleMessageHandler @Inject constructor(
             val maxChars = proStatusManager.getIncomingMessageMaxLength(message)
             val messageText = message.text?.take(maxChars) // truncate to max char limit for this message
             message.text = messageText
-            message.hasMention = (sequenceOf(ctx.currentUserPublicKey) + ctx.getCurrentUserBlindedKeysByThread(threadAddress).asSequence())
+            message.hasMention = (sequenceOf(ctx.currentUserPublicKey) + ctx.getCurrentUserBlindedIDsByThread(threadAddress).asSequence())
                 .any { key ->
                     messageText?.contains("@$key") == true || key == (quoteModel?.author?.toString() ?: "")
                 }

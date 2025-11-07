@@ -1,7 +1,6 @@
 package org.session.libsession.messaging.sending_receiving.pollers
 
 import com.fasterxml.jackson.core.type.TypeReference
-import com.google.protobuf.ByteString
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -18,14 +17,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.jobs.MessageReceiveParameters
 import org.session.libsession.messaging.jobs.OpenGroupDeleteJob
 import org.session.libsession.messaging.jobs.TrimThreadJob
-import org.session.libsession.messaging.messages.Message.Companion.senderOrSync
-import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
-import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.Endpoint
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.open_groups.OpenGroupApi.BatchRequest
@@ -36,15 +30,9 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi.DirectMessage
 import org.session.libsession.messaging.open_groups.OpenGroupApi.Message
 import org.session.libsession.messaging.open_groups.OpenGroupApi.getOrFetchServerCapabilities
 import org.session.libsession.messaging.open_groups.OpenGroupApi.parallelBatch
-import org.session.libsession.messaging.open_groups.OpenGroupMessage
-import org.session.libsession.messaging.sending_receiving.MessageReceiver
-import org.session.libsession.messaging.sending_receiving.ReceivedMessageHandler
+import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsignal.protos.SignalServiceProtos
-import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.HTTP.Verb.GET
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
@@ -52,7 +40,6 @@ import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.CommunityDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
-import java.util.concurrent.TimeUnit
 
 private typealias PollRequestToken = Channel<Result<List<String>>>
 
@@ -68,14 +55,12 @@ class OpenGroupPoller @AssistedInject constructor(
     private val storage: StorageProtocol,
     private val appVisibilityManager: AppVisibilityManager,
     private val blindMappingRepository: BlindMappingRepository,
-    private val receivedMessageHandler: ReceivedMessageHandler,
-    private val batchMessageJobFactory: BatchMessageReceiveJob.Factory,
     private val configFactory: ConfigFactoryProtocol,
     private val threadDatabase: ThreadDatabase,
     private val trimThreadJobFactory: TrimThreadJob.Factory,
     private val openGroupDeleteJobFactory: OpenGroupDeleteJob.Factory,
     private val communityDatabase: CommunityDatabase,
-    private val messageReceiver: MessageReceiver,
+    private val receivedMessageProcessor: ReceivedMessageProcessor,
     @Assisted private val server: String,
     @Assisted private val scope: CoroutineScope,
     @Assisted private val pollerSemaphore: Semaphore,
@@ -300,20 +285,8 @@ class OpenGroupPoller @AssistedInject constructor(
         messages: List<OpenGroupApi.Message>
     ) {
         val sortedMessages = messages.sortedBy { it.seqno }
-        sortedMessages.maxOfOrNull { it.seqno }?.let { seqNo ->
-            storage.setLastMessageServerID(roomToken, server, seqNo)
-        }
-        val (deletions, additions) = sortedMessages.partition { it.deleted }
-        handleNewMessages(server, roomToken, additions.map {
-            OpenGroupMessage(
-                serverID = it.id,
-                sender = it.sessionId,
-                sentTimestamp = (it.posted * 1000).toLong(),
-                base64EncodedData = it.data,
-                base64EncodedSignature = it.signature,
-                reactions = it.reactions
-            )
-        })
+        val (deletions, additions) = messages.partition { it.deleted }
+        handleNewMessages(server, roomToken, additions)
         handleDeletedMessages(server, roomToken, deletions.map { it.id })
     }
 
@@ -331,85 +304,83 @@ class OpenGroupPoller @AssistedInject constructor(
         } else {
             storage.setLastInboxMessageId(server, lastMessageId)
         }
+
         sortedMessages.forEach {
-            val encodedMessage = Base64.decode(it.message)
-            val envelope = SignalServiceProtos.Envelope.newBuilder()
-                .setTimestampMs(TimeUnit.SECONDS.toMillis(it.postedAt))
-                .setType(SignalServiceProtos.Envelope.Type.SESSION_MESSAGE)
-                .setContent(ByteString.copyFrom(encodedMessage))
-                .setSource(it.sender)
-                .build()
-            try {
-                val (message, proto) = messageReceiver.parse(
-                    envelope.toByteArray(),
-                    null,
-                    fromOutbox,
-                    if (fromOutbox) it.recipient else it.sender,
-                    serverPublicKey,
-                    emptySet() // this shouldn't be necessary as we are polling open groups here
-                )
-                if (fromOutbox) {
-                    val syncTarget = blindMappingRepository.getMapping(
-                        serverUrl = server,
-                        blindedAddress = Address.Blinded(AccountId(it.recipient))
-                    )?.accountId?.hexString ?: it.recipient
+            //TODO: implement direct message handling
 
-                    if (message is VisibleMessage) {
-                        message.syncTarget = syncTarget
-                    } else if (message is ExpirationTimerUpdate) {
-                        message.syncTarget = syncTarget
-                    }
-                }
-                val threadAddress = when (val addr = message.senderOrSync.toAddress()) {
-                    is Address.Blinded -> Address.CommunityBlindedId(serverUrl = server, blindedId = addr)
-                    is Address.Conversable -> addr
-                    else -> throw IllegalArgumentException("Unsupported address type: ${addr.debugString}")
-                }
-
-                val threadId = threadDatabase.getThreadIdIfExistsFor(threadAddress)
-                receivedMessageHandler.handle(
-                    message = message,
-                    proto = proto,
-                    threadId = threadId,
-                    threadAddress = threadAddress,
-                )
-            } catch (e: Exception) {
-                Log.e(TAG, "Couldn't handle direct message", e)
-            }
+//            val encodedMessage = Base64.decode(it.message)
+//            val envelope = SignalServiceProtos.Envelope.newBuilder()
+//                .setTimestampMs(TimeUnit.SECONDS.toMillis(it.postedAt))
+//                .setType(SignalServiceProtos.Envelope.Type.SESSION_MESSAGE)
+//                .setContent(ByteString.copyFrom(encodedMessage))
+//                .setSource(it.sender)
+//                .build()
+//            try {
+//                val (message, proto) = messageReceiver.parse(
+//                    envelope.toByteArray(),
+//                    null,
+//                    fromOutbox,
+//                    if (fromOutbox) it.recipient else it.sender,
+//                    serverPublicKey,
+//                    emptySet() // this shouldn't be necessary as we are polling open groups here
+//                )
+//                if (fromOutbox) {
+//                    val syncTarget = blindMappingRepository.getMapping(
+//                        serverUrl = server,
+//                        blindedAddress = Address.Blinded(AccountId(it.recipient))
+//                    )?.accountId?.hexString ?: it.recipient
+//
+//                    if (message is VisibleMessage) {
+//                        message.syncTarget = syncTarget
+//                    } else if (message is ExpirationTimerUpdate) {
+//                        message.syncTarget = syncTarget
+//                    }
+//                }
+//                val threadAddress = when (val addr = message.senderOrSync.toAddress()) {
+//                    is Address.Blinded -> Address.CommunityBlindedId(serverUrl = server, blindedId = addr)
+//                    is Address.Conversable -> addr
+//                    else -> throw IllegalArgumentException("Unsupported address type: ${addr.debugString}")
+//                }
+//
+//                val threadId = threadDatabase.getThreadIdIfExistsFor(threadAddress)
+//                receivedMessageHandler.handle(
+//                    message = message,
+//                    proto = proto,
+//                    threadId = threadId,
+//                    threadAddress = threadAddress,
+//                )
+//            } catch (e: Exception) {
+//                Log.e(TAG, "Couldn't handle direct message", e)
+//            }
         }
     }
 
-    private fun handleNewMessages(server: String, roomToken: String, messages: List<OpenGroupMessage>) {
+    private fun handleNewMessages(server: String, roomToken: String, sortedMessages: List<OpenGroupApi.Message>) {
         val threadAddress = Address.Community(serverUrl = server, room = roomToken)
         // check thread still exists
         val threadId = storage.getThreadId(threadAddress) ?: return
-        val envelopes =  mutableListOf<Triple<Long?, SignalServiceProtos.Envelope, Map<String, OpenGroupApi.Reaction>?>>()
-        messages.sortedBy { it.serverID!! }.forEach { message ->
-            if (!message.base64EncodedData.isNullOrEmpty()) {
-                val envelope = SignalServiceProtos.Envelope.newBuilder()
-                    .setType(SignalServiceProtos.Envelope.Type.SESSION_MESSAGE)
-                    .setSource(message.sender!!)
-                    .setSourceDevice(1)
-                    .setContent(message.toProto().toByteString())
-                    .setTimestampMs(message.sentTimestamp)
-                    .build()
-                envelopes.add(Triple( message.serverID, envelope, message.reactions))
+
+        if (sortedMessages.isEmpty()) return
+
+        receivedMessageProcessor.startProcessing("CommunityPoller(${threadAddress.debugString})") { ctx ->
+            for (msg in sortedMessages) {
+                try {
+                    // Set the last message server ID to each message as we process them, so that if processing fails halfway through,
+                    // we don't re-process messages we've already handled.
+                    storage.setLastMessageServerID(roomToken, server, msg.id)
+
+                    receivedMessageProcessor.processCommunityMessage(
+                        context = ctx,
+                        threadAddress = threadAddress,
+                        message = msg,
+                    )
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error processing open group message ${msg.id} in ${threadAddress.debugString}", e)
+                }
             }
         }
 
-        //TODO: Re-enable community polling
-
-//        envelopes.chunked(BatchMessageReceiveJob.BATCH_DEFAULT_NUMBER).forEach { list ->
-//            val parameters = list.map { (serverId, message, reactions) ->
-//                MessageReceiveParameters(message.toByteArray(), openGroupMessageServerID = serverId, reactions = reactions)
-//            }
-//            JobQueue.shared.add(batchMessageJobFactory.create(
-//                parameters,
-//                fromCommunity = threadAddress
-//            ))
-//        }
-
-        if (envelopes.isNotEmpty()) {
+        if (sortedMessages.isNotEmpty()) {
             JobQueue.shared.add(trimThreadJobFactory.create(threadId))
         }
     }
