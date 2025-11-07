@@ -246,99 +246,103 @@ class GroupManagerV2Impl @Inject constructor(
         memberInvites: List<MemberInvite>,
         isReinvite: Boolean
     ): Unit = scope.launchAndWait(group, if (isReinvite) "Reinvite members" else "Invite members") {
-        val adminKey = requireAdminAccess(group)
-        val groupAuth = OwnedSwarmAuth.ofClosedGroup(group, adminKey)
+       try {
+           val adminKey = requireAdminAccess(group)
+           val groupAuth = OwnedSwarmAuth.ofClosedGroup(group, adminKey)
 
-        val batchRequests = mutableListOf<SnodeAPI.SnodeBatchRequestInfo>()
+           val batchRequests = mutableListOf<SnodeAPI.SnodeBatchRequestInfo>()
 
-        val subAccountTokens = configFactory.withMutableGroupConfigs(group) { configs ->
-            val shareHistoryHexes = mutableListOf<String>()
+           val subAccountTokens = configFactory.withMutableGroupConfigs(group) { configs ->
+               val shareHistoryHexes = mutableListOf<String>()
 
-            for ((id, shareHistory) in memberInvites) {
-                val hex = id.hexString
+               for ((id, shareHistory) in memberInvites) {
+                   val hex = id.hexString
 
-                val toSet = configs.groupMembers.get(hex)
-                    ?.also { existing ->
-                        val status = configs.groupMembers.status(existing)
-                        if (status == GroupMember.Status.INVITE_FAILED || status == GroupMember.Status.INVITE_SENT) {
-                            existing.setSupplement(shareHistory)
-                        }
-                    }
-                    ?: configs.groupMembers.getOrConstruct(hex).also { member ->
-                        val contact = configFactory.withUserConfigs { it.contacts.get(hex) }
-                        member.setName(contact?.name.orEmpty())
-                        member.setProfilePic(contact?.profilePicture ?: UserPic.DEFAULT)
-                        member.setSupplement(shareHistory)
-                    }
+                   val toSet = configs.groupMembers.get(hex)
+                       ?.also { existing ->
+                           val status = configs.groupMembers.status(existing)
+                           if (status == GroupMember.Status.INVITE_FAILED || status == GroupMember.Status.INVITE_SENT) {
+                               existing.setSupplement(shareHistory)
+                           }
+                       }
+                       ?: configs.groupMembers.getOrConstruct(hex).also { member ->
+                           val contact = configFactory.withUserConfigs { it.contacts.get(hex) }
+                           member.setName(contact?.name.orEmpty())
+                           member.setProfilePic(contact?.profilePicture ?: UserPic.DEFAULT)
+                           member.setSupplement(shareHistory)
+                       }
 
-                if (shareHistory) shareHistoryHexes += hex
+                   if (shareHistory) shareHistoryHexes += hex
 
-                toSet.setInvited()
-                configs.groupMembers.set(toSet)
-            }
+                   toSet.setInvited()
+                   configs.groupMembers.set(toSet)
+               }
 
-            if (shareHistoryHexes.isNotEmpty()) {
-                val memberKey = configs.groupKeys.supplementFor(shareHistoryHexes)
-                batchRequests.add(
-                    SnodeAPI.buildAuthenticatedStoreBatchInfo(
-                        namespace = Namespace.GROUP_KEYS(),
-                        message = SnodeMessage(
-                            recipient = group.hexString,
-                            data = Base64.encodeBytes(memberKey),
-                            ttl = SnodeMessage.CONFIG_TTL,
-                            timestamp = clock.currentTimeMills(),
-                        ),
-                        auth = groupAuth,
-                    )
-                )
-            }
+               if (shareHistoryHexes.isNotEmpty()) {
+                   val memberKey = configs.groupKeys.supplementFor(shareHistoryHexes)
+                   batchRequests.add(
+                       SnodeAPI.buildAuthenticatedStoreBatchInfo(
+                           namespace = Namespace.GROUP_KEYS(),
+                           message = SnodeMessage(
+                               recipient = group.hexString,
+                               data = Base64.encodeBytes(memberKey),
+                               ttl = SnodeMessage.CONFIG_TTL,
+                               timestamp = clock.currentTimeMills(),
+                           ),
+                           auth = groupAuth,
+                       )
+                   )
+               }
 
-            configs.rekey()
-            memberInvites.map { configs.groupKeys.getSubAccountToken(it.id.hexString) }
-        }
+               configs.rekey()
+               memberInvites.map { configs.groupKeys.getSubAccountToken(it.id.hexString) }
+           }
 
-        // Call un-revocate API on new members, in case they have been removed before
-        batchRequests += SnodeAPI.buildAuthenticatedUnrevokeSubKeyBatchRequest(
-            groupAdminAuth = groupAuth,
-            subAccountTokens = subAccountTokens
-        )
+           // Call un-revocate API on new members, in case they have been removed before
+           batchRequests += SnodeAPI.buildAuthenticatedUnrevokeSubKeyBatchRequest(
+               groupAdminAuth = groupAuth,
+               subAccountTokens = subAccountTokens
+           )
 
-        try {
-            val swarmNode = SnodeAPI.getSingleTargetSnode(group.hexString).await()
-            val response = SnodeAPI.getBatchResponse(swarmNode, group.hexString, batchRequests)
+           try {
+               val swarmNode = SnodeAPI.getSingleTargetSnode(group.hexString).await()
+               val response = SnodeAPI.getBatchResponse(swarmNode, group.hexString, batchRequests)
 
-            // Make sure every request is successful
-            response.requireAllRequestsSuccessful("Failed to invite members")
+               // Make sure every request is successful
+               response.requireAllRequestsSuccessful("Failed to invite members")
 
-            // Wait for the group configs to be pushed
-            configFactory.waitUntilGroupConfigsPushed(group)
-        } catch (e: Exception) {
-            // Update every member's status to "invite failed" and return group name
-            val groupName = configFactory.withMutableGroupConfigs(group) { configs ->
-                for ((id, _) in memberInvites) {
-                    configs.groupMembers.get(id.hexString)?.apply {
-                        setInviteFailed()
-                        configs.groupMembers.set(this)
-                    }
-                }
-                configs.groupInfo.getName().orEmpty()
-            }
+               // Wait for the group configs to be pushed
+               configFactory.waitUntilGroupConfigsPushed(group)
+           } catch (e: Exception) {
+               // Update every member's status to "invite failed" and return group name
+               val groupName = configFactory.withMutableGroupConfigs(group) { configs ->
+                   for ((id, _) in memberInvites) {
+                       configs.groupMembers.get(id.hexString)?.apply {
+                           setInviteFailed()
+                           configs.groupMembers.set(this)
+                       }
+                   }
+                   configs.groupInfo.getName().orEmpty()
+               }
 
-            Log.w(TAG, "Failed to invite members to group $group", e)
+               Log.w(TAG, "Failed to invite members to group $group", e)
 
-            throw GroupInviteException(
-                isPromotion = false,
-                inviteeAccountIds = memberInvites.map { it.id.hexString },
-                groupName = groupName,
-                underlying = e,
-                isReinvite = isReinvite
-            )
-        } finally {
-            // Send a group update message to the group telling members someone has been invited
-            if (!isReinvite) {
-                sendGroupUpdateForAddingMembers(group, adminKey, memberInvites.map { it.id })
-            }
-        }
+               throw GroupInviteException(
+                   isPromotion = false,
+                   inviteeAccountIds = memberInvites.map { it.id.hexString },
+                   groupName = groupName,
+                   underlying = e,
+                   isReinvite = isReinvite
+               )
+           } finally {
+               // Send a group update message to the group telling members someone has been invited
+               if (!isReinvite) {
+                   sendGroupUpdateForAddingMembers(group, adminKey, memberInvites.map { it.id })
+               }
+           }
+       }catch (e : Exception){
+           Log.w(TAG, "Failed to invite members to group $group", e)
+       }
 
         // Send the invitation message to the new members
         JobQueue.shared.add(
