@@ -28,88 +28,87 @@ private const val MAX_LOG_ENTRIES = 200
 
 /**
  * A class that keeps track of certain logs and allows certain logs to pop as toasts
+ * To use: Set the tag as one of the known [DebugLogGroup]
  */
 @Singleton
 class DebugLogger @Inject constructor(
-    private val application: Application,
+    private val app: Application,
     private val prefs: TextSecurePreferences,
     private val dateUtils: DateUtils,
     @ManagerScope private val scope: CoroutineScope
-){
+) : Log.Logger() {
     private val prefPrefix: String = "debug_logger_"
 
     private val buffer = ArrayDeque<DebugLogData>(MAX_LOG_ENTRIES)
 
     private val logChanges = MutableSharedFlow<Unit>(
-        replay = 0,
-        extraBufferCapacity = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
+        replay = 0, extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
 
-    // should only run when collected
+    private val allowedTags: Set<String> =
+        DebugLogGroup.entries.map { it.label.lowercase() }.toSet()
+
+    private fun groupForTag(tag: String): DebugLogGroup? =
+        DebugLogGroup.entries.firstOrNull { it.label.equals(tag, ignoreCase = true) }
+
     val logSnapshots: Flow<List<DebugLogData>> =
-        logChanges
-            .onStart { emit(Unit) }
-            .map { currentSnapshot() }
+        logChanges.onStart { emit(Unit) }.map { currentSnapshot() }
 
     fun currentSnapshot(): List<DebugLogData> =
         synchronized(buffer) { buffer.toList().asReversed() }
 
-    fun showGroupToast(group: DebugLogGroup, showToast: Boolean){
+    fun clearAll() {
+        synchronized(buffer) { buffer.clear() }
+        logChanges.tryEmit(Unit)
+    }
+
+    fun getGroupToastPreference(group: DebugLogGroup): Boolean =
+        prefs.getBooleanPreference(prefPrefix + group.label, false)
+
+    fun showGroupToast(group: DebugLogGroup, showToast: Boolean) {
         prefs.setBooleanPreference(prefPrefix + group.label, showToast)
     }
 
-    fun getGroupToastPreference(group: DebugLogGroup): Boolean{
-        return prefs.getBooleanPreference(prefPrefix + group.label, false)
-    }
+    // ---- Log.Logger overrides (no “level” logic) ----
+    override fun v(tag: String, message: String?, t: Throwable?) = add(tag, message, t)
+    override fun d(tag: String, message: String?, t: Throwable?) = add(tag, message, t)
+    override fun i(tag: String, message: String?, t: Throwable?) = add(tag, message, t)
+    override fun w(tag: String, message: String?, t: Throwable?) = add(tag, message, t)
+    override fun e(tag: String, message: String?, t: Throwable?) = add(tag, message, t)
+    override fun wtf(tag: String, message: String?, t: Throwable?) = add(tag, message, t)
+    override fun blockUntilAllWritesFinished() { /* no-op */ }
 
-    fun log(message: String, group: DebugLogGroup, tag: String = "", logSeverity: LogSeverity = LogSeverity.INFO, throwable: Throwable? = null){
-        // add this message to our list
+    private fun add(tag: String, message: String?, t: Throwable?) {
+        // Capture ONLY if tag is in our allow-list
+        if (!allowedTags.contains(tag.lowercase())) return
+
+        val group = groupForTag(tag) ?: return
+
         val now = Instant.now()
+        val text = when {
+            !message.isNullOrBlank() -> message
+            t != null -> t.localizedMessage ?: t::class.java.simpleName
+            else -> "" // nothing meaningful
+        }
+
         val entry = DebugLogData(
-            message = message,
+            message = text,
             group = group,
             date = now,
             formattedDate = dateUtils.getLocaleFormattedTime(now.toEpochMilli())
         )
 
-        scope.launch(Dispatchers.Default) {
-            synchronized(buffer) {
-                if (buffer.size == MAX_LOG_ENTRIES) buffer.removeFirst()
-                buffer.addLast(entry)
-            }
-            logChanges.tryEmit(Unit)
+        synchronized(buffer) {
+            if (buffer.size == MAX_LOG_ENTRIES) buffer.removeFirst()
+            buffer.addLast(entry)
         }
+        logChanges.tryEmit(Unit)
 
-        // log the message
-        when(logSeverity){
-            LogSeverity.INFO -> Log.d(tag, message, throwable)
-            LogSeverity.WARNING -> Log.w(tag, message, throwable)
-            LogSeverity.ERROR -> Log.e(tag, message, throwable)
-        }
-
-        // show this as a toast if the prefs have this group toggled
-        if(prefs.getBooleanPreference(prefPrefix + group.label, false)){
+        // Toast decision is independent from capture.
+        if (getGroupToastPreference(group)) {
             scope.launch(Dispatchers.Main) {
-                Toast.makeText(application.applicationContext, message, Toast.LENGTH_LONG).show()
+                Toast.makeText(app, text, Toast.LENGTH_SHORT).show()
             }
-        }
-    }
-
-    fun logD(message: String, group: DebugLogGroup, tag: String = "", throwable: Throwable? = null){
-        log(message = message, group = group, tag = tag, throwable = throwable, logSeverity = LogSeverity.INFO)
-    }
-    fun logW(message: String, group: DebugLogGroup, tag: String = "", throwable: Throwable? = null){
-        log(message = message, group = group, tag = tag, throwable = throwable, logSeverity = LogSeverity.WARNING)
-    }
-    fun logE(message: String, group: DebugLogGroup, tag: String = "", throwable: Throwable? = null){
-        log(message = message, group = group, tag = tag, throwable = throwable, logSeverity = LogSeverity.ERROR)
-    }
-
-    fun clearAllLogs() {
-        scope.launch(Dispatchers.Default) {
-            synchronized(buffer) { buffer.clear() }
-            logChanges.tryEmit(Unit)
         }
     }
 }
@@ -120,10 +119,6 @@ data class DebugLogData(
     val date: Instant,
     val formattedDate: String
 )
-
-enum class LogSeverity{
-    INFO, WARNING, ERROR
-}
 
 enum class DebugLogGroup(val label: String, val color: Color){
     AVATAR("Avatar", primaryOrange), PRO_SUBSCRIPTION("Pro Subscription", primaryGreen)

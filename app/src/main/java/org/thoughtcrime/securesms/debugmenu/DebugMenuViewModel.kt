@@ -42,7 +42,6 @@ import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
@@ -398,7 +397,7 @@ class DebugMenuViewModel @AssistedInject constructor(
             }
 
             is Commands.ClearAllDebugLogs -> {
-                debugLogger.clearAllLogs()
+                debugLogger.clearAll()
             }
 
             is Commands.CopyAllLogs -> {

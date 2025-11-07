@@ -29,7 +29,6 @@ import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemote
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
-import org.thoughtcrime.securesms.debugmenu.DebugLogger
 import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
 import org.thoughtcrime.securesms.util.ImageUtils
@@ -52,16 +51,14 @@ class AvatarReuploadWorker @AssistedInject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val avatarUploadManager: Lazy<AvatarUploadManager>,
     private val localEncryptedFileInputStreamFactory: LocalEncryptedFileInputStream.Factory,
-    private val fileServerApi: FileServerApi,
-    private val debugLogger: DebugLogger
+    private val fileServerApi: FileServerApi
 ) : CoroutineWorker(context, params) {
 
     /**
      * Log the given message and show a toast if in debug mode
      */
     private fun log(message: String, e: Throwable? = null) {
-        debugLogger.logD(message = "Avatar Reupload: $message",
-            group = DebugLogGroup.AVATAR, throwable = e)
+        Log.d(DebugLogGroup.AVATAR.label, "Avatar Reupload: $message", e)
     }
 
     override suspend fun doWork(): Result {

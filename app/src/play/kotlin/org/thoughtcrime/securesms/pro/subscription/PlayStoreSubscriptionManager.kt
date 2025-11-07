@@ -36,8 +36,6 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
-import org.thoughtcrime.securesms.debugmenu.DebugLogger
-import org.thoughtcrime.securesms.debugmenu.LogSeverity
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager.PurchaseEvent
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
@@ -55,7 +53,6 @@ class PlayStoreSubscriptionManager @Inject constructor(
     @param:ManagerScope private val scope: CoroutineScope,
     private val currentActivityObserver: CurrentActivityObserver,
     private val prefs: TextSecurePreferences,
-    private val debugLogger: DebugLogger
 ) : SubscriptionManager {
     override val id = "google_play_store"
     override val name = "Google Play Store"
@@ -88,7 +85,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
     private val billingClient by lazy {
         BillingClient.newBuilder(application)
             .setListener { result, purchases ->
-                debugLogger.logD(message = "onPurchasesUpdated: $result, $purchases", group = DebugLogGroup.PRO_SUBSCRIPTION, tag = TAG)
+                Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "onPurchasesUpdated: $result, $purchases")
                 if (result.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
                     purchases.firstOrNull()?.let{
                         scope.launch {
@@ -103,7 +100,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
                         }
                     }
                 } else {
-                    debugLogger.logW(message = "Purchase failed or cancelled: $result", group = DebugLogGroup.PRO_SUBSCRIPTION, tag = TAG)
+                    Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Purchase failed or cancelled: $result")
                     scope.launch {
                         _purchaseEvents.emit(PurchaseEvent.Cancelled)
                     }
@@ -160,7 +157,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
 
             // If user has an existing subscription, configure upgrade/downgrade
             if (existingPurchase != null) {
-                debugLogger.log(message = "Found existing subscription, configuring upgrade/downgrade with WITHOUT_PRORATION", group = DebugLogGroup.PRO_SUBSCRIPTION, tag = TAG)
+                Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Found existing subscription, configuring upgrade/downgrade with WITHOUT_PRORATION")
 
                 billingFlowParamsBuilder.setSubscriptionUpdateParams(
                     BillingFlowParams.SubscriptionUpdateParams.newBuilder()
@@ -187,8 +184,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            debugLogger.logE(message = "Error purchase plan", group = DebugLogGroup.PRO_SUBSCRIPTION,
-                throwable = e, tag = TAG)
+            Log.e(DebugLogGroup.PRO_SUBSCRIPTION.label, "Error purchase plan", e)
 
             withContext(Dispatchers.Main) {
                 Toast.makeText(application, application.getString(R.string.errorGeneric), Toast.LENGTH_LONG).show()
@@ -223,8 +219,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
             }
 
             override fun onBillingSetupFinished(result: BillingResult) {
-                debugLogger.log(message = "onBillingSetupFinished with $result", group = DebugLogGroup.PRO_SUBSCRIPTION,
-                    tag = TAG)
+                Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "onBillingSetupFinished with $result")
                 if (result.responseCode == BillingClient.BillingResponseCode.OK) {
                     _playBillingAvailable.update { true }
                 }
@@ -249,8 +244,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
                 it.purchaseState == Purchase.PurchaseState.PURCHASED //todo PRO Should we also OR PENDING here?
             }
         } catch (e: Exception) {
-            debugLogger.logE(message = "Error querying existing subscription", group = DebugLogGroup.PRO_SUBSCRIPTION,
-                throwable = e, tag = TAG)
+            Log.e(DebugLogGroup.PRO_SUBSCRIPTION.label, "Error querying existing subscription", e)
             null
         }
     }
@@ -285,8 +279,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
 
         val productDetails = result.productDetailsList?.firstOrNull()
             ?: run {
-                debugLogger.logW(message = "No ProductDetails returned for product id session_pro", group = DebugLogGroup.PRO_SUBSCRIPTION,
-                    tag = TAG)
+                Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "No ProductDetails returned for product id session_pro")
                 return emptyList()
             }
 
@@ -298,8 +291,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
         return availablePlans.mapNotNull { duration ->
             val offer = offersByBasePlan[duration.id]
             if (offer == null) {
-                debugLogger.logW(message = "No offer found for basePlanId=${duration.id}", group = DebugLogGroup.PRO_SUBSCRIPTION,
-                    tag = TAG)
+                Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "No offer found for basePlanId=${duration.id}")
                 return@mapNotNull null
             }
 
