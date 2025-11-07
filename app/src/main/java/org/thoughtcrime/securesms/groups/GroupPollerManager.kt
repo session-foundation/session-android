@@ -58,7 +58,7 @@ class GroupPollerManager @Inject constructor(
     pollFactory: GroupPoller.Factory,
     @param:ManagerScope private val managerScope: CoroutineScope,
 ) : OnAppStartupComponent {
-    private val groupPollerSemaphore = Semaphore(5)
+    private val groupPollerSemaphore = Semaphore(20)
 
     @Suppress("OPT_IN_USAGE")
     private val groupPollers: StateFlow<Map<AccountId, GroupPollerHandle>> =

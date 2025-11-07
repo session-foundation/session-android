@@ -162,8 +162,8 @@ object HTTP {
     private val httpCallSemaphore = Semaphore(20)
 
     private suspend fun Call.await(): Response {
-        return withContext(Dispatchers.IO) {
-            httpCallSemaphore.withPermit {
+        return httpCallSemaphore.withPermit {
+            withContext(Dispatchers.IO) {
                 execute()
             }
         }
