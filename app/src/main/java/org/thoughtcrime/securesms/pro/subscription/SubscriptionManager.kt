@@ -69,6 +69,7 @@ abstract class SubscriptionManager(
      */
     protected fun onPurchaseSuccessful(){
         // we need to tie our purchase with the back end
+
         scope.launch {
             try {
                 proStatusManager.appProPaymentToBackend()

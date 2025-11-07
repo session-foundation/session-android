@@ -82,7 +82,6 @@ class ProSettingsViewModel @AssistedInject constructor(
     val cancelPlanState: StateFlow<State<CancelPlanState>> = _cancelPlanState
 
     init {
-        Log.w("", "*** VM INIT")
         // observe subscription status
         viewModelScope.launch {
             proStatusManager.subscriptionState.collect {

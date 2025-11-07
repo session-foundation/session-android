@@ -79,9 +79,10 @@ class PlayStoreSubscriptionManager @Inject constructor(
     private val billingClient by lazy {
         BillingClient.newBuilder(application)
             .setListener { result, purchases ->
-                Log.d(TAG, "onPurchasesUpdated: $result, $purchases")
+                Log.d(TAG, "Billing callback. Result: $result, Purchases: $purchases")
                 if (result.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
                     purchases.firstOrNull()?.let{
+                        Log.d(TAG, "Billing callback. We have a purchase [${it.orderId}]. Acknowledged? ${it.isAcknowledged}")
                         onPurchaseSuccessful()
                     }
                 } else {
