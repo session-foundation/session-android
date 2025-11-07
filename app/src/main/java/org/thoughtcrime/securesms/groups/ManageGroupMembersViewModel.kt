@@ -334,17 +334,31 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         showRemoveMember.value = visible
     }
 
-    fun onCommand(command : Commands){
-        when (command){
-            is Commands.ShowRemoveDialog -> {
-                toggleRemoveDialog(true)
-            }
-            is Commands.DismissRemoveDialog -> {
-                toggleRemoveDialog(false)
-            }
-            is Commands.RemoveMembers -> {
-                onRemoveContact(command.removeMessages)
-            }
+    fun onCommand(command: Commands) {
+        when (command) {
+            is Commands.ShowRemoveDialog -> toggleRemoveDialog(true)
+
+            is Commands.DismissRemoveDialog -> toggleRemoveDialog(false)
+
+            is Commands.RemoveMembers -> onRemoveContact(command.removeMessages)
+
+            is Commands.ClearSelection,
+
+            is Commands.CloseFooter -> clearSelection()
+
+            is Commands.ToggleFooter -> toggleFooter()
+
+            is Commands.DismissError -> onDismissError()
+
+            is Commands.DismissResend -> onDismissResend()
+
+            is Commands.MemberClick -> onMemberItemClicked(command.member)
+
+            is Commands.RemoveSearchState -> removeSearchState(command.clearSelection)
+
+            is Commands.SearchFocusChange -> onSearchFocusChanged(command.focus)
+
+            is Commands.SearchQueryChange -> onSearchQueryChanged(command.query)
         }
     }
 
@@ -372,7 +386,25 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
     sealed interface Commands {
         data object ShowRemoveDialog : Commands
         data object DismissRemoveDialog : Commands
+
+        data object DismissError : Commands
+
+        data object DismissResend : Commands
+
+        data object ToggleFooter : Commands
+
+        data object CloseFooter : Commands
+
+        data object ClearSelection : Commands
+
+        data class RemoveSearchState(val clearSelection : Boolean) : Commands
+
+        data class SearchQueryChange(val query : String) : Commands
+
+        data class SearchFocusChange(val focus : Boolean) : Commands
         data class RemoveMembers(val removeMessages: Boolean) : Commands
+
+        data class MemberClick(val member: GroupMemberState) : Commands
     }
 
     @AssistedFactory

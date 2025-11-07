@@ -42,21 +42,17 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import com.squareup.phrase.Phrase
-import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.groups.GroupMemberState
 import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel
 import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel.CollapsibleFooterState
-import org.thoughtcrime.securesms.groups.GroupMemberState
+import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel.Commands.*
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.CollapsibleFooterAction
@@ -69,8 +65,6 @@ import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.SearchBarWithClose
-import org.thoughtcrime.securesms.ui.components.ActionSheet
-import org.thoughtcrime.securesms.ui.components.ActionSheetItemData
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
@@ -101,22 +95,13 @@ fun ManageGroupMembersScreen(
         selectedMembers = viewModel.selectedMembers.collectAsState().value,
         showAddMembers = viewModel.showAddMembers.collectAsState().value,
         showingError = viewModel.error.collectAsState().value,
-        onErrorDismissed = viewModel::onDismissError,
         showingResend = viewModel.ongoingAction.collectAsState().value,
-        onResendDismissed = viewModel::onDismissResend,
-        onMemberClicked = viewModel::onMemberItemClicked,
         showLoading = viewModel.inProgress.collectAsState().value,
         searchQuery = viewModel.searchQuery.collectAsState().value,
         searchFocused = viewModel.searchFocused.collectAsState().value,
         data = viewModel.collapsibleFooterState.collectAsState().value,
-        onToggleFooter = viewModel::toggleFooter,
-        onCloseFooter = viewModel::clearSelection,
-        onSearchQueryChanged = viewModel::onSearchQueryChanged,
-        onSearchFocusChanged = viewModel::onSearchFocusChanged,
-        onSearchQueryClear = { viewModel.onSearchQueryChanged("") },
-        sendCommands = viewModel::onCommand,
+        sendCommand = viewModel::onCommand,
         removeMembersData = viewModel.removeMembersState.collectAsState().value,
-        removeSearchState = viewModel::removeSearchState
     )
 }
 
@@ -125,27 +110,18 @@ fun ManageGroupMembersScreen(
 fun ManageMembers(
     onBack: () -> Unit,
     onAddMemberClick: () -> Unit,
-    onMemberClicked: (member: GroupMemberState) -> Unit,
-    onSearchFocusChanged: (isFocused: Boolean) -> Unit,
     searchFocused: Boolean,
     searchQuery: String,
     data: CollapsibleFooterState,
-    onToggleFooter: () -> Unit,
-    onCloseFooter: () -> Unit,
-    onSearchQueryChanged: (String) -> Unit,
-    onSearchQueryClear: () -> Unit,
     members: List<GroupMemberState>,
     hasMembers: Boolean = false,
     selectedMembers: Set<GroupMemberState> = emptySet(),
     showAddMembers: Boolean,
     showingError: String?,
     showingResend: String?,
-    onResendDismissed: () -> Unit,
     showLoading: Boolean,
-    onErrorDismissed: () -> Unit,
-    sendCommands: (command: ManageGroupMembersViewModel.Commands) -> Unit,
+    sendCommand: (command: ManageGroupMembersViewModel.Commands) -> Unit,
     removeMembersData: ManageGroupMembersViewModel.RemoveMembersState,
-    removeSearchState: (clearSelection : Boolean) -> Unit
 ) {
     val optionsList: List<ManageGroupMembersViewModel.OptionsItem> = listOf(
         ManageGroupMembersViewModel.OptionsItem(
@@ -164,7 +140,7 @@ fun ManageMembers(
 
     val handleBack: () -> Unit = {
         when {
-            searchFocused -> removeSearchState(false)
+            searchFocused -> sendCommand(RemoveSearchState(false))
             else -> onBack()
         }
     }
@@ -193,8 +169,8 @@ fun ManageMembers(
                         visible = data.visible,
                         items = data.footerActionItems
                     ),
-                    onCollapsedClicked = onToggleFooter,
-                    onClosedClicked = onCloseFooter
+                    onCollapsedClicked = {sendCommand(ToggleFooter)},
+                    onClosedClicked = { sendCommand(CloseFooter) }
                 )
             }
         },
@@ -260,13 +236,13 @@ fun ManageMembers(
 
                 SearchBarWithClose(
                     query = searchQuery,
-                    onValueChanged = onSearchQueryChanged,
-                    onClear = onSearchQueryClear,
+                    onValueChanged = { query -> sendCommand(SearchQueryChange(query)) },
+                    onClear = { sendCommand(SearchQueryChange("")) },
                     placeholder = if (searchFocused) "" else LocalResources.current.getString(R.string.search),
                     enabled = true,
                     isFocused = searchFocused,
                     modifier = Modifier.padding(horizontal = LocalDimensions.current.smallSpacing),
-                    onFocusChanged = onSearchFocusChanged
+                    onFocusChanged = { isFocused -> sendCommand(SearchFocusChange(isFocused)) }
                 )
 
                 Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
@@ -279,10 +255,10 @@ fun ManageMembers(
                 ) {
                     items(members) { member ->
                         // Each member's view
-                        EditMemberItem(
+                        ManageMemberItem(
                             modifier = Modifier.fillMaxWidth(),
                             member = member,
-                            onClick = { onMemberClicked(member) },
+                            onClick = { sendCommand(MemberClick(member)) },
                             selected = member in selectedMembers
                         )
                     }
@@ -311,7 +287,7 @@ fun ManageMembers(
     if(removeMembersData.visible){
         ShowRemoveMembersDialog(
             state = removeMembersData,
-            sendCommand = sendCommands
+            sendCommand = sendCommand
         )
     }
 
@@ -324,19 +300,19 @@ fun ManageMembers(
     LaunchedEffect(showingError) {
         if (showingError != null) {
             Toast.makeText(context, showingError, Toast.LENGTH_SHORT).show()
-            onErrorDismissed()
+            sendCommand(DismissError)
         }
     }
     LaunchedEffect(showingResend) {
         if (showingResend != null) {
             Toast.makeText(context, showingResend, Toast.LENGTH_SHORT).show()
-            onResendDismissed()
+            sendCommand(DismissResend)
         }
     }
 }
 
 @Composable
-fun EditMemberItem(
+fun ManageMemberItem(
     member: GroupMemberState,
     onClick: (address: Address) -> Unit,
     modifier: Modifier = Modifier,
@@ -373,7 +349,7 @@ fun ShowRemoveMembersDialog(
         modifier = modifier,
         onDismissRequest = {
             // hide dialog
-            sendCommand(ManageGroupMembersViewModel.Commands.DismissRemoveDialog)
+            sendCommand(DismissRemoveDialog)
         },
         title = annotatedStringResource(R.string.remove),
         text = annotatedStringResource(state.removeMemberBody),
@@ -404,14 +380,14 @@ fun ShowRemoveMembersDialog(
                 color = LocalColors.current.danger,
                 dismissOnClick = false,
                 onClick = {
-                    sendCommand(ManageGroupMembersViewModel.Commands.DismissRemoveDialog)
-                    sendCommand(ManageGroupMembersViewModel.Commands.RemoveMembers(deleteMessages))
+                    sendCommand(DismissRemoveDialog)
+                    sendCommand(RemoveMembers(deleteMessages))
                 }
             ),
             DialogButtonData(
                 text = GetString(stringResource(R.string.cancel)),
                 onClick = {
-                    sendCommand(ManageGroupMembersViewModel.Commands.DismissRemoveDialog)
+                    sendCommand(DismissRemoveDialog)
                 }
             )
         )
@@ -507,7 +483,7 @@ private fun EditGroupPreviewSheet() {
             statusLabel = ""
         )
 
-        val (editingName, setEditingName) = remember { mutableStateOf<String?>(null) }
+        val (_, _) = remember { mutableStateOf<String?>(null) }
 
         ManageMembers(
             onBack = {},
@@ -515,28 +491,19 @@ private fun EditGroupPreviewSheet() {
             members = listOf(oneMember, twoMember, threeMember),
             showAddMembers = true,
             showingError = "Error",
-            onErrorDismissed = {},
-            onMemberClicked = {},
             showLoading = false,
             searchQuery = "Test",
-            onSearchQueryChanged = { },
-            onSearchFocusChanged = { },
             searchFocused = false,
-            onSearchQueryClear = {},
             data = CollapsibleFooterState(
                 visible = true,
                 collapsed = false,
                 footerActionTitle = title,
                 footerActionItems = trayItems
             ),
-            onToggleFooter = {},
-            onCloseFooter = {},
             selectedMembers = emptySet(),
             showingResend = "Resending Invite",
-            onResendDismissed = {},
-            sendCommands = {},
+            sendCommand = {},
             removeMembersData = ManageGroupMembersViewModel.RemoveMembersState(),
-            removeSearchState = {}
         )
     }
 }
@@ -620,14 +587,9 @@ private fun EditGroupEditNamePreview(
             members = listOf(oneMember, twoMember, threeMember),
             showAddMembers = true,
             showingError = "Error",
-            onErrorDismissed = {},
-            onMemberClicked = {},
             showLoading = false,
             searchQuery = "",
-            onSearchQueryChanged = { },
-            onSearchFocusChanged = {},
             searchFocused = true,
-            onSearchQueryClear = {},
             data = CollapsibleFooterState(
                 visible = true,
                 collapsed = false,
@@ -647,14 +609,10 @@ private fun EditGroupEditNamePreview(
                     )
                 )
             ),
-            onToggleFooter = {},
-            onCloseFooter = {},
             selectedMembers = emptySet(),
             showingResend = "Resending Invite",
-            onResendDismissed = {},
-            sendCommands = {},
+            sendCommand = {},
             removeMembersData = ManageGroupMembersViewModel.RemoveMembersState(),
-            removeSearchState = {  }
         )
     }
 }
@@ -671,14 +629,9 @@ private fun EditGroupEmptyPreview(
             members = listOf(),
             showAddMembers = true,
             showingError = "Error",
-            onErrorDismissed = {},
-            onMemberClicked = {},
             showLoading = false,
             searchQuery = "",
-            onSearchQueryChanged = { },
-            onSearchFocusChanged = {},
             searchFocused = true,
-            onSearchQueryClear = {},
             data = CollapsibleFooterState(
                 visible = false,
                 collapsed = true,
@@ -698,14 +651,10 @@ private fun EditGroupEmptyPreview(
                     )
                 )
             ),
-            onToggleFooter = {},
-            onCloseFooter = {},
             selectedMembers = emptySet(),
             showingResend = "Resending Invite",
-            onResendDismissed = {},
-            sendCommands = {},
+            sendCommand = {},
             removeMembersData = ManageGroupMembersViewModel.RemoveMembersState(),
-            removeSearchState = {}
         )
     }
 }
