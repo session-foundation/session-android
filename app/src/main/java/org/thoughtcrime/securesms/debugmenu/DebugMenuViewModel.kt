@@ -49,6 +49,7 @@ import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.util.ClearDataUtils
+import org.thoughtcrime.securesms.util.DateUtils
 import java.time.ZonedDateTime
 
 
@@ -68,6 +69,7 @@ class DebugMenuViewModel @AssistedInject constructor(
     private val databaseInspector: DatabaseInspector,
     private val tokenFetcher: TokenFetcher,
     private val debugLogger: DebugLogger,
+    private val dateUtils: DateUtils,
     subscriptionManagers: Set<@JvmSuppressWildcards SubscriptionManager>,
 ) : ViewModel() {
     private val TAG = "DebugMenu"
@@ -402,7 +404,7 @@ class DebugMenuViewModel @AssistedInject constructor(
 
             is Commands.CopyAllLogs -> {
                 val logs = debugLogger.currentSnapshot().joinToString("\n\n") {
-                    "${it.formattedDate}: ${it.message}"
+                    "${dateUtils.getLocaleFormattedTime(it.date.toEpochMilli())}: ${it.message}"
                 }
 
                 val clip = ClipData.newPlainText("Debug Logs", logs)
@@ -419,7 +421,7 @@ class DebugMenuViewModel @AssistedInject constructor(
             }
 
             is Commands.CopyLog -> {
-                val log = "${command.log.formattedDate}: ${command.log.message}"
+                val log = "${dateUtils.getLocaleFormattedTime(command.log.date.toEpochMilli())}: ${command.log.message}"
 
                 val clip = ClipData.newPlainText("Debug Log", log)
                 clipboardManager.setPrimaryClip(ClipData(clip))

@@ -42,8 +42,12 @@ import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.ui.theme.monospace
+import org.thoughtcrime.securesms.util.DateUtils
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 
 @Composable
@@ -118,8 +122,13 @@ fun DebugLogs(
                                 }
                         ) {
                             Row {
+                                val locale = remember(Unit) { Locale.getDefault() }
+                                val formatter = remember(Unit){ DateTimeFormatter.ofPattern("HH:mm", locale)}
+
                                 Text(
-                                    text = log.formattedDate,
+                                    text = Instant.ofEpochMilli(log.date.toEpochMilli())
+                                        .atZone(ZoneId.systemDefault())
+                                        .format(formatter),
                                     style = LocalType.current.small.bold()
                                 )
 
@@ -181,19 +190,16 @@ fun PrewviewDebugLogs(
                     message = "This is a log",
                     group = DebugLogGroup.PRO_SUBSCRIPTION,
                     date = Instant.now(),
-                    formattedDate = "10: 36"
                 ),
                 DebugLogData(
                     message = "This is another log",
                     group = DebugLogGroup.PRO_SUBSCRIPTION,
                     date = Instant.now() - Duration.ofMinutes(4),
-                    formattedDate = "10: 36"
                 ),
                 DebugLogData(
                     message = "This is also a log",
                     group = DebugLogGroup.AVATAR,
                     date = Instant.now() - Duration.ofMinutes(7),
-                    formattedDate = "10: 36"
                 ),
             ),
             sendCommand = {},

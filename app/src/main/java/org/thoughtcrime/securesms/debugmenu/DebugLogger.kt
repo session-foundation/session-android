@@ -103,7 +103,6 @@ class DebugLogger @Inject constructor(
             message = text,
             group = group,
             date = now,
-            formattedDate = dateUtils.getLocaleFormattedTime(now.toEpochMilli())
         )
 
         synchronized(buffer) {
@@ -125,7 +124,6 @@ data class DebugLogData(
     val message: String,
     val group: DebugLogGroup,
     val date: Instant,
-    val formattedDate: String
 )
 
 enum class DebugLogGroup(val label: String, val color: Color){
