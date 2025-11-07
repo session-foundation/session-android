@@ -10,6 +10,14 @@ import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
 
+/**
+ * This database table keeps track of which message hashes we've already received for
+ * particular senders (swarm public keys) and namespaces. This is used to prevent
+ * processing the same message multiple times.
+ *
+ * To use this class, call [checkOrUpdateDuplicateState] to atomically check if a message hash
+ * has already been seen, and if not, add it to the database.
+ */
 @Singleton
 class ReceivedMessageHashDatabase @Inject constructor(
     @ApplicationContext context: Context,
