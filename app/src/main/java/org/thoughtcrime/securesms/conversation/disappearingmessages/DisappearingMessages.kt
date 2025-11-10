@@ -29,6 +29,7 @@ class DisappearingMessages @Inject constructor(
     private val storage: StorageProtocol,
     private val groupManagerV2: GroupManagerV2,
     private val clock: SnodeClock,
+    private val messageSender: MessageSender,
 ) {
     fun set(address: Address, mode: ExpiryMode, isGroup: Boolean) {
         storage.setExpirationConfiguration(address, mode)
@@ -45,7 +46,7 @@ class DisappearingMessages @Inject constructor(
             }
 
             messageExpirationManager.insertExpirationTimerMessage(message)
-            MessageSender.send(message, address)
+            messageSender.send(message, address)
         }
     }
 

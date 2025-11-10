@@ -47,6 +47,7 @@ import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -81,6 +82,7 @@ class ConfigToDatabaseSync @Inject constructor(
     private val groupMemberDatabase: GroupMemberDatabase,
     private val communityDatabase: CommunityDatabase,
     private val lokiAPIDatabase: LokiAPIDatabase,
+    private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     private val clock: SnodeClock,
     private val preferences: TextSecurePreferences,
     private val conversationRepository: ConversationRepository,
@@ -195,7 +197,7 @@ class ConfigToDatabaseSync @Inject constructor(
 
     private fun deleteGroupData(address: Address.Group) {
         lokiAPIDatabase.clearLastMessageHashes(address.accountId.hexString)
-        lokiAPIDatabase.clearReceivedMessageHashValues(address.accountId.hexString)
+        receivedMessageHashDatabase.removeAllByPublicKey(address.accountId.hexString)
     }
 
     private fun onLegacyGroupAdded(
