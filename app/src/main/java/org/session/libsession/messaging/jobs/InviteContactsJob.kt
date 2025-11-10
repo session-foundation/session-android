@@ -2,6 +2,9 @@ package org.session.libsession.messaging.jobs
 
 import android.widget.Toast
 import com.google.protobuf.ByteString
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -22,12 +25,17 @@ import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateM
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 
-class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<String>, val isReinvite : Boolean) : Job {
+class InviteContactsJob @AssistedInject constructor(
+    @Assisted val groupSessionId: String,
+    @Assisted val memberSessionIds: Array<String>,
+    @Assisted val isReinvite: Boolean
+) : Job {
 
     companion object {
         const val KEY = "InviteContactJob"
         private const val GROUP = "group"
         private const val MEMBER = "member"
+        private const val REINVITE = "reinvite"
 
     }
 
@@ -55,7 +63,9 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
                         // Make the request for this member
                         val memberId = AccountId(memberSessionId)
                         val (groupName, subAccount) = configs.withMutableGroupConfigs(sessionId) { configs ->
-                            configs.groupInfo.getName() to configs.groupKeys.makeSubAccount(memberSessionId)
+                            configs.groupInfo.getName() to configs.groupKeys.makeSubAccount(
+                                memberSessionId
+                            )
                         }
 
                         val timestamp = SnodeAPI.nowWithOffset
@@ -76,7 +86,11 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
                             sentTimestamp = timestamp
                         }
 
-                        MessageSender.sendNonDurably(update, Destination.Contact(memberSessionId), false)
+                        MessageSender.sendNonDurably(
+                            update,
+                            Destination.Contact(memberSessionId),
+                            false
+                        )
                     }
                 }
             }
@@ -123,10 +137,16 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
                     groupName = groupName.orEmpty(),
                     underlying = firstError,
                     isReinvite = isReinvite
-                ).format(MessagingModuleConfiguration.shared.context,
-                    MessagingModuleConfiguration.shared.recipientRepository).let {
+                ).format(
+                    MessagingModuleConfiguration.shared.context,
+                    MessagingModuleConfiguration.shared.recipientRepository
+                ).let {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(MessagingModuleConfiguration.shared.context, it, Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            MessagingModuleConfiguration.shared.context,
+                            it,
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                 }
             }
@@ -137,8 +157,27 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
         Data.Builder()
             .putString(GROUP, groupSessionId)
             .putStringArray(MEMBER, memberSessionIds)
+            .putBoolean(REINVITE, isReinvite)
             .build()
 
     override fun getFactoryKey(): String = KEY
 
+    @AssistedFactory
+    abstract class Factory : Job.DeserializeFactory<InviteContactsJob> {
+
+        // Deserialization path used by SessionJobDatabase -> SessionJobInstantiator
+        override fun create(data: Data): InviteContactsJob {
+            val group = data.getString(GROUP)
+            val members = data.getStringArray(MEMBER)
+            val reinvite = data.getBooleanOrDefault(REINVITE, false)
+            return create(group, members, reinvite)
+        }
+
+        // This is what you call at runtime to create a new job (Dagger injects the rest)
+        abstract fun create(
+            groupSessionId: String,
+            memberSessionIds: Array<String>,
+            isReinvite: Boolean
+        ): InviteContactsJob
+    }
 }
