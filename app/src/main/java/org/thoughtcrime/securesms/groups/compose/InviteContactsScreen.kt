@@ -32,12 +32,12 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.groups.ContactItem
 import org.thoughtcrime.securesms.groups.SelectContactsViewModel
-import org.thoughtcrime.securesms.ui.BottomFadingEdgeBox
+import org.thoughtcrime.securesms.groups.SelectContactsViewModel.Commands.*
 import org.thoughtcrime.securesms.ui.CollapsibleFooterAction
 import org.thoughtcrime.securesms.ui.CollapsibleFooterActionData
 import org.thoughtcrime.securesms.ui.CollapsibleFooterItemData
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.SearchBar
+import org.thoughtcrime.securesms.ui.SearchBarWithClose
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -60,17 +60,13 @@ fun InviteContactsScreen(
 
     InviteContacts(
         contacts = viewModel.contacts.collectAsState().value,
-        onContactItemClicked = viewModel::onContactItemClicked,
+        uiState = viewModel.uiState.collectAsState().value,
         searchQuery = viewModel.searchQuery.collectAsState().value,
-        onSearchQueryChanged = viewModel::onSearchQueryChanged,
-        onSearchQueryClear = { viewModel.onSearchQueryChanged("") },
         onDoneClicked = onDoneClicked,
         onBack = onBack,
         banner = banner,
         data = footerData,
-        onToggleFooter = viewModel::toggleFooter,
-        onCloseFooter = viewModel::clearSelection
-
+        sendCommand = viewModel::sendCommand
     )
 }
 
@@ -78,16 +74,14 @@ fun InviteContactsScreen(
 @Composable
 fun InviteContacts(
     contacts: List<ContactItem>,
-    onContactItemClicked: (address: Address) -> Unit,
-    searchQuery: String,
-    onSearchQueryChanged: (String) -> Unit,
-    onSearchQueryClear: () -> Unit,
+    uiState : SelectContactsViewModel.UiState,
+    searchQuery : String,
     onDoneClicked: () -> Unit,
     onBack: () -> Unit,
     banner: @Composable () -> Unit = {},
     data: SelectContactsViewModel.CollapsibleFooterState,
-    onToggleFooter: () -> Unit,
-    onCloseFooter: () -> Unit,
+    sendCommand : (command : SelectContactsViewModel.Commands) -> Unit
+
 ) {
 
     val trayItems = listOf(
@@ -121,8 +115,8 @@ fun InviteContacts(
                         visible = data.visible,
                         items = trayItems
                     ),
-                    onCollapsedClicked = onToggleFooter,
-                    onClosedClicked = onCloseFooter
+                    onCollapsedClicked = {sendCommand(ToggleFooter)},
+                    onClosedClicked = {sendCommand(CloseFooter)}
                 )
             }
         }
@@ -136,22 +130,26 @@ fun InviteContacts(
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
-            SearchBar(
+            SearchBarWithClose(
                 query = searchQuery,
-                onValueChanged = onSearchQueryChanged,
-                onClear = onSearchQueryClear,
+                onValueChanged = { query -> sendCommand(SearchQueryChange(query)) },
+                onClear = { sendCommand(SearchQueryChange("")) },
                 placeholder = stringResource(R.string.searchContacts),
                 modifier = Modifier
                     .padding(horizontal = LocalDimensions.current.smallSpacing)
                     .qaTag(R.string.AccessibilityId_groupNameSearch),
                 backgroundColor = LocalColors.current.backgroundSecondary,
+                isFocused = uiState.isSearchFocused,
+                onFocusChanged = { isFocused -> sendCommand(SearchFocusChange(isFocused)) },
+                enabled = true,
             )
 
             val scrollState = rememberLazyListState()
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
-            Box(modifier = Modifier.weight(1f)
+            Box(modifier = Modifier
+                .weight(1f)
                 .fillMaxWidth()) {
                 if (contacts.isEmpty() && searchQuery.isEmpty()) {
                     Text(
@@ -168,7 +166,7 @@ fun InviteContacts(
                     ) {
                         multiSelectMemberList(
                             contacts = contacts,
-                            onContactItemClicked = onContactItemClicked,
+                            onContactItemClicked = { address -> sendCommand(ContactItemClick(address)) },
                         )
                     }
                 }
@@ -201,10 +199,6 @@ private fun PreviewSelectContacts() {
     PreviewTheme {
         InviteContacts(
             contacts = contacts,
-            onContactItemClicked = {},
-            searchQuery = "",
-            onSearchQueryChanged = {},
-            onSearchQueryClear = {},
             onDoneClicked = {},
             onBack = {},
             data = SelectContactsViewModel.CollapsibleFooterState(
@@ -212,8 +206,10 @@ private fun PreviewSelectContacts() {
                 visible = true,
                 footerActionTitle = GetString("1 Contact Selected")
             ),
-            onToggleFooter = { },
-            onCloseFooter = { },
+            banner = {},
+            sendCommand = {},
+            uiState = SelectContactsViewModel.UiState(),
+            searchQuery = ""
         )
     }
 }
@@ -226,10 +222,6 @@ private fun PreviewSelectEmptyContacts() {
     PreviewTheme {
         InviteContacts(
             contacts = contacts,
-            onContactItemClicked = {},
-            searchQuery = "",
-            onSearchQueryChanged = {},
-            onSearchQueryClear = {},
             onDoneClicked = {},
             onBack = {},
             data = SelectContactsViewModel.CollapsibleFooterState(
@@ -237,8 +229,10 @@ private fun PreviewSelectEmptyContacts() {
                 visible = false,
                 footerActionTitle = GetString("")
             ),
-            onToggleFooter = { },
-            onCloseFooter = { }
+            banner = {},
+            sendCommand = {},
+            uiState = SelectContactsViewModel.UiState(),
+            searchQuery = "Test"
         )
     }
 }
@@ -251,10 +245,6 @@ private fun PreviewSelectEmptyContactsWithSearch() {
     PreviewTheme {
         InviteContacts(
             contacts = contacts,
-            onContactItemClicked = {},
-            searchQuery = "Test",
-            onSearchQueryChanged = {},
-            onSearchQueryClear = {},
             onDoneClicked = {},
             onBack = {},
             data = SelectContactsViewModel.CollapsibleFooterState(
@@ -262,8 +252,10 @@ private fun PreviewSelectEmptyContactsWithSearch() {
                 visible = false,
                 footerActionTitle = GetString("")
             ),
-            onToggleFooter = { },
-            onCloseFooter = { }
+            banner = {},
+            sendCommand = {},
+            uiState = SelectContactsViewModel.UiState(),
+            searchQuery = ""
         )
     }
 }

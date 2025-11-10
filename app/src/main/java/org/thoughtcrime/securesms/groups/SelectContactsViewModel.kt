@@ -30,6 +30,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel.UiState
 import org.thoughtcrime.securesms.home.search.searchName
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.GetString
@@ -47,9 +48,6 @@ open class SelectContactsViewModel @AssistedInject constructor(
     private val recipientRepository: RecipientRepository,
     @param:ApplicationContext private val context: Context,
 ) : ViewModel() {
-    // Input: The search query
-    private val mutableSearchQuery = MutableStateFlow("")
-
     // Input: The selected contact account IDs
     private val mutableSelectedContactAccountIDs = MutableStateFlow(emptySet<Address>())
 
@@ -57,6 +55,8 @@ open class SelectContactsViewModel @AssistedInject constructor(
     // the user has. This is useful for selecting contacts that are not in the user's contacts list.
     private val mutableManuallyAddedContacts = MutableStateFlow(emptySet<Address>())
 
+    // Input: The search query
+    private val mutableSearchQuery = MutableStateFlow("")
     // Output: The search query
     val searchQuery: StateFlow<String> get() = mutableSearchQuery
 
@@ -73,6 +73,9 @@ open class SelectContactsViewModel @AssistedInject constructor(
     val hasContacts: StateFlow<Boolean> = contactsFlow
             .map { it.isNotEmpty() }
             .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    private val _uiState = MutableStateFlow(UiState())
+    val uiState: StateFlow<UiState> = _uiState
 
     // Output
     val currentSelected: Set<Address>
@@ -176,11 +179,47 @@ open class SelectContactsViewModel @AssistedInject constructor(
         footerCollapsed.update { !it }
     }
 
+    fun onSearchFocusChanged(isFocused :Boolean){
+        _uiState.update { it.copy(isSearchFocused = isFocused) }
+    }
+
+    fun sendCommand(command: Commands) {
+        when (command) {
+            is Commands.ClearSelection -> clearSelection()
+            is Commands.ToggleFooter -> toggleFooter()
+            is Commands.CloseFooter -> clearSelection()
+            is Commands.ContactItemClick -> onContactItemClicked(command.address)
+            is Commands.RemoveSearchState -> onSearchFocusChanged(false)
+            is Commands.SearchFocusChange -> onSearchFocusChanged(command.focus)
+            is Commands.SearchQueryChange -> onSearchQueryChanged(command.query)
+        }
+    }
+
+    data class UiState(
+        val isSearchFocused : Boolean = false,
+    )
+
     data class CollapsibleFooterState(
         val visible: Boolean = false,
         val collapsed: Boolean = false,
         val footerActionTitle : GetString = GetString("")
     )
+
+    sealed interface Commands {
+        data object ClearSelection : Commands
+
+        data object ToggleFooter : Commands
+
+        data object CloseFooter : Commands
+
+        data class ContactItemClick(val address: Address) : Commands
+
+        data class RemoveSearchState(val clearSelection: Boolean) : Commands
+
+        data class SearchQueryChange(val query: String) : Commands
+
+        data class SearchFocusChange(val focus: Boolean) : Commands
+    }
 
     @AssistedFactory
     interface Factory {
