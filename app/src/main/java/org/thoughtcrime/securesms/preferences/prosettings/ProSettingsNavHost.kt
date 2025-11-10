@@ -48,6 +48,10 @@ sealed interface ProSettingsDestination: Parcelable {
     data object RefundSubscription: ProSettingsDestination
 }
 
+enum class ProNavHostCustomActions {
+    ON_POST_PLAN_CONFIRMATION
+}
+
 @Serializable object ProSettingsGraph
 
 @SuppressLint("RestrictedApi")
@@ -84,6 +88,32 @@ fun ProSettingsNavHost(
 
             is NavigationAction.NavigateToIntent -> {
                 navController.context.startActivity(action.intent)
+            }
+
+            is NavigationAction.PerformCustomAction -> {
+                when(action.data as? ProNavHostCustomActions){
+                    // handle the custom case of dealing with the post "choose plan confirmation"screen
+                    ProNavHostCustomActions.ON_POST_PLAN_CONFIRMATION -> {
+                        // we get here where we either hit back or hit the "ok" button on the plan confirmation screen
+                        // if we are in a sheet we need to close it
+                        if (inSheet) {
+                            onBack()
+                        } // otherwise we should clear the stack and head back to the pro settings home screen
+                        else {
+                            // try to navigate "back" home is possible
+                            val wentBack = navController.popBackStack(route = Home, inclusive = false)
+
+                            if (!wentBack) {
+                                // Fallback: if Home wasn't in the back stack
+                                navController.navigate(Home){
+                                    popUpTo(Home){ inclusive = false }
+                                }
+                            }
+                        }
+                    }
+
+                    else -> {}
+                }
             }
 
             is NavigationAction.ReturnResult -> {}

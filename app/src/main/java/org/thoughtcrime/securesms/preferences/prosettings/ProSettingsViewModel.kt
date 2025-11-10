@@ -303,16 +303,11 @@ class ProSettingsViewModel @AssistedInject constructor(
                 }
             }
 
-            Commands.GoToProSettings -> {
-                // navigate back to home and pop all other screens off the stack
-                navigateTo(
-                    destination = ProSettingsDestination.Home,
-                    navOptions = {
-                        popUpTo(ProSettingsDestination.Home){
-                            inclusive = true
-                        }
-                    }
-                )
+            Commands.OnPostPlanConfirmation -> {
+                // send a custom action to deal with "post plan confirmation"
+                viewModelScope.launch {
+                    navigator.sendCustomAction(ProNavHostCustomActions.ON_POST_PLAN_CONFIRMATION)
+                }
             }
 
             Commands.OpenSubscriptionPage -> {
@@ -360,6 +355,13 @@ class ProSettingsViewModel @AssistedInject constructor(
             }
 
             Commands.GetProPlan -> {
+                // TEMP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                viewModelScope.launch {
+                    navigator.navigate(destination = ProSettingsDestination.PlanConfirmation)
+                }
+                return
+
+
                 val currentSubscription = _proSettingsUIState.value.subscriptionState.type
                 val selectedPlan = getSelectedPlan() ?: return
 
@@ -736,7 +738,7 @@ class ProSettingsViewModel @AssistedInject constructor(
         data class GoToChoosePlan(val inSheet: Boolean): Commands
         object GoToRefund: Commands
         object GoToCancel: Commands
-        object GoToProSettings: Commands
+        object OnPostPlanConfirmation: Commands
 
         object OpenSubscriptionPage: Commands
 
