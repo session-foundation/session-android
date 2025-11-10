@@ -51,6 +51,7 @@ import org.session.libsignal.utilities.HTTP.isConnectedToNetwork
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.AppContext.configureKovenant
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
+import org.thoughtcrime.securesms.debugmenu.DebugLogger
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.dependencies.DatabaseModule.init
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponents
@@ -89,6 +90,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
 
     @Inject lateinit var startupComponents: Lazy<OnAppStartupComponents>
     @Inject lateinit var persistentLogger: Lazy<PersistentLogger>
+    @Inject lateinit var debugLogger: Lazy<DebugLogger>
     @Inject lateinit var textSecurePreferences: Lazy<TextSecurePreferences>
     @Inject lateinit var migrationManager: Lazy<DatabaseMigrationManager>
 
@@ -208,7 +210,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
     }
 
     private fun initializeLogging() {
-        Log.initialize(AndroidLogger(), persistentLogger.get())
+        Log.initialize(AndroidLogger(), persistentLogger.get(), debugLogger.get())
         Logger.addLogger(object : Logger {
             private val tag = "LibSession"
 

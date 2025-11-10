@@ -21,6 +21,7 @@ import org.session.libsession.utilities.Util
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.util.castAwayType
@@ -41,7 +42,7 @@ class AvatarUploadManager @Inject constructor(
     @ManagerScope scope: CoroutineScope,
     private val localEncryptedFileOutputStreamFactory: LocalEncryptedFileOutputStream.Factory,
     private val fileServerApi: FileServerApi,
-    private val attachmentProcessor: AttachmentProcessor,
+    private val attachmentProcessor: AttachmentProcessor
 ) : OnAppStartupComponent {
     init {
         // Manage scheduling/cancellation of the AvatarReuploadWorker based on login state
@@ -99,7 +100,7 @@ class AvatarUploadManager @Inject constructor(
             customExpiresDuration = DEBUG_AVATAR_TTL.takeIf { prefs.forcedShortTTL() }
         )
 
-        Log.d(TAG, "Avatar upload finished with $uploadResult")
+        Log.d(DebugLogGroup.AVATAR.label, "Avatar upload finished with $uploadResult")
 
         val remoteFile = RemoteFile.Encrypted(url = uploadResult.fileUrl, key = Bytes(result.key))
 
@@ -111,7 +112,7 @@ class AvatarUploadManager @Inject constructor(
             it.write(pictureData)
         }
 
-        Log.d(TAG, "Avatar file written to local storage")
+        Log.d(DebugLogGroup.AVATAR.label, "Avatar file written to local storage")
 
         // Now that we have the file both locally and remotely, we can update the user profile
         val oldPic = configFactory.withMutableUserConfigs {
@@ -134,7 +135,7 @@ class AvatarUploadManager @Inject constructor(
             // If we had an old avatar, delete it from local storage
             val oldFile = AvatarDownloadManager.computeFileName(application, oldPic)
             if (oldFile.exists()) {
-                Log.d(TAG, "Deleting old avatar file: $oldFile")
+                Log.d(DebugLogGroup.AVATAR.label, "Deleting old avatar file: $oldFile")
                 oldFile.delete()
             }
         }
