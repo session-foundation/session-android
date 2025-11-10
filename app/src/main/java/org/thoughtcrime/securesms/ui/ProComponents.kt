@@ -580,8 +580,8 @@ fun GenericProCTA(
             .format()
             .toString(),
         features = listOf(
-            CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
             CTAFeature.Icon(stringResource(R.string.proFeatureListLongerMessages)),
+            CTAFeature.Icon(stringResource(R.string.proFeatureListPinnedConversations)),
             CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
         ),
         onCancel = {
@@ -613,7 +613,7 @@ fun LongMessageProCTA(
             .toString(),
         features = listOf(
             CTAFeature.Icon(stringResource(R.string.proFeatureListLongerMessages)),
-            CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
+            CTAFeature.Icon(stringResource(R.string.proFeatureListPinnedConversations)),
             CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
         ),
         onCancel = {
@@ -646,7 +646,7 @@ fun AnimatedProfilePicProCTA(
             .toString(),
         features = listOf(
             CTAFeature.Icon(stringResource(R.string.proFeatureListAnimatedDisplayPicture)),
-            CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
+            CTAFeature.Icon(stringResource(R.string.proFeatureListLongerMessages)),
             CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
         ),
         onCancel = {
@@ -700,7 +700,7 @@ fun PinProCTA(
         text = title,
         features = listOf(
             CTAFeature.Icon(stringResource(R.string.proFeatureListPinnedConversations)),
-            CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
+            CTAFeature.Icon(stringResource(R.string.proFeatureListLongerMessages)),
             CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
         ),
         onCancel = {
