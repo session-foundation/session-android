@@ -275,7 +275,6 @@ class ProStatusManager @Inject constructor(
         //todo PRO call AddProPaymentRequest in libsession
 
         // we should `AddProPaymentRequest` with exponential backoff
-        // the call might fail until the back end has had time to acknowledge the payment
 
         /**
          * Here are the errors from the back end that we will need to be aware of
