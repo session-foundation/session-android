@@ -916,12 +916,9 @@
     <string name="proActivated">Активирован</string>
     <string name="proAlreadyPurchased">У вас уже есть</string>
     <string name="proAnimatedDisplayPicture">Вперёд! И загружай анимированные GIF и WebP для вашего изображения!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">Получите анимированное изображение профиля и другие разблокированные премиум функции с {app_pro}</string>
     <string name="proAnimatedDisplayPictureFeature">Анимированное изображение профиля</string>
     <string name="proAnimatedDisplayPictureModalDescription">пользователи могут загружать GIF-файлы</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Загружайте GIF с</string>
-    <string name="proCallToActionLongerMessages">Хотите отправлять более длинные сообщения? Отправляйте больше текста и используйте премиум функции с {app_pro}</string>
-    <string name="proCallToActionPinnedConversations">Хотите больше закреплений? Организуйте свои чаты и получайте доступ к премиум функциям с {app_pro}</string>
     <string name="proFeatureListAnimatedDisplayPicture">Загрузка изображений в формате GIF и WebP</string>
     <string name="proFeatureListLargerGroups">Групповые чаты до 300 участников</string>
     <string name="proFeatureListLoadsMore">+ множество эксклюзивных функций</string>

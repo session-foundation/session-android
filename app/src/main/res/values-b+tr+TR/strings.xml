@@ -818,12 +818,9 @@
     <string name="proActivated">Etkinleştirildi</string>
     <string name="proAlreadyPurchased">Zaten sahipsiniz</string>
     <string name="proAnimatedDisplayPicture">Hadi, profil resminiz için GIF\'ler ve animasyonlu WebP görselleri yükleyin!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">Animasyonlu profil resimleri edinin ve {app_pro} ile premium özelliklerin kilidini açın</string>
     <string name="proAnimatedDisplayPictureFeature">Profil Onur Seçin</string>
     <string name="proAnimatedDisplayPictureModalDescription">kullanıcılar GIF yükleyebilir</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">ile GIF Yükleyin</string>
-    <string name="proCallToActionLongerMessages">Daha uzun mesajlar mı göndermek istiyorsunuz? {app_pro} ile daha fazla metin gönderin ve premium özelliklerin kilidini açın</string>
-    <string name="proCallToActionPinnedConversations">Daha fazla sabitleme mi istiyorsunuz? Sohbetlerinizi düzenleyin ve {app_pro} ile premium özelliklerin kilidini açın</string>
     <string name="proFeatureListAnimatedDisplayPicture">GIF ve WebP profil resmi yükleme</string>
     <string name="proFeatureListLargerGroups">300 üyeye kadar daha büyük grup sohbetleri</string>
     <string name="proFeatureListLoadsMore">Ayrıca daha birçok özel özellik</string>

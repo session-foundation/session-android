@@ -1001,7 +1001,7 @@ accepted an invite to join the group.</string>
     <string name="proAllSetDescription">Your {app_pro} access was updated! You will be billed when {pro} is automatically renewed on <b>{date}</b>.</string>
     <string name="proAlreadyPurchased">You’ve already got</string>
     <string name="proAnimatedDisplayPicture">Go ahead and upload GIFs and animated WebP images for your display picture!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">Get animated display pictures and unlock premium features with {app_pro}</string>
+    <string name="proAnimatedDisplayPictureCallToActionDescription">Get animated display pictures and unlock premium features with {app_pro} Beta</string>
     <string name="proAnimatedDisplayPictureFeature">Animated Display Picture</string>
     <string name="proAnimatedDisplayPictureModalDescription">users can upload GIFs</string>
     <string name="proAnimatedDisplayPictures">Animated Display Pictures</string>
@@ -1020,9 +1020,9 @@ accepted an invite to join the group.</string>
     <string name="proBilledAnnually">{price} Billed Annually</string>
     <string name="proBilledMonthly">{price} Billed Monthly</string>
     <string name="proBilledQuarterly">{price} Billed Quarterly</string>
-    <string name="proCallToActionLongerMessages">Want to send longer messages? Send more text and unlock premium features with {app_pro}</string>
+    <string name="proCallToActionLongerMessages">Want to send longer messages?\n Send more text and unlock premium features with {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversations">Want more pins? Organize your chats and unlock premium features with {app_pro}</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">Want more than {limit} pins? Organize your chats and unlock premium features with {app_pro}</string>
+    <string name="proCallToActionPinnedConversationsMoreThan">Want more than {limit} pins?\nOrganize your chats and unlock premium features with {app_pro} Beta</string>
     <string name="proCancelSorry">Sorry to see you cancel {pro}. Here\'s what you need to know before canceling your {pro} access.</string>
     <string name="proCancellation">Cancellation</string>
     <string name="proCancellationDescription">Canceling {pro} access will prevent automatic renewal from occurring before {pro} access expires. Canceling {pro} does <b>not</b> result in a refund. You will continue to be able to use {app_pro} features until your {pro} access expires.\n\nBecause you originally signed up for {app_pro} using your <b>{platform_account}</b>, you\'ll need to use the same {platform_account} to cancel {pro}.</string>
@@ -1094,7 +1094,7 @@ accepted an invite to join the group.</string>
     <string name="proRenewDesktopLinked">Renew your {pro} access from the {app_pro} settings on a linked device with {app_name} installed via the {platform_store} or {platform_store_other}.</string>
     <string name="proRenewLongerMessages">Want to send longer messages again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
     <string name="proRenewMaxPotential">Want to use {app_name} to its max potential again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
-    <string name="proRenewPinFiveConversations">Want to pin more than 5 conversations again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
+    <string name="proRenewPinFiveConversations">Want to pin more than {limit} conversations again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
     <string name="proRenewPinMoreConversations">Want to pin more conversations again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
     <string name="proRenewTosPrivacy">By renewing, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
     <string name="proRenewalUnsuccessful">Pro renewal unsuccessful, retrying soon</string>
