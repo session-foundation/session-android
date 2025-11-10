@@ -409,8 +409,10 @@ class ReceivedMessageHandler @Inject constructor(
                 runThreadUpdate = runThreadUpdate
             ) ?: return null
 
-            // If we have previously "hidden" the sender, we should flip the flag back to visible
-            if (senderAddress is Address.Standard && senderAddress.address != userPublicKey) {
+            // If we have previously "hidden" the sender, we should flip the flag back to visible,
+            // and this should only be done only for 1:1 messages
+            if (senderAddress is Address.Standard && senderAddress.address != userPublicKey
+                && context.threadAddress is Address.Standard) {
                 val existingContact =
                     configFactory.withUserConfigs { it.contacts.get(senderAddress.accountId.hexString) }
 
