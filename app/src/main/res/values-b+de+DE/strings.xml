@@ -871,12 +871,10 @@
     <string name="proActivated">Aktiviert</string>
     <string name="proAlreadyPurchased">Du hast bereits</string>
     <string name="proAnimatedDisplayPicture">Lade GIF- und animierte WebP-Bilder als Profilbild hoch!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">Hole dir animierte Profilbilder und schalte Premium-Funktionen mit {app_pro} frei</string>
     <string name="proAnimatedDisplayPictureFeature">Animiertes Profilbild</string>
     <string name="proAnimatedDisplayPictureModalDescription">Nutzer können GIFs hochladen</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">GIFs hochladen mit</string>
     <string name="proAutoRenewTime">Automatische {pro} Erneuerung in <b>{time}</b></string>
-    <string name="proCallToActionLongerMessages">Du möchtest längere Nachrichten senden? Sende mehr Text und schalte Premium-Funktionen mit {app_pro} frei</string>
     <string name="proCallToActionPinnedConversations">Mehr Anheftungen gewünscht? Organisiere deine Chats und schalte Premium-Funktionen mit {app_pro} frei</string>
     <string name="proExpired">Abgelaufen</string>
     <string name="proFaq">{pro} FAQ</string>

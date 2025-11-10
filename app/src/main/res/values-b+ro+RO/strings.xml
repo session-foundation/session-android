@@ -864,12 +864,9 @@
     <string name="proActivated">Activat</string>
     <string name="proAlreadyPurchased">Deja ai</string>
     <string name="proAnimatedDisplayPicture">Mergi mai departe și încarcă GIF-uri și imagini WebP animate pentru imaginea ta de profil!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">Obține imagini de profil animate și deblochează funcționalități premium cu {app_pro}</string>
     <string name="proAnimatedDisplayPictureFeature">Poză de profil animată</string>
     <string name="proAnimatedDisplayPictureModalDescription">utilizatorii pot încărca GIF-uri</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Încarcă GIF-uri cu</string>
-    <string name="proCallToActionLongerMessages">Vrei să trimiți mesaje mai lungi? Trimite mai mult text și deblochează funcții premium cu {app_pro}</string>
-    <string name="proCallToActionPinnedConversations">Vrei mai multe fixări? Organizează-ți conversațiile și deblochează funcționalități premium cu {app_pro}</string>
     <string name="proFeatureListAnimatedDisplayPicture">Încarcă imagini de profil GIF și WebP</string>
     <string name="proFeatureListLargerGroups">Conversații de grup mai mari, cu până la 300 de membri</string>
     <string name="proFeatureListLoadsMore">Și multe alte funcționalități exclusive</string>
