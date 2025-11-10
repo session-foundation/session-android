@@ -790,6 +790,22 @@ fun ProManage(
                     }
                 )
             }
+
+            val recoverButton: @Composable ()->Unit = {
+                IconActionRowItem(
+                    title = annotatedStringResource(
+                        Phrase.from(LocalContext.current, R.string.proAccessRecover)
+                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                            .format().toString()
+                    ),
+                    icon = R.drawable.ic_refresh_cw,
+                    qaTag = R.string.qa_pro_settings_action_request_refund,
+                    onClick = {
+                        //todo PRO implement
+                    }
+                )
+            }
+
             when(data){
                 is SubscriptionType.Active.AutoRenewing -> {
                     IconActionRowItem(
@@ -812,6 +828,10 @@ fun ProManage(
 
                 is SubscriptionType.Active.Expiring -> {
                     refundButton()
+                }
+
+                is SubscriptionType.NeverSubscribed -> {
+                    recoverButton()
                 }
 
                 is SubscriptionType.Expired -> {
@@ -871,18 +891,7 @@ fun ProManage(
                     )
 
                     Divider()
-                    IconActionRowItem(
-                        title = annotatedStringResource(
-                            Phrase.from(LocalContext.current, R.string.proAccessRecover)
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                .format().toString()
-                        ),
-                        icon = R.drawable.ic_refresh_cw,
-                        qaTag = R.string.qa_pro_settings_action_request_refund,
-                        onClick = {
-                            //todo PRO implement
-                        }
-                    )
+                    recoverButton()
                 }
 
                 is SubscriptionType.NeverSubscribed -> {}
@@ -899,15 +908,13 @@ fun ProSettingsFooter(
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
 ) {
     // Manage Pro - Pro
-    if(subscriptionType is SubscriptionType.Active){
-        Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
-        ProManage(
-            data = subscriptionType,
-            inSheet = inSheet,
-            subscriptionRefreshState = subscriptionRefreshState,
-            sendCommand = sendCommand,
-        )
-    }
+    Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+    ProManage(
+        data = subscriptionType,
+        inSheet = inSheet,
+        subscriptionRefreshState = subscriptionRefreshState,
+        sendCommand = sendCommand,
+    )
 
     // Help
     Spacer(Modifier.height(LocalDimensions.current.spacing))
