@@ -80,7 +80,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
     private val billingClient by lazy {
         BillingClient.newBuilder(application)
             .setListener { result, purchases ->
-                Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Billing callback. Result: $result, Purchases: $purchases")
+                Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Billing callback. Result: $result, Purchases: ${purchases?.map { it.orderId }}")
 
                 if (result.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
                     purchases.firstOrNull()?.let{
