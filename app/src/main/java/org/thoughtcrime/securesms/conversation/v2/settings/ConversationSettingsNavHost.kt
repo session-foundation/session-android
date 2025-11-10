@@ -187,14 +187,6 @@ fun ConversationSettingsNavHost(
 
                 ManageGroupMembersScreen(
                     viewModel = viewModel,
-                    navigateToInviteContact = {
-                        navController.navigate(
-                            RouteInviteToGroup(
-                                groupAddress = data.groupAddress,
-                                excludingAccountIDs = viewModel.excludingAccountIDsFromContactSelection.toList()
-                            )
-                        )
-                    },
                     onBack = dropUnlessResumed {
                         handleBack()
                     },

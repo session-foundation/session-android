@@ -17,7 +17,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -64,24 +66,9 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         .map { it?.first?.isUserAdmin == true }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
 
-    // Output: Intermediate states
-    private val mutableInProgress = MutableStateFlow(false)
-    val inProgress: StateFlow<Boolean> get() = mutableInProgress
-
-    // Output: errors
-    private val mutableError = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> get() = mutableError
-
-    private val _mutableOngoingAction = MutableStateFlow<String?>(null)
-    val ongoingAction: StateFlow<String?> = _mutableOngoingAction
-
     // Output:
     val excludingAccountIDsFromContactSelection: Set<String>
         get() = groupInfo.value?.second?.mapTo(hashSetOf()) { it.accountId.hexString }.orEmpty()
-
-    // Output: Intermediate states
-    private val mutableSearchFocused = MutableStateFlow(false)
-    val searchFocused: StateFlow<Boolean> get() = mutableSearchFocused
 
     private val _mutableSelectedMembers = MutableStateFlow(emptySet<GroupMemberState>())
     val selectedMembers: StateFlow<Set<GroupMemberState>> = _mutableSelectedMembers
@@ -147,56 +134,19 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
             .distinctUntilChanged()
             .stateIn(viewModelScope, SharingStarted.Eagerly, CollapsibleFooterState())
 
-    private val showRemoveMember = MutableStateFlow(false)
-    val removeMembersState: StateFlow<RemoveMembersState> =
+    private val showRemoveMembersDialog = MutableStateFlow(false)
+
+    init {
         combine(
-            showRemoveMember,
+            showRemoveMembersDialog,
             selectedMembers,
             groupName
         ) { showRemove, selected, group ->
-            val count = selected.size
-            val firstMember = selected.firstOrNull()
-
-            val body =
-                when (count) {
-                    1 -> {
-                        Phrase.from(context, R.string.groupRemoveDescription)
-                            .put(NAME_KEY, firstMember?.name)
-                            .put(GROUP_NAME_KEY, group)
-                            .format()
-                    }
-
-                    2 -> {
-                        val secondMember = selected.elementAtOrNull(1)?.name
-                        Phrase.from(context, R.string.groupRemoveDescriptionTwo)
-                            .put(NAME_KEY, firstMember?.name)
-                            .put(OTHER_NAME_KEY, secondMember)
-                            .put(GROUP_NAME_KEY, group)
-                            .format()
-                    }
-
-                    0 -> ""
-                    else -> {
-                        Phrase.from(context, R.string.groupRemoveDescriptionMultiple)
-                            .put(NAME_KEY, firstMember?.name)
-                            .put(COUNT_KEY, count - 1)
-                            .put(GROUP_NAME_KEY, group)
-                            .format()
-                    }
-                }
-            val removeMemberOnly =
-                context.resources.getQuantityString(R.plurals.removeMember, count, count)
-            val removeMessages =
-                context.resources.getQuantityString(R.plurals.removeMemberMessages, count, count)
-
-            RemoveMembersState(
-                visible = showRemove,
-                removeMemberBody = body,
-                removeMemberText = removeMemberOnly,
-                removeMessagesText = removeMessages
-            )
-        }.stateIn(viewModelScope, SharingStarted.Eagerly, RemoveMembersState())
-
+            buildRemoveMembersDialogState(showRemove, selected, group)
+        }.onEach { state ->
+            _uiState.update { it.copy(removeMembersDialog = state) }
+        }.launchIn(viewModelScope)
+    }
     fun onMemberItemClicked(member: GroupMemberState) {
         val newSet = _mutableSelectedMembers.value.toHashSet()
         if (!newSet.remove(member)) {
@@ -205,7 +155,7 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         _mutableSelectedMembers.value = newSet
     }
     fun onSearchFocusChanged(isFocused :Boolean){
-        mutableSearchFocused.value = isFocused
+        _uiState.update { it.copy(isSearchFocused = isFocused) }
     }
 
     private fun navigateInviteContacts() {
@@ -262,11 +212,13 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
 
             removeSearchState(true)
 
-            _mutableOngoingAction.value = context.resources.getQuantityString(
-                R.plurals.resendingInvite,
-                invites.size,
-                invites.size
-            )
+            _uiState.update { it ->
+                it.copy(error = context.resources.getQuantityString(
+                    R.plurals.resendingInvite,
+                    invites.size,
+                    invites.size
+                ))
+            }
 
             // Reinvite with per-member shareHistory
             groupManager.reinviteMembers(
@@ -292,11 +244,14 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
     }
 
     fun onRemoveContact(removeMessages: Boolean) {
-        _mutableOngoingAction.value = context.resources.getQuantityString(
-            R.plurals.removingMember,
-            selectedMembers.value.size,
-            selectedMembers.value.size
-        )
+        _uiState.update { it ->
+            it.copy(ongoingAction =context.resources.getQuantityString(
+                R.plurals.removingMember,
+                selectedMembers.value.size,
+                selectedMembers.value.size
+            ))
+        }
+
         performGroupOperation(showLoading = false) {
             val accountIdList = selectedMembers.value.map { it.accountId }
 
@@ -317,7 +272,7 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
     }
 
     fun onDismissError() {
-        mutableError.value = null
+        _uiState.update { it.copy(error = null) }
     }
 
     /**
@@ -328,10 +283,11 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
     private fun performGroupOperation(
         showLoading: Boolean = true,
         errorMessage: ((Throwable) -> String?)? = null,
-        operation: suspend () -> Unit) {
+        operation: suspend () -> Unit
+    ) {
         viewModelScope.launch {
             if (showLoading) {
-                mutableInProgress.value = true
+                _uiState.update { it.copy(inProgress = true) }
             }
 
             // We need to use GlobalScope here because we don't want
@@ -344,11 +300,15 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
             try {
                 task.await()
             } catch (e: Exception) {
-                mutableError.value = errorMessage?.invoke(e)
-                    ?: context.getString(R.string.errorUnknown)
+                _uiState.update {
+                    it.copy(
+                        error = errorMessage?.invoke(e)
+                            ?: context.getString(R.string.errorUnknown)
+                    )
+                }
             } finally {
                 if (showLoading) {
-                    mutableInProgress.value = false
+                    _uiState.update { it.copy(inProgress = false) }
                 }
             }
         }
@@ -362,10 +322,12 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         footerCollapsed.update { !it }
     }
 
-    fun onDismissResend() { _mutableOngoingAction.value = null }
+    fun onDismissResend() {
+        _uiState.update { it.copy(ongoingAction = null) }
+    }
 
     private fun toggleRemoveDialog(visible : Boolean){
-        showRemoveMember.value = visible
+        showRemoveMembersDialog.value = visible
     }
 
     fun onCommand(command: Commands) {
@@ -396,9 +358,65 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         }
     }
 
+    private fun buildRemoveMembersDialogState(
+        visible: Boolean,
+        selected: Set<GroupMemberState>,
+        group: String
+    ): RemoveMembersDialogState {
+        val count = selected.size
+        val firstMember = selected.firstOrNull()
+
+        val body: CharSequence = when (count) {
+            1 -> Phrase.from(context, R.string.groupRemoveDescription)
+                .put(NAME_KEY, firstMember?.name)
+                .put(GROUP_NAME_KEY, group)
+                .format()
+
+            2 -> {
+                val secondMember = selected.elementAtOrNull(1)?.name
+                Phrase.from(context, R.string.groupRemoveDescriptionTwo)
+                    .put(NAME_KEY, firstMember?.name)
+                    .put(OTHER_NAME_KEY, secondMember)
+                    .put(GROUP_NAME_KEY, group)
+                    .format()
+            }
+
+            0 -> ""
+            else -> Phrase.from(context, R.string.groupRemoveDescriptionMultiple)
+                .put(NAME_KEY, firstMember?.name)
+                .put(COUNT_KEY, count - 1)
+                .put(GROUP_NAME_KEY, group)
+                .format()
+        }
+
+        val removeMemberOnly =
+            context.resources.getQuantityString(R.plurals.removeMember, count, count)
+        val removeMessages =
+            context.resources.getQuantityString(R.plurals.removeMemberMessages, count, count)
+
+        return RemoveMembersDialogState(
+            visible = visible,
+            removeMemberBody = body,
+            removeMemberText = removeMemberOnly,
+            removeMessagesText = removeMessages
+        )
+    }
+
     data class UiState(
-        val options : List<OptionsItem> = emptyList()
+        val options : List<OptionsItem> = emptyList(),
+
+        val inProgress: Boolean = false,
+        val error: String? = null,
+        val ongoingAction: String? = null,
+
+        // search UI state:
+        val searchQuery: String = "",
+        val isSearchFocused: Boolean = false,
+
+        // Remove member dialog
+        val removeMembersDialog: RemoveMembersDialogState = RemoveMembersDialogState(),
     )
+
     data class CollapsibleFooterState(
         val visible: Boolean = false,
         val collapsed: Boolean = false,
@@ -406,7 +424,7 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         val footerActionItems : List<CollapsibleFooterItemData> = emptyList()
     )
 
-    data class RemoveMembersState(
+    data class RemoveMembersDialogState(
         val visible : Boolean = false,
         val removeMemberBody : CharSequence = "",
         val removeMemberText : String = "",

@@ -84,25 +84,18 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 @Composable
 fun ManageGroupMembersScreen(
     viewModel: ManageGroupMembersViewModel,
-    navigateToInviteContact: (Set<String>) -> Unit,
     onBack: () -> Unit,
 ) {
     ManageMembers(
         onBack = onBack,
         uiState = viewModel.uiState.collectAsState().value,
-        onAddMemberClick = { navigateToInviteContact(viewModel.excludingAccountIDsFromContactSelection) },
         members = viewModel.nonAdminMembers.collectAsState().value,
         hasMembers = viewModel.hasNonAdminMembers.collectAsState().value,
         selectedMembers = viewModel.selectedMembers.collectAsState().value,
         showAddMembers = viewModel.showAddMembers.collectAsState().value,
-        showingError = viewModel.error.collectAsState().value,
-        showingResend = viewModel.ongoingAction.collectAsState().value,
-        showLoading = viewModel.inProgress.collectAsState().value,
         searchQuery = viewModel.searchQuery.collectAsState().value,
-        searchFocused = viewModel.searchFocused.collectAsState().value,
         data = viewModel.collapsibleFooterState.collectAsState().value,
         sendCommand = viewModel::onCommand,
-        removeMembersData = viewModel.removeMembersState.collectAsState().value,
     )
 }
 
@@ -111,20 +104,19 @@ fun ManageGroupMembersScreen(
 fun ManageMembers(
     onBack: () -> Unit,
     uiState: ManageGroupMembersViewModel.UiState,
-    onAddMemberClick: () -> Unit,
-    searchFocused: Boolean,
     searchQuery: String,
     data: CollapsibleFooterState,
     members: List<GroupMemberState>,
     hasMembers: Boolean = false,
     selectedMembers: Set<GroupMemberState> = emptySet(),
     showAddMembers: Boolean,
-    showingError: String?,
-    showingResend: String?,
-    showLoading: Boolean,
     sendCommand: (command: ManageGroupMembersViewModel.Commands) -> Unit,
-    removeMembersData: ManageGroupMembersViewModel.RemoveMembersState,
+//    removeMembersData: ManageGroupMembersViewModel.RemoveMembersDialogState,
 ) {
+
+    val searchFocused = uiState.isSearchFocused
+    val showingError = uiState.error
+    val showingOngoingAction = uiState.ongoingAction
 
     val handleBack: () -> Unit = {
         when {
@@ -272,14 +264,14 @@ fun ManageMembers(
         }
     }
     
-    if(removeMembersData.visible){
+    if(uiState.removeMembersDialog.visible){
         ShowRemoveMembersDialog(
-            state = removeMembersData,
+            state = uiState.removeMembersDialog,
             sendCommand = sendCommand
         )
     }
 
-    if (showLoading) {
+    if (uiState.inProgress) {
         LoadingDialog()
     }
 
@@ -291,9 +283,9 @@ fun ManageMembers(
             sendCommand(DismissError)
         }
     }
-    LaunchedEffect(showingResend) {
-        if (showingResend != null) {
-            Toast.makeText(context, showingResend, Toast.LENGTH_SHORT).show()
+    LaunchedEffect(showingOngoingAction) {
+        if (showingOngoingAction != null) {
+            Toast.makeText(context, showingOngoingAction, Toast.LENGTH_SHORT).show()
             sendCommand(DismissResend)
         }
     }
@@ -327,7 +319,7 @@ fun ManageMemberItem(
 
 @Composable
 fun ShowRemoveMembersDialog(
-    state: ManageGroupMembersViewModel.RemoveMembersState,
+    state: ManageGroupMembersViewModel.RemoveMembersDialogState,
     modifier: Modifier = Modifier,
     sendCommand: (ManageGroupMembersViewModel.Commands) -> Unit
 ) {
@@ -475,13 +467,9 @@ private fun EditGroupPreviewSheet() {
 
         ManageMembers(
             onBack = {},
-            onAddMemberClick = {},
             members = listOf(oneMember, twoMember, threeMember),
             showAddMembers = true,
-            showingError = "Error",
-            showLoading = false,
             searchQuery = "Test",
-            searchFocused = false,
             data = CollapsibleFooterState(
                 visible = true,
                 collapsed = false,
@@ -489,9 +477,7 @@ private fun EditGroupPreviewSheet() {
                 footerActionItems = trayItems
             ),
             selectedMembers = emptySet(),
-            showingResend = "Resending Invite",
             sendCommand = {},
-            removeMembersData = ManageGroupMembersViewModel.RemoveMembersState(),
             uiState = ManageGroupMembersViewModel.UiState(options = emptyList()),
             hasMembers = true,
         )
@@ -573,13 +559,9 @@ private fun EditGroupEditNamePreview(
 
         ManageMembers(
             onBack = {},
-            onAddMemberClick = {},
             members = listOf(oneMember, twoMember, threeMember),
             showAddMembers = true,
-            showingError = "Error",
-            showLoading = false,
             searchQuery = "",
-            searchFocused = true,
             data = CollapsibleFooterState(
                 visible = true,
                 collapsed = false,
@@ -600,9 +582,7 @@ private fun EditGroupEditNamePreview(
                 )
             ),
             selectedMembers = emptySet(),
-            showingResend = "Resending Invite",
             sendCommand = {},
-            removeMembersData = ManageGroupMembersViewModel.RemoveMembersState(),
             uiState = ManageGroupMembersViewModel.UiState(options = emptyList()),
             hasMembers = true,
         )
@@ -617,13 +597,9 @@ private fun EditGroupEmptyPreview(
     PreviewTheme(colors) {
         ManageMembers(
             onBack = {},
-            onAddMemberClick = {},
             members = listOf(),
             showAddMembers = true,
-            showingError = "Error",
-            showLoading = false,
             searchQuery = "",
-            searchFocused = true,
             data = CollapsibleFooterState(
                 visible = false,
                 collapsed = true,
@@ -644,9 +620,7 @@ private fun EditGroupEmptyPreview(
                 )
             ),
             selectedMembers = emptySet(),
-            showingResend = "Resending Invite",
             sendCommand = {},
-            removeMembersData = ManageGroupMembersViewModel.RemoveMembersState(),
             uiState = ManageGroupMembersViewModel.UiState(options = emptyList()),
             hasMembers = true,
         )
