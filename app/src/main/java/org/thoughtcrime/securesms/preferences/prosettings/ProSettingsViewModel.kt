@@ -355,13 +355,6 @@ class ProSettingsViewModel @AssistedInject constructor(
             }
 
             Commands.GetProPlan -> {
-                // TEMP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                viewModelScope.launch {
-                    navigator.navigate(destination = ProSettingsDestination.PlanConfirmation)
-                }
-                return
-
-
                 val currentSubscription = _proSettingsUIState.value.subscriptionState.type
                 val selectedPlan = getSelectedPlan() ?: return
 
