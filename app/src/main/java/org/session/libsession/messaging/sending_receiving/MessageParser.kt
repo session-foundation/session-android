@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.sending_receiving
 
+import network.loki.messenger.libsession_util.SessionEncrypt
 import network.loki.messenger.libsession_util.protocol.DecodedEnvelope
 import network.loki.messenger.libsession_util.protocol.SessionProtocol
 import org.session.libsession.database.StorageProtocol
@@ -15,11 +16,13 @@ import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.snode.SnodeClock
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
+import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -236,5 +239,40 @@ class MessageParser @Inject constructor(
         ).also { (message, _) ->
             message.openGroupServerMessageID = msg.id
         }
+    }
+
+    fun parseCommunityDirectMessage(
+        msg: OpenGroupApi.DirectMessage,
+        communityServerPubKeyHex: String,
+        currentUserEd25519PrivKey: ByteArray,
+        currentUserId: AccountId,
+        currentUserBlindedIDs: List<AccountId>,
+    ): Pair<Message, SignalServiceProtos.Content> {
+        val (senderId, plaintext) = SessionEncrypt.decryptForBlindedRecipient(
+            ciphertext = Base64.decode(msg.message),
+            myEd25519Privkey = currentUserEd25519PrivKey,
+            openGroupPubkey = Hex.fromStringCondensed(communityServerPubKeyHex),
+            senderBlindedId = Hex.fromStringCondensed(msg.sender),
+            recipientBlindId = Hex.fromStringCondensed(msg.recipient),
+        )
+
+        val decoded = SessionProtocol.decodeForCommunity(
+            payload = plaintext.data,
+            nowEpochMs = snodeClock.currentTimeMills(),
+            proBackendPubKey = proBackendKey,
+        )
+
+        val sender = Address.Standard(AccountId(senderId))
+
+        return parseMessage(
+            contentPlaintext = decoded.contentPlainText.data,
+            relaxSignatureCheck = true,
+            checkForBlockStatus = false,
+            isForGroup = false,
+            currentUserId = currentUserId,
+            sender = sender.accountId,
+            messageTimestampMs = (msg.postedAt * 1000),
+            currentUserBlindedIDs = currentUserBlindedIDs,
+        )
     }
 }
