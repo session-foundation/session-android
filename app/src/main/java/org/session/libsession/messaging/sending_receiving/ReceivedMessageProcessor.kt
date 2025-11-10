@@ -14,6 +14,7 @@ import okio.withLock
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.messages.Message
+import org.session.libsession.messaging.messages.Message.Companion.senderOrSync
 import org.session.libsession.messaging.messages.control.CallMessage
 import org.session.libsession.messaging.messages.control.DataExtractionNotification
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
@@ -29,6 +30,7 @@ import org.session.libsession.messaging.sending_receiving.notifications.MessageN
 import org.session.libsession.messaging.utilities.WebRtcUtils
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.SSKEnvironment
@@ -76,6 +78,15 @@ class ReceivedMessageProcessor @Inject constructor(
 ) {
     private val threadMutexes = ConcurrentHashMap<Address.Conversable, ReentrantLock>()
 
+    private inline fun <T> withThreadLock(
+        threadAddress: Address.Conversable,
+        block: () -> T
+    ) {
+        threadMutexes.getOrPut(threadAddress) { ReentrantLock() }.withLock {
+            block()
+        }
+    }
+
 
     /**
      * Start a message processing session, ensuring that thread updates and notifications are handled
@@ -119,7 +130,7 @@ class ReceivedMessageProcessor @Inject constructor(
         threadAddress: Address.Conversable,
         message: Message,
         proto: SignalServiceProtos.Content,
-    ) = threadMutexes.getOrPut(threadAddress) { ReentrantLock() }.withLock {
+    ) = withThreadLock(threadAddress) {
         // The logic to check if the message should be discarded due to being from a hidden contact.
         if (threadAddress is Address.Standard &&
             message.sentTimestamp != null &&
@@ -130,7 +141,7 @@ class ReceivedMessageProcessor @Inject constructor(
             )
         ) {
             log { "Dropping message from hidden contact ${threadAddress.debugString}" }
-            return@withLock
+            return@withThreadLock
         }
 
         // Get or create thread ID, if we aren't allowed to create it, and it doesn't exist, drop the message
@@ -142,7 +153,7 @@ class ReceivedMessageProcessor @Inject constructor(
                 .also { id ->
                     if (id == -1L) {
                         log { "Dropping message for non-existing thread ${threadAddress.debugString}" }
-                        return@withLock
+                        return@withThreadLock
                     } else {
                         context.threadIDs[threadAddress] = id
                     }
@@ -201,23 +212,64 @@ class ReceivedMessageProcessor @Inject constructor(
 
     fun processCommunityInboxMessage(
         context: MessageProcessingContext,
+        communityServerUrl: String,
+        communityServerPubKeyHex: String,
         message: OpenGroupApi.DirectMessage
     ) {
-        //TODO("Waiting for the implementation from libsession_util")
+        val (message, proto) = messageParser.parseCommunityDirectMessage(
+            msg = message,
+            currentUserId = context.currentUserId,
+            currentUserEd25519PrivKey = context.currentUserEd25519KeyPair.secretKey.data,
+            currentUserBlindedIDs = context.getCurrentUserBlindedIDsByServer(communityServerUrl),
+            communityServerPubKeyHex = communityServerPubKeyHex,
+        )
+
+        val threadAddress = message.senderOrSync.toAddress() as Address.Conversable
+
+        withThreadLock(threadAddress) {
+            processSwarmMessage(
+                context = context,
+                threadAddress = threadAddress,
+                message = message,
+                proto = proto
+            )
+        }
     }
 
     fun processCommunityOutboxMessage(
         context: MessageProcessingContext,
-        message: OpenGroupApi.DirectMessage
+        communityServerUrl: String,
+        communityServerPubKeyHex: String,
+        msg: OpenGroupApi.DirectMessage
     ) {
-        //TODO("Waiting for the implementation from libsession_util")
+        val (message, proto) = messageParser.parseCommunityDirectMessage(
+            msg = msg,
+            currentUserId = context.currentUserId,
+            currentUserEd25519PrivKey = context.currentUserEd25519KeyPair.secretKey.data,
+            currentUserBlindedIDs = context.getCurrentUserBlindedIDsByServer(communityServerUrl),
+            communityServerPubKeyHex = communityServerPubKeyHex,
+        )
+
+        val threadAddress = Address.CommunityBlindedId(
+            serverUrl = communityServerUrl,
+            blindedId = Address.Blinded(AccountId(msg.recipient))
+        )
+
+        withThreadLock(threadAddress) {
+            processSwarmMessage(
+                context = context,
+                threadAddress = threadAddress,
+                message = message,
+                proto = proto
+            )
+        }
     }
 
     fun processCommunityMessage(
         context: MessageProcessingContext,
         threadAddress: Address.Community,
         message: OpenGroupApi.Message,
-    ) = threadMutexes.getOrPut(threadAddress) { ReentrantLock() }.withLock {
+    ) = withThreadLock(threadAddress) {
         var messageId = messageParser.parseCommunityMessage(
             msg = message,
             currentUserId = context.currentUserId,

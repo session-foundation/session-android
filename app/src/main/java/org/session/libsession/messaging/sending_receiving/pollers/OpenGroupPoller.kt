@@ -332,6 +332,12 @@ class OpenGroupPoller @AssistedInject constructor(
         if (messages.isEmpty()) return
         val sorted = messages.sortedBy { it.postedAt }
 
+        val serverPubKeyHex = storage.getOpenGroupPublicKey(server)
+            ?: run {
+                Log.e(TAG, "No community server public key cannot process inbox messages")
+                return
+            }
+
         receivedMessageProcessor.startProcessing("CommunityInbox") { ctx ->
             for (apiMessage in sorted) {
                 try {
@@ -340,6 +346,8 @@ class OpenGroupPoller @AssistedInject constructor(
                     receivedMessageProcessor.processCommunityInboxMessage(
                         context = ctx,
                         message = apiMessage,
+                        communityServerUrl = server,
+                        communityServerPubKeyHex = serverPubKeyHex,
                     )
 
                 } catch (e: Exception) {
@@ -358,6 +366,12 @@ class OpenGroupPoller @AssistedInject constructor(
         if (messages.isEmpty()) return
         val sorted = messages.sortedBy { it.postedAt }
 
+        val serverPubKeyHex = storage.getOpenGroupPublicKey(server)
+            ?: run {
+                Log.e(TAG, "No community server public key cannot process inbox messages")
+                return
+            }
+
         receivedMessageProcessor.startProcessing("CommunityOutbox") { ctx ->
             for (apiMessage in sorted) {
                 try {
@@ -365,11 +379,13 @@ class OpenGroupPoller @AssistedInject constructor(
 
                     receivedMessageProcessor.processCommunityOutboxMessage(
                         context = ctx,
-                        message = apiMessage,
+                        msg = apiMessage,
+                        communityServerUrl = server,
+                        communityServerPubKeyHex = serverPubKeyHex,
                     )
 
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error processing inbox message", e)
+                    Log.e(TAG, "Error processing outbox message", e)
                 }
             }
         }
