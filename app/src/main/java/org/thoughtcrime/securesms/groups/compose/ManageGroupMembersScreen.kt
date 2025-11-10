@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.groups.compose
 
+import android.R.attr.data
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -94,7 +95,6 @@ fun ManageGroupMembersScreen(
         selectedMembers = viewModel.selectedMembers.collectAsState().value,
         showAddMembers = viewModel.showAddMembers.collectAsState().value,
         searchQuery = viewModel.searchQuery.collectAsState().value,
-        data = viewModel.collapsibleFooterState.collectAsState().value,
         sendCommand = viewModel::onCommand,
     )
 }
@@ -105,13 +105,11 @@ fun ManageMembers(
     onBack: () -> Unit,
     uiState: ManageGroupMembersViewModel.UiState,
     searchQuery: String,
-    data: CollapsibleFooterState,
     members: List<GroupMemberState>,
     hasMembers: Boolean = false,
     selectedMembers: Set<GroupMemberState> = emptySet(),
     showAddMembers: Boolean,
     sendCommand: (command: ManageGroupMembersViewModel.Commands) -> Unit,
-//    removeMembersData: ManageGroupMembersViewModel.RemoveMembersDialogState,
 ) {
 
     val searchFocused = uiState.isSearchFocused
@@ -144,12 +142,12 @@ fun ManageMembers(
             ) {
                 CollapsibleFooterAction(
                     data = CollapsibleFooterActionData(
-                        title = data.footerActionTitle,
-                        collapsed = data.collapsed,
-                        visible = data.visible,
-                        items = data.footerActionItems
+                        title = uiState.footer.footerActionTitle,
+                        collapsed = uiState.footer.collapsed,
+                        visible = uiState.footer.visible,
+                        items = uiState.footer.footerActionItems
                     ),
-                    onCollapsedClicked = {sendCommand(ToggleFooter)},
+                    onCollapsedClicked = { sendCommand(ToggleFooter) },
                     onClosedClicked = { sendCommand(CloseFooter) }
                 )
             }
@@ -263,8 +261,8 @@ fun ManageMembers(
             }
         }
     }
-    
-    if(uiState.removeMembersDialog.visible){
+
+    if (uiState.removeMembersDialog.visible) {
         ShowRemoveMembersDialog(
             state = uiState.removeMembersDialog,
             sendCommand = sendCommand
@@ -470,15 +468,17 @@ private fun EditGroupPreviewSheet() {
             members = listOf(oneMember, twoMember, threeMember),
             showAddMembers = true,
             searchQuery = "Test",
-            data = CollapsibleFooterState(
-                visible = true,
-                collapsed = false,
-                footerActionTitle = title,
-                footerActionItems = trayItems
-            ),
             selectedMembers = emptySet(),
             sendCommand = {},
-            uiState = ManageGroupMembersViewModel.UiState(options = emptyList()),
+            uiState = ManageGroupMembersViewModel.UiState(
+                options = emptyList(),
+                footer = CollapsibleFooterState(
+                    visible = true,
+                    collapsed = false,
+                    footerActionTitle = title,
+                    footerActionItems = trayItems
+                )
+            ),
             hasMembers = true,
         )
     }
@@ -562,28 +562,29 @@ private fun EditGroupEditNamePreview(
             members = listOf(oneMember, twoMember, threeMember),
             showAddMembers = true,
             searchQuery = "",
-            data = CollapsibleFooterState(
-                visible = true,
-                collapsed = false,
-                footerActionTitle = GetString("3 Members Selected"),
-                footerActionItems = listOf(
-                    CollapsibleFooterItemData(
-                        label = GetString("Resend"),
-                        buttonLabel = GetString("1"),
-                        isDanger = false,
-                        onClick = {}
-                    ),
-                    CollapsibleFooterItemData(
-                        label = GetString("Remove"),
-                        buttonLabel = GetString("1"),
-                        isDanger = true,
-                        onClick = { }
-                    )
-                )
-            ),
             selectedMembers = emptySet(),
             sendCommand = {},
-            uiState = ManageGroupMembersViewModel.UiState(options = emptyList()),
+            uiState = ManageGroupMembersViewModel.UiState(
+                options = emptyList(),
+                footer = CollapsibleFooterState(
+                    visible = true,
+                    collapsed = false,
+                    footerActionTitle = GetString("3 Members Selected"),
+                    footerActionItems = listOf(
+                        CollapsibleFooterItemData(
+                            label = GetString("Resend"),
+                            buttonLabel = GetString("1"),
+                            isDanger = false,
+                            onClick = {}
+                        ),
+                        CollapsibleFooterItemData(
+                            label = GetString("Remove"),
+                            buttonLabel = GetString("1"),
+                            isDanger = true,
+                            onClick = { }
+                        )
+                    )
+                )),
             hasMembers = true,
         )
     }
@@ -600,28 +601,29 @@ private fun EditGroupEmptyPreview(
             members = listOf(),
             showAddMembers = true,
             searchQuery = "",
-            data = CollapsibleFooterState(
-                visible = false,
-                collapsed = true,
-                footerActionTitle = GetString("3 Members Selected"),
-                footerActionItems = listOf(
-                    CollapsibleFooterItemData(
-                        label = GetString("Resend"),
-                        buttonLabel = GetString("1"),
-                        isDanger = false,
-                        onClick = {}
-                    ),
-                    CollapsibleFooterItemData(
-                        label = GetString("Remove"),
-                        buttonLabel = GetString("1"),
-                        isDanger = true,
-                        onClick = { }
-                    )
-                )
-            ),
             selectedMembers = emptySet(),
             sendCommand = {},
-            uiState = ManageGroupMembersViewModel.UiState(options = emptyList()),
+            uiState = ManageGroupMembersViewModel.UiState(
+                options = emptyList(),
+                footer = CollapsibleFooterState(
+                    visible = false,
+                    collapsed = true,
+                    footerActionTitle = GetString("3 Members Selected"),
+                    footerActionItems = listOf(
+                        CollapsibleFooterItemData(
+                            label = GetString("Resend"),
+                            buttonLabel = GetString("1"),
+                            isDanger = false,
+                            onClick = {}
+                        ),
+                        CollapsibleFooterItemData(
+                            label = GetString("Remove"),
+                            buttonLabel = GetString("1"),
+                            isDanger = true,
+                            onClick = { }
+                        )
+                    )
+                )),
             hasMembers = true,
         )
     }

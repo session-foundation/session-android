@@ -95,57 +95,24 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
     private val _uiState = MutableStateFlow(UiState(options = optionsList))
     val uiState: StateFlow<UiState> = _uiState
 
-    val collapsibleFooterState: StateFlow<CollapsibleFooterState> =
-        combine(_mutableSelectedMembers, footerCollapsed) { selected, isCollapsed ->
-            val count = selected.size
-            val visible = count > 0
-            val title = if (count == 0) GetString("")
-            else GetString(
-                context.resources.getQuantityString(R.plurals.memberSelected, count, count)
-            )
-
-            // build tray items
-            val trayItems = listOf(
-                CollapsibleFooterItemData(
-                    label = GetString(
-                        context.resources.getQuantityString(R.plurals.resendInvite, count, count)
-                    ),
-                    buttonLabel = GetString(context.getString(R.string.resend)),
-                    isDanger = false,
-                    onClick = { onResendInviteClicked() }
-                ),
-                CollapsibleFooterItemData(
-                    label = GetString(
-                        context.resources.getQuantityString(R.plurals.removeMember, count, count)
-                    ),
-                    buttonLabel = GetString(context.getString(R.string.remove)),
-                    isDanger = true,
-                    onClick = {onCommand(Commands.ShowRemoveDialog)}
-                )
-            )
-
-            CollapsibleFooterState(
-                visible = visible,
-                collapsed = if (!visible) false else isCollapsed,
-                footerActionTitle = title,
-                footerActionItems = trayItems
-            )
-        }
-            .distinctUntilChanged()
-            .stateIn(viewModelScope, SharingStarted.Eagerly, CollapsibleFooterState())
-
     private val showRemoveMembersDialog = MutableStateFlow(false)
 
     init {
-        combine(
-            showRemoveMembersDialog,
-            selectedMembers,
-            groupName
-        ) { showRemove, selected, group ->
-            buildRemoveMembersDialogState(showRemove, selected, group)
-        }.onEach { state ->
-            _uiState.update { it.copy(removeMembersDialog = state) }
-        }.launchIn(viewModelScope)
+        viewModelScope.launch {
+            combine(showRemoveMembersDialog, selectedMembers, groupName) { showRemove, selected, group ->
+                buildRemoveMembersDialogState(showRemove, selected, group)
+            }.collect { state ->
+                _uiState.update { it.copy(removeMembersDialog = state) }
+            }
+        }
+
+        viewModelScope.launch {
+            combine(selectedMembers, footerCollapsed) { selected, isCollapsed ->
+                buildFooterState(selected, isCollapsed)
+            }.collect { footer ->
+                _uiState.update { it.copy(footer = footer) }
+            }
+        }
     }
     fun onMemberItemClicked(member: GroupMemberState) {
         val newSet = _mutableSelectedMembers.value.toHashSet()
@@ -402,6 +369,43 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         )
     }
 
+    private fun buildFooterState(
+        selected: Set<GroupMemberState>,
+        isCollapsed: Boolean
+    ): CollapsibleFooterState {
+        val count = selected.size
+        val visible = count > 0
+        val title = if (count == 0) GetString("") else GetString(
+            context.resources.getQuantityString(R.plurals.memberSelected, count, count)
+        )
+
+        val trayItems = listOf(
+            CollapsibleFooterItemData(
+                label = GetString(
+                    context.resources.getQuantityString(R.plurals.resendInvite, count, count)
+                ),
+                buttonLabel = GetString(context.getString(R.string.resend)),
+                isDanger = false,
+                onClick = { onResendInviteClicked() }
+            ),
+            CollapsibleFooterItemData(
+                label = GetString(
+                    context.resources.getQuantityString(R.plurals.removeMember, count, count)
+                ),
+                buttonLabel = GetString(context.getString(R.string.remove)),
+                isDanger = true,
+                onClick = { onCommand(Commands.ShowRemoveDialog) }
+            )
+        )
+
+        return CollapsibleFooterState(
+            visible = visible,
+            collapsed = if (!visible) false else isCollapsed,
+            footerActionTitle = title,
+            footerActionItems = trayItems
+        )
+    }
+
     data class UiState(
         val options : List<OptionsItem> = emptyList(),
 
@@ -415,6 +419,9 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
 
         // Remove member dialog
         val removeMembersDialog: RemoveMembersDialogState = RemoveMembersDialogState(),
+
+        //Collapsible footer
+        val footer: CollapsibleFooterState = CollapsibleFooterState()
     )
 
     data class CollapsibleFooterState(
