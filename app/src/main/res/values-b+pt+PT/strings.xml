@@ -822,12 +822,9 @@
     <string name="proActivated">Ativado</string>
     <string name="proAlreadyPurchased">Já tem</string>
     <string name="proAnimatedDisplayPicture">Agora pode enviar GIFs e imagens WebP animadas para a sua imagem de exibição!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">Obtenha imagens de exibição animadas e desbloqueie funcionalidades premium com o {app_pro}</string>
     <string name="proAnimatedDisplayPictureFeature">Imagem de exibição animada</string>
     <string name="proAnimatedDisplayPictureModalDescription">os utilizadores podem carregar GIFs</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Carregue GIFs com</string>
-    <string name="proCallToActionLongerMessages">Quer enviar mensagens mais longas? Envie mais texto e desbloqueie funcionalidades premium com {app_pro}</string>
-    <string name="proCallToActionPinnedConversations">Quer fixar mais conversas? Organize os seus chats e desbloqueie funcionalidades premium com o {app_pro}</string>
     <string name="proFeatureListAnimatedDisplayPicture">Carregue imagens de exibição em GIF e WebP</string>
     <string name="proFeatureListLargerGroups">Conversas de grupo maiores com até 300 membros</string>
     <string name="proFeatureListLoadsMore">E muitas outras funcionalidades exclusivas</string>
