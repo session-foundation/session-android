@@ -303,6 +303,14 @@ class GroupManagerV2Impl @Inject constructor(
             subAccountTokens = subAccountTokens
         )
 
+        // Send the invitation message to the new members
+        JobQueue.shared.add(
+            InviteContactsJob(
+                group.hexString,
+                memberInvites.map { it.id.hexString }.toTypedArray(), isReinvite
+            )
+        )
+
         try {
             val swarmNode = SnodeAPI.getSingleTargetSnode(group.hexString).await()
             val response = SnodeAPI.getBatchResponse(swarmNode, group.hexString, batchRequests)
@@ -339,16 +347,7 @@ class GroupManagerV2Impl @Inject constructor(
                 sendGroupUpdateForAddingMembers(group, adminKey, memberInvites.map { it.id })
             }
         }
-
-        // Send the invitation message to the new members
-        JobQueue.shared.add(
-            InviteContactsJob(
-                group.hexString,
-                memberInvites.map { it.id.hexString }.toTypedArray(), isReinvite
-            )
-        )
     }
-
 
     /**
      * Send a group update message to the group telling members someone has been invited.
