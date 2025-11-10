@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
@@ -150,13 +151,14 @@ fun InviteContacts(
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
-            Box(modifier = Modifier.weight(1f)) {
+            Box(modifier = Modifier.weight(1f)
+                .fillMaxWidth()) {
                 if (contacts.isEmpty() && searchQuery.isEmpty()) {
                     Text(
-                        text = stringResource(id = R.string.contactNone),
+                        text = stringResource(id = R.string.membersInviteNoContacts),
                         modifier = Modifier
-                            .padding(top = LocalDimensions.current.spacing)
                             .align(Alignment.TopCenter),
+                        textAlign = TextAlign.Center,
                         style = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
                     )
                 } else {
