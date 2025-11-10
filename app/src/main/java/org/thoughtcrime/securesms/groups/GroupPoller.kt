@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
@@ -43,6 +45,7 @@ import kotlin.time.Duration.Companion.days
 class GroupPoller @AssistedInject constructor(
     @Assisted scope: CoroutineScope,
     @Assisted private val groupId: AccountId,
+    @Assisted private val pollSemaphore: Semaphore,
     private val configFactoryProtocol: ConfigFactoryProtocol,
     private val lokiApiDatabase: LokiAPIDatabaseProtocol,
     private val clock: SnodeClock,
@@ -107,7 +110,9 @@ class GroupPoller @AssistedInject constructor(
 
             lastState = lastState.copy(inProgress = true).also { emit(it) }
 
-            val pollResult = doPollOnce(internalPollState)
+            val pollResult = pollSemaphore.withPermit {
+                doPollOnce(internalPollState)
+            }
 
             lastState = lastState.copy(
                 hadAtLeastOneSuccessfulPoll = lastState.hadAtLeastOneSuccessfulPoll || pollResult.result.isSuccess,
@@ -116,7 +121,9 @@ class GroupPoller @AssistedInject constructor(
             ).also { emit(it) }
 
             // Notify all pending tokens
-            pendingTokens.forEach { it.resultCallback.send(pollResult) }
+            pendingTokens.forEach {
+                it.resultCallback.trySend(pollResult)
+            }
             pendingTokens.clear()
         }
     }.stateIn(scope, SharingStarted.Eagerly, State())
@@ -130,10 +137,12 @@ class GroupPoller @AssistedInject constructor(
                 appVisibilityManager.isAppVisible.first { visible -> visible }
 
                 // As soon as the app becomes visible, start polling
+                Log.d(TAG, "Requesting routine poll for group($groupId)")
                 if (requestPollOnce().hasNonRetryableError()) {
                     Log.v(TAG, "Error polling group $groupId and stopped polling")
                     break
                 }
+                Log.d(TAG, "Routine poll done once for group($groupId)")
 
                 // As long as the app is visible, keep polling
                 while (true) {
@@ -147,10 +156,14 @@ class GroupPoller @AssistedInject constructor(
                         break
                     }
 
+                    Log.d(TAG, "Requesting routine poll for group($groupId)")
+
                     if (requestPollOnce().hasNonRetryableError()) {
                         Log.v(TAG, "Error polling group $groupId and stopped polling")
                         return@launch
                     }
+
+                    Log.d(TAG, "Routine poll done once for group($groupId)")
                 }
             }
         }
@@ -221,6 +234,8 @@ class GroupPoller @AssistedInject constructor(
                     throw NonRetryableException("Group has been kicked")
                 }
 
+                Log.v(TAG, "Start polling group($groupId) message snode = ${snode.ip}")
+
                 val adminKey = group.adminKey
 
                 val pollingTasks = mutableListOf<Pair<String, Deferred<*>>>()
@@ -265,7 +280,6 @@ class GroupPoller @AssistedInject constructor(
                         Namespace.GROUP_MESSAGES()
                     ).orEmpty()
 
-                    Log.v(TAG, "Retrieving group($groupId) message since lastHash = $lastHash, snode = ${snode.publicKeySet}")
 
                     SnodeAPI.sendBatchRequest(
                         snode = snode,
@@ -350,6 +364,8 @@ class GroupPoller @AssistedInject constructor(
                 }
             }
         }
+
+        Log.d(TAG, "Group($groupId) polling completed, success = ${result.isSuccess}")
 
         if (result.isFailure) {
             val error = result.exceptionOrNull()
@@ -469,6 +485,6 @@ class GroupPoller @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(scope: CoroutineScope, groupId: AccountId): GroupPoller
+        fun create(scope: CoroutineScope, groupId: AccountId, pollSemaphore: Semaphore): GroupPoller
     }
 }

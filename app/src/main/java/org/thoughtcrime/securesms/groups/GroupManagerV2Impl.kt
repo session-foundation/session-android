@@ -4,6 +4,7 @@ import android.content.Context
 import com.google.protobuf.ByteString
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
@@ -46,8 +47,8 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.getGroup
-import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.waitUntilGroupConfigsPushed
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateDeleteMemberContentMessage
@@ -527,7 +528,7 @@ class GroupManagerV2Impl @Inject constructor(
                         message = promoteMessage,
                         address = Address.fromSerialized(member.hexString),
                         isSyncMessage = false,
-                    ).await()
+                    )
                 }
             }
 
@@ -657,11 +658,13 @@ class GroupManagerV2Impl @Inject constructor(
                 .setInviteResponse(inviteResponse)
             val responseMessage = GroupUpdated(responseData.build(), profile = storage.getUserProfile())
             // this will fail the first couple of times :)
-            MessageSender.sendNonDurably(
-                responseMessage,
-                Destination.ClosedGroup(group.groupAccountId),
-                isSyncMessage = false
-            )
+            runCatching {
+                MessageSender.sendNonDurably(
+                    responseMessage,
+                    Destination.ClosedGroup(group.groupAccountId),
+                    isSyncMessage = false
+                )
+            }
         } else {
             // If we are invited as admin, we can just update the group info ourselves
             configFactory.withMutableGroupConfigs(AccountId(group.groupAccountId)) { configs ->

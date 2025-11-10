@@ -92,7 +92,9 @@ interface StorageProtocol {
     fun addReceivedMessageTimestamp(timestamp: Long)
     fun removeReceivedMessageTimestamps(timestamps: Set<Long>)
     fun getAttachmentsForMessage(mmsMessageId: Long): List<DatabaseAttachment>
-    fun getMessageBy(timestamp: Long, author: String): MessageRecord?
+    fun getMessageBy(threadId: Long, timestamp: Long, author: String): MessageRecord?
+    @Deprecated("We shouldn't be querying messages by timestamp alone. Use `getMessageBy` when possible ")
+    fun getMessageByTimestamp(timestamp: Long, author: String, getQuote: Boolean): MessageRecord?
     fun updateSentTimestamp(messageId: MessageId, newTimestamp: Long)
     fun markAsResyncing(messageId: MessageId)
     fun markAsSyncing(messageId: MessageId)
@@ -181,7 +183,15 @@ interface StorageProtocol {
         attachments: List<Attachment>,
         runThreadUpdate: Boolean
     ): MessageId?
-    fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean = false)
+    fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean = false, updateNotification: Boolean = true)
+
+    /**
+     * Marks the conversation as read up to and including the message with [messageId]. It will
+     * take the reactions associated with messages prior to and including that message into account.
+     *
+     * It will not do anything if the last seen of this thread is already set in the future.
+     */
+    fun markConversationAsReadUpToMessage(messageId: MessageId)
     fun markConversationAsUnread(threadId: Long)
     fun getLastSeen(threadId: Long): Long
     fun ensureMessageHashesAreSender(hashes: Set<String>, sender: String, closedGroupId: String): Boolean

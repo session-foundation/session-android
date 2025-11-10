@@ -8,7 +8,6 @@ import androidx.annotation.Nullable;
 import com.annimon.stream.Stream;
 
 import org.session.libsession.utilities.Address;
-import org.session.libsignal.utilities.Log;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -22,7 +21,7 @@ import java.util.List;
 /**
  * @deprecated We no longer use these address-based avatars. All avatars are now stored as sha256 of
  * urls encrypted locally. Look at {@link org.thoughtcrime.securesms.attachments.LocalEncryptedFileOutputStream},
- * {@link org.thoughtcrime.securesms.attachments.RemoteFileDownloadWorker},
+ * {@link org.thoughtcrime.securesms.attachments.AvatarDownloadWorker},
  * {@link org.thoughtcrime.securesms.glide.RecipientAvatarDownloadManager} for more information.
  *
  * Once the migration grace period is over, this class shall be removed.

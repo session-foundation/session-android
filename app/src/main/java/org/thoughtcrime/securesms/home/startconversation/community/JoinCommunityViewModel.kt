@@ -45,8 +45,11 @@ class JoinCommunityViewModel @Inject constructor(
     private val qrDebounceTime = 3000L
 
     init {
-        OpenGroupApi.getDefaultServerCapabilities().map {
-            OpenGroupApi.getDefaultRoomsIfNeeded()
+        viewModelScope.launch(Dispatchers.Default) {
+            runCatching {
+                OpenGroupApi.getDefaultServerCapabilities()
+                OpenGroupApi.getDefaultRoomsIfNeeded()
+            }
         }
 
         viewModelScope.launch(Dispatchers.Default) {

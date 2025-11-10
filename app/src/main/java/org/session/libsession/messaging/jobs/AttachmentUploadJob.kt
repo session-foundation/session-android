@@ -6,9 +6,7 @@ import com.esotericsoftware.kryo.io.Output
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import nl.komponents.kovenant.Promise
-import nl.komponents.kovenant.functional.map
-import okio.Buffer
+import network.loki.messenger.libsession_util.encrypt.Attachments
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.file_server.FileServerApi
@@ -21,16 +19,11 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.DecodedAudio
 import org.session.libsession.utilities.InputStreamMediaDataSource
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UploadResult
 import org.session.libsignal.messages.SignalServiceAttachmentStream
-import org.session.libsignal.streams.AttachmentCipherOutputStream
-import org.session.libsignal.streams.AttachmentCipherOutputStreamFactory
-import org.session.libsignal.streams.DigestingRequestBody
-import org.session.libsignal.streams.PaddingInputStream
-import org.session.libsignal.streams.PlaintextOutputStreamFactory
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.PushAttachmentData
-import org.session.libsignal.utilities.Util
+import org.thoughtcrime.securesms.attachments.AttachmentProcessor
 import org.thoughtcrime.securesms.database.ThreadDatabase
 
 class AttachmentUploadJob @AssistedInject constructor(
@@ -42,6 +35,9 @@ class AttachmentUploadJob @AssistedInject constructor(
     private val messageDataProvider: MessageDataProvider,
     private val messageSendJobFactory: MessageSendJob.Factory,
     private val threadDatabase: ThreadDatabase,
+    private val attachmentProcessor: AttachmentProcessor,
+    private val preferences: TextSecurePreferences,
+    private val fileServerApi: FileServerApi,
 ) : Job {
     override var delegate: JobDelegate? = null
     override var id: String? = null
@@ -75,14 +71,29 @@ class AttachmentUploadJob @AssistedInject constructor(
                 RuntimeException("Thread doesn't exist"))
 
             if (threadAddress is Address.Community) {
-                val keyAndResult = upload(attachment, threadAddress.serverUrl, false) {
-                    OpenGroupApi.upload(it, threadAddress.room, threadAddress.serverUrl)
+                val keyAndResult = upload(
+                    attachment = attachment,
+                    encrypt = false
+                ) { data, _ ->
+                    val id = OpenGroupApi.upload(data, threadAddress.room, threadAddress.serverUrl)
+                    id to "${threadAddress.serverUrl}/file/$id"
                 }
                 handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second)
             } else {
-                val keyAndResult = upload(attachment, FileServerApi.FILE_SERVER_URL, true) {
-                    FileServerApi.upload(it).map { it.fileId }
+                val fileServer = preferences.alternativeFileServer ?: FileServerApi.DEFAULT_FILE_SERVER
+                val keyAndResult = upload(
+                    attachment = attachment,
+                    encrypt = true
+                ) { data, isDeterministicallyEncrypted ->
+                    val result = fileServerApi.upload(
+                        file = data,
+                        usedDeterministicEncryption = isDeterministicallyEncrypted,
+                        fileServer = fileServer
+                    )
+
+                    result.fileId to result.fileUrl
                 }
+
                 handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second)
             }
         } catch (e: java.lang.Exception) {
@@ -94,36 +105,59 @@ class AttachmentUploadJob @AssistedInject constructor(
         }
     }
 
-    private suspend fun upload(attachment: SignalServiceAttachmentStream, server: String, encrypt: Boolean, upload: (ByteArray) -> Promise<String, Exception>): Pair<ByteArray, UploadResult> {
-        // Key
-        val key = if (encrypt) Util.getSecretBytes(64) else ByteArray(0)
-        // Length
-        val rawLength = attachment.length
-        val length = if (encrypt) {
-            val paddedLength = PaddingInputStream.getPaddedSize(rawLength)
-            AttachmentCipherOutputStream.getCiphertextLength(paddedLength)
-        } else {
-            attachment.length
+    private suspend fun upload(attachment: SignalServiceAttachmentStream,
+                               encrypt: Boolean,
+                               // Returning pair of fileId and the final file URL
+                               upload: suspend (
+                                   data: ByteArray,
+                                   isDeterministicallyEncrypted: Boolean,
+                               ) -> Pair<String, String>
+    ): Pair<ByteArray, UploadResult> {
+        val input = attachment.inputStream.use {
+            it.readBytes()
         }
-        // In & out streams
-        // PaddingInputStream adds padding as data is read out from it. AttachmentCipherOutputStream
-        // encrypts as it writes data.
-        val inputStream = if (encrypt) PaddingInputStream(attachment.inputStream, rawLength) else attachment.inputStream
-        val outputStreamFactory = if (encrypt) AttachmentCipherOutputStreamFactory(key) else PlaintextOutputStreamFactory()
-        // Create a digesting request body but immediately read it out to a buffer. Doing this makes
-        // it easier to deal with inputStream and outputStreamFactory.
-        val pad = PushAttachmentData(attachment.contentType, inputStream, length, outputStreamFactory)
-        val contentType = "application/octet-stream"
-        val drb = DigestingRequestBody(pad.data, pad.outputStreamFactory, contentType, pad.dataSize)
-        Log.d("Loki", "File size: ${length.toDouble() / 1000} kb.")
-        val b = Buffer()
-        drb.writeTo(b)
-        val data = b.readByteArray()
-        // Upload the data
-        val id = upload(data).await()
-        val digest = drb.transmittedDigest
+
+        val key: ByteArray
+        val dataToUpload: ByteArray
+        val digest: ByteArray?
+        val deterministicallyEncrypted: Boolean
+
+        when {
+            encrypt && preferences.forcesDeterministicAttachmentEncryption -> {
+                deterministicallyEncrypted = true
+                val result = attachmentProcessor.encryptDeterministically(
+                    plaintext = input,
+                    domain = Attachments.Domain.Attachment
+                )
+                key = result.key
+                dataToUpload = result.ciphertext
+                digest = null
+            }
+
+            encrypt -> {
+                deterministicallyEncrypted = false
+                val result = attachmentProcessor.encryptAttachmentLegacy(plaintext = input)
+                key = result.first.key
+                dataToUpload = result.first.ciphertext
+                digest = result.second
+            }
+
+            else -> {
+                deterministicallyEncrypted = false
+                key = byteArrayOf()
+                dataToUpload = input
+                digest = attachmentProcessor.digest(dataToUpload)
+            }
+        }
+
+        val (id, url) = upload(dataToUpload, deterministicallyEncrypted)
+
         // Return
-        return Pair(key, UploadResult(id, "${server}/file/$id", digest))
+        return Pair(key, UploadResult(
+            id = id,
+            url = url,
+            digest = digest,
+        ))
     }
 
     private fun handleSuccess(dispatcherName: String, attachment: SignalServiceAttachmentStream, attachmentKey: ByteArray, uploadResult: UploadResult) {

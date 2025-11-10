@@ -30,7 +30,7 @@ interface MessageDataProvider {
     fun getAttachmentStream(attachmentId: Long): SessionServiceAttachmentStream?
     fun getAttachmentPointer(attachmentId: Long): SessionServiceAttachmentPointer?
     fun getSignalAttachmentStream(attachmentId: Long): SignalServiceAttachmentStream?
-    fun getScaledSignalAttachmentStream(attachmentId: Long): SignalServiceAttachmentStream?
+    suspend fun getScaledSignalAttachmentStream(attachmentId: Long): SignalServiceAttachmentStream?
     fun getSignalAttachmentPointer(attachmentId: Long): SignalServiceAttachmentPointer?
     fun setAttachmentState(attachmentState: AttachmentState, attachmentId: AttachmentId, messageID: Long)
     fun insertAttachment(messageId: Long, attachmentId: AttachmentId, stream : InputStream)
@@ -39,9 +39,8 @@ interface MessageDataProvider {
     fun isDeletedMessage(id: MessageId): Boolean
     fun handleSuccessfulAttachmentUpload(attachmentId: Long, attachmentStream: SignalServiceAttachmentStream, attachmentKey: ByteArray, uploadResult: UploadResult)
     fun handleFailedAttachmentUpload(attachmentId: Long)
-    fun getMessageForQuote(timestamp: Long, author: Address): Triple<Long, Boolean, String>?
+    fun getMessageForQuote(threadId: Long, timestamp: Long, author: Address): Triple<Long, Boolean, String>?
     fun getAttachmentsAndLinkPreviewFor(mmsId: Long): List<Attachment>
-    fun getMessageBodyFor(timestamp: Long, author: String): String
     fun getAttachmentIDsFor(mmsMessageId: Long): List<Long>
     fun getLinkPreviewAttachmentIDFor(mmsMessageId: Long): Long?
 }

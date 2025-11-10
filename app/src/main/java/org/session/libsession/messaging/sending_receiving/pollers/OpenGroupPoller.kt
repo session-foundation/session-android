@@ -15,6 +15,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
@@ -37,7 +39,6 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi.parallelBatch
 import org.session.libsession.messaging.open_groups.OpenGroupMessage
 import org.session.libsession.messaging.sending_receiving.MessageReceiver
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageHandler
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -76,6 +77,7 @@ class OpenGroupPoller @AssistedInject constructor(
     private val communityDatabase: CommunityDatabase,
     @Assisted private val server: String,
     @Assisted private val scope: CoroutineScope,
+    @Assisted private val pollerSemaphore: Semaphore,
 ) {
     companion object {
         private const val POLL_INTERVAL_MILLS: Long = 4000L
@@ -98,7 +100,11 @@ class OpenGroupPoller @AssistedInject constructor(
 
             Log.d(TAG, "Polling open group messages for server: $server")
             emit(PollState.Polling)
-            val pollResult = runCatching { pollOnce() }
+            val pollResult = runCatching {
+                pollerSemaphore.withPermit {
+                    pollOnce()
+                }
+            }
             tokens.forEach { it.trySend(pollResult) }
             emit(PollState.Idle(pollResult))
 
@@ -283,7 +289,7 @@ class OpenGroupPoller @AssistedInject constructor(
                 }
             )
         }
-        return parallelBatch(server, requests).await()
+        return parallelBatch(server, requests)
     }
 
 
@@ -295,7 +301,6 @@ class OpenGroupPoller @AssistedInject constructor(
         val sortedMessages = messages.sortedBy { it.seqno }
         sortedMessages.maxOfOrNull { it.seqno }?.let { seqNo ->
             storage.setLastMessageServerID(roomToken, server, seqNo)
-            OpenGroupApi.pendingReactions.removeAll { !(it.seqNo == null || it.seqNo!! > seqNo) }
         }
         val (deletions, additions) = sortedMessages.partition { it.deleted }
         handleNewMessages(server, roomToken, additions.map {
@@ -426,6 +431,6 @@ class OpenGroupPoller @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(server: String, scope: CoroutineScope): OpenGroupPoller
+        fun create(server: String, scope: CoroutineScope, pollerSemaphore: Semaphore): OpenGroupPoller
     }
 }

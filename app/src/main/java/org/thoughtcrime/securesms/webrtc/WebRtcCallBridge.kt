@@ -50,6 +50,7 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 import org.thoughtcrime.securesms.webrtc.data.State as CallState
 
 //todo PHONE We want to eventually remove this bridging class and move the logic here to a better place, probably in the callManager
@@ -66,7 +67,7 @@ class WebRtcCallBridge @Inject constructor(
     private val networkConnectivity: NetworkConnectivity,
     private val recipientRepository: RecipientRepository,
     private val storage: StorageProtocol,
-    @ManagerScope scope: CoroutineScope,
+    @ManagerScope private val scope: CoroutineScope,
 ): CallManager.WebRtcListener, OnAppStartupComponent  {
 
     companion object {
@@ -159,10 +160,17 @@ class WebRtcCallBridge @Inject constructor(
 
     private fun handleNewOffer(address: Address, sdp: String, callId: UUID) {
         Log.d(TAG, "Handle new offer")
-        callManager.onNewOffer(sdp, callId, address).fail {
-            Log.e("Loki", "Error handling new offer", it)
-            callManager.postConnectionError()
-            terminate()
+        scope.launch {
+            try {
+                callManager.onNewOffer(sdp, callId, address)
+            } catch (e: CancellationException) {
+                Log.d(TAG, "onNewOffer coroutine cancelled", e)
+                throw e
+            } catch (e: Exception) {
+                Log.e("Loki", "Error handling new offer", e)
+                callManager.postConnectionError()
+                terminate()
+            }
         }
     }
 
@@ -268,9 +276,10 @@ class WebRtcCallBridge @Inject constructor(
                 val expectedState = callManager.currentConnectionState
                 val expectedCallId = callManager.callId
 
-                try {
-                    val offerFuture = callManager.onOutgoingCall(context)
-                    offerFuture.fail { e ->
+                scope.launch {
+                    try {
+                        callManager.onOutgoingCall(context)
+                    } catch (e: Exception) {
                         if (isConsistentState(
                                 expectedState,
                                 expectedCallId,
@@ -278,16 +287,13 @@ class WebRtcCallBridge @Inject constructor(
                                 callManager.callId
                             )
                         ) {
-                            Log.e(TAG, e)
                             callManager.postViewModelState(CallViewModel.State.NETWORK_FAILURE)
-                            callManager.postConnectionError()
-                            terminate()
                         }
+
+                        Log.e(TAG, e)
+                        callManager.postConnectionError()
+                        terminate()
                     }
-                } catch (e: Exception) {
-                    Log.e(TAG, e)
-                    callManager.postConnectionError()
-                    terminate()
                 }
             }
         }
@@ -348,9 +354,12 @@ class WebRtcCallBridge @Inject constructor(
                 val expectedState = callManager.currentConnectionState
                 val expectedCallId = callManager.callId
 
-                try {
-                    val answerFuture = callManager.onIncomingCall(context)
-                    answerFuture.fail { e ->
+                scope.launch {
+                    try {
+                        callManager.onIncomingCall(context)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "incoming call error: $e")
+
                         if (isConsistentState(
                                 expectedState,
                                 expectedCallId,
@@ -358,19 +367,15 @@ class WebRtcCallBridge @Inject constructor(
                                 callManager.callId
                             )
                         ) {
-                            Log.e(TAG, "incoming call error: $e")
                             insertMissedCall(
                                 recipient,
                                 true
                             ) //todo PHONE do we want a missed call in this case? Or just [xxx] called you ?
-                            callManager.postConnectionError()
-                            terminate()
                         }
+
+                        callManager.postConnectionError()
+                        terminate()
                     }
-                } catch (e: Exception) {
-                    Log.e(TAG, e)
-                    callManager.postConnectionError()
-                    terminate()
                 }
             }
         }
@@ -418,22 +423,28 @@ class WebRtcCallBridge @Inject constructor(
 
     fun handleAnswerIncoming(address: Address, sdp: String, callId: UUID) {
         serviceExecutor.execute {
-            try {
-                if (address.isLocalNumber && callManager.currentConnectionState in CallState.CAN_DECLINE_STATES) {
-                    handleLocalHangup(address)
-                    return@execute
+            val state = callManager.currentConnectionState
+            val isInitiator = callManager.isInitiator()
+
+            // If we receive a self-synced ANSWER:
+            if (address.isLocalNumber) {
+                // Only act if this device was in an INCOMING ring state (answered elsewhere).
+                if (!isInitiator && state in arrayOf(CallState.RemotePreOffer, CallState.RemoteRing)) {
+                    // Stop ringing / update UI, but DO NOT hang up the remote.
+                    callManager.silenceIncomingRinger()
+                    callManager.handleIgnoreCall()  
+                    terminate()
+                } else {
+                    // We’re the caller or already past ring → ignore self-answer
+                    Log.w(TAG, "Ignoring self-synced ANSWER in state=$state (isInitiator=$isInitiator)")
                 }
-
-                callManager.postViewModelState(CallViewModel.State.CALL_ANSWER_OUTGOING)
-
-                callManager.handleResponseMessage(
-                    address,
-                    callId,
-                    SessionDescription(SessionDescription.Type.ANSWER, sdp)
-                )
-            } catch (e: PeerConnectionException) {
-                terminate()
+                return@execute
             }
+
+            callManager.postViewModelState(CallViewModel.State.CALL_ANSWER_OUTGOING)
+            callManager.handleResponseMessage(
+                address, callId, SessionDescription(SessionDescription.Type.ANSWER, sdp)
+            )
         }
     }
 

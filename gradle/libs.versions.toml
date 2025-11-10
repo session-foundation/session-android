@@ -29,7 +29,7 @@ kotlinVersion = "2.2.20"
 kryoVersion = "5.6.2"
 kspVersion = "2.2.10-2.0.2"
 legacySupportV13Version = "1.0.0"
-libsessionUtilAndroidVersion = "1.0.8-1-g27817b4"
+libsessionUtilAndroidVersion = "1.0.9-2-g8c03d1e"
 media3ExoplayerVersion = "1.8.0"
 mockitoCoreVersion = "5.20.0"
 navVersion = "2.9.4"
@@ -143,6 +143,7 @@ glide-compose = { module = "com.github.bumptech.glide:compose", version = "1.0.0
 glide-ksp = { module = "com.github.bumptech.glide:ksp", version.ref = "glideVersion" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "daggerHiltVersion" }
 dagger-hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "daggerHiltVersion" }
+kotlinx-coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-guava", version.ref = "coroutinesVersion" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutinesVersion" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxJsonVersion" }
 kotlinx-coroutines-testing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutinesVersion" }
