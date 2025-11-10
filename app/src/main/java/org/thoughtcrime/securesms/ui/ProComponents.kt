@@ -680,6 +680,7 @@ fun PinProCTA(
             .toString()
 
         !overTheLimit && expired -> Phrase.from(context, R.string.proRenewPinFiveConversations)
+            .put(LIMIT_KEY, ProStatusManager.MAX_PIN_REGULAR.toString())
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format()
             .toString()
