@@ -156,7 +156,7 @@ class PushReceiver @Inject constructor(
                 }
 
                 namespace == Namespace.DEFAULT() || pushData?.metadata == null -> {
-                    if (pushData?.data == null || pushData.metadata?.msg_hash == null) {
+                    if (pushData?.data == null) {
                         Log.d(TAG, "Push data is null")
                         if(pushData?.metadata?.data_too_long != true) {
                             Log.d(TAG, "Sending a generic notification (data_too_long was false)")
@@ -165,15 +165,17 @@ class PushReceiver @Inject constructor(
                         return
                     }
 
-                    if (!receivedMessageHashDatabase.checkOrUpdateDuplicateState(
-                            swarmPublicKey = pushData.metadata.account,
-                            namespace = Namespace.DEFAULT(),
-                            hash = pushData.metadata.msg_hash
-                    )) {
+                    val isDuplicated = pushData.metadata?.msg_hash != null && receivedMessageHashDatabase.checkOrUpdateDuplicateState(
+                        swarmPublicKey = pushData.metadata.account,
+                        namespace = Namespace.DEFAULT(),
+                        hash = pushData.metadata.msg_hash
+                    )
+
+                    if (!isDuplicated) {
                         receivedMessageProcessor.startProcessing("PushReceiver") { ctx ->
                             val (message, proto) = messageParser.parse1o1Message(
                                 data = pushData.data,
-                                serverHash = pushData.metadata.msg_hash,
+                                serverHash = pushData.metadata?.msg_hash,
                                 currentUserId = ctx.currentUserId,
                                 currentUserEd25519PrivKey = ctx.currentUserEd25519KeyPair.secretKey.data,
                             )
