@@ -44,10 +44,8 @@ import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.NetworkConnectivity
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.days
 
 private const val TAG = "Poller"
@@ -215,8 +213,6 @@ class Poller @AssistedInject constructor(
         }
     }
 
-    private val profiled = AtomicBoolean(true)
-
     private fun processPersonalMessages(messages: List<RetrieveMessageResponse.Message>) {
         if (messages.isEmpty()) {
             Log.d(TAG, "No personal messages to process")
@@ -224,15 +220,6 @@ class Poller @AssistedInject constructor(
         }
 
         Log.d(TAG, "Received ${messages.size} personal messages from snode")
-
-        val start = System.currentTimeMillis()
-
-        val shouldProfile = !profiled.getAndSet(true)
-
-        if (shouldProfile) {
-            Log.d(TAG, "Start method tracing on ${Thread.currentThread().name}")
-            android.os.Debug.startMethodTracingSampling("${System.currentTimeMillis()}", 10 * 1024 * 1024, 1)
-        }
 
         processor.startProcessing("Poller") { ctx ->
             for (message in messages) {
@@ -253,7 +240,7 @@ class Poller @AssistedInject constructor(
                         currentUserId = ctx.currentUserId
                     )
 
-                    processor.processEnvelopedMessage(
+                    processor.processSwarmMessage(
                         threadAddress = message.senderOrSync.toAddress() as Address.Conversable,
                         message = message,
                         proto = proto,
@@ -268,12 +255,6 @@ class Poller @AssistedInject constructor(
                 }
             }
         }
-
-        if (shouldProfile) {
-            android.os.Debug.stopMethodTracing()
-        }
-
-        Log.d(TAG, "Processed ${messages.size} personal messages in ${System.currentTimeMillis() - start} ms")
     }
 
     private fun processConfig(messages: List<RetrieveMessageResponse.Message>, forConfig: UserConfigType) {

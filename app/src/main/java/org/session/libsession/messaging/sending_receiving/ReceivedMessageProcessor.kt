@@ -1,8 +1,6 @@
 package org.session.libsession.messaging.sending_receiving
 
 import android.content.Context
-import androidx.compose.runtime.saveable.autoSaver
-import androidx.compose.ui.geometry.Rect
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,7 +29,6 @@ import org.session.libsession.messaging.sending_receiving.notifications.MessageN
 import org.session.libsession.messaging.utilities.WebRtcUtils
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.SSKEnvironment
@@ -42,7 +39,6 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.getType
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
@@ -118,7 +114,7 @@ class ReceivedMessageProcessor @Inject constructor(
         }
     }
 
-    fun processEnvelopedMessage(
+    fun processSwarmMessage(
         context: MessageProcessingContext,
         threadAddress: Address.Conversable,
         message: Message,
@@ -227,7 +223,7 @@ class ReceivedMessageProcessor @Inject constructor(
             currentUserId = context.currentUserId,
             currentUserBlindedIDs = context.getCurrentUserBlindedIDsByThread(threadAddress)
         )?.let { (msg, proto) ->
-            processEnvelopedMessage(
+            processSwarmMessage(
                 context = context,
                 threadAddress = threadAddress,
                 message = msg,

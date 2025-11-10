@@ -133,7 +133,12 @@ class MessageParser @Inject constructor(
         }
 
         // Duplicate check
-        // TODO: Legacy code: find out why is this needed again (it was done using server hash when receiving messages)
+        // TODO: Legacy code: this is most likely because we try to duplicate the message we just
+        // send (so that a new polling won't get the same message). At the moment it's the only reliable
+        // way to de-duplicate sent messages as we can add the "timestamp" before hand so that when
+        // message arrives back from server we can identify it. The logic can be removed if we can
+        // calculate message hash before sending it out so we can use the existing hash de-duplication
+        // mechanism.
         if (storage.isDuplicateMessage(messageTimestampMs)) {
             throw NonRetryableException("Duplicate message")
         }

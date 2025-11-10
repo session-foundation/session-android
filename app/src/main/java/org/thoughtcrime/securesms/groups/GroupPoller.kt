@@ -36,7 +36,6 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.getRootCause
 import java.time.Instant
@@ -55,7 +54,6 @@ class GroupPoller @AssistedInject constructor(
     private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     private val messageParser: MessageParser,
     private val receivedMessageProcessor: ReceivedMessageProcessor,
-    private val threadDatabase: ThreadDatabase,
 ) {
     companion object {
         private const val POLL_INTERVAL = 3_000L
@@ -456,9 +454,6 @@ class GroupPoller @AssistedInject constructor(
         )
     }
 
-    /**
-     * @return The newest message handled, or null if no new messages were handled
-     */
     private fun handleMessages(messages: List<RetrieveMessageResponse.Message>) {
         if (messages.isEmpty()) {
             return
@@ -487,7 +482,7 @@ class GroupPoller @AssistedInject constructor(
                         currentUserEd25519PrivKey = ctx.currentUserEd25519KeyPair.secretKey.data,
                     )
 
-                    receivedMessageProcessor.processEnvelopedMessage(
+                    receivedMessageProcessor.processSwarmMessage(
                         threadAddress = threadAddress,
                         message = msg,
                         proto = proto,

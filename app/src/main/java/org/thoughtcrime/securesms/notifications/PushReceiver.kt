@@ -111,7 +111,7 @@ class PushReceiver @Inject constructor(
                                         currentUserEd25519PrivKey = ctx.currentUserEd25519KeyPair.secretKey.data
                                     )
 
-                                    receivedMessageProcessor.processEnvelopedMessage(
+                                    receivedMessageProcessor.processSwarmMessage(
                                         threadAddress = Address.Group(groupId),
                                         message = msg,
                                         proto = proto,
@@ -178,7 +178,7 @@ class PushReceiver @Inject constructor(
                                 currentUserEd25519PrivKey = ctx.currentUserEd25519KeyPair.secretKey.data,
                             )
 
-                            receivedMessageProcessor.processEnvelopedMessage(
+                            receivedMessageProcessor.processSwarmMessage(
                                 threadAddress = message.senderOrSync.toAddress() as Address.Conversable,
                                 message = message,
                                 proto = proto,
