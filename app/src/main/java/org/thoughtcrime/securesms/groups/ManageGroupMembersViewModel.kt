@@ -137,6 +137,17 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
     }
 
     fun onContactSelected(contacts: Set<Address>) {
+        val selectedCount = selectedMembers.value.size
+        _uiState.update {
+            it.copy(
+                ongoingAction = context.resources.getQuantityString(
+                    R.plurals.groupInviteSending,
+                    selectedCount,
+                    selectedCount
+                )
+            )
+        }
+
         performGroupOperation(
             showLoading = false,
             errorMessage = { err ->

@@ -1,5 +1,7 @@
 package org.thoughtcrime.securesms.groups.compose
 
+import android.R.attr.data
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -31,6 +33,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.groups.ContactItem
+import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel.Commands.RemoveSearchState
 import org.thoughtcrime.securesms.groups.SelectContactsViewModel
 import org.thoughtcrime.securesms.groups.SelectContactsViewModel.Commands.*
 import org.thoughtcrime.securesms.ui.CollapsibleFooterAction
@@ -56,8 +59,6 @@ fun InviteContactsScreen(
     onBack: () -> Unit,
     banner: @Composable () -> Unit = {}
 ) {
-    val footerData by viewModel.collapsibleFooterState.collectAsState()
-
     InviteContacts(
         contacts = viewModel.contacts.collectAsState().value,
         uiState = viewModel.uiState.collectAsState().value,
@@ -65,7 +66,6 @@ fun InviteContactsScreen(
         onDoneClicked = onDoneClicked,
         onBack = onBack,
         banner = banner,
-        data = footerData,
         sendCommand = viewModel::sendCommand
     )
 }
@@ -74,13 +74,12 @@ fun InviteContactsScreen(
 @Composable
 fun InviteContacts(
     contacts: List<ContactItem>,
-    uiState : SelectContactsViewModel.UiState,
-    searchQuery : String,
+    uiState: SelectContactsViewModel.UiState,
+    searchQuery: String,
     onDoneClicked: () -> Unit,
     onBack: () -> Unit,
     banner: @Composable () -> Unit = {},
-    data: SelectContactsViewModel.CollapsibleFooterState,
-    sendCommand : (command : SelectContactsViewModel.Commands) -> Unit
+    sendCommand: (command: SelectContactsViewModel.Commands) -> Unit
 
 ) {
 
@@ -89,16 +88,31 @@ fun InviteContacts(
             label = GetString(LocalResources.current.getString(R.string.membersInvite)),
             buttonLabel = GetString(LocalResources.current.getString(R.string.membersInviteTitle)),
             isDanger = false,
-            onClick = { onDoneClicked() }
+            onClick = { sendCommand(ShowSendInvite) }
         )
     )
+
+    val handleBack: () -> Unit = {
+        when {
+            uiState.isSearchFocused -> sendCommand(
+                SelectContactsViewModel.Commands.RemoveSearchState(
+                    false
+                )
+            )
+
+            else -> onBack()
+        }
+    }
+
+    // Intercept system back
+    BackHandler(enabled = true) { handleBack() }
 
     Scaffold(
         contentWindowInsets = WindowInsets.safeDrawing,
         topBar = {
             BackAppBar(
                 title = stringResource(id = R.string.membersInvite),
-                onBack = onBack,
+                onBack = handleBack,
             )
         },
         bottomBar = {
@@ -110,13 +124,13 @@ fun InviteContacts(
             ) {
                 CollapsibleFooterAction(
                     data = CollapsibleFooterActionData(
-                        title = data.footerActionTitle,
-                        collapsed = data.collapsed,
-                        visible = data.visible,
+                        title = uiState.footer.footerActionTitle,
+                        collapsed = uiState.footer.collapsed,
+                        visible = uiState.footer.visible,
                         items = trayItems
                     ),
-                    onCollapsedClicked = {sendCommand(ToggleFooter)},
-                    onClosedClicked = {sendCommand(CloseFooter)}
+                    onCollapsedClicked = { sendCommand(ToggleFooter) },
+                    onClosedClicked = { sendCommand(CloseFooter) }
                 )
             }
         }
@@ -126,8 +140,6 @@ fun InviteContacts(
                 .padding(paddings)
                 .consumeWindowInsets(paddings),
         ) {
-            banner()
-
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
             SearchBarWithClose(
@@ -148,9 +160,11 @@ fun InviteContacts(
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
-            Box(modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
                 if (contacts.isEmpty() && searchQuery.isEmpty()) {
                     Text(
                         text = stringResource(id = R.string.membersInviteNoContacts),
@@ -201,14 +215,15 @@ private fun PreviewSelectContacts() {
             contacts = contacts,
             onDoneClicked = {},
             onBack = {},
-            data = SelectContactsViewModel.CollapsibleFooterState(
-                collapsed = false,
-                visible = true,
-                footerActionTitle = GetString("1 Contact Selected")
-            ),
             banner = {},
             sendCommand = {},
-            uiState = SelectContactsViewModel.UiState(),
+            uiState = SelectContactsViewModel.UiState(
+                footer = SelectContactsViewModel.CollapsibleFooterState(
+                    collapsed = false,
+                    visible = true,
+                    footerActionTitle = GetString("1 Contact Selected")
+                )
+            ),
             searchQuery = ""
         )
     }
@@ -224,14 +239,15 @@ private fun PreviewSelectEmptyContacts() {
             contacts = contacts,
             onDoneClicked = {},
             onBack = {},
-            data = SelectContactsViewModel.CollapsibleFooterState(
-                collapsed = true,
-                visible = false,
-                footerActionTitle = GetString("")
-            ),
             banner = {},
             sendCommand = {},
-            uiState = SelectContactsViewModel.UiState(),
+            uiState = SelectContactsViewModel.UiState(
+                footer = SelectContactsViewModel.CollapsibleFooterState(
+                    collapsed = true,
+                    visible = false,
+                    footerActionTitle = GetString("")
+                )
+            ),
             searchQuery = "Test"
         )
     }
@@ -247,14 +263,15 @@ private fun PreviewSelectEmptyContactsWithSearch() {
             contacts = contacts,
             onDoneClicked = {},
             onBack = {},
-            data = SelectContactsViewModel.CollapsibleFooterState(
-                collapsed = true,
-                visible = false,
-                footerActionTitle = GetString("")
-            ),
             banner = {},
             sendCommand = {},
-            uiState = SelectContactsViewModel.UiState(),
+            uiState = SelectContactsViewModel.UiState(
+                footer = SelectContactsViewModel.CollapsibleFooterState(
+                    collapsed = true,
+                    visible = false,
+                    footerActionTitle = GetString("")
+                )
+            ),
             searchQuery = ""
         )
     }

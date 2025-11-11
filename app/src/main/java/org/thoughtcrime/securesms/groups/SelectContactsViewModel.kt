@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.groups
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.squareup.phrase.Phrase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -17,20 +18,22 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.OTHER_NAME_KEY
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel.UiState
 import org.thoughtcrime.securesms.home.search.searchName
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.GetString
@@ -49,7 +52,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
     @param:ApplicationContext private val context: Context,
 ) : ViewModel() {
     // Input: The selected contact account IDs
-    private val mutableSelectedContactAccountIDs = MutableStateFlow(emptySet<Address>())
+    private val mutableSelectedContacts = MutableStateFlow(emptySet<SelectedContact>())
 
     // Input: The manually added items to select from. This will be combined (and deduped) with the contacts
     // the user has. This is useful for selecting contacts that are not in the user's contacts list.
@@ -66,7 +69,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
     val contacts: StateFlow<List<ContactItem>> = combine(
         contactsFlow,
         mutableSearchQuery.debounce(100L),
-        mutableSelectedContactAccountIDs,
+        mutableSelectedContacts,
         ::filterContacts
     ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
@@ -79,28 +82,28 @@ open class SelectContactsViewModel @AssistedInject constructor(
 
     // Output
     val currentSelected: Set<Address>
-        get() = mutableSelectedContactAccountIDs.value
+        get() = mutableSelectedContacts.value.map { it.address }.toSet()
 
     private val footerCollapsed = MutableStateFlow(false)
+    private val showInviteContactsDialog = MutableStateFlow(false)
 
-    val collapsibleFooterState: StateFlow<CollapsibleFooterState> =
-        combine(mutableSelectedContactAccountIDs, footerCollapsed) { selected, isCollapsed ->
-            val count = selected.size
-            val visible = count > 0
-            val title = if (count == 0) GetString("")
-            else GetString(
-                context.resources.getQuantityString(R.plurals.contactSelected, count, count)
-            )
-
-            CollapsibleFooterState(
-                visible = visible,
-                // auto-expand when nothing is selected, otherwise keep user's choice
-                collapsed = if (!visible) false else isCollapsed,
-                footerActionTitle = title
-            )
+    init {
+        viewModelScope.launch {
+            combine(mutableSelectedContacts, footerCollapsed) { selected, isCollapsed ->
+                buildFooterState(selected, isCollapsed)
+            }.collect { footer ->
+                _uiState.update { it.copy(footer = footer) }
+            }
         }
-            .distinctUntilChanged()
-            .stateIn(viewModelScope, SharingStarted.Eagerly, CollapsibleFooterState())
+
+        viewModelScope.launch {
+            combine(showInviteContactsDialog, mutableSelectedContacts) { showDialog, selected ->
+                buildInviteContactsDialogState(showDialog, selected)
+            }.collect { state ->
+                _uiState.update { it.copy(inviteContactsDialog = state) }
+            }
+        }
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeContacts() = (configFactory.configUpdateNotifications as Flow<Any>)
@@ -131,9 +134,10 @@ open class SelectContactsViewModel @AssistedInject constructor(
     private fun filterContacts(
         contacts: Collection<Recipient>,
         query: String,
-        selectedAccountIDs: Set<Address>
+        selectedContacts: Set<SelectedContact>
     ): List<ContactItem> {
         val items = mutableListOf<ContactItem>()
+        val selectedAddresses = selectedContacts.asSequence().map { it.address }.toSet()
         for (contact in contacts) {
             if (query.isBlank() || contact.searchName.contains(query, ignoreCase = true)) {
                 val avatarData = avatarUtils.getUIDataFromRecipient(contact)
@@ -142,7 +146,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
                         name = contact.searchName,
                         address = contact.address,
                         avatarUIData = avatarData,
-                        selected = selectedAccountIDs.contains(contact.address),
+                        selected = selectedAddresses.contains(contact.address),
                         showProBadge = contact.proStatus.shouldShowProBadge()
                     )
                 )
@@ -160,19 +164,25 @@ open class SelectContactsViewModel @AssistedInject constructor(
     }
 
     open fun onContactItemClicked(address: Address) {
-        val newSet = mutableSelectedContactAccountIDs.value.toHashSet()
-        if (!newSet.remove(address)) {
-            newSet.add(address)
+        val newSet = mutableSelectedContacts.value.toHashSet()
+        val selectedContact = contacts.value.find { it.address == address }
+
+        if(selectedContact == null) return
+
+        val item = SelectedContact(address = selectedContact.address, name = selectedContact.name)
+        if (!newSet.remove(item)) {
+            newSet.add(item)
         }
-        mutableSelectedContactAccountIDs.value = newSet
+        mutableSelectedContacts.value = newSet
     }
 
     fun selectAccountIDs(accountIDs: Set<Address>) {
-        mutableSelectedContactAccountIDs.value += accountIDs
+        val toAdd = accountIDs.map { address -> SelectedContact(address) }.toSet()
+        mutableSelectedContacts.update { (it + toAdd).toSet() }
     }
 
     fun clearSelection(){
-        mutableSelectedContactAccountIDs.value = emptySet()
+        mutableSelectedContacts.value = emptySet()
     }
 
     fun toggleFooter() {
@@ -183,20 +193,100 @@ open class SelectContactsViewModel @AssistedInject constructor(
         _uiState.update { it.copy(isSearchFocused = isFocused) }
     }
 
+    fun onDismissResend() {
+        _uiState.update { it.copy(ongoingAction = null) }
+    }
+
+    fun removeSearchState(clearSelection : Boolean){
+        onSearchFocusChanged(false)
+        onSearchQueryChanged("")
+
+        if(clearSelection){
+            clearSelection()
+        }
+    }
+
+    private fun buildFooterState(
+        selected: Set<SelectedContact>,
+        isCollapsed: Boolean
+    ) : CollapsibleFooterState {
+        val count = selected.size
+        val visible = count > 0
+        val title = if (count == 0) GetString("")
+        else GetString(
+            context.resources.getQuantityString(R.plurals.contactSelected, count, count)
+        )
+
+        return CollapsibleFooterState(
+            visible = visible,
+            collapsed = if (!visible) false else isCollapsed,
+            footerActionTitle = title
+        )
+    }
+
+    private fun buildInviteContactsDialogState(
+        visible: Boolean,
+        selected : Set<SelectedContact>
+    ): InviteContactsDialogState {
+        val count = selected.size
+        val firstMember = selected.firstOrNull()
+
+        val body: CharSequence = when (count) {
+            1 -> Phrase.from(context, R.string.membersInviteShareDescription)
+                .put(NAME_KEY, firstMember?.name)
+                .format()
+
+            2 -> {
+                val secondMember = selected.elementAtOrNull(1)?.name
+                Phrase.from(context, R.string.membersInviteShareDescriptionTwo)
+                    .put(NAME_KEY, firstMember?.name)
+                    .put(OTHER_NAME_KEY, secondMember)
+                    .format()
+            }
+
+            0 -> ""
+            else -> Phrase.from(context, R.string.membersInviteShareDescriptionMultiple)
+                .put(NAME_KEY, firstMember?.name)
+                .put(COUNT_KEY, count - 1)
+                .format()
+        }
+
+        return InviteContactsDialogState(
+            visible = visible,
+            inviteContactsBody = body,
+        )
+    }
+
+    fun toggleInviteContactsDialog(visible : Boolean){
+        showInviteContactsDialog.value = visible
+    }
+
     fun sendCommand(command: Commands) {
         when (command) {
             is Commands.ClearSelection -> clearSelection()
             is Commands.ToggleFooter -> toggleFooter()
             is Commands.CloseFooter -> clearSelection()
+            is Commands.DismissResend -> onDismissResend()
+            is Commands.ShowSendInvite -> toggleInviteContactsDialog(true)
+            is Commands.DismissSendInvite -> toggleInviteContactsDialog(false)
             is Commands.ContactItemClick -> onContactItemClicked(command.address)
-            is Commands.RemoveSearchState -> onSearchFocusChanged(false)
+            is Commands.RemoveSearchState -> removeSearchState(command.clearSelection)
             is Commands.SearchFocusChange -> onSearchFocusChanged(command.focus)
             is Commands.SearchQueryChange -> onSearchQueryChanged(command.query)
         }
     }
 
     data class UiState(
-        val isSearchFocused : Boolean = false,
+        val isSearchFocused: Boolean = false,
+        val ongoingAction: String? = null,
+
+        val inviteContactsDialog: InviteContactsDialogState = InviteContactsDialogState(),
+        val footer: CollapsibleFooterState = CollapsibleFooterState()
+    )
+
+    data class InviteContactsDialogState(
+        val visible : Boolean = false,
+        val inviteContactsBody : CharSequence = "",
     )
 
     data class CollapsibleFooterState(
@@ -211,6 +301,12 @@ open class SelectContactsViewModel @AssistedInject constructor(
         data object ToggleFooter : Commands
 
         data object CloseFooter : Commands
+
+        data object DismissResend : Commands
+
+        data object ShowSendInvite : Commands
+
+        data object DismissSendInvite : Commands
 
         data class ContactItemClick(val address: Address) : Commands
 
@@ -240,4 +336,9 @@ data class ContactItem(
     val avatarUIData: AvatarUIData,
     val selected: Boolean,
     val showProBadge: Boolean
+)
+
+data class SelectedContact(
+    val address: Address,
+    val name: String = ""
 )
