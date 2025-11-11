@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.groups.compose
 
-import android.R.attr.data
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +23,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
@@ -33,15 +35,19 @@ import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.groups.ContactItem
-import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel.Commands.RemoveSearchState
 import org.thoughtcrime.securesms.groups.SelectContactsViewModel
 import org.thoughtcrime.securesms.groups.SelectContactsViewModel.Commands.*
+import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.CollapsibleFooterAction
 import org.thoughtcrime.securesms.ui.CollapsibleFooterActionData
 import org.thoughtcrime.securesms.ui.CollapsibleFooterItemData
+import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.SearchBarWithClose
 import org.thoughtcrime.securesms.ui.components.BackAppBar
+import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -55,7 +61,7 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 @Composable
 fun InviteContactsScreen(
     viewModel: SelectContactsViewModel,
-    onDoneClicked: () -> Unit,
+    onDoneClicked: (shareHistory : Boolean) -> Unit,
     onBack: () -> Unit,
     banner: @Composable () -> Unit = {}
 ) {
@@ -76,7 +82,7 @@ fun InviteContacts(
     contacts: List<ContactItem>,
     uiState: SelectContactsViewModel.UiState,
     searchQuery: String,
-    onDoneClicked: () -> Unit,
+    onDoneClicked: (shareHistory : Boolean) -> Unit,
     onBack: () -> Unit,
     banner: @Composable () -> Unit = {},
     sendCommand: (command: SelectContactsViewModel.Commands) -> Unit
@@ -88,7 +94,7 @@ fun InviteContacts(
             label = GetString(LocalResources.current.getString(R.string.membersInvite)),
             buttonLabel = GetString(LocalResources.current.getString(R.string.membersInviteTitle)),
             isDanger = false,
-            onClick = { sendCommand(ShowSendInvite) }
+            onClick = { sendCommand(ShowSendInviteDialog) }
         )
     )
 
@@ -187,6 +193,72 @@ fun InviteContacts(
             }
         }
     }
+
+    if (uiState.inviteContactsDialog.visible) {
+        ShowInviteContactsDialog(
+            state = uiState.inviteContactsDialog,
+            onDoneClicked = onDoneClicked,
+            sendCommand = sendCommand
+        )
+    }
+}
+
+@Composable
+fun ShowInviteContactsDialog(
+    state: SelectContactsViewModel.InviteContactsDialogState,
+    modifier: Modifier = Modifier,
+    onDoneClicked : (shareHistory : Boolean) -> Unit,
+    sendCommand: (SelectContactsViewModel.Commands) -> Unit
+) {
+    var shareHistory by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        modifier = modifier,
+        onDismissRequest = {
+            // hide dialog
+            sendCommand(DismissSendInviteDialog)
+        },
+        title = annotatedStringResource(R.string.membersInviteTitle),
+        text = annotatedStringResource(state.inviteContactsBody),
+        content = {
+            DialogTitledRadioButton(
+                option = RadioOption(
+                    value = Unit,
+                    title = GetString(LocalResources.current.getString(R.string.membersInviteShareMessageHistoryDays)),
+                    selected = !shareHistory
+                )
+            ) {
+                shareHistory = false
+            }
+
+            DialogTitledRadioButton(
+                option = RadioOption(
+                    value = Unit,
+                    title = GetString(LocalResources.current.getString(R.string.membersInviteShareNewMessagesOnly)),
+                    selected = shareHistory,
+                )
+            ) {
+                shareHistory = true
+            }
+        },
+        buttons = listOf(
+            DialogButtonData(
+                text = GetString(state.inviteText),
+                color = LocalColors.current.danger,
+                dismissOnClick = false,
+                onClick = {
+                    sendCommand(DismissSendInviteDialog)
+                    onDoneClicked(shareHistory)
+                }
+            ),
+            DialogButtonData(
+                text = GetString(stringResource(R.string.cancel)),
+                onClick = {
+                    sendCommand(DismissSendInviteDialog)
+                }
+            )
+        )
+    )
 }
 
 @Preview

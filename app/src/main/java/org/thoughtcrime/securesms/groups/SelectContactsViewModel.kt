@@ -226,7 +226,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
 
     private fun buildInviteContactsDialogState(
         visible: Boolean,
-        selected : Set<SelectedContact>
+        selected: Set<SelectedContact>
     ): InviteContactsDialogState {
         val count = selected.size
         val firstMember = selected.firstOrNull()
@@ -251,9 +251,13 @@ open class SelectContactsViewModel @AssistedInject constructor(
                 .format()
         }
 
+        val inviteText =
+            context.resources.getQuantityString(R.plurals.membersInviteSend, count, count)
+
         return InviteContactsDialogState(
             visible = visible,
             inviteContactsBody = body,
+            inviteText = inviteText
         )
     }
 
@@ -267,8 +271,8 @@ open class SelectContactsViewModel @AssistedInject constructor(
             is Commands.ToggleFooter -> toggleFooter()
             is Commands.CloseFooter -> clearSelection()
             is Commands.DismissResend -> onDismissResend()
-            is Commands.ShowSendInvite -> toggleInviteContactsDialog(true)
-            is Commands.DismissSendInvite -> toggleInviteContactsDialog(false)
+            is Commands.ShowSendInviteDialog -> toggleInviteContactsDialog(true)
+            is Commands.DismissSendInviteDialog -> toggleInviteContactsDialog(false)
             is Commands.ContactItemClick -> onContactItemClicked(command.address)
             is Commands.RemoveSearchState -> removeSearchState(command.clearSelection)
             is Commands.SearchFocusChange -> onSearchFocusChanged(command.focus)
@@ -287,6 +291,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
     data class InviteContactsDialogState(
         val visible : Boolean = false,
         val inviteContactsBody : CharSequence = "",
+        val inviteText : String = ""
     )
 
     data class CollapsibleFooterState(
@@ -304,9 +309,9 @@ open class SelectContactsViewModel @AssistedInject constructor(
 
         data object DismissResend : Commands
 
-        data object ShowSendInvite : Commands
+        data object ShowSendInviteDialog : Commands
 
-        data object DismissSendInvite : Commands
+        data object DismissSendInviteDialog : Commands
 
         data class ContactItemClick(val address: Address) : Commands
 

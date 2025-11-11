@@ -16,10 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -136,14 +133,13 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         }
     }
 
-    fun onContactSelected(contacts: Set<Address>) {
-        val selectedCount = selectedMembers.value.size
+    fun onSendInviteClicked(contacts: Set<Address>) {
         _uiState.update {
             it.copy(
                 ongoingAction = context.resources.getQuantityString(
                     R.plurals.groupInviteSending,
-                    selectedCount,
-                    selectedCount
+                    contacts.size,
+                    contacts.size
                 )
             )
         }

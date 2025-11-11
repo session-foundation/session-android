@@ -214,10 +214,9 @@ fun ConversationSettingsNavHost(
 
                 InviteContactsScreen(
                     viewModel = viewModel,
-                    onDoneClicked = dropUnlessResumed {
+                    onDoneClicked = { shareHistory ->
                         //send invites from the manage group screen
-                        manageGroupMembersViewModel.onContactSelected(viewModel.currentSelected)
-
+                        manageGroupMembersViewModel.onSendInviteClicked(viewModel.currentSelected)
                         handleBack()
                     },
                     onBack = dropUnlessResumed {
