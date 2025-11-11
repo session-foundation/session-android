@@ -21,10 +21,13 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.crypto.KeyStoreHelper
 import org.thoughtcrime.securesms.dependencies.ManagerScope
-import java.security.SecureRandom
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Repository for managing the login state of the user.
+ * Persists the state securely using Android's Keystore system.
+ */
 @Singleton
 class LoginStateRepository @Inject constructor(
     @ApplicationContext context: Context,
@@ -56,17 +59,20 @@ class LoginStateRepository @Inject constructor(
                 val seed = IdentityKeyUtil.retrieve(context, "loki_seed")?.let(Hex::fromStringCondensed)?.let(::Bytes)
 
                 if (seed != null) {
-                    val notificationKey = runCatching {
+                    val existingNotificationKey = runCatching {
                         IdentityKeyUtil.retrieve(context, IdentityKeyUtil.NOTIFICATION_KEY)
                             ?.let(Hex::fromStringCondensed)?.let(::Bytes)
                     }.onFailure { e ->
                         Log.e(TAG, "Unable to retrieve legacy notification key. Regenerating", e)
-                    }.getOrNull() ?: generateNotificationKey()
+                    }.getOrNull()
 
+                    val generated = LoggedInState.generate(seed = seed.data)
 
-                    LoggedInState.generate(seed = seed.data).copy(
-                        notificationKey = notificationKey
-                    )
+                    if (existingNotificationKey != null) {
+                        generated.copy(notificationKey = existingNotificationKey)
+                    } else {
+                        generated
+                    }
                 } else {
                     null
                 }
@@ -118,10 +124,20 @@ class LoginStateRepository @Inject constructor(
         "No logged in account"
     }
 
+    /**
+     * Returns the local number (account ID as hex string) of the logged-in user.
+     * Throws an exception if no user is logged in.
+     */
     fun requireLocalNumber(): String = requireLocalAccountId().hexString
 
+    /**
+     * Returns the local number (account ID as hex string) of the logged-in user,
+     */
     fun getLocalNumber(): String? = loggedInState.value?.accountId?.hexString
 
+    /**
+     * Returns the current [LoggedInState] without observing for changes.
+     */
     fun peekLoginState(): LoggedInState? = loggedInState.value
 
 
@@ -147,14 +163,13 @@ class LoginStateRepository @Inject constructor(
         mutableLoggedInState.value = null
     }
 
+    /**
+     * Updates the current [LoggedInState] using the provided [updater] function.
+     * The [org.thoughtcrime.securesms.auth.LoginStateRepository] will manage the persistence
+     * of the data automatically. You don't need to do anything else.
+     */
     fun update(updater: (LoggedInState?) -> LoggedInState) {
         mutableLoggedInState.update(updater)
-    }
-
-    private fun generateNotificationKey(): Bytes {
-        val keyBytes = ByteArray(32)
-        SecureRandom().nextBytes(keyBytes)
-        return Bytes(keyBytes)
     }
 
     companion object {
