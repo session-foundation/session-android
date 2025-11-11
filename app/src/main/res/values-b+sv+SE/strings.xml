@@ -876,12 +876,9 @@
     <string name="proActivated">Aktiverat</string>
     <string name="proAlreadyPurchased">Du har redan</string>
     <string name="proAnimatedDisplayPicture">Fortsätt och ladda upp GIF:ar och animerade WebP-bilder som visningsbild!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">Skaffa animerade visningsbilder och lås upp premiumfunktioner med {app_pro}</string>
     <string name="proAnimatedDisplayPictureFeature">Animerad visningsbild</string>
     <string name="proAnimatedDisplayPictureModalDescription">användare kan ladda upp GIF:ar</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Ladda upp GIF:ar med</string>
-    <string name="proCallToActionLongerMessages">Vill du skicka längre meddelanden? Skicka mer text och lås upp premiumfunktioner med {app_pro}</string>
-    <string name="proCallToActionPinnedConversations">Vill du ha fler fästen? Organisera dina chattar och lås upp premiumfunktioner med {app_pro}</string>
     <string name="proFeatureListAnimatedDisplayPicture">Ladda upp GIF- och WebP-visningsbilder</string>
     <string name="proFeatureListLargerGroups">Större gruppchattar upp till 300 medlemmar</string>
     <string name="proFeatureListLoadsMore">Plus många fler exklusiva funktioner</string>

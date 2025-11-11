@@ -421,7 +421,7 @@ fun Cell(
     modifier: Modifier = Modifier,
     dropShadow: Boolean = false,
     bgColor: Color = LocalColors.current.backgroundSecondary,
-    content: @Composable () -> Unit
+    content: @Composable BoxScope.() -> Unit
 ) {
     Box(
         modifier = modifier

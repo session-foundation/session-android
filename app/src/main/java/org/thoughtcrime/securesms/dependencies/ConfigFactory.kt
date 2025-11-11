@@ -390,7 +390,7 @@ class ConfigFactory @Inject constructor(
         // We need to persist the data to the database to save timestamp after the push
         val userAccountId = requiresCurrentUserAccountId()
         for ((variant, data, timestamp) in dump) {
-            configDatabase.storeConfig(variant, userAccountId.hexString, data, timestamp)
+            configDatabase.storeConfig(variant, userAccountId.hexString, data, timestamp.toEpochMilli())
         }
     }
 
@@ -412,11 +412,11 @@ class ConfigFactory @Inject constructor(
                 if (pendingConfig != null) {
                     for (hash in hashes) {
                         configs.groupKeys.loadKey(
-                            pendingConfig,
-                            hash,
-                            timestamp,
-                            configs.groupInfo.pointer,
-                            configs.groupMembers.pointer
+                            message = pendingConfig,
+                            hash = hash,
+                            timestampMs = timestamp.toEpochMilli(),
+                            infoPtr = configs.groupInfo.pointer,
+                            membersPtr = configs.groupMembers.pointer
                         )
                     }
                 }

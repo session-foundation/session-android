@@ -264,6 +264,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var openGroupManager: OpenGroupManager
     @Inject lateinit var attachmentDatabase: AttachmentDatabase
     @Inject lateinit var clock: SnodeClock
+    @Inject lateinit var messageSender: MessageSender
+    @Inject lateinit var resendMessageUtilities: ResendMessageUtilities
     @Inject @ManagerScope
     lateinit var scope: CoroutineScope
 
@@ -1790,7 +1792,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     }
                 }
             } else {
-                MessageSender.send(reactionMessage, recipient.address)
+                messageSender.send(reactionMessage, recipient.address)
             }
 
             LoaderManager.getInstance(this).restartLoader(0, null, this)
@@ -1843,7 +1845,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     }
                 }
             } else {
-                MessageSender.send(message, recipient.address)
+                messageSender.send(message, recipient.address)
             }
             LoaderManager.getInstance(this).restartLoader(0, null, this)
         }
@@ -2137,7 +2139,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             ), false)
 
             waitForApprovalJobToBeSubmitted()
-            MessageSender.send(message, recipient.address)
+            messageSender.send(message, recipient.address)
         }
         // Send a typing stopped message
         typingStatusSender.onTypingStopped(viewModel.threadId)
@@ -2215,7 +2217,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
                 waitForApprovalJobToBeSubmitted()
 
-                MessageSender.send(message, recipient.address, quote, linkPreview)
+                messageSender.send(message, recipient.address, quote, linkPreview)
             }.onFailure {
                 withContext(Dispatchers.Main){
                     when (it) {
@@ -2558,7 +2560,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         scope.launch {
             messages.iterator().forEach { messageRecord ->
                 runCatching {
-                    ResendMessageUtilities.resend(
+                    resendMessageUtilities.resend(
                         accountId,
                         messageRecord,
                         viewModel.blindedPublicKey,
@@ -2576,7 +2578,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         scope.launch {
             messages.iterator().forEach { messageRecord ->
                 runCatching {
-                    ResendMessageUtilities.resend(
+                    resendMessageUtilities.resend(
                         accountId,
                         messageRecord,
                         viewModel.blindedPublicKey
@@ -2731,7 +2733,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val timestamp = SnodeAPI.nowWithOffset
         val kind = DataExtractionNotification.Kind.MediaSaved(timestamp)
         val message = DataExtractionNotification(kind)
-        MessageSender.send(message, recipient.address)
+        messageSender.send(message, recipient.address)
     }
 
     private fun endActionMode() {

@@ -19,6 +19,7 @@ import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildGroupInviteSignature
 import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.getGroup
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateInviteMessage
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMessage
@@ -28,7 +29,10 @@ import org.session.libsignal.utilities.Log
 class InviteContactsJob @AssistedInject constructor(
     @Assisted val groupSessionId: String,
     @Assisted val memberSessionIds: Array<String>,
-    @Assisted val isReinvite: Boolean
+    @Assisted val isReinvite: Boolean,
+    private val configFactory: ConfigFactoryProtocol,
+    private val messageSender: MessageSender,
+
 ) : Job {
 
     companion object {
@@ -45,8 +49,7 @@ class InviteContactsJob @AssistedInject constructor(
     override val maxFailureCount: Int = 1
 
     override suspend fun execute(dispatcherName: String) {
-        val configs = MessagingModuleConfiguration.shared.configFactory
-        val group = requireNotNull(configs.getGroup(AccountId(groupSessionId))) {
+        val group = requireNotNull(configFactory.getGroup(AccountId(groupSessionId))) {
             "Group must exist to invite"
         }
 
@@ -62,10 +65,8 @@ class InviteContactsJob @AssistedInject constructor(
                     runCatching {
                         // Make the request for this member
                         val memberId = AccountId(memberSessionId)
-                        val (groupName, subAccount) = configs.withMutableGroupConfigs(sessionId) { configs ->
-                            configs.groupInfo.getName() to configs.groupKeys.makeSubAccount(
-                                memberSessionId
-                            )
+                        val (groupName, subAccount) = configFactory.withMutableGroupConfigs(sessionId) { configs ->
+                            configs.groupInfo.getName() to configs.groupKeys.makeSubAccount(memberSessionId)
                         }
 
                         val timestamp = SnodeAPI.nowWithOffset
@@ -86,18 +87,14 @@ class InviteContactsJob @AssistedInject constructor(
                             sentTimestamp = timestamp
                         }
 
-                        MessageSender.sendNonDurably(
-                            update,
-                            Destination.Contact(memberSessionId),
-                            false
-                        )
+                        messageSender.sendNonDurably(update, Destination.Contact(memberSessionId), false)
                     }
                 }
             }
 
             val results = memberSessionIds.zip(requests.awaitAll())
 
-            configs.withMutableGroupConfigs(sessionId) { configs ->
+            configFactory.withMutableGroupConfigs(sessionId) { configs ->
                 results.forEach { (memberSessionId, result) ->
                     configs.groupMembers.get(memberSessionId)?.let { member ->
                         if (result.isFailure) {
@@ -110,8 +107,8 @@ class InviteContactsJob @AssistedInject constructor(
                 }
             }
 
-            val groupName = configs.withGroupConfigs(sessionId) { it.groupInfo.getName() }
-                ?: configs.getGroup(sessionId)?.name
+            val groupName = configFactory.withGroupConfigs(sessionId) { it.groupInfo.getName() }
+                ?: configFactory.getGroup(sessionId)?.name
 
             // Gather all the exceptions, while keeping track of the invitee account IDs
             val failures = results.mapNotNull { (id, result) ->
@@ -164,20 +161,21 @@ class InviteContactsJob @AssistedInject constructor(
 
     @AssistedFactory
     abstract class Factory : Job.DeserializeFactory<InviteContactsJob> {
-
-        // Deserialization path used by SessionJobDatabase -> SessionJobInstantiator
-        override fun create(data: Data): InviteContactsJob {
-            val group = data.getString(GROUP)
-            val members = data.getStringArray(MEMBER)
-            val reinvite = data.getBooleanOrDefault(REINVITE, false)
-            return create(group, members, reinvite)
-        }
-
-        // This is what you call at runtime to create a new job (Dagger injects the rest)
         abstract fun create(
             groupSessionId: String,
             memberSessionIds: Array<String>,
             isReinvite: Boolean
         ): InviteContactsJob
+
+        override fun create(data: Data): InviteContactsJob? {
+            val groupSessionId = data.getString(GROUP) ?: return null
+            val memberSessionIds = data.getStringArray(MEMBER) ?: return null
+            val reinvite = data.getBooleanOrDefault(REINVITE, false)
+            return create(
+                groupSessionId = groupSessionId,
+                memberSessionIds = memberSessionIds,
+                isReinvite = reinvite
+            )
+        }
     }
 }

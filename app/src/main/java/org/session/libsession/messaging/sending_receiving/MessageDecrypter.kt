@@ -10,6 +10,7 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.hexEncodedPublicKey
 import org.session.libsignal.utilities.removingIdPrefixIfNeeded
 
+@Deprecated("This class is deprecated and new code should try to decrypt/decode message using SessionProtocol API")
 object MessageDecrypter {
 
     /**

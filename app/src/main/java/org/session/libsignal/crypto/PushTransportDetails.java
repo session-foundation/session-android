@@ -8,6 +8,11 @@ package org.session.libsignal.crypto;
 
 import org.session.libsignal.utilities.Log;
 
+/**
+ * @deprecated The logic here has been moved to SessionProtocol, this class only exists
+ * so the old persisted message queue can be read. It will be removed in a future release.
+ */
+@Deprecated(forRemoval = true)
 public class PushTransportDetails {
 
   private static final String TAG = PushTransportDetails.class.getSimpleName();
