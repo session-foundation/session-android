@@ -15,7 +15,6 @@ import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.Data
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.DecodedAudio
 import org.session.libsession.utilities.InputStreamMediaDataSource
@@ -38,6 +37,7 @@ class AttachmentUploadJob @AssistedInject constructor(
     private val attachmentProcessor: AttachmentProcessor,
     private val preferences: TextSecurePreferences,
     private val fileServerApi: FileServerApi,
+    private val messageSender: MessageSender,
 ) : Job {
     override var delegate: JobDelegate? = null
     override var id: String? = null
@@ -219,7 +219,7 @@ class AttachmentUploadJob @AssistedInject constructor(
 
     private fun failAssociatedMessageSendJob(e: Exception) {
         val messageSendJob = storage.getMessageSendJob(messageSendJobID)
-        MessageSender.handleFailedMessageSend(this.message, e)
+        messageSender.handleFailedMessageSend(this.message, e)
         if (messageSendJob != null) {
             storage.markJobAsFailedPermanently(messageSendJobID)
         }
@@ -244,7 +244,14 @@ class AttachmentUploadJob @AssistedInject constructor(
         return KEY
     }
 
-    class DeserializeFactory(private val factory: Factory): Job.DeserializeFactory<AttachmentUploadJob> {
+    @AssistedFactory
+    abstract class Factory : Job.DeserializeFactory<AttachmentUploadJob> {
+        abstract fun create(
+            attachmentID: Long,
+            @Assisted("threadID") threadID: String,
+            message: Message,
+            messageSendJobID: String
+        ): AttachmentUploadJob
 
         override fun create(data: Data): AttachmentUploadJob? {
             val serializedMessage = data.getByteArray(MESSAGE_KEY)
@@ -259,22 +266,12 @@ class AttachmentUploadJob @AssistedInject constructor(
                 return null
             }
             input.close()
-            return factory.create(
+            return create(
                 attachmentID = data.getLong(ATTACHMENT_ID_KEY),
                 threadID = data.getString(THREAD_ID_KEY)!!,
                 message = message,
                 messageSendJobID = data.getString(MESSAGE_SEND_JOB_ID_KEY)!!
             )
         }
-    }
-
-    @AssistedFactory
-    interface Factory {
-        fun create(
-            attachmentID: Long,
-            @Assisted("threadID") threadID: String,
-            message: Message,
-            messageSendJobID: String
-        ): AttachmentUploadJob
     }
 }

@@ -820,11 +820,9 @@
     <string name="preview">Vista prèvia</string>
     <string name="proAlreadyPurchased">Ja ho tens</string>
     <string name="proAnimatedDisplayPicture">Endavant i penja GIFs i imatges del webp animat per a la teva imatge de visualització!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">Obteniu imatges de visualització animada i desbloquegeu funcions premium amb {app_pro}</string>
     <string name="proAnimatedDisplayPictureFeature">Imatge de pantalla animada</string>
     <string name="proAnimatedDisplayPictureModalDescription">els usuaris poden penjar GIFs</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Penja els gifs amb</string>
-    <string name="proCallToActionLongerMessages">Voleu enviar missatges més llargs? Envia més text i desbloqueja funcions premium amb {app_pro}</string>
     <string name="proCallToActionPinnedConversations">Vols més pins? Organitzes els teus xats i desbloqueges les funcions premium amb {app_pro}</string>
     <string name="proFeatureListLargerGroups">Xateja de grups més grans fins a 300 membres</string>
     <string name="proFeatureListLoadsMore">Plus carrega funcions més exclusives</string>

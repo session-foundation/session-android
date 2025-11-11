@@ -932,7 +932,6 @@
     <string name="proAllSet">Готово!</string>
     <string name="proAlreadyPurchased">У вас вже є</string>
     <string name="proAnimatedDisplayPicture">Не зволікайте і завантажуйте GIF та анімовані WebP картинки для свого аватара!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">Отримайте анімовані аватари та розблокуйте преміальні функції з {app_pro}</string>
     <string name="proAnimatedDisplayPictureFeature">Анімоване зображення профілю</string>
     <string name="proAnimatedDisplayPictureModalDescription">користувачі можуть завантажувати GIF</string>
     <string name="proAnimatedDisplayPictures">Анімовані зображення облікового запису</string>
@@ -947,8 +946,6 @@
     <string name="proBilledAnnually">{price} сплата щорічно</string>
     <string name="proBilledMonthly">{price} сплата щомісячно</string>
     <string name="proBilledQuarterly">{price} сплата щоквартально</string>
-    <string name="proCallToActionLongerMessages">Хочете відправляти довші повідомлення? Надсилайте більше тексту та розблокуйте преміальні функції застосунку з Session Pro</string>
-    <string name="proCallToActionPinnedConversations">Потрібно більше закріплених бесід? Впорядкуйте свої чати та розблокуйте преміальні функції з {app_pro}</string>
     <string name="proExpired">Підписка сплила</string>
     <string name="proExpiringSoon">Невдовзі спливе підписка</string>
     <string name="proExpiringTime">{pro} спливає за <b>{time}</b></string>

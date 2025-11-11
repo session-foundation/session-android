@@ -84,6 +84,7 @@ internal fun MessageReceiver.isBlocked(publicKey: String): Boolean {
     return recipient?.blocked == true
 }
 
+@Deprecated(replaceWith = ReplaceWith("ReceivedMessageProcessor"), message = "Use ReceivedMessageProcessor instead")
 @Singleton
 class ReceivedMessageHandler @Inject constructor(
     @param:ApplicationContext private val context: Context,
@@ -131,7 +132,7 @@ class ReceivedMessageHandler @Inject constructor(
             }
             is DataExtractionNotification -> handleDataExtractionNotification(message)
             is UnsendRequest -> handleUnsendRequest(message)
-            is MessageRequestResponse -> messageRequestResponseHandler.get().handleExplicitRequestResponseMessage(message)
+            is MessageRequestResponse -> messageRequestResponseHandler.get().handleExplicitRequestResponseMessage(null, message)
             is VisibleMessage -> handleVisibleMessage(
                 message = message,
                 proto = proto,
@@ -300,7 +301,7 @@ class ReceivedMessageHandler @Inject constructor(
         // Do nothing if the message was outdated
         if (messageIsOutdated(message, context.threadId)) { return null }
 
-        messageRequestResponseHandler.get().handleVisibleMessage(message)
+        messageRequestResponseHandler.get().handleVisibleMessage(null, message)
 
         // Handle group invite response if new closed group
         val threadRecipientAddress = context.threadAddress
@@ -413,8 +414,10 @@ class ReceivedMessageHandler @Inject constructor(
                 runThreadUpdate = runThreadUpdate
             ) ?: return null
 
-            // If we have previously "hidden" the sender, we should flip the flag back to visible
-            if (senderAddress is Address.Standard && senderAddress.address != userPublicKey) {
+            // If we have previously "hidden" the sender, we should flip the flag back to visible,
+            // and this should only be done only for 1:1 messages
+            if (senderAddress is Address.Standard && senderAddress.address != userPublicKey
+                && context.threadAddress is Address.Standard) {
                 val existingContact =
                     configFactory.withUserConfigs { it.contacts.get(senderAddress.accountId.hexString) }
 

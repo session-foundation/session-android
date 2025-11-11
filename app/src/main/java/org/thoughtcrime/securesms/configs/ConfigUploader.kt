@@ -250,7 +250,7 @@ class ConfigUploader @Inject constructor(
                     ),
                     auth
                 ),
-                responseType = StoreMessageResponse::class.java
+                responseType = StoreMessageResponse.serializer()
             ).let(::listOf).toConfigPushResult()
         }
 
@@ -284,7 +284,7 @@ class ConfigUploader @Inject constructor(
                 val pendingConfig = configs.groupKeys.pendingConfig()
                 if (pendingConfig != null) {
                     for (hash in hashes) {
-                        configs.groupKeys.loadKey(pendingConfig, hash, timestamp)
+                        configs.groupKeys.loadKey(pendingConfig, hash, timestamp.toEpochMilli())
                     }
                 }
             }
@@ -329,7 +329,7 @@ class ConfigUploader @Inject constructor(
                                 ),
                                 auth,
                             ),
-                            responseType = StoreMessageResponse::class.java
+                            responseType = StoreMessageResponse.serializer()
                         )
                     }
                 }

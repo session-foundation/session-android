@@ -156,7 +156,7 @@ fun ProSettingsNavHost(
 }
 
 @Composable
-fun NavController.proGraphViewModel(
+private fun NavController.proGraphViewModel(
     entry: androidx.navigation.NavBackStackEntry,
     navigator: UINavigator<ProSettingsDestination>
 ): ProSettingsViewModel {
