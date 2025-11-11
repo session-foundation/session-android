@@ -330,8 +330,8 @@ class MessageSender @Inject constructor(
                         destination.fileIds
                     )
 
-                    message.openGroupServerMessageID = response.serverID
-                    handleSuccessfulMessageSend(message, destination, openGroupSentTimestamp = response.sentTimestamp)
+                    message.openGroupServerMessageID = response.id
+                    handleSuccessfulMessageSend(message, destination, openGroupSentTimestamp = response.posted!!.toEpochMilli())
                     return
                 }
                 is Destination.OpenGroupInbox -> {

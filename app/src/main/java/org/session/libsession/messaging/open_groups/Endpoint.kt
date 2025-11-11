@@ -1,5 +1,7 @@
 package org.session.libsession.messaging.open_groups
 
+import kotlinx.serialization.json.JsonObject
+
 sealed class Endpoint(val value: String) {
 
     object Onion : Endpoint("oxen/v4/lsrpc")

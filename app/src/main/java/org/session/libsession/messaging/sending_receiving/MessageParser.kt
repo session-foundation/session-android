@@ -226,7 +226,7 @@ class MessageParser @Inject constructor(
             isForGroup = false,
             currentUserId = currentUserId,
             sender = sender,
-            messageTimestampMs = (msg.posted * 1000).toLong(),
+            messageTimestampMs = msg.posted!!.toEpochMilli(),
             currentUserBlindedIDs = currentUserBlindedIDs,
         ).also { (message, _) ->
             message.openGroupServerMessageID = msg.id

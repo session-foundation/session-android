@@ -5,6 +5,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import okhttp3.Call
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -81,6 +83,7 @@ object HTTP {
     ) : kotlin.Exception(message)
     class HTTPNoNetworkException : HTTPRequestFailedException(0, null, "No network connection")
 
+    @Serializable
     enum class Verb(val rawValue: String) {
         GET("GET"), PUT("PUT"), POST("POST"), DELETE("DELETE")
     }

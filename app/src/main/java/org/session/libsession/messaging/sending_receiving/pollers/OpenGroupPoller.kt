@@ -1,6 +1,5 @@
 package org.session.libsession.messaging.sending_receiving.pollers
 
-import com.fasterxml.jackson.core.type.TypeReference
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -16,11 +15,13 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.JsonObject
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.OpenGroupDeleteJob
 import org.session.libsession.messaging.jobs.TrimThreadJob
-import org.session.libsession.messaging.messages.Message.Companion.senderOrSync
 import org.session.libsession.messaging.open_groups.Endpoint
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.open_groups.OpenGroupApi.BatchRequest
@@ -33,11 +34,8 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi.parallelBatch
 import org.session.libsession.messaging.sending_receiving.MessageParser
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.HTTP.Verb.GET
-import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.CommunityDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
@@ -133,9 +131,9 @@ class OpenGroupPoller @AssistedInject constructor(
 
     private fun handleRoomPollInfo(
         address: Address.Community,
-        pollInfoJson: Map<*, *>,
+        pollInfoJson: JsonObject,
     ) {
-        communityDatabase.patchRoomInfo(address, JsonUtil.toJson(pollInfoJson))
+        communityDatabase.patchRoomInfo(address, MessagingModuleConfiguration.shared.json.encodeToString(pollInfoJson))
     }
 
 
@@ -160,7 +158,7 @@ class OpenGroupPoller @AssistedInject constructor(
             .forEach { response ->
                 when (response.endpoint) {
                     is Endpoint.RoomPollInfo -> {
-                        handleRoomPollInfo(Address.Community(server, response.endpoint.roomToken), response.body as Map<*, *>)
+                        handleRoomPollInfo(Address.Community(server, response.endpoint.roomToken), response.body as JsonObject)
                     }
                     is Endpoint.RoomMessagesRecent -> {
                         handleMessages(response.endpoint.roomToken, response.body as List<OpenGroupApi.Message>)
@@ -201,7 +199,7 @@ class OpenGroupPoller @AssistedInject constructor(
                         path = "/room/$room/pollInfo/$infoUpdates"
                     ),
                     endpoint = Endpoint.RoomPollInfo(room, infoUpdates),
-                    responseType = object : TypeReference<Map<*, *>>(){}
+                    responseSerializer = JsonObject.serializer(),
                 )
             )
             requests.add(
@@ -212,7 +210,7 @@ class OpenGroupPoller @AssistedInject constructor(
                             path = "/room/$room/messages/recent?t=r&reactors=5"
                         ),
                         endpoint = Endpoint.RoomMessagesRecent(room),
-                        responseType = object : TypeReference<List<OpenGroupApi.Message>>(){}
+                        responseSerializer = ListSerializer(OpenGroupApi.Message.serializer()),
                     )
                 } else {
                     BatchRequestInfo(
@@ -221,7 +219,7 @@ class OpenGroupPoller @AssistedInject constructor(
                             path = "/room/$room/messages/since/$lastMessageServerId?t=r&reactors=5"
                         ),
                         endpoint = Endpoint.RoomMessagesSince(room, lastMessageServerId),
-                        responseType = object : TypeReference<List<OpenGroupApi.Message>>(){}
+                        responseSerializer = ListSerializer(OpenGroupApi.Message.serializer()),
                     )
                 }
             )
@@ -236,7 +234,7 @@ class OpenGroupPoller @AssistedInject constructor(
                                 path = "/inbox"
                             ),
                             endpoint = Endpoint.Inbox,
-                            responseType = object : TypeReference<List<DirectMessage>>() {}
+                            responseSerializer = ListSerializer(DirectMessage.serializer()),
                         )
                     } else {
                         BatchRequestInfo(
@@ -245,7 +243,7 @@ class OpenGroupPoller @AssistedInject constructor(
                                 path = "/inbox/since/$lastInboxMessageId"
                             ),
                             endpoint = Endpoint.InboxSince(lastInboxMessageId),
-                            responseType = object : TypeReference<List<DirectMessage>>() {}
+                            responseSerializer = ListSerializer(DirectMessage.serializer()),
                         )
                     }
                 )
@@ -259,7 +257,7 @@ class OpenGroupPoller @AssistedInject constructor(
                             path = "/outbox"
                         ),
                         endpoint = Endpoint.Outbox,
-                        responseType = object : TypeReference<List<DirectMessage>>() {}
+                        responseSerializer = ListSerializer(DirectMessage.serializer()),
                     )
                 } else {
                     BatchRequestInfo(
@@ -268,7 +266,7 @@ class OpenGroupPoller @AssistedInject constructor(
                             path = "/outbox/since/$lastOutboxMessageId"
                         ),
                         endpoint = Endpoint.OutboxSince(lastOutboxMessageId),
-                        responseType = object : TypeReference<List<DirectMessage>>() {}
+                        responseSerializer = ListSerializer(DirectMessage.serializer()),
                     )
                 }
             )

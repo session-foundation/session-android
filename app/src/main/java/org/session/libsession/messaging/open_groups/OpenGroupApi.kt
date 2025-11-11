@@ -1,14 +1,15 @@
 package org.session.libsession.messaging.open_groups
 
-import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.PropertyNamingStrategy
-import com.fasterxml.jackson.databind.annotation.JsonNaming
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromStream
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.Hash
@@ -22,6 +23,7 @@ import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.OnionResponse
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.utilities.await
+import org.session.libsession.utilities.serializable.InstantAsSecondsDoubleSerializer
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64.encodeBytes
 import org.session.libsignal.utilities.ByteArraySlice
@@ -35,6 +37,7 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import java.security.SecureRandom
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 object OpenGroupApi {
@@ -121,17 +124,27 @@ object OpenGroupApi {
         val request: BatchRequest,
         val endpoint: Endpoint,
         val queryParameters: Map<String, String> = mapOf(),
-        val responseType: TypeReference<T>?
+        val responseSerializer: DeserializationStrategy<T>,
     )
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @Serializable
     data class BatchRequest(
         val method: HTTP.Verb,
         val path: String,
         val headers: Map<String, String> = emptyMap(),
-        val json: Map<String, Any>? = null,
+        val json: JsonElement? = null,
         val b64: String? = null,
-        val bytes: ByteArray? = null,
+    ) {
+        init {
+            check(json == null || b64 == null) { "BatchRequest can have either 'json' or 'b64' body, not both." }
+        }
+    }
+
+    @Serializable
+    private data class APIBatchResponse(
+        val code: Int,
+        val headers: Map<String, String>,
+        val body: JsonElement,
     )
 
     data class BatchResponse<T>(
@@ -175,32 +188,39 @@ object OpenGroupApi {
         val details: RoomInfoDetails = RoomInfoDetails()
     )
 
-    @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy::class)
+    @Serializable
     data class DirectMessage(
         val id: Long = 0,
         val sender: String = "",
         val recipient: String = "",
+        @SerialName("posted_at")
         val postedAt: Long = 0,
+        @SerialName("expires_at")
         val expiresAt: Long = 0,
         val message: String = "",
     )
 
-    @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy::class)
+    @Serializable
     data class Message(
         val id : Long = 0,
         val sessionId: String = "",
-        val posted: Double = 0.0,
-        val edited: Long = 0,
+        @Serializable(InstantAsSecondsDoubleSerializer::class)
+        val posted: Instant? = null,
+        @Serializable(InstantAsSecondsDoubleSerializer::class)
+        val edited: Instant? = null,
         val seqno: Long = 0,
         val deleted: Boolean = false,
         val whisper: Boolean = false,
+        @SerialName("whisper_mods")
         val whisperMods: String = "",
+        @SerialName("whisper_to")
         val whisperTo: String = "",
         val data: String? = null,
         val signature: String? = null,
         val reactions: Map<String, Reaction>? = null,
     )
 
+    @Serializable
     data class Reaction(
         val count: Long = 0,
         val reactors: List<String> = emptyList(),
@@ -236,34 +256,13 @@ object OpenGroupApi {
         var seqNo: Long? = null
     )
 
-    @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy::class)
-    data class SendMessageRequest(
-        val data: String? = null,
-        val signature: String? = null,
-        val whisperTo: List<String>? = null,
-        val whisperMods: Boolean? = null,
-        val files: List<String>? = null
-    )
-
-    data class MessageDeletion(
-        @JsonProperty("id")
-        val id: Long = 0,
-        @JsonProperty("deleted_message_id")
-        val deletedMessageServerID: Long = 0
-    ) {
-
-        companion object {
-            val empty = MessageDeletion()
-        }
-    }
-
     data class Request(
         val verb: HTTP.Verb,
         val room: String?,
         val server: String,
         val endpoint: Endpoint,
         val queryParameters: Map<String, String> = mapOf(),
-        val parameters: Any? = null,
+        val parameters: JsonElement? = null,
         val headers: Map<String, String> = mapOf(),
         val body: ByteArray? = null,
         /**
@@ -273,10 +272,10 @@ object OpenGroupApi {
         val useOnionRouting: Boolean = true
     )
 
-    private fun createBody(body: ByteArray?, parameters: Any?): RequestBody? {
+    private fun createBody(body: ByteArray?, parameters: JsonElement?): RequestBody? {
         if (body != null) return RequestBody.create("application/octet-stream".toMediaType(), body)
         if (parameters == null) return null
-        val parametersAsJSON = JsonUtil.toJson(parameters)
+        val parametersAsJSON = MessagingModuleConfiguration.shared.json.encodeToString(parameters)
         return RequestBody.create("application/json".toMediaType(), parametersAsJSON)
     }
 
@@ -290,13 +289,20 @@ object OpenGroupApi {
         return response.body ?: throw Error.ParsingFailed
     }
 
-    private suspend fun getResponseBodyJson(
+    @OptIn(ExperimentalSerializationApi::class)
+    private suspend inline fun <reified T> getResponseBodyJson(
         request: Request,
         signRequest: Boolean = true,
         serverPubKeyHex: String? = null
-    ): Map<*, *> {
-        val response =  send(request, signRequest = signRequest, serverPubKeyHex = serverPubKeyHex)
-        return JsonUtil.fromJson(response.body, Map::class.java)
+    ): T {
+        return send(request, signRequest = signRequest, serverPubKeyHex = serverPubKeyHex)
+            .body!!
+            .inputStream()
+            .use {
+                MessagingModuleConfiguration.shared
+                    .json
+                    .decodeFromStream<T>(it)
+            }
     }
 
     suspend fun getOrFetchServerCapabilities(server: String): List<String> {
@@ -439,6 +445,9 @@ object OpenGroupApi {
     }
 
     // region Upload/Download
+    @Serializable
+    private data class UploadResult(val id: String)
+
     suspend fun upload(file: ByteArray, room: String, server: String): String {
         val request = Request(
             verb = POST,
@@ -451,8 +460,8 @@ object OpenGroupApi {
                 "Content-Type" to "application/octet-stream"
             )
         )
-        val json =  getResponseBodyJson(request, signRequest = true)
-        return json["id"]?.toString() ?: throw Error.ParsingFailed
+
+        return getResponseBodyJson<UploadResult>(request, signRequest = true).id
     }
 
     suspend fun download(fileId: String, room: String, server: String): ByteArraySlice {
@@ -474,7 +483,7 @@ object OpenGroupApi {
         whisperTo: List<String>? = null,
         whisperMods: Boolean? = null,
         fileIds: List<String>? = null
-    ): OpenGroupMessage {
+    ): Message {
         val signedMessage = message.sign(server) ?:throw Error.SigningFailed
         val parameters = signedMessage.toJSON().toMutableMap()
 
@@ -490,13 +499,11 @@ object OpenGroupApi {
             endpoint = Endpoint.RoomMessage(room),
             parameters = parameters
         )
-        val json =  getResponseBodyJson(request, signRequest = true)
-        @Suppress("UNCHECKED_CAST") val rawMessage = json as? Map<String, Any>
-            ?: throw Error.ParsingFailed
-        val result = OpenGroupMessage.fromJSON(rawMessage) ?: throw Error.ParsingFailed
-        val storage = MessagingModuleConfiguration.shared.storage
-        storage.addReceivedMessageTimestamp(result.sentTimestamp)
-        return result
+        val msg = getResponseBodyJson<Message>(request, signRequest = true)
+        msg.posted?.let {
+            MessagingModuleConfiguration.shared.storage.addReceivedMessageTimestamp(it.toEpochMilli())
+        }
+        return msg
     }
     // endregion
 
@@ -575,16 +582,16 @@ object OpenGroupApi {
                 request = BatchRequest(
                     method = POST,
                     path = "/user/$publicKey/ban",
-                    json = mapOf("rooms" to listOf(room))
+                    json = JsonObject(mapOf("rooms" to JsonArray(listOf(JsonPrimitive(room))))),
                 ),
                 endpoint = Endpoint.UserBan(publicKey),
-                responseType = object: TypeReference<Any>(){}
+                responseSerializer = Unit.serializer(),
             ),
             // Delete request
             BatchRequestInfo(
                 request = BatchRequest(DELETE, "/room/$room/all/$publicKey"),
                 endpoint = Endpoint.RoomDeleteMessages(room, publicKey),
-                responseType = object: TypeReference<Any>(){}
+                responseSerializer = Unit.serializer()
             )
         )
         sequentialBatch(server, requests)
@@ -630,25 +637,25 @@ object OpenGroupApi {
 
     private suspend fun getBatchResponseJson(
         request: Request,
-        requests: MutableList<BatchRequestInfo<*>>,
+        requests: List<BatchRequestInfo<*>>,
         signRequest: Boolean = true
     ): List<BatchResponse<*>> {
-        val batch = getResponseBody(request, signRequest = signRequest)
-        val results = JsonUtil.fromJson(batch, List::class.java) ?: throw Error.ParsingFailed
-        return results.mapIndexed { idx, result ->
-            val response = result as? Map<*, *> ?: throw Error.ParsingFailed
-            val code = response["code"] as Int
-            BatchResponse(
-                endpoint = requests[idx].endpoint,
-                code = code,
-                headers = response["headers"] as Map<String, String>,
-                body = if (code in 200..299) {
-                    requests[idx].responseType?.let { respType ->
-                        JsonUtil.toJson(response["body"]).takeIf { it != "[]" }?.let {
-                            JsonUtil.fromJson(it, respType)
-                        } ?: response["body"]
-                    }
+        val batch = getResponseBodyJson<List<APIBatchResponse>>(request = request, signRequest = signRequest)
+        check(batch.size <= requests.size) {
+            "Batch response size (${batch.size}) is larger than request size (${requests.size})."
+        }
 
+        return batch.mapIndexed { idx, result ->
+            val requestInfo = requests[idx]
+            BatchResponse(
+                endpoint = requestInfo.endpoint,
+                code = result.code,
+                headers = result.headers,
+                body = if (result.code in 200..299) {
+                    MessagingModuleConfiguration.shared.json.decodeFromJsonElement(
+                        requestInfo.responseSerializer,
+                        result.body
+                    )
                 } else null
             )
         }
@@ -698,14 +705,11 @@ object OpenGroupApi {
             server = defaultServer,
             endpoint = Endpoint.Rooms
         )
-        val response = getResponseBody(
+        return getResponseBodyJson(
             request = request,
             signRequest = false,
             serverPubKeyHex = defaultServerPublicKey
         )
-
-        return MessagingModuleConfiguration.shared.json
-            .decodeFromStream<Array<RoomInfoDetails>>(response.inputStream()).toList()
     }
 
     suspend fun getCapabilities(server: String, serverPubKeyHex: String? = null): Capabilities {

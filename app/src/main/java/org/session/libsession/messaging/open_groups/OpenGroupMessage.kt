@@ -1,5 +1,7 @@
 package org.session.libsession.messaging.open_groups
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.messaging.MessagingModuleConfiguration
@@ -27,23 +29,6 @@ data class OpenGroupMessage(
     val base64EncodedSignature: String? = null,
     val reactions: Map<String, OpenGroupApi.Reaction>? = null
 ) {
-
-    companion object {
-        fun fromJSON(json: Map<String, Any>): OpenGroupMessage? {
-            val base64EncodedData = json["data"] as? String ?: return null
-            val sentTimestamp = json["posted"] as? Double ?: return null
-            val serverID = json["id"] as? Int
-            val sender = json["session_id"] as? String
-            val base64EncodedSignature = json["signature"] as? String
-            return OpenGroupMessage(
-                serverID = serverID?.toLong(),
-                sender = sender,
-                sentTimestamp = (sentTimestamp * 1000).toLong(),
-                base64EncodedData = base64EncodedData,
-                base64EncodedSignature = base64EncodedSignature
-            )
-        }
-    }
 
     fun sign(server: String): OpenGroupMessage? {
         if (base64EncodedData.isNullOrEmpty()) return null
