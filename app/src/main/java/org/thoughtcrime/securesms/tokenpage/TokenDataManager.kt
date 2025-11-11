@@ -9,8 +9,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import javax.inject.Inject
@@ -18,7 +18,7 @@ import javax.inject.Singleton
 
 @Singleton
 class TokenDataManager @Inject constructor(
-    private val textSecurePreferences: TextSecurePreferences,
+    private val loginStateRepository: LoginStateRepository,
     private val tokenRepository: TokenRepository,
     @param:ManagerScope private val scope: CoroutineScope
 ) : OnAppStartupComponent {
@@ -40,7 +40,7 @@ class TokenDataManager @Inject constructor(
     override fun onPostAppStarted() {
         // we want to preload the data as soon as the user is logged in
         scope.launch {
-            textSecurePreferences.watchLocalNumber()
+            loginStateRepository.loggedInState
                 .map { it != null }
                 .distinctUntilChanged()
                 .collect { logged ->

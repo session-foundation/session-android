@@ -106,8 +106,6 @@ interface TextSecurePreferences {
     fun getPreferredCameraDirection(): CameraSelector
     fun getNotificationPrivacy(): NotificationPrivacyPreference
     fun getRepeatAlertsCount(): Int
-    fun getLocalRegistrationId(): Int
-    fun setLocalRegistrationId(registrationId: Int)
     fun isInThreadNotifications(): Boolean
     fun isUniversalUnidentifiedAccess(): Boolean
     fun getUpdateApkRefreshTime(): Long
@@ -116,12 +114,8 @@ interface TextSecurePreferences {
     fun getUpdateApkDownloadId(): Long
     fun setUpdateApkDigest(value: String?)
     fun getUpdateApkDigest(): String?
-    fun getLocalNumber(): String?
-    fun watchLocalNumber(): StateFlow<String?>
     fun getHasLegacyConfig(): Boolean
     fun setHasLegacyConfig(newValue: Boolean)
-    fun setLocalNumber(localNumber: String)
-    fun removeLocalNumber()
     fun isEnterSendsEnabled(): Boolean
     fun isPasswordDisabled(): Boolean
     fun setPasswordDisabled(disabled: Boolean)
@@ -160,8 +154,6 @@ interface TextSecurePreferences {
     fun setStringSetPreference(key: String, value: Set<String>)
     fun getHasViewedSeed(): Boolean
     fun setHasViewedSeed(hasViewedSeed: Boolean)
-    fun setRestorationTime(time: Long)
-    fun getRestorationTime(): Long
     fun getLastSnodePoolRefreshDate(): Long
     fun setLastSnodePoolRefreshDate(date: Date)
     fun getLastOpenTimeDate(): Long
@@ -274,7 +266,6 @@ interface TextSecurePreferences {
         const val PASSPHRASE_TIMEOUT_PREF = "pref_timeout_passphrase"
         const val ENTER_SENDS_PREF = "pref_enter_sends"
         const val THREAD_TRIM_ENABLED = "pref_trim_threads"
-        internal const val LOCAL_NUMBER_PREF = "pref_local_number"
         const val REGISTERED_GCM_PREF = "pref_gcm_registered"
         const val UPDATE_APK_REFRESH_TIME_PREF = "pref_update_apk_refresh_time"
         const val UPDATE_APK_DOWNLOAD_ID = "pref_update_apk_download_id"
@@ -282,6 +273,7 @@ interface TextSecurePreferences {
         const val IN_THREAD_NOTIFICATION_PREF = "pref_key_inthread_notifications"
         const val IN_APP_NOTIFICATION_SOUNDS = "pref_sound_when_app_open"
         const val MESSAGE_BODY_TEXT_SIZE_PREF = "pref_message_body_text_size"
+        @Deprecated("No longer used, kept for migration purposes")
         const val LOCAL_REGISTRATION_ID_PREF = "pref_local_registration_id"
         const val REPEAT_ALERTS_PREF = "pref_repeat_alerts"
         const val NOTIFICATION_PRIVACY_PREF = "pref_notification_privacy"
@@ -646,15 +638,6 @@ interface TextSecurePreferences {
             return getStringPreference(context, UPDATE_APK_DIGEST, null)
         }
 
-        @Deprecated(
-            "Use the dependency-injected TextSecurePreference instance instead",
-            ReplaceWith("TextSecurePreferences.getLocalNumber()")
-        )
-        @JvmStatic
-        fun getLocalNumber(context: Context): String? {
-            return preferenceInstance.getLocalNumber()
-        }
-
         @JvmStatic
         fun getHasLegacyConfig(context: Context): Boolean {
             return getBooleanPreference(context, HAS_RECEIVED_LEGACY_CONFIG, false)
@@ -987,7 +970,6 @@ class AppTextSecurePreferences @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val json: Json,
 ): TextSecurePreferences {
-    private val localNumberState = MutableStateFlow(getStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, null))
     private val postProLaunchState = MutableStateFlow(getBooleanPreference(SET_FORCE_POST_PRO, false))
     private val hiddenPasswordState = MutableStateFlow(getBooleanPreference(HIDE_PASSWORD, false))
 
@@ -1207,14 +1189,6 @@ class AppTextSecurePreferences @Inject constructor(
         }
     }
 
-    override fun getLocalRegistrationId(): Int {
-        return getIntegerPreference(TextSecurePreferences.LOCAL_REGISTRATION_ID_PREF, 0)
-    }
-
-    override fun setLocalRegistrationId(registrationId: Int) {
-        setIntegerPreference(TextSecurePreferences.LOCAL_REGISTRATION_ID_PREF, registrationId)
-    }
-
     override fun isInThreadNotifications(): Boolean {
         return getBooleanPreference(TextSecurePreferences.IN_THREAD_NOTIFICATION_PREF, true)
     }
@@ -1247,14 +1221,6 @@ class AppTextSecurePreferences @Inject constructor(
         return getStringPreference(TextSecurePreferences.UPDATE_APK_DIGEST, null)
     }
 
-    override fun getLocalNumber(): String? {
-        return localNumberState.value
-    }
-
-    override fun watchLocalNumber(): StateFlow<String?> {
-        return localNumberState
-    }
-
     override fun getHasLegacyConfig(): Boolean {
         return getBooleanPreference(TextSecurePreferences.HAS_RECEIVED_LEGACY_CONFIG, false)
     }
@@ -1262,17 +1228,6 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setHasLegacyConfig(newValue: Boolean) {
         setBooleanPreference(TextSecurePreferences.HAS_RECEIVED_LEGACY_CONFIG, newValue)
         _events.tryEmit(TextSecurePreferences.HAS_RECEIVED_LEGACY_CONFIG)
-    }
-
-    override fun setLocalNumber(localNumber: String) {
-        val normalised = localNumber.lowercase()
-        setStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, normalised)
-        localNumberState.value = normalised
-    }
-
-    override fun removeLocalNumber() {
-        localNumberState.value = null
-        removePreference(TextSecurePreferences.LOCAL_NUMBER_PREF)
     }
 
     override fun isEnterSendsEnabled(): Boolean {
@@ -1444,14 +1399,6 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setHasViewedSeed(hasViewedSeed: Boolean) {
         setBooleanPreference("has_viewed_seed", hasViewedSeed)
-    }
-
-    override fun setRestorationTime(time: Long) {
-        setLongPreference("restoration_time", time)
-    }
-
-    override fun getRestorationTime(): Long {
-        return getLongPreference("restoration_time", 0)
     }
 
     override fun getLastSnodePoolRefreshDate(): Long {
@@ -1695,7 +1642,6 @@ class AppTextSecurePreferences @Inject constructor(
      */
     override fun clearAll() {
         pushEnabled.update { false }
-        localNumberState.update { null }
         postProLaunchState.update { false }
         hiddenPasswordState.update { false }
 

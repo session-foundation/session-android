@@ -9,8 +9,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -32,8 +30,8 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.isGroupV2
@@ -45,6 +43,7 @@ import org.session.libsession.utilities.upsertContact
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.CommunityDatabase
 import org.thoughtcrime.securesms.database.DraftDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
@@ -129,7 +128,6 @@ interface ConversationRepository {
 
 @Singleton
 class DefaultConversationRepository @Inject constructor(
-    private val textSecurePreferences: TextSecurePreferences,
     private val messageDataProvider: MessageDataProvider,
     private val threadDb: ThreadDatabase,
     private val communityDatabase: CommunityDatabase,
@@ -145,26 +143,26 @@ class DefaultConversationRepository @Inject constructor(
     private val recipientRepository: RecipientRepository,
     @param:ManagerScope private val scope: CoroutineScope,
     private val messageSender: MessageSender,
+    private val loginStateRepository: LoginStateRepository,
 ) : ConversationRepository {
 
-    override val conversationListAddressesFlow = configFactory
-        .userConfigsChanged(EnumSet.of(
-            UserConfigType.CONTACTS,
-            UserConfigType.USER_PROFILE,
-            UserConfigType.USER_GROUPS
-        ))
-        .castAwayType()
-        .onStart {
-            // Only start when we have a local number
-            textSecurePreferences.watchLocalNumber().filterNotNull().first()
+    override val conversationListAddressesFlow = loginStateRepository.flowWithLoggedInState {
+        configFactory
+            .userConfigsChanged(EnumSet.of(
+                UserConfigType.CONTACTS,
+                UserConfigType.USER_PROFILE,
+                UserConfigType.USER_GROUPS
+            ))
+            .castAwayType()
+            .onStart {
+                emit(Unit)
+            }
+            .map { getConversationListAddresses() }
+    }.stateIn(scope, SharingStarted.Eagerly, getConversationListAddresses())
 
-            emit(Unit)
-        }
-        .map { getConversationListAddresses() }
-        .stateIn(scope, SharingStarted.Eagerly, getConversationListAddresses())
-
-    private fun getConversationListAddresses() = buildSet {
-        val myAddress = Address.Standard(AccountId(textSecurePreferences.getLocalNumber() ?: return@buildSet ))
+    private fun getConversationListAddresses() = buildSet<Address.Conversable> {
+        val myAddress = loginStateRepository.getLocalNumber()?.toAddress() as? Address.Standard
+            ?: return@buildSet
 
         // Always have NTS - we should only "hide" them on home screen - the convo should never be deleted
         add(myAddress)
@@ -397,10 +395,10 @@ class DefaultConversationRepository @Inject constructor(
         messages: Set<MessageRecord>
     ) {
         // delete the messages remotely
-        val userAddress: Address? =  textSecurePreferences.getLocalNumber()?.let { Address.fromSerialized(it) }
         val userAuth = requireNotNull(storage.userAuth) {
             "User auth is required to delete messages remotely"
         }
+        val userAddress = userAuth.accountId.toAddress()
 
         messages.forEach { message ->
             // delete from swarm
@@ -411,7 +409,7 @@ class DefaultConversationRepository @Inject constructor(
 
             // send an UnsendRequest to user's swarm
             buildUnsendRequest(message).let { unsendRequest ->
-                userAddress?.let { messageSender.send(unsendRequest, it) }
+                messageSender.send(unsendRequest, userAddress)
             }
 
             // send an UnsendRequest to recipient's swarm
@@ -454,10 +452,10 @@ class DefaultConversationRepository @Inject constructor(
         messages: Set<MessageRecord>
     ) {
         // delete the messages remotely
-        val userAddress: Address? =  textSecurePreferences.getLocalNumber()?.let { Address.fromSerialized(it) }
         val userAuth = requireNotNull(storage.userAuth) {
             "User auth is required to delete messages remotely"
         }
+        val userAddress = userAuth.accountId.toAddress()
 
         messages.forEach { message ->
             // delete from swarm
@@ -468,14 +466,15 @@ class DefaultConversationRepository @Inject constructor(
 
             // send an UnsendRequest to user's swarm
             buildUnsendRequest(message).let { unsendRequest ->
-                userAddress?.let { messageSender.send(unsendRequest, it) }
+                messageSender.send(unsendRequest, userAddress)
             }
         }
     }
 
     private fun buildUnsendRequest(message: MessageRecord): UnsendRequest {
         return UnsendRequest(
-            author = message.takeUnless { it.isOutgoing }?.run { individualRecipient.address.address } ?: textSecurePreferences.getLocalNumber(),
+            author = message.takeUnless { it.isOutgoing }?.run { individualRecipient.address.address }
+                ?: loginStateRepository.requireLocalNumber(),
             timestamp = message.timestamp
         )
     }

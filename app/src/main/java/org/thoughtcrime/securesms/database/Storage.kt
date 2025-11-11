@@ -61,10 +61,9 @@ import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.KeyHelper
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
-import org.thoughtcrime.securesms.crypto.KeyPairUtilities
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
@@ -105,16 +104,20 @@ open class Storage @Inject constructor(
     private val notificationManager: MessageNotifier,
     private val messageDataProvider: MessageDataProvider,
     private val clock: SnodeClock,
-    private val preferences: TextSecurePreferences,
     private val openGroupManager: Lazy<OpenGroupManager>,
     private val recipientRepository: RecipientRepository,
+    private val loginStateRepository: LoginStateRepository,
 ) : Database(context, helper), StorageProtocol {
 
-    override fun getUserPublicKey(): String? { return preferences.getLocalNumber() }
+    override fun getUserPublicKey(): String? { return loginStateRepository.peekLoginState()?.accountId?.hexString }
 
-    override fun getUserX25519KeyPair(): ECKeyPair { return lokiAPIDatabase.getUserX25519KeyPair() }
+    override fun getUserX25519KeyPair(): KeyPair = requireNotNull(loginStateRepository.peekLoginState()) {
+        "No logged in state available"
+    }.accountX25519KeyPair
 
-    override fun getUserED25519KeyPair(): KeyPair? { return KeyPairUtilities.getUserED25519KeyPair(context) }
+    override fun getUserED25519KeyPair(): KeyPair? {
+        return loginStateRepository.peekLoginState()?.accountEd25519KeyPair
+    }
 
     override fun getUserBlindedAccountId(serverPublicKey: String): AccountId? {
         val myId = getUserPublicKey() ?: return null
@@ -131,15 +134,6 @@ open class Storage @Inject constructor(
                 profileUpdated = configs.userProfile.getProfileUpdatedSeconds().secondsToInstant(),
             )
         }
-    }
-
-    override fun getOrGenerateRegistrationID(): Int {
-        var registrationID = TextSecurePreferences.getLocalRegistrationId(context)
-        if (registrationID == 0) {
-            registrationID = KeyHelper.generateRegistrationId(false)
-            TextSecurePreferences.setLocalRegistrationId(context, registrationID)
-        }
-        return registrationID
     }
 
     override fun getAttachmentsForMessage(mmsMessageId: Long): List<DatabaseAttachment> {

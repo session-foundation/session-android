@@ -19,15 +19,13 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.DistributionTypes
-import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerProtocol
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.messages.SignalServiceGroup
-import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.MessagingDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
@@ -61,7 +59,7 @@ class ExpiringMessageManager @Inject constructor(
     private val mmsDatabase: MmsDatabase,
     private val clock: SnodeClock,
     private val storage: Lazy<Storage>,
-    private val preferences: TextSecurePreferences,
+    private val loginStateRepository: LoginStateRepository,
     private val recipientRepository: RecipientRepository,
     private val threadDatabase: ThreadDatabase,
     @ManagerScope scope: CoroutineScope,
@@ -185,7 +183,7 @@ class ExpiringMessageManager @Inject constructor(
     }
 
     override fun insertExpirationTimerMessage(message: ExpirationTimerUpdate) {
-        val userPublicKey = preferences.getLocalNumber()
+        val userPublicKey = loginStateRepository.requireLocalNumber()
         val senderPublicKey = message.sender
 
         message.id = if (senderPublicKey == null || userPublicKey == senderPublicKey) {
