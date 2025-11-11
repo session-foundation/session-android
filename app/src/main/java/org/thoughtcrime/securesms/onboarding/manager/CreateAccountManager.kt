@@ -6,9 +6,8 @@ import org.session.libsession.snode.SnodeModule
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
-import org.session.libsignal.utilities.KeyHelper
-import org.session.libsignal.utilities.hexEncodedPublicKey
-import org.thoughtcrime.securesms.crypto.KeyPairUtilities
+import org.thoughtcrime.securesms.auth.LoggedInState
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.util.VersionDataFetcher
 import javax.inject.Inject
@@ -16,11 +15,10 @@ import javax.inject.Singleton
 
 @Singleton
 class CreateAccountManager @Inject constructor(
-    private val application: Application,
-    private val prefs: TextSecurePreferences,
     private val versionDataFetcher: VersionDataFetcher,
     private val configFactory: ConfigFactoryProtocol,
     private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
+    private val loginStateRepository: LoginStateRepository,
 ) {
     private val database: LokiAPIDatabaseProtocol
         get() = SnodeModule.shared.storage
@@ -31,17 +29,13 @@ class CreateAccountManager @Inject constructor(
         database.clearAllLastMessageHashes()
         receivedMessageHashDatabase.removeAll()
 
-        val keyPairGenerationResult = KeyPairUtilities.generate()
-        val seed = keyPairGenerationResult.seed
-        val ed25519KeyPair = keyPairGenerationResult.ed25519KeyPair
-        val x25519KeyPair = keyPairGenerationResult.x25519KeyPair
+        loginStateRepository.update { oldState ->
+            require(oldState == null) {
+                "Attempting to create a new account when one already exists!"
+            }
 
-        KeyPairUtilities.store(application, seed, ed25519KeyPair, x25519KeyPair)
-        val userHexEncodedPublicKey = x25519KeyPair.hexEncodedPublicKey
-        val registrationID = KeyHelper.generateRegistrationId(false)
-        prefs.setLocalRegistrationId(registrationID)
-        prefs.setLocalNumber(userHexEncodedPublicKey)
-        prefs.setRestorationTime(0)
+            LoggedInState.generate(seed = null)
+        }
 
         configFactory.withMutableUserConfigs {
             it.userProfile.setName(displayName)

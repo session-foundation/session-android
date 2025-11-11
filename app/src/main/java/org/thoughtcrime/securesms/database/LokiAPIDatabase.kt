@@ -446,11 +446,6 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
         TextSecurePreferences.setLastSnodePoolRefreshDate(context, date)
     }
 
-    override fun getUserX25519KeyPair(): ECKeyPair {
-        val keyPair = IdentityKeyUtil.getIdentityKeyPair(context)
-        return ECKeyPair(DjbECPublicKey(keyPair.publicKey.serialize().removingIdPrefixIfNeeded()), DjbECPrivateKey(keyPair.privateKey.serialize()))
-    }
-
     fun addClosedGroupEncryptionKeyPair(encryptionKeyPair: ECKeyPair, groupPublicKey: String, timestamp: Long) {
         val database = writableDatabase
         val index = "$groupPublicKey-$timestamp"

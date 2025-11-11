@@ -8,21 +8,20 @@ import kotlinx.coroutines.launch
 import org.session.libsession.snode.SnodeModule
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
-import org.session.libsignal.utilities.hexEncodedPublicKey
-import org.thoughtcrime.securesms.ApplicationContext
-import org.thoughtcrime.securesms.crypto.KeyPairUtilities
+import org.thoughtcrime.securesms.auth.LoggedInState
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
-import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.VersionDataFetcher
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class LoadAccountManager @Inject constructor(
-    @dagger.hilt.android.qualifiers.ApplicationContext private val context: Context,
+    @param:dagger.hilt.android.qualifiers.ApplicationContext private val context: Context,
     private val prefs: TextSecurePreferences,
     private val versionDataFetcher: VersionDataFetcher,
     private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
+    private val loginStateRepository: LoginStateRepository,
 ) {
     private val database: LokiAPIDatabaseProtocol
         get() = SnodeModule.shared.storage
@@ -41,18 +40,16 @@ class LoadAccountManager @Inject constructor(
             database.clearAllLastMessageHashes()
             receivedMessageHashDatabase.removeAll()
 
-            // RestoreActivity handles seed this way
-            val keyPairGenerationResult = KeyPairUtilities.generate(seed)
-            val x25519KeyPair = keyPairGenerationResult.x25519KeyPair
-            KeyPairUtilities.store(context, seed, keyPairGenerationResult.ed25519KeyPair, x25519KeyPair)
-            val userHexEncodedPublicKey = x25519KeyPair.hexEncodedPublicKey
-            val registrationID = org.session.libsignal.utilities.KeyHelper.generateRegistrationId(false)
-            prefs.apply {
-                setLocalRegistrationId(registrationID)
-                setLocalNumber(userHexEncodedPublicKey)
-                setRestorationTime(System.currentTimeMillis())
-                setHasViewedSeed(true)
+            loginStateRepository.update {
+                require(it == null) {
+                    "Attempting to restore an account when one already exists!"
+                }
+
+                LoggedInState.generate(seed)
             }
+
+            // Mark that the user has viewed their seed to prevent being prompted again
+            prefs.setHasViewedSeed(true)
 
             versionDataFetcher.startTimedVersionCheck()
         }

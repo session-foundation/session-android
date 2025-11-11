@@ -40,8 +40,6 @@ import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_LARGE_KEY
-import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.isCommunity
@@ -106,7 +104,6 @@ class ConversationReactionOverlay : FrameLayout {
     @Inject lateinit var repository: ConversationRepository
     @Inject lateinit var dateUtils: DateUtils
     @Inject lateinit var threadDatabase: ThreadDatabase
-    @Inject lateinit var textSecurePreferences: TextSecurePreferences
     @Inject lateinit var deprecationManager: LegacyGroupDeprecationManager
     @Inject lateinit var openGroupManager: OpenGroupManager
 
@@ -580,12 +577,6 @@ class ConversationReactionOverlay : FrameLayout {
     fun setOnHideListener(onHideListener: OnHideListener?) {
         this.onHideListener = onHideListener
     }
-
-    private fun getOldEmoji(messageRecord: MessageRecord): String? =
-        messageRecord.reactions
-            .filter { it.author == getLocalNumber(context) }
-            .firstOrNull()
-            ?.let(ReactionRecord::emoji)
 
     private fun getMenuActionItems(message: MessageRecord, recipient: Address): List<ActionItem> {
         val items: MutableList<ActionItem> = ArrayList()

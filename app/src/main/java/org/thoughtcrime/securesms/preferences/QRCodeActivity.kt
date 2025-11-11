@@ -14,15 +14,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.PublicKeyValidation
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.ui.components.QRScannerScreen
@@ -37,7 +38,10 @@ import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 
 private val TITLES = listOf(R.string.view, R.string.scan)
 
+@AndroidEntryPoint
 class QRCodeActivity : ScreenLockActionBarActivity() {
+
+    lateinit var loginStateRepository: LoginStateRepository
 
     override val applyDefaultWindowInsets: Boolean
         get() = false
@@ -57,7 +61,7 @@ class QRCodeActivity : ScreenLockActionBarActivity() {
 
         setComposeContent {
             Tabs(
-                TextSecurePreferences.getLocalNumber(this)!!,
+                loginStateRepository.requireLocalNumber(),
                 errors.asSharedFlow(),
                 onScan = ::onScan
             )
