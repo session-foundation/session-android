@@ -34,8 +34,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -269,81 +271,86 @@ fun SessionProCTA(
             onDismissRequest = onCancel,
             content = {
                 DialogBg {
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        // hero image
-                        BottomFadingEdgeBox(
-                            fadingEdgeHeight = 70.dp,
-                            fadingColor = LocalColors.current.backgroundSecondary,
-                            content = { _ ->
-                                content()
-                            },
-                        )
-
-                        // content
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(LocalDimensions.current.smallSpacing)
-                        ) {
-                            // title
-                            ProBadgeText(
-                                modifier = Modifier.align(Alignment.CenterHorizontally),
-                                text = title,
-                                textStyle = LocalType.current.h5.copy(color = titleColor),
-                                badgeAtStart = badgeAtStart,
-                                badgeColors = if (disabled) proBadgeColorDisabled() else proBadgeColorStandard(),
+                    BoxWithConstraints(Modifier.fillMaxWidth()) {
+                        val heroMaxHeight = maxHeight * 0.4f
+                        Column(modifier = Modifier.fillMaxWidth()
+                            .verticalScroll(rememberScrollState())) {
+                            // hero image
+                            BottomFadingEdgeBox(
+                                modifier = Modifier.heightIn(max = heroMaxHeight),
+                                fadingEdgeHeight = 70.dp,
+                                fadingColor = LocalColors.current.backgroundSecondary,
+                                content = { _ ->
+                                    content()
+                                },
                             )
 
-                            Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
-
-                            // main message
-                            textContent()
-
-                            Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
-
-                            // features
-                            if (features.isNotEmpty()) {
-                                features.forEachIndexed { index, feature ->
-                                    ProCTAFeature(data = feature)
-                                    if (index < features.size - 1) {
-                                        Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
-                                    }
-                                }
+                            // content
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(LocalDimensions.current.smallSpacing)
+                            ) {
+                                // title
+                                ProBadgeText(
+                                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                                    text = title,
+                                    textStyle = LocalType.current.h5.copy(color = titleColor),
+                                    badgeAtStart = badgeAtStart,
+                                    badgeColors = if (disabled) proBadgeColorDisabled() else proBadgeColorStandard(),
+                                )
 
                                 Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
-                            }
 
-                            // buttons
-                            Row(
-                                Modifier.height(IntrinsicSize.Min)
-                                    .fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(
-                                    LocalDimensions.current.xsSpacing,
-                                    Alignment.CenterHorizontally
-                                ),
-                            ) {
-                                positiveButtonText?.let {
-                                    AccentFillButtonRect(
-                                        modifier = Modifier.then(
-                                            if (negativeButtonText != null)
-                                                Modifier.weight(1f)
-                                            else Modifier
-                                        ).shimmerOverlay(),
-                                        text = it,
-                                        onClick = onUpgrade ?: defaultUpgrade
-                                    )
+                                // main message
+                                textContent()
+
+                                Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
+
+                                // features
+                                if (features.isNotEmpty()) {
+                                    features.forEachIndexed { index, feature ->
+                                        ProCTAFeature(data = feature)
+                                        if (index < features.size - 1) {
+                                            Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
+                                        }
+                                    }
+
+                                    Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
                                 }
 
-                                negativeButtonText?.let {
-                                    TertiaryFillButtonRect(
-                                        modifier = Modifier.then(
-                                            if (positiveButtonText != null)
-                                                Modifier.weight(1f)
-                                            else Modifier
-                                        ),
-                                        text = it,
-                                        onClick = onCancel
-                                    )
+                                // buttons
+                                Row(
+                                    Modifier.height(IntrinsicSize.Min)
+                                        .fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(
+                                        LocalDimensions.current.xsSpacing,
+                                        Alignment.CenterHorizontally
+                                    ),
+                                ) {
+                                    positiveButtonText?.let {
+                                        AccentFillButtonRect(
+                                            modifier = Modifier.then(
+                                                if (negativeButtonText != null)
+                                                    Modifier.weight(1f)
+                                                else Modifier
+                                            ).shimmerOverlay(),
+                                            text = it,
+                                            onClick = onUpgrade ?: defaultUpgrade
+                                        )
+                                    }
+
+                                    negativeButtonText?.let {
+                                        TertiaryFillButtonRect(
+                                            modifier = Modifier.then(
+                                                if (positiveButtonText != null)
+                                                    Modifier.weight(1f)
+                                                else Modifier
+                                            ),
+                                            text = it,
+                                            onClick = onCancel
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -709,23 +716,26 @@ fun PinProCTA(
     )
 }
 
-@Preview
+@Preview(name = "Compact", widthDp = 200, heightDp = 300)
+@Preview(name = "Medium", widthDp = 720, heightDp = 1280)
 @Composable
 private fun PreviewProCTA(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
     PreviewTheme(colors) {
-        SimpleSessionProCTA(
-            heroImage = R.drawable.cta_hero_char_limit,
-            text = "This is a description of this Pro feature",
-            features = listOf(
-                CTAFeature.Icon("Feature one"),
-                CTAFeature.Icon("Feature two", R.drawable.ic_eye),
-                CTAFeature.RainbowIcon("Feature three"),
-            ),
-            onUpgrade = {},
-            onCancel = {}
-        )
+        Box(Modifier.fillMaxSize()) {
+            SimpleSessionProCTA(
+                heroImage = R.drawable.cta_hero_char_limit,
+                text = "This is a description of this Pro feature",
+                features = listOf(
+                    CTAFeature.Icon("Feature one"),
+                    CTAFeature.Icon("Feature two", R.drawable.ic_eye),
+                    CTAFeature.RainbowIcon("Feature three"),
+                ),
+                onUpgrade = {},
+                onCancel = {}
+            )
+        }
     }
 }
 
