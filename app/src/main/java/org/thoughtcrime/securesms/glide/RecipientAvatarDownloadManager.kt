@@ -7,8 +7,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
@@ -22,6 +20,7 @@ import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemote
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.attachments.AvatarDownloadManager
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import javax.inject.Inject
@@ -35,23 +34,18 @@ class RecipientAvatarDownloadManager @Inject constructor(
     private val configFactory: ConfigFactory,
     @ManagerScope scope: CoroutineScope,
     private val avatarDownloadManager: AvatarDownloadManager,
+    private val loginStateRepository: LoginStateRepository,
 ) {
     private val avatarBulkDownloadSemaphore = Semaphore(5)
 
     init {
         scope.launch {
-            prefs.watchLocalNumber()
-                .map { it != null }
-                .flatMapLatest { isLoggedIn ->
-                    if (isLoggedIn) {
-                        (configFactory.configUpdateNotifications as Flow<*>)
-                            .debounce(500)
-                            .onStart { emit(Unit) }
-                            .map { getAllAvatars() }
-                    } else {
-                        flowOf(emptySet())
-                    }
-                }
+            loginStateRepository.flowWithLoggedInState {
+                (configFactory.configUpdateNotifications as Flow<*>)
+                    .debounce(500)
+                    .onStart { emit(Unit) }
+                    .map { getAllAvatars() }
+            }
                 .scan(State()) { acc, newSet ->
                     val toDownload = newSet - acc.downloadedAvatar
                     val coroutineJobs = acc.downloadingJob.toMutableMap()

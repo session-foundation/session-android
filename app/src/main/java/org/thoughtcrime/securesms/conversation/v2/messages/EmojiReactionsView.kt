@@ -16,8 +16,8 @@ import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewEmojiReactionsBinding
 import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
-import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.ThemeUtil
+import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.components.emoji.EmojiImageView
 import org.thoughtcrime.securesms.components.emoji.EmojiUtil
 import org.thoughtcrime.securesms.conversation.v2.ViewUtil
@@ -93,7 +93,10 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
     }
 
     private fun displayReactions(messageId: MessageId, threshold: Int) {
-        val userPublicKey = getLocalNumber(context)
+        val userPublicKey = (context.applicationContext as ApplicationContext).loginStateRepository
+            .get()
+            .getLocalNumber()
+
         val reactions = buildSortedReactionsList(messageId, records!!, userPublicKey, threshold)
         binding.layoutEmojiContainer.removeAllViews()
         val overflowContainer = LinearLayout(context)

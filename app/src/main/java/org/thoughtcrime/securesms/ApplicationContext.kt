@@ -50,6 +50,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.pushSuff
 import org.session.libsignal.utilities.HTTP.isConnectedToNetwork
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.AppContext.configureKovenant
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.debugmenu.DebugLogger
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
@@ -99,6 +100,9 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
     // Exist purely because Glide doesn't support Hilt injection
     @Inject
     lateinit var remoteFileLoader: Provider<RemoteFileLoader>
+
+    @Inject
+    lateinit var loginStateRepository: Lazy<LoginStateRepository>
 
 
     @Volatile
