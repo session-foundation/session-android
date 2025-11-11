@@ -8,6 +8,7 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.removingIdPrefixIfNeeded
 
+@Deprecated("This class is deprecated and new code should try to encrypt/encode message using SessionProtocol API")
 object MessageEncrypter {
 
     /**

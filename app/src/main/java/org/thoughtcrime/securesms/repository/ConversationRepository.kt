@@ -144,6 +144,7 @@ class DefaultConversationRepository @Inject constructor(
     private val recipientDatabase: RecipientSettingsDatabase,
     private val recipientRepository: RecipientRepository,
     @param:ManagerScope private val scope: CoroutineScope,
+    private val messageSender: MessageSender,
 ) : ConversationRepository {
 
     override val conversationListAddressesFlow = configFactory
@@ -285,7 +286,7 @@ class DefaultConversationRepository @Inject constructor(
                 false
             )
 
-            MessageSender.send(message, contact)
+            messageSender.send(message, contact)
         }
     }
 
@@ -410,12 +411,12 @@ class DefaultConversationRepository @Inject constructor(
 
             // send an UnsendRequest to user's swarm
             buildUnsendRequest(message).let { unsendRequest ->
-                userAddress?.let { MessageSender.send(unsendRequest, it) }
+                userAddress?.let { messageSender.send(unsendRequest, it) }
             }
 
             // send an UnsendRequest to recipient's swarm
             buildUnsendRequest(message).let { unsendRequest ->
-                MessageSender.send(unsendRequest, recipient)
+                messageSender.send(unsendRequest, recipient)
             }
         }
     }
@@ -428,7 +429,7 @@ class DefaultConversationRepository @Inject constructor(
             messages.forEach { message ->
                 // send an UnsendRequest to group's swarm
                 buildUnsendRequest(message).let { unsendRequest ->
-                    MessageSender.send(unsendRequest, recipient)
+                    messageSender.send(unsendRequest, recipient)
                 }
             }
         }
@@ -467,7 +468,7 @@ class DefaultConversationRepository @Inject constructor(
 
             // send an UnsendRequest to user's swarm
             buildUnsendRequest(message).let { unsendRequest ->
-                userAddress?.let { MessageSender.send(unsendRequest, it) }
+                userAddress?.let { messageSender.send(unsendRequest, it) }
             }
         }
     }
@@ -551,7 +552,7 @@ class DefaultConversationRepository @Inject constructor(
                 }
 
                 withContext(Dispatchers.Default) {
-                    MessageSender.send(message = MessageRequestResponse(true), address = recipient)
+                    messageSender.send(message = MessageRequestResponse(true), address = recipient)
 
                     // add a control message for our user
                     storage.insertMessageRequestResponseFromYou(threadDb.getOrCreateThreadIdFor(recipient))

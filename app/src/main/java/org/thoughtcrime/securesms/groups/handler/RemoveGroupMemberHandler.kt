@@ -62,6 +62,7 @@ class RemoveGroupMemberHandler @Inject constructor(
     private val storage: StorageProtocol,
     private val groupScope: GroupScope,
     @ManagerScope scope: CoroutineScope,
+    private val messageSender: MessageSender,
 ) : OnAppStartupComponent {
     init {
         scope.launch {
@@ -220,7 +221,7 @@ class RemoveGroupMemberHandler @Inject constructor(
     ): SnodeMessage {
         val timestamp = clock.currentTimeMills()
 
-        return MessageSender.buildWrappedMessageToSnode(
+        return messageSender.buildWrappedMessageToSnode(
             destination = Destination.ClosedGroup(groupAccountId),
             message = GroupUpdated(
                 SignalServiceProtos.DataMessage.GroupUpdateMessage.newBuilder()
