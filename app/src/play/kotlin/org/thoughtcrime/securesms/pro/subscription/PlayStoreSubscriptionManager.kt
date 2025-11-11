@@ -13,6 +13,8 @@ import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
 import com.android.billingclient.api.queryProductDetails
 import com.android.billingclient.api.queryPurchasesAsync
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,6 +39,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager.PurchaseEvent
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import java.time.Instant
@@ -50,10 +53,11 @@ import javax.inject.Singleton
 @Singleton
 class PlayStoreSubscriptionManager @Inject constructor(
     private val application: Application,
-    @param:ManagerScope private val scope: CoroutineScope,
     private val currentActivityObserver: CurrentActivityObserver,
     private val prefs: TextSecurePreferences,
-) : SubscriptionManager {
+    proStatusManager: ProStatusManager,
+    @param:ManagerScope scope: CoroutineScope,
+) : SubscriptionManager(proStatusManager, scope) {
     override val id = "google_play_store"
     override val name = "Google Play Store"
     override val description = ""
@@ -75,29 +79,17 @@ class PlayStoreSubscriptionManager @Inject constructor(
 
     override val quickRefundUrl = "https://support.google.com/googleplay/workflow/9813244"
 
-    private val _purchaseEvents = MutableSharedFlow<PurchaseEvent>(
-        replay = 0,
-        extraBufferCapacity = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
-    )
-    override val purchaseEvents: SharedFlow<PurchaseEvent> = _purchaseEvents.asSharedFlow()
-
     private val billingClient by lazy {
         BillingClient.newBuilder(application)
             .setListener { result, purchases ->
-                Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "onPurchasesUpdated: $result, $purchases")
+                Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Billing callback. Result: $result, Purchases: ${purchases?.map { it.orderId }}")
+
                 if (result.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
                     purchases.firstOrNull()?.let{
-                        scope.launch {
-                           // signal that purchase was completed
-                            try {
-                                //todo PRO send confirmation to libsession
-                            } catch (e : Exception){
-                                _purchaseEvents.emit(PurchaseEvent.Failed())
-                            }
+                        Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label,
+                            "Billing callback. We have a purchase [${it.orderId}]. Acknowledged? ${it.isAcknowledged}")
 
-                            _purchaseEvents.emit(PurchaseEvent.Success)
-                        }
+                        onPurchaseSuccessful()
                     }
                 } else {
                     Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Purchase failed or cancelled: $result")
@@ -127,8 +119,8 @@ class PlayStoreSubscriptionManager @Inject constructor(
 
             val result = getProductDetails()
 
-            check(result.billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                "Failed to query product details. Reason: ${result.billingResult}"
+            check(result?.billingResult?.responseCode == BillingClient.BillingResponseCode.OK) {
+                "Failed to query product details. Reason: ${result?.billingResult}"
             }
 
             val productDetails = checkNotNull(result.productDetailsList?.firstOrNull()) {
@@ -194,7 +186,9 @@ class PlayStoreSubscriptionManager @Inject constructor(
         }
     }
 
-    private suspend fun getProductDetails(): ProductDetailsResult {
+    private suspend fun getProductDetails(): ProductDetailsResult? {
+        if(!billingClient.isReady || !_playBillingAvailable.value) return null
+
         return billingClient.queryProductDetails(
             QueryProductDetailsParams.newBuilder()
                 .setProductList(
@@ -212,6 +206,12 @@ class PlayStoreSubscriptionManager @Inject constructor(
     override fun onPostAppStarted() {
         super.onPostAppStarted()
 
+        if (!hasPlayServices() || !hasPlayStore()) {
+            _playBillingAvailable.update { false }
+            Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Play Billing unavailable (GMS/Play Store missing).")
+            return
+        }
+
         billingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingServiceDisconnected() {
 
@@ -222,9 +222,26 @@ class PlayStoreSubscriptionManager @Inject constructor(
                 Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "onBillingSetupFinished with $result")
                 if (result.responseCode == BillingClient.BillingResponseCode.OK) {
                     _playBillingAvailable.update { true }
+                } else {
+                    _playBillingAvailable.update { false }
+                    runCatching { billingClient.endConnection() }
                 }
             }
         })
+    }
+
+    private fun hasPlayServices(): Boolean {
+        val gms = GoogleApiAvailability.getInstance()
+        return gms.isGooglePlayServicesAvailable(application) == ConnectionResult.SUCCESS
+    }
+
+    private fun hasPlayStore(): Boolean {
+        return try {
+            val ai = application.packageManager.getApplicationInfo("com.android.vending", 0)
+            ai.enabled
+        } catch (_: Exception) {
+            false
+        }
     }
 
     /**
@@ -232,6 +249,8 @@ class PlayStoreSubscriptionManager @Inject constructor(
      * Returns null if no active subscription is found.
      */
     private suspend fun getExistingSubscription(): Purchase? {
+        if(!billingClient.isReady || !_playBillingAvailable.value) return null
+
         return try {
             val params = QueryPurchasesParams.newBuilder()
                 .setProductType(BillingClient.ProductType.SUBS)
@@ -273,8 +292,8 @@ class PlayStoreSubscriptionManager @Inject constructor(
     @Throws(Exception::class)
     override suspend fun getSubscriptionPrices(): List<SubscriptionManager.SubscriptionPricing> {
         val result = getProductDetails()
-        check(result.billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-            "Failed to query product details. Reason: ${result.billingResult}"
+        check(result?.billingResult?.responseCode == BillingClient.BillingResponseCode.OK) {
+            "Failed to query product details. Reason: ${result?.billingResult}"
         }
 
         val productDetails = result.productDetailsList?.firstOrNull()

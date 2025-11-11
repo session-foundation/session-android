@@ -82,7 +82,6 @@ class ProSettingsViewModel @AssistedInject constructor(
     val cancelPlanState: StateFlow<State<CancelPlanState>> = _cancelPlanState
 
     init {
-        Log.w("", "*** VM INIT")
         // observe subscription status
         viewModelScope.launch {
             proStatusManager.subscriptionState.collect {
@@ -304,16 +303,11 @@ class ProSettingsViewModel @AssistedInject constructor(
                 }
             }
 
-            Commands.GoToProSettings -> {
-                // navigate back to home and pop all other screens off the stack
-                navigateTo(
-                    destination = ProSettingsDestination.Home,
-                    navOptions = {
-                        popUpTo(ProSettingsDestination.Home){
-                            inclusive = true
-                        }
-                    }
-                )
+            Commands.OnPostPlanConfirmation -> {
+                // send a custom action to deal with "post plan confirmation"
+                viewModelScope.launch {
+                    navigator.sendCustomAction(ProNavHostCustomActions.ON_POST_PLAN_CONFIRMATION)
+                }
             }
 
             Commands.OpenSubscriptionPage -> {
@@ -553,13 +547,18 @@ class ProSettingsViewModel @AssistedInject constructor(
         viewModelScope.launch {
             val subType = _proSettingsUIState.value.subscriptionState.type
 
-            // first check if the user has a valid subscription
+            // first check if the user has a valid subscription and billing
+            val hasBillingCapacity = subscriptionCoordinator.getCurrentManager().supportsBilling.value
             val hasValidSub = subscriptionCoordinator.getCurrentManager().hasValidSubscription()
 
-            // next get the plans, including their pricing
-            // there is no point in calculating it if the user is pro but without a valid sub
-            // (meaning they got pro from a different google account than the one they are on now
-            val plans = if(subType is SubscriptionType.Active && !hasValidSub) emptyList()
+            // next get the plans, including their pricing, unless there is no billing
+            // or the user is pro without a valid subscription
+            // or the user is pro but non originating
+            val noPriceNeeded = !hasBillingCapacity
+                    || (subType is SubscriptionType.Active && !hasValidSub)
+                    || (subType is SubscriptionType.Active && subType.subscriptionDetails.isFromAnotherPlatform())
+
+            val plans = if(noPriceNeeded) emptyList()
             else {
                 // attempt to get the prices from the subscription provider
                 // return early in case of error
@@ -576,7 +575,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                     ChoosePlanState(
                         subscriptionType = subType,
                         hasValidSubscription = hasValidSub,
-                        hasBillingCapacity = subscriptionCoordinator.getCurrentManager().supportsBilling.value,
+                        hasBillingCapacity = hasBillingCapacity,
                         enableButton = subType !is SubscriptionType.Active.AutoRenewing, // only the auto-renew can have a disabled state
                         plans = plans
                     )
@@ -737,7 +736,7 @@ class ProSettingsViewModel @AssistedInject constructor(
         data class GoToChoosePlan(val inSheet: Boolean): Commands
         object GoToRefund: Commands
         object GoToCancel: Commands
-        object GoToProSettings: Commands
+        object OnPostPlanConfirmation: Commands
 
         object OpenSubscriptionPage: Commands
 

@@ -271,6 +271,35 @@ class ProStatusManager @Inject constructor(
         return emptySet()
     }
 
+    suspend fun appProPaymentToBackend() {
+        //todo PRO call AddProPaymentRequest in libsession
+
+        // we should `AddProPaymentRequest` with exponential backoff
+
+        /**
+         * Here are the errors from the back end that we will need to be aware of
+         * UnknownPayment: means it's potentially not acknowledged yet so might need to keep trying until this work or times out
+         * Error: is non retryable - we might want a custom UI for this.
+         *
+         *
+         *   /// Payment was claimed and the pro proof was successfully generated
+         *     Success = SESSION_PRO_BACKEND_ADD_PRO_PAYMENT_RESPONSE_STATUS_SUCCESS,
+         *
+         *     /// Backend encountered an error when attempting to claim the payment
+         *     Error = SESSION_PRO_BACKEND_ADD_PRO_PAYMENT_RESPONSE_STATUS_ERROR,
+         *
+         *     /// Request JSON failed to be parsed correctly, payload was malformed or missing values
+         *     ParseError = SESSION_PRO_BACKEND_ADD_PRO_PAYMENT_RESPONSE_STATUS_PARSE_ERROR,
+         *
+         *     /// Payment is already claimed
+         *     AlreadyRedeemed = SESSION_PRO_BACKEND_ADD_PRO_PAYMENT_RESPONSE_STATUS_ALREADY_REDEEMED,
+         *
+         *     /// Payment transaction attempted to claim a payment that the backend does not have. Either the
+         *     /// payment doesn't exist or the backend has not witnessed the payment from the provider yet.
+         *     UnknownPayment = SESSION_PRO_BACKEND_ADD_PRO_PAYMENT_RESPONSE_STATUS_UNKNOWN_PAYMENT,
+         */
+    }
+
     enum class MessageProFeature {
         ProBadge, LongMessage, AnimatedAvatar
     }
