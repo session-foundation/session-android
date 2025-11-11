@@ -13,6 +13,8 @@ import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
 import com.android.billingclient.api.queryProductDetails
 import com.android.billingclient.api.queryPurchasesAsync
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -117,8 +119,8 @@ class PlayStoreSubscriptionManager @Inject constructor(
 
             val result = getProductDetails()
 
-            check(result.billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                "Failed to query product details. Reason: ${result.billingResult}"
+            check(result?.billingResult?.responseCode == BillingClient.BillingResponseCode.OK) {
+                "Failed to query product details. Reason: ${result?.billingResult}"
             }
 
             val productDetails = checkNotNull(result.productDetailsList?.firstOrNull()) {
@@ -184,7 +186,9 @@ class PlayStoreSubscriptionManager @Inject constructor(
         }
     }
 
-    private suspend fun getProductDetails(): ProductDetailsResult {
+    private suspend fun getProductDetails(): ProductDetailsResult? {
+        if(!billingClient.isReady || !_playBillingAvailable.value) return null
+
         return billingClient.queryProductDetails(
             QueryProductDetailsParams.newBuilder()
                 .setProductList(
@@ -202,6 +206,12 @@ class PlayStoreSubscriptionManager @Inject constructor(
     override fun onPostAppStarted() {
         super.onPostAppStarted()
 
+        if (!hasPlayServices() || !hasPlayStore()) {
+            _playBillingAvailable.update { false }
+            Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Play Billing unavailable (GMS/Play Store missing).")
+            return
+        }
+
         billingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingServiceDisconnected() {
 
@@ -212,9 +222,26 @@ class PlayStoreSubscriptionManager @Inject constructor(
                 Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "onBillingSetupFinished with $result")
                 if (result.responseCode == BillingClient.BillingResponseCode.OK) {
                     _playBillingAvailable.update { true }
+                } else {
+                    _playBillingAvailable.update { false }
+                    runCatching { billingClient.endConnection() }
                 }
             }
         })
+    }
+
+    private fun hasPlayServices(): Boolean {
+        val gms = GoogleApiAvailability.getInstance()
+        return gms.isGooglePlayServicesAvailable(application) == ConnectionResult.SUCCESS
+    }
+
+    private fun hasPlayStore(): Boolean {
+        return try {
+            val ai = application.packageManager.getApplicationInfo("com.android.vending", 0)
+            ai.enabled
+        } catch (_: Exception) {
+            false
+        }
     }
 
     /**
@@ -222,6 +249,8 @@ class PlayStoreSubscriptionManager @Inject constructor(
      * Returns null if no active subscription is found.
      */
     private suspend fun getExistingSubscription(): Purchase? {
+        if(!billingClient.isReady || !_playBillingAvailable.value) return null
+
         return try {
             val params = QueryPurchasesParams.newBuilder()
                 .setProductType(BillingClient.ProductType.SUBS)
@@ -263,8 +292,8 @@ class PlayStoreSubscriptionManager @Inject constructor(
     @Throws(Exception::class)
     override suspend fun getSubscriptionPrices(): List<SubscriptionManager.SubscriptionPricing> {
         val result = getProductDetails()
-        check(result.billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-            "Failed to query product details. Reason: ${result.billingResult}"
+        check(result?.billingResult?.responseCode == BillingClient.BillingResponseCode.OK) {
+            "Failed to query product details. Reason: ${result?.billingResult}"
         }
 
         val productDetails = result.productDetailsList?.firstOrNull()

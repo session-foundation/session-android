@@ -547,13 +547,18 @@ class ProSettingsViewModel @AssistedInject constructor(
         viewModelScope.launch {
             val subType = _proSettingsUIState.value.subscriptionState.type
 
-            // first check if the user has a valid subscription
+            // first check if the user has a valid subscription and billing
+            val hasBillingCapacity = subscriptionCoordinator.getCurrentManager().supportsBilling.value
             val hasValidSub = subscriptionCoordinator.getCurrentManager().hasValidSubscription()
 
-            // next get the plans, including their pricing
-            // there is no point in calculating it if the user is pro but without a valid sub
-            // (meaning they got pro from a different google account than the one they are on now
-            val plans = if(subType is SubscriptionType.Active && !hasValidSub) emptyList()
+            // next get the plans, including their pricing, unless there is no billing
+            // or the user is pro without a valid subscription
+            // or the user is pro but non originating
+            val noPriceNeeded = !hasBillingCapacity
+                    || (subType is SubscriptionType.Active && !hasValidSub)
+                    || (subType is SubscriptionType.Active && subType.subscriptionDetails.isFromAnotherPlatform())
+
+            val plans = if(noPriceNeeded) emptyList()
             else {
                 // attempt to get the prices from the subscription provider
                 // return early in case of error
@@ -570,7 +575,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                     ChoosePlanState(
                         subscriptionType = subType,
                         hasValidSubscription = hasValidSub,
-                        hasBillingCapacity = subscriptionCoordinator.getCurrentManager().supportsBilling.value,
+                        hasBillingCapacity = hasBillingCapacity,
                         enableButton = subType !is SubscriptionType.Active.AutoRenewing, // only the auto-renew can have a disabled state
                         plans = plans
                     )
