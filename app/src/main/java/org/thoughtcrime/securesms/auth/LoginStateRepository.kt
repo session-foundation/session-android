@@ -40,7 +40,7 @@ class LoginStateRepository @Inject constructor(
 
 
     init {
-        var initialState = sharedPrefs.getString("state", null)?.let { serializedState ->
+        var initialState = sharedPrefs.getString(PREF_KEY_STATE, null)?.let { serializedState ->
             runCatching {
                 json.decodeFromString<LoggedInState>(
                     KeyStoreHelper.unseal(KeyStoreHelper.SealedData.fromString(serializedState)).toString(
@@ -86,7 +86,7 @@ class LoginStateRepository @Inject constructor(
                 Log.i(TAG, "Migrating legacy login state to new format")
                 val sealedData = KeyStoreHelper.seal(json.encodeToString(initialState).toByteArray(Charsets.UTF_8))
                 sharedPrefs.edit()
-                    .putString("state", sealedData.serialize())
+                    .putString(PREF_KEY_STATE, sealedData.serialize())
                     .apply()
 
                 //TODO: Consider removing legacy data here after a grace period
@@ -105,12 +105,12 @@ class LoginStateRepository @Inject constructor(
                     if (newState != null) {
                         val sealedData = KeyStoreHelper.seal(json.encodeToString(newState).toByteArray(Charsets.UTF_8))
                         sharedPrefs.edit()
-                            .putString("state", sealedData.serialize())
+                            .putString(PREF_KEY_STATE, sealedData.serialize())
                             .apply()
                         Log.d(TAG, "Persisted new login state: $newState")
                     } else {
                         sharedPrefs.edit()
-                            .remove("state")
+                            .remove(PREF_KEY_STATE)
                             .apply()
                         Log.d(TAG, "Cleared login state")
                     }
@@ -174,5 +174,7 @@ class LoginStateRepository @Inject constructor(
 
     companion object {
         private const val TAG = "LoginStateRepository"
+
+        private const val PREF_KEY_STATE = "state"
     }
 }
