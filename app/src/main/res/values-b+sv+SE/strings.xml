@@ -890,7 +890,6 @@
     <string name="proIncreasedMessageLengthFeature">Förlängd meddelandelängd</string>
     <string name="proMessageInfoFeatures">Detta meddelande använde följande funktioner från {app_pro}:</string>
     <string name="proSendMore">Skicka mer med</string>
-    <string name="proUserProfileModalCallToAction">Vill du få ut mer av {app_name}? Uppgradera till {app_pro} för en kraftfullare meddelandeupplevelse.</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Visa bild</string>
     <string name="profileDisplayPictureRemoveError">Misslyckades med att ta bort visningsbild.</string>
@@ -954,6 +953,7 @@
     <string name="removePasswordFail">Misslyckades med att ta bort lösenord</string>
     <string name="removePasswordModalDescription">Ta bort ditt nuvarande lösenord för {app_name}. Lokalt lagrad data kommer att krypteras om med en slumpmässigt genererad nyckel som lagras på din enhet.</string>
     <string name="reply">Svara</string>
+    <string name="requestRefund">Begär återbetalning</string>
     <string name="resend">Skicka på nytt</string>
     <string name="resolving">Läser in landinformation ...</string>
     <string name="restart">Starta om</string>

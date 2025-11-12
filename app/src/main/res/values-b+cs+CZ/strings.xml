@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="NoNonAdminsInGroup">V této skupině nejsou žádní členové, kromě správců.</string>
     <string name="about">Info</string>
     <string name="accept">Přijmout</string>
     <string name="accountIDCopy">Kopírovat ID účtu</string>
@@ -770,7 +769,6 @@
         <item quantity="other">%1$d aktivních členů</item>
     </plurals>
     <string name="membersAddAccountIdOrOns">Přidat ID účtu nebo ONS</string>
-    <string name="membersGroupPromotionAcceptInvite">Členové mohou být povýšeni teprve poté,&amp;#13; co přijmou pozvání ke vstupu do skupiny.</string>
     <string name="membersInvite">Pozvat kontakty</string>
     <string name="membersInviteNoContacts">Nemáte žádné kontakty, které byste mohli pozvat do této skupiny.\nVraťte se zpět později a pozvěte členy pomocí jejich ID účtu nebo ONS.</string>
     <plurals name="membersInviteSend">
@@ -783,8 +781,6 @@
     <string name="membersInviteShareDescriptionMultiple">Chcete sdílet historii zpráv skupiny s <b>{name}</b> a <b>{count} dalšími</b>?</string>
     <string name="membersInviteShareDescriptionTwo">Chcete sdílet historii zpráv skupiny s <b>{name}</b> a <b>{other_name}</b>?</string>
     <string name="membersInviteShareMessageHistory">Sdílet historii zpráv</string>
-    <string name="membersInviteShareMessageHistoryDays">Sdílet historii zpráv za posledních&amp;#13;
-14 dní</string>
     <string name="membersInviteShareNewMessagesOnly">Sdílet pouze nové zprávy</string>
     <string name="membersInviteTitle">Pozvat</string>
     <string name="membersNonAdmins">Členové (ne správci)</string>
@@ -872,6 +868,7 @@
     <string name="nicknameRemove">Odstranit přezdívku</string>
     <string name="nicknameSet">Nastavit přezdívku</string>
     <string name="no">Ne</string>
+    <string name="noNonAdminsInGroup">V této skupině nejsou žádní členové, kromě správců.</string>
     <string name="noSuggestions">Žádné návrhy</string>
     <string name="nonProLongerMessagesDescription">Ve všech konverzacích můžete odesílat zprávy o délce až 10000 znaků.</string>
     <string name="nonProUnlimitedPinnedDescription">Organizujte komunikace pomocí neomezeného počtu připnutých konverzací.</string>
@@ -1079,7 +1076,6 @@
     <string name="proBilledAnnually">{price} účtováno ročně</string>
     <string name="proBilledMonthly">{price} účtováno měsíčně</string>
     <string name="proBilledQuarterly">{price} účtováno čtvrtletně</string>
-    <string name="proCallToActionPinnedConversations">Chcete více připnutí? Organizujte své chaty a odemkněte prémiové funkce pomocí Session Pro</string>
     <string name="proCancelSorry">Mrzí nás, že rušíte {pro}. Než zrušíte {pro}, přečtěte si, co byste měli vědět.</string>
     <string name="proCancellation">Zrušit</string>
     <string name="proCancellationDescription">Zrušení přístupu k {pro} zabrání jeho automatickému prodloužení před vypršením platnosti přístupu k {pro}. Zrušením {pro} <b>nedojde</b> k vrácení peněz. Funkce {app_pro} budete moci využívat až do vypršení přístupu k {pro}.\n\nProtože jste si původně {app_pro} zařídili pomocí účtu <b>{platform_account}</b>, bude ke zrušení přístupu k {pro} potřeba použít stejný {platform_account}.</string>
@@ -1093,7 +1089,6 @@
     <string name="proExpired">Platnost vypršela</string>
     <string name="proExpiredDescription">Bohužel, váš tarif {pro} vypršel. Prodlužte jej, abyste znovu získali přístup k exkluzivním výhodám a funkcím {app_pro}.</string>
     <string name="proExpiringSoon">Brzy vyprší</string>
-    <string name="proExpiringSoonDescription">Váš přístup k {pro} vyprší za <b>{time}</b>. Proveďte nyní aktualizaci, abyste si zachovali přístup k exkluzivním výhodám a funkcím {app_pro}.</string>
     <string name="proExpiringTime">{pro} vyprší za <b>{time}</b></string>
     <string name="proFaq">{pro} FAQ</string>
     <string name="proFaqDescription">Najděte odpovědi na časté dotazy v nápovědě {app_pro}.</string>
@@ -1192,7 +1187,6 @@
     <string name="proUpgraded">Navýšili jste na {app_pro}!\n\nDěkujeme, že podporujete síť {network_name}.</string>
     <string name="proUpgradingTo">Navýšení na {pro}</string>
     <string name="proUpgradingTosPrivacy">Navýšením souhlasíte s <b>Podmínkami služby</b> {icon} a <b>Zásadami ochrany osobních údajů</b> {icon} {app_pro}</string>
-    <string name="proUserProfileModalCallToAction">Chcete z {app_name} získat více? Navyštee na {app_pro} pro výkonnější posílání zpráv.</string>
     <string name="processingRefundRequest">{platform} zpracovává vaši žádost o vrácení peněz</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Zobrazovaný obrázek</string>

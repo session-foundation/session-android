@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name" translatable="false">Session</string>
-    <string name="NoNonAdminsInGroup">There are no non-admin members in this group.</string>
     <string name="about">About</string>
     <string name="accept">Accept</string>
     <string name="accountIDCopy">Copy Account ID</string>
@@ -721,8 +720,7 @@
         <item quantity="other">%1$d active members</item>
     </plurals>
     <string name="membersAddAccountIdOrOns">Add Account ID or ONS</string>
-    <string name="membersGroupPromotionAcceptInvite">Members can only be promoted once they\'ve&amp;#13;
-accepted an invite to join the group.</string>
+    <string name="membersGroupPromotionAcceptInvite">Members can only be promoted once they\'ve accepted an invite to join the group.</string>
     <string name="membersInvite">Invite Contacts</string>
     <string name="membersInviteNoContacts">You don’t have any contacts to invite to this group.\nGo back and invite members using their Account ID or ONS.</string>
     <plurals name="membersInviteSend">
@@ -733,8 +731,7 @@ accepted an invite to join the group.</string>
     <string name="membersInviteShareDescriptionMultiple">Would you like to share group message history with <b>{name}</b> and <b>{count} others</b>?</string>
     <string name="membersInviteShareDescriptionTwo">Would you like to share group message history with <b>{name}</b> and <b>{other_name}</b>?</string>
     <string name="membersInviteShareMessageHistory">Share message history</string>
-    <string name="membersInviteShareMessageHistoryDays">Share message history from last&amp;#13;
-14 days</string>
+    <string name="membersInviteShareMessageHistoryDays">Share message history from last 14 days</string>
     <string name="membersInviteShareNewMessagesOnly">Share new messages only</string>
     <string name="membersInviteTitle">Invite</string>
     <string name="membersNonAdmins">Members (Non-Admins)</string>
@@ -814,6 +811,7 @@ accepted an invite to join the group.</string>
     <string name="nicknameRemove">Remove Nickname</string>
     <string name="nicknameSet">Set Nickname</string>
     <string name="no">No</string>
+    <string name="noNonAdminsInGroup">There are no non-admin members in this group.</string>
     <string name="noSuggestions">No Suggestions</string>
     <string name="nonProLongerMessagesDescription">Send messages up to 10,000 characters in all conversations.</string>
     <string name="nonProUnlimitedPinnedDescription">Organize chats with unlimited pinned conversations.</string>
@@ -823,6 +821,7 @@ accepted an invite to join the group.</string>
     <string name="noteToSelfEmpty">You have no messages in Note to Self.</string>
     <string name="noteToSelfHide">Hide Note to Self</string>
     <string name="noteToSelfHideDescription">Are you sure you want to hide Note to Self?</string>
+    <string name="noteTosPrivacyPolicy"><b>PLEASE NOTE</b>: By {action_type}, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
     <string name="notificationDisplay">Notification Display</string>
     <string name="notificationSenderNameAndPreview">Display the sender\'s name and a preview of the message content.</string>
     <string name="notificationSenderNameOnly">Display only the sender\'s name without any message content.</string>
@@ -932,6 +931,8 @@ accepted an invite to join the group.</string>
     <string name="passwordStrengthIndicatorDescription">Setting a strong password helps protect your messages and attachments if your device is ever lost or stolen.</string>
     <string name="passwords">Passwords</string>
     <string name="paste">Paste</string>
+    <string name="paymentError">Payment Error</string>
+    <string name="paymentProError">Your payment has been processed successfully, but there was an error {action_type} your {pro} status.\n\nPlease check your network connection and retry.</string>
     <string name="permissionChange">Permission Change</string>
     <string name="permissionMusicAudioDenied">{app_name} needs music and audio access in order to send files, music and audio, but it has been permanently denied. Tap Settings → Permissions, and turn \"Music and audio\" on.</string>
     <string name="permissionsAppleMusic">{app_name} needs to use Apple Music to play media attachments.</string>
@@ -1020,8 +1021,8 @@ accepted an invite to join the group.</string>
     <string name="proBilledAnnually">{price} Billed Annually</string>
     <string name="proBilledMonthly">{price} Billed Monthly</string>
     <string name="proBilledQuarterly">{price} Billed Quarterly</string>
-    <string name="proCallToActionLongerMessages">Want to send longer messages?\n Send more text and unlock premium features with {app_pro} Beta</string>
-    <string name="proCallToActionPinnedConversations">Want more pins? Organize your chats and unlock premium features with {app_pro}</string>
+    <string name="proCallToActionLongerMessages">Want to send longer messages?\nSend more text and unlock premium features with {app_pro} Beta</string>
+    <string name="proCallToActionPinnedConversations">Want more pins?\nOrganize your chats and unlock premium features with {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Want more than {limit} pins?\nOrganize your chats and unlock premium features with {app_pro} Beta</string>
     <string name="proCancelSorry">Sorry to see you cancel {pro}. Here\'s what you need to know before canceling your {pro} access.</string>
     <string name="proCancellation">Cancellation</string>
@@ -1034,9 +1035,9 @@ accepted an invite to join the group.</string>
     <string name="proDiscountTooltip">Your {pro} access is already discounted by {percent}% of the full {app_pro} price.</string>
     <string name="proErrorRefreshingStatus">Error refreshing {pro} status</string>
     <string name="proExpired">Expired</string>
-    <string name="proExpiredDescription">Unfortunately, your {pro} access has expired. Renew to reactivate the exclusive perks and features of {app_pro}.</string>
+    <string name="proExpiredDescription">Unfortunately, your {pro} access has expired.\nRenew to reactivate the exclusive perks and features of {app_pro} Beta.</string>
     <string name="proExpiringSoon">Expiring Soon</string>
-    <string name="proExpiringSoonDescription">Your {pro} access is expiring in <b>{time}</b>. Update now to keep accessing the exclusive perks and features of {app_pro}.</string>
+    <string name="proExpiringSoonDescription">Your {pro} access is expiring in <b>{time}</b>.\nUpdate now to keep accessing the exclusive perks and features of {app_pro} Beta</string>
     <string name="proExpiringTime">{pro} expiring in <b>{time}</b></string>
     <string name="proFaq">{pro} FAQ</string>
     <string name="proFaqDescription">Find answers to common questions in the {app_pro} FAQ.</string>
@@ -1117,6 +1118,7 @@ accepted an invite to join the group.</string>
     <string name="proStatusRefreshNetworkError">Unable to connect to the network to refresh your {pro} status. Some actions on this page will be disabled until connectivity is restored.\n\nPlease check your network connection and retry.</string>
     <string name="proStatusRenewError">Unable to connect to the network to load your current {pro} access. Renewing {pro} via {app_name} will be disabled until connectivity is restored.\n\nPlease check your network connection and retry.</string>
     <string name="proSupportDescription">Need help with {pro}? Submit a request to the support team.</string>
+    <string name="proTosDescription">By {action_type}, you are {activation_type} {app_pro} via the {app_name} Protocol. {entity} will facilitate that activation but is not the provider of {app_pro}. {entity} is not responsible for the performance, availability, or functionality of {app_pro}.</string>
     <string name="proTosPrivacy">By updating, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
     <string name="proUnlimitedPins">Unlimited Pins</string>
     <string name="proUnlimitedPinsDescription">Organize all your chats with unlimited pinned conversations.</string>
@@ -1130,7 +1132,7 @@ accepted an invite to join the group.</string>
     <string name="proUpgraded">You have upgraded to {app_pro}!\nThank you for supporting the {network_name}.</string>
     <string name="proUpgradingTo">Upgrading to {pro}</string>
     <string name="proUpgradingTosPrivacy">By upgrading, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
-    <string name="proUserProfileModalCallToAction">Want to get more out of {app_name}? Upgrade to {app_pro} for a more powerful messaging experience.</string>
+    <string name="proUserProfileModalCallToAction">Want to get more out of {app_name}?\nUpgrade to {app_pro} Beta for a more powerful messaging experience.</string>
     <string name="processingRefundRequest">{platform} is processing your refund request</string>
     <string name="profile">Profile</string>
     <string name="profileDisplayPicture">Display Picture</string>

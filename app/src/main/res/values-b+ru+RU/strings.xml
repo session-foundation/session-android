@@ -930,7 +930,6 @@
     <string name="proIncreasedMessageLengthFeature">Увеличенная длина сообщения</string>
     <string name="proMessageInfoFeatures">Это сообщение использовало следующие функции {app_pro}:</string>
     <string name="proSendMore">Отправить еще с</string>
-    <string name="proUserProfileModalCallToAction">Хотите больше возможностей от {app_name}? Перейдите на {app_pro}, чтобы получить более мощный опыт обмена сообщениями.</string>
     <string name="profile">Профиль</string>
     <string name="profileDisplayPicture">Изображение профиля</string>
     <string name="profileDisplayPictureRemoveError">Не удалось удалить изображение профиля.</string>
