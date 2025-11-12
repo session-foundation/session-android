@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.pro.subscription
 
 import android.app.Application
-import android.widget.Toast
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
@@ -17,15 +16,10 @@ import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
@@ -33,14 +27,11 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager.PurchaseEvent
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -178,9 +169,8 @@ class PlayStoreSubscriptionManager @Inject constructor(
         } catch (e: Exception) {
             Log.e(DebugLogGroup.PRO_SUBSCRIPTION.label, "Error purchase plan", e)
 
-            withContext(Dispatchers.Main) {
-                Toast.makeText(application, application.getString(R.string.errorGeneric), Toast.LENGTH_LONG).show()
-            }
+            // pass the purchase error information to subscribers
+            _purchaseEvents.emit(PurchaseEvent.Failed.GenericError())
 
             return Result.failure(e)
         }

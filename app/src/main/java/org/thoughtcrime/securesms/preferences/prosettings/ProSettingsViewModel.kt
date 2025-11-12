@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.icu.util.MeasureUnit
 import android.widget.Toast
-import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -35,7 +34,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_LENGTH_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_LENGTH_SINGULAR_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.SubscriptionState
@@ -734,12 +732,12 @@ class ProSettingsViewModel @AssistedInject constructor(
         viewModelScope.launch {
             val selectedPlan = getSelectedPlan() ?: return@launch
 
-            val purchaseStarted = subscriptionCoordinator.getCurrentManager().purchasePlan(
+            val purchaseResult = subscriptionCoordinator.getCurrentManager().purchasePlan(
                 selectedPlan.durationType
             )
 
             val data = choosePlanState.value
-            if(purchaseStarted.isSuccess && data is State.Success) {
+            if(purchaseResult.isSuccess && data is State.Success) {
                 _choosePlanState.update {
                     State.Success(
                         data.value.copy(purchaseInProgress = true)
@@ -747,10 +745,6 @@ class ProSettingsViewModel @AssistedInject constructor(
                 }
             }
         }
-    }
-
-    fun getSubscriptionManager(): SubscriptionManager {
-        return subscriptionCoordinator.getCurrentManager()
     }
 
     private fun navigateTo(

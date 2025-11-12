@@ -79,7 +79,7 @@ abstract class SubscriptionManager(
             } catch (e: Exception) {
                 when (e) {
                     is PaymentServerException -> _purchaseEvents.emit(PurchaseEvent.Failed.ServerError)
-                    else -> _purchaseEvents.emit(PurchaseEvent.Failed.GenericError(e.message))
+                    else -> _purchaseEvents.emit(PurchaseEvent.Failed.GenericError())
                 }
             }
         }
