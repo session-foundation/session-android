@@ -132,7 +132,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                             it.copy(
                                 showSimpleDialog = SimpleDialogData(
                                     title = context.getString(R.string.paymentError),
-                                    message = Phrase.from(context, R.string.proAutoRenewTime)
+                                    message = Phrase.from(context, R.string.paymentProError)
                                         .put(ACTION_TYPE_KEY, action)
                                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format(),
