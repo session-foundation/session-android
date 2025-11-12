@@ -732,12 +732,15 @@ class ProSettingsViewModel @AssistedInject constructor(
         viewModelScope.launch {
             val selectedPlan = getSelectedPlan() ?: return@launch
 
-            val purchaseResult = subscriptionCoordinator.getCurrentManager().purchasePlan(
+            // let the provider handle the plan from their UI
+            val providerResult = subscriptionCoordinator.getCurrentManager().purchasePlan(
                 selectedPlan.durationType
             )
 
+            // check if we managed to display the plan from the provider
             val data = choosePlanState.value
-            if(purchaseResult.isSuccess && data is State.Success) {
+            if(providerResult.isSuccess && data is State.Success) {
+                // show a loader while the user is looking at the UI from the provider
                 _choosePlanState.update {
                     State.Success(
                         data.value.copy(purchaseInProgress = true)
