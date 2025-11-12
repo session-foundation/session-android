@@ -1,11 +1,13 @@
 package org.thoughtcrime.securesms.auth
 
 import android.content.Context
+import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.emptyFlow
@@ -15,12 +17,14 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.loki.messenger.libsession_util.util.Bytes
+import org.session.libsession.snode.SnodeClock
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.crypto.KeyStoreHelper
 import org.thoughtcrime.securesms.dependencies.ManagerScope
+import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -32,7 +36,8 @@ import javax.inject.Singleton
 class LoginStateRepository @Inject constructor(
     @ApplicationContext context: Context,
     private val json: Json,
-    @param:ManagerScope private val scope: CoroutineScope
+    @param:ManagerScope private val scope: CoroutineScope,
+    private val snodeClock: Lazy<SnodeClock>,
 ) {
     private val sharedPrefs = context.getSharedPreferences("login_state", Context.MODE_PRIVATE)
 
@@ -120,9 +125,7 @@ class LoginStateRepository @Inject constructor(
 
     val loggedInState: StateFlow<LoggedInState?> get() = mutableLoggedInState
 
-    fun requireLocalAccountId(): AccountId = requireNotNull(loggedInState.value?.accountId) {
-        "No logged in account"
-    }
+    fun requireLocalAccountId(): AccountId = requireLoggedInState().accountId
 
     /**
      * Returns the local number (account ID as hex string) of the logged-in user.
@@ -140,6 +143,9 @@ class LoginStateRepository @Inject constructor(
      */
     fun peekLoginState(): LoggedInState? = loggedInState.value
 
+    fun requireLoggedInState(): LoggedInState = requireNotNull(loggedInState.value) {
+        "No logged in user"
+    }
 
     /**
      * A flow that starts emitting items from the provided [flowFactory] only when the user is logged in.
@@ -159,6 +165,20 @@ class LoginStateRepository @Inject constructor(
             }
     }
 
+    /**
+     * Runs the provided [block] suspend function while the user is logged in, and cancels it
+     * when logged out.
+     */
+    suspend fun runWhileLoggedIn(block: suspend () -> Unit) {
+        loggedInState
+            .map { it != null }
+            .collectLatest { loggedIn ->
+                if (loggedIn) {
+                    block()
+                }
+            }
+    }
+
     fun clear() {
         mutableLoggedInState.value = null
     }
@@ -170,6 +190,27 @@ class LoginStateRepository @Inject constructor(
      */
     fun update(updater: (LoggedInState?) -> LoggedInState) {
         mutableLoggedInState.update(updater)
+    }
+
+
+    /**
+     * Ensures the user is logged in and valid rotating keypair exists, returning the pro master private key
+     * and (validated or newly generated) pro state
+     */
+    fun ensureProMasterAndRotatingState(now: Instant = snodeClock.get().currentTime()): Pair<ByteArray, LoggedInState.ProState> {
+        var masterKey: ByteArray? = null
+        var proState: LoggedInState.ProState? = null
+
+        update { oldState ->
+            requireNotNull(oldState) {
+                "User not logged in"
+            }.ensureValidProRotatingKey(now).also {
+                masterKey = it.proMasterPrivateKey
+                proState = it.proState!!
+            }
+        }
+
+        return masterKey!! to proState!!
     }
 
     companion object {

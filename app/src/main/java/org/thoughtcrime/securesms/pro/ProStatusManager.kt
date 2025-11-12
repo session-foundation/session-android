@@ -2,12 +2,14 @@ package org.thoughtcrime.securesms.pro
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -20,9 +22,12 @@ import org.session.libsession.utilities.recipients.ProStatus
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.isPro
 import org.session.libsession.utilities.recipients.shouldShowProBadge
+import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.util.State
@@ -35,7 +40,9 @@ import javax.inject.Singleton
 class ProStatusManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val prefs: TextSecurePreferences,
-    private val recipientRepository: RecipientRepository,
+    recipientRepository: RecipientRepository,
+    @param:ManagerScope private val scope: CoroutineScope,
+    loginStateRepository: LoginStateRepository,
 ) : OnAppStartupComponent {
 
     val subscriptionState: StateFlow<SubscriptionState> = combine(
@@ -186,7 +193,7 @@ class ProStatusManager @Inject constructor(
             refreshState = proDataStatus,
         )
 
-    }.stateIn(GlobalScope, SharingStarted.Eagerly,
+    }.stateIn(scope, SharingStarted.Eagerly,
         initialValue = getDefaultSubscriptionStateData()
     )
 
@@ -194,10 +201,25 @@ class ProStatusManager @Inject constructor(
     val postProLaunchStatus: StateFlow<Boolean> = _postProLaunchStatus
 
     init {
-        GlobalScope.launch {
+        scope.launch {
             prefs.watchPostProStatus().collect {
                 _postProLaunchStatus.update { isPostPro() }
             }
+        }
+
+        scope.launch {
+            loginStateRepository.loggedInState
+                .map { it != null }
+                .distinctUntilChanged()
+                .collect { loggedIn ->
+                    if (loggedIn) {
+                        Log.d("ProStatusManager", "User logged in - starting Pro state poller")
+                        ProStatePoller.schedule(context)
+                    } else {
+                        Log.d("ProStatusManager", "User logged out - stopping Pro state poller")
+                        ProStatePoller.cancel(context)
+                    }
+                }
         }
     }
 

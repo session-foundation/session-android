@@ -9,9 +9,9 @@ import network.loki.messenger.libsession_util.util.KeyPair
 import org.session.libsession.utilities.serializable.BytesAsBase64Serializer
 import org.session.libsession.utilities.serializable.InstantAsMillisSerializer
 import org.session.libsession.utilities.serializable.KeyPairAsArraySerializer
-import org.session.libsession.utilities.serializable.ProPoofSerializer
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
+import org.thoughtcrime.securesms.pro.api.ProProofSerializer
 import java.security.SecureRandom
 import java.time.Instant
 
@@ -35,7 +35,23 @@ data class LoggedInState(
     val accountId: AccountId get() = seeded.accountId
     val proMasterPrivateKey: ByteArray get() = seeded.proMasterPrivateKey
 
+    fun ensureValidProRotatingKey(now: Instant = Instant.now()): LoggedInState {
+        if (proState == null || proState.isRotatingKeyExpired(now)) {
+            return copy(
+                proState = ProState(
+                    rotatingKeyPair = Curve25519.generateKeyPair(),
+                    rotatingKeyExpiry = now.plusSeconds(ROTATING_KEY_VALIDITY_HOURS * 3600),
+                    proProof = proState?.proProof
+                )
+            )
+        }
 
+        return this
+    }
+
+    /**
+     * Holds the account seed. Almost all account related keys are derived from this seed.
+     */
     @Serializable
     data class Seeded(
         @Serializable(with = BytesAsBase64Serializer::class)
@@ -59,7 +75,7 @@ data class LoggedInState(
             AccountId(IdPrefix.STANDARD, accountX25519KeyPair.pubKey.data)
         }
 
-        val proMasterPrivateKey: ByteArray by lazy {
+        val proMasterPrivateKey: ByteArray by lazy(LazyThreadSafetyMode.NONE) {
             ED25519.generateProPrivateKey(seed.data)
         }
 
@@ -76,11 +92,15 @@ data class LoggedInState(
         @Serializable(with = InstantAsMillisSerializer::class)
         val rotatingKeyExpiry: Instant,
 
-        @Serializable(with = ProPoofSerializer::class)
+        @Serializable(with = ProProofSerializer::class)
         val proProof: ProProof?,
     ) {
         override fun toString(): String {
             return "ProState(rotatingKeyPair=[REDACTED], rotatingKeyExpiry=$rotatingKeyExpiry, proProof=${if (proProof != null) "[REDACTED]" else "null"})"
+        }
+
+        fun isRotatingKeyExpired(now: Instant = Instant.now()): Boolean {
+            return now.isAfter(rotatingKeyExpiry)
         }
     }
 
@@ -91,6 +111,8 @@ data class LoggedInState(
     companion object {
         private const val SEED_LENGTH = 16
         private const val NOTIFICATION_KEY_LENGTH = 32
+
+        const val ROTATING_KEY_VALIDITY_HOURS = 12L
 
         fun generate(seed: ByteArray?): LoggedInState {
             return LoggedInState(
