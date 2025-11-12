@@ -840,7 +840,6 @@
     <string name="proIncreasedMessageLengthFeature">Mayor longitud de mensaje</string>
     <string name="proMessageInfoFeatures">Este mensaje utilizó las siguientes funciones de {app_pro}:</string>
     <string name="proSendMore">Envía más con</string>
-    <string name="proUserProfileModalCallToAction">¿Quieres sacarle más provecho a {app_name}? Actualiza a {app_pro} para una experiencia de mensajería más potente.</string>
     <string name="profile">Perfil</string>
     <string name="profileDisplayPicture">Imagen de perfil</string>
     <string name="profileDisplayPictureRemoveError">Fallo al eliminar la foto de perfil.</string>

@@ -814,7 +814,6 @@
     <string name="proIncreasedMessageLengthFeature">メッセージの文字数増加</string>
     <string name="proMessageInfoFeatures">このメッセージには以下の {app_pro} 機能が使用されています:</string>
     <string name="proSendMore">さらに送信：</string>
-    <string name="proUserProfileModalCallToAction">{app_name}をもっと活用したいですか？より強力なメッセージ体験のために{app_pro}へアップグレードしましょう。</string>
     <string name="profile">プロフィール</string>
     <string name="profileDisplayPicture">ディスプレイの画像</string>
     <string name="profileDisplayPictureRemoveError">表示画像の削除に失敗しました。</string>

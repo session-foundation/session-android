@@ -992,7 +992,6 @@
     <string name="proTosPrivacy">Dokonując zmian wyrażasz zgodę na <b>Warunki Świadczenia Usług</b> {app_pro} {icon} oraz <b>Politykę Prywatności</b> {icon}</string>
     <string name="proUnlimitedPins">Nielimitowane przypięcia</string>
     <string name="proUnlimitedPinsDescription">Organizuj swoje czaty z nielimitowaną możliwością przypinania konwersacji.</string>
-    <string name="proUserProfileModalCallToAction">Chcesz więcej z {app_name}? Uaktualnij do {app_pro}, aby uzyskać potężniejsze możliwości wiadomości.</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Zdjęcie profilowe</string>
     <string name="profileDisplayPictureRemoveError">Nie udało się usunąć zdjęcia profilowego.</string>
