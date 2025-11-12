@@ -34,7 +34,10 @@ abstract class SubscriptionManager(
     sealed interface PurchaseEvent {
         data object Success : PurchaseEvent
         data object Cancelled : PurchaseEvent
-        data class Failed(val errorMessage: String? = null) : PurchaseEvent
+        sealed interface Failed : PurchaseEvent {
+            data class GenericError(val errorMessage: String? = null): Failed
+            data object ServerError : Failed
+        }
     }
 
     // purchase events
@@ -74,10 +77,15 @@ abstract class SubscriptionManager(
                 proStatusManager.appProPaymentToBackend()
                 _purchaseEvents.emit(PurchaseEvent.Success)
             } catch (e: Exception) {
-                _purchaseEvents.emit(PurchaseEvent.Failed())
+                when (e) {
+                    is PaymentServerException -> _purchaseEvents.emit(PurchaseEvent.Failed.ServerError)
+                    else -> _purchaseEvents.emit(PurchaseEvent.Failed.GenericError(e.message))
+                }
             }
         }
     }
+
+    class PaymentServerException: Exception()
 
     data class SubscriptionPricing(
         val subscriptionDuration: ProSubscriptionDuration,

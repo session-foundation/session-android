@@ -196,12 +196,17 @@ fun ChoosePlan(
         Spacer(Modifier.height(LocalDimensions.current.xxsSpacing))
 
         val (footerAction, footerActivation) = when (planData.subscriptionType) {
-            is SubscriptionType.Expired -> stringResource(R.string.upgrade) to stringResource(R.string.upgrade) //todo STRINGS need crowdin strings here
+            is SubscriptionType.Expired ->
+                stringResource(R.string.proRenewingAction) to
+                        stringResource(R.string.proReactivatingActivation)
 
-            is SubscriptionType.Active -> stringResource(R.string.upgrade) to "" //todo STRINGS need crowdin strings here
+
+            is SubscriptionType.Active -> stringResource(R.string.proUpdatingAction) to ""
 
             is SubscriptionType.NeverSubscribed ->
-                stringResource(R.string.upgrade) to  stringResource(R.string.upgrade)//todo STRINGS need crowdin strings here
+                stringResource(R.string.proUpgradingAction) to
+                        stringResource(R.string.proActivatingActivation)
+
         }
 
         val footer = Phrase.from(LocalContext.current.getText(R.string.noteTosPrivacyPolicy))

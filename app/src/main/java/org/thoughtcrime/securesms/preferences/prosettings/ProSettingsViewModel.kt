@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.icu.util.MeasureUnit
 import android.widget.Toast
+import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -22,6 +23,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.session.libsession.utilities.StringSubstitutionConstants.ACTION_TYPE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN_LENGTH_KEY
@@ -108,12 +110,45 @@ class ProSettingsViewModel @AssistedInject constructor(
                         navigator.navigate(destination = ProSettingsDestination.PlanConfirmation)
                     }
 
-                    is SubscriptionManager.PurchaseEvent.Failed -> {
+                    is SubscriptionManager.PurchaseEvent.Failed.GenericError -> {
                         Toast.makeText(
                             context,
                             purchaseEvent.errorMessage ?: context.getString(R.string.errorGeneric),
                             Toast.LENGTH_SHORT
                         ).show()
+                    }
+
+                    is SubscriptionManager.PurchaseEvent.Failed.ServerError -> {
+                        // this is a special case of failure. We should display a custom dialog and allow the user to retry
+                        _dialogState.update {
+                            val action = context.getString(
+                                when(_proSettingsUIState.value.subscriptionState.type) {
+                                    is SubscriptionType.Active -> R.string.proUpdatingAction
+                                    is SubscriptionType.Expired -> R.string.proRenewingAction
+                                    else -> R.string.proUpgradingAction
+                                }
+                            )
+
+                            it.copy(
+                                showSimpleDialog = SimpleDialogData(
+                                    title = context.getString(R.string.paymentError),
+                                    message = Phrase.from(context, R.string.proAutoRenewTime)
+                                        .put(ACTION_TYPE_KEY, action)
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .format(),
+                                    positiveText = context.getString(R.string.retry),
+                                    negativeText = context.getString(R.string.helpSupport),
+                                    positiveStyleDanger = false,
+                                    showXIcon = true,
+                                    onPositive = {
+                                        getPlanFromProvider() // retry getting the plan from provider
+                                    },
+                                    onNegative = {
+                                        onCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
+                                    }
+                                )
+                            )
+                        }
                     }
 
                     is SubscriptionManager.PurchaseEvent.Cancelled -> {
