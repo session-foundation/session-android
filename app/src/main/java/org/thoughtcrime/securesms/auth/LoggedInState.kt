@@ -9,6 +9,7 @@ import network.loki.messenger.libsession_util.util.KeyPair
 import org.session.libsession.utilities.serializable.BytesAsBase64Serializer
 import org.session.libsession.utilities.serializable.InstantAsMillisSerializer
 import org.session.libsession.utilities.serializable.KeyPairAsArraySerializer
+import org.session.libsession.utilities.serializable.ProPoofSerializer
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.pro.api.ProProofSerializer

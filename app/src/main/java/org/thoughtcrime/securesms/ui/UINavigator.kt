@@ -38,6 +38,10 @@ class UINavigator<T> () {
         _navigationActions.send(NavigationAction.NavigateToIntent(intent))
     }
 
+    suspend fun sendCustomAction(data: Any){
+        _navigationActions.send(NavigationAction.PerformCustomAction(data))
+    }
+
     suspend fun returnResult(code: String, value: Boolean) {
         _navigationActions.send(NavigationAction.ReturnResult(code, value))
     }
@@ -58,5 +62,9 @@ sealed interface NavigationAction<out T> {
     data class ReturnResult(
         val code: String,
         val value: Boolean
+    ) : NavigationAction<Nothing>
+
+    data class PerformCustomAction(
+        val data: Any
     ) : NavigationAction<Nothing>
 }

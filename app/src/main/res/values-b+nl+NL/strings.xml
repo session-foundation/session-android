@@ -938,7 +938,6 @@
     <string name="proTosPrivacy">Door bij te werken ga je akkoord met de {app_pro} <b>Gebruiksvoorwaarden</b> {icon} en het <b>Privacybeleid</b> {icon}</string>
     <string name="proUnlimitedPins">Onbeperkte Pins</string>
     <string name="proUnlimitedPinsDescription">Organiseer al je chats met onbeperkt vastgezette gesprekken.</string>
-    <string name="proUserProfileModalCallToAction">Wil je meer uit {app_name} halen? Upgrade naar {app_pro} voor een krachtigere berichtbeleving.</string>
     <string name="processingRefundRequest">{platform} verwerkt je restitutieverzoek</string>
     <string name="profile">Profiel</string>
     <string name="profileDisplayPicture">Toon afbeelding</string>

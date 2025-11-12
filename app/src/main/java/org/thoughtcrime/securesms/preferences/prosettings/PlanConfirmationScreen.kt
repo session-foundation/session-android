@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.preferences.prosettings
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -37,7 +38,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NETWORK_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.recipients.ProStatus
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.GoToProSettings
 import org.thoughtcrime.securesms.pro.SubscriptionDetails
 import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.SubscriptionType
@@ -79,6 +79,10 @@ fun PlanConfirmation(
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ) {
+    BackHandler {
+        sendCommand(ProSettingsViewModel.Commands.OnPostPlanConfirmation)
+    }
+
     Scaffold(
         topBar = {},
         contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
@@ -163,7 +167,7 @@ fun PlanConfirmation(
                     .widthIn(max = LocalDimensions.current.maxContentWidth),
                 text = buttonLabel,
                 onClick = {
-                    sendCommand(GoToProSettings)
+                    sendCommand(ProSettingsViewModel.Commands.OnPostPlanConfirmation)
                 }
             )
 

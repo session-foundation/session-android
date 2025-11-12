@@ -48,9 +48,13 @@ import com.squareup.phrase.Phrase
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.session.libsession.utilities.StringSubstitutionConstants.ACTION_TYPE_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.ACTIVATION_TYPE_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN_LENGTH_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.ENTITY_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
@@ -191,24 +195,25 @@ fun ChoosePlan(
 
         Spacer(Modifier.height(LocalDimensions.current.xxsSpacing))
 
-        val footer = when (planData.subscriptionType) {
+        val (footerAction, footerActivation) = when (planData.subscriptionType) {
             is SubscriptionType.Expired ->
-                Phrase.from(LocalContext.current.getText(R.string.proRenewTosPrivacy))
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .put(ICON_KEY, iconExternalLink)
-                    .format()
+                stringResource(R.string.proRenewingAction) to
+                        stringResource(R.string.proReactivatingActivation)
 
-            is SubscriptionType.Active -> Phrase.from(LocalContext.current.getText(R.string.proTosPrivacy))
-                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                .put(ICON_KEY, iconExternalLink)
-                .format()
+
+            is SubscriptionType.Active -> stringResource(R.string.proUpdatingAction) to ""
 
             is SubscriptionType.NeverSubscribed ->
-                Phrase.from(LocalContext.current.getText(R.string.proUpgradingTosPrivacy))
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .put(ICON_KEY, iconExternalLink)
-                    .format()
+                stringResource(R.string.proUpgradingAction) to
+                        stringResource(R.string.proActivatingActivation)
+
         }
+
+        val footer = Phrase.from(LocalContext.current.getText(R.string.noteTosPrivacyPolicy))
+            .put(ACTION_TYPE_KEY, footerAction)
+            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+            .put(ICON_KEY, iconExternalLink)
+            .format()
 
         Text(
             modifier = Modifier.fillMaxWidth()
@@ -224,13 +229,33 @@ fun ChoosePlan(
                 .clip(MaterialTheme.shapes.extraSmall),
             text = annotatedStringResource(footer),
             textAlign = TextAlign.Center,
-            style = LocalType.current.small,
+            style = LocalType.current.base,
             color = LocalColors.current.text,
             inlineContent = inlineContentMap(
                 textSize = LocalType.current.small.fontSize,
                 imageColor = LocalColors.current.text
             ),
         )
+
+        // add another label in cases other than an active subscription
+        if (planData.subscriptionType !is SubscriptionType.Active) {
+            Spacer(Modifier.height(LocalDimensions.current.xxxsSpacing))
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                text = annotatedStringResource(
+                    Phrase.from(LocalContext.current.getText(R.string.proTosDescription))
+                        .put(ACTION_TYPE_KEY, footerAction)
+                        .put(ACTIVATION_TYPE_KEY, footerActivation)
+                        .put(ENTITY_KEY, NonTranslatableStringConstants.ENTITY_STF)
+                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                        .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
+                        .format()
+                ),
+                textAlign = TextAlign.Center,
+                style = LocalType.current.base,
+                color = LocalColors.current.text,
+            )
+        }
     }
 }
 

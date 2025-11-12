@@ -66,7 +66,7 @@ fun DebugMenuNavHost(
                 navController.context.startActivity(action.intent)
             }
 
-            is NavigationAction.ReturnResult -> {}
+            else -> {}
         }
     }
 

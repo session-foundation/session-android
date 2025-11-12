@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.session.libsession.utilities.StringSubstitutionConstants.ACTION_TYPE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN_LENGTH_KEY
@@ -33,7 +34,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_LENGTH_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_LENGTH_SINGULAR_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.SubscriptionState
@@ -82,7 +82,6 @@ class ProSettingsViewModel @AssistedInject constructor(
     val cancelPlanState: StateFlow<State<CancelPlanState>> = _cancelPlanState
 
     init {
-        Log.w("", "*** VM INIT")
         // observe subscription status
         viewModelScope.launch {
             proStatusManager.subscriptionState.collect {
@@ -109,12 +108,45 @@ class ProSettingsViewModel @AssistedInject constructor(
                         navigator.navigate(destination = ProSettingsDestination.PlanConfirmation)
                     }
 
-                    is SubscriptionManager.PurchaseEvent.Failed -> {
+                    is SubscriptionManager.PurchaseEvent.Failed.GenericError -> {
                         Toast.makeText(
                             context,
                             purchaseEvent.errorMessage ?: context.getString(R.string.errorGeneric),
                             Toast.LENGTH_SHORT
                         ).show()
+                    }
+
+                    is SubscriptionManager.PurchaseEvent.Failed.ServerError -> {
+                        // this is a special case of failure. We should display a custom dialog and allow the user to retry
+                        _dialogState.update {
+                            val action = context.getString(
+                                when(_proSettingsUIState.value.subscriptionState.type) {
+                                    is SubscriptionType.Active -> R.string.proUpdatingAction
+                                    is SubscriptionType.Expired -> R.string.proRenewingAction
+                                    else -> R.string.proUpgradingAction
+                                }
+                            )
+
+                            it.copy(
+                                showSimpleDialog = SimpleDialogData(
+                                    title = context.getString(R.string.paymentError),
+                                    message = Phrase.from(context, R.string.paymentProError)
+                                        .put(ACTION_TYPE_KEY, action)
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .format(),
+                                    positiveText = context.getString(R.string.retry),
+                                    negativeText = context.getString(R.string.helpSupport),
+                                    positiveStyleDanger = false,
+                                    showXIcon = true,
+                                    onPositive = {
+                                        getPlanFromProvider() // retry getting the plan from provider
+                                    },
+                                    onNegative = {
+                                        onCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
+                                    }
+                                )
+                            )
+                        }
                     }
 
                     is SubscriptionManager.PurchaseEvent.Cancelled -> {
@@ -304,16 +336,11 @@ class ProSettingsViewModel @AssistedInject constructor(
                 }
             }
 
-            Commands.GoToProSettings -> {
-                // navigate back to home and pop all other screens off the stack
-                navigateTo(
-                    destination = ProSettingsDestination.Home,
-                    navOptions = {
-                        popUpTo(ProSettingsDestination.Home){
-                            inclusive = true
-                        }
-                    }
-                )
+            Commands.OnPostPlanConfirmation -> {
+                // send a custom action to deal with "post plan confirmation"
+                viewModelScope.launch {
+                    navigator.sendCustomAction(ProNavHostCustomActions.ON_POST_PLAN_CONFIRMATION)
+                }
             }
 
             Commands.OpenSubscriptionPage -> {
@@ -553,13 +580,18 @@ class ProSettingsViewModel @AssistedInject constructor(
         viewModelScope.launch {
             val subType = _proSettingsUIState.value.subscriptionState.type
 
-            // first check if the user has a valid subscription
+            // first check if the user has a valid subscription and billing
+            val hasBillingCapacity = subscriptionCoordinator.getCurrentManager().supportsBilling.value
             val hasValidSub = subscriptionCoordinator.getCurrentManager().hasValidSubscription()
 
-            // next get the plans, including their pricing
-            // there is no point in calculating it if the user is pro but without a valid sub
-            // (meaning they got pro from a different google account than the one they are on now
-            val plans = if(subType is SubscriptionType.Active && !hasValidSub) emptyList()
+            // next get the plans, including their pricing, unless there is no billing
+            // or the user is pro without a valid subscription
+            // or the user is pro but non originating
+            val noPriceNeeded = !hasBillingCapacity
+                    || (subType is SubscriptionType.Active && !hasValidSub)
+                    || (subType is SubscriptionType.Active && subType.subscriptionDetails.isFromAnotherPlatform())
+
+            val plans = if(noPriceNeeded) emptyList()
             else {
                 // attempt to get the prices from the subscription provider
                 // return early in case of error
@@ -576,7 +608,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                     ChoosePlanState(
                         subscriptionType = subType,
                         hasValidSubscription = hasValidSub,
-                        hasBillingCapacity = subscriptionCoordinator.getCurrentManager().supportsBilling.value,
+                        hasBillingCapacity = hasBillingCapacity,
                         enableButton = subType !is SubscriptionType.Active.AutoRenewing, // only the auto-renew can have a disabled state
                         plans = plans
                     )
@@ -700,12 +732,15 @@ class ProSettingsViewModel @AssistedInject constructor(
         viewModelScope.launch {
             val selectedPlan = getSelectedPlan() ?: return@launch
 
-            val purchaseStarted = subscriptionCoordinator.getCurrentManager().purchasePlan(
+            // let the provider handle the plan from their UI
+            val providerResult = subscriptionCoordinator.getCurrentManager().purchasePlan(
                 selectedPlan.durationType
             )
 
+            // check if we managed to display the plan from the provider
             val data = choosePlanState.value
-            if(purchaseStarted.isSuccess && data is State.Success) {
+            if(providerResult.isSuccess && data is State.Success) {
+                // show a loader while the user is looking at the UI from the provider
                 _choosePlanState.update {
                     State.Success(
                         data.value.copy(purchaseInProgress = true)
@@ -713,10 +748,6 @@ class ProSettingsViewModel @AssistedInject constructor(
                 }
             }
         }
-    }
-
-    fun getSubscriptionManager(): SubscriptionManager {
-        return subscriptionCoordinator.getCurrentManager()
     }
 
     private fun navigateTo(
@@ -737,7 +768,7 @@ class ProSettingsViewModel @AssistedInject constructor(
         data class GoToChoosePlan(val inSheet: Boolean): Commands
         object GoToRefund: Commands
         object GoToCancel: Commands
-        object GoToProSettings: Commands
+        object OnPostPlanConfirmation: Commands
 
         object OpenSubscriptionPage: Commands
 

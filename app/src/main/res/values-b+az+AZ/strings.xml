@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="NoNonAdminsInGroup">Bu qrupda admin olmayan üzv yoxdur.</string>
     <string name="about">Haqqında</string>
     <string name="accept">Qəbul et</string>
     <string name="accountIDCopy">Hesab Kimliyini kopyala</string>
@@ -22,9 +21,14 @@
     </plurals>
     <string name="addAdmins">İnzibatçılar əlavə et</string>
     <string name="addAdminsDescription">Admin edəcəyiniz istifadəçinin Hesab ID-sini daxil edin.\n\nBirdən çox istifadəçi əlavə etmək üçün vergüllə ayrılmış hər Hesab ID-sini daxil edin. Bir dəfəyə 20-yə qədər Hesab ID-si daxil edilə bilər.</string>
+    <string name="adminCannotBeDemoted">Adminlərin vəzifəsini azaltmaq və ya adminləri qrupdan xaric etmək mümkün deyil.</string>
+    <string name="adminCannotBeRemoved">Adminlər xaric edilə bilməz.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> və <b>başqa {count} nəfər</b> Admin olaraq yüksəldildi.</string>
     <string name="adminPromote">Adminləri yüksəlt</string>
+    <string name="adminPromoteDescription"><b>{name}</b> istifadəçisini admin etmək istədiyinizə əminsiniz? Adminlər xaric edilə bilməz.</string>
+    <string name="adminPromoteMoreDescription"><b>{name}</b> və <b>başqa {count} nəfəri</b> admin etmək istədiyinizə əminsiniz? Adminlər xaric edilə bilməz.</string>
     <string name="adminPromoteToAdmin">Admin olaraq yüksəlt</string>
+    <string name="adminPromoteTwoDescription"><b>{name}</b> və <b>{other_name}</b> istifadəçilərini admin etmək istədiyinizə əminsiniz? Adminlər xaric edilə bilməz.</string>
     <string name="adminPromotedToAdmin"><b>{name}</b> Admin olaraq yüksəldildi.</string>
     <string name="adminPromotionFailed">Admin təyinatı uğursuz oldu</string>
     <string name="adminPromotionFailedDescription">{name} istifadəçisini {group_name} qrupunda yüksəltmə uğursuz oldu</string>
@@ -33,8 +37,15 @@
     <string name="adminPromotionNotSent">Yüksəltmə göndərilmədi</string>
     <string name="adminPromotionSent">Admin təyinatı göndərildi</string>
     <string name="adminPromotionStatusUnknown">Yüksəltmə statusu bilinmir</string>
+    <string name="adminRemove">Adminləri xaric et</string>
+    <string name="adminRemoveAsAdmin">Admin olaraq xaric et</string>
     <string name="adminRemoveCommunityNone">Bu İcmada heç bir Admin yoxdur.</string>
-    <string name="adminRemovedUser"><b>{name}</b> artıq Admin deyil.</string>
+    <string name="adminRemoveFailed">{name} Adminlikdən xaric edilmədi.</string>
+    <string name="adminRemoveFailedMultiple"><b>{name}</b> və <b>digər {count} nəfər</b> Adminlikdən xaric edilmədi.</string>
+    <string name="adminRemoveFailedOther"><b>{name}</b> və <b>{other_name}</b> Adminlikdən xaric edilmədi.</string>
+    <string name="adminRemovedUser"><b>{name}</b> Adminlikdən xaric edildi.</string>
+    <string name="adminRemovedUserMultiple"><b>{name}</b> və <b>digər {count} nəfər</b> Adminlikdən xaric edildi.</string>
+    <string name="adminRemovedUserOther"><b>{name}</b> və <b>{other_name}</b> Adminlikdən xaric edildi.</string>
     <plurals name="adminSelected">
         <item quantity="one">%1$d Admin seçildi</item>
         <item quantity="other">%1$d Admin seçildi</item>
@@ -112,6 +123,7 @@
     <string name="attachmentsFileSize">Fayl ölçüsü:</string>
     <string name="attachmentsFileType">Fayl növü:</string>
     <string name="attachmentsFilesEmpty">Bu danışıqda heç bir faylınız yoxdur.</string>
+    <string name="attachmentsImageErrorMetadata">Meta veri, fayldan xaric edilə bilmir.</string>
     <string name="attachmentsLoadingNewer">Yeni media yüklənir...</string>
     <string name="attachmentsLoadingNewerFiles">Yeni fayllar yüklənir...</string>
     <string name="attachmentsLoadingOlder">Köhnə media yüklənir...</string>
@@ -264,6 +276,8 @@
     <string name="communityUrl">İcma URL-si</string>
     <string name="communityUrlCopy">İcma URL-sini kopyala</string>
     <string name="confirm">Təsdiqlə</string>
+    <string name="confirmPromotion">Yüksəltməni təsdiqlə</string>
+    <string name="confirmPromotionDescription">Əminsiniz? Adminlərin vəzifəsini azaltmaq və ya adminləri qrupdan xaric etmək mümkün deyil.</string>
     <string name="contactContacts">Kontaktlar</string>
     <string name="contactDelete">Kontaktı sil</string>
     <string name="contactDeleteDescription"><b>{name}</b> istifadəçisini silmək istədiyinizə əminsiniz? <b>{name}</b> göndərən yeni mesajlar mesaj tələbi olaraq gələcək.</string>
@@ -504,7 +518,7 @@
     <string name="groupCreate">Qrup yarat</string>
     <string name="groupCreateErrorNoMembers">Lütfən ən azı bir qrup üzvü seçin.</string>
     <string name="groupDelete">Qrupu sil</string>
-    <string name="groupDeleteDescription"><b>{group_name}</b> qrupunu silmək istədiyinizdən əminsinizmi?\n\nBu, bütün üzvləri çıxaracaq və bütün qrup məzmununu siləcək.</string>
+    <string name="groupDeleteDescription"><b>{group_name}</b> qrupunu silmək istədiyinizə əminsiniz?\n\nBu, bütün üzvləri xaric edəcək və qrupun bütün məzmununu siləcək.</string>
     <string name="groupDeleteDescriptionMember"><b>{group_name}</b> qrupunu silmək istədiyinizə əminsiniz?</string>
     <string name="groupDeletedMemberDescription">{group_name}, qrup admini tərəfindən silindi. Artıq mesaj göndərə bilməyəcəksiniz.</string>
     <string name="groupDescriptionEnter">Qrup açıqlamasını daxil edin</string>
@@ -536,7 +550,11 @@
     <string name="groupInviteYouHistory"><b>Siz</b> qrupa qoşulmaq üçün dəvət edildiniz. Söhbət tarixçəsi paylaşıldı.</string>
     <string name="groupLeave">Qrupu tərk et</string>
     <string name="groupLeaveDescription"><b>{group_name}</b> qrupunu tərk etmək istədiyinizə əminsiniz?</string>
+    <string name="groupLeaveDescriptionAdmin"><b>{group_name}</b> qrupunu tərk etmək istədiyinizə əminsiniz?\n\nBu, bütün üzvlər xaric ediləcək və qrupun bütün məzmunu silinəcək.</string>
     <string name="groupLeaveErrorFailed">{group_name} qrupunu tərk etmə uğursuz oldu</string>
+    <string name="groupMemberInvitedHistory"><b>{name}</b> qrupa qoşulmaq üçün dəvət edildi. Son 14 günə aid söhbət tarixçəsi paylaşıldı.</string>
+    <string name="groupMemberInvitedHistoryMultiple"><b>{name}</b> və digər <b>{count}</b> nəfər qrupa qoşulmaq üçün dəvət edildi. Son 14 günə aid söhbət tarixçəsi paylaşıldı.</string>
+    <string name="groupMemberInvitedHistoryTwo"><b>{name}</b> və <b>{other_name}</b> qrupa qoşulmaq üçün dəvət edildi. Son 14 günə aid söhbət tarixçəsi paylaşıldı.</string>
     <string name="groupMemberLeft"><b>{name}</b> qrupu tərk etdi.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> və <b>başqa {count} nəfər</b> qrupu tərk etdi.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> və <b>{other_name}</b> qrupu tərk etdi.</string>
@@ -548,6 +566,9 @@
     <string name="groupMemberNewTwo"><b>{name}</b> və <b>{other_name}</b> qrupa qoşulmaq üçün dəvət edildi.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Siz</b> və <b>digər {count} nəfər</b> qrupa qoşulmaq üçün dəvət edildiniz. Söhbət tarixçəsi paylaşıldı.</string>
     <string name="groupMemberNewYouHistoryTwo"><b>Siz</b> və <b>{other_name}</b> qrupa qoşulmaq üçün dəvət edildiniz. Söhbət tarixçəsi paylaşıldı.</string>
+    <string name="groupMemberRemoveFailed"><b>{name}</b> <b>{group_name}</b> qrupundan xaric edilmədi</string>
+    <string name="groupMemberRemoveFailedMultiple"><b>{name}</b> və <b>digər {count} nəfər</b> <b>{group_name}</b> qrupundan xaric edilmədi</string>
+    <string name="groupMemberRemoveFailedOther"><b>{name}</b> və <b>{other_name}</b> <b>{group_name}</b> qrupundan xaric edilmədi</string>
     <string name="groupMemberYouLeft"><b>Siz</b> qrupu tərk etdiniz.</string>
     <string name="groupMembers">Qrup üzvləri</string>
     <string name="groupMembersNone">Bu qrupda başqa üzv yoxdur.</string>
@@ -561,14 +582,29 @@
     <string name="groupNoMessages"><b>{group_name}</b> daxilində heç bir mesajınız yoxdur. Danışığa başlamaq üçün bir mesaj göndərin!</string>
     <string name="groupNotUpdatedWarning">Bu qrup 30 gün ərzində güncəllənməyib. Mesaj göndərərkən və ya qrup məlumatlarına baxarkən problemlərlə üzləşə bilərsiniz.</string>
     <string name="groupOnlyAdmin">Siz <b>{group_name}</b> qrupunda yeganə adminsiniz.\n\nQrup üzvləri və ayarları admin olmadan dəyişdirilə bilməz.</string>
+    <string name="groupOnlyAdminLeave">Siz, <b>{group_name}</b> qrupunun yeganə adminisiniz.\n\nQrup üzvləri və ayarları admin olmadan dəyişdirilə bilməz. Qrupu silmədən tərk etmək üçün, əvvəlcə yeni bir admin əlavə edin</string>
     <string name="groupPendingRemoval">Silmə gözlənilir</string>
     <string name="groupPromotedYou"><b>Siz</b> Admin oldunuz.</string>
     <string name="groupPromotedYouMultiple"><b>Siz</b> və <b> digər {count} nəfər</b> Admin oldunuz.</string>
     <string name="groupPromotedYouTwo"><b>Siz</b> və<b>{other_name}</b> Admin oldunuz.</string>
-    <string name="groupRemoveDescription"><b>{name}</b> istifadəçisini <b>{group_name}</b> qrupundan çıxarmaq istəyirsiniz?</string>
-    <string name="groupRemoveDescriptionTwo"><b>{name}</b> və <b>{other_name}</b> istifadəçilərini <b>{group_name}</b> qrupundan çıxarmaq istəyirsiniz?</string>
-    <string name="groupRemoved"><b>{name}</b> qrupdan çıxarıldı.</string>
-    <string name="groupRemovedTwo"><b>{name}</b> və <b>{other_name}</b> qrupdan çıxarıldı.</string>
+    <string name="groupRemoveDescription"><b>{name}</b> istifadəçisini <b>{group_name}</b> qrupundan xaric etmək istəyirsiniz?</string>
+    <string name="groupRemoveDescriptionMultiple"><b>{name}</b> və digər <b>{count} nəfəri</b> <b>{group_name}</b> qrupundan xaric etmək istəyirsiniz?</string>
+    <string name="groupRemoveDescriptionTwo"><b>{name}</b> və <b>{other_name}</b> istifadəçilərini <b>{group_name}</b> qrupundan xaric etmək istəyirsiniz?</string>
+    <plurals name="groupRemoveMessages">
+        <item quantity="one">İstifadəçini xaric et və mesajlarını sil</item>
+        <item quantity="other">İstifadəçiləri xaric et və mesajlarını sil</item>
+    </plurals>
+    <plurals name="groupRemoveUserOnly">
+        <item quantity="one">İstifadəçini xaric et</item>
+        <item quantity="other">İstifadəçiləri xaric et</item>
+    </plurals>
+    <string name="groupRemoved"><b>{name}</b> qrupdan xaric edildi.</string>
+    <string name="groupRemovedMultiple"><b>{name}</b> və <b>digər {count} nəfər</b> qrupdan xaric edildi.</string>
+    <string name="groupRemovedTwo"><b>{name}</b> və <b>{other_name}</b> qrupdan xaric edildi.</string>
+    <string name="groupRemovedYou"><b>{group_name}</b> qrupundan xaric edildiniz.</string>
+    <string name="groupRemovedYouGeneral">Qrupdan xaric edildiniz.</string>
+    <string name="groupRemovedYouMultiple"><b>Siz</b> və <b>digər {count} nəfər</b> qrupdan xaric edildiniz.</string>
+    <string name="groupRemovedYouTwo"><b>Siz</b> və <b>{other_name}</b> qrupdan xaric edildiniz.</string>
     <string name="groupSetDisplayPicture">Qrup ekran şəklini ayarla</string>
     <string name="groupUnknown">Bilinməyən Qrup</string>
     <string name="groupUpdated">Qrup güncəlləndi</string>
@@ -612,6 +648,7 @@
         <item quantity="one">Üzvü dəvət et</item>
         <item quantity="other">Üzvləri dəvət et</item>
     </plurals>
+    <string name="inviteNewMemberGroupLink">Dostunuzun Hesab kimliyini, ONS-sini daxil edərək və ya onun QR kodunu skan edərək qrupa yeni üzv dəvət edin {icon}</string>
     <string name="join">Qoşul</string>
     <string name="later">Daha sonra</string>
     <string name="launchOnStartDescriptionDesktop">Kompüteriniz açıldığı zaman {app_name}-u avtomatik başlat.</string>
@@ -674,6 +711,7 @@
     </plurals>
     <string name="membersAddAccountIdOrOns">Hesab Kimliyi və ya ONS əlavə et</string>
     <string name="membersInvite">Kontaktları dəvət et</string>
+    <string name="membersInviteNoContacts">Bu qrupa dəvət edəcək kontaktınız yoxdur.\nGeri qayıdın və Hesab kimliyini və ya ONS-sini istifadə edərək üzvlər dəvət edin.</string>
     <plurals name="membersInviteSend">
         <item quantity="one">Dəvət göndər</item>
         <item quantity="other">Dəvətləri göndər</item>
@@ -761,6 +799,7 @@
     <string name="nicknameRemove">Ləqəbi sil</string>
     <string name="nicknameSet">Ləqəb təyin et</string>
     <string name="no">Xeyr</string>
+    <string name="noNonAdminsInGroup">Bu qrupda admin olmayan üzv yoxdur.</string>
     <string name="noSuggestions">Təklif yoxdur</string>
     <string name="nonProLongerMessagesDescription">Bütün danışıqlarda 10,000 xarakterə qədər mesaj göndərin.</string>
     <string name="nonProUnlimitedPinnedDescription">Limitsiz sancılmış danışıqla söhbətləri təşkil edin.</string>
@@ -957,7 +996,6 @@
     <string name="proBilledAnnually">{price} - illik haqq</string>
     <string name="proBilledMonthly">{price} - aylıq haqq</string>
     <string name="proBilledQuarterly">{price} - rüblük haqq</string>
-    <string name="proCallToActionPinnedConversations">Daha çoxunu sancmaq istəyirsiniz? {app_pro} ilə söhbətlərinizi təşkil edin və premium özəlliklərin kilidini açın</string>
     <string name="proCancellation">Ləğv etmə</string>
     <string name="proCancellationOptions">{pro} erişiminizi ləğv etməyin iki yolu var:</string>
     <string name="proDiscountTooltip">Tam {app_pro} qiymətinə sahib {pro} erişiminiz üçün artıq {percent}% endirim var.</string>
@@ -965,7 +1003,6 @@
     <string name="proExpired">Müddəti bitib</string>
     <string name="proExpiredDescription">Təəssüf ki, {pro} erişiminizin istifadə müddəti bitib. {app_pro} üzrə eksklüziv imtiyazları və özəllikləri təkrar aktivləşdirmək üçün yeniləyin.</string>
     <string name="proExpiringSoon">Tezliklə bitir</string>
-    <string name="proExpiringSoonDescription">{pro} planınızın istifadə müddəti <b>{time}</b> vaxtında bitir. {app_pro} üzrə eksklüziv imtiyazlara və özəlliklərə erişimi davam etdirmək üçün planınızı güncəlləyin.</string>
     <string name="proExpiringTime">{pro}, <b>{time}</b> vaxtında başa çatır</string>
     <string name="proFaq">{pro} TVS</string>
     <string name="proFaqDescription">{app_pro} TVS-da tez-tez verilən suallara cavab tapın.</string>
@@ -1014,6 +1051,8 @@
     <string name="proRefundingDescription">{app_pro} üçün geri ödəmələr yalnız {platform_store} vasitəsilə {platform} tərəfindən həyata keçirilir.\n\n{platform} geri ödəniş siyasətlərinə əsasən, {app_name} gəlişdiriciləri, geri ödəniş tələblərinin nəticəsinə təsir edə bilməz. Bu, tələbin qəbul olunub-olunmaması ilə yanaşı, tam və ya qismən geri ödənişin verilib-verilməməsini də əhatə edir.</string>
     <string name="proRenewBeta">{pro} Beta-nı yenilə</string>
     <string name="proRenewDesktopLinked">{pro} erişiminizi, {platform_store} və ya {platform_store_other} üzərindən {app_name} quraşdırılmış və əlaqələndirilmiş cihazın {app_pro} ayarlarında yeniləyin.</string>
+    <string name="proRenewMaxPotential">{app_name} tətbiqini yenidən maksimum potensialda istifadə etmək istəyirsiniz?\nQaçırdığınız özəlliklərin kilidini açmaq üçün {pro} erişiminizi yeniləyin.</string>
+    <string name="proRenewPinMoreConversations">Daha çox danışığı təkrar sancmaq istəyirsiniz?\nQaçırdığınız özəlliklərin kilidini açmaq üçün {pro} erişiminizi yeniləyin.</string>
     <string name="proRenewalUnsuccessful">Pro yeniləməsi uğursuz oldu, tezliklə yenidən sınanacaq</string>
     <string name="proRequestedRefund">Geri ödəmə tələb edildi</string>
     <string name="proSendMore">Daha çoxunu göndərmək üçün</string>
@@ -1033,7 +1072,6 @@
     <string name="proTosPrivacy">Güncəlləyərək, {app_pro} <b>Xidmət Şərtləri</b> {icon} və <b>Məxfilik Siyasəti</b> {icon} ilə razılaşırsınız</string>
     <string name="proUnlimitedPins">Limitsiz sancma</string>
     <string name="proUnlimitedPinsDescription">Limitsiz sancılmış danışıqla bütün söhbətlərinizi təşkil edin.</string>
-    <string name="proUserProfileModalCallToAction">{app_name} tətbiqindən daha çox faydalanmaq istəyirsiniz? Daha güclü mesajlaşma təcrübəsi üçün {app_pro}-ya yüksəldin.</string>
     <string name="processingRefundRequest">{platform} geri ödəmə tələbinizi emal edir</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Ekran şəkli</string>
@@ -1042,6 +1080,7 @@
     <string name="profileDisplayPictureSizeError">Lütfən daha kiçik bir fayl götürün.</string>
     <string name="profileErrorUpdate">Profili güncəlləmək uğursuz oldu.</string>
     <string name="promote">Yüksəlt</string>
+    <string name="promoteAdminsWarning">Adminlər, son 14 günə aid mesaj tarixçəsini görə biləcək. Onların vəzifəsini azaltmaq və ya onları qrupdan xaric etmək mümkün deyil.</string>
     <plurals name="promoteMember">
         <item quantity="one">Üzvü yüksəlt</item>
         <item quantity="other">Üzvləri yüksəlt</item>
@@ -1104,6 +1143,14 @@
     </plurals>
     <string name="remindMeLater">Daha sonra xatırlat</string>
     <string name="remove">Sil</string>
+    <plurals name="removeMember">
+        <item quantity="one">Üzvü xaric et</item>
+        <item quantity="other">Üzvləri xaric et</item>
+    </plurals>
+    <plurals name="removeMemberMessages">
+        <item quantity="one">Üzvü xaric et və mesajlarını sil</item>
+        <item quantity="other">Üzvləri xaric et və mesajlarını sil</item>
+    </plurals>
     <string name="removePasswordFail">Parol silmə uğursuz oldu</string>
     <string name="removePasswordModalDescription">{app_name} üçün hazırkı parolunuzu silin. Daxili olaraq saxlanılmış verilər, cihazınızda saxlanılan təsadüfi yaradılmış açarla təkrar şifrələnəcək.</string>
     <plurals name="removingMember">
