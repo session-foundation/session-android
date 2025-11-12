@@ -286,8 +286,9 @@ class ProStatusManager @Inject constructor(
                     //todo PRO call AddProPaymentRequest in libsession
                     /**
                      * Here are the errors from the back end that we will need to be aware of
-                     * UnknownPayment: means it's potentially not acknowledged yet so might need to keep trying until this work or times out
-                     * Error: is non retryable - we might want a custom UI for this.
+                     * UnknownPayment: retryable > increment counter and try again
+                     * Error, ParseError: is non retryable - throw PaymentServerException
+                     * Success, AlreadyRedeemed - all good
                      *
                      *
                      *   /// Payment was claimed and the pro proof was successfully generated
