@@ -998,6 +998,7 @@
     <string name="proAccessSignUp">Because you originally signed up for {app_pro} via the <b>{platform_store}</b>, you\'ll need to use your {platform_account} to update your {pro} access.</string>
     <string name="proAccessUpgradeDesktop">Currently, {pro} access can only be purchased via the {platform_store} or {platform_store_other}. Because you are using {app_name} Desktop, you\'re not able to upgrade to {pro} here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the {platform_store} and {platform_store_other}. <b>{pro} Roadmap</b> {icon}</string>
     <string name="proActivated">Activated</string>
+    <string name="proActivatingActivation">activating</string>
     <string name="proAllSet">You\'re all set!</string>
     <string name="proAllSetDescription">Your {app_pro} access was updated! You will be billed when {pro} is automatically renewed on <b>{date}</b>.</string>
     <string name="proAlreadyPurchased">You’ve already got</string>
@@ -1082,6 +1083,7 @@
     <string name="proPriceOneMonth">1 Month - {monthly_price} / Month</string>
     <string name="proPriceThreeMonths">3 Months - {monthly_price} / Month</string>
     <string name="proPriceTwelveMonths">12 Months - {monthly_price} / Month</string>
+    <string name="proReactivatingActivation">re-activating</string>
     <string name="proRefundAccountDevice">Open this {app_name} account on an {device_type} device logged into the {platform_account} you originally signed up with. Then, request a refund via the {app_pro} settings.</string>
     <string name="proRefundDescription">We’re sorry to see you go. Here\'s what you need to know before requesting a refund.</string>
     <string name="proRefundNextSteps">{platform} is now processing your refund request. This typically takes 24-48 hours. Depending on their decision, you may see your {pro} status change in {app_name}.</string>
@@ -1099,6 +1101,7 @@
     <string name="proRenewPinMoreConversations">Want to pin more conversations again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
     <string name="proRenewTosPrivacy">By renewing, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
     <string name="proRenewalUnsuccessful">Pro renewal unsuccessful, retrying soon</string>
+    <string name="proRenewingAction">renewing</string>
     <string name="proRenewingNoAccessBilling">Currently, {pro} access can only be purchased and renewed via the {platform_store} or {platform_store_other}. Because you installed {app_name} using the {build_variant}, you\'re not able to renew here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the {platform_store} and {platform_store_other}.<b> {pro} Roadmap</b> {icon}</string>
     <string name="proRequestedRefund">Refund Requested</string>
     <string name="proSendMore">Send more with</string>
@@ -1124,12 +1127,14 @@
     <string name="proUnlimitedPinsDescription">Organize all your chats with unlimited pinned conversations.</string>
     <string name="proUpdateAccessDescription">Your current billing option grants <b>{current_plan_length}</b> of {pro} access. Are you sure you want to switch to the <b>{selected_plan_length_singular}</b> billing option?\n\nBy updating, your {pro} access will automatically renew on <b>{date}</b> for an additional <b>{selected_plan_length}</b> of {pro} access.</string>
     <string name="proUpdateAccessExpireDescription">Your {pro} access will expire on <b>{date}</b>.\n\nBy updating, your {pro} access will automatically renew on <b>{date}</b> for an additional <b>{selected_plan_length}</b> of {pro} access.</string>
+    <string name="proUpdatingAction">updating</string>
     <string name="proUpgradeAccess">Upgrade to {app_pro} Beta to get access to loads of exclusive perks and features.</string>
     <string name="proUpgradeDesktopLinked">Upgrade to {pro} from the {app_pro} settings on a linked device with {app_name} installed via the {platform_store} or {platform_store_other}.</string>
     <string name="proUpgradeNoAccessBilling">Currently, {pro} access can only be purchased via the {platform_store} or {platform_store_other}. Because you installed {app_name} using the {build_variant}, you\'re not able to upgrade to {pro} here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the {platform_store} and {platform_store_other}.<b> {pro} Roadmap</b> {icon}</string>
     <string name="proUpgradeOption">For now, there is only one way to upgrade:</string>
     <string name="proUpgradeOptionsTwo">For now, there are two ways to upgrade:</string>
     <string name="proUpgraded">You have upgraded to {app_pro}!\nThank you for supporting the {network_name}.</string>
+    <string name="proUpgradingAction">upgrading</string>
     <string name="proUpgradingTo">Upgrading to {pro}</string>
     <string name="proUpgradingTosPrivacy">By upgrading, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
     <string name="proUserProfileModalCallToAction">Want to get more out of {app_name}?\nUpgrade to {app_pro} Beta for a more powerful messaging experience.</string>
