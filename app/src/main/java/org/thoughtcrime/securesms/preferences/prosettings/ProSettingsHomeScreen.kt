@@ -907,14 +907,16 @@ fun ProSettingsFooter(
     inSheet: Boolean,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
 ) {
-    // Manage Pro - Pro
-    Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
-    ProManage(
-        data = subscriptionType,
-        inSheet = inSheet,
-        subscriptionRefreshState = subscriptionRefreshState,
-        sendCommand = sendCommand,
-    )
+    // Manage Pro - Expired has this in the header so exclude it here
+    if(subscriptionType !is SubscriptionType.Expired) {
+        Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+        ProManage(
+            data = subscriptionType,
+            inSheet = inSheet,
+            subscriptionRefreshState = subscriptionRefreshState,
+            sendCommand = sendCommand,
+        )
+    }
 
     // Help
     Spacer(Modifier.height(LocalDimensions.current.spacing))
