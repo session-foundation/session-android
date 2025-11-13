@@ -496,7 +496,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         ) } +
             threads.mapNotNull {
                 if(it.address is Address.GroupLike)
-                    GlobalSearchAdapter.Model.GroupConversation(it, showProBadge = recipientRepository.getRecipientSync(it.encodedId.toAddress()).proStatus.shouldShowProBadge)
+                    GlobalSearchAdapter.Model.GroupConversation(it)
                 else null
             }
 
