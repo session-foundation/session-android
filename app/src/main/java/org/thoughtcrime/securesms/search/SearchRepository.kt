@@ -8,21 +8,15 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.GroupRecord
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.concurrent.SignalExecutors
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.toGroupString
 import org.session.libsignal.utilities.AccountId
-import org.thoughtcrime.securesms.contacts.ContactAccessor
 import org.thoughtcrime.securesms.database.CursorList
-import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.MmsSmsColumns
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SearchDatabase
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.search.model.SearchResult
@@ -35,13 +29,9 @@ import javax.inject.Singleton
 class SearchRepository @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val searchDatabase: SearchDatabase,
-    private val threadDatabase: ThreadDatabase,
-    private val groupDatabase: GroupDatabase,
-    private val contactAccessor: ContactAccessor,
     private val recipientRepository: RecipientRepository,
     private val conversationRepository: ConversationRepository,
     private val configFactory: ConfigFactoryProtocol,
-    private val prefs: TextSecurePreferences,
 ) {
     private val executor = SignalExecutors.SERIAL
 
