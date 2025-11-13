@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.preferences
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.media.RingtoneManager
 import android.net.Uri
@@ -9,7 +10,6 @@ import android.os.AsyncTask
 import android.os.Bundle
 import android.provider.Settings
 import android.text.TextUtils
-import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -22,16 +22,15 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.components.SwitchPreferenceCompat
-import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HideSimpleDialog
 import org.thoughtcrime.securesms.notifications.NotificationChannels
 import org.thoughtcrime.securesms.preferences.widgets.ComposePreference
 import org.thoughtcrime.securesms.preferences.widgets.DropDownPreference
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.isWhitelistedFromDoze
 import org.thoughtcrime.securesms.ui.requestDozeWhitelist
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -47,17 +46,20 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
 //todo WHITELIST remove hardcoded strings
 //todo WHITELIST looks like there is a visible empty pref at the bottom from the compose one? << Might need to rebuild the whole thing in compose
 
-    var showWhitelistDialog by mutableStateOf(false)
+    var showWhitelistEnableDialog by mutableStateOf(false)
+    var showWhitelistDisableDialog by mutableStateOf(false)
+
+    var whiteListControl: SwitchPreferenceCompat? = null
 
     override fun onCreate(paramBundle: Bundle?) {
         super.onCreate(paramBundle)
         // whitelist control
-        val whiteListControl = findPreference<Preference>("whitelist_background")!!
-        whiteListControl.onPreferenceClickListener =
+        whiteListControl = findPreference<SwitchPreferenceCompat>("whitelist_background")!!
+        whiteListControl?.onPreferenceClickListener =
             Preference.OnPreferenceClickListener {
                 // if already whitelisted, show toast
                 if(requireContext().isWhitelistedFromDoze()){
-                    Toast.makeText(requireContext(), "Session is already whitelisted", Toast.LENGTH_SHORT).show()
+                    showWhitelistDisableDialog = true
                 } else {
                     openSystemBgWhitelist()
                 }
@@ -67,7 +69,7 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 prefs.pushEnabled.collect { enabled ->
-                    whiteListControl.isVisible = !enabled
+                    whiteListControl?.isVisible = !enabled
                 }
             }
         }
@@ -80,7 +82,7 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
                 prefs.setPushEnabled(newValue as Boolean)
                 // open whitelist dialog when setting to slow mode if first time
                 if(!newValue && !prefs.hasCheckedDozeWhitelist()){
-                    showWhitelistDialog = true
+                    showWhitelistEnableDialog = true
                     //prefs.setHasCheckedDozeWhitelist(true)
                 }
                 true
@@ -148,14 +150,14 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
         //set up compose content
         findPreference<ComposePreference>("compose_data")!!.apply {
             setContent {
-                if(showWhitelistDialog) {
+                if(showWhitelistEnableDialog) {
                     AlertDialog(
                         onDismissRequest = {
                             // hide dialog
-                            showWhitelistDialog = false
+                            showWhitelistEnableDialog = false
                         },
-                        title = "Allow Session to work in the background",
-                        text = "Since you are using slow mode we recommend allowing Session to run in the background to help with receiving messages. Your system might still decide to slow down the process but this step might help getting messages more reliably. \nYou can set this later in the Settings > Notifications page.",
+                        title = "Run Session in the Background?",
+                        text = "Since you’re using slow mode we recommend allowing Session to run in the background to improve notifications. Your system may still decide to limit Session, but allowing can improve notification consistency.\n\nYou can change this later in Settings.",
                         buttons = listOf(
                             DialogButtonData(
                                 text = GetString("Allow"),
@@ -171,10 +173,61 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
                         )
                     )
                 }
+
+                if(showWhitelistDisableDialog) {
+                    AlertDialog(
+                        onDismissRequest = {
+                            // hide dialog
+                            showWhitelistDisableDialog = false
+                        },
+                        title = "Limit Background Activity?",
+                        text = "You have previously allowed Session to run in the background to improve notification reliability. Changing this permission could result in less reliable notifications.",
+                        buttons = listOf(
+                            DialogButtonData(
+                                text = GetString("Change Setting"),
+                                qaTag = getString(R.string.qa_conversation_settings_dialog_whitelist_confirm),
+                                color = LocalColors.current.danger,
+                                onClick = {
+                                    // we can't disable it ourselves, but we can take the user to the right settings instead
+                                    openBatteryOptimizationSettings()
+                                }
+                            ),
+                            DialogButtonData(
+                                text = GetString(getString(R.string.cancel)),
+                                qaTag = getString(R.string.qa_conversation_settings_dialog_whitelist_cancel),
+                            ),
+                        )
+                    )
+                }
             }
         }
 
         initializeMessageVibrateSummary(findPreference<Preference>(TextSecurePreferences.VIBRATE_PREF) as SwitchPreferenceCompat?)
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        Log.w("", "*** ON RESUME!!")
+
+        whiteListControl?.isChecked = requireContext().isWhitelistedFromDoze()
+    }
+
+    // Opens the system Battery Optimization settings
+    private fun openBatteryOptimizationSettings() {
+        try {
+            val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
+                data = Uri.parse("package:${requireContext().packageName}")
+            }
+
+            startActivity(intent)
+        } catch (e: ActivityNotFoundException) {
+            // Fallback: open the generic Battery Optimization settings screen
+            val fallbackIntent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(fallbackIntent)
+        }
     }
 
     private fun openSystemBgWhitelist(){

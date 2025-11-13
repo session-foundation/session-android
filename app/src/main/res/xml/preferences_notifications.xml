@@ -11,8 +11,10 @@
             android:summary="@string/notificationsFastModeDescription"
             android:defaultValue="false" />
 
-        <Preference android:title="@string/temp_do_not_commit"
+        <org.thoughtcrime.securesms.components.SwitchPreferenceCompat
+            android:title="@string/temp_do_not_commit"
             app:isPreferenceVisible="false"
+            android:defaultValue="false"
             android:key="whitelist_background" />
 
         <Preference android:title="@string/notificationsGoToDevice"

@@ -175,8 +175,8 @@ class HomeViewModel @Inject constructor(
                 _dialogsState.update {
                     it.copy(
                         showSimpleDialog = SimpleDialogData(
-                            title = "Allow Session to work in the background",
-                            message = "Since you are using slow mode we recommend allowing Session to run in the background to help with receiving messages. Your system might still decide to slow down the process but this step might help getting messages more reliably. \nYou can set this later in the Settings > Notifications page.",
+                            title = "Run Session in the Background?",
+                            message = "Since you’re using slow mode we recommend allowing Session to run in the background to improve notifications. Your system may still decide to limit Session, but allowing can improve notification consistency.\n\nYou can change this later in Settings.",
                             positiveText = "Allow",
                             negativeText = context.getString(R.string.cancel),
                             positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_whitelist_confirm),
