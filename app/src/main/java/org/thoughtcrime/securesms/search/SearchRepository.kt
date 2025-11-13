@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.search
 import android.content.Context
 import android.database.Cursor
 import dagger.hilt.android.qualifiers.ApplicationContext
+import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
@@ -12,6 +13,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.concurrent.SignalExecutors
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
+import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.toGroupString
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.contacts.ContactAccessor
@@ -128,12 +130,41 @@ class SearchRepository @Inject constructor(
 
     private fun queryConversations(
         query: String,
-    ): List<GroupRecord> {
-        val numbers = contactAccessor.getNumbersForThreadSearchFilter(context, query)
-        val addresses = numbers.map { fromSerialized(it) }
+    ) : List<Recipient> {
+        if(query.isEmpty()) return emptyList()
 
-        return threadDatabase.getThreads(addresses)
-            .map { groupDatabase.getGroup(it.recipient.address.toGroupString()).get() }
+        return configFactory.withUserConfigs { configs ->
+            configs.userGroups.all()
+        }.asSequence()
+            .mapNotNull { group ->
+                when (group) {
+                    is GroupInfo.ClosedGroupInfo -> {
+                        if(group.invited) null // do not show groups V2 we have not yet accepted
+                        else recipientRepository.getRecipientSync(
+                            Address.Group(AccountId(group.groupAccountId))
+                        )
+                    }
+
+                    is GroupInfo.LegacyGroupInfo -> {
+                        recipientRepository.getRecipientSync(
+                            Address.LegacyGroup(group.accountId)
+                        )
+                    }
+
+                    is GroupInfo.CommunityGroupInfo -> {
+                        recipientRepository.getRecipientSync(
+                            Address.Community(
+                                serverUrl = group.community.baseUrl,
+                                room = group.community.room
+                            )
+                        )
+                    }
+                }
+            }
+            .filter { group ->
+                group.displayName().contains(query, ignoreCase = true)
+            }
+            .toList()
     }
 
     private fun queryMessages(query: String): CursorList<MessageResult> {

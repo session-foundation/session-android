@@ -172,7 +172,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                     is GlobalSearchAdapter.Model.GroupConversation -> ConversationActivityV2
                         .createIntent(
                             this,
-                            address = Address.fromSerialized(model.groupId) as Address.Conversable
+                            address = model.address
                         )
 
                     else -> {
@@ -479,8 +479,9 @@ class HomeActivity : ScreenLockActionBarActivity(),
             isSelf = it.isSelf,
             showProBadge = it.proStatus.shouldShowProBadge()
         ) } +
-            threads.map {
-                GlobalSearchAdapter.Model.GroupConversation(it, showProBadge = recipientRepository.getRecipientSync(it.encodedId.toAddress()).proStatus.shouldShowProBadge())
+            threads.mapNotNull {
+                if(it.address is Address.GroupLike) GlobalSearchAdapter.Model.GroupConversation(it)
+                else null
             }
 
     private val GlobalSearchResult.messageResults: List<GlobalSearchAdapter.Model> get() {

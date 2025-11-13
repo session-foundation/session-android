@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.DiffUtil
 import network.loki.messenger.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.isLegacyGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.truncateIdForDisplay
@@ -111,10 +112,10 @@ private fun ComposeView.setupTitleWithBadge(title: String, showProBadge: Boolean
 
 fun ContentView.bindModel(query: String?, model: GroupConversation) {
     binding.searchResultProfilePicture.isVisible = true
-    binding.searchResultSubtitle.isVisible = model.isLegacy
+    binding.searchResultSubtitle.isVisible = model.address.isLegacyGroup
     binding.searchResultTimestamp.isVisible = false
     val threadRecipient = MessagingModuleConfiguration.shared.recipientRepository.getRecipientSync(
-        Address.fromSerialized(model.groupId)
+        model.address
     )
 
     binding.searchResultProfilePicture.setThemedContent {
