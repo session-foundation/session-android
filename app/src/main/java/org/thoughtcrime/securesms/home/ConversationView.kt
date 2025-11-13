@@ -88,7 +88,7 @@ class ConversationView : LinearLayout {
 
         // Thread name and pro badge
         binding.conversationViewDisplayName.text = senderDisplayName
-        binding.iconPro.isVisible = thread.recipient.proStatus.shouldShowProBadge()
+        binding.iconPro.isVisible = thread.recipient.proStatus.shouldShowProBadge
                 && !thread.recipient.isLocalNumber
 
         binding.timestampTextView.text = thread.date.takeIf { it != 0L }?.let { dateUtils.getDisplayFormattedTimeSpanString(

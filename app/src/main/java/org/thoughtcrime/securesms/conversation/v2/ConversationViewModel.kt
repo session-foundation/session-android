@@ -526,7 +526,7 @@ class ConversationViewModel @AssistedInject constructor(
                 application.resources.getQuantityString(R.plurals.membersActive, userCount, userCount)
             } else {
                 val userCount = if (conversation.data is RecipientData.Group) {
-                    conversation.data.partial.members.size
+                    conversation.data.members.size
                 } else { // legacy closed groups
                     groupDb.getGroupMemberAddresses(conversation.address.toGroupString(), true).size
                 }
@@ -553,7 +553,7 @@ class ConversationViewModel @AssistedInject constructor(
             showSearch = showSearch,
             avatarUIData = avatarData,
             // show the pro badge when a conversation/user is pro, except for communities
-            showProBadge = conversation.proStatus.shouldShowProBadge() && !conversation.isLocalNumber // do not show for note to self
+            showProBadge = conversation.proStatus.shouldShowProBadge && !conversation.isLocalNumber // do not show for note to self
         ).also {
             // also preload the larger version of the avatar in case the user goes to the settings
             avatarData.elements.mapNotNull { it.remoteFile }.forEach {
@@ -647,7 +647,7 @@ class ConversationViewModel @AssistedInject constructor(
             // this would be a request from us instead.
             (
                     (recipient.data is RecipientData.Contact && !recipient.data.approved) ||
-                            (recipient.data is RecipientData.Group && !recipient.data.partial.approved)
+                            (recipient.data is RecipientData.Group && !recipient.data.approved)
             ) &&
 
             // Req 2: the type of conversation supports message request

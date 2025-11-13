@@ -54,7 +54,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
-import org.session.libsession.utilities.recipients.ProStatus
+import org.session.libsession.utilities.recipients.RecipientProStatus
 import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.GoToCancel
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.GoToChoosePlan
@@ -589,7 +589,7 @@ fun ProSettings(
                         .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                         .format().toString()
                 ),
-                checked = data.proStatus.shouldShowProBadge(),
+                checked = data.proStatus.shouldShowProBadge,
                 qaTag = R.string.qa_pro_settings_action_show_badge,
                 onCheckedChange = { sendCommand(SetShowProBadge(it)) }
             )
@@ -979,7 +979,7 @@ fun PreviewProSettingsPro(
             data = ProSettingsViewModel.ProSettingsState(
                 subscriptionState = SubscriptionState(
                     type = SubscriptionType.Active.AutoRenewing(
-                        proStatus = ProStatus.Pro(
+                        proStatus = RecipientProStatus.Pro(
                             visible = true,
                             validUntil = Instant.now() + Duration.ofDays(14),
                         ),
@@ -1013,7 +1013,7 @@ fun PreviewProSettingsProLoading(
             data = ProSettingsViewModel.ProSettingsState(
                 subscriptionState = SubscriptionState(
                     type = SubscriptionType.Active.AutoRenewing(
-                        proStatus = ProStatus.Pro(
+                        proStatus = RecipientProStatus.Pro(
                             visible = true,
                             validUntil = Instant.now() + Duration.ofDays(14),
                         ),
@@ -1047,7 +1047,7 @@ fun PreviewProSettingsProError(
             data = ProSettingsViewModel.ProSettingsState(
                 subscriptionState = SubscriptionState(
                     type = SubscriptionType.Active.AutoRenewing(
-                        proStatus = ProStatus.Pro(
+                        proStatus = RecipientProStatus.Pro(
                             visible = true,
                             validUntil = Instant.now() + Duration.ofDays(14),
                         ),

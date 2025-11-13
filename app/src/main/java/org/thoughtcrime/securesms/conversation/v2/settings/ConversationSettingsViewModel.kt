@@ -396,7 +396,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             }
 
             conversation.data is RecipientData.Group -> {
-                conversation.data.partial.description to // description
+                conversation.data.description to // description
                         context.getString(R.string.qa_conversation_settings_description_groups) // description qa tag
             }
 
@@ -532,7 +532,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
             conversation.data is RecipientData.Group -> {
                 // if the user is kicked or the group destroyed, only show "Delete Group"
-                if (!conversation.data.partial.shouldPoll){
+                if (!conversation.data.shouldPoll){
                     listOf(
                             OptionsCategory(
                                 items = listOf(
@@ -657,10 +657,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             else -> emptyList()
         }
 
-        val showProBadge = conversation.proStatus.shouldShowProBadge() && !conversation.isLocalNumber
+        val showProBadge = conversation.proStatus.shouldShowProBadge && !conversation.isLocalNumber
 
         // if it's a one on one convo and the user isn't pro themselves
-        val proBadgeClickable = if(conversation.is1on1 && myself.proStatus.isPro()) false
+        val proBadgeClickable = if(conversation.is1on1 && myself.proStatus.isPro) false
         else showProBadge // otherwise whenever the badge is shown
 
         val avatarData = avatarUtils.getUIDataFromRecipient(conversation)

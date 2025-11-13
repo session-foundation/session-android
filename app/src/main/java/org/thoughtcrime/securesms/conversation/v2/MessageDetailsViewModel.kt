@@ -202,13 +202,13 @@ class MessageDetailsViewModel @AssistedInject constructor(
                         )
                     },
                     senderAvatarData = avatarUtils.getUIDataFromRecipient(sender),
-                    senderShowProBadge = sender.proStatus.shouldShowProBadge(),
+                    senderShowProBadge = sender.proStatus.shouldShowProBadge,
                     senderHasAdminCrown = shouldShowAdminCrown,
                     senderIsBlinded = IdPrefix.fromValue(sender.address.toString())?.isBlinded() ?: false,
                     thread = conversation,
                     readOnly = isDeprecatedLegacyGroup,
                     proFeatures = proStatusManager.getMessageProFeatures(messageRecord.messageId),
-                    proBadgeClickable = !recipientRepository.getSelf().proStatus.isPro() // no badge click if the current user is pro
+                    proBadgeClickable = !recipientRepository.getSelf().proStatus.isPro // no badge click if the current user is pro
                 )
             }
         }

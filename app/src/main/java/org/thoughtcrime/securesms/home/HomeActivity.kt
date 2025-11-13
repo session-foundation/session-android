@@ -482,7 +482,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                         GlobalSearchAdapter.Model.Contact(
                             contact = it.value,
                             isSelf = it.value.address.address == publicKey,
-                            showProBadge = it.value.proStatus.shouldShowProBadge()
+                            showProBadge = it.value.proStatus.shouldShowProBadge
                         )
                     }
             }
@@ -492,10 +492,10 @@ class HomeActivity : ScreenLockActionBarActivity(),
         contacts.map { GlobalSearchAdapter.Model.Contact(
             contact = it,
             isSelf = it.isSelf,
-            showProBadge = it.proStatus.shouldShowProBadge()
+            showProBadge = it.proStatus.shouldShowProBadge
         ) } +
             threads.map {
-                GlobalSearchAdapter.Model.GroupConversation(it, showProBadge = recipientRepository.getRecipientSync(it.encodedId.toAddress()).proStatus.shouldShowProBadge())
+                GlobalSearchAdapter.Model.GroupConversation(it, showProBadge = recipientRepository.getRecipientSync(it.encodedId.toAddress()).proStatus.shouldShowProBadge)
             }
 
     private val GlobalSearchResult.messageResults: List<GlobalSearchAdapter.Model> get() {
@@ -508,7 +508,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 messageResult = it,
                 unread = unreadThreadMap[it.threadId] ?: 0,
                 isSelf = it.conversationRecipient.isLocalNumber,
-                showProBadge = it.conversationRecipient.proStatus.shouldShowProBadge()
+                showProBadge = it.conversationRecipient.proStatus.shouldShowProBadge
             )
         }
     }

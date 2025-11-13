@@ -10,11 +10,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.serialization.json.Json
-import network.loki.messenger.libsession_util.pro.ProProof
 import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.recipients.ProStatus
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
@@ -122,13 +120,8 @@ class RecipientSettingsDatabase @Inject constructor(
             ),
             blocksCommunityMessagesRequests = getInt(getColumnIndexOrThrow(COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS)) == 1,
             name = getString(getColumnIndexOrThrow(COL_NAME)),
-            proProof = getString(getColumnIndexOrThrow(COL_PRO_PROOF))
-                ?.let {
-                    runCatching {
-                        json.get().decodeFromString<ProProof>(it)
-                    }.getOrNull()
-                },
             profileUpdated = getLong(getColumnIndexOrThrow(COL_PROFILE_UPDATE_TIME)).millsToInstant(),
+            proData = getString(getColumnIndexOrThrow(COL_PRO_DATA))?.let(json.get()::decodeFromString),
         )
     }
 
@@ -141,8 +134,8 @@ class RecipientSettingsDatabase @Inject constructor(
             put(COL_PROFILE_PIC_KEY, profilePic?.key?.data?.let(Base64::encodeBytes))
             put(COL_PROFILE_PIC_URL, profilePic?.url)
             put(COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS, blocksCommunityMessagesRequests)
-            put(COL_PRO_PROOF, proProof?.let { json.get().encodeToString(it) })
             put(COL_PROFILE_UPDATE_TIME, profileUpdated?.toEpochMilli() ?: 0L)
+            put(COL_PRO_DATA, proData?.let { json.get().encodeToString(it) })
         }
     }
 
@@ -247,7 +240,8 @@ class RecipientSettingsDatabase @Inject constructor(
         @Deprecated("Old column kept for migrations")
         private const val COL_PRO_STATUS = "pro_status"
 
-        private const val COL_PRO_PROOF = "pro_proof"
+        private const val COL_PRO_DATA = "pro_data"
+
 
         // The time when the profile pic/name/is_pro was last updated, in epoch seconds.
         private const val COL_PROFILE_UPDATE_TIME = "profile_update_time"
@@ -301,11 +295,12 @@ class RecipientSettingsDatabase @Inject constructor(
             DROP TABLE recipient_preferences
         """
 
-        fun migrateProStatusToProProof(db: SupportSQLiteDatabase) {
+        fun migrateProStatusToProData(db: SupportSQLiteDatabase) {
             // By the time we release this code, the pro_status column is actually only filled with nulls,
-            // so we can simply remove the column and add new one.
+            // so we can simply remove the column
             db.execSQL("ALTER TABLE $TABLE_NAME DROP COLUMN $COL_PRO_STATUS")
-            db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $COL_PRO_PROOF TEXT DEFAULT NULL")
+
+            db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $COL_PRO_DATA TEXT DEFAULT NULL")
         }
 
         private fun readUserProfile(keyB64: String?, url: String?): UserPic? {

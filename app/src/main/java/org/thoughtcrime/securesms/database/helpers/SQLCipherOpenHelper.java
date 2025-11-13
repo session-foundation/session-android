@@ -621,7 +621,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
           ProDatabase.Companion.createTable(db);
           db.execSQL(MmsDatabase.ADD_PRO_PROOF_COLUMN);
           db.execSQL(SmsDatabase.ADD_PRO_PROOF_COLUMN);
-          RecipientSettingsDatabase.Companion.migrateProStatusToProProof(db);
+          RecipientSettingsDatabase.Companion.migrateProStatusToProData(db);
       }
 
       db.setTransactionSuccessful();

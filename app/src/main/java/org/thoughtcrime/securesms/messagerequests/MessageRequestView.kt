@@ -83,7 +83,7 @@ class MessageRequestView : LinearLayout {
                 ProBadgeText(
                     text = senderDisplayName,
                     textStyle = LocalType.current.h8.bold().copy(color = LocalColors.current.text),
-                    showBadge = thread.recipient.proStatus.shouldShowProBadge()
+                    showBadge = thread.recipient.proStatus.shouldShowProBadge
                             && !thread.recipient.isLocalNumber,
                 )
             }

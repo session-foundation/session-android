@@ -17,7 +17,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACC
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
-import org.session.libsession.utilities.recipients.ProStatus
+import org.session.libsession.utilities.recipients.RecipientProStatus
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.SubscriptionDetails
 import org.thoughtcrime.securesms.pro.SubscriptionType
@@ -94,7 +94,7 @@ private fun PreviewUpdatePlan(
         val context = LocalContext.current
         RefundPlanNonOriginating (
             subscription = SubscriptionType.Active.AutoRenewing(
-                proStatus = ProStatus.Pro(
+                proStatus = RecipientProStatus.Pro(
                     visible = true,
                     validUntil = Instant.now() + Duration.ofDays(14),
                 ),

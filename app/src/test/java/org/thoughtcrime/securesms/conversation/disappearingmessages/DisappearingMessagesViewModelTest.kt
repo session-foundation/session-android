@@ -17,7 +17,7 @@ import org.mockito.junit.MockitoJUnitRunner
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.session.libsession.utilities.Address.Companion.toAddress
-import org.session.libsession.utilities.recipients.ProStatus
+import org.session.libsession.utilities.recipients.RecipientProStatus
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.thoughtcrime.securesms.BaseViewModelTest
@@ -51,7 +51,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
     fun `note to self, off, new config`() = runTest {
         val viewModel = createViewModel(Recipient(
             address = STANDARD_ADDRESS,
-            data = RecipientData.Self(name = "Myself", avatar = null, expiryMode = ExpiryMode.NONE, priority = 1, proStatus = ProStatus.None,  profileUpdatedAt = null),
+            data = RecipientData.Self(name = "Myself", avatar = null, expiryMode = ExpiryMode.NONE, priority = 1, proStatus = RecipientProStatus.None,  profileUpdatedAt = null),
         ))
 
         advanceUntilIdle()
@@ -109,7 +109,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                         destroyed = false,
                         joinedAtSecs = System.currentTimeMillis() / 1000L,
                     ),
-                    proStatus = ProStatus.None,
+                    proStatus = RecipientProStatus.None,
                     members = listOf(),
                     description = null,
                 ),
@@ -120,7 +120,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                         avatar = null,
                         expiryMode = ExpiryMode.NONE,
                         priority = 1,
-                        proStatus = ProStatus.None,
+                        proStatus = RecipientProStatus.None,
                         profileUpdatedAt = null
                     )
                 ),
@@ -186,7 +186,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                         destroyed = false,
                         joinedAtSecs = System.currentTimeMillis() / 1000L,
                     ),
-                    proStatus = ProStatus.None,
+                    proStatus = RecipientProStatus.None,
                     members = listOf(),
                     description = null,
                 ),
@@ -197,7 +197,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                         avatar = null,
                         expiryMode = ExpiryMode.NONE,
                         priority = 1,
-                        proStatus = ProStatus.None,
+                        proStatus = RecipientProStatus.None,
                         profileUpdatedAt = null
                     )
                 ),
@@ -257,7 +257,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 blocked = false,
                 expiryMode = ExpiryMode.NONE,
                 priority = 1,
-                proStatus = ProStatus.None,
+                proStatus = RecipientProStatus.None,
                 profileUpdatedAt = null
             )
         )
@@ -311,7 +311,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 blocked = false,
                 expiryMode = ExpiryMode.AfterSend(time.inWholeSeconds),
                 priority = 1,
-                proStatus = ProStatus.None,
+                proStatus = RecipientProStatus.None,
                 profileUpdatedAt = null
             )
         )
@@ -372,7 +372,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 blocked = false,
                 expiryMode = ExpiryMode.AfterSend(time.inWholeSeconds),
                 priority = 1,
-                proStatus = ProStatus.None,
+                proStatus = RecipientProStatus.None,
                 profileUpdatedAt = null
             )
         )
@@ -433,7 +433,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 blocked = false,
                 expiryMode = ExpiryMode.AfterRead(time.inWholeSeconds),
                 priority = 1,
-                proStatus = ProStatus.None,
+                proStatus = RecipientProStatus.None,
                 profileUpdatedAt = null
             )
         )
@@ -496,7 +496,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 blocked = false,
                 expiryMode = ExpiryMode.AfterRead(time.inWholeSeconds),
                 priority = 1,
-                proStatus = ProStatus.None,
+                proStatus = RecipientProStatus.None,
                 profileUpdatedAt = null
             )
         )

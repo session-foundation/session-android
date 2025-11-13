@@ -19,13 +19,11 @@ import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
-import org.session.libsession.utilities.recipients.ProStatus
+import org.session.libsession.utilities.recipients.RecipientProStatus
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.SubscriptionDetails
 import org.thoughtcrime.securesms.pro.SubscriptionType
-import org.thoughtcrime.securesms.pro.subscription.NoOpSubscriptionManager
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
-import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -161,7 +159,7 @@ private fun PreviewRefundPlan(
     PreviewTheme(colors) {
         RefundPlan(
             data = SubscriptionType.Active.AutoRenewing(
-                proStatus = ProStatus.Pro(
+                proStatus = RecipientProStatus.Pro(
                     visible = true,
                     validUntil = Instant.now() + Duration.ofDays(14),
                 ),
@@ -191,7 +189,7 @@ private fun PreviewQuickRefundPlan(
     PreviewTheme(colors) {
         RefundPlan(
             data = SubscriptionType.Active.AutoRenewing(
-                proStatus = ProStatus.Pro(
+                proStatus = RecipientProStatus.Pro(
                     visible = true,
                     validUntil = Instant.now() + Duration.ofDays(14),
                 ),

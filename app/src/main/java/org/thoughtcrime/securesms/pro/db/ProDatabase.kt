@@ -21,9 +21,12 @@ import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.pro.api.ProRevocations
 import org.thoughtcrime.securesms.util.asSequence
 import java.time.Instant
+import java.util.Optional
+import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
+import kotlin.jvm.optionals.getOrNull
 import kotlin.time.Duration.Companion.days
 import kotlin.time.toJavaDuration
 
@@ -49,6 +52,7 @@ class ProDatabase @Inject constructor(
     )
 
     val currentProProofChangesNotification: SharedFlow<Unit> get() = mutableCurrentProProofChangesNotification
+    private var currentProProof = AtomicReference(Optional.empty<ProProof>())
 
     fun getLastRevocationTicket(): Long? {
         val cursor = readableDatabase.query("SELECT CAST(value AS INTEGER) FROM pro_state WHERE name = '$STATE_NAME_LAST_TICKET'")
@@ -180,6 +184,10 @@ class ProDatabase @Inject constructor(
     }
 
     fun getCurrentProProof(): ProProof? {
+        currentProProof.get()?.let {
+            return it.getOrNull()
+        }
+
         //language=roomsql
         return readableDatabase.rawQuery("""
             SELECT value FROM pro_state
@@ -190,10 +198,14 @@ class ProDatabase @Inject constructor(
             } else {
                 null
             }
+        }.also {
+            currentProProof.set(Optional.ofNullable(it))
         }
     }
 
     fun updateCurrentProProof(proProof: ProProof?) {
+        currentProProof.set(Optional.ofNullable(proProof))
+
         val changes = if (proProof != null) {
             writableDatabase.compileStatement("""
                 INSERT INTO pro_state(name, value)

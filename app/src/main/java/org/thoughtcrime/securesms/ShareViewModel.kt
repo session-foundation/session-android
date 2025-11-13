@@ -123,7 +123,7 @@ class ShareViewModel @Inject constructor(
                             else recipient.searchName,
                     address = recipient.address,
                     avatarUIData = avatarUtils.getUIDataFromRecipient(recipient),
-                    showProBadge = recipient.proStatus.shouldShowProBadge()
+                    showProBadge = recipient.proStatus.shouldShowProBadge
                 )
             }.toList()
     }

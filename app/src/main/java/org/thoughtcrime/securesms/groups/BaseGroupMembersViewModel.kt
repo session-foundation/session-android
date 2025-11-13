@@ -26,7 +26,7 @@ import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.GroupDisplayInfo
-import org.session.libsession.utilities.recipients.ProStatus
+import org.session.libsession.utilities.recipients.RecipientProStatus
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsignal.utilities.AccountId
@@ -104,7 +104,7 @@ abstract class BaseGroupMembersViewModel(
     private suspend fun createGroupMember(
         member: GroupMember,
         status: GroupMember.Status,
-        proStatus: ProStatus,
+        proStatus: RecipientProStatus?,
         myAccountId: AccountId,
         amIAdmin: Boolean,
     ): GroupMemberState {
@@ -137,7 +137,7 @@ abstract class BaseGroupMembersViewModel(
             status = status.takeIf { !isMyself }, // Status is only meant for other members
             highlightStatus = highlightStatus,
             showAsAdmin = member.isAdminOrBeingPromoted(status),
-            showProBadge = proStatus.shouldShowProBadge(),
+            showProBadge = proStatus.shouldShowProBadge,
             avatarUIData = avatarUtils.getUIDataFromAccountId(memberAccountId.hexString),
             clickable = !isMyself,
             statusLabel = getMemberLabel(status, context, amIAdmin),

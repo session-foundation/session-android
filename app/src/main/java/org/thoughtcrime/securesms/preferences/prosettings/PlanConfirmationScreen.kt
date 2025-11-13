@@ -37,7 +37,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NETWORK_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
-import org.session.libsession.utilities.recipients.ProStatus
+import org.session.libsession.utilities.recipients.RecipientProStatus
 import org.thoughtcrime.securesms.pro.SubscriptionDetails
 import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.SubscriptionType
@@ -188,7 +188,7 @@ private fun PreviewPlanConfirmationActive(
                 subscriptionExpiryDate = "20th June 2026",
                 subscriptionState = SubscriptionState(
                     type = SubscriptionType.Active.AutoRenewing(
-                        proStatus = ProStatus.Pro(
+                        proStatus = RecipientProStatus.Pro(
                             visible = true,
                             validUntil = Instant.now() + Duration.ofDays(14),
                         ),

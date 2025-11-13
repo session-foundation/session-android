@@ -12,14 +12,12 @@ import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.content.res.use
-import androidx.core.graphics.toColor
 import androidx.core.text.toSpannable
 import androidx.core.view.isVisible
 import com.bumptech.glide.RequestManager
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewQuoteBinding
-import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
@@ -32,7 +30,6 @@ import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.proBadgeColorOutgoing
 import org.thoughtcrime.securesms.ui.proBadgeColorStandard
 import org.thoughtcrime.securesms.ui.setThemedContent
-import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.util.MediaUtil
@@ -105,7 +102,7 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
                     modifier = modifier,
                     text = authorDisplayName,
                     textStyle = LocalType.current.small.bold().copy(color = Color(textColor)),
-                    showBadge = authorRecipient.proStatus.shouldShowProBadge(),
+                    showBadge = authorRecipient.proStatus.shouldShowProBadge,
                     badgeColors = if(isOutgoingMessage && mode == Mode.Regular) proBadgeColorOutgoing()
                     else proBadgeColorStandard()
                 )

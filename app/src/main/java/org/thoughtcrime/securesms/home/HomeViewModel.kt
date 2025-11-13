@@ -151,7 +151,7 @@ class HomeViewModel @Inject constructor(
 
     val shouldShowCurrentUserProBadge: StateFlow<Boolean> = recipientRepository
         .observeSelf()
-        .map { it.proStatus.shouldShowProBadge() }
+        .map { it.proStatus.shouldShowProBadge }
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     private var userProfileModalJob: Job? = null

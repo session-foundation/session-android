@@ -1,6 +1,6 @@
 package org.thoughtcrime.securesms.pro
 
-import org.session.libsession.utilities.recipients.ProStatus
+import org.session.libsession.utilities.recipients.RecipientProStatus
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.util.State
 import java.time.Instant
@@ -9,18 +9,18 @@ sealed interface SubscriptionType{
     data object NeverSubscribed: SubscriptionType
 
     sealed interface Active: SubscriptionType{
-        val proStatus: ProStatus.Pro
+        val proStatus: RecipientProStatus.Pro
         val duration: ProSubscriptionDuration
         val subscriptionDetails: SubscriptionDetails
 
         data class AutoRenewing(
-            override val proStatus: ProStatus.Pro,
+            override val proStatus: RecipientProStatus.Pro,
             override val duration: ProSubscriptionDuration,
             override val subscriptionDetails: SubscriptionDetails
         ): Active
 
         data class Expiring(
-            override val proStatus: ProStatus.Pro,
+            override val proStatus: RecipientProStatus.Pro,
             override val duration: ProSubscriptionDuration,
             override val subscriptionDetails: SubscriptionDetails
         ): Active

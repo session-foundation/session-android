@@ -266,7 +266,7 @@ class SettingsViewModel @Inject constructor(
             ?: return Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
 
         // if the selected avatar is animated but the user isn't pro, show the animated pro CTA
-        if (tempAvatar.isAnimated && !selfRecipient.value.proStatus.isPro() && proStatusManager.isPostPro()) {
+        if (tempAvatar.isAnimated && !selfRecipient.value.proStatus.isPro && proStatusManager.isPostPro()) {
             showAnimatedProCTA()
             return
         }
@@ -394,7 +394,7 @@ class SettingsViewModel @Inject constructor(
 
     private fun clearData(clearNetwork: Boolean) {
         val currentClearState = uiState.value.clearDataDialog
-        val isPro = selfRecipient.value.proStatus.isPro()
+        val isPro = selfRecipient.value.proStatus.isPro
         // show loading
         _uiState.update { it.copy(clearDataDialog = ClearDataState.Clearing) }
 

@@ -25,10 +25,9 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
-import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
-import org.session.libsession.utilities.recipients.ProStatus
+import org.session.libsession.utilities.recipients.RecipientProStatus
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.thoughtcrime.securesms.BaseViewModelTest
@@ -74,7 +73,7 @@ class ConversationViewModelTest : BaseViewModelTest() {
             blocked = false,
             expiryMode = ExpiryMode.NONE,
             1,
-            proStatus = ProStatus.None,
+            proStatus = RecipientProStatus.None,
             profileUpdatedAt = null
         )
     )

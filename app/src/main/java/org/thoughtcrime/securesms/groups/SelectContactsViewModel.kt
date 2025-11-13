@@ -140,7 +140,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
                         address = contact.address,
                         avatarUIData = avatarData,
                         selected = selectedAccountIDs.contains(contact.address),
-                        showProBadge = contact.proStatus.shouldShowProBadge()
+                        showProBadge = contact.proStatus.shouldShowProBadge
                     )
                 )
             }

@@ -1,6 +1,7 @@
 package org.session.libsession.utilities.recipients
 
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
+import network.loki.messenger.libsession_util.pro.ProProof
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.utilities.Address
@@ -37,7 +38,7 @@ data class Recipient(
      * it will always return [GroupMemberRole.STANDARD].
      */
     val currentUserRole: GroupMemberRole get() = when (data) {
-        is RecipientData.Group -> if (data.partial.isAdmin) GroupMemberRole.ADMIN else GroupMemberRole.STANDARD
+        is RecipientData.Group -> if (data.isAdmin) GroupMemberRole.ADMIN else GroupMemberRole.STANDARD
         is RecipientData.Community -> when {
             data.roomInfo?.admin == true -> GroupMemberRole.ADMIN
             data.roomInfo?.moderator == true -> GroupMemberRole.MODERATOR
@@ -60,7 +61,7 @@ data class Recipient(
     val expiryMode: ExpiryMode get() = when (data) {
         is RecipientData.Self -> data.expiryMode
         is RecipientData.Contact -> data.expiryMode
-        is RecipientData.Group -> data.partial.expiryMode
+        is RecipientData.Group -> data.expiryMode
         else -> ExpiryMode.NONE
     }
 
@@ -71,12 +72,12 @@ data class Recipient(
             address is Address.CommunityBlindedId -> true
 
         data is RecipientData.Contact -> data.approved
-        data is RecipientData.Group -> data.partial.approved
+        data is RecipientData.Group -> data.approved
 
         else -> false
     }
 
-    val proStatus: ProStatus get() = data.proStatus
+    val proStatus: RecipientProStatus? get() = data.proStatus
 
     val approvedMe: Boolean get() {
         return when (data) {

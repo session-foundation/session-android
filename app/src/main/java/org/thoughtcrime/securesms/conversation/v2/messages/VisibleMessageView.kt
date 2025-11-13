@@ -231,7 +231,7 @@ class VisibleMessageView : FrameLayout {
                         text = sender.displayName(),
                         textStyle = LocalType.current.base.bold()
                             .copy(color = LocalColors.current.text),
-                        showBadge = message.recipient.proStatus.shouldShowProBadge(),
+                        showBadge = message.recipient.proStatus.shouldShowProBadge,
                     )
 
                     if (sender.address is Address.Blinded) {

@@ -2,15 +2,14 @@ package org.thoughtcrime.securesms.pro
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -20,11 +19,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.recipients.ProStatus
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientProStatus
+import org.session.libsession.utilities.recipients.hasHigherCharacterLimit
 import org.session.libsession.utilities.recipients.isPro
 import org.session.libsession.utilities.recipients.shouldShowProBadge
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -79,7 +78,7 @@ class ProStatusManager @Inject constructor(
         else SubscriptionState(
             type = when(subscriptionState){
                 DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> SubscriptionType.Active.AutoRenewing(
-                    proStatus = ProStatus.Pro(
+                    proStatus = RecipientProStatus.Pro(
                         visible = true,
                         validUntil = Instant.now() + Duration.ofDays(14),
                     ),
@@ -95,7 +94,7 @@ class ProStatusManager @Inject constructor(
                 )
 
                 DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> SubscriptionType.Active.Expiring(
-                    proStatus = ProStatus.Pro(
+                    proStatus = RecipientProStatus.Pro(
                         visible = true,
                         validUntil = Instant.now() + Duration.ofDays(2),
                     ),
@@ -111,7 +110,7 @@ class ProStatusManager @Inject constructor(
                 )
 
                 DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER -> SubscriptionType.Active.Expiring(
-                    proStatus = ProStatus.Pro(
+                    proStatus = RecipientProStatus.Pro(
                         visible = true,
                         validUntil = Instant.now() + Duration.ofDays(40),
                     ),
@@ -127,7 +126,7 @@ class ProStatusManager @Inject constructor(
                 )
 
                 DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> SubscriptionType.Active.AutoRenewing(
-                    proStatus = ProStatus.Pro(
+                    proStatus = RecipientProStatus.Pro(
                         visible = true,
                         validUntil = Instant.now() + Duration.ofDays(14),
                     ),
@@ -143,7 +142,7 @@ class ProStatusManager @Inject constructor(
                 )
 
                 DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_APPLE -> SubscriptionType.Active.Expiring(
-                    proStatus = ProStatus.Pro(
+                    proStatus = RecipientProStatus.Pro(
                         visible = true,
                         validUntil = Instant.now() + Duration.ofDays(2),
                     ),
@@ -209,28 +208,13 @@ class ProStatusManager @Inject constructor(
                 _postProLaunchStatus.update { isPostPro() }
             }
         }
-
-        scope.launch {
-            loginStateRepository.loggedInState
-                .map { it != null }
-                .distinctUntilChanged()
-                .collect { loggedIn ->
-                    if (loggedIn) {
-                        Log.d("ProStatusManager", "User logged in - starting Pro state poller")
-                        ProStatePoller.schedule(context)
-                    } else {
-                        Log.d("ProStatusManager", "User logged out - stopping Pro state poller")
-                        ProStatePoller.cancel(context)
-                    }
-                }
-        }
     }
 
     /**
      * Logic to determine if we should animate the avatar for a user or freeze it on the first frame
      */
     fun freezeFrameForUser(recipient: Recipient): Boolean{
-        return if(!isPostPro() || recipient.isCommunityRecipient) false else !recipient.proStatus.isPro()
+        return if(!isPostPro() || recipient.isCommunityRecipient) false else !recipient.proStatus.isPro
     }
 
     /**
@@ -249,24 +233,24 @@ class ProStatusManager @Inject constructor(
         return prefs.forcePostPro()
     }
 
-    fun getCharacterLimit(status: ProStatus): Int {
-        return if (status.isPro()) MAX_CHARACTER_PRO else MAX_CHARACTER_REGULAR
+    fun getCharacterLimit(status: RecipientProStatus?): Int {
+        return if (status.hasHigherCharacterLimit) MAX_CHARACTER_PRO else MAX_CHARACTER_REGULAR
     }
 
-    fun getPinnedConversationLimit(status: ProStatus): Int {
+    fun getPinnedConversationLimit(status: RecipientProStatus?): Int {
         if(!isPostPro()) return Int.MAX_VALUE // allow infinite pins while not in post Pro
 
-        return if (status.isPro()) Int.MAX_VALUE else MAX_PIN_REGULAR
+        return if (status.isPro) Int.MAX_VALUE else MAX_PIN_REGULAR
     }
 
     /**
      * This will calculate the pro features of an outgoing message
      */
-    fun calculateMessageProFeatures(status: ProStatus, message: String): List<MessageProFeature>{
+    fun calculateMessageProFeatures(status: RecipientProStatus, message: String): List<MessageProFeature>{
         val features = mutableListOf<MessageProFeature>()
 
         // check for pro badge display
-        if (status.shouldShowProBadge()){
+        if (status.shouldShowProBadge){
             features.add(MessageProFeature.ProBadge)
         }
 

@@ -1,7 +1,6 @@
 package org.session.libsession.utilities.recipients
 
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
-import network.loki.messenger.libsession_util.pro.ProProof
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.GroupMember
@@ -21,10 +20,7 @@ sealed interface RecipientData {
     val priority: Long
     val profileUpdatedAt: Instant?
 
-    val proProof: ProProof?
-
-    // Marker interface to distinguish between config-based and other recipient data.
-    sealed interface ConfigBased
+    val proStatus: RecipientProStatus?
 
     /**
      * Represents a group-like recipient, which can be a group or community.
@@ -51,7 +47,7 @@ sealed interface RecipientData {
         val displayName: String = "",
         override val avatar: RemoteFile? = null,
         override val priority: Long = PRIORITY_VISIBLE,
-        override val proProof: ProProof? = null,
+        override val proStatus: RecipientProStatus? = null,
         val acceptsBlindedCommunityMessageRequests: Boolean = false,
         override val profileUpdatedAt: Instant? = null,
     ) : RecipientData
@@ -60,10 +56,10 @@ sealed interface RecipientData {
         val displayName: String,
         override val avatar: RemoteFile.Encrypted?,
         override val priority: Long,
-        override val proProof: ProProof?,
+        override val proStatus: RecipientProStatus?,
         val acceptsBlindedCommunityMessageRequests: Boolean,
         override val profileUpdatedAt: Instant?
-    ) : ConfigBased, RecipientData
+    ) : RecipientData
 
     data class Community(
         val serverUrl: String,
@@ -96,7 +92,7 @@ sealed interface RecipientData {
         override val profileUpdatedAt: Instant?
             get() = null
 
-        override val proProof: ProProof?
+        override val proStatus: RecipientProStatus?
             get() = null
 
         override fun hasAdmin(user: AccountId): Boolean {
@@ -120,9 +116,9 @@ sealed interface RecipientData {
         override val avatar: RemoteFile.Encrypted?,
         val expiryMode: ExpiryMode,
         override val priority: Long,
-        override val proProof: ProProof?,
+        override val proStatus: RecipientProStatus?,
         override val profileUpdatedAt: Instant?
-    ) : ConfigBased, RecipientData
+    ) : RecipientData
 
     /**
      * A recipient that was saved in your contact config.
@@ -136,9 +132,9 @@ sealed interface RecipientData {
         val blocked: Boolean,
         val expiryMode: ExpiryMode,
         override val priority: Long,
-        override val proProof: ProProof?,
+        override val proStatus: RecipientProStatus?,
         override val profileUpdatedAt: Instant?,
-    ) : ConfigBased, RecipientData {
+    ) : RecipientData {
         val displayName: String
             get() = nickname?.takeIf { it.isNotBlank() } ?: name
     }
@@ -157,47 +153,33 @@ sealed interface RecipientData {
         )
     }
 
-    /**
-     * Group data fetched from the config. It's named as "partial" because it does not include
-     * all the information we need to resemble a full group recipient, hence not implementing the
-     * [RecipientData] interface.
-     */
-    data class PartialGroup(
-        val name: String,
-        private val groupInfo: GroupInfo.ClosedGroupInfo,
-        val avatar: RemoteFile.Encrypted?,
-        val expiryMode: ExpiryMode,
-        val members: List<GroupMemberInfo>,
-        val description: String?,
-    ) : ConfigBased {
-        val approved: Boolean get() = !groupInfo.invited
-        val priority: Long get() = groupInfo.priority
-        val isAdmin: Boolean get() = groupInfo.hasAdminKey()
-        val kicked: Boolean get() = groupInfo.kicked
-        val destroyed: Boolean get() = groupInfo.destroyed
-        val shouldPoll: Boolean get() = groupInfo.shouldPoll
-    }
 
     /**
      * Full group data that includes additional information that may not be present in the config.
      */
     data class Group(
-        val partial: PartialGroup,
-        override val proProof: ProProof?,
-        override val firstMember: Recipient, // Used primarily to assemble the profile picture for the group.
+        val name: String,
+        private val groupInfo: GroupInfo.ClosedGroupInfo,
+        override val avatar: RemoteFile.Encrypted?,
+        val expiryMode: ExpiryMode,
+        val members: List<GroupMemberInfo>,
+        val description: String?,
+        override val proStatus: RecipientProStatus?,
+        override val firstMember: Recipient?, // Used primarily to assemble the profile picture for the group.
         override val secondMember: Recipient?, // Used primarily to assemble the profile picture for the group.
     ) : RecipientData, GroupLike {
-        override val avatar: RemoteFile?
-            get() = partial.avatar
-
-        override val priority: Long
-            get() = partial.priority
+        val approved: Boolean get() = !groupInfo.invited
+        override val priority: Long get() = groupInfo.priority
+        val isAdmin: Boolean get() = groupInfo.hasAdminKey()
+        val kicked: Boolean get() = groupInfo.kicked
+        val destroyed: Boolean get() = groupInfo.destroyed
+        val shouldPoll: Boolean get() = groupInfo.shouldPoll
 
         override val profileUpdatedAt: Instant?
             get() = null
 
         override fun hasAdmin(user: AccountId): Boolean {
-            return partial.members.any { it.address.accountId == user && it.isAdmin }
+            return members.any { it.address.accountId == user && it.isAdmin }
         }
 
         override fun shouldShowAdminCrown(user: AccountId): Boolean {
@@ -224,7 +206,7 @@ sealed interface RecipientData {
             return members[user]?.shouldShowAdminCrown == true
         }
 
-        override val proProof: ProProof?
+        override val proStatus: RecipientProStatus?
             get() = null
 
         override val profileUpdatedAt: Instant?
