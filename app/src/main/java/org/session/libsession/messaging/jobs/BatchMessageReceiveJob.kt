@@ -51,6 +51,7 @@ data class MessageReceiveParameters(
     val closedGroup: Destination.ClosedGroup? = null
 )
 
+@Deprecated("BatchMessageReceiveJob is now only here so that existing persisted jobs can be processed.")
 class BatchMessageReceiveJob @AssistedInject constructor(
     @Assisted private val messages: List<MessageReceiveParameters>,
     @Assisted val fromCommunity: Address.Community?, // The community the messages are received in, if any
@@ -62,6 +63,7 @@ class BatchMessageReceiveJob @AssistedInject constructor(
     private val messageNotifier: MessageNotifier,
     private val threadDatabase: ThreadDatabase,
     private val recipientRepository: RecipientRepository,
+    private val messageReceiver: MessageReceiver,
 ) : Job {
 
     override var delegate: JobDelegate? = null
@@ -105,6 +107,7 @@ class BatchMessageReceiveJob @AssistedInject constructor(
             fromCommunity = fromCommunity,
             threadDatabase = threadDatabase,
             recipientRepository = recipientRepository,
+            messageReceiver = messageReceiver,
         )
     }
 
@@ -157,7 +160,7 @@ class BatchMessageReceiveJob @AssistedInject constructor(
         messages.forEach { messageParameters ->
             val (data, serverHash, openGroupMessageServerID) = messageParameters
             try {
-                val (message, proto) = MessageReceiver.parse(
+                val (message, proto) = messageReceiver.parse(
                     data,
                     openGroupMessageServerID,
                     openGroupPublicKey = serverPublicKey,
@@ -358,7 +361,8 @@ class BatchMessageReceiveJob @AssistedInject constructor(
 
     @AssistedFactory
     abstract class Factory : Job.DeserializeFactory<BatchMessageReceiveJob> {
-        abstract fun create(
+        @Deprecated("New code should try to handle message directly instead of creating this job")
+        protected abstract fun create(
             messages: List<MessageReceiveParameters>,
             fromCommunity: Address.Community?,
         ): BatchMessageReceiveJob

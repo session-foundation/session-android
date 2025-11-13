@@ -805,6 +805,7 @@
     <string name="onsErrorNotRecognized">We konden deze ONS niet herkennen. Controleer deze alsjeblieft en probeer het opnieuw.</string>
     <string name="onsErrorUnableToSearch">We konden niet zoeken naar deze ONS. Probeer het later opnieuw.</string>
     <string name="open">Openen</string>
+    <string name="openPlatformWebsite">Open de {platform} website</string>
     <string name="openSurvey">Enquête openen</string>
     <string name="other">Overige</string>
     <string name="password">Wachtwoord</string>
@@ -885,7 +886,6 @@
     <string name="proAllSet">Alles is geregeld!</string>
     <string name="proAlreadyPurchased">Je hebt al</string>
     <string name="proAnimatedDisplayPicture">Upload nu GIF\'s en geanimeerde WebP-afbeeldingen voor je profielfoto!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">Krijg geanimeerde profielfoto\'s en ontgrendel premiumfuncties met {app_pro}</string>
     <string name="proAnimatedDisplayPictureFeature">Geanimeerde profielfoto</string>
     <string name="proAnimatedDisplayPictureModalDescription">gebruikers kunnen GIF\'s uploaden</string>
     <string name="proAnimatedDisplayPictures">Geanimeerde profielfoto\'s</string>
@@ -900,8 +900,6 @@
     <string name="proBilledAnnually">{price} Jaarlijks gefactureerd</string>
     <string name="proBilledMonthly">{price} Maandelijks gefactureerd</string>
     <string name="proBilledQuarterly">{price} per kwartaal gefactureerd</string>
-    <string name="proCallToActionLongerMessages">Wil je langere berichten versturen? Verstuur meer tekst en ontgrendel premiumfuncties met {app_pro}</string>
-    <string name="proCallToActionPinnedConversations">Wil je meer vastzetten? Organiseer je chats en ontgrendel premiumfuncties met {app_pro}</string>
     <string name="proExpired">Verlopen</string>
     <string name="proExpiringSoon">Verloopt binnenkort</string>
     <string name="proFaq">{pro} FAQ</string>
@@ -921,11 +919,16 @@
     <string name="proLongerMessagesDescription">Je kunt berichten tot 10.000 tekens verzenden in alle gesprekken.</string>
     <string name="proMessageInfoFeatures">Dit bericht maakte gebruik van de volgende {app_pro}-functies:</string>
     <string name="proPercentOff">{percent}% korting</string>
+    <string name="proPlanPlatformRefund">Omdat je je oorspronkelijk hebt aangemeld voor {app_pro} via de <b><font color="0">{platform_store} winkel</font></b>, moet je hetzelfde {platform_account} gebruiken om een terugbetaling aan te vragen.</string>
+    <string name="proPlanPlatformRefundLong">Omdat je je oorspronkelijk hebt aangemeld voor {app_pro} via de <b><font color="0">{platform_store} winkel</font></b>, wordt je restitutieverzoek afgehandeld door {app_name} Support.\n\nVraag een restitutie aan door op de knop hieronder te drukken en het restitutieformulier in te vullen.\n\nHoewel {app_name} Support ernaar streeft om restitutieverzoeken binnen 24-72 uur te verwerken, kan het tijdens drukte langer duren.</string>
     <string name="proPriceOneMonth">1 maand - {monthly_price} / maand</string>
     <string name="proPriceThreeMonths">3 maanden - {monthly_price} / maand</string>
     <string name="proPriceTwelveMonths">12 maanden - {monthly_price} / maand</string>
     <string name="proRefundDescription">Het spijt ons dat je vertrekt. Dit moet je weten voordat je een terugbetaling aanvraagt.</string>
+    <string name="proRefundNextSteps">{platform} verwerkt nu je terugbetalingsverzoek. Dit duurt meestal 24-48 uur. Afhankelijk van hun beslissing kan je {pro} status wijzigen in {app_name}.</string>
     <string name="proRefundRequestSessionSupport">Je restitutieverzoek wordt afgehandeld door {app_name} Support.\n\nVraag een restitutie aan door op de knop hieronder te drukken en het restitutieformulier in te vullen.\n\nHoewel {app_name} Support ernaar streeft om restitutieverzoeken binnen 24-72 uur te verwerken, kan het tijdens drukte langer duren.</string>
+    <string name="proRefundRequestStorePolicies">Je terugbetalingsverzoek wordt uitsluitend afgehandeld door {platform} via de website van <b>{platform}</b>.\n\nVanwege het restitutiebeleid van {platform} hebben ontwikkelaars van {app_name} geen invloed op de uitkomst van terugbetalingsverzoeken. Dit geldt zowel voor de goedkeuring of afwijzing van het verzoek als voor het wel of niet toekennen van een volledige of gedeeltelijke terugbetaling.</string>
+    <string name="proRefundSupport">Neem contact op met {platform} voor verdere updates over je restitutieverzoek. Vanwege het restitutiebeleid van {platform} hebben de ontwikkelaars van {app_name} geen invloed op de uitkomst van restitutieverzoeken.\n\n<font color="0">{platform} Terugbetalingsondersteuning</font></string>
     <string name="proRefunding">Terugbetalen {pro}</string>
     <string name="proRequestedRefund">Terugbetaling aangevraagd</string>
     <string name="proSendMore">Verstuur meer met</string>
@@ -935,7 +938,7 @@
     <string name="proTosPrivacy">Door bij te werken ga je akkoord met de {app_pro} <b>Gebruiksvoorwaarden</b> {icon} en het <b>Privacybeleid</b> {icon}</string>
     <string name="proUnlimitedPins">Onbeperkte Pins</string>
     <string name="proUnlimitedPinsDescription">Organiseer al je chats met onbeperkt vastgezette gesprekken.</string>
-    <string name="proUserProfileModalCallToAction">Wil je meer uit {app_name} halen? Upgrade naar {app_pro} voor een krachtigere berichtbeleving.</string>
+    <string name="processingRefundRequest">{platform} verwerkt je restitutieverzoek</string>
     <string name="profile">Profiel</string>
     <string name="profileDisplayPicture">Toon afbeelding</string>
     <string name="profileDisplayPictureRemoveError">Verwijderen profielfoto mislukt.</string>
@@ -1128,6 +1131,7 @@
     <string name="urlOpenDescription">Weet u zeker dat u deze URL in uw browser wilt openen?\n\n<b>{url}</b></string>
     <string name="urlOpenDescriptionAlternative">Links worden in uw browser geopend.</string>
     <string name="useFastMode">Gebruik Snelle Modus</string>
+    <string name="viaStoreWebsite">Via de {platform} website</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Kan video niet afspelen.</string>
     <string name="view">Bekijken</string>

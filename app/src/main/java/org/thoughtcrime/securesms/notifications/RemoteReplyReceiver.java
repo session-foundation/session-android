@@ -76,6 +76,10 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
   SnodeClock clock;
   @Inject
   RecipientRepository recipientRepository;
+  @Inject
+  MarkReadProcessor markReadProcessor;
+  @Inject
+  MessageSender messageSender;
 
   @SuppressLint("StaticFieldLeak")
   @Override
@@ -110,7 +114,7 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
               OutgoingMediaMessage reply = OutgoingMediaMessage.from(message, address, Collections.emptyList(), null, null, expiresInMillis, 0);
               try {
                 message.setId(new MessageId(mmsDatabase.insertMessageOutbox(reply, threadId, false, true), true));
-                MessageSender.send(message, address);
+                messageSender.send(message, address);
               } catch (MmsException e) {
                 Log.w(TAG, e);
               }
@@ -119,7 +123,7 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
             case SecureMessage: {
               OutgoingTextMessage reply = OutgoingTextMessage.from(message, address, expiresInMillis, expireStartedAt);
               message.setId(new MessageId(smsDatabase.insertMessageOutbox(threadId, reply, false, System.currentTimeMillis(), true), false));
-              MessageSender.send(message, address);
+                messageSender.send(message, address);
               break;
             }
             default:
@@ -129,7 +133,7 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
           List<MarkedMessageInfo> messageIds = threadDatabase.setRead(threadId, true);
 
           messageNotifier.updateNotification(context);
-          MarkReadReceiver.process(context, messageIds);
+          markReadProcessor.process(messageIds);
 
           return null;
         }

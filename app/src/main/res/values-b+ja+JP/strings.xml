@@ -800,12 +800,9 @@
     <string name="proActivated">アクティベート済み</string>
     <string name="proAlreadyPurchased">すでにご利用中です</string>
     <string name="proAnimatedDisplayPicture">ディスプレイ画像としてGIFやアニメーションWebP画像をアップロードできます！</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">アニメーションディスプレイ画像を取得し、{app_pro}でプレミアム機能を解除しましょう</string>
     <string name="proAnimatedDisplayPictureFeature">アニメーション表示画像</string>
     <string name="proAnimatedDisplayPictureModalDescription">ユーザーはGIFをアップロードできます</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">GIFをアップロード（PRO）</string>
-    <string name="proCallToActionLongerMessages">長文を送りたいですか？{app_pro}でより多くのテキストを送り、プレミアム機能を解除しましょう。</string>
-    <string name="proCallToActionPinnedConversations">さらにピン留めしますか？{app_pro}でチャットを整理して、プレミアム機能を解除しましょう</string>
     <string name="proFeatureListAnimatedDisplayPicture">GIFとWebPのディスプレイ画像をアップロード</string>
     <string name="proFeatureListLargerGroups">最大300人の大型グループチャット</string>
     <string name="proFeatureListLoadsMore">さらに多数の限定機能</string>
@@ -817,7 +814,6 @@
     <string name="proIncreasedMessageLengthFeature">メッセージの文字数増加</string>
     <string name="proMessageInfoFeatures">このメッセージには以下の {app_pro} 機能が使用されています:</string>
     <string name="proSendMore">さらに送信：</string>
-    <string name="proUserProfileModalCallToAction">{app_name}をもっと活用したいですか？より強力なメッセージ体験のために{app_pro}へアップグレードしましょう。</string>
     <string name="profile">プロフィール</string>
     <string name="profileDisplayPicture">ディスプレイの画像</string>
     <string name="profileDisplayPictureRemoveError">表示画像の削除に失敗しました。</string>

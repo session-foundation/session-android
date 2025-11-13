@@ -23,11 +23,11 @@ import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
@@ -53,21 +53,21 @@ import javax.inject.Singleton
 @Singleton
 class GroupPollerManager @Inject constructor(
     configFactory: ConfigFactory,
-    preferences: TextSecurePreferences,
     connectivity: NetworkConnectivity,
     pollFactory: GroupPoller.Factory,
+    loginStateRepository: LoginStateRepository,
     @param:ManagerScope private val managerScope: CoroutineScope,
 ) : OnAppStartupComponent {
-    private val groupPollerSemaphore = Semaphore(5)
+    private val groupPollerSemaphore = Semaphore(20)
 
     @Suppress("OPT_IN_USAGE")
     private val groupPollers: StateFlow<Map<AccountId, GroupPollerHandle>> =
         combine(
             connectivity.networkAvailable.debounce(200L),
-            preferences.watchLocalNumber()
-        ) { networkAvailable, localNumber ->
-            Log.v(TAG, "Network available: $networkAvailable, hasLocalNumber: ${localNumber != null}")
-            networkAvailable && localNumber != null
+            loginStateRepository.loggedInState,
+        ) { networkAvailable, loginState ->
+            Log.v(TAG, "Network available: $networkAvailable, hasLogin: ${loginState != null}")
+            networkAvailable && loginState != null
         }
             // This flatMap produces a flow of groups that should be polled now
             .flatMapLatest { shouldPoll ->

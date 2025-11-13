@@ -2,7 +2,9 @@ package org.thoughtcrime.securesms.pro
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -14,6 +16,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.ProStatus
@@ -25,6 +28,7 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
+import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
 import org.thoughtcrime.securesms.util.State
 import java.time.Duration
 import java.time.Instant
@@ -269,6 +273,56 @@ class ProStatusManager @Inject constructor(
         }
 
         return emptySet()
+    }
+
+    suspend fun appProPaymentToBackend() {
+        // max 3 attempts as per PRD
+        val maxAttempts = 3
+
+        for (attempt in 1..maxAttempts) {
+            try {
+                // 5s timeout as per PRD
+                withTimeout(5_000L) {
+                    //todo PRO call AddProPaymentRequest in libsession
+                    /**
+                     * Here are the errors from the back end that we will need to be aware of
+                     * UnknownPayment: retryable > increment counter and try again
+                     * Error, ParseError: is non retryable - throw PaymentServerException
+                     * Success, AlreadyRedeemed - all good
+                     *
+                     *
+                     *   /// Payment was claimed and the pro proof was successfully generated
+                     *     Success = SESSION_PRO_BACKEND_ADD_PRO_PAYMENT_RESPONSE_STATUS_SUCCESS,
+                     *
+                     *     /// Backend encountered an error when attempting to claim the payment
+                     *     Error = SESSION_PRO_BACKEND_ADD_PRO_PAYMENT_RESPONSE_STATUS_ERROR,
+                     *
+                     *     /// Request JSON failed to be parsed correctly, payload was malformed or missing values
+                     *     ParseError = SESSION_PRO_BACKEND_ADD_PRO_PAYMENT_RESPONSE_STATUS_PARSE_ERROR,
+                     *
+                     *     /// Payment is already claimed
+                     *     AlreadyRedeemed = SESSION_PRO_BACKEND_ADD_PRO_PAYMENT_RESPONSE_STATUS_ALREADY_REDEEMED,
+                     *
+                     *     /// Payment transaction attempted to claim a payment that the backend does not have. Either the
+                     *     /// payment doesn't exist or the backend has not witnessed the payment from the provider yet.
+                     *     UnknownPayment = SESSION_PRO_BACKEND_ADD_PRO_PAYMENT_RESPONSE_STATUS_UNKNOWN_PAYMENT,
+                     */
+
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // If not the last attempt, backoff a little and retry
+                if (attempt < maxAttempts) {
+                    // small incremental backoff before retry
+                    val backoffMs = 300L * attempt
+                    delay(backoffMs)
+                }
+            }
+        }
+
+        // All attempts failed - throw our custom exception
+        throw SubscriptionManager.PaymentServerException()
     }
 
     enum class MessageProFeature {

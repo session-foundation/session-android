@@ -202,11 +202,6 @@ object Util {
     }
 
     @JvmStatic
-    fun isOwnNumber(context: Context, number: String): Boolean {
-        return TextSecurePreferences.getLocalNumber(context).equals(number)
-    }
-
-    @JvmStatic
     fun <T> partition(list: List<T>, partitionSize: Int): List<List<T>> {
         val results: MutableList<List<T>> = LinkedList()
         var index = 0

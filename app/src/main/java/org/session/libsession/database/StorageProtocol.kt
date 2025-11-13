@@ -38,12 +38,9 @@ interface StorageProtocol {
     // General
     fun getUserPublicKey(): String?
     fun getUserED25519KeyPair(): KeyPair?
-    fun getUserX25519KeyPair(): ECKeyPair
+    fun getUserX25519KeyPair(): KeyPair
     fun getUserBlindedAccountId(serverPublicKey: String): AccountId?
     fun getUserProfile(): Profile
-
-    // Signal
-    fun getOrGenerateRegistrationID(): Int
 
     // Jobs
     fun persistJob(job: Job)

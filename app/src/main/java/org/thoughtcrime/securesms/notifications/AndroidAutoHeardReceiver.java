@@ -25,23 +25,34 @@ import android.os.AsyncTask;
 
 import androidx.core.app.NotificationManagerCompat;
 
+import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.database.MarkedMessageInfo;
+import org.thoughtcrime.securesms.database.ThreadDatabase;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
 /**
  * Marks an Android Auto as read after the driver have listened to it
  */
+@AndroidEntryPoint
 public class AndroidAutoHeardReceiver extends BroadcastReceiver {
 
   public static final String TAG                   = AndroidAutoHeardReceiver.class.getSimpleName();
   public static final String HEARD_ACTION          = "network.loki.securesms.notifications.ANDROID_AUTO_HEARD";
   public static final String THREAD_IDS_EXTRA      = "car_heard_thread_ids";
   public static final String NOTIFICATION_ID_EXTRA = "car_notification_id";
+
+  @Inject MarkReadProcessor markReadProcessor;
+  @Inject MessageNotifier messageNotifier;
+  @Inject ThreadDatabase threadDb;
 
   @SuppressLint("StaticFieldLeak")
   @Override
@@ -63,13 +74,13 @@ public class AndroidAutoHeardReceiver extends BroadcastReceiver {
 
           for (long threadId : threadIds) {
             Log.i(TAG, "Marking meassage as read: " + threadId);
-            List<MarkedMessageInfo> messageIds = DatabaseComponent.get(context).threadDatabase().setRead(threadId, true);
+            List<MarkedMessageInfo> messageIds = threadDb.setRead(threadId, true);
 
             messageIdsCollection.addAll(messageIds);
           }
 
-          ApplicationContext.getInstance(context).getMessageNotifier().updateNotification(context);
-          MarkReadReceiver.process(context, messageIdsCollection);
+          messageNotifier.updateNotification(context);
+          markReadProcessor.process(messageIdsCollection);
 
           return null;
         }

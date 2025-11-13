@@ -62,6 +62,7 @@ import org.session.libsession.utilities.updateContact
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsActivity
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
@@ -142,12 +143,13 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var proStatusManager: ProStatusManager
     @Inject lateinit var recipientRepository: RecipientRepository
     @Inject lateinit var avatarUtils: AvatarUtils
+    @Inject lateinit var loginStateRepository: LoginStateRepository
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
     private val inAppReviewViewModel by viewModels<InAppReviewViewModel>()
 
-    private val publicKey: String by lazy { textSecurePreferences.getLocalNumber()!! }
+    private val publicKey: String by lazy { loginStateRepository.requireLocalNumber() }
 
     private val homeAdapter: HomeAdapter by lazy {
         HomeAdapter(context = this, configFactory = configFactory, listener = this, ::showMessageRequests, ::hideMessageRequests)
@@ -345,7 +347,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
             launch(Dispatchers.Default) {
                 // update things based on TextSecurePrefs (profile info etc)
                 // Set up remaining components if needed
-                if (textSecurePreferences.getLocalNumber() != null) {
+                if (loginStateRepository.getLocalNumber() != null) {
                     JobQueue.shared.resumePendingJobs()
                 }
             }
@@ -549,7 +551,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     override fun onResume() {
         super.onResume()
         messageNotifier.setHomeScreenVisible(true)
-        if (textSecurePreferences.getLocalNumber() == null) { return; } // This can be the case after a secondary device is auto-cleared
+        if (loginStateRepository.getLocalNumber() == null) { return; } // This can be the case after a secondary device is auto-cleared
         IdentityKeyUtil.checkUpdate(this)
         if (textSecurePreferences.getHasViewedSeed()) {
             binding.seedReminderView.isVisible = false

@@ -822,12 +822,9 @@
     <string name="proActivated">Attivato</string>
     <string name="proAlreadyPurchased">Hai già attivato</string>
     <string name="proAnimatedDisplayPicture">Carica GIF e immagini WebP animate per la tua immagine del profilo!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">Ottieni immagini del profilo animate e sblocca funzionalità premium con {app_pro}</string>
     <string name="proAnimatedDisplayPictureFeature">Immagine del profilo animata</string>
     <string name="proAnimatedDisplayPictureModalDescription">gli utenti possono caricare GIF</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Carica GIF con</string>
-    <string name="proCallToActionLongerMessages">Vuoi inviare messaggi più lunghi? Invia più testo e sblocca funzionalità premium con {app_pro}</string>
-    <string name="proCallToActionPinnedConversations">Vuoi più chat bloccate? Organizza le tue chat e sblocca le funzionalità premium con {app_pro}</string>
     <string name="proFeatureListAnimatedDisplayPicture">Carica immagini profilo in formato GIF e WebP</string>
     <string name="proFeatureListLargerGroups">Chat di gruppo maggiori fino a 300 membri</string>
     <string name="proFeatureListLoadsMore">E tante altre funzionalità esclusive</string>
@@ -839,7 +836,6 @@
     <string name="proIncreasedMessageLengthFeature">Lunghezza messaggio aumentata</string>
     <string name="proMessageInfoFeatures">Questo messaggio ha utilizzato le seguenti funzionalità di {app_pro}:</string>
     <string name="proSendMore">Invia di più con</string>
-    <string name="proUserProfileModalCallToAction">Vuoi ottenere di più da {app_name}? Passa a {app_pro} per un\'esperienza di messaggistica più potente.</string>
     <string name="profile">Profilo</string>
     <string name="profileDisplayPicture">Mostra immagine</string>
     <string name="profileDisplayPictureRemoveError">Impossibile rimuovere l\'immagine del profilo.</string>

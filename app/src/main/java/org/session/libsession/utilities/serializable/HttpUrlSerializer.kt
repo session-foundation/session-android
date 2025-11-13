@@ -9,7 +9,7 @@ import kotlinx.serialization.encoding.Encoder
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
-class HttpSerializer : KSerializer<HttpUrl> {
+class HttpUrlSerializer : KSerializer<HttpUrl> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(
         serialName = HttpUrl::javaClass.name,
         kind = PrimitiveKind.STRING
