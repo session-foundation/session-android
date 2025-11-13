@@ -155,8 +155,6 @@ fun StartConversationNavHost(
                 val viewModel = hiltViewModel<NewMessageViewModel>()
                 val uiState by viewModel.state.collectAsState(State())
 
-                val helpUrl = "https://getsession.org/account-ids"
-
                 LaunchedEffect(Unit) {
                     scope.launch {
                         viewModel.success.collect {
@@ -182,7 +180,7 @@ fun StartConversationNavHost(
                 )
                 if (uiState.showUrlDialog) {
                     OpenURLAlertDialog(
-                        url = helpUrl,
+                        url = uiState.helpUrl,
                         onDismissRequest = { viewModel.onCommand(NewMessageViewModel.Commands.DismissUrlDialog) }
                     )
                 }

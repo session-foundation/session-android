@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.home.startconversation.newmessage
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.squareup.phrase.Phrase
@@ -21,10 +20,8 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
-import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.PublicKeyValidation
-import org.thoughtcrime.securesms.preferences.SettingsViewModel
 import org.thoughtcrime.securesms.ui.GetString
 import java.net.IDN
 import javax.inject.Inject
@@ -33,7 +30,7 @@ import javax.inject.Inject
 class NewMessageViewModel @Inject constructor(
     private val application: Application,
     private val configFactory: ConfigFactoryProtocol,
-): ViewModel(), Callbacks {
+) : ViewModel(), Callbacks {
 
     private val _state = MutableStateFlow(State())
     val state = _state.asStateFlow()
@@ -41,7 +38,10 @@ class NewMessageViewModel @Inject constructor(
     private val _success = MutableSharedFlow<Success>()
     val success get() = _success
 
-    private val _qrErrors = MutableSharedFlow<String>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val _qrErrors = MutableSharedFlow<String>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
     val qrErrors = _qrErrors.asSharedFlow()
 
     private var loadOnsJob: Job? = null
@@ -52,7 +52,13 @@ class NewMessageViewModel @Inject constructor(
     override fun onChange(value: String) {
         loadOnsJob?.cancel()
         loadOnsJob = null
-        _state.update { it.copy(newMessageIdOrOns = value, isTextErrorColor = false, loading = false) }
+        _state.update {
+            it.copy(
+                newMessageIdOrOns = value,
+                isTextErrorColor = false,
+                loading = false
+            )
+        }
     }
 
     override fun onContinue() {
@@ -98,11 +104,29 @@ class NewMessageViewModel @Inject constructor(
                     isPrefixRequired = false
                 ) && PublicKeyValidation.hasValidPrefix(value)
             ) {
-                onPublicKey(value)
+                onChange(value)
+                _state.update { it.copy(validIdFromQr = value) }
             } else {
                 _qrErrors.tryEmit(application.getString(R.string.qrNotAccountId))
+                _state.update { it.copy(validIdFromQr = "") }
             }
         }
+    }
+
+    override fun onClearQrCode() {
+        _state.update {it.copy(validIdFromQr = "") }
+    }
+
+    override fun onShowInviteDialog() {
+        _state.update { it.copy(showInviteDialog = true) }
+    }
+
+    override fun onDismissInviteDialog() {
+        _state.update { it.copy(showInviteDialog = false) }
+    }
+
+    override fun onToggleShareHistory(share: Boolean) {
+        _state.update { it.copy(shareMessageHistory = share) }
     }
 
     private fun resolveONS(ons: String) {
@@ -114,7 +138,7 @@ class NewMessageViewModel @Inject constructor(
         loadOnsJob = viewModelScope.launch {
             try {
                 val publicKey = withTimeout(30_000L, {
-                   SnodeAPI.getAccountID(ons)
+                    SnodeAPI.getAccountID(ons)
                 })
                 onPublicKey(publicKey)
             } catch (e: Exception) {
@@ -125,7 +149,12 @@ class NewMessageViewModel @Inject constructor(
     }
 
     private fun onError(e: Exception) {
-        _state.update { it.copy(loading = false, isTextErrorColor = true, error = GetString(e) { it.toMessage() }) }
+        _state.update {
+            it.copy(
+                loading = false,
+                isTextErrorColor = true,
+                error = GetString(e) { it.toMessage() })
+        }
     }
 
     private fun onPublicKey(publicKey: String) {
@@ -133,7 +162,7 @@ class NewMessageViewModel @Inject constructor(
 
         val address = publicKey.toAddress()
         if (address is Address.Standard) {
-            viewModelScope.launch { _success.emit(Success(address)) }
+            viewModelScope.launch { _success.emit(Success(address, state.value.shareMessageHistory)) }
         }
     }
 
@@ -141,7 +170,13 @@ class NewMessageViewModel @Inject constructor(
         if (PublicKeyValidation.hasValidPrefix(publicKey)) {
             onPublicKey(publicKey)
         } else {
-            _state.update { it.copy(isTextErrorColor = true, error = GetString(R.string.accountIdErrorInvalid), loading = false) }
+            _state.update {
+                it.copy(
+                    isTextErrorColor = true,
+                    error = GetString(R.string.accountIdErrorInvalid),
+                    loading = false
+                )
+            }
         }
     }
 
@@ -179,12 +214,14 @@ data class State(
     val isTextErrorColor: Boolean = false,
     val error: GetString? = null,
     val loading: Boolean = false,
-    val showUrlDialog : Boolean = false
+    val showUrlDialog: Boolean = false,
+    val helpUrl : String = "https://getsession.org/account-ids",
+    val showInviteDialog : Boolean = false,
+    val validIdFromQr: String = "",
+    val shareMessageHistory : Boolean = false
 ) {
     val isNextButtonEnabled: Boolean get() = newMessageIdOrOns.isNotBlank()
 }
 
 
-
-
-data class Success(val address: Address.Standard)
+data class Success(val address: Address.Standard, val shareHistory: Boolean = false)

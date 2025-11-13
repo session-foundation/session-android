@@ -142,7 +142,7 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         }
     }
 
-    fun onSendInviteClicked(contacts: Set<Address>) {
+    fun onSendInviteClicked(contacts: Set<Address>, shareHistory : Boolean) {
         _uiState.update {
             it.copy(
                 ongoingAction = context.resources.getQuantityString(
@@ -166,7 +166,7 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
             groupManager.inviteMembers(
                 groupId,
                 contacts.map { AccountId(it.toString()) }.toList(),
-                shareHistory = false,
+                shareHistory = shareHistory,
                 isReinvite = false,
             )
         }

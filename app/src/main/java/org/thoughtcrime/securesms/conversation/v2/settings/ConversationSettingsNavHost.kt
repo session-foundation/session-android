@@ -1,11 +1,14 @@
 package org.thoughtcrime.securesms.conversation.v2.settings
 
+import android.R.attr.data
 import android.annotation.SuppressLint
 import android.os.Parcelable
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -23,6 +26,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesViewModel
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.DisappearingMessagesScreen
+import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.*
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsScreen
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsViewModel
@@ -31,13 +35,15 @@ import org.thoughtcrime.securesms.groups.GroupMembersViewModel
 import org.thoughtcrime.securesms.groups.SelectContactsViewModel
 import org.thoughtcrime.securesms.groups.compose.ManageGroupMembersScreen
 import org.thoughtcrime.securesms.groups.compose.GroupMembersScreen
-import org.thoughtcrime.securesms.groups.compose.InviteAccountId
 import org.thoughtcrime.securesms.groups.compose.InviteAccountIdScreen
 import org.thoughtcrime.securesms.groups.compose.InviteContactsScreen
+import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessageViewModel
+import org.thoughtcrime.securesms.home.startconversation.newmessage.State
 import org.thoughtcrime.securesms.media.MediaOverviewScreen
 import org.thoughtcrime.securesms.media.MediaOverviewViewModel
 import org.thoughtcrime.securesms.ui.NavigationAction
 import org.thoughtcrime.securesms.ui.ObserveAsEvents
+import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.horizontalSlideComposable
 
@@ -230,7 +236,7 @@ fun ConversationSettingsNavHost(
                     viewModel = viewModel,
                     onDoneClicked = { shareHistory ->
                         //send invites from the manage group screen
-                        manageGroupMembersViewModel.onSendInviteClicked(viewModel.currentSelected)
+                        manageGroupMembersViewModel.onSendInviteClicked(viewModel.currentSelected, shareHistory)
                         handleBack()
                     },
                     onBack = dropUnlessResumed {
@@ -272,30 +278,46 @@ fun ConversationSettingsNavHost(
 
             // Invite contacts using Account ID
             horizontalSlideComposable<RouteInviteAccountIdToGroup> { backStackEntry ->
-//                val data: RouteInviteToGroup = backStackEntry.toRoute()
-//
-//                // grab a hold of manage group's VM
-//                val parentEntry = remember(backStackEntry) {
-//                    navController.getBackStackEntry(
-//                        RouteManageMembers(data.groupAddress)
-//                    )
-//                }
-//                val manageGroupMembersViewModel: ManageGroupMembersViewModel = hiltViewModel(parentEntry)
+                val data: RouteInviteAccountIdToGroup = backStackEntry.toRoute()
 
-                InviteAccountIdScreen()
+                val viewModel = hiltViewModel<NewMessageViewModel>()
+                val uiState by viewModel.state.collectAsState(State())
 
-//                InviteContactsScreen(
-//                    viewModel = viewModel,
-//                    onDoneClicked = { shareHistory ->
-//                        //send invites from the manage group screen
-//                        manageGroupMembersViewModel.onSendInviteClicked(viewModel.currentSelected)
-//                        handleBack()
-//                    },
-//                    onBack = dropUnlessResumed {
-//                        handleBack()
-//                    },
-//                    banner = {}
-//                )
+                // grab a hold of manage group's VM
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry(
+                        RouteManageMembers(data.groupAddress)
+                    )
+                }
+
+                val manageGroupMembersViewModel: ManageGroupMembersViewModel = hiltViewModel(parentEntry)
+
+                LaunchedEffect(Unit) {
+                    viewModel.success.collect { success ->
+                        val address = success.address
+                        val shareHistory = success.shareHistory
+                        manageGroupMembersViewModel.onSendInviteClicked(
+                            setOf(address),
+                            shareHistory
+                        )
+                    }
+                }
+
+                InviteAccountIdScreen(
+                    uiState,
+                    viewModel.qrErrors,
+                    viewModel,
+                    onBack = { handleBack() },
+                    onHelp = { viewModel.onCommand(NewMessageViewModel.Commands.ShowUrlDialog) },
+                    sendCommand = viewModel::onCommand
+                )
+
+                if (uiState.showUrlDialog) {
+                    OpenURLAlertDialog(
+                        url = uiState.helpUrl,
+                        onDismissRequest = { viewModel.onCommand(NewMessageViewModel.Commands.DismissUrlDialog) }
+                    )
+                }
             }
 
             // Disappearing Messages

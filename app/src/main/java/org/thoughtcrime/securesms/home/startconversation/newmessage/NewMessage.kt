@@ -18,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -53,20 +54,38 @@ private val TITLES = listOf(R.string.accountIdEnter, R.string.qrScan)
 internal fun NewMessage(
     state: State,
     qrErrors: Flow<String> = emptyFlow(),
-    callbacks: Callbacks = object: Callbacks {},
+    callbacks: Callbacks = object : Callbacks {},
     onClose: () -> Unit = {},
     onBack: () -> Unit = {},
     onHelp: () -> Unit = {},
+    isInvite: Boolean = false
 ) {
     val pagerState = rememberPagerState { TITLES.size }
 
-    Column(modifier = Modifier.background(
-        LocalColors.current.backgroundSecondary,
-        shape = MaterialTheme.shapes.small
-    )) {
+    LaunchedEffect(state.validIdFromQr) {
+        if (state.validIdFromQr.isNotBlank()) {
+            if (isInvite) {
+                // auto-run the normal flow (validation etc.)
+                callbacks.onContinue()
+            } else {
+                // switch back to the 1st tab and proceed with invite flow
+                pagerState.animateScrollToPage(0)
+            }
+
+            callbacks.onClearQrCode()
+        }
+    }
+
+    Column(
+        modifier = Modifier.background(
+            LocalColors.current.backgroundSecondary,
+            shape = MaterialTheme.shapes.small
+        )
+    ) {
         // `messageNew` is now a plurals string so get the singular version
         val context = LocalContext.current
-        val newMessageTitleTxt:String = context.resources.getQuantityString(R.plurals.messageNew, 1, 1)
+        val newMessageTitleTxt: String =
+            context.resources.getQuantityString(R.plurals.messageNew, 1, 1)
 
         BackAppBar(
             title = newMessageTitleTxt,
@@ -78,7 +97,7 @@ internal fun NewMessage(
         SessionTabRow(pagerState, TITLES)
         HorizontalPager(pagerState) {
             when (TITLES[it]) {
-                R.string.accountIdEnter -> EnterAccountId(state, callbacks, onHelp)
+                R.string.accountIdEnter -> EnterAccountId(state, callbacks, onHelp, isInvite)
                 R.string.qrScan -> QRScannerScreen(qrErrors, onScan = callbacks::onScanQrCode)
             }
         }
@@ -89,7 +108,8 @@ internal fun NewMessage(
 private fun EnterAccountId(
     state: State,
     callbacks: Callbacks,
-    onHelp: () -> Unit = {}
+    onHelp: () -> Unit = {},
+    isInvite: Boolean = false
 ) {
     Surface(color = LocalColors.current.backgroundSecondary) {
         Column(
@@ -129,7 +149,9 @@ private fun EnterAccountId(
                 )
             }
 
-            Spacer(Modifier.weight(1f).heightIn(min = LocalDimensions.current.smallSpacing))
+            Spacer(Modifier
+                .weight(1f)
+                .heightIn(min = LocalDimensions.current.smallSpacing))
 
             AccentOutlineButton(
                 modifier = Modifier
@@ -140,7 +162,7 @@ private fun EnterAccountId(
                     .qaTag(R.string.next),
                 enabled = state.isNextButtonEnabled,
                 disabledColor = LocalColors.current.textSecondary,
-                onClick = callbacks::onContinue
+                onClick = if(isInvite) callbacks::onShowInviteDialog  else callbacks::onContinue
             ) {
                 LoadingArcOr(state.loading) {
                     Text(stringResource(R.string.next))
