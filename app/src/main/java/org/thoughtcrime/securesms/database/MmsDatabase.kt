@@ -697,9 +697,6 @@ class MmsDatabase @Inject constructor(
         if (retrieved.isPushMessage) {
             type = type or MmsSmsColumns.Types.PUSH_MESSAGE_BIT
         }
-        if (retrieved.isScreenshotDataExtraction) {
-            type = type or MmsSmsColumns.Types.SCREENSHOT_EXTRACTION_BIT
-        }
         if (retrieved.isMediaSavedDataExtraction) {
             type = type or MmsSmsColumns.Types.MEDIA_SAVED_EXTRACTION_BIT
         }

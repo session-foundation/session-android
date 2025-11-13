@@ -53,6 +53,7 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.SSKEnvironment
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
@@ -83,6 +84,7 @@ internal fun MessageReceiver.isBlocked(publicKey: String): Boolean {
     return recipient?.blocked == true
 }
 
+@Deprecated(replaceWith = ReplaceWith("ReceivedMessageProcessor"), message = "Use ReceivedMessageProcessor instead")
 @Singleton
 class ReceivedMessageHandler @Inject constructor(
     @param:ApplicationContext private val context: Context,
@@ -100,6 +102,7 @@ class ReceivedMessageHandler @Inject constructor(
     @param:ManagerScope private val scope: CoroutineScope,
     private val configFactory: ConfigFactoryProtocol,
     private val messageRequestResponseHandler: Provider<MessageRequestResponseHandler>,
+    private val prefs: TextSecurePreferences,
 ) {
 
     suspend fun handle(
@@ -129,7 +132,7 @@ class ReceivedMessageHandler @Inject constructor(
             }
             is DataExtractionNotification -> handleDataExtractionNotification(message)
             is UnsendRequest -> handleUnsendRequest(message)
-            is MessageRequestResponse -> messageRequestResponseHandler.get().handleExplicitRequestResponseMessage(message)
+            is MessageRequestResponse -> messageRequestResponseHandler.get().handleExplicitRequestResponseMessage(null, message)
             is VisibleMessage -> handleVisibleMessage(
                 message = message,
                 proto = proto,
@@ -183,6 +186,9 @@ class ReceivedMessageHandler @Inject constructor(
     }
 
     private fun showTypingIndicatorIfNeeded(senderPublicKey: String) {
+        // We don't want to show other people's indicators if the toggle is off
+        if(!prefs.isTypingIndicatorsEnabled()) return
+
         val address = Address.fromSerialized(senderPublicKey)
         val threadID = storage.getThreadId(address) ?: return
         typingIndicators.didReceiveTypingStartedMessage(threadID, address, 1)
@@ -213,7 +219,6 @@ class ReceivedMessageHandler @Inject constructor(
         val senderPublicKey = message.sender!!
 
         val notification: DataExtractionNotificationInfoMessage = when(message.kind) {
-            is DataExtractionNotification.Kind.Screenshot -> DataExtractionNotificationInfoMessage(DataExtractionNotificationInfoMessage.Kind.SCREENSHOT)
             is DataExtractionNotification.Kind.MediaSaved -> DataExtractionNotificationInfoMessage(DataExtractionNotificationInfoMessage.Kind.MEDIA_SAVED)
             else -> return
         }
@@ -296,7 +301,7 @@ class ReceivedMessageHandler @Inject constructor(
         // Do nothing if the message was outdated
         if (messageIsOutdated(message, context.threadId)) { return null }
 
-        messageRequestResponseHandler.get().handleVisibleMessage(message)
+        messageRequestResponseHandler.get().handleVisibleMessage(null, message)
 
         // Handle group invite response if new closed group
         val threadRecipientAddress = context.threadAddress

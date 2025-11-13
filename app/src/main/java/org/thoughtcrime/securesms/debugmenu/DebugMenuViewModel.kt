@@ -7,19 +7,24 @@ import android.os.Build
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.file_server.FileServer
@@ -28,13 +33,13 @@ import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.upsertContact
+import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.hexEncodedPublicKey
-import org.thoughtcrime.securesms.crypto.KeyPairUtilities
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
@@ -43,13 +48,15 @@ import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
+import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.util.ClearDataUtils
+import org.thoughtcrime.securesms.util.DateUtils
 import java.time.ZonedDateTime
-import javax.inject.Inject
 
 
-@HiltViewModel
-class DebugMenuViewModel @Inject constructor(
+@HiltViewModel(assistedFactory = DebugMenuViewModel.Factory::class)
+class DebugMenuViewModel @AssistedInject constructor(
+    @Assisted private val navigator: UINavigator<DebugMenuDestination>,
     @param:ApplicationContext private val context: Context,
     private val textSecurePreferences: TextSecurePreferences,
     private val tokenPageNotificationManager: TokenPageNotificationManager,
@@ -62,9 +69,17 @@ class DebugMenuViewModel @Inject constructor(
     private val conversationRepository: ConversationRepository,
     private val databaseInspector: DatabaseInspector,
     private val tokenFetcher: TokenFetcher,
+    private val debugLogger: DebugLogger,
+    private val dateUtils: DateUtils,
+    private val loginStateRepository: LoginStateRepository,
     subscriptionManagers: Set<@JvmSuppressWildcards SubscriptionManager>,
 ) : ViewModel() {
     private val TAG = "DebugMenu"
+
+    @AssistedFactory
+    interface Factory {
+        fun create(navigator: UINavigator<DebugMenuDestination>): DebugMenuViewModel
+    }
 
     private val _uiState = MutableStateFlow(
         UIState(
@@ -92,20 +107,34 @@ class DebugMenuViewModel @Inject constructor(
             debugSubscriptionStatuses = setOf(
                 DebugSubscriptionStatus.AUTO_GOOGLE,
                 DebugSubscriptionStatus.EXPIRING_GOOGLE,
+                DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER,
                 DebugSubscriptionStatus.AUTO_APPLE,
                 DebugSubscriptionStatus.EXPIRING_APPLE,
                 DebugSubscriptionStatus.EXPIRED,
+                DebugSubscriptionStatus.EXPIRED_EARLIER,
+                DebugSubscriptionStatus.EXPIRED_APPLE,
             ),
             selectedDebugSubscriptionStatus = textSecurePreferences.getDebugSubscriptionType() ?: DebugSubscriptionStatus.AUTO_GOOGLE,
+            debugProPlanStatus = setOf(
+                DebugProPlanStatus.NORMAL,
+                DebugProPlanStatus.LOADING,
+                DebugProPlanStatus.ERROR,
+            ),
+            selectedDebugProPlanStatus = textSecurePreferences.getDebugProPlanStatus() ?: DebugProPlanStatus.NORMAL,
             debugProPlans = subscriptionManagers.asSequence()
                 .flatMap { it.availablePlans.asSequence().map { plan -> DebugProPlan(it, plan) } }
                 .toList(),
+            forceNoBilling = textSecurePreferences.getDebugForceNoBilling(),
+            withinQuickRefund = textSecurePreferences.getDebugIsWithinQuickRefund(),
             availableAltFileServers = TEST_FILE_SERVERS,
             alternativeFileServer = textSecurePreferences.alternativeFileServer,
+            showToastForGroups = getDebugGroupToastPref()
         )
     )
     val uiState: StateFlow<UIState>
         get() = _uiState
+
+    val debugLogs: Flow<List<DebugLogData>> get() = debugLogger.logSnapshots
 
     init {
         if (databaseInspector.available) {
@@ -159,7 +188,7 @@ class DebugMenuViewModel @Inject constructor(
             }
 
             is Commands.CopyAccountId -> {
-                val accountId = textSecurePreferences.getLocalNumber()
+                val accountId = loginStateRepository.requireLocalNumber()
                 val clip = ClipData.newPlainText("Account ID", accountId)
                 clipboardManager.setPrimaryClip(ClipData(clip))
 
@@ -227,13 +256,13 @@ class DebugMenuViewModel @Inject constructor(
 
                     withContext(Dispatchers.Default) {
                         val keys = List(command.count) {
-                            KeyPairUtilities.generate()
+                            AccountId(IdPrefix.STANDARD, ED25519.generate(null).secretKey.data)
                         }
 
                         configFactory.withMutableUserConfigs { configs ->
                             for ((index, key) in keys.withIndex()) {
                                 configs.contacts.upsertContact(
-                                    key.x25519KeyPair.hexEncodedPublicKey.toAddress() as Address.Standard,
+                                    Address.Standard(key),
                                 ) {
                                     name = "${command.prefix}$index"
                                     approved = true
@@ -265,6 +294,20 @@ class DebugMenuViewModel @Inject constructor(
                 textSecurePreferences.setForceIncomingMessagesAsPro(command.set)
                 _uiState.update {
                     it.copy(forceIncomingMessagesAsPro = command.set)
+                }
+            }
+
+            is Commands.ForceNoBilling -> {
+                textSecurePreferences.setDebugForceNoBilling(command.set)
+                _uiState.update {
+                    it.copy(forceNoBilling = command.set)
+                }
+            }
+
+            is Commands.WithinQuickRefund -> {
+                textSecurePreferences.setDebugIsWithinQuickRefund(command.set)
+                _uiState.update {
+                    it.copy(withinQuickRefund = command.set)
                 }
             }
 
@@ -308,8 +351,17 @@ class DebugMenuViewModel @Inject constructor(
                 }
             }
 
+            is Commands.SetDebugProPlanStatus -> {
+                textSecurePreferences.setDebugProPlanStatus(command.status)
+                _uiState.update {
+                    it.copy(selectedDebugProPlanStatus = command.status)
+                }
+            }
+
             is Commands.PurchaseDebugPlan -> {
-                command.plan.apply { manager.purchasePlan(plan) }
+                viewModelScope.launch {
+                    command.plan.apply { manager.purchasePlan(plan) }
+                }
             }
 
             is Commands.ToggleDeterministicEncryption -> {
@@ -334,7 +386,64 @@ class DebugMenuViewModel @Inject constructor(
                 _uiState.update { it.copy(alternativeFileServer = command.fileServer) }
                 textSecurePreferences.alternativeFileServer = command.fileServer
             }
+
+            is Commands.NavigateTo -> {
+                viewModelScope.launch {
+                    navigator.navigate(command.destination)
+                }
+            }
+
+            is Commands.ToggleDebugLogGroup -> {
+                debugLogger.showGroupToast(command.group, command.showToast)
+                _uiState.update {
+                    it.copy(showToastForGroups = getDebugGroupToastPref())
+                }
+            }
+
+            is Commands.ClearAllDebugLogs -> {
+                debugLogger.clearAll()
+            }
+
+            is Commands.CopyAllLogs -> {
+                val logs = debugLogger.currentSnapshot().joinToString("\n\n") {
+                    "${dateUtils.getLocaleFormattedTime(it.date.toEpochMilli())}: ${it.message}"
+                }
+
+                val clip = ClipData.newPlainText("Debug Logs", logs)
+                clipboardManager.setPrimaryClip(ClipData(clip))
+
+                // Show a toast if the version is below Android 13
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                    Toast.makeText(
+                        context,
+                        "Copied Debug Logs to clipboard",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+
+            is Commands.CopyLog -> {
+                val log = "${dateUtils.getLocaleFormattedTime(command.log.date.toEpochMilli())}: ${command.log.message}"
+
+                val clip = ClipData.newPlainText("Debug Log", log)
+                clipboardManager.setPrimaryClip(ClipData(clip))
+
+                // Show a toast if the version is below Android 13
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                    Toast.makeText(
+                        context,
+                        "Copied Debug Log to clipboard",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
         }
+    }
+
+    private fun getDebugGroupToastPref(): Map<String, Boolean> {
+        return DebugLogGroup.entries.associate { group ->
+                group.label to debugLogger.getGroupToastPreference(group)
+            }
     }
 
     private fun showEnvironmentWarningDialog(environment: String) {
@@ -441,9 +550,14 @@ class DebugMenuViewModel @Inject constructor(
         val dbInspectorState: DatabaseInspectorState,
         val debugSubscriptionStatuses: Set<DebugSubscriptionStatus>,
         val selectedDebugSubscriptionStatus: DebugSubscriptionStatus,
+        val debugProPlanStatus: Set<DebugProPlanStatus>,
+        val selectedDebugProPlanStatus: DebugProPlanStatus,
         val debugProPlans: List<DebugProPlan>,
+        val forceNoBilling: Boolean,
+        val withinQuickRefund: Boolean,
         val alternativeFileServer: FileServer? = null,
         val availableAltFileServers: List<FileServer> = emptyList(),
+        val showToastForGroups: Map<String, Boolean> = emptyMap(),
     )
 
     enum class DatabaseInspectorState {
@@ -454,10 +568,19 @@ class DebugMenuViewModel @Inject constructor(
 
     enum class DebugSubscriptionStatus(val label: String) {
         AUTO_GOOGLE("Auto Renewing (Google, 3 months)"),
-        EXPIRING_GOOGLE("Expiring/Cancelled (Google, 12 months)"),
+        EXPIRING_GOOGLE("Expiring/Cancelled (Expires in 14 days, Google, 12 months)"),
+        EXPIRING_GOOGLE_LATER("Expiring/Cancelled (Expires in 40 days, Google, 12 months)"),
         AUTO_APPLE("Auto Renewing (Apple, 1 months)"),
-        EXPIRING_APPLE("Expiring/Cancelled (Apple, 1 months)"),
-        EXPIRED("Expired"),
+        EXPIRING_APPLE("Expiring/Cancelled (Expires in 14 days, Apple, 1 months)"),
+        EXPIRED("Expired (Expired 2 days ago, Google)"),
+        EXPIRED_EARLIER("Expired (Expired 60 days ago, Google)"),
+        EXPIRED_APPLE("Expired (Expired 2 days ago, Apple)"),
+    }
+
+    enum class DebugProPlanStatus(val label: String){
+        NORMAL("Normal State"),
+        LOADING("Always Loading"),
+        ERROR("Always Erroring out"),
     }
 
     sealed class Commands {
@@ -472,6 +595,8 @@ class DebugMenuViewModel @Inject constructor(
         data class ForceCurrentUserAsPro(val set: Boolean) : Commands()
         data class ForceOtherUsersAsPro(val set: Boolean) : Commands()
         data class ForceIncomingMessagesAsPro(val set: Boolean) : Commands()
+        data class ForceNoBilling(val set: Boolean) : Commands()
+        data class WithinQuickRefund(val set: Boolean) : Commands()
         data class ForcePostPro(val set: Boolean) : Commands()
         data class ForceShortTTl(val set: Boolean) : Commands()
         data class SetMessageProFeature(val feature: ProStatusManager.MessageProFeature, val set: Boolean) : Commands()
@@ -484,11 +609,17 @@ class DebugMenuViewModel @Inject constructor(
         data class GenerateContacts(val prefix: String, val count: Int): Commands()
         data object ToggleDatabaseInspector : Commands()
         data class SetDebugSubscriptionStatus(val status: DebugSubscriptionStatus) : Commands()
+        data class SetDebugProPlanStatus(val status: DebugProPlanStatus) : Commands()
         data class PurchaseDebugPlan(val plan: DebugProPlan) : Commands()
         data object ToggleDeterministicEncryption : Commands()
         data object ToggleDebugAvatarReupload : Commands()
         data object ResetPushToken : Commands()
         data class SelectAltFileServer(val fileServer: FileServer?) : Commands()
+        data class NavigateTo(val destination: DebugMenuDestination) : Commands()
+        data class ToggleDebugLogGroup(val group: DebugLogGroup, val showToast: Boolean) : Commands()
+        data object ClearAllDebugLogs : Commands()
+        data object CopyAllLogs : Commands()
+        data class CopyLog(val log: DebugLogData) : Commands()
     }
 
     companion object {

@@ -100,7 +100,6 @@ class SettingsViewModel @Inject constructor(
         hasPath = true,
         version = getVersionNumber(),
         recoveryHidden = prefs.getHidePassword(),
-        isPro = selfRecipient.value.proStatus.isPro(),
         isPostPro = proStatusManager.isPostPro(),
         subscriptionState = getDefaultSubscriptionStateData(),
     ))
@@ -115,7 +114,6 @@ class SettingsViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             username = recipient.displayName(attachesBlindedId = false),
-                            isPro = recipient.proStatus.isPro(),
                         )
                     }
                 }
@@ -600,53 +598,6 @@ class SettingsViewModel @Inject constructor(
                 showUrlDialog( "https://session.foundation/donate#app")
             }
 
-            is Commands.ShowProErrorOrLoading -> {
-                when(_uiState.value.subscriptionState.refreshState){
-                    // if we are in a loading or refresh state we should show a dialog instead
-                    is State.Loading -> {
-                        _uiState.update {
-                            it.copy(
-                                showSimpleDialog = SimpleDialogData(
-                                    title = Phrase.from(context.getText(R.string.proStatusLoading))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                        .format().toString(),
-                                    message = Phrase.from(context.getText(R.string.proStatusLoadingDescription))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                        .format(),
-                                    positiveText = context.getString(R.string.okay),
-                                    positiveStyleDanger = false,
-                                )
-                            )
-                        }
-                    }
-
-                    is State.Error -> {
-                        _uiState.update {
-                            it.copy(
-                                showSimpleDialog = SimpleDialogData(
-                                    title = Phrase.from(context.getText(R.string.proStatusError))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                        .format().toString(),
-                                    message = Phrase.from(context.getText(R.string.proStatusRefreshNetworkError))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                        .format(),
-                                    positiveText = context.getString(R.string.retry),
-                                    negativeText = context.getString(R.string.helpSupport),
-                                    positiveStyleDanger = false,
-                                    showXIcon = true,
-                                    onPositive = { refreshSubscriptionData() },
-                                    onNegative = {
-                                        showUrlDialog(ProStatusManager.URL_PRO_SUPPORT)
-                                    }
-                                )
-                            )
-                        }
-                    }
-
-                    else -> {}
-                }
-            }
-
             is Commands.HideSimpleDialog -> {
                 _uiState.update { it.copy(showSimpleDialog = null) }
             }
@@ -704,7 +655,6 @@ class SettingsViewModel @Inject constructor(
         val showAnimatedProCTA: Boolean = false,
         val usernameDialog: UsernameDialogData? = null,
         val showSimpleDialog: SimpleDialogData? = null,
-        val isPro: Boolean,
         val isPostPro: Boolean,
         val subscriptionState: SubscriptionState,
     )
@@ -732,8 +682,6 @@ class SettingsViewModel @Inject constructor(
         data object HideSimpleDialog: Commands
 
         data object OnDonateClicked: Commands
-
-        data object ShowProErrorOrLoading: Commands
 
         data class ClearData(val clearNetwork: Boolean): Commands
     }

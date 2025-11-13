@@ -29,6 +29,8 @@ import org.session.libsession.utilities.toBlinded
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.SubscriptionType
 
 /**
  * Helper class to get the information required for the user profile modal
@@ -41,6 +43,7 @@ class UserProfileUtils @AssistedInject constructor(
     private val avatarUtils: AvatarUtils,
     private val blindedIdMappingRepository: BlindMappingRepository,
     private val recipientRepository: RecipientRepository,
+    private val proStatusManager: ProStatusManager
 ) {
     private val _userProfileModalData: MutableStateFlow<UserProfileModalData?> = MutableStateFlow(null)
     val userProfileModalData: StateFlow<UserProfileModalData?>
@@ -123,7 +126,7 @@ class UserProfileUtils @AssistedInject constructor(
             enableMessage = !recipient.address.isBlinded || recipient.acceptsBlindedCommunityMessageRequests,
             expandedAvatar = false,
             showQR = false,
-            showProCTA = false,
+            showProCTA = null,
             messageAddress = messageAddress,
         )
 
@@ -140,11 +143,15 @@ class UserProfileUtils @AssistedInject constructor(
     fun onCommand(command: UserProfileModalCommands){
         when(command){
             UserProfileModalCommands.ShowProCTA -> {
-                _userProfileModalData.update { _userProfileModalData.value?.copy(showProCTA = true) }
+                _userProfileModalData.update {
+                    _userProfileModalData.value?.copy(
+                        showProCTA = GenericCTAData(proStatusManager.subscriptionState.value.type)
+                    )
+                }
             }
 
             UserProfileModalCommands.HideSessionProCTA -> {
-                _userProfileModalData.update { _userProfileModalData.value?.copy(showProCTA = false) }
+                _userProfileModalData.update { _userProfileModalData.value?.copy(showProCTA = null) }
             }
 
             UserProfileModalCommands.ToggleQR -> {
@@ -196,7 +203,11 @@ data class UserProfileModalData(
     val expandedAvatar: Boolean,
     val showQR: Boolean,
     val avatarUIData: AvatarUIData,
-    val showProCTA: Boolean
+    val showProCTA: GenericCTAData?
+)
+
+data class GenericCTAData(
+    val proSubscription: SubscriptionType
 )
 
 sealed interface UserProfileModalCommands {

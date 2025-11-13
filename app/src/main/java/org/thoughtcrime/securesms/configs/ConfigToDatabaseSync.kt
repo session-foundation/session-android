@@ -8,12 +8,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
@@ -39,6 +35,7 @@ import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.CommunityDatabase
 import org.thoughtcrime.securesms.database.DraftDatabase
 import org.thoughtcrime.securesms.database.GroupDatabase
@@ -47,6 +44,7 @@ import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -59,7 +57,6 @@ import org.thoughtcrime.securesms.util.castAwayType
 import java.util.EnumSet
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
-import kotlin.math.log
 
 private const val TAG = "ConfigToDatabaseSync"
 
@@ -81,6 +78,7 @@ class ConfigToDatabaseSync @Inject constructor(
     private val groupMemberDatabase: GroupMemberDatabase,
     private val communityDatabase: CommunityDatabase,
     private val lokiAPIDatabase: LokiAPIDatabase,
+    private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     private val clock: SnodeClock,
     private val preferences: TextSecurePreferences,
     private val conversationRepository: ConversationRepository,
@@ -89,27 +87,22 @@ class ConfigToDatabaseSync @Inject constructor(
     private val messageNotifier: MessageNotifier,
     private val recipientSettingsDatabase: RecipientSettingsDatabase,
     private val avatarCacheCleaner: AvatarCacheCleaner,
+    private val loginStateRepository: LoginStateRepository,
     @param:ManagerScope private val scope: CoroutineScope,
 ) : OnAppStartupComponent {
     init {
         // Sync conversations from config -> database
         scope.launch {
-            preferences.watchLocalNumber()
-                .map { it != null }
-                .flatMapLatest { loggedIn ->
-                    if (loggedIn) {
-                        combine(
-                            conversationRepository.conversationListAddressesFlow,
-                            configFactory.userConfigsChanged(EnumSet.of(UserConfigType.CONVO_INFO_VOLATILE))
-                                .castAwayType()
-                                .onStart { emit(Unit) }
-                                .map { _ -> configFactory.withUserConfigs { it.convoInfoVolatile.all() } },
-                            ::Pair
-                        )
-                    } else {
-                        emptyFlow()
-                    }
-                }
+            loginStateRepository.flowWithLoggedInState {
+                combine(
+                    conversationRepository.conversationListAddressesFlow,
+                    configFactory.userConfigsChanged(EnumSet.of(UserConfigType.CONVO_INFO_VOLATILE))
+                        .castAwayType()
+                        .onStart { emit(Unit) }
+                        .map { _ -> configFactory.withUserConfigs { it.convoInfoVolatile.all() } },
+                    ::Pair
+                )
+            }
                 .distinctUntilChanged()
                 .collectLatest { (conversations, convoInfo) ->
                     try {
@@ -195,7 +188,7 @@ class ConfigToDatabaseSync @Inject constructor(
 
     private fun deleteGroupData(address: Address.Group) {
         lokiAPIDatabase.clearLastMessageHashes(address.accountId.hexString)
-        lokiAPIDatabase.clearReceivedMessageHashValues(address.accountId.hexString)
+        receivedMessageHashDatabase.removeAllByPublicKey(address.accountId.hexString)
     }
 
     private fun onLegacyGroupAdded(
@@ -216,7 +209,7 @@ class ConfigToDatabaseSync @Inject constructor(
         val keyPair = ECKeyPair(DjbECPublicKey(group.encPubKey.data), DjbECPrivateKey(group.encSecKey.data))
         storage.addClosedGroupEncryptionKeyPair(keyPair, group.accountId, clock.currentTimeMills())
         // Notify the PN server
-        PushRegistryV1.subscribeGroup(group.accountId, publicKey = preferences.getLocalNumber()!!)
+        PushRegistryV1.subscribeGroup(group.accountId, publicKey = loginStateRepository.requireLocalNumber())
         threadDatabase.setCreationDate(threadId, formationTimestamp)
     }
 
@@ -260,7 +253,7 @@ class ConfigToDatabaseSync @Inject constructor(
     }
 
     private fun deleteLegacyGroupData(address: Address.LegacyGroup) {
-        val myAddress = preferences.getLocalNumber()!!
+        val myAddress = loginStateRepository.requireLocalNumber()
 
         // Mark the group as inactive
         storage.setActive(address.address, false)

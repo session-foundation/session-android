@@ -876,13 +876,9 @@
     <string name="proActivated">Aktiverat</string>
     <string name="proAlreadyPurchased">Du har redan</string>
     <string name="proAnimatedDisplayPicture">Fortsätt och ladda upp GIF:ar och animerade WebP-bilder som visningsbild!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">Skaffa animerade visningsbilder och lås upp premiumfunktioner med {app_pro}</string>
     <string name="proAnimatedDisplayPictureFeature">Animerad visningsbild</string>
     <string name="proAnimatedDisplayPictureModalDescription">användare kan ladda upp GIF:ar</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Ladda upp GIF:ar med</string>
-    <string name="proCallToActionLongerMessages">Vill du skicka längre meddelanden? Skicka mer text och lås upp premiumfunktioner med {app_pro}</string>
-    <string name="proCallToActionPinnedConversations">Vill du ha fler fästen? Organisera dina chattar och lås upp premiumfunktioner med {app_pro}</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">Vill du ha mer än 5 fästisar? Organisera dina chattar och lås upp premiumfunktioner med {app_pro}</string>
     <string name="proFeatureListAnimatedDisplayPicture">Ladda upp GIF- och WebP-visningsbilder</string>
     <string name="proFeatureListLargerGroups">Större gruppchattar upp till 300 medlemmar</string>
     <string name="proFeatureListLoadsMore">Plus många fler exklusiva funktioner</string>
@@ -894,7 +890,6 @@
     <string name="proIncreasedMessageLengthFeature">Förlängd meddelandelängd</string>
     <string name="proMessageInfoFeatures">Detta meddelande använde följande funktioner från {app_pro}:</string>
     <string name="proSendMore">Skicka mer med</string>
-    <string name="proUserProfileModalCallToAction">Vill du få ut mer av {app_name}? Uppgradera till {app_pro} för en kraftfullare meddelandeupplevelse.</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Visa bild</string>
     <string name="profileDisplayPictureRemoveError">Misslyckades med att ta bort visningsbild.</string>
@@ -958,6 +953,7 @@
     <string name="removePasswordFail">Misslyckades med att ta bort lösenord</string>
     <string name="removePasswordModalDescription">Ta bort ditt nuvarande lösenord för {app_name}. Lokalt lagrad data kommer att krypteras om med en slumpmässigt genererad nyckel som lagras på din enhet.</string>
     <string name="reply">Svara</string>
+    <string name="requestRefund">Begär återbetalning</string>
     <string name="resend">Skicka på nytt</string>
     <string name="resolving">Läser in landinformation ...</string>
     <string name="restart">Starta om</string>

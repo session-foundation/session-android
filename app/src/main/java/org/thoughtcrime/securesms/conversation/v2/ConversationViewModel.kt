@@ -1297,7 +1297,7 @@ class ConversationViewModel @AssistedInject constructor(
                 }
             }
 
-            _uiEvents.tryEmit(ConversationUiEvent.ShowDisappearingMessages(convo.address))
+            _uiEvents.tryEmit(ConversationUiEvent.ShowDisappearingMessages(address))
         }
     }
 
@@ -1459,7 +1459,7 @@ data class UiMessage(val id: Long, val message: String)
 
 sealed interface ConversationUiEvent {
     data class NavigateToConversation(val address: Address.Conversable) : ConversationUiEvent
-    data class ShowDisappearingMessages(val address: Address) : ConversationUiEvent
+    data class ShowDisappearingMessages(val address: Address.Conversable) : ConversationUiEvent
     data class ShowNotificationSettings(val address: Address) : ConversationUiEvent
     data class ShowGroupMembers(val groupAddress: Address.Group) : ConversationUiEvent
     data class ShowConversationSettings(val threadAddress: Address.Conversable) : ConversationUiEvent

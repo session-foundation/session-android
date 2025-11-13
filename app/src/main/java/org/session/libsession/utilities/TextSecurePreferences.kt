@@ -30,6 +30,8 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONM
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FORCED_SHORT_TTL
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_MESSAGE_REQUESTS
+import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN_PRO_EXPIRED
+import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN_PRO_EXPIRING
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HIDE_PASSWORD
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VACUUM_TIME
@@ -104,8 +106,6 @@ interface TextSecurePreferences {
     fun getPreferredCameraDirection(): CameraSelector
     fun getNotificationPrivacy(): NotificationPrivacyPreference
     fun getRepeatAlertsCount(): Int
-    fun getLocalRegistrationId(): Int
-    fun setLocalRegistrationId(registrationId: Int)
     fun isInThreadNotifications(): Boolean
     fun isUniversalUnidentifiedAccess(): Boolean
     fun getUpdateApkRefreshTime(): Long
@@ -114,12 +114,8 @@ interface TextSecurePreferences {
     fun getUpdateApkDownloadId(): Long
     fun setUpdateApkDigest(value: String?)
     fun getUpdateApkDigest(): String?
-    fun getLocalNumber(): String?
-    fun watchLocalNumber(): StateFlow<String?>
     fun getHasLegacyConfig(): Boolean
     fun setHasLegacyConfig(newValue: Boolean)
-    fun setLocalNumber(localNumber: String)
-    fun removeLocalNumber()
     fun isEnterSendsEnabled(): Boolean
     fun isPasswordDisabled(): Boolean
     fun setPasswordDisabled(disabled: Boolean)
@@ -158,8 +154,6 @@ interface TextSecurePreferences {
     fun setStringSetPreference(key: String, value: Set<String>)
     fun getHasViewedSeed(): Boolean
     fun setHasViewedSeed(hasViewedSeed: Boolean)
-    fun setRestorationTime(time: Long)
-    fun getRestorationTime(): Long
     fun getLastSnodePoolRefreshDate(): Long
     fun setLastSnodePoolRefreshDate(date: Date)
     fun getLastOpenTimeDate(): Long
@@ -176,6 +170,10 @@ interface TextSecurePreferences {
     fun setForceIncomingMessagesAsPro(isPro: Boolean)
     fun forcePostPro(): Boolean
     fun setForcePostPro(postPro: Boolean)
+    fun hasSeenProExpiring(): Boolean
+    fun setHasSeenProExpiring()
+    fun hasSeenProExpired(): Boolean
+    fun setHasSeenProExpired()
     fun watchPostProStatus(): StateFlow<Boolean>
     fun setShownCallWarning(): Boolean
     fun setShownCallNotification(): Boolean
@@ -212,6 +210,12 @@ interface TextSecurePreferences {
 
     fun getDebugSubscriptionType(): DebugMenuViewModel.DebugSubscriptionStatus?
     fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?)
+    fun getDebugProPlanStatus(): DebugMenuViewModel.DebugProPlanStatus?
+    fun setDebugProPlanStatus(status: DebugMenuViewModel.DebugProPlanStatus?)
+    fun getDebugForceNoBilling(): Boolean
+    fun setDebugForceNoBilling(hasBilling: Boolean)
+    fun getDebugIsWithinQuickRefund(): Boolean
+    fun setDebugIsWithinQuickRefund(isWithin: Boolean)
 
     fun setSubscriptionProvider(provider: String)
     fun getSubscriptionProvider(): String?
@@ -262,7 +266,6 @@ interface TextSecurePreferences {
         const val PASSPHRASE_TIMEOUT_PREF = "pref_timeout_passphrase"
         const val ENTER_SENDS_PREF = "pref_enter_sends"
         const val THREAD_TRIM_ENABLED = "pref_trim_threads"
-        internal const val LOCAL_NUMBER_PREF = "pref_local_number"
         const val REGISTERED_GCM_PREF = "pref_gcm_registered"
         const val UPDATE_APK_REFRESH_TIME_PREF = "pref_update_apk_refresh_time"
         const val UPDATE_APK_DOWNLOAD_ID = "pref_update_apk_download_id"
@@ -270,6 +273,7 @@ interface TextSecurePreferences {
         const val IN_THREAD_NOTIFICATION_PREF = "pref_key_inthread_notifications"
         const val IN_APP_NOTIFICATION_SOUNDS = "pref_sound_when_app_open"
         const val MESSAGE_BODY_TEXT_SIZE_PREF = "pref_message_body_text_size"
+        @Deprecated("No longer used, kept for migration purposes")
         const val LOCAL_REGISTRATION_ID_PREF = "pref_local_registration_id"
         const val REPEAT_ALERTS_PREF = "pref_repeat_alerts"
         const val NOTIFICATION_PRIVACY_PREF = "pref_notification_privacy"
@@ -311,6 +315,8 @@ interface TextSecurePreferences {
         const val SET_FORCE_OTHER_USERS_PRO = "pref_force_other_users_pro"
         const val SET_FORCE_INCOMING_MESSAGE_PRO = "pref_force_incoming_message_pro"
         const val SET_FORCE_POST_PRO = "pref_force_post_pro"
+        const val HAS_SEEN_PRO_EXPIRING = "has_seen_pro_expiring"
+        const val HAS_SEEN_PRO_EXPIRED = "has_seen_pro_expired"
         const val CALL_NOTIFICATIONS_ENABLED = "pref_call_notifications_enabled"
         const val SHOWN_CALL_WARNING = "pref_shown_call_warning" // call warning is user-facing warning of enabling calls
         const val SHOWN_CALL_NOTIFICATION = "pref_shown_call_notification" // call notification is a prompt to check privacy settings
@@ -374,6 +380,9 @@ interface TextSecurePreferences {
 
         const val DEBUG_MESSAGE_FEATURES = "debug_message_features"
         const val DEBUG_SUBSCRIPTION_STATUS = "debug_subscription_status"
+        const val DEBUG_PRO_PLAN_STATUS = "debug_pro_plan_status"
+        const val DEBUG_FORCE_NO_BILLING = "debug_pro_has_billing"
+        const val DEBUG_WITHIN_QUICK_REFUND = "debug_within_quick_refund"
 
         const val SUBSCRIPTION_PROVIDER = "session_subscription_provider"
         const val DEBUG_AVATAR_REUPLOAD = "debug_avatar_reupload"
@@ -627,15 +636,6 @@ interface TextSecurePreferences {
         @JvmStatic
         fun getUpdateApkDigest(context: Context): String? {
             return getStringPreference(context, UPDATE_APK_DIGEST, null)
-        }
-
-        @Deprecated(
-            "Use the dependency-injected TextSecurePreference instance instead",
-            ReplaceWith("TextSecurePreferences.getLocalNumber()")
-        )
-        @JvmStatic
-        fun getLocalNumber(context: Context): String? {
-            return preferenceInstance.getLocalNumber()
         }
 
         @JvmStatic
@@ -970,7 +970,6 @@ class AppTextSecurePreferences @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val json: Json,
 ): TextSecurePreferences {
-    private val localNumberState = MutableStateFlow(getStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, null))
     private val postProLaunchState = MutableStateFlow(getBooleanPreference(SET_FORCE_POST_PRO, false))
     private val hiddenPasswordState = MutableStateFlow(getBooleanPreference(HIDE_PASSWORD, false))
 
@@ -1190,14 +1189,6 @@ class AppTextSecurePreferences @Inject constructor(
         }
     }
 
-    override fun getLocalRegistrationId(): Int {
-        return getIntegerPreference(TextSecurePreferences.LOCAL_REGISTRATION_ID_PREF, 0)
-    }
-
-    override fun setLocalRegistrationId(registrationId: Int) {
-        setIntegerPreference(TextSecurePreferences.LOCAL_REGISTRATION_ID_PREF, registrationId)
-    }
-
     override fun isInThreadNotifications(): Boolean {
         return getBooleanPreference(TextSecurePreferences.IN_THREAD_NOTIFICATION_PREF, true)
     }
@@ -1230,14 +1221,6 @@ class AppTextSecurePreferences @Inject constructor(
         return getStringPreference(TextSecurePreferences.UPDATE_APK_DIGEST, null)
     }
 
-    override fun getLocalNumber(): String? {
-        return localNumberState.value
-    }
-
-    override fun watchLocalNumber(): StateFlow<String?> {
-        return localNumberState
-    }
-
     override fun getHasLegacyConfig(): Boolean {
         return getBooleanPreference(TextSecurePreferences.HAS_RECEIVED_LEGACY_CONFIG, false)
     }
@@ -1245,17 +1228,6 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setHasLegacyConfig(newValue: Boolean) {
         setBooleanPreference(TextSecurePreferences.HAS_RECEIVED_LEGACY_CONFIG, newValue)
         _events.tryEmit(TextSecurePreferences.HAS_RECEIVED_LEGACY_CONFIG)
-    }
-
-    override fun setLocalNumber(localNumber: String) {
-        val normalised = localNumber.lowercase()
-        setStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, normalised)
-        localNumberState.value = normalised
-    }
-
-    override fun removeLocalNumber() {
-        localNumberState.value = null
-        removePreference(TextSecurePreferences.LOCAL_NUMBER_PREF)
     }
 
     override fun isEnterSendsEnabled(): Boolean {
@@ -1429,14 +1401,6 @@ class AppTextSecurePreferences @Inject constructor(
         setBooleanPreference("has_viewed_seed", hasViewedSeed)
     }
 
-    override fun setRestorationTime(time: Long) {
-        setLongPreference("restoration_time", time)
-    }
-
-    override fun getRestorationTime(): Long {
-        return getLongPreference("restoration_time", 0)
-    }
-
     override fun getLastSnodePoolRefreshDate(): Long {
         return getLongPreference("last_snode_pool_refresh_date", 0)
     }
@@ -1559,6 +1523,22 @@ class AppTextSecurePreferences @Inject constructor(
         _events.tryEmit(SET_FORCE_POST_PRO)
     }
 
+    override fun hasSeenProExpiring(): Boolean {
+        return getBooleanPreference(HAS_SEEN_PRO_EXPIRING, false)
+    }
+
+    override fun setHasSeenProExpiring() {
+        setBooleanPreference(HAS_SEEN_PRO_EXPIRING, true)
+    }
+
+    override fun hasSeenProExpired(): Boolean {
+        return getBooleanPreference(HAS_SEEN_PRO_EXPIRED, false)
+    }
+
+    override fun setHasSeenProExpired() {
+        setBooleanPreference(HAS_SEEN_PRO_EXPIRED, true)
+    }
+
     override fun watchPostProStatus(): StateFlow<Boolean> {
         return postProLaunchState
     }
@@ -1662,7 +1642,6 @@ class AppTextSecurePreferences @Inject constructor(
      */
     override fun clearAll() {
         pushEnabled.update { false }
-        localNumberState.update { null }
         postProLaunchState.update { false }
         hiddenPasswordState.update { false }
 
@@ -1747,6 +1726,35 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?) {
         setStringPreference(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS, status?.name)
         _events.tryEmit(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS)
+    }
+
+    override fun getDebugProPlanStatus(): DebugMenuViewModel.DebugProPlanStatus? {
+        return getStringPreference(TextSecurePreferences.DEBUG_PRO_PLAN_STATUS, null)?.let {
+            DebugMenuViewModel.DebugProPlanStatus.valueOf(it)
+        }
+    }
+
+    override fun setDebugProPlanStatus(status: DebugMenuViewModel.DebugProPlanStatus?) {
+        setStringPreference(TextSecurePreferences.DEBUG_PRO_PLAN_STATUS, status?.name)
+        _events.tryEmit(TextSecurePreferences.DEBUG_PRO_PLAN_STATUS)
+    }
+
+    override fun getDebugForceNoBilling(): Boolean {
+        return getBooleanPreference(TextSecurePreferences.DEBUG_FORCE_NO_BILLING, false)
+    }
+
+    override fun setDebugForceNoBilling(hasBilling: Boolean) {
+        setBooleanPreference(TextSecurePreferences.DEBUG_FORCE_NO_BILLING, hasBilling)
+        _events.tryEmit(TextSecurePreferences.DEBUG_FORCE_NO_BILLING)
+    }
+
+    override fun getDebugIsWithinQuickRefund(): Boolean {
+        return getBooleanPreference(TextSecurePreferences.DEBUG_WITHIN_QUICK_REFUND, false)
+    }
+
+    override fun setDebugIsWithinQuickRefund(isWithin: Boolean) {
+        setBooleanPreference(TextSecurePreferences.DEBUG_WITHIN_QUICK_REFUND, isWithin)
+        _events.tryEmit(TextSecurePreferences.DEBUG_FORCE_NO_BILLING)
     }
 
     override fun getSubscriptionProvider(): String? {

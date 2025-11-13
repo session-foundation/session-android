@@ -27,7 +27,7 @@ configurations.configureEach {
 }
 
 val canonicalVersionCode = 430
-val canonicalVersionName = "1.29.1"
+val canonicalVersionName = "1.30.0"
 
 val postFixSize = 10
 val abiPostFix = mapOf(
@@ -181,13 +181,12 @@ android {
             matchingFallbacks += "release"
 
             signingConfig = signingConfigs.getByName("debug")
-            applicationIdSuffix = ".$name"
 
             devNetDefaultOn(false)
             enablePermissiveNetworkSecurityConfig(true)
 
             setAlternativeAppName("Session QA")
-            setAuthorityPostfix(".qa")
+            setAuthorityPostfix("")
         }
 
         create("automaticQa") {

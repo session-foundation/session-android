@@ -28,6 +28,7 @@ import network.loki.messenger.R
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.isLegacyGroup
 import org.session.libsession.utilities.recipients.Recipient
@@ -38,6 +39,7 @@ import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.MediaPreviewArgs
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
@@ -51,6 +53,7 @@ import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.ProStatusManager.MessageProFeature.AnimatedAvatar
 import org.thoughtcrime.securesms.pro.ProStatusManager.MessageProFeature.LongMessage
+import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.TitledText
 import org.thoughtcrime.securesms.util.AvatarUIData
@@ -148,7 +151,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
                 }
 
                 val sender = if(messageRecord.isOutgoing){
-                    recipientRepository.getRecipient(Address.fromSerialized(prefs.getLocalNumber()!!))
+                    recipientRepository.getSelf()
                 } else individualRecipient
 
                 val attachments = slides.map(::Attachment)
@@ -283,13 +286,14 @@ class MessageDetailsViewModel @AssistedInject constructor(
             is Commands.ShowProBadgeCTA -> {
                 val features = state.value.proFeatures
                 _dialogState.update {
+                    val proSubscription = proStatusManager.subscriptionState.value.type
                     it.copy(
                         proBadgeCTA = when{
-                            features.size > 1 -> ProBadgeCTA.Generic // always show the generic cta when there are more than 1 feature
+                            features.size > 1 -> ProBadgeCTA.Generic(proSubscription) // always show the generic cta when there are more than 1 feature
 
-                            features.contains(LongMessage) -> ProBadgeCTA.LongMessage
-                            features.contains(AnimatedAvatar) -> ProBadgeCTA.AnimatedProfile
-                            else -> ProBadgeCTA.Generic
+                            features.contains(LongMessage) -> ProBadgeCTA.LongMessage(proSubscription)
+                            features.contains(AnimatedAvatar) -> ProBadgeCTA.AnimatedProfile(proSubscription)
+                            else -> ProBadgeCTA.Generic(proSubscription)
                         }
                     )
                 }
@@ -369,10 +373,10 @@ data class MessageDetailsState(
     val canDelete: Boolean get() = !readOnly
 }
 
-sealed interface ProBadgeCTA {
-    data object Generic: ProBadgeCTA
-    data object LongMessage: ProBadgeCTA
-    data object AnimatedProfile: ProBadgeCTA
+sealed class ProBadgeCTA(open val proSubscription: SubscriptionType) {
+    data class Generic(override val proSubscription: SubscriptionType): ProBadgeCTA(proSubscription)
+    data class LongMessage(override val proSubscription: SubscriptionType): ProBadgeCTA(proSubscription)
+    data class AnimatedProfile(override val proSubscription: SubscriptionType): ProBadgeCTA(proSubscription)
 }
 
 data class DialogsState(

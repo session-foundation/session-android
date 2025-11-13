@@ -4,9 +4,8 @@ import androidx.collection.LruCache
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -15,10 +14,10 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.time.delay
@@ -46,8 +45,10 @@ import org.session.libsession.utilities.toGroupString
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.RecipientSettings
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.groups.GroupMemberComparator
 import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
@@ -75,6 +76,7 @@ class RecipientRepository @Inject constructor(
     private val preferences: TextSecurePreferences,
     private val blindedIdMappingRepository: BlindMappingRepository,
     private val communityDatabase: CommunityDatabase,
+    private val loginStateRepository: LoginStateRepository,
     @param:ManagerScope private val managerScope: CoroutineScope,
 ) {
     private val recipientFlowCache = LruCache<Address, WeakReference<SharedFlow<Recipient>>>(512)
@@ -92,19 +94,23 @@ class RecipientRepository @Inject constructor(
         return newFlow
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun observeSelf(): Flow<Recipient> {
-        return preferences.watchLocalNumber()
-            .flatMapLatest {
-                if (it.isNullOrBlank()) {
+        return loginStateRepository
+            .loggedInState
+            .map { it?.accountId }
+            .distinctUntilChanged()
+            .flatMapLatest { accountId ->
+                if (accountId == null) {
                     emptyFlow()
                 } else {
-                    observeRecipient(it.toAddress())
+                    observeRecipient(accountId.toAddress())
                 }
             }
     }
 
     fun getSelf(): Recipient {
-        return getRecipientSync(preferences.getLocalNumber()!!.toAddress())
+        return getRecipientSync(loginStateRepository.requireLocalAccountId().toAddress())
     }
 
     // This function creates a flow that emits the recipient information for the given address,
@@ -152,7 +158,10 @@ class RecipientRepository @Inject constructor(
                 value = createLocalRecipient(address, recipientData)
                 changeSource = merge(
                     configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_PROFILE)),
-                    TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO }
+                    TextSecurePreferences.events.filter {
+                        it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO
+                                || it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS
+                    }
                 )
             }
 
@@ -404,7 +413,7 @@ class RecipientRepository @Inject constructor(
         return when (address) {
             is Address.Standard -> {
                 // Is this our own address?
-                if (address.address.equals(preferences.getLocalNumber(), ignoreCase = true)) {
+                if (address.address.equals(loginStateRepository.requireLocalNumber(), ignoreCase = true)) {
                     configFactory.withUserConfigs { configs ->
                         RecipientData.Self(
                             name = configs.userProfile.getName().orEmpty(),
@@ -412,7 +421,11 @@ class RecipientRepository @Inject constructor(
                             expiryMode = configs.userProfile.getNtsExpiry(),
                             priority = configs.userProfile.getNtsPriority(),
                             proStatus = if (preferences.forceCurrentUserAsPro()) {
-                                ProStatus.Pro()
+                                // take into account the fact that we can be expired via the debug menu - which is no longer pro
+                                if(preferences.getDebugSubscriptionType() == DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED
+                                    || preferences.getDebugSubscriptionType() == DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE
+                                    || preferences.getDebugSubscriptionType() == DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_EARLIER) ProStatus.None
+                                else ProStatus.Pro()
                             } else {
                                 // TODO: Get pro status from config
                                 ProStatus.None
@@ -450,7 +463,7 @@ class RecipientRepository @Inject constructor(
             // Is this a group?
             is Address.Group -> {
                 val groupInfo = configFactory.getGroup(address.accountId) ?: return null
-                val groupMemberComparator = GroupMemberComparator(AccountId(preferences.getLocalNumber()!!))
+                val groupMemberComparator = GroupMemberComparator(loginStateRepository.requireLocalAccountId())
                 configFactory.withGroupConfigs(address.accountId) { configs ->
                     RecipientData.PartialGroup(
                         avatar = configs.groupInfo.getProfilePic().toRemoteFile(),
@@ -572,7 +585,7 @@ class RecipientRepository @Inject constructor(
             .toMutableList()
 
 
-        val myAccountId = AccountId(preferences.getLocalNumber()!!)
+        val myAccountId = loginStateRepository.requireLocalAccountId()
         val groupMemberComparator = GroupMemberComparator(myAccountId)
 
         memberAddresses.sortedWith { a1, a2 ->

@@ -77,6 +77,12 @@ public class AndroidAutoReplyReceiver extends BroadcastReceiver {
   @Inject
   MessageNotifier messageNotifier;
 
+  @Inject
+  MarkReadProcessor markReadProcessor;
+
+  @Inject
+  MessageSender messageSender;
+
   @SuppressLint("StaticFieldLeak")
   @Override
   public void onReceive(final Context context, Intent intent)
@@ -107,7 +113,7 @@ public class AndroidAutoReplyReceiver extends BroadcastReceiver {
           VisibleMessage message = new VisibleMessage();
           message.setText(responseText.toString());
           message.setSentTimestamp(SnodeAPI.getNowWithOffset());
-          MessageSender.send(message, address);
+          messageSender.send(message, address);
           ExpiryMode expiryMode = recipientRepository.getRecipientSync(address).getExpiryMode();
           long expiresInMillis = expiryMode.getExpiryMillis();
           long expireStartedAt = expiryMode instanceof ExpiryMode.AfterSend ? message.getSentTimestamp() : 0L;
@@ -129,7 +135,7 @@ public class AndroidAutoReplyReceiver extends BroadcastReceiver {
           List<MarkedMessageInfo> messageIds = threadDatabase.setRead(replyThreadId, true);
 
           messageNotifier.updateNotification(context);
-          MarkReadReceiver.process(context, messageIds);
+          markReadProcessor.process(messageIds);
 
           return null;
         }
