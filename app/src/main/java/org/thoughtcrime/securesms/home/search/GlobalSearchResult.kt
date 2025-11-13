@@ -8,7 +8,7 @@ import org.thoughtcrime.securesms.search.model.SearchResult
 data class GlobalSearchResult(
     val query: String,
     val contacts: List<Recipient> = emptyList(),
-    val threads: List<GroupRecord> = emptyList(),
+    val threads: List<Recipient> = emptyList(),
     val messages: List<MessageResult> = emptyList(),
     val showNoteToSelf: Boolean = false
 ) {
