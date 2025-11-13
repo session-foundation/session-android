@@ -308,8 +308,7 @@ fun ConversationSettingsNavHost(
                     viewModel.qrErrors,
                     viewModel,
                     onBack = { handleBack() },
-                    onHelp = { viewModel.onCommand(NewMessageViewModel.Commands.ShowUrlDialog) },
-                    sendCommand = viewModel::onCommand
+                    onHelp = { viewModel.onCommand(NewMessageViewModel.Commands.ShowUrlDialog) }
                 )
 
                 if (uiState.showUrlDialog) {

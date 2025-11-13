@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -78,20 +79,19 @@ internal fun NewMessage(
 
     Column(
         modifier = Modifier.background(
-            LocalColors.current.backgroundSecondary,
+            if (isInvite) LocalColors.current.background else LocalColors.current.backgroundSecondary,
             shape = MaterialTheme.shapes.small
         )
     ) {
         // `messageNew` is now a plurals string so get the singular version
-        val context = LocalContext.current
-        val newMessageTitleTxt: String =
-            context.resources.getQuantityString(R.plurals.messageNew, 1, 1)
+        val newMessageTitleTxt: String = if(isInvite) LocalResources.current.getString(R.string.membersInviteTitle) else
+            LocalResources.current.getQuantityString(R.plurals.messageNew, 1, 1)
 
         BackAppBar(
             title = newMessageTitleTxt,
             backgroundColor = Color.Transparent, // transparent to show the rounded shape of the container
             onBack = onBack,
-            actions = { AppBarCloseIcon(onClose = onClose) },
+            actions = { if(!isInvite) AppBarCloseIcon(onClose = onClose) },
             windowInsets = WindowInsets(0, 0, 0, 0), // Insets handled by the dialog
         )
         SessionTabRow(pagerState, TITLES)
@@ -111,7 +111,7 @@ private fun EnterAccountId(
     onHelp: () -> Unit = {},
     isInvite: Boolean = false
 ) {
-    Surface(color = LocalColors.current.backgroundSecondary) {
+    Surface(color = if (isInvite) LocalColors.current.background else LocalColors.current.backgroundSecondary) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -137,7 +137,7 @@ private fun EnterAccountId(
                 Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
 
                 BorderlessButtonWithIcon(
-                    text = stringResource(R.string.messageNewDescriptionMobile),
+                    text = stringResource(if(isInvite) R.string.inviteNewMemberGroupLink else R.string.messageNewDescriptionMobile),
                     modifier = Modifier
                         .qaTag(R.string.AccessibilityId_messageNewDescriptionMobile)
                         .padding(horizontal = LocalDimensions.current.mediumSpacing)
@@ -165,12 +165,11 @@ private fun EnterAccountId(
                 onClick = if(isInvite) callbacks::onShowInviteDialog  else callbacks::onContinue
             ) {
                 LoadingArcOr(state.loading) {
-                    Text(stringResource(R.string.next))
+                    Text(stringResource(if(isInvite) R.string.membersInviteTitle else R.string.next))
                 }
             }
         }
     }
-
 }
 
 @Preview

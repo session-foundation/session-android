@@ -7,20 +7,14 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.home.startconversation.newmessage.Callbacks
 import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessage
-import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessageViewModel
 import org.thoughtcrime.securesms.home.startconversation.newmessage.State
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonData
@@ -37,7 +31,6 @@ internal fun InviteAccountIdScreen(
     callbacks: Callbacks = object : Callbacks {},
     onBack: () -> Unit = {},
     onHelp: () -> Unit = {},
-    sendCommand: (NewMessageViewModel.Commands) -> Unit = {}
 ) {
     InviteAccountId(
         state = state,
@@ -45,7 +38,6 @@ internal fun InviteAccountIdScreen(
         callbacks = callbacks,
         onBack = onBack,
         onHelp = onHelp,
-        sendCommand = sendCommand
     )
 }
 
@@ -57,7 +49,6 @@ private fun InviteAccountId(
     callbacks: Callbacks = object : Callbacks {},
     onBack: () -> Unit = {},
     onHelp: () -> Unit = {},
-    sendCommand: (NewMessageViewModel.Commands) -> Unit = {}
 ) {
     Scaffold(
         contentWindowInsets = WindowInsets.safeDrawing,
@@ -74,7 +65,8 @@ private fun InviteAccountId(
                 callbacks = callbacks,
                 onBack = { onBack() },
                 onClose = { onBack() },
-                onHelp = { onHelp() }
+                onHelp = { onHelp() },
+                isInvite = true
             )
         }
     }
