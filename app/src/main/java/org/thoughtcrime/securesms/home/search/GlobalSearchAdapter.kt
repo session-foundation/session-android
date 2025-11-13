@@ -14,8 +14,11 @@ import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
+import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.util.DateUtils
@@ -147,6 +150,8 @@ class GlobalSearchAdapter(
                     onContactLongPressed(model)
                     true
                 }
+            } else {
+                binding.root.setOnLongClickListener(null)
             }
         }
     }
@@ -167,26 +172,39 @@ class GlobalSearchAdapter(
                     this(contact.address as Address.Conversable, contact.displayName(false), isSelf, showProBadge)
         }
         data class GroupConversation(
-            val isLegacy: Boolean,
-            val groupId: String,
+            val address: Address.GroupLike,
             val title: String,
             val legacyMembersString: String?,
             val showProBadge: Boolean
         ) : Model {
-            constructor(groupRecord: GroupRecord, showProBadge: Boolean):
+            constructor(recipient: Recipient):
                     this(
-                        isLegacy = groupRecord.isLegacyGroup,
-                        groupId = groupRecord.encodedId,
-                        title = groupRecord.title,
-                        legacyMembersString = if (groupRecord.isLegacyGroup) {
-                            val recipients = groupRecord.members.map {
-                                MessagingModuleConfiguration.shared.recipientRepository.getRecipientSync(it)
+                        address = recipient.address as Address.GroupLike,
+                        title = recipient.displayName(),
+                        legacyMembersString = when (recipient.address) {
+                            is Address.LegacyGroup -> {
+                                val data = (recipient.data as? RecipientData.LegacyGroup)
+                                if(data == null) null
+                                else {
+                                    if(data.secondMember != null) "${data.firstMember.displayName()}, ${data.secondMember.displayName()}".plus(
+                                        if(data.members.size > 2) ", ..." else ""
+                                    )
+                                    else data.firstMember.displayName().plus(
+                                        if(data.members.size > 1) ", ..." else ""
+                                    )
+                                }
                             }
-                            recipients.joinToString(transform = { it.searchName })
-                        } else {
-                            null
+
+                            is Address.Group -> {
+                                val data = (recipient.data as? RecipientData.Group)
+                                data?.partial?.members?.joinToString(", ") { it.name }
+                            }
+
+                            else -> {
+                                null
+                            }
                         },
-                        showProBadge = showProBadge
+                        showProBadge = recipient.proStatus.shouldShowProBadge()
                     )
         }
         data class Message(val messageResult: MessageResult, val unread: Int, val isSelf: Boolean, val showProBadge: Boolean) : Model

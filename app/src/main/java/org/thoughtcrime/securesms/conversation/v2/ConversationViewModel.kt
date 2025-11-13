@@ -225,6 +225,10 @@ class ConversationViewModel @AssistedInject constructor(
         it.currentUserRole in EnumSet.of(GroupMemberRole.ADMIN, GroupMemberRole.HIDDEN_ADMIN)
     }
 
+    val canModerate: StateFlow<Boolean> = recipientFlow.mapStateFlow(viewModelScope) {
+        it.currentUserRole.canModerate
+    }
+
     private val _searchOpened = MutableStateFlow(false)
 
     val appBarData: StateFlow<ConversationAppBarData> = combine(
@@ -750,7 +754,7 @@ class ConversationViewModel @AssistedInject constructor(
                 }
 
                 // If the user is an admin or is interacting with their own message And are allowed to delete for everyone
-                (isAdmin.value || allSentByCurrentUser) && canDeleteForEveryone -> {
+                (canModerate.value || allSentByCurrentUser) && canDeleteForEveryone -> {
                     _dialogsState.update {
                         it.copy(
                             deleteEveryone = DeleteForEveryoneDialogData(
