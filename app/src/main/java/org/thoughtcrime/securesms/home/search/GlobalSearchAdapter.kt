@@ -18,6 +18,7 @@ import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.util.DateUtils
@@ -183,17 +184,18 @@ class GlobalSearchAdapter(
                                 val data = (recipient.data as? RecipientData.LegacyGroup)
                                 if(data == null) null
                                 else {
-                                    if(data.secondMember != null) "${data.firstMember.displayName()}, ${data.secondMember.displayName()}"
-                                    else data.firstMember.displayName()
+                                    if(data.secondMember != null) "${data.firstMember.displayName()}, ${data.secondMember.displayName()}".plus(
+                                        if(data.members.size > 2) ", ..." else ""
+                                    )
+                                    else data.firstMember.displayName().plus(
+                                        if(data.members.size > 1) ", ..." else ""
+                                    )
                                 }
                             }
 
                             is Address.Group -> {
                                 val data = (recipient.data as? RecipientData.Group)
-                                if(data == null) null
-                                else {
-                                    data.partial.members.joinToString(", ")
-                                }
+                                data?.partial?.members?.joinToString(", ") { it.name }
                             }
 
                             else -> {

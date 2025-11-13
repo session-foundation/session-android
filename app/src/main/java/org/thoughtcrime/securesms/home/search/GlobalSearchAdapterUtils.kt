@@ -112,7 +112,6 @@ private fun ComposeView.setupTitleWithBadge(title: String, showProBadge: Boolean
 
 fun ContentView.bindModel(query: String?, model: GroupConversation) {
     binding.searchResultProfilePicture.isVisible = true
-    binding.searchResultSubtitle.isVisible = model.address.isLegacyGroup
     binding.searchResultTimestamp.isVisible = false
     val threadRecipient = MessagingModuleConfiguration.shared.recipientRepository.getRecipientSync(
         model.address
@@ -131,7 +130,10 @@ fun ContentView.bindModel(query: String?, model: GroupConversation) {
     )
 
     if (model.legacyMembersString != null) {
+        binding.searchResultSubtitle.isVisible = true
         binding.searchResultSubtitle.text = getHighlight(query, model.legacyMembersString)
+    } else {
+        binding.searchResultSubtitle.isVisible = false
     }
 }
 
