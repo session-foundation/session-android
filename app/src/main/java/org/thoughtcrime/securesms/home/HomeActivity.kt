@@ -466,7 +466,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                     .map {
                         GlobalSearchAdapter.Model.Contact(
                             contact = it.value,
-                            isSelf = it.value.address.address == publicKey,
+                            isSelf = it.value.isSelf,
                             showProBadge = it.value.proStatus.shouldShowProBadge()
                         )
                     }

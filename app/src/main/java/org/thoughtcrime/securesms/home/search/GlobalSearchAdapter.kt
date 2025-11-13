@@ -150,6 +150,8 @@ class GlobalSearchAdapter(
                     onContactLongPressed(model)
                     true
                 }
+            } else {
+                binding.root.setOnLongClickListener(null)
             }
         }
     }
