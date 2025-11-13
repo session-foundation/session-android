@@ -77,14 +77,12 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
             OptionsItem(
                 name = context.getString(R.string.membersInvite),
                 icon = R.drawable.ic_user_round_plus,
-                onClick = ::navigateInviteContacts
+                onClick = ::navigateToInviteContacts
             ),
             OptionsItem(
                 name = context.getString(R.string.accountIdOrOnsInvite),
                 icon = R.drawable.ic_user_round_search,
-                onClick = {
-                    // TODO: Add navigation
-                }
+                onClick = ::navigateToInviteAccountId
             )
         )
     }
@@ -122,10 +120,21 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         _uiState.update { it.copy(isSearchFocused = isFocused) }
     }
 
-    private fun navigateInviteContacts() {
+    private fun navigateToInviteContacts() {
         viewModelScope.launch {
             navigator.navigate(
                 ConversationSettingsDestination.RouteInviteToGroup(
+                    groupAddress,
+                    excludingAccountIDsFromContactSelection.toList()
+                )
+            )
+        }
+    }
+
+    private fun navigateToInviteAccountId(){
+        viewModelScope.launch {
+            navigator.navigate(
+                ConversationSettingsDestination.RouteInviteAccountIdToGroup(
                     groupAddress,
                     excludingAccountIDsFromContactSelection.toList()
                 )

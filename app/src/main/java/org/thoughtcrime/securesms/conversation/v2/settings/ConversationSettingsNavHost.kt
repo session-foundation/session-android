@@ -31,6 +31,8 @@ import org.thoughtcrime.securesms.groups.GroupMembersViewModel
 import org.thoughtcrime.securesms.groups.SelectContactsViewModel
 import org.thoughtcrime.securesms.groups.compose.ManageGroupMembersScreen
 import org.thoughtcrime.securesms.groups.compose.GroupMembersScreen
+import org.thoughtcrime.securesms.groups.compose.InviteAccountId
+import org.thoughtcrime.securesms.groups.compose.InviteAccountIdScreen
 import org.thoughtcrime.securesms.groups.compose.InviteContactsScreen
 import org.thoughtcrime.securesms.media.MediaOverviewScreen
 import org.thoughtcrime.securesms.media.MediaOverviewViewModel
@@ -94,6 +96,18 @@ sealed interface ConversationSettingsDestination: Parcelable {
     data class RouteInviteToCommunity(
         val communityUrl: String
     ): ConversationSettingsDestination
+
+    @Serializable
+    @Parcelize
+    data class RouteInviteAccountIdToGroup private constructor(
+        private val address: String,
+        val excludingAccountIDs: List<String>
+    ): ConversationSettingsDestination {
+        constructor(groupAddress: Address.Group, excludingAccountIDs: List<String>)
+        : this(groupAddress.address, excludingAccountIDs)
+
+        val groupAddress: Address.Group get() = Address.Group(AccountId(address))
+    }
 }
 
 @SuppressLint("RestrictedApi")
@@ -254,6 +268,34 @@ fun ConversationSettingsNavHost(
                         handleBack()
                     },
                 )
+            }
+
+            // Invite contacts using Account ID
+            horizontalSlideComposable<RouteInviteAccountIdToGroup> { backStackEntry ->
+//                val data: RouteInviteToGroup = backStackEntry.toRoute()
+//
+//                // grab a hold of manage group's VM
+//                val parentEntry = remember(backStackEntry) {
+//                    navController.getBackStackEntry(
+//                        RouteManageMembers(data.groupAddress)
+//                    )
+//                }
+//                val manageGroupMembersViewModel: ManageGroupMembersViewModel = hiltViewModel(parentEntry)
+
+                InviteAccountIdScreen()
+
+//                InviteContactsScreen(
+//                    viewModel = viewModel,
+//                    onDoneClicked = { shareHistory ->
+//                        //send invites from the manage group screen
+//                        manageGroupMembersViewModel.onSendInviteClicked(viewModel.currentSelected)
+//                        handleBack()
+//                    },
+//                    onBack = dropUnlessResumed {
+//                        handleBack()
+//                    },
+//                    banner = {}
+//                )
             }
 
             // Disappearing Messages
