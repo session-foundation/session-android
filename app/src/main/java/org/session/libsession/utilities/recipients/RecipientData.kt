@@ -1,6 +1,7 @@
 package org.session.libsession.utilities.recipients
 
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.pro.ProProof
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.GroupMember
@@ -20,7 +21,7 @@ sealed interface RecipientData {
     val priority: Long
     val profileUpdatedAt: Instant?
 
-    val proStatus: ProStatus
+    val proProof: ProProof?
 
     // Marker interface to distinguish between config-based and other recipient data.
     sealed interface ConfigBased
@@ -50,7 +51,7 @@ sealed interface RecipientData {
         val displayName: String = "",
         override val avatar: RemoteFile? = null,
         override val priority: Long = PRIORITY_VISIBLE,
-        override val proStatus: ProStatus = ProStatus.None,
+        override val proProof: ProProof? = null,
         val acceptsBlindedCommunityMessageRequests: Boolean = false,
         override val profileUpdatedAt: Instant? = null,
     ) : RecipientData
@@ -59,7 +60,7 @@ sealed interface RecipientData {
         val displayName: String,
         override val avatar: RemoteFile.Encrypted?,
         override val priority: Long,
-        override val proStatus: ProStatus,
+        override val proProof: ProProof?,
         val acceptsBlindedCommunityMessageRequests: Boolean,
         override val profileUpdatedAt: Instant?
     ) : ConfigBased, RecipientData
@@ -95,6 +96,9 @@ sealed interface RecipientData {
         override val profileUpdatedAt: Instant?
             get() = null
 
+        override val proProof: ProProof?
+            get() = null
+
         override fun hasAdmin(user: AccountId): Boolean {
             return roomInfo != null && (roomInfo.details.admins.contains(user.hexString) ||
                     roomInfo.details.moderators.contains(user.hexString) ||
@@ -106,9 +110,6 @@ sealed interface RecipientData {
             return roomInfo != null && (roomInfo.details.admins.contains(user.hexString) ||
                     roomInfo.details.moderators.contains(user.hexString))
         }
-
-        override val proStatus: ProStatus
-            get() = ProStatus.None
     }
 
     /**
@@ -119,7 +120,7 @@ sealed interface RecipientData {
         override val avatar: RemoteFile.Encrypted?,
         val expiryMode: ExpiryMode,
         override val priority: Long,
-        override val proStatus: ProStatus,
+        override val proProof: ProProof?,
         override val profileUpdatedAt: Instant?
     ) : ConfigBased, RecipientData
 
@@ -135,7 +136,7 @@ sealed interface RecipientData {
         val blocked: Boolean,
         val expiryMode: ExpiryMode,
         override val priority: Long,
-        override val proStatus: ProStatus,
+        override val proProof: ProProof?,
         override val profileUpdatedAt: Instant?,
     ) : ConfigBased, RecipientData {
         val displayName: String
@@ -166,7 +167,6 @@ sealed interface RecipientData {
         private val groupInfo: GroupInfo.ClosedGroupInfo,
         val avatar: RemoteFile.Encrypted?,
         val expiryMode: ExpiryMode,
-        val proStatus: ProStatus,
         val members: List<GroupMemberInfo>,
         val description: String?,
     ) : ConfigBased {
@@ -183,6 +183,7 @@ sealed interface RecipientData {
      */
     data class Group(
         val partial: PartialGroup,
+        override val proProof: ProProof?,
         override val firstMember: Recipient, // Used primarily to assemble the profile picture for the group.
         override val secondMember: Recipient?, // Used primarily to assemble the profile picture for the group.
     ) : RecipientData, GroupLike {
@@ -191,9 +192,6 @@ sealed interface RecipientData {
 
         override val priority: Long
             get() = partial.priority
-
-        override val proStatus: ProStatus
-            get() = partial.proStatus
 
         override val profileUpdatedAt: Instant?
             get() = null
@@ -218,9 +216,6 @@ sealed interface RecipientData {
         override val avatar: RemoteFile?
             get() = null
 
-        override val proStatus: ProStatus
-            get() = ProStatus.None
-
         override fun hasAdmin(user: AccountId): Boolean {
             return members[user]?.canModerate == true
         }
@@ -228,6 +223,9 @@ sealed interface RecipientData {
         override fun shouldShowAdminCrown(user: AccountId): Boolean {
             return members[user]?.shouldShowAdminCrown == true
         }
+
+        override val proProof: ProProof?
+            get() = null
 
         override val profileUpdatedAt: Instant?
             get() = null

@@ -44,70 +44,9 @@ sealed interface ProApiResponse<out Res, out Status> {
     data class Failure<S>(val status: S, val errors: List<String>) : ProApiResponse<Nothing, S>
 }
 
-@Serializable
-private data class RawProApiResponse(
-    val status: Int,
-    val result: JsonElement? = null,
-    val errors: List<String>? = null,
-) {
-    fun <Res> toProApiResponse(
-        deserializer: DeserializationStrategy<Res>,
-        json: Json
-    ): ProApiResponse<Res, Int> {
-        return if (status == 0) {
-            val data = json.decodeFromJsonElement(deserializer, requireNotNull(result) {
-                "Expected 'result' field to be present on successful response"
-            })
-            ProApiResponse.Success(data)
-        } else {
-            ProApiResponse.Failure(
-                status = status,
-                errors = errors.orEmpty()
-            )
-        }
-    }
-}
-
-/**
- * Executes the given [ApiRequest] against the specified server using an onion request.
- *
- * @return A [ProApiResponse] containing either the successful response data or error information.
- * Note that network errors, json deserialization will throw exceptions and are not represented
- * in the [ProApiResponse]: you must catch and handle those separately.
- */
-@OptIn(ExperimentalSerializationApi::class)
-suspend fun <Status, Res> OnionRequestAPI.executeProApiRequest(
-    serverUrl: HttpUrl = "https://pro-backend-dev.getsession.org".toHttpUrl(),
-    serverX25519PubKeyHex: String = "920b81e9bf1a06e70814432668c61487d6fdbe13faaee3b09ebc56223061f140",
-    json: Json,
-    request: ApiRequest<Status, Res>
-): ProApiResponse<Res, Status> {
-    val rawResp = sendOnionRequest(
-        request = Request.Builder()
-            .url(serverUrl.resolve(request.endpoint)!!)
-            .post(
-                request.buildJsonBody().toRequestBody(
-                    "application/json".toMediaType()
-                )
-            )
-            .build(),
-        server = serverUrl.host,
-        x25519PublicKey = serverX25519PubKeyHex
-    ).await().body!!.inputStream().use {
-        json.decodeFromStream<RawProApiResponse>(it)
-    }
-
-    return if (rawResp.status == 0) {
-        val data = json.decodeFromJsonElement(
-            request.responseDeserializer,
-            requireNotNull(rawResp.result) {
-                "Expected 'result' field to be present on successful response"
-            })
-        ProApiResponse.Success(data)
-    } else {
-        ProApiResponse.Failure(
-            status = request.convertStatus(rawResp.status),
-            errors = rawResp.errors.orEmpty()
-        )
+fun <T> ProApiResponse<T, *>.successOrThrow(): T {
+    return when (this) {
+        is ProApiResponse.Success -> this.data
+        is ProApiResponse.Failure -> throw RuntimeException("Fail with status = $status, errors = $errors")
     }
 }

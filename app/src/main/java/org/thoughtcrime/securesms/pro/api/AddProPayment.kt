@@ -9,7 +9,7 @@ class AddProPaymentRequest(
     private val googleOrderId: String,
     private val masterPrivateKey: ByteArray,
     private val rotatingPrivateKey: ByteArray,
-) : ApiRequest<AddPaymentStatus, AddProPaymentResponse> {
+) : ApiRequest<AddPaymentStatus, ProProof> {
     override val endpoint: String
         get() = "add_pro_payment"
 
@@ -29,8 +29,8 @@ class AddProPaymentRequest(
             ?: AddPaymentStatus.GenericError
     }
 
-    override val responseDeserializer: DeserializationStrategy<AddProPaymentResponse>
-        get() = ProProofSerializer()
+    override val responseDeserializer: DeserializationStrategy<ProProof>
+        get() = ProProof.serializer()
 
 }
 
@@ -40,5 +40,3 @@ enum class AddPaymentStatus(val apiValue: Int) {
     AlreadyRedeemed(2),
     UnknownPayment(3),
 }
-
-typealias AddProPaymentResponse = ProProof

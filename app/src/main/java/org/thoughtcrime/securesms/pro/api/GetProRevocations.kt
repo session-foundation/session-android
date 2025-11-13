@@ -11,11 +11,11 @@ import org.session.libsession.utilities.serializable.InstantAsMillisSerializer
 import java.time.Instant
 
 class GetProRevocationRequest @AssistedInject constructor(
-    @Assisted private val ticket: Long,
+    @Assisted private val ticket: Long?,
     private val json: Json,
-) : ApiRequest<Int, GetProRevocationResponse> {
-    override val responseDeserializer: DeserializationStrategy<GetProRevocationResponse>
-        get() = GetProRevocationResponse.serializer()
+) : ApiRequest<Int, ProRevocations> {
+    override val responseDeserializer: DeserializationStrategy<ProRevocations>
+        get() = ProRevocations.serializer()
 
     override fun convertStatus(status: Int): Int = status
 
@@ -25,7 +25,7 @@ class GetProRevocationRequest @AssistedInject constructor(
     override fun buildJsonBody(): String {
         return json.encodeToString(
             mapOf(
-                "ticket" to ticket,
+                "ticket" to (ticket ?: 0L),
                 "version" to 0
             )
         )
@@ -33,12 +33,12 @@ class GetProRevocationRequest @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(ticket: Long): GetProRevocationRequest
+        fun create(ticket: Long?): GetProRevocationRequest
     }
 }
 
 @Serializable
-class GetProRevocationResponse(
+class ProRevocations(
     val ticket: Long,
     val items: List<Item>
 ) {

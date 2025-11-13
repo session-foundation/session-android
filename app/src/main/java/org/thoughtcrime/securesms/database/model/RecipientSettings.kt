@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.database.model
 
+import network.loki.messenger.libsession_util.pro.ProProof
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.utilities.recipients.ProStatus
 import java.time.Instant
@@ -14,6 +15,6 @@ data class RecipientSettings(
     val autoDownloadAttachments: Boolean = false,
     val profilePic: UserPic? = null,
     val blocksCommunityMessagesRequests: Boolean = true,
-    val proStatus: ProStatus = ProStatus.None,
+    val proProof: ProProof? = null,
     val profileUpdated: Instant? = null,
 )

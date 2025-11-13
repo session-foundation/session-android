@@ -1545,5 +1545,9 @@ class MmsDatabase @Inject constructor(
             "INSERT INTO $TABLE_NAME ($COMMA_SEPARATED_COLUMNS) SELECT $COMMA_SEPARATED_COLUMNS FROM $TEMP_TABLE_NAME",
             "DROP TABLE $TEMP_TABLE_NAME"
         )
+
+        const val ADD_PRO_PROOF_COLUMN = """
+            ALTER TABLE $TABLE_NAME ADD COLUMN $PRO_PROOF TEXT DEFAULT NULL;
+        """
     }
 }

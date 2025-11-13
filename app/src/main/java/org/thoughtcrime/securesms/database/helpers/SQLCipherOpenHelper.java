@@ -41,6 +41,7 @@ import org.thoughtcrime.securesms.database.SessionContactDatabase;
 import org.thoughtcrime.securesms.database.SessionJobDatabase;
 import org.thoughtcrime.securesms.database.SmsDatabase;
 import org.thoughtcrime.securesms.database.ThreadDatabase;
+import org.thoughtcrime.securesms.pro.db.ProDatabase;
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities;
 
 import javax.inject.Provider;
@@ -104,9 +105,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int lokiV54                          = 75;
   private static final int lokiV55                          = 76;
   private static final int lokiV56                          = 77;
+  private static final int lokiV57                          = 78;
 
   // Loki - onUpgrade(...) must be updated to use Loki version numbers if Signal makes any database changes
-  private static final int    DATABASE_VERSION         = lokiV56;
+  private static final int    DATABASE_VERSION         = lokiV57;
   private static final int    MIN_DATABASE_VERSION     = lokiV7;
   public static final String  DATABASE_NAME            = "session.db";
 
@@ -270,6 +272,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     executeStatements(db, PushRegistrationDatabase.Companion.createTableStatements());
 
     ReceivedMessageHashDatabase.Companion.createAndMigrateTable(db);
+
+    ProDatabase.Companion.createTable(db);
+    ReactionDatabase.Companion.migrateToDropForeignConstraint(db);
   }
 
   @Override
@@ -610,6 +615,13 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
       if (oldVersion < lokiV56) {
         ReceivedMessageHashDatabase.Companion.createAndMigrateTable(db);
+      }
+
+      if (oldVersion < lokiV57) {
+          ProDatabase.Companion.createTable(db);
+          db.execSQL(MmsDatabase.ADD_PRO_PROOF_COLUMN);
+          db.execSQL(SmsDatabase.ADD_PRO_PROOF_COLUMN);
+          RecipientSettingsDatabase.Companion.migrateProStatusToProProof(db);
       }
 
       db.setTransactionSuccessful();

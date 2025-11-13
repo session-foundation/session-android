@@ -1,7 +1,7 @@
 package org.thoughtcrime.securesms.auth
 
 import android.content.Context
-import dagger.Lazy
+import android.content.SharedPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -17,14 +17,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.loki.messenger.libsession_util.util.Bytes
-import org.session.libsession.snode.SnodeClock
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.crypto.KeyStoreHelper
 import org.thoughtcrime.securesms.dependencies.ManagerScope
-import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -37,7 +35,6 @@ class LoginStateRepository @Inject constructor(
     @ApplicationContext context: Context,
     private val json: Json,
     @param:ManagerScope private val scope: CoroutineScope,
-    private val snodeClock: Lazy<SnodeClock>,
 ) {
     private val sharedPrefs = context.getSharedPreferences("login_state", Context.MODE_PRIVATE)
 
@@ -89,10 +86,7 @@ class LoginStateRepository @Inject constructor(
             if (initialState != null) {
                 // Migrate legacy state to new format
                 Log.i(TAG, "Migrating legacy login state to new format")
-                val sealedData = KeyStoreHelper.seal(json.encodeToString(initialState).toByteArray(Charsets.UTF_8))
-                sharedPrefs.edit()
-                    .putString(PREF_KEY_STATE, sealedData.serialize())
-                    .apply()
+                saveLoggedInState(sharedPrefs, initialState, json)
 
                 //TODO: Consider removing legacy data here after a grace period
             }
@@ -108,10 +102,7 @@ class LoginStateRepository @Inject constructor(
                 .drop(1) // Skip the initial value
                 .collect { newState ->
                     if (newState != null) {
-                        val sealedData = KeyStoreHelper.seal(json.encodeToString(newState).toByteArray(Charsets.UTF_8))
-                        sharedPrefs.edit()
-                            .putString(PREF_KEY_STATE, sealedData.serialize())
-                            .apply()
+                        saveLoggedInState(sharedPrefs, newState, json)
                         Log.d(TAG, "Persisted new login state: $newState")
                     } else {
                         sharedPrefs.edit()
@@ -193,29 +184,22 @@ class LoginStateRepository @Inject constructor(
     }
 
 
-    /**
-     * Ensures the user is logged in and valid rotating keypair exists, returning the pro master private key
-     * and (validated or newly generated) pro state
-     */
-    fun ensureProMasterAndRotatingState(now: Instant = snodeClock.get().currentTime()): Pair<ByteArray, LoggedInState.ProState> {
-        var masterKey: ByteArray? = null
-        var proState: LoggedInState.ProState? = null
-
-        update { oldState ->
-            requireNotNull(oldState) {
-                "User not logged in"
-            }.ensureValidProRotatingKey(now).also {
-                masterKey = it.proMasterPrivateKey
-                proState = it.proState!!
-            }
-        }
-
-        return masterKey!! to proState!!
-    }
-
     companion object {
         private const val TAG = "LoginStateRepository"
 
         private const val PREF_KEY_STATE = "state"
+
+        private fun saveLoggedInState(
+            prefs: SharedPreferences,
+            state: LoggedInState,
+            json: Json
+        ) {
+            prefs.edit()
+                .putString(PREF_KEY_STATE,
+                    KeyStoreHelper.seal(
+                        json.encodeToString(state).toByteArray(Charsets.UTF_8)
+                    ).serialize())
+                .apply()
+        }
     }
 }

@@ -8,17 +8,17 @@ import network.loki.messenger.libsession_util.pro.BackendRequests
 import network.loki.messenger.libsession_util.pro.ProProof
 import org.session.libsession.snode.SnodeClock
 
-class GetProProofRequest @AssistedInject constructor(
+class GenerateProProofRequest @AssistedInject constructor(
     @Assisted("master") private val masterPrivateKey: ByteArray,
     @Assisted private val rotatingPrivateKey: ByteArray,
     private val snodeClock: SnodeClock,
-) : ApiRequest<GetProProofStatus, GetProProofResponse> {
+) : ApiRequest<GetProProofStatus, ProProof> {
     override val endpoint: String
         get() = "get_pro_proof"
 
     override fun buildJsonBody(): String {
         val now = snodeClock.currentTime()
-        return BackendRequests.buildGetProProofRequestJson(
+        return BackendRequests.buildGenerateProProofRequestJson(
             version = 0,
             masterPrivateKey = masterPrivateKey,
             rotatingPrivateKey = rotatingPrivateKey,
@@ -26,8 +26,8 @@ class GetProProofRequest @AssistedInject constructor(
         )
     }
 
-    override val responseDeserializer: DeserializationStrategy<GetProProofResponse>
-        get() = ProProofSerializer()
+    override val responseDeserializer: DeserializationStrategy<ProProof>
+        get() = ProProof.serializer()
 
     override fun convertStatus(status: Int): GetProProofStatus = status
 
@@ -36,9 +36,8 @@ class GetProProofRequest @AssistedInject constructor(
         fun create(
             @Assisted("master") masterPrivateKey: ByteArray,
             rotatingPrivateKey: ByteArray,
-        ): GetProProofRequest
+        ): GenerateProProofRequest
     }
 }
 
 typealias GetProProofStatus = Int
-typealias GetProProofResponse = ProProof
