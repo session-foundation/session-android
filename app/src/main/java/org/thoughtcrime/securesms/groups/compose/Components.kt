@@ -182,7 +182,7 @@ fun LazyListScope.multiSelectMemberList(
 }
 
 @Composable
-fun ShowInviteContactsDialog(
+fun InviteMembersDialog(
     state: InviteMembersViewModel.InviteContactsDialogState,
     modifier: Modifier = Modifier,
     onInviteClicked: (Boolean) -> Unit,

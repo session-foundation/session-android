@@ -73,7 +73,7 @@ private fun InviteAccountId(
     }
 
     if (inviteState.visible) {
-        ShowInviteContactsDialog(
+        InviteMembersDialog(
             state = inviteState,
             onInviteClicked = onSendInvite,
             onDismiss = onDismissInviteDialog

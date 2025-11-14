@@ -191,7 +191,7 @@ fun InviteContacts(
     }
 
     if (uiState.inviteContactsDialog.visible) {
-        ShowInviteContactsDialog(
+        InviteMembersDialog(
             state = uiState.inviteContactsDialog,
             onInviteClicked = onDoneClicked,
             onDismiss = { }
