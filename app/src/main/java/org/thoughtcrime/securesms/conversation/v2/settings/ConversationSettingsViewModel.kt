@@ -44,8 +44,6 @@ import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.recipients.isPro
-import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.utilities.AccountId
@@ -58,8 +56,8 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_GROUP
 import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_NAME_BYTES
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.HomeActivity
-import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.ProStatus
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.ui.UINavigator
@@ -656,10 +654,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             else -> emptyList()
         }
 
-        val showProBadge = conversation.proStatus.shouldShowProBadge && !conversation.isLocalNumber
+        val showProBadge = conversation.shouldShowProBadge && !conversation.isLocalNumber
 
         // if it's a one on one convo and the user isn't pro themselves
-        val proBadgeClickable = if(conversation.is1on1 && myself.proStatus.isPro) false
+        val proBadgeClickable = if(conversation.is1on1 && myself.isPro) false
         else showProBadge // otherwise whenever the badge is shown
 
         val avatarData = avatarUtils.getUIDataFromRecipient(conversation)
@@ -715,7 +713,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun pinConversation(){
         // check the pin limit before continuing
         val totalPins = storage.getTotalPinned()
-        val maxPins = proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().proStatus)
+        val maxPins = proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().isPro)
         if(totalPins >= maxPins){
             // the user has reached the pin limit, show the CTA
             _dialogState.update {

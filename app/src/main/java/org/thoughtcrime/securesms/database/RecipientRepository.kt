@@ -42,7 +42,6 @@ import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
-import org.session.libsession.utilities.recipients.RecipientProStatus.Companion.toProStatus
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
 import org.session.libsession.utilities.toBlinded
 import org.session.libsession.utilities.toGroupString
@@ -152,13 +151,19 @@ class RecipientRepository @Inject constructor(
         )
     }
 
-    private class FetchRecipientContext(
-        var earliestProExpiry: Instant? = null
-    ) {
-        fun updateProExpiry(expiry: Instant) {
-            if (earliestProExpiry == null || expiry < earliestProExpiry!!) {
-                earliestProExpiry = expiry
+    private class FetchRecipientContext {
+        var proDataList: MutableList<RecipientSettings.ProData>? = null
+
+        fun addProData(proData: RecipientSettings.ProData?) {
+            if (proData == null) {
+                return
             }
+
+            if (proDataList == null) {
+                proDataList = mutableListOf()
+            }
+
+            proDataList!!.add(proData)
         }
     }
 
@@ -170,7 +175,7 @@ class RecipientRepository @Inject constructor(
     ): Pair<Recipient, Flow<*>?> {
         val now = snodeClock.get().currentTime()
 
-        val fetchRecipientContext = if (needFlow) FetchRecipientContext() else null
+        val fetchRecipientContext = FetchRecipientContext()
 
         // Fetch data from config first, this may contain partial information for some kind of recipient
         val configData = getDataFromConfig(
@@ -416,17 +421,39 @@ class RecipientRepository @Inject constructor(
             }
         }
 
-        if (changeSources != null && fetchRecipientContext != null) {
-            val now = snodeClock.get().currentTime()
-            if (fetchRecipientContext.earliestProExpiry != null &&
-                    fetchRecipientContext.earliestProExpiry!! > now) {
-                val delayMills = Duration.between(now, fetchRecipientContext.earliestProExpiry!!).toMillis()
-                // Add a flow that triggers when the pro proof expires
-                changeSources.add(flowOf("Pro proof expires").onStart { delay(delayMills) })
+        // Calculate the ProData for this recipient
+        val proDataList = fetchRecipientContext.proDataList
+        val proData = if (!proDataList.isNullOrEmpty()) {
+            proDataList.removeAll {
+                it.isExpired(now) || proDatabase.isRevoked(it.genIndexHash)
             }
+
+            // The pro data that goes into the recipient, should show the one with the most information
+            proDataList.firstOrNull { it.showProBadge }?.let {
+                RecipientData.ProData(it.showProBadge)
+            }
+        } else {
+            null
         }
 
-        return value to changeSources?.let { merge(*it.toTypedArray()) }
+        val updatedValue = if (value.data.proData != proData && proData != null) {
+            value.copy(data = value.data.setProData(proData))
+        } else {
+            value
+        }
+
+        if (changeSources != null && !proDataList.isNullOrEmpty()) {
+            // If we have valid pro data, we need to add a flow to trigger a re-fetch when
+            // the earliest pro proof expires.
+            val earliestProExpiry = proDataList.minOf { it.expiry }
+
+            val delayMills = Duration.between(now, earliestProExpiry).toMillis()
+            // Add a flow that triggers when the pro proof expires
+            changeSources.add(flowOf("Pro proof expires")
+                .onStart { delay(delayMills) })
+        }
+
+        return updatedValue to changeSources?.let { merge(*it.toTypedArray()) }
     }
 
     /**
@@ -536,21 +563,25 @@ class RecipientRepository @Inject constructor(
                         ignoreCase = true
                     )
                 ) {
-                    // TODO: Collect pro expiry/status from config
+                    //TODO: Collect pro status
+                    //fetchRecipientContext?.addProData(...)
+
                     configFactory.withUserConfigs { configs ->
                         RecipientData.Self(
                             name = configs.userProfile.getName().orEmpty(),
                             avatar = configs.userProfile.getPic().toRemoteFile(),
                             expiryMode = configs.userProfile.getNtsExpiry(),
                             priority = configs.userProfile.getNtsPriority(),
-                            proStatus = null,
-                            profileUpdatedAt = null
+                            proData = null, // final ProData will be calculated later
+                            profileUpdatedAt = null,
                         )
                     }
                 } else {
-                    // TODO: Collect pro expiry/status from config
-
                     // Is this a contact?
+
+                    //TODO: Collect pro status
+                    //fetchRecipientContext?.addProData(...)
+
                     configFactory.withUserConfigs { configs ->
                         configs.contacts.get(address.accountId.hexString)
                     }?.let { contact ->
@@ -563,7 +594,7 @@ class RecipientRepository @Inject constructor(
                             blocked = contact.blocked,
                             expiryMode = contact.expiryMode,
                             priority = contact.priority,
-                            proStatus = null,
+                            proData = null, // final ProData will be calculated later
                             profileUpdatedAt = contact.profileUpdatedEpochSeconds.secondsToInstant(),
                         )
                     }
@@ -576,12 +607,16 @@ class RecipientRepository @Inject constructor(
                 val groupInfo = configFactory.getGroup(address.accountId) ?: return null
                 val groupMemberComparator =
                     GroupMemberComparator(loginStateRepository.requireLocalAccountId())
+
+                //TODO: Collect pro status
+                //fetchRecipientContext?.addProData(...)
+
                 configFactory.withGroupConfigs(address.accountId) { configs ->
                     RecipientData.Group(
                         avatar = configs.groupInfo.getProfilePic().toRemoteFile(),
                         expiryMode = configs.groupInfo.expiryMode,
                         name = configs.groupInfo.getName() ?: groupInfo.name,
-                        proStatus = null, // We can't get pro status from config but we will calculate this later
+                        proData = null, // final ProData will be calculated later
                         description = configs.groupInfo.getDescription(),
                         members = configs.groupMembers.all()
                             .asSequence()
@@ -608,13 +643,14 @@ class RecipientRepository @Inject constructor(
                     configFactory.withUserConfigs { it.contacts.getBlinded(blinded.blindedId.hexString) }
                         ?: return null
 
-                // TODO: Collect pro status
+                //TODO: Collect pro status
+                //fetchRecipientContext?.addProData(...)
 
                 RecipientData.BlindedContact(
                     displayName = contact.name,
                     avatar = contact.profilePic.toRemoteFile(),
                     priority = contact.priority,
-                    proStatus = null,
+                    proData = null, // final ProData will be calculated later
 
                     // This information is not available in the config but we infer that
                     // if you already have this person as blinded contact, you would have been
@@ -645,9 +681,8 @@ class RecipientRepository @Inject constructor(
             "Address must match the group member info address if provided."
         }
 
-        val proStatus = settings.proData?.let { data ->
-            fetchRecipientContext?.updateProExpiry(data.expiry)
-            data.toProStatus(now)
+        if (settings.proData != null && fetchRecipientContext != null) {
+            fetchRecipientContext.addProData(settings.proData)
         }
 
         return Recipient(
@@ -657,7 +692,6 @@ class RecipientRepository @Inject constructor(
                     ?: groupMemberInfo?.name.orEmpty(),
                 avatar = settings.profilePic?.toRemoteFile()
                     ?: groupMemberInfo?.profilePic?.toRemoteFile(),
-                proStatus = proStatus,
                 acceptsBlindedCommunityMessageRequests = !settings.blocksCommunityMessagesRequests,
             ),
             mutedUntil = settings.muteUntil,

@@ -148,11 +148,13 @@ class ProStatePoller @Inject constructor(
 
         if (currentProof == null || currentProof.expiryMs <= snodeClock.currentTimeMills()) {
             // Current proof is missing or expired, grab the pro details to decide what to do next
-            val status = apiExecutor.executeRequest(
+            val details = apiExecutor.executeRequest(
                 request = getProDetailsRequestFactory.create(masterPrivateKey = proMasterPrivateKey)
-            ).successOrThrow().status
+            ).successOrThrow()
 
-            val newProof = if (status == ProDetails.DETAILS_STATUS_ACTIVE) {
+            proDatabase.updateProDetails(details, Instant.now())
+
+            val newProof = if (details.status == ProDetails.DETAILS_STATUS_ACTIVE) {
                 Log.d(TAG, "User is active Pro but has no valid proof, generating new proof")
                 apiExecutor.executeRequest(
                     request = generateProProofRequest.create(

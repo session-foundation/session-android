@@ -47,7 +47,6 @@ import org.session.libsession.utilities.modifyLayoutParams
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsession.utilities.truncatedForDisplay
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -231,7 +230,7 @@ class VisibleMessageView : FrameLayout {
                         text = sender.displayName(),
                         textStyle = LocalType.current.base.bold()
                             .copy(color = LocalColors.current.text),
-                        showBadge = message.recipient.proStatus.shouldShowProBadge,
+                        showBadge = message.recipient.shouldShowProBadge,
                     )
 
                     if (sender.address is Address.Blinded) {

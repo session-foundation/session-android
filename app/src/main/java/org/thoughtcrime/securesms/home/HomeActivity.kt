@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.view.ViewGroup.MarginLayoutParams
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.compose.foundation.clickable
@@ -19,10 +18,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.graphics.Insets
-import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
-import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -51,13 +48,11 @@ import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsession.utilities.updateContact
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
@@ -79,7 +74,6 @@ import org.thoughtcrime.securesms.home.search.GlobalSearchInputLayout
 import org.thoughtcrime.securesms.home.search.GlobalSearchResult
 import org.thoughtcrime.securesms.home.search.GlobalSearchViewModel
 import org.thoughtcrime.securesms.home.search.SearchContactActionBottomSheet
-import org.thoughtcrime.securesms.home.startconversation.StartConversationDestination
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
@@ -91,7 +85,6 @@ import org.thoughtcrime.securesms.reviews.ui.InAppReview
 import org.thoughtcrime.securesms.reviews.ui.InAppReviewViewModel
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
-import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -482,7 +475,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                         GlobalSearchAdapter.Model.Contact(
                             contact = it.value,
                             isSelf = it.value.isSelf,
-                            showProBadge = it.value.proStatus.shouldShowProBadge
+                            showProBadge = it.value.shouldShowProBadge
                         )
                     }
             }
@@ -492,7 +485,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         contacts.map { GlobalSearchAdapter.Model.Contact(
             contact = it,
             isSelf = it.isSelf,
-            showProBadge = it.proStatus.shouldShowProBadge
+            showProBadge = it.shouldShowProBadge
         ) } +
             threads.mapNotNull {
                 if(it.address is Address.GroupLike)
@@ -510,7 +503,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 messageResult = it,
                 unread = unreadThreadMap[it.threadId] ?: 0,
                 isSelf = it.conversationRecipient.isLocalNumber,
-                showProBadge = it.conversationRecipient.proStatus.shouldShowProBadge
+                showProBadge = it.conversationRecipient.shouldShowProBadge
             )
         }
     }

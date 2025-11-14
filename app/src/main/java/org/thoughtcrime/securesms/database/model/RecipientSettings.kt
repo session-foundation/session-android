@@ -24,7 +24,7 @@ data class RecipientSettings(
         @Serializable(with = InstantAsMillisSerializer::class)
         val expiry: Instant,
         val genIndexHash: String,
-        val features: ProFeatures
+        val showProBadge: Boolean,
     ) {
         fun isExpired(now: Instant): Boolean {
             return expiry <= now

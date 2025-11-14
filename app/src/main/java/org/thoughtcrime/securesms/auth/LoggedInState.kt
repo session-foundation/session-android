@@ -42,8 +42,12 @@ data class LoggedInState(
             }
         }
 
+        private val paddedSeed: ByteArray by lazy(LazyThreadSafetyMode.NONE) {
+            seed.data + ByteArray(16)
+        }
+
         val accountEd25519KeyPair: KeyPair by lazy(LazyThreadSafetyMode.NONE) {
-            ED25519.generate(seed.data + ByteArray(16))
+            ED25519.generate(paddedSeed)
         }
 
         val accountX25519KeyPair: KeyPair by lazy(LazyThreadSafetyMode.NONE) {
@@ -55,7 +59,7 @@ data class LoggedInState(
         }
 
         val proMasterPrivateKey: ByteArray by lazy(LazyThreadSafetyMode.NONE) {
-            ED25519.generateProPrivateKey(seed.data)
+            ED25519.generateProMasterKey(paddedSeed)
         }
 
         override fun toString(): String {

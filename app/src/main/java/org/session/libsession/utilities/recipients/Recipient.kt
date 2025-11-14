@@ -1,7 +1,6 @@
 package org.session.libsession.utilities.recipients
 
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
-import network.loki.messenger.libsession_util.pro.ProProof
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.utilities.Address
@@ -77,7 +76,8 @@ data class Recipient(
         else -> false
     }
 
-    val proStatus: RecipientProStatus? get() = data.proStatus
+    val isPro: Boolean get() = data.proData != null
+    val shouldShowProBadge: Boolean get() = data.proData?.showProBadge == true
 
     val approvedMe: Boolean get() {
         return when (data) {

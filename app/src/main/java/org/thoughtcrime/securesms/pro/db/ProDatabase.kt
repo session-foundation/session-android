@@ -18,6 +18,7 @@ import org.session.libsession.utilities.serializable.InstantAsMillisSerializer
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.Database
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
+import org.thoughtcrime.securesms.pro.api.ProDetails
 import org.thoughtcrime.securesms.pro.api.ProRevocations
 import org.thoughtcrime.securesms.util.asSequence
 import java.time.Instant
@@ -132,15 +133,14 @@ class ProDatabase @Inject constructor(
             """).use { stmt ->
                 stmt.bindString(1, STATE_NAME_LAST_TICKET)
                 stmt.bindLong(2, newTicket)
-                changes += stmt.executeUpdateDelete()
             }
         }
 
-        if (changes > 0) {
-            for (item in data) {
-                cache.put(item.genIndexHash, Unit)
-            }
+        for (item in data) {
+            cache.put(item.genIndexHash, Unit)
+        }
 
+        if (changes > 0) {
             mutableRevocationChangeNotification.tryEmit(Unit)
         }
     }
@@ -230,6 +230,39 @@ class ProDatabase @Inject constructor(
         }
     }
 
+    fun getProDetailsAndLastUpdated(): Pair<ProDetails, Instant>? {
+        return readableDatabase.rawQuery("""
+            SELECT name, value FROM pro_state
+            WHERE name IN (?, ?)
+        """, STATE_PRO_DETAILS, STATE_PRO_DETAILS_UPDATED_AT).use { cursor ->
+            var details: ProDetails? = null
+            var updatedAt: Instant? = null
+
+            while (cursor.moveToNext()) {
+                when (val name = cursor.getString(0)) {
+                    STATE_PRO_DETAILS -> details = json.decodeFromString(cursor.getString(1))
+                    STATE_PRO_DETAILS_UPDATED_AT -> updatedAt = Instant.ofEpochMilli(cursor.getString(1).toLong())
+                    else -> error("Unexpected state name $name")
+                }
+            }
+
+            if (details != null && updatedAt != null) {
+                details to updatedAt
+            } else {
+                null
+            }
+        }
+    }
+
+    fun updateProDetails(proDetails: ProDetails, updatedAt: Instant) {
+        //language=roomsql
+        writableDatabase.rawExecSQL("""
+            INSERT OR REPLACE INTO pro_state (name, value)
+            VALUES (?, ?), (?, ?)
+        """, STATE_PRO_DETAILS, json.encodeToString(proDetails),
+                    STATE_PRO_DETAILS_UPDATED_AT, updatedAt.toEpochMilli().toString())
+    }
+
     @Serializable
     class ProRotatingKeys(
         @Serializable(with = ByteArrayAsHexSerializer::class)
@@ -254,6 +287,9 @@ class ProDatabase @Inject constructor(
         private const val STATE_NAME_ROTATING_KEYS = "rotating_private_key"
 
         private const val STATE_PRO_PROOF = "pro_proof"
+
+        private const val STATE_PRO_DETAILS = "pro_details"
+        private const val STATE_PRO_DETAILS_UPDATED_AT = "pro_details_updated_at"
 
         private const val ROTATING_KEY_VALIDITY_DAYS = 15
 

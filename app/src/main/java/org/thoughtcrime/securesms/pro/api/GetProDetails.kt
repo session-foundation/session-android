@@ -46,14 +46,14 @@ class ProDetails(
     val status: ProDetailsStatus,
 
     @SerialName("auto_renewing")
-    val autoRenewing: Boolean,
+    val autoRenewing: Boolean? = null,
 
     @SerialName("expiry_unix_ts_ms")
     @Serializable(with = InstantAsMillisSerializer::class)
-    val expiry: Instant,
+    val expiry: Instant? = null,
 
     @SerialName("grace_duration_ms")
-    val graceDurationMs: Long,
+    val graceDurationMs: Long? = null,
 
     @SerialName("error_report")
     val errorReport: Int? = null,

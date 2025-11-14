@@ -20,9 +20,6 @@ import kotlinx.coroutines.withTimeout
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.recipients.RecipientProStatus
-import org.session.libsession.utilities.recipients.isPro
-import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -71,7 +68,7 @@ class ProStatusManager @Inject constructor(
             //todo PRO this is where we should get the real state
             SubscriptionState(
                 type = ProStatus.NeverSubscribed,
-                showProBadge = selfRecipient.proStatus.shouldShowProBadge,
+                showProBadge = selfRecipient.shouldShowProBadge,
                 refreshState = proDataStatus
             )
         }
@@ -178,7 +175,7 @@ class ProStatusManager @Inject constructor(
             },
 
             refreshState = proDataStatus,
-            showProBadge = selfRecipient.proStatus.shouldShowProBadge,
+            showProBadge = selfRecipient.shouldShowProBadge,
         )
 
     }.stateIn(scope, SharingStarted.Eagerly,
@@ -200,7 +197,7 @@ class ProStatusManager @Inject constructor(
      * Logic to determine if we should animate the avatar for a user or freeze it on the first frame
      */
     fun freezeFrameForUser(recipient: Recipient): Boolean{
-        return if(!isPostPro() || recipient.isCommunityRecipient) false else !recipient.proStatus.isPro
+        return if(!isPostPro() || recipient.isCommunityRecipient) false else !recipient.isPro
     }
 
     /**
@@ -219,24 +216,28 @@ class ProStatusManager @Inject constructor(
         return prefs.forcePostPro()
     }
 
-    fun getCharacterLimit(status: RecipientProStatus?): Int {
-        return if (status.isPro) MAX_CHARACTER_PRO else MAX_CHARACTER_REGULAR
+    fun getCharacterLimit(isPro: Boolean): Int {
+        return if (isPro) MAX_CHARACTER_PRO else MAX_CHARACTER_REGULAR
     }
 
-    fun getPinnedConversationLimit(status: RecipientProStatus?): Int {
+    fun getPinnedConversationLimit(isPro: Boolean): Int {
         if(!isPostPro()) return Int.MAX_VALUE // allow infinite pins while not in post Pro
 
-        return if (status.isPro) Int.MAX_VALUE else MAX_PIN_REGULAR
+        return if (isPro) Int.MAX_VALUE else MAX_PIN_REGULAR
     }
 
     /**
      * This will calculate the pro features of an outgoing message
      */
-    fun calculateMessageProFeatures(status: RecipientProStatus, message: String): List<MessageProFeature>{
+    fun calculateMessageProFeatures(isPro: Boolean, shouldShowProBadge: Boolean, message: String): List<MessageProFeature>{
+        if (!isPro){
+            return emptyList()
+        }
+
         val features = mutableListOf<MessageProFeature>()
 
         // check for pro badge display
-        if (status.shouldShowProBadge){
+        if (shouldShowProBadge){
             features.add(MessageProFeature.ProBadge)
         }
 

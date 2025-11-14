@@ -21,7 +21,6 @@ import network.loki.messenger.databinding.ViewQuoteBinding
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.mms.SlideDeck
@@ -102,7 +101,7 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
                     modifier = modifier,
                     text = authorDisplayName,
                     textStyle = LocalType.current.small.bold().copy(color = Color(textColor)),
-                    showBadge = authorRecipient.proStatus.shouldShowProBadge,
+                    showBadge = authorRecipient.shouldShowProBadge,
                     badgeColors = if(isOutgoingMessage && mode == Mode.Regular) proBadgeColorOutgoing()
                     else proBadgeColorStandard()
                 )

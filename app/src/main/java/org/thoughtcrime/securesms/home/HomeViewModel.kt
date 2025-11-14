@@ -32,7 +32,6 @@ import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
@@ -40,8 +39,8 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
-import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.ProStatus
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.util.DateUtils
@@ -151,7 +150,7 @@ class HomeViewModel @Inject constructor(
 
     val shouldShowCurrentUserProBadge: StateFlow<Boolean> = recipientRepository
         .observeSelf()
-        .map { it.proStatus.shouldShowProBadge }
+        .map { it.shouldShowProBadge }
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     private var userProfileModalJob: Job? = null
@@ -256,7 +255,7 @@ class HomeViewModel @Inject constructor(
     fun setPinned(address: Address, pinned: Boolean) {
         // check the pin limit before continuing
         val totalPins = storage.getTotalPinned()
-        val maxPins = proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().proStatus)
+        val maxPins = proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().isPro)
         if (pinned && totalPins >= maxPins) {
             // the user has reached the pin limit, show the CTA
             _dialogsState.update {

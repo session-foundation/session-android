@@ -20,7 +20,9 @@ sealed interface RecipientData {
     val priority: Long
     val profileUpdatedAt: Instant?
 
-    val proStatus: RecipientProStatus?
+    val proData: ProData?
+
+    fun setProData(proData: ProData): RecipientData
 
     /**
      * Represents a group-like recipient, which can be a group or community.
@@ -47,19 +49,23 @@ sealed interface RecipientData {
         val displayName: String = "",
         override val avatar: RemoteFile? = null,
         override val priority: Long = PRIORITY_VISIBLE,
-        override val proStatus: RecipientProStatus? = null,
+        override val proData: ProData? = null,
         val acceptsBlindedCommunityMessageRequests: Boolean = false,
         override val profileUpdatedAt: Instant? = null,
-    ) : RecipientData
+    ) : RecipientData {
+        override fun setProData(proData: ProData): Generic = copy(proData = proData)
+    }
 
     data class BlindedContact(
         val displayName: String,
         override val avatar: RemoteFile.Encrypted?,
         override val priority: Long,
-        override val proStatus: RecipientProStatus?,
+        override val proData: ProData?,
         val acceptsBlindedCommunityMessageRequests: Boolean,
         override val profileUpdatedAt: Instant?
-    ) : RecipientData
+    ) : RecipientData {
+        override fun setProData(proData: ProData): BlindedContact = copy(proData = proData)
+    }
 
     data class Community(
         val serverUrl: String,
@@ -92,8 +98,10 @@ sealed interface RecipientData {
         override val profileUpdatedAt: Instant?
             get() = null
 
-        override val proStatus: RecipientProStatus?
+        override val proData: ProData?
             get() = null
+
+        override fun setProData(proData: ProData): Community = this
 
         override fun hasAdmin(user: AccountId): Boolean {
             return roomInfo != null && (roomInfo.details.admins.contains(user.hexString) ||
@@ -116,9 +124,11 @@ sealed interface RecipientData {
         override val avatar: RemoteFile.Encrypted?,
         val expiryMode: ExpiryMode,
         override val priority: Long,
-        override val proStatus: RecipientProStatus?,
+        override val proData: ProData?,
         override val profileUpdatedAt: Instant?
-    ) : RecipientData
+    ) : RecipientData {
+        override fun setProData(proData: ProData): Self = copy(proData = proData)
+    }
 
     /**
      * A recipient that was saved in your contact config.
@@ -132,11 +142,13 @@ sealed interface RecipientData {
         val blocked: Boolean,
         val expiryMode: ExpiryMode,
         override val priority: Long,
-        override val proStatus: RecipientProStatus?,
+        override val proData: ProData?,
         override val profileUpdatedAt: Instant?,
     ) : RecipientData {
         val displayName: String
             get() = nickname?.takeIf { it.isNotBlank() } ?: name
+
+        override fun setProData(proData: ProData): Contact = copy(proData = proData)
     }
 
     data class GroupMemberInfo(
@@ -164,7 +176,7 @@ sealed interface RecipientData {
         val expiryMode: ExpiryMode,
         val members: List<GroupMemberInfo>,
         val description: String?,
-        override val proStatus: RecipientProStatus?,
+        override val proData: ProData?,
         override val firstMember: Recipient?, // Used primarily to assemble the profile picture for the group.
         override val secondMember: Recipient?, // Used primarily to assemble the profile picture for the group.
     ) : RecipientData, GroupLike {
@@ -185,6 +197,8 @@ sealed interface RecipientData {
         override fun shouldShowAdminCrown(user: AccountId): Boolean {
             return hasAdmin(user)
         }
+
+        override fun setProData(proData: ProData): Group = copy(proData = proData)
     }
 
     data class LegacyGroup(
@@ -206,10 +220,17 @@ sealed interface RecipientData {
             return members[user]?.shouldShowAdminCrown == true
         }
 
-        override val proStatus: RecipientProStatus?
-            get() = null
-
         override val profileUpdatedAt: Instant?
             get() = null
+
+        override val proData: ProData?
+            get() = null
+
+        override fun setProData(proData: ProData): LegacyGroup = this
     }
+
+
+    data class ProData(
+        val showProBadge: Boolean,
+    )
 }

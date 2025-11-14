@@ -14,7 +14,6 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.util.DateUtils
@@ -200,7 +199,7 @@ class GlobalSearchAdapter(
                                 null
                             }
                         },
-                        showProBadge = recipient.proStatus.shouldShowProBadge
+                        showProBadge = recipient.shouldShowProBadge
                     )
         }
         data class Message(val messageResult: MessageResult, val unread: Int, val isSelf: Boolean, val showProBadge: Boolean) : Model
