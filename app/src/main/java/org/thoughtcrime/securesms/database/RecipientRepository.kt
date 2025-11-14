@@ -74,6 +74,7 @@ import javax.inject.Singleton
 @Singleton
 class RecipientRepository @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
+    private val prefs: TextSecurePreferences,
     private val groupDatabase: GroupDatabase,
     private val recipientSettingsDatabase: RecipientSettingsDatabase,
     private val blindedIdMappingRepository: BlindMappingRepository,
@@ -423,7 +424,7 @@ class RecipientRepository @Inject constructor(
 
         // Calculate the ProData for this recipient
         val proDataList = fetchRecipientContext.proDataList
-        val proData = if (!proDataList.isNullOrEmpty()) {
+        var proData = if (!proDataList.isNullOrEmpty()) {
             proDataList.removeAll {
                 it.isExpired(now) || proDatabase.isRevoked(it.genIndexHash)
             }
@@ -434,6 +435,16 @@ class RecipientRepository @Inject constructor(
             }
         } else {
             null
+        }
+
+        // Debug overrides from preferences
+        if (value.isSelf && proData == null && prefs.forceCurrentUserAsPro()) {
+            proData = RecipientData.ProData(showProBadge = true)
+        } else if (!value.isSelf
+            && (value.address is Address.Standard || value.address is Address.Group)
+            && proData == null
+            && prefs.forceOtherUsersAsPro()) {
+            proData = RecipientData.ProData(showProBadge = true)
         }
 
         val updatedValue = if (value.data.proData != proData && proData != null) {
@@ -563,8 +574,17 @@ class RecipientRepository @Inject constructor(
                         ignoreCase = true
                     )
                 ) {
-                    //TODO: Collect pro status
-                    //fetchRecipientContext?.addProData(...)
+                    //TODO: The pro data will come from config later, now we are getting it
+                    // from local db
+                    fetchRecipientContext?.let { ctx ->
+                        proDatabase.getCurrentProProof()?.let { proof ->
+                            ctx.addProData(RecipientSettings.ProData(
+                                expiry = Instant.ofEpochMilli(proof.expiryMs),
+                                genIndexHash = proof.genIndexHashHex,
+                                showProBadge = true
+                            ))
+                        }
+                    }
 
                     configFactory.withUserConfigs { configs ->
                         RecipientData.Self(
