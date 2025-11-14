@@ -1,6 +1,7 @@
 package org.session.libsession.messaging.sending_receiving
 
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
+import network.loki.messenger.libsession_util.util.KeyPair
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.CallMessage
@@ -123,7 +124,11 @@ class MessageReceiver @Inject constructor(
                         var encryptionKeyPair = encryptionKeyPairs.removeAt(encryptionKeyPairs.lastIndex)
                         fun decrypt() {
                             try {
-                                val decryptionResult = MessageDecrypter.decrypt(envelopeContent.toByteArray(), encryptionKeyPair)
+                                val decryptionResult = MessageDecrypter.decrypt(envelopeContent.toByteArray(),
+                                    KeyPair(
+                                        pubKey = encryptionKeyPair.publicKey.serialize(),
+                                        secretKey = encryptionKeyPair.privateKey.serialize()
+                                    ))
                                 plaintext = decryptionResult.first
                                 sender = decryptionResult.second
                             } catch (e: Exception) {

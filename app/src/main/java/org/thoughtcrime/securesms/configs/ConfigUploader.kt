@@ -45,6 +45,7 @@ import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.retryWithUniformInterval
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import javax.inject.Inject
@@ -67,7 +68,7 @@ class ConfigUploader @Inject constructor(
     private val storageProtocol: StorageProtocol,
     private val clock: SnodeClock,
     private val networkConnectivity: NetworkConnectivity,
-    private val textSecurePreferences: TextSecurePreferences,
+    private val loginStateRepository: LoginStateRepository,
 ) : OnAppStartupComponent {
     private var job: Job? = null
 
@@ -89,7 +90,7 @@ class ConfigUploader @Inject constructor(
         }
 
     // A flow that emits true when there's a logged in user
-    private fun hasLoggedInUser(): Flow<Boolean> = textSecurePreferences.watchLocalNumber()
+    private fun hasLoggedInUser(): Flow<Boolean> = loginStateRepository.loggedInState
         .map { it != null }
         .distinctUntilChanged()
 

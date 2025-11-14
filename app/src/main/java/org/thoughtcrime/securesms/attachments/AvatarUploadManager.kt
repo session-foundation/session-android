@@ -21,6 +21,7 @@ import org.session.libsession.utilities.Util
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
@@ -42,13 +43,14 @@ class AvatarUploadManager @Inject constructor(
     @ManagerScope scope: CoroutineScope,
     private val localEncryptedFileOutputStreamFactory: LocalEncryptedFileOutputStream.Factory,
     private val fileServerApi: FileServerApi,
-    private val attachmentProcessor: AttachmentProcessor
+    private val attachmentProcessor: AttachmentProcessor,
+    loginStateRepository: LoginStateRepository,
 ) : OnAppStartupComponent {
     init {
         // Manage scheduling/cancellation of the AvatarReuploadWorker based on login state
         scope.launch {
             combine(
-                prefs.watchLocalNumber()
+                loginStateRepository.loggedInState
                     .map { it != null }
                     .distinctUntilChanged(),
                 TextSecurePreferences._events.filter { it == TextSecurePreferences.DEBUG_AVATAR_REUPLOAD }

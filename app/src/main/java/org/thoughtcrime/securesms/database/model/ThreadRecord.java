@@ -37,6 +37,7 @@ import org.session.libsession.utilities.AddressKt;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsession.utilities.recipients.RecipientNamesKt;
+import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.database.MmsSmsColumns;
 import org.thoughtcrime.securesms.database.SmsDatabase;
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate;
@@ -159,7 +160,8 @@ public class ThreadRecord extends DisplayRecord {
         } else if (MmsSmsColumns.Types.isMessageRequestResponse(type)) {
             try {
                 if (lastMessage.getRecipient().getAddress().toString().equals(
-                        TextSecurePreferences.getLocalNumber(context))) {
+                        ((ApplicationContext) context.getApplicationContext()).getLoginStateRepository()
+                                        .get().getLocalNumber())) {
                     return UtilKt.getSubbedCharSequence(
                             context,
                             R.string.messageRequestYouHaveAccepted,

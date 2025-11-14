@@ -6,9 +6,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ED25519
@@ -32,13 +30,13 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.waitUntilGroupConfigsPushed
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import javax.inject.Inject
@@ -56,25 +54,17 @@ private const val TAG = "RemoveGroupMemberHandler"
 class RemoveGroupMemberHandler @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val configFactory: ConfigFactoryProtocol,
-    private val textSecurePreferences: TextSecurePreferences,
     private val clock: SnodeClock,
     private val messageDataProvider: MessageDataProvider,
     private val storage: StorageProtocol,
     private val groupScope: GroupScope,
     @ManagerScope scope: CoroutineScope,
     private val messageSender: MessageSender,
+    private val loginStateRepository: LoginStateRepository,
 ) : OnAppStartupComponent {
     init {
         scope.launch {
-            textSecurePreferences
-                .watchLocalNumber()
-                .flatMapLatest { localNumber ->
-                    if (localNumber == null) {
-                        return@flatMapLatest emptyFlow()
-                    }
-
-                    configFactory.configUpdateNotifications
-                }
+            loginStateRepository.flowWithLoggedInState { configFactory.configUpdateNotifications }
                 .filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
                 .collect { update ->
                     val adminKey = configFactory.getGroup(update.groupId)?.adminKey?.data

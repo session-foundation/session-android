@@ -176,8 +176,8 @@ fun ChoosePlanNoBilling(
                     title = Phrase.from(context.getText(R.string.onPlatformStoreWebsite))
                         .put(PLATFORM_STORE_KEY, subscription.subscriptionDetails.getPlatformDisplayName())
                         .format(),
-                    info = Phrase.from(context.getText(R.string.proAccessRenewPlatformStoreWebsite))
-                        .put(PLATFORM_STORE_KEY, subscription.subscriptionDetails.getPlatformDisplayName())
+                    info = Phrase.from(context.getText(R.string.proAccessRenewPlatformWebsite))
+                        .put(PLATFORM_KEY, subscription.subscriptionDetails.getPlatformDisplayName())
                         .put(PLATFORM_ACCOUNT_KEY, subscription.subscriptionDetails.platformAccount)
                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format(),

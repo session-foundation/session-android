@@ -134,6 +134,8 @@ fun ConversationSettingsNavHost(
                 is NavigationAction.ReturnResult -> {
                     returnResult(action.code, action.value)
                 }
+
+                else -> {}
             }
         }
 

@@ -8,6 +8,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import org.session.libsession.database.MessageDataProvider
 import org.thoughtcrime.securesms.attachments.DatabaseAttachmentProvider
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.crypto.AttachmentSecret
 import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider
 import org.thoughtcrime.securesms.database.AttachmentDatabase
@@ -66,7 +67,8 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideMmsSms(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = MmsSmsDatabase(context, openHelper)
+    fun provideMmsSms(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>, loginStateRepository: LoginStateRepository)
+        = MmsSmsDatabase(context, openHelper, loginStateRepository)
 
     @Provides
     @Singleton
@@ -78,7 +80,8 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideGroupDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = GroupDatabase(context,openHelper)
+    fun provideGroupDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>, loginStateRepository: LoginStateRepository)
+        = GroupDatabase(context,openHelper, loginStateRepository)
 
     @Provides
     @Singleton

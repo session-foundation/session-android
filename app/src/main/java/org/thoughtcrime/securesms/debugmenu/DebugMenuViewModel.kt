@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.file_server.FileServer
@@ -32,13 +33,13 @@ import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.upsertContact
+import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.hexEncodedPublicKey
-import org.thoughtcrime.securesms.crypto.KeyPairUtilities
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
@@ -70,6 +71,7 @@ class DebugMenuViewModel @AssistedInject constructor(
     private val tokenFetcher: TokenFetcher,
     private val debugLogger: DebugLogger,
     private val dateUtils: DateUtils,
+    private val loginStateRepository: LoginStateRepository,
     subscriptionManagers: Set<@JvmSuppressWildcards SubscriptionManager>,
 ) : ViewModel() {
     private val TAG = "DebugMenu"
@@ -186,7 +188,7 @@ class DebugMenuViewModel @AssistedInject constructor(
             }
 
             is Commands.CopyAccountId -> {
-                val accountId = textSecurePreferences.getLocalNumber()
+                val accountId = loginStateRepository.requireLocalNumber()
                 val clip = ClipData.newPlainText("Account ID", accountId)
                 clipboardManager.setPrimaryClip(ClipData(clip))
 
@@ -254,13 +256,13 @@ class DebugMenuViewModel @AssistedInject constructor(
 
                     withContext(Dispatchers.Default) {
                         val keys = List(command.count) {
-                            KeyPairUtilities.generate()
+                            AccountId(IdPrefix.STANDARD, ED25519.generate(null).secretKey.data)
                         }
 
                         configFactory.withMutableUserConfigs { configs ->
                             for ((index, key) in keys.withIndex()) {
                                 configs.contacts.upsertContact(
-                                    key.x25519KeyPair.hexEncodedPublicKey.toAddress() as Address.Standard,
+                                    Address.Standard(key),
                                 ) {
                                     name = "${command.prefix}$index"
                                     approved = true

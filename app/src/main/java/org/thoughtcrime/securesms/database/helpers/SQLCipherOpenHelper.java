@@ -148,8 +148,6 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     );
 
     this.jsonProvider = jsonProvider;
-
-    Log.d(TAG, "SQLCipherOpenHelper created with database secret: " + databaseSecret.asString());
   }
 
   @Override
