@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.groups
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.squareup.phrase.Phrase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -23,20 +22,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import network.loki.messenger.R
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.OTHER_NAME_KEY
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.home.search.searchName
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 
@@ -60,6 +53,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
 
     // Input: The search query
     private val mutableSearchQuery = MutableStateFlow("")
+
     // Output: The search query
     val searchQuery: StateFlow<String> get() = mutableSearchQuery
 
@@ -77,33 +71,12 @@ open class SelectContactsViewModel @AssistedInject constructor(
             .map { it.isNotEmpty() }
             .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
-    private val _uiState = MutableStateFlow(UiState())
-    val uiState: StateFlow<UiState> = _uiState
+    // Output: to be used by VMs extending this base VM
+    val selectedContacts: StateFlow<Set<SelectedContact>> = mutableSelectedContacts
 
-    // Output
+    // Output : snapshot helper
     val currentSelected: Set<Address>
         get() = mutableSelectedContacts.value.map { it.address }.toSet()
-
-    private val footerCollapsed = MutableStateFlow(false)
-    private val showInviteContactsDialog = MutableStateFlow(false)
-
-    init {
-        viewModelScope.launch {
-            combine(mutableSelectedContacts, footerCollapsed) { selected, isCollapsed ->
-                buildFooterState(selected, isCollapsed)
-            }.collect { footer ->
-                _uiState.update { it.copy(footer = footer) }
-            }
-        }
-
-        viewModelScope.launch {
-            combine(showInviteContactsDialog, mutableSelectedContacts) { showDialog, selected ->
-                buildInviteContactsDialogState(showDialog, selected)
-            }.collect { state ->
-                _uiState.update { it.copy(inviteContactsDialog = state) }
-            }
-        }
-    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeContacts() = (configFactory.configUpdateNotifications as Flow<Any>)
@@ -183,143 +156,6 @@ open class SelectContactsViewModel @AssistedInject constructor(
 
     fun clearSelection(){
         mutableSelectedContacts.value = emptySet()
-    }
-
-    fun toggleFooter() {
-        footerCollapsed.update { !it }
-    }
-
-    fun onSearchFocusChanged(isFocused :Boolean){
-        _uiState.update { it.copy(isSearchFocused = isFocused) }
-    }
-
-    fun onDismissResend() {
-        _uiState.update { it.copy(ongoingAction = null) }
-    }
-
-    fun removeSearchState(clearSelection : Boolean){
-        onSearchFocusChanged(false)
-        onSearchQueryChanged("")
-
-        if(clearSelection){
-            clearSelection()
-        }
-    }
-
-    private fun buildFooterState(
-        selected: Set<SelectedContact>,
-        isCollapsed: Boolean
-    ) : CollapsibleFooterState {
-        val count = selected.size
-        val visible = count > 0
-        val title = if (count == 0) GetString("")
-        else GetString(
-            context.resources.getQuantityString(R.plurals.contactSelected, count, count)
-        )
-
-        return CollapsibleFooterState(
-            visible = visible,
-            collapsed = if (!visible) false else isCollapsed,
-            footerActionTitle = title
-        )
-    }
-
-    private fun buildInviteContactsDialogState(
-        visible: Boolean,
-        selected: Set<SelectedContact>
-    ): InviteContactsDialogState {
-        val count = selected.size
-        val firstMember = selected.firstOrNull()
-
-        val body: CharSequence = when (count) {
-            1 -> Phrase.from(context, R.string.membersInviteShareDescription)
-                .put(NAME_KEY, firstMember?.name)
-                .format()
-
-            2 -> {
-                val secondMember = selected.elementAtOrNull(1)?.name
-                Phrase.from(context, R.string.membersInviteShareDescriptionTwo)
-                    .put(NAME_KEY, firstMember?.name)
-                    .put(OTHER_NAME_KEY, secondMember)
-                    .format()
-            }
-
-            0 -> ""
-            else -> Phrase.from(context, R.string.membersInviteShareDescriptionMultiple)
-                .put(NAME_KEY, firstMember?.name)
-                .put(COUNT_KEY, count - 1)
-                .format()
-        }
-
-        val inviteText =
-            context.resources.getQuantityString(R.plurals.membersInviteSend, count, count)
-
-        return InviteContactsDialogState(
-            visible = visible,
-            inviteContactsBody = body,
-            inviteText = inviteText
-        )
-    }
-
-    fun toggleInviteContactsDialog(visible : Boolean){
-        showInviteContactsDialog.value = visible
-    }
-
-    fun sendCommand(command: Commands) {
-        when (command) {
-            is Commands.ClearSelection -> clearSelection()
-            is Commands.ToggleFooter -> toggleFooter()
-            is Commands.CloseFooter -> clearSelection()
-            is Commands.DismissResend -> onDismissResend()
-            is Commands.ShowSendInviteDialog -> toggleInviteContactsDialog(true)
-            is Commands.DismissSendInviteDialog -> toggleInviteContactsDialog(false)
-            is Commands.ContactItemClick -> onContactItemClicked(command.address)
-            is Commands.RemoveSearchState -> removeSearchState(command.clearSelection)
-            is Commands.SearchFocusChange -> onSearchFocusChanged(command.focus)
-            is Commands.SearchQueryChange -> onSearchQueryChanged(command.query)
-        }
-    }
-
-    data class UiState(
-        val isSearchFocused: Boolean = false,
-        val ongoingAction: String? = null,
-
-        val inviteContactsDialog: InviteContactsDialogState = InviteContactsDialogState(),
-        val footer: CollapsibleFooterState = CollapsibleFooterState()
-    )
-
-    data class InviteContactsDialogState(
-        val visible : Boolean = false,
-        val inviteContactsBody : CharSequence = "",
-        val inviteText : String = ""
-    )
-
-    data class CollapsibleFooterState(
-        val visible: Boolean = false,
-        val collapsed: Boolean = false,
-        val footerActionTitle : GetString = GetString("")
-    )
-
-    sealed interface Commands {
-        data object ClearSelection : Commands
-
-        data object ToggleFooter : Commands
-
-        data object CloseFooter : Commands
-
-        data object DismissResend : Commands
-
-        data object ShowSendInviteDialog : Commands
-
-        data object DismissSendInviteDialog : Commands
-
-        data class ContactItemClick(val address: Address) : Commands
-
-        data class RemoveSearchState(val clearSelection: Boolean) : Commands
-
-        data class SearchQueryChange(val query: String) : Commands
-
-        data class SearchFocusChange(val focus: Boolean) : Commands
     }
 
     @AssistedFactory

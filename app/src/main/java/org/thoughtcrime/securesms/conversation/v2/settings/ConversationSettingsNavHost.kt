@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.conversation.v2.settings
 
-import android.R.attr.data
 import android.annotation.SuppressLint
 import android.os.Parcelable
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -26,13 +25,12 @@ import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesViewModel
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.DisappearingMessagesScreen
-import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.*
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsScreen
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsViewModel
 import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel
 import org.thoughtcrime.securesms.groups.GroupMembersViewModel
-import org.thoughtcrime.securesms.groups.SelectContactsViewModel
+import org.thoughtcrime.securesms.groups.InviteMembersViewModel
 import org.thoughtcrime.securesms.groups.compose.ManageGroupMembersScreen
 import org.thoughtcrime.securesms.groups.compose.GroupMembersScreen
 import org.thoughtcrime.securesms.groups.compose.InviteAccountIdScreen
@@ -220,8 +218,9 @@ fun ConversationSettingsNavHost(
                 val data: RouteInviteToGroup = backStackEntry.toRoute()
 
                 val viewModel =
-                    hiltViewModel<SelectContactsViewModel, SelectContactsViewModel.Factory> { factory ->
+                    hiltViewModel<InviteMembersViewModel, InviteMembersViewModel.Factory> { factory ->
                         factory.create(
+                            groupAddress = data.groupAddress,
                             excludingAccountIDs = data.excludingAccountIDs.map(Address::fromSerialized).toSet()
                         )
                     }
@@ -244,14 +243,14 @@ fun ConversationSettingsNavHost(
                     onBack = dropUnlessResumed {
                         handleBack()
                     },
-                    banner = {}
+                    forCommunity = false
                 )
             }
 
             // Invite Contacts to community
             horizontalSlideComposable<RouteInviteToCommunity> { backStackEntry ->
                 val viewModel =
-                    hiltViewModel<SelectContactsViewModel, SelectContactsViewModel.Factory> { factory ->
+                    hiltViewModel<InviteMembersViewModel, InviteMembersViewModel.Factory> { factory ->
                         factory.create()
                     }
 
@@ -271,10 +270,12 @@ fun ConversationSettingsNavHost(
 
                         // clear selected contacts
                         viewModel.clearSelection()
+                        handleBack()
                     },
                     onBack = dropUnlessResumed {
                         handleBack()
                     },
+                    forCommunity = true
                 )
             }
 

@@ -35,8 +35,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.groups.ContactItem
-import org.thoughtcrime.securesms.groups.SelectContactsViewModel
-import org.thoughtcrime.securesms.groups.SelectContactsViewModel.Commands.*
+import org.thoughtcrime.securesms.groups.InviteMembersViewModel
+import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.CloseFooter
+import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.ContactItemClick
+import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.DismissSendInviteDialog
+import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.RemoveSearchState
+import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.SearchFocusChange
+import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.SearchQueryChange
+import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.ShowSendInviteDialog
+import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.ToggleFooter
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.CollapsibleFooterAction
 import org.thoughtcrime.securesms.ui.CollapsibleFooterActionData
@@ -57,13 +64,13 @@ import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
 
-
 @Composable
 fun InviteContactsScreen(
-    viewModel: SelectContactsViewModel,
-    onDoneClicked: (shareHistory : Boolean) -> Unit,
+    viewModel: InviteMembersViewModel,
+    onDoneClicked: (shareHistory: Boolean) -> Unit,
     onBack: () -> Unit,
-    banner: @Composable () -> Unit = {}
+    banner: @Composable () -> Unit = {},
+    forCommunity : Boolean = false,
 ) {
     InviteContacts(
         contacts = viewModel.contacts.collectAsState().value,
@@ -72,7 +79,8 @@ fun InviteContactsScreen(
         onDoneClicked = onDoneClicked,
         onBack = onBack,
         banner = banner,
-        sendCommand = viewModel::sendCommand
+        sendCommand = viewModel::sendCommand,
+        forCommunity = forCommunity
     )
 }
 
@@ -80,13 +88,13 @@ fun InviteContactsScreen(
 @Composable
 fun InviteContacts(
     contacts: List<ContactItem>,
-    uiState: SelectContactsViewModel.UiState,
+    uiState: InviteMembersViewModel.UiState,
     searchQuery: String,
-    onDoneClicked: (shareHistory : Boolean) -> Unit,
+    onDoneClicked: (shareHistory: Boolean) -> Unit,
     onBack: () -> Unit,
     banner: @Composable () -> Unit = {},
-    sendCommand: (command: SelectContactsViewModel.Commands) -> Unit
-
+    sendCommand: (command: InviteMembersViewModel.Commands) -> Unit,
+    forCommunity: Boolean = false
 ) {
 
     val trayItems = listOf(
@@ -94,18 +102,16 @@ fun InviteContacts(
             label = GetString(LocalResources.current.getString(R.string.membersInvite)),
             buttonLabel = GetString(LocalResources.current.getString(R.string.membersInviteTitle)),
             isDanger = false,
-            onClick = { sendCommand(ShowSendInviteDialog) }
+            onClick = {
+                if (forCommunity) onDoneClicked(false) // Community does not need the dialog
+                else sendCommand(ShowSendInviteDialog)
+            }
         )
     )
 
     val handleBack: () -> Unit = {
         when {
-            uiState.isSearchFocused -> sendCommand(
-                SelectContactsViewModel.Commands.RemoveSearchState(
-                    false
-                )
-            )
-
+            uiState.isSearchFocused -> sendCommand(RemoveSearchState(false))
             else -> onBack()
         }
     }
@@ -205,10 +211,10 @@ fun InviteContacts(
 
 @Composable
 fun ShowInviteContactsDialog(
-    state: SelectContactsViewModel.InviteContactsDialogState,
+    state: InviteMembersViewModel.InviteContactsDialogState,
     modifier: Modifier = Modifier,
-    onDoneClicked : (shareHistory : Boolean) -> Unit,
-    sendCommand: (SelectContactsViewModel.Commands) -> Unit
+    onDoneClicked: (shareHistory: Boolean) -> Unit,
+    sendCommand: (InviteMembersViewModel.Commands) -> Unit
 ) {
     var shareHistory by remember { mutableStateOf(false) }
 
@@ -289,14 +295,14 @@ private fun PreviewSelectContacts() {
             onBack = {},
             banner = {},
             sendCommand = {},
-            uiState = SelectContactsViewModel.UiState(
-                footer = SelectContactsViewModel.CollapsibleFooterState(
+            uiState = InviteMembersViewModel.UiState(
+                footer = InviteMembersViewModel.CollapsibleFooterState(
                     collapsed = false,
                     visible = true,
                     footerActionTitle = GetString("1 Contact Selected")
                 )
             ),
-            searchQuery = ""
+            searchQuery = "",
         )
     }
 }
@@ -313,8 +319,8 @@ private fun PreviewSelectEmptyContacts() {
             onBack = {},
             banner = {},
             sendCommand = {},
-            uiState = SelectContactsViewModel.UiState(
-                footer = SelectContactsViewModel.CollapsibleFooterState(
+            uiState = InviteMembersViewModel.UiState(
+                footer = InviteMembersViewModel.CollapsibleFooterState(
                     collapsed = true,
                     visible = false,
                     footerActionTitle = GetString("")
@@ -337,8 +343,8 @@ private fun PreviewSelectEmptyContactsWithSearch() {
             onBack = {},
             banner = {},
             sendCommand = {},
-            uiState = SelectContactsViewModel.UiState(
-                footer = SelectContactsViewModel.CollapsibleFooterState(
+            uiState = InviteMembersViewModel.UiState(
+                footer = InviteMembersViewModel.CollapsibleFooterState(
                     collapsed = true,
                     visible = false,
                     footerActionTitle = GetString("")
