@@ -66,11 +66,11 @@ internal fun NewMessage(
     LaunchedEffect(state.validIdFromQr) {
         if (state.validIdFromQr.isNotBlank()) {
             if (isInvite) {
-                // auto-run the normal flow (validation etc.)
-                callbacks.onContinue()
-            } else {
                 // switch back to the 1st tab and proceed with invite flow
                 pagerState.animateScrollToPage(0)
+            } else {
+                // auto-run the normal flow ()
+                callbacks.onContinue()
             }
 
             callbacks.onClearQrCode()
