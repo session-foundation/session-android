@@ -7,56 +7,35 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
-import network.loki.messenger.R
-import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Address.Companion.toAddress
-import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel
-import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel.Commands.*
+import org.thoughtcrime.securesms.groups.InviteMembersViewModel
 import org.thoughtcrime.securesms.home.startconversation.newmessage.Callbacks
 import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessage
-import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessageViewModel
 import org.thoughtcrime.securesms.home.startconversation.newmessage.State
-import org.thoughtcrime.securesms.ui.AlertDialog
-import org.thoughtcrime.securesms.ui.DialogButtonData
-import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.RadioOption
-import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
-import org.thoughtcrime.securesms.ui.components.annotatedStringResource
-import org.thoughtcrime.securesms.ui.theme.LocalColors
-import kotlin.Boolean
-import kotlin.String
 
 @Composable
 internal fun InviteAccountIdScreen(
-    state: State,
+    viewModel: InviteMembersViewModel,
+    state: State, // new message state
     qrErrors: Flow<String> = emptyFlow(),
     callbacks: Callbacks = object : Callbacks {},
     onBack: () -> Unit = {},
     onHelp: () -> Unit = {},
-    sendCommand: (ManageGroupMembersViewModel.Commands) -> Unit,
-    onSendInvite: (address: Set<Address>, shareHistory: Boolean) -> Unit,
-    inviteDialogVisible: Boolean = false
+    onSendInvite: (shareHistory: Boolean) -> Unit
 ) {
     InviteAccountId(
         state = state,
+        inviteState = viewModel.uiState.collectAsState().value.inviteContactsDialog,
         qrErrors = qrErrors,
         callbacks = callbacks,
         onBack = onBack,
         onHelp = onHelp,
         onSendInvite = onSendInvite,
-        sendCommand = sendCommand,
-        inviteDialogVisible = inviteDialogVisible
+        onDismissInviteDialog = { viewModel.sendCommand(InviteMembersViewModel.Commands.DismissSendInviteDialog) }
     )
 }
 
@@ -64,13 +43,13 @@ internal fun InviteAccountIdScreen(
 @Composable
 private fun InviteAccountId(
     state: State,
+    inviteState: InviteMembersViewModel.InviteContactsDialogState,
     qrErrors: Flow<String> = emptyFlow(),
     callbacks: Callbacks = object : Callbacks {},
     onBack: () -> Unit = {},
     onHelp: () -> Unit = {},
-    sendCommand: (ManageGroupMembersViewModel.Commands) -> Unit = {},
-    onSendInvite: (Set<Address>, Boolean) -> Unit,
-    inviteDialogVisible: Boolean
+    onSendInvite: (Boolean) -> Unit,
+    onDismissInviteDialog: () -> Unit
 ) {
     Scaffold(
         contentWindowInsets = WindowInsets.safeDrawing,
@@ -93,87 +72,20 @@ private fun InviteAccountId(
         }
     }
 
-    if (inviteDialogVisible) {
+    if (inviteState.visible) {
         ShowInviteContactsDialog(
-            address = state.newMessageIdOrOns.toAddress(),
-            sendCommand = sendCommand,
-            onSendInvite = onSendInvite
+            state = inviteState,
+            onInviteClicked = onSendInvite,
+            onDismiss = onDismissInviteDialog
         )
     }
-}
-
-@Composable
-fun ShowInviteContactsDialog(
-    address: Address,
-    modifier: Modifier = Modifier,
-    onSendInvite: (Set<Address>, Boolean) -> Unit,
-    sendCommand: (ManageGroupMembersViewModel.Commands) -> Unit,
-) {
-    var shareHistory by remember { mutableStateOf(false) }
-
-    AlertDialog(
-        modifier = modifier,
-        onDismissRequest = {
-            // hide dialog
-            sendCommand(DismissInviteMemberDialog)
-        },
-        title = annotatedStringResource(R.string.membersInviteTitle),
-        text = annotatedStringResource(R.string.membersInviteShareDescription), // TODO: String from crowdin
-        content = {
-            DialogTitledRadioButton(
-                option = RadioOption(
-                    value = Unit,
-                    title = GetString(LocalResources.current.getString(R.string.membersInviteShareMessageHistoryDays)),
-                    selected = !shareHistory
-                )
-            ) {
-                shareHistory = false
-            }
-
-            DialogTitledRadioButton(
-                option = RadioOption(
-                    value = Unit,
-                    title = GetString(LocalResources.current.getString(R.string.membersInviteShareNewMessagesOnly)),
-                    selected = shareHistory,
-                )
-            ) {
-                shareHistory = true
-            }
-        },
-        buttons = listOf(
-            DialogButtonData(
-                text = GetString(
-                    LocalResources.current.getQuantityString(
-                        R.plurals.membersInviteSend,
-                        1,
-                        1
-                    )
-                ),
-                color = LocalColors.current.danger,
-                dismissOnClick = false,
-                onClick = {
-                    sendCommand(DismissInviteMemberDialog)
-                    onSendInvite(
-                        setOf(address),
-                        shareHistory
-                    )
-                }
-            ),
-            DialogButtonData(
-                text = GetString(stringResource(R.string.cancel)),
-                onClick = {
-                    sendCommand(DismissInviteMemberDialog)
-                }
-            )
-        )
-    )
 }
 
 @Preview
 @Composable
 fun PreviewInviteAccountId() {
-    InviteAccountIdScreen(
-        State(
+    InviteAccountId(
+        state = State(
             newMessageIdOrOns = "",
             isTextErrorColor = false,
             error = null,
@@ -182,11 +94,11 @@ fun PreviewInviteAccountId() {
             helpUrl = "https://getsession.org/account-ids",
             validIdFromQr = "",
         ),
-        emptyFlow(),
         onBack = { },
         onHelp = { },
-        onSendInvite = {_, _ ->},
-        sendCommand = {  },
-        inviteDialogVisible = false
+        onSendInvite = {_ -> },
+        inviteState = InviteMembersViewModel.InviteContactsDialogState(),
+        qrErrors = emptyFlow(),
+        onDismissInviteDialog = {},
     )
 }

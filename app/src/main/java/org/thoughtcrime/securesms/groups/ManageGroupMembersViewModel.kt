@@ -313,19 +313,11 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         showRemoveMembersDialog.value = visible
     }
 
-    private fun toggleInviteMembersDialog(visible : Boolean){
-        _uiState.update { it.copy(isInviteMemberDialogVisible = visible) }
-    }
-
     fun onCommand(command: Commands) {
         when (command) {
             is Commands.ShowRemoveMembersDialog -> toggleRemoveMembersDialog(true)
 
             is Commands.DismissRemoveMembersDialog -> toggleRemoveMembersDialog(false)
-
-            is Commands.DismissInviteMemberDialog -> toggleInviteMembersDialog(false)
-
-            is Commands.ShowInviteMemberDialog -> toggleInviteMembersDialog(true)
 
             is Commands.RemoveMembers -> onRemoveContact(command.removeMessages)
 
@@ -439,8 +431,6 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         val error: String? = null,
         val ongoingAction: String? = null,
 
-        val isInviteMemberDialogVisible : Boolean  = false,
-
         // search UI state:
         val searchQuery: String = "",
         val isSearchFocused: Boolean = false,
@@ -486,10 +476,6 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         data object CloseFooter : Commands
 
         data object ClearSelection : Commands
-
-        data object ShowInviteMemberDialog : Commands
-
-        data object DismissInviteMemberDialog : Commands
 
         data class SendInvites(val address : Set<Address>, val shareHistory: Boolean) : Commands
 

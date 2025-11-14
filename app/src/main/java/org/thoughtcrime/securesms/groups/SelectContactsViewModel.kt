@@ -132,6 +132,12 @@ open class SelectContactsViewModel @AssistedInject constructor(
         mutableManuallyAddedContacts.value = accountIDs
     }
 
+    // Used when getting results from a QR or AccountId input field
+    fun setManuallySelectedAddress(address : Address){
+        val selectedItem = SelectedContact(address, "")
+        mutableSelectedContacts.value = setOf(selectedItem)
+    }
+
     fun onSearchQueryChanged(query: String) {
         mutableSearchQuery.value = query
     }

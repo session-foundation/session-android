@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.groups
 
-import android.R.attr.data
 import android.content.Context
 import androidx.lifecycle.viewModelScope
 import com.squareup.phrase.Phrase
@@ -88,16 +87,22 @@ class InviteMembersViewModel @AssistedInject constructor(
 
     private fun buildInviteContactsDialogState(
         visible: Boolean,
-        selected: Set<SelectedContact>
+        selected: Set<SelectedContact>,
     ): InviteContactsDialogState {
         val count = selected.size
         val firstMember = selected.firstOrNull()
 
         val body: CharSequence = when (count) {
-            1 -> Phrase.from(context, R.string.membersInviteShareDescription)
-                .put(NAME_KEY, firstMember?.name)
-                .format()
-
+            1 -> {
+                if (firstMember != null && firstMember.name.isNotEmpty()) {
+                    Phrase.from(context, R.string.membersInviteShareDescription)
+                        .put(NAME_KEY, firstMember?.name)
+                        .format()
+                } else {
+                    // TODO: Need to add String in Crowdin
+                    context.getString(R.string.membersInviteShareDescription)
+                }
+            }
             2 -> {
                 val secondMember = selected.elementAtOrNull(1)?.name
                 Phrase.from(context, R.string.membersInviteShareDescriptionTwo)
@@ -153,6 +158,11 @@ class InviteMembersViewModel @AssistedInject constructor(
 
             is Commands.ContactItemClick -> onContactItemClicked(command.address)
 
+            is Commands.HandleAccountId -> {
+                setManuallySelectedAddress(command.address)
+                toggleInviteContactsDialog(true)
+            }
+
             is Commands.DismissSendInviteDialog -> toggleInviteContactsDialog(false)
 
             is Commands.ShowSendInviteDialog -> toggleInviteContactsDialog(true)
@@ -176,6 +186,8 @@ class InviteMembersViewModel @AssistedInject constructor(
 
         data object ClearSelection : Commands
 
+        data class HandleAccountId(val address : Address) : Commands
+
         data class ContactItemClick(val address: Address) : Commands
 
         data class SearchFocusChange(val focus: Boolean) : Commands
@@ -197,7 +209,7 @@ class InviteMembersViewModel @AssistedInject constructor(
     data class InviteContactsDialogState(
         val visible: Boolean = false,
         val inviteContactsBody: CharSequence = "",
-        val inviteText: String = ""
+        val inviteText: String = "",
     )
 
     data class CollapsibleFooterState(

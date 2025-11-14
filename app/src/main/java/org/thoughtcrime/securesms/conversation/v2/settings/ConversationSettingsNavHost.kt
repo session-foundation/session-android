@@ -283,8 +283,16 @@ fun ConversationSettingsNavHost(
             horizontalSlideComposable<RouteInviteAccountIdToGroup> { backStackEntry ->
                 val data: RouteInviteAccountIdToGroup = backStackEntry.toRoute()
 
-                val viewModel = hiltViewModel<NewMessageViewModel>()
-                val uiState by viewModel.state.collectAsState(State())
+                val viewModel =
+                    hiltViewModel<InviteMembersViewModel, InviteMembersViewModel.Factory> { factory ->
+                        factory.create(
+                            groupAddress = data.groupAddress,
+                            excludingAccountIDs = data.excludingAccountIDs.map(Address::fromSerialized).toSet()
+                        )
+                    }
+
+                val newMessageViewModel = hiltViewModel<NewMessageViewModel>()
+                val uiState by newMessageViewModel.state.collectAsState(State())
 
                 // grab a hold of manage group's VM
                 val parentEntry = remember(backStackEntry) {
@@ -296,29 +304,37 @@ fun ConversationSettingsNavHost(
                 val manageGroupMembersViewModel: ManageGroupMembersViewModel = hiltViewModel(parentEntry)
 
                 LaunchedEffect(Unit) {
-                    viewModel.success.collect { success ->
-                        manageGroupMembersViewModel.onCommand(ManageGroupMembersViewModel.Commands.ShowInviteMemberDialog)
+                    newMessageViewModel.success.collect { success ->
+                        viewModel.sendCommand(
+                            InviteMembersViewModel.Commands.HandleAccountId(
+                                address = success.address
+                            )
+                        )
                     }
                 }
 
                 InviteAccountIdScreen(
-                    uiState,
-                    viewModel.qrErrors,
-                    viewModel,
+                    viewModel = viewModel,
+                    state = uiState,
+                    qrErrors = newMessageViewModel.qrErrors,
+                    callbacks = newMessageViewModel,
                     onBack = { handleBack() },
-                    onHelp = { viewModel.onCommand(NewMessageViewModel.Commands.ShowUrlDialog) },
-                    onSendInvite = { address, shareHistory ->
-                        manageGroupMembersViewModel.onCommand(ManageGroupMembersViewModel.Commands.SendInvites(address, shareHistory))
+                    onHelp = { newMessageViewModel.onCommand(NewMessageViewModel.Commands.ShowUrlDialog) },
+                    onSendInvite = {shareHistory ->
+                        manageGroupMembersViewModel.onCommand(
+                            ManageGroupMembersViewModel.Commands.SendInvites(
+                                address = viewModel.currentSelected,
+                                shareHistory = shareHistory
+                            )
+                        )
                         handleBack()
-                    },
-                    sendCommand = manageGroupMembersViewModel::onCommand,
-                    inviteDialogVisible = manageGroupMembersViewModel.uiState.collectAsState().value.isInviteMemberDialogVisible
+                    }
                 )
 
                 if (uiState.showUrlDialog) {
                     OpenURLAlertDialog(
                         url = uiState.helpUrl,
-                        onDismissRequest = { viewModel.onCommand(NewMessageViewModel.Commands.DismissUrlDialog) }
+                        onDismissRequest = { newMessageViewModel.onCommand(NewMessageViewModel.Commands.DismissUrlDialog) }
                     )
                 }
             }
