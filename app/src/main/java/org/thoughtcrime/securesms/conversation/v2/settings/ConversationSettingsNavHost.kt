@@ -305,7 +305,13 @@ fun ConversationSettingsNavHost(
                     viewModel.qrErrors,
                     viewModel,
                     onBack = { handleBack() },
-                    onHelp = { viewModel.onCommand(NewMessageViewModel.Commands.ShowUrlDialog) }
+                    onHelp = { viewModel.onCommand(NewMessageViewModel.Commands.ShowUrlDialog) },
+                    onSendInvite = { address, shareHistory ->
+                        manageGroupMembersViewModel.onCommand(ManageGroupMembersViewModel.Commands.SendInvites(address, shareHistory))
+                        handleBack()
+                    },
+                    sendCommand = manageGroupMembersViewModel::onCommand,
+                    inviteDialogVisible = manageGroupMembersViewModel.uiState.collectAsState().value.isInviteMemberDialogVisible
                 )
 
                 if (uiState.showUrlDialog) {

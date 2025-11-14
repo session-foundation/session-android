@@ -14,14 +14,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel
+import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel.Commands.*
 import org.thoughtcrime.securesms.home.startconversation.newmessage.Callbacks
 import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessage
+import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessageViewModel
 import org.thoughtcrime.securesms.home.startconversation.newmessage.State
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonData
@@ -30,6 +34,8 @@ import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
+import kotlin.Boolean
+import kotlin.String
 
 @Composable
 internal fun InviteAccountIdScreen(
@@ -38,7 +44,8 @@ internal fun InviteAccountIdScreen(
     callbacks: Callbacks = object : Callbacks {},
     onBack: () -> Unit = {},
     onHelp: () -> Unit = {},
-    sendCommand: (ManageGroupMembersViewModel.Commands) -> Unit = {},
+    sendCommand: (ManageGroupMembersViewModel.Commands) -> Unit,
+    onSendInvite: (address: Set<Address>, shareHistory: Boolean) -> Unit,
     inviteDialogVisible: Boolean = false
 ) {
     InviteAccountId(
@@ -47,6 +54,7 @@ internal fun InviteAccountIdScreen(
         callbacks = callbacks,
         onBack = onBack,
         onHelp = onHelp,
+        onSendInvite = onSendInvite,
         sendCommand = sendCommand,
         inviteDialogVisible = inviteDialogVisible
     )
@@ -61,6 +69,7 @@ private fun InviteAccountId(
     onBack: () -> Unit = {},
     onHelp: () -> Unit = {},
     sendCommand: (ManageGroupMembersViewModel.Commands) -> Unit = {},
+    onSendInvite: (Set<Address>, Boolean) -> Unit,
     inviteDialogVisible: Boolean
 ) {
     Scaffold(
@@ -79,7 +88,7 @@ private fun InviteAccountId(
                 onBack = { onBack() },
                 onClose = { onBack() },
                 onHelp = { onHelp() },
-                isInvite = true
+                isInvite = true,
             )
         }
     }
@@ -88,14 +97,16 @@ private fun InviteAccountId(
         ShowInviteContactsDialog(
             address = state.newMessageIdOrOns.toAddress(),
             sendCommand = sendCommand,
+            onSendInvite = onSendInvite
         )
     }
 }
 
 @Composable
 fun ShowInviteContactsDialog(
-    address : Address,
+    address: Address,
     modifier: Modifier = Modifier,
+    onSendInvite: (Set<Address>, Boolean) -> Unit,
     sendCommand: (ManageGroupMembersViewModel.Commands) -> Unit,
 ) {
     var shareHistory by remember { mutableStateOf(false) }
@@ -104,7 +115,7 @@ fun ShowInviteContactsDialog(
         modifier = modifier,
         onDismissRequest = {
             // hide dialog
-            sendCommand(ManageGroupMembersViewModel.Commands.DismissInviteMemberDialog)
+            sendCommand(DismissInviteMemberDialog)
         },
         title = annotatedStringResource(R.string.membersInviteTitle),
         text = annotatedStringResource(R.string.membersInviteShareDescription), // TODO: String from crowdin
@@ -141,22 +152,41 @@ fun ShowInviteContactsDialog(
                 color = LocalColors.current.danger,
                 dismissOnClick = false,
                 onClick = {
-                    sendCommand(ManageGroupMembersViewModel.Commands.DismissInviteMemberDialog)
-                    sendCommand(ManageGroupMembersViewModel.Commands.SendInvites(setOf(address), shareHistory))
+                    sendCommand(DismissInviteMemberDialog)
+                    onSendInvite(
+                        setOf(address),
+                        shareHistory
+                    )
                 }
             ),
             DialogButtonData(
                 text = GetString(stringResource(R.string.cancel)),
                 onClick = {
-                    sendCommand(ManageGroupMembersViewModel.Commands.DismissInviteMemberDialog)
+                    sendCommand(DismissInviteMemberDialog)
                 }
             )
         )
     )
 }
 
-//@Preview
-//@Composable
-//fun PreviewInviteAccountId() {
-//    InviteAccountIdScreen()
-//}
+@Preview
+@Composable
+fun PreviewInviteAccountId() {
+    InviteAccountIdScreen(
+        State(
+            newMessageIdOrOns = "",
+            isTextErrorColor = false,
+            error = null,
+            loading = false,
+            showUrlDialog = false,
+            helpUrl = "https://getsession.org/account-ids",
+            validIdFromQr = "",
+        ),
+        emptyFlow(),
+        onBack = { },
+        onHelp = { },
+        onSendInvite = {_, _ ->},
+        sendCommand = {  },
+        inviteDialogVisible = false
+    )
+}

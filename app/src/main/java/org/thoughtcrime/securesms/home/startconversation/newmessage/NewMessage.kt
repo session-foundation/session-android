@@ -59,7 +59,7 @@ internal fun NewMessage(
     onClose: () -> Unit = {},
     onBack: () -> Unit = {},
     onHelp: () -> Unit = {},
-    isInvite: Boolean = false
+    isInvite: Boolean = false,
 ) {
     val pagerState = rememberPagerState { TITLES.size }
 
@@ -109,7 +109,7 @@ private fun EnterAccountId(
     state: State,
     callbacks: Callbacks,
     onHelp: () -> Unit = {},
-    isInvite: Boolean = false
+    isInvite: Boolean = false,
 ) {
     Surface(color = if (isInvite) LocalColors.current.background else LocalColors.current.backgroundSecondary) {
         Column(
@@ -162,7 +162,7 @@ private fun EnterAccountId(
                     .qaTag(R.string.next),
                 enabled = state.isNextButtonEnabled,
                 disabledColor = LocalColors.current.textSecondary,
-                onClick = if(isInvite) callbacks::onShowInviteDialog  else callbacks::onContinue
+                onClick = callbacks::onContinue
             ) {
                 LoadingArcOr(state.loading) {
                     Text(stringResource(if(isInvite) R.string.membersInviteTitle else R.string.next))

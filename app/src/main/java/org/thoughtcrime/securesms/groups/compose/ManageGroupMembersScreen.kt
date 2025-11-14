@@ -252,7 +252,7 @@ fun ManageMembers(
                         .padding(horizontal = LocalDimensions.current.mediumSpacing)
                         .fillMaxWidth()
                         .wrapContentWidth(Alignment.CenterHorizontally),
-                    text = LocalResources.current.getString(R.string.NoNonAdminsInGroup),
+                    text = LocalResources.current.getString(R.string.noNonAdminsInGroup),
                     textAlign = TextAlign.Center,
                     style = LocalType.current.base,
                     color = LocalColors.current.textSecondary
