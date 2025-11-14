@@ -17,7 +17,7 @@ class GetProDetailsRequest @AssistedInject constructor(
     @Assisted private val masterPrivateKey: ByteArray,
 ) : ApiRequest<Int, ProDetails> {
     override val endpoint: String
-        get() = "get_pro_status"
+        get() = "get_pro_details"
 
     override fun buildJsonBody(): String {
         return BackendRequests.buildGetProDetailsRequestJson(

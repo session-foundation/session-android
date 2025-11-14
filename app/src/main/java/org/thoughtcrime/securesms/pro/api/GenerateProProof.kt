@@ -14,7 +14,7 @@ class GenerateProProofRequest @AssistedInject constructor(
     private val snodeClock: SnodeClock,
 ) : ApiRequest<GetProProofStatus, ProProof> {
     override val endpoint: String
-        get() = "get_pro_proof"
+        get() = "generate_pro_proof"
 
     override fun buildJsonBody(): String {
         val now = snodeClock.currentTime()
