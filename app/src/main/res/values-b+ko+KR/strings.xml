@@ -65,6 +65,7 @@
     <string name="appNameNotes">노트</string>
     <string name="appNameStocks">주식</string>
     <string name="appNameWeather">날씨</string>
+    <string name="appearanceAutoDarkMode">자동 다크 모드</string>
     <string name="appearanceHideMenuBar">메뉴 바 숨기기</string>
     <string name="appearanceLanguage">언어</string>
     <string name="appearanceLanguageDescription">{app_name}의 언어 설정을 선택하십시오. 언어 설정을 변경하면 {app_name}이 재시작됩니다.</string>
@@ -182,6 +183,7 @@
     <string name="callsSettings">통화 (베타)</string>
     <string name="callsVoiceAndVideo">음성 및 영상 통화</string>
     <string name="callsVoiceAndVideoBeta">음성 및 영상 통화 (Beta)</string>
+    <string name="callsVoiceAndVideoModalDescription">베타 버전 통화를 사용하면 상대방과 {session_foundation} 서버에 IP가 노출됩니다.</string>
     <string name="callsVoiceAndVideoToggleDescription">다른 사용자와 음성 및 영상 통화를 할 수 있습니다.</string>
     <string name="callsYouCalled">{name}님에게 전화함</string>
     <string name="callsYouMissedCallPermissions"><b>{name}</b>님으로부터 받은 전화를 놓쳤습니다. 개인 정보 설정에서 <b>음성 및 화상 통화</b>를 활성화하지 않았기 때문입니다.</string>
@@ -271,11 +273,15 @@
     <string name="conversationsDeleted">대화를 삭제함</string>
     <string name="conversationsEmpty">{conversation_name}에는 메시지가 없습니다.</string>
     <string name="conversationsEnter">키 입력</string>
+    <string name="conversationsEnterNewLine">SHIFT + ENTER 메시지 전송, ENTER 새 줄 시작.</string>
+    <string name="conversationsEnterSends">ENTER 키는 메시지를 전송하며, SHIFT + ENTER 키는 줄바꿈을 합니다.</string>
     <string name="conversationsGroups">그룹</string>
     <string name="conversationsMessageTrimming">대화 줄이기</string>
     <string name="conversationsMessageTrimmingTrimCommunities">커뮤니티 정돈</string>
+    <string name="conversationsMessageTrimmingTrimCommunitiesDescription">2000개 이상의 메시지가 있는 커뮤니티에서 6개월 이상 지난 메시지를 자동 삭제.</string>
     <string name="conversationsNew">새 대화</string>
     <string name="conversationsNone">아직 대화가 없습니다</string>
+    <string name="conversationsSendWithEnterKey">ENTER 키로 전송</string>
     <string name="conversationsSendWithEnterKeyDescription">Enter를 누를 때 줄바꿈 대신 메시지를 전송합니다.</string>
     <string name="conversationsSettingsAllMedia">모든 미디어</string>
     <string name="conversationsSpellCheck">맞춤법 검사</string>
@@ -425,6 +431,7 @@
     <string name="failures">실패</string>
     <string name="file">파일</string>
     <string name="files">파일들</string>
+    <string name="followSystemSettings">시스템 설정 모드.</string>
     <string name="forever">영원히</string>
     <string name="from">보낸 사람:</string>
     <string name="fullScreenToggle">Toggle Full Screen</string>
@@ -518,10 +525,12 @@
     <string name="handlingConnectionCandidates">연결 후보 처리 중</string>
     <string name="helpFAQ">자주 묻는 질문</string>
     <string name="helpHelpUsTranslateSession">{app_name} 번역 돕기</string>
+    <string name="helpReportABug">버그 제보</string>
     <string name="helpReportABugDescription">문제를 해결하는 데 도움이 될 수 있도록 몇 가지 세부 정보를 공유해 주세요. 로그를 내보낸 다음 {app_name}의 도움말 센터에 파일을 업로드하세요.</string>
     <string name="helpReportABugExportLogs">로그 내보내기</string>
     <string name="helpReportABugExportLogsDescription">로그를 내보내고, {app_name}의 지원 데스크를 통하여 파일을 업로드하세요.</string>
     <string name="helpReportABugExportLogsSaveToDesktop">데스크탑에 저장</string>
+    <string name="helpReportABugExportLogsSaveToDesktopDescription">이 파일을 저장하고 {app_name} 개발자와 공유합니다.</string>
     <string name="helpSupport">지원</string>
     <string name="helpWedLoveYourFeedback">여러분의 의견을 기다리고 있습니다</string>
     <string name="hide">숨기기</string>
@@ -598,6 +607,7 @@
     <string name="membersInviteShareNewMessagesOnly">새 메시지만 공유</string>
     <string name="membersInviteTitle">초대</string>
     <string name="message">메시지</string>
+    <string name="messageBubbleReadMore">더보기</string>
     <string name="messageEmpty">이 메시지는 비어 있습니다.</string>
     <string name="messageErrorDelivery">메시지 전송 실패</string>
     <string name="messageErrorLimit">글자 수 제한을 초과했습니다.</string>
@@ -648,6 +658,14 @@
     <string name="messageVoiceSnippetGroup">{author}: {emoji} 음성 메시지</string>
     <string name="messages">메시지</string>
     <string name="minimize">최소화</string>
+    <plurals name="modalMessageCharacterDisplayDescription">
+        <item quantity="other">메시지를 최대 %1$s자 작성할 수 있습니다. %2$d자 남았습니다.</item>
+    </plurals>
+    <string name="modalMessageCharacterDisplayTitle">메시지 길이</string>
+    <string name="modalMessageCharacterTooLongDescription">이 메시지에 사용된 문자 수가 제한을 초과했습니다. 메시지를 {limit}자 이하로 줄여 주세요.</string>
+    <string name="modalMessageCharacterTooLongTitle">메시지 길이 초과</string>
+    <string name="modalMessageTooLongDescription">메시지 길이를 {limit}글자 이하로 줄여주세요.</string>
+    <string name="modalMessageTooLongTitle">메시지 길이 초과</string>
     <string name="next">다음</string>
     <string name="nicknameDescription"><b>{name}</b>의 닉네임을 선택하십시오. 일대일 및 그룹 채팅에서 표시됩니다.</string>
     <string name="nicknameEnter">닉네임을 입력하세요.</string>
@@ -726,17 +744,24 @@
     <string name="open">열기</string>
     <string name="other">기타</string>
     <string name="passwordChange">비밀번호 변경</string>
+    <string name="passwordChangeShortDescription">{app_name} 잠금 해제 시 사용되는 비밀번호를 변경합니다.</string>
+    <string name="passwordChangedDescriptionToast">비밀번호 변경이 완료되었습니다. 안전히 관리하시기 바랍니다.</string>
     <string name="passwordConfirm">비밀번호 확인</string>
+    <string name="passwordCreate">비밀번호 생성</string>
     <string name="passwordCurrentIncorrect">현재 비밀번호가 잘못되었습니다.</string>
     <string name="passwordEnter">비밀번호 입력</string>
     <string name="passwordEnterCurrent">현재 비밀번호를 입력해주세요</string>
     <string name="passwordEnterNew">새 비밀번호를 입력해 주세요</string>
     <string name="passwordError">비밀번호는 문자, 숫자 및 간단한 기호만으로 구성되야 합니다</string>
+    <string name="passwordErrorLength">비밀번호는 {min} 글자 이상, {max} 글자 이하여야 합니다</string>
     <string name="passwordErrorMatch">비밀번호가 일치하지 않습니다</string>
     <string name="passwordFailed">비밀번호 설정 실패</string>
     <string name="passwordIncorrect">잘못된 비밀번호</string>
     <string name="passwordRemove">비밀번호 제거</string>
+    <string name="passwordRemovedDescriptionToast">비밀번호가 제거되었습니다.</string>
     <string name="passwordSet">비밀번호 설정</string>
+    <string name="passwordSetDescriptionToast">비밀번호를 설정했습니다. 잊어버리지 않게 주의하세요.</string>
+    <string name="passwordSetShortDescription">{app_name}앱을 시작할 때 비밀번호를 요구합니다.</string>
     <string name="paste">붙여넣기</string>
     <string name="permissionChange">권한 변경</string>
     <string name="permissionMusicAudioDenied">{app_name}은(는) 파일, 음악 및 오디오를 전송하기 위해 음악 및 오디오 접근이 필요하지만, 접근이 영구적으로 거부되었습니다. 설정 → 권한으로 이동하여 \"음악 및 오디오\"를 켜십시오.</string>
@@ -749,6 +774,7 @@
     <string name="permissionsCameraDescriptionIos">영상 통화를 위해 카메라 접근을 허용하세요.</string>
     <string name="permissionsFaceId">{app_name}의 화면 잠금 기능은 Face ID를 사용합니다.</string>
     <string name="permissionsKeepInSystemTray">트레이 아이콘 유지</string>
+    <string name="permissionsKeepInSystemTrayDescription">{app_name}은 창을 닫아도 백그라운드에서 동작합니다.</string>
     <string name="permissionsLibrary">{app_name}은 포토 라이브러리 접근권한이 필요합니다. iOS 설정에서 접근 권한을 허용할 수 있습니다.</string>
     <string name="permissionsLocalNetworkAccessRequiredCallsIos">통화를 위해 “로컬 네트워크” 접근이 필요합니다. 계속하려면 설정에서 “로컬 네트워크” 권한을 켜세요.</string>
     <string name="permissionsLocalNetworkAccessRequiredIos">{app_name}이 음성 및 영상 통화를 하기 위해 로컬 네트워크에 접근해야 합니다.</string>
@@ -776,6 +802,9 @@
     <string name="pinUnpin">고정 해제</string>
     <string name="pinUnpinConversation">대화 고정 취소</string>
     <string name="preview">미리보기</string>
+    <plurals name="proPinnedConversations">
+        <item quantity="other">고정된 대화 %1$s개</item>
+    </plurals>
     <string name="profile">프로필</string>
     <string name="profileDisplayPicture">프로필 사진 설정</string>
     <string name="profileDisplayPictureRemoveError">표시 사진을 제거하지 못했습니다.</string>
@@ -807,6 +836,7 @@
     <string name="recommended">권장</string>
     <string name="recoveryPasswordBannerDescription">계정에 접근 권한을 잃지 않도록 회복 비밀번호를 저장하세요.</string>
     <string name="recoveryPasswordBannerTitle">회복 비밀번호 저장</string>
+    <string name="recoveryPasswordDescription">복구 비밀번호를 사용해 다른 기기에서 계정을 불러올 수 있습니다. \n\n복구 비밀번호가 없으면 계정을 불러올 수 없습니다. 안전한 곳에 보관하고 <b>다른 사람이 볼 수 없게 하세요</b>.</string>
     <string name="recoveryPasswordEnter">복구 비밀번호 입력</string>
     <string name="recoveryPasswordErrorLoad">복구 비밀번호를 불러오는 도중 오류가 발생했습니다.\n\n문제를 해결하기 위해 로그를 내보낸 후 {app_name} 고객 지원 센터에 첨부하여 문의 해주세요.</string>
     <string name="recoveryPasswordErrorMessageGeneric">복구 비밀번호를 확인하시고 다시 시도해주세요.</string>
@@ -816,13 +846,17 @@
     <string name="recoveryPasswordExplanation">계정을 로드하려면 복구 비밀번호를 입력하세요.</string>
     <string name="recoveryPasswordHidePermanently">복구 비밀번호 영구적으로 숨기기</string>
     <string name="recoveryPasswordHidePermanentlyDescription1">복구 비밀번호가 없으면 새로운 기기에서 계정을 불러올 수 없습니다.\n\n계속하기 전에 안전하고 보안된 곳에 복구 비밀번호를 저장할 것을 강력히 권장합니다.</string>
+    <string name="recoveryPasswordHidePermanentlyDescription2">정말 이 장치에서 복구 비밀번호를 영구적으로 숨기겠습니까?\n\n이 작업은 되돌릴 수 없습니다.</string>
     <string name="recoveryPasswordHideRecoveryPassword">복구 비밀번호 숨기기</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">이 기기에서 복구 비밀번호를 영구적으로 숨깁니다.</string>
     <string name="recoveryPasswordRestoreDescription">계정을 로드하려면 복구 비밀번호를 입력하세요. 저장되지 않았다면, 앱 설정에서 찾을 수 있습니다.</string>
     <string name="recoveryPasswordWarningSendDescription">이것은 당신의 복구 비밀번호입니다. 다른 사람에게 보내면 그들이 당신의 계정에 완전히 접근할 수 있게 됩니다.</string>
     <string name="recreateGroup">그룹 다시 만들기</string>
     <string name="redo">다시 실행</string>
-    <string name="remainingCharactersTooltip">{count}자 입력 가능</string>
+    <string name="remainingCharactersOverTooltip">메시지 길이를 {count}자 줄이세요</string>
+    <plurals name="remainingCharactersTooltip">
+        <item quantity="other">%1$d글자 남았습니다</item>
+    </plurals>
     <string name="remove">삭제</string>
     <string name="removePasswordFail">비밀번호를 제거하지 못했습니다</string>
     <string name="reply">답장</string>

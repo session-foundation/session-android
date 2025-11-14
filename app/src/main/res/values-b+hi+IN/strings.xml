@@ -836,7 +836,6 @@
     <string name="proIncreasedMessageLengthFeature">बढ़ाई गई संदेश लंबाई</string>
     <string name="proMessageInfoFeatures">इस संदेश में निम्नलिखित {app_pro} विशेषताएँ उपयोग की गईं हैं:</string>
     <string name="proSendMore">इसके साथ और भेजें</string>
-    <string name="proUserProfileModalCallToAction">क्या आप {app_name} से अधिक प्राप्त करना चाहते हैं? एक अधिक शक्तिशाली संदेश अनुभव के लिए {app_pro} में अपग्रेड करें।</string>
     <string name="profile">प्रोफ़ाइल</string>
     <string name="profileDisplayPicture">प्रदर्शन चित्र</string>
     <string name="profileDisplayPictureRemoveError">डिस्प्ले तस्वीर हटाने में विफल।</string>

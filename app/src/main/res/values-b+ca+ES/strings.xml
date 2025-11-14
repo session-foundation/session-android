@@ -823,7 +823,6 @@
     <string name="proAnimatedDisplayPictureFeature">Imatge de pantalla animada</string>
     <string name="proAnimatedDisplayPictureModalDescription">els usuaris poden penjar GIFs</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Penja els gifs amb</string>
-    <string name="proCallToActionPinnedConversations">Vols més pins? Organitzes els teus xats i desbloqueges les funcions premium amb {app_pro}</string>
     <string name="proFeatureListLargerGroups">Xateja de grups més grans fins a 300 membres</string>
     <string name="proFeatureListLoadsMore">Plus carrega funcions més exclusives</string>
     <string name="proFeatureListLongerMessages">Missatges de fins a 10,000 caràcters</string>
@@ -834,7 +833,6 @@
     <string name="proIncreasedMessageLengthFeature">Augment de la longitud del missatge</string>
     <string name="proMessageInfoFeatures">Aquest missatge va utilitzar les funcions següents {app_pro}:</string>
     <string name="proSendMore">Envia més amb</string>
-    <string name="proUserProfileModalCallToAction">Vols treure més informació de {app_name}? Actualitzes a {app_pro} per a una experiència de missatgeria més potent.</string>
     <string name="profile">Perfil</string>
     <string name="profileDisplayPicture">Imatge de perfil</string>
     <string name="profileDisplayPictureRemoveError">Error en eliminar la imatge de perfil.</string>

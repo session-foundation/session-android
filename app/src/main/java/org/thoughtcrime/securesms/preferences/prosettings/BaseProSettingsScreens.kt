@@ -13,11 +13,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.widthIn
@@ -107,15 +109,16 @@ fun BaseProSettingsScreen(
                     onBack = onBack,
                 )
             }} else {{}},
-        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
+        contentWindowInsets = WindowInsets.systemBars,
     ) { paddings ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .consumeWindowInsets(paddings)
-                .padding(horizontal = LocalDimensions.current.spacing),
+                .consumeWindowInsets(paddings),
             state = lazyListState,
             contentPadding = PaddingValues(
+                start = LocalDimensions.current.spacing,
+                end = LocalDimensions.current.spacing,
                 top = (paddings.calculateTopPadding() - LocalDimensions.current.appBarHeight)
                     .coerceAtLeast(0.dp) + 46.dp,
                 bottom = paddings.calculateBottomPadding() + LocalDimensions.current.spacing

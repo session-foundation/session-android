@@ -35,6 +35,7 @@ import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -57,6 +58,7 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val prefs: TextSecurePreferences,
+    private val loginStateRepository: LoginStateRepository,
     private val typingStatusRepository: TypingStatusRepository,
     private val configFactory: ConfigFactory,
     callManager: CallManager,
@@ -291,7 +293,7 @@ class HomeViewModel @Inject constructor(
             is Commands.ShowStartConversationSheet -> {
                 _dialogsState.update { it.copy(showStartConversationSheet =
                     StartConversationSheetData(
-                        accountId = prefs.getLocalNumber()!!
+                        accountId = loginStateRepository.requireLocalNumber()
                     )
                 ) }
             }

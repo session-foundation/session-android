@@ -24,6 +24,7 @@ import org.session.libsignal.utilities.ByteArraySlice.Companion.view
 import org.session.libsignal.utilities.ByteArraySlice.Companion.write
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.util.DateUtils.Companion.millsToInstant
 import org.thoughtcrime.securesms.util.getRootCause
@@ -47,6 +48,7 @@ class AvatarDownloadManager @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val fileServerApi: FileServerApi,
     private val attachmentProcessor: AttachmentProcessor,
+    private val loginStateRepository: LoginStateRepository,
 ) {
     /**
      * A map of mutexes to synchronize downloads for each remote file.
@@ -168,7 +170,7 @@ class AvatarDownloadManager @Inject constructor(
                 if (configs.userProfile.getPic().url == profilePicUrl) {
                     // If the profile picture URL matches the one in the user config, add the local number
                     // as a recipient as well.
-                    add(Address.fromSerialized(prefs.getLocalNumber()!!))
+                    add(Address.fromSerialized(loginStateRepository.requireLocalNumber()))
                 }
 
                 // Search through all contacts to find any that have this profile picture URL.
@@ -212,7 +214,7 @@ class AvatarDownloadManager @Inject constructor(
                             .getOrNull() ?: continue
 
                         val meta = FileMetadata(
-                            expiryTime = if (address.address == prefs.getLocalNumber()) {
+                            expiryTime = if (address.address == loginStateRepository.requireLocalNumber()) {
                                 TextSecurePreferences.getProfileExpiry(context).millsToInstant()
                             } else {
                                 null

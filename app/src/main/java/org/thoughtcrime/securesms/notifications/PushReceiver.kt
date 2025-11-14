@@ -32,6 +32,7 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -52,6 +53,7 @@ class PushReceiver @Inject constructor(
     private val receivedMessageProcessor: ReceivedMessageProcessor,
     private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     @param:ManagerScope private val scope: CoroutineScope,
+    private val loginStateRepository: LoginStateRepository,
 ) {
 
     /**
@@ -246,7 +248,10 @@ class PushReceiver @Inject constructor(
     private fun decrypt(encPayload: ByteArray): PushData {
         Log.d(TAG, "decrypt() called")
 
-        val encKey = getOrCreateNotificationKey()
+        val encKey = checkNotNull(loginStateRepository.loggedInState?.value?.notificationKey?.data) {
+            "No notification key available to decrypt push notification"
+        }
+
         val decrypted = SessionEncrypt.decryptPushNotification(
             message = encPayload,
             secretKey = encKey
@@ -267,18 +272,6 @@ class PushReceiver @Inject constructor(
             pushData.data?.let { check(metadata.data_len == it.size) { "wrong message data size" } }
                 ?: check(metadata.data_too_long) { "missing message data, but no too-long flag" }
         }
-    }
-
-    fun getOrCreateNotificationKey(): ByteArray {
-        val keyHex = IdentityKeyUtil.retrieve(context, IdentityKeyUtil.NOTIFICATION_KEY)
-        if (keyHex != null) {
-            return keyHex.decodeHex().toByteArray()
-        }
-
-        // generate the key and store it
-        val key = ByteArray(32).also { SecureRandom().nextBytes(it) }
-        IdentityKeyUtil.save(context, IdentityKeyUtil.NOTIFICATION_KEY, key.toHexString())
-        return key
     }
 
     class PushData(

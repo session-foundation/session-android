@@ -50,6 +50,7 @@ import network.loki.messenger.libsession_util.util.KeyPair;
  * 
  * @author Moxie Marlinspike
  */
+@Deprecated(forRemoval = true)
 public class IdentityKeyUtil {
 
   private static final String MASTER_SECRET_UTIL_PREFERENCES_NAME = "SecureSMS-Preferences";
@@ -63,7 +64,7 @@ public class IdentityKeyUtil {
   public static final String ED25519_PUBLIC_KEY                          = "pref_ed25519_public_key";
   public static final String ED25519_SECRET_KEY                          = "pref_ed25519_secret_key";
   public static final String NOTIFICATION_KEY                            = "pref_notification_key";
-  public static final String LOKI_SEED                                   = "loki_seed";
+  private static final String LOKI_SEED                                   = "loki_seed";
   public static final String HAS_MIGRATED_KEY                            = "has_migrated_keys";
 
   public static final MutableSharedFlow<Unit> CHANGES = SharedFlowKt.MutableSharedFlow(0, 1, BufferOverflow.DROP_LATEST);

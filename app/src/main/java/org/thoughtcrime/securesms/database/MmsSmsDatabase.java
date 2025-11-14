@@ -38,6 +38,7 @@ import org.session.libsession.utilities.GroupUtil;
 import org.session.libsession.utilities.Util;
 import org.session.libsignal.utilities.AccountId;
 import org.session.libsignal.utilities.Log;
+import org.thoughtcrime.securesms.auth.LoginStateRepository;
 import org.thoughtcrime.securesms.database.MessagingDatabase.SyncMessageId;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.database.model.MessageId;
@@ -98,8 +99,14 @@ public class MmsSmsDatabase extends Database {
                                               MmsSmsColumns.SERVER_HASH
   };
 
-  public MmsSmsDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper) {
+  private final LoginStateRepository loginStateRepository;
+
+  public MmsSmsDatabase(Context context,
+                        Provider<SQLCipherOpenHelper> databaseHelper,
+                        LoginStateRepository loginStateRepository) {
     super(context, databaseHelper);
+
+    this.loginStateRepository = loginStateRepository;
   }
 
   public @Nullable MessageRecord getMessageForTimestamp(long threadId, long timestamp) {
@@ -135,7 +142,7 @@ public class MmsSmsDatabase extends Database {
       MmsSmsDatabase.Reader reader = readerFor(cursor, getQuote);
 
       MessageRecord messageRecord;
-      boolean isOwnNumber = Util.isOwnNumber(context, serializedAuthor);
+      boolean isOwnNumber = serializedAuthor.equals(loginStateRepository.getLocalNumber());
 
       while ((messageRecord = reader.getNext()) != null) {
         if ((isOwnNumber && messageRecord.isOutgoing()) ||
@@ -158,7 +165,7 @@ public class MmsSmsDatabase extends Database {
       MmsSmsDatabase.Reader reader = readerFor(cursor, getQuote);
 
       MessageRecord messageRecord;
-      boolean isOwnNumber = Util.isOwnNumber(context, serializedAuthor);
+      boolean isOwnNumber = serializedAuthor.equals(loginStateRepository.getLocalNumber());
 
       while ((messageRecord = reader.getNext()) != null) {
         if ((isOwnNumber && messageRecord.isOutgoing()) ||
@@ -454,7 +461,7 @@ public class MmsSmsDatabase extends Database {
 
     try (Cursor cursor = queryTables(new String[]{ MmsSmsColumns.NORMALIZED_DATE_SENT, MmsSmsColumns.ADDRESS }, selection, true, null, order, null)) {
       String  serializedAddress = address.toString();
-      boolean isOwnNumber       = Util.isOwnNumber(context, address.toString());
+      boolean isOwnNumber       = serializedAddress.equals(loginStateRepository.getLocalNumber());
 
       while (cursor != null && cursor.moveToNext()) {
         boolean timestampMatches = cursor.getLong(0) == sentTimestamp;

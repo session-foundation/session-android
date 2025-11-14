@@ -111,49 +111,48 @@ fun StartConversationNavHost(
     accountId: String,
     onClose: () -> Unit
 ){
-    SharedTransitionLayout {
-        val navController = rememberNavController()
-        val navigator: UINavigator<StartConversationDestination> =
-            remember { UINavigator() }
+    val navController = rememberNavController()
+    val navigator: UINavigator<StartConversationDestination> =
+        remember { UINavigator() }
 
-        ObserveAsEvents(flow = navigator.navigationActions) { action ->
-            when (action) {
-                is NavigationAction.Navigate -> navController.navigate(
-                    action.destination
-                ) {
-                    action.navOptions(this)
-                }
-
-                NavigationAction.NavigateUp -> navController.navigateUp()
-
-                is NavigationAction.NavigateToIntent -> {
-                    navController.context.startActivity(action.intent)
-                }
-
-                is NavigationAction.ReturnResult -> {}
+    ObserveAsEvents(flow = navigator.navigationActions) { action ->
+        when (action) {
+            is NavigationAction.Navigate -> navController.navigate(
+                action.destination
+            ) {
+                action.navOptions(this)
             }
+
+            NavigationAction.NavigateUp -> navController.navigateUp()
+
+            is NavigationAction.NavigateToIntent -> {
+                navController.context.startActivity(action.intent)
+            }
+
+            else -> {}
+        }
+    }
+
+    val scope = rememberCoroutineScope()
+    val activity = LocalActivity.current
+    val context = LocalContext.current
+
+    NavHost(navController = navController, startDestination = StartConversationDestination.Home) {
+        // Home
+        horizontalSlideComposable<StartConversationDestination.Home> {
+            StartConversationScreen (
+                accountId = accountId,
+                onClose = onClose,
+                navigateTo = {
+                    scope.launch { navigator.navigate(it) }
+                }
+            )
         }
 
-        val scope = rememberCoroutineScope()
-        val activity = LocalActivity.current
-        val context = LocalContext.current
-
-        NavHost(navController = navController, startDestination = StartConversationDestination.Home) {
-            // Home
-            horizontalSlideComposable<StartConversationDestination.Home> {
-                StartConversationScreen (
-                    accountId = accountId,
-                    onClose = onClose,
-                    navigateTo = {
-                        scope.launch { navigator.navigate(it) }
-                    }
-                )
-            }
-
-            // New Message
-            horizontalSlideComposable<StartConversationDestination.NewMessage> {
-                val viewModel = hiltViewModel<NewMessageViewModel>()
-                val uiState by viewModel.state.collectAsState(State())
+        // New Message
+        horizontalSlideComposable<StartConversationDestination.NewMessage> {
+            val viewModel = hiltViewModel<NewMessageViewModel>()
+            val uiState by viewModel.state.collectAsState(State())
 
                 LaunchedEffect(Unit) {
                     scope.launch {
@@ -186,56 +185,55 @@ fun StartConversationNavHost(
                 }
             }
 
-            // Create Group
-            horizontalSlideComposable<StartConversationDestination.CreateGroup> {
-                CreateGroupScreen(
-                    onNavigateToConversationScreen = { address ->
-                        activity?.startActivity(
-                            ConversationActivityV2.createIntent(activity, address)
-                        )
-                    },
-                    onBack = { scope.launch { navigator.navigateUp() }},
-                    onClose = onClose,
-                    fromLegacyGroupId = null,
-                )
-            }
+        // Create Group
+        horizontalSlideComposable<StartConversationDestination.CreateGroup> {
+            CreateGroupScreen(
+                onNavigateToConversationScreen = { address ->
+                    activity?.startActivity(
+                        ConversationActivityV2.createIntent(activity, address)
+                    )
+                },
+                onBack = { scope.launch { navigator.navigateUp() }},
+                onClose = onClose,
+                fromLegacyGroupId = null,
+            )
+        }
 
-            // Join Community
-            horizontalSlideComposable<StartConversationDestination.JoinCommunity> {
-                val viewModel = hiltViewModel<JoinCommunityViewModel>()
-                val state by viewModel.state.collectAsState()
+        // Join Community
+        horizontalSlideComposable<StartConversationDestination.JoinCommunity> {
+            val viewModel = hiltViewModel<JoinCommunityViewModel>()
+            val state by viewModel.state.collectAsState()
 
-                LaunchedEffect(Unit){
-                    scope.launch {
-                        viewModel.uiEvents.collect {
-                            when(it){
-                                is JoinCommunityViewModel.UiEvent.NavigateToConversation -> {
-                                    onClose()
-                                    activity?.startActivity(ConversationActivityV2.createIntent(activity, it.address))
-                                }
+            LaunchedEffect(Unit){
+                scope.launch {
+                    viewModel.uiEvents.collect {
+                        when(it){
+                            is JoinCommunityViewModel.UiEvent.NavigateToConversation -> {
+                                onClose()
+                                activity?.startActivity(ConversationActivityV2.createIntent(activity, it.address))
                             }
                         }
                     }
                 }
-
-                JoinCommunityScreen(
-                    state = state,
-                    sendCommand = { viewModel.onCommand(it) },
-                    onBack = { scope.launch { navigator.navigateUp() }},
-                    onClose = onClose
-                )
             }
 
-            // Invite Friend
-            horizontalSlideComposable<StartConversationDestination.InviteFriend> {
-                InviteFriend(
-                    accountId = accountId,
-                    onBack = { scope.launch { navigator.navigateUp() }},
-                    onClose = onClose
-                )
-            }
-
+            JoinCommunityScreen(
+                state = state,
+                sendCommand = { viewModel.onCommand(it) },
+                onBack = { scope.launch { navigator.navigateUp() }},
+                onClose = onClose
+            )
         }
+
+        // Invite Friend
+        horizontalSlideComposable<StartConversationDestination.InviteFriend> {
+            InviteFriend(
+                accountId = accountId,
+                onBack = { scope.launch { navigator.navigateUp() }},
+                onClose = onClose
+            )
+        }
+
     }
 }
 

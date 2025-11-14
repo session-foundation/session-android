@@ -3,24 +3,20 @@ package org.thoughtcrime.securesms.search
 import android.content.Context
 import android.database.Cursor
 import dagger.hilt.android.qualifiers.ApplicationContext
+import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.GroupRecord
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.concurrent.SignalExecutors
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
-import org.session.libsession.utilities.toGroupString
+import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.AccountId
-import org.thoughtcrime.securesms.contacts.ContactAccessor
 import org.thoughtcrime.securesms.database.CursorList
-import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.MmsSmsColumns
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SearchDatabase
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.search.model.SearchResult
@@ -33,13 +29,9 @@ import javax.inject.Singleton
 class SearchRepository @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val searchDatabase: SearchDatabase,
-    private val threadDatabase: ThreadDatabase,
-    private val groupDatabase: GroupDatabase,
-    private val contactAccessor: ContactAccessor,
     private val recipientRepository: RecipientRepository,
     private val conversationRepository: ConversationRepository,
     private val configFactory: ConfigFactoryProtocol,
-    private val prefs: TextSecurePreferences,
 ) {
     private val executor = SignalExecutors.SERIAL
 
@@ -128,12 +120,41 @@ class SearchRepository @Inject constructor(
 
     private fun queryConversations(
         query: String,
-    ): List<GroupRecord> {
-        val numbers = contactAccessor.getNumbersForThreadSearchFilter(context, query)
-        val addresses = numbers.map { fromSerialized(it) }
+    ) : List<Recipient> {
+        if(query.isEmpty()) return emptyList()
 
-        return threadDatabase.getThreads(addresses)
-            .map { groupDatabase.getGroup(it.recipient.address.toGroupString()).get() }
+        return configFactory.withUserConfigs { configs ->
+            configs.userGroups.all()
+        }.asSequence()
+            .mapNotNull { group ->
+                when (group) {
+                    is GroupInfo.ClosedGroupInfo -> {
+                        if(group.invited) null // do not show groups V2 we have not yet accepted
+                        else recipientRepository.getRecipientSync(
+                            Address.Group(AccountId(group.groupAccountId))
+                        )
+                    }
+
+                    is GroupInfo.LegacyGroupInfo -> {
+                        recipientRepository.getRecipientSync(
+                            Address.LegacyGroup(group.accountId)
+                        )
+                    }
+
+                    is GroupInfo.CommunityGroupInfo -> {
+                        recipientRepository.getRecipientSync(
+                            Address.Community(
+                                serverUrl = group.community.baseUrl,
+                                room = group.community.room
+                            )
+                        )
+                    }
+                }
+            }
+            .filter { group ->
+                group.displayName().contains(query, ignoreCase = true)
+            }
+            .toList()
     }
 
     private fun queryMessages(query: String): CursorList<MessageResult> {
