@@ -54,7 +54,4 @@
 
     </PreferenceCategory>
 
-    <org.thoughtcrime.securesms.preferences.widgets.ComposePreference
-        android:key="compose_data"/>
-
 </PreferenceScreen>

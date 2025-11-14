@@ -10,9 +10,16 @@ import android.os.AsyncTask
 import android.os.Bundle
 import android.provider.Settings
 import android.text.TextUtils
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -26,13 +33,13 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.components.SwitchPreferenceCompat
 import org.thoughtcrime.securesms.notifications.NotificationChannels
-import org.thoughtcrime.securesms.preferences.widgets.ComposePreference
 import org.thoughtcrime.securesms.preferences.widgets.DropDownPreference
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.isWhitelistedFromDoze
 import org.thoughtcrime.securesms.ui.requestDozeWhitelist
+import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import java.util.Arrays
 import javax.inject.Inject
@@ -44,12 +51,109 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
 
     //todo WHITELIST uncomment prefs after seeing the dialog
 //todo WHITELIST remove hardcoded strings
-//todo WHITELIST looks like there is a visible empty pref at the bottom from the compose one? << Might need to rebuild the whole thing in compose
 
     var showWhitelistEnableDialog by mutableStateOf(false)
     var showWhitelistDisableDialog by mutableStateOf(false)
 
     var whiteListControl: SwitchPreferenceCompat? = null
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        // We will wrap the existing screen in a framelayout in order to add custom compose content
+        val preferenceView = super.onCreateView(inflater, container, savedInstanceState)
+
+        val wrapper = FrameLayout(requireContext()).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        }
+
+        wrapper.addView(
+            preferenceView,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+        )
+
+        val compose = ComposeView(requireContext()).apply { id = R.id.composeHost }
+        wrapper.addView(
+            compose,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                Gravity.TOP
+            )
+        )
+
+        return wrapper
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        //set up compose content
+        view.findViewById<ComposeView>(R.id.composeHost).apply {
+            setViewCompositionStrategy(
+                ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
+            )
+            setThemedContent {
+                if(showWhitelistEnableDialog) {
+                    AlertDialog(
+                        onDismissRequest = {
+                            // hide dialog
+                            showWhitelistEnableDialog = false
+                        },
+                        title = "Run Session in the Background?",
+                        text = "Since you’re using slow mode we recommend allowing Session to run in the background to improve notifications. Your system may still decide to limit Session, but allowing can improve notification consistency.\n\nYou can change this later in Settings.",
+                        buttons = listOf(
+                            DialogButtonData(
+                                text = GetString("Allow"),
+                                qaTag = getString(R.string.qa_conversation_settings_dialog_whitelist_confirm),
+                                onClick = {
+                                    openSystemBgWhitelist()
+                                }
+                            ),
+                            DialogButtonData(
+                                text = GetString(getString(R.string.cancel)),
+                                qaTag = getString(R.string.qa_conversation_settings_dialog_whitelist_cancel),
+                            ),
+                        )
+                    )
+                }
+
+                if(showWhitelistDisableDialog) {
+                    AlertDialog(
+                        onDismissRequest = {
+                            // hide dialog
+                            showWhitelistDisableDialog = false
+                        },
+                        title = "Limit Background Activity?",
+                        text = "You have previously allowed Session to run in the background to improve notification reliability. Changing this permission could result in less reliable notifications.",
+                        buttons = listOf(
+                            DialogButtonData(
+                                text = GetString("Change Setting"),
+                                qaTag = getString(R.string.qa_conversation_settings_dialog_whitelist_confirm),
+                                color = LocalColors.current.danger,
+                                onClick = {
+                                    // we can't disable it ourselves, but we can take the user to the right settings instead
+                                    openBatteryOptimizationSettings()
+                                }
+                            ),
+                            DialogButtonData(
+                                text = GetString(getString(R.string.cancel)),
+                                qaTag = getString(R.string.qa_conversation_settings_dialog_whitelist_cancel),
+                            ),
+                        )
+                    )
+                }
+            }
+        }
+    }
 
     override fun onCreate(paramBundle: Bundle?) {
         super.onCreate(paramBundle)
@@ -146,61 +250,6 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
                 startActivity(intent)
                 true
             }
-
-        //set up compose content
-        findPreference<ComposePreference>("compose_data")!!.apply {
-            setContent {
-                if(showWhitelistEnableDialog) {
-                    AlertDialog(
-                        onDismissRequest = {
-                            // hide dialog
-                            showWhitelistEnableDialog = false
-                        },
-                        title = "Run Session in the Background?",
-                        text = "Since you’re using slow mode we recommend allowing Session to run in the background to improve notifications. Your system may still decide to limit Session, but allowing can improve notification consistency.\n\nYou can change this later in Settings.",
-                        buttons = listOf(
-                            DialogButtonData(
-                                text = GetString("Allow"),
-                                qaTag = getString(R.string.qa_conversation_settings_dialog_whitelist_confirm),
-                                onClick = {
-                                    openSystemBgWhitelist()
-                                }
-                            ),
-                            DialogButtonData(
-                                text = GetString(getString(R.string.cancel)),
-                                qaTag = getString(R.string.qa_conversation_settings_dialog_whitelist_cancel),
-                            ),
-                        )
-                    )
-                }
-
-                if(showWhitelistDisableDialog) {
-                    AlertDialog(
-                        onDismissRequest = {
-                            // hide dialog
-                            showWhitelistDisableDialog = false
-                        },
-                        title = "Limit Background Activity?",
-                        text = "You have previously allowed Session to run in the background to improve notification reliability. Changing this permission could result in less reliable notifications.",
-                        buttons = listOf(
-                            DialogButtonData(
-                                text = GetString("Change Setting"),
-                                qaTag = getString(R.string.qa_conversation_settings_dialog_whitelist_confirm),
-                                color = LocalColors.current.danger,
-                                onClick = {
-                                    // we can't disable it ourselves, but we can take the user to the right settings instead
-                                    openBatteryOptimizationSettings()
-                                }
-                            ),
-                            DialogButtonData(
-                                text = GetString(getString(R.string.cancel)),
-                                qaTag = getString(R.string.qa_conversation_settings_dialog_whitelist_cancel),
-                            ),
-                        )
-                    )
-                }
-            }
-        }
 
         initializeMessageVibrateSummary(findPreference<Preference>(TextSecurePreferences.VIBRATE_PREF) as SwitchPreferenceCompat?)
     }
