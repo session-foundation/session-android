@@ -81,7 +81,7 @@ import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActiv
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsActivity
 import org.thoughtcrime.securesms.pro.SubscriptionDetails
 import org.thoughtcrime.securesms.pro.SubscriptionState
-import org.thoughtcrime.securesms.pro.SubscriptionType
+import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.tokenpage.TokenPageActivity
@@ -267,11 +267,11 @@ fun Settings(
                     },
                 text = uiState.username,
                 iconSize = 53.sp to 24.sp,
-                content = if(uiState.subscriptionState.type !is SubscriptionType.NeverSubscribed){{ // if we are pro or expired
+                content = if(uiState.subscriptionState.type !is ProStatus.NeverSubscribed){{ // if we are pro or expired
                     ProBadge(
                         modifier = Modifier.padding(start = 4.dp)
                             .qaTag(stringResource(R.string.qa_pro_badge_icon)),
-                        colors = if(uiState.subscriptionState.type is SubscriptionType.Active)
+                        colors = if(uiState.subscriptionState.type is ProStatus.Active)
                             proBadgeColorStandard()
                         else proBadgeColorDisabled()
                     )
@@ -385,7 +385,7 @@ fun Settings(
         if(uiState.showAvatarDialog) {
             AvatarDialog(
                 state = uiState.avatarDialogState,
-                isPro = uiState.subscriptionState.type is SubscriptionType.Active,
+                isPro = uiState.subscriptionState.type is ProStatus.Active,
                 isPostPro = uiState.isPostPro,
                 sendCommand = sendCommand,
                 startAvatarSelection = startAvatarSelection
@@ -528,21 +528,21 @@ fun Buttons(
                    ItemButton(
                         text = annotatedStringResource(
                             when (subscriptionState.type) {
-                                is SubscriptionType.Active -> Phrase.from(
+                                is ProStatus.Active -> Phrase.from(
                                     LocalContext.current,
                                     R.string.sessionProBeta
                                 )
                                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                                     .format().toString()
 
-                                is SubscriptionType.NeverSubscribed -> Phrase.from(
+                                is ProStatus.NeverSubscribed -> Phrase.from(
                                     LocalContext.current,
                                     R.string.upgradeSession
                                 )
                                     .put(APP_NAME_KEY, stringResource(R.string.app_name))
                                     .format().toString()
 
-                                is SubscriptionType.Expired -> Phrase.from(
+                                is ProStatus.Expired -> Phrase.from(
                                     LocalContext.current,
                                     R.string.proRenewBeta
                                 )
@@ -994,10 +994,10 @@ fun AvatarDialog(
 
 @Composable
 fun AnimatedProCTA(
-    proSubscription: SubscriptionType,
+    proSubscription: ProStatus,
     sendCommand: (SettingsViewModel.Commands) -> Unit,
 ){
-    if(proSubscription is SubscriptionType.Active) {
+    if(proSubscription is ProStatus.Active) {
         SessionProCTA (
             title = stringResource(R.string.proActivated),
             badgeAtStart = true,
@@ -1064,11 +1064,8 @@ private fun SettingsScreenPreview() {
                 ),
                 isPostPro = true,
                 subscriptionState = SubscriptionState(
-                    type = SubscriptionType.Active.AutoRenewing(
-                        proStatus = RecipientProStatus.Pro(
-                            visible = true,
-                            validUntil = Instant.now() + Duration.ofDays(14),
-                        ),
+                    type = ProStatus.Active.AutoRenewing(
+                        validUntil = Instant.now() + Duration.ofDays(14),
                         duration = ProSubscriptionDuration.THREE_MONTHS,
                         subscriptionDetails = SubscriptionDetails(
                             device = "iOS",
@@ -1080,6 +1077,7 @@ private fun SettingsScreenPreview() {
                         )
                     ),
                     refreshState = State.Success(Unit),
+                    showProBadge = true
                 ),
                 username = "Atreyu",
                 accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",

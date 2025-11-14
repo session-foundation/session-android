@@ -91,8 +91,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsNavHost
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.pro.SubscriptionDetails
-import org.thoughtcrime.securesms.pro.SubscriptionType
+import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
@@ -105,8 +104,6 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.util.AvatarUIData
-import java.time.Duration
-import java.time.Instant
 
 
 @Composable
@@ -565,11 +562,11 @@ fun CTAAnimatedImages(
 // Reusable generic Pro CTA
 @Composable
 fun GenericProCTA(
-    proSubscription: SubscriptionType,
+    proSubscription: ProStatus,
     onDismissRequest: () -> Unit,
 ){
     val context = LocalContext.current
-    val expired = proSubscription is SubscriptionType.Expired
+    val expired = proSubscription is ProStatus.Expired
 
     AnimatedSessionProCTA(
         heroImageBg = R.drawable.cta_hero_generic_bg,
@@ -600,10 +597,10 @@ fun GenericProCTA(
 // Reusable long message  Pro CTA
 @Composable
 fun LongMessageProCTA(
-    proSubscription: SubscriptionType,
+    proSubscription: ProStatus,
     onDismissRequest: () -> Unit,
 ){
-    val expired = proSubscription is SubscriptionType.Expired
+    val expired = proSubscription is ProStatus.Expired
     val context = LocalContext.current
 
     SimpleSessionProCTA(
@@ -632,10 +629,10 @@ fun LongMessageProCTA(
 // Reusable animated profile pic Pro CTA
 @Composable
 fun AnimatedProfilePicProCTA(
-    proSubscription: SubscriptionType,
+    proSubscription: ProStatus,
     onDismissRequest: () -> Unit,
 ){
-    val expired = proSubscription is SubscriptionType.Expired
+    val expired = proSubscription is ProStatus.Expired
     val context = LocalContext.current
 
     AnimatedSessionProCTA(
@@ -668,11 +665,11 @@ fun AnimatedProfilePicProCTA(
 @Composable
 fun PinProCTA(
     overTheLimit: Boolean,
-    proSubscription: SubscriptionType,
+    proSubscription: ProStatus,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
 ){
-    val expired = proSubscription is SubscriptionType.Expired
+    val expired = proSubscription is ProStatus.Expired
     val context = LocalContext.current
 
     val title = when{

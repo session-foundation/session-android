@@ -37,7 +37,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.SubscriptionState
-import org.thoughtcrime.securesms.pro.SubscriptionType
+import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionCoordinator
@@ -121,8 +121,8 @@ class ProSettingsViewModel @AssistedInject constructor(
                         _dialogState.update {
                             val action = context.getString(
                                 when(_proSettingsUIState.value.subscriptionState.type) {
-                                    is SubscriptionType.Active -> R.string.proUpdatingAction
-                                    is SubscriptionType.Expired -> R.string.proRenewingAction
+                                    is ProStatus.Active -> R.string.proUpdatingAction
+                                    is ProStatus.Expired -> R.string.proRenewingAction
                                     else -> R.string.proUpgradingAction
                                 }
                             )
@@ -166,22 +166,22 @@ class ProSettingsViewModel @AssistedInject constructor(
             ProSettingsState(
                 subscriptionState = subscriptionState,
                 subscriptionExpiryLabel = when(subType){
-                    is SubscriptionType.Active.AutoRenewing ->
+                    is ProStatus.Active.AutoRenewing ->
                         Phrase.from(context, R.string.proAutoRenewTime)
                             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                            .put(TIME_KEY, dateUtils.getExpiryString(subType.proStatus.validUntil))
+                            .put(TIME_KEY, dateUtils.getExpiryString(subType.validUntil))
                             .format()
 
-                    is SubscriptionType.Active.Expiring ->
+                    is ProStatus.Active.Expiring ->
                         Phrase.from(context, R.string.proExpiringTime)
                             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                            .put(TIME_KEY, dateUtils.getExpiryString(subType.proStatus.validUntil))
+                            .put(TIME_KEY, dateUtils.getExpiryString(subType.validUntil))
                             .format()
 
                     else -> ""
                 },
                 subscriptionExpiryDate = when(subType){
-                    is SubscriptionType.Active -> subType.duration.expiryFromNow()
+                    is ProStatus.Active -> subType.duration.expiryFromNow()
                     else -> ""
                 },
                 proStats = State.Success( //todo PRO calculate properly
@@ -211,13 +211,13 @@ class ProSettingsViewModel @AssistedInject constructor(
                     is State.Loading -> {
                         val state = _proSettingsUIState.value.subscriptionState.type
                         val (title, message) = when{
-                            state is SubscriptionType.Active -> Phrase.from(context.getText(R.string.proAccessLoading))
+                            state is ProStatus.Active -> Phrase.from(context.getText(R.string.proAccessLoading))
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.proAccessLoadingDescription))
                                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format()
-                            state is SubscriptionType.NeverSubscribed
+                            state is ProStatus.NeverSubscribed
                                     || command.inSheet -> Phrase.from(context.getText(R.string.checkingProStatus))
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
@@ -247,14 +247,14 @@ class ProSettingsViewModel @AssistedInject constructor(
                     is State.Error -> {
                         val state = _proSettingsUIState.value.subscriptionState.type
                         val (title, message) = when{
-                            state is SubscriptionType.Active -> Phrase.from(context.getText(R.string.proAccessError))
+                            state is ProStatus.Active -> Phrase.from(context.getText(R.string.proAccessError))
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.proAccessNetworkLoadError))
                                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .put(APP_NAME_KEY, context.getString(R.string.app_name))
                                         .format()
-                            state is SubscriptionType.NeverSubscribed
+                            state is ProStatus.NeverSubscribed
                                     || command.inSheet-> Phrase.from(context.getText(R.string.proStatusError))
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
@@ -295,7 +295,7 @@ class ProSettingsViewModel @AssistedInject constructor(
 
             Commands.GoToRefund -> {
                 val sub = _proSettingsUIState.value.subscriptionState.type
-                if(sub !is SubscriptionType.Active) return
+                if(sub !is ProStatus.Active) return
 
                 _refundPlanState.update { State.Loading }
                 navigateTo(ProSettingsDestination.RefundSubscription)
@@ -305,7 +305,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                     _refundPlanState.update {
                         State.Success(
                             RefundPlanState(
-                                subscriptionType = sub,
+                                proStatus = sub,
                                 isQuickRefund = subManager.isWithinQuickRefundWindow(),
                                 quickRefundUrl = subManager.quickRefundUrl
                             )
@@ -316,7 +316,7 @@ class ProSettingsViewModel @AssistedInject constructor(
 
             Commands.GoToCancel -> {
                 val sub = _proSettingsUIState.value.subscriptionState.type
-                if(sub !is SubscriptionType.Active) return
+                if(sub !is ProStatus.Active) return
 
                 // calculate state
                 _cancelPlanState.update { State.Loading }
@@ -328,7 +328,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                     _cancelPlanState.update {
                         State.Success(
                             CancelPlanState(
-                                subscriptionType = sub,
+                                proStatus = sub,
                                 hasValidSubscription = hasValidSubscription
                             )
                         )
@@ -344,7 +344,7 @@ class ProSettingsViewModel @AssistedInject constructor(
             }
 
             Commands.OpenSubscriptionPage -> {
-                val subUrl = (_proSettingsUIState.value.subscriptionState.type as? SubscriptionType.Active)
+                val subUrl = (_proSettingsUIState.value.subscriptionState.type as? ProStatus.Active)
                     ?.subscriptionDetails?.subscriptionUrl
                 if(!subUrl.isNullOrEmpty()){
                     viewModelScope.launch {
@@ -368,7 +368,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                             plans = data.plans.map {
                                 it.copy(selected = it == command.plan)
                             },
-                            enableButton = data.subscriptionType !is SubscriptionType.Active.AutoRenewing
+                            enableButton = data.proStatus !is ProStatus.Active.AutoRenewing
                                     || !command.plan.currentPlan
                         )
                     )
@@ -391,7 +391,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                 val currentSubscription = _proSettingsUIState.value.subscriptionState.type
                 val selectedPlan = getSelectedPlan() ?: return
 
-                if(currentSubscription is SubscriptionType.Active){
+                if(currentSubscription is ProStatus.Active){
                     val newSubscriptionExpiryString = selectedPlan.durationType.expiryFromNow()
 
                     val currentSubscriptionDuration = DateUtils.getLocalisedTimeDuration(
@@ -412,7 +412,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                                 title = Phrase.from(context, R.string.updateAccess)
                                     .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                     .format().toString(),
-                                message = if(currentSubscription is SubscriptionType.Active.AutoRenewing)
+                                message = if(currentSubscription is ProStatus.Active.AutoRenewing)
                                     Phrase.from(context.getText(R.string.proUpdateAccessDescription))
                                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .put(DATE_KEY, newSubscriptionExpiryString)
@@ -457,13 +457,13 @@ class ProSettingsViewModel @AssistedInject constructor(
                     is State.Loading -> {
                         val state = _proSettingsUIState.value.subscriptionState.type
                         val (title, message) = when{
-                            state is SubscriptionType.Active -> Phrase.from(context.getText(R.string.proStatusLoading))
+                            state is ProStatus.Active -> Phrase.from(context.getText(R.string.proStatusLoading))
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.proStatusLoadingDescription))
                                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format()
-                            state is SubscriptionType.NeverSubscribed
+                            state is ProStatus.NeverSubscribed
                                     || command.inSheet-> Phrase.from(context.getText(R.string.checkingProStatus))
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
@@ -493,13 +493,13 @@ class ProSettingsViewModel @AssistedInject constructor(
                         _dialogState.update {
                             val state = _proSettingsUIState.value.subscriptionState.type
                             val (title, message) = when{
-                                state is SubscriptionType.Active -> Phrase.from(context.getText(R.string.proStatusError))
+                                state is ProStatus.Active -> Phrase.from(context.getText(R.string.proStatusError))
                                     .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                     .format().toString() to
                                         Phrase.from(context.getText(R.string.proStatusRefreshNetworkError))
                                             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                             .format()
-                                state is SubscriptionType.NeverSubscribed ||
+                                state is ProStatus.NeverSubscribed ||
                                      command.inSheet -> Phrase.from(context.getText(R.string.proStatusError))
                                     .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                     .format().toString() to
@@ -588,8 +588,8 @@ class ProSettingsViewModel @AssistedInject constructor(
             // or the user is pro without a valid subscription
             // or the user is pro but non originating
             val noPriceNeeded = !hasBillingCapacity
-                    || (subType is SubscriptionType.Active && !hasValidSub)
-                    || (subType is SubscriptionType.Active && subType.subscriptionDetails.isFromAnotherPlatform())
+                    || (subType is ProStatus.Active && !hasValidSub)
+                    || (subType is ProStatus.Active && subType.subscriptionDetails.isFromAnotherPlatform())
 
             val plans = if(noPriceNeeded) emptyList()
             else {
@@ -606,10 +606,10 @@ class ProSettingsViewModel @AssistedInject constructor(
             _choosePlanState.update {
                 State.Success(
                     ChoosePlanState(
-                        subscriptionType = subType,
+                        proStatus = subType,
                         hasValidSubscription = hasValidSub,
                         hasBillingCapacity = hasBillingCapacity,
-                        enableButton = subType !is SubscriptionType.Active.AutoRenewing, // only the auto-renew can have a disabled state
+                        enableButton = subType !is ProStatus.Active.AutoRenewing, // only the auto-renew can have a disabled state
                         plans = plans
                     )
                 )
@@ -622,8 +622,8 @@ class ProSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    private suspend fun getSubscriptionPlans(subType: SubscriptionType): List<ProPlan> {
-        val isActive = subType is SubscriptionType.Active
+    private suspend fun getSubscriptionPlans(subType: ProStatus): List<ProPlan> {
+        val isActive = subType is ProStatus.Active
         val currentPlan12Months = isActive && subType.duration == ProSubscriptionDuration.TWELVE_MONTHS
         val currentPlan3Months = isActive && subType.duration == ProSubscriptionDuration.THREE_MONTHS
         val currentPlan1Month = isActive && subType.duration == ProSubscriptionDuration.ONE_MONTH
@@ -645,7 +645,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                 subtitle = Phrase.from(context.getText(R.string.proBilledAnnually))
                     .put(PRICE_KEY, it.totalText)
                     .format().toString(),
-                selected = currentPlan12Months || subType !is SubscriptionType.Active, // selected if our active sub is 12 month, or as a default for non pro or renew
+                selected = currentPlan12Months || subType !is ProStatus.Active, // selected if our active sub is 12 month, or as a default for non pro or renew
                 currentPlan = currentPlan12Months,
                 durationType = ProSubscriptionDuration.TWELVE_MONTHS,
                 badges = buildList {
@@ -786,11 +786,11 @@ class ProSettingsViewModel @AssistedInject constructor(
         val subscriptionState: SubscriptionState = getDefaultSubscriptionStateData(),
         val proStats: State<ProStats> = State.Loading,
         val subscriptionExpiryLabel: CharSequence = "", // eg: "Pro auto renewing in 3 days"
-        val subscriptionExpiryDate: CharSequence = "" // eg: "May 21st, 2025"
+        val subscriptionExpiryDate: CharSequence = "", // eg: "May 21st, 2025"
     )
 
     data class ChoosePlanState(
-        val subscriptionType: SubscriptionType = SubscriptionType.NeverSubscribed,
+        val proStatus: ProStatus = ProStatus.NeverSubscribed,
         val hasBillingCapacity: Boolean = false,
         val hasValidSubscription: Boolean = false,  // true is there is a current subscription AND the available subscription manager on this device has an account which matches the product id we got from libsession
         val purchaseInProgress: Boolean = false,
@@ -799,12 +799,12 @@ class ProSettingsViewModel @AssistedInject constructor(
     )
 
     data class CancelPlanState(
-        val subscriptionType: SubscriptionType.Active,
+        val proStatus: ProStatus.Active,
         val hasValidSubscription: Boolean,  // true is there is a current subscription AND the available subscription manager on this device has an account which matches the product id we got from libsession
     )
 
     data class RefundPlanState(
-        val subscriptionType: SubscriptionType.Active,
+        val proStatus: ProStatus.Active,
         val isQuickRefund: Boolean,
         val quickRefundUrl: String?
     )

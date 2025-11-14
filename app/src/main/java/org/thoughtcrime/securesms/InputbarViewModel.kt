@@ -12,7 +12,7 @@ import org.session.libsession.utilities.recipients.isPro
 import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.pro.SubscriptionType
+import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.util.NumberUtil
 
@@ -200,7 +200,7 @@ abstract class InputbarViewModel(
     )
 
     data class CharLimitCTAData(
-        val proSubscription: SubscriptionType
+        val proSubscription: ProStatus
     )
 
     sealed interface Commands {

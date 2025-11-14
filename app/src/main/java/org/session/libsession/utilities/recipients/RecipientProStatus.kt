@@ -22,6 +22,3 @@ val RecipientProStatus?.isPro: Boolean
 
 val RecipientProStatus?.shouldShowProBadge: Boolean
     get() = this?.features?.contains(ProFeature.PRO_BADGE) == true
-
-val RecipientProStatus?.hasHigherCharacterLimit: Boolean
-    get() = this?.features?.contains(ProFeature.HIGHER_CHARACTER_LIMIT) == true

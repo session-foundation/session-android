@@ -21,7 +21,6 @@ import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientProStatus
-import org.session.libsession.utilities.recipients.hasHigherCharacterLimit
 import org.session.libsession.utilities.recipients.isPro
 import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.thoughtcrime.securesms.auth.LoginStateRepository
@@ -71,17 +70,15 @@ class ProStatusManager @Inject constructor(
         if(!forceCurrentUserAsPro){
             //todo PRO this is where we should get the real state
             SubscriptionState(
-                type = SubscriptionType.NeverSubscribed,
+                type = ProStatus.NeverSubscribed,
+                showProBadge = selfRecipient.proStatus.shouldShowProBadge,
                 refreshState = proDataStatus
             )
         }
         else SubscriptionState(
             type = when(subscriptionState){
-                DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> SubscriptionType.Active.AutoRenewing(
-                    proStatus = RecipientProStatus.Pro(
-                        visible = true,
-                        validUntil = Instant.now() + Duration.ofDays(14),
-                    ),
+                DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> ProStatus.Active.AutoRenewing(
+                    validUntil = Instant.now() + Duration.ofDays(14),
                     duration = ProSubscriptionDuration.THREE_MONTHS,
                     subscriptionDetails = SubscriptionDetails(
                         device = "Android",
@@ -93,11 +90,8 @@ class ProStatusManager @Inject constructor(
                     )
                 )
 
-                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> SubscriptionType.Active.Expiring(
-                    proStatus = RecipientProStatus.Pro(
-                        visible = true,
-                        validUntil = Instant.now() + Duration.ofDays(2),
-                    ),
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> ProStatus.Active.Expiring(
+                    validUntil = Instant.now() + Duration.ofDays(2),
                     duration = ProSubscriptionDuration.TWELVE_MONTHS,
                     subscriptionDetails = SubscriptionDetails(
                         device = "Android",
@@ -109,11 +103,8 @@ class ProStatusManager @Inject constructor(
                     )
                 )
 
-                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER -> SubscriptionType.Active.Expiring(
-                    proStatus = RecipientProStatus.Pro(
-                        visible = true,
-                        validUntil = Instant.now() + Duration.ofDays(40),
-                    ),
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER -> ProStatus.Active.Expiring(
+                    validUntil = Instant.now() + Duration.ofDays(40),
                     duration = ProSubscriptionDuration.TWELVE_MONTHS,
                     subscriptionDetails = SubscriptionDetails(
                         device = "Android",
@@ -125,11 +116,8 @@ class ProStatusManager @Inject constructor(
                     )
                 )
 
-                DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> SubscriptionType.Active.AutoRenewing(
-                    proStatus = RecipientProStatus.Pro(
-                        visible = true,
-                        validUntil = Instant.now() + Duration.ofDays(14),
-                    ),
+                DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> ProStatus.Active.AutoRenewing(
+                    validUntil = Instant.now() + Duration.ofDays(14),
                     duration = ProSubscriptionDuration.ONE_MONTH,
                     subscriptionDetails = SubscriptionDetails(
                         device = "iOS",
@@ -141,11 +129,8 @@ class ProStatusManager @Inject constructor(
                     )
                 )
 
-                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_APPLE -> SubscriptionType.Active.Expiring(
-                    proStatus = RecipientProStatus.Pro(
-                        visible = true,
-                        validUntil = Instant.now() + Duration.ofDays(2),
-                    ),
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_APPLE -> ProStatus.Active.Expiring(
+                    validUntil = Instant.now() + Duration.ofDays(2),
                     duration = ProSubscriptionDuration.ONE_MONTH,
                     subscriptionDetails = SubscriptionDetails(
                         device = "iOS",
@@ -157,7 +142,7 @@ class ProStatusManager @Inject constructor(
                     )
                 )
 
-                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> SubscriptionType.Expired(
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> ProStatus.Expired(
                     expiredAt = Instant.now() - Duration.ofDays(14),
                     subscriptionDetails = SubscriptionDetails(
                         device = "Android",
@@ -168,7 +153,7 @@ class ProStatusManager @Inject constructor(
                         refundUrl = "https://getsession.org/android-refund",
                     )
                 )
-                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_EARLIER -> SubscriptionType.Expired(
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_EARLIER -> ProStatus.Expired(
                     expiredAt = Instant.now() - Duration.ofDays(60),
                     subscriptionDetails = SubscriptionDetails(
                         device = "Android",
@@ -179,7 +164,7 @@ class ProStatusManager @Inject constructor(
                         refundUrl = "https://getsession.org/android-refund",
                     )
                 )
-                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE -> SubscriptionType.Expired(
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE -> ProStatus.Expired(
                     expiredAt = Instant.now() - Duration.ofDays(14),
                     subscriptionDetails = SubscriptionDetails(
                         device = "iOS",
@@ -193,6 +178,7 @@ class ProStatusManager @Inject constructor(
             },
 
             refreshState = proDataStatus,
+            showProBadge = selfRecipient.proStatus.shouldShowProBadge,
         )
 
     }.stateIn(scope, SharingStarted.Eagerly,
@@ -234,7 +220,7 @@ class ProStatusManager @Inject constructor(
     }
 
     fun getCharacterLimit(status: RecipientProStatus?): Int {
-        return if (status.hasHigherCharacterLimit) MAX_CHARACTER_PRO else MAX_CHARACTER_REGULAR
+        return if (status.isPro) MAX_CHARACTER_PRO else MAX_CHARACTER_REGULAR
     }
 
     fun getPinnedConversationLimit(status: RecipientProStatus?): Int {

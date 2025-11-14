@@ -23,7 +23,6 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -60,7 +59,7 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_NAME_
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.pro.SubscriptionType
+import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.ui.UINavigator
@@ -1446,12 +1445,12 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     data class PinProCTA(
         val overTheLimit: Boolean,
-        val proSubscription: SubscriptionType
+        val proSubscription: ProStatus
     )
 
-    sealed class ProBadgeCTA(open val proSubscription: SubscriptionType) {
-        data class Generic(override val proSubscription: SubscriptionType): ProBadgeCTA(proSubscription)
-        data class Group(override val proSubscription: SubscriptionType): ProBadgeCTA(proSubscription)
+    sealed class ProBadgeCTA(open val proSubscription: ProStatus) {
+        data class Generic(override val proSubscription: ProStatus): ProBadgeCTA(proSubscription)
+        data class Group(override val proSubscription: ProStatus): ProBadgeCTA(proSubscription)
     }
 
     data class NicknameDialogData(

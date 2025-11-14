@@ -4,7 +4,8 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -19,10 +20,9 @@ import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
-import org.session.libsession.utilities.recipients.RecipientProStatus
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
+import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.SubscriptionDetails
-import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -48,7 +48,7 @@ fun RefundPlanScreen(
         state = state,
         onBack = onBack
     ) { refundData ->
-        val activePlan = refundData.subscriptionType
+        val activePlan = refundData.proStatus
 
         // there are different UI depending on the state
         when {
@@ -75,7 +75,7 @@ fun RefundPlanScreen(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun RefundPlan(
-    data: SubscriptionType.Active,
+    data: ProStatus.Active,
     isQuickRefund: Boolean,
     quickRefundUrl: String?,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
@@ -158,11 +158,8 @@ private fun PreviewRefundPlan(
 ) {
     PreviewTheme(colors) {
         RefundPlan(
-            data = SubscriptionType.Active.AutoRenewing(
-                proStatus = RecipientProStatus.Pro(
-                    visible = true,
-                    validUntil = Instant.now() + Duration.ofDays(14),
-                ),
+            data = ProStatus.Active.AutoRenewing(
+                validUntil = Instant.now() + Duration.ofDays(14),
                 duration = ProSubscriptionDuration.THREE_MONTHS,
                 subscriptionDetails = SubscriptionDetails(
                     device = "Android",
@@ -188,11 +185,8 @@ private fun PreviewQuickRefundPlan(
 ) {
     PreviewTheme(colors) {
         RefundPlan(
-            data = SubscriptionType.Active.AutoRenewing(
-                proStatus = RecipientProStatus.Pro(
-                    visible = true,
-                    validUntil = Instant.now() + Duration.ofDays(14),
-                ),
+            data = ProStatus.Active.AutoRenewing(
+                validUntil = Instant.now() + Duration.ofDays(14),
                 duration = ProSubscriptionDuration.THREE_MONTHS,
                 subscriptionDetails = SubscriptionDetails(
                     device = "Android",

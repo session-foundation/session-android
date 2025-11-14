@@ -30,7 +30,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.pro.SubscriptionType
+import org.thoughtcrime.securesms.pro.ProStatus
 
 /**
  * Helper class to get the information required for the user profile modal
@@ -207,7 +207,7 @@ data class UserProfileModalData(
 )
 
 data class GenericCTAData(
-    val proSubscription: SubscriptionType
+    val proSubscription: ProStatus
 )
 
 sealed interface UserProfileModalCommands {
