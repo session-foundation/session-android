@@ -17,7 +17,6 @@ import org.mockito.junit.MockitoJUnitRunner
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.session.libsession.utilities.Address.Companion.toAddress
-import org.session.libsession.utilities.recipients.RecipientProStatus
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.thoughtcrime.securesms.BaseViewModelTest
@@ -51,7 +50,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
     fun `note to self, off, new config`() = runTest {
         val viewModel = createViewModel(Recipient(
             address = STANDARD_ADDRESS,
-            data = RecipientData.Self(name = "Myself", avatar = null, expiryMode = ExpiryMode.NONE, priority = 1, proStatus = RecipientProStatus.None,  profileUpdatedAt = null),
+            data = RecipientData.Self(name = "Myself", avatar = null, expiryMode = ExpiryMode.NONE, priority = 1, proData = null,  profileUpdatedAt = null),
         ))
 
         advanceUntilIdle()
@@ -94,25 +93,23 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
         val recipient = Recipient(
             address = GROUP_ADDRESS,
             data = RecipientData.Group(
-                partial = RecipientData.PartialGroup(
+                name = "Group Name",
+                avatar = null,
+                expiryMode = ExpiryMode.NONE,
+                groupInfo = GroupInfo.ClosedGroupInfo(
+                    groupAccountId = GROUP_ADDRESS.address,
+                    adminKey = Bytes(ByteArray(32)),
+                    authData = Bytes(ByteArray(32)),
+                    priority = 1,
+                    invited = false,
                     name = "Group Name",
-                    avatar = null,
-                    expiryMode = ExpiryMode.NONE,
-                    groupInfo = GroupInfo.ClosedGroupInfo(
-                        groupAccountId = GROUP_ADDRESS.address,
-                        adminKey = Bytes(ByteArray(32)),
-                        authData = Bytes(ByteArray(32)),
-                        priority = 1,
-                        invited = false,
-                        name = "Group Name",
-                        kicked = false,
-                        destroyed = false,
-                        joinedAtSecs = System.currentTimeMillis() / 1000L,
-                    ),
-                    proStatus = RecipientProStatus.None,
-                    members = listOf(),
-                    description = null,
+                    kicked = false,
+                    destroyed = false,
+                    joinedAtSecs = System.currentTimeMillis() / 1000L,
                 ),
+                proData = null,
+                members = listOf(),
+                description = null,
                 firstMember = Recipient(
                     address = STANDARD_ADDRESS,
                     data = RecipientData.Self(
@@ -120,7 +117,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                         avatar = null,
                         expiryMode = ExpiryMode.NONE,
                         priority = 1,
-                        proStatus = RecipientProStatus.None,
+                        proData = null,
                         profileUpdatedAt = null
                     )
                 ),
@@ -171,25 +168,23 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
         val recipient = Recipient(
             address = GROUP_ADDRESS,
             data = RecipientData.Group(
-                partial = RecipientData.PartialGroup(
+                name = "Group Name",
+                avatar = null,
+                expiryMode = ExpiryMode.NONE,
+                groupInfo = GroupInfo.ClosedGroupInfo(
+                    groupAccountId = GROUP_ADDRESS.address,
+                    adminKey = null,
+                    authData = Bytes(ByteArray(32)),
+                    priority = 1,
+                    invited = false,
                     name = "Group Name",
-                    avatar = null,
-                    expiryMode = ExpiryMode.NONE,
-                    groupInfo = GroupInfo.ClosedGroupInfo(
-                        groupAccountId = GROUP_ADDRESS.address,
-                        adminKey = null,
-                        authData = Bytes(ByteArray(32)),
-                        priority = 1,
-                        invited = false,
-                        name = "Group Name",
-                        kicked = false,
-                        destroyed = false,
-                        joinedAtSecs = System.currentTimeMillis() / 1000L,
-                    ),
-                    proStatus = RecipientProStatus.None,
-                    members = listOf(),
-                    description = null,
+                    kicked = false,
+                    destroyed = false,
+                    joinedAtSecs = System.currentTimeMillis() / 1000L,
                 ),
+                proData = null,
+                members = listOf(),
+                description = null,
                 firstMember = Recipient(
                     address = STANDARD_ADDRESS,
                     data = RecipientData.Self(
@@ -197,7 +192,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                         avatar = null,
                         expiryMode = ExpiryMode.NONE,
                         priority = 1,
-                        proStatus = RecipientProStatus.None,
+                        proData = null,
                         profileUpdatedAt = null
                     )
                 ),
@@ -257,7 +252,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 blocked = false,
                 expiryMode = ExpiryMode.NONE,
                 priority = 1,
-                proStatus = RecipientProStatus.None,
+                proData = null,
                 profileUpdatedAt = null
             )
         )
@@ -311,7 +306,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 blocked = false,
                 expiryMode = ExpiryMode.AfterSend(time.inWholeSeconds),
                 priority = 1,
-                proStatus = RecipientProStatus.None,
+                proData = null,
                 profileUpdatedAt = null
             )
         )
@@ -372,7 +367,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 blocked = false,
                 expiryMode = ExpiryMode.AfterSend(time.inWholeSeconds),
                 priority = 1,
-                proStatus = RecipientProStatus.None,
+                proData = null,
                 profileUpdatedAt = null
             )
         )
@@ -433,7 +428,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 blocked = false,
                 expiryMode = ExpiryMode.AfterRead(time.inWholeSeconds),
                 priority = 1,
-                proStatus = RecipientProStatus.None,
+                proData = null,
                 profileUpdatedAt = null
             )
         )
@@ -496,7 +491,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 blocked = false,
                 expiryMode = ExpiryMode.AfterRead(time.inWholeSeconds),
                 priority = 1,
-                proStatus = RecipientProStatus.None,
+                proData = null,
                 profileUpdatedAt = null
             )
         )

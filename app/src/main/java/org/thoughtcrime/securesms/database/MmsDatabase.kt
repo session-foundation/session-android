@@ -1546,8 +1546,8 @@ class MmsDatabase @Inject constructor(
             "DROP TABLE $TEMP_TABLE_NAME"
         )
 
-        const val ADD_PRO_PROOF_COLUMN = """
-            ALTER TABLE $TABLE_NAME ADD COLUMN $PRO_PROOF TEXT DEFAULT NULL;
+        const val ADD_PRO_FEATURES_COLUMN = """
+            ALTER TABLE $TABLE_NAME ADD COLUMN $PRO_FEATURES INTEGER NOT NULL DEFAULT 0;
         """
     }
 }

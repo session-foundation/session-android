@@ -273,6 +273,11 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
     ProDatabase.Companion.createTable(db);
     ReactionDatabase.Companion.migrateToDropForeignConstraint(db);
+
+    ProDatabase.Companion.createTable(db);
+    db.execSQL(MmsDatabase.ADD_PRO_FEATURES_COLUMN);
+    db.execSQL(SmsDatabase.ADD_PRO_FEATURES_COLUMN);
+    RecipientSettingsDatabase.Companion.migrateProStatusToProData(db);
   }
 
   @Override
@@ -617,8 +622,8 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
       if (oldVersion < lokiV57) {
           ProDatabase.Companion.createTable(db);
-          db.execSQL(MmsDatabase.ADD_PRO_PROOF_COLUMN);
-          db.execSQL(SmsDatabase.ADD_PRO_PROOF_COLUMN);
+          db.execSQL(MmsDatabase.ADD_PRO_FEATURES_COLUMN);
+          db.execSQL(SmsDatabase.ADD_PRO_FEATURES_COLUMN);
           RecipientSettingsDatabase.Companion.migrateProStatusToProData(db);
       }
 

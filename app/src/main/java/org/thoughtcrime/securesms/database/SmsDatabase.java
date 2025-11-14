@@ -160,7 +160,7 @@ public class SmsDatabase extends MessagingDatabase {
   public static final String ADD_IS_DELETED_COLUMN = "ALTER TABLE " + TABLE_NAME + " ADD COLUMN " + IS_DELETED_COLUMN_DEF;
   public static final String ADD_IS_GROUP_UPDATE_COLUMN = "ALTER TABLE " + TABLE_NAME +" ADD COLUMN " + IS_GROUP_UPDATE +" BOOL GENERATED ALWAYS AS (" + TYPE +" & " + GROUP_UPDATE_MESSAGE_BIT +" != 0) VIRTUAL";
 
-  public static final String ADD_PRO_PROOF_COLUMN = "ALTER TABLE " + TABLE_NAME + " ADD COLUMN " + PRO_PROOF + " TEXT DEFAULT NULL";
+  public static final String ADD_PRO_FEATURES_COLUMN = "ALTER TABLE " + TABLE_NAME + " ADD COLUMN " + PRO_FEATURES + " INTEGER NOT NULL DEFAULT 0";
 
   private static final EarlyReceiptCache earlyDeliveryReceiptCache = new EarlyReceiptCache();
   private static final EarlyReceiptCache earlyReadReceiptCache     = new EarlyReceiptCache();
