@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.groups.compose
 
-import android.R.attr.data
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -327,7 +326,7 @@ fun ShowRemoveMembersDialog(
         modifier = modifier,
         onDismissRequest = {
             // hide dialog
-            sendCommand(DismissRemoveDialog)
+            sendCommand(DismissRemoveMembersDialog)
         },
         title = annotatedStringResource(R.string.remove),
         text = annotatedStringResource(state.removeMemberBody),
@@ -358,14 +357,14 @@ fun ShowRemoveMembersDialog(
                 color = LocalColors.current.danger,
                 dismissOnClick = false,
                 onClick = {
-                    sendCommand(DismissRemoveDialog)
+                    sendCommand(DismissRemoveMembersDialog)
                     sendCommand(RemoveMembers(deleteMessages))
                 }
             ),
             DialogButtonData(
                 text = GetString(stringResource(R.string.cancel)),
                 onClick = {
-                    sendCommand(DismissRemoveDialog)
+                    sendCommand(DismissRemoveMembersDialog)
                 }
             )
         )

@@ -7,12 +7,19 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import network.loki.messenger.R
+import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
+import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel
 import org.thoughtcrime.securesms.home.startconversation.newmessage.Callbacks
 import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessage
 import org.thoughtcrime.securesms.home.startconversation.newmessage.State
@@ -31,6 +38,8 @@ internal fun InviteAccountIdScreen(
     callbacks: Callbacks = object : Callbacks {},
     onBack: () -> Unit = {},
     onHelp: () -> Unit = {},
+    sendCommand: (ManageGroupMembersViewModel.Commands) -> Unit = {},
+    inviteDialogVisible: Boolean = false
 ) {
     InviteAccountId(
         state = state,
@@ -38,6 +47,8 @@ internal fun InviteAccountIdScreen(
         callbacks = callbacks,
         onBack = onBack,
         onHelp = onHelp,
+        sendCommand = sendCommand,
+        inviteDialogVisible = inviteDialogVisible
     )
 }
 
@@ -49,6 +60,8 @@ private fun InviteAccountId(
     callbacks: Callbacks = object : Callbacks {},
     onBack: () -> Unit = {},
     onHelp: () -> Unit = {},
+    sendCommand: (ManageGroupMembersViewModel.Commands) -> Unit = {},
+    inviteDialogVisible: Boolean
 ) {
     Scaffold(
         contentWindowInsets = WindowInsets.safeDrawing,
@@ -71,28 +84,27 @@ private fun InviteAccountId(
         }
     }
 
-    if (state.showInviteDialog) {
+    if (inviteDialogVisible) {
         ShowInviteContactsDialog(
-            onDoneClicked = {},
-            onDismissDialog = {callbacks.onDismissInviteDialog()},
-            onToggleShareHistory = callbacks::onToggleShareHistory
+            address = state.newMessageIdOrOns.toAddress(),
+            sendCommand = sendCommand,
         )
     }
 }
 
 @Composable
 fun ShowInviteContactsDialog(
+    address : Address,
     modifier: Modifier = Modifier,
-    shareHistory: Boolean = false,
-    onDoneClicked: (shareHistory: Boolean) -> Unit,
-    onDismissDialog: () -> Unit,
-    onToggleShareHistory : (Boolean) -> Unit
+    sendCommand: (ManageGroupMembersViewModel.Commands) -> Unit,
 ) {
+    var shareHistory by remember { mutableStateOf(false) }
+
     AlertDialog(
         modifier = modifier,
         onDismissRequest = {
             // hide dialog
-            onDismissDialog()
+            sendCommand(ManageGroupMembersViewModel.Commands.DismissInviteMemberDialog)
         },
         title = annotatedStringResource(R.string.membersInviteTitle),
         text = annotatedStringResource(R.string.membersInviteShareDescription), // TODO: String from crowdin
@@ -104,7 +116,7 @@ fun ShowInviteContactsDialog(
                     selected = !shareHistory
                 )
             ) {
-               onToggleShareHistory(false)
+                shareHistory = false
             }
 
             DialogTitledRadioButton(
@@ -114,7 +126,7 @@ fun ShowInviteContactsDialog(
                     selected = shareHistory,
                 )
             ) {
-                onToggleShareHistory(true)
+                shareHistory = true
             }
         },
         buttons = listOf(
@@ -129,14 +141,14 @@ fun ShowInviteContactsDialog(
                 color = LocalColors.current.danger,
                 dismissOnClick = false,
                 onClick = {
-                    onDismissDialog()
-                    onDoneClicked(shareHistory)
+                    sendCommand(ManageGroupMembersViewModel.Commands.DismissInviteMemberDialog)
+                    sendCommand(ManageGroupMembersViewModel.Commands.SendInvites(setOf(address), shareHistory))
                 }
             ),
             DialogButtonData(
                 text = GetString(stringResource(R.string.cancel)),
                 onClick = {
-                    onDismissDialog()
+                    sendCommand(ManageGroupMembersViewModel.Commands.DismissInviteMemberDialog)
                 }
             )
         )

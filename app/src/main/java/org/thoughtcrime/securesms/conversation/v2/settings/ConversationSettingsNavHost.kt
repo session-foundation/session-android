@@ -294,12 +294,7 @@ fun ConversationSettingsNavHost(
 
                 LaunchedEffect(Unit) {
                     viewModel.success.collect { success ->
-                        val address = success.address
-                        val shareHistory = success.shareHistory
-                        manageGroupMembersViewModel.onSendInviteClicked(
-                            setOf(address),
-                            shareHistory
-                        )
+                        manageGroupMembersViewModel.onCommand(ManageGroupMembersViewModel.Commands.ShowInviteMemberDialog)
                     }
                 }
 

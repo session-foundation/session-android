@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.getOrNull
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupInviteException
 import org.session.libsession.messaging.groups.GroupManagerV2
@@ -309,15 +308,23 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         _uiState.update { it.copy(ongoingAction = null) }
     }
 
-    private fun toggleRemoveDialog(visible : Boolean){
+    private fun toggleRemoveMembersDialog(visible : Boolean){
         showRemoveMembersDialog.value = visible
+    }
+
+    private fun toggleInviteMembersDialog(visible : Boolean){
+        _uiState.update { it.copy(isInviteMemberDialogVisible = visible) }
     }
 
     fun onCommand(command: Commands) {
         when (command) {
-            is Commands.ShowRemoveDialog -> toggleRemoveDialog(true)
+            is Commands.ShowRemoveMembersDialog -> toggleRemoveMembersDialog(true)
 
-            is Commands.DismissRemoveDialog -> toggleRemoveDialog(false)
+            is Commands.DismissRemoveMembersDialog -> toggleRemoveMembersDialog(false)
+
+            is Commands.DismissInviteMemberDialog -> toggleInviteMembersDialog(false)
+
+            is Commands.ShowInviteMemberDialog -> toggleInviteMembersDialog(true)
 
             is Commands.RemoveMembers -> onRemoveContact(command.removeMessages)
 
@@ -338,6 +345,8 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
             is Commands.SearchFocusChange -> onSearchFocusChanged(command.focus)
 
             is Commands.SearchQueryChange -> onSearchQueryChanged(command.query)
+
+            is Commands.SendInvites -> onSendInviteClicked(command.address, command.shareHistory)
         }
     }
 
@@ -410,7 +419,7 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
                 ),
                 buttonLabel = GetString(context.getString(R.string.remove)),
                 isDanger = true,
-                onClick = { onCommand(Commands.ShowRemoveDialog) }
+                onClick = { onCommand(Commands.ShowRemoveMembersDialog) }
             )
         )
 
@@ -428,6 +437,8 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         val inProgress: Boolean = false,
         val error: String? = null,
         val ongoingAction: String? = null,
+
+        val isInviteMemberDialogVisible : Boolean  = false,
 
         // search UI state:
         val searchQuery: String = "",
@@ -462,8 +473,8 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
     )
 
     sealed interface Commands {
-        data object ShowRemoveDialog : Commands
-        data object DismissRemoveDialog : Commands
+        data object ShowRemoveMembersDialog : Commands
+        data object DismissRemoveMembersDialog : Commands
 
         data object DismissError : Commands
 
@@ -474,6 +485,12 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         data object CloseFooter : Commands
 
         data object ClearSelection : Commands
+
+        data object ShowInviteMemberDialog : Commands
+
+        data object DismissInviteMemberDialog : Commands
+
+        data class SendInvites(val address : Set<Address>, val shareHistory: Boolean) : Commands
 
         data class RemoveSearchState(val clearSelection : Boolean) : Commands
 

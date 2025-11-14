@@ -117,18 +117,6 @@ class NewMessageViewModel @Inject constructor(
         _state.update {it.copy(validIdFromQr = "") }
     }
 
-    override fun onShowInviteDialog() {
-        _state.update { it.copy(showInviteDialog = true) }
-    }
-
-    override fun onDismissInviteDialog() {
-        _state.update { it.copy(showInviteDialog = false) }
-    }
-
-    override fun onToggleShareHistory(share: Boolean) {
-        _state.update { it.copy(shareMessageHistory = share) }
-    }
-
     private fun resolveONS(ons: String) {
         if (loadOnsJob?.isActive == true) return
 
@@ -162,7 +150,7 @@ class NewMessageViewModel @Inject constructor(
 
         val address = publicKey.toAddress()
         if (address is Address.Standard) {
-            viewModelScope.launch { _success.emit(Success(address, state.value.shareMessageHistory)) }
+            viewModelScope.launch { _success.emit(Success(address)) }
         }
     }
 
@@ -216,12 +204,10 @@ data class State(
     val loading: Boolean = false,
     val showUrlDialog: Boolean = false,
     val helpUrl : String = "https://getsession.org/account-ids",
-    val showInviteDialog : Boolean = false,
     val validIdFromQr: String = "",
-    val shareMessageHistory : Boolean = false
 ) {
     val isNextButtonEnabled: Boolean get() = newMessageIdOrOns.isNotBlank()
 }
 
 
-data class Success(val address: Address.Standard, val shareHistory: Boolean = false)
+data class Success(val address: Address.Standard)

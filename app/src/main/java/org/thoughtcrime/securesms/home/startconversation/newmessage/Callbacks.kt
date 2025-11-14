@@ -6,10 +6,4 @@ internal interface Callbacks {
     fun onScanQrCode(value: String) {}
 
     fun onClearQrCode() {}
-
-    fun onShowInviteDialog() {}
-
-    fun onDismissInviteDialog(){}
-
-    fun onToggleShareHistory(share : Boolean){}
 }
