@@ -57,16 +57,15 @@ public class SignalGlideModule extends AppGlideModule {
 
   @Override
   public void registerComponents(@NonNull Context context, @NonNull Glide glide, @NonNull Registry registry) {
-    AttachmentSecret attachmentSecret = AttachmentSecretProvider.getInstance(context).getOrCreateAttachmentSecret();
-    byte[]           secret           = attachmentSecret.getModernKey();
+    AttachmentSecretProvider secretProvider = AttachmentSecretProvider.getInstance(context);
 
     registry.prepend(File.class, File.class, UnitModelLoader.Factory.getInstance());
-    registry.prepend(InputStream.class, new EncryptedCacheEncoder(secret, glide.getArrayPool()));
-    registry.prepend(File.class, Bitmap.class, new EncryptedBitmapCacheDecoder(secret, new StreamBitmapDecoder(new Downsampler(registry.getImageHeaderParsers(), context.getResources().getDisplayMetrics(), glide.getBitmapPool(), glide.getArrayPool()), glide.getArrayPool())));
-    registry.prepend(File.class, GifDrawable.class, new EncryptedGifCacheDecoder(secret, new StreamGifDecoder(registry.getImageHeaderParsers(), new ByteBufferGifDecoder(context, registry.getImageHeaderParsers(), glide.getBitmapPool(), glide.getArrayPool()), glide.getArrayPool())));
+    registry.prepend(InputStream.class, new EncryptedCacheEncoder(secretProvider, glide.getArrayPool()));
+    registry.prepend(File.class, Bitmap.class, new EncryptedBitmapCacheDecoder(secretProvider, new StreamBitmapDecoder(new Downsampler(registry.getImageHeaderParsers(), context.getResources().getDisplayMetrics(), glide.getBitmapPool(), glide.getArrayPool()), glide.getArrayPool())));
+    registry.prepend(File.class, GifDrawable.class, new EncryptedGifCacheDecoder(secretProvider, new StreamGifDecoder(registry.getImageHeaderParsers(), new ByteBufferGifDecoder(context, registry.getImageHeaderParsers(), glide.getBitmapPool(), glide.getArrayPool()), glide.getArrayPool())));
 
-    registry.prepend(Bitmap.class, new EncryptedBitmapResourceEncoder(secret));
-    registry.prepend(GifDrawable.class, new EncryptedGifDrawableResourceEncoder(secret));
+    registry.prepend(Bitmap.class, new EncryptedBitmapResourceEncoder(secretProvider));
+    registry.prepend(GifDrawable.class, new EncryptedGifDrawableResourceEncoder(secretProvider));
 
     registry.append(RemoteFile.class, InputStream.class, new RemoteFileLoader.Factory(
             ((ApplicationContext) (context.getApplicationContext())).getRemoteFileLoader()
