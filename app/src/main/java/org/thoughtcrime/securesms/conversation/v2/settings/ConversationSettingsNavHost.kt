@@ -320,7 +320,10 @@ fun ConversationSettingsNavHost(
                     callbacks = newMessageViewModel,
                     onBack = { handleBack() },
                     onHelp = { newMessageViewModel.onCommand(NewMessageViewModel.Commands.ShowUrlDialog) },
-                    onSendInvite = {shareHistory ->
+                    onDismissHelpDialog = {
+                        newMessageViewModel.onCommand(NewMessageViewModel.Commands.DismissUrlDialog)
+                    },
+                    onSendInvite = { shareHistory ->
                         manageGroupMembersViewModel.onCommand(
                             ManageGroupMembersViewModel.Commands.SendInvites(
                                 address = viewModel.currentSelected,
@@ -328,15 +331,8 @@ fun ConversationSettingsNavHost(
                             )
                         )
                         handleBack()
-                    }
+                    },
                 )
-
-                if (uiState.showUrlDialog) {
-                    OpenURLAlertDialog(
-                        url = uiState.helpUrl,
-                        onDismissRequest = { newMessageViewModel.onCommand(NewMessageViewModel.Commands.DismissUrlDialog) }
-                    )
-                }
             }
 
             // Disappearing Messages

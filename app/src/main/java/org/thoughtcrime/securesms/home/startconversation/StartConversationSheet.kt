@@ -177,9 +177,9 @@ fun StartConversationNavHost(
                     onClose = onClose,
                     onHelp = { viewModel.onCommand(NewMessageViewModel.Commands.ShowUrlDialog) }
                 )
-                if (uiState.showUrlDialog) {
+                if (uiState.showUrlDialog != null) {
                     OpenURLAlertDialog(
-                        url = uiState.helpUrl,
+                        url = uiState.showUrlDialog!!,
                         onDismissRequest = { viewModel.onCommand(NewMessageViewModel.Commands.DismissUrlDialog) }
                     )
                 }

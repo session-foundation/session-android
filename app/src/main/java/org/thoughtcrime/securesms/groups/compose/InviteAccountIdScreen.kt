@@ -16,7 +16,9 @@ import kotlinx.coroutines.flow.emptyFlow
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel
 import org.thoughtcrime.securesms.home.startconversation.newmessage.Callbacks
 import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessage
+import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessageViewModel
 import org.thoughtcrime.securesms.home.startconversation.newmessage.State
+import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 
 @Composable
 internal fun InviteAccountIdScreen(
@@ -26,7 +28,8 @@ internal fun InviteAccountIdScreen(
     callbacks: Callbacks = object : Callbacks {},
     onBack: () -> Unit = {},
     onHelp: () -> Unit = {},
-    onSendInvite: (shareHistory: Boolean) -> Unit
+    onDismissHelpDialog: () -> Unit,
+    onSendInvite: (shareHistory: Boolean) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -37,6 +40,7 @@ internal fun InviteAccountIdScreen(
         callbacks = callbacks,
         onBack = onBack,
         onHelp = onHelp,
+        onDismissHelpDialog = onDismissHelpDialog,
         onSendInvite = onSendInvite,
         onDismissInviteDialog = { viewModel.sendCommand(InviteMembersViewModel.Commands.DismissSendInviteDialog) }
     )
@@ -51,6 +55,7 @@ private fun InviteAccountId(
     callbacks: Callbacks = object : Callbacks {},
     onBack: () -> Unit = {},
     onHelp: () -> Unit = {},
+    onDismissHelpDialog: () -> Unit,
     onSendInvite: (Boolean) -> Unit,
     onDismissInviteDialog: () -> Unit
 ) {
@@ -82,6 +87,13 @@ private fun InviteAccountId(
             onDismiss = onDismissInviteDialog
         )
     }
+
+    if(!state.showUrlDialog.isNullOrEmpty()) {
+        OpenURLAlertDialog(
+            url = state.showUrlDialog,
+            onDismissRequest = { onDismissHelpDialog() }
+        )
+    }
 }
 
 @Preview
@@ -93,15 +105,15 @@ fun PreviewInviteAccountId() {
             isTextErrorColor = false,
             error = null,
             loading = false,
-            showUrlDialog = false,
-            helpUrl = "https://getsession.org/account-ids",
+            showUrlDialog = null,
             validIdFromQr = "",
         ),
         onBack = { },
         onHelp = { },
-        onSendInvite = {_ -> },
+        onSendInvite = { _ -> },
         inviteState = InviteMembersViewModel.InviteContactsDialogState(),
         qrErrors = emptyFlow(),
         onDismissInviteDialog = {},
+        onDismissHelpDialog = {},
     )
 }

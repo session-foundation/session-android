@@ -31,6 +31,7 @@ class NewMessageViewModel @Inject constructor(
     private val application: Application,
     private val configFactory: ConfigFactoryProtocol,
 ) : ViewModel(), Callbacks {
+    private val HELP_URL : String = "https://getsession.org/account-ids"
 
     private val _state = MutableStateFlow(State())
     val state = _state.asStateFlow()
@@ -178,13 +179,13 @@ class NewMessageViewModel @Inject constructor(
     fun onCommand(commands: Commands) {
         when (commands) {
             is Commands.ShowUrlDialog -> {
-                _state.update { it.copy(showUrlDialog = true) }
+                _state.update { it.copy(showUrlDialog = HELP_URL) }
             }
 
             is Commands.DismissUrlDialog -> {
                 _state.update {
                     it.copy(
-                        showUrlDialog = false
+                        showUrlDialog = null
                     )
                 }
             }
@@ -202,8 +203,7 @@ data class State(
     val isTextErrorColor: Boolean = false,
     val error: GetString? = null,
     val loading: Boolean = false,
-    val showUrlDialog: Boolean = false,
-    val helpUrl : String = "https://getsession.org/account-ids",
+    val showUrlDialog: String? = null,
     val validIdFromQr: String = "",
 ) {
     val isNextButtonEnabled: Boolean get() = newMessageIdOrOns.isNotBlank()
