@@ -32,7 +32,6 @@ import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
@@ -40,8 +39,8 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
+import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.util.DateUtils
@@ -151,7 +150,7 @@ class HomeViewModel @Inject constructor(
 
     val shouldShowCurrentUserProBadge: StateFlow<Boolean> = recipientRepository
         .observeSelf()
-        .map { it.proStatus.shouldShowProBadge() }
+        .map { it.shouldShowProBadge }
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     private var userProfileModalJob: Job? = null
@@ -166,24 +165,22 @@ class HomeViewModel @Inject constructor(
                 // - subscription expired less than 30 days ago
                 val now = Instant.now()
 
-                if(subscription.type is SubscriptionType.Active.Expiring
+                if(subscription.type is ProStatus.Active.Expiring
                     && !prefs.hasSeenProExpiring()
                 ){
-                    val validUntil = subscription.type.proStatus.validUntil ?: return@collect
+                    val validUntil = subscription.type.validUntil
 
                     if (validUntil.isBefore(now.plus(7, ChronoUnit.DAYS))) {
                         _dialogsState.update { state ->
                             state.copy(
                                 proExpiringCTA = ProExpiringCTA(
-                                    dateUtils.getExpiryString(
-                                        subscription.type.proStatus.validUntil
-                                    )
+                                    dateUtils.getExpiryString(validUntil)
                                 )
                             )
                         }
                     }
                 }
-                else if(subscription.type is SubscriptionType.Expired
+                else if(subscription.type is ProStatus.Expired
                     && !prefs.hasSeenProExpired()) {
                     val validUntil = subscription.type.expiredAt
 
@@ -258,7 +255,7 @@ class HomeViewModel @Inject constructor(
     fun setPinned(address: Address, pinned: Boolean) {
         // check the pin limit before continuing
         val totalPins = storage.getTotalPinned()
-        val maxPins = proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().proStatus)
+        val maxPins = proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().isPro)
         if (pinned && totalPins >= maxPins) {
             // the user has reached the pin limit, show the CTA
             _dialogsState.update {
@@ -347,7 +344,7 @@ class HomeViewModel @Inject constructor(
 
     data class PinProCTA(
         val overTheLimit: Boolean,
-        val proSubscription: SubscriptionType
+        val proSubscription: ProStatus
     )
 
     data class ProExpiringCTA(

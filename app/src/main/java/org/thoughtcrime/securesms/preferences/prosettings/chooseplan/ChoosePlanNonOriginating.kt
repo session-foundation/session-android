@@ -19,13 +19,12 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACC
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
-import org.session.libsession.utilities.recipients.ProStatus
 import org.thoughtcrime.securesms.preferences.prosettings.BaseNonOriginatingProSettingsScreen
 import org.thoughtcrime.securesms.preferences.prosettings.NonOriginatingLinkCellData
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
+import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.SubscriptionDetails
-import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.expiryFromNow
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
@@ -38,7 +37,7 @@ import java.time.Instant
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun ChoosePlanNonOriginating(
-    subscription: SubscriptionType.Active,
+    subscription: ProStatus.Active,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ){
@@ -47,12 +46,12 @@ fun ChoosePlanNonOriginating(
     val platformOverride = subscription.subscriptionDetails.getPlatformDisplayName()
 
     val headerTitle = when(subscription) {
-        is SubscriptionType.Active.Expiring -> Phrase.from(context.getText(R.string.proAccessExpireDate))
+        is ProStatus.Active.Expiring -> Phrase.from(context.getText(R.string.proAccessExpireDate))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(DATE_KEY, subscription.duration.expiryFromNow())
             .format()
 
-        is SubscriptionType.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proAccessActivatedAutoShort))
+        is ProStatus.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proAccessActivatedAutoShort))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(CURRENT_PLAN_LENGTH_KEY, DateUtils.getLocalisedTimeDuration(
                 context = context,
@@ -125,11 +124,8 @@ private fun PreviewUpdatePlan(
     PreviewTheme(colors) {
         val context = LocalContext.current
         ChoosePlanNonOriginating (
-            subscription = SubscriptionType.Active.AutoRenewing(
-                proStatus = ProStatus.Pro(
-                    visible = true,
-                    validUntil = Instant.now() + Duration.ofDays(14),
-                ),
+            subscription = ProStatus.Active.AutoRenewing(
+                validUntil = Instant.now() + Duration.ofDays(14),
                 duration = ProSubscriptionDuration.THREE_MONTHS,
                 subscriptionDetails = SubscriptionDetails(
                     device = "iOS",

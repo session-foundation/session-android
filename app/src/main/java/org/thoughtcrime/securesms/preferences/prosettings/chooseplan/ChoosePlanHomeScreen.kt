@@ -6,7 +6,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import org.thoughtcrime.securesms.preferences.prosettings.BaseStateProScreen
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel
-import org.thoughtcrime.securesms.pro.SubscriptionType
+import org.thoughtcrime.securesms.pro.ProStatus
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -21,8 +21,8 @@ fun ChoosePlanHomeScreen(
         onBack = onBack
     ) { planData ->
         // Option 1. ACTIVE Pro subscription
-        if(planData.subscriptionType is SubscriptionType.Active) {
-            val subscription = planData.subscriptionType
+        if(planData.proStatus is ProStatus.Active) {
+            val subscription = planData.proStatus
 
             when {
                 // there is an active subscription but from a different platform or from the
@@ -32,7 +32,7 @@ fun ChoosePlanHomeScreen(
                         || !planData.hasValidSubscription
                         || !planData.hasBillingCapacity ->
                     ChoosePlanNonOriginating(
-                        subscription = planData.subscriptionType,
+                        subscription = planData.proStatus,
                         sendCommand = viewModel::onCommand,
                         onBack = onBack,
                     )
@@ -49,7 +49,7 @@ fun ChoosePlanHomeScreen(
                 // there are no billing options on this device
                 !planData.hasBillingCapacity ->
                     ChoosePlanNoBilling(
-                        subscription = planData.subscriptionType,
+                        subscription = planData.proStatus,
                         sendCommand = viewModel::onCommand,
                         onBack = onBack,
                     )

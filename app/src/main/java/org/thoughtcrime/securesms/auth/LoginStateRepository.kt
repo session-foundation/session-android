@@ -1,11 +1,13 @@
 package org.thoughtcrime.securesms.auth
 
 import android.content.Context
+import android.content.SharedPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.emptyFlow
@@ -32,7 +34,7 @@ import javax.inject.Singleton
 class LoginStateRepository @Inject constructor(
     @ApplicationContext context: Context,
     private val json: Json,
-    @param:ManagerScope private val scope: CoroutineScope
+    @param:ManagerScope private val scope: CoroutineScope,
 ) {
     private val sharedPrefs = context.getSharedPreferences("login_state", Context.MODE_PRIVATE)
 
@@ -84,10 +86,7 @@ class LoginStateRepository @Inject constructor(
             if (initialState != null) {
                 // Migrate legacy state to new format
                 Log.i(TAG, "Migrating legacy login state to new format")
-                val sealedData = KeyStoreHelper.seal(json.encodeToString(initialState).toByteArray(Charsets.UTF_8))
-                sharedPrefs.edit()
-                    .putString(PREF_KEY_STATE, sealedData.serialize())
-                    .apply()
+                saveLoggedInState(sharedPrefs, initialState, json)
 
                 //TODO: Consider removing legacy data here after a grace period
             }
@@ -103,10 +102,7 @@ class LoginStateRepository @Inject constructor(
                 .drop(1) // Skip the initial value
                 .collect { newState ->
                     if (newState != null) {
-                        val sealedData = KeyStoreHelper.seal(json.encodeToString(newState).toByteArray(Charsets.UTF_8))
-                        sharedPrefs.edit()
-                            .putString(PREF_KEY_STATE, sealedData.serialize())
-                            .apply()
+                        saveLoggedInState(sharedPrefs, newState, json)
                         Log.d(TAG, "Persisted new login state: $newState")
                     } else {
                         sharedPrefs.edit()
@@ -120,9 +116,7 @@ class LoginStateRepository @Inject constructor(
 
     val loggedInState: StateFlow<LoggedInState?> get() = mutableLoggedInState
 
-    fun requireLocalAccountId(): AccountId = requireNotNull(loggedInState.value?.accountId) {
-        "No logged in account"
-    }
+    fun requireLocalAccountId(): AccountId = requireLoggedInState().accountId
 
     /**
      * Returns the local number (account ID as hex string) of the logged-in user.
@@ -140,6 +134,9 @@ class LoginStateRepository @Inject constructor(
      */
     fun peekLoginState(): LoggedInState? = loggedInState.value
 
+    fun requireLoggedInState(): LoggedInState = requireNotNull(loggedInState.value) {
+        "No logged in user"
+    }
 
     /**
      * A flow that starts emitting items from the provided [flowFactory] only when the user is logged in.
@@ -159,6 +156,20 @@ class LoginStateRepository @Inject constructor(
             }
     }
 
+    /**
+     * Runs the provided [block] suspend function while the user is logged in, and cancels it
+     * when logged out.
+     */
+    suspend fun runWhileLoggedIn(block: suspend () -> Unit) {
+        loggedInState
+            .map { it != null }
+            .collectLatest { loggedIn ->
+                if (loggedIn) {
+                    block()
+                }
+            }
+    }
+
     fun clear() {
         mutableLoggedInState.value = null
     }
@@ -172,9 +183,23 @@ class LoginStateRepository @Inject constructor(
         mutableLoggedInState.update(updater)
     }
 
+
     companion object {
         private const val TAG = "LoginStateRepository"
 
         private const val PREF_KEY_STATE = "state"
+
+        private fun saveLoggedInState(
+            prefs: SharedPreferences,
+            state: LoggedInState,
+            json: Json
+        ) {
+            prefs.edit()
+                .putString(PREF_KEY_STATE,
+                    KeyStoreHelper.seal(
+                        json.encodeToString(state).toByteArray(Charsets.UTF_8)
+                    ).serialize())
+                .apply()
+        }
     }
 }

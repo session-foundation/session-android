@@ -3,7 +3,7 @@ package org.thoughtcrime.securesms.pro
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,13 +19,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.recipients.ProStatus
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.recipients.isPro
-import org.session.libsession.utilities.recipients.shouldShowProBadge
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
@@ -39,7 +38,9 @@ import javax.inject.Singleton
 class ProStatusManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val prefs: TextSecurePreferences,
-    private val recipientRepository: RecipientRepository,
+    recipientRepository: RecipientRepository,
+    @param:ManagerScope private val scope: CoroutineScope,
+    loginStateRepository: LoginStateRepository,
 ) : OnAppStartupComponent {
 
     val subscriptionState: StateFlow<SubscriptionState> = combine(
@@ -66,17 +67,15 @@ class ProStatusManager @Inject constructor(
         if(!forceCurrentUserAsPro){
             //todo PRO this is where we should get the real state
             SubscriptionState(
-                type = SubscriptionType.NeverSubscribed,
+                type = ProStatus.NeverSubscribed,
+                showProBadge = selfRecipient.shouldShowProBadge,
                 refreshState = proDataStatus
             )
         }
         else SubscriptionState(
             type = when(subscriptionState){
-                DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> SubscriptionType.Active.AutoRenewing(
-                    proStatus = ProStatus.Pro(
-                        visible = true,
-                        validUntil = Instant.now() + Duration.ofDays(14),
-                    ),
+                DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> ProStatus.Active.AutoRenewing(
+                    validUntil = Instant.now() + Duration.ofDays(14),
                     duration = ProSubscriptionDuration.THREE_MONTHS,
                     subscriptionDetails = SubscriptionDetails(
                         device = "Android",
@@ -88,11 +87,8 @@ class ProStatusManager @Inject constructor(
                     )
                 )
 
-                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> SubscriptionType.Active.Expiring(
-                    proStatus = ProStatus.Pro(
-                        visible = true,
-                        validUntil = Instant.now() + Duration.ofDays(2),
-                    ),
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> ProStatus.Active.Expiring(
+                    validUntil = Instant.now() + Duration.ofDays(2),
                     duration = ProSubscriptionDuration.TWELVE_MONTHS,
                     subscriptionDetails = SubscriptionDetails(
                         device = "Android",
@@ -104,11 +100,8 @@ class ProStatusManager @Inject constructor(
                     )
                 )
 
-                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER -> SubscriptionType.Active.Expiring(
-                    proStatus = ProStatus.Pro(
-                        visible = true,
-                        validUntil = Instant.now() + Duration.ofDays(40),
-                    ),
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER -> ProStatus.Active.Expiring(
+                    validUntil = Instant.now() + Duration.ofDays(40),
                     duration = ProSubscriptionDuration.TWELVE_MONTHS,
                     subscriptionDetails = SubscriptionDetails(
                         device = "Android",
@@ -120,11 +113,8 @@ class ProStatusManager @Inject constructor(
                     )
                 )
 
-                DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> SubscriptionType.Active.AutoRenewing(
-                    proStatus = ProStatus.Pro(
-                        visible = true,
-                        validUntil = Instant.now() + Duration.ofDays(14),
-                    ),
+                DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> ProStatus.Active.AutoRenewing(
+                    validUntil = Instant.now() + Duration.ofDays(14),
                     duration = ProSubscriptionDuration.ONE_MONTH,
                     subscriptionDetails = SubscriptionDetails(
                         device = "iOS",
@@ -136,11 +126,8 @@ class ProStatusManager @Inject constructor(
                     )
                 )
 
-                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_APPLE -> SubscriptionType.Active.Expiring(
-                    proStatus = ProStatus.Pro(
-                        visible = true,
-                        validUntil = Instant.now() + Duration.ofDays(2),
-                    ),
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_APPLE -> ProStatus.Active.Expiring(
+                    validUntil = Instant.now() + Duration.ofDays(2),
                     duration = ProSubscriptionDuration.ONE_MONTH,
                     subscriptionDetails = SubscriptionDetails(
                         device = "iOS",
@@ -152,7 +139,7 @@ class ProStatusManager @Inject constructor(
                     )
                 )
 
-                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> SubscriptionType.Expired(
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> ProStatus.Expired(
                     expiredAt = Instant.now() - Duration.ofDays(14),
                     subscriptionDetails = SubscriptionDetails(
                         device = "Android",
@@ -163,7 +150,7 @@ class ProStatusManager @Inject constructor(
                         refundUrl = "https://getsession.org/android-refund",
                     )
                 )
-                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_EARLIER -> SubscriptionType.Expired(
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_EARLIER -> ProStatus.Expired(
                     expiredAt = Instant.now() - Duration.ofDays(60),
                     subscriptionDetails = SubscriptionDetails(
                         device = "Android",
@@ -174,7 +161,7 @@ class ProStatusManager @Inject constructor(
                         refundUrl = "https://getsession.org/android-refund",
                     )
                 )
-                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE -> SubscriptionType.Expired(
+                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE -> ProStatus.Expired(
                     expiredAt = Instant.now() - Duration.ofDays(14),
                     subscriptionDetails = SubscriptionDetails(
                         device = "iOS",
@@ -188,9 +175,10 @@ class ProStatusManager @Inject constructor(
             },
 
             refreshState = proDataStatus,
+            showProBadge = selfRecipient.shouldShowProBadge,
         )
 
-    }.stateIn(GlobalScope, SharingStarted.Eagerly,
+    }.stateIn(scope, SharingStarted.Eagerly,
         initialValue = getDefaultSubscriptionStateData()
     )
 
@@ -198,7 +186,7 @@ class ProStatusManager @Inject constructor(
     val postProLaunchStatus: StateFlow<Boolean> = _postProLaunchStatus
 
     init {
-        GlobalScope.launch {
+        scope.launch {
             prefs.watchPostProStatus().collect {
                 _postProLaunchStatus.update { isPostPro() }
             }
@@ -209,7 +197,7 @@ class ProStatusManager @Inject constructor(
      * Logic to determine if we should animate the avatar for a user or freeze it on the first frame
      */
     fun freezeFrameForUser(recipient: Recipient): Boolean{
-        return if(!isPostPro() || recipient.isCommunityRecipient) false else !recipient.proStatus.isPro()
+        return if(!isPostPro() || recipient.isCommunityRecipient) false else !recipient.isPro
     }
 
     /**
@@ -228,24 +216,28 @@ class ProStatusManager @Inject constructor(
         return prefs.forcePostPro()
     }
 
-    fun getCharacterLimit(status: ProStatus): Int {
-        return if (status.isPro()) MAX_CHARACTER_PRO else MAX_CHARACTER_REGULAR
+    fun getCharacterLimit(isPro: Boolean): Int {
+        return if (isPro) MAX_CHARACTER_PRO else MAX_CHARACTER_REGULAR
     }
 
-    fun getPinnedConversationLimit(status: ProStatus): Int {
+    fun getPinnedConversationLimit(isPro: Boolean): Int {
         if(!isPostPro()) return Int.MAX_VALUE // allow infinite pins while not in post Pro
 
-        return if (status.isPro()) Int.MAX_VALUE else MAX_PIN_REGULAR
+        return if (isPro) Int.MAX_VALUE else MAX_PIN_REGULAR
     }
 
     /**
      * This will calculate the pro features of an outgoing message
      */
-    fun calculateMessageProFeatures(status: ProStatus, message: String): List<MessageProFeature>{
+    fun calculateMessageProFeatures(isPro: Boolean, shouldShowProBadge: Boolean, message: String): List<MessageProFeature>{
+        if (!isPro){
+            return emptyList()
+        }
+
         val features = mutableListOf<MessageProFeature>()
 
         // check for pro badge display
-        if (status.shouldShowProBadge()){
+        if (shouldShowProBadge){
             features.add(MessageProFeature.ProBadge)
         }
 

@@ -20,11 +20,9 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.robolectric.RobolectricTestRunner
 import org.session.libsession.messaging.open_groups.GroupMemberRole
-import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
-import org.session.libsession.utilities.recipients.ProStatus
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.truncateIdForDisplay
@@ -131,7 +129,7 @@ class MentionViewModelTest : BaseViewModelTest() {
                         avatar = null,
                         expiryMode = ExpiryMode.NONE,
                         priority = 0,
-                        proStatus = ProStatus.None,
+                        proData = null,
                         profileUpdatedAt = null,
                     )
                 )

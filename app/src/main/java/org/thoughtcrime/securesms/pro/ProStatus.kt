@@ -1,26 +1,25 @@
 package org.thoughtcrime.securesms.pro
 
-import org.session.libsession.utilities.recipients.ProStatus
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.util.State
 import java.time.Instant
 
-sealed interface SubscriptionType{
-    data object NeverSubscribed: SubscriptionType
+sealed interface ProStatus{
+    data object NeverSubscribed: ProStatus
 
-    sealed interface Active: SubscriptionType{
-        val proStatus: ProStatus.Pro
+    sealed interface Active: ProStatus{
+        val validUntil: Instant
         val duration: ProSubscriptionDuration
         val subscriptionDetails: SubscriptionDetails
 
         data class AutoRenewing(
-            override val proStatus: ProStatus.Pro,
+            override val validUntil: Instant,
             override val duration: ProSubscriptionDuration,
             override val subscriptionDetails: SubscriptionDetails
         ): Active
 
         data class Expiring(
-            override val proStatus: ProStatus.Pro,
+            override val validUntil: Instant,
             override val duration: ProSubscriptionDuration,
             override val subscriptionDetails: SubscriptionDetails
         ): Active
@@ -30,11 +29,12 @@ sealed interface SubscriptionType{
     data class Expired(
         val expiredAt: Instant,
         val subscriptionDetails: SubscriptionDetails
-    ): SubscriptionType
+    ): ProStatus
 }
 
 data class SubscriptionState(
-    val type: SubscriptionType,
+    val type: ProStatus,
+    val showProBadge: Boolean,
     val refreshState: State<Unit>,
 )
 
@@ -62,6 +62,7 @@ data class SubscriptionDetails(
 }
 
 fun getDefaultSubscriptionStateData() = SubscriptionState(
-    type = SubscriptionType.NeverSubscribed,
-    refreshState = State.Loading
+    type = ProStatus.NeverSubscribed,
+    refreshState = State.Loading,
+    showProBadge = false
 )

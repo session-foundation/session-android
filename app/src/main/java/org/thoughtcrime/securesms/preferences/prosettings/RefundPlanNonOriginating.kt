@@ -17,10 +17,9 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACC
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
-import org.session.libsession.utilities.recipients.ProStatus
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
+import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.SubscriptionDetails
-import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
@@ -31,7 +30,7 @@ import java.time.Instant
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun RefundPlanNonOriginating(
-    subscription: SubscriptionType.Active,
+    subscription: ProStatus.Active,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ){
@@ -93,11 +92,8 @@ private fun PreviewUpdatePlan(
     PreviewTheme(colors) {
         val context = LocalContext.current
         RefundPlanNonOriginating (
-            subscription = SubscriptionType.Active.AutoRenewing(
-                proStatus = ProStatus.Pro(
-                    visible = true,
-                    validUntil = Instant.now() + Duration.ofDays(14),
-                ),
+            subscription = ProStatus.Active.AutoRenewing(
+                validUntil = Instant.now() + Duration.ofDays(14),
                 duration = ProSubscriptionDuration.THREE_MONTHS,
                 subscriptionDetails = SubscriptionDetails(
                     device = "iOS",
