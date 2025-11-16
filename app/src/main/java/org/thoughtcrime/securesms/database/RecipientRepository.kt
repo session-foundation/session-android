@@ -152,6 +152,12 @@ class RecipientRepository @Inject constructor(
         )
     }
 
+    /**
+     * A context object to collect data during the fetchRecipient process. For now we only
+     * collect [RecipientSettings.ProData], this is needed because some recipient (like groups) have
+     * multiple sub-recipients, and each of them may have their own pro data.
+     * We then collect all the pro data and perform a final calculation at the end of [fetchRecipient].
+     */
     private class FetchRecipientContext {
         var proDataList: MutableList<RecipientSettings.ProData>? = null
 
