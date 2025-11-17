@@ -272,9 +272,6 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     ReceivedMessageHashDatabase.Companion.createAndMigrateTable(db);
 
     ProDatabase.Companion.createTable(db);
-    ReactionDatabase.Companion.migrateToDropForeignConstraint(db);
-
-    ProDatabase.Companion.createTable(db);
     db.execSQL(MmsDatabase.ADD_PRO_FEATURES_COLUMN);
     db.execSQL(SmsDatabase.ADD_PRO_FEATURES_COLUMN);
     RecipientSettingsDatabase.Companion.migrateProStatusToProData(db);
