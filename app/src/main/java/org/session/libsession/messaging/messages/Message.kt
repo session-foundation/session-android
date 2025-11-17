@@ -1,7 +1,6 @@
 package org.session.libsession.messaging.messages
 
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.visible.VisibleMessage

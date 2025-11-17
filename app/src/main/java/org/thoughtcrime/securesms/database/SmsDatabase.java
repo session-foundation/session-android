@@ -24,19 +24,14 @@ import android.content.Context;
 import android.database.Cursor;
 import android.text.TextUtils;
 
-
 import com.annimon.stream.Stream;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.json.JSONArray;
-import net.zetetic.database.sqlcipher.SQLiteStatement;
-
-import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.session.libsession.messaging.calls.CallMessageType;
-import org.session.libsession.messaging.messages.signal.IncomingGroupMessage;
 import org.session.libsession.messaging.messages.signal.IncomingTextMessage;
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage;
 import org.session.libsession.snode.SnodeAPI;
@@ -59,7 +54,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -447,16 +441,9 @@ public class SmsDatabase extends MessagingDatabase {
 
   protected Optional<InsertResult> insertMessageInbox(IncomingTextMessage message, long type, long serverTimestamp, boolean runThreadUpdate) {
     Address recipient = message.getSender();
+    Address groupRecipient = message.getGroup();
 
-    Address groupRecipient;
-
-    if (message.getGroupId() == null) {
-      groupRecipient = null;
-    } else {
-      groupRecipient = message.getGroupId();
-    }
-
-    boolean    unread     = (message.isSecureMessage() || message.isGroup() || message.isUnreadCallMessage());
+    boolean    unread     = (message.isSecureMessage() || message.isGroupMessage() || message.isUnreadCallMessage());
 
     long       threadId;
 
@@ -465,16 +452,16 @@ public class SmsDatabase extends MessagingDatabase {
 
     if (message.isSecureMessage()) {
       type |= Types.SECURE_MESSAGE_BIT;
-    } else if (message.isGroup()) {
+    } else if (message.isGroupMessage()) {
       type |= Types.SECURE_MESSAGE_BIT;
-      if (((IncomingGroupMessage)message).isUpdateMessage()) type |= GROUP_UPDATE_MESSAGE_BIT;
+      if (message.isGroupUpdateMessage()) type |= GROUP_UPDATE_MESSAGE_BIT;
     }
 
-    if (message.isPush()) type |= Types.PUSH_MESSAGE_BIT;
+    if (message.getPush()) type |= Types.PUSH_MESSAGE_BIT;
 
     if (message.isOpenGroupInvitation()) type |= Types.OPEN_GROUP_INVITATION_BIT;
 
-    CallMessageType callMessageType = message.getCallType();
+    CallMessageType callMessageType = message.getCallMessageType();
     if (callMessageType != null) {
       type |= getCallMessageTypeMask(callMessageType);
     }
@@ -490,21 +477,22 @@ public class SmsDatabase extends MessagingDatabase {
     values.put(PROTOCOL, message.getProtocol());
     values.put(READ, unread ? 0 : 1);
     values.put(SUBSCRIPTION_ID, message.getSubscriptionId());
-    values.put(EXPIRES_IN, message.getExpiresIn());
+    values.put(EXPIRES_IN, message.getExpiresInMillis());
     values.put(EXPIRE_STARTED, message.getExpireStartedAt());
-    values.put(UNIDENTIFIED, message.isUnidentified());
-    values.put(HAS_MENTION, message.hasMention());
+    values.put(UNIDENTIFIED, message.getUnidentified());
+    values.put(HAS_MENTION, message.getHasMention());
 
     if (!TextUtils.isEmpty(message.getPseudoSubject()))
       values.put(SUBJECT, message.getPseudoSubject());
 
-    values.put(REPLY_PATH_PRESENT, message.isReplyPathPresent());
+    values.put(REPLY_PATH_PRESENT, message.getReplyPathPresent());
     values.put(SERVICE_CENTER, message.getServiceCenterAddress());
-    values.put(BODY, message.getMessageBody());
+    values.put(BODY, message.getMessage());
     values.put(TYPE, type);
     values.put(THREAD_ID, threadId);
+    values.put(PRO_FEATURES, message.getProFeaturesRawValue());
 
-    if (message.isPush() && isDuplicate(message, threadId)) {
+    if (message.getPush() && isDuplicate(message, threadId)) {
       Log.w(TAG, "Duplicate message (" + message.getSentTimestampMillis() + "), ignoring...");
       return Optional.absent();
     } else {
@@ -562,9 +550,8 @@ public class SmsDatabase extends MessagingDatabase {
                                   boolean forceSms, long date,
                                   boolean runThreadUpdate)
   {
-    long type = Types.BASE_SENDING_TYPE;
+    long type = Types.BASE_SENDING_TYPE | Types.SECURE_MESSAGE_BIT | Types.PUSH_MESSAGE_BIT;
 
-    if (message.isSecureMessage())       type |= (Types.SECURE_MESSAGE_BIT | Types.PUSH_MESSAGE_BIT);
     if (forceSms)                        type |= Types.MESSAGE_FORCE_SMS_BIT;
     if (message.isOpenGroupInvitation()) type |= Types.OPEN_GROUP_INVITATION_BIT;
 
@@ -575,14 +562,14 @@ public class SmsDatabase extends MessagingDatabase {
     ContentValues contentValues = new ContentValues();
     contentValues.put(ADDRESS, address.toString());
     contentValues.put(THREAD_ID, threadId);
-    contentValues.put(BODY, message.getMessageBody());
+    contentValues.put(BODY, message.getMessage());
     contentValues.put(DATE_RECEIVED, SnodeAPI.getNowWithOffset());
     contentValues.put(DATE_SENT, message.getSentTimestampMillis());
     contentValues.put(READ, 1);
     contentValues.put(TYPE, type);
     contentValues.put(SUBSCRIPTION_ID, message.getSubscriptionId());
-    contentValues.put(EXPIRES_IN, message.getExpiresIn());
-    contentValues.put(EXPIRE_STARTED, message.getExpireStartedAt());
+    contentValues.put(EXPIRES_IN, message.getExpiresInMillis());
+    contentValues.put(EXPIRE_STARTED, message.getExpireStartedAtMillis());
     contentValues.put(DELIVERY_RECEIPT_COUNT, Stream.of(earlyDeliveryReceipts.values()).mapToLong(Long::longValue).sum());
     contentValues.put(READ_RECEIPT_COUNT, Stream.of(earlyReadReceipts.values()).mapToLong(Long::longValue).sum());
 

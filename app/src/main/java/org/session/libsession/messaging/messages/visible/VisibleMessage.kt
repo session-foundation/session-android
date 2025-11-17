@@ -1,6 +1,8 @@
 package org.session.libsession.messaging.messages.visible
 
+import androidx.annotation.Keep
 import network.loki.messenger.BuildConfig
+import network.loki.messenger.libsession_util.protocol.ProFeatures
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.copyExpiration
@@ -24,8 +26,13 @@ data class VisibleMessage(
     var openGroupInvitation: OpenGroupInvitation? = null,
     var reaction: Reaction? = null,
     var hasMention: Boolean = false,
-    var blocksMessageRequests: Boolean = false
+    var blocksMessageRequests: Boolean = false,
+    var proFeatures: ProFeatures = ProFeatures.NONE
 ) : Message()  {
+
+    // This empty constructor is needed for kryo serialization
+    @Keep
+    constructor(): this(proFeatures = ProFeatures.NONE)
 
     override val isSelfSendValid: Boolean = true
 
