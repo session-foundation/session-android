@@ -1,161 +1,62 @@
-package org.session.libsession.messaging.messages.signal;
+package org.session.libsession.messaging.messages.signal
 
-import org.jspecify.annotations.Nullable;
-import org.session.libsession.messaging.messages.visible.VisibleMessage;
-import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
-import org.session.libsession.messaging.sending_receiving.attachments.PointerAttachment;
-import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage;
-import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview;
-import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel;
-import org.session.libsession.utilities.Address;
-import org.session.libsession.utilities.Contact;
-import org.session.libsignal.messages.SignalServiceAttachment;
-import org.session.libsignal.utilities.guava.Optional;
-import org.thoughtcrime.securesms.database.model.content.MessageContent;
+import network.loki.messenger.libsession_util.protocol.ProFeatures
+import org.session.libsession.messaging.messages.visible.VisibleMessage
+import org.session.libsession.messaging.sending_receiving.attachments.Attachment
+import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
+import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
+import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
+import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Contact
+import org.thoughtcrime.securesms.database.model.content.MessageContent
 
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+class IncomingMediaMessage(
+    val from: Address,
+    val sentTimeMillis: Long,
+    val subscriptionId: Int,
+    val expiresIn: Long,
+    val expireStartedAt: Long,
+    val isMessageRequestResponse: Boolean,
+    val hasMention: Boolean,
+    val body: String?,
+    val group: Address.GroupLike?,
+    val attachments: List<Attachment>,
+    val proFeatures: ProFeatures,
+    val messageContent: MessageContent?,
+    val quote: QuoteModel?,
+    val sharedContacts: List<Contact>,
+    val linkPreviews: List<LinkPreview>,
+    val dataExtractionNotification: DataExtractionNotificationInfoMessage?,
+) {
 
-public class IncomingMediaMessage {
+    constructor(
+        message: VisibleMessage,
+        from: Address,
+        expiresIn: Long,
+        expireStartedAt: Long,
+        group: Address.GroupLike?,
+        attachments: List<Attachment>,
+        quote: QuoteModel?,
+        linkPreviews: List<LinkPreview>
+    ): this(
+        from = from,
+        sentTimeMillis = message.sentTimestamp!!,
+        subscriptionId = -1,
+        expiresIn = expiresIn,
+        expireStartedAt = expireStartedAt,
+        isMessageRequestResponse = false,
+        hasMention = message.hasMention,
+        body = message.text,
+        group = group,
+        attachments = attachments,
+        proFeatures = message.proFeatures,
+        messageContent = null,
+        quote = quote,
+        sharedContacts = emptyList(),
+        linkPreviews = linkPreviews,
+        dataExtractionNotification = null
+    )
 
-  private final Address       from;
-  private final Address.GroupLike       groupId;
-  private final String        body;
-  private final boolean       push;
-  private final long          sentTimeMillis;
-  private final int           subscriptionId;
-  private final long          expiresIn;
-  private final long          expireStartedAt;
-  private final boolean       messageRequestResponse;
-  private final boolean       hasMention;
-  @Nullable
-  private final MessageContent messageContent;
-
-  private final DataExtractionNotificationInfoMessage dataExtractionNotification;
-  private final QuoteModel                            quote;
-
-  private final List<Attachment>  attachments    = new LinkedList<>();
-  private final List<Contact>     sharedContacts = new LinkedList<>();
-  private final List<LinkPreview> linkPreviews   = new LinkedList<>();
-
-  public IncomingMediaMessage(Address from,
-                              long sentTimeMillis,
-                              int subscriptionId,
-                              long expiresIn,
-                              long expireStartedAt,
-                              boolean messageRequestResponse,
-                              boolean hasMention,
-                              Optional<String> body,
-                              Optional<Address.GroupLike> group,
-                              Optional<List<SignalServiceAttachment>> attachments,
-                              @Nullable MessageContent messageContent,
-                              Optional<QuoteModel> quote,
-                              Optional<List<Contact>> sharedContacts,
-                              Optional<List<LinkPreview>> linkPreviews,
-                              Optional<DataExtractionNotificationInfoMessage> dataExtractionNotification)
-  {
-    this.messageContent = messageContent;
-    this.push                       = true;
-    this.from                       = from;
-    this.sentTimeMillis             = sentTimeMillis;
-    this.body                       = body.orNull();
-    this.subscriptionId             = subscriptionId;
-    this.expiresIn                  = expiresIn;
-    this.expireStartedAt            = expireStartedAt;
-    this.dataExtractionNotification = dataExtractionNotification.orNull();
-    this.quote                      = quote.orNull();
-    this.messageRequestResponse     = messageRequestResponse;
-    this.hasMention                 = hasMention;
-    this.groupId = group.orNull();
-
-    this.attachments.addAll(PointerAttachment.forPointers(attachments));
-    this.sharedContacts.addAll(sharedContacts.or(Collections.emptyList()));
-    this.linkPreviews.addAll(linkPreviews.or(Collections.emptyList()));
-  }
-
-  public static IncomingMediaMessage from(VisibleMessage message,
-                                          Address from,
-                                          long expiresIn,
-                                          long expireStartedAt,
-                                          Optional<Address.GroupLike> group,
-                                          List<SignalServiceAttachment> attachments,
-                                          Optional<QuoteModel> quote,
-                                          Optional<List<LinkPreview>> linkPreviews)
-  {
-    return new IncomingMediaMessage(from, message.getSentTimestamp(), -1, expiresIn, expireStartedAt,
-            false, message.getHasMention(), Optional.fromNullable(message.getText()),
-            group, Optional.fromNullable(attachments), null, quote, Optional.absent(), linkPreviews, Optional.absent());
-  }
-
-  public int getSubscriptionId() {
-    return subscriptionId;
-  }
-
-  public String getBody() {
-    return body;
-  }
-
-  public List<Attachment> getAttachments() {
-    return attachments;
-  }
-
-  public Address getFrom() {
-    return from;
-  }
-
-  public Address.GroupLike getGroupId() {
-    return groupId;
-  }
-
-  public @Nullable MessageContent getMessageContent() {
-    return messageContent;
-  }
-
-  public boolean isPushMessage() {
-    return push;
-  }
-
-  public long getSentTimeMillis() {
-    return sentTimeMillis;
-  }
-
-  public long getExpiresIn() {
-    return expiresIn;
-  }
-
-  public long getExpireStartedAt() {
-    return expireStartedAt;
-  }
-
-  public boolean isGroupMessage() {
-    return groupId != null;
-  }
-
-  public boolean hasMention() {
-    return hasMention;
-  }
-
-  public boolean isMediaSavedDataExtraction() {
-    if (dataExtractionNotification == null) return false;
-    else {
-      return dataExtractionNotification.getKind() == DataExtractionNotificationInfoMessage.Kind.MEDIA_SAVED;
-    }
-  }
-
-  public QuoteModel getQuote() {
-    return quote;
-  }
-
-  public List<Contact> getSharedContacts() {
-    return sharedContacts;
-  }
-
-  public List<LinkPreview> getLinkPreviews() {
-    return linkPreviews;
-  }
-
-  public boolean isMessageRequestResponse() {
-    return messageRequestResponse;
-  }
+    val isMediaSavedDataExtraction: Boolean get() =
+        dataExtractionNotification?.kind == DataExtractionNotificationInfoMessage.Kind.MEDIA_SAVED
 }

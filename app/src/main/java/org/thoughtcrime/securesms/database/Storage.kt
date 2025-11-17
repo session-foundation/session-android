@@ -37,6 +37,7 @@ import org.session.libsession.messaging.messages.visible.Reaction
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
+import org.session.libsession.messaging.sending_receiving.attachments.PointerAttachment
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
@@ -338,7 +339,7 @@ open class Storage @Inject constructor(
             }
 
             val quote: Optional<QuoteModel> = if (quotes != null) Optional.of(quotes) else Optional.absent()
-            val linkPreviews: Optional<List<LinkPreview>> = if (linkPreview.isEmpty()) Optional.absent() else Optional.of(linkPreview.mapNotNull { it!! })
+            val linkPreviews = linkPreview.mapNotNull { it }
             val insertResult = if (isUserSender || isUserBlindedSender) {
                 val pointers = attachments.mapNotNull {
                     it.toSignalAttachment()
@@ -349,7 +350,7 @@ open class Storage @Inject constructor(
                     targetAddress,
                     pointers,
                     quote.orNull(),
-                    linkPreviews.orNull()?.firstOrNull(),
+                    linkPreviews.firstOrNull(),
                     expiresInMillis,
                     expireStartedAt
                 )
@@ -359,7 +360,16 @@ open class Storage @Inject constructor(
                 val signalServiceAttachments = attachments.mapNotNull {
                     it.toSignalPointer()
                 }
-                val mediaMessage = IncomingMediaMessage.from(message, senderAddress, expiresInMillis, expireStartedAt, Optional.fromNullable(threadRecipient.address as? Address.GroupLike), signalServiceAttachments, quote, linkPreviews)
+                val mediaMessage = IncomingMediaMessage(
+                    message = message,
+                    from = senderAddress,
+                    expiresIn = expiresInMillis,
+                    expireStartedAt = expireStartedAt,
+                    group = threadRecipient.address as? Address.GroupLike,
+                    attachments = PointerAttachment.forPointers(Optional.of(signalServiceAttachments)),
+                    quote = quotes,
+                    linkPreviews = linkPreviews
+                )
                 mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, message.threadID!!, message.receivedTimestamp ?: 0, runThreadUpdate)
             }
 
@@ -1058,14 +1068,15 @@ open class Storage @Inject constructor(
             expireStartedAt,
             false,
             false,
-            Optional.absent(),
-            Optional.absent(),
-            Optional.absent(),
             null,
-            Optional.absent(),
-            Optional.absent(),
-            Optional.absent(),
-            Optional.of(message)
+            null,
+            emptyList(),
+            ProFeatures.NONE,
+            null,
+            null,
+            emptyList(),
+            emptyList(),
+            message
         )
 
         mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, threadId, runThreadUpdate = true)
@@ -1078,21 +1089,22 @@ open class Storage @Inject constructor(
         val userPublicKey = getUserPublicKey() ?: return
 
         val message = IncomingMediaMessage(
-            fromSerialized(userPublicKey),
-            clock.currentTimeMills(),
-            -1,
-            0,
-            0,
-            true,
-            false,
-            Optional.absent(),
-            Optional.absent(),
-            Optional.absent(),
-            null,
-            Optional.absent(),
-            Optional.absent(),
-            Optional.absent(),
-            Optional.absent()
+            from = fromSerialized(userPublicKey),
+            sentTimeMillis = clock.currentTimeMills(),
+            subscriptionId = -1,
+            expiresIn = 0,
+            expireStartedAt = 0,
+            isMessageRequestResponse = true,
+            hasMention = false,
+            body = null,
+            group = null,
+            attachments = emptyList(),
+            proFeatures = ProFeatures.NONE,
+            messageContent = null,
+            quote = null,
+            sharedContacts = emptyList(),
+            linkPreviews = emptyList(),
+            dataExtractionNotification = null
         )
         mmsDatabase.insertSecureDecryptedMessageInbox(message, threadId, runThreadUpdate = true)
     }

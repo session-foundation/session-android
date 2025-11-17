@@ -14,141 +14,153 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package org.thoughtcrime.securesms.notifications
 
-package org.thoughtcrime.securesms.notifications;
-
-import android.annotation.SuppressLint;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.os.AsyncTask;
-import android.os.Bundle;
-
-import androidx.core.app.RemoteInput;
-
-import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage;
-import org.session.libsession.messaging.messages.signal.OutgoingTextMessage;
-import org.session.libsession.messaging.messages.visible.VisibleMessage;
-import org.session.libsession.messaging.sending_receiving.MessageSender;
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
-import org.session.libsession.snode.SnodeAPI;
-import org.session.libsession.utilities.Address;
-import org.session.libsession.utilities.AddressKt;
-import org.session.libsignal.utilities.Log;
-import org.thoughtcrime.securesms.database.MarkedMessageInfo;
-import org.thoughtcrime.securesms.database.MmsDatabase;
-import org.thoughtcrime.securesms.database.RecipientRepository;
-import org.thoughtcrime.securesms.database.SmsDatabase;
-import org.thoughtcrime.securesms.database.ThreadDatabase;
-import org.thoughtcrime.securesms.mms.MmsException;
-
-import java.util.Collections;
-import java.util.List;
-
-import javax.inject.Inject;
-
-import dagger.hilt.android.AndroidEntryPoint;
-import network.loki.messenger.libsession_util.util.ExpiryMode;
+import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.os.AsyncTask
+import androidx.core.app.RemoteInput
+import dagger.hilt.android.AndroidEntryPoint
+import network.loki.messenger.libsession_util.util.ExpiryMode.AfterSend
+import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
+import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
+import org.session.libsession.messaging.messages.visible.VisibleMessage
+import org.session.libsession.messaging.sending_receiving.MessageSender
+import org.session.libsession.messaging.sending_receiving.attachments.Attachment
+import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
+import org.session.libsession.snode.SnodeAPI.nowWithOffset
+import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.isGroupOrCommunity
+import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.MmsDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.database.SmsDatabase
+import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.mms.MmsException
+import javax.inject.Inject
 
 /**
  * Get the response text from the Android Auto and sends an message as a reply
  */
 @AndroidEntryPoint
-public class AndroidAutoReplyReceiver extends BroadcastReceiver {
+class AndroidAutoReplyReceiver : BroadcastReceiver() {
+    @Inject
+    lateinit var threadDatabase: ThreadDatabase
 
-  public static final String TAG             = AndroidAutoReplyReceiver.class.getSimpleName();
-  public static final String REPLY_ACTION    = "network.loki.securesms.notifications.ANDROID_AUTO_REPLY";
-  public static final String ADDRESS_EXTRA   = "car_address";
-  public static final String VOICE_REPLY_KEY = "car_voice_reply_key";
-  public static final String THREAD_ID_EXTRA = "car_reply_thread_id";
+    @Inject
+    lateinit var recipientRepository: RecipientRepository
 
-  @Inject
-  ThreadDatabase threadDatabase;
+    @Inject
+    lateinit var mmsDatabase: MmsDatabase
 
-  @Inject
-  RecipientRepository recipientRepository;
+    @Inject
+    lateinit var smsDatabase: SmsDatabase
 
-  @Inject
-  MmsDatabase mmsDatabase;
+    @Inject
+    lateinit var messageNotifier: MessageNotifier
 
-  @Inject
-  SmsDatabase smsDatabase;
+    @Inject
+    lateinit var markReadProcessor: MarkReadProcessor
 
-  @Inject
-  MessageNotifier messageNotifier;
+    @Inject
+    lateinit var messageSender: MessageSender
 
-  @Inject
-  MarkReadProcessor markReadProcessor;
+    @SuppressLint("StaticFieldLeak")
+    override fun onReceive(context: Context, intent: Intent) {
+        if (REPLY_ACTION != intent.getAction()) return
 
-  @Inject
-  MessageSender messageSender;
+        val remoteInput = RemoteInput.getResultsFromIntent(intent)
 
-  @SuppressLint("StaticFieldLeak")
-  @Override
-  public void onReceive(final Context context, Intent intent)
-  {
-    if (!REPLY_ACTION.equals(intent.getAction())) return;
+        if (remoteInput == null) return
 
-    Bundle remoteInput = RemoteInput.getResultsFromIntent(intent);
+        val address = intent.getParcelableExtra<Address?>(ADDRESS_EXTRA)
+        val threadId = intent.getLongExtra(THREAD_ID_EXTRA, -1)
+        val responseText = getMessageText(intent)
 
-    if (remoteInput == null) return;
+        if (responseText != null) {
+            object : AsyncTask<Void?, Void?, Void?>() {
+                override fun doInBackground(vararg params: Void?): Void? {
+                    val replyThreadId: Long
 
-    final Address      address      = intent.getParcelableExtra(ADDRESS_EXTRA);
-    final long         threadId     = intent.getLongExtra(THREAD_ID_EXTRA, -1);
-    final CharSequence responseText = getMessageText(intent);
+                    if (threadId == -1L) {
+                        replyThreadId = threadDatabase.getOrCreateThreadIdFor(address)
+                    } else {
+                        replyThreadId = threadId
+                    }
 
-    if (responseText != null) {
-      new AsyncTask<Void, Void, Void>() {
-        @Override
-        protected Void doInBackground(Void... params) {
+                    val message = VisibleMessage()
+                    message.text = responseText.toString()
+                    message.sentTimestamp = nowWithOffset
+                    messageSender.send(message, address!!)
+                    val expiryMode = recipientRepository.getRecipientSync(address).expiryMode
+                    val expiresInMillis = expiryMode.expiryMillis
+                    val expireStartedAt: Long =
+                        (if (expiryMode is AfterSend) message.sentTimestamp!! else 0L)
 
-          long replyThreadId;
+                    if (address.isGroupOrCommunity) {
+                        Log.w("AndroidAutoReplyReceiver", "GroupRecipient, Sending media message")
+                        val reply = OutgoingMediaMessage.from(
+                            message,
+                            address,
+                            mutableListOf<Attachment?>(),
+                            null,
+                            null,
+                            expiresInMillis,
+                            0
+                        )
+                        try {
+                            mmsDatabase.insertMessageOutbox(
+                                message = reply,
+                                threadId = replyThreadId,
+                                forceSms = false,
+                                runThreadUpdate = true
+                            )
+                        } catch (e: MmsException) {
+                            Log.w(TAG, e)
+                        }
+                    } else {
+                        Log.w("AndroidAutoReplyReceiver", "Sending regular message ")
+                        val reply = OutgoingTextMessage.from(
+                            message,
+                            address,
+                            expiresInMillis,
+                            expireStartedAt
+                        )
+                        smsDatabase.insertMessageOutbox(
+                            replyThreadId,
+                            reply,
+                            false,
+                            nowWithOffset,
+                            true
+                        )
+                    }
 
-          if (threadId == -1) {
-            replyThreadId = threadDatabase.getOrCreateThreadIdFor(address);
-          } else {
-            replyThreadId = threadId;
-          }
+                    val messageIds = threadDatabase.setRead(replyThreadId, true)
 
-          VisibleMessage message = new VisibleMessage();
-          message.setText(responseText.toString());
-          message.setSentTimestamp(SnodeAPI.getNowWithOffset());
-          messageSender.send(message, address);
-          ExpiryMode expiryMode = recipientRepository.getRecipientSync(address).getExpiryMode();
-          long expiresInMillis = expiryMode.getExpiryMillis();
-          long expireStartedAt = expiryMode instanceof ExpiryMode.AfterSend ? message.getSentTimestamp() : 0L;
+                    messageNotifier.updateNotification(context)
+                    markReadProcessor.process(messageIds)
 
-          if (AddressKt.isGroupOrCommunity(address)) {
-            Log.w("AndroidAutoReplyReceiver", "GroupRecipient, Sending media message");
-            OutgoingMediaMessage reply = OutgoingMediaMessage.from(message, address, Collections.emptyList(), null, null, expiresInMillis, 0);
-            try {
-              mmsDatabase.insertMessageOutbox(reply, replyThreadId, false, true);
-            } catch (MmsException e) {
-              Log.w(TAG, e);
-            }
-          } else {
-            Log.w("AndroidAutoReplyReceiver", "Sending regular message ");
-            OutgoingTextMessage reply = OutgoingTextMessage.from(message, address, expiresInMillis, expireStartedAt);
-            smsDatabase.insertMessageOutbox(replyThreadId, reply, false, SnodeAPI.getNowWithOffset(), true);
-          }
-
-          List<MarkedMessageInfo> messageIds = threadDatabase.setRead(replyThreadId, true);
-
-          messageNotifier.updateNotification(context);
-          markReadProcessor.process(messageIds);
-
-          return null;
+                    return null
+                }
+            }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR)
         }
-      }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
-  }
 
-  private CharSequence getMessageText(Intent intent) {
-    Bundle remoteInput = RemoteInput.getResultsFromIntent(intent);
-    if (remoteInput != null) {
-      return remoteInput.getCharSequence(VOICE_REPLY_KEY);
+    private fun getMessageText(intent: Intent): CharSequence? {
+        val remoteInput = RemoteInput.getResultsFromIntent(intent)
+        if (remoteInput != null) {
+            return remoteInput.getCharSequence(VOICE_REPLY_KEY)
+        }
+        return null
     }
-    return null;
-  }
 
+    companion object {
+        val TAG: String = AndroidAutoReplyReceiver::class.java.getSimpleName()
+        const val REPLY_ACTION: String = "network.loki.securesms.notifications.ANDROID_AUTO_REPLY"
+        const val ADDRESS_EXTRA: String = "car_address"
+        const val VOICE_REPLY_KEY: String = "car_voice_reply_key"
+        const val THREAD_ID_EXTRA: String = "car_reply_thread_id"
+    }
 }

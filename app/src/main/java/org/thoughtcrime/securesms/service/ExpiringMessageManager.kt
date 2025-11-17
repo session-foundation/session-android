@@ -84,7 +84,6 @@ class ExpiringMessageManager @Inject constructor(
         val sentTimestamp = message.sentTimestamp
         val groupAddress = message.groupPublicKey?.toAddress() as? Address.GroupLike
         val expiresInMillis = message.expiryMode.expiryMillis
-        var groupInfo = Optional.absent<SignalServiceGroup?>()
         val address = fromSerialized(senderPublicKey!!)
         var recipient = recipientRepository.getRecipientSync(address)
 
@@ -97,20 +96,23 @@ class ExpiringMessageManager @Inject constructor(
 
             val threadId = recipient.address.let(storage.get()::getThreadId) ?: return null
             val mediaMessage = IncomingMediaMessage(
-                address, sentTimestamp!!, -1,
-                expiresInMillis,
-                0,  // Marking expiryStartedAt as 0 as expiration logic will be universally applied on received messages
+                from = address,
+                sentTimeMillis = sentTimestamp!!,
+                subscriptionId = -1,
+                expiresIn = expiresInMillis,
+                expireStartedAt = 0,  // Marking expiryStartedAt as 0 as expiration logic will be universally applied on received messages
                 // We no longer set this to true anymore as it won't be used in the future,
-                false,
-                false,
-                Optional.absent(),
-                Optional.fromNullable(groupAddress),
-                Optional.absent(),
-                DisappearingMessageUpdate(message.expiryMode),
-                Optional.absent(),
-                Optional.absent(),
-                Optional.absent(),
-                Optional.absent()
+                isMessageRequestResponse = false,
+                hasMention = false,
+                body = null,
+                group = groupAddress,
+                attachments = emptyList(),
+                proFeatures = ProFeatures.NONE,
+                messageContent = DisappearingMessageUpdate(message.expiryMode),
+                quote = null,
+                sharedContacts = emptyList(),
+                linkPreviews = emptyList(),
+                dataExtractionNotification = null
             )
             //insert the timer update message
             mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, threadId, runThreadUpdate = true)

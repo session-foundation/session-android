@@ -604,7 +604,8 @@ class MmsDatabase @Inject constructor(
         runThreadUpdate: Boolean
     ): Optional<InsertResult> {
         if (threadId < 0 ) throw MmsException("No thread ID supplied!")
-        if (retrieved.messageContent is DisappearingMessageUpdate) deleteExpirationTimerMessages(threadId, false.takeUnless { retrieved.groupId != null })
+        if (retrieved.messageContent is DisappearingMessageUpdate)
+            deleteExpirationTimerMessages(threadId, false.takeUnless { retrieved.group != null })
         val contentValues = ContentValues()
         contentValues.put(DATE_SENT, retrieved.sentTimeMillis)
         contentValues.put(ADDRESS, retrieved.from.toString())
@@ -625,7 +626,7 @@ class MmsDatabase @Inject constructor(
         contentValues.put(SUBSCRIPTION_ID, retrieved.subscriptionId)
         contentValues.put(EXPIRES_IN, retrieved.expiresIn)
         contentValues.put(EXPIRE_STARTED, retrieved.expireStartedAt)
-        contentValues.put(HAS_MENTION, retrieved.hasMention())
+        contentValues.put(HAS_MENTION, retrieved.hasMention)
         contentValues.put(MESSAGE_REQUEST_RESPONSE, retrieved.isMessageRequestResponse)
         if (!contentValues.containsKey(DATE_SENT)) {
             contentValues.put(DATE_SENT, contentValues.getAsLong(DATE_RECEIVED))
@@ -637,7 +638,7 @@ class MmsDatabase @Inject constructor(
             contentValues.put(QUOTE_MISSING, if (retrieved.quote.missing) 1 else 0)
             quoteAttachments = retrieved.quote.attachments
         }
-        if (retrieved.isPushMessage && isDuplicate(retrieved, threadId) ||
+        if (isDuplicate(retrieved, threadId) ||
             retrieved.isMessageRequestResponse && isDuplicateMessageRequestResponse(
                 retrieved,
                 threadId
@@ -693,10 +694,7 @@ class MmsDatabase @Inject constructor(
         serverTimestamp: Long = 0,
         runThreadUpdate: Boolean
     ): Optional<InsertResult> {
-        var type = MmsSmsColumns.Types.BASE_INBOX_TYPE or MmsSmsColumns.Types.SECURE_MESSAGE_BIT
-        if (retrieved.isPushMessage) {
-            type = type or MmsSmsColumns.Types.PUSH_MESSAGE_BIT
-        }
+        var type = MmsSmsColumns.Types.BASE_INBOX_TYPE or MmsSmsColumns.Types.SECURE_MESSAGE_BIT or MmsSmsColumns.Types.PUSH_MESSAGE_BIT
         if (retrieved.isMediaSavedDataExtraction) {
             type = type or MmsSmsColumns.Types.MEDIA_SAVED_EXTRACTION_BIT
         }
@@ -706,11 +704,11 @@ class MmsDatabase @Inject constructor(
         return insertMessageInbox(retrieved, "", threadId, type, serverTimestamp, runThreadUpdate)
     }
 
-    @JvmOverloads
     @Throws(MmsException::class)
     fun insertMessageOutbox(
         message: OutgoingMediaMessage,
-        threadId: Long, forceSms: Boolean,
+        threadId: Long,
+        forceSms: Boolean,
         serverTimestamp: Long = 0,
         runThreadUpdate: Boolean
     ): Long {
