@@ -80,6 +80,7 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
+import org.thoughtcrime.securesms.util.AvatarBadge
 import org.thoughtcrime.securesms.util.AvatarUIData
 
 
@@ -750,7 +751,7 @@ fun AvatarQrWidget(
         label = "corner_radius"
     )
 
-    // Scale animations for content
+    // Scale animations for content (used when going from QR back to avatar)
     val avatarScale by animateFloatAsState(
         targetValue = if (showQR) 0.8f else 1f,
         animationSpec = animationSpecFast,
@@ -835,7 +836,6 @@ fun AvatarQrWidget(
             }
             Avatar(
                 modifier = avatarModifier
-                    .size(animatedSize)
                     .graphicsLayer(
                         alpha = avatarAlpha,
                         scaleX = avatarScale,
@@ -844,7 +844,7 @@ fun AvatarQrWidget(
                 ,
                 size = animatedSize,
                 maxSizeLoad = LocalDimensions.current.iconXXLargeAvatar,
-                data = avatarUIData
+                data = avatarUIData,
             )
 
             // QR with scale and alpha

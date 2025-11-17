@@ -104,20 +104,11 @@ fun BaseAvatar(
 
         // Badge content, if any.
         if (badge != null) {
-            var badgeSize = size * 0.4f
-            var offset = 0.dp
-
-            if(badgeSize < MIN_BADGE_SIZE){
-                // apply an opinionated minimum size for the badge
-                badgeSize = MIN_BADGE_SIZE
-                offset = 1.dp // the forced min size looks better with a slight offset
-            }
-
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .offset(x = offset, y = offset)
-                    .size(badgeSize)
+                    .offset(x = 1.dp, y = 1.dp)
+                    .size(max(size * 0.4f, MIN_BADGE_SIZE))
             ) {
                 badge()
             }
@@ -394,40 +385,6 @@ fun PreviewAvatarSinglePhoto(){
                 color = primaryGreen,
                 remoteFile = null
             )))
-        )
-    }
-}
-
-@Preview
-@Composable
-fun PreviewAvatarBadge(){
-    PreviewTheme {
-        Avatar(
-            size = LocalDimensions.current.iconLarge,
-            badge = AvatarBadge.Admin,
-            data = AvatarUIData(
-                listOf(AvatarUIElement(
-                    name = "AT",
-                    color = primaryGreen,
-                    remoteFile = null
-                )))
-        )
-    }
-}
-
-@Preview
-@Composable
-fun PreviewAvatarBadgeSmall(){
-    PreviewTheme {
-        Avatar(
-            size = LocalDimensions.current.iconMediumAvatar,
-            badge = AvatarBadge.Admin,
-            data = AvatarUIData(
-                listOf(AvatarUIElement(
-                    name = "AT",
-                    color = primaryGreen,
-                    remoteFile = null
-                )))
         )
     }
 }
