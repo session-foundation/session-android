@@ -31,6 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImagePainter
 import coil3.compose.SubcomposeAsyncImage
@@ -55,6 +56,7 @@ import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
 import org.thoughtcrime.securesms.util.avatarOptions
 
+private val MIN_BADGE_SIZE = 12.dp
 
 @Composable
 fun BaseAvatar(
@@ -102,11 +104,20 @@ fun BaseAvatar(
 
         // Badge content, if any.
         if (badge != null) {
+            var badgeSize = size * 0.4f
+            var offset = 0.dp
+
+            if(badgeSize < MIN_BADGE_SIZE){
+                // apply an opinionated minimum size for the badge
+                badgeSize = MIN_BADGE_SIZE
+                offset = 1.dp // the forced min size looks better with a slight offset
+            }
+
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .offset(1.dp, 1.dp) // Used to make up for transparent padding in icon.
-                    .size(size * 0.4f)
+                    .offset(x = offset, y = offset)
+                    .size(badgeSize)
             ) {
                 badge()
             }
@@ -383,6 +394,40 @@ fun PreviewAvatarSinglePhoto(){
                 color = primaryGreen,
                 remoteFile = null
             )))
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewAvatarBadge(){
+    PreviewTheme {
+        Avatar(
+            size = LocalDimensions.current.iconLarge,
+            badge = AvatarBadge.Admin,
+            data = AvatarUIData(
+                listOf(AvatarUIElement(
+                    name = "AT",
+                    color = primaryGreen,
+                    remoteFile = null
+                )))
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewAvatarBadgeSmall(){
+    PreviewTheme {
+        Avatar(
+            size = LocalDimensions.current.iconMediumAvatar,
+            badge = AvatarBadge.Admin,
+            data = AvatarUIData(
+                listOf(AvatarUIElement(
+                    name = "AT",
+                    color = primaryGreen,
+                    remoteFile = null
+                )))
         )
     }
 }
