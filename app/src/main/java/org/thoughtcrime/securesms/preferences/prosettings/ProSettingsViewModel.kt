@@ -139,7 +139,8 @@ class ProSettingsViewModel @AssistedInject constructor(
                                     positiveStyleDanger = false,
                                     showXIcon = true,
                                     onPositive = {
-                                        getPlanFromProvider() // retry getting the plan from provider
+                                        //todo PRO I shouldn't get the plan from the provider again. I should really only try to redo the backend call
+                                        //getPlanFromProvider() // retry getting the plan from provider
                                     },
                                     onNegative = {
                                         onCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
