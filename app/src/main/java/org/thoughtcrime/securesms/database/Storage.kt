@@ -24,8 +24,6 @@ import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.GroupUpdated
-import org.session.libsession.messaging.messages.signal.IncomingEncryptedMessage
-import org.session.libsession.messaging.messages.signal.IncomingGroupMessage
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
 import org.session.libsession.messaging.messages.signal.IncomingTextMessage
 import org.session.libsession.messaging.messages.signal.OutgoingGroupMediaMessage
@@ -383,10 +381,21 @@ open class Storage @Inject constructor(
                 else OutgoingTextMessage.from(message, targetAddress, expiresInMillis, expireStartedAt)
                 smsDatabase.insertMessageOutbox(message.threadID ?: -1, textMessage, message.sentTimestamp!!, runThreadUpdate)
             } else {
-                val textMessage = if (isOpenGroupInvitation) IncomingTextMessage.fromOpenGroupInvitation(message.openGroupInvitation, senderAddress, message.sentTimestamp, expiresInMillis, expireStartedAt)
-                else IncomingTextMessage.from(message, senderAddress, Optional.fromNullable(threadRecipient.address as? Address.GroupLike), expiresInMillis, expireStartedAt)
-                val encrypted = IncomingEncryptedMessage(textMessage, textMessage.messageBody)
-                smsDatabase.insertMessageInbox(encrypted, message.receivedTimestamp ?: 0, runThreadUpdate)
+                val textMessage = if (isOpenGroupInvitation) IncomingTextMessage.fromOpenGroupInvitation(
+                    invitation = message.openGroupInvitation!!,
+                    sender = senderAddress,
+                    sentTimestampMillis = message.sentTimestamp!!,
+                    expiresInMillis = expiresInMillis,
+                    expireStartedAt = expireStartedAt
+                )!!
+                else IncomingTextMessage(
+                    message = message,
+                    sender = senderAddress,
+                    group = threadRecipient.address as? Address.GroupLike,
+                    expiresInMillis = expiresInMillis,
+                    expireStartedAt = expireStartedAt
+                )
+                smsDatabase.insertMessageInbox(textMessage.copy(isSecureMessage = true), message.receivedTimestamp ?: 0, runThreadUpdate)
             }
             messageID = insertResult.orNull()?.messageId?.let { MessageId(it, mms = false) }
         }
@@ -820,7 +829,7 @@ open class Storage @Inject constructor(
         val threadDb = threadDatabase
         val threadID = threadDb.getThreadIdIfExistsFor(address)
         val expiryMode = recipient.expiryMode
-        val expiresInMillis = expiryMode?.expiryMillis ?: 0
+        val expiresInMillis = expiryMode.expiryMillis
         val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) sentTimestamp else 0
         val inviteJson = updateData.toJSON()
 
@@ -853,10 +862,28 @@ open class Storage @Inject constructor(
             mmsDB.markAsSent(infoMessageID, true)
             return MessageId(infoMessageID, mms = true)
         } else {
-            val m = IncomingTextMessage(fromSerialized(senderPublicKey), 1, sentTimestamp, "", Optional.of(Address.Group(closedGroup)), expiresInMillis, expireStartedAt, true, false)
-            val infoMessage = IncomingGroupMessage(m, inviteJson, true)
+            val m = IncomingTextMessage(
+                sender = fromSerialized(senderPublicKey),
+                senderDeviceId = 1,
+                sentTimestampMillis = sentTimestamp,
+                message = inviteJson,
+                group = Address.Group(closedGroup),
+                expiresInMillis = expiresInMillis,
+                expireStartedAt = expireStartedAt,
+                unidentified = true,
+                hasMention = false,
+                push = true,
+                callType = -1,
+                isOpenGroupInvitation = false,
+                isSecureMessage = false,
+                isGroupMessage = true,
+                isGroupUpdateMessage = true,
+            )
             val smsDB = smsDatabase
-            val insertResult = smsDB.insertMessageInbox(infoMessage,  true)
+            val insertResult = smsDB.insertMessageInbox(m.copy(
+                isGroupUpdateMessage = true,
+                message = inviteJson
+            ),  true)
             return insertResult.orNull()?.messageId?.let { MessageId(it, mms = false) }
         }
     }
@@ -1115,7 +1142,14 @@ open class Storage @Inject constructor(
         val expiryMode = recipient.expiryMode.coerceSendToRead()
         val expiresInMillis = expiryMode.expiryMillis
         val expireStartedAt = if (expiryMode != ExpiryMode.NONE) clock.currentTimeMills() else 0
-        val callMessage = IncomingTextMessage.fromCallInfo(callMessageType, address, Optional.absent(), sentTimestamp, expiresInMillis, expireStartedAt)
+        val callMessage = IncomingTextMessage(
+            callMessageType = callMessageType,
+            sender = address,
+            group = null,
+            sentTimestampMillis = sentTimestamp,
+            expiresInMillis = expiresInMillis,
+            expireStartedAt = expireStartedAt
+        )
         smsDatabase.insertCallMessage(callMessage)
     }
 
