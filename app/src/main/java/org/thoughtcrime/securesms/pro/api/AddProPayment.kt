@@ -26,7 +26,7 @@ class AddProPaymentRequest(
     }
 
     override fun convertErrorStatus(status: Int): AddPaymentErrorStatus {
-        Log.d("", "*** convertErrorStatus: $status")
+        Log.w("", "AddProPayment: convertErrorStatus: $status")
         return AddPaymentErrorStatus.entries.firstOrNull { it.apiValue == status }
             ?: AddPaymentErrorStatus.GenericError
     }
@@ -38,6 +38,6 @@ class AddProPaymentRequest(
 
 enum class AddPaymentErrorStatus(val apiValue: Int) {
     GenericError(1),
-    AlreadyRedeemed(2),
-    UnknownPayment(3),
+    AlreadyRedeemed(100),
+    UnknownPayment(101),
 }

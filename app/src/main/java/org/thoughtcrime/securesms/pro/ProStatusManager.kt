@@ -347,6 +347,7 @@ class ProStatusManager @Inject constructor(
         }
 
         // All attempts failed - throw our custom exception
+        Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' - Al retries attempted, throwing our custom `PaymentServerException`")
         throw SubscriptionManager.PaymentServerException()
     }
 
