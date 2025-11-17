@@ -3,13 +3,14 @@ package org.thoughtcrime.securesms.pro.api
 import kotlinx.serialization.DeserializationStrategy
 import network.loki.messenger.libsession_util.pro.BackendRequests
 import network.loki.messenger.libsession_util.pro.ProProof
+import org.session.libsignal.utilities.Log
 
 class AddProPaymentRequest(
     private val googlePaymentToken: String,
     private val googleOrderId: String,
     private val masterPrivateKey: ByteArray,
     private val rotatingPrivateKey: ByteArray,
-) : ApiRequest<AddPaymentStatus, ProProof> {
+) : ApiRequest<AddPaymentErrorStatus, ProProof> {
     override val endpoint: String
         get() = "add_pro_payment"
 
@@ -24,9 +25,10 @@ class AddProPaymentRequest(
         )
     }
 
-    override fun convertStatus(status: Int): AddPaymentStatus {
-        return AddPaymentStatus.entries.firstOrNull { it.apiValue == status }
-            ?: AddPaymentStatus.GenericError
+    override fun convertErrorStatus(status: Int): AddPaymentErrorStatus {
+        Log.d("", "*** convertErrorStatus: $status")
+        return AddPaymentErrorStatus.entries.firstOrNull { it.apiValue == status }
+            ?: AddPaymentErrorStatus.GenericError
     }
 
     override val responseDeserializer: DeserializationStrategy<ProProof>
@@ -34,8 +36,7 @@ class AddProPaymentRequest(
 
 }
 
-enum class AddPaymentStatus(val apiValue: Int) {
-    Success(0),
+enum class AddPaymentErrorStatus(val apiValue: Int) {
     GenericError(1),
     AlreadyRedeemed(2),
     UnknownPayment(3),

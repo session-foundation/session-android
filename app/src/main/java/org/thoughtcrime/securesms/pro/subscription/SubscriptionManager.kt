@@ -70,11 +70,11 @@ abstract class SubscriptionManager(
     /**
      * Function called when a purchased has been made successfully from the subscription api
      */
-    protected fun onPurchaseSuccessful(){
+    protected fun onPurchaseSuccessful(orderId: String, paymentId: String){
         // we need to tie our purchase with the back end
         scope.launch {
             try {
-                proStatusManager.appProPaymentToBackend()
+                proStatusManager.appProPaymentToBackend(orderId, paymentId)
                 _purchaseEvents.emit(PurchaseEvent.Success)
             } catch (e: Exception) {
                 when (e) {

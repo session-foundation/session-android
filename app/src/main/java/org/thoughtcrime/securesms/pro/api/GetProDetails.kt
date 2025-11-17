@@ -31,7 +31,7 @@ class GetProDetailsRequest @AssistedInject constructor(
     override val responseDeserializer: DeserializationStrategy<ProDetails>
         get() = ProDetails.serializer()
 
-    override fun convertStatus(status: Int): Int = status
+    override fun convertErrorStatus(status: Int): Int = status
 
     @AssistedFactory
     interface Factory {
@@ -79,7 +79,7 @@ class ProDetails(
         val expiry: Instant? = null,
 
         @SerialName("grace_duration_ms")
-        val graceDurationMs: Long,
+        val graceDurationMs: Long? = null,
 
         @SerialName("platform_refund_expiry_unix_ts_ms")
         @Serializable(with = InstantAsMillisSerializer::class)

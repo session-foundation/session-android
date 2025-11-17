@@ -80,7 +80,10 @@ class PlayStoreSubscriptionManager @Inject constructor(
                         Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label,
                             "Billing callback. We have a purchase [${it.orderId}]. Acknowledged? ${it.isAcknowledged}")
 
-                        onPurchaseSuccessful()
+                        onPurchaseSuccessful(
+                            orderId = it.orderId ?: "",
+                            paymentId = it.purchaseToken
+                        )
                     }
                 } else {
                     Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Purchase failed or cancelled: $result")

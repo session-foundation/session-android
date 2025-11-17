@@ -4,6 +4,7 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,14 +19,22 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import org.session.libsession.messaging.messages.visible.VisibleMessage
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
+import org.thoughtcrime.securesms.pro.api.AddPaymentErrorStatus
+import org.thoughtcrime.securesms.pro.api.AddProPaymentRequest
+import org.thoughtcrime.securesms.pro.api.ProApiExecutor
+import org.thoughtcrime.securesms.pro.api.ProApiResponse
+import org.thoughtcrime.securesms.pro.db.ProDatabase
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
 import org.thoughtcrime.securesms.util.State
@@ -40,7 +49,10 @@ class ProStatusManager @Inject constructor(
     private val prefs: TextSecurePreferences,
     recipientRepository: RecipientRepository,
     @param:ManagerScope private val scope: CoroutineScope,
-    loginStateRepository: LoginStateRepository,
+    private val apiExecutor: ProApiExecutor,
+    private val loginState: LoginStateRepository,
+    private val proDatabase: ProDatabase,
+    private val snodeClock: SnodeClock,
 ) : OnAppStartupComponent {
 
     val subscriptionState: StateFlow<SubscriptionState> = combine(
@@ -267,43 +279,64 @@ class ProStatusManager @Inject constructor(
         return emptySet()
     }
 
-    suspend fun appProPaymentToBackend() {
+    @OptIn(ExperimentalCoroutinesApi::class)
+    suspend fun appProPaymentToBackend(orderId: String, paymentId: String) {
         // max 3 attempts as per PRD
         val maxAttempts = 3
 
+        // no point in going further if we have no key data
+        val keyData = loginState.loggedInState.value ?: throw Exception()
+
         for (attempt in 1..maxAttempts) {
             try {
-                // 5s timeout as per PRD
-                withTimeout(5_000L) {
-                    //todo PRO call AddProPaymentRequest in libsession
-                    /**
-                     * Here are the errors from the back end that we will need to be aware of
-                     * UnknownPayment: retryable > increment counter and try again
-                     * Error, ParseError: is non retryable - throw PaymentServerException
-                     * Success, AlreadyRedeemed - all good
-                     *
-                     *
-                     *   /// Payment was claimed and the pro proof was successfully generated
-                     *     Success = SESSION_PRO_BACKEND_ADD_PRO_PAYMENT_RESPONSE_STATUS_SUCCESS,
-                     *
-                     *     /// Backend encountered an error when attempting to claim the payment
-                     *     Error = SESSION_PRO_BACKEND_ADD_PRO_PAYMENT_RESPONSE_STATUS_ERROR,
-                     *
-                     *     /// Request JSON failed to be parsed correctly, payload was malformed or missing values
-                     *     ParseError = SESSION_PRO_BACKEND_ADD_PRO_PAYMENT_RESPONSE_STATUS_PARSE_ERROR,
-                     *
-                     *     /// Payment is already claimed
-                     *     AlreadyRedeemed = SESSION_PRO_BACKEND_ADD_PRO_PAYMENT_RESPONSE_STATUS_ALREADY_REDEEMED,
-                     *
-                     *     /// Payment transaction attempted to claim a payment that the backend does not have. Either the
-                     *     /// payment doesn't exist or the backend has not witnessed the payment from the provider yet.
-                     *     UnknownPayment = SESSION_PRO_BACKEND_ADD_PRO_PAYMENT_RESPONSE_STATUS_UNKNOWN_PAYMENT,
-                     */
+                    // 5s timeout as per PRD
+                    val paymentResponse = withTimeout(5_000L) {
+                            apiExecutor.executeRequest(
+                            request = AddProPaymentRequest(
+                                googlePaymentToken = paymentId,
+                                googleOrderId = orderId,
+                                masterPrivateKey = keyData.seeded.proMasterPrivateKey,
+                                rotatingPrivateKey = proDatabase.ensureValidRotatingKeys(snodeClock.currentTime()).ed25519PrivKey
+                            )
+                        )
+                    }
 
-                }
+                    when (paymentResponse) {
+                        is ProApiResponse.Success -> {
+                            Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' successful")
+                            // Payment was successfully claimed - save it to the database
+                            proDatabase.updateCurrentProProof(paymentResponse.data)
+                        }
+
+                        is ProApiResponse.Failure -> {
+                            // Handle payment failure
+                            Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' failure: $paymentResponse")
+                            when (paymentResponse.status) {
+                                // unknown payment is retryable - throw a generic exception here to go through our retries
+                                AddPaymentErrorStatus.UnknownPayment -> {
+                                    throw Exception()
+                                }
+
+                                // nothing to do if already redeemed
+                                AddPaymentErrorStatus.AlreadyRedeemed -> {
+                                    return
+                                }
+
+                                // non retryable error - throw our custom exception
+                                AddPaymentErrorStatus.GenericError -> {
+                                    throw SubscriptionManager.PaymentServerException()
+                                }
+                            }
+                        }
+                    }
             } catch (e: CancellationException) {
                 throw e
-            } catch (_: Exception) {
+            } catch (e: SubscriptionManager.PaymentServerException){
+                // rethrow this error directly without retrying
+                Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' PaymentServerException caught and rethrown")
+                throw e
+            }catch (e: Exception) {
+                Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' exception", e)
                 // If not the last attempt, backoff a little and retry
                 if (attempt < maxAttempts) {
                     // small incremental backoff before retry

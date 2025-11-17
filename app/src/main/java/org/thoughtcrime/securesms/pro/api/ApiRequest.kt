@@ -1,26 +1,14 @@
 package org.thoughtcrime.securesms.pro.api
 
 import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.decodeFromStream
-import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
-import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.snode.utilities.await
 
 /**
  * Represents a generic API request to the Pro backend.
  *
- * @param Status The type of the status returned by the API.
+ * @param ErrorStatus The type of error status returned by the API.
  * @param Res The type of the expected response.
  */
-interface ApiRequest<out Status, Res> {
+interface ApiRequest<out ErrorStatus, Res> {
     /**
      * The endpoint (path) for this API request, e.g. "v1/pro/payments"
      */
@@ -28,7 +16,7 @@ interface ApiRequest<out Status, Res> {
 
     val responseDeserializer: DeserializationStrategy<Res>
 
-    fun convertStatus(status: Int): Status
+    fun convertErrorStatus(status: Int): ErrorStatus
 
     fun buildJsonBody(): String
 }

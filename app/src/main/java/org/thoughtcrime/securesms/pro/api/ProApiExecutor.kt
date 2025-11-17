@@ -80,7 +80,7 @@ class ProApiExecutor @Inject constructor(
             ProApiResponse.Success(data)
         } else {
             ProApiResponse.Failure(
-                status = request.convertStatus(rawResp.status),
+                status = request.convertErrorStatus(rawResp.status),
                 errors = rawResp.errors.orEmpty()
             )
         }
