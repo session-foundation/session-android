@@ -490,6 +490,7 @@ public class SmsDatabase extends MessagingDatabase {
     values.put(BODY, message.getMessage());
     values.put(TYPE, type);
     values.put(THREAD_ID, threadId);
+    values.put(PRO_FEATURES, message.getProFeaturesRawValue());
 
     if (message.getPush() && isDuplicate(message, threadId)) {
       Log.w(TAG, "Duplicate message (" + message.getSentTimestampMillis() + "), ignoring...");

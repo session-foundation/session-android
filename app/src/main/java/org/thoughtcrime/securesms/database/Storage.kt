@@ -26,7 +26,6 @@ import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
 import org.session.libsession.messaging.messages.signal.IncomingTextMessage
-import org.session.libsession.messaging.messages.signal.OutgoingGroupMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.Attachment
@@ -58,7 +57,6 @@ import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
-import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
@@ -343,14 +341,14 @@ open class Storage @Inject constructor(
                     it.toSignalAttachment()
                 }
 
-                val mediaMessage = OutgoingMediaMessage.from(
-                    message,
-                    targetAddress,
-                    pointers,
-                    quote.orNull(),
-                    linkPreviews.firstOrNull(),
-                    expiresInMillis,
-                    expireStartedAt
+                val mediaMessage = OutgoingMediaMessage(
+                    message = message,
+                    recipient = targetAddress,
+                    attachments = pointers,
+                    outgoingQuote = quote.orNull(),
+                    linkPreview = linkPreviews.firstOrNull(),
+                    expiresInMillis = expiresInMillis,
+                    expireStartedAt = expireStartedAt
                 )
                 mmsDatabase.insertSecureDecryptedMessageOutbox(mediaMessage, message.threadID ?: -1, message.sentTimestamp!!, runThreadUpdate)
             } else {
@@ -671,40 +669,6 @@ open class Storage @Inject constructor(
         groupDatabase.updateMembers(groupID, members)
     }
 
-    override fun insertOutgoingInfoMessage(context: Context, groupID: String, type: SignalServiceGroup.Type, name: String, members: Collection<String>, admins: Collection<String>, threadID: Long, sentTimestamp: Long): Long? {
-        val userPublicKey = getUserPublicKey()!!
-        val recipient = fromSerialized(groupID)
-        val updateData = UpdateMessageData.buildGroupUpdate(type, name, members)?.toJSON() ?: ""
-        val infoMessage = OutgoingGroupMediaMessage(
-            recipient,
-            updateData,
-            groupID,
-            null,
-            sentTimestamp,
-            0,
-            0,
-            true,
-            null,
-            listOf(),
-            listOf(),
-            null
-        )
-        val mmsDB = mmsDatabase
-        val mmsSmsDB = mmsSmsDatabase
-        if (mmsSmsDB.getMessageFor(threadID, sentTimestamp, userPublicKey) != null) {
-            Log.w(TAG, "Bailing from insertOutgoingInfoMessage because we believe the message has already been sent!")
-            return null
-        }
-        val infoMessageID = mmsDB.insertMessageOutbox(
-            infoMessage,
-            threadID,
-            false,
-            runThreadUpdate = true
-        )
-        mmsDB.markAsSent(infoMessageID, true)
-        return infoMessageID
-    }
-
     override fun isLegacyClosedGroup(publicKey: String): Boolean {
         return lokiAPIDatabase.isClosedGroup(publicKey)
     }
@@ -824,7 +788,7 @@ open class Storage @Inject constructor(
 
     private fun insertUpdateControlMessage(updateData: UpdateMessageData, sentTimestamp: Long, senderPublicKey: String?, closedGroup: AccountId): MessageId? {
         val userPublicKey = getUserPublicKey()!!
-        val address = fromSerialized(closedGroup.hexString)
+        val address = Address.Group(closedGroup)
         val recipient = recipientRepository.getRecipientSync(address)
         val threadDb = threadDatabase
         val threadID = threadDb.getThreadIdIfExistsFor(address)
@@ -835,19 +799,19 @@ open class Storage @Inject constructor(
 
 
         if (senderPublicKey == null || senderPublicKey == userPublicKey) {
-            val infoMessage = OutgoingGroupMediaMessage(
-                address,
-                inviteJson,
-                closedGroup.hexString,
-                null,
-                sentTimestamp,
-                expiresInMillis,
-                expireStartedAt,
-                true,
-                null,
-                listOf(),
-                listOf(),
-                null
+            val infoMessage = OutgoingMediaMessage(
+                recipient = address,
+                body = inviteJson,
+                group = address,
+                avatar = null,
+                sentTimeMillis = sentTimestamp,
+                expiresInMillis = expiresInMillis,
+                expireStartedAtMillis = expireStartedAt,
+                isGroupUpdateMessage = true,
+                quote = null,
+                contacts = listOf(),
+                previews = listOf(),
+                messageContent = null
             )
             val mmsDB = mmsDatabase
             val mmsSmsDB = mmsSmsDatabase
@@ -876,6 +840,7 @@ open class Storage @Inject constructor(
                 callType = -1,
                 isOpenGroupInvitation = false,
                 isSecureMessage = false,
+                proFeatures = ProFeatures.NONE,
                 isGroupMessage = true,
                 isGroupUpdateMessage = true,
             )

@@ -103,14 +103,14 @@ class RemoteReplyReceiver : BroadcastReceiver() {
                         (if (expiryMode is AfterSend) message.sentTimestamp else 0L)!!
                     when (replyMethod) {
                         ReplyMethod.GroupMessage -> {
-                            val reply = OutgoingMediaMessage.from(
-                                message,
-                                address,
-                                mutableListOf<Attachment?>(),
-                                null,
-                                null,
-                                expiresInMillis,
-                                0
+                            val reply = OutgoingMediaMessage(
+                                message = message,
+                                recipient = address,
+                                attachments = listOf(),
+                                outgoingQuote = null,
+                                linkPreview = null,
+                                expiresInMillis = expiresInMillis,
+                                expireStartedAt = 0
                             )
                             try {
                                 message.id = MessageId(

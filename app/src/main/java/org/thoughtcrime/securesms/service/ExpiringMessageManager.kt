@@ -13,8 +13,7 @@ import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
-import org.session.libsession.messaging.messages.signal.OutgoingGroupMediaMessage
-import org.session.libsession.messaging.messages.signal.OutgoingSecureMediaMessage
+import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
@@ -22,10 +21,8 @@ import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.DistributionTypes
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerProtocol
-import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.MessagingDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
@@ -131,43 +128,43 @@ class ExpiringMessageManager @Inject constructor(
         message: ExpirationTimerUpdate,
     ): MessageId? {
         val sentTimestamp = message.sentTimestamp
-        val groupId = message.groupPublicKey
+        val groupId = message.groupPublicKey?.toAddress() as? Address.GroupLike
         val duration = message.expiryMode.expiryMillis
         try {
-            val serializedAddress = when {
-                groupId == null -> message.syncTarget ?: message.recipient!!
-                groupId.startsWith(IdPrefix.GROUP.value) -> groupId
-                else -> doubleEncodeGroupID(groupId)
-            }
-            val address = fromSerialized(serializedAddress)
+            val serializedAddress = groupId ?: (message.syncTarget ?: message.recipient!!).toAddress()
 
-            message.threadID = storage.get().getOrCreateThreadIdFor(address)
+            message.threadID = storage.get().getOrCreateThreadIdFor(serializedAddress)
             val content = DisappearingMessageUpdate(message.expiryMode)
-            val timerUpdateMessage = if (groupId != null) OutgoingGroupMediaMessage(
-                address,
-                "",
-                groupId,
-                null,
-                sentTimestamp!!,
-                duration,
-                0, // Marking as 0 as expiration shouldn't start until we send the message
-                false,
-                null,
-                emptyList(),
-                emptyList(),
-                content
-            ) else OutgoingSecureMediaMessage(
-                address,
-                "",
-                emptyList(),
-                sentTimestamp!!,
-                DistributionTypes.CONVERSATION,
-                duration,
-                0, // Marking as 0 as expiration shouldn't start until we send the message
-                null,
-                emptyList(),
-                emptyList(),
-                content
+            val timerUpdateMessage = if (groupId != null) OutgoingMediaMessage(
+                recipient = serializedAddress,
+                body = "",
+                group = groupId,
+                avatar = null,
+                sentTimeMillis = sentTimestamp!!,
+                expiresInMillis = duration,
+                expireStartedAtMillis = 0, // Marking as 0 as expiration shouldn't start until we send the message
+                isGroupUpdateMessage = false,
+                quote = null,
+                contacts = emptyList(),
+                previews = emptyList(),
+                messageContent = content
+            ) else OutgoingMediaMessage(
+                recipient = serializedAddress,
+                body = "",
+                attachments = emptyList(),
+                sentTimeMillis = sentTimestamp!!,
+                distributionType = DistributionTypes.CONVERSATION,
+                subscriptionId = -1,
+                expiresInMillis = duration,
+                expireStartedAtMillis = 0, // Marking as 0 as expiration shouldn't start until we send the message
+                outgoingQuote = null,
+                messageContent = content,
+                networkFailures = emptyList(),
+                identityKeyMismatches = emptyList(),
+                contacts = emptyList(),
+                linkPreviews = emptyList(),
+                group = null,
+                isGroupUpdateMessage = false
             )
 
             return mmsDatabase.insertSecureDecryptedMessageOutbox(

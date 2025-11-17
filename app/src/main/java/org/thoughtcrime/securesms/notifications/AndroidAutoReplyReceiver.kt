@@ -101,14 +101,14 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
 
                     if (address.isGroupOrCommunity) {
                         Log.w("AndroidAutoReplyReceiver", "GroupRecipient, Sending media message")
-                        val reply = OutgoingMediaMessage.from(
-                            message,
-                            address,
-                            mutableListOf<Attachment?>(),
-                            null,
-                            null,
-                            expiresInMillis,
-                            0
+                        val reply = OutgoingMediaMessage(
+                            message = message,
+                            recipient = address,
+                            attachments = listOf(),
+                            outgoingQuote = null,
+                            linkPreview = null,
+                            expiresInMillis = expiresInMillis,
+                            expireStartedAt = 0
                         )
                         try {
                             mmsDatabase.insertMessageOutbox(

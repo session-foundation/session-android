@@ -28,9 +28,7 @@ import org.json.JSONException
 import org.json.JSONObject
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
-import org.session.libsession.messaging.messages.signal.OutgoingGroupMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
-import org.session.libsession.messaging.messages.signal.OutgoingSecureMediaMessage
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
@@ -40,6 +38,7 @@ import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.Contact
+import org.session.libsession.utilities.DistributionTypes
 import org.session.libsession.utilities.IdentityKeyMismatch
 import org.session.libsession.utilities.IdentityKeyMismatchList
 import org.session.libsession.utilities.NetworkFailure
@@ -457,8 +456,8 @@ class MmsDatabase @Inject constructor(
                     .asSequence()
                     .filterNot { obj: DatabaseAttachment -> obj.isQuote || contactAttachments.contains(obj) || previewAttachments.contains(obj) }
                     .toList()
-                var networkFailures: List<NetworkFailure?>? = LinkedList()
-                var mismatches: List<IdentityKeyMismatch?>? = LinkedList()
+                var networkFailures: List<NetworkFailure?> = emptyList()
+                var mismatches: List<IdentityKeyMismatch?> = emptyList()
                 var quote: QuoteModel? = null
                 if (quoteId > 0 && (!quoteText.isNullOrEmpty() || quoteAttachments.isNotEmpty())) {
                     quote = QuoteModel(
@@ -496,25 +495,24 @@ class MmsDatabase @Inject constructor(
                     Log.w(TAG, "Failed to decode message content for message ID $messageId", it)
                 }.getOrNull()
 
-                val message = OutgoingMediaMessage(
-                    fromSerialized(address),
-                    body,
-                    attachments,
-                    timestamp,
-                    subscriptionId,
-                    expiresIn,
-                    expireStartedAt,
-                    distributionType,
-                    quote,
-                    contacts,
-                    previews,
-                    networkFailures!!,
-                    mismatches!!,
-                    messageContent,
+                return OutgoingMediaMessage(
+                    recipient = fromSerialized(serialized = address),
+                    body = body,
+                    attachments = attachments,
+                    sentTimeMillis = timestamp,
+                    distributionType = distributionType,
+                    subscriptionId = subscriptionId,
+                    expiresInMillis = expiresIn,
+                    expireStartedAtMillis = expireStartedAt,
+                    outgoingQuote = quote,
+                    messageContent = messageContent,
+                    networkFailures = networkFailures?.filterNotNull().orEmpty(),
+                    identityKeyMismatches = mismatches?.filterNotNull().orEmpty(),
+                    contacts = contacts,
+                    linkPreviews = previews,
+                    group = null,
+                    isGroupUpdateMessage = false
                 )
-                return if (MmsSmsColumns.Types.isSecureType(outboxType)) {
-                    OutgoingSecureMediaMessage(message)
-                } else message
             }
             throw NoSuchMessageException("No record found for id: $messageId")
         } finally {
@@ -613,6 +611,7 @@ class MmsDatabase @Inject constructor(
         contentValues.put(THREAD_ID, threadId)
         contentValues.put(CONTENT_LOCATION, contentLocation)
         contentValues.put(STATUS, Status.DOWNLOAD_INITIALIZED)
+        contentValues.put(PRO_FEATURES, retrieved.proFeatures.rawValue)
         // In open groups messages should be sorted by their server timestamp
         var receivedTimestamp = serverTimestamp
         if (serverTimestamp == 0L) {
@@ -716,8 +715,8 @@ class MmsDatabase @Inject constructor(
         if (message.isSecure) type =
             type or (MmsSmsColumns.Types.SECURE_MESSAGE_BIT or MmsSmsColumns.Types.PUSH_MESSAGE_BIT)
         if (forceSms) type = type or MmsSmsColumns.Types.MESSAGE_FORCE_SMS_BIT
-        if (message.isGroup && message is OutgoingGroupMediaMessage) {
-            if (message.isUpdateMessage) type = type or MmsSmsColumns.Types.GROUP_UPDATE_MESSAGE_BIT
+        if (message.isGroup) {
+            if (message.isGroupUpdateMessage) type = type or MmsSmsColumns.Types.GROUP_UPDATE_MESSAGE_BIT
         }
         val earlyDeliveryReceipts = earlyDeliveryReceiptCache.remove(message.sentTimeMillis)
         val earlyReadReceipts = earlyReadReceiptCache.remove(message.sentTimeMillis)
@@ -733,8 +732,8 @@ class MmsDatabase @Inject constructor(
         }
         contentValues.put(DATE_RECEIVED, receivedTimestamp)
         contentValues.put(SUBSCRIPTION_ID, message.subscriptionId)
-        contentValues.put(EXPIRES_IN, message.expiresIn)
-        contentValues.put(EXPIRE_STARTED, message.expireStartedAt)
+        contentValues.put(EXPIRES_IN, message.expiresInMillis)
+        contentValues.put(EXPIRE_STARTED, message.expireStartedAtMillis)
         contentValues.put(ADDRESS, message.recipient.toString())
         contentValues.put(
             DELIVERY_RECEIPT_COUNT,
@@ -760,7 +759,7 @@ class MmsDatabase @Inject constructor(
             messageContent = message.messageContent,
             attachments = message.attachments,
             quoteAttachments = quoteAttachments,
-            sharedContacts = message.sharedContacts,
+            sharedContacts = message.contacts,
             linkPreviews = message.linkPreviews,
             contentValues = contentValues,
         )

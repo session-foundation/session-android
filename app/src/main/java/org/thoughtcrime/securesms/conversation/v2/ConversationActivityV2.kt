@@ -2181,7 +2181,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val expireStartedAtMs = if (viewModel.recipient.expiryMode is ExpiryMode.AfterSend) {
             sentTimestamp
         } else 0
-        val outgoingTextMessage = OutgoingMediaMessage.from(message, recipient.address, attachments, localQuote, linkPreview, expiresInMs, expireStartedAtMs)
+        val outgoingTextMessage = OutgoingMediaMessage(
+            message = message,
+            recipient = recipient.address,
+            attachments = attachments,
+            outgoingQuote = localQuote,
+            linkPreview = linkPreview,
+            expiresInMillis = expiresInMs,
+            expireStartedAt = expireStartedAtMs
+        )
 
         // Clear the input bar
         binding.inputBar.text = ""
