@@ -128,11 +128,11 @@ class RemoteReplyReceiver : BroadcastReceiver() {
                         }
 
                         ReplyMethod.SecureMessage -> {
-                            val reply = OutgoingTextMessage.from(
-                                message,
-                                address,
-                                expiresInMillis,
-                                expireStartedAt
+                            val reply = OutgoingTextMessage(
+                                message = message,
+                                recipient = address,
+                                expiresInMillis = expiresInMillis,
+                                expireStartedAtMillis = expireStartedAt
                             )
                             message.id = MessageId(
                                 smsDatabase.insertMessageOutbox(

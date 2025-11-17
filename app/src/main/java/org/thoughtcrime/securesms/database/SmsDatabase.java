@@ -550,9 +550,8 @@ public class SmsDatabase extends MessagingDatabase {
                                   boolean forceSms, long date,
                                   boolean runThreadUpdate)
   {
-    long type = Types.BASE_SENDING_TYPE;
+    long type = Types.BASE_SENDING_TYPE | Types.SECURE_MESSAGE_BIT | Types.PUSH_MESSAGE_BIT;
 
-    if (message.isSecureMessage())       type |= (Types.SECURE_MESSAGE_BIT | Types.PUSH_MESSAGE_BIT);
     if (forceSms)                        type |= Types.MESSAGE_FORCE_SMS_BIT;
     if (message.isOpenGroupInvitation()) type |= Types.OPEN_GROUP_INVITATION_BIT;
 
@@ -563,14 +562,14 @@ public class SmsDatabase extends MessagingDatabase {
     ContentValues contentValues = new ContentValues();
     contentValues.put(ADDRESS, address.toString());
     contentValues.put(THREAD_ID, threadId);
-    contentValues.put(BODY, message.getMessageBody());
+    contentValues.put(BODY, message.getMessage());
     contentValues.put(DATE_RECEIVED, SnodeAPI.getNowWithOffset());
     contentValues.put(DATE_SENT, message.getSentTimestampMillis());
     contentValues.put(READ, 1);
     contentValues.put(TYPE, type);
     contentValues.put(SUBSCRIPTION_ID, message.getSubscriptionId());
-    contentValues.put(EXPIRES_IN, message.getExpiresIn());
-    contentValues.put(EXPIRE_STARTED, message.getExpireStartedAt());
+    contentValues.put(EXPIRES_IN, message.getExpiresInMillis());
+    contentValues.put(EXPIRE_STARTED, message.getExpireStartedAtMillis());
     contentValues.put(DELIVERY_RECEIPT_COUNT, Stream.of(earlyDeliveryReceipts.values()).mapToLong(Long::longValue).sum());
     contentValues.put(READ_RECEIPT_COUNT, Stream.of(earlyReadReceipts.values()).mapToLong(Long::longValue).sum());
 

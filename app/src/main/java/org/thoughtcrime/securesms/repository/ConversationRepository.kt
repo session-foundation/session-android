@@ -274,10 +274,10 @@ class DefaultConversationRepository @Inject constructor(
             val outgoingTextMessage = OutgoingTextMessage.fromOpenGroupInvitation(
                 openGroupInvitation,
                 contact,
-                message.sentTimestamp,
+                message.sentTimestamp!!,
                 expirationConfig.expiryMillis,
                 expireStartedAt
-            )
+            )!!
 
             message.id = MessageId(
                 smsDb.insertMessageOutbox(contactThreadId, outgoingTextMessage, false, message.sentTimestamp!!, true),

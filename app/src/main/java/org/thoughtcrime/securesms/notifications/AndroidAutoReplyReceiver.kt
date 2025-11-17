@@ -122,11 +122,11 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
                         }
                     } else {
                         Log.w("AndroidAutoReplyReceiver", "Sending regular message ")
-                        val reply = OutgoingTextMessage.from(
-                            message,
-                            address,
-                            expiresInMillis,
-                            expireStartedAt
+                        val reply = OutgoingTextMessage(
+                            message = message,
+                            recipient = address,
+                            expiresInMillis = expiresInMillis,
+                            expireStartedAtMillis = expireStartedAt
                         )
                         smsDatabase.insertMessageOutbox(
                             replyThreadId,

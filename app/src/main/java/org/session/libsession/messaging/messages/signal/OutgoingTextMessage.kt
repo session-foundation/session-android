@@ -1,70 +1,52 @@
-package org.session.libsession.messaging.messages.signal;
+package org.session.libsession.messaging.messages.signal
 
-import org.session.libsession.messaging.messages.visible.OpenGroupInvitation;
-import org.session.libsession.messaging.messages.visible.VisibleMessage;
-import org.session.libsession.utilities.Address;
-import org.session.libsession.messaging.utilities.UpdateMessageData;
+import org.session.libsession.messaging.messages.visible.OpenGroupInvitation
+import org.session.libsession.messaging.messages.visible.VisibleMessage
+import org.session.libsession.messaging.utilities.UpdateMessageData
+import org.session.libsession.utilities.Address
 
-public class OutgoingTextMessage {
-  private final Address  recipient;
-  private final String    message;
-  private final int       subscriptionId;
-  private final long      expiresIn;
-  private final long      expireStartedAt;
-  private final long      sentTimestampMillis;
-  private boolean         isOpenGroupInvitation = false;
+data class OutgoingTextMessage(
+    val recipient: Address,
+    val message: String?,
+    val expiresInMillis: Long,
+    val expireStartedAtMillis: Long,
+    val subscriptionId: Int = -1,
+    val sentTimestampMillis: Long,
+    val isOpenGroupInvitation: Boolean,
+) {
+    constructor(
+        message: VisibleMessage,
+        recipient: Address,
+        expiresInMillis: Long,
+        expireStartedAtMillis: Long,
+    ): this(
+        recipient = recipient,
+        message = message.text,
+        expiresInMillis = expiresInMillis,
+        expireStartedAtMillis = expireStartedAtMillis,
+        sentTimestampMillis = message.sentTimestamp!!,
+        isOpenGroupInvitation = false,
+    )
 
-  public OutgoingTextMessage(Address recipient, String message, long expiresIn, long expireStartedAt, int subscriptionId, long sentTimestampMillis) {
-    this.recipient      = recipient;
-    this.message        = message;
-    this.expiresIn      = expiresIn;
-    this.expireStartedAt= expireStartedAt;
-    this.subscriptionId = subscriptionId;
-    this.sentTimestampMillis = sentTimestampMillis;
-  }
-
-  public static OutgoingTextMessage from(VisibleMessage message, Address recipient, long expiresInMillis, long expireStartedAt) {
-    return new OutgoingTextMessage(recipient, message.getText(), expiresInMillis, expireStartedAt, -1, message.getSentTimestamp());
-  }
-
-  public static OutgoingTextMessage fromOpenGroupInvitation(OpenGroupInvitation openGroupInvitation, Address recipient, Long sentTimestamp, long expiresInMillis, long expireStartedAt) {
-    String url = openGroupInvitation.getUrl();
-    String name = openGroupInvitation.getName();
-    if (url == null || name == null) { return null; }
-    // FIXME: Doing toJSON() to get the body here is weird
-    String body = UpdateMessageData.Companion.buildOpenGroupInvitation(url, name).toJSON();
-    OutgoingTextMessage outgoingTextMessage = new OutgoingTextMessage(recipient, body, expiresInMillis, expireStartedAt, -1, sentTimestamp);
-    outgoingTextMessage.isOpenGroupInvitation = true;
-    return outgoingTextMessage;
-  }
-
-  public long getExpiresIn() {
-    return expiresIn;
-  }
-
-  public long getExpireStartedAt() {
-    return expireStartedAt;
-  }
-
-  public int getSubscriptionId() {
-    return subscriptionId;
-  }
-
-  public String getMessageBody() {
-    return message;
-  }
-
-  public Address getRecipient() {
-    return recipient;
-  }
-
-  public long getSentTimestampMillis() {
-    return sentTimestampMillis;
-  }
-
-  public boolean isSecureMessage() {
-    return true;
-  }
-
-  public boolean isOpenGroupInvitation() { return isOpenGroupInvitation; }
+    companion object {
+        fun fromOpenGroupInvitation(
+            invitation: OpenGroupInvitation,
+            recipient: Address,
+            sentTimestampMillis: Long,
+            expiresInMillis: Long,
+            expireStartedAtMillis: Long,
+        ): OutgoingTextMessage? {
+            return OutgoingTextMessage(
+                recipient = recipient,
+                message = UpdateMessageData.buildOpenGroupInvitation(
+                    url = invitation.url ?: return null,
+                    name = invitation.name ?: return null,
+                ).toJSON(),
+                expiresInMillis = expiresInMillis,
+                expireStartedAtMillis = expireStartedAtMillis,
+                sentTimestampMillis = sentTimestampMillis,
+                isOpenGroupInvitation = true,
+            )
+        }
+    }
 }

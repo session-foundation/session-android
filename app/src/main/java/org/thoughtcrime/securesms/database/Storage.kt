@@ -375,8 +375,20 @@ open class Storage @Inject constructor(
             val isOpenGroupInvitation = (message.openGroupInvitation != null)
 
             val insertResult = if (isUserSender || isUserBlindedSender) {
-                val textMessage = if (isOpenGroupInvitation) OutgoingTextMessage.fromOpenGroupInvitation(message.openGroupInvitation, targetAddress, message.sentTimestamp, expiresInMillis, expireStartedAt)
-                else OutgoingTextMessage.from(message, targetAddress, expiresInMillis, expireStartedAt)
+                val textMessage = if (isOpenGroupInvitation) OutgoingTextMessage.fromOpenGroupInvitation(
+                    invitation = message.openGroupInvitation!!,
+                    recipient = targetAddress,
+                    sentTimestampMillis = message.sentTimestamp!!,
+                    expiresInMillis = expiresInMillis,
+                    expireStartedAtMillis = expireStartedAt
+                )!!
+                else OutgoingTextMessage(
+                    message = message,
+                    recipient = targetAddress,
+                    expiresInMillis = expiresInMillis,
+                    expireStartedAtMillis = expireStartedAt
+                )
+
                 smsDatabase.insertMessageOutbox(message.threadID ?: -1, textMessage, message.sentTimestamp!!, runThreadUpdate)
             } else {
                 val textMessage = if (isOpenGroupInvitation) IncomingTextMessage.fromOpenGroupInvitation(
