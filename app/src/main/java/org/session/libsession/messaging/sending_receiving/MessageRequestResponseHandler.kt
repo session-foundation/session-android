@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.sending_receiving
 
+import network.loki.messenger.libsession_util.protocol.ProFeatures
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.ProfileUpdateHandler
 import org.session.libsession.messaging.messages.ProfileUpdateHandler.Updates.Companion.toUpdates
