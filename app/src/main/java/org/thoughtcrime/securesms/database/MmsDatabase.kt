@@ -38,7 +38,6 @@ import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.Contact
-import org.session.libsession.utilities.DistributionTypes
 import org.session.libsession.utilities.IdentityKeyMismatch
 import org.session.libsession.utilities.IdentityKeyMismatchList
 import org.session.libsession.utilities.NetworkFailure
@@ -1199,21 +1198,16 @@ class MmsDatabase @Inject constructor(
                 return getMediaMmsMessageRecord(cursor!!, getQuote)
             }
 
-        private fun getMediaMmsMessageRecord(cursor: Cursor, getQuote: Boolean): MediaMmsMessageRecord {
+        private fun getMediaMmsMessageRecord(cursor: Cursor, getQuote: Boolean): MmsMessageRecord {
             val id                   = cursor.getLong(cursor.getColumnIndexOrThrow(ID))
             val dateSent             = cursor.getLong(cursor.getColumnIndexOrThrow(NORMALIZED_DATE_SENT))
             val dateReceived         = cursor.getLong(cursor.getColumnIndexOrThrow(NORMALIZED_DATE_RECEIVED))
             val box                  = cursor.getLong(cursor.getColumnIndexOrThrow(MESSAGE_BOX))
             val threadId             = cursor.getLong(cursor.getColumnIndexOrThrow(THREAD_ID))
             val address              = cursor.getString(cursor.getColumnIndexOrThrow(ADDRESS))
-            val addressDeviceId      = cursor.getInt(cursor.getColumnIndexOrThrow(ADDRESS_DEVICE_ID))
             val deliveryReceiptCount = cursor.getInt(cursor.getColumnIndexOrThrow(DELIVERY_RECEIPT_COUNT))
             var readReceiptCount     = cursor.getInt(cursor.getColumnIndexOrThrow(READ_RECEIPT_COUNT))
             val body                 = cursor.getString(cursor.getColumnIndexOrThrow(BODY))
-            val partCount            = cursor.getInt(cursor.getColumnIndexOrThrow(PART_COUNT))
-            val mismatchDocument     = cursor.getString(cursor.getColumnIndexOrThrow(MISMATCHED_IDENTITIES))
-            val networkDocument      = cursor.getString(cursor.getColumnIndexOrThrow(NETWORK_FAILURE))
-            val subscriptionId       = cursor.getInt(cursor.getColumnIndexOrThrow(SUBSCRIPTION_ID))
             val expiresIn            = cursor.getLong(cursor.getColumnIndexOrThrow(EXPIRES_IN))
             val expireStarted        = cursor.getLong(cursor.getColumnIndexOrThrow(EXPIRE_STARTED))
             val hasMention           = cursor.getInt(cursor.getColumnIndexOrThrow(HAS_MENTION)) == 1
@@ -1224,8 +1218,6 @@ class MmsDatabase @Inject constructor(
                 readReceiptCount = 0
             }
             val recipient = getRecipientFor(address)
-            val mismatches = getMismatchedIdentities(mismatchDocument)
-            val networkFailures = getFailures(networkDocument)
             val attachments = attachmentDatabase.getAttachment(
                 cursor
             )
@@ -1250,39 +1242,30 @@ class MmsDatabase @Inject constructor(
             }.getOrNull()
 
             return MediaMmsMessageRecord(
-                id, recipient, recipient,
-                addressDeviceId, dateSent, dateReceived, deliveryReceiptCount,
-                threadId, body, slideDeck!!, partCount, box, mismatches,
-                networkFailures, subscriptionId, expiresIn, expireStarted,
-                readReceiptCount, quote, contacts, previews, reactions, hasMention,
-                messageContent, proFeatures
+                /* id = */ id,
+                /* conversationRecipient = */ recipient,
+                /* individualRecipient = */ recipient,
+                /* dateSent = */ dateSent,
+                /* dateReceived = */ dateReceived,
+                /* deliveryReceiptCount = */ deliveryReceiptCount,
+                /* threadId = */ threadId,
+                /* body = */ body,
+                /* slideDeck = */ slideDeck!!,
+                /* mailbox = */ box,
+                /* expiresIn = */ expiresIn,
+                /* expireStarted = */ expireStarted,
+                /* readReceiptCount = */ readReceiptCount,
+                /* quote = */ quote,
+                /* linkPreviews = */ previews,
+                /* reactions = */ reactions,
+                /* hasMention = */ hasMention,
+                /* messageContent = */ messageContent,
+                /* proFeaturesRawValue = */ proFeatures
             )
         }
 
         private fun getRecipientFor(serialized: String): Recipient {
             return recipientRepository.getRecipientSync(serialized.toAddress())
-        }
-
-        private fun getMismatchedIdentities(document: String?): List<IdentityKeyMismatch?>? {
-            if (!document.isNullOrEmpty()) {
-                try {
-                    return JsonUtil.fromJson(document, IdentityKeyMismatchList::class.java).list
-                } catch (e: IOException) {
-                    Log.w(TAG, e)
-                }
-            }
-            return LinkedList()
-        }
-
-        private fun getFailures(document: String?): List<NetworkFailure?>? {
-            if (!document.isNullOrEmpty()) {
-                try {
-                    return JsonUtil.fromJson(document, NetworkFailureList::class.java).list
-                } catch (ioe: IOException) {
-                    Log.w(TAG, ioe)
-                }
-            }
-            return LinkedList()
         }
 
         private fun getSlideDeck(attachments: List<DatabaseAttachment?>): SlideDeck? {
@@ -1521,7 +1504,8 @@ class MmsDatabase @Inject constructor(
                     "'" + ReactionDatabase.SORT_ID + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.SORT_ID + ", " +
                     "'" + ReactionDatabase.DATE_SENT + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.DATE_SENT + ", " +
                     "'" + ReactionDatabase.DATE_RECEIVED + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.DATE_RECEIVED +
-                    ")) AS " + ReactionDatabase.REACTION_JSON_ALIAS
+                    ")) AS " + ReactionDatabase.REACTION_JSON_ALIAS,
+            PRO_FEATURES,
         )
         private const val RAW_ID_WHERE: String = "$TABLE_NAME._id = ?"
         const val CREATE_MESSAGE_REQUEST_RESPONSE_COMMAND = "ALTER TABLE $TABLE_NAME ADD COLUMN $MESSAGE_REQUEST_RESPONSE INTEGER DEFAULT 0;"

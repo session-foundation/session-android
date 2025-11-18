@@ -21,10 +21,8 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
-import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.recipients.Recipient;
 
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -41,13 +39,12 @@ public class SmsMessageRecord extends MessageRecord {
                             long dateSent, long dateReceived,
                             int deliveryReceiptCount,
                             long type, long threadId,
-                            int status, List<IdentityKeyMismatch> mismatches,
+                            int status,
                             long expiresIn, long expireStarted,
                             int readReceiptCount, List<ReactionRecord> reactions, boolean hasMention,
                             long proFeaturesRawValue) {
         super(id, body, recipient, individualRecipient,
                 dateSent, dateReceived, threadId, status, deliveryReceiptCount, type,
-                mismatches, new LinkedList<>(),
                 expiresIn, expireStarted, readReceiptCount, reactions, hasMention, null,
                 proFeaturesRawValue);
     }

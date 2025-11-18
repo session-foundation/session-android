@@ -55,8 +55,6 @@ import network.loki.messenger.R;
  */
 public abstract class MessageRecord extends DisplayRecord {
   private final Recipient individualRecipient;
-  private final List<IdentityKeyMismatch> mismatches;
-  private final List<NetworkFailure>      networkFailures;
   private final long                      expiresIn;
   private final long                      expireStarted;
   public  final long                      id;
@@ -78,8 +76,6 @@ public abstract class MessageRecord extends DisplayRecord {
                 Recipient individualRecipient,
                 long dateSent, long dateReceived, long threadId,
                 int deliveryStatus, int deliveryReceiptCount, long type,
-                List<IdentityKeyMismatch> mismatches,
-                List<NetworkFailure> networkFailures,
                 long expiresIn, long expireStarted,
                 int readReceiptCount, List<ReactionRecord> reactions, boolean hasMention,
                 @Nullable MessageContent messageContent,
@@ -89,8 +85,6 @@ public abstract class MessageRecord extends DisplayRecord {
       threadId, deliveryStatus, deliveryReceiptCount, type, readReceiptCount, messageContent);
     this.id                  = id;
     this.individualRecipient = individualRecipient;
-    this.mismatches          = mismatches;
-    this.networkFailures     = networkFailures;
     this.expiresIn           = expiresIn;
     this.expireStarted       = expireStarted;
     this.reactions           = reactions;
@@ -110,9 +104,7 @@ public abstract class MessageRecord extends DisplayRecord {
   public long getType() {
     return type;
   }
-  public List<NetworkFailure> getNetworkFailures() {
-    return networkFailures;
-  }
+
   public long getExpiresIn() {
     return expiresIn;
   }

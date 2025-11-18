@@ -36,12 +36,9 @@ import org.session.libsession.messaging.messages.signal.IncomingTextMessage;
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage;
 import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
-import org.session.libsession.utilities.IdentityKeyMismatch;
-import org.session.libsession.utilities.IdentityKeyMismatchList;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.Recipient;
-import org.session.libsignal.utilities.JsonUtil;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
@@ -51,7 +48,6 @@ import org.thoughtcrime.securesms.database.model.ReactionRecord;
 import org.thoughtcrime.securesms.database.model.SmsMessageRecord;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -65,7 +61,6 @@ import javax.inject.Singleton;
 
 import dagger.Lazy;
 import dagger.hilt.android.qualifiers.ApplicationContext;
-import network.loki.messenger.libsession_util.protocol.ProFeatures;
 
 /**
  * Database for storage of SMS messages.
@@ -779,7 +774,6 @@ public class SmsDatabase extends MessagingDatabase {
     public SmsMessageRecord getCurrent() {
       long    messageId            = cursor.getLong(cursor.getColumnIndexOrThrow(SmsDatabase.ID));
       Address address              = Address.fromSerialized(cursor.getString(cursor.getColumnIndexOrThrow(SmsDatabase.ADDRESS)));
-      int     addressDeviceId      = cursor.getInt(cursor.getColumnIndexOrThrow(SmsDatabase.ADDRESS_DEVICE_ID));
       long    type                 = cursor.getLong(cursor.getColumnIndexOrThrow(SmsDatabase.TYPE));
       long    dateReceived         = cursor.getLong(cursor.getColumnIndexOrThrow(SmsDatabase.NORMALIZED_DATE_RECEIVED));
       long    dateSent             = cursor.getLong(cursor.getColumnIndexOrThrow(SmsDatabase.NORMALIZED_DATE_SENT));
@@ -787,8 +781,6 @@ public class SmsDatabase extends MessagingDatabase {
       int     status               = cursor.getInt(cursor.getColumnIndexOrThrow(SmsDatabase.STATUS));
       int     deliveryReceiptCount = cursor.getInt(cursor.getColumnIndexOrThrow(SmsDatabase.DELIVERY_RECEIPT_COUNT));
       int     readReceiptCount     = cursor.getInt(cursor.getColumnIndexOrThrow(SmsDatabase.READ_RECEIPT_COUNT));
-      String  mismatchDocument     = cursor.getString(cursor.getColumnIndexOrThrow(SmsDatabase.MISMATCHED_IDENTITIES));
-      int     subscriptionId       = cursor.getInt(cursor.getColumnIndexOrThrow(SmsDatabase.SUBSCRIPTION_ID));
       long    expiresIn            = cursor.getLong(cursor.getColumnIndexOrThrow(SmsDatabase.EXPIRES_IN));
       long    expireStarted        = cursor.getLong(cursor.getColumnIndexOrThrow(SmsDatabase.EXPIRE_STARTED));
       String  body                 = cursor.getString(cursor.getColumnIndexOrThrow(SmsDatabase.BODY));
@@ -799,29 +791,28 @@ public class SmsDatabase extends MessagingDatabase {
         readReceiptCount = 0;
       }
 
-      List<IdentityKeyMismatch> mismatches = getMismatches(mismatchDocument);
       Recipient recipient  = recipientRepository.getRecipientSync(address);
       List<ReactionRecord>      reactions  = reactionDatabase.get().getReactions(cursor);
 
-      return new SmsMessageRecord(messageId, body, recipient,
-                                  recipient,
-                                  dateSent, dateReceived, deliveryReceiptCount, type,
-                                  threadId, status, mismatches,
-                                  expiresIn, expireStarted, readReceiptCount, reactions, hasMention,
-                                  proFeatures);
+      return new SmsMessageRecord(
+              messageId,
+              body,
+              recipient,
+              recipient,
+              dateSent,
+              dateReceived,
+              deliveryReceiptCount,
+              type,
+              threadId,
+              status,
+              expiresIn,
+              expireStarted,
+              readReceiptCount,
+              reactions,
+              hasMention,
+              proFeatures);
     }
 
-    private List<IdentityKeyMismatch> getMismatches(String document) {
-      try {
-        if (!TextUtils.isEmpty(document)) {
-          return JsonUtil.fromJson(document, IdentityKeyMismatchList.class).getList();
-        }
-      } catch (IOException e) {
-        Log.w(TAG, e);
-      }
-
-      return new LinkedList<>();
-    }
 
     @Override
     public void close() {
