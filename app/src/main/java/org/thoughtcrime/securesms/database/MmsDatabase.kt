@@ -33,7 +33,6 @@ import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
-import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
@@ -232,21 +231,6 @@ class MmsDatabase @Inject constructor(
         }
     }
 
-    private fun rawQuery(where: String, arguments: Array<String>?): Cursor {
-        val database = readableDatabase
-        return database.rawQuery(
-            "SELECT " + MMS_PROJECTION.joinToString(",") + " FROM " + TABLE_NAME +
-                    " LEFT OUTER JOIN " + AttachmentDatabase.TABLE_NAME + " ON (" + TABLE_NAME + "." + ID + " = " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.MMS_ID + ")" +
-                    " LEFT OUTER JOIN " + ReactionDatabase.TABLE_NAME + " ON (" + TABLE_NAME + "." + ID + " = " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.MESSAGE_ID + " AND " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.IS_MMS + " = 1)" +
-                    " WHERE " + where + " GROUP BY " + TABLE_NAME + "." + ID, arguments
-        )
-    }
-
-    fun getMessage(messageId: Long): Cursor {
-        val cursor = rawQuery(RAW_ID_WHERE, arrayOf(messageId.toString()))
-        return cursor
-    }
-
     override fun getExpiredMessageIDs(nowMills: Long): List<Long> {
         val query = "SELECT " + ID + " FROM " + TABLE_NAME +
                 " WHERE " + EXPIRES_IN + " > 0 AND " + EXPIRE_STARTED + " > 0 AND " + EXPIRE_STARTED + " + " + EXPIRES_IN + " <= ?"
@@ -410,113 +394,6 @@ class MmsDatabase @Inject constructor(
             database.endTransaction()
         }
         return result
-    }
-
-    @Throws(MmsException::class, NoSuchMessageException::class)
-    fun getOutgoingMessage(messageId: Long): OutgoingMediaMessage {
-        var cursor: Cursor? = null
-        try {
-            cursor = rawQuery(RAW_ID_WHERE, arrayOf(messageId.toString()))
-            if (cursor.moveToNext()) {
-                val associatedAttachments = attachmentDatabase.getAttachmentsForMessage(messageId)
-                val outboxType = cursor.getLong(cursor.getColumnIndexOrThrow(MESSAGE_BOX))
-                val body = cursor.getString(cursor.getColumnIndexOrThrow(BODY))
-                val timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(NORMALIZED_DATE_SENT))
-                val subscriptionId = cursor.getInt(cursor.getColumnIndexOrThrow(SUBSCRIPTION_ID))
-                val expiresIn = cursor.getLong(cursor.getColumnIndexOrThrow(EXPIRES_IN))
-                val expireStartedAt = cursor.getLong(cursor.getColumnIndexOrThrow(EXPIRE_STARTED))
-                val address = cursor.getString(cursor.getColumnIndexOrThrow(ADDRESS))
-                val threadId = cursor.getLong(cursor.getColumnIndexOrThrow(THREAD_ID))
-                val distributionType = threadDatabase.getDistributionType(threadId)
-                val mismatchDocument = cursor.getString(
-                    cursor.getColumnIndexOrThrow(
-                        MISMATCHED_IDENTITIES
-                    )
-                )
-                val networkDocument = cursor.getString(
-                    cursor.getColumnIndexOrThrow(
-                        NETWORK_FAILURE
-                    )
-                )
-                val quoteId = cursor.getLong(cursor.getColumnIndexOrThrow(QUOTE_ID))
-                val quoteAuthor = cursor.getString(cursor.getColumnIndexOrThrow(QUOTE_AUTHOR))
-                val quoteText = cursor.getString(cursor.getColumnIndexOrThrow(QUOTE_BODY)) // TODO: this should be the referenced quote
-                val quoteMissing = cursor.getInt(cursor.getColumnIndexOrThrow(QUOTE_MISSING)) == 1
-                val quoteAttachments = associatedAttachments
-                    .filter { obj: DatabaseAttachment -> obj.isQuote }
-                val contacts = getSharedContacts(cursor, associatedAttachments)
-                val contactAttachments: Set<Attachment> =
-                    contacts.mapNotNull { obj: Contact -> obj.avatarAttachment }.toSet()
-                val previews = getLinkPreviews(cursor, associatedAttachments)
-                val previewAttachments =
-                    previews.filter { lp: LinkPreview -> lp.getThumbnail().isPresent }
-                        .map { lp: LinkPreview -> lp.getThumbnail().get() }
-                val attachments = associatedAttachments
-                    .asSequence()
-                    .filterNot { obj: DatabaseAttachment -> obj.isQuote || contactAttachments.contains(obj) || previewAttachments.contains(obj) }
-                    .toList()
-                var networkFailures: List<NetworkFailure?> = emptyList()
-                var mismatches: List<IdentityKeyMismatch?> = emptyList()
-                var quote: QuoteModel? = null
-                if (quoteId > 0 && (!quoteText.isNullOrEmpty() || quoteAttachments.isNotEmpty())) {
-                    quote = QuoteModel(
-                        quoteId,
-                        fromSerialized(quoteAuthor),
-                        quoteText, // TODO: refactor this to use referenced quote
-                        quoteMissing,
-                        quoteAttachments
-                    )
-                }
-                if (!mismatchDocument.isNullOrEmpty()) {
-                    try {
-                        mismatches = JsonUtil.fromJson(
-                            mismatchDocument,
-                            IdentityKeyMismatchList::class.java
-                        ).list
-                    } catch (e: IOException) {
-                        Log.w(TAG, e)
-                    }
-                }
-                if (!networkDocument.isNullOrEmpty()) {
-                    try {
-                        networkFailures =
-                            JsonUtil.fromJson(networkDocument, NetworkFailureList::class.java).list
-                    } catch (e: IOException) {
-                        Log.w(TAG, e)
-                    }
-                }
-
-                val messageContentJson = cursor.getString(cursor.getColumnIndexOrThrow(MESSAGE_CONTENT))
-
-                val messageContent = runCatching {
-                    json.decodeFromString<MessageContent>(messageContentJson)
-                }.onFailure {
-                    Log.w(TAG, "Failed to decode message content for message ID $messageId", it)
-                }.getOrNull()
-
-                return OutgoingMediaMessage(
-                    recipient = fromSerialized(serialized = address),
-                    body = body,
-                    attachments = attachments,
-                    sentTimeMillis = timestamp,
-                    distributionType = distributionType,
-                    subscriptionId = subscriptionId,
-                    expiresInMillis = expiresIn,
-                    expireStartedAtMillis = expireStartedAt,
-                    outgoingQuote = quote,
-                    messageContent = messageContent,
-                    networkFailures = networkFailures?.filterNotNull().orEmpty(),
-                    identityKeyMismatches = mismatches?.filterNotNull().orEmpty(),
-                    contacts = contacts,
-                    linkPreviews = previews,
-                    group = null,
-                    isGroupUpdateMessage = false
-                )
-            }
-            throw NoSuchMessageException("No record found for id: $messageId")
-        } finally {
-            cursor?.close()
-        }
     }
 
     private fun getSharedContacts(
@@ -949,13 +826,6 @@ class MmsDatabase @Inject constructor(
 
         val db = writableDatabase
         db.update(SmsDatabase.TABLE_NAME, contentValues, "$THREAD_ID = ?", arrayOf("$fromId"))
-    }
-
-    @Throws(NoSuchMessageException::class)
-    override fun getMessageRecord(messageId: Long): MessageRecord {
-        rawQuery(RAW_ID_WHERE, arrayOf("$messageId")).use { cursor ->
-            return Reader(cursor).next ?: throw NoSuchMessageException("No message for ID: $messageId")
-        }
     }
 
     fun deleteThread(threadId: Long, updateThread: Boolean) {
@@ -1435,78 +1305,6 @@ class MmsDatabase @Inject constructor(
         const val ADD_LAST_MESSAGE_INDEX: String =
             "CREATE INDEX mms_thread_id_date_sent_index ON $TABLE_NAME ($THREAD_ID, $DATE_SENT)"
 
-        private val MMS_PROJECTION: Array<String> = arrayOf(
-            "$TABLE_NAME.$ID AS $ID",
-            THREAD_ID,
-            MESSAGE_CONTENT,
-            "$DATE_SENT AS $NORMALIZED_DATE_SENT",
-            "$DATE_RECEIVED AS $NORMALIZED_DATE_RECEIVED",
-            MESSAGE_BOX,
-            READ,
-            CONTENT_LOCATION,
-            EXPIRY,
-            MESSAGE_TYPE,
-            MESSAGE_SIZE,
-            STATUS,
-            TRANSACTION_ID,
-            BODY,
-            PART_COUNT,
-            ADDRESS,
-            ADDRESS_DEVICE_ID,
-            DELIVERY_RECEIPT_COUNT,
-            READ_RECEIPT_COUNT,
-            MISMATCHED_IDENTITIES,
-            NETWORK_FAILURE,
-            SUBSCRIPTION_ID,
-            EXPIRES_IN,
-            EXPIRE_STARTED,
-            NOTIFIED,
-            QUOTE_ID,
-            QUOTE_AUTHOR,
-            QUOTE_BODY,
-            QUOTE_ATTACHMENT,
-            QUOTE_MISSING,
-            SHARED_CONTACTS,
-            LINK_PREVIEWS,
-            HAS_MENTION,
-            "json_group_array(json_object(" +
-                    "'" + AttachmentDatabase.ROW_ID + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.ROW_ID + ", " +
-                    "'" + AttachmentDatabase.UNIQUE_ID + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.UNIQUE_ID + ", " +
-                    "'" + AttachmentDatabase.MMS_ID + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.MMS_ID + ", " +
-                    "'" + AttachmentDatabase.SIZE + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.SIZE + ", " +
-                    "'" + AttachmentDatabase.FILE_NAME + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.FILE_NAME + ", " +
-                    "'" + AttachmentDatabase.DATA + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.DATA + ", " +
-                    "'" + AttachmentDatabase.THUMBNAIL + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.THUMBNAIL + ", " +
-                    "'" + AttachmentDatabase.CONTENT_TYPE + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.CONTENT_TYPE + ", " +
-                    "'" + AttachmentDatabase.CONTENT_LOCATION + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.CONTENT_LOCATION + ", " +
-                    "'" + AttachmentDatabase.FAST_PREFLIGHT_ID + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.FAST_PREFLIGHT_ID + "," +
-                    "'" + AttachmentDatabase.VOICE_NOTE + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.VOICE_NOTE + "," +
-                    "'" + AttachmentDatabase.WIDTH + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.WIDTH + "," +
-                    "'" + AttachmentDatabase.HEIGHT + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.HEIGHT + "," +
-                    "'" + AttachmentDatabase.QUOTE + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.QUOTE + ", " +
-                    "'" + AttachmentDatabase.CONTENT_DISPOSITION + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.CONTENT_DISPOSITION + ", " +
-                    "'" + AttachmentDatabase.NAME + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.NAME + ", " +
-                    "'" + AttachmentDatabase.TRANSFER_STATE + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.TRANSFER_STATE + ", " +
-                    "'" + AttachmentDatabase.CAPTION + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.CAPTION + ", " +
-                    "'" + AttachmentDatabase.STICKER_PACK_ID + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.STICKER_PACK_ID + ", " +
-                    "'" + AttachmentDatabase.STICKER_PACK_KEY + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.STICKER_PACK_KEY + ", " +
-                    "'" + AttachmentDatabase.AUDIO_DURATION + "', ifnull(" + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.AUDIO_DURATION + ", -1), " +
-                    "'" + AttachmentDatabase.STICKER_ID + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.STICKER_ID +
-                    ")) AS " + AttachmentDatabase.ATTACHMENT_JSON_ALIAS,
-            "json_group_array(json_object(" +
-                    "'" + ReactionDatabase.ROW_ID + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.ROW_ID + ", " +
-                    "'" + ReactionDatabase.MESSAGE_ID + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.MESSAGE_ID + ", " +
-                    "'" + ReactionDatabase.IS_MMS + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.IS_MMS + ", " +
-                    "'" + ReactionDatabase.AUTHOR_ID + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.AUTHOR_ID + ", " +
-                    "'" + ReactionDatabase.EMOJI + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.EMOJI + ", " +
-                    "'" + ReactionDatabase.SERVER_ID + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.SERVER_ID + ", " +
-                    "'" + ReactionDatabase.COUNT + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.COUNT + ", " +
-                    "'" + ReactionDatabase.SORT_ID + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.SORT_ID + ", " +
-                    "'" + ReactionDatabase.DATE_SENT + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.DATE_SENT + ", " +
-                    "'" + ReactionDatabase.DATE_RECEIVED + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.DATE_RECEIVED +
-                    ")) AS " + ReactionDatabase.REACTION_JSON_ALIAS,
-            PRO_FEATURES,
-        )
         private const val RAW_ID_WHERE: String = "$TABLE_NAME._id = ?"
         const val CREATE_MESSAGE_REQUEST_RESPONSE_COMMAND = "ALTER TABLE $TABLE_NAME ADD COLUMN $MESSAGE_REQUEST_RESPONSE INTEGER DEFAULT 0;"
         const val CREATE_REACTIONS_UNREAD_COMMAND = "ALTER TABLE $TABLE_NAME ADD COLUMN $REACTIONS_UNREAD INTEGER DEFAULT 0;"

@@ -876,12 +876,7 @@ open class Storage @Inject constructor(
     }
 
     override fun getThreadIdForMms(mmsId: Long): Long {
-        val mmsDb = mmsDatabase
-        val cursor = mmsDb.getMessage(mmsId)
-        val reader = mmsDb.readerFor(cursor)
-        val threadId = reader.next?.threadId
-        cursor.close()
-        return threadId ?: -1
+        return mmsDatabase.getThreadIdForMessage(mmsId)
     }
 
     override fun getRecipientForThread(threadId: Long): Recipient? {
