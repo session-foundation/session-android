@@ -120,14 +120,16 @@ public class MmsSmsDatabase extends Database {
   }
 
   public @Nullable MessageRecord getMessageById(@NonNull MessageId id) {
-    if (id.isMms()) {
-      final MmsDatabase db = DatabaseComponent.get(context).mmsDatabase();
-      try (final Cursor cursor = db.getMessage(id.getId())) {
-        return db.readerFor(cursor, true).getNext();
+      String selection = ID + " = " + id.getId() + " AND " +
+              TRANSPORT + " = '" + (id.isMms() ? MMS_TRANSPORT : SMS_TRANSPORT) + "'";
+      try (MmsSmsDatabase.Reader reader = readerFor(queryTables(PROJECTION, selection, true, null, null, null))) {
+          final MessageRecord messageRecord;
+          if ((messageRecord = reader.getNext()) != null) {
+            return messageRecord;
+          }
       }
-    } else {
-      return DatabaseComponent.get(context).smsDatabase().getMessageOrNull(id.getId());
-    }
+
+    return null;
   }
 
   public @Nullable MessageRecord getMessageFor(long threadId, long timestamp, String serializedAuthor) {
