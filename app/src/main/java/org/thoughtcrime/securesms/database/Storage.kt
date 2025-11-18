@@ -29,7 +29,6 @@ import org.session.libsession.messaging.messages.signal.IncomingTextMessage
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.Attachment
-import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsession.messaging.messages.visible.Reaction
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
@@ -68,7 +67,6 @@ import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.PartAuthority
-import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
 import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import java.time.Instant
@@ -89,7 +87,6 @@ open class Storage @Inject constructor(
     private val threadDatabase: ThreadDatabase,
     private val recipientDatabase: RecipientSettingsDatabase,
     private val attachmentDatabase: AttachmentDatabase,
-    private val draftDatabase: DraftDatabase,
     private val lokiAPIDatabase: LokiAPIDatabase,
     private val groupDatabase: GroupDatabase,
     private val lokiMessageDatabase: LokiMessageDatabase,
@@ -118,18 +115,6 @@ open class Storage @Inject constructor(
     override fun getUserBlindedAccountId(serverPublicKey: String): AccountId? {
         val myId = getUserPublicKey() ?: return null
         return AccountId(BlindKeyAPI.blind15Ids(myId, serverPublicKey).first())
-    }
-
-    override fun getUserProfile(): Profile {
-        return configFactory.withUserConfigs { configs ->
-            val pic = configs.userProfile.getPic()
-            Profile(
-                displayName = configs.userProfile.getName(),
-                profilePictureURL = pic.url.takeIf { it.isNotBlank() },
-                profileKey = pic.key.data.takeIf { pic.url.isNotBlank() },
-                profileUpdated = configs.userProfile.getProfileUpdatedSeconds().secondsToInstant(),
-            )
-        }
     }
 
     override fun getAttachmentsForMessage(mmsMessageId: Long): List<DatabaseAttachment> {

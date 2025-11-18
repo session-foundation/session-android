@@ -165,7 +165,8 @@ class ReceivedMessageProcessor @Inject constructor(
             is TypingIndicator -> handleTypingIndicator(message)
             is GroupUpdated -> groupMessageHandler.get().handleGroupUpdated(
                 message = message,
-                groupId = (threadAddress as? Address.Group)?.accountId
+                groupId = (threadAddress as? Address.Group)?.accountId,
+                proto = proto
             )
 
             is ExpirationTimerUpdate -> {
@@ -184,7 +185,7 @@ class ReceivedMessageProcessor @Inject constructor(
             is DataExtractionNotification -> handleDataExtractionNotification(message)
             is UnsendRequest -> handleUnsendRequest(message)
             is MessageRequestResponse -> messageRequestResponseHandler.get()
-                .handleExplicitRequestResponseMessage(context, message)
+                .handleExplicitRequestResponseMessage(context, message, proto)
 
             is VisibleMessage -> {
                 if (message.isSenderSelf &&

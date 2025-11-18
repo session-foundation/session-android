@@ -1,8 +1,8 @@
 package org.session.libsession.messaging.messages.control
 
+import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.messages.copyExpiration
 import org.session.libsignal.protos.SignalServiceProtos
-import org.session.libsignal.utilities.Log
 
 class DataExtractionNotification() : ControlMessage() {
     var kind: Kind? = null
@@ -53,28 +53,17 @@ class DataExtractionNotification() : ControlMessage() {
         }
     }
 
-    override fun toProto(): SignalServiceProtos.Content? {
-        val kind = kind
-        if (kind == null) {
-            Log.w(TAG, "Couldn't construct data extraction notification proto from: $this")
-            return null
-        }
-        try {
-            val dataExtractionNotification = SignalServiceProtos.DataExtractionNotification.newBuilder()
-            when(kind) {
-                is Kind.Screenshot -> dataExtractionNotification.type = SignalServiceProtos.DataExtractionNotification.Type.SCREENSHOT
-                is Kind.MediaSaved -> {
-                    dataExtractionNotification.type = SignalServiceProtos.DataExtractionNotification.Type.MEDIA_SAVED
-                    dataExtractionNotification.timestampMs = kind.timestamp
-                }
+    protected override fun buildProto(
+        builder: SignalServiceProtos.Content.Builder,
+        messageDataProvider: MessageDataProvider
+    ) {
+        val dataExtractionNotification = builder.dataExtractionNotificationBuilder
+        when (val kind = kind!!) {
+            is Kind.Screenshot -> dataExtractionNotification.type = SignalServiceProtos.DataExtractionNotification.Type.SCREENSHOT
+            is Kind.MediaSaved -> {
+                dataExtractionNotification.type = SignalServiceProtos.DataExtractionNotification.Type.MEDIA_SAVED
+                dataExtractionNotification.timestampMs = kind.timestamp
             }
-            return SignalServiceProtos.Content.newBuilder()
-                .setDataExtractionNotification(dataExtractionNotification.build())
-                .applyExpiryMode()
-                .build()
-        } catch (e: Exception) {
-            Log.w(TAG, "Couldn't construct data extraction notification proto from: $this")
-            return null
         }
     }
 }
