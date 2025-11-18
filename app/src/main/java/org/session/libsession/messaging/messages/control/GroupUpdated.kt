@@ -1,8 +1,8 @@
 package org.session.libsession.messaging.messages.control
 
+import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsignal.protos.SignalServiceProtos.Content
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMessage
 
 class GroupUpdated @JvmOverloads constructor(
@@ -31,13 +31,9 @@ class GroupUpdated @JvmOverloads constructor(
             else null
     }
 
-    override fun toProto(): Content {
-        val dataMessage = DataMessage.newBuilder()
+    override fun buildProto(builder: Content.Builder, messageDataProvider: MessageDataProvider) {
+        builder.dataMessageBuilder
             .setGroupUpdateMessage(inner)
             .apply { profile?.let(this::setProfile) }
-            .build()
-        return Content.newBuilder()
-            .setDataMessage(dataMessage)
-            .build()
     }
 }

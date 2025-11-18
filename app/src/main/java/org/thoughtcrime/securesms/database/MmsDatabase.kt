@@ -735,6 +735,7 @@ class MmsDatabase @Inject constructor(
         contentValues.put(EXPIRES_IN, message.expiresInMillis)
         contentValues.put(EXPIRE_STARTED, message.expireStartedAtMillis)
         contentValues.put(ADDRESS, message.recipient.toString())
+        contentValues.put(PRO_FEATURES, message.proFeatures.rawValue)
         contentValues.put(
             DELIVERY_RECEIPT_COUNT,
             Stream.of(earlyDeliveryReceipts.values).mapToLong { obj: Long -> obj }

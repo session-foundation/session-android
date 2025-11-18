@@ -1,10 +1,10 @@
 package org.session.libsession.messaging.messages.control
 
 import com.google.protobuf.ByteString
+import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.messages.copyExpiration
 import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsignal.protos.SignalServiceProtos
-import org.session.libsignal.utilities.Log
 
 class MessageRequestResponse(val isApproved: Boolean, var profile: Profile? = null) : ControlMessage() {
 
@@ -12,23 +12,20 @@ class MessageRequestResponse(val isApproved: Boolean, var profile: Profile? = nu
 
     override fun shouldDiscardIfBlocked(): Boolean = true
 
-    override fun toProto(): SignalServiceProtos.Content? {
-        val profileProto = SignalServiceProtos.DataMessage.LokiProfile.newBuilder()
-        profile?.displayName?.let { profileProto.displayName = it }
-        profile?.profilePictureURL?.let { profileProto.profilePicture = it }
-        val messageRequestResponseProto = SignalServiceProtos.MessageRequestResponse.newBuilder()
+    protected override fun buildProto(
+        builder: SignalServiceProtos.Content.Builder,
+        messageDataProvider: MessageDataProvider
+    ) {
+        builder.messageRequestResponseBuilder
             .setIsApproved(isApproved)
-            .setProfile(profileProto.build())
-        profile?.profileKey?.let { messageRequestResponseProto.profileKey = ByteString.copyFrom(it) }
-        return try {
-            SignalServiceProtos.Content.newBuilder()
-                .applyExpiryMode()
-                .setMessageRequestResponse(messageRequestResponseProto.build())
-                .build()
-        } catch (e: Exception) {
-            Log.w(TAG, "Couldn't construct message request response proto from: $this")
-            null
-        }
+            .also { builder ->
+                profile?.profileKey?.let { builder.setProfileKey(ByteString.copyFrom(it)) }
+            }
+            .profileBuilder
+            .also { builder ->
+                profile?.displayName?.let { builder.displayName = it }
+                profile?.profilePictureURL?.let { builder.profilePicture = it }
+            }
     }
 
     companion object {

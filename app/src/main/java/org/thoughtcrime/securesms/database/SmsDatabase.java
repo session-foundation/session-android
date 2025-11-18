@@ -572,6 +572,7 @@ public class SmsDatabase extends MessagingDatabase {
     contentValues.put(EXPIRE_STARTED, message.getExpireStartedAtMillis());
     contentValues.put(DELIVERY_RECEIPT_COUNT, Stream.of(earlyDeliveryReceipts.values()).mapToLong(Long::longValue).sum());
     contentValues.put(READ_RECEIPT_COUNT, Stream.of(earlyReadReceipts.values()).mapToLong(Long::longValue).sum());
+    contentValues.put(PRO_FEATURES, message.getProFeaturesRawValue());
 
     if (isDuplicate(message, threadId)) {
       Log.w(TAG, "Duplicate message (" + message.getSentTimestampMillis() + "), ignoring...");

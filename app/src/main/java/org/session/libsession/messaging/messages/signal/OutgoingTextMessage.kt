@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.messages.signal
 
+import network.loki.messenger.libsession_util.protocol.ProFeatures
 import org.session.libsession.messaging.messages.visible.OpenGroupInvitation
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.utilities.UpdateMessageData
@@ -13,6 +14,7 @@ data class OutgoingTextMessage(
     val subscriptionId: Int = -1,
     val sentTimestampMillis: Long,
     val isOpenGroupInvitation: Boolean,
+    val proFeatures: ProFeatures = ProFeatures.NONE,
 ) {
     constructor(
         message: VisibleMessage,
@@ -27,6 +29,8 @@ data class OutgoingTextMessage(
         sentTimestampMillis = message.sentTimestamp!!,
         isOpenGroupInvitation = false,
     )
+
+    val proFeaturesRawValue: Long get() = proFeatures.rawValue
 
     companion object {
         fun fromOpenGroupInvitation(

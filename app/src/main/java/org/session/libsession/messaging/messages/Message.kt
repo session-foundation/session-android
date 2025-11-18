@@ -1,6 +1,7 @@
 package org.session.libsession.messaging.messages
 
 import network.loki.messenger.libsession_util.util.ExpiryMode
+import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.visible.VisibleMessage
@@ -47,18 +48,32 @@ abstract class Message {
             && sender != null
             && recipient != null
 
-    abstract fun toProto(): SignalServiceProtos.Content?
+    protected abstract fun buildProto(
+        builder: SignalServiceProtos.Content.Builder,
+        messageDataProvider: MessageDataProvider
+    )
 
-    abstract fun shouldDiscardIfBlocked(): Boolean
-
-    fun SignalServiceProtos.Content.Builder.applyExpiryMode() = apply {
-        expirationTimerSeconds = expiryMode.expirySeconds.toInt()
-        expirationType = when (expiryMode) {
+    fun toProto(
+        builder: SignalServiceProtos.Content.Builder,
+        messageDataProvider: MessageDataProvider
+    ) {
+        // First apply common message data
+        // * Expiry mode
+        builder.expirationTimerSeconds = expiryMode.expirySeconds.toInt()
+        builder.expirationType = when (expiryMode) {
             is ExpiryMode.AfterSend -> ExpirationType.DELETE_AFTER_SEND
             is ExpiryMode.AfterRead -> ExpirationType.DELETE_AFTER_READ
             else -> ExpirationType.UNKNOWN
         }
+
+        // * Timestamps
+        builder.setSigTimestampMs(sentTimestamp!!)
+
+        // Then ask the subclasses to build their specific proto
+        buildProto(builder, messageDataProvider)
     }
+
+    abstract fun shouldDiscardIfBlocked(): Boolean
 }
 
 inline fun <reified M: Message> M.copyExpiration(proto: SignalServiceProtos.Content): M = apply {

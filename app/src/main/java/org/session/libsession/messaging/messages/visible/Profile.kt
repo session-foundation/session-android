@@ -39,25 +39,18 @@ class Profile(
         }
     }
 
-    fun toProto(): SignalServiceProtos.DataMessage? {
+    fun toProto(builder: SignalServiceProtos.DataMessage.Builder) {
         val displayName = displayName
         if (displayName == null) {
             Log.w(TAG, "Couldn't construct profile proto from: $this")
-            return null
+            return
         }
-        val dataMessageProto = SignalServiceProtos.DataMessage.newBuilder()
-        val profileProto = SignalServiceProtos.DataMessage.LokiProfile.newBuilder()
-        profileProto.displayName = displayName
-        profileKey?.let { dataMessageProto.profileKey = ByteString.copyFrom(it) }
+
+        val profileProto = builder.profileBuilder
+            .setDisplayName(displayName)
+
+        profileKey?.let { builder.profileKey = ByteString.copyFrom(it) }
         profilePictureURL?.let { profileProto.profilePicture = it }
         profileUpdated?.let { profileProto.lastProfileUpdateSeconds = it.toEpochSeconds() }
-        // Build
-        try {
-            dataMessageProto.profile = profileProto.build()
-            return dataMessageProto.build()
-        } catch (e: Exception) {
-            Log.w(TAG, "Couldn't construct profile proto from: $this")
-            return null
-        }
     }
 }

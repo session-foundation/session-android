@@ -3,7 +3,7 @@ package org.session.libsession.messaging.messages.visible
 import androidx.annotation.Keep
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.libsession_util.protocol.ProFeatures
-import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.copyExpiration
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
@@ -69,10 +69,15 @@ data class VisibleMessage(
         }
     }
 
-    override fun toProto(): SignalServiceProtos.Content? {
-        val proto = SignalServiceProtos.Content.newBuilder()
+    protected override fun buildProto(
+        builder: SignalServiceProtos.Content.Builder,
+        messageDataProvider: MessageDataProvider
+    ) {
+        val dataMessage = builder.dataMessageBuilder
+
         // Profile
-        val dataMessage = profile?.toProto()?.toBuilder() ?: SignalServiceProtos.DataMessage.newBuilder()
+        profile?.toProto(dataMessage)
+
         // Text
         if (text != null) { dataMessage.body = text }
         // Quote
@@ -96,8 +101,7 @@ data class VisibleMessage(
             dataMessage.openGroupInvitation = openGroupInvitationProto
         }
         // Attachments
-        val database = MessagingModuleConfiguration.shared.messageDataProvider
-        val attachments = attachmentIDs.mapNotNull { database.getSignalAttachmentPointer(it) }
+        val attachments = attachmentIDs.mapNotNull { messageDataProvider.getSignalAttachmentPointer(it) }
         if (attachments.any { it.url.isNullOrEmpty() }) {
             if (BuildConfig.DEBUG) {
                 Log.w(TAG, "Sending a message before all associated attachments have been uploaded.")
@@ -105,9 +109,6 @@ data class VisibleMessage(
         }
         val pointers = attachments.mapNotNull { Attachment.createAttachmentPointer(it) }
         dataMessage.addAllAttachments(pointers)
-        // TODO: Contact
-        // Expiration timer on the message
-        proto.applyExpiryMode()
 
         // Community blocked message requests flag
         dataMessage.blocksCommunityMessageRequests = blocksMessageRequests
@@ -115,13 +116,10 @@ data class VisibleMessage(
         if (syncTarget != null) {
             dataMessage.syncTarget = syncTarget
         }
-        // Build
-        return try {
-            proto.dataMessage = dataMessage.build()
-            proto.build()
-        } catch (e: Exception) {
-            Log.w(TAG, "Couldn't construct visible message proto from: $this")
-            null
+
+        // Pro features
+        if (proFeatures != ProFeatures.NONE) {
+            builder.proMessageBuilder.setFeatures(proFeatures.rawValue)
         }
     }
     // endregion

@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.messages.signal
 
+import network.loki.messenger.libsession_util.protocol.ProFeatures
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
@@ -28,6 +29,7 @@ class OutgoingMediaMessage(
     val linkPreviews: List<LinkPreview>,
     val group: Address.GroupLike?,
     val isGroupUpdateMessage: Boolean,
+    val proFeatures: ProFeatures = ProFeatures.NONE,
 ) {
     init {
         check(!isGroupUpdateMessage || group != null) {
