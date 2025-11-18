@@ -32,7 +32,6 @@ import org.session.libsession.messaging.jobs.InviteContactsJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.control.GroupUpdated
-import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildDeleteMemberContentSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildInfoChangeSignature
@@ -121,7 +120,6 @@ class GroupManagerV2Impl @Inject constructor(
     ): Recipient = withContext(dispatcher) {
         val ourAccountId =
             requireNotNull(storage.getUserPublicKey()) { "Our account ID is not available" }
-        val ourProfile = storage.getUserProfile()
 
         val groupCreationTimestamp = clock.currentTimeMills()
 
@@ -161,10 +159,14 @@ class GroupManagerV2Impl @Inject constructor(
             }
 
             // Add ourselves as admin
+            val (ourName, ourPic) = configFactory.withUserConfigs { configs ->
+                configs.userProfile.getName().orEmpty() to configs.userProfile.getPic()
+            }
+
             newGroupConfigs.groupMembers.set(
                 newGroupConfigs.groupMembers.getOrConstruct(ourAccountId).apply {
-                    setName(ourProfile.displayName.orEmpty())
-                    setProfilePic(ourProfile.profilePicture ?: UserPic.DEFAULT)
+                    setName(ourName)
+                    setProfilePic(ourPic)
                     setPromotionAccepted()
                 }
             )
@@ -201,7 +203,7 @@ class GroupManagerV2Impl @Inject constructor(
                 "Failed to create a thread for the group"
             }
 
-            val recipient = recipientRepository.getRecipient(Address.fromSerialized(groupId.hexString))!!
+            val recipient = recipientRepository.getRecipient(Address.fromSerialized(groupId.hexString))
 
             // Invite members
             JobQueue.shared.add(
@@ -660,7 +662,7 @@ class GroupManagerV2Impl @Inject constructor(
                 .setIsApproved(true)
             val responseData = GroupUpdateMessage.newBuilder()
                 .setInviteResponse(inviteResponse)
-            val responseMessage = GroupUpdated(responseData.build(), profile = storage.getUserProfile())
+            val responseMessage = GroupUpdated(responseData.build())
             // this will fail the first couple of times :)
             runCatching {
                 messageSender.sendNonDurably(
@@ -1196,15 +1198,4 @@ class GroupManagerV2Impl @Inject constructor(
         val firstError = this.results.firstOrNull { it.code != 200 }
         require(firstError == null) { "$errorMessage: ${firstError!!.body}" }
     }
-
-    private val Profile.profilePicture: UserPic?
-        get() {
-            val url = this.profilePictureURL
-            val key = this.profileKey
-            return if (url != null && key != null) {
-                UserPic(url, key)
-            } else {
-                null
-            }
-        }
 }

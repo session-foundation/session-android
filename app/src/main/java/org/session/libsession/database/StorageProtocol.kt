@@ -10,7 +10,6 @@ import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.messages.visible.Attachment
-import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsession.messaging.messages.visible.Reaction
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
@@ -38,7 +37,6 @@ interface StorageProtocol {
     fun getUserED25519KeyPair(): KeyPair?
     fun getUserX25519KeyPair(): KeyPair
     fun getUserBlindedAccountId(serverPublicKey: String): AccountId?
-    fun getUserProfile(): Profile
 
     // Jobs
     fun persistJob(job: Job)

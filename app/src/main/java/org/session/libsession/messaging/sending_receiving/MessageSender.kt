@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.sending_receiving
 
+import com.google.protobuf.ByteString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
@@ -8,6 +9,7 @@ import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.Namespace
+import network.loki.messenger.libsession_util.ReadableUserProfile
 import network.loki.messenger.libsession_util.protocol.SessionProtocol
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
@@ -81,6 +83,31 @@ class MessageSender @Inject constructor(
         }
     }
 
+
+    private fun SignalServiceProtos.DataMessage.Builder.copyProfileFromConfig() {
+        configFactory.withUserConfigs {
+            val pic = it.userProfile.getPic()
+
+            profileBuilder.setDisplayName(it.userProfile.getName().orEmpty())
+                .setProfilePicture(pic.url)
+                .setLastProfileUpdateSeconds(it.userProfile.getProfileUpdatedSeconds())
+
+            setProfileKey(ByteString.copyFrom(pic.keyAsByteArray))
+        }
+    }
+
+    private fun SignalServiceProtos.MessageRequestResponse.Builder.copyProfileFromConfig() {
+        configFactory.withUserConfigs {
+            val pic = it.userProfile.getPic()
+
+            profileBuilder.setDisplayName(it.userProfile.getName().orEmpty())
+                .setProfilePicture(pic.url)
+                .setLastProfileUpdateSeconds(it.userProfile.getProfileUpdatedSeconds())
+
+            setProfileKey(ByteString.copyFrom(pic.keyAsByteArray))
+        }
+    }
+
     // Convenience
     suspend fun sendNonDurably(message: Message, destination: Destination, isSyncMessage: Boolean) {
         return if (destination is Destination.OpenGroup || destination is Destination.OpenGroupInbox) {
@@ -99,6 +126,17 @@ class MessageSender @Inject constructor(
             // Attach pro proof
             proDatabase.getCurrentProProof()?.let { proof ->
                 builder.proMessageBuilder.proofBuilder.copyFromLibSession(proof)
+            }
+
+            // Attach the user's profile if needed
+            when {
+                builder.hasDataMessage() && !builder.dataMessageBuilder.hasProfile() -> {
+                    builder.dataMessageBuilder.copyProfileFromConfig()
+                }
+
+                builder.hasMessageRequestResponse() && !builder.messageRequestResponseBuilder.hasProfile() -> {
+                    builder.messageRequestResponseBuilder.copyProfileFromConfig()
+                }
             }
 
             return builder.build()
@@ -143,13 +181,6 @@ class MessageSender @Inject constructor(
             && message !is UnsendRequest
         ) {
             throw Error.InvalidMessage()
-        }
-        // Attach the user's profile if needed
-        if (message is VisibleMessage) {
-            message.profile = storage.getUserProfile()
-        }
-        if (message is MessageRequestResponse) {
-            message.profile = storage.getUserProfile()
         }
 
         val messageContent = when (destination) {
@@ -304,10 +335,6 @@ class MessageSender @Inject constructor(
         message.sender = messageSender
 
         try {
-            // Attach the user's profile if needed
-            if (message is VisibleMessage) {
-                message.profile = storage.getUserProfile()
-            }
             val content = buildProto(message)
 
             when (destination) {

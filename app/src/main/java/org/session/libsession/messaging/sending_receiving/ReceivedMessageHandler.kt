@@ -117,7 +117,11 @@ class ReceivedMessageHandler @Inject constructor(
         when (message) {
             is ReadReceipt -> handleReadReceipt(message)
             is TypingIndicator -> handleTypingIndicator(message)
-            is GroupUpdated -> handleGroupUpdated(message, (threadAddress as? Address.Group)?.accountId)
+            is GroupUpdated -> handleGroupUpdated(
+                message = message,
+                closedGroup = (threadAddress as? Address.Group)?.accountId,
+                proto = proto
+            )
             is ExpirationTimerUpdate -> {
                 // For groupsv2, there are dedicated mechanisms for handling expiration timers, and
                 // we want to avoid the 1-to-1 message format which is unauthenticated in a group settings.
@@ -132,7 +136,7 @@ class ReceivedMessageHandler @Inject constructor(
             }
             is DataExtractionNotification -> handleDataExtractionNotification(message)
             is UnsendRequest -> handleUnsendRequest(message)
-            is MessageRequestResponse -> messageRequestResponseHandler.get().handleExplicitRequestResponseMessage(null, message)
+            is MessageRequestResponse -> messageRequestResponseHandler.get().handleExplicitRequestResponseMessage(null, message, proto)
             is VisibleMessage -> handleVisibleMessage(
                 message = message,
                 proto = proto,
@@ -443,14 +447,7 @@ class ReceivedMessageHandler @Inject constructor(
             // - must be done after the message is persisted)
             // - must be done after neccessary contact is created
             if (runProfileUpdate && senderAddress is Address.WithAccountId) {
-                val updates = ProfileUpdateHandler.Updates.create(
-                    name = message.profile?.displayName,
-                    picUrl = message.profile?.profilePictureURL,
-                    picKey = message.profile?.profileKey,
-                    blocksCommunityMessageRequests = message.blocksMessageRequests,
-                    proStatus = null,
-                    profileUpdateTime = message.profile?.profileUpdated,
-                )
+                val updates = ProfileUpdateHandler.Updates.create(proto)
 
                 if (updates != null) {
                     profileUpdateHandler.get().handleProfileUpdate(
@@ -489,7 +486,7 @@ class ReceivedMessageHandler @Inject constructor(
         return null
     }
 
-    private fun handleGroupUpdated(message: GroupUpdated, closedGroup: AccountId?) {
+    private fun handleGroupUpdated(message: GroupUpdated, closedGroup: AccountId?, proto: SignalServiceProtos.Content) {
         val inner = message.inner
         if (closedGroup == null &&
             !inner.hasInviteMessage() && !inner.hasPromoteMessage()) {
@@ -497,14 +494,7 @@ class ReceivedMessageHandler @Inject constructor(
         }
 
         // Update profile if needed
-        ProfileUpdateHandler.Updates.create(
-            name = message.profile?.displayName,
-            picUrl = message.profile?.profilePictureURL,
-            picKey = message.profile?.profileKey,
-            blocksCommunityMessageRequests = null,
-            proStatus = null,
-            profileUpdateTime = null
-        )?.let { updates ->
+        ProfileUpdateHandler.Updates.create(proto)?.let { updates ->
             profileUpdateHandler.get().handleProfileUpdate(
                 senderId = AccountId(message.sender!!),
                 updates = updates,
@@ -513,9 +503,9 @@ class ReceivedMessageHandler @Inject constructor(
         }
 
         when {
-            inner.hasInviteMessage() -> handleNewLibSessionClosedGroupMessage(message)
+            inner.hasInviteMessage() -> handleNewLibSessionClosedGroupMessage(message, proto)
             inner.hasInviteResponse() -> handleInviteResponse(message, closedGroup!!)
-            inner.hasPromoteMessage() -> handlePromotionMessage(message)
+            inner.hasPromoteMessage() -> handlePromotionMessage(message, proto)
             inner.hasInfoChangeMessage() -> handleGroupInfoChange(message, closedGroup!!)
             inner.hasMemberChangeMessage() -> handleMemberChange(message, closedGroup!!)
             inner.hasMemberLeftMessage() -> handleMemberLeft(message, closedGroup!!)
@@ -594,7 +584,7 @@ class ReceivedMessageHandler @Inject constructor(
         groupManagerV2.handleGroupInfoChange(message, closedGroup)
     }
 
-    private fun handlePromotionMessage(message: GroupUpdated) {
+    private fun handlePromotionMessage(message: GroupUpdated, proto: SignalServiceProtos.Content) {
         val promotion = message.inner.promoteMessage
         val seed = promotion.groupIdentitySeed.toByteArray()
         val sender = message.sender!!
@@ -607,7 +597,9 @@ class ReceivedMessageHandler @Inject constructor(
                         groupName = promotion.name,
                         adminKeySeed = seed,
                         promoter = adminId,
-                        promoterName = message.profile?.displayName,
+                        promoterName = if (proto.hasDataMessage() && proto.dataMessage.hasProfile() && proto.dataMessage.profile.hasDisplayName())
+                                proto.dataMessage.profile.displayName
+                            else null,
                         promoteMessageHash = message.serverHash!!,
                         promoteMessageTimestamp = message.sentTimestamp!!,
                     )
@@ -630,7 +622,7 @@ class ReceivedMessageHandler @Inject constructor(
         }
     }
 
-    private fun handleNewLibSessionClosedGroupMessage(message: GroupUpdated) {
+    private fun handleNewLibSessionClosedGroupMessage(message: GroupUpdated, proto: SignalServiceProtos.Content) {
         val storage = storage
         val ourUserId = storage.getUserPublicKey()!!
         val invite = message.inner.inviteMessage
@@ -651,7 +643,9 @@ class ReceivedMessageHandler @Inject constructor(
                         groupName = invite.name,
                         authData = invite.memberAuthData.toByteArray(),
                         inviter = adminId,
-                        inviterName = message.profile?.displayName,
+                        inviterName = if (proto.hasDataMessage() && proto.dataMessage.hasProfile() && proto.dataMessage.profile.hasDisplayName())
+                                proto.dataMessage.profile.displayName
+                            else null,
                         inviteMessageHash = message.serverHash!!,
                         inviteMessageTimestamp = message.sentTimestamp!!,
                     )

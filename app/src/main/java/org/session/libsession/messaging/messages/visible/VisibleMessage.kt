@@ -22,7 +22,6 @@ data class VisibleMessage(
     val attachmentIDs: MutableList<Long> = mutableListOf(),
     var quote: Quote? = null,
     var linkPreview: LinkPreview? = null,
-    var profile: Profile? = null,
     var openGroupInvitation: OpenGroupInvitation? = null,
     var reaction: Reaction? = null,
     var hasMention: Boolean = false,
@@ -61,8 +60,6 @@ data class VisibleMessage(
                 if (it.hasQuote()) quote = Quote.fromProto(it.quote)
                 linkPreview = it.previewList.firstOrNull()?.let(LinkPreview::fromProto)
                 if (it.hasOpenGroupInvitation()) openGroupInvitation = it.openGroupInvitation?.let(OpenGroupInvitation::fromProto)
-                // TODO Contact
-                profile = Profile.fromProto(it)
                 if (it.hasReaction()) reaction = it.reaction?.let(Reaction::fromProto)
                 blocksMessageRequests = it.hasBlocksCommunityMessageRequests() && it.blocksCommunityMessageRequests
             }.copyExpiration(proto)
@@ -75,8 +72,6 @@ data class VisibleMessage(
     ) {
         val dataMessage = builder.dataMessageBuilder
 
-        // Profile
-        profile?.toProto(dataMessage)
 
         // Text
         if (text != null) { dataMessage.body = text }

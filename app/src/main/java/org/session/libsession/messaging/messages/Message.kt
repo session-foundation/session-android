@@ -86,20 +86,10 @@ inline fun <reified M: Message> M.copyExpiration(proto: SignalServiceProtos.Cont
     }
 }
 
-fun SignalServiceProtos.Content.expiryMode(): ExpiryMode =
-    (takeIf { it.hasExpirationTimerSeconds() }?.expirationTimerSeconds ?: dataMessage?.expireTimerSeconds)?.let { duration ->
-        when (expirationType.takeIf { duration > 0 }) {
-            ExpirationType.DELETE_AFTER_SEND -> ExpiryMode.AfterSend(duration.toLong())
-            ExpirationType.DELETE_AFTER_READ -> ExpiryMode.AfterRead(duration.toLong())
-            else -> ExpiryMode.NONE
-        }
-    } ?: ExpiryMode.NONE
-
 /**
  * Apply ExpiryMode from the current setting.
  */
 inline fun <reified M: Message> M.applyExpiryMode(recipientAddress: Address): M = apply {
     expiryMode = MessagingModuleConfiguration.shared.recipientRepository.getRecipientSync(recipientAddress)
-        ?.expiryMode?.coerceSendToRead(coerceDisappearAfterSendToRead)
-        ?: ExpiryMode.NONE
+        .expiryMode.coerceSendToRead(coerceDisappearAfterSendToRead)
 }
