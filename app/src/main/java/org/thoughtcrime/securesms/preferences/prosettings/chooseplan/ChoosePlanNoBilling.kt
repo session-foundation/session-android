@@ -172,11 +172,11 @@ fun ChoosePlanNoBilling(
             add(
                 NonOriginatingLinkCellData(
                     title = Phrase.from(context.getText(R.string.onPlatformStoreWebsite))
-                        .put(PLATFORM_STORE_KEY, subscription.subscriptionDetails.getPlatformDisplayName())
+                        .put(PLATFORM_STORE_KEY, subscription.providerData.getPlatformDisplayName())
                         .format(),
                     info = Phrase.from(context.getText(R.string.proAccessRenewPlatformWebsite))
-                        .put(PLATFORM_KEY, subscription.subscriptionDetails.getPlatformDisplayName())
-                        .put(PLATFORM_ACCOUNT_KEY, subscription.subscriptionDetails.platformAccount)
+                        .put(PLATFORM_KEY, subscription.providerData.getPlatformDisplayName())
+                        .put(PLATFORM_ACCOUNT_KEY, subscription.providerData.platformAccount)
                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format(),
                     iconRes = R.drawable.ic_globe
@@ -191,13 +191,13 @@ fun ChoosePlanNoBilling(
         onBack = onBack,
         headerTitle = headerTitle,
         buttonText = if(subscription is ProStatus.Expired) Phrase.from(context.getText(R.string.openPlatformWebsite))
-            .put(PLATFORM_KEY, subscription.subscriptionDetails.getPlatformDisplayName())
+            .put(PLATFORM_KEY, subscription.providerData.getPlatformDisplayName())
             .format().toString()
         else null,
         dangerButton = false,
         onButtonClick = {
             if(subscription is ProStatus.Expired) {
-                sendCommand(ShowOpenUrlDialog(subscription.subscriptionDetails.updateSubscriptionUrl))
+                sendCommand(ShowOpenUrlDialog(subscription.providerData.updateSubscriptionUrl))
             }
         },
         contentTitle = contentTitle,

@@ -313,7 +313,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                             RefundPlanState(
                                 proStatus = sub,
                                 isQuickRefund = isQuickRefund,
-                                quickRefundUrl = sub.subscriptionDetails.refundUrl
+                                quickRefundUrl = sub.providerData.refundUrl
                             )
                         )
                     }
@@ -351,7 +351,7 @@ class ProSettingsViewModel @AssistedInject constructor(
 
             Commands.OpenCancelSubscriptionPage -> {
                 val subUrl = (_proSettingsUIState.value.proDataState.type as? ProStatus.Active)
-                    ?.subscriptionDetails?.cancelSubscriptionUrl
+                    ?.providerData?.cancelSubscriptionUrl
                 if(!subUrl.isNullOrEmpty()){
                     viewModelScope.launch {
                         navigator.navigateToIntent(
@@ -595,7 +595,7 @@ class ProSettingsViewModel @AssistedInject constructor(
             // or the user is pro but non originating
             val noPriceNeeded = !hasBillingCapacity
                     || (subType is ProStatus.Active && !hasValidSub)
-                    || (subType is ProStatus.Active && subType.subscriptionDetails.isFromAnotherPlatform())
+                    || (subType is ProStatus.Active && subType.providerData.isFromAnotherPlatform())
 
             val plans = if(noPriceNeeded) emptyList()
             else {

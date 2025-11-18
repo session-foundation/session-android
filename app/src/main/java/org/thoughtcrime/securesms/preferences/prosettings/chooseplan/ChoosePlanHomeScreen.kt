@@ -29,7 +29,7 @@ fun ChoosePlanHomeScreen(
                 // there is an active subscription but from a different platform or from the
                 // same platform but a different account
                 // or we have no billing APIs
-                subscription.subscriptionDetails.isFromAnotherPlatform()
+                subscription.providerData.isFromAnotherPlatform()
                         || !planData.hasValidSubscription
                         || !planData.hasBillingCapacity ->
                     ChoosePlanNonOriginating(

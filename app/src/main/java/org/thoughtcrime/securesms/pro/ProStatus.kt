@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.pro
 
 import network.loki.messenger.libsession_util.protocol.PaymentProviderMetadata
-import org.thoughtcrime.securesms.pro.api.ProDetails
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.util.State
 import java.time.Instant
@@ -12,20 +11,20 @@ sealed interface ProStatus{
     sealed interface Active: ProStatus{
         val validUntil: Instant
         val duration: ProSubscriptionDuration
-        val subscriptionDetails: PaymentProviderMetadata
+        val providerData: PaymentProviderMetadata
         val quickRefundExpiry: Instant?
 
         data class AutoRenewing(
             override val validUntil: Instant,
             override val duration: ProSubscriptionDuration,
-            override val subscriptionDetails: PaymentProviderMetadata,
+            override val providerData: PaymentProviderMetadata,
             override val quickRefundExpiry: Instant?
         ): Active
 
         data class Expiring(
             override val validUntil: Instant,
             override val duration: ProSubscriptionDuration,
-            override val subscriptionDetails: PaymentProviderMetadata,
+            override val providerData: PaymentProviderMetadata,
             override val quickRefundExpiry: Instant?
         ): Active
 
@@ -38,7 +37,7 @@ sealed interface ProStatus{
 
     data class Expired(
         val expiredAt: Instant,
-        val subscriptionDetails: PaymentProviderMetadata
+        val providerData: PaymentProviderMetadata
     ): ProStatus
 }
 

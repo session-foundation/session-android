@@ -94,49 +94,49 @@ class ProStatusManager @Inject constructor(
                     DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> ProStatus.Active.AutoRenewing(
                         validUntil = Instant.now() + Duration.ofDays(14),
                         duration = ProSubscriptionDuration.THREE_MONTHS,
-                        subscriptionDetails = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
+                        providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
                         quickRefundExpiry = Instant.now() + Duration.ofDays(7)
                     )
 
                     DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> ProStatus.Active.Expiring(
                         validUntil = Instant.now() + Duration.ofDays(2),
                         duration = ProSubscriptionDuration.TWELVE_MONTHS,
-                        subscriptionDetails = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
+                        providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
                         quickRefundExpiry = Instant.now() + Duration.ofDays(7)
                     )
 
                     DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER -> ProStatus.Active.Expiring(
                         validUntil = Instant.now() + Duration.ofDays(40),
                         duration = ProSubscriptionDuration.TWELVE_MONTHS,
-                        subscriptionDetails = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
+                        providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
                         quickRefundExpiry = Instant.now() + Duration.ofDays(7)
                     )
 
                     DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> ProStatus.Active.AutoRenewing(
                         validUntil = Instant.now() + Duration.ofDays(14),
                         duration = ProSubscriptionDuration.ONE_MONTH,
-                        subscriptionDetails = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
+                        providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
                         quickRefundExpiry = Instant.now() + Duration.ofDays(7)
                     )
 
                     DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_APPLE -> ProStatus.Active.Expiring(
                         validUntil = Instant.now() + Duration.ofDays(2),
                         duration = ProSubscriptionDuration.ONE_MONTH,
-                        subscriptionDetails = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
+                        providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
                         quickRefundExpiry = Instant.now() + Duration.ofDays(7)
                     )
 
                     DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> ProStatus.Expired(
                         expiredAt = Instant.now() - Duration.ofDays(14),
-                        subscriptionDetails = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!
+                        providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!
                     )
                     DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_EARLIER -> ProStatus.Expired(
                         expiredAt = Instant.now() - Duration.ofDays(60),
-                        subscriptionDetails = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!
+                        providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!
                     )
                     DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE -> ProStatus.Expired(
                         expiredAt = Instant.now() - Duration.ofDays(14),
-                        subscriptionDetails = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!
+                        providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!
                     )
                 },
 

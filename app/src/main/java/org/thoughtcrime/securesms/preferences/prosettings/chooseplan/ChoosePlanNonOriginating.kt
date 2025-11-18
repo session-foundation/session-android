@@ -41,7 +41,7 @@ fun ChoosePlanNonOriginating(
 ){
     val context = LocalContext.current
 
-    val platformOverride = subscription.subscriptionDetails.getPlatformDisplayName()
+    val platformOverride = subscription.providerData.getPlatformDisplayName()
 
     val headerTitle = when(subscription) {
         is ProStatus.Active.Expiring -> Phrase.from(context.getText(R.string.proAccessExpireDate))
@@ -71,15 +71,15 @@ fun ChoosePlanNonOriginating(
             .format().toString(),
         dangerButton = false,
         onButtonClick = {
-            sendCommand(ShowOpenUrlDialog(subscription.subscriptionDetails.updateSubscriptionUrl))
+            sendCommand(ShowOpenUrlDialog(subscription.providerData.updateSubscriptionUrl))
         },
         contentTitle = Phrase.from(LocalContext.current, R.string.updateAccess)
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString(),
         contentDescription = Phrase.from(context.getText(R.string.proAccessSignUp))
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-            .put(PLATFORM_STORE_KEY, subscription.subscriptionDetails.store)
-            .put(PLATFORM_ACCOUNT_KEY, subscription.subscriptionDetails.platformAccount)
+            .put(PLATFORM_STORE_KEY, subscription.providerData.store)
+            .put(PLATFORM_ACCOUNT_KEY, subscription.providerData.platformAccount)
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format(),
         linkCellsInfo = Phrase.from(context.getText(R.string.updateAccessTwo))
@@ -88,12 +88,12 @@ fun ChoosePlanNonOriginating(
         linkCells = listOf(
             NonOriginatingLinkCellData(
                 title = Phrase.from(context.getText(R.string.onDevice))
-                    .put(DEVICE_TYPE_KEY, subscription.subscriptionDetails.device)
+                    .put(DEVICE_TYPE_KEY, subscription.providerData.device)
                     .format(),
                 info = Phrase.from(context.getText(R.string.onDeviceDescription))
                     .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
-                    .put(DEVICE_TYPE_KEY, subscription.subscriptionDetails.device)
-                    .put(PLATFORM_ACCOUNT_KEY, subscription.subscriptionDetails.platformAccount)
+                    .put(DEVICE_TYPE_KEY, subscription.providerData.device)
+                    .put(PLATFORM_ACCOUNT_KEY, subscription.providerData.platformAccount)
                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                     .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .format(),
@@ -104,7 +104,7 @@ fun ChoosePlanNonOriginating(
                     .put(PLATFORM_KEY, platformOverride)
                     .format(),
                 info = Phrase.from(context.getText(R.string.viaStoreWebsiteDescription))
-                    .put(PLATFORM_ACCOUNT_KEY, subscription.subscriptionDetails.platformAccount)
+                    .put(PLATFORM_ACCOUNT_KEY, subscription.providerData.platformAccount)
                     .put(PLATFORM_STORE_KEY, platformOverride)
                     .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .format(),

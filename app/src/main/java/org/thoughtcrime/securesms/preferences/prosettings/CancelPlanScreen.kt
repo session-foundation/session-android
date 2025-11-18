@@ -49,10 +49,10 @@ fun CancelPlanScreen(
         when {
             // there is an active subscription but from a different platform or from the
             // same platform but a different account
-            activePlan.subscriptionDetails.isFromAnotherPlatform()
+            activePlan.providerData.isFromAnotherPlatform()
                     || !planData.hasValidSubscription ->
                 CancelPlanNonOriginating(
-                    subscriptionDetails = activePlan.subscriptionDetails,
+                    providerData = activePlan.providerData,
                     sendCommand = viewModel::onCommand,
                     onBack = onBack,
                 )

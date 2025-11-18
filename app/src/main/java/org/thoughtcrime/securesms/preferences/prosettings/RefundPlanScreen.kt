@@ -51,7 +51,7 @@ fun RefundPlanScreen(
         // there are different UI depending on the state
         when {
             // there is an active subscription but from a different platform
-            activePlan.subscriptionDetails.isFromAnotherPlatform() ->
+            activePlan.providerData.isFromAnotherPlatform() ->
                 RefundPlanNonOriginating(
                     subscription = activePlan,
                     sendCommand = viewModel::onCommand,
@@ -85,7 +85,7 @@ fun RefundPlan(
         disabled = true,
         onBack = onBack,
         buttonText = if(isQuickRefund) Phrase.from(context.getText(R.string.openPlatformWebsite))
-            .put(PLATFORM_KEY, data.subscriptionDetails.platform)
+            .put(PLATFORM_KEY, data.providerData.platform)
             .format().toString()
         else stringResource(R.string.requestRefund),
         dangerButton = true,
@@ -93,7 +93,7 @@ fun RefundPlan(
             if(isQuickRefund && !quickRefundUrl.isNullOrEmpty()){
                 sendCommand(ShowOpenUrlDialog(quickRefundUrl))
             } else {
-                sendCommand(ShowOpenUrlDialog(data.subscriptionDetails.refundSupportUrl))
+                sendCommand(ShowOpenUrlDialog(data.providerData.refundSupportUrl))
             }
         },
         title = stringResource(R.string.proRefundDescription),
@@ -113,7 +113,7 @@ fun RefundPlan(
                 text = annotatedStringResource(
                     if(isQuickRefund)
                         Phrase.from(context.getText(R.string.proRefundRequestStorePolicies))
-                            .put(PLATFORM_KEY, data.subscriptionDetails.platform)
+                            .put(PLATFORM_KEY, data.providerData.platform)
                             .put(APP_NAME_KEY, context.getString(R.string.app_name))
                             .format()
                     else Phrase.from(context.getText(R.string.proRefundRequestSessionSupport))

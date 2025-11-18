@@ -38,41 +38,41 @@ fun RefundPlanNonOriginating(
         onBack = onBack,
         headerTitle = stringResource(R.string.proRefundDescription),
         buttonText = Phrase.from(context.getText(R.string.openPlatformWebsite))
-            .put(PLATFORM_KEY, subscription.subscriptionDetails.platform)
+            .put(PLATFORM_KEY, subscription.providerData.platform)
             .format().toString(),
         dangerButton = true,
         onButtonClick = {
-            sendCommand(ShowOpenUrlDialog(subscription.subscriptionDetails.refundSupportUrl))
+            sendCommand(ShowOpenUrlDialog(subscription.providerData.refundSupportUrl))
         },
         contentTitle = Phrase.from(context.getText(R.string.proRefunding))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString(),
         contentDescription = Phrase.from(context.getText(R.string.proPlanPlatformRefund))
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-            .put(PLATFORM_STORE_KEY, subscription.subscriptionDetails.store)
-            .put(PLATFORM_ACCOUNT_KEY, subscription.subscriptionDetails.platformAccount)
+            .put(PLATFORM_STORE_KEY, subscription.providerData.store)
+            .put(PLATFORM_ACCOUNT_KEY, subscription.providerData.platformAccount)
             .format(),
         linkCellsInfo = stringResource(R.string.refundRequestOptions),
         linkCells = listOf(
             NonOriginatingLinkCellData(
                 title =  Phrase.from(context.getText(R.string.onDevice))
-                    .put(DEVICE_TYPE_KEY, subscription.subscriptionDetails.device)
+                    .put(DEVICE_TYPE_KEY, subscription.providerData.device)
                     .format(),
                 info = Phrase.from(context.getText(R.string.proRefundAccountDevice))
                     .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
-                    .put(DEVICE_TYPE_KEY, subscription.subscriptionDetails.device)
-                    .put(PLATFORM_ACCOUNT_KEY, subscription.subscriptionDetails.platformAccount)
+                    .put(DEVICE_TYPE_KEY, subscription.providerData.device)
+                    .put(PLATFORM_ACCOUNT_KEY, subscription.providerData.platformAccount)
                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                     .format(),
                 iconRes = R.drawable.ic_smartphone
             ),
             NonOriginatingLinkCellData(
                 title =  Phrase.from(context.getText(R.string.onPlatformWebsite))
-                    .put(PLATFORM_KEY, subscription.subscriptionDetails.platform)
+                    .put(PLATFORM_KEY, subscription.providerData.platform)
                     .format(),
                 info = Phrase.from(context.getText(R.string.requestRefundPlatformWebsite))
-                    .put(PLATFORM_KEY, subscription.subscriptionDetails.platform)
-                    .put(PLATFORM_ACCOUNT_KEY, subscription.subscriptionDetails.platformAccount)
+                    .put(PLATFORM_KEY, subscription.providerData.platform)
+                    .put(PLATFORM_ACCOUNT_KEY, subscription.providerData.platformAccount)
                     .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .format(),
                 iconRes = R.drawable.ic_globe
