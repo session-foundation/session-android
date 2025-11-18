@@ -13,6 +13,7 @@ import org.thoughtcrime.securesms.database.model.MessageId
  * ```sqlite
  * SELECT sms_fields,
  *  (query reaction table) AS reactions,
+ *  NULL AS attachments,
  *  (query hash table) AS server_hash
  * FROM sms
  *
@@ -119,7 +120,8 @@ fun buildMmsSmsCombinedQuery(
             NULL AS ${MmsDatabase.SHARED_CONTACTS},
             NULL AS ${MmsDatabase.LINK_PREVIEWS},
             ${MmsSmsColumns.HAS_MENTION},
-            ($smsHashQuery) AS ${MmsSmsColumns.SERVER_HASH}
+            ($smsHashQuery) AS ${MmsSmsColumns.SERVER_HASH},
+            ${MmsSmsColumns.PRO_FEATURES}
         FROM ${SmsDatabase.TABLE_NAME}
         $whereStatement
     """
@@ -217,7 +219,8 @@ fun buildMmsSmsCombinedQuery(
             ${MmsDatabase.SHARED_CONTACTS},
             ${MmsDatabase.LINK_PREVIEWS},
             ${MmsSmsColumns.HAS_MENTION},
-            ($mmsHashQuery) AS ${MmsSmsColumns.SERVER_HASH}
+            ($mmsHashQuery) AS ${MmsSmsColumns.SERVER_HASH},
+            ${MmsSmsColumns.PRO_FEATURES}
         FROM ${MmsDatabase.TABLE_NAME}
         $whereStatement
     """

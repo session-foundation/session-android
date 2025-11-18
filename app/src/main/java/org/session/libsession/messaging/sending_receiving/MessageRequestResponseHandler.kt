@@ -1,8 +1,8 @@
 package org.session.libsession.messaging.sending_receiving
 
+import network.loki.messenger.libsession_util.protocol.ProFeatures
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.ProfileUpdateHandler
-import org.session.libsession.messaging.messages.ProfileUpdateHandler.Updates.Companion.toUpdates
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
 import org.session.libsession.messaging.messages.visible.VisibleMessage
@@ -12,8 +12,8 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.upsertContact
+import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
@@ -68,7 +68,8 @@ class MessageRequestResponseHandler @Inject constructor(
 
     fun handleExplicitRequestResponseMessage(
         ctx: ReceivedMessageProcessor.MessageProcessingContext?,
-        message: MessageRequestResponse
+        message: MessageRequestResponse,
+        proto: SignalServiceProtos.Content,
     ) {
         val (sender, receiver) = fetchSenderAndReceiver(message) ?: return
         // Always handle explicit request response
@@ -81,7 +82,7 @@ class MessageRequestResponseHandler @Inject constructor(
 
         // Always process the profile update if any. We don't need
         // to process profile for other kind of messages as they should be handled elsewhere
-        message.profile?.toUpdates()?.let { updates ->
+        ProfileUpdateHandler.Updates.create(proto)?.let { updates ->
             profileUpdateHandler.get().handleProfileUpdate(
                 senderId = (sender.address as Address.Standard).accountId,
                 updates = updates,
@@ -151,21 +152,22 @@ class MessageRequestResponseHandler @Inject constructor(
                 if (!didApproveMe) {
                     mmsDatabase.insertSecureDecryptedMessageInbox(
                         retrieved = IncomingMediaMessage(
-                            messageSender.address,
-                            messageTimestampMs,
-                            -1,
-                            0L,
-                            0L,
-                            true,
-                            false,
-                            Optional.absent(),
-                            Optional.absent(),
-                            Optional.absent(),
-                            null,
-                            Optional.absent(),
-                            Optional.absent(),
-                            Optional.absent(),
-                            Optional.absent()
+                            from = messageSender.address,
+                            sentTimeMillis = messageTimestampMs,
+                            subscriptionId = -1,
+                            expiresIn = 0L,
+                            expireStartedAt = 0L,
+                            isMessageRequestResponse = true,
+                            hasMention = false,
+                            body = null,
+                            group = null,
+                            attachments = emptyList(),
+                            proFeatures = ProFeatures.NONE,
+                            messageContent = null,
+                            quote = null,
+                            sharedContacts = emptyList(),
+                            linkPreviews = emptyList(),
+                            dataExtractionNotification = null
                         ),
                         threadId,
                         runThreadUpdate = true,

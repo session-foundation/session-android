@@ -202,14 +202,7 @@ class VisibleMessageHandler @Inject constructor(
             // - must be done after the message is persisted)
             // - must be done after neccessary contact is created
             if (runProfileUpdate && senderAddress is Address.WithAccountId) {
-                val updates = ProfileUpdateHandler.Updates.create(
-                    name = message.profile?.displayName,
-                    picUrl = message.profile?.profilePictureURL,
-                    picKey = message.profile?.profileKey,
-                    blocksCommunityMessageRequests = message.blocksMessageRequests,
-                    proStatus = null,
-                    profileUpdateTime = message.profile?.profileUpdated,
-                )
+                val updates = ProfileUpdateHandler.Updates.create(proto)
 
                 if (updates != null) {
                     profileUpdateHandler.get().handleProfileUpdate(

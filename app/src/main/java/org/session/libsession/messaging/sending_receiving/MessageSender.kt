@@ -1,6 +1,7 @@
 package org.session.libsession.messaging.sending_receiving
 
-import kotlinx.coroutines.GlobalScope
+import com.google.protobuf.ByteString
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
@@ -8,6 +9,7 @@ import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.Namespace
+import network.loki.messenger.libsession_util.ReadableUserProfile
 import network.loki.messenger.libsession_util.protocol.SessionProtocol
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
@@ -29,16 +31,20 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.open_groups.OpenGroupApi.Capability
 import org.session.libsession.messaging.open_groups.OpenGroupMessage
 import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.SnodeAPI.nowWithOffset
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.pro.copyFromLibSession
+import org.thoughtcrime.securesms.pro.db.ProDatabase
 import org.thoughtcrime.securesms.service.ExpiringMessageManager
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -55,25 +61,50 @@ class MessageSender @Inject constructor(
     private val messageDataProvider: MessageDataProvider,
     private val messageSendJobFactory: MessageSendJob.Factory,
     private val messageExpirationManager: ExpiringMessageManager,
+    private val proDatabase: ProDatabase,
+    private val snodeClock: SnodeClock,
+    @param:ManagerScope private val scope: CoroutineScope,
 ) {
 
     // Error
-    sealed class Error(val description: String) : Exception(description) {
-        object InvalidMessage : Error("Invalid message.")
-        object ProtoConversionFailed : Error("Couldn't convert message to proto.")
-        object NoUserED25519KeyPair : Error("Couldn't find user ED25519 key pair.")
-        object SigningFailed : Error("Couldn't sign message.")
-        object EncryptionFailed : Error("Couldn't encrypt message.")
-        data class InvalidDestination(val destination: Destination): Error("Can't send this way to $destination")
+    sealed class Error(val description: String, cause: Throwable? = null) : Exception(description, cause) {
+        class InvalidMessage : Error("Invalid message.")
+        class ProtoConversionFailed(cause: Throwable) : Error("Couldn't convert message to proto.", cause)
+        class NoUserED25519KeyPair : Error("Couldn't find user ED25519 key pair.")
+        class SigningFailed : Error("Couldn't sign message.")
+        class EncryptionFailed : Error("Couldn't encrypt message.")
 
         // Closed groups
-        object NoThread : Error("Couldn't find a thread associated with the given group public key.")
-        object NoKeyPair: Error("Couldn't find a private key associated with the given group public key.")
-        object InvalidClosedGroupUpdate : Error("Invalid group update.")
+        class InvalidClosedGroupUpdate : Error("Invalid group update.")
 
         internal val isRetryable: Boolean = when (this) {
-            is InvalidMessage, ProtoConversionFailed, InvalidClosedGroupUpdate -> false
+            is InvalidMessage, is ProtoConversionFailed, is InvalidClosedGroupUpdate -> false
             else -> true
+        }
+    }
+
+
+    private fun SignalServiceProtos.DataMessage.Builder.copyProfileFromConfig() {
+        configFactory.withUserConfigs {
+            val pic = it.userProfile.getPic()
+
+            profileBuilder.setDisplayName(it.userProfile.getName().orEmpty())
+                .setProfilePicture(pic.url)
+                .setLastProfileUpdateSeconds(it.userProfile.getProfileUpdatedSeconds())
+
+            setProfileKey(ByteString.copyFrom(pic.keyAsByteArray))
+        }
+    }
+
+    private fun SignalServiceProtos.MessageRequestResponse.Builder.copyProfileFromConfig() {
+        configFactory.withUserConfigs {
+            val pic = it.userProfile.getPic()
+
+            profileBuilder.setDisplayName(it.userProfile.getName().orEmpty())
+                .setProfilePicture(pic.url)
+                .setLastProfileUpdateSeconds(it.userProfile.getProfileUpdatedSeconds())
+
+            setProfileKey(ByteString.copyFrom(pic.keyAsByteArray))
         }
     }
 
@@ -86,15 +117,42 @@ class MessageSender @Inject constructor(
         }
     }
 
+    private fun buildProto(msg: Message): SignalServiceProtos.Content {
+        try {
+            val builder = SignalServiceProtos.Content.newBuilder()
+
+            msg.toProto(builder, messageDataProvider)
+
+            // Attach pro proof
+            proDatabase.getCurrentProProof()?.let { proof ->
+                builder.proMessageBuilder.proofBuilder.copyFromLibSession(proof)
+            }
+
+            // Attach the user's profile if needed
+            when {
+                builder.hasDataMessage() && !builder.dataMessageBuilder.hasProfile() -> {
+                    builder.dataMessageBuilder.copyProfileFromConfig()
+                }
+
+                builder.hasMessageRequestResponse() && !builder.messageRequestResponseBuilder.hasProfile() -> {
+                    builder.messageRequestResponseBuilder.copyProfileFromConfig()
+                }
+            }
+
+            return builder.build()
+        } catch (e: Exception) {
+            throw Error.ProtoConversionFailed(e)
+        }
+    }
+
     // One-on-One Chats & Closed Groups
-    @Throws(Exception::class)
     fun buildWrappedMessageToSnode(destination: Destination, message: Message, isSyncMessage: Boolean): SnodeMessage {
         val userPublicKey = storage.getUserPublicKey()
         val userEd25519PrivKey = requireNotNull(storage.getUserED25519KeyPair()?.secretKey?.data) {
             "Missing user key"
         }
         // Set the timestamp, sender and recipient
-        val messageSendTime = nowWithOffset
+        val messageSendTime = snodeClock.currentTimeMills()
         if (message.sentTimestamp == null) {
             message.sentTimestamp =
                 messageSendTime // Visible messages will already have their sent timestamp set
@@ -112,7 +170,7 @@ class MessageSender @Inject constructor(
         val isSelfSend = (message.recipient == userPublicKey)
         // Validate the message
         if (!message.isValid()) {
-            throw Error.InvalidMessage
+            throw Error.InvalidMessage()
         }
         // Stop here if this is a self-send, unless it's:
         // • a configuration message
@@ -122,30 +180,13 @@ class MessageSender @Inject constructor(
             && !isSyncMessage
             && message !is UnsendRequest
         ) {
-            throw Error.InvalidMessage
+            throw Error.InvalidMessage()
         }
-        // Attach the user's profile if needed
-        if (message is VisibleMessage) {
-            message.profile = storage.getUserProfile()
-        }
-        if (message is MessageRequestResponse) {
-            message.profile = storage.getUserProfile()
-        }
-        // Convert it to protobuf
-        val proto = message.toProto()?.toBuilder() ?: throw Error.ProtoConversionFailed
-        if (message is GroupUpdated) {
-            if (message.profile != null) {
-                proto.mergeDataMessage(message.profile.toProto())
-            }
-        }
-
-        // Set the timestamp on the content so it can be verified against envelope timestamp
-        proto.setSigTimestampMs(message.sentTimestamp!!)
 
         val messageContent = when (destination) {
             is Destination.Contact -> {
                 SessionProtocol.encodeFor1o1(
-                    plaintext = proto.build().toByteArray(),
+                    plaintext = buildProto(message).toByteArray(),
                     myEd25519PrivKey = userEd25519PrivKey,
                     timestampMs = message.sentTimestamp!!,
                     recipientPubKey = Hex.fromStringCondensed(destination.publicKey),
@@ -155,7 +196,7 @@ class MessageSender @Inject constructor(
 
             is Destination.ClosedGroup -> {
                 SessionProtocol.encodeForGroup(
-                    plaintext = proto.build().toByteArray(),
+                    plaintext = buildProto(message).toByteArray(),
                     myEd25519PrivKey = userEd25519PrivKey,
                     timestampMs = message.sentTimestamp!!,
                     groupEd25519PublicKey = Hex.fromStringCondensed(destination.publicKey),
@@ -254,7 +295,7 @@ class MessageSender @Inject constructor(
     // Open Groups
     private suspend fun sendToOpenGroupDestination(destination: Destination, message: Message) {
         if (message.sentTimestamp == null) {
-            message.sentTimestamp = nowWithOffset
+            message.sentTimestamp = snodeClock.currentTimeMills()
         }
         // Attach the blocks message requests info
         configFactory.withUserConfigs { configs ->
@@ -263,7 +304,7 @@ class MessageSender @Inject constructor(
             }
         }
         val userEdKeyPair = storage.getUserED25519KeyPair()!!
-        var serverCapabilities = listOf<String>()
+        var serverCapabilities: List<String>
         var blindedPublicKey: ByteArray? = null
         when (destination) {
             is Destination.OpenGroup -> {
@@ -294,21 +335,15 @@ class MessageSender @Inject constructor(
         message.sender = messageSender
 
         try {
-            // Attach the user's profile if needed
-            if (message is VisibleMessage) {
-                message.profile = storage.getUserProfile()
-            }
-            val content = message.toProto()!!.toBuilder()
-                .setSigTimestampMs(message.sentTimestamp!!)
-                .build()
+            val content = buildProto(message)
 
             when (destination) {
                 is Destination.OpenGroup -> {
-                    val whisperMods = if (destination.whisperTo.isNullOrEmpty() && destination.whisperMods) "mods" else null
+                    val whisperMods = if (destination.whisperTo.isEmpty() && destination.whisperMods) "mods" else null
                     message.recipient = "${destination.server}.${destination.roomToken}.${destination.whisperTo}.$whisperMods"
                     // Validate the message
                     if (message !is VisibleMessage || !message.isValid()) {
-                        throw Error.InvalidMessage
+                        throw Error.InvalidMessage()
                     }
                     val plaintext = SessionProtocol.encodeForCommunity(
                         plaintext = content.toByteArray(),
@@ -338,7 +373,7 @@ class MessageSender @Inject constructor(
                     message.recipient = destination.blindedPublicKey
                     // Validate the message
                     if (message !is VisibleMessage || !message.isValid()) {
-                        throw Error.InvalidMessage
+                        throw Error.InvalidMessage()
                     }
                     val ciphertext = SessionProtocol.encodeForCommunityInbox(
                         plaintext = content.toByteArray(),
@@ -423,7 +458,7 @@ class MessageSender @Inject constructor(
             if (message is ExpirationTimerUpdate) message.syncTarget = destination.publicKey
 
             message.id?.let(storage::markAsSyncing)
-            GlobalScope.launch {
+            scope.launch {
                 try {
                     sendToSnodeDestination(Destination.Contact(userPublicKey), message, true)
                 } catch (ec: Exception) {

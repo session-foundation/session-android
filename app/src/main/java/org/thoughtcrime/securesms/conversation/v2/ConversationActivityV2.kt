@@ -1873,11 +1873,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onReactWithAnyEmojiSelected(emoji: String, messageId: MessageId) {
         reactionDelegate.hide()
-        val message = if (messageId.mms) {
-            mmsDb.getMessageRecord(messageId.id)
-        } else {
-            smsDb.getMessageRecord(messageId.id)
-        }
+        val message = mmsSmsDb.getMessageById(messageId) ?: return
         val oldRecord = reactionDb.getReactions(messageId).find { it.author == loginStateRepository.getLocalNumber() }
         if (oldRecord?.emoji == emoji) {
             sendEmojiRemoval(emoji, message)
@@ -1887,11 +1883,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun onRemoveReaction(emoji: String, messageId: MessageId) {
-        val message = if (messageId.mms) {
-            mmsDb.getMessageRecord(messageId.id)
-        } else {
-            smsDb.getMessageRecord(messageId.id)
-        }
+        val message = mmsSmsDb.getMessageById(messageId) ?: return
         sendEmojiRemoval(emoji, message)
     }
 
@@ -2014,11 +2006,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun onReactionClicked(emoji: String, messageId: MessageId, userWasSender: Boolean) {
-        val message = if (messageId.mms) {
-            mmsDb.getMessageRecord(messageId.id)
-        } else {
-            smsDb.getMessageRecord(messageId.id)
-        }
+        val message = mmsSmsDb.getMessageById(messageId) ?: return
         if (userWasSender && viewModel.canRemoveReaction) {
             sendEmojiRemoval(emoji, message)
         } else if (!userWasSender && viewModel.canReactToMessages) {
@@ -2125,7 +2113,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         message.sentTimestamp = sentTimestamp
         message.text = text
         val expiresInMillis = viewModel.recipient.expiryMode.expiryMillis
-        val outgoingTextMessage = OutgoingTextMessage.from(message, recipient.address, expiresInMillis, 0)
+        val outgoingTextMessage = OutgoingTextMessage(
+            message = message,
+            recipient = recipient.address,
+            expiresInMillis = expiresInMillis,
+            expireStartedAtMillis = 0
+        )
 
         // Clear the input bar
         binding.inputBar.text = ""
@@ -2181,7 +2174,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val expireStartedAtMs = if (viewModel.recipient.expiryMode is ExpiryMode.AfterSend) {
             sentTimestamp
         } else 0
-        val outgoingTextMessage = OutgoingMediaMessage.from(message, recipient.address, attachments, localQuote, linkPreview, expiresInMs, expireStartedAtMs)
+        val outgoingTextMessage = OutgoingMediaMessage(
+            message = message,
+            recipient = recipient.address,
+            attachments = attachments,
+            outgoingQuote = localQuote,
+            linkPreview = linkPreview,
+            expiresInMillis = expiresInMs,
+            expireStartedAt = expireStartedAtMs
+        )
 
         // Clear the input bar
         binding.inputBar.text = ""
