@@ -53,6 +53,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.protocol.ProFeature
+import network.loki.messenger.libsession_util.protocol.ProFeatures
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ChangeEnvironment
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ClearTrustedDownloads
@@ -348,45 +350,21 @@ fun DebugMenu(
                 )
 
                 AnimatedVisibility(uiState.forceIncomingMessagesAsPro) {
-                    Column{
-                        DebugCheckboxRow(
-                            text = "Message Feature: Pro Badge",
-                            minHeight = 30.dp,
-                            checked = uiState.messageProFeature.contains(ProStatusManager.MessageProFeature.ProBadge),
-                            onCheckedChange = {
-                                sendCommand(
-                                    DebugMenuViewModel.Commands.SetMessageProFeature(
-                                        ProStatusManager.MessageProFeature.ProBadge, it
+                    Column {
+                        for (feature in ProFeature.entries) {
+                            DebugCheckboxRow(
+                                text = "Message Feature: ${feature.name}",
+                                minHeight = 30.dp,
+                                checked = uiState.messageProFeature.contains(feature),
+                                onCheckedChange = {
+                                    sendCommand(
+                                        DebugMenuViewModel.Commands.SetMessageProFeature(
+                                            feature, it
+                                        )
                                     )
-                                )
-                            }
-                        )
-
-                        DebugCheckboxRow(
-                            text = "Message Feature: Long Message",
-                            minHeight = 30.dp,
-                            checked = uiState.messageProFeature.contains(ProStatusManager.MessageProFeature.LongMessage),
-                            onCheckedChange = {
-                                sendCommand(
-                                    DebugMenuViewModel.Commands.SetMessageProFeature(
-                                        ProStatusManager.MessageProFeature.LongMessage, it
-                                    )
-                                )
-                            }
-                        )
-
-                        DebugCheckboxRow(
-                            text = "Message Feature: Animated Avatar",
-                            minHeight = 30.dp,
-                            checked = uiState.messageProFeature.contains(ProStatusManager.MessageProFeature.AnimatedAvatar),
-                            onCheckedChange = {
-                                sendCommand(
-                                    DebugMenuViewModel.Commands.SetMessageProFeature(
-                                        ProStatusManager.MessageProFeature.AnimatedAvatar, it
-                                    )
-                                )
-                            }
-                        )
+                                }
+                            )
+                        }
                     }
 
                 }
@@ -865,7 +843,7 @@ fun PreviewDebugMenu() {
                 forceOtherUsersAsPro = false,
                 forcePostPro = false,
                 forceShortTTl = false,
-                messageProFeature = setOf(ProStatusManager.MessageProFeature.AnimatedAvatar),
+                messageProFeature = ProFeatures.from(listOf(ProFeature.ANIMATED_AVATAR)),
                 dbInspectorState = DebugMenuViewModel.DatabaseInspectorState.STARTED,
                 debugSubscriptionStatuses = setOf(DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE),
                 selectedDebugSubscriptionStatus = DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE,

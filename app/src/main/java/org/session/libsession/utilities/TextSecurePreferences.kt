@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.Json
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.protocol.ProFeatures
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.file_server.FileServer
 import org.session.libsession.utilities.TextSecurePreferences.Companion.AUTOPLAY_AUDIO_MESSAGES
@@ -205,8 +206,8 @@ interface TextSecurePreferences {
     fun forcedShortTTL(): Boolean
     fun setForcedShortTTL(value: Boolean)
 
-    fun  getDebugMessageFeatures(): Set<ProStatusManager.MessageProFeature>
-    fun  setDebugMessageFeatures(features: Set<ProStatusManager.MessageProFeature>)
+    fun  getDebugMessageFeatures(): ProFeatures
+    fun  setDebugMessageFeatures(features: ProFeatures)
 
     fun getDebugSubscriptionType(): DebugMenuViewModel.DebugSubscriptionStatus?
     fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?)
@@ -378,7 +379,7 @@ interface TextSecurePreferences {
 
         const val IN_APP_REVIEW_STATE = "in_app_review_state"
 
-        const val DEBUG_MESSAGE_FEATURES = "debug_message_features"
+        const val DEBUG_MESSAGE_FEATURES = "debug_message_features_long"
         const val DEBUG_SUBSCRIPTION_STATUS = "debug_subscription_status"
         const val DEBUG_PRO_PLAN_STATUS = "debug_pro_plan_status"
         const val DEBUG_FORCE_NO_BILLING = "debug_pro_has_billing"
@@ -1708,13 +1709,12 @@ class AppTextSecurePreferences @Inject constructor(
                 setStringPreference(TextSecurePreferences.DEPRECATING_START_TIME_OVERRIDE, value.toString())
             }
         }
-    override fun getDebugMessageFeatures(): Set<ProStatusManager.MessageProFeature> {
-        return getStringSetPreference( TextSecurePreferences.DEBUG_MESSAGE_FEATURES, emptySet())
-            ?.map { ProStatusManager.MessageProFeature.valueOf(it) }?.toSet() ?: emptySet()
+    override fun getDebugMessageFeatures(): ProFeatures {
+        return ProFeatures(getLongPreference( TextSecurePreferences.DEBUG_MESSAGE_FEATURES, 0))
     }
 
-    override fun setDebugMessageFeatures(features: Set<ProStatusManager.MessageProFeature>) {
-        setStringSetPreference(TextSecurePreferences.DEBUG_MESSAGE_FEATURES, features.map { it.name }.toSet())
+    override fun setDebugMessageFeatures(features: ProFeatures) {
+        setLongPreference(TextSecurePreferences.DEBUG_MESSAGE_FEATURES, features.rawValue)
     }
 
     override fun getDebugSubscriptionType(): DebugMenuViewModel.DebugSubscriptionStatus? {

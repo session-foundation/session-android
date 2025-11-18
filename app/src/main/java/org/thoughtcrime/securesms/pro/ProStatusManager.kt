@@ -1,7 +1,5 @@
 package org.thoughtcrime.securesms.pro
 
-import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -17,12 +15,14 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
+import network.loki.messenger.libsession_util.protocol.ProFeatures
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
-import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.database.model.MessageRecord
+import org.thoughtcrime.securesms.database.model.proFeatures
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
@@ -36,11 +36,9 @@ import javax.inject.Singleton
 
 @Singleton
 class ProStatusManager @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val prefs: TextSecurePreferences,
     recipientRepository: RecipientRepository,
     @param:ManagerScope private val scope: CoroutineScope,
-    loginStateRepository: LoginStateRepository,
 ) : OnAppStartupComponent {
 
     val subscriptionState: StateFlow<SubscriptionState> = combine(
@@ -229,42 +227,40 @@ class ProStatusManager @Inject constructor(
     /**
      * This will calculate the pro features of an outgoing message
      */
-    fun calculateMessageProFeatures(isPro: Boolean, shouldShowProBadge: Boolean, message: String): List<MessageProFeature>{
-        if (!isPro){
-            return emptyList()
-        }
-
-        val features = mutableListOf<MessageProFeature>()
-
-        // check for pro badge display
-        if (shouldShowProBadge){
-            features.add(MessageProFeature.ProBadge)
-        }
-
-        // check for "long message" feature
-        if(message.length > MAX_CHARACTER_REGULAR){
-            features.add(MessageProFeature.LongMessage)
-        }
+    fun calculateMessageProFeatures(isPro: Boolean, shouldShowProBadge: Boolean, message: String) {
+//        if (!isPro){
+//            return emptyList()
+//        }
+//
+//        val features = mutableListOf<MessageProFeature>()
+//
+//        // check for pro badge display
+//        if (shouldShowProBadge){
+//            features.add(MessageProFeature.ProBadge)
+//        }
+//
+//        // check for "long message" feature
+//        if(message.length > MAX_CHARACTER_REGULAR){
+//            features.add(MessageProFeature.LongMessage)
+//        }
 
         // check is the user has an animated avatar
         //todo PRO check for animated avatar here and add appropriate feature
 
 
-        return features
+//        return features
     }
 
     /**
      * This will get the list of Pro features from an incoming message
      */
-    fun getMessageProFeatures(messageId: MessageId): Set<MessageProFeature>{
-        //todo PRO implement once we have data
-
+    fun getMessageProFeatures(message: MessageRecord): ProFeatures {
         // use debug values if any
         if(prefs.forceIncomingMessagesAsPro()){
             return prefs.getDebugMessageFeatures()
         }
 
-        return emptySet()
+        return message.proFeatures
     }
 
     suspend fun appProPaymentToBackend() {
@@ -315,10 +311,6 @@ class ProStatusManager @Inject constructor(
 
         // All attempts failed - throw our custom exception
         throw SubscriptionManager.PaymentServerException()
-    }
-
-    enum class MessageProFeature {
-        ProBadge, LongMessage, AnimatedAvatar
     }
 
     companion object {
