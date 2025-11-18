@@ -159,7 +159,7 @@ class HomeViewModel @Inject constructor(
     init {
         // observe subscription status
         viewModelScope.launch {
-            proStatusManager.subscriptionState.collect { subscription ->
+            proStatusManager.proDataState.collect { subscription ->
                 // show a CTA (only once per install) when
                 // - subscription is expiring in less than 7 days
                 // - subscription expired less than 30 days ago
@@ -262,7 +262,7 @@ class HomeViewModel @Inject constructor(
                 it.copy(
                     pinCTA = PinProCTA(
                         overTheLimit = totalPins > maxPins,
-                        proSubscription = proStatusManager.subscriptionState.value.type
+                        proSubscription = proStatusManager.proDataState.value.type
                     )
                 )
             }

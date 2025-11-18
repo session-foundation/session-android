@@ -63,7 +63,7 @@ import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.C
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.SubscriptionDetails
-import org.thoughtcrime.securesms.pro.SubscriptionState
+import org.thoughtcrime.securesms.pro.ProDataState
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.ui.ActionRowItem
@@ -125,7 +125,7 @@ fun ProSettingsHome(
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ) {
-    val subscriptionType = data.subscriptionState.type
+    val subscriptionType = data.proDataState.type
     val context = LocalContext.current
 
     val expiredInMainScreen = subscriptionType is ProStatus.Expired && !inSheet
@@ -137,13 +137,13 @@ fun ProSettingsHome(
         onBack = onBack,
         onHeaderClick = {
             // add a click handling if the subscription state is loading or errored
-            if(data.subscriptionState.refreshState !is State.Success<*>){
+            if(data.proDataState.refreshState !is State.Success<*>){
                 sendCommand(OnHeaderClicked(inSheet))
             } else null
         },
         extraHeaderContent = {
             // display extra content if the subscription state is loading or errored
-            when(data.subscriptionState.refreshState){
+            when(data.proDataState.refreshState){
                 is State.Loading -> {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -199,7 +199,7 @@ fun ProSettingsHome(
     ) {
         // Header for non-pro users or expired users in sheet mode
         if(subscriptionType is ProStatus.NeverSubscribed || expiredInSheet) {
-            if(data.subscriptionState.refreshState !is State.Success){
+            if(data.proDataState.refreshState !is State.Success){
                 Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
             }
 
@@ -219,7 +219,7 @@ fun ProSettingsHome(
             Spacer(Modifier.height(LocalDimensions.current.spacing))
 
             Box {
-                val enableButon = data.subscriptionState.refreshState is State.Success
+                val enableButon = data.proDataState.refreshState is State.Success
                 AccentFillButtonRect(
                     modifier = Modifier.fillMaxWidth(),
                     text = stringResource(R.string.theContinue),
@@ -261,8 +261,8 @@ fun ProSettingsHome(
         if(subscriptionType is ProStatus.Active){
             Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
             ProSettings(
-                showProBadge = data.subscriptionState.showProBadge,
-                subscriptionRefreshState = data.subscriptionState.refreshState,
+                showProBadge = data.proDataState.showProBadge,
+                subscriptionRefreshState = data.proDataState.refreshState,
                 inSheet = inSheet,
                 expiry = data.subscriptionExpiryLabel,
                 sendCommand = sendCommand,
@@ -274,7 +274,7 @@ fun ProSettingsHome(
             Spacer(Modifier.height(LocalDimensions.current.spacing))
             ProManage(
                 data = subscriptionType,
-                subscriptionRefreshState = data.subscriptionState.refreshState,
+                subscriptionRefreshState = data.proDataState.refreshState,
                 inSheet = inSheet,
                 sendCommand = sendCommand,
             )
@@ -292,7 +292,7 @@ fun ProSettingsHome(
         if(!inSheet){
            ProSettingsFooter(
                proStatus = subscriptionType,
-               subscriptionRefreshState = data.subscriptionState.refreshState,
+               subscriptionRefreshState = data.proDataState.refreshState,
                inSheet = inSheet,
                sendCommand = sendCommand
            )
@@ -973,7 +973,7 @@ fun PreviewProSettingsPro(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState(
+                proDataState = ProDataState(
                     type = ProStatus.Active.AutoRenewing(
                         validUntil = Instant.now() + Duration.ofDays(14),
                         duration = ProSubscriptionDuration.THREE_MONTHS,
@@ -1005,7 +1005,7 @@ fun PreviewProSettingsProLoading(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState(
+                proDataState = ProDataState(
                     type = ProStatus.Active.AutoRenewing(
                         validUntil = Instant.now() + Duration.ofDays(14),
                         duration = ProSubscriptionDuration.THREE_MONTHS,
@@ -1037,7 +1037,7 @@ fun PreviewProSettingsProError(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState(
+                proDataState = ProDataState(
                     type = ProStatus.Active.AutoRenewing(
                         validUntil = Instant.now() + Duration.ofDays(14),
                         duration = ProSubscriptionDuration.THREE_MONTHS,
@@ -1069,7 +1069,7 @@ fun PreviewProSettingsExpired(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState(
+                proDataState = ProDataState(
                     type = ProStatus.Expired(
                         expiredAt = Instant.now() - Duration.ofDays(14),
                         SubscriptionDetails(
@@ -1099,7 +1099,7 @@ fun PreviewProSettingsExpiredInSheet(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState(
+                proDataState = ProDataState(
                     type = ProStatus.Expired(
                         expiredAt = Instant.now() - Duration.ofDays(14),
                         SubscriptionDetails(
@@ -1129,7 +1129,7 @@ fun PreviewProSettingsExpiredLoading(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState(
+                proDataState = ProDataState(
                     type = ProStatus.Expired(
                         expiredAt = Instant.now() - Duration.ofDays(14),
                         SubscriptionDetails(
@@ -1159,7 +1159,7 @@ fun PreviewProSettingsExpiredError(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState(
+                proDataState = ProDataState(
                     type = ProStatus.Expired(
                         expiredAt = Instant.now() - Duration.ofDays(14),
                         SubscriptionDetails(
@@ -1189,7 +1189,7 @@ fun PreviewProSettingsNonPro(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState(
+                proDataState = ProDataState(
                     type = ProStatus.NeverSubscribed,
                     refreshState = State.Success(Unit),
                     showProBadge = true,
@@ -1210,7 +1210,7 @@ fun PreviewProSettingsNonProInSheet(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState(
+                proDataState = ProDataState(
                     type = ProStatus.NeverSubscribed,
                     refreshState = State.Success(Unit),
                     showProBadge = true,

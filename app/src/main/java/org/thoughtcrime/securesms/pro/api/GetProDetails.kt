@@ -39,11 +39,12 @@ class GetProDetailsRequest @AssistedInject constructor(
     }
 }
 
-typealias ProDetailsStatus = Int
+typealias ServerProDetailsStatus = Int
+typealias ServerPlanDuration = Int
 
 @Serializable
 class ProDetails(
-    val status: ProDetailsStatus,
+    val status: ServerProDetailsStatus,
 
     @SerialName("auto_renewing")
     val autoRenewing: Boolean? = null,
@@ -66,10 +67,17 @@ class ProDetails(
 
     val version: Int,
 ) {
+    init {
+        check((status != DETAILS_STATUS_ACTIVE && status != DETAILS_STATUS_EXPIRED) || expiry != null) { "Expiry must not be null for state other than 'never subscribed'" }
+        check((status != DETAILS_STATUS_ACTIVE && status != DETAILS_STATUS_EXPIRED) || paymentItems.isNotEmpty()) { "Can't have no payment items for state other than 'never subscribed'" }
+    }
 
     @Serializable
     data class Item(
-        val status: ProDetailsStatus,
+        @SerialName("plan")
+        val planDuration: ServerPlanDuration,
+
+        val status: Int, // Payment status [Redeemed, Revoked, Expired] - we do not use this status in the clients
 
         @SerialName("payment_provider")
         val paymentProvider: PaymentProvider,
@@ -114,8 +122,12 @@ class ProDetails(
     )
 
     companion object {
-        const val DETAILS_STATUS_NEVER_BEEN_PRO: ProDetailsStatus = 0
-        const val DETAILS_STATUS_ACTIVE: ProDetailsStatus = 1
-        const val DETAILS_STATUS_EXPIRED: ProDetailsStatus = 2
+        const val DETAILS_STATUS_NEVER_BEEN_PRO: ServerProDetailsStatus = 0
+        const val DETAILS_STATUS_ACTIVE: ServerProDetailsStatus = 1
+        const val DETAILS_STATUS_EXPIRED: ServerProDetailsStatus = 2
+
+        const val SERVER_PLAN_DURATION_1_MONTH: ServerPlanDuration = 1
+        const val SERVER_PLAN_DURATION_3_MONTH: ServerPlanDuration = 2
+        const val SERVER_PLAN_DURATION_12_MONTH: ServerPlanDuration = 3
     }
 }

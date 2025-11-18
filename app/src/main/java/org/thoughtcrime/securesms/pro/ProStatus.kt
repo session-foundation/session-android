@@ -32,7 +32,7 @@ sealed interface ProStatus{
     ): ProStatus
 }
 
-data class SubscriptionState(
+data class ProDataState(
     val type: ProStatus,
     val showProBadge: Boolean,
     val refreshState: State<Unit>,
@@ -61,7 +61,7 @@ data class SubscriptionDetails(
     }
 }
 
-fun getDefaultSubscriptionStateData() = SubscriptionState(
+fun getDefaultSubscriptionStateData() = ProDataState(
     type = ProStatus.NeverSubscribed,
     refreshState = State.Loading,
     showProBadge = false

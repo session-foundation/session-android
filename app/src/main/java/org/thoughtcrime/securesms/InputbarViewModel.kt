@@ -93,7 +93,7 @@ abstract class InputbarViewModel(
 
     fun showSessionProCTA(){
         _inputBarStateDialogsState.update {
-            it.copy(sessionProCharLimitCTA = CharLimitCTAData(proStatusManager.subscriptionState.value.type))
+            it.copy(sessionProCharLimitCTA = CharLimitCTAData(proStatusManager.proDataState.value.type))
         }
     }
 
