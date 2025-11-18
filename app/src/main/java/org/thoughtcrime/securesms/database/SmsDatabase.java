@@ -22,7 +22,6 @@ import static org.thoughtcrime.securesms.database.MmsSmsColumns.Types.GROUP_UPDA
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.text.TextUtils;
 
 import com.annimon.stream.Stream;
 
@@ -74,11 +73,14 @@ public class SmsDatabase extends MessagingDatabase {
   public  static final String PERSON             = "person";
           static final String DATE_RECEIVED      = "date";
           static final String DATE_SENT          = "date_sent";
+  @Deprecated(forRemoval = true)
   public  static final String PROTOCOL           = "protocol";
   public  static final String STATUS             = "status";
   public  static final String TYPE               = "type";
+    @Deprecated(forRemoval = true)
   public  static final String REPLY_PATH_PRESENT = "reply_path_present";
   public  static final String SUBJECT            = "subject";
+  @Deprecated(forRemoval = true)
   public  static final String SERVICE_CENTER     = "service_center";
 
   private static final String IS_DELETED_COLUMN_DEF = IS_DELETED + " GENERATED ALWAYS AS ((" + TYPE +
@@ -103,14 +105,14 @@ public class SmsDatabase extends MessagingDatabase {
     "CREATE INDEX IF NOT EXISTS sms_thread_date_index ON " + TABLE_NAME + " (" + THREAD_ID + ", " + DATE_RECEIVED + ");"
   };
 
-    public static String CREATE_REACTIONS_UNREAD_COMMAND = "ALTER TABLE "+ TABLE_NAME + " " +
+  public static final String CREATE_REACTIONS_UNREAD_COMMAND = "ALTER TABLE "+ TABLE_NAME + " " +
           "ADD COLUMN " + REACTIONS_UNREAD + " INTEGER DEFAULT 0;";
 
-  public static String CREATE_HAS_MENTION_COMMAND = "ALTER TABLE "+ TABLE_NAME + " " +
+  public static final String CREATE_HAS_MENTION_COMMAND = "ALTER TABLE "+ TABLE_NAME + " " +
           "ADD COLUMN " + HAS_MENTION + " INTEGER DEFAULT 0;";
 
-  private static String COMMA_SEPARATED_COLUMNS = ID + ", " + THREAD_ID + ", " + ADDRESS + ", " + ADDRESS_DEVICE_ID + ", " + PERSON + ", " + DATE_RECEIVED + ", " + DATE_SENT + ", " + PROTOCOL + ", " + READ + ", " + STATUS + ", " + TYPE + ", " + REPLY_PATH_PRESENT + ", " + DELIVERY_RECEIPT_COUNT + ", " + SUBJECT + ", " + BODY + ", " + MISMATCHED_IDENTITIES + ", " + SERVICE_CENTER + ", " + SUBSCRIPTION_ID + ", " + EXPIRES_IN + ", " + EXPIRE_STARTED + ", " + NOTIFIED + ", " + READ_RECEIPT_COUNT + ", " + UNIDENTIFIED + ", " + REACTIONS_UNREAD + ", " + HAS_MENTION;
-  private static String TEMP_TABLE_NAME = "TEMP_TABLE_NAME";
+  private static final String COMMA_SEPARATED_COLUMNS = ID + ", " + THREAD_ID + ", " + ADDRESS + ", " + ADDRESS_DEVICE_ID + ", " + PERSON + ", " + DATE_RECEIVED + ", " + DATE_SENT + ", " + PROTOCOL + ", " + READ + ", " + STATUS + ", " + TYPE + ", " + REPLY_PATH_PRESENT + ", " + DELIVERY_RECEIPT_COUNT + ", " + SUBJECT + ", " + BODY + ", " + MISMATCHED_IDENTITIES + ", " + SERVICE_CENTER + ", " + SUBSCRIPTION_ID + ", " + EXPIRES_IN + ", " + EXPIRE_STARTED + ", " + NOTIFIED + ", " + READ_RECEIPT_COUNT + ", " + UNIDENTIFIED + ", " + REACTIONS_UNREAD + ", " + HAS_MENTION;
+  private static final String TEMP_TABLE_NAME = "TEMP_TABLE_NAME";
 
   public static final String[] ADD_AUTOINCREMENT = new String[]{
           "ALTER TABLE " + TABLE_NAME + " RENAME TO " + TEMP_TABLE_NAME,
@@ -199,10 +201,6 @@ public class SmsDatabase extends MessagingDatabase {
     }
 
     return 0;
-  }
-
-  public void markAsDecryptFailed(long id) {
-    updateTypeBitmask(id, Types.ENCRYPTION_MASK, Types.ENCRYPTION_REMOTE_FAILED_BIT);
   }
 
   @Override
@@ -370,19 +368,11 @@ public class SmsDatabase extends MessagingDatabase {
     return setMessagesRead(THREAD_ID + " = ? AND (" + READ + " = 0)", new String[] {String.valueOf(threadId)});
   }
 
-  public List<MarkedMessageInfo> setAllMessagesRead() {
-    return setMessagesRead(READ + " = 0", null);
-  }
-
   private List<MarkedMessageInfo> setMessagesRead(String where, String[] arguments) {
     SQLiteDatabase          database  = getWritableDatabase();
     List<MarkedMessageInfo> results   = new LinkedList<>();
-    Cursor                  cursor    = null;
-
     database.beginTransaction();
-    try {
-      cursor = database.query(TABLE_NAME, new String[] {ID, ADDRESS, DATE_SENT, TYPE, EXPIRES_IN, EXPIRE_STARTED}, where, arguments, null, null, null);
-
+    try (final Cursor cursor = database.query(TABLE_NAME, new String[] {ID, ADDRESS, DATE_SENT, TYPE, EXPIRES_IN, EXPIRE_STARTED}, where, arguments, null, null, null)) {
       while (cursor != null && cursor.moveToNext()) {
         long timestamp = cursor.getLong(2);
         SyncMessageId  syncMessageId  = new SyncMessageId(Address.fromSerialized(cursor.getString(1)), timestamp);
@@ -398,7 +388,6 @@ public class SmsDatabase extends MessagingDatabase {
       database.update(TABLE_NAME, contentValues, where, arguments);
       database.setTransactionSuccessful();
     } finally {
-      if (cursor != null) cursor.close();
       database.endTransaction();
     }
 
@@ -445,17 +434,10 @@ public class SmsDatabase extends MessagingDatabase {
     if (serverTimestamp == 0) { receivedTimestamp = message.getSentTimestampMillis(); }
     values.put(DATE_RECEIVED, receivedTimestamp); // Loki - This is important due to how we handle GIFs
     values.put(DATE_SENT, message.getSentTimestampMillis());
-    values.put(PROTOCOL, message.getProtocol());
     values.put(READ, unread ? 0 : 1);
     values.put(EXPIRES_IN, message.getExpiresInMillis());
     values.put(EXPIRE_STARTED, message.getExpireStartedAt());
     values.put(HAS_MENTION, message.getHasMention());
-
-    if (!TextUtils.isEmpty(message.getPseudoSubject()))
-      values.put(SUBJECT, message.getPseudoSubject());
-
-    values.put(REPLY_PATH_PRESENT, message.getReplyPathPresent());
-    values.put(SERVICE_CENTER, message.getServiceCenterAddress());
     values.put(BODY, message.getMessage());
     values.put(TYPE, type);
     values.put(THREAD_ID, threadId);

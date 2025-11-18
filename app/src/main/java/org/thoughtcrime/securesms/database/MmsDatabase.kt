@@ -429,9 +429,8 @@ class MmsDatabase @Inject constructor(
     @Throws(MmsException::class)
     private fun insertMessageInbox(
         retrieved: IncomingMediaMessage,
-        contentLocation: String,
-        threadId: Long, mailbox: Long,
-        serverTimestamp: Long,
+        threadId: Long,
+        mailbox: Long, serverTimestamp: Long,
         runThreadUpdate: Boolean
     ): Optional<InsertResult> {
         if (threadId < 0 ) throw MmsException("No thread ID supplied!")
@@ -442,7 +441,6 @@ class MmsDatabase @Inject constructor(
         contentValues.put(ADDRESS, retrieved.from.toString())
         contentValues.put(MESSAGE_BOX, mailbox)
         contentValues.put(THREAD_ID, threadId)
-        contentValues.put(CONTENT_LOCATION, contentLocation)
         contentValues.put(STATUS, Status.DOWNLOAD_INITIALIZED)
         contentValues.put(PRO_FEATURES, retrieved.proFeatures.rawValue)
         // In open groups messages should be sorted by their server timestamp
@@ -450,11 +448,7 @@ class MmsDatabase @Inject constructor(
         if (serverTimestamp == 0L) {
             receivedTimestamp = retrieved.sentTimeMillis
         }
-        contentValues.put(
-            DATE_RECEIVED,
-            receivedTimestamp
-        ) // Loki - This is important due to how we handle GIFs
-        contentValues.put(PART_COUNT, retrieved.attachments.size)
+        contentValues.put(DATE_RECEIVED, receivedTimestamp) // Loki - This is important due to how we handle GIFs
         contentValues.put(EXPIRES_IN, retrieved.expiresIn)
         contentValues.put(EXPIRE_STARTED, retrieved.expireStartedAt)
         contentValues.put(HAS_MENTION, retrieved.hasMention)
@@ -531,7 +525,7 @@ class MmsDatabase @Inject constructor(
         if (retrieved.isMessageRequestResponse) {
             type = type or MmsSmsColumns.Types.MESSAGE_REQUEST_RESPONSE_BIT
         }
-        return insertMessageInbox(retrieved, "", threadId, type, serverTimestamp, runThreadUpdate)
+        return insertMessageInbox(retrieved, threadId, type, serverTimestamp, runThreadUpdate)
     }
 
     @Throws(MmsException::class)
@@ -1076,6 +1070,7 @@ class MmsDatabase @Inject constructor(
         const val DATE_SENT: String = "date"
         const val DATE_RECEIVED: String = "date_received"
         const val MESSAGE_BOX: String = "msg_box"
+        @Deprecated("No longer used.")
         const val CONTENT_LOCATION: String = "ct_l"
         const val EXPIRY: String = "exp"
 
@@ -1083,14 +1078,18 @@ class MmsDatabase @Inject constructor(
         const val MESSAGE_TYPE: String = "m_type"
         const val MESSAGE_SIZE: String = "m_size"
         const val STATUS: String = "st"
+        @Deprecated("No longer used.")
         const val TRANSACTION_ID: String = "tr_id"
+        @Deprecated("No longer used.")
         const val PART_COUNT: String = "part_count"
+        @Deprecated("No longer used.")
         const val NETWORK_FAILURE: String = "network_failures"
         const val QUOTE_ID: String = "quote_id"
         const val QUOTE_AUTHOR: String = "quote_author"
         const val QUOTE_BODY: String = "quote_body"
         const val QUOTE_ATTACHMENT: String = "quote_attachment"
         const val QUOTE_MISSING: String = "quote_missing"
+        @Deprecated("No longer used.")
         const val SHARED_CONTACTS: String = "shared_contacts"
         const val LINK_PREVIEWS: String = "previews"
 

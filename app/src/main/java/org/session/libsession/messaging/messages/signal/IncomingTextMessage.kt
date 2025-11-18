@@ -24,21 +24,6 @@ data class IncomingTextMessage(
     val isGroupMessage: Boolean = false,
     val isGroupUpdateMessage: Boolean = false,
 ) {
-    // Legacy code
-    val protocol: Int get() = 31337
-
-    // Legacy code
-    val serviceCenterAddress: String get() = "GCM"
-
-    // Legacy code
-    val replyPathPresent: Boolean get() = true
-
-    // Legacy code
-    val pseudoSubject: String get() = ""
-
-    // Legacy code
-    val subscriptionId: Int get() = -1
-
     val callMessageType: CallMessageType? get() =
         CallMessageType.entries.getOrNull(callType)
 
