@@ -20,8 +20,6 @@ import android.content.Context;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
-import android.text.style.RelativeSizeSpan;
-import android.text.style.StyleSpan;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -67,6 +65,7 @@ public abstract class MessageRecord extends DisplayRecord {
 
   @Nullable
   private UpdateMessageData               groupUpdateMessage;
+  final long                              proFeaturesRawValue;
 
   public abstract boolean isMms();
   public abstract boolean isMmsNotification();
@@ -83,7 +82,8 @@ public abstract class MessageRecord extends DisplayRecord {
                 List<NetworkFailure> networkFailures,
                 long expiresIn, long expireStarted,
                 int readReceiptCount, List<ReactionRecord> reactions, boolean hasMention,
-                @Nullable MessageContent messageContent)
+                @Nullable MessageContent messageContent,
+                long proFeaturesRawValue)
   {
     super(body, conversationRecipient, dateSent, dateReceived,
       threadId, deliveryStatus, deliveryReceiptCount, type, readReceiptCount, messageContent);
@@ -95,6 +95,7 @@ public abstract class MessageRecord extends DisplayRecord {
     this.expireStarted       = expireStarted;
     this.reactions           = reactions;
     this.hasMention          = hasMention;
+    this.proFeaturesRawValue = proFeaturesRawValue;
   }
 
   public long getId() {
@@ -197,15 +198,7 @@ public abstract class MessageRecord extends DisplayRecord {
     return updateMessageData != null && updateMessageData.getKind() instanceof UpdateMessageData.Kind.GroupExpirationUpdated;
   }
 
-  protected SpannableString emphasisAdded(String sequence) {
-    SpannableString spannable = new SpannableString(sequence);
-    spannable.setSpan(new RelativeSizeSpan(0.9f), 0, sequence.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-    spannable.setSpan(new StyleSpan(android.graphics.Typeface.ITALIC), 0, sequence.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-    return spannable;
-  }
-
-  @Override
+    @Override
   public boolean equals(Object other) {
     return other instanceof MessageRecord
             && ((MessageRecord) other).getId() == getId()

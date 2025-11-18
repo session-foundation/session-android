@@ -96,7 +96,8 @@ public class MmsSmsDatabase extends Database {
                                               MmsDatabase.LINK_PREVIEWS,
                                               ReactionDatabase.REACTION_JSON_ALIAS,
                                               MmsSmsColumns.HAS_MENTION,
-                                              MmsSmsColumns.SERVER_HASH
+                                              MmsSmsColumns.SERVER_HASH,
+                                              MmsSmsColumns.PRO_FEATURES
   };
 
   private final LoginStateRepository loginStateRepository;

@@ -1218,6 +1218,7 @@ class MmsDatabase @Inject constructor(
             val expireStarted        = cursor.getLong(cursor.getColumnIndexOrThrow(EXPIRE_STARTED))
             val hasMention           = cursor.getInt(cursor.getColumnIndexOrThrow(HAS_MENTION)) == 1
             val messageContentJson   = cursor.getString(cursor.getColumnIndexOrThrow(MESSAGE_CONTENT))
+            val proFeatures          = cursor.getLong(cursor.getColumnIndexOrThrow(PRO_FEATURES))
 
             if (!isReadReceiptsEnabled(context)) {
                 readReceiptCount = 0
@@ -1254,7 +1255,7 @@ class MmsDatabase @Inject constructor(
                 threadId, body, slideDeck!!, partCount, box, mismatches,
                 networkFailures, subscriptionId, expiresIn, expireStarted,
                 readReceiptCount, quote, contacts, previews, reactions, hasMention,
-                messageContent
+                messageContent, proFeatures
             )
         }
 

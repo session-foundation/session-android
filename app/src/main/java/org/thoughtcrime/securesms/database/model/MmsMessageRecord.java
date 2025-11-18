@@ -15,6 +15,8 @@ import org.thoughtcrime.securesms.mms.SlideDeck;
 import java.util.LinkedList;
 import java.util.List;
 
+import network.loki.messenger.libsession_util.protocol.ProFeatures;
+
 public abstract class MmsMessageRecord extends MessageRecord {
   private final @NonNull  SlideDeck         slideDeck;
   private final @Nullable Quote             quote;
@@ -29,9 +31,10 @@ public abstract class MmsMessageRecord extends MessageRecord {
                    long expireStarted, @NonNull SlideDeck slideDeck, int readReceiptCount,
                    @Nullable Quote quote, @NonNull List<Contact> contacts,
                    @NonNull List<LinkPreview> linkPreviews, List<ReactionRecord> reactions, boolean hasMention,
-                   @Nullable MessageContent messageContent)
+                   @Nullable MessageContent messageContent,
+                   long proFeaturesRawValue)
   {
-    super(id, body, conversationRecipient, individualRecipient, dateSent, dateReceived, threadId, deliveryStatus, deliveryReceiptCount, type, mismatches, networkFailures, expiresIn, expireStarted, readReceiptCount, reactions, hasMention, messageContent);
+    super(id, body, conversationRecipient, individualRecipient, dateSent, dateReceived, threadId, deliveryStatus, deliveryReceiptCount, type, mismatches, networkFailures, expiresIn, expireStarted, readReceiptCount, reactions, hasMention, messageContent, proFeaturesRawValue);
     this.slideDeck = slideDeck;
     this.quote     = quote;
     this.contacts.addAll(contacts);

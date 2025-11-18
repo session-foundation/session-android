@@ -65,6 +65,7 @@ import javax.inject.Singleton;
 
 import dagger.Lazy;
 import dagger.hilt.android.qualifiers.ApplicationContext;
+import network.loki.messenger.libsession_util.protocol.ProFeatures;
 
 /**
  * Database for storage of SMS messages.
@@ -792,6 +793,7 @@ public class SmsDatabase extends MessagingDatabase {
       long    expireStarted        = cursor.getLong(cursor.getColumnIndexOrThrow(SmsDatabase.EXPIRE_STARTED));
       String  body                 = cursor.getString(cursor.getColumnIndexOrThrow(SmsDatabase.BODY));
       boolean hasMention           = cursor.getInt(cursor.getColumnIndexOrThrow(SmsDatabase.HAS_MENTION)) == 1;
+      long    proFeatures          = cursor.getLong(cursor.getColumnIndexOrThrow(SmsDatabase.PRO_FEATURES));
 
       if (!TextSecurePreferences.isReadReceiptsEnabled(context)) {
         readReceiptCount = 0;
@@ -805,7 +807,8 @@ public class SmsDatabase extends MessagingDatabase {
                                   recipient,
                                   dateSent, dateReceived, deliveryReceiptCount, type,
                                   threadId, status, mismatches,
-                                  expiresIn, expireStarted, readReceiptCount, reactions, hasMention);
+                                  expiresIn, expireStarted, readReceiptCount, reactions, hasMention,
+                                  proFeatures);
     }
 
     private List<IdentityKeyMismatch> getMismatches(String document) {

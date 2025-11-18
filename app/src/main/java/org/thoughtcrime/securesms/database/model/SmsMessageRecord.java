@@ -35,38 +35,39 @@ import java.util.List;
  */
 public class SmsMessageRecord extends MessageRecord {
 
-  public SmsMessageRecord(long id,
-                          String body, Recipient recipient,
-                          Recipient individualRecipient,
-                          long dateSent, long dateReceived,
-                          int deliveryReceiptCount,
-                          long type, long threadId,
-                          int status, List<IdentityKeyMismatch> mismatches,
-                          long expiresIn, long expireStarted,
-                          int readReceiptCount, List<ReactionRecord> reactions, boolean hasMention)
-  {
-    super(id, body, recipient, individualRecipient,
-      dateSent, dateReceived, threadId, status, deliveryReceiptCount, type,
-      mismatches, new LinkedList<>(),
-      expiresIn, expireStarted, readReceiptCount, reactions, hasMention, null);
-  }
+    public SmsMessageRecord(long id,
+                            String body, Recipient recipient,
+                            Recipient individualRecipient,
+                            long dateSent, long dateReceived,
+                            int deliveryReceiptCount,
+                            long type, long threadId,
+                            int status, List<IdentityKeyMismatch> mismatches,
+                            long expiresIn, long expireStarted,
+                            int readReceiptCount, List<ReactionRecord> reactions, boolean hasMention,
+                            long proFeaturesRawValue) {
+        super(id, body, recipient, individualRecipient,
+                dateSent, dateReceived, threadId, status, deliveryReceiptCount, type,
+                mismatches, new LinkedList<>(),
+                expiresIn, expireStarted, readReceiptCount, reactions, hasMention, null,
+                proFeaturesRawValue);
+    }
 
-  public long getType() {
-    return type;
-  }
+    public long getType() {
+        return type;
+    }
 
-  @Override
-  public CharSequence getDisplayBody(@NonNull Context context) {
-    return super.getDisplayBody(context);
-  }
+    @Override
+    public CharSequence getDisplayBody(@NonNull Context context) {
+        return super.getDisplayBody(context);
+    }
 
-  @Override
-  public boolean isMms() {
-    return false;
-  }
+    @Override
+    public boolean isMms() {
+        return false;
+    }
 
-  @Override
-  public boolean isMmsNotification() {
-    return false;
-  }
+    @Override
+    public boolean isMmsNotification() {
+        return false;
+    }
 }
