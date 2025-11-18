@@ -24,15 +24,13 @@ import org.thoughtcrime.securesms.preferences.prosettings.NonOriginatingLinkCell
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProStatus
-import org.thoughtcrime.securesms.pro.SubscriptionDetails
-import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
+import org.thoughtcrime.securesms.pro.getPlatformDisplayName
+import org.thoughtcrime.securesms.pro.previewAutoRenewingApple
 import org.thoughtcrime.securesms.pro.subscription.expiryFromNow
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.util.DateUtils
-import java.time.Duration
-import java.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
@@ -73,7 +71,7 @@ fun ChoosePlanNonOriginating(
             .format().toString(),
         dangerButton = false,
         onButtonClick = {
-            sendCommand(ShowOpenUrlDialog(subscription.subscriptionDetails.subscriptionUrl))
+            sendCommand(ShowOpenUrlDialog(subscription.subscriptionDetails.updateSubscriptionUrl))
         },
         contentTitle = Phrase.from(LocalContext.current, R.string.updateAccess)
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
@@ -124,18 +122,7 @@ private fun PreviewUpdatePlan(
     PreviewTheme(colors) {
         val context = LocalContext.current
         ChoosePlanNonOriginating (
-            subscription = ProStatus.Active.AutoRenewing(
-                validUntil = Instant.now() + Duration.ofDays(14),
-                duration = ProSubscriptionDuration.THREE_MONTHS,
-                subscriptionDetails = SubscriptionDetails(
-                    device = "iOS",
-                    store = "Apple App Store",
-                    platform = "Apple",
-                    platformAccount = "Apple Account",
-                    subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                    refundUrl = "https://www.apple.com/account/subscriptions",
-                )
-            ),
+            subscription = previewAutoRenewingApple,
             sendCommand = {},
             onBack = {},
         )

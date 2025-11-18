@@ -61,11 +61,11 @@ import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.C
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.OnProStatsClicked
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.SetShowProBadge
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
-import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.pro.SubscriptionDetails
 import org.thoughtcrime.securesms.pro.ProDataState
 import org.thoughtcrime.securesms.pro.ProStatus
-import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
+import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.previewAutoRenewingApple
+import org.thoughtcrime.securesms.pro.previewExpiredApple
 import org.thoughtcrime.securesms.ui.ActionRowItem
 import org.thoughtcrime.securesms.ui.CategoryCell
 import org.thoughtcrime.securesms.ui.Divider
@@ -96,8 +96,6 @@ import org.thoughtcrime.securesms.ui.theme.primaryRed
 import org.thoughtcrime.securesms.ui.theme.primaryYellow
 import org.thoughtcrime.securesms.util.NumberUtil
 import org.thoughtcrime.securesms.util.State
-import java.time.Duration
-import java.time.Instant
 
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -974,18 +972,7 @@ fun PreviewProSettingsPro(
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
                 proDataState = ProDataState(
-                    type = ProStatus.Active.AutoRenewing(
-                        validUntil = Instant.now() + Duration.ofDays(14),
-                        duration = ProSubscriptionDuration.THREE_MONTHS,
-                        subscriptionDetails = SubscriptionDetails(
-                            device = "iOS",
-                            store = "Apple App Store",
-                            platform = "Apple",
-                            platformAccount = "Apple Account",
-                            subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                            refundUrl = "https://www.apple.com/account/subscriptions",
-                        )
-                    ),
+                    type = previewAutoRenewingApple,
                     refreshState = State.Success(Unit),
                     showProBadge = true,
                 ),
@@ -1006,18 +993,7 @@ fun PreviewProSettingsProLoading(
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
                 proDataState = ProDataState(
-                    type = ProStatus.Active.AutoRenewing(
-                        validUntil = Instant.now() + Duration.ofDays(14),
-                        duration = ProSubscriptionDuration.THREE_MONTHS,
-                        subscriptionDetails = SubscriptionDetails(
-                            device = "iOS",
-                            store = "Apple App Store",
-                            platform = "Apple",
-                            platformAccount = "Apple Account",
-                            subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                            refundUrl = "https://www.apple.com/account/subscriptions",
-                        )
-                    ),
+                    type = previewAutoRenewingApple,
                     refreshState = State.Loading,
                     showProBadge = true,
                 ),
@@ -1038,18 +1014,7 @@ fun PreviewProSettingsProError(
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
                 proDataState = ProDataState(
-                    type = ProStatus.Active.AutoRenewing(
-                        validUntil = Instant.now() + Duration.ofDays(14),
-                        duration = ProSubscriptionDuration.THREE_MONTHS,
-                        subscriptionDetails = SubscriptionDetails(
-                            device = "iOS",
-                            store = "Apple App Store",
-                            platform = "Apple",
-                            platformAccount = "Apple Account",
-                            subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                            refundUrl = "https://www.apple.com/account/subscriptions",
-                        )
-                    ),
+                    type = previewAutoRenewingApple,
                     refreshState = State.Error(Exception()),
                     showProBadge = true,
                 ),
@@ -1070,16 +1035,7 @@ fun PreviewProSettingsExpired(
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
                 proDataState = ProDataState(
-                    type = ProStatus.Expired(
-                        expiredAt = Instant.now() - Duration.ofDays(14),
-                        SubscriptionDetails(
-                        device = "iOS",
-                        store = "Apple App Store",
-                        platform = "Apple",
-                        platformAccount = "Apple Account",
-                        subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                        refundUrl = "https://www.apple.com/account/subscriptions",
-                    )),
+                    type = previewExpiredApple,
                     refreshState = State.Success(Unit),
                     showProBadge = true,
                 )
@@ -1100,16 +1056,7 @@ fun PreviewProSettingsExpiredInSheet(
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
                 proDataState = ProDataState(
-                    type = ProStatus.Expired(
-                        expiredAt = Instant.now() - Duration.ofDays(14),
-                        SubscriptionDetails(
-                            device = "iOS",
-                            store = "Apple App Store",
-                            platform = "Apple",
-                            platformAccount = "Apple Account",
-                            subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                            refundUrl = "https://www.apple.com/account/subscriptions",
-                        )),
+                    type = previewExpiredApple,
                     refreshState = State.Success(Unit),
                     showProBadge = true,
                 )
@@ -1130,16 +1077,7 @@ fun PreviewProSettingsExpiredLoading(
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
                 proDataState = ProDataState(
-                    type = ProStatus.Expired(
-                        expiredAt = Instant.now() - Duration.ofDays(14),
-                        SubscriptionDetails(
-                        device = "iOS",
-                        store = "Apple App Store",
-                        platform = "Apple",
-                        platformAccount = "Apple Account",
-                        subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                        refundUrl = "https://www.apple.com/account/subscriptions",
-                    )),
+                    type = previewExpiredApple,
                     refreshState = State.Loading,
                     showProBadge = true,
                 )
@@ -1160,16 +1098,7 @@ fun PreviewProSettingsExpiredError(
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
                 proDataState = ProDataState(
-                    type = ProStatus.Expired(
-                        expiredAt = Instant.now() - Duration.ofDays(14),
-                        SubscriptionDetails(
-                        device = "iOS",
-                        store = "Apple App Store",
-                        platform = "Apple",
-                        platformAccount = "Apple Account",
-                        subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                        refundUrl = "https://www.apple.com/account/subscriptions",
-                    )),
+                    type = previewExpiredApple,
                     refreshState = State.Error(Exception()),
                     showProBadge = true,
                 )

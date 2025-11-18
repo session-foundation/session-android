@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import org.thoughtcrime.securesms.preferences.prosettings.BaseStateProScreen
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel
 import org.thoughtcrime.securesms.pro.ProStatus
+import org.thoughtcrime.securesms.pro.isFromAnotherPlatform
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable

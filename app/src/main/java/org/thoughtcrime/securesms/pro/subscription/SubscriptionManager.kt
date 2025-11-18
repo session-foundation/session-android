@@ -26,9 +26,6 @@ abstract class SubscriptionManager(
 
     abstract val supportsBilling: StateFlow<Boolean>
 
-    // Optional. Some store can have a platform specific refund window and url
-    abstract val quickRefundUrl: String?
-
     abstract val availablePlans: List<ProSubscriptionDuration>
 
     sealed interface PurchaseEvent {
@@ -50,10 +47,6 @@ abstract class SubscriptionManager(
 
     abstract suspend fun purchasePlan(subscriptionDuration: ProSubscriptionDuration): Result<Unit>
 
-    /**
-     * Returns true if a provider has a quick refunds and the current time since purchase is within that window
-     */
-    abstract suspend fun isWithinQuickRefundWindow(): Boolean
 
     /**
      * Checks whether there is a valid subscription for the current user within this subscriber's billing API

@@ -68,8 +68,6 @@ class PlayStoreSubscriptionManager @Inject constructor(
         }
         .stateIn(scope, SharingStarted.Eagerly, false)
 
-    override val quickRefundUrl = "https://support.google.com/googleplay/workflow/9813244"
-
     private val billingClient by lazy {
         BillingClient.newBuilder(application)
             .setListener { result, purchases ->
@@ -265,21 +263,6 @@ class PlayStoreSubscriptionManager @Inject constructor(
         // if in debug mode, always return true
         return if(prefs.forceCurrentUserAsPro()) true
         else getExistingSubscription() != null
-    }
-
-    override suspend fun isWithinQuickRefundWindow(): Boolean {
-        if(prefs.getDebugIsWithinQuickRefund() && prefs.forceCurrentUserAsPro()) return true // debug mode
-
-        val purchaseTimeMillis = getExistingSubscription()?.purchaseTime ?: return false
-
-        val now = Instant.now()
-        val purchaseInstant = Instant.ofEpochMilli(purchaseTimeMillis)
-
-        // Google Play allows refunds within 48 hours of purchase
-        val refundWindowHours = 48
-        val refundDeadline = purchaseInstant.plus(refundWindowHours.toLong(), ChronoUnit.HOURS)
-
-        return now.isBefore(refundDeadline)
     }
 
     @Throws(Exception::class)

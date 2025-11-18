@@ -34,11 +34,13 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_LENGTH_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_LENGTH_SINGULAR_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
+import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
-import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.ProDataState
 import org.thoughtcrime.securesms.pro.ProStatus
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
+import org.thoughtcrime.securesms.pro.isFromAnotherPlatform
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionCoordinator
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
@@ -58,7 +60,8 @@ class ProSettingsViewModel @AssistedInject constructor(
     @param:ApplicationContext private val context: Context,
     private val proStatusManager: ProStatusManager,
     private val subscriptionCoordinator: SubscriptionCoordinator,
-    private val dateUtils: DateUtils
+    private val dateUtils: DateUtils,
+    private val prefs: TextSecurePreferences,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -302,13 +305,15 @@ class ProSettingsViewModel @AssistedInject constructor(
                 navigateTo(ProSettingsDestination.RefundSubscription)
 
                 viewModelScope.launch {
-                    val subManager = subscriptionCoordinator.getCurrentManager()
                     _refundPlanState.update {
+                        val isQuickRefund = if(prefs.getDebugIsWithinQuickRefund() && prefs.forceCurrentUserAsPro()) true // debug mode
+                        else sub.isWithinQuickRefundWindow()
+
                         State.Success(
                             RefundPlanState(
                                 proStatus = sub,
-                                isQuickRefund = subManager.isWithinQuickRefundWindow(),
-                                quickRefundUrl = subManager.quickRefundUrl
+                                isQuickRefund = isQuickRefund,
+                                quickRefundUrl = sub.subscriptionDetails.refundUrl
                             )
                         )
                     }
@@ -344,9 +349,9 @@ class ProSettingsViewModel @AssistedInject constructor(
                 }
             }
 
-            Commands.OpenSubscriptionPage -> {
+            Commands.OpenCancelSubscriptionPage -> {
                 val subUrl = (_proSettingsUIState.value.proDataState.type as? ProStatus.Active)
-                    ?.subscriptionDetails?.subscriptionUrl
+                    ?.subscriptionDetails?.cancelSubscriptionUrl
                 if(!subUrl.isNullOrEmpty()){
                     viewModelScope.launch {
                         navigator.navigateToIntent(
@@ -771,7 +776,7 @@ class ProSettingsViewModel @AssistedInject constructor(
         object GoToCancel: Commands
         object OnPostPlanConfirmation: Commands
 
-        object OpenSubscriptionPage: Commands
+        object OpenCancelSubscriptionPage: Commands
 
         data class SetShowProBadge(val show: Boolean): Commands
 

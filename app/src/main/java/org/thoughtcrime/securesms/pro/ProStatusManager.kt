@@ -18,6 +18,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
+import network.loki.messenger.libsession_util.pro.BackendRequests
+import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_APP_STORE
+import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_GOOGLE_PLAY
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.TextSecurePreferences
@@ -91,100 +94,49 @@ class ProStatusManager @Inject constructor(
                     DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> ProStatus.Active.AutoRenewing(
                         validUntil = Instant.now() + Duration.ofDays(14),
                         duration = ProSubscriptionDuration.THREE_MONTHS,
-                        subscriptionDetails = SubscriptionDetails(
-                            device = "Android",
-                            store = "Google Play Store",
-                            platform = "Google",
-                            platformAccount = "Google account",
-                            subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
-                            refundUrl = "https://getsession.org/android-refund",
-                        )
+                        subscriptionDetails = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
+                        quickRefundExpiry = Instant.now() + Duration.ofDays(7)
                     )
 
                     DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> ProStatus.Active.Expiring(
                         validUntil = Instant.now() + Duration.ofDays(2),
                         duration = ProSubscriptionDuration.TWELVE_MONTHS,
-                        subscriptionDetails = SubscriptionDetails(
-                            device = "Android",
-                            store = "Google Play Store",
-                            platform = "Google",
-                            platformAccount = "Google account",
-                            subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
-                            refundUrl = "https://getsession.org/android-refund",
-                        )
+                        subscriptionDetails = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
+                        quickRefundExpiry = Instant.now() + Duration.ofDays(7)
                     )
 
                     DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER -> ProStatus.Active.Expiring(
                         validUntil = Instant.now() + Duration.ofDays(40),
                         duration = ProSubscriptionDuration.TWELVE_MONTHS,
-                        subscriptionDetails = SubscriptionDetails(
-                            device = "Android",
-                            store = "Google Play Store",
-                            platform = "Google",
-                            platformAccount = "Google account",
-                            subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
-                            refundUrl = "https://getsession.org/android-refund",
-                        )
+                        subscriptionDetails = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
+                        quickRefundExpiry = Instant.now() + Duration.ofDays(7)
                     )
 
                     DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> ProStatus.Active.AutoRenewing(
                         validUntil = Instant.now() + Duration.ofDays(14),
                         duration = ProSubscriptionDuration.ONE_MONTH,
-                        subscriptionDetails = SubscriptionDetails(
-                            device = "iOS",
-                            store = "Apple App Store",
-                            platform = "Apple",
-                            platformAccount = "Apple Account",
-                            subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                            refundUrl = "https://support.apple.com/118223",
-                        )
+                        subscriptionDetails = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
+                        quickRefundExpiry = Instant.now() + Duration.ofDays(7)
                     )
 
                     DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_APPLE -> ProStatus.Active.Expiring(
                         validUntil = Instant.now() + Duration.ofDays(2),
                         duration = ProSubscriptionDuration.ONE_MONTH,
-                        subscriptionDetails = SubscriptionDetails(
-                            device = "iOS",
-                            store = "Apple App Store",
-                            platform = "Apple",
-                            platformAccount = "Apple Account",
-                            subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                            refundUrl = "https://support.apple.com/118223",
-                        )
+                        subscriptionDetails = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
+                        quickRefundExpiry = Instant.now() + Duration.ofDays(7)
                     )
 
                     DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> ProStatus.Expired(
                         expiredAt = Instant.now() - Duration.ofDays(14),
-                        subscriptionDetails = SubscriptionDetails(
-                            device = "Android",
-                            store = "Google Play Store",
-                            platform = "Google",
-                            platformAccount = "Google account",
-                            subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
-                            refundUrl = "https://getsession.org/android-refund",
-                        )
+                        subscriptionDetails = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!
                     )
                     DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_EARLIER -> ProStatus.Expired(
                         expiredAt = Instant.now() - Duration.ofDays(60),
-                        subscriptionDetails = SubscriptionDetails(
-                            device = "Android",
-                            store = "Google Play Store",
-                            platform = "Google",
-                            platformAccount = "Google account",
-                            subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
-                            refundUrl = "https://getsession.org/android-refund",
-                        )
+                        subscriptionDetails = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!
                     )
                     DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE -> ProStatus.Expired(
                         expiredAt = Instant.now() - Duration.ofDays(14),
-                        subscriptionDetails = SubscriptionDetails(
-                            device = "iOS",
-                            store = "Apple App Store",
-                            platform = "Apple",
-                            platformAccount = "Apple Account",
-                            subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                            refundUrl = "https://support.apple.com/118223",
-                        )
+                        subscriptionDetails = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!
                     )
                 },
 

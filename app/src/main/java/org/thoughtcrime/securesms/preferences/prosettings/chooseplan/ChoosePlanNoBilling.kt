@@ -24,15 +24,14 @@ import org.thoughtcrime.securesms.preferences.prosettings.BaseNonOriginatingProS
 import org.thoughtcrime.securesms.preferences.prosettings.NonOriginatingLinkCellData
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
-import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.pro.SubscriptionDetails
 import org.thoughtcrime.securesms.pro.ProStatus
+import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.getPlatformDisplayName
+import org.thoughtcrime.securesms.pro.previewExpiredApple
 import org.thoughtcrime.securesms.ui.components.iconExternalLink
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
-import java.time.Duration
-import java.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
@@ -198,7 +197,7 @@ fun ChoosePlanNoBilling(
         dangerButton = false,
         onButtonClick = {
             if(subscription is ProStatus.Expired) {
-                sendCommand(ShowOpenUrlDialog(subscription.subscriptionDetails.subscriptionUrl))
+                sendCommand(ShowOpenUrlDialog(subscription.subscriptionDetails.updateSubscriptionUrl))
             }
         },
         contentTitle = contentTitle,
@@ -220,17 +219,7 @@ private fun PreviewNonOrigExpiredUpdatePlan(
     PreviewTheme(colors) {
         val context = LocalContext.current
         ChoosePlanNoBilling (
-            subscription = ProStatus.Expired(
-                expiredAt = Instant.now() - Duration.ofDays(14),
-                SubscriptionDetails(
-                    device = "iOS",
-                    store = "Apple App Store",
-                    platform = "Apple",
-                    platformAccount = "Apple Account",
-                    subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                    refundUrl = "https://www.apple.com/account/subscriptions",
-                )
-            ),
+            subscription = previewExpiredApple,
             sendCommand = {},
             onBack = {},
         )

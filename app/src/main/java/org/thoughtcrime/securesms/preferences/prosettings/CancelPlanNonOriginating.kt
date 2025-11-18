@@ -9,6 +9,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.protocol.PaymentProviderMetadata
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
@@ -17,7 +18,8 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACC
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
-import org.thoughtcrime.securesms.pro.SubscriptionDetails
+import org.thoughtcrime.securesms.pro.getPlatformDisplayName
+import org.thoughtcrime.securesms.pro.previewAppleMetaData
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
@@ -25,7 +27,7 @@ import org.thoughtcrime.securesms.ui.theme.ThemeColors
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun CancelPlanNonOriginating(
-    subscriptionDetails: SubscriptionDetails,
+    subscriptionDetails: PaymentProviderMetadata,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ){
@@ -42,7 +44,7 @@ fun CancelPlanNonOriginating(
             .format().toString(),
         dangerButton = true,
         onButtonClick = {
-            sendCommand(ShowOpenUrlDialog(subscriptionDetails.subscriptionUrl))
+            sendCommand(ShowOpenUrlDialog(subscriptionDetails.cancelSubscriptionUrl))
         },
         contentTitle = stringResource(R.string.proCancellation),
         contentDescription = Phrase.from(context.getText(R.string.proCancellationDescription))
@@ -88,14 +90,7 @@ private fun PreviewUpdatePlan(
     PreviewTheme(colors) {
         val context = LocalContext.current
         CancelPlanNonOriginating (
-            subscriptionDetails = SubscriptionDetails(
-                device = "iOS",
-                store = "Apple App Store",
-                platform = "Apple",
-                platformAccount = "Apple Account",
-                subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                refundUrl = "https://www.apple.com/account/subscriptions",
-            ),
+            subscriptionDetails = previewAppleMetaData,
             sendCommand = {},
             onBack = {},
         )

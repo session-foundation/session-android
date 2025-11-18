@@ -75,13 +75,29 @@ import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.TempAvatar
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.UserAvatar
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.*
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ClearData
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideAnimatedProCTA
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideAvatarPickerOptions
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideClearDataDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideSimpleDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideUrlDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideUsernameDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.OnAvatarDialogDismissed
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.OnDonateClicked
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.RemoveAvatar
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.SaveAvatar
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.SetUsername
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowAnimatedProCTA
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowAvatarDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowClearDataDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowUrlDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowUsernameDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.UpdateUsername
 import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsActivity
-import org.thoughtcrime.securesms.pro.SubscriptionDetails
 import org.thoughtcrime.securesms.pro.ProDataState
 import org.thoughtcrime.securesms.pro.ProStatus
-import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
+import org.thoughtcrime.securesms.pro.previewAutoRenewingApple
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.tokenpage.TokenPageActivity
 import org.thoughtcrime.securesms.ui.AccountIdHeader
@@ -131,8 +147,6 @@ import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
 import org.thoughtcrime.securesms.util.State
 import org.thoughtcrime.securesms.util.push
-import java.time.Duration
-import java.time.Instant
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -1063,18 +1077,7 @@ private fun SettingsScreenPreview() {
                 ),
                 isPostPro = true,
                 proDataState = ProDataState(
-                    type = ProStatus.Active.AutoRenewing(
-                        validUntil = Instant.now() + Duration.ofDays(14),
-                        duration = ProSubscriptionDuration.THREE_MONTHS,
-                        subscriptionDetails = SubscriptionDetails(
-                            device = "iOS",
-                            store = "Apple App Store",
-                            platform = "Apple",
-                            platformAccount = "Apple Account",
-                            subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                            refundUrl = "https://www.apple.com/account/subscriptions",
-                        )
-                    ),
+                    type = previewAutoRenewingApple,
                     refreshState = State.Success(Unit),
                     showProBadge = true
                 ),
