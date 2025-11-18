@@ -38,7 +38,6 @@ import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.AddressKt;
 import org.session.libsession.utilities.ConfigFactoryProtocol;
 import org.session.libsession.utilities.ConfigFactoryProtocolKt;
-import org.session.libsession.utilities.DistributionTypes;
 import org.session.libsession.utilities.GroupUtil;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
@@ -57,7 +56,6 @@ import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.notifications.MarkReadProcessor;
-import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
 import org.thoughtcrime.securesms.util.SharedConfigUtilsKt;
 
 import java.io.Closeable;
@@ -491,22 +489,6 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
     for (Long threadId : dates.keySet()) {
       notifyThreadUpdated(threadId);
     }
-  }
-
-  public int getDistributionType(long threadId) {
-    SQLiteDatabase db     = getReadableDatabase();
-    Cursor         cursor = db.query(TABLE_NAME, new String[]{DISTRIBUTION_TYPE}, ID_WHERE, new String[]{String.valueOf(threadId)}, null, null, null);
-
-    try {
-      if (cursor != null && cursor.moveToNext()) {
-        return cursor.getInt(cursor.getColumnIndexOrThrow(DISTRIBUTION_TYPE));
-      }
-
-      return DistributionTypes.DEFAULT;
-    } finally {
-      if (cursor != null) cursor.close();
-    }
-
   }
 
   @NonNull

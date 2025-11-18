@@ -31,8 +31,6 @@ import org.session.libsession.messaging.utilities.UpdateMessageBuilder;
 import org.session.libsession.messaging.utilities.UpdateMessageData;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.AddressKt;
-import org.session.libsession.utilities.IdentityKeyMismatch;
-import org.session.libsession.utilities.NetworkFailure;
 import org.session.libsession.utilities.ThemeUtil;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.AccountId;

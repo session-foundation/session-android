@@ -440,7 +440,6 @@ public class SmsDatabase extends MessagingDatabase {
 
     ContentValues values = new ContentValues(6);
     values.put(ADDRESS, message.getSender().toString());
-    values.put(ADDRESS_DEVICE_ID,  message.getSenderDeviceId());
     // In open groups messages should be sorted by their server timestamp
     long receivedTimestamp = serverTimestamp;
     if (serverTimestamp == 0) { receivedTimestamp = message.getSentTimestampMillis(); }
@@ -448,10 +447,8 @@ public class SmsDatabase extends MessagingDatabase {
     values.put(DATE_SENT, message.getSentTimestampMillis());
     values.put(PROTOCOL, message.getProtocol());
     values.put(READ, unread ? 0 : 1);
-    values.put(SUBSCRIPTION_ID, message.getSubscriptionId());
     values.put(EXPIRES_IN, message.getExpiresInMillis());
     values.put(EXPIRE_STARTED, message.getExpireStartedAt());
-    values.put(UNIDENTIFIED, message.getUnidentified());
     values.put(HAS_MENTION, message.getHasMention());
 
     if (!TextUtils.isEmpty(message.getPseudoSubject()))
@@ -539,7 +536,6 @@ public class SmsDatabase extends MessagingDatabase {
     contentValues.put(DATE_SENT, message.getSentTimestampMillis());
     contentValues.put(READ, 1);
     contentValues.put(TYPE, type);
-    contentValues.put(SUBSCRIPTION_ID, message.getSubscriptionId());
     contentValues.put(EXPIRES_IN, message.getExpiresInMillis());
     contentValues.put(EXPIRE_STARTED, message.getExpireStartedAtMillis());
     contentValues.put(DELIVERY_RECEIPT_COUNT, Stream.of(earlyDeliveryReceipts.values()).mapToLong(Long::longValue).sum());

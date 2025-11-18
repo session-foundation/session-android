@@ -28,7 +28,7 @@ import org.thoughtcrime.securesms.database.model.MessageId
  * ```
  */
 fun buildMmsSmsCombinedQuery(
-    projections: Array<String>,
+    projection: String,
     selection: String?,
     includeReactions: Boolean,
     reactionSelection: String?,
@@ -92,7 +92,6 @@ fun buildMmsSmsCombinedQuery(
             ${MmsSmsColumns.THREAD_ID},
             ${SmsDatabase.TYPE},
             ${SmsDatabase.ADDRESS},
-            ${SmsDatabase.ADDRESS_DEVICE_ID},
             ${SmsDatabase.SUBJECT},
             NULL AS ${MmsDatabase.MESSAGE_TYPE},
             NULL AS ${MmsDatabase.MESSAGE_BOX},
@@ -105,12 +104,9 @@ fun buildMmsSmsCombinedQuery(
             NULL AS ${MmsDatabase.STATUS},
             ${MmsSmsColumns.DELIVERY_RECEIPT_COUNT},
             ${MmsSmsColumns.READ_RECEIPT_COUNT},
-            ${MmsSmsColumns.MISMATCHED_IDENTITIES},
-            ${MmsSmsColumns.SUBSCRIPTION_ID},
             ${MmsSmsColumns.EXPIRES_IN},
             ${MmsSmsColumns.EXPIRE_STARTED},
             ${MmsSmsColumns.NOTIFIED},
-            NULL AS ${MmsDatabase.NETWORK_FAILURE},
             '${MmsSmsDatabase.SMS_TRANSPORT}' AS ${MmsSmsDatabase.TRANSPORT},
             NULL AS ${MmsDatabase.QUOTE_ID},
             NULL AS ${MmsDatabase.QUOTE_AUTHOR},
@@ -191,7 +187,6 @@ fun buildMmsSmsCombinedQuery(
             ${MmsSmsColumns.THREAD_ID},
             NULL AS ${SmsDatabase.TYPE},
             ${MmsSmsColumns.ADDRESS},
-            ${MmsSmsColumns.ADDRESS_DEVICE_ID},
             NULL AS ${SmsDatabase.SUBJECT},
             ${MmsDatabase.MESSAGE_TYPE},
             ${MmsDatabase.MESSAGE_BOX},
@@ -204,12 +199,9 @@ fun buildMmsSmsCombinedQuery(
             ${MmsDatabase.STATUS},
             ${MmsSmsColumns.DELIVERY_RECEIPT_COUNT},
             ${MmsSmsColumns.READ_RECEIPT_COUNT},
-            ${MmsSmsColumns.MISMATCHED_IDENTITIES},
-            ${MmsSmsColumns.SUBSCRIPTION_ID},
             ${MmsSmsColumns.EXPIRES_IN},
             ${MmsSmsColumns.EXPIRE_STARTED},
             ${MmsSmsColumns.NOTIFIED},
-            ${MmsDatabase.NETWORK_FAILURE},
             '${MmsSmsDatabase.MMS_TRANSPORT}' AS ${MmsSmsDatabase.TRANSPORT},
             ${MmsDatabase.QUOTE_ID},
             ${MmsDatabase.QUOTE_AUTHOR},
@@ -235,7 +227,7 @@ fun buildMmsSmsCombinedQuery(
             $mmsQuery
         )
         
-        SELECT ${projections.joinToString(", ")}
+        SELECT $projection
         FROM combined
         $orderStatement
         $limitStatement

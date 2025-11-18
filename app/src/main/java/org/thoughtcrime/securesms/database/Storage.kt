@@ -806,7 +806,6 @@ open class Storage @Inject constructor(
                 expireStartedAtMillis = expireStartedAt,
                 isGroupUpdateMessage = true,
                 quote = null,
-                contacts = listOf(),
                 previews = listOf(),
                 messageContent = null
             )
@@ -824,17 +823,15 @@ open class Storage @Inject constructor(
             return MessageId(infoMessageID, mms = true)
         } else {
             val m = IncomingTextMessage(
-                sender = fromSerialized(senderPublicKey),
-                senderDeviceId = 1,
-                sentTimestampMillis = sentTimestamp,
                 message = inviteJson,
+                sender = fromSerialized(senderPublicKey),
+                sentTimestampMillis = sentTimestamp,
                 group = Address.Group(closedGroup),
+                push = true,
                 expiresInMillis = expiresInMillis,
                 expireStartedAt = expireStartedAt,
-                unidentified = true,
-                hasMention = false,
-                push = true,
                 callType = -1,
+                hasMention = false,
                 isOpenGroupInvitation = false,
                 isSecureMessage = false,
                 proFeatures = ProFeatures.NONE,
@@ -1047,7 +1044,6 @@ open class Storage @Inject constructor(
         val mediaMessage = IncomingMediaMessage(
             address,
             sentTimestamp,
-            -1,
             expiresInMillis,
             expireStartedAt,
             false,
@@ -1058,7 +1054,6 @@ open class Storage @Inject constructor(
             ProFeatures.NONE,
             null,
             null,
-            emptyList(),
             emptyList(),
             message
         )
@@ -1075,7 +1070,6 @@ open class Storage @Inject constructor(
         val message = IncomingMediaMessage(
             from = fromSerialized(userPublicKey),
             sentTimeMillis = clock.currentTimeMills(),
-            subscriptionId = -1,
             expiresIn = 0,
             expireStartedAt = 0,
             isMessageRequestResponse = true,
@@ -1086,7 +1080,6 @@ open class Storage @Inject constructor(
             proFeatures = ProFeatures.NONE,
             messageContent = null,
             quote = null,
-            sharedContacts = emptyList(),
             linkPreviews = emptyList(),
             dataExtractionNotification = null
         )
