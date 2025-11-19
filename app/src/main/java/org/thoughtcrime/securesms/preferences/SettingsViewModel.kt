@@ -52,7 +52,7 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.mms.MediaConstraints
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.pro.SubscriptionState
+import org.thoughtcrime.securesms.pro.ProDataState
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
 import org.thoughtcrime.securesms.ui.SimpleDialogData
@@ -96,7 +96,7 @@ class SettingsViewModel @Inject constructor(
         version = getVersionNumber(),
         recoveryHidden = prefs.getHidePassword(),
         isPostPro = proStatusManager.isPostPro(),
-        subscriptionState = getDefaultSubscriptionStateData(),
+        proDataState = getDefaultSubscriptionStateData(),
     ))
     val uiState: StateFlow<UIState>
         get() = _uiState
@@ -116,8 +116,8 @@ class SettingsViewModel @Inject constructor(
 
         // observe subscription status
         viewModelScope.launch {
-            proStatusManager.subscriptionState.collect { state ->
-                _uiState.update { it.copy(subscriptionState = state) }
+            proStatusManager.proDataState.collect { state ->
+                _uiState.update { it.copy(proDataState = state) }
             }
         }
 
@@ -651,7 +651,7 @@ class SettingsViewModel @Inject constructor(
         val usernameDialog: UsernameDialogData? = null,
         val showSimpleDialog: SimpleDialogData? = null,
         val isPostPro: Boolean,
-        val subscriptionState: SubscriptionState,
+        val proDataState: ProDataState,
     )
 
     sealed interface Commands {

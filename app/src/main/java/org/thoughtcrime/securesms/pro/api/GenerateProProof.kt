@@ -29,7 +29,7 @@ class GenerateProProofRequest @AssistedInject constructor(
     override val responseDeserializer: DeserializationStrategy<ProProof>
         get() = ProProof.serializer()
 
-    override fun convertStatus(status: Int): GetProProofStatus = status
+    override fun convertErrorStatus(status: Int): GetProProofStatus = status
 
     @AssistedFactory
     interface Factory {

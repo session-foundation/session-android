@@ -203,6 +203,21 @@ class DebugMenuViewModel @AssistedInject constructor(
                 }
             }
 
+            is Commands.CopyProMasterKey -> {
+                val proKey = loginStateRepository.loggedInState.value?.seeded?.proMasterPrivateKey?.toHexString()
+                val clip = ClipData.newPlainText("Pro Master Key", proKey)
+                clipboardManager.setPrimaryClip(ClipData(clip))
+
+                // Show a toast if the version is below Android 13
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                    Toast.makeText(
+                        context,
+                        "Copied Pro Master Key to clipboard",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+
             is Commands.HideMessageRequest -> {
                 textSecurePreferences.setHasHiddenMessageRequests(command.hide)
                 _uiState.value = _uiState.value.copy(hideMessageRequests = command.hide)
@@ -592,6 +607,7 @@ class DebugMenuViewModel @AssistedInject constructor(
         object ScheduleTokenNotification : Commands()
         object Copy07PrefixedBlindedPublicKey : Commands()
         object CopyAccountId : Commands()
+        object CopyProMasterKey : Commands()
         data class HideMessageRequest(val hide: Boolean) : Commands()
         data class HideNoteToSelf(val hide: Boolean) : Commands()
         data class ForceCurrentUserAsPro(val set: Boolean) : Commands()

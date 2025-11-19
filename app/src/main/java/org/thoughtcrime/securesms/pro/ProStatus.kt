@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.pro
 
+import network.loki.messenger.libsession_util.protocol.PaymentProviderMetadata
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.util.State
 import java.time.Instant
@@ -10,58 +11,43 @@ sealed interface ProStatus{
     sealed interface Active: ProStatus{
         val validUntil: Instant
         val duration: ProSubscriptionDuration
-        val subscriptionDetails: SubscriptionDetails
+        val providerData: PaymentProviderMetadata
+        val quickRefundExpiry: Instant?
 
         data class AutoRenewing(
             override val validUntil: Instant,
             override val duration: ProSubscriptionDuration,
-            override val subscriptionDetails: SubscriptionDetails
+            override val providerData: PaymentProviderMetadata,
+            override val quickRefundExpiry: Instant?
         ): Active
 
         data class Expiring(
             override val validUntil: Instant,
             override val duration: ProSubscriptionDuration,
-            override val subscriptionDetails: SubscriptionDetails
+            override val providerData: PaymentProviderMetadata,
+            override val quickRefundExpiry: Instant?
         ): Active
+
+        fun isWithinQuickRefundWindow(): Boolean {
+            return quickRefundExpiry != null && quickRefundExpiry!!.isAfter(Instant.now())
+        }
+
 
     }
 
     data class Expired(
         val expiredAt: Instant,
-        val subscriptionDetails: SubscriptionDetails
+        val providerData: PaymentProviderMetadata
     ): ProStatus
 }
 
-data class SubscriptionState(
+data class ProDataState(
     val type: ProStatus,
     val showProBadge: Boolean,
     val refreshState: State<Unit>,
 )
 
-data class SubscriptionDetails(
-    val device: String,
-    val store: String,
-    val platform: String,
-    val platformAccount: String,
-    val subscriptionUrl: String,
-    val refundUrl: String,
-){
-    fun isFromAnotherPlatform(): Boolean {
-        return platform.trim().lowercase() != "google"
-    }
-
-    /**
-     * Some UI cases require a special display name for the platform.
-     */
-    fun getPlatformDisplayName(): String {
-        return when(platform.trim().lowercase()){
-            "google" -> store
-            else -> platform
-        }
-    }
-}
-
-fun getDefaultSubscriptionStateData() = SubscriptionState(
+fun getDefaultSubscriptionStateData() = ProDataState(
     type = ProStatus.NeverSubscribed,
     refreshState = State.Loading,
     showProBadge = false

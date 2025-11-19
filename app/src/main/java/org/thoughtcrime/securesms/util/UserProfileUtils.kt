@@ -143,7 +143,7 @@ class UserProfileUtils @AssistedInject constructor(
             UserProfileModalCommands.ShowProCTA -> {
                 _userProfileModalData.update {
                     _userProfileModalData.value?.copy(
-                        showProCTA = GenericCTAData(proStatusManager.subscriptionState.value.type)
+                        showProCTA = GenericCTAData(proStatusManager.proDataState.value.type)
                     )
                 }
             }

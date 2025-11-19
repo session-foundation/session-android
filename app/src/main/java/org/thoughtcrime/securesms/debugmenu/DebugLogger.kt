@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.ui.theme.primaryGreen
 import org.thoughtcrime.securesms.ui.theme.primaryOrange
 import org.thoughtcrime.securesms.util.DateUtils
@@ -127,5 +128,7 @@ data class DebugLogData(
 )
 
 enum class DebugLogGroup(val label: String, val color: Color){
-    AVATAR("Avatar", primaryOrange), PRO_SUBSCRIPTION("Pro Subscription", primaryGreen)
+    AVATAR("Avatar", primaryOrange),
+    PRO_SUBSCRIPTION("Pro Subscription", primaryGreen),
+    PRO_DATA("Pro Data", primaryBlue)
 }

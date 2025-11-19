@@ -25,8 +25,6 @@ class NoOpSubscriptionManager @Inject constructor(
 
     override val supportsBilling = MutableStateFlow(false)
 
-    override val quickRefundUrl = null
-
     override suspend fun purchasePlan(subscriptionDuration: ProSubscriptionDuration): Result<Unit> {
         return Result.success(Unit)
     }
@@ -34,10 +32,6 @@ class NoOpSubscriptionManager @Inject constructor(
         get() = emptyList()
 
     override suspend fun hasValidSubscription(): Boolean {
-        return false
-    }
-
-    override suspend fun isWithinQuickRefundWindow(): Boolean {
         return false
     }
 

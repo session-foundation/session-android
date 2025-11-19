@@ -17,7 +17,7 @@ class GetProRevocationRequest @AssistedInject constructor(
     override val responseDeserializer: DeserializationStrategy<ProRevocations>
         get() = ProRevocations.serializer()
 
-    override fun convertStatus(status: Int): Int = status
+    override fun convertErrorStatus(status: Int): Int = status
 
     override val endpoint: String
         get() = "get_pro_revocations"

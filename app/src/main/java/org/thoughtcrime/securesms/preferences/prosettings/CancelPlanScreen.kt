@@ -19,7 +19,8 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.OpenSubscriptionPage
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.OpenCancelSubscriptionPage
+import org.thoughtcrime.securesms.pro.isFromAnotherPlatform
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -48,10 +49,10 @@ fun CancelPlanScreen(
         when {
             // there is an active subscription but from a different platform or from the
             // same platform but a different account
-            activePlan.subscriptionDetails.isFromAnotherPlatform()
+            activePlan.providerData.isFromAnotherPlatform()
                     || !planData.hasValidSubscription ->
                 CancelPlanNonOriginating(
-                    subscriptionDetails = activePlan.subscriptionDetails,
+                    providerData = activePlan.providerData,
                     sendCommand = viewModel::onCommand,
                     onBack = onBack,
                 )
@@ -81,7 +82,7 @@ fun CancelPlan(
             .format().toString(),
         dangerButton = true,
         onButtonClick = {
-            sendCommand(OpenSubscriptionPage)
+            sendCommand(OpenCancelSubscriptionPage)
         },
         title = Phrase.from(context.getText(R.string.proCancelSorry))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
