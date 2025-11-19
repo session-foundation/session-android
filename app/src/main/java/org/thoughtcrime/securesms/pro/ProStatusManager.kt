@@ -1,7 +1,5 @@
 package org.thoughtcrime.securesms.pro
 
-import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -21,6 +19,7 @@ import kotlinx.coroutines.withTimeout
 import network.loki.messenger.libsession_util.pro.BackendRequests
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_APP_STORE
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_GOOGLE_PLAY
+import network.loki.messenger.libsession_util.protocol.ProFeatures
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.TextSecurePreferences
@@ -28,7 +27,8 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
-import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.database.model.MessageRecord
+import org.thoughtcrime.securesms.database.model.proFeatures
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.ManagerScope
@@ -48,7 +48,6 @@ import javax.inject.Singleton
 
 @Singleton
 class ProStatusManager @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val prefs: TextSecurePreferences,
     recipientRepository: RecipientRepository,
     @param:ManagerScope private val scope: CoroutineScope,
@@ -196,42 +195,40 @@ class ProStatusManager @Inject constructor(
     /**
      * This will calculate the pro features of an outgoing message
      */
-    fun calculateMessageProFeatures(isPro: Boolean, shouldShowProBadge: Boolean, message: String): List<MessageProFeature>{
-        if (!isPro){
-            return emptyList()
-        }
-
-        val features = mutableListOf<MessageProFeature>()
-
-        // check for pro badge display
-        if (shouldShowProBadge){
-            features.add(MessageProFeature.ProBadge)
-        }
-
-        // check for "long message" feature
-        if(message.length > MAX_CHARACTER_REGULAR){
-            features.add(MessageProFeature.LongMessage)
-        }
+    fun calculateMessageProFeatures(isPro: Boolean, shouldShowProBadge: Boolean, message: String) {
+//        if (!isPro){
+//            return emptyList()
+//        }
+//
+//        val features = mutableListOf<MessageProFeature>()
+//
+//        // check for pro badge display
+//        if (shouldShowProBadge){
+//            features.add(MessageProFeature.ProBadge)
+//        }
+//
+//        // check for "long message" feature
+//        if(message.length > MAX_CHARACTER_REGULAR){
+//            features.add(MessageProFeature.LongMessage)
+//        }
 
         // check is the user has an animated avatar
         //todo PRO check for animated avatar here and add appropriate feature
 
 
-        return features
+//        return features
     }
 
     /**
      * This will get the list of Pro features from an incoming message
      */
-    fun getMessageProFeatures(messageId: MessageId): Set<MessageProFeature>{
-        //todo PRO implement once we have data
-
+    fun getMessageProFeatures(message: MessageRecord): ProFeatures {
         // use debug values if any
         if(prefs.forceIncomingMessagesAsPro()){
             return prefs.getDebugMessageFeatures()
         }
 
-        return emptySet()
+        return message.proFeatures
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -304,10 +301,6 @@ class ProStatusManager @Inject constructor(
         // All attempts failed - throw our custom exception
         Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' - Al retries attempted, throwing our custom `PaymentServerException`")
         throw SubscriptionManager.PaymentServerException()
-    }
-
-    enum class MessageProFeature {
-        ProBadge, LongMessage, AnimatedAvatar
     }
 
     companion object {

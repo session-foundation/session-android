@@ -154,7 +154,6 @@ class MessageRequestResponseHandler @Inject constructor(
                         retrieved = IncomingMediaMessage(
                             from = messageSender.address,
                             sentTimeMillis = messageTimestampMs,
-                            subscriptionId = -1,
                             expiresIn = 0L,
                             expireStartedAt = 0L,
                             isMessageRequestResponse = true,
@@ -165,7 +164,6 @@ class MessageRequestResponseHandler @Inject constructor(
                             proFeatures = ProFeatures.NONE,
                             messageContent = null,
                             quote = null,
-                            sharedContacts = emptyList(),
                             linkPreviews = emptyList(),
                             dataExtractionNotification = null
                         ),

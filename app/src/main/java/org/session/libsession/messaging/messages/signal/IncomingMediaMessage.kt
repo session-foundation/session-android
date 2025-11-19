@@ -7,13 +7,11 @@ import org.session.libsession.messaging.sending_receiving.data_extraction.DataEx
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Contact
 import org.thoughtcrime.securesms.database.model.content.MessageContent
 
 class IncomingMediaMessage(
     val from: Address,
     val sentTimeMillis: Long,
-    val subscriptionId: Int,
     val expiresIn: Long,
     val expireStartedAt: Long,
     val isMessageRequestResponse: Boolean,
@@ -24,7 +22,6 @@ class IncomingMediaMessage(
     val proFeatures: ProFeatures,
     val messageContent: MessageContent?,
     val quote: QuoteModel?,
-    val sharedContacts: List<Contact>,
     val linkPreviews: List<LinkPreview>,
     val dataExtractionNotification: DataExtractionNotificationInfoMessage?,
 ) {
@@ -41,7 +38,6 @@ class IncomingMediaMessage(
     ): this(
         from = from,
         sentTimeMillis = message.sentTimestamp!!,
-        subscriptionId = -1,
         expiresIn = expiresIn,
         expireStartedAt = expireStartedAt,
         isMessageRequestResponse = false,
@@ -52,7 +48,6 @@ class IncomingMediaMessage(
         proFeatures = message.proFeatures,
         messageContent = null,
         quote = quote,
-        sharedContacts = emptyList(),
         linkPreviews = linkPreviews,
         dataExtractionNotification = null
     )

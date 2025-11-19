@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.protocol.ProFeature
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
@@ -47,8 +48,6 @@ import org.thoughtcrime.securesms.mms.ImageSlide
 import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.pro.ProStatusManager.MessageProFeature.AnimatedAvatar
-import org.thoughtcrime.securesms.pro.ProStatusManager.MessageProFeature.LongMessage
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.TitledText
 import org.thoughtcrime.securesms.util.AvatarUIData
@@ -201,7 +200,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
                     senderIsBlinded = IdPrefix.fromValue(sender.address.toString())?.isBlinded() ?: false,
                     thread = conversation,
                     readOnly = isDeprecatedLegacyGroup,
-                    proFeatures = proStatusManager.getMessageProFeatures(messageRecord.messageId),
+                    proFeatures = proStatusManager.getMessageProFeatures(messageRecord).toSet(),
                     proBadgeClickable = !recipientRepository.getSelf().isPro // no badge click if the current user is pro
                 )
             }
@@ -285,8 +284,8 @@ class MessageDetailsViewModel @AssistedInject constructor(
                         proBadgeCTA = when{
                             features.size > 1 -> ProBadgeCTA.Generic(proSubscription) // always show the generic cta when there are more than 1 feature
 
-                            features.contains(LongMessage) -> ProBadgeCTA.LongMessage(proSubscription)
-                            features.contains(AnimatedAvatar) -> ProBadgeCTA.AnimatedProfile(proSubscription)
+                            features.contains(ProFeature.HIGHER_CHARACTER_LIMIT) -> ProBadgeCTA.LongMessage(proSubscription)
+                            features.contains(ProFeature.ANIMATED_AVATAR) -> ProBadgeCTA.AnimatedProfile(proSubscription)
                             else -> ProBadgeCTA.Generic(proSubscription)
                         }
                     )
@@ -350,7 +349,7 @@ data class MessageDetailsState(
     val senderIsBlinded: Boolean = false,
     val thread: Recipient? = null,
     val readOnly: Boolean = false,
-    val proFeatures: Set<ProStatusManager.MessageProFeature> = emptySet(),
+    val proFeatures: Set<ProFeature> = emptySet(),
     val proBadgeClickable: Boolean = false,
 ) {
     val fromTitle = GetString(R.string.from)

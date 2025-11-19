@@ -18,10 +18,7 @@ import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
-import org.session.libsession.utilities.DistributionTypes
-import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerProtocol
-import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.MessagingDatabase
@@ -95,7 +92,6 @@ class ExpiringMessageManager @Inject constructor(
             val mediaMessage = IncomingMediaMessage(
                 from = address,
                 sentTimeMillis = sentTimestamp!!,
-                subscriptionId = -1,
                 expiresIn = expiresInMillis,
                 expireStartedAt = 0,  // Marking expiryStartedAt as 0 as expiration logic will be universally applied on received messages
                 // We no longer set this to true anymore as it won't be used in the future,
@@ -107,7 +103,6 @@ class ExpiringMessageManager @Inject constructor(
                 proFeatures = ProFeatures.NONE,
                 messageContent = DisappearingMessageUpdate(message.expiryMode),
                 quote = null,
-                sharedContacts = emptyList(),
                 linkPreviews = emptyList(),
                 dataExtractionNotification = null
             )
@@ -145,7 +140,6 @@ class ExpiringMessageManager @Inject constructor(
                 expireStartedAtMillis = 0, // Marking as 0 as expiration shouldn't start until we send the message
                 isGroupUpdateMessage = false,
                 quote = null,
-                contacts = emptyList(),
                 previews = emptyList(),
                 messageContent = content
             ) else OutgoingMediaMessage(
@@ -153,15 +147,10 @@ class ExpiringMessageManager @Inject constructor(
                 body = "",
                 attachments = emptyList(),
                 sentTimeMillis = sentTimestamp!!,
-                distributionType = DistributionTypes.CONVERSATION,
-                subscriptionId = -1,
                 expiresInMillis = duration,
                 expireStartedAtMillis = 0, // Marking as 0 as expiration shouldn't start until we send the message
                 outgoingQuote = null,
                 messageContent = content,
-                networkFailures = emptyList(),
-                identityKeyMismatches = emptyList(),
-                contacts = emptyList(),
                 linkPreviews = emptyList(),
                 group = null,
                 isGroupUpdateMessage = false
