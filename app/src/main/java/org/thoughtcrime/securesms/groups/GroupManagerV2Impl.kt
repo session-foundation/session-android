@@ -4,7 +4,6 @@ import android.content.Context
 import com.google.protobuf.ByteString
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
