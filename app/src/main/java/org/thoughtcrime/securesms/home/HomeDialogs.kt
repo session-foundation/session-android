@@ -15,13 +15,12 @@ import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
-import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HandleUserProfileCommand
-import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HidePinCTADialog
-import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HideUserProfileModal
+import org.thoughtcrime.securesms.home.HomeViewModel.Commands.*
 import org.thoughtcrime.securesms.home.startconversation.StartConversationSheet
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
 import org.thoughtcrime.securesms.ui.AnimatedSessionProCTA
 import org.thoughtcrime.securesms.ui.CTAFeature
+import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.PinProCTA
 import org.thoughtcrime.securesms.ui.UserProfileModal
 import org.thoughtcrime.securesms.ui.theme.SessionMaterialTheme
@@ -143,6 +142,50 @@ fun HomeDialogs(
                 onCancel = {
                     sendCommand(HomeViewModel.Commands.HideExpiredCTADialog)
                 }
+            )
+        }
+
+        // we need a delay before displaying this.
+        // Setting the delay in the VM does not account for render and it seems to appear immediately
+        var showDonation by remember { mutableStateOf(false) }
+        LaunchedEffect(dialogsState.donationCTA) {
+            showDonation = false
+            if (dialogsState.donationCTA) {
+                delay(1500)
+                showDonation = true
+            }
+        }
+
+        if (showDonation && dialogsState.donationCTA) {
+            val context = LocalContext.current
+            AnimatedSessionProCTA(
+                heroImageBg = R.drawable.cta_hero_generic_bg,
+                heroImageAnimatedFg = R.drawable.cta_hero_generic_fg,
+                title = stringResource(R.string.proExpired), //todo DONATION need crowdin strings
+                showProBadge = false,
+                text = Phrase.from(context,R.string.proExpiredDescription)
+                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                    .format()
+                    .toString(),//todo DONATION need crowdin strings
+                positiveButtonText = stringResource(R.string.donate),
+                negativeButtonText = stringResource(R.string.cancel), //todo DONATION need crowdin strings
+                onUpgrade = {
+                    sendCommand(HideExpiredCTADialog)
+                    sendCommand(ShowDonationConfirmation)
+                },
+                onCancel = {
+                    sendCommand(HideExpiredCTADialog)
+                }
+            )
+        }
+
+        if(dialogsState.showUrlDialog != null){
+            OpenURLAlertDialog(
+                url = dialogsState.showUrlDialog,
+                onLinkOpened = { sendCommand(OnLinkOpened(dialogsState.showUrlDialog)) },
+                onLinkCopied = { sendCommand(OnLinkCopied(dialogsState.showUrlDialog)) },
+                onDismissRequest = { sendCommand(HideUrlDialog) }
             )
         }
     }

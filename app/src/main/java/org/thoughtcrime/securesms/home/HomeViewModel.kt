@@ -44,6 +44,8 @@ import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.util.DateUtils
+import org.thoughtcrime.securesms.util.DonationManager
+import org.thoughtcrime.securesms.util.DonationManager.Companion.URL_DONATE
 import org.thoughtcrime.securesms.util.UserProfileModalCommands
 import org.thoughtcrime.securesms.util.UserProfileModalData
 import org.thoughtcrime.securesms.util.UserProfileUtils
@@ -67,7 +69,8 @@ class HomeViewModel @Inject constructor(
     private val proStatusManager: ProStatusManager,
     private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
     private val recipientRepository: RecipientRepository,
-    private val dateUtils: DateUtils
+    private val dateUtils: DateUtils,
+    private val donationManager: DonationManager
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
@@ -194,6 +197,11 @@ class HomeViewModel @Inject constructor(
                 }
             }
         }
+
+        // check if we should display the donation CTA
+        if(donationManager.shouldShowDonationCTA()){
+            showDonationCTA()
+        }
     }
 
     private fun observeTypingStatus(): Flow<Set<Long>> = typingStatusRepository
@@ -314,8 +322,44 @@ class HomeViewModel @Inject constructor(
                     _uiEvents.emit(UiEvent.OpenProSettings(command.destination))
                 }
             }
+
+            is Commands.HideDonationCTADialog -> {
+                _dialogsState.update { it.copy(donationCTA = false) }
+            }
+
+            is Commands.ShowDonationConfirmation -> {
+                showUrlDialog(URL_DONATE)
+            }
+
+            is Commands.HideUrlDialog -> {
+                _dialogsState.update { it.copy(showUrlDialog = null) }
+            }
+
+            is Commands.OnLinkOpened -> {
+                // if the link was for donation, mark it as seen
+                if(command.url == URL_DONATE) {
+                    donationManager.onDonationSeen()
+                }
+            }
+
+            is Commands.OnLinkCopied -> {
+                // if the link was for donation, mark it as seen
+                if(command.url == URL_DONATE) {
+                    donationManager.onDonationCopied()
+                }
+            }
         }
     }
+
+    fun showDonationCTA(){
+        _dialogsState.update { it.copy(donationCTA = true) }
+        donationManager.onDonationCTAViewed()
+    }
+
+    fun showUrlDialog(url: String) {
+        _dialogsState.update { it.copy(showUrlDialog = url) }
+    }
+
 
     fun showUserProfileModal(thread: ThreadRecord) {
         // get the helper class for the selected user
@@ -339,7 +383,9 @@ class HomeViewModel @Inject constructor(
         val userProfileModal: UserProfileModalData? = null,
         val showStartConversationSheet: StartConversationSheetData? = null,
         val proExpiringCTA: ProExpiringCTA? = null,
-        val proExpiredCTA: Boolean = false
+        val proExpiredCTA: Boolean = false,
+        val donationCTA: Boolean = false,
+        val showUrlDialog: String? = null,
     )
 
     data class PinProCTA(
@@ -363,7 +409,12 @@ class HomeViewModel @Inject constructor(
         data object HidePinCTADialog : Commands
         data object HideExpiringCTADialog : Commands
         data object HideExpiredCTADialog : Commands
+        data object ShowDonationConfirmation : Commands
+        data object HideDonationCTADialog : Commands
         data object HideUserProfileModal : Commands
+        data object HideUrlDialog : Commands
+        data class OnLinkOpened(val url: String) : Commands
+        data class OnLinkCopied(val url: String) : Commands
         data class HandleUserProfileCommand(
             val upmCommand: UserProfileModalCommands
         ) : Commands

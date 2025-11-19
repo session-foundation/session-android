@@ -60,6 +60,7 @@ import org.thoughtcrime.securesms.util.AnimatedImageUtils
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.ClearDataUtils
+import org.thoughtcrime.securesms.util.DonationManager.Companion.URL_DONATE
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import org.thoughtcrime.securesms.util.mapToStateFlow
 import java.io.File
@@ -590,7 +591,7 @@ class SettingsViewModel @Inject constructor(
                 viewModelScope.launch {
                     inAppReviewManager.onEvent(InAppReviewManager.Event.DonateButtonClicked)
                 }
-                showUrlDialog( "https://session.foundation/donate#app")
+                showUrlDialog(URL_DONATE)
             }
 
             is Commands.HideSimpleDialog -> {
