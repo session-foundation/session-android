@@ -7,7 +7,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -73,13 +72,9 @@ import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.components.SlimFillButtonRect
 import org.thoughtcrime.securesms.ui.components.BackAppBar
-import org.thoughtcrime.securesms.ui.components.Button
-import org.thoughtcrime.securesms.ui.components.ButtonType
 import org.thoughtcrime.securesms.ui.components.DropDown
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionSwitch
-import org.thoughtcrime.securesms.ui.components.SlimFillButtonRect
-import org.thoughtcrime.securesms.ui.components.SlimFillButtonRect
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -184,71 +179,6 @@ fun DebugMenu(
                 .verticalScroll(rememberScrollState())
         ) {
             Spacer(modifier = Modifier.height(contentPadding.calculateTopPadding()))
-
-            // Donations
-            DebugCell("Donations") {
-                Text(
-                    text = "First app install: ${uiState.firstInstall}",
-                    style = LocalType.current.base
-                )
-                Text(
-                    text = "Has donated: ${uiState.hasDonated}",
-                    style = LocalType.current.base
-                )
-                Text(
-                    text = "Has copied donate URL: ${uiState.hasCopiedDonationURL}",
-                    style = LocalType.current.base
-                )
-                Text(
-                    text = "Seen donation CTA amount: ${uiState.seenDonateCTAAmount} times",
-                    style = LocalType.current.base
-                )
-                Text(
-                    text = "Last seen donation CTA: ${uiState.lastSeenDonateCTA}",
-                    style = LocalType.current.base
-                )
-                Text(
-                    text = "Show CTA from positive review: ${uiState.showDonateCTAFromPositiveReview}",
-                    style = LocalType.current.base
-                )
-
-                Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
-                Divider()
-                Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
-
-                DebugDropDownRow(
-                    text = "Debug 'Has donated': ",
-                    selectedText = NOT_SET,
-                    values = listOf(NOT_SET, TRUE, FALSE),
-                    onValueSelected = {
-                        sendCommand(SetDebugHasDonated(it))
-                    }
-                )
-                DebugDropDownRow(
-                    text = "Debug 'Has copied link': ",
-                    selectedText = NOT_SET,
-                    values = listOf(NOT_SET, TRUE, FALSE),
-                    onValueSelected = {
-                        sendCommand(SetDebugHasCopiedDonation(it))
-                    }
-                )
-                DebugDropDownRow(
-                    text = "Debug 'CTA seen amount': ",
-                    selectedText = NOT_SET,
-                    values = listOf(NOT_SET, SEEN_1, SEEN_2, SEEN_3, SEEN_4),
-                    onValueSelected = {
-                        sendCommand(SetDebugDonationCTAViews(it))
-                    }
-                )
-                DebugDropDownRow(
-                    text = "Debug 'Show donation from app review': ",
-                    selectedText = NOT_SET,
-                    values = listOf(NOT_SET, TRUE, FALSE),
-                    onValueSelected = {
-                        sendCommand(SetDebugShowDonationFromReview(it))
-                    }
-                )
-            }
 
             // Info pane
             val clipboardManager = LocalClipboardManager.current
@@ -508,6 +438,71 @@ fun DebugMenu(
                         else "Stop",
                     )
                 }
+            }
+
+            // Donations
+            DebugCell("Donations") {
+                Text(
+                    text = "First app install: ${uiState.firstInstall}",
+                    style = LocalType.current.base
+                )
+                Text(
+                    text = "Has donated: ${uiState.hasDonated}",
+                    style = LocalType.current.base
+                )
+                Text(
+                    text = "Has copied donate URL: ${uiState.hasCopiedDonationURL}",
+                    style = LocalType.current.base
+                )
+                Text(
+                    text = "Seen donation CTA amount: ${uiState.seenDonateCTAAmount} times",
+                    style = LocalType.current.base
+                )
+                Text(
+                    text = "Last seen donation CTA: ${uiState.lastSeenDonateCTA}",
+                    style = LocalType.current.base
+                )
+                Text(
+                    text = "Show CTA from positive review: ${uiState.showDonateCTAFromPositiveReview}",
+                    style = LocalType.current.base
+                )
+
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
+                Divider()
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
+
+                DebugDropDownRow(
+                    text = "Debug 'Has donated': ",
+                    selectedText = NOT_SET,
+                    values = listOf(NOT_SET, TRUE, FALSE),
+                    onValueSelected = {
+                        sendCommand(SetDebugHasDonated(it))
+                    }
+                )
+                DebugDropDownRow(
+                    text = "Debug 'Has copied link': ",
+                    selectedText = NOT_SET,
+                    values = listOf(NOT_SET, TRUE, FALSE),
+                    onValueSelected = {
+                        sendCommand(SetDebugHasCopiedDonation(it))
+                    }
+                )
+                DebugDropDownRow(
+                    text = "Debug 'CTA seen amount': ",
+                    selectedText = NOT_SET,
+                    values = listOf(NOT_SET, SEEN_1, SEEN_2, SEEN_3, SEEN_4),
+                    onValueSelected = {
+                        sendCommand(SetDebugDonationCTAViews(it))
+                    }
+                )
+                DebugDropDownRow(
+                    text = "Debug 'Show donation from app review': ",
+                    selectedText = NOT_SET,
+                    values = listOf(NOT_SET, TRUE, FALSE),
+                    onValueSelected = {
+                        sendCommand(SetDebugShowDonationFromReview(it))
+                    }
+                )
             }
 
             // Fake contacts
