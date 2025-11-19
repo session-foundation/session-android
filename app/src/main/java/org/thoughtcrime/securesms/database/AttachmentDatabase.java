@@ -34,7 +34,6 @@ import com.bumptech.glide.Glide;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
-import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
