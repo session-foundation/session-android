@@ -229,6 +229,8 @@ fun OpenURLAlertDialog(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     url: String,
+    onLinkOpened: (String) -> Unit = {},
+    onLinkCopied: (String) -> Unit = {},
     content: @Composable () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -246,11 +248,15 @@ fun OpenURLAlertDialog(
             DialogButtonData(
                 text = GetString(R.string.open),
                 color = LocalColors.current.danger,
-                onClick = { context.openUrl(url) }
+                onClick = {
+                    onLinkOpened(url)
+                    context.openUrl(url)
+                }
             ),
             DialogButtonData(
                 text = GetString(android.R.string.copyUrl),
                 onClick = {
+                    onLinkCopied(url)
                     context.copyURLToClipboard(url)
                     Toast.makeText(context, R.string.copied, Toast.LENGTH_SHORT).show()
                 }
