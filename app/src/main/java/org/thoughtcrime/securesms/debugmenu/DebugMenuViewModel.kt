@@ -52,6 +52,7 @@ import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.util.ClearDataUtils
 import org.thoughtcrime.securesms.util.DateUtils
 import java.time.ZonedDateTime
+import kotlin.time.Instant
 
 
 @HiltViewModel(assistedFactory = DebugMenuViewModel.Factory::class)
@@ -128,7 +129,20 @@ class DebugMenuViewModel @AssistedInject constructor(
             withinQuickRefund = textSecurePreferences.getDebugIsWithinQuickRefund(),
             availableAltFileServers = TEST_FILE_SERVERS,
             alternativeFileServer = textSecurePreferences.alternativeFileServer,
-            showToastForGroups = getDebugGroupToastPref()
+            showToastForGroups = getDebugGroupToastPref(),
+            firstInstall = dateUtils.getLocaleFormattedDate(
+                context.packageManager.getPackageInfo(context.packageName, 0).firstInstallTime
+            ),
+            hasDonated = textSecurePreferences.hasDonated(),
+            hasCopiedDonationURL = textSecurePreferences.hasCopiedDonationURL(),
+            seenDonateCTAAmount = textSecurePreferences.seenDonationCTAAmount(),
+            lastSeenDonateCTA = if(textSecurePreferences.lastSeenDonationCTA() == 0L ) "Never"
+                    else dateUtils.getLocaleFormattedDate(textSecurePreferences.lastSeenDonationCTA()),
+            showDonateCTAFromPositiveReview = textSecurePreferences.showDonationCTAFromPositiveReview(),
+            hasDonatedDebug = textSecurePreferences.hasDonatedDebug() ?: NOT_SET,
+            hasCopiedDonationURLDebug = textSecurePreferences.hasCopiedDonationURLDebug() ?: NOT_SET,
+            seenDonateCTAAmountDebug = textSecurePreferences.seenDonationCTAAmountDebug() ?: NOT_SET,
+            showDonateCTAFromPositiveReviewDebug = textSecurePreferences.showDonationCTAFromPositiveReviewDebug() ?: NOT_SET
         )
     )
     val uiState: StateFlow<UIState>
@@ -452,6 +466,53 @@ class DebugMenuViewModel @AssistedInject constructor(
                     ).show()
                 }
             }
+
+            is Commands.SetDebugHasDonated -> {
+                _uiState.update {
+                    it.copy(hasDonatedDebug = command.value)
+                }
+
+                when(command.value){
+                    TRUE -> textSecurePreferences.setHasDonatedDebug(TRUE)
+                    FALSE -> textSecurePreferences.setHasDonatedDebug(FALSE)
+                    else -> textSecurePreferences.setHasDonatedDebug(null)
+                }
+            }
+            is Commands.SetDebugHasCopiedDonation -> {
+                _uiState.update {
+                    it.copy(hasCopiedDonationURLDebug = command.value)
+                }
+
+                when(command.value){
+                    TRUE -> textSecurePreferences.setHasCopiedDonationURLDebug(TRUE)
+                    FALSE -> textSecurePreferences.setHasCopiedDonationURLDebug(FALSE)
+                    else -> textSecurePreferences.setHasCopiedDonationURLDebug(null)
+                }
+            }
+            is Commands.SetDebugDonationCTAViews -> {
+                _uiState.update {
+                    it.copy(seenDonateCTAAmountDebug = command.value)
+                }
+
+                when(command.value){
+                    SEEN_1 -> textSecurePreferences.setSeenDonationCTAAmountDebug(SEEN_1)
+                    SEEN_2 -> textSecurePreferences.setSeenDonationCTAAmountDebug(SEEN_2)
+                    SEEN_3 -> textSecurePreferences.setSeenDonationCTAAmountDebug(SEEN_3)
+                    SEEN_4 -> textSecurePreferences.setSeenDonationCTAAmountDebug(SEEN_4)
+                    else -> textSecurePreferences.setSeenDonationCTAAmountDebug(null)
+                }
+            }
+            is Commands.SetDebugShowDonationFromReview -> {
+                _uiState.update {
+                    it.copy(showDonateCTAFromPositiveReviewDebug = command.value)
+                }
+
+                when(command.value){
+                    TRUE -> textSecurePreferences.setShowDonationCTAFromPositiveReviewDebug(TRUE)
+                    FALSE -> textSecurePreferences.setShowDonationCTAFromPositiveReviewDebug(FALSE)
+                    else -> textSecurePreferences.setShowDonationCTAFromPositiveReviewDebug(null)
+                }
+            }
         }
     }
 
@@ -573,6 +634,16 @@ class DebugMenuViewModel @AssistedInject constructor(
         val alternativeFileServer: FileServer? = null,
         val availableAltFileServers: List<FileServer> = emptyList(),
         val showToastForGroups: Map<String, Boolean> = emptyMap(),
+        val firstInstall: String,
+        val hasDonated: Boolean,
+        val hasCopiedDonationURL: Boolean,
+        val seenDonateCTAAmount: Int,
+        val lastSeenDonateCTA: String,
+        val showDonateCTAFromPositiveReview: Boolean,
+        val hasDonatedDebug: String,
+        val hasCopiedDonationURLDebug: String,
+        val seenDonateCTAAmountDebug: String,
+        val showDonateCTAFromPositiveReviewDebug: String
     )
 
     enum class DatabaseInspectorState {
@@ -636,6 +707,10 @@ class DebugMenuViewModel @AssistedInject constructor(
         data object ClearAllDebugLogs : Commands()
         data object CopyAllLogs : Commands()
         data class CopyLog(val log: DebugLogData) : Commands()
+        data class SetDebugHasDonated(val value: String) : Commands()
+        data class SetDebugHasCopiedDonation(val value: String) : Commands()
+        data class SetDebugDonationCTAViews(val value: String) : Commands()
+        data class SetDebugShowDonationFromReview(val value: String) : Commands()
     }
 
     companion object {
@@ -649,5 +724,13 @@ class DebugMenuViewModel @AssistedInject constructor(
                 ed25519PublicKeyHex = "929e33ded05e653fec04b49645117f51851f102a947e04806791be416ed76602",
             )
         )
+
+        val NOT_SET = "Not set"
+        val TRUE = "True"
+        val FALSE = "False"
+        val SEEN_1 = "1"
+        val SEEN_2 = "2"
+        val SEEN_3 = "3"
+        val SEEN_4 = "4"
     }
 }

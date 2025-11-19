@@ -22,11 +22,19 @@ class DonationManager @Inject constructor(
     private val maxDonationCTAViews = donationCTADisplayIncrements.size
 
     fun shouldShowDonationCTA(): Boolean{
+        val hasDonated = prefs.hasDonated() || prefs.hasCopiedDonationURL()
         val seenAmount = prefs.seenDonationCTAAmount()
+
         // return early if the user has already donated/copied the donation url
         // or if they have reached the max views
-        if(prefs.hasDonated() || prefs.hasCopiedDonationURL() || seenAmount >= maxDonationCTAViews)
+        if(hasDonated || seenAmount >= maxDonationCTAViews)
             return false
+
+        // if we gave a positive review and never donated, then show the donate CTA
+        if(prefs.showDonationCTAFromPositiveReview()) {
+            prefs.setShowDonationCTAFromPositiveReview(false) // reset flag
+            return true
+        }
 
         // display the CTA is the last is later than the increment for the current views
         // the comparison point is either the last time the CTA was seen,

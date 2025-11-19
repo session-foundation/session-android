@@ -26,6 +26,10 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.AUTOPLAY
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_DARK
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_LIGHT
+import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_HAS_COPIED_DONATION_URL
+import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_HAS_DONATED
+import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_SEEN_DONATION_CTA_AMOUNT
+import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW
 import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONMENT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FORCED_SHORT_TTL
@@ -236,6 +240,15 @@ interface TextSecurePreferences {
     fun showDonationCTAFromPositiveReview(): Boolean
     fun setShowDonationCTAFromPositiveReview(show: Boolean)
 
+    fun hasDonatedDebug(): String?
+    fun setHasDonatedDebug(hasDonated: String?)
+    fun hasCopiedDonationURLDebug(): String?
+    fun setHasCopiedDonationURLDebug(hasCopied: String?)
+    fun seenDonationCTAAmountDebug(): String?
+    fun setSeenDonationCTAAmountDebug(amount: String?)
+    fun showDonationCTAFromPositiveReviewDebug(): String?
+    fun setShowDonationCTAFromPositiveReviewDebug(show: String?)
+
     var deprecationStateOverride: String?
     var deprecatedTimeOverride: ZonedDateTime?
     var deprecatingStartTimeOverride: ZonedDateTime?
@@ -409,6 +422,11 @@ interface TextSecurePreferences {
         const val SEEN_DONATION_CTA_AMOUNT = "seen_donation_cta_amount"
         const val LAST_SEEN_DONATION_CTA = "last_seen_donation_cta"
         const val SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW = "show_donation_cta_from_positive_review"
+
+        const val DEBUG_HAS_DONATED = "debug_has_donated"
+        const val DEBUG_HAS_COPIED_DONATION_URL = "debug_has_copied_donation_url"
+        const val DEBUG_SEEN_DONATION_CTA_AMOUNT = "debug_seen_donation_cta_amount"
+        const val DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW = "debug_show_donation_cta_from_positive_review"
 
         @JvmStatic
         fun getConfigurationMessageSynced(context: Context): Boolean {
@@ -1845,5 +1863,33 @@ class AppTextSecurePreferences @Inject constructor(
     }
     override fun setShowDonationCTAFromPositiveReview(show: Boolean) {
         setBooleanPreference(SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW, show)
+    }
+
+    override fun hasDonatedDebug(): String? {
+        return getStringPreference(DEBUG_HAS_DONATED, null)
+    }
+    override fun setHasDonatedDebug(hasDonated: String?) {
+        setStringPreference(DEBUG_HAS_DONATED, hasDonated)
+    }
+
+    override fun hasCopiedDonationURLDebug(): String? {
+        return getStringPreference(DEBUG_HAS_COPIED_DONATION_URL, null)
+    }
+    override fun setHasCopiedDonationURLDebug(hasCopied: String?) {
+        setStringPreference(DEBUG_HAS_COPIED_DONATION_URL, hasCopied)
+    }
+
+    override fun seenDonationCTAAmountDebug(): String? {
+        return getStringPreference(DEBUG_SEEN_DONATION_CTA_AMOUNT, null)
+    }
+    override fun setSeenDonationCTAAmountDebug(amount: String?) {
+        setStringPreference(DEBUG_SEEN_DONATION_CTA_AMOUNT, amount)
+    }
+
+    override fun showDonationCTAFromPositiveReviewDebug(): String? {
+        return getStringPreference(DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW, null)
+    }
+    override fun setShowDonationCTAFromPositiveReviewDebug(show: String?) {
+        setStringPreference(DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW, show)
     }
 }

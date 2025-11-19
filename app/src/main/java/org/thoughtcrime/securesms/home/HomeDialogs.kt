@@ -171,11 +171,11 @@ fun HomeDialogs(
                 positiveButtonText = stringResource(R.string.donate),
                 negativeButtonText = stringResource(R.string.cancel), //todo DONATION need crowdin strings
                 onUpgrade = {
-                    sendCommand(HideExpiredCTADialog)
+                    sendCommand(HideDonationCTADialog)
                     sendCommand(ShowDonationConfirmation)
                 },
                 onCancel = {
-                    sendCommand(HideExpiredCTADialog)
+                    sendCommand(HideDonationCTADialog)
                 }
             )
         }
