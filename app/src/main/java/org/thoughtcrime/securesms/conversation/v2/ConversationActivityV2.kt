@@ -403,6 +403,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             retryFailedAttachments = viewModel::retryFailedAttachments,
             glide = glide,
             threadRecipientProvider = viewModel::recipient,
+            messageDB = mmsSmsDb,
         )
         adapter.visibleMessageViewDelegate = this
         adapter
@@ -791,7 +792,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun onCreateLoader(id: Int, bundle: Bundle?): Loader<Cursor> {
-        return ConversationLoader(viewModel.threadId, false, this@ConversationActivityV2)
+        return ConversationLoader(
+            threadID = viewModel.threadId,
+            reverse = false,
+            context = this@ConversationActivityV2,
+            mmsSmsDatabase = mmsSmsDb
+        )
     }
 
     override fun onLoadFinished(loader: Loader<Cursor>, cursor: Cursor?) {

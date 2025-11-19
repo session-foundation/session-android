@@ -171,33 +171,22 @@ public class SmsDatabase extends MessagingDatabase {
     String[] sqlArgs  = new String[] {id+""};
     SQLiteDatabase db = getReadableDatabase();
 
-    Cursor cursor = null;
-
-    try {
-      cursor = db.rawQuery(sql, sqlArgs);
-      if (cursor != null && cursor.moveToFirst())
-        return cursor.getLong(0);
-      else
-        return -1;
-    } finally {
-      if (cursor != null)
-        cursor.close();
+    try (Cursor cursor = db.rawQuery(sql, sqlArgs)) {
+          if (cursor != null && cursor.moveToFirst())
+              return cursor.getLong(0);
+          else
+              return -1;
     }
   }
 
   public int getMessageCountForThread(long threadId) {
     SQLiteDatabase db = getReadableDatabase();
-    Cursor cursor     = null;
 
-    try {
-      cursor = db.query(TABLE_NAME, new String[] {"COUNT(*)"}, THREAD_ID + " = ?",
-                        new String[] {threadId+""}, null, null, null);
+    try (Cursor cursor = db.query(TABLE_NAME, new String[]{"COUNT(*)"}, THREAD_ID + " = ?",
+            new String[]{threadId + ""}, null, null, null)) {
 
-      if (cursor != null && cursor.moveToFirst())
-        return cursor.getInt(0);
-    } finally {
-      if (cursor != null)
-        cursor.close();
+          if (cursor != null && cursor.moveToFirst())
+              return cursor.getInt(0);
     }
 
     return 0;

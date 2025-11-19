@@ -26,12 +26,10 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.session.libsession.messaging.utilities.UpdateMessageData;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.GroupUtil;
@@ -42,7 +40,6 @@ import org.thoughtcrime.securesms.database.MessagingDatabase.SyncMessageId;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.database.model.MessageId;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 
 import java.io.Closeable;
 import java.util.ArrayList;
@@ -50,11 +47,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 
+import dagger.Lazy;
+import dagger.hilt.android.qualifiers.ApplicationContext;
 import kotlin.Pair;
 import kotlin.Triple;
 
+@Singleton
 public class MmsSmsDatabase extends Database {
 
   @SuppressWarnings("unused")
@@ -67,13 +69,23 @@ public class MmsSmsDatabase extends Database {
   private static final String PROJECTION_ALL = "*";
 
   private final LoginStateRepository loginStateRepository;
+  private final Lazy<@NonNull ThreadDatabase> threadDatabase;
+  private final Lazy<@NonNull MmsDatabase> mmsDatabase;
+  private final Lazy<@NonNull SmsDatabase> smsDatabase;
 
-  public MmsSmsDatabase(Context context,
+  @Inject
+  public MmsSmsDatabase(@ApplicationContext Context context,
                         Provider<SQLCipherOpenHelper> databaseHelper,
-                        LoginStateRepository loginStateRepository) {
+                        LoginStateRepository loginStateRepository,
+                        Lazy<@NonNull ThreadDatabase> threadDatabase, 
+                        Lazy<@NonNull MmsDatabase> mmsDatabase, 
+                        Lazy<@NonNull SmsDatabase> smsDatabase) {
     super(context, databaseHelper);
 
     this.loginStateRepository = loginStateRepository;
+    this.threadDatabase = threadDatabase;
+    this.mmsDatabase = mmsDatabase;
+    this.smsDatabase = smsDatabase;
   }
 
   public @Nullable MessageRecord getMessageForTimestamp(long threadId, long timestamp) {
@@ -384,17 +396,14 @@ public class MmsSmsDatabase extends Database {
 
   public int getUnreadCount(long threadId) {
     String selection = READ + " = 0 AND " + NOTIFIED + " = 0 AND " + MmsSmsColumns.THREAD_ID + " = " + threadId;
-    Cursor cursor    = queryTables(ID, selection, true, null, null, null);
 
-    try {
+    try (Cursor cursor = queryTables(ID, selection, true, null, null, null)) {
       return cursor != null ? cursor.getCount() : 0;
-    } finally {
-      if (cursor != null) cursor.close();
     }
   }
 
   public void deleteGroupInfoMessage(AccountId groupId, Class<? extends UpdateMessageData.Kind> kind) {
-    long threadId = DatabaseComponent.get(context).threadDatabase().getThreadIdIfExistsFor(groupId.getHexString());
+    long threadId = threadDatabase.get().getThreadIdIfExistsFor(groupId.getHexString());
     if (threadId == -1) {
       Log.d(TAG, "No thread found for group info message deletion");
       return;
@@ -412,15 +421,15 @@ public class MmsSmsDatabase extends Database {
   }
 
   public long getConversationCount(long threadId) {
-    long count = DatabaseComponent.get(context).smsDatabase().getMessageCountForThread(threadId);
-    count    += DatabaseComponent.get(context).mmsDatabase().getMessageCountForThread(threadId);
+    long count = smsDatabase.get().getMessageCountForThread(threadId);
+    count    += mmsDatabase.get().getMessageCountForThread(threadId);
 
     return count;
   }
 
   public void incrementReadReceiptCount(SyncMessageId syncMessageId, long timestamp) {
-    DatabaseComponent.get(context).smsDatabase().incrementReceiptCount(syncMessageId, false, true);
-    DatabaseComponent.get(context).mmsDatabase().incrementReceiptCount(syncMessageId, timestamp, false, true);
+    smsDatabase.get().incrementReceiptCount(syncMessageId, false, true);
+    mmsDatabase.get().incrementReceiptCount(syncMessageId, timestamp, false, true);
   }
 
   public int getMessagePositionInConversation(long threadId, long sentTimestamp, @NonNull Address address, boolean reverse) {
@@ -598,8 +607,8 @@ public class MmsSmsDatabase extends Database {
     return new Reader(cursor, getQuote);
   }
 
-  @NotNull
-  public Pair<Boolean, Long> timestampAndDirectionForCurrent(@NotNull Cursor cursor) {
+  @NonNull
+  public Pair<Boolean, Long> timestampAndDirectionForCurrent(@NonNull Cursor cursor) {
     int sentColumn = cursor.getColumnIndex(MmsSmsColumns.NORMALIZED_DATE_SENT);
     String msgType = cursor.getString(cursor.getColumnIndexOrThrow(TRANSPORT));
     long sentTime = cursor.getLong(sentColumn);
@@ -629,7 +638,7 @@ public class MmsSmsDatabase extends Database {
 
     private SmsDatabase.Reader getSmsReader() {
       if (smsReader == null) {
-        smsReader = DatabaseComponent.get(context).smsDatabase().readerFor(cursor);
+        smsReader = smsDatabase.get().readerFor(cursor);
       }
 
       return smsReader;
@@ -637,7 +646,7 @@ public class MmsSmsDatabase extends Database {
 
     private MmsDatabase.Reader getMmsReader() {
       if (mmsReader == null) {
-        mmsReader = DatabaseComponent.get(context).mmsDatabase().readerFor(cursor, getQuote);
+        mmsReader = mmsDatabase.get().readerFor(cursor, getQuote);
       }
 
       return mmsReader;
