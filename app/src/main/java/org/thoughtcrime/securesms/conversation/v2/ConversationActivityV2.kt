@@ -59,6 +59,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.annimon.stream.Stream
 import com.bumptech.glide.Glide
 import com.squareup.phrase.Phrase
+import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
 import kotlinx.coroutines.CancellationException
@@ -263,7 +264,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var typingStatusRepository: TypingStatusRepository
     @Inject lateinit var typingStatusSender: TypingStatusSender
     @Inject lateinit var openGroupManager: OpenGroupManager
-    @Inject lateinit var attachmentDatabase: AttachmentDatabase
     @Inject lateinit var clock: SnodeClock
     @Inject @ManagerScope
     lateinit var scope: CoroutineScope
