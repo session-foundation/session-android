@@ -11,7 +11,6 @@ data class OutgoingTextMessage(
     val message: String?,
     val expiresInMillis: Long,
     val expireStartedAtMillis: Long,
-    val subscriptionId: Int = -1,
     val sentTimestampMillis: Long,
     val isOpenGroupInvitation: Boolean,
     val proFeatures: ProFeatures = ProFeatures.NONE,

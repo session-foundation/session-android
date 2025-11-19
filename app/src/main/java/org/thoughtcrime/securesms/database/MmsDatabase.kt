@@ -36,16 +36,10 @@ import org.session.libsession.messaging.sending_receiving.link_preview.LinkPrevi
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
-import org.session.libsession.utilities.Contact
-import org.session.libsession.utilities.IdentityKeyMismatch
-import org.session.libsession.utilities.IdentityKeyMismatchList
-import org.session.libsession.utilities.NetworkFailure
-import org.session.libsession.utilities.NetworkFailureList
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
 import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.toGroupString
-import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils.queue
 import org.session.libsignal.utilities.guava.Optional
@@ -396,43 +390,6 @@ class MmsDatabase @Inject constructor(
         return result
     }
 
-    private fun getSharedContacts(
-        cursor: Cursor,
-        attachments: List<DatabaseAttachment>
-    ): List<Contact> {
-        val serializedContacts = cursor.getString(cursor.getColumnIndexOrThrow(SHARED_CONTACTS))
-        if (serializedContacts.isNullOrEmpty()) {
-            return emptyList()
-        }
-        val attachmentIdMap: MutableMap<AttachmentId?, DatabaseAttachment> = HashMap()
-        for (attachment in attachments) {
-            attachmentIdMap[attachment.attachmentId] = attachment
-        }
-        try {
-            val contacts: MutableList<Contact> = LinkedList()
-            val jsonContacts = JSONArray(serializedContacts)
-            for (i in 0 until jsonContacts.length()) {
-                val contact = Contact.deserialize(jsonContacts.getJSONObject(i).toString())
-                if (contact.avatar != null && contact.avatar!!.attachmentId != null) {
-                    val attachment = attachmentIdMap[contact.avatar!!.attachmentId]
-                    val updatedAvatar = Contact.Avatar(
-                        contact.avatar!!.attachmentId,
-                        attachment,
-                        contact.avatar!!.isProfile
-                    )
-                    contacts.add(Contact(contact, updatedAvatar))
-                } else {
-                    contacts.add(contact)
-                }
-            }
-            return contacts
-        } catch (e: JSONException) {
-            Log.w(TAG, "Failed to parse shared contacts.", e)
-        } catch (e: IOException) {
-            Log.w(TAG, "Failed to parse shared contacts.", e)
-        }
-        return emptyList()
-    }
 
     private fun getLinkPreviews(
         cursor: Cursor,
@@ -472,9 +429,8 @@ class MmsDatabase @Inject constructor(
     @Throws(MmsException::class)
     private fun insertMessageInbox(
         retrieved: IncomingMediaMessage,
-        contentLocation: String,
-        threadId: Long, mailbox: Long,
-        serverTimestamp: Long,
+        threadId: Long,
+        mailbox: Long, serverTimestamp: Long,
         runThreadUpdate: Boolean
     ): Optional<InsertResult> {
         if (threadId < 0 ) throw MmsException("No thread ID supplied!")
@@ -485,7 +441,6 @@ class MmsDatabase @Inject constructor(
         contentValues.put(ADDRESS, retrieved.from.toString())
         contentValues.put(MESSAGE_BOX, mailbox)
         contentValues.put(THREAD_ID, threadId)
-        contentValues.put(CONTENT_LOCATION, contentLocation)
         contentValues.put(STATUS, Status.DOWNLOAD_INITIALIZED)
         contentValues.put(PRO_FEATURES, retrieved.proFeatures.rawValue)
         // In open groups messages should be sorted by their server timestamp
@@ -493,12 +448,7 @@ class MmsDatabase @Inject constructor(
         if (serverTimestamp == 0L) {
             receivedTimestamp = retrieved.sentTimeMillis
         }
-        contentValues.put(
-            DATE_RECEIVED,
-            receivedTimestamp
-        ) // Loki - This is important due to how we handle GIFs
-        contentValues.put(PART_COUNT, retrieved.attachments.size)
-        contentValues.put(SUBSCRIPTION_ID, retrieved.subscriptionId)
+        contentValues.put(DATE_RECEIVED, receivedTimestamp) // Loki - This is important due to how we handle GIFs
         contentValues.put(EXPIRES_IN, retrieved.expiresIn)
         contentValues.put(EXPIRE_STARTED, retrieved.expireStartedAt)
         contentValues.put(HAS_MENTION, retrieved.hasMention)
@@ -527,7 +477,6 @@ class MmsDatabase @Inject constructor(
             messageContent = retrieved.messageContent,
             attachments = retrieved.attachments,
             quoteAttachments = quoteAttachments!!,
-            sharedContacts = retrieved.sharedContacts,
             linkPreviews = retrieved.linkPreviews,
             contentValues = contentValues,
         )
@@ -576,7 +525,7 @@ class MmsDatabase @Inject constructor(
         if (retrieved.isMessageRequestResponse) {
             type = type or MmsSmsColumns.Types.MESSAGE_REQUEST_RESPONSE_BIT
         }
-        return insertMessageInbox(retrieved, "", threadId, type, serverTimestamp, runThreadUpdate)
+        return insertMessageInbox(retrieved, threadId, type, serverTimestamp, runThreadUpdate)
     }
 
     @Throws(MmsException::class)
@@ -607,7 +556,6 @@ class MmsDatabase @Inject constructor(
             receivedTimestamp = SnodeAPI.nowWithOffset
         }
         contentValues.put(DATE_RECEIVED, receivedTimestamp)
-        contentValues.put(SUBSCRIPTION_ID, message.subscriptionId)
         contentValues.put(EXPIRES_IN, message.expiresInMillis)
         contentValues.put(EXPIRE_STARTED, message.expireStartedAtMillis)
         contentValues.put(ADDRESS, message.recipient.toString())
@@ -622,10 +570,10 @@ class MmsDatabase @Inject constructor(
                 .sum())
         val quoteAttachments: MutableList<Attachment?> = LinkedList()
         if (message.outgoingQuote != null) {
-            contentValues.put(QUOTE_ID, message.outgoingQuote!!.id)
-            contentValues.put(QUOTE_AUTHOR, message.outgoingQuote!!.author.toString())
-            contentValues.put(QUOTE_MISSING, if (message.outgoingQuote!!.missing) 1 else 0)
-            quoteAttachments.addAll(message.outgoingQuote!!.attachments!!)
+            contentValues.put(QUOTE_ID, message.outgoingQuote.id)
+            contentValues.put(QUOTE_AUTHOR, message.outgoingQuote.author.toString())
+            contentValues.put(QUOTE_MISSING, if (message.outgoingQuote.missing) 1 else 0)
+            quoteAttachments.addAll(message.outgoingQuote.attachments!!)
         }
         if (isDuplicate(message, threadId)) {
             Log.w(TAG, "Ignoring duplicate media message (" + message.sentTimeMillis + ")")
@@ -636,7 +584,6 @@ class MmsDatabase @Inject constructor(
             messageContent = message.messageContent,
             attachments = message.attachments,
             quoteAttachments = quoteAttachments,
-            sharedContacts = message.contacts,
             linkPreviews = message.linkPreviews,
             contentValues = contentValues,
         )
@@ -678,7 +625,6 @@ class MmsDatabase @Inject constructor(
         messageContent: MessageContent?,
         attachments: List<Attachment?>,
         quoteAttachments: List<Attachment?>,
-        sharedContacts: List<Contact>,
         linkPreviews: List<LinkPreview>,
         contentValues: ContentValues,
     ): Long {
@@ -687,17 +633,12 @@ class MmsDatabase @Inject constructor(
         val allAttachments: MutableList<Attachment?> = LinkedList()
         val thumbnailJobs: MutableList<AttachmentId> = ArrayList()  // Collector for thumbnail jobs
 
-        val contactAttachments =
-            Stream.of(sharedContacts).map { obj: Contact -> obj.avatarAttachment }
-                .filter { a: Attachment? -> a != null }
-                .toList()
         val previewAttachments =
             Stream.of(linkPreviews).filter { lp: LinkPreview -> lp.getThumbnail().isPresent }
                 .map { lp: LinkPreview -> lp.getThumbnail().get() }
                 .toList()
 
         allAttachments.addAll(attachments)
-        allAttachments.addAll(contactAttachments)
         allAttachments.addAll(previewAttachments)
 
         contentValues.put(BODY, body)
@@ -716,24 +657,7 @@ class MmsDatabase @Inject constructor(
                 thumbnailJobs  // This will collect all attachment IDs that need thumbnails
             )
 
-            val serializedContacts =
-                getSerializedSharedContacts(insertedAttachments, sharedContacts)
             val serializedPreviews = getSerializedLinkPreviews(insertedAttachments, linkPreviews)
-
-            if (!serializedContacts.isNullOrEmpty()) {
-                val contactValues = ContentValues()
-                contactValues.put(SHARED_CONTACTS, serializedContacts)
-                val database = readableDatabase
-                val rows = database.update(
-                    TABLE_NAME,
-                    contactValues,
-                    "$ID = ?",
-                    arrayOf(messageId.toString())
-                )
-                if (rows <= 0) {
-                    Log.w(TAG, "Failed to update message with shared contact data.")
-                }
-            }
 
             if (!serializedPreviews.isNullOrEmpty()) {
                 val contactValues = ContentValues()
@@ -856,36 +780,6 @@ class MmsDatabase @Inject constructor(
         )
     }
 
-    private fun getSerializedSharedContacts(
-        insertedAttachmentIds: Map<Attachment?, AttachmentId?>,
-        contacts: List<Contact?>
-    ): String? {
-        if (contacts.isEmpty()) return null
-        val sharedContactJson = JSONArray()
-        for (contact in contacts) {
-            try {
-                var attachmentId: AttachmentId? = null
-                if (contact!!.avatarAttachment != null) {
-                    attachmentId = insertedAttachmentIds[contact.avatarAttachment]
-                }
-                val updatedAvatar = Contact.Avatar(
-                    attachmentId,
-                    contact.avatarAttachment,
-                    contact.avatar != null && contact.avatar!!
-                        .isProfile
-                )
-                val updatedContact = Contact(
-                    contact, updatedAvatar
-                )
-                sharedContactJson.put(JSONObject(updatedContact.serialize()))
-            } catch (e: JSONException) {
-                Log.w(TAG, "Failed to serialize shared contact. Skipping it.", e)
-            } catch (e: IOException) {
-                Log.w(TAG, "Failed to serialize shared contact. Skipping it.", e)
-            }
-        }
-        return sharedContactJson.toString()
-    }
 
     private fun getSerializedLinkPreviews(
         insertedAttachmentIds: Map<Attachment?, AttachmentId?>,
@@ -1091,15 +985,11 @@ class MmsDatabase @Inject constructor(
             val attachments = attachmentDatabase.getAttachment(
                 cursor
             )
-            val contacts: List<Contact?> = getSharedContacts(cursor, attachments)
-            val contactAttachments: Set<Attachment?> =
-                contacts.mapNotNull { it?.avatarAttachment }.toSet()
             val previews: List<LinkPreview?> = getLinkPreviews(cursor, attachments)
             val previewAttachments: Set<Attachment?> =
                 previews.mapNotNull { it?.getThumbnail()?.orNull() }.toSet()
             val slideDeck = getSlideDeck(
                 attachments
-                    .filterNot { o: DatabaseAttachment? -> o in contactAttachments }
                     .filterNot { o: DatabaseAttachment? -> o in previewAttachments }
             )
             val quote = if (getQuote) getQuote(cursor) else null
@@ -1180,6 +1070,7 @@ class MmsDatabase @Inject constructor(
         const val DATE_SENT: String = "date"
         const val DATE_RECEIVED: String = "date_received"
         const val MESSAGE_BOX: String = "msg_box"
+        @Deprecated("No longer used.")
         const val CONTENT_LOCATION: String = "ct_l"
         const val EXPIRY: String = "exp"
 
@@ -1187,14 +1078,18 @@ class MmsDatabase @Inject constructor(
         const val MESSAGE_TYPE: String = "m_type"
         const val MESSAGE_SIZE: String = "m_size"
         const val STATUS: String = "st"
+        @Deprecated("No longer used.")
         const val TRANSACTION_ID: String = "tr_id"
+        @Deprecated("No longer used.")
         const val PART_COUNT: String = "part_count"
+        @Deprecated("No longer used.")
         const val NETWORK_FAILURE: String = "network_failures"
         const val QUOTE_ID: String = "quote_id"
         const val QUOTE_AUTHOR: String = "quote_author"
         const val QUOTE_BODY: String = "quote_body"
         const val QUOTE_ATTACHMENT: String = "quote_attachment"
         const val QUOTE_MISSING: String = "quote_missing"
+        @Deprecated("No longer used.")
         const val SHARED_CONTACTS: String = "shared_contacts"
         const val LINK_PREVIEWS: String = "previews"
 
@@ -1305,7 +1200,6 @@ class MmsDatabase @Inject constructor(
         const val ADD_LAST_MESSAGE_INDEX: String =
             "CREATE INDEX mms_thread_id_date_sent_index ON $TABLE_NAME ($THREAD_ID, $DATE_SENT)"
 
-        private const val RAW_ID_WHERE: String = "$TABLE_NAME._id = ?"
         const val CREATE_MESSAGE_REQUEST_RESPONSE_COMMAND = "ALTER TABLE $TABLE_NAME ADD COLUMN $MESSAGE_REQUEST_RESPONSE INTEGER DEFAULT 0;"
         const val CREATE_REACTIONS_UNREAD_COMMAND = "ALTER TABLE $TABLE_NAME ADD COLUMN $REACTIONS_UNREAD INTEGER DEFAULT 0;"
         const val CREATE_REACTIONS_LAST_SEEN_COMMAND = "ALTER TABLE $TABLE_NAME ADD COLUMN $REACTIONS_LAST_SEEN INTEGER DEFAULT 0;"
