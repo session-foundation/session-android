@@ -280,7 +280,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
             is Commands.ShowProBadgeCTA -> {
                 val features = state.value.proFeatures
                 _dialogState.update {
-                    val proSubscription = proStatusManager.subscriptionState.value.type
+                    val proSubscription = proStatusManager.proDataState.value.type
                     it.copy(
                         proBadgeCTA = when{
                             features.size > 1 -> ProBadgeCTA.Generic(proSubscription) // always show the generic cta when there are more than 1 feature

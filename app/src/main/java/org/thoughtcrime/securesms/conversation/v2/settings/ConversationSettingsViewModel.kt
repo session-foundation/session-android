@@ -719,7 +719,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             _dialogState.update {
                 it.copy(pinCTA = PinProCTA(
                     overTheLimit = totalPins > maxPins,
-                    proSubscription = proStatusManager.subscriptionState.value.type
+                    proSubscription = proStatusManager.proDataState.value.type
                 ))
             }
         } else {
@@ -1237,8 +1237,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             is Commands.ShowProBadgeCTA -> {
                 _dialogState.update {
                     it.copy(
-                        proBadgeCTA = if(recipient?.isGroupV2Recipient == true) ProBadgeCTA.Group(proStatusManager.subscriptionState.value.type)
-                        else ProBadgeCTA.Generic(proStatusManager.subscriptionState.value.type)
+                        proBadgeCTA = if(recipient?.isGroupV2Recipient == true) ProBadgeCTA.Group(proStatusManager.proDataState.value.type)
+                        else ProBadgeCTA.Generic(proStatusManager.proDataState.value.type)
                     )
                 }
             }

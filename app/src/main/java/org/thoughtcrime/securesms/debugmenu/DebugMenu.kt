@@ -504,6 +504,14 @@ fun DebugMenu(
                         sendCommand(Copy07PrefixedBlindedPublicKey)
                     }
                 )
+
+                SlimFillButtonRect (
+                    text = "Copy Pro Master Key",
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        sendCommand(DebugMenuViewModel.Commands.CopyProMasterKey)
+                    }
+                )
             }
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))

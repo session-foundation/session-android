@@ -24,15 +24,14 @@ import org.thoughtcrime.securesms.preferences.prosettings.BaseNonOriginatingProS
 import org.thoughtcrime.securesms.preferences.prosettings.NonOriginatingLinkCellData
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
-import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.pro.SubscriptionDetails
 import org.thoughtcrime.securesms.pro.ProStatus
+import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.getPlatformDisplayName
+import org.thoughtcrime.securesms.pro.previewExpiredApple
 import org.thoughtcrime.securesms.ui.components.iconExternalLink
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
-import java.time.Duration
-import java.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
@@ -173,11 +172,11 @@ fun ChoosePlanNoBilling(
             add(
                 NonOriginatingLinkCellData(
                     title = Phrase.from(context.getText(R.string.onPlatformStoreWebsite))
-                        .put(PLATFORM_STORE_KEY, subscription.subscriptionDetails.getPlatformDisplayName())
+                        .put(PLATFORM_STORE_KEY, subscription.providerData.getPlatformDisplayName())
                         .format(),
                     info = Phrase.from(context.getText(R.string.proAccessRenewPlatformWebsite))
-                        .put(PLATFORM_KEY, subscription.subscriptionDetails.getPlatformDisplayName())
-                        .put(PLATFORM_ACCOUNT_KEY, subscription.subscriptionDetails.platformAccount)
+                        .put(PLATFORM_KEY, subscription.providerData.getPlatformDisplayName())
+                        .put(PLATFORM_ACCOUNT_KEY, subscription.providerData.platformAccount)
                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format(),
                     iconRes = R.drawable.ic_globe
@@ -192,13 +191,13 @@ fun ChoosePlanNoBilling(
         onBack = onBack,
         headerTitle = headerTitle,
         buttonText = if(subscription is ProStatus.Expired) Phrase.from(context.getText(R.string.openPlatformWebsite))
-            .put(PLATFORM_KEY, subscription.subscriptionDetails.getPlatformDisplayName())
+            .put(PLATFORM_KEY, subscription.providerData.getPlatformDisplayName())
             .format().toString()
         else null,
         dangerButton = false,
         onButtonClick = {
             if(subscription is ProStatus.Expired) {
-                sendCommand(ShowOpenUrlDialog(subscription.subscriptionDetails.subscriptionUrl))
+                sendCommand(ShowOpenUrlDialog(subscription.providerData.updateSubscriptionUrl))
             }
         },
         contentTitle = contentTitle,
@@ -220,17 +219,7 @@ private fun PreviewNonOrigExpiredUpdatePlan(
     PreviewTheme(colors) {
         val context = LocalContext.current
         ChoosePlanNoBilling (
-            subscription = ProStatus.Expired(
-                expiredAt = Instant.now() - Duration.ofDays(14),
-                SubscriptionDetails(
-                    device = "iOS",
-                    store = "Apple App Store",
-                    platform = "Apple",
-                    platformAccount = "Apple Account",
-                    subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                    refundUrl = "https://www.apple.com/account/subscriptions",
-                )
-            ),
+            subscription = previewExpiredApple,
             sendCommand = {},
             onBack = {},
         )

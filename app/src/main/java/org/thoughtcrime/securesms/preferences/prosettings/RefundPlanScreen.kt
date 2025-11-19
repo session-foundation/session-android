@@ -22,8 +22,8 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProStatus
-import org.thoughtcrime.securesms.pro.SubscriptionDetails
-import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
+import org.thoughtcrime.securesms.pro.isFromAnotherPlatform
+import org.thoughtcrime.securesms.pro.previewAutoRenewingApple
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -32,8 +32,6 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.bold
-import java.time.Duration
-import java.time.Instant
 
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -53,7 +51,7 @@ fun RefundPlanScreen(
         // there are different UI depending on the state
         when {
             // there is an active subscription but from a different platform
-            activePlan.subscriptionDetails.isFromAnotherPlatform() ->
+            activePlan.providerData.isFromAnotherPlatform() ->
                 RefundPlanNonOriginating(
                     subscription = activePlan,
                     sendCommand = viewModel::onCommand,
@@ -87,7 +85,7 @@ fun RefundPlan(
         disabled = true,
         onBack = onBack,
         buttonText = if(isQuickRefund) Phrase.from(context.getText(R.string.openPlatformWebsite))
-            .put(PLATFORM_KEY, data.subscriptionDetails.platform)
+            .put(PLATFORM_KEY, data.providerData.platform)
             .format().toString()
         else stringResource(R.string.requestRefund),
         dangerButton = true,
@@ -95,7 +93,7 @@ fun RefundPlan(
             if(isQuickRefund && !quickRefundUrl.isNullOrEmpty()){
                 sendCommand(ShowOpenUrlDialog(quickRefundUrl))
             } else {
-                sendCommand(ShowOpenUrlDialog(data.subscriptionDetails.refundUrl))
+                sendCommand(ShowOpenUrlDialog(data.providerData.refundSupportUrl))
             }
         },
         title = stringResource(R.string.proRefundDescription),
@@ -115,7 +113,7 @@ fun RefundPlan(
                 text = annotatedStringResource(
                     if(isQuickRefund)
                         Phrase.from(context.getText(R.string.proRefundRequestStorePolicies))
-                            .put(PLATFORM_KEY, data.subscriptionDetails.platform)
+                            .put(PLATFORM_KEY, data.providerData.platform)
                             .put(APP_NAME_KEY, context.getString(R.string.app_name))
                             .format()
                     else Phrase.from(context.getText(R.string.proRefundRequestSessionSupport))
@@ -158,18 +156,7 @@ private fun PreviewRefundPlan(
 ) {
     PreviewTheme(colors) {
         RefundPlan(
-            data = ProStatus.Active.AutoRenewing(
-                validUntil = Instant.now() + Duration.ofDays(14),
-                duration = ProSubscriptionDuration.THREE_MONTHS,
-                subscriptionDetails = SubscriptionDetails(
-                    device = "Android",
-                    store = "Google Play Store",
-                    platform = "Google",
-                    platformAccount = "Google account",
-                    subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
-                    refundUrl = "https://getsession.org/android-refund",
-                )
-            ),
+            data = previewAutoRenewingApple,
             isQuickRefund = false,
             quickRefundUrl = "",
             sendCommand = {},
@@ -185,18 +172,7 @@ private fun PreviewQuickRefundPlan(
 ) {
     PreviewTheme(colors) {
         RefundPlan(
-            data = ProStatus.Active.AutoRenewing(
-                validUntil = Instant.now() + Duration.ofDays(14),
-                duration = ProSubscriptionDuration.THREE_MONTHS,
-                subscriptionDetails = SubscriptionDetails(
-                    device = "Android",
-                    store = "Google Play Store",
-                    platform = "Google",
-                    platformAccount = "Google account",
-                    subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
-                    refundUrl = "https://getsession.org/android-refund",
-                )
-            ),
+            data = previewAutoRenewingApple,
             isQuickRefund = true,
             quickRefundUrl = "",
             sendCommand = {},

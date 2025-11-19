@@ -37,10 +37,10 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NETWORK_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
-import org.thoughtcrime.securesms.pro.SubscriptionDetails
-import org.thoughtcrime.securesms.pro.SubscriptionState
+import org.thoughtcrime.securesms.pro.ProDataState
 import org.thoughtcrime.securesms.pro.ProStatus
-import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
+import org.thoughtcrime.securesms.pro.previewAutoRenewingApple
+import org.thoughtcrime.securesms.pro.previewExpiredApple
 import org.thoughtcrime.securesms.ui.SessionProSettingsHeader
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
@@ -52,8 +52,6 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.util.State
-import java.time.Duration
-import java.time.Instant
 
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -115,7 +113,7 @@ fun PlanConfirmation(
 
             Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
 
-            val description = when (proData.subscriptionState.type) {
+            val description = when (proData.proDataState.type) {
                 is ProStatus.Active -> {
                     Phrase.from(context.getText(R.string.proAllSetDescription))
                         .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
@@ -150,7 +148,7 @@ fun PlanConfirmation(
 
             Spacer(Modifier.height(LocalDimensions.current.spacing))
 
-            val buttonLabel = when (proData.subscriptionState.type) {
+            val buttonLabel = when (proData.proDataState.type) {
                 is ProStatus.Active -> stringResource(R.string.theReturn)
 
                 else -> {
@@ -185,19 +183,8 @@ private fun PreviewPlanConfirmationActive(
         PlanConfirmation(
             proData = ProSettingsViewModel.ProSettingsState(
                 subscriptionExpiryDate = "20th June 2026",
-                subscriptionState = SubscriptionState(
-                    type = ProStatus.Active.AutoRenewing(
-                        validUntil = Instant.now() + Duration.ofDays(14),
-                        duration = ProSubscriptionDuration.THREE_MONTHS,
-                        subscriptionDetails = SubscriptionDetails(
-                            device = "iOS",
-                            store = "Apple App Store",
-                            platform = "Apple",
-                            platformAccount = "Apple Account",
-                            subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                            refundUrl = "https://www.apple.com/account/subscriptions",
-                        )
-                    ),
+                proDataState = ProDataState(
+                    type = previewAutoRenewingApple,
                     refreshState = State.Success(Unit),
                     showProBadge = false,
                 ),
@@ -216,17 +203,8 @@ private fun PreviewPlanConfirmationExpired(
     PreviewTheme(colors) {
         PlanConfirmation(
             proData = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState(
-                    type = ProStatus.Expired(
-                        expiredAt = Instant.now() - Duration.ofDays(14),
-                        SubscriptionDetails(
-                            device = "iOS",
-                            store = "Apple App Store",
-                            platform = "Apple",
-                            platformAccount = "Apple Account",
-                            subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                            refundUrl = "https://www.apple.com/account/subscriptions",
-                        )),
+                proDataState = ProDataState(
+                    type = previewExpiredApple,
                     refreshState = State.Success(Unit),
                     showProBadge = true,
                     ),
@@ -245,7 +223,7 @@ private fun PreviewPlanConfirmationNeverSub(
     PreviewTheme(colors) {
         PlanConfirmation(
             proData = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState(
+                proDataState = ProDataState(
                     type = ProStatus.NeverSubscribed,
                     refreshState = State.Success(Unit),
                     showProBadge = true,
