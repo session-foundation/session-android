@@ -451,7 +451,7 @@ fun DebugMenu(
 
                 DebugDropDownRow(
                     text = "Debug 'Has donated': ",
-                    selectedText = NOT_SET,
+                    selectedText = uiState.hasDonatedDebug,
                     values = listOf(NOT_SET, TRUE, FALSE),
                     onValueSelected = {
                         sendCommand(SetDebugHasDonated(it))
@@ -459,7 +459,7 @@ fun DebugMenu(
                 )
                 DebugDropDownRow(
                     text = "Debug 'Has copied link': ",
-                    selectedText = NOT_SET,
+                    selectedText = uiState.hasCopiedDonationURLDebug,
                     values = listOf(NOT_SET, TRUE, FALSE),
                     onValueSelected = {
                         sendCommand(SetDebugHasCopiedDonation(it))
@@ -467,7 +467,7 @@ fun DebugMenu(
                 )
                 DebugDropDownRow(
                     text = "Debug 'CTA seen amount': ",
-                    selectedText = NOT_SET,
+                    selectedText = uiState.seenDonateCTAAmountDebug,
                     values = listOf(NOT_SET, SEEN_1, SEEN_2, SEEN_3, SEEN_4),
                     onValueSelected = {
                         sendCommand(SetDebugDonationCTAViews(it))
@@ -475,7 +475,7 @@ fun DebugMenu(
                 )
                 DebugDropDownRow(
                     text = "Debug 'Show donation from app review': ",
-                    selectedText = NOT_SET,
+                    selectedText = uiState.showDonateCTAFromPositiveReviewDebug,
                     values = listOf(NOT_SET, TRUE, FALSE),
                     onValueSelected = {
                         sendCommand(SetDebugShowDonationFromReview(it))
