@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.pro.subscription
 
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
@@ -8,8 +9,10 @@ import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 /**
  * Helper class to handle the selection and management of our available subscription providers
  */
+@Singleton
 class SubscriptionCoordinator @Inject constructor(
     private val availableManagers: Set<@JvmSuppressWildcards SubscriptionManager>,
+    private val noopSubManager: NoOpSubscriptionManager,
     private val prefs: TextSecurePreferences
 ): OnAppStartupComponent {
 
@@ -20,7 +23,7 @@ class SubscriptionCoordinator @Inject constructor(
 
         when {
             managers.isEmpty() -> {
-                currentManager = NoOpSubscriptionManager()
+                currentManager = noopSubManager
             }
             managers.size == 1 -> {
                 currentManager = managers.first()

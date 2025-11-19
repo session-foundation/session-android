@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.squareup.phrase.Phrase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
@@ -19,9 +20,11 @@ import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.PublicKeyValidation
+import org.thoughtcrime.securesms.preferences.SettingsViewModel
 import org.thoughtcrime.securesms.ui.GetString
 import java.net.IDN
 import javax.inject.Inject
@@ -69,10 +72,20 @@ class NewMessageViewModel @Inject constructor(
             }
         }
 
-        if (PublicKeyValidation.isValid(idOrONS, isPrefixRequired = false)) {
-            onUnvalidatedPublicKey(publicKey = idOrONS)
+        if (PublicKeyValidation.hasValidLength(idOrONS)) {
+            if (PublicKeyValidation.isValid(idOrONS, isPrefixRequired = false)) {
+                onUnvalidatedPublicKey(idOrONS)
+            } else {
+                _state.update {
+                    it.copy(
+                        isTextErrorColor = true,
+                        error = GetString(R.string.accountIdErrorInvalid),
+                        loading = false
+                    )
+                }
+            }
         } else {
-            resolveONS(ons = idOrONS)
+            resolveONS(idOrONS)
         }
     }
 
@@ -122,7 +135,6 @@ class NewMessageViewModel @Inject constructor(
         if (address is Address.Standard) {
             viewModelScope.launch { _success.emit(Success(address)) }
         }
-
     }
 
     private fun onUnvalidatedPublicKey(publicKey: String) {
@@ -134,8 +146,31 @@ class NewMessageViewModel @Inject constructor(
     }
 
     private fun Exception.toMessage() = when (this) {
-        is SnodeAPI.Error.Generic -> application.getString(R.string.onsErrorNotRecognized)
-        else -> application.getString(R.string.onsErrorUnableToSearch)
+        is SnodeAPI.Error.Generic -> application.getString(R.string.errorUnregisteredOns)
+        else -> Phrase.from(application, R.string.errorNoLookupOns)
+            .put(APP_NAME_KEY, application.getString(R.string.app_name))
+            .format().toString()
+    }
+
+    fun onCommand(commands: Commands) {
+        when (commands) {
+            is Commands.ShowUrlDialog -> {
+                _state.update { it.copy(showUrlDialog = true) }
+            }
+
+            is Commands.DismissUrlDialog -> {
+                _state.update {
+                    it.copy(
+                        showUrlDialog = false
+                    )
+                }
+            }
+        }
+    }
+
+    sealed interface Commands {
+        data object ShowUrlDialog : Commands
+        data object DismissUrlDialog : Commands
     }
 }
 
@@ -143,9 +178,13 @@ data class State(
     val newMessageIdOrOns: String = "",
     val isTextErrorColor: Boolean = false,
     val error: GetString? = null,
-    val loading: Boolean = false
+    val loading: Boolean = false,
+    val showUrlDialog : Boolean = false
 ) {
     val isNextButtonEnabled: Boolean get() = newMessageIdOrOns.isNotBlank()
 }
+
+
+
 
 data class Success(val address: Address.Standard)

@@ -26,8 +26,8 @@ configurations.configureEach {
     exclude(module = "commons-logging")
 }
 
-val canonicalVersionCode = 431
-val canonicalVersionName = "1.29.2"
+val canonicalVersionCode = 432
+val canonicalVersionName = "1.30.0"
 
 val postFixSize = 10
 val abiPostFix = mapOf(
@@ -181,13 +181,12 @@ android {
             matchingFallbacks += "release"
 
             signingConfig = signingConfigs.getByName("debug")
-            applicationIdSuffix = ".$name"
 
             devNetDefaultOn(false)
             enablePermissiveNetworkSecurityConfig(true)
 
             setAlternativeAppName("Session QA")
-            setAuthorityPostfix(".qa")
+            setAuthorityPostfix("")
         }
 
         create("automaticQa") {

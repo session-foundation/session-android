@@ -1,12 +1,13 @@
 package org.session.libsession.messaging.messages
 
+import com.google.protobuf.ByteString
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.UserPic
-import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.updateContact
+import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.BlindMappingRepository
@@ -164,44 +165,69 @@ class ProfileUpdateHandler @Inject constructor(
         }
 
         companion object {
-            fun create(
-                name: String? = null,
-                picUrl: String?,
-                picKey: ByteArray?,
-                blocksCommunityMessageRequests: Boolean? = null,
-                proStatus: Boolean? = null,
-                profileUpdateTime: Instant?
-            ): Updates? {
-                val hasNameUpdate = !name.isNullOrBlank()
-                val pic = when {
-                    picUrl == null -> null
-                    picUrl.isBlank() || picKey == null || picKey.size !in VALID_PROFILE_KEY_LENGTH -> UserPic.DEFAULT
-                    else -> UserPic(picUrl, picKey)
+            fun create(content: SignalServiceProtos.Content): Updates? {
+                val profile: SignalServiceProtos.DataMessage.LokiProfile
+                val profilePicKey: ByteString?
+
+                when {
+                    content.hasDataMessage() && content.dataMessage.hasProfile() -> {
+                        profile = content.dataMessage.profile
+                        profilePicKey =
+                            if (content.dataMessage.hasProfileKey()) content.dataMessage.profileKey else null
+                    }
+
+                    content.hasMessageRequestResponse() && content.messageRequestResponse.hasProfile() -> {
+                        profile = content.messageRequestResponse.profile
+                        profilePicKey =
+                            if (content.messageRequestResponse.hasProfileKey()) content.messageRequestResponse.profileKey else null
+                    }
+
+                    else -> {
+                        // No profile found, not updating.
+                        // This is different from having an empty profile, which is a valid update.
+                        return null
+                    }
                 }
 
-                if (!hasNameUpdate && pic == null && blocksCommunityMessageRequests == null && proStatus == null) {
+                val pic = if (profile.hasProfilePicture()) {
+                    if (!profile.profilePicture.isNullOrBlank() && profilePicKey != null &&
+                        profilePicKey.size() in VALID_PROFILE_KEY_LENGTH) {
+                        UserPic(
+                            url = profile.profilePicture,
+                            key = profilePicKey.toByteArray()
+                        )
+                    } else {
+                        UserPic.DEFAULT // Clear the profile picture
+                    }
+                } else {
+                    null // No update to profile picture
+                }
+
+                val name = if (profile.hasDisplayName()) profile.displayName else null
+                val blocksCommunityMessageRequests = if (content.hasDataMessage() &&
+                    content.dataMessage.hasBlocksCommunityMessageRequests()) {
+                    content.dataMessage.blocksCommunityMessageRequests
+                } else {
+                    null
+                }
+
+                if (name == null && pic == null && blocksCommunityMessageRequests == null) {
+                    // Nothing is updated..
                     return null
                 }
 
                 return Updates(
-                    name = if (hasNameUpdate) name else null,
+                    name = name,
                     pic = pic,
                     blocksCommunityMessageRequests = blocksCommunityMessageRequests,
-                    profileUpdateTime = profileUpdateTime
+                    profileUpdateTime = if (profile.hasLastProfileUpdateSeconds()) {
+                        Instant.ofEpochSecond(profile.lastProfileUpdateSeconds)
+                    } else {
+                        null
+                    }
                 )
             }
 
-            fun Profile.toUpdates(
-                blocksCommunityMessageRequests: Boolean? = null,
-            ): Updates? {
-                return create(
-                    name = this.displayName,
-                    picUrl = this.profilePictureURL,
-                    picKey = this.profileKey,
-                    blocksCommunityMessageRequests = blocksCommunityMessageRequests,
-                    profileUpdateTime = this.profileUpdated
-                )
-            }
         }
     }
 

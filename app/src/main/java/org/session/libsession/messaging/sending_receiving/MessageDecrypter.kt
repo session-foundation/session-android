@@ -2,14 +2,14 @@ package org.session.libsession.messaging.sending_receiving
 
 import network.loki.messenger.libsession_util.SessionEncrypt
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
+import network.loki.messenger.libsession_util.util.KeyPair
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.sending_receiving.MessageReceiver.Error
-import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.hexEncodedPublicKey
 import org.session.libsignal.utilities.removingIdPrefixIfNeeded
 
+@Deprecated("This class is deprecated and new code should try to decrypt/decode message using SessionProtocol API")
 object MessageDecrypter {
 
     /**
@@ -20,9 +20,9 @@ object MessageDecrypter {
      *
      * @return the padded plaintext.
      */
-    fun decrypt(ciphertext: ByteArray, x25519KeyPair: ECKeyPair): Pair<ByteArray, String> {
-        val recipientX25519PrivateKey = x25519KeyPair.privateKey.serialize()
-        val recipientX25519PublicKey = Hex.fromStringCondensed(x25519KeyPair.hexEncodedPublicKey.removingIdPrefixIfNeeded())
+    fun decrypt(ciphertext: ByteArray, x25519KeyPair: KeyPair): Pair<ByteArray, String> {
+        val recipientX25519PrivateKey = x25519KeyPair.secretKey.data
+        val recipientX25519PublicKey = x25519KeyPair.pubKey.data.removingIdPrefixIfNeeded()
         val (id, data) = SessionEncrypt.decryptIncoming(
             x25519PubKey = recipientX25519PublicKey,
             x25519PrivKey = recipientX25519PrivateKey,

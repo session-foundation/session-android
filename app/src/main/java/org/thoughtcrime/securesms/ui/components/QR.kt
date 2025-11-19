@@ -10,8 +10,11 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.CameraController
+import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -38,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -163,31 +167,41 @@ fun QRScannerScreen(
 
 @Composable
 fun ScanQrCode(errors: Flow<String>, onScan: (String) -> Unit) {
-    val localContext = LocalContext.current
-    val cameraProvider = remember { ProcessCameraProvider.getInstance(localContext) }
+    val context = LocalContext.current
 
-    val preview = Preview.Builder().build()
-    val selector = CameraSelector.Builder()
-        .requireLensFacing(CameraSelector.LENS_FACING_BACK)
-        .build()
-
-    runCatching {
-        cameraProvider.get().unbindAll()
-
-        cameraProvider.get().bindToLifecycle(
-            LocalLifecycleOwner.current,
-            selector,
-            preview,
-            buildAnalysisUseCase(QRCodeReader(), onScan)
-        )
-
-    }.onFailure { Log.e(TAG, "error binding camera", it) }
-
-    DisposableEffect(cameraProvider) {
-        onDispose {
-            cameraProvider.get().unbindAll()
+    // Setting up camera objects
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val controller = remember {
+        LifecycleCameraController(context).apply {
+            setEnabledUseCases(CameraController.IMAGE_ANALYSIS)
+            setTapToFocusEnabled(true)
+            setPinchToZoomEnabled(true)
         }
     }
+
+    DisposableEffect(Unit) {
+        val executor = Executors.newSingleThreadExecutor()
+        controller.setImageAnalysisAnalyzer(executor, QRCodeAnalyzer(QRCodeReader(), onScan))
+        onDispose {
+            controller.clearImageAnalysisAnalyzer()
+            executor.shutdown()
+        }
+    }
+
+    LaunchedEffect(controller, lifecycleOwner) {
+        controller.bindToLifecycle(lifecycleOwner)
+        controller.cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+    }
+
+    AndroidView(
+        modifier = Modifier.fillMaxSize(),
+        factory = { ctx ->
+            PreviewView(ctx).apply {
+                controller.let { this.controller = it }
+            }
+        }
+    )
+
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -224,12 +238,24 @@ fun ScanQrCode(errors: Flow<String>, onScan: (String) -> Unit) {
             }
         }
     ) { padding ->
-        Box {
+        var cachedZoom by remember { mutableStateOf(1f) }
+
+        val zoomRange = controller.zoomState.value?.let {
+            it.minZoomRatio..it.maxZoomRatio
+        } ?: 1f..4f
+
+        Box(Modifier.fillMaxSize()
+            .padding(padding)) {
             AndroidView(
-                modifier = Modifier.fillMaxSize(),
-                factory = { PreviewView(it).apply { preview.setSurfaceProvider(surfaceProvider) } }
+                modifier = Modifier.matchParentSize(),
+                factory = { ctx ->
+                    PreviewView(ctx).apply {
+                        this.controller = controller
+                    }
+                }
             )
 
+            // visual cue for middle part
             Box(
                 Modifier
                     .aspectRatio(1f)
@@ -237,6 +263,22 @@ fun ScanQrCode(errors: Flow<String>, onScan: (String) -> Unit) {
                     .clip(shape = RoundedCornerShape(26.dp))
                     .background(Color(0x33ffffff))
                     .align(Alignment.Center)
+            )
+
+            // Fullscreen overlay that captures gestures and updates camera zoom
+            // Without this, the bottom sheet in start-conversation, or the viewpagers
+            // all fight for gesture handling and the zoom doesn't work
+            Box(
+                Modifier
+                    .matchParentSize()
+                    .pointerInput(controller) {
+                        detectTransformGestures { _, _, zoom, _ ->
+                            val new = (cachedZoom * zoom)
+                                .coerceIn(zoomRange.start, zoomRange.endInclusive)
+                            cachedZoom = new
+                            controller.cameraControl?.setZoomRatio(new)
+                        }
+                    }
             )
         }
     }

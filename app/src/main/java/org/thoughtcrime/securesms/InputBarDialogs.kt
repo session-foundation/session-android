@@ -63,8 +63,9 @@ fun InputBarDialogs(
         }
 
         // Pro CTA
-        if (inputBarDialogsState.sessionProCharLimitCTA) {
+        if (inputBarDialogsState.sessionProCharLimitCTA != null) {
             LongMessageProCTA(
+                proSubscription = inputBarDialogsState.sessionProCharLimitCTA.proSubscription,
                 onDismissRequest = {sendCommand(InputbarViewModel.Commands.HideSessionProCTA)}
             )
         }

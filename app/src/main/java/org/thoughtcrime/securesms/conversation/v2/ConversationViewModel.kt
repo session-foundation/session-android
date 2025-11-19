@@ -73,7 +73,6 @@ import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.recipients.effectiveNotifyType
 import org.session.libsession.utilities.recipients.getType
 import org.session.libsession.utilities.recipients.repeatedWithEffectiveNotifyTypeChange
-import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsession.utilities.toGroupString
 import org.session.libsession.utilities.upsertContact
 import org.session.libsession.utilities.userConfigsChanged
@@ -526,7 +525,7 @@ class ConversationViewModel @AssistedInject constructor(
                 application.resources.getQuantityString(R.plurals.membersActive, userCount, userCount)
             } else {
                 val userCount = if (conversation.data is RecipientData.Group) {
-                    conversation.data.partial.members.size
+                    conversation.data.members.size
                 } else { // legacy closed groups
                     groupDb.getGroupMemberAddresses(conversation.address.toGroupString(), true).size
                 }
@@ -553,7 +552,7 @@ class ConversationViewModel @AssistedInject constructor(
             showSearch = showSearch,
             avatarUIData = avatarData,
             // show the pro badge when a conversation/user is pro, except for communities
-            showProBadge = conversation.proStatus.shouldShowProBadge() && !conversation.isLocalNumber // do not show for note to self
+            showProBadge = conversation.shouldShowProBadge && !conversation.isLocalNumber // do not show for note to self
         ).also {
             // also preload the larger version of the avatar in case the user goes to the settings
             avatarData.elements.mapNotNull { it.remoteFile }.forEach {
@@ -647,7 +646,7 @@ class ConversationViewModel @AssistedInject constructor(
             // this would be a request from us instead.
             (
                     (recipient.data is RecipientData.Contact && !recipient.data.approved) ||
-                            (recipient.data is RecipientData.Group && !recipient.data.partial.approved)
+                            (recipient.data is RecipientData.Group && !recipient.data.approved)
             ) &&
 
             // Req 2: the type of conversation supports message request
@@ -1297,7 +1296,7 @@ class ConversationViewModel @AssistedInject constructor(
                 }
             }
 
-            _uiEvents.tryEmit(ConversationUiEvent.ShowDisappearingMessages(convo.address))
+            _uiEvents.tryEmit(ConversationUiEvent.ShowDisappearingMessages(address))
         }
     }
 
@@ -1459,7 +1458,7 @@ data class UiMessage(val id: Long, val message: String)
 
 sealed interface ConversationUiEvent {
     data class NavigateToConversation(val address: Address.Conversable) : ConversationUiEvent
-    data class ShowDisappearingMessages(val address: Address) : ConversationUiEvent
+    data class ShowDisappearingMessages(val address: Address.Conversable) : ConversationUiEvent
     data class ShowNotificationSettings(val address: Address) : ConversationUiEvent
     data class ShowGroupMembers(val groupAddress: Address.Group) : ConversationUiEvent
     data class ShowConversationSettings(val threadAddress: Address.Conversable) : ConversationUiEvent

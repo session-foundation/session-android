@@ -29,6 +29,7 @@ import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.PushRegistrationDatabase
 import org.thoughtcrime.securesms.util.getRootCause
 import java.time.Duration
@@ -45,7 +46,7 @@ class PushRegistrationWorker @AssistedInject constructor(
     private val storage: StorageProtocol,
     private val pushRegistrationDatabase: PushRegistrationDatabase,
     private val configFactory: ConfigFactoryProtocol,
-    private val prefs: TextSecurePreferences,
+    private val loginStateRepository: LoginStateRepository,
     @param:PushNotificationModule.PushProcessingSemaphore
     private val semaphore: Semaphore,
 ) : CoroutineWorker(context, params) {
@@ -217,7 +218,7 @@ class PushRegistrationWorker @AssistedInject constructor(
                 }
             }
 
-            accountId.hexString == prefs.getLocalNumber() -> {
+            accountId == loginStateRepository.requireLocalAccountId() -> {
                 requireNotNull(storage.userAuth) {
                     "User auth is required for local number push registration"
                 }

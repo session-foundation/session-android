@@ -30,7 +30,6 @@ interface DatabaseComponent {
     fun threadDatabase(): ThreadDatabase
     fun mmsSmsDatabase(): MmsSmsDatabase
     fun groupDatabase(): GroupDatabase
-    fun recipientDatabase(): RecipientDatabase
     fun lokiAPIDatabase(): LokiAPIDatabase
     fun lokiMessageDatabase(): LokiMessageDatabase
     fun reactionDatabase(): ReactionDatabase

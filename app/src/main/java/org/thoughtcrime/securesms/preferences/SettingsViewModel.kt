@@ -38,13 +38,10 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.utilities.await
-import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.recipients.isPro
 import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.NoExternalStorageException
@@ -54,9 +51,8 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSi
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.mms.MediaConstraints
-import org.thoughtcrime.securesms.mms.PushMediaConstraints
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.pro.SubscriptionState
+import org.thoughtcrime.securesms.pro.ProDataState
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
 import org.thoughtcrime.securesms.ui.SimpleDialogData
@@ -64,8 +60,8 @@ import org.thoughtcrime.securesms.util.AnimatedImageUtils
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.ClearDataUtils
+import org.thoughtcrime.securesms.util.DonationManager.Companion.URL_DONATE
 import org.thoughtcrime.securesms.util.NetworkConnectivity
-import org.thoughtcrime.securesms.util.State
 import org.thoughtcrime.securesms.util.mapToStateFlow
 import java.io.File
 import java.io.IOException
@@ -100,9 +96,8 @@ class SettingsViewModel @Inject constructor(
         hasPath = true,
         version = getVersionNumber(),
         recoveryHidden = prefs.getHidePassword(),
-        isPro = selfRecipient.value.proStatus.isPro(),
         isPostPro = proStatusManager.isPostPro(),
-        subscriptionState = getDefaultSubscriptionStateData(),
+        proDataState = getDefaultSubscriptionStateData(),
     ))
     val uiState: StateFlow<UIState>
         get() = _uiState
@@ -115,7 +110,6 @@ class SettingsViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             username = recipient.displayName(attachesBlindedId = false),
-                            isPro = recipient.proStatus.isPro(),
                         )
                     }
                 }
@@ -123,8 +117,8 @@ class SettingsViewModel @Inject constructor(
 
         // observe subscription status
         viewModelScope.launch {
-            proStatusManager.subscriptionState.collect { state ->
-                _uiState.update { it.copy(subscriptionState = state) }
+            proStatusManager.proDataState.collect { state ->
+                _uiState.update { it.copy(proDataState = state) }
             }
         }
 
@@ -268,7 +262,7 @@ class SettingsViewModel @Inject constructor(
             ?: return Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
 
         // if the selected avatar is animated but the user isn't pro, show the animated pro CTA
-        if (tempAvatar.isAnimated && !selfRecipient.value.proStatus.isPro() && proStatusManager.isPostPro()) {
+        if (tempAvatar.isAnimated && !selfRecipient.value.isPro && proStatusManager.isPostPro()) {
             showAnimatedProCTA()
             return
         }
@@ -396,7 +390,7 @@ class SettingsViewModel @Inject constructor(
 
     private fun clearData(clearNetwork: Boolean) {
         val currentClearState = uiState.value.clearDataDialog
-        val isPro = selfRecipient.value.proStatus.isPro()
+        val isPro = selfRecipient.value.isPro
         // show loading
         _uiState.update { it.copy(clearDataDialog = ClearDataState.Clearing) }
 
@@ -597,54 +591,7 @@ class SettingsViewModel @Inject constructor(
                 viewModelScope.launch {
                     inAppReviewManager.onEvent(InAppReviewManager.Event.DonateButtonClicked)
                 }
-                showUrlDialog( "https://session.foundation/donate#app")
-            }
-
-            is Commands.ShowProErrorOrLoading -> {
-                when(_uiState.value.subscriptionState.refreshState){
-                    // if we are in a loading or refresh state we should show a dialog instead
-                    is State.Loading -> {
-                        _uiState.update {
-                            it.copy(
-                                showSimpleDialog = SimpleDialogData(
-                                    title = Phrase.from(context.getText(R.string.proStatusLoading))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                        .format().toString(),
-                                    message = Phrase.from(context.getText(R.string.proStatusLoadingDescription))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                        .format(),
-                                    positiveText = context.getString(R.string.okay),
-                                    positiveStyleDanger = false,
-                                )
-                            )
-                        }
-                    }
-
-                    is State.Error -> {
-                        _uiState.update {
-                            it.copy(
-                                showSimpleDialog = SimpleDialogData(
-                                    title = Phrase.from(context.getText(R.string.proStatusError))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                        .format().toString(),
-                                    message = Phrase.from(context.getText(R.string.proStatusRefreshNetworkError))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                        .format(),
-                                    positiveText = context.getString(R.string.retry),
-                                    negativeText = context.getString(R.string.helpSupport),
-                                    positiveStyleDanger = false,
-                                    showXIcon = true,
-                                    onPositive = { refreshSubscriptionData() },
-                                    onNegative = {
-                                        showUrlDialog(ProStatusManager.URL_PRO_SUPPORT)
-                                    }
-                                )
-                            )
-                        }
-                    }
-
-                    else -> {}
-                }
+                showUrlDialog(URL_DONATE)
             }
 
             is Commands.HideSimpleDialog -> {
@@ -704,9 +651,8 @@ class SettingsViewModel @Inject constructor(
         val showAnimatedProCTA: Boolean = false,
         val usernameDialog: UsernameDialogData? = null,
         val showSimpleDialog: SimpleDialogData? = null,
-        val isPro: Boolean,
         val isPostPro: Boolean,
-        val subscriptionState: SubscriptionState,
+        val proDataState: ProDataState,
     )
 
     sealed interface Commands {
@@ -732,8 +678,6 @@ class SettingsViewModel @Inject constructor(
         data object HideSimpleDialog: Commands
 
         data object OnDonateClicked: Commands
-
-        data object ShowProErrorOrLoading: Commands
 
         data class ClearData(val clearNetwork: Boolean): Commands
     }

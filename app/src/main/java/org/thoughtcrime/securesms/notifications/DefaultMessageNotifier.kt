@@ -31,8 +31,6 @@ import org.session.libsession.messaging.sending_receiving.notifications.MessageN
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ServiceUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
-import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getNotificationPrivacy
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isNotificationsEnabled
 import org.session.libsession.utilities.TextSecurePreferences.Companion.removeHasHiddenMessageRequests
@@ -41,8 +39,8 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
-import org.thoughtcrime.securesms.crypto.KeyPairUtilities.getUserED25519KeyPair
 import org.thoughtcrime.securesms.database.MmsSmsColumns.NOTIFIED
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
@@ -75,8 +73,8 @@ class DefaultMessageNotifier @Inject constructor(
     private val threadDatabase: ThreadDatabase,
     private val recipientRepository: RecipientRepository,
     private val mmsSmsDatabase: MmsSmsDatabase,
-    private val textSecurePreferences: TextSecurePreferences,
     private val imageLoader: Provider<ImageLoader>,
+    private val loginStateRepository: LoginStateRepository,
 ) : MessageNotifier {
     override fun setVisibleThread(threadId: Long) {
         visibleThread = threadId
@@ -204,7 +202,7 @@ class DefaultMessageNotifier @Inject constructor(
             incomingCursor  = mmsSmsDatabase.getUnreadIncomingForNotifications(MAX_ROWS)
             reactionsCursor = mmsSmsDatabase.getOutgoingWithUnseenReactionsForNotifications(MAX_ROWS)
 
-            val localNumber = textSecurePreferences.getLocalNumber()
+            val localNumber = loginStateRepository.peekLoginState()?.accountId?.hexString
             val hasIncoming  = incomingCursor  != null && incomingCursor.count  > 0
             val hasReactions = reactionsCursor != null && reactionsCursor.count > 0
             val nothingToDo  = !hasIncoming && !hasReactions
@@ -601,7 +599,7 @@ class DefaultMessageNotifier @Inject constructor(
             // Check notification settings
             if (threadRecipients?.notifyType == NotifyType.NONE) continue
 
-            val userPublicKey = getLocalNumber(context)
+            val userPublicKey = loginStateRepository.requireLocalNumber()
 
             // Check mentions-only setting
             if (threadRecipients?.notifyType == NotifyType.MENTIONS) {
@@ -803,7 +801,7 @@ class DefaultMessageNotifier @Inject constructor(
     private fun generateBlindedId(threadId: Long, context: Context): String? {
         val threadRecipient = recipientRepository.getRecipientSync(threadDatabase.getRecipientForThreadId(threadId) ?: return null)
         val serverPubKey = (threadRecipient.data as? RecipientData.Community)?.serverPubKey
-        val edKeyPair = getUserED25519KeyPair(context)
+        val edKeyPair = loginStateRepository.peekLoginState()?.accountEd25519KeyPair
         if (serverPubKey != null && edKeyPair != null) {
             val blindedKeyPair = BlindKeyAPI.blind15KeyPairOrNull(
                 ed25519SecretKey = edKeyPair.secretKey.data,

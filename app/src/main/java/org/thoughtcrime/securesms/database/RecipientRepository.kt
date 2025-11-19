@@ -1,11 +1,12 @@
 package org.thoughtcrime.securesms.database
 
 import androidx.collection.LruCache
+import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
@@ -15,13 +16,14 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.time.delay
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
@@ -29,6 +31,7 @@ import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.messaging.open_groups.OpenGroupApi
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -37,7 +40,6 @@ import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.getGroup
-import org.session.libsession.utilities.recipients.ProStatus
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
@@ -46,10 +48,12 @@ import org.session.libsession.utilities.toGroupString
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.RecipientSettings
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.groups.GroupMemberComparator
+import org.thoughtcrime.securesms.pro.db.ProDatabase
 import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
 import java.lang.ref.WeakReference
 import java.time.Duration
@@ -70,12 +74,15 @@ import javax.inject.Singleton
 @Singleton
 class RecipientRepository @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
+    private val prefs: TextSecurePreferences,
     private val groupDatabase: GroupDatabase,
     private val recipientSettingsDatabase: RecipientSettingsDatabase,
-    private val preferences: TextSecurePreferences,
     private val blindedIdMappingRepository: BlindMappingRepository,
     private val communityDatabase: CommunityDatabase,
+    private val loginStateRepository: LoginStateRepository,
     @param:ManagerScope private val managerScope: CoroutineScope,
+    private val proDatabase: ProDatabase,
+    private val snodeClock: Lazy<SnodeClock>,
 ) {
     private val recipientFlowCache = LruCache<Address, WeakReference<SharedFlow<Recipient>>>(512)
 
@@ -92,19 +99,23 @@ class RecipientRepository @Inject constructor(
         return newFlow
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun observeSelf(): Flow<Recipient> {
-        return preferences.watchLocalNumber()
-            .flatMapLatest {
-                if (it.isNullOrBlank()) {
+        return loginStateRepository
+            .loggedInState
+            .map { it?.accountId }
+            .distinctUntilChanged()
+            .flatMapLatest { accountId ->
+                if (accountId == null) {
                     emptyFlow()
                 } else {
-                    observeRecipient(it.toAddress())
+                    observeRecipient(accountId.toAddress())
                 }
             }
     }
 
     fun getSelf(): Recipient {
-        return getRecipientSync(preferences.getLocalNumber()!!.toAddress())
+        return getRecipientSync(loginStateRepository.requireLocalAccountId().toAddress())
     }
 
     // This function creates a flow that emits the recipient information for the given address,
@@ -118,11 +129,18 @@ class RecipientRepository @Inject constructor(
                     settingsFetcher = {
                         withContext(Dispatchers.Default) { recipientSettingsDatabase.getSettings(it) }
                     },
-                    communityFetcher = { withContext(Dispatchers.Default) { communityDatabase.getRoomInfo(it) } }
+                    communityFetcher = {
+                        withContext(Dispatchers.Default) {
+                            communityDatabase.getRoomInfo(
+                                it
+                            )
+                        }
+                    },
+                    needFlow = true,
                 )
 
                 emit(value)
-                val evt = changeSource.debounce(200).first()
+                val evt = changeSource!!.debounce(200).first()
                 Log.d(TAG, "Recipient changed for ${address.debugString}, triggering event: $evt")
             }
 
@@ -134,75 +152,131 @@ class RecipientRepository @Inject constructor(
         )
     }
 
+    /**
+     * A context object to collect data during the fetchRecipient process. For now we only
+     * collect [RecipientSettings.ProData], this is needed because some recipient (like groups) have
+     * multiple sub-recipients, and each of them may have their own pro data.
+     * We then collect all the pro data and perform a final calculation at the end of [fetchRecipient].
+     */
+    private class FetchRecipientContext {
+        var proDataList: MutableList<RecipientSettings.ProData>? = null
+
+        fun addProData(proData: RecipientSettings.ProData?) {
+            if (proData == null) {
+                return
+            }
+
+            if (proDataList == null) {
+                proDataList = mutableListOf()
+            }
+
+            proDataList!!.add(proData)
+        }
+    }
+
     private inline fun fetchRecipient(
         address: Address,
         settingsFetcher: (Address) -> RecipientSettings,
         communityFetcher: (Address.Community) -> OpenGroupApi.RoomInfo?,
-    ): Pair<Recipient, Flow<*>> {
-        val recipientData =
-            address.toBlinded()?.let { blindedIdMappingRepository.findMappings(it).firstOrNull()?.second }
-                ?.let(this::getDataFromConfig)
-                ?: getDataFromConfig(address)
+        needFlow: Boolean,
+    ): Pair<Recipient, Flow<*>?> {
+        val now = snodeClock.get().currentTime()
 
-        val changeSource: Flow<*>
+        val fetchRecipientContext = FetchRecipientContext()
+
+        // Fetch data from config first, this may contain partial information for some kind of recipient
+        val configData = getDataFromConfig(
+            address = address.toBlinded()
+                ?.let { blindedIdMappingRepository.findMappings(it).firstOrNull()?.second } ?: address,
+            fetchRecipientContext = fetchRecipientContext
+        )
+
+        val changeSources: MutableList<Flow<*>>?
         val value: Recipient
 
-        when (recipientData) {
+        when (configData) {
             is RecipientData.Self -> {
-                value = createLocalRecipient(address, recipientData)
-                changeSource = merge(
-                    configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_PROFILE)),
-                    TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO }
-                )
+                value = createLocalRecipient(address, configData)
+                changeSources = if (needFlow) {
+                    arrayListOf(
+                        configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_PROFILE)),
+                        TextSecurePreferences.events.filter {
+                            it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO
+                                    || it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS
+                        },
+                        proDatabase.currentProProofChangesNotification,
+                    )
+                } else {
+                    null
+                }
             }
 
             is RecipientData.BlindedContact -> {
-                value = Recipient(
-                    address = address,
-                    data = recipientData,
-                )
+                value = Recipient(address = address, data = configData)
 
-                changeSource = merge(
-                    configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.CONTACTS)),
-                    TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_OTHER_USERS_PRO }
-                )
+                changeSources = if (needFlow) {
+                    arrayListOf(
+                        configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.CONTACTS)),
+                        TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_OTHER_USERS_PRO },
+                        proDatabase.revocationChangeNotification,
+                    )
+                } else {
+                    null
+                }
             }
 
             is RecipientData.Contact -> {
                 value = createContactRecipient(
                     address = address,
-                    basic = recipientData,
+                    configData = configData,
                     fallbackSettings = settingsFetcher(address)
                 )
 
-                changeSource = merge(
-                    configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.CONTACTS)),
-                    recipientSettingsDatabase.changeNotification.filter { it == address },
-                    TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_OTHER_USERS_PRO }
-                )
+                changeSources = if (needFlow) {
+                    arrayListOf(
+                        configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.CONTACTS)),
+                        recipientSettingsDatabase.changeNotification.filter { it == address },
+                        TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_OTHER_USERS_PRO },
+                        proDatabase.revocationChangeNotification,
+                    )
+                } else {
+                    null
+                }
             }
 
-            is RecipientData.PartialGroup -> {
+            is RecipientData.Group -> {
                 value = createGroupV2Recipient(
                     address = address,
-                    partial = recipientData,
+                    now = now,
+                    fetchRecipientContext = fetchRecipientContext,
+                    configData = configData,
                     settings = settingsFetcher(address),
-                    settingsFetcher = settingsFetcher
+                    settingsFetcher = settingsFetcher,
                 )
 
-                val memberAddresses = recipientData.members.mapTo(hashSetOf()) { it.address }
+                val memberAddresses = configData.members.mapTo(hashSetOf()) { it.address }
 
-                changeSource = merge(
-                    configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_GROUPS)),
-                    configFactory.configUpdateNotifications
-                        .filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
-                        .filter { it.groupId.hexString == address.address },
-                    recipientSettingsDatabase.changeNotification.filter { it == address || memberAddresses.contains(it) },
-                    TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_OTHER_USERS_PRO }
-                )
+                changeSources = if (needFlow) {
+                    arrayListOf(
+                        configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_GROUPS)),
+                        configFactory.configUpdateNotifications
+                            .filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
+                            .filter { it.groupId.hexString == address.address },
+                        recipientSettingsDatabase.changeNotification.filter {
+                            it == address || memberAddresses.contains(
+                                it
+                            )
+                        },
+                        TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_OTHER_USERS_PRO },
+                        proDatabase.revocationChangeNotification,
+                        proDatabase.currentProProofChangesNotification,
+                    )
+                } else {
+                    null
+                }
             }
 
-            null -> {
+            else -> {
                 // Given address is not backed by the config system so we'll get them from
                 // local database.
                 // If this is a community inbox, we'll load the underlying blinded recipient settings
@@ -226,14 +300,35 @@ class RecipientRepository @Inject constructor(
 
                         val memberAddresses = group?.members?.toSet().orEmpty()
 
-                        changeSource = merge(
-                            groupDatabase.updateNotification,
-                            recipientSettingsDatabase.changeNotification.filter { it == address || it in memberAddresses },
-                            configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_GROUPS)),
+                        changeSources = if (needFlow) {
+                            arrayListOf(
+                                groupDatabase.updateNotification,
+                                recipientSettingsDatabase.changeNotification.filter { it == address || it in memberAddresses },
+                                configFactory.userConfigsChanged(
+                                    onlyConfigTypes = EnumSet.of(
+                                        UserConfigType.USER_GROUPS
+                                    )
+                                ),
+                            )
+                        } else {
+                            null
+                        }
+                        value = group?.let {
+                            createLegacyGroupRecipient(
+                                now = now,
+                                fetchRecipientContext = fetchRecipientContext,
+                                address = address,
+                                config = groupConfig,
+                                group = it,
+                                settings = settings,
+                                settingsFetcher = settingsFetcher
+                            )
+                        } ?: createGenericRecipient(
+                            address = address,
+                            now = now,
+                            fetchRecipientContext = fetchRecipientContext,
+                            settings = settings
                         )
-
-                        value = group?.let { createLegacyGroupRecipient(address, groupConfig, it, settings, settingsFetcher) }
-                            ?: createGenericRecipient(address, settings)
                     }
 
                     is Address.Community -> {
@@ -246,20 +341,34 @@ class RecipientRepository @Inject constructor(
                                 roomInfo = communityFetcher(address),
                                 settings = settings
                             )
-                        } ?: createGenericRecipient(address, settings)
-
-                        changeSource = merge(
-                            recipientSettingsDatabase.changeNotification.filter { it == address },
-                            communityDatabase.changeNotification.filter { it == address },
-                            configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_GROUPS)),
+                        } ?: createGenericRecipient(
+                            address = address,
+                            now = now,
+                            fetchRecipientContext = fetchRecipientContext,
+                            settings = settings
                         )
+
+                        changeSources = if (needFlow) {
+                            arrayListOf(
+                                recipientSettingsDatabase.changeNotification.filter { it == address },
+                                communityDatabase.changeNotification.filter { it == address },
+                                configFactory.userConfigsChanged(
+                                    onlyConfigTypes = EnumSet.of(
+                                        UserConfigType.USER_GROUPS
+                                    )
+                                ),
+                            )
+                        } else {
+                            null
+                        }
                     }
 
                     is Address.Standard -> {
                         // If we are a standard address, last attempt to find the
                         // recipient inside all closed groups' member list
                         // members:
-                        val allGroups = configFactory.withUserConfigs { it.userGroups.allClosedGroupInfo() }
+                        val allGroups =
+                            configFactory.withUserConfigs { it.userGroups.allClosedGroupInfo() }
                         value = allGroups
                             .asSequence()
                             .mapNotNull { groupInfo ->
@@ -268,50 +377,100 @@ class RecipientRepository @Inject constructor(
                                 }?.let(RecipientData::GroupMemberInfo)
                             }
                             .firstOrNull()
-                            ?.let { groupMember -> fetchGroupMember(groupMember, settingsFetcher) }
-                            ?: createGenericRecipient(address, settings)
+                            ?.let { groupMember ->
+                                fetchGroupMember(
+                                    now = now,
+                                    fetchRecipientContext = fetchRecipientContext,
+                                    member = groupMember,
+                                    settingsFetcher = settingsFetcher
+                                )
+                            }
+                            ?: createGenericRecipient(
+                                address = address,
+                                now = now,
+                                fetchRecipientContext = fetchRecipientContext,
+                                settings = settings
+                            )
 
-                        changeSource = merge(
-                            configFactory.configUpdateNotifications.filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
-                                .filter { it.groupId == address.accountId },
-                            configFactory.userConfigsChanged(),
-                            recipientSettingsDatabase.changeNotification.filter { it == address },
-                            TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_OTHER_USERS_PRO }
-                        )
+                        changeSources = if (needFlow) {
+                            arrayListOf(
+                                configFactory.configUpdateNotifications.filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
+                                    .filter { it.groupId == address.accountId },
+                                configFactory.userConfigsChanged(),
+                                recipientSettingsDatabase.changeNotification.filter { it == address },
+                                TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_OTHER_USERS_PRO },
+                                proDatabase.currentProProofChangesNotification,
+                            )
+                        } else {
+                            null
+                        }
                     }
 
                     else -> {
-                        value = createGenericRecipient(address, settings)
-                        changeSource = merge(
-                            recipientSettingsDatabase.changeNotification.filter { it == address },
-                            TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_OTHER_USERS_PRO }
+                        value = createGenericRecipient(
+                            address = address,
+                            now = now,
+                            fetchRecipientContext = fetchRecipientContext,
+                            settings = settings
                         )
+
+                        changeSources = if (needFlow) {
+                            arrayListOf(
+                                recipientSettingsDatabase.changeNotification.filter { it == address },
+                                TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_OTHER_USERS_PRO },
+                                proDatabase.currentProProofChangesNotification,
+                            )
+                        } else {
+                            null
+                        }
                     }
                 }
             }
         }
 
-        val updatedChangeSource = (value.proStatus as? ProStatus.Pro)
-            ?.validUntil
-            ?.let { validUntil ->
-                val now = Instant.now()
-                if (validUntil >= now) {
-                    return@let merge(
-                        changeSource,
-                        flow {
-                            delay(Duration.between(now, validUntil))
-
-                            // Emit anything to trigger a recipient update
-                            emit("ProStatus validity change")
-                        }
-                    )
-                }
-
-                changeSource
+        // Calculate the ProData for this recipient
+        val proDataList = fetchRecipientContext.proDataList
+        var proData = if (!proDataList.isNullOrEmpty()) {
+            proDataList.removeAll {
+                it.isExpired(now) || proDatabase.isRevoked(it.genIndexHash)
             }
-            ?: changeSource
 
-        return value to updatedChangeSource
+            // The pro data that goes into the recipient, should show the one with the most information
+            proDataList.firstOrNull { it.showProBadge }?.let {
+                RecipientData.ProData(it.showProBadge)
+            }
+        } else {
+            null
+        }
+
+        // Debug overrides from preferences
+        if (value.isSelf && proData == null && prefs.forceCurrentUserAsPro()) {
+            proData = RecipientData.ProData(showProBadge = true)
+        } else if (!value.isSelf
+            && (value.address is Address.Standard || value.address is Address.Group)
+            && proData == null
+            && prefs.forceOtherUsersAsPro()) {
+            proData = RecipientData.ProData(showProBadge = true)
+        }
+
+        val updatedValue = if (value.data.proData != proData && proData != null) {
+            value.copy(data = value.data.setProData(proData))
+        } else {
+            value
+        }
+
+        if (changeSources != null && !proDataList.isNullOrEmpty()) {
+            // If we have valid pro data, we need to add a flow to trigger a re-fetch when
+            // the earliest pro proof expires.
+            val earliestProExpiry = proDataList.minOf { it.expiry }
+
+            val delayMills = Duration.between(now, earliestProExpiry).toMillis()
+            // Add a flow that triggers when the pro proof expires
+            changeSources.add(flowOf("Pro proof expires")
+                .onStart { delay(delayMills) })
+        }
+
+        return updatedValue to changeSources?.let { merge(*it.toTypedArray()) }
     }
 
     /**
@@ -319,10 +478,12 @@ class RecipientRepository @Inject constructor(
      * for a group member purpose.
      */
     private inline fun fetchGroupMember(
+        now: Instant,
+        fetchRecipientContext: FetchRecipientContext?,
         member: RecipientData.GroupMemberInfo,
-        settingsFetcher: (address: Address) -> RecipientSettings,
+        settingsFetcher: (address: Address) -> RecipientSettings
     ): Recipient {
-        return when (val configData = getDataFromConfig(member.address)) {
+        return when (val configData = getDataFromConfig(member.address, fetchRecipientContext)) {
             is RecipientData.Self -> {
                 createLocalRecipient(member.address, configData)
             }
@@ -330,7 +491,7 @@ class RecipientRepository @Inject constructor(
             is RecipientData.Contact -> {
                 createContactRecipient(
                     address = member.address,
-                    basic = configData,
+                    configData = configData,
                     fallbackSettings = settingsFetcher(member.address)
                 )
             }
@@ -340,8 +501,10 @@ class RecipientRepository @Inject constructor(
                 // with the settings fetched from the database.
                 createGenericRecipient(
                     address = member.address,
+                    now = now,
+                    fetchRecipientContext = fetchRecipientContext,
                     settings = settingsFetcher(member.address),
-                    groupMemberInfo = member,
+                    groupMemberInfo = member
                 )
             }
         }
@@ -349,9 +512,11 @@ class RecipientRepository @Inject constructor(
 
     private inline fun fetchLegacyGroupMember(
         address: Address.Standard,
+        now: Instant,
+        fetchRecipientContext: FetchRecipientContext?,
         settingsFetcher: (address: Address) -> RecipientSettings,
     ): Recipient {
-        return when (val configData = getDataFromConfig(address)) {
+        return when (val configData = getDataFromConfig(address, fetchRecipientContext)) {
             is RecipientData.Self -> {
                 createLocalRecipient(address, configData)
             }
@@ -359,7 +524,7 @@ class RecipientRepository @Inject constructor(
             is RecipientData.Contact -> {
                 createContactRecipient(
                     address = address,
-                    basic = configData,
+                    configData = configData,
                     fallbackSettings = settingsFetcher(address)
                 )
             }
@@ -369,6 +534,8 @@ class RecipientRepository @Inject constructor(
                 // with the settings fetched from the database.
                 createGenericRecipient(
                     address = address,
+                    now = now,
+                    fetchRecipientContext = fetchRecipientContext,
                     settings = settingsFetcher(address),
                 )
             }
@@ -390,7 +557,8 @@ class RecipientRepository @Inject constructor(
         return fetchRecipient(
             address = address,
             settingsFetcher = recipientSettingsDatabase::getSettings,
-            communityFetcher = communityDatabase::getRoomInfo
+            communityFetcher = communityDatabase::getRoomInfo,
+            needFlow = false,
         ).first
     }
 
@@ -400,28 +568,46 @@ class RecipientRepository @Inject constructor(
      * Note that some of the data might not be available in the config system so it's your
      * responsibility to fill in the gaps if needed.
      */
-    private fun getDataFromConfig(address: Address): RecipientData.ConfigBased? {
+    private fun getDataFromConfig(
+        address: Address,
+        fetchRecipientContext: FetchRecipientContext?
+    ): RecipientData? {
         return when (address) {
             is Address.Standard -> {
                 // Is this our own address?
-                if (address.address.equals(preferences.getLocalNumber(), ignoreCase = true)) {
+                if (address.address.equals(
+                        loginStateRepository.requireLocalNumber(),
+                        ignoreCase = true
+                    )
+                ) {
+                    //TODO: The pro data will come from config later, now we are getting it
+                    // from local db
+                    fetchRecipientContext?.let { ctx ->
+                        proDatabase.getCurrentProProof()?.let { proof ->
+                            ctx.addProData(RecipientSettings.ProData(
+                                expiry = Instant.ofEpochMilli(proof.expiryMs),
+                                genIndexHash = proof.genIndexHashHex,
+                                showProBadge = true
+                            ))
+                        }
+                    }
+
                     configFactory.withUserConfigs { configs ->
                         RecipientData.Self(
                             name = configs.userProfile.getName().orEmpty(),
                             avatar = configs.userProfile.getPic().toRemoteFile(),
                             expiryMode = configs.userProfile.getNtsExpiry(),
                             priority = configs.userProfile.getNtsPriority(),
-                            proStatus = if (preferences.forceCurrentUserAsPro()) {
-                                ProStatus.Pro()
-                            } else {
-                                // TODO: Get pro status from config
-                                ProStatus.None
-                            },
-                            profileUpdatedAt = null
+                            proData = null, // final ProData will be calculated later
+                            profileUpdatedAt = null,
                         )
                     }
                 } else {
                     // Is this a contact?
+
+                    //TODO: Collect pro status
+                    //fetchRecipientContext?.addProData(...)
+
                     configFactory.withUserConfigs { configs ->
                         configs.contacts.get(address.accountId.hexString)
                     }?.let { contact ->
@@ -434,12 +620,7 @@ class RecipientRepository @Inject constructor(
                             blocked = contact.blocked,
                             expiryMode = contact.expiryMode,
                             priority = contact.priority,
-                            proStatus = if (preferences.forceOtherUsersAsPro()) {
-                                ProStatus.Pro()
-                            } else {
-                                //TODO: Get contact's pro status from config
-                                ProStatus.None
-                            },
+                            proData = null, // final ProData will be calculated later
                             profileUpdatedAt = contact.profileUpdatedEpochSeconds.secondsToInstant(),
                         )
                     }
@@ -450,25 +631,32 @@ class RecipientRepository @Inject constructor(
             // Is this a group?
             is Address.Group -> {
                 val groupInfo = configFactory.getGroup(address.accountId) ?: return null
-                val groupMemberComparator = GroupMemberComparator(AccountId(preferences.getLocalNumber()!!))
+                val groupMemberComparator =
+                    GroupMemberComparator(loginStateRepository.requireLocalAccountId())
+
+                //TODO: Collect pro status
+                //fetchRecipientContext?.addProData(...)
+
                 configFactory.withGroupConfigs(address.accountId) { configs ->
-                    RecipientData.PartialGroup(
+                    RecipientData.Group(
                         avatar = configs.groupInfo.getProfilePic().toRemoteFile(),
                         expiryMode = configs.groupInfo.expiryMode,
                         name = configs.groupInfo.getName() ?: groupInfo.name,
-                        proStatus = if (preferences.forceOtherUsersAsPro()) ProStatus.Pro() else {
-                            // TODO: Get group's pro status from config?
-                            ProStatus.None
-                        },
+                        proData = null, // final ProData will be calculated later
                         description = configs.groupInfo.getDescription(),
                         members = configs.groupMembers.all()
                             .asSequence()
                             .map(RecipientData::GroupMemberInfo)
                             .sortedWith { o1, o2 ->
-                                groupMemberComparator.compare(o1.address.accountId, o2.address.accountId)
+                                groupMemberComparator.compare(
+                                    o1.address.accountId,
+                                    o2.address.accountId
+                                )
                             }
                             .toList(),
                         groupInfo = groupInfo,
+                        firstMember = null,
+                        secondMember = null,
                     )
                 }
             }
@@ -477,18 +665,18 @@ class RecipientRepository @Inject constructor(
             is Address.Blinded,
             is Address.CommunityBlindedId -> {
                 val blinded = address.toBlinded() ?: return null
-                val contact = configFactory.withUserConfigs { it.contacts.getBlinded(blinded.blindedId.hexString) } ?: return null
+                val contact =
+                    configFactory.withUserConfigs { it.contacts.getBlinded(blinded.blindedId.hexString) }
+                        ?: return null
+
+                //TODO: Collect pro status
+                //fetchRecipientContext?.addProData(...)
 
                 RecipientData.BlindedContact(
                     displayName = contact.name,
                     avatar = contact.profilePic.toRemoteFile(),
                     priority = contact.priority,
-                    proStatus = if (preferences.forceOtherUsersAsPro()) {
-                        ProStatus.Pro()
-                    } else {
-                        //TODO: Get blinded contact's pro status from?
-                        ProStatus.None
-                    },
+                    proData = null, // final ProData will be calculated later
 
                     // This information is not available in the config but we infer that
                     // if you already have this person as blinded contact, you would have been
@@ -509,6 +697,8 @@ class RecipientRepository @Inject constructor(
      */
     private fun createGenericRecipient(
         address: Address,
+        now: Instant,
+        fetchRecipientContext: FetchRecipientContext?,
         settings: RecipientSettings,
         // Additional data for group members, if available.
         groupMemberInfo: RecipientData.GroupMemberInfo? = null,
@@ -517,16 +707,17 @@ class RecipientRepository @Inject constructor(
             "Address must match the group member info address if provided."
         }
 
+        if (settings.proData != null && fetchRecipientContext != null) {
+            fetchRecipientContext.addProData(settings.proData)
+        }
+
         return Recipient(
             address = address,
             data = RecipientData.Generic(
-                displayName = settings.name?.takeIf { it.isNotBlank() } ?: groupMemberInfo?.name.orEmpty(),
-                avatar = settings.profilePic?.toRemoteFile() ?: groupMemberInfo?.profilePic?.toRemoteFile(),
-                proStatus = if (preferences.forceOtherUsersAsPro()) {
-                    ProStatus.Pro()
-                } else {
-                    settings.proStatus
-                },
+                displayName = settings.name?.takeIf { it.isNotBlank() }
+                    ?: groupMemberInfo?.name.orEmpty(),
+                avatar = settings.profilePic?.toRemoteFile()
+                    ?: groupMemberInfo?.profilePic?.toRemoteFile(),
                 acceptsBlindedCommunityMessageRequests = !settings.blocksCommunityMessagesRequests,
             ),
             mutedUntil = settings.muteUntil,
@@ -537,19 +728,20 @@ class RecipientRepository @Inject constructor(
 
     private inline fun createGroupV2Recipient(
         address: Address,
-        partial: RecipientData.PartialGroup,
+        now: Instant,
+        fetchRecipientContext: FetchRecipientContext?,
+        configData: RecipientData.Group,
         settings: RecipientSettings?,
         settingsFetcher: (Address) -> RecipientSettings,
     ): Recipient {
         return Recipient(
             address = address,
-            data = RecipientData.Group(
-                partial = partial,
-                firstMember = partial.members.firstOrNull()?.let { member ->
-                    fetchGroupMember(member, settingsFetcher)
+            data = configData.copy(
+                firstMember = configData.members.firstOrNull()?.let { member ->
+                    fetchGroupMember(now, fetchRecipientContext, member, settingsFetcher)
                 } ?: getSelf(), // Fallback to have self as first member if no members are present
-                secondMember = partial.members.getOrNull(1)?.let { member ->
-                    fetchGroupMember(member, settingsFetcher)
+                secondMember = configData.members.getOrNull(1)?.let { member ->
+                    fetchGroupMember(now, fetchRecipientContext, member, settingsFetcher)
                 },
             ),
             mutedUntil = settings?.muteUntil,
@@ -559,6 +751,8 @@ class RecipientRepository @Inject constructor(
     }
 
     private inline fun createLegacyGroupRecipient(
+        now: Instant,
+        fetchRecipientContext: FetchRecipientContext?,
         address: Address,
         config: GroupInfo.LegacyGroupInfo?,
         group: GroupRecord, // Local db data
@@ -572,7 +766,7 @@ class RecipientRepository @Inject constructor(
             .toMutableList()
 
 
-        val myAccountId = AccountId(preferences.getLocalNumber()!!)
+        val myAccountId = loginStateRepository.requireLocalAccountId()
         val groupMemberComparator = GroupMemberComparator(myAccountId)
 
         memberAddresses.sortedWith { a1, a2 ->
@@ -592,9 +786,10 @@ class RecipientRepository @Inject constructor(
                     }
                 },
                 firstMember = memberAddresses.firstOrNull()
-                    ?.let { fetchLegacyGroupMember(it, settingsFetcher) }
+                    ?.let { fetchLegacyGroupMember(it, now, fetchRecipientContext, settingsFetcher) }
                     ?: getSelf(),  // Fallback to have self as first member if no members are present
-                secondMember = memberAddresses.getOrNull(1)?.let { fetchLegacyGroupMember(it, settingsFetcher) },
+                secondMember = memberAddresses.getOrNull(1)
+                    ?.let { fetchLegacyGroupMember(it, now, fetchRecipientContext, settingsFetcher) },
                 isCurrentUserAdmin = Address.Standard(myAccountId) in group.admins
             ),
             mutedUntil = settings?.muteUntil,
@@ -604,17 +799,9 @@ class RecipientRepository @Inject constructor(
     }
 
 
-
     companion object {
         private const val TAG = "RecipientRepository"
 
-        private fun createLocalRecipient(address: Address, basic: RecipientData.Self): Recipient {
-            return Recipient(
-                address = address,
-                data = basic,
-                autoDownloadAttachments = true,
-            )
-        }
 
         private val ReadableGroupInfoConfig.expiryMode: ExpiryMode
             get() {
@@ -625,14 +812,22 @@ class RecipientRepository @Inject constructor(
                 }
             }
 
+        private fun createLocalRecipient(address: Address, configData: RecipientData.Self): Recipient {
+            return Recipient(
+                address = address,
+                data = configData,
+                autoDownloadAttachments = true,
+            )
+        }
+
         private fun createContactRecipient(
             address: Address,
-            basic: RecipientData.Contact,
+            configData: RecipientData.Contact,
             fallbackSettings: RecipientSettings?, // Local db data
         ): Recipient {
             return Recipient(
                 address = address,
-                data = basic,
+                data = configData,
                 mutedUntil = fallbackSettings?.muteUntil,
                 autoDownloadAttachments = fallbackSettings?.autoDownloadAttachments,
                 notifyType = fallbackSettings?.notifyType ?: NotifyType.ALL,
