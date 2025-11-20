@@ -16,6 +16,7 @@ import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
+import network.loki.messenger.libsession_util.util.Util
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
@@ -394,7 +395,7 @@ class ReceivedMessageHandler @Inject constructor(
 
             // Verify the incoming message length and truncate it if needed, before saving it to the db
             val maxChars = proStatusManager.getIncomingMessageMaxLength(message)
-            val messageText = message.text?.take(maxChars) // truncate to max char limit for this message
+            val messageText = message.text?.let { Util.truncateCodepoints(it, maxChars) } // truncate to max char limit for this message
             message.text = messageText
             message.hasMention = listOfNotNull(userPublicKey, context.userBlindedKey)
                 .any { key ->

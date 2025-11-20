@@ -7,6 +7,7 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDD
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.ExpiryMode
+import network.loki.messenger.libsession_util.util.Util
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
@@ -147,7 +148,7 @@ class VisibleMessageHandler @Inject constructor(
 
             // Verify the incoming message length and truncate it if needed, before saving it to the db
             val maxChars = proStatusManager.getIncomingMessageMaxLength(message)
-            val messageText = message.text?.take(maxChars) // truncate to max char limit for this message
+            val messageText = message.text?.let { Util.truncateCodepoints(it, maxChars) } // truncate to max char limit for this message
             message.text = messageText
             message.hasMention = (sequenceOf(ctx.currentUserPublicKey) + ctx.getCurrentUserBlindedIDsByThread(threadAddress).asSequence())
                 .any { key ->
