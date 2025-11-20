@@ -144,6 +144,16 @@ class ProSettingsViewModel @AssistedInject constructor(
                                     positiveStyleDanger = false,
                                     showXIcon = true,
                                     onPositive = {
+                                        // show the loader again
+                                        val data = choosePlanState.value
+                                        if(data is State.Success) {
+                                            _choosePlanState.update {
+                                                State.Success(
+                                                    data.value.copy(purchaseInProgress = true)
+                                                )
+                                            }
+                                        }
+
                                         // retry the post purchase code
                                         subscriptionCoordinator.getCurrentManager().onPurchaseSuccessful(
                                             orderId = purchaseEvent.orderId,

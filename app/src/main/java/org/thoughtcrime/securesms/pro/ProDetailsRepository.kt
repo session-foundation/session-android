@@ -17,6 +17,7 @@ import kotlinx.coroutines.selects.onTimeout
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
+import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.api.GetProDetailsRequest
 import org.thoughtcrime.securesms.pro.api.ProApiExecutor
@@ -82,7 +83,7 @@ class ProDetailsRepository @Inject constructor(
                         var retryingAt: Instant? = null
 
                         if (last != null && last.second.plusSeconds(MIN_UPDATE_INTERVAL_SECONDS) >= Instant.now()) {
-                            Log.d(TAG, "Pro details is fresh enough, skipping fetch")
+                            Log.d(DebugLogGroup.PRO_DATA.label, "Pro details is fresh enough, skipping fetch")
                             // Last update was recent enough, skip fetching
                             emit(LoadState.Loaded(last))
                         } else {
@@ -96,14 +97,14 @@ class ProDetailsRepository @Inject constructor(
 
                             // Fetch new details
                             try {
-                                Log.d(TAG, "Start fetching Pro details from backend")
+                                Log.d(DebugLogGroup.PRO_DATA.label, "Start fetching Pro details from backend")
                                 last = apiExecutor.executeRequest(
                                     request = getProDetailsRequestFactory.create(proMasterKey)
                                 ).successOrThrow() to Instant.now()
 
                                 db.updateProDetails(last.first, last.second)
 
-                                Log.d(TAG, "Successfully fetched Pro details from backend")
+                                Log.d(DebugLogGroup.PRO_DATA.label, "Successfully fetched Pro details from backend")
                                 emit(LoadState.Loaded(last))
                                 numRetried = 0
                             } catch (e: Exception) {
@@ -113,7 +114,7 @@ class ProDetailsRepository @Inject constructor(
 
                                 // Exponential backoff for retries, capped at 2 minutes
                                 val delaySeconds = minOf(10L * (1L shl numRetried), 120L)
-                                Log.e(TAG, "Error fetching Pro details from backend, retrying in ${delaySeconds}s", e)
+                                Log.e(DebugLogGroup.PRO_DATA.label, "Error fetching Pro details from backend, retrying in ${delaySeconds}s", e)
 
                                 retryingAt = Instant.now().plusSeconds(delaySeconds)
                                 numRetried++
@@ -124,14 +125,14 @@ class ProDetailsRepository @Inject constructor(
                         // Wait until either a refresh is requested, or it's time to retry
                         select {
                             refreshRequests.onReceiveCatching {
-                                Log.d(TAG, "Manual refresh requested")
+                                Log.d(DebugLogGroup.PRO_DATA.label, "Manual Pro details refresh requested")
                             }
 
                             if (retryingAt != null) {
                                 val delayMillis =
                                     Duration.between(Instant.now(), retryingAt).toMillis()
                                 onTimeout(delayMillis) {
-                                    Log.d(TAG, "Retrying Pro details fetch after delay")
+                                    Log.d(DebugLogGroup.PRO_DATA.label, "Retrying Pro details fetch after delay")
                                 }
                             }
                         }
@@ -145,7 +146,6 @@ class ProDetailsRepository @Inject constructor(
     }
 
     companion object {
-        private const val TAG = "ProDetailsRepository"
         private const val MIN_UPDATE_INTERVAL_SECONDS = 120L
     }
 }

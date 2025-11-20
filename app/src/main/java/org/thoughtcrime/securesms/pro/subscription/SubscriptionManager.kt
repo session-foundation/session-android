@@ -67,9 +67,7 @@ abstract class SubscriptionManager(
         // we need to tie our purchase with the back end
         scope.launch {
             try {
-                //proStatusManager.addProPayment(orderId, paymentId)
-                delay(3000)
-                throw PaymentServerException()
+                proStatusManager.addProPayment(orderId, paymentId)
                 _purchaseEvents.emit(PurchaseEvent.Success)
             } catch (e: Exception) {
                 when (e) {

@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -55,10 +56,12 @@ class ProStatusManager @Inject constructor(
     private val loginState: LoginStateRepository,
     private val proDatabase: ProDatabase,
     private val snodeClock: SnodeClock,
+    private val proDetailsRepository: ProDetailsRepository,
 ) : OnAppStartupComponent {
 
     val proDataState: StateFlow<ProDataState> = combine(
-        recipientRepository.observeSelf(),
+        recipientRepository.observeSelf().map { it.shouldShowProBadge }.distinctUntilChanged(),
+        proDetailsRepository.loadState,
         (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS } as Flow<*>)
             .onStart { emit(Unit) }
             .map { prefs.getDebugSubscriptionType() },
@@ -68,19 +71,26 @@ class ProStatusManager @Inject constructor(
         (TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO } as Flow<*>)
             .onStart { emit(Unit) }
             .map { prefs.forceCurrentUserAsPro() },
-    ){ selfRecipient, debugSubscription, debugProPlanStatus, forceCurrentUserAsPro ->
+    ){ shouldShowProBadge, proDetailsState, debugSubscription, debugProPlanStatus, forceCurrentUserAsPro ->
         val proDataRefreshState = when(debugProPlanStatus){
             DebugMenuViewModel.DebugProPlanStatus.LOADING -> State.Loading
             DebugMenuViewModel.DebugProPlanStatus.ERROR -> State.Error(Exception())
-            else -> State.Success(Unit)
+            else -> {
+                // calculate the real refresh state here
+                when(proDetailsState){
+                    is ProDetailsRepository.LoadState.Loading -> State.Loading
+                    is ProDetailsRepository.LoadState.Error -> State.Error(Exception())
+                    else -> State.Success(Unit)
+                }
+            }
         }
 
         if(!forceCurrentUserAsPro){
             Log.d(DebugLogGroup.PRO_DATA.label, "ProStatusManager: Getting REAL Pro data state")
-            //todo PRO this is where we should get the real state
+
             ProDataState(
-                type = ProStatus.NeverSubscribed,
-                showProBadge = selfRecipient.shouldShowProBadge,
+                type = proDetailsState.lastUpdated?.first?.toProStatus() ?: ProStatus.NeverSubscribed,
+                showProBadge = shouldShowProBadge,
                 refreshState = proDataRefreshState
             )
         }// debug data
@@ -140,7 +150,7 @@ class ProStatusManager @Inject constructor(
                 },
 
                 refreshState = proDataRefreshState,
-                showProBadge = selfRecipient.shouldShowProBadge,
+                showProBadge = shouldShowProBadge,
             )
         }
 
@@ -262,6 +272,8 @@ class ProStatusManager @Inject constructor(
                             Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' successful")
                             // Payment was successfully claimed - save it to the database
                             proDatabase.updateCurrentProProof(paymentResponse.data)
+                            // refresh the pro details
+                            proDetailsRepository.requestRefresh()
                         }
 
                         is ProApiResponse.Failure -> {
