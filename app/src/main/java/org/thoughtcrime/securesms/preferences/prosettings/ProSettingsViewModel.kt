@@ -37,6 +37,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProDataState
+import org.thoughtcrime.securesms.pro.ProDetailsRepository
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
@@ -62,6 +63,7 @@ class ProSettingsViewModel @AssistedInject constructor(
     private val subscriptionCoordinator: SubscriptionCoordinator,
     private val dateUtils: DateUtils,
     private val prefs: TextSecurePreferences,
+    private val proDetailsRepository: ProDetailsRepository,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -142,8 +144,11 @@ class ProSettingsViewModel @AssistedInject constructor(
                                     positiveStyleDanger = false,
                                     showXIcon = true,
                                     onPositive = {
-                                        //todo PRO I shouldn't get the plan from the provider again. I should really only try to redo the backend call
-                                        //getPlanFromProvider() // retry getting the plan from provider
+                                        // retry the post purchase code
+                                        subscriptionCoordinator.getCurrentManager().onPurchaseSuccessful(
+                                            orderId = purchaseEvent.orderId,
+                                            paymentId = purchaseEvent.paymentId
+                                        )
                                     },
                                     onNegative = {
                                         onCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
@@ -283,7 +288,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                                     negativeText = context.getString(R.string.helpSupport),
                                     positiveStyleDanger = false,
                                     showXIcon = true,
-                                    onPositive = { refreshSubscriptionData() },
+                                    onPositive = { refreshProDetails() },
                                     onNegative = {
                                         onCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
                                     }
@@ -363,6 +368,10 @@ class ProSettingsViewModel @AssistedInject constructor(
 
             is Commands.SetShowProBadge -> {
                 //todo PRO implement
+            }
+
+            is Commands.RefeshProDetails -> {
+                refreshProDetails()
             }
 
             is Commands.SelectProPlan -> {
@@ -528,7 +537,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                                     negativeText = context.getString(R.string.helpSupport),
                                     positiveStyleDanger = false,
                                     showXIcon = true,
-                                    onPositive = { refreshSubscriptionData() },
+                                    onPositive = { refreshProDetails() },
                                     onNegative = {
                                         onCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
                                     }
@@ -567,8 +576,9 @@ class ProSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    private fun refreshSubscriptionData(){
-        //todo PRO implement properly
+    private fun refreshProDetails(){
+        // refreshes the pro details data
+        proDetailsRepository.requestRefresh()
     }
 
     private fun getSelectedPlan(): ProPlan? {
@@ -786,6 +796,8 @@ class ProSettingsViewModel @AssistedInject constructor(
 
         data class OnHeaderClicked(val inSheet: Boolean): Commands
         data object OnProStatsClicked: Commands
+
+        data object RefeshProDetails: Commands
     }
 
     data class ProSettingsState(

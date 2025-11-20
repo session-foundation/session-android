@@ -54,13 +54,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.GoToCancel
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.GoToChoosePlan
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.GoToRefund
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.OnHeaderClicked
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.OnProStatsClicked
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.SetShowProBadge
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.pro.ProDataState
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -795,9 +789,9 @@ fun ProManage(
                             .format().toString()
                     ),
                     icon = R.drawable.ic_refresh_cw,
-                    qaTag = R.string.qa_pro_settings_action_request_refund,
+                    qaTag = R.string.qa_pro_settings_action_recover_plan,
                     onClick = {
-                        //todo PRO implement
+                        sendCommand(RefeshProDetails)
                     }
                 )
             }

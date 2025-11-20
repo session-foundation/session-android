@@ -231,8 +231,12 @@ class ProStatusManager @Inject constructor(
         return message.proFeatures
     }
 
+    /**
+     * To be called once a subscription has successfully gone through a provider.
+     * This will link that payment to our back end.
+     */
     @OptIn(ExperimentalCoroutinesApi::class)
-    suspend fun appProPaymentToBackend(orderId: String, paymentId: String) {
+    suspend fun addProPayment(orderId: String, paymentId: String) {
         // max 3 attempts as per PRD
         val maxAttempts = 3
 

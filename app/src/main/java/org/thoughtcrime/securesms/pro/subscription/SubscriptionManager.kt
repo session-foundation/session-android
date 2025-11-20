@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.pro.subscription
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -10,7 +11,6 @@ import kotlinx.coroutines.launch
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import java.time.Instant
 
 /**
  * Represents the implementation details of a given subscription provider
@@ -33,7 +33,7 @@ abstract class SubscriptionManager(
         data object Cancelled : PurchaseEvent
         sealed interface Failed : PurchaseEvent {
             data class GenericError(val errorMessage: String? = null): Failed
-            data object ServerError : Failed
+            data class ServerError(val orderId: String, val paymentId: String) : Failed
         }
     }
 
@@ -63,15 +63,24 @@ abstract class SubscriptionManager(
     /**
      * Function called when a purchased has been made successfully from the subscription api
      */
-    protected fun onPurchaseSuccessful(orderId: String, paymentId: String){
+    fun onPurchaseSuccessful(orderId: String, paymentId: String){
         // we need to tie our purchase with the back end
         scope.launch {
             try {
-                proStatusManager.appProPaymentToBackend(orderId, paymentId)
+                //proStatusManager.addProPayment(orderId, paymentId)
+                delay(3000)
+                throw PaymentServerException()
                 _purchaseEvents.emit(PurchaseEvent.Success)
             } catch (e: Exception) {
                 when (e) {
-                    is PaymentServerException -> _purchaseEvents.emit(PurchaseEvent.Failed.ServerError)
+                    is PaymentServerException -> {
+                        _purchaseEvents.emit(
+                            PurchaseEvent.Failed.ServerError(
+                                orderId = orderId,
+                                paymentId = paymentId
+                            )
+                        )
+                    }
                     else -> _purchaseEvents.emit(PurchaseEvent.Failed.GenericError())
                 }
             }
