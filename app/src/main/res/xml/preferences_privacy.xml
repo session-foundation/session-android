@@ -36,13 +36,11 @@
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/typingIndicators">
-        <org.thoughtcrime.securesms.components.SwitchPreferenceCompat
+        <org.thoughtcrime.securesms.components.TypingIndicatorPreferenceCompat
             android:defaultValue="false"
             android:key="pref_typing_indicators"
             android:title="@string/typingIndicators"
             android:summary="@string/typingIndicatorsDescription" />
-        <!-- TODO ACL: Need to show a live typing indicator here! -->
-
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/linkPreviews">

@@ -871,14 +871,10 @@
     <string name="proActivated">Aktiviert</string>
     <string name="proAlreadyPurchased">Du hast bereits</string>
     <string name="proAnimatedDisplayPicture">Lade GIF- und animierte WebP-Bilder als Profilbild hoch!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">Hole dir animierte Profilbilder und schalte Premium-Funktionen mit {app_pro} frei</string>
     <string name="proAnimatedDisplayPictureFeature">Animiertes Profilbild</string>
     <string name="proAnimatedDisplayPictureModalDescription">Nutzer können GIFs hochladen</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">GIFs hochladen mit</string>
     <string name="proAutoRenewTime">Automatische {pro} Erneuerung in <b>{time}</b></string>
-    <string name="proCallToActionLongerMessages">Du möchtest längere Nachrichten senden? Sende mehr Text und schalte Premium-Funktionen mit {app_pro} frei</string>
-    <string name="proCallToActionPinnedConversations">Mehr Anheftungen gewünscht? Organisiere deine Chats und schalte Premium-Funktionen mit {app_pro} frei</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">Mehr als 5 Anheftungen gewünscht? Organisiere deine Chats und schalte Premium-Funktionen mit {app_pro} frei</string>
     <string name="proExpired">Abgelaufen</string>
     <string name="proFaq">{pro} FAQ</string>
     <string name="proFeatureListAnimatedDisplayPicture">GIF- und WebP-Profilbilder hochladen</string>
@@ -894,7 +890,6 @@
     <string name="proSendMore">Mehr senden mit</string>
     <string name="proStats">Deine {pro} Statistik</string>
     <string name="proTosPrivacy">Durch die Aktualisierung stimmst du den <b>Nutzungsbedingungen</b> {icon} und der <b>Datenschutzerklärung</b> {icon} von {app_pro} zu</string>
-    <string name="proUserProfileModalCallToAction">Willst du mehr aus {app_name} herausholen? Upgrade auf {app_pro} für ein leistungsstärkeres Nachrichten-Erlebnis.</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Anzeigebild</string>
     <string name="profileDisplayPictureRemoveError">Fehler beim Entfernen des Profilbildes.</string>

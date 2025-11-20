@@ -34,6 +34,7 @@ class MessageSendJob @AssistedInject constructor(
     private val messageDataProvider: MessageDataProvider,
     private val storage: StorageProtocol,
     private val configFactory: ConfigFactoryProtocol,
+    private val messageSender: MessageSender,
 ) : Job {
 
     object AwaitingAttachmentUploadException : Exception("Awaiting attachment upload.")
@@ -89,15 +90,15 @@ class MessageSendJob @AssistedInject constructor(
         val isSync = destination is Destination.Contact && destination.publicKey == storage.getUserPublicKey()
 
         try {
-            withTimeout(20_000L) {
-                // Shouldn't send message to group when the group has no keys available
-                if (destination is Destination.ClosedGroup) {
+            // Shouldn't send message to group when the group has no keys available
+            if (destination is Destination.ClosedGroup) {
+                withTimeout(20_000L) {
                     configFactory
                         .waitForGroupEncryptionKeys(AccountId(destination.publicKey))
                 }
-
-                MessageSender.sendNonDurably(this@MessageSendJob.message, destination, isSync)
             }
+
+            messageSender.sendNonDurably(this@MessageSendJob.message, destination, isSync)
 
             this.handleSuccess(dispatcherName)
             statusCallback?.trySend(Result.success(Unit))
@@ -173,7 +174,14 @@ class MessageSendJob @AssistedInject constructor(
         return KEY
     }
 
-    class DeserializeFactory(private val factory: Factory) : Job.DeserializeFactory<MessageSendJob> {
+
+    @AssistedFactory
+    abstract class Factory : Job.DeserializeFactory<MessageSendJob> {
+        abstract fun create(
+            message: Message,
+            destination: Destination,
+            statusCallback: SendChannel<Result<Unit>>? = null
+        ): MessageSendJob
 
         override fun create(data: Data): MessageSendJob? {
             val serializedMessage = data.getByteArray(MESSAGE_KEY)
@@ -201,20 +209,11 @@ class MessageSendJob @AssistedInject constructor(
             }
             destinationInput.close()
             // Return
-            return factory.create(
+            return create(
                 message = message,
                 destination = destination,
                 statusCallback = null
             )
         }
-    }
-
-    @AssistedFactory
-    interface Factory {
-        fun create(
-            message: Message,
-            destination: Destination,
-            statusCallback: SendChannel<Result<Unit>>? = null
-        ): MessageSendJob
     }
 }

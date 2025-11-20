@@ -4,20 +4,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun DebugMenuScreen(
     modifier: Modifier = Modifier,
-    debugMenuViewModel: DebugMenuViewModel = viewModel(),
-    onClose: () -> Unit
+    viewModel: DebugMenuViewModel,
+    onBack: () -> Unit
 ) {
-    val uiState by debugMenuViewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
 
     DebugMenu(
         modifier = modifier,
         uiState = uiState,
-        sendCommand = debugMenuViewModel::onCommand,
-        onClose = onClose
+        sendCommand = viewModel::onCommand,
+        onClose = onBack
     )
 }

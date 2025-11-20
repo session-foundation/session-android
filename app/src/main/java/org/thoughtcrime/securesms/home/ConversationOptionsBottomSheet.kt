@@ -23,6 +23,7 @@ import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.NotifyType
@@ -43,7 +44,7 @@ class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnCli
     @Inject lateinit var deprecationManager: LegacyGroupDeprecationManager
 
     @Inject lateinit var groupDatabase: GroupDatabase
-    @Inject lateinit var textSecurePreferences: TextSecurePreferences
+    @Inject lateinit var loginStateRepository: LoginStateRepository
 
     @Inject lateinit var threadDatabase: ThreadDatabase
 
@@ -169,7 +170,7 @@ class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnCli
                     val group = groupDatabase.getGroup(recipient.address.toString()).orNull()
 
                     val isGroupAdmin = group.admins.map { it.toString() }
-                        .contains(textSecurePreferences.getLocalNumber())
+                        .contains(loginStateRepository.requireLocalNumber())
 
                     if (isGroupAdmin) {
                         text = context.getString(R.string.delete)

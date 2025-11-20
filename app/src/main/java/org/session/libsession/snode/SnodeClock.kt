@@ -87,6 +87,10 @@ class SnodeClock @Inject constructor(
         return currentTimeMills() / 1000
     }
 
+    fun currentTime(): java.time.Instant {
+        return java.time.Instant.ofEpochMilli(currentTimeMills())
+    }
+
     private class Instant(
         val systemUptime: Long,
         val networkTime: Long,

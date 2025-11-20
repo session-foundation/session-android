@@ -1,13 +1,12 @@
 package org.session.libsession.messaging.messages.control
 
-import org.session.libsession.messaging.messages.applyExpiryMode
+import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.messages.copyExpiration
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.ANSWER
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.END_CALL
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.OFFER
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.PRE_OFFER
-import org.session.libsignal.utilities.Log
 import java.util.UUID
 
 class CallMessage(): ControlMessage() {
@@ -77,23 +76,16 @@ class CallMessage(): ControlMessage() {
         }
     }
 
-    override fun toProto(): SignalServiceProtos.Content? {
-        val nonNullType = type ?: run {
-            Log.w(TAG,"Couldn't construct call message request proto from: $this")
-            return null
-        }
-
-        val callMessage = SignalServiceProtos.CallMessage.newBuilder()
-            .setType(nonNullType)
+    protected override fun buildProto(
+        builder: SignalServiceProtos.Content.Builder,
+        messageDataProvider: MessageDataProvider
+    ) {
+        builder.callMessageBuilder
+            .setType(type!!)
             .addAllSdps(sdps)
             .addAllSdpMLineIndexes(sdpMLineIndexes)
             .addAllSdpMids(sdpMids)
             .setUuid(callId!!.toString())
-
-        return SignalServiceProtos.Content.newBuilder()
-            .applyExpiryMode()
-            .setCallMessage(callMessage)
-            .build()
     }
 
     override fun equals(other: Any?): Boolean {

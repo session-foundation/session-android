@@ -151,7 +151,7 @@ fun AlertDialogContent(
                 Icon(
                     painter = painterResource(id = R.drawable.ic_x),
                     tint = LocalColors.current.text,
-                    contentDescription = "back"
+                    contentDescription = stringResource(R.string.close)
                 )
             }
         }
@@ -229,6 +229,8 @@ fun OpenURLAlertDialog(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     url: String,
+    onLinkOpened: (String) -> Unit = {},
+    onLinkCopied: (String) -> Unit = {},
     content: @Composable () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -246,11 +248,15 @@ fun OpenURLAlertDialog(
             DialogButtonData(
                 text = GetString(R.string.open),
                 color = LocalColors.current.danger,
-                onClick = { context.openUrl(url) }
+                onClick = {
+                    onLinkOpened(url)
+                    context.openUrl(url)
+                }
             ),
             DialogButtonData(
                 text = GetString(android.R.string.copyUrl),
                 onClick = {
+                    onLinkCopied(url)
                     context.copyURLToClipboard(url)
                     Toast.makeText(context, R.string.copied, Toast.LENGTH_SHORT).show()
                 }
@@ -450,6 +456,7 @@ fun TCPolicyDialog(
         onDismissRequest = onDismissRequest,
         title = stringResource(R.string.urlOpen),
         text = stringResource(R.string.urlOpenBrowser),
+        showCloseButton = true,
         content = {
             Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
             Cell(

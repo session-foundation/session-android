@@ -15,29 +15,41 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +63,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -62,18 +75,26 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideSubcomposition
 import com.bumptech.glide.integration.compose.RequestState
 import com.squareup.phrase.Phrase
+import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.LIMIT_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsNavHost
+import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.Avatar
-import org.thoughtcrime.securesms.ui.components.FillButtonRect
+import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.TertiaryFillButtonRect
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -82,6 +103,7 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
+import org.thoughtcrime.securesms.util.AvatarBadge
 import org.thoughtcrime.securesms.util.AvatarUIData
 
 
@@ -205,6 +227,10 @@ private fun PreviewProBadgeText(
     }
 }
 
+/**
+ * This composable comprises of the CTA itself
+ * and the bottom sheet with the whole pro settings content
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionProCTA(
@@ -212,100 +238,174 @@ fun SessionProCTA(
     textContent: @Composable ColumnScope.() -> Unit,
     modifier: Modifier = Modifier,
     title: String = stringResource(R.string.upgradeTo),
+    titleColor: Color = LocalColors.current.text,
+    showProBadge: Boolean = true,
     badgeAtStart: Boolean = false,
     disabled: Boolean = false,
     features: List<CTAFeature> = emptyList(),
     positiveButtonText: String? = stringResource(R.string.theContinue),
     negativeButtonText: String? = stringResource(R.string.cancel),
-    onUpgrade: () -> Unit = {},
+    onUpgrade: (() -> Unit)? = null,
     onCancel: () -> Unit = {},
 ){
-    BasicAlertDialog(
-        modifier = modifier,
-        onDismissRequest = onCancel,
-        content = {
-            DialogBg {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    // hero image
-                    BottomFadingEdgeBox(
-                        fadingEdgeHeight = 70.dp,
-                        fadingColor = LocalColors.current.backgroundSecondary,
-                        content = { _ ->
-                            content()
-                        },
-                    )
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
+    val scope = rememberCoroutineScope()
 
-                    // content
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(LocalDimensions.current.smallSpacing)
-                    ) {
-                        // title
-                        ProBadgeText(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            text = title,
-                            badgeAtStart = badgeAtStart,
-                            badgeColors = if(disabled) proBadgeColorDisabled() else proBadgeColorStandard(),
-                        )
+    // We should avoid internal state in a composable but having the bottom sheet
+    // here avoids re-defining the sheet in multiple places in the app
+    var showDialog by remember { mutableStateOf(true) }
+    var showProSheet by remember { mutableStateOf(false) }
 
-                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
+    // default handling of the upgrade button
+    val defaultUpgrade: () -> Unit = {
+        showProSheet = true
+        showDialog = false
+    }
 
-                        // main message
-                        textContent()
+    if(showDialog) {
+        BasicAlertDialog(
+            modifier = modifier,
+            onDismissRequest = onCancel,
+            content = {
+                DialogBg {
+                    BoxWithConstraints(Modifier.fillMaxWidth()) {
+                        val heroMaxHeight = maxHeight * 0.4f
+                        Column(modifier = Modifier.fillMaxWidth()
+                            .verticalScroll(rememberScrollState())) {
+                            // hero image
+                            BottomFadingEdgeBox(
+                                modifier = Modifier.heightIn(max = heroMaxHeight),
+                                fadingEdgeHeight = 70.dp,
+                                fadingColor = LocalColors.current.backgroundSecondary,
+                                content = { _ ->
+                                    content()
+                                },
+                            )
 
-                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
+                            // content
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(LocalDimensions.current.smallSpacing)
+                            ) {
+                                // title
+                                ProBadgeText(
+                                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                                    text = title,
+                                    textStyle = LocalType.current.h5.copy(color = titleColor),
+                                    showBadge = showProBadge,
+                                    badgeAtStart = badgeAtStart,
+                                    badgeColors = if (disabled) proBadgeColorDisabled() else proBadgeColorStandard(),
+                                )
 
-                        // features
-                        if(features.isNotEmpty()) {
-                            features.forEachIndexed { index, feature ->
-                                ProCTAFeature(data = feature)
-                                if (index < features.size - 1) {
-                                    Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
+                                Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
+
+                                // main message
+                                textContent()
+
+                                Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
+
+                                // features
+                                if (features.isNotEmpty()) {
+                                    features.forEachIndexed { index, feature ->
+                                        ProCTAFeature(data = feature)
+                                        if (index < features.size - 1) {
+                                            Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
+                                        }
+                                    }
+
+                                    Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
                                 }
-                            }
 
-                            Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
-                        }
-
-                        // buttons
-                        Row(
-                            Modifier.height(IntrinsicSize.Min)
-                                .fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(
-                                LocalDimensions.current.xsSpacing,
-                                Alignment.CenterHorizontally
-                            ),
-                        ) {
-                            positiveButtonText?.let {
-                                AccentFillButtonRect(
-                                    modifier = Modifier.then(
-                                        if(negativeButtonText != null)
-                                        Modifier.weight(1f)
-                                        else Modifier
-                                    ).shimmerOverlay(),
-                                    text = it,
-                                    onClick = onUpgrade
-                                )
-                            }
-
-                            negativeButtonText?.let {
-                                TertiaryFillButtonRect(
-                                    modifier = Modifier.then(
-                                        if(positiveButtonText != null)
-                                            Modifier.weight(1f)
-                                        else Modifier
+                                // buttons
+                                Row(
+                                    Modifier.height(IntrinsicSize.Min)
+                                        .fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(
+                                        LocalDimensions.current.xsSpacing,
+                                        Alignment.CenterHorizontally
                                     ),
-                                    text = it,
-                                    onClick = onCancel
-                                )
+                                ) {
+                                    positiveButtonText?.let {
+                                        AccentFillButtonRect(
+                                            modifier = Modifier.then(
+                                                if (negativeButtonText != null)
+                                                    Modifier.weight(1f)
+                                                else Modifier
+                                            ).shimmerOverlay(),
+                                            text = it,
+                                            onClick = onUpgrade ?: defaultUpgrade
+                                        )
+                                    }
+
+                                    negativeButtonText?.let {
+                                        TertiaryFillButtonRect(
+                                            modifier = Modifier.then(
+                                                if (positiveButtonText != null)
+                                                    Modifier.weight(1f)
+                                                else Modifier
+                                            ),
+                                            text = it,
+                                            onClick = onCancel
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
+        )
+    }
+
+    if(showProSheet) {
+        val dismissSheet: () -> Unit = {
+            scope.launch {
+                sheetState.hide()
+                onCancel()
+            }
         }
-    )
+
+        BaseBottomSheet(
+            modifier = modifier,
+            sheetState = sheetState,
+            dragHandle = null,
+            onDismissRequest = dismissSheet
+        ) {
+            BoxWithConstraints(modifier = modifier) {
+                val topInset = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding()
+                val maxHeight =
+                    (this.maxHeight - topInset) * 0.85f // sheet should take up 80% of the height, without the status bar
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = maxHeight),
+                    contentAlignment = Alignment.TopCenter
+                ) {
+                    ProSettingsNavHost(
+                        startDestination = ProSettingsDestination.Home,
+                        inSheet = true,
+                        onBack = dismissSheet
+                    )
+
+                    IconButton(
+                        onClick = dismissSheet,
+                        modifier = Modifier.align(Alignment.TopEnd)
+                            .padding(10.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_x),
+                            tint = LocalColors.current.text,
+                            contentDescription = stringResource(R.string.close)
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
 
 sealed interface CTAFeature {
@@ -328,16 +428,18 @@ fun SimpleSessionProCTA(
     text: String,
     modifier: Modifier = Modifier,
     title: String = stringResource(R.string.upgradeTo),
+    showProBadge: Boolean = true,
     badgeAtStart: Boolean = false,
     features: List<CTAFeature> = emptyList(),
     positiveButtonText: String? = stringResource(R.string.theContinue),
     negativeButtonText: String? = stringResource(R.string.cancel),
-    onUpgrade: () -> Unit = {},
+    onUpgrade: (() -> Unit)? = null,
     onCancel: () -> Unit = {},
 ){
     SessionProCTA(
         modifier = modifier,
         title = title,
+        showProBadge = showProBadge,
         badgeAtStart = badgeAtStart,
         textContent = {
             Text(
@@ -380,12 +482,13 @@ fun AnimatedSessionProCTA(
     text: String,
     modifier: Modifier = Modifier,
     title: String = stringResource(R.string.upgradeTo),
+    showProBadge: Boolean = true,
     badgeAtStart: Boolean = false,
     disabled: Boolean = false,
     features: List<CTAFeature> = emptyList(),
     positiveButtonText: String? = stringResource(R.string.theContinue),
     negativeButtonText: String? = stringResource(R.string.cancel),
-    onUpgrade: () -> Unit = {},
+    onUpgrade: (() -> Unit)? = null,
     onCancel: () -> Unit = {},
 ){
     SessionProCTA(
@@ -413,6 +516,8 @@ fun AnimatedSessionProCTA(
         positiveButtonText = positiveButtonText,
         negativeButtonText = negativeButtonText,
         title = title,
+        titleColor = if(disabled) LocalColors.current.disabled else LocalColors.current.text,
+        showProBadge = showProBadge,
         badgeAtStart = badgeAtStart,
         disabled = disabled
     )
@@ -464,28 +569,32 @@ fun CTAAnimatedImages(
 // Reusable generic Pro CTA
 @Composable
 fun GenericProCTA(
+    proSubscription: ProStatus,
     onDismissRequest: () -> Unit,
-    onPostAction: (() -> Unit)? = null // a function for optional code once an action has been taken
 ){
     val context = LocalContext.current
+    val expired = proSubscription is ProStatus.Expired
+
     AnimatedSessionProCTA(
         heroImageBg = R.drawable.cta_hero_generic_bg,
         heroImageAnimatedFg = R.drawable.cta_hero_generic_fg,
-        text = Phrase.from(context,R.string.proUserProfileModalCallToAction)
+        title = if(expired) stringResource(R.string.renew)
+        else stringResource(R.string.upgradeTo),
+        text = if(expired)  Phrase.from(context,R.string.proRenewMaxPotential)
+            .put(APP_NAME_KEY, context.getString(R.string.app_name))
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .format()
+            .toString()
+            else Phrase.from(context, R.string.proUserProfileModalCallToAction)
             .put(APP_NAME_KEY, context.getString(R.string.app_name))
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format()
             .toString(),
         features = listOf(
-            CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
             CTAFeature.Icon(stringResource(R.string.proFeatureListLongerMessages)),
+            CTAFeature.Icon(stringResource(R.string.proFeatureListPinnedConversations)),
             CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
         ),
-        onUpgrade = {
-            onDismissRequest()
-            onPostAction?.invoke()
-            //todo PRO go to screen once it exists
-        },
         onCancel = {
             onDismissRequest()
         }
@@ -495,23 +604,29 @@ fun GenericProCTA(
 // Reusable long message  Pro CTA
 @Composable
 fun LongMessageProCTA(
+    proSubscription: ProStatus,
     onDismissRequest: () -> Unit,
 ){
+    val expired = proSubscription is ProStatus.Expired
+    val context = LocalContext.current
+
     SimpleSessionProCTA(
         heroImage = R.drawable.cta_hero_char_limit,
-        text = Phrase.from(LocalContext.current, R.string.proCallToActionLongerMessages)
+        title = if(expired) stringResource(R.string.renew)
+        else stringResource(R.string.upgradeTo),
+        text = if(expired) Phrase.from(context,R.string.proRenewLongerMessages)
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .format()
+            .toString()
+        else Phrase.from(context, R.string.proCallToActionLongerMessages)
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format()
             .toString(),
         features = listOf(
             CTAFeature.Icon(stringResource(R.string.proFeatureListLongerMessages)),
-            CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
+            CTAFeature.Icon(stringResource(R.string.proFeatureListPinnedConversations)),
             CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
         ),
-        onUpgrade = {
-            onDismissRequest()
-            //todo PRO go to screen once it exists
-        },
         onCancel = {
             onDismissRequest()
         }
@@ -521,24 +636,30 @@ fun LongMessageProCTA(
 // Reusable animated profile pic Pro CTA
 @Composable
 fun AnimatedProfilePicProCTA(
+    proSubscription: ProStatus,
     onDismissRequest: () -> Unit,
 ){
+    val expired = proSubscription is ProStatus.Expired
+    val context = LocalContext.current
+
     AnimatedSessionProCTA(
         heroImageBg = R.drawable.cta_hero_animated_bg,
         heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
-        text = Phrase.from(LocalContext.current, R.string.proAnimatedDisplayPictureCallToActionDescription)
+        title = if(expired) stringResource(R.string.renew)
+        else stringResource(R.string.upgradeTo),
+        text =if(expired)  Phrase.from(context,R.string.proRenewAnimatedDisplayPicture)
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .format()
+            .toString()
+        else  Phrase.from(context, R.string.proAnimatedDisplayPictureCallToActionDescription)
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format()
             .toString(),
         features = listOf(
             CTAFeature.Icon(stringResource(R.string.proFeatureListAnimatedDisplayPicture)),
-            CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
+            CTAFeature.Icon(stringResource(R.string.proFeatureListLongerMessages)),
             CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
         ),
-        onUpgrade = {
-            onDismissRequest()
-            //todo PRO go to screen once it exists
-        },
         onCancel = {
             onDismissRequest()
         }
@@ -551,56 +672,74 @@ fun AnimatedProfilePicProCTA(
 @Composable
 fun PinProCTA(
     overTheLimit: Boolean,
+    proSubscription: ProStatus,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
 ){
+    val expired = proSubscription is ProStatus.Expired
     val context = LocalContext.current
+
+    val title = when{
+        overTheLimit && expired -> Phrase.from(context, R.string.proRenewPinMoreConversations)
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .format()
+            .toString()
+
+        overTheLimit && !expired -> Phrase.from(context, R.string.proCallToActionPinnedConversations)
+            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+            .format()
+            .toString()
+
+        !overTheLimit && expired -> Phrase.from(context, R.string.proRenewPinFiveConversations)
+            .put(LIMIT_KEY, ProStatusManager.MAX_PIN_REGULAR.toString())
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .format()
+            .toString()
+
+        else -> Phrase.from(context, R.string.proCallToActionPinnedConversationsMoreThan)
+            .put(LIMIT_KEY, ProStatusManager.MAX_PIN_REGULAR.toString())
+            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+            .format()
+            .toString()
+    }
     
     SimpleSessionProCTA(
         modifier = modifier,
         heroImage = R.drawable.cta_hero_pins,
-        text = if(overTheLimit)
-            Phrase.from(context, R.string.proCallToActionPinnedConversations)
-                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                .format()
-                .toString()
-        else
-            Phrase.from(context, R.string.proCallToActionPinnedConversationsMoreThan)
-                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                .format()
-                .toString(),
+        title = if(expired) stringResource(R.string.renew)
+        else stringResource(R.string.upgradeTo),
+        text = title,
         features = listOf(
             CTAFeature.Icon(stringResource(R.string.proFeatureListPinnedConversations)),
-            CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
+            CTAFeature.Icon(stringResource(R.string.proFeatureListLongerMessages)),
             CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
         ),
-        onUpgrade = {
-            onDismissRequest()
-            //todo PRO go to screen once it exists
-        },
         onCancel = {
             onDismissRequest()
         }
     )
 }
 
-@Preview
+@Preview(name = "Compact", widthDp = 200, heightDp = 300)
+@Preview(name = "Medium", widthDp = 720, heightDp = 1280)
 @Composable
 private fun PreviewProCTA(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
     PreviewTheme(colors) {
-        SimpleSessionProCTA(
-            heroImage = R.drawable.cta_hero_char_limit,
-            text = "This is a description of this Pro feature",
-            features = listOf(
-                CTAFeature.Icon("Feature one"),
-                CTAFeature.Icon("Feature two", R.drawable.ic_eye),
-                CTAFeature.RainbowIcon("Feature three"),
-            ),
-            onUpgrade = {},
-            onCancel = {}
-        )
+        Box(Modifier.fillMaxSize()) {
+            SimpleSessionProCTA(
+                heroImage = R.drawable.cta_hero_char_limit,
+                text = "This is a description of this Pro feature",
+                features = listOf(
+                    CTAFeature.Icon("Feature one"),
+                    CTAFeature.Icon("Feature two", R.drawable.ic_eye),
+                    CTAFeature.RainbowIcon("Feature three"),
+                ),
+                onUpgrade = {},
+                onCancel = {}
+            )
+        }
     }
 }
 
@@ -719,7 +858,7 @@ fun AvatarQrWidget(
         label = "corner_radius"
     )
 
-    // Scale animations for content
+    // Scale animations for content (used when going from QR back to avatar)
     val avatarScale by animateFloatAsState(
         targetValue = if (showQR) 0.8f else 1f,
         animationSpec = animationSpecFast,
@@ -804,7 +943,6 @@ fun AvatarQrWidget(
             }
             Avatar(
                 modifier = avatarModifier
-                    .size(animatedSize)
                     .graphicsLayer(
                         alpha = avatarAlpha,
                         scaleX = avatarScale,
@@ -813,7 +951,7 @@ fun AvatarQrWidget(
                 ,
                 size = animatedSize,
                 maxSizeLoad = LocalDimensions.current.iconXXLargeAvatar,
-                data = avatarUIData
+                data = avatarUIData,
             )
 
             // QR with scale and alpha
@@ -953,22 +1091,25 @@ fun SessionProSettingsHeader(
 
                 Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
 
-                Row(
-                    modifier = Modifier.height(LocalDimensions.current.smallSpacing)
-                ) {
-                    Image(
-                        painter = painterResource(R.drawable.ic_session),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(LocalColors.current.text)
-                    )
-
-                    Spacer(Modifier.width(LocalDimensions.current.xxxsSpacing))
-
-                    ProBadge(
-                        colors = proBadgeColorStandard().copy(
-                            backgroundColor = color
+                // Force the row to remain in LTR to preserve the image+icon order
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                    Row(
+                        modifier = Modifier.height(LocalDimensions.current.smallSpacing)
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.ic_session),
+                            contentDescription = null,
+                            colorFilter = ColorFilter.tint(LocalColors.current.text)
                         )
-                    )
+
+                        Spacer(Modifier.width(LocalDimensions.current.xxxsSpacing))
+
+                        ProBadge(
+                            colors = proBadgeColorStandard().copy(
+                                backgroundColor = color
+                            )
+                        )
+                    }
                 }
 
                 extraContent?.let{

@@ -3,7 +3,6 @@
 package org.session.libsession.snode
 
 import android.os.SystemClock
-import com.fasterxml.jackson.databind.JsonNode
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -12,20 +11,20 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
+import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.decodeFromStream
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.Hash
 import network.loki.messenger.libsession_util.SessionEncrypt
 import nl.komponents.kovenant.Promise
-import nl.komponents.kovenant.all
 import nl.komponents.kovenant.functional.bind
 import nl.komponents.kovenant.functional.map
-import nl.komponents.kovenant.unwrap
 import org.session.libsession.messaging.MessagingModuleConfiguration
-import org.session.libsession.messaging.utilities.MessageWrapper
 import org.session.libsession.snode.model.BatchResponse
 import org.session.libsession.snode.model.StoreMessageResponse
 import org.session.libsession.snode.utilities.asyncPromise
@@ -37,17 +36,13 @@ import org.session.libsession.utilities.toByteArray
 import org.session.libsignal.crypto.secureRandom
 import org.session.libsignal.crypto.shuffledRandom
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
-import org.session.libsignal.protos.SignalServiceProtos
-import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
-import org.session.libsignal.utilities.Broadcaster
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.prettifiedDescription
-import org.session.libsignal.utilities.retryIfNeeded
 import org.session.libsignal.utilities.retryWithUniformInterval
 import java.util.Locale
 import kotlin.collections.component1
@@ -165,13 +160,18 @@ object SnodeAPI {
         method: Snode.Method,
         snode: Snode,
         parameters: Map<String, Any>,
-        responseClass: Class<Res>,
+        responseDeserializationStrategy: DeserializationStrategy<Res>,
         publicKey: String? = null,
         version: Version = Version.V3
     ): Res = when {
         useOnionRequests -> {
             val resp = OnionRequestAPI.sendOnionRequest(method, parameters, snode, version, publicKey).await()
-            JsonUtil.fromJson(resp.body ?: throw Error.Generic, responseClass)
+            (resp.body ?: throw Error.Generic).inputStream().use { inputStream ->
+                MessagingModuleConfiguration.shared.json.decodeFromStream(
+                    deserializer = responseDeserializationStrategy,
+                    stream = inputStream
+                )
+            }
         }
 
         else -> HTTP.execute(
@@ -182,7 +182,10 @@ object SnodeAPI {
                 this["params"] = parameters
             }
         ).toString().let {
-            JsonUtil.fromJson(it, responseClass)
+            MessagingModuleConfiguration.shared.json.decodeFromString(
+                deserializer = responseDeserializationStrategy,
+                string = it
+            )
         }
     }
 
@@ -355,49 +358,6 @@ object SnodeAPI {
         }
     }
 
-    /**
-     * Retrieve messages from the swarm.
-     *
-     * @param snode The swarm service where you want to retrieve messages from. It can be a swarm for a specific user or a group. Call [getSingleTargetSnode] to get a swarm node.
-     * @param auth The authentication data required to retrieve messages. This can be a user or group authentication data.
-     * @param namespace The namespace of the messages you want to retrieve. Default is 0.
-     */
-    fun getRawMessages(
-        snode: Snode,
-        auth: SwarmAuth,
-        namespace: Int = 0
-    ): RawResponsePromise {
-        val parameters = buildAuthenticatedParameters(
-            namespace = namespace,
-            auth = auth,
-            verificationData = { ns, t -> "${Snode.Method.Retrieve.rawValue}$ns$t" }
-        ) {
-            put(
-                "last_hash",
-                database.getLastMessageHashValue(snode, auth.accountId.hexString, namespace).orEmpty()
-            )
-        }
-
-        // Make the request
-        return invoke(Snode.Method.Retrieve, snode, parameters, auth.accountId.hexString)
-    }
-
-    fun getUnauthenticatedRawMessages(
-        snode: Snode,
-        publicKey: String,
-        namespace: Int = 0
-    ): RawResponsePromise {
-        val parameters = buildMap {
-            put("last_hash", database.getLastMessageHashValue(snode, publicKey, namespace).orEmpty())
-            put("pubkey", publicKey)
-            if (namespace != 0) {
-                put("namespace", namespace)
-            }
-        }
-
-        return invoke(Snode.Method.Retrieve, snode, parameters, publicKey)
-    }
-
     fun buildAuthenticatedStoreBatchInfo(
         namespace: Int,
         message: SnodeMessage,
@@ -541,40 +501,11 @@ object SnodeAPI {
         )
     }
 
-    @Suppress("UNCHECKED_CAST")
-    fun getRawBatchResponse(
-        snode: Snode,
-        publicKey: String,
-        requests: List<SnodeBatchRequestInfo>,
-        sequence: Boolean = false
-    ): RawResponsePromise {
-        val parameters = buildMap { this["requests"] = requests }
-        return invoke(
-            if (sequence) Snode.Method.Sequence else Snode.Method.Batch,
-            snode,
-            parameters,
-            publicKey
-        ).success { rawResponses ->
-            rawResponses[KEY_RESULTS].let { it as List<RawResponse> }
-                .asSequence()
-                .filter { it[KEY_CODE] as? Int != 200 }
-                .forEach { response ->
-                    Log.w("Loki", "response code was not 200")
-                    handleSnodeError(
-                        response[KEY_CODE] as? Int ?: 0,
-                        response[KEY_BODY] as? Map<*, *>,
-                        snode,
-                        publicKey
-                    )
-                }
-        }
-    }
-
     private data class RequestInfo(
         val snode: Snode,
         val publicKey: String,
         val request: SnodeBatchRequestInfo,
-        val responseType: Class<*>,
+        val responseType: DeserializationStrategy<*>,
         val callback: SendChannel<Result<Any>>,
         val requestTime: Long = SystemClock.elapsedRealtime(),
     )
@@ -641,7 +572,8 @@ object SnodeAPI {
                                     throw BatchResponse.Error(resp)
                                 }
 
-                                JsonUtil.fromJson(resp.body, req.responseType)
+                                MessagingModuleConfiguration.shared.json.decodeFromJsonElement(
+                                    req.responseType, resp.body)!!
                             }
 
                             runCatching {
@@ -664,7 +596,7 @@ object SnodeAPI {
         snode: Snode,
         publicKey: String,
         request: SnodeBatchRequestInfo,
-        responseType: Class<T>,
+        responseType: DeserializationStrategy<T>,
     ): T {
         val callback = Channel<Result<T>>(capacity = 1)
         @Suppress("UNCHECKED_CAST")
@@ -689,8 +621,8 @@ object SnodeAPI {
         snode: Snode,
         publicKey: String,
         request: SnodeBatchRequestInfo,
-    ): JsonNode {
-        return sendBatchRequest(snode, publicKey, request, JsonNode::class.java)
+    ): JsonElement {
+        return sendBatchRequest(snode, publicKey, request, JsonElement.serializer())
     }
 
     suspend fun getBatchResponse(
@@ -703,7 +635,7 @@ object SnodeAPI {
             method = if (sequence) Snode.Method.Sequence else Snode.Method.Batch,
             snode = snode,
             parameters = mapOf("requests" to requests),
-            responseClass = BatchResponse::class.java,
+            responseDeserializationStrategy = BatchResponse.serializer(),
             publicKey = publicKey
         ).also { resp ->
             // If there's a unsuccessful response, go through specific logic to handle
@@ -712,8 +644,8 @@ object SnodeAPI {
             if (firstError != null) {
                 handleSnodeError(
                     statusCode = firstError.code,
-                    json = if (firstError.body.isObject) {
-                        JsonUtil.fromJson(firstError.body, Map::class.java)
+                    json = if (firstError.body is JsonObject) {
+                        JsonUtil.fromJson(firstError.body.toString(), Map::class.java)
                     } else {
                         null
                     },
@@ -721,30 +653,6 @@ object SnodeAPI {
                     publicKey = publicKey
                 )
             }
-        }
-    }
-
-    fun getExpiries(
-        messageHashes: List<String>,
-        auth: SwarmAuth,
-    ): RawResponsePromise {
-        val hashes = messageHashes.takeIf { it.size != 1 }
-            ?: (messageHashes + "///////////////////////////////////////////") // TODO remove this when bug is fixed on nodes.
-        return scope.retrySuspendAsPromise(maxRetryCount) {
-            val params = buildAuthenticatedParameters(
-                auth = auth,
-                namespace = null,
-                verificationData = { _, t -> buildString {
-                    append(Snode.Method.GetExpiries.rawValue)
-                    append(t)
-                    hashes.forEach(this::append)
-                } },
-            ) {
-                this["messages"] = hashes
-            }
-
-            val snode = getSingleTargetSnode(auth.accountId.hexString).await()
-            invoke(Snode.Method.GetExpiries, snode, params, auth.accountId.hexString).await()
         }
     }
 
@@ -788,12 +696,6 @@ object SnodeAPI {
                 shorten -> this["shorten"] = true
             }
         }
-    }
-
-    fun getMessages(auth: SwarmAuth): MessageListPromise = scope.retrySuspendAsPromise(maxRetryCount) {
-        val snode = getSingleTargetSnode(auth.accountId.hexString).await()
-        val resp = getRawMessages(snode, auth).await()
-        parseRawMessagesResponse(resp, snode, auth.accountId.hexString)
     }
 
     fun getNetworkTime(snode: Snode): Promise<Pair<Snode, Long>, Exception> =
@@ -845,7 +747,7 @@ object SnodeAPI {
                     params = params,
                     namespace = namespace
                 ),
-                responseType = StoreMessageResponse::class.java
+                responseType = StoreMessageResponse.serializer()
             )
         }
     }
@@ -959,89 +861,6 @@ object SnodeAPI {
             )
         }
 
-    fun parseRawMessagesResponse(rawResponse: RawResponse, snode: Snode, publicKey: String, namespace: Int = 0, updateLatestHash: Boolean = true, updateStoredHashes: Boolean = true, decrypt: ((ByteArray) -> Pair<ByteArray, AccountId>?)? = null): List<Pair<SignalServiceProtos.Envelope, String?>> =
-        (rawResponse["messages"] as? List<*>)?.let { messages ->
-            if (updateLatestHash) updateLastMessageHashValueIfPossible(snode, publicKey, messages, namespace)
-            removeDuplicates(
-                publicKey = publicKey,
-                messages = parseEnvelopes(messages, decrypt),
-                messageHashGetter = { it.second },
-                namespace = namespace,
-                updateStoredHashes = updateStoredHashes
-            )
-        } ?: listOf()
-
-    fun updateLastMessageHashValueIfPossible(snode: Snode, publicKey: String, rawMessages: List<*>, namespace: Int) {
-        val lastMessageAsJSON = rawMessages.lastOrNull() as? Map<*, *>
-        val hashValue = lastMessageAsJSON?.get("hash") as? String
-        when {
-            hashValue != null -> database.setLastMessageHashValue(snode, publicKey, hashValue, namespace)
-            rawMessages.isNotEmpty() -> Log.d("Loki", "Failed to update last message hash value from: ${rawMessages.prettifiedDescription()}.")
-        }
-    }
-
-    /**
-     *
-     *
-     * TODO Use a db transaction, synchronizing is sufficient for now because
-     * database#setReceivedMessageHashValues is only called here.
-     */
-    @Synchronized
-    fun <M> removeDuplicates(
-        publicKey: String,
-        messages: List<M>,
-        messageHashGetter: (M) -> String?,
-        namespace: Int,
-        updateStoredHashes: Boolean
-    ): List<M> {
-        val hashValues = database.getReceivedMessageHashValues(publicKey, namespace)?.toMutableSet() ?: mutableSetOf()
-        return messages
-            .filter { message ->
-                val hash = messageHashGetter(message)
-                if (hash == null) {
-                    Log.d("Loki", "Missing hash value for message: ${message?.prettifiedDescription()}.")
-                    return@filter false
-                }
-
-                val isNew = hashValues.add(hash)
-
-                if (!isNew) {
-                    Log.d("Loki", "Duplicate message hash: $hash.")
-                }
-
-                isNew
-            }
-            .also {
-                if (updateStoredHashes && it.isNotEmpty()) {
-                    database.setReceivedMessageHashValues(publicKey, hashValues, namespace)
-                }
-            }
-    }
-
-    private fun parseEnvelopes(rawMessages: List<*>, decrypt: ((ByteArray)->Pair<ByteArray, AccountId>?)?): List<Pair<SignalServiceProtos.Envelope, String?>> {
-        return rawMessages.mapNotNull { rawMessage ->
-            val rawMessageAsJSON = rawMessage as? Map<*, *>
-            val base64EncodedData = rawMessageAsJSON?.get("data") as? String
-            val data = base64EncodedData?.let { Base64.decode(it) }
-            if (data != null) {
-                try {
-                    if (decrypt != null) {
-                        val (decrypted, sender) = decrypt(data)!!
-                        val envelope = SignalServiceProtos.Envelope.parseFrom(decrypted).toBuilder()
-                        envelope.source = sender.hexString
-                        Pair(envelope.build(), rawMessageAsJSON["hash"] as? String)
-                    }
-                    else Pair(MessageWrapper.unwrap(data), rawMessageAsJSON["hash"] as? String)
-                } catch (e: Exception) {
-                    Log.d("Loki", "Failed to unwrap data for message: ${rawMessage.prettifiedDescription()}.", e)
-                    null
-                }
-            } else {
-                Log.d("Loki", "Failed to decode data for message: ${rawMessage?.prettifiedDescription()}.")
-                null
-            }
-        }
-    }
 
     @Suppress("UNCHECKED_CAST")
     private fun parseDeletions(userPublicKey: String, timestamp: Long, rawResponse: RawResponse): Map<String, Boolean> =
@@ -1111,5 +930,4 @@ object SnodeAPI {
 
 // Type Aliases
 typealias RawResponse = Map<*, *>
-typealias MessageListPromise = Promise<List<Pair<SignalServiceProtos.Envelope, String?>>, Exception>
 typealias RawResponsePromise = Promise<RawResponse, Exception>

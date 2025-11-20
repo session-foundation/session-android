@@ -19,8 +19,6 @@ import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.os.AsyncTask
-import android.os.Handler
-import android.os.HandlerThread
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -32,7 +30,6 @@ import androidx.work.Configuration
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
-import coil3.request.crossfade
 import dagger.Lazy
 import dagger.hilt.EntryPoints
 import dagger.hilt.android.HiltAndroidApp
@@ -53,8 +50,9 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.pushSuff
 import org.session.libsignal.utilities.HTTP.isConnectedToNetwork
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.AppContext.configureKovenant
-import org.thoughtcrime.securesms.coil.RemoteFileKeyer
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
+import org.thoughtcrime.securesms.debugmenu.DebugLogger
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.dependencies.DatabaseModule.init
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponents
@@ -93,6 +91,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
 
     @Inject lateinit var startupComponents: Lazy<OnAppStartupComponents>
     @Inject lateinit var persistentLogger: Lazy<PersistentLogger>
+    @Inject lateinit var debugLogger: Lazy<DebugLogger>
     @Inject lateinit var textSecurePreferences: Lazy<TextSecurePreferences>
     @Inject lateinit var migrationManager: Lazy<DatabaseMigrationManager>
 
@@ -101,6 +100,9 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
     // Exist purely because Glide doesn't support Hilt injection
     @Inject
     lateinit var remoteFileLoader: Provider<RemoteFileLoader>
+
+    @Inject
+    lateinit var loginStateRepository: Lazy<LoginStateRepository>
 
 
     @Volatile
@@ -212,7 +214,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
     }
 
     private fun initializeLogging() {
-        Log.initialize(AndroidLogger(), persistentLogger.get())
+        Log.initialize(AndroidLogger(), persistentLogger.get(), debugLogger.get())
         Logger.addLogger(object : Logger {
             private val tag = "LibSession"
 

@@ -12,6 +12,7 @@ import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 @Singleton
 class SubscriptionCoordinator @Inject constructor(
     private val availableManagers: Set<@JvmSuppressWildcards SubscriptionManager>,
+    private val noopSubManager: NoOpSubscriptionManager,
     private val prefs: TextSecurePreferences
 ): OnAppStartupComponent {
 
@@ -22,7 +23,7 @@ class SubscriptionCoordinator @Inject constructor(
 
         when {
             managers.isEmpty() -> {
-                currentManager = NoOpSubscriptionManager()
+                currentManager = noopSubManager
             }
             managers.size == 1 -> {
                 currentManager = managers.first()

@@ -59,6 +59,7 @@ message Content {
   optional ExpirationType             expirationType             = 12;
   optional uint32                     expirationTimerSeconds     = 13;
   optional uint64                     sigTimestampMs             = 15;
+  optional ProMessage proMessage = 16;
 
   reserved 14;
   reserved 11; // Used to be a "sharedConfigMessage" but no longer used
@@ -313,4 +314,17 @@ message AttachmentPointer {
   optional uint32  height      = 10;
   optional string  caption     = 11;
   optional string  url         = 101;
+}
+
+message ProMessage {
+  optional ProProof proof    = 1;
+  optional uint64   features = 2; // this will need to be set by what we get from pro_features_for_utf*
+}
+
+message ProProof {
+  optional uint32 version           = 1;
+  optional bytes  genIndexHash      = 2;
+  optional bytes  rotatingPublicKey = 3;
+  optional uint64 expiryUnixTs      = 4; // Epoch timestamp in milliseconds
+  optional bytes  sig               = 5;
 }

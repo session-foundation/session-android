@@ -175,7 +175,7 @@ sealed interface Address : Parcelable, Comparable<Address> {
     /**
      * A marker interface for addresses that represent a group-like entity.
      */
-    sealed interface GroupLike : Address
+    sealed interface GroupLike : Conversable
 
     sealed interface WithAccountId {
         val accountId: AccountId

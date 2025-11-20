@@ -12,9 +12,12 @@ import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import org.session.libsession.messaging.groups.GroupScope
 import org.session.libsession.messaging.messages.control.GroupUpdated
+import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.Address
@@ -27,6 +30,8 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.notifications.PushRegistryV2
 
 @HiltWorker
 class GroupLeavingWorker @AssistedInject constructor(
@@ -35,6 +40,9 @@ class GroupLeavingWorker @AssistedInject constructor(
     private val storage: Storage,
     private val configFactory: ConfigFactory,
     private val groupScope: GroupScope,
+    private val tokenFetcher: TokenFetcher,
+    private val pushRegistryV2: PushRegistryV2,
+    private val messageSender: MessageSender,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val groupId = requireNotNull(inputData.getString(KEY_GROUP_ID)) {
@@ -49,6 +57,32 @@ class GroupLeavingWorker @AssistedInject constructor(
             // Make sure we only have one group leaving control message
             storage.deleteGroupInfoMessages(groupId, UpdateMessageData.Kind.GroupLeaving::class.java)
             storage.insertGroupInfoLeaving(groupId)
+
+            // Best effort to unsubscribe ourselves from the registration server.
+            // Note that this process can only be done on the device that is leaving the group,
+            // on a linked device, we might not have the credentials to do so.
+            val currentToken = tokenFetcher.token.value
+            if (currentToken != null) {
+                try {
+                    val groupAuth = configFactory.getGroupAuth(groupId)
+
+                    if (groupAuth != null) {
+                        val resp = pushRegistryV2.unregister(listOf(
+                            pushRegistryV2.buildUnregisterRequest(currentToken, groupAuth)
+                        )).firstOrNull()
+
+                        check(resp?.success == true) {
+                            "Unsubscription failed: code = ${resp?.error}, message = ${resp?.message}"
+                        }
+                        Log.d(TAG, "Unsubscribed from group $groupId successfully")
+                    }
+
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to unsubscribe from group $groupId", e)
+                }
+            }
 
             try {
                 if (group?.destroyed != true) {
@@ -65,7 +99,7 @@ class GroupLeavingWorker @AssistedInject constructor(
                         val statusChannel = Channel<kotlin.Result<Unit>>()
 
                         // Always send a "XXX left" message to the group if we can
-                        MessageSender.send(
+                        messageSender.send(
                             GroupUpdated(
                                 GroupUpdateMessage.newBuilder()
                                     .setMemberLeftNotificationMessage(DataMessage.GroupUpdateMemberLeftNotificationMessage.getDefaultInstance())
@@ -77,7 +111,7 @@ class GroupLeavingWorker @AssistedInject constructor(
 
                         // If we are not the only admin, send a left message for other admin to handle the member removal
                         // We'll have to wait for this message to be sent before going ahead to delete the group
-                        MessageSender.send(
+                        messageSender.send(
                             GroupUpdated(
                                 GroupUpdateMessage.newBuilder()
                                     .setMemberLeftMessage(DataMessage.GroupUpdateMemberLeftMessage.getDefaultInstance())

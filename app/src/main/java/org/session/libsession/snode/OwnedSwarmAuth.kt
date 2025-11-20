@@ -22,10 +22,6 @@ class OwnedSwarmAuth(
         }
     }
 
-    override fun signForPushRegistry(data: ByteArray): Map<String, String> {
-        return sign(data)
-    }
-
     companion object {
         fun ofClosedGroup(groupAccountId: AccountId, adminKey: ByteArray): OwnedSwarmAuth {
             return OwnedSwarmAuth(

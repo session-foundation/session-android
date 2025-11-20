@@ -1,8 +1,9 @@
 package org.thoughtcrime.securesms.pro
 
-import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -14,17 +15,31 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
+import network.loki.messenger.libsession_util.pro.BackendRequests
+import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_APP_STORE
+import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_GOOGLE_PLAY
+import network.loki.messenger.libsession_util.protocol.ProFeatures
 import org.session.libsession.messaging.messages.visible.VisibleMessage
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.recipients.ProStatus
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.recipients.isPro
-import org.session.libsession.utilities.recipients.shouldShowProBadge
+import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
-import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.database.model.MessageRecord
+import org.thoughtcrime.securesms.database.model.proFeatures
+import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
+import org.thoughtcrime.securesms.pro.api.AddPaymentErrorStatus
+import org.thoughtcrime.securesms.pro.api.AddProPaymentRequest
+import org.thoughtcrime.securesms.pro.api.ProApiExecutor
+import org.thoughtcrime.securesms.pro.api.ProApiResponse
+import org.thoughtcrime.securesms.pro.db.ProDatabase
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
+import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
 import org.thoughtcrime.securesms.util.State
 import java.time.Duration
 import java.time.Instant
@@ -33,12 +48,16 @@ import javax.inject.Singleton
 
 @Singleton
 class ProStatusManager @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val prefs: TextSecurePreferences,
-    private val recipientRepository: RecipientRepository,
+    recipientRepository: RecipientRepository,
+    @param:ManagerScope private val scope: CoroutineScope,
+    private val apiExecutor: ProApiExecutor,
+    private val loginState: LoginStateRepository,
+    private val proDatabase: ProDatabase,
+    private val snodeClock: SnodeClock,
 ) : OnAppStartupComponent {
 
-    val subscriptionState: StateFlow<SubscriptionState> = combine(
+    val proDataState: StateFlow<ProDataState> = combine(
         recipientRepository.observeSelf(),
         (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS } as Flow<*>)
             .onStart { emit(Unit) }
@@ -46,110 +65,86 @@ class ProStatusManager @Inject constructor(
         (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_PRO_PLAN_STATUS } as Flow<*>)
             .onStart { emit(Unit) }
             .map { prefs.getDebugProPlanStatus() },
-    ){ selfRecipient, debugSubscription, debugProPlanStatus ->
-        //todo PRO implement properly
-
-        val subscriptionState = debugSubscription ?: DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE
-        val proStatus = when(debugProPlanStatus){
+        (TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO } as Flow<*>)
+            .onStart { emit(Unit) }
+            .map { prefs.forceCurrentUserAsPro() },
+    ){ selfRecipient, debugSubscription, debugProPlanStatus, forceCurrentUserAsPro ->
+        val proDataRefreshState = when(debugProPlanStatus){
             DebugMenuViewModel.DebugProPlanStatus.LOADING -> State.Loading
             DebugMenuViewModel.DebugProPlanStatus.ERROR -> State.Error(Exception())
             else -> State.Success(Unit)
         }
 
-        SubscriptionState(
-            type = when(subscriptionState){
-                DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> SubscriptionType.Active.AutoRenewing(
-                    proStatus = ProStatus.Pro(
-                        visible = true,
+        if(!forceCurrentUserAsPro){
+            Log.d(DebugLogGroup.PRO_DATA.label, "ProStatusManager: Getting REAL Pro data state")
+            //todo PRO this is where we should get the real state
+            ProDataState(
+                type = ProStatus.NeverSubscribed,
+                showProBadge = selfRecipient.shouldShowProBadge,
+                refreshState = proDataRefreshState
+            )
+        }// debug data
+        else {
+            Log.d(DebugLogGroup.PRO_DATA.label, "ProStatusManager: Getting DEBUG Pro data state")
+            val subscriptionState = debugSubscription ?: DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE
+
+            ProDataState(
+                type = when(subscriptionState){
+                    DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> ProStatus.Active.AutoRenewing(
                         validUntil = Instant.now() + Duration.ofDays(14),
-                    ),
-                    duration = ProSubscriptionDuration.THREE_MONTHS,
-                    subscriptionDetails = SubscriptionDetails(
-                        device = "Android",
-                        store = "Google Play Store",
-                        platform = "Google",
-                        platformAccount = "Google account",
-                        subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
-                        refundUrl = "https://getsession.org/android-refund",
+                        duration = ProSubscriptionDuration.THREE_MONTHS,
+                        providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
+                        quickRefundExpiry = Instant.now() + Duration.ofDays(7)
                     )
-                )
 
-                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> SubscriptionType.Active.Expiring(
-                    proStatus = ProStatus.Pro(
-                        visible = true,
+                    DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> ProStatus.Active.Expiring(
                         validUntil = Instant.now() + Duration.ofDays(2),
-                    ),
-                    duration = ProSubscriptionDuration.TWELVE_MONTHS,
-                    subscriptionDetails = SubscriptionDetails(
-                        device = "Android",
-                        store = "Google Play Store",
-                        platform = "Google",
-                        platformAccount = "Google account",
-                        subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
-                        refundUrl = "https://getsession.org/android-refund",
+                        duration = ProSubscriptionDuration.TWELVE_MONTHS,
+                        providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
+                        quickRefundExpiry = Instant.now() + Duration.ofDays(7)
                     )
-                )
 
-                DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> SubscriptionType.Active.AutoRenewing(
-                    proStatus = ProStatus.Pro(
-                        visible = true,
+                    DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER -> ProStatus.Active.Expiring(
+                        validUntil = Instant.now() + Duration.ofDays(40),
+                        duration = ProSubscriptionDuration.TWELVE_MONTHS,
+                        providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
+                        quickRefundExpiry = Instant.now() + Duration.ofDays(7)
+                    )
+
+                    DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> ProStatus.Active.AutoRenewing(
                         validUntil = Instant.now() + Duration.ofDays(14),
-                    ),
-                    duration = ProSubscriptionDuration.ONE_MONTH,
-                    subscriptionDetails = SubscriptionDetails(
-                        device = "iPhone",
-                        store = "Apple App Store",
-                        platform = "Apple",
-                        platformAccount = "Apple Account",
-                        subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                        refundUrl = "https://support.apple.com/118223",
+                        duration = ProSubscriptionDuration.ONE_MONTH,
+                        providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
+                        quickRefundExpiry = Instant.now() + Duration.ofDays(7)
                     )
-                )
 
-                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_APPLE -> SubscriptionType.Active.Expiring(
-                    proStatus = ProStatus.Pro(
-                        visible = true,
+                    DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_APPLE -> ProStatus.Active.Expiring(
                         validUntil = Instant.now() + Duration.ofDays(2),
-                    ),
-                    duration = ProSubscriptionDuration.ONE_MONTH,
-                    subscriptionDetails = SubscriptionDetails(
-                        device = "iPhone",
-                        store = "Apple App Store",
-                        platform = "Apple",
-                        platformAccount = "Apple Account",
-                        subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                        refundUrl = "https://support.apple.com/118223",
+                        duration = ProSubscriptionDuration.ONE_MONTH,
+                        providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
+                        quickRefundExpiry = Instant.now() + Duration.ofDays(7)
                     )
-                )
 
-                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> SubscriptionType.Expired(
-                    expiredAt = Instant.now() - Duration.ofDays(14),
-                    subscriptionDetails = SubscriptionDetails(
-                        device = "Android",
-                        store = "Google Play Store",
-                        platform = "Google",
-                        platformAccount = "Google account",
-                        subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
-                        refundUrl = "https://getsession.org/android-refund",
+                    DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> ProStatus.Expired(
+                        expiredAt = Instant.now() - Duration.ofDays(14),
+                        providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!
                     )
-                )
-                DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE -> SubscriptionType.Expired(
-                    expiredAt = Instant.now() - Duration.ofDays(14),
-                    subscriptionDetails = SubscriptionDetails(
-                        device = "iPhone",
-                        store = "Apple App Store",
-                        platform = "Apple",
-                        platformAccount = "Apple Account",
-                        subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                        refundUrl = "https://support.apple.com/118223",
+                    DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_EARLIER -> ProStatus.Expired(
+                        expiredAt = Instant.now() - Duration.ofDays(60),
+                        providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!
                     )
-                )
-            },
+                    DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE -> ProStatus.Expired(
+                        expiredAt = Instant.now() - Duration.ofDays(14),
+                        providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!
+                    )
+                },
 
-            refreshState = proStatus,
-        )
+                refreshState = proDataRefreshState,
+                showProBadge = selfRecipient.shouldShowProBadge,
+            )
+        }
 
-    }.stateIn(GlobalScope, SharingStarted.Eagerly,
+    }.stateIn(scope, SharingStarted.Eagerly,
         initialValue = getDefaultSubscriptionStateData()
     )
 
@@ -157,21 +152,18 @@ class ProStatusManager @Inject constructor(
     val postProLaunchStatus: StateFlow<Boolean> = _postProLaunchStatus
 
     init {
-        GlobalScope.launch {
+        scope.launch {
             prefs.watchPostProStatus().collect {
                 _postProLaunchStatus.update { isPostPro() }
             }
         }
     }
 
-    //todo PRO add "about to expire" CTA logic on app launch
-    //todo PRO add "expired" CTA logic on app launch
-
     /**
      * Logic to determine if we should animate the avatar for a user or freeze it on the first frame
      */
     fun freezeFrameForUser(recipient: Recipient): Boolean{
-        return if(!isPostPro() || recipient.isCommunityRecipient) false else !recipient.proStatus.isPro()
+        return if(!isPostPro() || recipient.isCommunityRecipient) false else !recipient.isPro
     }
 
     /**
@@ -190,61 +182,131 @@ class ProStatusManager @Inject constructor(
         return prefs.forcePostPro()
     }
 
-    fun getCharacterLimit(status: ProStatus): Int {
-        return if (status.isPro()) MAX_CHARACTER_PRO else MAX_CHARACTER_REGULAR
+    fun getCharacterLimit(isPro: Boolean): Int {
+        return if (isPro) MAX_CHARACTER_PRO else MAX_CHARACTER_REGULAR
     }
 
-    fun getPinnedConversationLimit(status: ProStatus): Int {
+    fun getPinnedConversationLimit(isPro: Boolean): Int {
         if(!isPostPro()) return Int.MAX_VALUE // allow infinite pins while not in post Pro
 
-        return if (status.isPro()) Int.MAX_VALUE else MAX_PIN_REGULAR
+        return if (isPro) Int.MAX_VALUE else MAX_PIN_REGULAR
     }
 
     /**
      * This will calculate the pro features of an outgoing message
      */
-    fun calculateMessageProFeatures(status: ProStatus, message: String): List<MessageProFeature>{
-        val features = mutableListOf<MessageProFeature>()
-
-        // check for pro badge display
-        if (status.shouldShowProBadge()){
-            features.add(MessageProFeature.ProBadge)
-        }
-
-        // check for "long message" feature
-        if(message.length > MAX_CHARACTER_REGULAR){
-            features.add(MessageProFeature.LongMessage)
-        }
+    fun calculateMessageProFeatures(isPro: Boolean, shouldShowProBadge: Boolean, message: String) {
+//        if (!isPro){
+//            return emptyList()
+//        }
+//
+//        val features = mutableListOf<MessageProFeature>()
+//
+//        // check for pro badge display
+//        if (shouldShowProBadge){
+//            features.add(MessageProFeature.ProBadge)
+//        }
+//
+//        // check for "long message" feature
+//        if(message.length > MAX_CHARACTER_REGULAR){
+//            features.add(MessageProFeature.LongMessage)
+//        }
 
         // check is the user has an animated avatar
         //todo PRO check for animated avatar here and add appropriate feature
 
 
-        return features
+//        return features
     }
 
     /**
      * This will get the list of Pro features from an incoming message
      */
-    fun getMessageProFeatures(messageId: MessageId): Set<MessageProFeature>{
-        //todo PRO implement once we have data
-
+    fun getMessageProFeatures(message: MessageRecord): ProFeatures {
         // use debug values if any
         if(prefs.forceIncomingMessagesAsPro()){
             return prefs.getDebugMessageFeatures()
         }
 
-        return emptySet()
+        return message.proFeatures
     }
 
-    enum class MessageProFeature {
-        ProBadge, LongMessage, AnimatedAvatar
+    @OptIn(ExperimentalCoroutinesApi::class)
+    suspend fun appProPaymentToBackend(orderId: String, paymentId: String) {
+        // max 3 attempts as per PRD
+        val maxAttempts = 3
+
+        // no point in going further if we have no key data
+        val keyData = loginState.loggedInState.value ?: throw Exception()
+
+        for (attempt in 1..maxAttempts) {
+            try {
+                    // 5s timeout as per PRD
+                    val paymentResponse = withTimeout(5_000L) {
+                            apiExecutor.executeRequest(
+                            request = AddProPaymentRequest(
+                                googlePaymentToken = paymentId,
+                                googleOrderId = orderId,
+                                masterPrivateKey = keyData.seeded.proMasterPrivateKey,
+                                rotatingPrivateKey = proDatabase.ensureValidRotatingKeys(snodeClock.currentTime()).ed25519PrivKey
+                            )
+                        )
+                    }
+
+                    when (paymentResponse) {
+                        is ProApiResponse.Success -> {
+                            Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' successful")
+                            // Payment was successfully claimed - save it to the database
+                            proDatabase.updateCurrentProProof(paymentResponse.data)
+                        }
+
+                        is ProApiResponse.Failure -> {
+                            // Handle payment failure
+                            Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' failure: $paymentResponse")
+                            when (paymentResponse.status) {
+                                // unknown payment is retryable - throw a generic exception here to go through our retries
+                                AddPaymentErrorStatus.UnknownPayment -> {
+                                    throw Exception()
+                                }
+
+                                // nothing to do if already redeemed
+                                AddPaymentErrorStatus.AlreadyRedeemed -> {
+                                    return
+                                }
+
+                                // non retryable error - throw our custom exception
+                                AddPaymentErrorStatus.GenericError -> {
+                                    throw SubscriptionManager.PaymentServerException()
+                                }
+                            }
+                        }
+                    }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: SubscriptionManager.PaymentServerException){
+                // rethrow this error directly without retrying
+                Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' PaymentServerException caught and rethrown")
+                throw e
+            }catch (e: Exception) {
+                Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' exception", e)
+                // If not the last attempt, backoff a little and retry
+                if (attempt < maxAttempts) {
+                    // small incremental backoff before retry
+                    val backoffMs = 300L * attempt
+                    delay(backoffMs)
+                }
+            }
+        }
+
+        // All attempts failed - throw our custom exception
+        Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' - Al retries attempted, throwing our custom `PaymentServerException`")
+        throw SubscriptionManager.PaymentServerException()
     }
 
     companion object {
         const val MAX_CHARACTER_PRO = 10000 // max characters in a message for pro users
         private const val MAX_CHARACTER_REGULAR = 2000 // max characters in a message for non pro users
-        private const val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
+        const val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
 
         const val URL_PRO_SUPPORT = "https://getsession.org/pro-form"
         const val DEFAULT_GOOGLE_STORE = "Google Play Store"

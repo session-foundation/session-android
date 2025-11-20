@@ -19,7 +19,10 @@ class TypingIndicatorViewContainer : LinearLayout {
     }
 
     fun setTypists(typists: List<Address>) {
-        if (typists.isEmpty()) { binding.typingIndicator.root.stopAnimation(); return }
-        binding.typingIndicator.root.startAnimation()
+        if (typists.isEmpty()) { stopAnimation(); return }
+        startAnimation()
     }
+
+    fun startAnimation() = binding.typingIndicator.root.startAnimation()
+    fun stopAnimation() = binding.typingIndicator.root.stopAnimation()
 }

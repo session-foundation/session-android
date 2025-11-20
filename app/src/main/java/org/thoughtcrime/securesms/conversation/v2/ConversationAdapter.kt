@@ -17,9 +17,7 @@ import org.thoughtcrime.securesms.database.MmsSmsColumns
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.math.max
 import kotlin.math.min
 
 class ConversationAdapter(
@@ -34,8 +32,8 @@ class ConversationAdapter(
     private val retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
     private val glide: RequestManager,
     private val threadRecipientProvider: () -> Recipient,
+    val messageDB: MmsSmsDatabase,
 ) : CursorRecyclerViewAdapter<ViewHolder>(context) {
-    private val messageDB by lazy { DatabaseComponent.get(context).mmsSmsDatabase() }
     var selectedItems = mutableSetOf<MessageRecord>()
     var isAdmin: Boolean = false
     private var searchQuery: String? = null
@@ -261,18 +259,20 @@ class ConversationAdapter(
         notifyDataSetChanged()
     }
 
-    fun getTimestampForItemAt(firstVisiblePosition: Int): Long? {
+    fun getMessageIdAt(position: Int): MessageId? {
         val cursor = this.cursor ?: return null
-        if (!cursor.moveToPosition(firstVisiblePosition)) return null
-        val message = messageDB.readerFor(cursor).current ?: return null
-        if (message.reactions.isEmpty()) {
-            // If the message has no reactions, we can use the timestamp directly
-            return message.timestamp
-        }
+        if (!cursor.moveToPosition(position)) return null
 
-        // Otherwise, we will need to take the reaction timestamp into account
-        val maxReactionTimestamp = message.reactions.maxOf { it.dateReceived }
-        return max(message.timestamp, maxReactionTimestamp)
+        val id = cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.ID))
+        val isMms = cursor.getString(cursor.getColumnIndexOrThrow(MmsSmsDatabase.TRANSPORT)) == MmsSmsDatabase.MMS_TRANSPORT
+        return MessageId(id, isMms)
+    }
+
+    fun getMessageTimestampAt(position: Int): Long? {
+        val cursor = this.cursor ?: return null
+        if (!cursor.moveToPosition(position)) return null
+
+        return cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.NORMALIZED_DATE_SENT))
     }
 
     companion object {

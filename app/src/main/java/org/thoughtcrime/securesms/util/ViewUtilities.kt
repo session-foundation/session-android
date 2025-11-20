@@ -154,6 +154,7 @@ fun View.applySafeInsetsMargins(
     consumeInsets: Boolean = true,
     @InsetsType
     typeMask: Int = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime(),
+    additionalInsets : Insets = Insets.NONE // for additional offsets
 ) {
     ViewCompat.setOnApplyWindowInsetsListener(this) { view, windowInsets ->
         // Get system bars insets
@@ -162,7 +163,7 @@ fun View.applySafeInsetsMargins(
         // Update view margins to account for system bars
         val lp = view.layoutParams as? MarginLayoutParams
         if (lp != null) {
-            lp.setMargins(systemBarsInsets.left, systemBarsInsets.top, systemBarsInsets.right, systemBarsInsets.bottom)
+            lp.setMargins(additionalInsets.left + systemBarsInsets.left, additionalInsets.top + systemBarsInsets.top, additionalInsets.right + systemBarsInsets.right, additionalInsets.bottom + systemBarsInsets.bottom)
             view.layoutParams = lp
 
             if (consumeInsets) {

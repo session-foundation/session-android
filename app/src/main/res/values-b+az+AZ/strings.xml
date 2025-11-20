@@ -15,15 +15,20 @@
     <string name="accountIdYoursDescription">Bu, sizin Hesab Kimliyinizdir. Digər istifadəçilər onu skan edərək sizinlə danışıq başlada bilər.</string>
     <string name="actualSize">Aktual həcmi</string>
     <string name="add">Əlavə et</string>
+    <plurals name="addAdmin">
+        <item quantity="one">Admin əlavə et</item>
+        <item quantity="other">Adminləri əlavə et</item>
+    </plurals>
     <string name="addAdmins">İnzibatçılar əlavə et</string>
     <string name="addAdminsDescription">Admin edəcəyiniz istifadəçinin Hesab ID-sini daxil edin.\n\nBirdən çox istifadəçi əlavə etmək üçün vergüllə ayrılmış hər Hesab ID-sini daxil edin. Bir dəfəyə 20-yə qədər Hesab ID-si daxil edilə bilər.</string>
-    <string name="adminCannotBeRemoved">Adminlər çıxarıla bilməz.</string>
+    <string name="adminCannotBeDemoted">Adminlərin vəzifəsini azaltmaq və ya adminləri qrupdan xaric etmək mümkün deyil.</string>
+    <string name="adminCannotBeRemoved">Adminlər xaric edilə bilməz.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> və <b>başqa {count} nəfər</b> Admin olaraq yüksəldildi.</string>
     <string name="adminPromote">Adminləri yüksəlt</string>
-    <string name="adminPromoteDescription"><b>{name}</b> istifadəçisini admin etmək istədiyinizə əminsiniz? Adminlər çıxarıla bilməz.</string>
-    <string name="adminPromoteMoreDescription"><b>{name}</b> və <b>başqa {count} nəfəri</b> admin etmək istədiyinizə əminsiniz? Adminlər çıxarıla bilməz.</string>
+    <string name="adminPromoteDescription"><b>{name}</b> istifadəçisini admin etmək istədiyinizə əminsiniz? Adminlər xaric edilə bilməz.</string>
+    <string name="adminPromoteMoreDescription"><b>{name}</b> və <b>başqa {count} nəfəri</b> admin etmək istədiyinizə əminsiniz? Adminlər xaric edilə bilməz.</string>
     <string name="adminPromoteToAdmin">Admin olaraq yüksəlt</string>
-    <string name="adminPromoteTwoDescription"><b>{name}</b> və <b>{other_name}</b> admin etmək istədiyinizə əminsiniz? Adminlər silinə bilməz.</string>
+    <string name="adminPromoteTwoDescription"><b>{name}</b> və <b>{other_name}</b> istifadəçilərini admin etmək istədiyinizə əminsiniz? Adminlər xaric edilə bilməz.</string>
     <string name="adminPromotedToAdmin"><b>{name}</b> Admin olaraq yüksəldildi.</string>
     <string name="adminPromotionFailed">Admin təyinatı uğursuz oldu</string>
     <string name="adminPromotionFailedDescription">{name} istifadəçisini {group_name} qrupunda yüksəltmə uğursuz oldu</string>
@@ -32,21 +37,26 @@
     <string name="adminPromotionNotSent">Yüksəltmə göndərilmədi</string>
     <string name="adminPromotionSent">Admin təyinatı göndərildi</string>
     <string name="adminPromotionStatusUnknown">Yüksəltmə statusu bilinmir</string>
-    <string name="adminRemove">Adminləri çıxart</string>
-    <string name="adminRemoveAsAdmin">Admin olaraq sil</string>
+    <string name="adminRemove">Adminləri xaric et</string>
+    <string name="adminRemoveAsAdmin">Admin olaraq xaric et</string>
     <string name="adminRemoveCommunityNone">Bu İcmada heç bir Admin yoxdur.</string>
-    <string name="adminRemoveFailed">{name} istifadəçisini Admin olaraq çıxartma uğursuz oldu.</string>
-    <string name="adminRemoveFailedMultiple"><b>{name}</b> və <b>digər {count} nəfər</b> Adminlikdən çıxarılmadı.</string>
-    <string name="adminRemoveFailedOther"><b>{name}</b> və <b>{other_name}</b> Adminlikdən çıxarılmadı.</string>
-    <string name="adminRemovedUser"><b>{name}</b> artıq Admin deyil.</string>
-    <string name="adminRemovedUserMultiple"><b>{name}</b> və <b>digər {count} nəfər</b> Adminlikdən çıxarıldı.</string>
-    <string name="adminRemovedUserOther"><b>{name}</b> və <b>{other_name}</b> Adminlikdən çıxarıldı.</string>
+    <string name="adminRemoveFailed">{name} Adminlikdən xaric edilmədi.</string>
+    <string name="adminRemoveFailedMultiple"><b>{name}</b> və <b>digər {count} nəfər</b> Adminlikdən xaric edilmədi.</string>
+    <string name="adminRemoveFailedOther"><b>{name}</b> və <b>{other_name}</b> Adminlikdən xaric edilmədi.</string>
+    <string name="adminRemovedUser"><b>{name}</b> Adminlikdən xaric edildi.</string>
+    <string name="adminRemovedUserMultiple"><b>{name}</b> və <b>digər {count} nəfər</b> Adminlikdən xaric edildi.</string>
+    <string name="adminRemovedUserOther"><b>{name}</b> və <b>{other_name}</b> Adminlikdən xaric edildi.</string>
+    <plurals name="adminSelected">
+        <item quantity="one">%1$d Admin seçildi</item>
+        <item quantity="other">%1$d Admin seçildi</item>
+    </plurals>
     <plurals name="adminSendingPromotion">
         <item quantity="one">Admin təyinatı göndərilir</item>
         <item quantity="other">Admin təyinatları göndərilir</item>
     </plurals>
     <string name="adminSettings">Admin ayarları</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> və <b>{other_name}</b> Admin olaraq yüksəldildi.</string>
+    <string name="admins">Adminlər</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonim</string>
     <string name="appIcon">Tətbiq ikonu</string>
@@ -113,7 +123,7 @@
     <string name="attachmentsFileSize">Fayl ölçüsü:</string>
     <string name="attachmentsFileType">Fayl növü:</string>
     <string name="attachmentsFilesEmpty">Bu danışıqda heç bir faylınız yoxdur.</string>
-    <string name="attachmentsImageErrorMetadata">Meta veri, fayldan silinə bilmir.</string>
+    <string name="attachmentsImageErrorMetadata">Meta veri, fayldan xaric edilə bilmir.</string>
     <string name="attachmentsLoadingNewer">Yeni media yüklənir...</string>
     <string name="attachmentsLoadingNewerFiles">Yeni fayllar yüklənir...</string>
     <string name="attachmentsLoadingOlder">Köhnə media yüklənir...</string>
@@ -191,6 +201,9 @@
     <string name="callsVoiceAndVideoToggleDescription">Digər istifadəçilərlə səsli və görüntülü zəngləri təmin edir.</string>
     <string name="callsYouCalled">{name} istifadəçisinə zəng etdiniz</string>
     <string name="callsYouMissedCallPermissions">Gizlilik Ayarlarında <b>Səsli və görüntülü zənglər</b> seçimini fəallaşdırmadığınız üçün <b>{name}</b> etdiyi bir zəngi buraxdınız.</string>
+    <string name="cameraAccessInstructions">Kamera erişiminə icazə vermək üçün ayarları aç və Kamera icazəsini işə sal.</string>
+    <string name="cameraAccessReminderMessage">Son zəng zamanı, görüntünü istifadə etməyə çalışdınız, ancaq kamera erişiminə daha əvvəl rədd cavabı verildiyi üçün edə bilmədiniz. Kamera erişiminə icazə vermək üçün ayarları açıb Kamera icazəsini işə salın.</string>
+    <string name="cameraAccessRequired">Kamera erişimi tələb olunur</string>
     <string name="cameraErrorNotFound">Kamera tapılmadı</string>
     <string name="cameraErrorUnavailable">Kamera əlçatmazdır.</string>
     <string name="cameraGrantAccess">Kamera erişiminə icazə ver</string>
@@ -198,10 +211,12 @@
     <string name="cameraGrantAccessDescription">{app_name} foto və video çəkmək və ya QR kodlarını skan etmək üçün kameraya müraciət etməlidir.</string>
     <string name="cameraGrantAccessQr">{app_name} QR kodlarını skan etmək üçün kameraya müraciət etməlidir</string>
     <string name="cancel">İmtina</string>
+    <string name="cancelAccess">{pro} - ləğv et</string>
     <string name="change">Dəyişdir</string>
     <string name="changePasswordFail">Parol dəyişdirmə uğursuz oldu</string>
     <string name="changePasswordModalDescription">{app_name} üçün parolunuzu dəyişdirin. Daxili olaraq saxlanılmış verilər, yeni parolunuzla təkrar şifrələnəcək.</string>
     <string name="checkingProStatus">{pro} statusu yoxlanılır</string>
+    <string name="checkingProStatusEllipsis">{pro} statusu yoxlanılır...</string>
     <string name="checkingProStatusUpgradeDescription">{pro} statusunuz yoxlanılır. Bu yoxlama tamamlandıqdan sonra {pro} ya yüksəldə biləcəksiniz.</string>
     <string name="clear">Təmizlə</string>
     <string name="clearAll">Hamısını təmizlə</string>
@@ -261,11 +276,17 @@
     <string name="communityUrl">İcma URL-si</string>
     <string name="communityUrlCopy">İcma URL-sini kopyala</string>
     <string name="confirm">Təsdiqlə</string>
+    <string name="confirmPromotion">Yüksəltməni təsdiqlə</string>
+    <string name="confirmPromotionDescription">Əminsiniz? Adminlərin vəzifəsini azaltmaq və ya adminləri qrupdan xaric etmək mümkün deyil.</string>
     <string name="contactContacts">Kontaktlar</string>
     <string name="contactDelete">Kontaktı sil</string>
     <string name="contactDeleteDescription"><b>{name}</b> istifadəçisini silmək istədiyinizə əminsiniz? <b>{name}</b> göndərən yeni mesajlar mesaj tələbi olaraq gələcək.</string>
     <string name="contactNone">Hələ heç bir kontaktınız yoxdur</string>
     <string name="contactSelect">Kontaktları seç</string>
+    <plurals name="contactSelected">
+        <item quantity="one">%1$d Kontakt seçildi</item>
+        <item quantity="other">%1$d Kontakt seçildi</item>
+    </plurals>
     <string name="contactUserDetails">İstifadəçi detalları</string>
     <string name="contentDescriptionCamera">Kamera</string>
     <string name="contentDescriptionChooseConversationType">Danışıq başlatmaq üçün bir fəaliyyət seçin</string>
@@ -306,6 +327,7 @@
     <string name="copy">Kopyala</string>
     <string name="create">Yarat</string>
     <string name="creatingCall">Zəng yaradılır</string>
+    <string name="currentBilling">Hazırkı faktura</string>
     <string name="currentPassword">Hazırkı parol</string>
     <string name="cut">Kəs</string>
     <string name="darkMode">Qaranlıq rejim</string>
@@ -333,6 +355,14 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">Qrup yaradılarkən lütfən gözləyin...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">Qrup güncəlləmə uğursuz oldu</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">Başqalarının mesajlarını silmə icazəniz yoxdur</string>
+    <plurals name="deleteAttachments">
+        <item quantity="one">Seçilmiş qoşmanı sil</item>
+        <item quantity="other">Seçilmiş qoşmaları sil</item>
+    </plurals>
+    <plurals name="deleteAttachmentsDescription">
+        <item quantity="one">Seçilmiş qoşmanı silmək istədiyinizə əminsiniz? Qoşma ilə əlaqəli mesaj da silinəcək.</item>
+        <item quantity="other">Seçilmiş qoşmaları silmək istədiyinizə əminsiniz? Qoşmalarla əlaqəli mesaj da silinəcək.</item>
+    </plurals>
     <string name="deleteContactDescription"><b>{name}</b> adlı şəxsi kontaktlarınızdan silmək istədiyinizə əminsinizmi?\n\nBu, bütün mesajlar və qoşmalar daxil olmaqla söhbətinizi siləcək. <b>{name}</b> ünvanından gələcək mesajlar mesaj sorğusu kimi görünəcək.</string>
     <string name="deleteConversationDescription"><b>{name}</b> ilə söhbətinizi silmək istədiyinizə əminsinizmi?\nBu, bütün mesajları və qoşmaları həmişəlik siləcək.</string>
     <plurals name="deleteMessage">
@@ -448,17 +478,27 @@
     <string name="emojiReactsHoverYouNameTwoDesktop">Siz və {name}, {emoji_name} ilə reaksiya verdiniz</string>
     <string name="emojiReactsNotification">Mesajınıza {emoji} reaksiyasını verdi</string>
     <string name="enable">Fəallaşdır</string>
+    <string name="enableCameraAccess">Kamera erişimi fəallaşdırılsın?</string>
     <string name="enableNotifications">Yeni mesaj aldığınız zaman bildirişlər göstərilsin.</string>
+    <string name="endCallToEnable">Fəallaşdırmaq üçün zəngi söndür</string>
     <string name="enjoyingSession">{app_name}-dan zövq alırsınız?</string>
     <string name="enjoyingSessionButtonNegative">Təkmilləşməlidir {emoji}</string>
     <string name="enjoyingSessionButtonPositive">Əladır {emoji}</string>
     <string name="enjoyingSessionDescription">{app_name} tətbiqini bir müddətdir istifadə edirsiniz, necə gedir? Fikirlərinizi eşitmək bizim üçün çox dəyərli olardı.</string>
     <string name="enter">Daxil ol</string>
+    <string name="enterPasswordDescription">{app_name} üçün təyin etdiyiniz parolu daxil edin</string>
+    <string name="errorCheckingProStatus">{pro} statusunu yoxlama xətası.</string>
     <string name="errorConnection">Lütfən internet bağlantınızı yoxlayıb yenidən sınayın.</string>
     <string name="errorCopyAndQuit">Xətanı kopyala və çıx</string>
     <string name="errorDatabase">Veri bazası xətası</string>
     <string name="errorGeneric">Nəsə səhv getdi. Lütfən daha sonra yenidən sınayın.</string>
+    <string name="errorLoadingProAccess">{pro} erişimini yükləmə xətası</string>
+    <string name="errorNoLookupOns">{app_name}, bu ONS-ni axtara bilmədi. Lütfən şəbəkə bağlantınızı yoxlayıb yenidən sınayın.</string>
     <string name="errorUnknown">Bilinməyən bir xəta baş verdi.</string>
+    <string name="errorUnregisteredOns">Bu ONS qeydiyyatdan keçməyib. Lütfən doğru olub-olmadığını yoxlayıb yenidən sınayın.</string>
+    <string name="failedResendInvite"><b>{group_name}</b> qrupundakı <b>{name}</b> üçün dəvət təkrar göndərilmədi</string>
+    <string name="failedResendInviteMultiple"><b>{group_name}</b> qrupundakı <b>{name}</b> və <b>digər {count} nəfər</b> üçün dəvət təkrar göndərilmədi</string>
+    <string name="failedResendInviteTwo"><b>{group_name}</b> qrupundakı <b>{name}</b> və <b>{other_name}</b> üçün dəvət təkrar göndərilmədi</string>
     <string name="failedToDownload">Endirmək uğursuz oldu</string>
     <string name="failures">Xətalar</string>
     <string name="feedback">Əks-əlaqə</string>
@@ -478,7 +518,7 @@
     <string name="groupCreate">Qrup yarat</string>
     <string name="groupCreateErrorNoMembers">Lütfən ən azı bir qrup üzvü seçin.</string>
     <string name="groupDelete">Qrupu sil</string>
-    <string name="groupDeleteDescription"><b>{group_name}</b> qrupunu silmək istədiyinizdən əminsinizmi?\n\nBu, bütün üzvləri çıxaracaq və bütün qrup məzmununu siləcək.</string>
+    <string name="groupDeleteDescription"><b>{group_name}</b> qrupunu silmək istədiyinizə əminsiniz?\n\nBu, bütün üzvləri xaric edəcək və qrupun bütün məzmununu siləcək.</string>
     <string name="groupDeleteDescriptionMember"><b>{group_name}</b> qrupunu silmək istədiyinizə əminsiniz?</string>
     <string name="groupDeletedMemberDescription">{group_name}, qrup admini tərəfindən silindi. Artıq mesaj göndərə bilməyəcəksiniz.</string>
     <string name="groupDescriptionEnter">Qrup açıqlamasını daxil edin</string>
@@ -510,8 +550,11 @@
     <string name="groupInviteYouHistory"><b>Siz</b> qrupa qoşulmaq üçün dəvət edildiniz. Söhbət tarixçəsi paylaşıldı.</string>
     <string name="groupLeave">Qrupu tərk et</string>
     <string name="groupLeaveDescription"><b>{group_name}</b> qrupunu tərk etmək istədiyinizə əminsiniz?</string>
-    <string name="groupLeaveDescriptionAdmin"><b>{group_name}</b> qrupunu tərk etmək istədiyinizə əminsiniz?\n\nBununla bütün üzvləri çıxarılacaq və qrupun bütün məzmunu silinəcək.</string>
+    <string name="groupLeaveDescriptionAdmin"><b>{group_name}</b> qrupunu tərk etmək istədiyinizə əminsiniz?\n\nBu, bütün üzvlər xaric ediləcək və qrupun bütün məzmunu silinəcək.</string>
     <string name="groupLeaveErrorFailed">{group_name} qrupunu tərk etmə uğursuz oldu</string>
+    <string name="groupMemberInvitedHistory"><b>{name}</b> qrupa qoşulmaq üçün dəvət edildi. Son 14 günə aid söhbət tarixçəsi paylaşıldı.</string>
+    <string name="groupMemberInvitedHistoryMultiple"><b>{name}</b> və digər <b>{count}</b> nəfər qrupa qoşulmaq üçün dəvət edildi. Son 14 günə aid söhbət tarixçəsi paylaşıldı.</string>
+    <string name="groupMemberInvitedHistoryTwo"><b>{name}</b> və <b>{other_name}</b> qrupa qoşulmaq üçün dəvət edildi. Son 14 günə aid söhbət tarixçəsi paylaşıldı.</string>
     <string name="groupMemberLeft"><b>{name}</b> qrupu tərk etdi.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> və <b>başqa {count} nəfər</b> qrupu tərk etdi.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> və <b>{other_name}</b> qrupu tərk etdi.</string>
@@ -523,6 +566,9 @@
     <string name="groupMemberNewTwo"><b>{name}</b> və <b>{other_name}</b> qrupa qoşulmaq üçün dəvət edildi.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Siz</b> və <b>digər {count} nəfər</b> qrupa qoşulmaq üçün dəvət edildiniz. Söhbət tarixçəsi paylaşıldı.</string>
     <string name="groupMemberNewYouHistoryTwo"><b>Siz</b> və <b>{other_name}</b> qrupa qoşulmaq üçün dəvət edildiniz. Söhbət tarixçəsi paylaşıldı.</string>
+    <string name="groupMemberRemoveFailed"><b>{name}</b> <b>{group_name}</b> qrupundan xaric edilmədi</string>
+    <string name="groupMemberRemoveFailedMultiple"><b>{name}</b> və <b>digər {count} nəfər</b> <b>{group_name}</b> qrupundan xaric edilmədi</string>
+    <string name="groupMemberRemoveFailedOther"><b>{name}</b> və <b>{other_name}</b> <b>{group_name}</b> qrupundan xaric edilmədi</string>
     <string name="groupMemberYouLeft"><b>Siz</b> qrupu tərk etdiniz.</string>
     <string name="groupMembers">Qrup üzvləri</string>
     <string name="groupMembersNone">Bu qrupda başqa üzv yoxdur.</string>
@@ -536,28 +582,29 @@
     <string name="groupNoMessages"><b>{group_name}</b> daxilində heç bir mesajınız yoxdur. Danışığa başlamaq üçün bir mesaj göndərin!</string>
     <string name="groupNotUpdatedWarning">Bu qrup 30 gün ərzində güncəllənməyib. Mesaj göndərərkən və ya qrup məlumatlarına baxarkən problemlərlə üzləşə bilərsiniz.</string>
     <string name="groupOnlyAdmin">Siz <b>{group_name}</b> qrupunda yeganə adminsiniz.\n\nQrup üzvləri və ayarları admin olmadan dəyişdirilə bilməz.</string>
+    <string name="groupOnlyAdminLeave">Siz, <b>{group_name}</b> qrupunun yeganə adminisiniz.\n\nQrup üzvləri və ayarları admin olmadan dəyişdirilə bilməz. Qrupu silmədən tərk etmək üçün, əvvəlcə yeni bir admin əlavə edin</string>
     <string name="groupPendingRemoval">Silmə gözlənilir</string>
     <string name="groupPromotedYou"><b>Siz</b> Admin oldunuz.</string>
     <string name="groupPromotedYouMultiple"><b>Siz</b> və <b> digər {count} nəfər</b> Admin oldunuz.</string>
     <string name="groupPromotedYouTwo"><b>Siz</b> və<b>{other_name}</b> Admin oldunuz.</string>
-    <string name="groupRemoveDescription"><b>{name}</b> istifadəçisini <b>{group_name}</b> qrupundan çıxarmaq istəyirsiniz?</string>
-    <string name="groupRemoveDescriptionMultiple"><b>{name}</b> və digər <b>{count} nəfəri</b> <b>{group_name}</b> qrupundan çıxartmaq istəyirsiniz?</string>
-    <string name="groupRemoveDescriptionTwo"><b>{name}</b> və <b>{other_name}</b> istifadəçilərini <b>{group_name}</b> qrupundan çıxarmaq istəyirsiniz?</string>
+    <string name="groupRemoveDescription"><b>{name}</b> istifadəçisini <b>{group_name}</b> qrupundan xaric etmək istəyirsiniz?</string>
+    <string name="groupRemoveDescriptionMultiple"><b>{name}</b> və digər <b>{count} nəfəri</b> <b>{group_name}</b> qrupundan xaric etmək istəyirsiniz?</string>
+    <string name="groupRemoveDescriptionTwo"><b>{name}</b> və <b>{other_name}</b> istifadəçilərini <b>{group_name}</b> qrupundan xaric etmək istəyirsiniz?</string>
     <plurals name="groupRemoveMessages">
-        <item quantity="one">İstifadəçini və mesajlarını sil</item>
-        <item quantity="other">İstifadəçiləri və mesajlarını sil</item>
+        <item quantity="one">İstifadəçini xaric et və mesajlarını sil</item>
+        <item quantity="other">İstifadəçiləri xaric et və mesajlarını sil</item>
     </plurals>
     <plurals name="groupRemoveUserOnly">
-        <item quantity="one">İstifadəçini sil</item>
-        <item quantity="other">İstifadəçiləri sil</item>
+        <item quantity="one">İstifadəçini xaric et</item>
+        <item quantity="other">İstifadəçiləri xaric et</item>
     </plurals>
-    <string name="groupRemoved"><b>{name}</b> qrupdan çıxarıldı.</string>
-    <string name="groupRemovedMultiple"><b>{name}</b> və <b>başqa {count} nəfər</b> qrupdan çıxarıldı.</string>
-    <string name="groupRemovedTwo"><b>{name}</b> və <b>{other_name}</b> qrupdan çıxarıldı.</string>
-    <string name="groupRemovedYou"><b>{group_name}</b> qrupundan çıxarıldınız.</string>
-    <string name="groupRemovedYouGeneral">Qrupdan çıxarıldınız.</string>
-    <string name="groupRemovedYouMultiple"><b>Siz</b> və <b>digər {count} nəfər</b> qrupdan çıxarıldınız.</string>
-    <string name="groupRemovedYouTwo"><b>Siz</b> və <b>{other_name}</b> qrupdan çıxarıldınız.</string>
+    <string name="groupRemoved"><b>{name}</b> qrupdan xaric edildi.</string>
+    <string name="groupRemovedMultiple"><b>{name}</b> və <b>digər {count} nəfər</b> qrupdan xaric edildi.</string>
+    <string name="groupRemovedTwo"><b>{name}</b> və <b>{other_name}</b> qrupdan xaric edildi.</string>
+    <string name="groupRemovedYou"><b>{group_name}</b> qrupundan xaric edildiniz.</string>
+    <string name="groupRemovedYouGeneral">Qrupdan xaric edildiniz.</string>
+    <string name="groupRemovedYouMultiple"><b>Siz</b> və <b>digər {count} nəfər</b> qrupdan xaric edildiniz.</string>
+    <string name="groupRemovedYouTwo"><b>Siz</b> və <b>{other_name}</b> qrupdan xaric edildiniz.</string>
     <string name="groupSetDisplayPicture">Qrup ekran şəklini ayarla</string>
     <string name="groupUnknown">Bilinməyən Qrup</string>
     <string name="groupUpdated">Qrup güncəlləndi</string>
@@ -585,6 +632,10 @@
     <string name="incognitoKeyboardDescription">Mövcuddursa gizli rejimi tələb et. İstifadə etdiyiniz klaviaturadan asılı olaraq, klaviaturanız bu tələbi yox saya bilər.</string>
     <string name="info">Məlumat</string>
     <string name="invalidShortcut">Yararsız qısayol</string>
+    <plurals name="inviteContactsPlural">
+        <item quantity="one">Kontaktı dəvət et</item>
+        <item quantity="other">Kontaktları dəvət et</item>
+    </plurals>
     <plurals name="inviteFailed">
         <item quantity="one">Dəvət uğursuz oldu</item>
         <item quantity="other">Dəvətlər uğursuz oldu</item>
@@ -593,6 +644,11 @@
         <item quantity="one">Dəvət göndərilə bilmədi. Təkrar cəhd etmək istəyirsiniz?</item>
         <item quantity="other">Dəvətlər göndərilə bilmədi. Təkrar cəhd etmək istəyirsiniz?</item>
     </plurals>
+    <plurals name="inviteMembers">
+        <item quantity="one">Üzvü dəvət et</item>
+        <item quantity="other">Üzvləri dəvət et</item>
+    </plurals>
+    <string name="inviteNewMemberGroupLink">Dostunuzun Hesab kimliyini, ONS-sini daxil edərək və ya onun QR kodunu skan edərək qrupa yeni üzv dəvət edin {icon}</string>
     <string name="join">Qoşul</string>
     <string name="later">Daha sonra</string>
     <string name="launchOnStartDescriptionDesktop">Kompüteriniz açıldığı zaman {app_name}-u avtomatik başlat.</string>
@@ -636,10 +692,15 @@
     <string name="lockAppUnlock">Kilidi açmaq üçün toxunun</string>
     <string name="lockAppUnlocked">{app_name} kilidi açıldı</string>
     <string name="logs">Log-lar</string>
+    <string name="manageAdmins">Adminləri idarə et</string>
     <string name="manageMembers">Üzvləri İdarə Et</string>
     <string name="managePro">{pro} - idarə et</string>
     <string name="max">Maksimum</string>
     <string name="media">Media</string>
+    <plurals name="memberSelected">
+        <item quantity="one">%1$d üzv seçildi</item>
+        <item quantity="other">%1$d üzv seçildi</item>
+    </plurals>
     <plurals name="members">
         <item quantity="one">%1$d üzv</item>
         <item quantity="other">%1$d üzv</item>
@@ -650,6 +711,7 @@
     </plurals>
     <string name="membersAddAccountIdOrOns">Hesab Kimliyi və ya ONS əlavə et</string>
     <string name="membersInvite">Kontaktları dəvət et</string>
+    <string name="membersInviteNoContacts">Bu qrupa dəvət edəcək kontaktınız yoxdur.\nGeri qayıdın və Hesab kimliyini və ya ONS-sini istifadə edərək üzvlər dəvət edin.</string>
     <plurals name="membersInviteSend">
         <item quantity="one">Dəvət göndər</item>
         <item quantity="other">Dəvətləri göndər</item>
@@ -660,6 +722,7 @@
     <string name="membersInviteShareMessageHistory">Mesaj tarixçəsini paylaş</string>
     <string name="membersInviteShareNewMessagesOnly">Yalnız yeni mesajları paylaş</string>
     <string name="membersInviteTitle">Dəvət et</string>
+    <string name="membersNonAdmins">Üzvlər (admin olmayanlar)</string>
     <string name="menuBar">Menyu çubuğu</string>
     <string name="message">Mesaj</string>
     <string name="messageBubbleReadMore">Daha çox oxu</string>
@@ -678,6 +741,7 @@
     </plurals>
     <string name="messageNewDescriptionDesktop">Yeni bir danışıq başlatmaq üçün dostunuzun Hesab Kimliyini və ya ONS-sini daxil edin.</string>
     <string name="messageNewDescriptionMobile">Yeni bir danışıq başlatmaq üçün dostunuzun Hesab Kimliyini, ONS-sini daxil edin və ya onun QR kodunu skan edin.</string>
+    <string name="messageNewDescriptionMobileLink">Yeni bir danışıq başlatmaq üçün dostunuzun Hesab Kimliyini, ONS-sini daxil edin və ya onun QR kodunu skan edin {icon}</string>
     <plurals name="messageNewYouveGot">
         <item quantity="one">Yeni bir mesajınız var.</item>
         <item quantity="other">%1$d yeni mesajınız var.</item>
@@ -735,7 +799,10 @@
     <string name="nicknameRemove">Ləqəbi sil</string>
     <string name="nicknameSet">Ləqəb təyin et</string>
     <string name="no">Xeyr</string>
+    <string name="noNonAdminsInGroup">Bu qrupda admin olmayan üzv yoxdur.</string>
     <string name="noSuggestions">Təklif yoxdur</string>
+    <string name="nonProLongerMessagesDescription">Bütün danışıqlarda 10,000 xarakterə qədər mesaj göndərin.</string>
+    <string name="nonProUnlimitedPinnedDescription">Limitsiz sancılmış danışıqla söhbətləri təşkil edin.</string>
     <string name="none">Heç biri</string>
     <string name="notNow">İndi yox</string>
     <string name="noteToSelf">Özümə qeyd</string>
@@ -786,6 +853,7 @@
     <string name="okay">Yaxşı</string>
     <string name="on">Açıq</string>
     <string name="onDevice">{device_type} cihazınızda</string>
+    <string name="onDeviceDescription">Başda qeydiyyatdan keçdiyiniz {platform_account} hesabına giriş etdiyiniz {device_type} cihazından bu {app_name} hesabını açın. Sonra {pro} erişiminizi {app_pro} ayarları vasitəsilə güncəlləyin.</string>
     <string name="onboardingAccountCreate">Hesab yarat</string>
     <string name="onboardingAccountCreated">Hesab yaradıldı</string>
     <string name="onboardingAccountExists">Hesabım var</string>
@@ -810,6 +878,8 @@
     <string name="onsErrorNotRecognized">Bu ONS-i tanıya bilmədik. Lütfən, yoxlayıb yenidən sınayın.</string>
     <string name="onsErrorUnableToSearch">Bu ONS-i axtara bilmədik. Lütfən, daha sonra yenidən sınayın.</string>
     <string name="open">Aç</string>
+    <string name="openPlatformWebsite">{platform} veb saytını aç</string>
+    <string name="openSettings">Ayarları aç</string>
     <string name="openSurvey">Anketi aç</string>
     <string name="other">Digər</string>
     <string name="password">Parol</string>
@@ -886,11 +956,28 @@
     <string name="preferences">Tərcihlər</string>
     <string name="preview">Önizləmə</string>
     <string name="previewNotification">Bildirişi önizlə</string>
+    <string name="proAccessActivatedAutoShort">{pro} erişiminiz aktivdir!\n\n{pro} erişiminiz avtomatik olaraq başqa <b>{current_plan_length}</b> üçün <b>{date}</b> tarixində yenilənəcək.</string>
+    <string name="proAccessActivatedNotAuto">{pro} erişiminizin müddəti <b>{date}</b> tarixində bitir.\n\n{pro} erişiminizin istifadə müddəti bitməzdən əvvəl avtomatik olaraq yenilənməsi üçün {pro} erişiminizi indi güncəlləyin.</string>
+    <string name="proAccessActivatesAuto">{pro} erişiminiz aktivdir!\n\n{pro} erişiminiz avtomatik olaraq başqa \n<b>{current_plan_length}</b> üçün <b>{date}</b> tarixində yenilənəcək. Burada etdiyiniz istənilən dəyişiklik, növbəti yeniləmə zamanı qüvvəyə minəcək.</string>
+    <string name="proAccessError">{pro} erişim xətası</string>
+    <string name="proAccessExpireDate">{pro} erişiminizin istifadə müddəti <b>{date}</b> tarixində bitir.</string>
+    <string name="proAccessLoading">{pro} erişimi yüklənir</string>
+    <string name="proAccessLoadingEllipsis">{pro} erişimi yüklənir...</string>
+    <string name="proAccessNotFound">{pro} erişimi tapılmadı</string>
+    <string name="proAccessNotFoundDescription">{app_name}, hesabınızda {pro} erişimi olmadığını müəyyən etdi. Bunun bir səhv olduğunu düşünürsünüzsə, lütfən kömək üçün {app_name} dəstəyi ilə əlaqə saxlayın.</string>
+    <string name="proAccessRecover">{pro} erişimini geri qaytar</string>
+    <string name="proAccessRenew">{pro} erişimini yenilə</string>
+    <string name="proAccessRenewDesktop">Hazırda, {pro} erişimi , yalnız {platform_store} və {platform_store_other} vasitəsilə satın alına və yenilənə bilər. {app_name} Masaüstü istifadə etdiyinizə görə burada yeniləyə bilməzsiniz.\n\n{app_name} gəlişdiriciləri, istifadəçilərin {pro} erişimini {platform_store} və {platform_store_other} xaricində almağına imkan verəcək alternativ ödəniş variantları üzərində ciddi şəkildə çalışırlar. <b>{pro} Yol Xəritəsi</b> {icon}</string>
+    <string name="proAccessRenewPlatformStoreWebsite">{pro} erişiminizi {pro} üçün qeydiyyatdan keçdiyiniz {platform_account} istifadə edərək <b><font color="0">{platform_store} veb saytında</font></b> yeniləyin.</string>
+    <string name="proAccessRenewStart">Güclü {pro} Beta özəlliklərini yenidən istifadə etməyə başlamaq üçün {app_pro} erişiminizi yeniləyin.</string>
+    <string name="proAccessRestored">{pro} erişimi geri qaytarıldı</string>
+    <string name="proAccessRestoredDescription">{app_name}, hesabınız üçün {pro} erişimini aşkarladı və geri qaytardı. {pro} statusunuz bərpa edildi!</string>
+    <string name="proAccessSignUp">Başlanğıcda <b>{platform_store}</b> üzərindən {app_pro} üçün qeydiyyatdan keçdiyinizə görə, {pro} erişiminizi {platform_account} istifadə edərək güncəlləməlisiniz.</string>
     <string name="proActivated">Aktivləşdirildi</string>
     <string name="proAllSet">Hər şey hazırdır!</string>
+    <string name="proAllSetDescription">{app_pro} erişiminiz güncəllənib! {pro} abunəliyiniz <b>{date}</b> tarixində avtomatik yeniləndiyi zaman ödəniş haqqı alınacaq.</string>
     <string name="proAlreadyPurchased">Artıq yüksəltdiniz</string>
     <string name="proAnimatedDisplayPicture">Getdik və ekran şəkliniz üçün GIF-lər və animasiyalı WebP təsvirləri yükləyin!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">{app_pro} ilə animasiyalı ekran şəkillərini endirin və premium özəlliklərin kilidini açın</string>
     <string name="proAnimatedDisplayPictureFeature">Animasiyalı profil şəkli</string>
     <string name="proAnimatedDisplayPictureModalDescription">istifadəçiləri GIF-ləri yükləyə bilər</string>
     <string name="proAnimatedDisplayPictures">Animasiyalı ekran şəkilləri</string>
@@ -909,11 +996,12 @@
     <string name="proBilledAnnually">{price} - illik haqq</string>
     <string name="proBilledMonthly">{price} - aylıq haqq</string>
     <string name="proBilledQuarterly">{price} - rüblük haqq</string>
-    <string name="proCallToActionLongerMessages">Daha uzun mesajlar göndərmək istəyirsiniz? {app_pro} ilə daha çox mətn göndərin və premium özəlliklərin kilidini açın</string>
-    <string name="proCallToActionPinnedConversations">Daha çoxunu sancmaq istəyirsiniz? {app_pro} ilə söhbətlərinizi təşkil edin və premium özəlliklərin kilidini açın</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">5-dən çoxunu sancmaq istəyirsiniz? {app_pro} ilə söhbətlərinizi təşkil edin və premium özəlliklərin kilidini açın</string>
+    <string name="proCancellation">Ləğv etmə</string>
+    <string name="proCancellationOptions">{pro} erişiminizi ləğv etməyin iki yolu var:</string>
+    <string name="proDiscountTooltip">Tam {app_pro} qiymətinə sahib {pro} erişiminiz üçün artıq {percent}% endirim var.</string>
     <string name="proErrorRefreshingStatus">{pro} statusunu təzələmə xətası</string>
     <string name="proExpired">Müddəti bitib</string>
+    <string name="proExpiredDescription">Təəssüf ki, {pro} erişiminizin istifadə müddəti bitib. {app_pro} üzrə eksklüziv imtiyazları və özəllikləri təkrar aktivləşdirmək üçün yeniləyin.</string>
     <string name="proExpiringSoon">Tezliklə bitir</string>
     <string name="proExpiringTime">{pro}, <b>{time}</b> vaxtında başa çatır</string>
     <string name="proFaq">{pro} TVS</string>
@@ -929,10 +1017,12 @@
         <item quantity="one">%1$s qrup yüksəldildi</item>
         <item quantity="other">%1$s qrup yüksəldildi</item>
     </plurals>
+    <string name="proImportantDescription">Geri ödəniş tələbi qətidir. Əgər təsdiqlənsə, {pro} erişiminiz dərhal ləğv ediləcək və bütün {pro} özəlliklərinə erişimi itirəcəksiniz.</string>
     <string name="proIncreasedAttachmentSizeFeature">Artırılmış qoşma ölçüsü</string>
     <string name="proIncreasedMessageLengthFeature">Artırılmış mesaj uzunluğu</string>
     <string name="proLargerGroups">Daha böyük qruplar</string>
     <string name="proLargerGroupsDescription">Admin olduğunuz qruplar, avtomatik olaraq 300 üzvü dəstəkləmək üçün təkmilləşdirilir.</string>
+    <string name="proLargerGroupsTooltip">Tezliklə bütün Pro Beta istifadəçiləri üçün daha böyük qrup söhbətləri (300 üzvə qədər) gəlir!</string>
     <string name="proLongerMessages">Daha uzun mesajlar</string>
     <string name="proLongerMessagesDescription">Bütün danışıqlarda 10,000 xarakterə qədər mesaj göndərə bilərsiniz.</string>
     <plurals name="proLongerMessagesSent">
@@ -940,17 +1030,30 @@
         <item quantity="other">%1$s daha uzun mesaj göndərildi</item>
     </plurals>
     <string name="proMessageInfoFeatures">Bu mesajda aşağıdakı {app_pro} özəllikləri istifadə olunub:</string>
+    <string name="proOptionsTwoRenewalSubtitle">İndilik, yeniləməyin iki yolu var:</string>
     <string name="proPercentOff">{percent}% endirim</string>
     <plurals name="proPinnedConversations">
         <item quantity="one">%1$s sancılmış danışıq</item>
         <item quantity="other">%1$s sancılmış danışıq</item>
     </plurals>
+    <string name="proPlanPlatformRefund">Başda <b><font color="0">{platform_store} Mağazası</font></b> üzərindən {app_pro} üçün qeydiyyatdan keçdiyinizə görə, geri ödəmə tələbini göndərmək üçün eyni {platform_account} hesabını istifadə etməlisiniz.</string>
+    <string name="proPlanPlatformRefundLong">Başda <b><font color="0">{platform_store} Mağazası</font></b> üzərindən {app_pro} üçün qeydiyyatdan keçdiyinizə görə, geri qaytarma tələbiniz {app_name} Dəstək komandası tərəfindən icra olunacaq.\n\nAşağıdakı düyməyə basaraq və geri ödəniş formunu dolduraraq geri ödəmə tələbinizi göndərin.\n\n{app_name} Dəstək komandası, geri ödəmə tələblərini adətən 24-72 saat ərzində emal edir, yüksək tələb həcminə görə bu proses daha uzun çəkə bilər.</string>
+    <string name="proPlanRenewSupport">{app_pro} erişiminiz yeniləndi! {network_name} dəstək verdiyiniz üçün təşəkkürlər.</string>
     <string name="proPriceOneMonth">1 ay - {monthly_price}/ay</string>
     <string name="proPriceThreeMonths">3 ay - {monthly_price}/ay</string>
     <string name="proPriceTwelveMonths">12 ay - {monthly_price}/ay</string>
     <string name="proRefundDescription">Getməyinizə məyus olduq. Geri ödəmə tələb etməzdən əvvəl bilməli olduğunuz şeylər.</string>
+    <string name="proRefundNextSteps">{platform} hazırda geri ödəniş tələbinizi emal edir. Bu, adətən 24-48 saat çəkir. Onların qərarından asılı olaraq, {app_name} tətbiqində {pro} statusunuzun dəyişdiyini görə bilərsiniz.</string>
     <string name="proRefundRequestSessionSupport">Geri qaytarma tələbiniz {app_name} Dəstək komandası tərəfindən icra olunacaq.\n\nAşağıdakı düyməyə basaraq və geri ödəniş formunu dolduraraq geri ödəniş tələbinizi göndərin.\n\n{app_name} Dəstək komandası, geri ödəniş tələblərini adətən 24-72 saat ərzində emal edir, yüksək tələb həcminə görə bu proses daha uzun çəkə bilər.</string>
+    <string name="proRefundRequestStorePolicies">Geri ödəniş tələbiniz yalnız {platform} veb saytında <b>{platform}</b> hesabı üzərindən icra olunacaq.\n\n{platform} geri ödəniş siyasətlərinə əsasən, {app_name} gəlişdiriciləri, geri ödəniş tələblərinin nəticəsinə təsir edə bilməz. Bu, tələbin qəbul olunub-olunmaması ilə yanaşı, tam və ya qismən geri ödənişin verilib-verilməməsini də əhatə edir.</string>
+    <string name="proRefundSupport">Geri ödəmə tələbinizlə bağlı daha çox güncəlləmə üçün lütfən {platform} ilə əlaqə saxlayın. {platform} geri ödəniş siyasətlərinə əsasən, {app_name} gəlişdiriciləri, geri ödəniş tələblərinin nəticəsinə təsir edə bilməz.\n\n<font color="0">{platform} Geri ödəmə dəstəyi</font></string>
     <string name="proRefunding">{pro} geri ödəməsi</string>
+    <string name="proRefundingDescription">{app_pro} üçün geri ödəmələr yalnız {platform_store} vasitəsilə {platform} tərəfindən həyata keçirilir.\n\n{platform} geri ödəniş siyasətlərinə əsasən, {app_name} gəlişdiriciləri, geri ödəniş tələblərinin nəticəsinə təsir edə bilməz. Bu, tələbin qəbul olunub-olunmaması ilə yanaşı, tam və ya qismən geri ödənişin verilib-verilməməsini də əhatə edir.</string>
+    <string name="proRenewBeta">{pro} Beta-nı yenilə</string>
+    <string name="proRenewDesktopLinked">{pro} erişiminizi, {platform_store} və ya {platform_store_other} üzərindən {app_name} quraşdırılmış və əlaqələndirilmiş cihazın {app_pro} ayarlarında yeniləyin.</string>
+    <string name="proRenewMaxPotential">{app_name} tətbiqini yenidən maksimum potensialda istifadə etmək istəyirsiniz?\nQaçırdığınız özəlliklərin kilidini açmaq üçün {pro} erişiminizi yeniləyin.</string>
+    <string name="proRenewPinMoreConversations">Daha çox danışığı təkrar sancmaq istəyirsiniz?\nQaçırdığınız özəlliklərin kilidini açmaq üçün {pro} erişiminizi yeniləyin.</string>
+    <string name="proRenewalUnsuccessful">Pro yeniləməsi uğursuz oldu, tezliklə yenidən sınanacaq</string>
     <string name="proRequestedRefund">Geri ödəmə tələb edildi</string>
     <string name="proSendMore">Daha çoxunu göndərmək üçün</string>
     <string name="proSettings">{pro} ayarları</string>
@@ -965,10 +1068,11 @@
     <string name="proStatusLoadingSubtitle">{pro} status yüklənir</string>
     <string name="proStatusNetworkErrorDescription">{pro} statusunuzu yoxlamaq üçün şəbəkəyə bağlana bilmir. Bağlantı bərpa olunana qədər {pro} ya yüksəldə bilməyəcəksiniz.\n\nLütfən şəbəkə bağlantınızı yoxlayıb yenidən sınayın.</string>
     <string name="proStatusRefreshNetworkError">{pro} statusunuzu təzələmək üçün şəbəkəyə bağlana bilmir. Bu səhifədəki bəzi əməliyyatlar, bağlantı bərpa olunana qədər sıradan çıxarılacaq.\n\nLütfən şəbəkə bağlantınızı yoxlayıb yenidən sınayın.</string>
+    <string name="proSupportDescription">{pro} ilə bağlı kömək lazımdır? Dəstək komandasına sorğu göndər.</string>
     <string name="proTosPrivacy">Güncəlləyərək, {app_pro} <b>Xidmət Şərtləri</b> {icon} və <b>Məxfilik Siyasəti</b> {icon} ilə razılaşırsınız</string>
     <string name="proUnlimitedPins">Limitsiz sancma</string>
     <string name="proUnlimitedPinsDescription">Limitsiz sancılmış danışıqla bütün söhbətlərinizi təşkil edin.</string>
-    <string name="proUserProfileModalCallToAction">{app_name} tətbiqindən daha çox faydalanmaq istəyirsiniz? Daha güclü mesajlaşma təcrübəsi üçün {app_pro}-ya yüksəldin.</string>
+    <string name="processingRefundRequest">{platform} geri ödəmə tələbinizi emal edir</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Ekran şəkli</string>
     <string name="profileDisplayPictureRemoveError">Ekran şəklini silmə uğursuz oldu.</string>
@@ -976,6 +1080,11 @@
     <string name="profileDisplayPictureSizeError">Lütfən daha kiçik bir fayl götürün.</string>
     <string name="profileErrorUpdate">Profili güncəlləmək uğursuz oldu.</string>
     <string name="promote">Yüksəlt</string>
+    <string name="promoteAdminsWarning">Adminlər, son 14 günə aid mesaj tarixçəsini görə biləcək. Onların vəzifəsini azaltmaq və ya onları qrupdan xaric etmək mümkün deyil.</string>
+    <plurals name="promoteMember">
+        <item quantity="one">Üzvü yüksəlt</item>
+        <item quantity="other">Üzvləri yüksəlt</item>
+    </plurals>
     <plurals name="promotionFailed">
         <item quantity="one">Yüksəltmə uğursuz oldu</item>
         <item quantity="other">Yüksəltmələr uğursuz oldu</item>
@@ -1024,18 +1133,51 @@
     <string name="recoveryPasswordWarningSendDescription">Bu, sizin geri qaytarma parolunuzdur. Kiməsə göndərsəniz, hesabınıza tam erişə bilər.</string>
     <string name="recreateGroup">Qrupu yenidən yarat</string>
     <string name="redo">Təkrar et</string>
+    <string name="refundNonOriginatorApple">Başda fərqli {platform_account} vasitəsilə {app_pro} üçün qeydiyyatdan keçdiyinizə görə planınızı
+{pro} erişiminizi güncəlləmək üçün həmin <b><font color="0">{platform_account}</font></b> platformasını istifadə etməlisiniz.</string>
+    <string name="refundRequestOptions">Geri qaytarma tələb etmək üçün iki üsul:</string>
     <string name="remainingCharactersOverTooltip">Mesajın uzunluğunu {count} qədər azalt</string>
     <plurals name="remainingCharactersTooltip">
         <item quantity="one">%1$d xarakter qaldı</item>
         <item quantity="other">%1$d xarakter qaldı</item>
     </plurals>
+    <string name="remindMeLater">Daha sonra xatırlat</string>
     <string name="remove">Sil</string>
+    <plurals name="removeMember">
+        <item quantity="one">Üzvü xaric et</item>
+        <item quantity="other">Üzvləri xaric et</item>
+    </plurals>
+    <plurals name="removeMemberMessages">
+        <item quantity="one">Üzvü xaric et və mesajlarını sil</item>
+        <item quantity="other">Üzvləri xaric et və mesajlarını sil</item>
+    </plurals>
     <string name="removePasswordFail">Parol silmə uğursuz oldu</string>
     <string name="removePasswordModalDescription">{app_name} üçün hazırkı parolunuzu silin. Daxili olaraq saxlanılmış verilər, cihazınızda saxlanılan təsadüfi yaradılmış açarla təkrar şifrələnəcək.</string>
+    <plurals name="removingMember">
+        <item quantity="one">Üzv çıxarılır</item>
+        <item quantity="other">Üzvlər çıxarılır</item>
+    </plurals>
     <string name="renew">Yenilə</string>
+    <string name="renewingPro">{pro} yeniləmə</string>
     <string name="reply">Cavabla</string>
     <string name="requestRefund">Geri ödəmə tələb et</string>
     <string name="resend">Təkrar göndər</string>
+    <plurals name="resendInvite">
+        <item quantity="one">Dəvəti təkrar göndər</item>
+        <item quantity="other">Dəvətləri təkrar göndər</item>
+    </plurals>
+    <plurals name="resendPromotion">
+        <item quantity="one">Yüksəltməni təkrar göndər</item>
+        <item quantity="other">Yüksəltmələri təkrar göndər</item>
+    </plurals>
+    <plurals name="resendingInvite">
+        <item quantity="one">Dəvətlər təkrar göndərilir</item>
+        <item quantity="other">Dəvət təkrar göndərilir</item>
+    </plurals>
+    <plurals name="resendingPromotion">
+        <item quantity="one">Yüksəltmə təkrar göndərilir</item>
+        <item quantity="other">Yüksəltmələr təkrar göndərilir</item>
+    </plurals>
     <string name="resolving">Ölkə məlumatları yüklənir...</string>
     <string name="restart">Yenidən başlat</string>
     <string name="resync">Təkrar sinxronlaşdır</string>
@@ -1136,6 +1278,9 @@
     <string name="undo">Geri al</string>
     <string name="unknown">Bilinmir</string>
     <string name="unsupportedCpu">Dəstəklənməyən CPU</string>
+    <string name="update">Güncəllə</string>
+    <string name="updateAccess">{pro} erişimini güncəllə</string>
+    <string name="updateAccessTwo">{pro} erişiminizi güncəlləməyin iki yolu var:</string>
     <string name="updateApp">Tətbiq güncəlləmələri</string>
     <string name="updateCommunityInformation">İcma məlumatlarını güncəllə</string>
     <string name="updateCommunityInformationDescription">İcma adı və açıqlaması, bütün icma üzvlərinə görünür</string>
@@ -1158,6 +1303,8 @@
     <string name="updated">Son güncəlləmə: {relative_time} əvvəl</string>
     <string name="updates">Güncəlləmələr</string>
     <string name="updating">Güncəllənir...</string>
+    <string name="upgrade">Yüksəlt</string>
+    <string name="upgradeSession">{app_name} - yüksəlt</string>
     <string name="upgradeTo">Yüksəlt</string>
     <string name="uploading">Yüklənir</string>
     <string name="urlCopy">URL-ni kopyala</string>
@@ -1166,6 +1313,8 @@
     <string name="urlOpenDescription">Bu URL-ni brauzerinizdə açmaq istədiyinizə əminsiniz?\n\n<b>{url}</b></string>
     <string name="urlOpenDescriptionAlternative">Keçidlər, brauzerinizdə açılacaq.</string>
     <string name="useFastMode">Sürətli rejimi istifadə et</string>
+    <string name="viaStoreWebsite">{platform} veb saytı vasitəsilə</string>
+    <string name="viaStoreWebsiteDescription">Qeydiyyatdan keçdiyiniz {platform_account} hesabını istifadə edərək {pro} erişiminizi <b><font color="0">{platform_store}</font></b> veb saytı üzərindən güncəlləyin.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Video oxudula bilmir.</string>
     <string name="view">Göstər</string>

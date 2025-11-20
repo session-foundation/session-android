@@ -31,8 +31,6 @@ import org.session.libsession.messaging.sending_receiving.notifications.MessageN
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ServiceUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
-import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getNotificationPrivacy
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isNotificationsEnabled
 import org.session.libsession.utilities.TextSecurePreferences.Companion.removeHasHiddenMessageRequests
@@ -41,8 +39,8 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
-import org.thoughtcrime.securesms.crypto.KeyPairUtilities.getUserED25519KeyPair
 import org.thoughtcrime.securesms.database.MmsSmsColumns.NOTIFIED
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
@@ -75,8 +73,8 @@ class DefaultMessageNotifier @Inject constructor(
     private val threadDatabase: ThreadDatabase,
     private val recipientRepository: RecipientRepository,
     private val mmsSmsDatabase: MmsSmsDatabase,
-    private val textSecurePreferences: TextSecurePreferences,
     private val imageLoader: Provider<ImageLoader>,
+    private val loginStateRepository: LoginStateRepository,
 ) : MessageNotifier {
     override fun setVisibleThread(threadId: Long) {
         visibleThread = threadId
@@ -204,7 +202,7 @@ class DefaultMessageNotifier @Inject constructor(
             incomingCursor  = mmsSmsDatabase.getUnreadIncomingForNotifications(MAX_ROWS)
             reactionsCursor = mmsSmsDatabase.getOutgoingWithUnseenReactionsForNotifications(MAX_ROWS)
 
-            val localNumber = textSecurePreferences.getLocalNumber()
+            val localNumber = loginStateRepository.peekLoginState()?.accountId?.hexString
             val hasIncoming  = incomingCursor  != null && incomingCursor.count  > 0
             val hasReactions = reactionsCursor != null && reactionsCursor.count > 0
             val nothingToDo  = !hasIncoming && !hasReactions
@@ -237,13 +235,30 @@ class DefaultMessageNotifier @Inject constructor(
                 }
 
                 // Normal notifications (unchanged behavior, but uses normalItems)
-                if (normalItems.hasMultipleThreads()) {
+                if (normalItems.notificationCount == 0) {
+                    // There's no notification at all, we'll remove the "group summary notification"
+                    // here, exists or not. Other notifications will be cleaned up in
+                    // `cancelOrphanedNotifications`
+                    ServiceUtil.getNotificationManager(context)
+                        .cancel(SUMMARY_NOTIFICATION_ID)
+                }
+                else if (normalItems.hasMultipleThreads() || hasGroupSummaryNotification(context)) {
+                    // The case of "grouped notifications".
+                    // This includes:
+                    // 1. One notification per thread
+                    // 2. A summary notification for all threads
+                    //
+                    // We will first enter this state when we have multiple threads to show,
+                    // and remain so until the user clears all notifications. This is to avoid
+                    // going back into single-thread mode as it can cause excessive notification
+                    // alerts.
                     for (threadId in normalItems.threads) {
                         val perThread = NotificationState(normalItems.getNotificationsForThread(threadId))
                         sendSingleThreadNotification(context, perThread, false, true)
                     }
-                    sendMultipleThreadNotification(context, normalItems, playNotificationAudio)
-                } else if (normalItems.notificationCount > 0) {
+                    sendGroupSummaryNotification(context, normalItems, playNotificationAudio)
+                } else {
+                    // The case of showing just one single-threaded notification.
                     sendSingleThreadNotification(context, normalItems, playNotificationAudio, false)
                 }
 
@@ -253,12 +268,8 @@ class DefaultMessageNotifier @Inject constructor(
                     sendSingleThreadNotification(context, perThread,false,false)
                 }
 
-                // If nothing to display at all, clear everything (including reminders)
-                if (normalItems.notificationCount == 0 && requestItems.notificationCount == 0) {
-                    // Request-aware cleanup (keeps active request notifs alive)
-                    cancelOrphanedNotifications(context, normalItems)
-                    return
-                }
+                // Clean up any notifications that are no longer in our state
+                cancelOrphanedNotifications(context, normalItems)
             } catch (e: Exception) {
                 Log.e(TAG, "Error creating notification", e)
             }
@@ -267,6 +278,13 @@ class DefaultMessageNotifier @Inject constructor(
             incomingCursor?.close()
             reactionsCursor?.close()
         }
+    }
+
+    private fun hasGroupSummaryNotification(context: Context): Boolean {
+        return ServiceUtil.getNotificationManager(context)
+            .activeNotifications
+            ?.any { it.id == SUMMARY_NOTIFICATION_ID } == true
+
     }
 
     // Note: The `signal` parameter means "play an audio signal for the notification".
@@ -279,23 +297,11 @@ class DefaultMessageNotifier @Inject constructor(
     ) {
         Log.i(TAG, "sendSingleThreadNotification()  signal: $signal  bundled: $bundled")
 
-        if (notificationState.notifications.isEmpty()) {
-            if (!bundled) {
-                cancelActiveNotifications(context)
-            }
-            Log.i(TAG, "Empty notification state. Skipping.")
-            return
-        }
-
         // Bail early if the existing displayed notification has the same content as what we are trying to send now
         val notifications = notificationState.notifications
         // Use dedicated id + group for request notifications
         val isRequest = notifications.firstOrNull()?.isMessageRequest == true
-        val notificationId = if (isRequest) {
-            (SUMMARY_NOTIFICATION_ID + notifications[0].threadId).toInt()
-        } else {
-            (SUMMARY_NOTIFICATION_ID + (if (bundled) notifications[0].threadId else 0)).toInt()
-        }
+        val notificationId = (SUMMARY_NOTIFICATION_ID + notifications[0].threadId).toInt()
 
         val contentSignature = notifications.map {
             getNotificationSignature(it)
@@ -303,18 +309,23 @@ class DefaultMessageNotifier @Inject constructor(
 
         val existingNotifications = ServiceUtil.getNotificationManager(context).activeNotifications
 
-        val existingSignature = if (isRequest) {
-            // For requests: match BOTH id and tag to detect duplicates correctly
-            existingNotifications
-                .firstOrNull { it.id == notificationId && REQUEST_TAG == it.tag }
-                ?.notification?.extras?.getString(CONTENT_SIGNATURE)
-        } else {
-            existingNotifications
-                .firstOrNull { it.id == notificationId }
-                ?.notification?.extras?.getString(CONTENT_SIGNATURE)
-        }
+        val exitingNotification = existingNotifications.firstOrNull {
+            if (isRequest) {
+                it.id == notificationId && REQUEST_TAG == it.tag
+            } else {
+                it.id == notificationId
+            }
+        }?.notification
 
-        if (existingSignature == contentSignature) {
+        val contentChanged = exitingNotification?.extras?.getString(
+            CONTENT_SIGNATURE
+        ) != contentSignature
+
+        val bundleStateChanged = exitingNotification == null || (
+            bundled != (exitingNotification.group == NOTIFICATION_GROUP)
+        )
+
+        if (!contentChanged && !bundleStateChanged) {
             Log.i(TAG, "Skipping duplicate single thread notification for ID $notificationId")
             return
         }
@@ -368,8 +379,10 @@ class DefaultMessageNotifier @Inject constructor(
 
         builder.setContentIntent(notificationItem.getPendingIntent(context))
         builder.setDeleteIntent(notificationState.getDeleteIntent(context))
-        builder.setOnlyAlertOnce(!signal)
-        builder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
+        // Turn on the OnlyAlertOnce if the content doesn't change. If
+        // the content doesn't change, we don't want to keep alerting the user.
+        val alertOnce = !contentChanged
+        builder.setOnlyAlertOnce(alertOnce)
         builder.setAutoCancel(true)
 
         val replyMethod = ReplyMethod.forRecipient(context, messageOriginator)
@@ -408,7 +421,7 @@ class DefaultMessageNotifier @Inject constructor(
             builder.addMessageBody(item.recipient, item.individualRecipient, item.text)
         }
 
-        if (signal) {
+        if (signal && contentChanged) {
             builder.setAlarms(notificationState.getRingtone(context))
             builder.setTicker(
                 notificationItem.individualRecipient,
@@ -419,7 +432,7 @@ class DefaultMessageNotifier @Inject constructor(
         // requests go to a separate group; normal keeps existing behavior
         if (bundled || isRequest) {
             builder.setGroup(if (isRequest) REQUESTS_GROUP else NOTIFICATION_GROUP)
-            builder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
+            builder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
         }
 
         val notification = builder.build()
@@ -442,7 +455,7 @@ class DefaultMessageNotifier @Inject constructor(
 
     // Note: The `signal` parameter means "play an audio signal for the notification".
     @SuppressLint("MissingPermission")
-    private fun sendMultipleThreadNotification(
+    private fun sendGroupSummaryNotification(
         context: Context,
         notificationState: NotificationState,
         signal: Boolean
@@ -465,7 +478,7 @@ class DefaultMessageNotifier @Inject constructor(
             return
         }
 
-        val builder = MultipleRecipientNotificationBuilder(context, getNotificationPrivacy(context))
+        val builder = GroupSummaryNotificationBuilder(context, getNotificationPrivacy(context))
         builder.putStringExtra(CONTENT_SIGNATURE, contentSignature)
 
         builder.setMessageCount(notificationState.notificationCount, notificationState.threadCount)
@@ -473,7 +486,7 @@ class DefaultMessageNotifier @Inject constructor(
         builder.setGroup(NOTIFICATION_GROUP)
         builder.setDeleteIntent(notificationState.getDeleteIntent(context))
         builder.setOnlyAlertOnce(!signal)
-        builder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
+        builder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
         builder.setAutoCancel(true)
 
         val messageIdTag = notifications[0].timestamp.toString()
@@ -586,7 +599,7 @@ class DefaultMessageNotifier @Inject constructor(
             // Check notification settings
             if (threadRecipients?.notifyType == NotifyType.NONE) continue
 
-            val userPublicKey = getLocalNumber(context)
+            val userPublicKey = loginStateRepository.requireLocalNumber()
 
             // Check mentions-only setting
             if (threadRecipients?.notifyType == NotifyType.MENTIONS) {
@@ -788,7 +801,7 @@ class DefaultMessageNotifier @Inject constructor(
     private fun generateBlindedId(threadId: Long, context: Context): String? {
         val threadRecipient = recipientRepository.getRecipientSync(threadDatabase.getRecipientForThreadId(threadId) ?: return null)
         val serverPubKey = (threadRecipient.data as? RecipientData.Community)?.serverPubKey
-        val edKeyPair = getUserED25519KeyPair(context)
+        val edKeyPair = loginStateRepository.peekLoginState()?.accountEd25519KeyPair
         if (serverPubKey != null && edKeyPair != null) {
             val blindedKeyPair = BlindKeyAPI.blind15KeyPairOrNull(
                 ed25519SecretKey = edKeyPair.secretKey.data,

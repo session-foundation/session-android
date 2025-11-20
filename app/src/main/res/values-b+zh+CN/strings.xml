@@ -65,6 +65,7 @@
     <string name="appNameNotes">笔记</string>
     <string name="appNameStocks">股票</string>
     <string name="appNameWeather">天气</string>
+    <string name="appearanceAutoDarkMode">自动深色模式</string>
     <string name="appearanceHideMenuBar">隐藏菜单栏</string>
     <string name="appearanceLanguage">语言</string>
     <string name="appearanceLanguageDescription">选择{app_name}的语言设置。更改语言设置后{app_name}将重新启动。</string>
@@ -159,6 +160,7 @@
     <string name="blockUnblockNameMultiple">您确定要取消屏蔽<b>{name}</b>和其他<b>{count}人</b>吗？</string>
     <string name="blockUnblockNameTwo">您确定要取消屏蔽<b>{name}</b>和其他1人吗？</string>
     <string name="blockUnblockedUser">取消屏蔽{name}</string>
+    <string name="blockedContactsManageDescription">查看和管理已屏蔽的联系人。</string>
     <string name="call">语音通话</string>
     <string name="callsCalledYou">{name}呼叫过您</string>
     <string name="callsCannotStart">您无法开始新的通话。请先结束当前的通话。</string>
@@ -193,6 +195,7 @@
     <string name="cameraGrantAccessDescription">{app_name}需要相机权限来拍摄照片和视频，或扫描二维码。</string>
     <string name="cameraGrantAccessQr">{app_name}需要相机访问权限才能扫描二维码</string>
     <string name="cancel">取消</string>
+    <string name="change">更改</string>
     <string name="changePasswordFail">更改密码失败</string>
     <string name="clear">清除</string>
     <string name="clearAll">清除所有</string>
@@ -281,6 +284,7 @@
     <string name="conversationsNew">新建会话</string>
     <string name="conversationsNone">您还没有任何会话</string>
     <string name="conversationsSendWithEnterKeyDescription">按回车键发送消息而非换行</string>
+    <string name="conversationsSendWithShiftEnter">使用 Shift + Enter 键发送</string>
     <string name="conversationsSettingsAllMedia">所有媒体</string>
     <string name="conversationsSpellCheck">拼写检查</string>
     <string name="conversationsSpellCheckDescription">在输入消息时启用拼写检查。</string>
@@ -289,7 +293,9 @@
     <string name="copy">复制</string>
     <string name="create">创建</string>
     <string name="creatingCall">正在创建通话</string>
+    <string name="currentPassword">当前密码</string>
     <string name="cut">剪切</string>
+    <string name="darkMode">深色模式</string>
     <string name="databaseErrorClearDataWarning">您确定要删除此设备上的所有消息、附件和帐户数据，并创建新帐户吗？</string>
     <string name="databaseErrorGeneric">发生数据库错误。\n\n请导出您的应用日志以进行故障排除。如果不成功，请重新安装{app_name}并恢复您的帐户。</string>
     <string name="databaseErrorRestoreDataWarning">您确定要删除此设备上的所有消息、附件和帐户数据，并从网络中恢复你的帐户吗？</string>
@@ -381,6 +387,7 @@
     <string name="disappearingMessagesUpdated"><b>{admin_name}</b>更改了阅后即焚消息设置。</string>
     <string name="disappearingMessagesUpdatedYou"><b>您</b>更改了阅后即焚消息设置。</string>
     <string name="dismiss">放弃</string>
+    <string name="display">显示</string>
     <string name="displayNameDescription">它可以是您的真名、化名或任何您喜欢的内容——并且您可以随时进行更改。</string>
     <string name="displayNameEnter">输入您想显示的名称</string>
     <string name="displayNameErrorDescription">请输入显示名称</string>
@@ -424,6 +431,7 @@
     <string name="enjoyingSessionButtonNegative">需要改进 {emoji}</string>
     <string name="enjoyingSessionButtonPositive">很棒 {emoji}</string>
     <string name="enjoyingSessionDescription">您已使用 {app_name} 一段时间了，感觉如何？非常希望能听到您的反馈。</string>
+    <string name="enter">进入</string>
     <string name="errorConnection">请检查您的网络连接并重试。</string>
     <string name="errorCopyAndQuit">复制错误并退出</string>
     <string name="errorDatabase">数据库错误</string>
@@ -431,8 +439,11 @@
     <string name="errorUnknown">发生了未知错误。</string>
     <string name="failedToDownload">下载失败</string>
     <string name="failures">失败</string>
+    <string name="feedback">反馈</string>
+    <string name="feedbackDescription">通过完成一份简短的调查问卷分享您对 {app_name} 的使用体验。</string>
     <string name="file">文件</string>
     <string name="files">文件</string>
+    <string name="followSystemSettings">跟随系统设置。</string>
     <string name="forever">永久</string>
     <string name="from">发送自：</string>
     <string name="fullScreenToggle">全屏</string>
@@ -533,8 +544,10 @@
     <string name="helpReportABugExportLogsDescription">导出您的日志，然后通过{app_name}的帮助服务台上传日志。</string>
     <string name="helpReportABugExportLogsSaveToDesktop">保存到桌面</string>
     <string name="helpSupport">支持</string>
+    <string name="helpTranslateSessionDescription">帮助将 {app_name} 本地化翻译成超过 80 种语言！</string>
     <string name="helpWedLoveYourFeedback">感谢您的反馈</string>
     <string name="hide">隐藏</string>
+    <string name="hideMenuBarDescription">切换系统菜单栏可见性。</string>
     <string name="hideNoteToSelfDescription">你确定要从对话列表中隐藏<b>Note to Self</b>吗？</string>
     <string name="hideOthers">隐藏其它</string>
     <string name="image">图片</string>
@@ -572,6 +585,7 @@
     <string name="linkPreviewsSendModalDescription">您无法在绝对的元数据安全保障前提下发送链接预览。</string>
     <string name="linkPreviewsTurnedOff">链接预览已关闭</string>
     <string name="linkPreviewsTurnedOffDescription">{app_name}必须访问链接的网站以生成您发送和接收的链接预览。\n\n您可以在{app_name}的设置中启用该功能。</string>
+    <string name="links">链接</string>
     <string name="loadAccount">加载账户</string>
     <string name="loadAccountProgressMessage">正在加载您的账户</string>
     <string name="loading">正在加载...</string>
@@ -584,6 +598,7 @@
     <string name="lockAppStatus">锁定状态</string>
     <string name="lockAppUnlock">点击解锁</string>
     <string name="lockAppUnlocked">{app_name}已解锁</string>
+    <string name="logs">日志</string>
     <string name="manageMembers">管理成员</string>
     <string name="max">最大</string>
     <string name="media">媒体</string>
@@ -606,6 +621,7 @@
     <string name="membersInviteTitle">邀请</string>
     <string name="message">消息</string>
     <string name="messageBubbleReadMore">了解更多</string>
+    <string name="messageCopy">复制消息</string>
     <string name="messageEmpty">此消息内容为空。</string>
     <string name="messageErrorDelivery">消息发送失败</string>
     <string name="messageErrorLimit">消息字数已满</string>
@@ -664,6 +680,7 @@
     <string name="modalMessageCharacterTooLongTitle">消息太长</string>
     <string name="modalMessageTooLongDescription">请将消息缩短至 {limit} 个字符或更少。</string>
     <string name="modalMessageTooLongTitle">消息太长</string>
+    <string name="newPassword">新密码</string>
     <string name="next">下一步</string>
     <string name="nicknameDescription">为 <b>{name}</b>选择一个昵称。该昵称将在您的一对一和群组对话中显示。</string>
     <string name="nicknameEnter">输入昵称</string>
@@ -678,6 +695,7 @@
     <string name="noteToSelfEmpty">您在备忘录中没有消息。</string>
     <string name="noteToSelfHide">隐藏备忘录</string>
     <string name="noteToSelfHideDescription">您确定要隐藏备忘录吗？</string>
+    <string name="notificationDisplay">通知显示</string>
     <string name="notificationsAllMessages">所有信息</string>
     <string name="notificationsContent">通知内容</string>
     <string name="notificationsContentDescription">在通知中显示的信息。</string>
@@ -742,8 +760,11 @@
     <string name="open">打开</string>
     <string name="openSurvey">打开调查问卷</string>
     <string name="other">其它</string>
+    <string name="password">密码</string>
     <string name="passwordChange">更改密码</string>
+    <string name="passwordChangeShortDescription">更改 {app_name} 的解锁密码。</string>
     <string name="passwordConfirm">确认密码</string>
+    <string name="passwordCreate">创建密码</string>
     <string name="passwordCurrentIncorrect">您当前的密码不正确。</string>
     <string name="passwordEnter">请输入密码</string>
     <string name="passwordEnterCurrent">请输入您当前的密码</string>
@@ -753,8 +774,14 @@
     <string name="passwordErrorMatch">密码不一致</string>
     <string name="passwordFailed">设置密码失败</string>
     <string name="passwordIncorrect">密码不正确</string>
+    <string name="passwordNewConfirm">确认新密码</string>
     <string name="passwordRemove">移除密码</string>
+    <string name="passwordRemovedDescriptionToast">您的密码已被移除。</string>
     <string name="passwordSet">设置密码</string>
+    <string name="passwordStrengthCharLength">长于12个字符</string>
+    <string name="passwordStrengthIndicator">密码强度指标</string>
+    <string name="passwordStrengthIndicatorDescription">设置强密码有助于在设备丢失或被盗时保护您的消息和附件。</string>
+    <string name="passwords">密码</string>
     <string name="paste">粘贴</string>
     <string name="permissionChange">授权变更</string>
     <string name="permissionMusicAudioDenied">{app_name}需要音乐和音频权限才能发送文件、音乐和音频，但该权限已被永久拒绝。请进入应用程序设置→权限，打开“音乐和音频”权限。</string>
@@ -767,6 +794,7 @@
     <string name="permissionsCameraDescriptionIos">请允许访问摄像头以进行视频通话。</string>
     <string name="permissionsFaceId">{app_name}的屏幕锁功能使用 Face ID。</string>
     <string name="permissionsKeepInSystemTray">保留在系统托盘</string>
+    <string name="permissionsKeepInSystemTrayDescription">当您关闭窗口，{app_name}将在后台继续运行。</string>
     <string name="permissionsLibrary">{app_name}需要照片库访问权限以继续。您可以在iOS设置中启用访问。</string>
     <string name="permissionsLocalNetworkAccessRequiredCallsIos">需要本地网络访问权限才能进行通话。在设置中允许“本地网络”权限以继续。</string>
     <string name="permissionsLocalNetworkAccessRequiredIos">{app_name}需要访问本地网络才能进行语音和视频通话。</string>
@@ -793,17 +821,15 @@
     <string name="pinConversation">置顶会话</string>
     <string name="pinUnpin">取消置顶</string>
     <string name="pinUnpinConversation">取消置顶会话</string>
+    <string name="preferences">偏好设置</string>
     <string name="preview">通知效果预览</string>
+    <string name="previewNotification">预览通知</string>
     <string name="proActivated">已激活</string>
     <string name="proAlreadyPurchased">您已拥有</string>
     <string name="proAnimatedDisplayPicture">快去为头像上传 GIF 或动画 WebP 图片吧！</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">获取动画头像并使用 {app_pro} 解锁高级功能</string>
     <string name="proAnimatedDisplayPictureFeature">动画头像</string>
     <string name="proAnimatedDisplayPictureModalDescription">用户可上传 GIF</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">使用 PRO 上传 GIF</string>
-    <string name="proCallToActionLongerMessages">想发送更长的消息？使用 {app_pro} 发送更多文本并解锁高级功能</string>
-    <string name="proCallToActionPinnedConversations">想要固定更多对话？使用 {app_pro} 整理你的聊天并解锁高级功能</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">想要固定超过 5 个对话？使用 {app_pro} 整理你的聊天并解锁高级功能</string>
     <string name="proFeatureListAnimatedDisplayPicture">上传 GIF 和 WebP 头像</string>
     <string name="proFeatureListLargerGroups">更大的群组聊天，最多可容纳 300 名成员</string>
     <string name="proFeatureListLoadsMore">还有更多专属功能等你解锁</string>
@@ -813,9 +839,9 @@
     <string name="proGroupActivatedDescription">该群组已扩容！因管理员升级为 PRO，现支持最多 300 名成员</string>
     <string name="proIncreasedAttachmentSizeFeature">附件大小已增加</string>
     <string name="proIncreasedMessageLengthFeature">消息长度已增加</string>
+    <string name="proLargerGroupsDescription">您作为管理员的群组自动升级成支持300名成员。</string>
     <string name="proMessageInfoFeatures">此消息使用了以下 {app_pro} 功能：</string>
     <string name="proSendMore">发送更多内容，体验</string>
-    <string name="proUserProfileModalCallToAction">想充分体验 {app_name}？升级到 {app_pro} 享受更强大的消息体验。</string>
     <string name="profile">个人资料</string>
     <string name="profileDisplayPicture">头像</string>
     <string name="profileDisplayPictureRemoveError">移除头像失败。</string>
@@ -944,12 +970,15 @@
     <string name="showNoteToSelf">显示备忘录</string>
     <string name="showNoteToSelfDescription">你确定要在对话列表中显示 <b>Note to Self</b>吗？</string>
     <string name="stickers">贴图</string>
+    <string name="strength">强度</string>
+    <string name="supportDescription">遇到问题？浏览帮助文章或向 {app_name} 支持提交工单。</string>
     <string name="supportGoTo">跳转到支持页面</string>
     <string name="systemInformationDesktop">系统信息：{information}</string>
     <string name="tapToRetry">点击以重试</string>
     <string name="theContinue">继续</string>
     <string name="theDefault">默认</string>
     <string name="theError">错误</string>
+    <string name="themePreview">主题预览</string>
     <string name="tooltipAccountIdVisible">基于您与 <b>{name}</b> 之前的互动，其 Account ID 对您可见</string>
     <string name="tooltipBlindedIdCommunities">盲化 ID 在社区中用于减少垃圾信息并提高隐私性</string>
     <string name="tryAgain">重试</string>
@@ -972,6 +1001,7 @@
     <string name="updateGroupInformationEnterShorterDescription">请输入更简短的群组描述</string>
     <string name="updateNewVersion">有新版本的{app_name}可用，点击更新</string>
     <string name="updateNewVersionDescription">{app_name}有新版本（{version}）可用。</string>
+    <string name="updateProfileInformation">更新个人资料信息</string>
     <string name="updateReleaseNotes">跳转到版本信息</string>
     <string name="updateSession">{app_name}更新</string>
     <string name="updateVersion">版本 {version}</string>
@@ -994,4 +1024,6 @@
     <string name="window">窗口</string>
     <string name="yes">是</string>
     <string name="you">您</string>
+    <string name="zoomFactor">缩放系数</string>
+    <string name="zoomFactorDescription">调整文本和视觉元素的大小。</string>
 </resources>

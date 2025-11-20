@@ -9,7 +9,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,25 +33,26 @@ import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
+import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.util.DateUtils
+import org.thoughtcrime.securesms.util.DonationManager
+import org.thoughtcrime.securesms.util.DonationManager.Companion.URL_DONATE
 import org.thoughtcrime.securesms.util.UserProfileModalCommands
 import org.thoughtcrime.securesms.util.UserProfileModalData
 import org.thoughtcrime.securesms.util.UserProfileUtils
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
-import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
@@ -61,6 +61,7 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val prefs: TextSecurePreferences,
+    private val loginStateRepository: LoginStateRepository,
     private val typingStatusRepository: TypingStatusRepository,
     private val configFactory: ConfigFactory,
     callManager: CallManager,
@@ -70,7 +71,8 @@ class HomeViewModel @Inject constructor(
     private val proStatusManager: ProStatusManager,
     private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
     private val recipientRepository: RecipientRepository,
-    private val dateUtils: DateUtils
+    private val dateUtils: DateUtils,
+    private val donationManager: DonationManager
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
@@ -153,7 +155,7 @@ class HomeViewModel @Inject constructor(
 
     val shouldShowCurrentUserProBadge: StateFlow<Boolean> = recipientRepository
         .observeSelf()
-        .map { it.proStatus.shouldShowProBadge() }
+        .map { it.shouldShowProBadge }
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     private var userProfileModalJob: Job? = null
@@ -162,45 +164,45 @@ class HomeViewModel @Inject constructor(
     init {
         // observe subscription status
         viewModelScope.launch {
-            proStatusManager.subscriptionState.collect { subscription ->
+            proStatusManager.proDataState.collect { subscription ->
                 // show a CTA (only once per install) when
                 // - subscription is expiring in less than 7 days
                 // - subscription expired less than 30 days ago
                 val now = Instant.now()
 
-                if(subscription.type is SubscriptionType.Active.Expiring
+                if(subscription.type is ProStatus.Active.Expiring
                     && !prefs.hasSeenProExpiring()
                 ){
-                    val validUntil = subscription.type.proStatus.validUntil ?: return@collect
+                    val validUntil = subscription.type.validUntil
 
                     if (validUntil.isBefore(now.plus(7, ChronoUnit.DAYS))) {
-                        delay(2000)
-                        prefs.setHasSeenProExpiring()
                         _dialogsState.update { state ->
                             state.copy(
                                 proExpiringCTA = ProExpiringCTA(
-                                    dateUtils.getExpiryString(
-                                        subscription.type.proStatus.validUntil
-                                    )
+                                    dateUtils.getExpiryString(validUntil)
                                 )
                             )
                         }
                     }
                 }
-                else if(subscription.type is SubscriptionType.Expired
+                else if(subscription.type is ProStatus.Expired
                     && !prefs.hasSeenProExpired()) {
                     val validUntil = subscription.type.expiredAt
 
                     // Check if now is within 30 days after expiry
                     if (now.isBefore(validUntil.plus(30, ChronoUnit.DAYS))) {
-                        delay(2000)
-                        prefs.setHasSeenProExpired()
+
                         _dialogsState.update { state ->
                             state.copy(proExpiredCTA = true)
                         }
                     }
                 }
             }
+        }
+
+        // check if we should display the donation CTA
+        if(donationManager.shouldShowDonationCTA()){
+            showDonationCTA()
         }
     }
 
@@ -263,12 +265,15 @@ class HomeViewModel @Inject constructor(
     fun setPinned(address: Address, pinned: Boolean) {
         // check the pin limit before continuing
         val totalPins = storage.getTotalPinned()
-        val maxPins = proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().proStatus)
+        val maxPins = proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().isPro)
         if (pinned && totalPins >= maxPins) {
             // the user has reached the pin limit, show the CTA
             _dialogsState.update {
                 it.copy(
-                    pinCTA = PinProCTA(overTheLimit = totalPins > maxPins)
+                    pinCTA = PinProCTA(
+                        overTheLimit = totalPins > maxPins,
+                        proSubscription = proStatusManager.proDataState.value.type
+                    )
                 )
             }
         } else {
@@ -295,7 +300,7 @@ class HomeViewModel @Inject constructor(
             is Commands.ShowStartConversationSheet -> {
                 _dialogsState.update { it.copy(showStartConversationSheet =
                     StartConversationSheetData(
-                        accountId = prefs.getLocalNumber()!!
+                        accountId = loginStateRepository.requireLocalNumber()
                     )
                 ) }
             }
@@ -305,10 +310,12 @@ class HomeViewModel @Inject constructor(
             }
 
             is Commands.HideExpiringCTADialog -> {
+                prefs.setHasSeenProExpiring()
                 _dialogsState.update { it.copy(proExpiringCTA = null) }
             }
 
             is Commands.HideExpiredCTADialog -> {
+                prefs.setHasSeenProExpired()
                 _dialogsState.update { it.copy(proExpiredCTA = false) }
             }
 
@@ -317,8 +324,44 @@ class HomeViewModel @Inject constructor(
                     _uiEvents.emit(UiEvent.OpenProSettings(command.destination))
                 }
             }
+
+            is Commands.HideDonationCTADialog -> {
+                _dialogsState.update { it.copy(donationCTA = false) }
+            }
+
+            is Commands.ShowDonationConfirmation -> {
+                showUrlDialog(URL_DONATE)
+            }
+
+            is Commands.HideUrlDialog -> {
+                _dialogsState.update { it.copy(showUrlDialog = null) }
+            }
+
+            is Commands.OnLinkOpened -> {
+                // if the link was for donation, mark it as seen
+                if(command.url == URL_DONATE) {
+                    donationManager.onDonationSeen()
+                }
+            }
+
+            is Commands.OnLinkCopied -> {
+                // if the link was for donation, mark it as seen
+                if(command.url == URL_DONATE) {
+                    donationManager.onDonationCopied()
+                }
+            }
         }
     }
+
+    fun showDonationCTA(){
+        _dialogsState.update { it.copy(donationCTA = true) }
+        donationManager.onDonationCTAViewed()
+    }
+
+    fun showUrlDialog(url: String) {
+        _dialogsState.update { it.copy(showUrlDialog = url) }
+    }
+
 
     fun showUserProfileModal(thread: ThreadRecord) {
         // get the helper class for the selected user
@@ -342,11 +385,14 @@ class HomeViewModel @Inject constructor(
         val userProfileModal: UserProfileModalData? = null,
         val showStartConversationSheet: StartConversationSheetData? = null,
         val proExpiringCTA: ProExpiringCTA? = null,
-        val proExpiredCTA: Boolean = false
+        val proExpiredCTA: Boolean = false,
+        val donationCTA: Boolean = false,
+        val showUrlDialog: String? = null,
     )
 
     data class PinProCTA(
-        val overTheLimit: Boolean
+        val overTheLimit: Boolean,
+        val proSubscription: ProStatus
     )
 
     data class ProExpiringCTA(
@@ -365,7 +411,12 @@ class HomeViewModel @Inject constructor(
         data object HidePinCTADialog : Commands
         data object HideExpiringCTADialog : Commands
         data object HideExpiredCTADialog : Commands
+        data object ShowDonationConfirmation : Commands
+        data object HideDonationCTADialog : Commands
         data object HideUserProfileModal : Commands
+        data object HideUrlDialog : Commands
+        data class OnLinkOpened(val url: String) : Commands
+        data class OnLinkCopied(val url: String) : Commands
         data class HandleUserProfileCommand(
             val upmCommand: UserProfileModalCommands
         ) : Commands

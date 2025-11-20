@@ -925,7 +925,6 @@
     <string name="proAllSet">Wszystko gotowe!</string>
     <string name="proAlreadyPurchased">Masz już</string>
     <string name="proAnimatedDisplayPicture">Możesz przesyłać GIF-y i animowane obrazy WebP jako swoje zdjęcie profilowe!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">Zyskaj animowane zdjęcia profilowe i odblokuj funkcje premium dzięki {app_pro}</string>
     <string name="proAnimatedDisplayPictureFeature">Animowany obraz profilowy</string>
     <string name="proAnimatedDisplayPictureModalDescription">użytkownicy mogą przesyłać GIF-y</string>
     <string name="proAnimatedDisplayPictures">Animowane obrazy profilu</string>
@@ -946,9 +945,6 @@
     <string name="proBilledAnnually">Opłata roczna: {price}</string>
     <string name="proBilledMonthly">Opłata miesięczna: {price}</string>
     <string name="proBilledQuarterly">Opłata kwartalna: {price}</string>
-    <string name="proCallToActionLongerMessages">Chcesz wysyłać dłuższe wiadomości? Wyślij więcej tekstu i odblokuj funkcje premium dzięki {app_pro}</string>
-    <string name="proCallToActionPinnedConversations">Chcesz przypinać więcej czatów? Zorganizuj konwersacje i odblokuj funkcje premium dzięki {app_pro}</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">Chcesz przypiąć więcej niż 5 czatów? Zorganizuj konwersacje i odblokuj funkcje premium dzięki {app_pro}</string>
     <string name="proExpiringSoon">Niedługo wygaśnie</string>
     <string name="proFaq">FAQ {pro}</string>
     <string name="proFaqDescription">Znajdź odpowiedzi na często zadawane pytania w sekcji FAQ {app_pro}.</string>
@@ -996,7 +992,6 @@
     <string name="proTosPrivacy">Dokonując zmian wyrażasz zgodę na <b>Warunki Świadczenia Usług</b> {app_pro} {icon} oraz <b>Politykę Prywatności</b> {icon}</string>
     <string name="proUnlimitedPins">Nielimitowane przypięcia</string>
     <string name="proUnlimitedPinsDescription">Organizuj swoje czaty z nielimitowaną możliwością przypinania konwersacji.</string>
-    <string name="proUserProfileModalCallToAction">Chcesz więcej z {app_name}? Uaktualnij do {app_pro}, aby uzyskać potężniejsze możliwości wiadomości.</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Zdjęcie profilowe</string>
     <string name="profileDisplayPictureRemoveError">Nie udało się usunąć zdjęcia profilowego.</string>

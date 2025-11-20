@@ -50,7 +50,6 @@ object StringSubstitutionConstants {
     const val BUILD_VARIANT_KEY: StringSubKey              = "build_variant"
     const val APP_PRO_KEY: StringSubKey                    = "app_pro"
     const val PRO_KEY: StringSubKey                        = "pro"
-    const val CURRENT_PLAN_KEY: StringSubKey               = "current_plan"
     const val CURRENT_PLAN_LENGTH_KEY: StringSubKey        = "current_plan_length"
     const val SELECTED_PLAN_LENGTH_KEY: StringSubKey       = "selected_plan_length"
     const val SELECTED_PLAN_LENGTH_SINGULAR_KEY: StringSubKey = "selected_plan_length_singular"
@@ -63,4 +62,7 @@ object StringSubstitutionConstants {
     const val PERCENT_KEY: StringSubKey                    = "percent"
     const val DEVICE_TYPE_KEY: StringSubKey                = "device_type"
     const val SESSION_FOUNDATION_KEY: StringSubKey         = "session_foundation"
+    const val ACTION_TYPE_KEY: StringSubKey                = "action_type"
+    const val ACTIVATION_TYPE_KEY: StringSubKey            = "activation_type"
+    const val ENTITY_KEY: StringSubKey                     = "entity"
 }

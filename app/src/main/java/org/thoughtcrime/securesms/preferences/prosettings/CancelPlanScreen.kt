@@ -19,13 +19,8 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
-import org.session.libsession.utilities.recipients.ProStatus
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.OpenSubscriptionPage
-import org.thoughtcrime.securesms.pro.SubscriptionDetails
-import org.thoughtcrime.securesms.pro.SubscriptionType
-import org.thoughtcrime.securesms.pro.subscription.NoOpSubscriptionManager
-import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
-import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.OpenCancelSubscriptionPage
+import org.thoughtcrime.securesms.pro.isFromAnotherPlatform
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -34,8 +29,6 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.bold
-import java.time.Duration
-import java.time.Instant
 
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -44,42 +37,38 @@ fun CancelPlanScreen(
     viewModel: ProSettingsViewModel,
     onBack: () -> Unit,
 ) {
-    val planData by viewModel.choosePlanState.collectAsState()
-    val activePlan = planData.subscriptionType as? SubscriptionType.Active
-    if (activePlan == null) {
-        onBack()
-        return
-    }
+    val state by viewModel.cancelPlanState.collectAsState()
 
-    val subManager = viewModel.getSubscriptionManager()
+    BaseStateProScreen(
+        state = state,
+        onBack = onBack
+    ){ planData ->
+        val activePlan = planData.proStatus
 
-    // there are different UI depending on the state
-    when {
-        // there is an active subscription but from a different platform or from the
-        // same platform but a different account
-        activePlan.subscriptionDetails.isFromAnotherPlatform()
-                || !planData.hasValidSubscription ->
-            CancelPlanNonOriginating(
-                subscriptionDetails = activePlan.subscriptionDetails,
+        // there are different UI depending on the state
+        when {
+            // there is an active subscription but from a different platform or from the
+            // same platform but a different account
+            activePlan.providerData.isFromAnotherPlatform()
+                    || !planData.hasValidSubscription ->
+                CancelPlanNonOriginating(
+                    providerData = activePlan.providerData,
+                    sendCommand = viewModel::onCommand,
+                    onBack = onBack,
+                )
+
+            // default cancel screen
+            else -> CancelPlan(
                 sendCommand = viewModel::onCommand,
                 onBack = onBack,
             )
-
-        // default cancel screen
-        else -> CancelPlan(
-            data = activePlan,
-            subscriptionManager = subManager,
-            sendCommand = viewModel::onCommand,
-            onBack = onBack,
-        )
+        }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun CancelPlan(
-    data: SubscriptionType.Active,
-    subscriptionManager: SubscriptionManager,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -93,7 +82,7 @@ fun CancelPlan(
             .format().toString(),
         dangerButton = true,
         onButtonClick = {
-            sendCommand(OpenSubscriptionPage)
+            sendCommand(OpenCancelSubscriptionPage)
         },
         title = Phrase.from(context.getText(R.string.proCancelSorry))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
@@ -131,22 +120,6 @@ private fun PreviewCancelPlan(
 ) {
     PreviewTheme(colors) {
         CancelPlan(
-            data = SubscriptionType.Active.AutoRenewing(
-                proStatus = ProStatus.Pro(
-                    visible = true,
-                    validUntil = Instant.now() + Duration.ofDays(14),
-                ),
-                duration = ProSubscriptionDuration.THREE_MONTHS,
-                subscriptionDetails = SubscriptionDetails(
-                    device = "Android",
-                    store = "Google Play Store",
-                    platform = "Google",
-                    platformAccount = "Google account",
-                    subscriptionUrl = "https://play.google.com/store/account/subscriptions?package=network.loki.messenger&sku=SESSION_PRO_MONTHLY",
-                    refundUrl = "https://getsession.org/android-refund",
-                )
-            ),
-            subscriptionManager = NoOpSubscriptionManager(),
             sendCommand = {},
             onBack = {},
         )

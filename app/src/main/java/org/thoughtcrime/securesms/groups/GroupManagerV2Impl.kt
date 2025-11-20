@@ -32,7 +32,6 @@ import org.session.libsession.messaging.jobs.InviteContactsJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.control.GroupUpdated
-import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildDeleteMemberContentSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildInfoChangeSignature
@@ -63,6 +62,7 @@ import org.thoughtcrime.securesms.configs.ConfigUploader
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -84,10 +84,13 @@ class GroupManagerV2Impl @Inject constructor(
     private val clock: SnodeClock,
     private val messageDataProvider: MessageDataProvider,
     private val lokiAPIDatabase: LokiAPIDatabase,
+    private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     private val configUploader: ConfigUploader,
     private val scope: GroupScope,
     private val groupPollerManager: GroupPollerManager,
     private val recipientRepository: RecipientRepository,
+    private val messageSender: MessageSender,
+    private val inviteContactJobFactory: InviteContactsJob.Factory,
 ) : GroupManagerV2 {
     private val dispatcher = Dispatchers.Default
 
@@ -117,7 +120,6 @@ class GroupManagerV2Impl @Inject constructor(
     ): Recipient = withContext(dispatcher) {
         val ourAccountId =
             requireNotNull(storage.getUserPublicKey()) { "Our account ID is not available" }
-        val ourProfile = storage.getUserProfile()
 
         val groupCreationTimestamp = clock.currentTimeMills()
 
@@ -157,10 +159,14 @@ class GroupManagerV2Impl @Inject constructor(
             }
 
             // Add ourselves as admin
+            val (ourName, ourPic) = configFactory.withUserConfigs { configs ->
+                configs.userProfile.getName().orEmpty() to configs.userProfile.getPic()
+            }
+
             newGroupConfigs.groupMembers.set(
                 newGroupConfigs.groupMembers.getOrConstruct(ourAccountId).apply {
-                    setName(ourProfile.displayName.orEmpty())
-                    setProfilePic(ourProfile.profilePicture ?: UserPic.DEFAULT)
+                    setName(ourName)
+                    setProfilePic(ourPic)
                     setPromotionAccepted()
                 }
             )
@@ -197,11 +203,11 @@ class GroupManagerV2Impl @Inject constructor(
                 "Failed to create a thread for the group"
             }
 
-            val recipient = recipientRepository.getRecipient(Address.fromSerialized(groupId.hexString))!!
+            val recipient = recipientRepository.getRecipient(Address.fromSerialized(groupId.hexString))
 
             // Invite members
             JobQueue.shared.add(
-                InviteContactsJob(
+                inviteContactJobFactory.create(
                     groupSessionId = groupId.hexString,
                     memberSessionIds = members.map { it.hexString }.toTypedArray()
                 )
@@ -321,9 +327,9 @@ class GroupManagerV2Impl @Inject constructor(
 
         // Send the invitation message to the new members
         JobQueue.shared.add(
-            InviteContactsJob(
-                group.hexString,
-                newMembers.map { it.hexString }.toTypedArray()
+            inviteContactJobFactory.create(
+                groupSessionId = group.hexString,
+                memberSessionIds = newMembers.map { it.hexString }.toTypedArray()
             )
         )
     }
@@ -355,7 +361,7 @@ class GroupManagerV2Impl @Inject constructor(
 
         storage.insertGroupInfoChange(updatedMessage, group)
 
-        MessageSender.send(updatedMessage, Address.fromSerialized(group.hexString))
+        messageSender.send(updatedMessage, Address.fromSerialized(group.hexString))
     }
 
     override suspend fun removeMembers(
@@ -394,7 +400,7 @@ class GroupManagerV2Impl @Inject constructor(
             updateMessage
         ).apply { sentTimestamp = timestamp }
 
-        MessageSender.send(message, Address.fromSerialized(groupAccountId.hexString))
+        messageSender.send(message, Address.fromSerialized(groupAccountId.hexString))
         storage.insertGroupInfoChange(message, groupAccountId)
     }
 
@@ -524,7 +530,7 @@ class GroupManagerV2Impl @Inject constructor(
             val promotionDeferred = members.associateWith { member ->
                 async {
                     // The promotion message shouldn't be persisted to avoid being retried automatically
-                    MessageSender.sendNonDurably(
+                    messageSender.sendNonDurably(
                         message = promoteMessage,
                         address = Address.fromSerialized(member.hexString),
                         isSyncMessage = false,
@@ -555,7 +561,7 @@ class GroupManagerV2Impl @Inject constructor(
 
 
             if (!isRepromote) {
-                MessageSender.sendAndAwait(message, Address.fromSerialized(group.hexString))
+                messageSender.sendAndAwait(message, Address.fromSerialized(group.hexString))
             }
         }
     }
@@ -656,10 +662,10 @@ class GroupManagerV2Impl @Inject constructor(
                 .setIsApproved(true)
             val responseData = GroupUpdateMessage.newBuilder()
                 .setInviteResponse(inviteResponse)
-            val responseMessage = GroupUpdated(responseData.build(), profile = storage.getUserProfile())
+            val responseMessage = GroupUpdated(responseData.build())
             // this will fail the first couple of times :)
             runCatching {
-                MessageSender.sendNonDurably(
+                messageSender.sendNonDurably(
                     responseMessage,
                     Destination.ClosedGroup(group.groupAccountId),
                     isSyncMessage = false
@@ -883,7 +889,7 @@ class GroupManagerV2Impl @Inject constructor(
 
         // Clear all polling states
         lokiAPIDatabase.clearLastMessageHashes(groupId.hexString)
-        lokiAPIDatabase.clearReceivedMessageHashValues(groupId.hexString)
+        receivedMessageHashDatabase.removeAllByPublicKey(groupId.hexString)
         SessionMetaProtocol.clearReceivedMessages()
 
         configFactory.deleteGroupConfigs(groupId)
@@ -926,7 +932,7 @@ class GroupManagerV2Impl @Inject constructor(
             }
 
             storage.insertGroupInfoChange(message, groupId)
-            MessageSender.sendAndAwait(message, Address.fromSerialized(groupId.hexString))
+            messageSender.sendAndAwait(message, Address.fromSerialized(groupId.hexString))
         }
 
     override suspend fun setDescription(groupId: AccountId, newDescription: String): Unit =
@@ -1008,7 +1014,7 @@ class GroupManagerV2Impl @Inject constructor(
             sentTimestamp = timestamp
         }
 
-        MessageSender.sendAndAwait(message, Address.fromSerialized(groupId.hexString))
+        messageSender.sendAndAwait(message, Address.fromSerialized(groupId.hexString))
     }
 
     override suspend fun handleDeleteMemberContent(
@@ -1141,7 +1147,7 @@ class GroupManagerV2Impl @Inject constructor(
             sentTimestamp = timestamp
         }
 
-        MessageSender.send(message, Address.fromSerialized(groupId.hexString))
+        messageSender.send(message, Address.fromSerialized(groupId.hexString))
 
         storage.deleteGroupInfoMessages(groupId, UpdateMessageData.Kind.GroupExpirationUpdated::class.java)
         storage.insertGroupInfoChange(message, groupId)
@@ -1192,15 +1198,4 @@ class GroupManagerV2Impl @Inject constructor(
         val firstError = this.results.firstOrNull { it.code != 200 }
         require(firstError == null) { "$errorMessage: ${firstError!!.body}" }
     }
-
-    private val Profile.profilePicture: UserPic?
-        get() {
-            val url = this.profilePictureURL
-            val key = this.profileKey
-            return if (url != null && key != null) {
-                UserPic(url, key)
-            } else {
-                null
-            }
-        }
 }

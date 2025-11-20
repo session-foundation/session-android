@@ -5,8 +5,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -18,6 +16,7 @@ import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.util.castAwayType
@@ -33,7 +32,7 @@ private typealias CommunityServerUrl = String
 @Singleton
 class BlindMappingRepository @Inject constructor(
     private val configFactory: ConfigFactory,
-    prefs: TextSecurePreferences,
+    loginStateRepository: LoginStateRepository,
     @param:ManagerScope private val scope: CoroutineScope,
 ) {
 
@@ -42,9 +41,8 @@ class BlindMappingRepository @Inject constructor(
      * blinded addresses to 05 prefixed addresses
      */
     @Suppress("OPT_IN_USAGE")
-    val mappings: StateFlow<Map<CommunityServerUrl, Map<Address.Blinded, Address.Standard>>> = prefs.watchLocalNumber()
-        .filterNotNull()
-        .flatMapLatest { localAddress ->
+    val mappings: StateFlow<Map<CommunityServerUrl, Map<Address.Blinded, Address.Standard>>> =
+        loginStateRepository.flowWithLoggedInState {
             configFactory
                 .userConfigsChanged(setOf(UserConfigType.USER_GROUPS, UserConfigType.CONTACTS))
                 .castAwayType()
@@ -54,14 +52,14 @@ class BlindMappingRepository @Inject constructor(
                         Pair(
                             configs.userGroups.allCommunityInfo().map { it.community },
                             configs.contacts.all().map { Address.Standard(AccountId(it.id)) }
-                                    + Address.Standard(AccountId(localAddress))
+                                    + Address.Standard(loginStateRepository.requireLocalAccountId())
                         )
                     }
                 }
         }
         .distinctUntilChanged()
         .map { (allCommunities, allContacts) ->
-            allCommunities.asSequence()
+            allCommunities
                 .associate { community ->
                     community.baseUrl to allContacts.asSequence()
                         .flatMap { contactAddress ->
