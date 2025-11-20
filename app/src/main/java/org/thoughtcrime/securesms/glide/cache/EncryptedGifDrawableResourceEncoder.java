@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.glide.cache;
 
 import androidx.annotation.NonNull;
 import org.session.libsignal.utilities.Log;
+import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider;
 
 import com.bumptech.glide.load.EncodeStrategy;
 import com.bumptech.glide.load.Options;
@@ -19,10 +20,10 @@ public class EncryptedGifDrawableResourceEncoder extends EncryptedCoder implemen
 
   private static final String TAG = EncryptedGifDrawableResourceEncoder.class.getSimpleName();
 
-  private final byte[] secret;
+  private final AttachmentSecretProvider secretProvider;
 
-  public EncryptedGifDrawableResourceEncoder(@NonNull byte[] secret) {
-    this.secret = secret;
+  public EncryptedGifDrawableResourceEncoder(@NonNull AttachmentSecretProvider secretProvider) {
+    this.secretProvider = secretProvider;
   }
 
   @Override
@@ -34,7 +35,7 @@ public class EncryptedGifDrawableResourceEncoder extends EncryptedCoder implemen
   public boolean encode(@NonNull Resource<GifDrawable> data, @NonNull File file, @NonNull Options options) {
     GifDrawable drawable = data.get();
 
-    try (OutputStream outputStream = createEncryptedOutputStream(secret, file)) {
+    try (OutputStream outputStream = createEncryptedOutputStream(secretProvider.getOrCreateAttachmentSecret().getModernKey(), file)) {
       ByteBufferUtil.toStream(drawable.getBuffer(), outputStream);
       return true;
     } catch (IOException e) {
