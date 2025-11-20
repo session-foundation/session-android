@@ -92,12 +92,18 @@ object FilenameUtils {
                 val projection = arrayOf(OpenableColumns.DISPLAY_NAME)
                 val contentRes = context.contentResolver
                 if (contentRes != null) {
-                    val cursor = contentRes.query(uri, projection, null, null, null)
-                    cursor?.use {
-                        if (it.moveToFirst()) {
-                            val nameIndex = it.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
-                            extractedFilename = it.getString(nameIndex)
+                    try {
+                        val cursor = contentRes.query(uri, projection, null, null, null)
+                        cursor?.use {
+                            if (it.moveToFirst()) {
+                               val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                                if (nameIndex != -1) {
+                                    extractedFilename = it.getString(nameIndex)
+                                }
+                            }
                         }
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Unable to query display name for uri: $uri", e)
                     }
                 }
             }

@@ -31,6 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImagePainter
 import coil3.compose.SubcomposeAsyncImage
@@ -55,6 +56,7 @@ import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
 import org.thoughtcrime.securesms.util.avatarOptions
 
+private val MIN_BADGE_SIZE = 12.dp
 
 @Composable
 fun BaseAvatar(
@@ -105,8 +107,8 @@ fun BaseAvatar(
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .offset(1.dp, 1.dp) // Used to make up for transparent padding in icon.
-                    .size(size * 0.4f)
+                    .offset(x = 1.dp, y = 1.dp)
+                    .size(max(size * 0.4f, MIN_BADGE_SIZE))
             ) {
                 badge()
             }

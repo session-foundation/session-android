@@ -4,6 +4,7 @@ package org.thoughtcrime.securesms.glide.cache;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import org.session.libsignal.utilities.Log;
+import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider;
 
 import com.bumptech.glide.load.Options;
 import com.bumptech.glide.load.ResourceDecoder;
@@ -19,11 +20,11 @@ public class EncryptedGifCacheDecoder extends EncryptedCoder implements Resource
 
   private static final String TAG = EncryptedGifCacheDecoder.class.getSimpleName();
 
-  private final byte[]           secret;
+  private final AttachmentSecretProvider attachmentSecretProvider;
   private final StreamGifDecoder gifDecoder;
 
-  public EncryptedGifCacheDecoder(@NonNull byte[] secret, @NonNull StreamGifDecoder gifDecoder) {
-    this.secret     = secret;
+  public EncryptedGifCacheDecoder(@NonNull AttachmentSecretProvider attachmentSecretProvider, @NonNull StreamGifDecoder gifDecoder) {
+    this.attachmentSecretProvider = attachmentSecretProvider;
     this.gifDecoder = gifDecoder;
   }
 
@@ -31,7 +32,7 @@ public class EncryptedGifCacheDecoder extends EncryptedCoder implements Resource
   public boolean handles(@NonNull File source, @NonNull Options options) {
     Log.i(TAG, "Checking item for encrypted GIF cache decoder: " + source.toString());
 
-    try (InputStream inputStream = createEncryptedInputStream(secret, source)) {
+    try (InputStream inputStream = createEncryptedInputStream(attachmentSecretProvider.getOrCreateAttachmentSecret().getModernKey(), source)) {
       return gifDecoder.handles(inputStream, options);
     } catch (IOException e) {
       Log.w(TAG, e);
@@ -43,7 +44,7 @@ public class EncryptedGifCacheDecoder extends EncryptedCoder implements Resource
   @Override
   public Resource<GifDrawable> decode(@NonNull File source, int width, int height, @NonNull Options options) throws IOException {
     Log.i(TAG, "Encrypted GIF cache decoder running...");
-    try (InputStream inputStream = createEncryptedInputStream(secret, source)) {
+    try (InputStream inputStream = createEncryptedInputStream(attachmentSecretProvider.getOrCreateAttachmentSecret().getModernKey(), source)) {
       return gifDecoder.decode(inputStream, width, height, options);
     }
   }
