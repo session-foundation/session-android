@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.preferences.prosettings.chooseplan
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import org.thoughtcrime.securesms.preferences.prosettings.BaseStateProScreen
@@ -15,6 +16,12 @@ fun ChoosePlanHomeScreen(
     viewModel: ProSettingsViewModel,
     onBack: () -> Unit,
 ) {
+    LaunchedEffect(Unit) {
+        // ensuring we get the latest data here
+        // since we can deep link to this screen without going through the pro home screen
+        viewModel.ensureChoosePlanState()
+    }
+
     val state by viewModel.choosePlanState.collectAsState()
 
     BaseStateProScreen(

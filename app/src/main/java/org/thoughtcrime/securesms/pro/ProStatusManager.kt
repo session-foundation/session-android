@@ -59,6 +59,10 @@ class ProStatusManager @Inject constructor(
     private val proDetailsRepository: ProDetailsRepository,
 ) : OnAppStartupComponent {
 
+    //todo PRO state does not update after a successful pro purchase once getting back to the pro home
+    //todo PRO implement post cancel screen handling
+
+
     val proDataState: StateFlow<ProDataState> = combine(
         recipientRepository.observeSelf().map { it.shouldShowProBadge }.distinctUntilChanged(),
         proDetailsRepository.loadState,
@@ -200,33 +204,6 @@ class ProStatusManager @Inject constructor(
         if(!isPostPro()) return Int.MAX_VALUE // allow infinite pins while not in post Pro
 
         return if (isPro) Int.MAX_VALUE else MAX_PIN_REGULAR
-    }
-
-    /**
-     * This will calculate the pro features of an outgoing message
-     */
-    fun calculateMessageProFeatures(isPro: Boolean, shouldShowProBadge: Boolean, message: String) {
-//        if (!isPro){
-//            return emptyList()
-//        }
-//
-//        val features = mutableListOf<MessageProFeature>()
-//
-//        // check for pro badge display
-//        if (shouldShowProBadge){
-//            features.add(MessageProFeature.ProBadge)
-//        }
-//
-//        // check for "long message" feature
-//        if(message.length > MAX_CHARACTER_REGULAR){
-//            features.add(MessageProFeature.LongMessage)
-//        }
-
-        // check is the user has an animated avatar
-        //todo PRO check for animated avatar here and add appropriate feature
-
-
-//        return features
     }
 
     /**

@@ -104,7 +104,7 @@ class ProDetailsRepository @Inject constructor(
 
                                 db.updateProDetails(last.first, last.second)
 
-                                Log.d(DebugLogGroup.PRO_DATA.label, "Successfully fetched Pro details from backend")
+                                Log.d(DebugLogGroup.PRO_DATA.label, "Successfully fetched Pro details from backend: status: ${last.first.status}, auto-renewing: ${last.first.autoRenewing}")
                                 emit(LoadState.Loaded(last))
                                 numRetried = 0
                             } catch (e: Exception) {
