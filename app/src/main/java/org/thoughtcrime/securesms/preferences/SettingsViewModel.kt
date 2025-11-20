@@ -53,6 +53,7 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.mms.MediaConstraints
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.ProDataState
+import org.thoughtcrime.securesms.pro.ProDetailsRepository
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
 import org.thoughtcrime.securesms.ui.SimpleDialogData
@@ -82,6 +83,7 @@ class SettingsViewModel @Inject constructor(
     private val inAppReviewManager: InAppReviewManager,
     private val avatarUploadManager: AvatarUploadManager,
     private val attachmentProcessor: AttachmentProcessor,
+    val proDetailsRepository: ProDetailsRepository,
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
 
@@ -153,6 +155,8 @@ class SettingsViewModel @Inject constructor(
                     _uiState.update { it.copy(avatarData = data) }
                 }
         }
+
+        proDetailsRepository.requestRefresh()
     }
 
     private fun getVersionNumber(): CharSequence {

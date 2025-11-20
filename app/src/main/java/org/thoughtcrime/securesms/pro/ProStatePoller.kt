@@ -8,14 +8,18 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
 import org.session.libsession.snode.SnodeClock
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.dependencies.ManagerScope
@@ -28,6 +32,7 @@ import org.thoughtcrime.securesms.pro.api.ProDetails
 import org.thoughtcrime.securesms.pro.api.successOrThrow
 import org.thoughtcrime.securesms.pro.db.ProDatabase
 import org.thoughtcrime.securesms.util.NetworkConnectivity
+import org.thoughtcrime.securesms.util.castAwayType
 import java.time.Duration
 import java.time.Instant
 import javax.inject.Inject
@@ -45,6 +50,8 @@ class ProStatePoller @Inject constructor(
     private val proDatabase: ProDatabase,
     private val snodeClock: SnodeClock,
     private val apiExecutor: ProApiExecutor,
+    private val proDetailsRepository: ProDetailsRepository,
+    prefs: TextSecurePreferences,
     @ManagerScope scope: CoroutineScope,
 ): OnAppStartupComponent {
     private val manualPollRequest = Channel<PollToken>()
@@ -56,9 +63,11 @@ class ProStatePoller @Inject constructor(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val pollState: StateFlow<PollState> = loginStateRepository
-        .loggedInState
-        .map { it?.seeded?.proMasterPrivateKey }
+    val pollState: StateFlow<PollState> = prefs.flowPostProLaunch {
+            loginStateRepository
+                .loggedInState
+                .map { it?.seeded?.proMasterPrivateKey }
+        }
         .distinctUntilChanged()
         .flatMapLatest { proMasterPrivateKey ->
             if (proMasterPrivateKey == null) {
@@ -148,11 +157,9 @@ class ProStatePoller @Inject constructor(
 
         if (currentProof == null || currentProof.expiryMs <= snodeClock.currentTimeMills()) {
             // Current proof is missing or expired, grab the pro details to decide what to do next
-            val details = apiExecutor.executeRequest(
-                request = getProDetailsRequestFactory.create(masterPrivateKey = proMasterPrivateKey)
-            ).successOrThrow()
+            proDetailsRepository.requestRefresh()
 
-            proDatabase.updateProDetails(details, Instant.now())
+            val details = proDetailsRepository.loadState.mapNotNull { it.lastUpdated }.first().first
 
             val newProof = if (details.status == ProDetails.DETAILS_STATUS_ACTIVE) {
                 Log.d(TAG, "User is active Pro but has no valid proof, generating new proof")
