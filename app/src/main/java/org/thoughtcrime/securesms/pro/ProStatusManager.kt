@@ -8,9 +8,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -35,8 +38,10 @@ import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.pro.api.AddPaymentErrorStatus
 import org.thoughtcrime.securesms.pro.api.AddProPaymentRequest
+import org.thoughtcrime.securesms.pro.api.GenerateProProofRequest
 import org.thoughtcrime.securesms.pro.api.ProApiExecutor
 import org.thoughtcrime.securesms.pro.api.ProApiResponse
+import org.thoughtcrime.securesms.pro.api.successOrThrow
 import org.thoughtcrime.securesms.pro.db.ProDatabase
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
@@ -55,6 +60,8 @@ class ProStatusManager @Inject constructor(
     private val loginState: LoginStateRepository,
     private val proDatabase: ProDatabase,
     private val snodeClock: SnodeClock,
+    private val proDetailsRepository: ProDetailsRepository,
+    private val generateProProofRequest: GenerateProProofRequest.Factory,
 ) : OnAppStartupComponent {
 
     val proDataState: StateFlow<ProDataState> = combine(
@@ -155,6 +162,51 @@ class ProStatusManager @Inject constructor(
         scope.launch {
             prefs.watchPostProStatus().collect {
                 _postProLaunchStatus.update { isPostPro() }
+            }
+        }
+
+        // Manage pro proof based on
+        scope.launch {
+            combine(
+                loginState.loggedInState.mapNotNull { it?.seeded?.proMasterPrivateKey },
+                proDetailsRepository.loadState
+                    .filter { it != ProDetailsRepository.LoadState.Init }
+                    .map { it.lastUpdated?.first?.expiry },
+                ::Pair
+            ).collectLatest { (proMasterKey, proValidUntil) ->
+                val currentProof = proDatabase.getCurrentProProof()
+
+                val now = snodeClock.currentTime()
+                if (proValidUntil != null && proValidUntil > now) {
+                    if (currentProof != null) {
+                        val proofExpiry = Instant.ofEpochMilli(currentProof.expiryMs)
+
+                        val renewProofAt = if (proofExpiry < now) {
+                            if (Duration.between(now, proValidUntil).toMinutes() < 60) {
+                                now
+                            } else {
+                                proValidUntil - Duration.ofMinutes(10 + (Math.random() * 50).toLong())
+                            }
+                        } else {
+                            now
+                        }
+
+                        Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Scheduling pro proof renewal at $renewProofAt")
+                        if (renewProofAt > now) {
+                            delay(Duration.between(now, renewProofAt).toMillis())
+                        }
+                    }
+
+                    Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Generating new pro proof")
+                    try {
+                        val proof = apiExecutor.executeRequest(request = generateProProofRequest.create(
+                            masterPrivateKey = proMasterKey,
+                            rotatingPrivateKey = proDatabase.ensureValidRotatingKeys(now).ed25519PrivKey
+                        )).successOrThrow()
+                    } catch (e: Exception) {
+                        TODO("Not yet implemented")
+                    }
+                }
             }
         }
     }

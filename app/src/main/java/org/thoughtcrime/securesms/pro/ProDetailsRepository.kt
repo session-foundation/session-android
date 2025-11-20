@@ -30,13 +30,15 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
 
+typealias ForceRefresh = Boolean
+
 @Singleton
 class ProDetailsRepository @Inject constructor(
     private val db: ProDatabase,
     private val apiExecutor: ProApiExecutor,
     private val getProDetailsRequestFactory: GetProDetailsRequest.Factory,
     private val loginStateRepository: LoginStateRepository,
-    private val prefs: TextSecurePreferences,
+    prefs: TextSecurePreferences,
     networkConnectivity: NetworkConnectivity,
     @ManagerScope scope: CoroutineScope,
 ) {
@@ -57,12 +59,12 @@ class ProDetailsRepository @Inject constructor(
         data class Error(override val lastUpdated: Pair<ProDetails, Instant>?) : LoadState
     }
 
-    private val refreshRequests: SendChannel<Unit>
+    private val refreshRequests: SendChannel<ForceRefresh>
 
     val loadState: StateFlow<LoadState>
 
     init {
-        val channel = Channel<Unit>(capacity = 10, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+        val channel = Channel<ForceRefresh>()
 
         refreshRequests = channel
         @Suppress("OPT_IN_USAGE")
@@ -74,22 +76,44 @@ class ProDetailsRepository @Inject constructor(
                 flow {
                     var last = db.getProDetailsAndLastUpdated()
                     var numRetried = 0
+                    var forceRefresh = false
 
                     while (true) {
                         // Drain all pending requests as we are about to execute a request
-                        while (channel.tryReceive().isSuccess) { }
+                        while (true) {
+                            val result = channel.tryReceive()
+                            when {
+                                result.isClosed -> {
+                                    Log.w(TAG, "Refresh channel closed, stopping Pro details fetcher")
+                                    return@flow
+                                }
+
+                                result.isSuccess -> {
+                                    forceRefresh = forceRefresh || result.getOrThrow()
+                                }
+
+                                else -> break
+                            }
+                        }
 
                         var retryingAt: Instant? = null
 
-                        if (last != null && last.second.plusSeconds(MIN_UPDATE_INTERVAL_SECONDS) >= Instant.now()) {
+                        if (!forceRefresh && last != null
+                            && last.second.plusSeconds(MIN_UPDATE_INTERVAL_SECONDS) >= Instant.now()) {
                             Log.d(TAG, "Pro details is fresh enough, skipping fetch")
                             // Last update was recent enough, skip fetching
                             emit(LoadState.Loaded(last))
                         } else {
                             if (!networkConnectivity.networkAvailable.value) {
-                                // No network...mark the state and wait for it to come back
+                                // No network...mark the state and wait for the network to be online
                                 emit(LoadState.Loading(last, waitingForNetwork = true))
+
                                 networkConnectivity.networkAvailable.first { it }
+
+                                // We might have waited a while for the network to come back
+                                // so drain the refresh requests again to avoid blocking the requesters
+                                // for too long
+                                while (channel.tryReceive().isSuccess) {}
                             }
 
                             emit(LoadState.Loading(last, waitingForNetwork = false))
@@ -118,13 +142,16 @@ class ProDetailsRepository @Inject constructor(
                                 retryingAt = Instant.now().plusSeconds(delaySeconds)
                                 numRetried++
                             }
+
+                            forceRefresh = false
                         }
 
 
                         // Wait until either a refresh is requested, or it's time to retry
                         select {
-                            refreshRequests.onReceiveCatching {
-                                Log.d(TAG, "Manual refresh requested")
+                            refreshRequests.onReceive {
+                                Log.d(TAG, "Manual refresh requested: force = $it")
+                                forceRefresh = it
                             }
 
                             if (retryingAt != null) {
@@ -140,8 +167,18 @@ class ProDetailsRepository @Inject constructor(
             }.stateIn(scope, SharingStarted.Eagerly, LoadState.Init)
     }
 
-    fun requestRefresh() {
-        refreshRequests.trySend(Unit)
+    /**
+     * Requests a fresh of current user's pro details. By default, if last update is recent enough,
+     * no network request will be made. If [force] is true, a network request will be
+     * made regardless of the freshness of the last update.
+     */
+    suspend fun requestRefresh(force: Boolean = false) {
+        if ((loadState.value as? LoadState.Loading)?.waitingForNetwork == true) {
+            Log.d(TAG, "Currently waiting for network for a fetch, no need to send another request")
+            return
+        }
+
+        refreshRequests.send(force)
     }
 
     companion object {

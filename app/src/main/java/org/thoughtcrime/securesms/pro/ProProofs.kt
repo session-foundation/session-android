@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.pro
 import com.google.protobuf.ByteString
 import network.loki.messenger.libsession_util.pro.ProProof
 import org.session.libsignal.protos.SignalServiceProtos
+import java.time.Instant
 
 /**
  * Copies values from a libsession ProProof into a protobuf-based ProProof.
