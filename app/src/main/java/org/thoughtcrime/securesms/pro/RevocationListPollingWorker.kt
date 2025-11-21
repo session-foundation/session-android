@@ -24,6 +24,9 @@ import java.time.Duration
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.cancellation.CancellationException
 
+/**
+ * A long running worker which periodically polls the revocation list and updates the local database.
+ */
 @HiltWorker
 class RevocationListPollingWorker @AssistedInject constructor(
     @Assisted context: Context,

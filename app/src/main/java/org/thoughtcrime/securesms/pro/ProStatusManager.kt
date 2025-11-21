@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
@@ -186,13 +187,18 @@ class ProStatusManager @Inject constructor(
                 }
         }
 
-        // ProDetails worker lifecycle
+        manageProDetailsRefreshScheduling()
+        manageCurrentProProofRevocation()
+    }
+
+    private fun manageProDetailsRefreshScheduling() {
         loginState.runWhileLoggedIn(scope) {
             postProLaunchStatus
                 .collectLatest { postLaunch ->
                     if (postLaunch) {
                         merge(
-                            configFactory.get().userConfigsChanged(EnumSet.of(UserConfigType.USER_PROFILE))
+                            configFactory.get()
+                                .userConfigsChanged(EnumSet.of(UserConfigType.USER_PROFILE))
                                 .map { "UserProfile changes" }, //TODO: also schedule it when the real config changes (not integrated yet)
 
                             proDetailsRepository.loadState
@@ -205,7 +211,10 @@ class ProStatusManager @Inject constructor(
                                     val now = snodeClock.currentTime()
                                     if (now < refreshTime) {
                                         val duration = Duration.between(now, refreshTime)
-                                        Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Delaying ProDetails refresh until $refreshTime due to access expiry")
+                                        Log.d(
+                                            DebugLogGroup.PRO_SUBSCRIPTION.label,
+                                            "Delaying ProDetails refresh until $refreshTime due to access expiry"
+                                        )
                                         delay(duration)
                                     }
 
@@ -214,22 +223,33 @@ class ProStatusManager @Inject constructor(
 
                             proDatabase.currentProProofChangesNotification
                                 .onStart { emit(Unit) }
-                                .mapNotNull { proDatabase.getCurrentProProof()?.expiryMs?.let(Instant::ofEpochMilli) }
+                                .mapNotNull {
+                                    proDatabase.getCurrentProProof()?.expiryMs?.let(
+                                        Instant::ofEpochMilli
+                                    )
+                                }
                                 .mapLatest { expiry ->
                                     // Schedule a refresh for a random number between 10 and 60 minutes before proof expiry
                                     val now = snodeClock.currentTime()
 
-                                    val refreshTime = expiry.minus(Duration.ofMinutes((10..60).random().toLong()))
+                                    val refreshTime =
+                                        expiry.minus(Duration.ofMinutes((10..60).random().toLong()))
 
                                     if (now < refreshTime) {
-                                        Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Delaying ProDetails refresh until $refreshTime due to proof expiry")
+                                        Log.d(
+                                            DebugLogGroup.PRO_SUBSCRIPTION.label,
+                                            "Delaying ProDetails refresh until $refreshTime due to proof expiry"
+                                        )
                                         delay(Duration.between(now, expiry))
                                     }
                                 },
 
                             flowOf("App starting up")
                         ).collect { refreshReason ->
-                            Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Scheduling ProDetails fetch due to: $refreshReason")
+                            Log.d(
+                                DebugLogGroup.PRO_SUBSCRIPTION.label,
+                                "Scheduling ProDetails fetch due to: $refreshReason"
+                            )
 
                             proDetailsRepository.requestRefresh()
                         }
@@ -240,6 +260,36 @@ class ProStatusManager @Inject constructor(
         }
     }
 
+    private fun manageCurrentProProofRevocation() {
+        loginState.runWhileLoggedIn(scope) {
+            postProLaunchStatus.collectLatest { postLaunch ->
+                if (postLaunch) {
+                    combine(
+                        proDatabase.currentProProofChangesNotification
+                            .onStart { emit(Unit) }
+                            .mapNotNull { proDatabase.getCurrentProProof()?.genIndexHashHex },
+
+                        proDatabase.revocationChangeNotification
+                            .onStart { emit(Unit) },
+
+                        { proofGenIndexHash, _ ->
+                            proofGenIndexHash.takeIf { proDatabase.isRevoked(it) }
+                        }
+                    )
+                        .filterNotNull()
+                        .collectLatest { revokedHash ->
+                            if (revokedHash == proDatabase.getCurrentProProof()?.genIndexHashHex) {
+                                Log.w(
+                                    DebugLogGroup.PRO_SUBSCRIPTION.label,
+                                    "Current Pro proof has been revoked, clearing local proof"
+                                )
+                                proDatabase.updateCurrentProProof(null)
+                            }
+                        }
+                }
+            }
+        }
+    }
 
     /**
      * Logic to determine if we should animate the avatar for a user or freeze it on the first frame
