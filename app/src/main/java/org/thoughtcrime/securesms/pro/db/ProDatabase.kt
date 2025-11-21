@@ -230,6 +230,13 @@ class ProDatabase @Inject constructor(
         }
     }
 
+    private val mutableProDetailsChangeNotification = MutableSharedFlow<Unit>(
+        extraBufferCapacity = 10,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+
+    val proDetailsChangeNotification: SharedFlow<Unit> get() = mutableProDetailsChangeNotification
+
     fun getProDetailsAndLastUpdated(): Pair<ProDetails, Instant>? {
         return readableDatabase.rawQuery("""
             SELECT name, value FROM pro_state
@@ -255,12 +262,22 @@ class ProDatabase @Inject constructor(
     }
 
     fun updateProDetails(proDetails: ProDetails, updatedAt: Instant) {
-        //language=roomsql
-        writableDatabase.rawExecSQL("""
-            INSERT OR REPLACE INTO pro_state (name, value)
+        val changes = writableDatabase.compileStatement("""
+            INSERT INTO pro_state (name, value)
             VALUES (?, ?), (?, ?)
-        """, STATE_PRO_DETAILS, json.encodeToString(proDetails),
-                    STATE_PRO_DETAILS_UPDATED_AT, updatedAt.toEpochMilli().toString())
+            ON CONFLICT DO UPDATE SET value=excluded.value
+            WHERE value != excluded.value
+        """).use { stmt ->
+            stmt.bindString(1, STATE_PRO_DETAILS)
+            stmt.bindString(2, json.encodeToString(proDetails))
+            stmt.bindString(3, STATE_PRO_DETAILS_UPDATED_AT)
+            stmt.bindString(4, updatedAt.toEpochMilli().toString())
+            stmt.executeUpdateDelete()
+        }
+
+        if (changes > 0) {
+            mutableProDetailsChangeNotification.tryEmit(Unit)
+        }
     }
 
     @Serializable

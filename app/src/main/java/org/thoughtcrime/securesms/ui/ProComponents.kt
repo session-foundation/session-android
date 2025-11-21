@@ -103,6 +103,7 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
+import org.thoughtcrime.securesms.util.AvatarBadge
 import org.thoughtcrime.securesms.util.AvatarUIData
 
 
@@ -238,6 +239,7 @@ fun SessionProCTA(
     modifier: Modifier = Modifier,
     title: String = stringResource(R.string.upgradeTo),
     titleColor: Color = LocalColors.current.text,
+    showProBadge: Boolean = true,
     badgeAtStart: Boolean = false,
     disabled: Boolean = false,
     features: List<CTAFeature> = emptyList(),
@@ -293,6 +295,7 @@ fun SessionProCTA(
                                     modifier = Modifier.align(Alignment.CenterHorizontally),
                                     text = title,
                                     textStyle = LocalType.current.h5.copy(color = titleColor),
+                                    showBadge = showProBadge,
                                     badgeAtStart = badgeAtStart,
                                     badgeColors = if (disabled) proBadgeColorDisabled() else proBadgeColorStandard(),
                                 )
@@ -425,6 +428,7 @@ fun SimpleSessionProCTA(
     text: String,
     modifier: Modifier = Modifier,
     title: String = stringResource(R.string.upgradeTo),
+    showProBadge: Boolean = true,
     badgeAtStart: Boolean = false,
     features: List<CTAFeature> = emptyList(),
     positiveButtonText: String? = stringResource(R.string.theContinue),
@@ -435,6 +439,7 @@ fun SimpleSessionProCTA(
     SessionProCTA(
         modifier = modifier,
         title = title,
+        showProBadge = showProBadge,
         badgeAtStart = badgeAtStart,
         textContent = {
             Text(
@@ -477,6 +482,7 @@ fun AnimatedSessionProCTA(
     text: String,
     modifier: Modifier = Modifier,
     title: String = stringResource(R.string.upgradeTo),
+    showProBadge: Boolean = true,
     badgeAtStart: Boolean = false,
     disabled: Boolean = false,
     features: List<CTAFeature> = emptyList(),
@@ -511,6 +517,7 @@ fun AnimatedSessionProCTA(
         negativeButtonText = negativeButtonText,
         title = title,
         titleColor = if(disabled) LocalColors.current.disabled else LocalColors.current.text,
+        showProBadge = showProBadge,
         badgeAtStart = badgeAtStart,
         disabled = disabled
     )
@@ -851,7 +858,7 @@ fun AvatarQrWidget(
         label = "corner_radius"
     )
 
-    // Scale animations for content
+    // Scale animations for content (used when going from QR back to avatar)
     val avatarScale by animateFloatAsState(
         targetValue = if (showQR) 0.8f else 1f,
         animationSpec = animationSpecFast,
@@ -936,7 +943,6 @@ fun AvatarQrWidget(
             }
             Avatar(
                 modifier = avatarModifier
-                    .size(animatedSize)
                     .graphicsLayer(
                         alpha = avatarAlpha,
                         scaleX = avatarScale,
@@ -945,7 +951,7 @@ fun AvatarQrWidget(
                 ,
                 size = animatedSize,
                 maxSizeLoad = LocalDimensions.current.iconXXLargeAvatar,
-                data = avatarUIData
+                data = avatarUIData,
             )
 
             // QR with scale and alpha

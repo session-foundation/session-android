@@ -51,11 +51,6 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideAttachmentDatabase(@ApplicationContext context: Context,
-                                  openHelper: Provider<SQLCipherOpenHelper>,
-                                  attachmentSecret: AttachmentSecret) = AttachmentDatabase(context, openHelper, attachmentSecret)
-    @Provides
-    @Singleton
     fun provideMediaDatbase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = MediaDatabase(context, openHelper)
 
 

@@ -2,14 +2,17 @@ package org.thoughtcrime.securesms.glide.cache;
 
 
 import android.graphics.Bitmap;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import org.session.libsignal.utilities.Log;
 
 import com.bumptech.glide.load.Options;
 import com.bumptech.glide.load.ResourceDecoder;
 import com.bumptech.glide.load.engine.Resource;
 import com.bumptech.glide.load.resource.bitmap.StreamBitmapDecoder;
+
+import org.session.libsignal.utilities.Log;
+import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,10 +23,10 @@ public class EncryptedBitmapCacheDecoder extends EncryptedCoder implements Resou
   private static final String TAG = EncryptedBitmapCacheDecoder.class.getSimpleName();
 
   private final StreamBitmapDecoder streamBitmapDecoder;
-  private final byte[]              secret;
+  private final AttachmentSecretProvider attachmentSecretProvider;
 
-  public EncryptedBitmapCacheDecoder(@NonNull byte[] secret, @NonNull StreamBitmapDecoder streamBitmapDecoder) {
-    this.secret              = secret;
+  public EncryptedBitmapCacheDecoder(@NonNull AttachmentSecretProvider attachmentSecretProvider, @NonNull StreamBitmapDecoder streamBitmapDecoder) {
+    this.attachmentSecretProvider = attachmentSecretProvider;
     this.streamBitmapDecoder = streamBitmapDecoder;
   }
 
@@ -33,7 +36,7 @@ public class EncryptedBitmapCacheDecoder extends EncryptedCoder implements Resou
   {
     Log.i(TAG, "Checking item for encrypted Bitmap cache decoder: " + source.toString());
 
-    try (InputStream inputStream = createEncryptedInputStream(secret, source)) {
+    try (InputStream inputStream = createEncryptedInputStream(attachmentSecretProvider.getOrCreateAttachmentSecret().getModernKey(), source)) {
       return streamBitmapDecoder.handles(inputStream, options);
     } catch (IOException e) {
       Log.w(TAG, e);
@@ -47,7 +50,7 @@ public class EncryptedBitmapCacheDecoder extends EncryptedCoder implements Resou
       throws IOException
   {
     Log.i(TAG, "Encrypted Bitmap cache decoder running: " + source.toString());
-    try (InputStream inputStream = createEncryptedInputStream(secret, source)) {
+    try (InputStream inputStream = createEncryptedInputStream(attachmentSecretProvider.getOrCreateAttachmentSecret().getModernKey(), source)) {
       return streamBitmapDecoder.decode(inputStream, width, height, options);
     }
   }

@@ -35,8 +35,11 @@ import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLA
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_LENGTH_SINGULAR_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProDataState
+import org.thoughtcrime.securesms.pro.ProDetailsRepository
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
@@ -62,6 +65,7 @@ class ProSettingsViewModel @AssistedInject constructor(
     private val subscriptionCoordinator: SubscriptionCoordinator,
     private val dateUtils: DateUtils,
     private val prefs: TextSecurePreferences,
+    private val proDetailsRepository: ProDetailsRepository,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -142,8 +146,21 @@ class ProSettingsViewModel @AssistedInject constructor(
                                     positiveStyleDanger = false,
                                     showXIcon = true,
                                     onPositive = {
-                                        //todo PRO I shouldn't get the plan from the provider again. I should really only try to redo the backend call
-                                        //getPlanFromProvider() // retry getting the plan from provider
+                                        // show the loader again
+                                        val data = choosePlanState.value
+                                        if(data is State.Success) {
+                                            _choosePlanState.update {
+                                                State.Success(
+                                                    data.value.copy(purchaseInProgress = true)
+                                                )
+                                            }
+                                        }
+
+                                        // retry the post purchase code
+                                        subscriptionCoordinator.getCurrentManager().onPurchaseSuccessful(
+                                            orderId = purchaseEvent.orderId,
+                                            paymentId = purchaseEvent.paymentId
+                                        )
                                     },
                                     onNegative = {
                                         onCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
@@ -162,8 +179,6 @@ class ProSettingsViewModel @AssistedInject constructor(
     }
 
     private fun generateState(proDataState: ProDataState){
-        //todo PRO need to properly calculate this
-
         val subType = proDataState.type
 
         _proSettingsUIState.update {
@@ -200,6 +215,93 @@ class ProSettingsViewModel @AssistedInject constructor(
         }
     }
 
+    fun ensureChoosePlanState(){
+        // Get the choose plan state ready in loading mode
+        _choosePlanState.update { State.Loading }
+
+        // while the user is on the page we need to calculate the "choose plan" data
+        viewModelScope.launch {
+            val subType = _proSettingsUIState.value.proDataState.type
+
+            // first check if the user has a valid subscription and billing
+            val hasBillingCapacity = subscriptionCoordinator.getCurrentManager().supportsBilling.value
+            val hasValidSub = subscriptionCoordinator.getCurrentManager().hasValidSubscription()
+
+            // next get the plans, including their pricing, unless there is no billing
+            // or the user is pro without a valid subscription
+            // or the user is pro but non originating
+            val noPriceNeeded = !hasBillingCapacity
+                    || (subType is ProStatus.Active && !hasValidSub)
+                    || (subType is ProStatus.Active && subType.providerData.isFromAnotherPlatform())
+
+            val plans = if(noPriceNeeded) emptyList()
+            else {
+                // attempt to get the prices from the subscription provider
+                // return early in case of error
+                try {
+                    getSubscriptionPlans(subType)
+                } catch (e: Exception){
+                    Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Error while trying to get subscription plans", e)
+                    _choosePlanState.update { State.Error(e) }
+                    return@launch
+                }
+            }
+
+            _choosePlanState.update {
+                State.Success(
+                    ChoosePlanState(
+                        proStatus = subType,
+                        hasValidSubscription = hasValidSub,
+                        hasBillingCapacity = hasBillingCapacity,
+                        enableButton = subType !is ProStatus.Active.AutoRenewing, // only the auto-renew can have a disabled state
+                        plans = plans
+                    )
+                )
+            }
+        }
+    }
+
+    fun ensureCancelState(){
+        val sub = _proSettingsUIState.value.proDataState.type
+        if(sub !is ProStatus.Active) return
+
+        _cancelPlanState.update { State.Loading }
+        viewModelScope.launch {
+            _cancelPlanState.update { State.Loading }
+            val hasValidSubscription = subscriptionCoordinator.getCurrentManager().hasValidSubscription()
+
+            _cancelPlanState.update {
+                State.Success(
+                    CancelPlanState(
+                        proStatus = sub,
+                        hasValidSubscription = hasValidSubscription
+                    )
+                )
+            }
+        }
+    }
+
+    fun ensureRefundState(){
+        val sub = _proSettingsUIState.value.proDataState.type
+        if(sub !is ProStatus.Active) return
+
+        _refundPlanState.update { State.Loading }
+
+        viewModelScope.launch {
+            _refundPlanState.update {
+                val isQuickRefund = if(prefs.getDebugIsWithinQuickRefund() && prefs.forceCurrentUserAsPro()) true // debug mode
+                else sub.isWithinQuickRefundWindow()
+
+                State.Success(
+                    RefundPlanState(
+                        proStatus = sub,
+                        isQuickRefund = isQuickRefund,
+                        quickRefundUrl = sub.providerData.refundUrl
+                    )
+                )
+            }
+        }
+    }
 
     fun onCommand(command: Commands) {
         when (command) {
@@ -283,7 +385,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                                     negativeText = context.getString(R.string.helpSupport),
                                     positiveStyleDanger = false,
                                     showXIcon = true,
-                                    onPositive = { refreshSubscriptionData() },
+                                    onPositive = { refreshProDetails(true) },
                                     onNegative = {
                                         onCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
                                     }
@@ -301,45 +403,14 @@ class ProSettingsViewModel @AssistedInject constructor(
                 val sub = _proSettingsUIState.value.proDataState.type
                 if(sub !is ProStatus.Active) return
 
-                _refundPlanState.update { State.Loading }
                 navigateTo(ProSettingsDestination.RefundSubscription)
-
-                viewModelScope.launch {
-                    _refundPlanState.update {
-                        val isQuickRefund = if(prefs.getDebugIsWithinQuickRefund() && prefs.forceCurrentUserAsPro()) true // debug mode
-                        else sub.isWithinQuickRefundWindow()
-
-                        State.Success(
-                            RefundPlanState(
-                                proStatus = sub,
-                                isQuickRefund = isQuickRefund,
-                                quickRefundUrl = sub.providerData.refundPlatformUrl
-                            )
-                        )
-                    }
-                }
             }
 
             Commands.GoToCancel -> {
                 val sub = _proSettingsUIState.value.proDataState.type
                 if(sub !is ProStatus.Active) return
 
-                // calculate state
-                _cancelPlanState.update { State.Loading }
                 navigateTo(ProSettingsDestination.CancelSubscription)
-
-                viewModelScope.launch {
-                    val hasValidSubscription = subscriptionCoordinator.getCurrentManager().hasValidSubscription()
-
-                    _cancelPlanState.update {
-                        State.Success(
-                            CancelPlanState(
-                                proStatus = sub,
-                                hasValidSubscription = hasValidSubscription
-                            )
-                        )
-                    }
-                }
             }
 
             Commands.OnPostPlanConfirmation -> {
@@ -363,6 +434,20 @@ class ProSettingsViewModel @AssistedInject constructor(
 
             is Commands.SetShowProBadge -> {
                 //todo PRO implement
+            }
+
+            is Commands.RefeshProDetails -> {
+                refreshProDetails(true)
+            }
+
+            is Commands.OnUserBackFromCancellation -> {
+                // refresh details
+                refreshProDetails(true)
+
+                // send action to handle post cancellation to the navigator
+                viewModelScope.launch {
+                    navigator.sendCustomAction(ProNavHostCustomActions.ON_POST_CANCELLATION)
+                }
             }
 
             is Commands.SelectProPlan -> {
@@ -528,7 +613,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                                     negativeText = context.getString(R.string.helpSupport),
                                     positiveStyleDanger = false,
                                     showXIcon = true,
-                                    onPositive = { refreshSubscriptionData() },
+                                    onPositive = { refreshProDetails(true) },
                                     onNegative = {
                                         onCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
                                     }
@@ -567,8 +652,12 @@ class ProSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    private fun refreshSubscriptionData(){
-        //todo PRO implement properly
+    private fun refreshProDetails(force: Boolean){
+        // stop early if we are already refreshing
+        if(_proSettingsUIState.value.proDataState.refreshState is State.Loading) return
+
+        // refreshes the pro details data
+        proDetailsRepository.requestRefresh(force = force)
     }
 
     private fun getSelectedPlan(): ProPlan? {
@@ -576,56 +665,8 @@ class ProSettingsViewModel @AssistedInject constructor(
     }
 
     private fun goToChoosePlan(){
-        // Get the choose plan state ready in loading mode
-        _choosePlanState.update { State.Loading }
-
         // Navigate to choose plan screen
         navigateTo(ProSettingsDestination.ChoosePlan)
-
-        // while the user is on the page we need to calculate the "choose plan" data
-        viewModelScope.launch {
-            val subType = _proSettingsUIState.value.proDataState.type
-
-            // first check if the user has a valid subscription and billing
-            val hasBillingCapacity = subscriptionCoordinator.getCurrentManager().supportsBilling.value
-            val hasValidSub = subscriptionCoordinator.getCurrentManager().hasValidSubscription()
-
-            // next get the plans, including their pricing, unless there is no billing
-            // or the user is pro without a valid subscription
-            // or the user is pro but non originating
-            val noPriceNeeded = !hasBillingCapacity
-                    || (subType is ProStatus.Active && !hasValidSub)
-                    || (subType is ProStatus.Active && subType.providerData.isFromAnotherPlatform())
-
-            val plans = if(noPriceNeeded) emptyList()
-            else {
-                // attempt to get the prices from the subscription provider
-                // return early in case of error
-                try {
-                    getSubscriptionPlans(subType)
-                } catch (e: Exception){
-                    _choosePlanState.update { State.Error(e) }
-                    return@launch
-                }
-            }
-
-            _choosePlanState.update {
-                State.Success(
-                    ChoosePlanState(
-                        proStatus = subType,
-                        hasValidSubscription = hasValidSub,
-                        hasBillingCapacity = hasBillingCapacity,
-                        enableButton = subType !is ProStatus.Active.AutoRenewing, // only the auto-renew can have a disabled state
-                        plans = plans
-                    )
-                )
-            }
-
-            /**
-            SHOW LOADER AT THE START OF THIS, CATER TO LOAD AND ERROR IN THE CHOOSE_HOME_SCREEN, CREATE THE STATE PROPERLY
-            HERE AND CALCULATE THE PLANS TO SEND AS SUCCESS
-            **/
-        }
     }
 
     private suspend fun getSubscriptionPlans(subType: ProStatus): List<ProPlan> {
@@ -777,6 +818,7 @@ class ProSettingsViewModel @AssistedInject constructor(
         object OnPostPlanConfirmation: Commands
 
         object OpenCancelSubscriptionPage: Commands
+        object OnUserBackFromCancellation: Commands
 
         data class SetShowProBadge(val show: Boolean): Commands
 
@@ -786,6 +828,8 @@ class ProSettingsViewModel @AssistedInject constructor(
 
         data class OnHeaderClicked(val inSheet: Boolean): Commands
         data object OnProStatsClicked: Commands
+
+        data object RefeshProDetails: Commands
     }
 
     data class ProSettingsState(

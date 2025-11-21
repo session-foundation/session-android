@@ -129,6 +129,6 @@ data class DebugLogData(
 
 enum class DebugLogGroup(val label: String, val color: Color){
     AVATAR("Avatar", primaryOrange),
-    PRO_SUBSCRIPTION("Pro Subscription", primaryGreen),
-    PRO_DATA("Pro Data", primaryBlue)
+    PRO_SUBSCRIPTION("ProSubscription", primaryGreen),
+    PRO_DATA("ProData", primaryBlue)
 }

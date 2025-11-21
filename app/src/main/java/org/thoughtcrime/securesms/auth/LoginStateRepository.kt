@@ -160,14 +160,16 @@ class LoginStateRepository @Inject constructor(
      * Runs the provided [block] suspend function while the user is logged in, and cancels it
      * when logged out.
      */
-    suspend fun runWhileLoggedIn(block: suspend () -> Unit) {
-        loggedInState
-            .map { it != null }
-            .collectLatest { loggedIn ->
-                if (loggedIn) {
-                    block()
+    fun runWhileLoggedIn(scope: CoroutineScope, block: suspend () -> Unit) {
+        scope.launch {
+            loggedInState
+                .map { it != null }
+                .collectLatest { loggedIn ->
+                    if (loggedIn) {
+                        block()
+                    }
                 }
-            }
+        }
     }
 
     fun clear() {

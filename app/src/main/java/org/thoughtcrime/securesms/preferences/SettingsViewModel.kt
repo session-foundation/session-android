@@ -53,6 +53,7 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.mms.MediaConstraints
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.ProDataState
+import org.thoughtcrime.securesms.pro.ProDetailsRepository
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
 import org.thoughtcrime.securesms.ui.SimpleDialogData
@@ -60,6 +61,7 @@ import org.thoughtcrime.securesms.util.AnimatedImageUtils
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.ClearDataUtils
+import org.thoughtcrime.securesms.util.DonationManager.Companion.URL_DONATE
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import org.thoughtcrime.securesms.util.mapToStateFlow
 import java.io.File
@@ -81,6 +83,7 @@ class SettingsViewModel @Inject constructor(
     private val inAppReviewManager: InAppReviewManager,
     private val avatarUploadManager: AvatarUploadManager,
     private val attachmentProcessor: AttachmentProcessor,
+    private val proDetailsRepository: ProDetailsRepository,
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
 
@@ -151,6 +154,11 @@ class SettingsViewModel @Inject constructor(
                 .collectLatest { data ->
                     _uiState.update { it.copy(avatarData = data) }
                 }
+        }
+
+        // refreshes the pro details data
+        viewModelScope.launch {
+            proDetailsRepository.requestRefresh()
         }
     }
 
@@ -590,17 +598,13 @@ class SettingsViewModel @Inject constructor(
                 viewModelScope.launch {
                     inAppReviewManager.onEvent(InAppReviewManager.Event.DonateButtonClicked)
                 }
-                showUrlDialog( "https://session.foundation/donate#app")
+                showUrlDialog(URL_DONATE)
             }
 
             is Commands.HideSimpleDialog -> {
                 _uiState.update { it.copy(showSimpleDialog = null) }
             }
         }
-    }
-
-    private fun refreshSubscriptionData(){
-        //todo PRO implement properly
     }
 
     sealed class AvatarDialogState() {

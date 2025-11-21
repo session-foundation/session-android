@@ -58,8 +58,8 @@ class PersistentLogger @Inject constructor(
             var logWriter: LogFile.Writer? = null
             val entryBuilder = StringBuilder()
 
-            try {
-                while (true) {
+            while (true) {
+                try {
                     channel.receiveBulkLogs(bulk)
 
                     if (bulk.isNotEmpty()) {
@@ -92,18 +92,18 @@ class PersistentLogger @Inject constructor(
                             logWriter = null
                         }
                     }
+                } catch (e: Throwable) {
+                    logWriter?.close()
 
-                    // Notify that the log channel is idle
-                    logChannelIdleSignal.tryEmit(Unit)
+                    android.util.Log.e(
+                        TAG,
+                        "Error while processing log entries: ${e.message}",
+                        e
+                    )
                 }
-            } catch (e: Exception) {
-                logWriter?.close()
 
-                android.util.Log.e(
-                    TAG,
-                    "Error while processing log entries: ${e.message}",
-                    e
-                )
+                // Notify that the log channel is idle
+                logChannelIdleSignal.tryEmit(Unit)
             }
         }
     }
