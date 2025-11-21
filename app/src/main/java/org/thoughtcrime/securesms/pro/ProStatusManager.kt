@@ -1,5 +1,7 @@
 package org.thoughtcrime.securesms.pro
 
+import android.app.Application
+import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -12,12 +14,16 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.time.delay
 import kotlinx.coroutines.withTimeout
 import network.loki.messenger.libsession_util.pro.BackendRequests
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_APP_STORE
@@ -25,8 +31,11 @@ import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVID
 import network.loki.messenger.libsession_util.protocol.ProFeatures
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.snode.SnodeClock
+import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
@@ -38,21 +47,22 @@ import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.pro.api.AddPaymentErrorStatus
 import org.thoughtcrime.securesms.pro.api.AddProPaymentRequest
-import org.thoughtcrime.securesms.pro.api.GenerateProProofRequest
 import org.thoughtcrime.securesms.pro.api.ProApiExecutor
 import org.thoughtcrime.securesms.pro.api.ProApiResponse
-import org.thoughtcrime.securesms.pro.api.successOrThrow
 import org.thoughtcrime.securesms.pro.db.ProDatabase
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
 import org.thoughtcrime.securesms.util.State
 import java.time.Duration
 import java.time.Instant
+import java.util.EnumSet
 import javax.inject.Inject
 import javax.inject.Singleton
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @Singleton
 class ProStatusManager @Inject constructor(
+    private val application: Application,
     private val prefs: TextSecurePreferences,
     recipientRepository: RecipientRepository,
     @param:ManagerScope private val scope: CoroutineScope,
@@ -61,7 +71,7 @@ class ProStatusManager @Inject constructor(
     private val proDatabase: ProDatabase,
     private val snodeClock: SnodeClock,
     private val proDetailsRepository: ProDetailsRepository,
-    private val generateProProofRequest: GenerateProProofRequest.Factory,
+    private val configFactory: Lazy<ConfigFactoryProtocol>,
 ) : OnAppStartupComponent {
 
     val proDataState: StateFlow<ProDataState> = combine(
@@ -165,51 +175,71 @@ class ProStatusManager @Inject constructor(
             }
         }
 
-        // Manage pro proof based on
-        scope.launch {
-            combine(
-                loginState.loggedInState.mapNotNull { it?.seeded?.proMasterPrivateKey },
-                proDetailsRepository.loadState
-                    .filter { it != ProDetailsRepository.LoadState.Init }
-                    .map { it.lastUpdated?.first?.expiry },
-                ::Pair
-            ).collectLatest { (proMasterKey, proValidUntil) ->
-                val currentProof = proDatabase.getCurrentProProof()
-
-                val now = snodeClock.currentTime()
-                if (proValidUntil != null && proValidUntil > now) {
-                    if (currentProof != null) {
-                        val proofExpiry = Instant.ofEpochMilli(currentProof.expiryMs)
-
-                        val renewProofAt = if (proofExpiry < now) {
-                            if (Duration.between(now, proValidUntil).toMinutes() < 60) {
-                                now
-                            } else {
-                                proValidUntil - Duration.ofMinutes(10 + (Math.random() * 50).toLong())
-                            }
-                        } else {
-                            now
-                        }
-
-                        Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Scheduling pro proof renewal at $renewProofAt")
-                        if (renewProofAt > now) {
-                            delay(Duration.between(now, renewProofAt).toMillis())
-                        }
-                    }
-
-                    Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Generating new pro proof")
-                    try {
-                        val proof = apiExecutor.executeRequest(request = generateProProofRequest.create(
-                            masterPrivateKey = proMasterKey,
-                            rotatingPrivateKey = proDatabase.ensureValidRotatingKeys(now).ed25519PrivKey
-                        )).successOrThrow()
-                    } catch (e: Exception) {
-                        TODO("Not yet implemented")
+        loginState.runWhileLoggedIn(scope) {
+            postProLaunchStatus
+                .collectLatest { postLaunch ->
+                    if (postLaunch) {
+                        RevocationListPollingWorker.schedule(application)
+                    } else {
+                        RevocationListPollingWorker.cancel(application)
                     }
                 }
-            }
+        }
+
+        // ProDetails worker lifecycle
+        loginState.runWhileLoggedIn(scope) {
+            postProLaunchStatus
+                .collectLatest { postLaunch ->
+                    if (postLaunch) {
+                        merge(
+                            configFactory.get().userConfigsChanged(EnumSet.of(UserConfigType.USER_PROFILE))
+                                .map { "UserProfile changes" }, //TODO: also schedule it when the real config changes (not integrated yet)
+
+                            proDetailsRepository.loadState
+                                .mapNotNull { it.lastUpdated?.first?.expiry }
+                                .distinctUntilChanged()
+                                .mapLatest { expiry ->
+                                    // Schedule a refresh 30seconds after access expiry
+                                    val refreshTime = expiry.plusSeconds(30)
+
+                                    val now = snodeClock.currentTime()
+                                    if (now < refreshTime) {
+                                        val duration = Duration.between(now, refreshTime)
+                                        Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Delaying ProDetails refresh until $refreshTime due to access expiry")
+                                        delay(duration)
+                                    }
+
+                                    "ProDetails expiry reached"
+                                },
+
+                            proDatabase.currentProProofChangesNotification
+                                .onStart { emit(Unit) }
+                                .mapNotNull { proDatabase.getCurrentProProof()?.expiryMs?.let(Instant::ofEpochMilli) }
+                                .mapLatest { expiry ->
+                                    // Schedule a refresh for a random number between 10 and 60 minutes before proof expiry
+                                    val now = snodeClock.currentTime()
+
+                                    val refreshTime = expiry.minus(Duration.ofMinutes((10..60).random().toLong()))
+
+                                    if (now < refreshTime) {
+                                        Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Delaying ProDetails refresh until $refreshTime due to proof expiry")
+                                        delay(Duration.between(now, expiry))
+                                    }
+                                },
+
+                            flowOf("App starting up")
+                        ).collect { refreshReason ->
+                            Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Scheduling ProDetails fetch due to: $refreshReason")
+
+                            proDetailsRepository.requestRefresh()
+                        }
+                    } else {
+                        FetchProDetailsWorker.cancel(application)
+                    }
+                }
         }
     }
+
 
     /**
      * Logic to determine if we should animate the avatar for a user or freeze it on the first frame
