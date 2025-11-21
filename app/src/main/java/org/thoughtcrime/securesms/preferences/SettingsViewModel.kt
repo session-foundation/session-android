@@ -155,7 +155,7 @@ class SettingsViewModel @Inject constructor(
                     _uiState.update { it.copy(avatarData = data) }
                 }
         }
-        
+
         // refreshes the pro details data
         viewModelScope.launch {
             proDetailsRepository.requestRefresh()
