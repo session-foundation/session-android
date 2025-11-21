@@ -1,6 +1,6 @@
 package org.session.libsession.utilities.recipients
 
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
+import network.loki.messenger.libsession_util.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.utilities.Address

@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
+import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.RecipientData
@@ -32,7 +32,6 @@ import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.home.search.searchName
 import org.thoughtcrime.securesms.mms.PartAuthority
-import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.providers.BlobUtils
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.AvatarUIData
@@ -46,9 +45,8 @@ import javax.inject.Inject
 class ShareViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val avatarUtils: AvatarUtils,
-    private val proStatusManager: ProStatusManager,
     private val deprecationManager: LegacyGroupDeprecationManager,
-    private val conversationRepository: ConversationRepository,
+    conversationRepository: ConversationRepository,
 ): ViewModel(){
     private val TAG = ShareViewModel::class.java.simpleName
 
