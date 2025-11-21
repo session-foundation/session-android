@@ -156,7 +156,9 @@ class SettingsViewModel @Inject constructor(
                 }
         }
 
-        proDetailsRepository.requestRefresh()
+        viewModelScope.launch {
+            proDetailsRepository.requestRefresh()
+        }
     }
 
     private fun getVersionNumber(): CharSequence {
