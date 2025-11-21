@@ -264,9 +264,6 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
     }
 
     private fun showAlbumRail() {
-        // never show the rail in landscape
-        if(isLandscape()) return
-
         val rail = binding.mediaPreviewAlbumRailContainer
         rail.animate().cancel()
         rail.visibility = View.VISIBLE
@@ -395,13 +392,11 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        // always hide the rail in landscape
-        if (isLandscape()) {
-            hideAlbumRail()
+
+        if (!isFullscreen) {
+            showAlbumRail()
         } else {
-            if (!isFullscreen) {
-                showAlbumRail()
-            }
+            hideAlbumRail()
         }
 
         // Re-apply fullscreen if we were already in it
