@@ -81,7 +81,7 @@ object SnodeAPI {
     private val seedNodePort = 4443
 
     private val seedNodePool = when (SnodeModule.shared.environment) {
-        Environment.DEV_NET -> setOf("http://192.168.1.223:1280")
+        Environment.DEV_NET -> setOf("http://sesh-net.local:1280")
         Environment.TEST_NET -> setOf("http://public.loki.foundation:38157")
         Environment.MAIN_NET -> setOf(
             "https://seed1.getsession.org:$seedNodePort",
