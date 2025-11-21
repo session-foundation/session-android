@@ -60,8 +60,6 @@ class ProStatusManager @Inject constructor(
 ) : OnAppStartupComponent {
 
     //todo PRO state does not update after a successful pro purchase once getting back to the pro home
-    //todo PRO implement post cancel screen handling
-
 
     val proDataState: StateFlow<ProDataState> = combine(
         recipientRepository.observeSelf().map { it.shouldShowProBadge }.distinctUntilChanged(),

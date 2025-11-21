@@ -49,8 +49,10 @@ sealed interface ProSettingsDestination: Parcelable {
 }
 
 enum class ProNavHostCustomActions {
-    ON_POST_PLAN_CONFIRMATION
+    ON_POST_PLAN_CONFIRMATION, ON_POST_CANCELLATION
 }
+
+private const val KEY_SCROLL_TOP = "scrollToTop"
 
 @Serializable object ProSettingsGraph
 
@@ -93,13 +95,20 @@ fun ProSettingsNavHost(
             is NavigationAction.PerformCustomAction -> {
                 when(action.data as? ProNavHostCustomActions){
                     // handle the custom case of dealing with the post "choose plan confirmation"screen
-                    ProNavHostCustomActions.ON_POST_PLAN_CONFIRMATION -> {
+                    ProNavHostCustomActions.ON_POST_PLAN_CONFIRMATION,
+                    ProNavHostCustomActions.ON_POST_CANCELLATION -> {
                         // we get here where we either hit back or hit the "ok" button on the plan confirmation screen
                         // if we are in a sheet we need to close it
                         if (inSheet) {
                             onBack()
                         } // otherwise we should clear the stack and head back to the pro settings home screen
                         else {
+                            // set a flag to make sure the home screen scroll back to the top
+                            runCatching {
+                                navController.getBackStackEntry(Home)
+                                    .savedStateHandle[KEY_SCROLL_TOP] = true
+                            }
+
                             // try to navigate "back" home is possible
                             val wentBack = navController.popBackStack(route = Home, inclusive = false)
 
@@ -128,9 +137,20 @@ fun ProSettingsNavHost(
             // Home
             horizontalSlideComposable<Home> { entry ->
                 val viewModel = navController.proGraphViewModel(entry, navigator)
+
+                // check if we have the scroll flag set
+                val scrollToTop by entry.savedStateHandle
+                    .getStateFlow(KEY_SCROLL_TOP, false)
+                    .collectAsState()
+
                 ProSettingsHomeScreen(
                     viewModel = viewModel,
                     inSheet = inSheet,
+                    shouldScrollToTop = scrollToTop,
+                    onScrollToTopConsumed = {
+                        // Reset the flag so it doesn't trigger again on rotation
+                        entry.savedStateHandle["scrollToTop"] = false
+                    },
                     onBack = onBack,
                 )
             }

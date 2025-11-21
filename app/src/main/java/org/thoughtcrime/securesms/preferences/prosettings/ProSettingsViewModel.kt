@@ -442,6 +442,16 @@ class ProSettingsViewModel @AssistedInject constructor(
                 refreshProDetails()
             }
 
+            is Commands.OnUserBackFromCancellation -> {
+                // refresh details
+                refreshProDetails()
+
+                // send action to handle post cancellation to the navigator
+                viewModelScope.launch {
+                    navigator.sendCustomAction(ProNavHostCustomActions.ON_POST_CANCELLATION)
+                }
+            }
+
             is Commands.SelectProPlan -> {
                 val data: ChoosePlanState = (_choosePlanState.value as? State.Success)?.value ?: return
 
@@ -807,6 +817,7 @@ class ProSettingsViewModel @AssistedInject constructor(
         object OnPostPlanConfirmation: Commands
 
         object OpenCancelSubscriptionPage: Commands
+        object OnUserBackFromCancellation: Commands
 
         data class SetShowProBadge(val show: Boolean): Commands
 
