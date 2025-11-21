@@ -296,7 +296,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                     RefundPlanState(
                         proStatus = sub,
                         isQuickRefund = isQuickRefund,
-                        quickRefundUrl = sub.providerData.refundUrl
+                        quickRefundUrl = sub.providerData.refundPlatformUrl
                     )
                 )
             }
