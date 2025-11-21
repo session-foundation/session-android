@@ -179,8 +179,6 @@ class ProSettingsViewModel @AssistedInject constructor(
     }
 
     private fun generateState(proDataState: ProDataState){
-        //todo PRO need to properly calculate this
-
         val subType = proDataState.type
 
         _proSettingsUIState.update {
@@ -387,7 +385,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                                     negativeText = context.getString(R.string.helpSupport),
                                     positiveStyleDanger = false,
                                     showXIcon = true,
-                                    onPositive = { refreshProDetails() },
+                                    onPositive = { refreshProDetails(true) },
                                     onNegative = {
                                         onCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
                                     }
@@ -439,12 +437,12 @@ class ProSettingsViewModel @AssistedInject constructor(
             }
 
             is Commands.RefeshProDetails -> {
-                refreshProDetails()
+                refreshProDetails(true)
             }
 
             is Commands.OnUserBackFromCancellation -> {
                 // refresh details
-                refreshProDetails()
+                refreshProDetails(true)
 
                 // send action to handle post cancellation to the navigator
                 viewModelScope.launch {
@@ -615,7 +613,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                                     negativeText = context.getString(R.string.helpSupport),
                                     positiveStyleDanger = false,
                                     showXIcon = true,
-                                    onPositive = { refreshProDetails() },
+                                    onPositive = { refreshProDetails(true) },
                                     onNegative = {
                                         onCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
                                     }
@@ -654,9 +652,12 @@ class ProSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    private fun refreshProDetails(){
+    private fun refreshProDetails(force: Boolean){
+        // stop early if we are already refreshing
+        if(_proSettingsUIState.value.proDataState.refreshState is State.Loading) return
+
         // refreshes the pro details data
-        proDetailsRepository.requestRefresh()
+        proDetailsRepository.requestRefresh(force = force)
     }
 
     private fun getSelectedPlan(): ProPlan? {

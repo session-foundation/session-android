@@ -75,8 +75,6 @@ class ProStatusManager @Inject constructor(
     private val configFactory: Lazy<ConfigFactoryProtocol>,
 ) : OnAppStartupComponent {
 
-    //todo PRO state does not update after a successful pro purchase once getting back to the pro home
-
     val proDataState: StateFlow<ProDataState> = combine(
         recipientRepository.observeSelf().map { it.shouldShowProBadge }.distinctUntilChanged(),
         proDetailsRepository.loadState,
