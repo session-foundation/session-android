@@ -136,11 +136,11 @@ fun HomeDialogs(
                 positiveButtonText = stringResource(R.string.renew),
                 negativeButtonText = stringResource(R.string.cancel),
                 onUpgrade = {
-                    sendCommand(HomeViewModel.Commands.HideExpiredCTADialog)
-                    sendCommand(HomeViewModel.Commands.GotoProSettings(ProSettingsDestination.ChoosePlan))
+                    sendCommand(HideExpiredCTADialog)
+                    sendCommand(GotoProSettings(ProSettingsDestination.ChoosePlan))
                 },
                 onCancel = {
-                    sendCommand(HomeViewModel.Commands.HideExpiredCTADialog)
+                    sendCommand(HideExpiredCTADialog)
                 }
             )
         }

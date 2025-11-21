@@ -83,7 +83,7 @@ class SettingsViewModel @Inject constructor(
     private val inAppReviewManager: InAppReviewManager,
     private val avatarUploadManager: AvatarUploadManager,
     private val attachmentProcessor: AttachmentProcessor,
-    val proDetailsRepository: ProDetailsRepository,
+    private val proDetailsRepository: ProDetailsRepository,
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
 
@@ -156,6 +156,7 @@ class SettingsViewModel @Inject constructor(
                 }
         }
 
+        // refreshes the pro details data
         viewModelScope.launch {
             proDetailsRepository.requestRefresh()
         }
@@ -604,10 +605,6 @@ class SettingsViewModel @Inject constructor(
                 _uiState.update { it.copy(showSimpleDialog = null) }
             }
         }
-    }
-
-    private fun refreshSubscriptionData(){
-        //todo PRO implement properly
     }
 
     sealed class AvatarDialogState() {

@@ -105,6 +105,8 @@ import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
@@ -939,9 +941,12 @@ private fun CollapsibleFooterActions(
                 val annotatedTitle = remember(titleText) { AnnotatedString(titleText) }
 
                 ActionRowItem(
-                    modifier = Modifier.background(LocalColors.current.backgroundTertiary),
+                    modifier = Modifier.background(LocalColors.current.backgroundTertiary)
+                        .semantics(mergeDescendants = true){},
                     title = annotatedTitle,
-                    onClick = {},
+                    onClick = {
+                        item.onClick()
+                    },
                     qaTag = R.string.qa_collapsing_footer_action,
                     endContent = {
                         Box(
@@ -952,11 +957,16 @@ private fun CollapsibleFooterActions(
                                     else Modifier.width(equalWidthDp)
                                 )
                         ) {
+                            val buttonModifier = if (single) Modifier else Modifier.fillMaxWidth()
                             SlimFillButtonRect(
-                                modifier = if (single) Modifier else Modifier.fillMaxWidth(),
+                                modifier = buttonModifier
+                                    .qaTag(stringResource(R.string.qa_collapsing_footer_action)+"_"+item.buttonLabel.string().lowercase())
+                                    .clearAndSetSemantics{},
                                 text = item.buttonLabel.string(),
                                 color = item.buttonColor
-                            ) { item.onClick() }
+                            ) {
+                                item.onClick()
+                            }
                         }
                     }
                 )

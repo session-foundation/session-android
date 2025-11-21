@@ -76,7 +76,8 @@ class ProStatusManager @Inject constructor(
 ) : OnAppStartupComponent {
 
     val proDataState: StateFlow<ProDataState> = combine(
-        recipientRepository.observeSelf(),
+        recipientRepository.observeSelf().map { it.shouldShowProBadge }.distinctUntilChanged(),
+        proDetailsRepository.loadState,
         (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS } as Flow<*>)
             .onStart { emit(Unit) }
             .map { prefs.getDebugSubscriptionType() },
@@ -86,19 +87,26 @@ class ProStatusManager @Inject constructor(
         (TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO } as Flow<*>)
             .onStart { emit(Unit) }
             .map { prefs.forceCurrentUserAsPro() },
-    ){ selfRecipient, debugSubscription, debugProPlanStatus, forceCurrentUserAsPro ->
+    ){ shouldShowProBadge, proDetailsState, debugSubscription, debugProPlanStatus, forceCurrentUserAsPro ->
         val proDataRefreshState = when(debugProPlanStatus){
             DebugMenuViewModel.DebugProPlanStatus.LOADING -> State.Loading
             DebugMenuViewModel.DebugProPlanStatus.ERROR -> State.Error(Exception())
-            else -> State.Success(Unit)
+            else -> {
+                // calculate the real refresh state here
+                when(proDetailsState){
+                    is ProDetailsRepository.LoadState.Loading -> State.Loading
+                    is ProDetailsRepository.LoadState.Error -> State.Error(Exception())
+                    else -> State.Success(Unit)
+                }
+            }
         }
 
         if(!forceCurrentUserAsPro){
             Log.d(DebugLogGroup.PRO_DATA.label, "ProStatusManager: Getting REAL Pro data state")
-            //todo PRO this is where we should get the real state
+
             ProDataState(
-                type = ProStatus.NeverSubscribed,
-                showProBadge = selfRecipient.shouldShowProBadge,
+                type = proDetailsState.lastUpdated?.first?.toProStatus() ?: ProStatus.NeverSubscribed,
+                showProBadge = shouldShowProBadge,
                 refreshState = proDataRefreshState
             )
         }// debug data
@@ -158,7 +166,7 @@ class ProStatusManager @Inject constructor(
                 },
 
                 refreshState = proDataRefreshState,
-                showProBadge = selfRecipient.shouldShowProBadge,
+                showProBadge = shouldShowProBadge,
             )
         }
 
@@ -325,33 +333,6 @@ class ProStatusManager @Inject constructor(
     }
 
     /**
-     * This will calculate the pro features of an outgoing message
-     */
-    fun calculateMessageProFeatures(isPro: Boolean, shouldShowProBadge: Boolean, message: String) {
-//        if (!isPro){
-//            return emptyList()
-//        }
-//
-//        val features = mutableListOf<MessageProFeature>()
-//
-//        // check for pro badge display
-//        if (shouldShowProBadge){
-//            features.add(MessageProFeature.ProBadge)
-//        }
-//
-//        // check for "long message" feature
-//        if(message.length > MAX_CHARACTER_REGULAR){
-//            features.add(MessageProFeature.LongMessage)
-//        }
-
-        // check is the user has an animated avatar
-        //todo PRO check for animated avatar here and add appropriate feature
-
-
-//        return features
-    }
-
-    /**
      * This will get the list of Pro features from an incoming message
      */
     fun getMessageProFeatures(message: MessageRecord): ProFeatures {
@@ -363,8 +344,12 @@ class ProStatusManager @Inject constructor(
         return message.proFeatures
     }
 
+    /**
+     * To be called once a subscription has successfully gone through a provider.
+     * This will link that payment to our back end.
+     */
     @OptIn(ExperimentalCoroutinesApi::class)
-    suspend fun appProPaymentToBackend(orderId: String, paymentId: String) {
+    suspend fun addProPayment(orderId: String, paymentId: String) {
         // max 3 attempts as per PRD
         val maxAttempts = 3
 
@@ -390,6 +375,8 @@ class ProStatusManager @Inject constructor(
                             Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' successful")
                             // Payment was successfully claimed - save it to the database
                             proDatabase.updateCurrentProProof(paymentResponse.data)
+                            // refresh the pro details
+                            proDetailsRepository.requestRefresh()
                         }
 
                         is ProApiResponse.Failure -> {

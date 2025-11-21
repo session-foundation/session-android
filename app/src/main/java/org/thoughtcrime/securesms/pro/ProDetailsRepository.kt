@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import org.session.libsession.snode.SnodeClock
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.api.ProDetails
 import org.thoughtcrime.securesms.pro.db.ProDatabase
@@ -59,6 +60,7 @@ class ProDetailsRepository @Inject constructor(
             WorkInfo.State.RUNNING -> LoadState.Loading(last, waitingForNetwork = false)
             WorkInfo.State.SUCCEEDED -> {
                 if (last != null) {
+                    Log.d(DebugLogGroup.PRO_DATA.label, "Successfully fetched Pro details from backend")
                     LoadState.Loaded(last)
                 } else {
                     // This should never happen, but just in case...
@@ -81,17 +83,16 @@ class ProDetailsRepository @Inject constructor(
         if (!force && (currentState is LoadState.Loading || currentState is LoadState.Loaded) &&
             currentState.lastUpdated?.second?.plusSeconds(MIN_UPDATE_INTERVAL_SECONDS)
                 ?.isBefore(snodeClock.currentTime()) == true) {
-            Log.d(TAG, "Pro details are fresh enough, skipping refresh")
+            Log.d(DebugLogGroup.PRO_DATA.label, "Pro details are fresh enough, skipping refresh")
             return
         }
 
-        Log.d(TAG, "Scheduling fetch of Pro details from server")
+        Log.d(DebugLogGroup.PRO_DATA.label, "Scheduling fetch of Pro details from server")
         FetchProDetailsWorker.schedule(application, ExistingWorkPolicy.KEEP)
     }
 
 
     companion object {
-        private const val TAG = "ProDetailsRepository"
         private const val MIN_UPDATE_INTERVAL_SECONDS = 120L
     }
 }
