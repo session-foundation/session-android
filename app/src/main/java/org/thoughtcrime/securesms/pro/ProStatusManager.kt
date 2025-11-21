@@ -26,9 +26,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.time.delay
 import kotlinx.coroutines.withTimeout
+import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.pro.BackendRequests
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_APP_STORE
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_GOOGLE_PLAY
+import network.loki.messenger.libsession_util.pro.ProConfig
 import network.loki.messenger.libsession_util.protocol.ProFeatures
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.snode.SnodeClock
@@ -207,7 +209,13 @@ class ProStatusManager @Inject constructor(
                         merge(
                             configFactory.get()
                                 .userConfigsChanged(EnumSet.of(UserConfigType.USER_PROFILE))
-                                .map { "UserProfile changes" }, //TODO: also schedule it when the real config changes (not integrated yet)
+                                .map {
+                                    configFactory.get().withUserConfigs { configs ->
+                                        configs.userProfile.getProAccessExpiryMs()
+                                    }
+                                }
+                                .distinctUntilChanged()
+                                .map { "ProAccessExpiry in config changes" },
 
                             proDetailsRepository.loadState
                                 .mapNotNull { it.lastUpdated?.first?.expiry }
@@ -229,14 +237,11 @@ class ProStatusManager @Inject constructor(
                                     "ProDetails expiry reached"
                                 },
 
-                            proDatabase.currentProProofChangesNotification
-                                .onStart { emit(Unit) }
-                                .mapNotNull {
-                                    proDatabase.getCurrentProProof()?.expiryMs?.let(
-                                        Instant::ofEpochMilli
-                                    )
-                                }
-                                .mapLatest { expiry ->
+                            configFactory.get()
+                                .watchUserProConfig()
+                                .filterNotNull()
+                                .mapLatest { proConfig ->
+                                    val expiry = Instant.ofEpochMilli(proConfig.proProof.expiryMs)
                                     // Schedule a refresh for a random number between 10 and 60 minutes before proof expiry
                                     val now = snodeClock.currentTime()
 
@@ -273,9 +278,9 @@ class ProStatusManager @Inject constructor(
             postProLaunchStatus.collectLatest { postLaunch ->
                 if (postLaunch) {
                     combine(
-                        proDatabase.currentProProofChangesNotification
-                            .onStart { emit(Unit) }
-                            .mapNotNull { proDatabase.getCurrentProProof()?.genIndexHashHex },
+                        configFactory.get()
+                            .watchUserProConfig()
+                            .mapNotNull { it?.proProof?.genIndexHashHex },
 
                         proDatabase.revocationChangeNotification
                             .onStart { emit(Unit) },
@@ -286,12 +291,14 @@ class ProStatusManager @Inject constructor(
                     )
                         .filterNotNull()
                         .collectLatest { revokedHash ->
-                            if (revokedHash == proDatabase.getCurrentProProof()?.genIndexHashHex) {
-                                Log.w(
-                                    DebugLogGroup.PRO_SUBSCRIPTION.label,
-                                    "Current Pro proof has been revoked, clearing local proof"
-                                )
-                                proDatabase.updateCurrentProProof(null)
+                            configFactory.get().withMutableUserConfigs { configs ->
+                                if (configs.userProfile.getProConfig()?.proProof?.genIndexHashHex == revokedHash) {
+                                    Log.w(
+                                        DebugLogGroup.PRO_SUBSCRIPTION.label,
+                                        "Current Pro proof has been revoked, clearing Pro config"
+                                    )
+                                    configs.userProfile.removeProConfig()
+                                }
                             }
                         }
                 }
@@ -355,51 +362,61 @@ class ProStatusManager @Inject constructor(
 
         // no point in going further if we have no key data
         val keyData = loginState.loggedInState.value ?: throw Exception()
+        val rotatingKeyPair = ED25519.generate(null)
 
         for (attempt in 1..maxAttempts) {
             try {
-                    // 5s timeout as per PRD
-                    val paymentResponse = withTimeout(5_000L) {
-                            apiExecutor.executeRequest(
-                            request = AddProPaymentRequest(
-                                googlePaymentToken = paymentId,
-                                googleOrderId = orderId,
-                                masterPrivateKey = keyData.seeded.proMasterPrivateKey,
-                                rotatingPrivateKey = proDatabase.ensureValidRotatingKeys(snodeClock.currentTime()).ed25519PrivKey
-                            )
+                // 5s timeout as per PRD
+                val paymentResponse = withTimeout(5_000L) {
+                    apiExecutor.executeRequest(
+                        request = AddProPaymentRequest(
+                            googlePaymentToken = paymentId,
+                            googleOrderId = orderId,
+                            masterPrivateKey = keyData.seeded.proMasterPrivateKey,
+                            rotatingPrivateKey = rotatingKeyPair.secretKey.data
                         )
+                    )
+                }
+
+                when (paymentResponse) {
+                    is ProApiResponse.Success -> {
+                        Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' successful")
+                        // Payment was successfully claimed - save it
+                        configFactory.get().withMutableUserConfigs { configs ->
+                            configs.userProfile.setProConfig(
+                                ProConfig(
+                                    proProof = paymentResponse.data,
+                                    rotatingPrivateKey = rotatingKeyPair.secretKey.data
+                                )
+                            )
+
+                            configs.userProfile.setProBadge(true)
+                        }
+                        // refresh the pro details
+                        proDetailsRepository.requestRefresh()
                     }
 
-                    when (paymentResponse) {
-                        is ProApiResponse.Success -> {
-                            Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' successful")
-                            // Payment was successfully claimed - save it to the database
-                            proDatabase.updateCurrentProProof(paymentResponse.data)
-                            // refresh the pro details
-                            proDetailsRepository.requestRefresh()
-                        }
+                    is ProApiResponse.Failure -> {
+                        // Handle payment failure
+                        Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' failure: $paymentResponse")
+                        when (paymentResponse.status) {
+                            // unknown payment is retryable - throw a generic exception here to go through our retries
+                            AddPaymentErrorStatus.UnknownPayment -> {
+                                throw Exception()
+                            }
 
-                        is ProApiResponse.Failure -> {
-                            // Handle payment failure
-                            Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' failure: $paymentResponse")
-                            when (paymentResponse.status) {
-                                // unknown payment is retryable - throw a generic exception here to go through our retries
-                                AddPaymentErrorStatus.UnknownPayment -> {
-                                    throw Exception()
-                                }
+                            // nothing to do if already redeemed
+                            AddPaymentErrorStatus.AlreadyRedeemed -> {
+                                return
+                            }
 
-                                // nothing to do if already redeemed
-                                AddPaymentErrorStatus.AlreadyRedeemed -> {
-                                    return
-                                }
-
-                                // non retryable error - throw our custom exception
-                                AddPaymentErrorStatus.GenericError -> {
-                                    throw SubscriptionManager.PaymentServerException()
-                                }
+                            // non retryable error - throw our custom exception
+                            AddPaymentErrorStatus.GenericError -> {
+                                throw SubscriptionManager.PaymentServerException()
                             }
                         }
                     }
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: SubscriptionManager.PaymentServerException){

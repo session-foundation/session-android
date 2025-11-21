@@ -82,7 +82,7 @@ class ProDetailsRepository @Inject constructor(
         val currentState = loadState.value
         if (!force && (currentState is LoadState.Loading || currentState is LoadState.Loaded) &&
             currentState.lastUpdated?.second?.plusSeconds(MIN_UPDATE_INTERVAL_SECONDS)
-                ?.isBefore(snodeClock.currentTime()) == true) {
+                ?.isAfter(snodeClock.currentTime()) == true) {
             Log.d(DebugLogGroup.PRO_DATA.label, "Pro details are fresh enough, skipping refresh")
             return
         }
@@ -93,6 +93,6 @@ class ProDetailsRepository @Inject constructor(
 
 
     companion object {
-        private const val MIN_UPDATE_INTERVAL_SECONDS = 120L
+        private const val MIN_UPDATE_INTERVAL_SECONDS = 60L
     }
 }

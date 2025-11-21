@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
+import network.loki.messenger.libsession_util.protocol.ProFeature
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.messaging.open_groups.GroupMemberRole
@@ -158,7 +159,7 @@ class RecipientRepository @Inject constructor(
      * multiple sub-recipients, and each of them may have their own pro data.
      * We then collect all the pro data and perform a final calculation at the end of [fetchRecipient].
      */
-    private class FetchRecipientContext {
+    private class ProDataContext {
         var proDataList: MutableList<RecipientSettings.ProData>? = null
 
         fun addProData(proData: RecipientSettings.ProData?) {
@@ -182,13 +183,13 @@ class RecipientRepository @Inject constructor(
     ): Pair<Recipient, Flow<*>?> {
         val now = snodeClock.get().currentTime()
 
-        val fetchRecipientContext = FetchRecipientContext()
+        val proDataContext = ProDataContext()
 
         // Fetch data from config first, this may contain partial information for some kind of recipient
         val configData = getDataFromConfig(
             address = address.toBlinded()
                 ?.let { blindedIdMappingRepository.findMappings(it).firstOrNull()?.second } ?: address,
-            fetchRecipientContext = fetchRecipientContext
+            proDataContext = proDataContext
         )
 
         val changeSources: MutableList<Flow<*>>?
@@ -204,7 +205,6 @@ class RecipientRepository @Inject constructor(
                             it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO
                                     || it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS
                         },
-                        proDatabase.currentProProofChangesNotification,
                     )
                 } else {
                     null
@@ -247,8 +247,7 @@ class RecipientRepository @Inject constructor(
             is RecipientData.Group -> {
                 value = createGroupV2Recipient(
                     address = address,
-                    now = now,
-                    fetchRecipientContext = fetchRecipientContext,
+                    proDataContext = proDataContext,
                     configData = configData,
                     settings = settingsFetcher(address),
                     settingsFetcher = settingsFetcher,
@@ -258,7 +257,8 @@ class RecipientRepository @Inject constructor(
 
                 changeSources = if (needFlow) {
                     arrayListOf(
-                        configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_GROUPS)),
+                        configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_GROUPS,
+                            UserConfigType.USER_PROFILE)),
                         configFactory.configUpdateNotifications
                             .filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
                             .filter { it.groupId.hexString == address.address },
@@ -269,7 +269,6 @@ class RecipientRepository @Inject constructor(
                         },
                         TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_OTHER_USERS_PRO },
                         proDatabase.revocationChangeNotification,
-                        proDatabase.currentProProofChangesNotification,
                     )
                 } else {
                     null
@@ -315,8 +314,7 @@ class RecipientRepository @Inject constructor(
                         }
                         value = group?.let {
                             createLegacyGroupRecipient(
-                                now = now,
-                                fetchRecipientContext = fetchRecipientContext,
+                                proDataContext = proDataContext,
                                 address = address,
                                 config = groupConfig,
                                 group = it,
@@ -325,8 +323,7 @@ class RecipientRepository @Inject constructor(
                             )
                         } ?: createGenericRecipient(
                             address = address,
-                            now = now,
-                            fetchRecipientContext = fetchRecipientContext,
+                            proDataContext = proDataContext,
                             settings = settings
                         )
                     }
@@ -343,8 +340,7 @@ class RecipientRepository @Inject constructor(
                             )
                         } ?: createGenericRecipient(
                             address = address,
-                            now = now,
-                            fetchRecipientContext = fetchRecipientContext,
+                            proDataContext = proDataContext,
                             settings = settings
                         )
 
@@ -379,16 +375,14 @@ class RecipientRepository @Inject constructor(
                             .firstOrNull()
                             ?.let { groupMember ->
                                 fetchGroupMember(
-                                    now = now,
-                                    fetchRecipientContext = fetchRecipientContext,
+                                    proDataContext = proDataContext,
                                     member = groupMember,
                                     settingsFetcher = settingsFetcher
                                 )
                             }
                             ?: createGenericRecipient(
                                 address = address,
-                                now = now,
-                                fetchRecipientContext = fetchRecipientContext,
+                                proDataContext = proDataContext,
                                 settings = settings
                             )
 
@@ -399,7 +393,7 @@ class RecipientRepository @Inject constructor(
                                 configFactory.userConfigsChanged(),
                                 recipientSettingsDatabase.changeNotification.filter { it == address },
                                 TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_OTHER_USERS_PRO },
-                                proDatabase.currentProProofChangesNotification,
+                                configFactory.userConfigsChanged(EnumSet.of(UserConfigType.USER_PROFILE)),
                             )
                         } else {
                             null
@@ -409,8 +403,7 @@ class RecipientRepository @Inject constructor(
                     else -> {
                         value = createGenericRecipient(
                             address = address,
-                            now = now,
-                            fetchRecipientContext = fetchRecipientContext,
+                            proDataContext = proDataContext,
                             settings = settings
                         )
 
@@ -418,7 +411,7 @@ class RecipientRepository @Inject constructor(
                             arrayListOf(
                                 recipientSettingsDatabase.changeNotification.filter { it == address },
                                 TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_OTHER_USERS_PRO },
-                                proDatabase.currentProProofChangesNotification,
+                                configFactory.userConfigsChanged(EnumSet.of(UserConfigType.USER_PROFILE)),
                             )
                         } else {
                             null
@@ -429,7 +422,7 @@ class RecipientRepository @Inject constructor(
         }
 
         // Calculate the ProData for this recipient
-        val proDataList = fetchRecipientContext.proDataList
+        val proDataList = proDataContext.proDataList
         var proData = if (!proDataList.isNullOrEmpty()) {
             proDataList.removeAll {
                 it.isExpired(now) || proDatabase.isRevoked(it.genIndexHash)
@@ -478,12 +471,11 @@ class RecipientRepository @Inject constructor(
      * for a group member purpose.
      */
     private inline fun fetchGroupMember(
-        now: Instant,
-        fetchRecipientContext: FetchRecipientContext?,
+        proDataContext: ProDataContext?,
         member: RecipientData.GroupMemberInfo,
         settingsFetcher: (address: Address) -> RecipientSettings
     ): Recipient {
-        return when (val configData = getDataFromConfig(member.address, fetchRecipientContext)) {
+        return when (val configData = getDataFromConfig(member.address, proDataContext)) {
             is RecipientData.Self -> {
                 createLocalRecipient(member.address, configData)
             }
@@ -501,8 +493,7 @@ class RecipientRepository @Inject constructor(
                 // with the settings fetched from the database.
                 createGenericRecipient(
                     address = member.address,
-                    now = now,
-                    fetchRecipientContext = fetchRecipientContext,
+                    proDataContext = proDataContext,
                     settings = settingsFetcher(member.address),
                     groupMemberInfo = member
                 )
@@ -512,11 +503,10 @@ class RecipientRepository @Inject constructor(
 
     private inline fun fetchLegacyGroupMember(
         address: Address.Standard,
-        now: Instant,
-        fetchRecipientContext: FetchRecipientContext?,
+        proDataContext: ProDataContext?,
         settingsFetcher: (address: Address) -> RecipientSettings,
     ): Recipient {
-        return when (val configData = getDataFromConfig(address, fetchRecipientContext)) {
+        return when (val configData = getDataFromConfig(address, proDataContext)) {
             is RecipientData.Self -> {
                 createLocalRecipient(address, configData)
             }
@@ -534,8 +524,7 @@ class RecipientRepository @Inject constructor(
                 // with the settings fetched from the database.
                 createGenericRecipient(
                     address = address,
-                    now = now,
-                    fetchRecipientContext = fetchRecipientContext,
+                    proDataContext = proDataContext,
                     settings = settingsFetcher(address),
                 )
             }
@@ -570,7 +559,7 @@ class RecipientRepository @Inject constructor(
      */
     private fun getDataFromConfig(
         address: Address,
-        fetchRecipientContext: FetchRecipientContext?
+        proDataContext: ProDataContext?
     ): RecipientData? {
         return when (address) {
             is Address.Standard -> {
@@ -580,19 +569,21 @@ class RecipientRepository @Inject constructor(
                         ignoreCase = true
                     )
                 ) {
-                    //TODO: The pro data will come from config later, now we are getting it
-                    // from local db
-                    fetchRecipientContext?.let { ctx ->
-                        proDatabase.getCurrentProProof()?.let { proof ->
-                            ctx.addProData(RecipientSettings.ProData(
-                                expiry = Instant.ofEpochMilli(proof.expiryMs),
-                                genIndexHash = proof.genIndexHashHex,
-                                showProBadge = true
-                            ))
-                        }
-                    }
-
                     configFactory.withUserConfigs { configs ->
+                        val pro = configs.userProfile.getProConfig()
+
+                        if (pro != null) {
+                            proDataContext?.addProData(
+                                RecipientSettings.ProData(
+                                    showProBadge = configs.userProfile.getProFeatures().contains(
+                                        ProFeature.PRO_BADGE
+                                    ),
+                                    expiry = Instant.ofEpochMilli(pro.proProof.expiryMs),
+                                    genIndexHash = pro.proProof.genIndexHashHex,
+                                )
+                            )
+                        }
+
                         RecipientData.Self(
                             name = configs.userProfile.getName().orEmpty(),
                             avatar = configs.userProfile.getPic().toRemoteFile(),
@@ -697,8 +688,7 @@ class RecipientRepository @Inject constructor(
      */
     private fun createGenericRecipient(
         address: Address,
-        now: Instant,
-        fetchRecipientContext: FetchRecipientContext?,
+        proDataContext: ProDataContext?,
         settings: RecipientSettings,
         // Additional data for group members, if available.
         groupMemberInfo: RecipientData.GroupMemberInfo? = null,
@@ -707,8 +697,8 @@ class RecipientRepository @Inject constructor(
             "Address must match the group member info address if provided."
         }
 
-        if (settings.proData != null && fetchRecipientContext != null) {
-            fetchRecipientContext.addProData(settings.proData)
+        if (settings.proData != null && proDataContext != null) {
+            proDataContext.addProData(settings.proData)
         }
 
         return Recipient(
@@ -728,8 +718,7 @@ class RecipientRepository @Inject constructor(
 
     private inline fun createGroupV2Recipient(
         address: Address,
-        now: Instant,
-        fetchRecipientContext: FetchRecipientContext?,
+        proDataContext: ProDataContext?,
         configData: RecipientData.Group,
         settings: RecipientSettings?,
         settingsFetcher: (Address) -> RecipientSettings,
@@ -738,10 +727,10 @@ class RecipientRepository @Inject constructor(
             address = address,
             data = configData.copy(
                 firstMember = configData.members.firstOrNull()?.let { member ->
-                    fetchGroupMember(now, fetchRecipientContext, member, settingsFetcher)
+                    fetchGroupMember(proDataContext?.takeIf { member.isAdmin }, member, settingsFetcher)
                 } ?: getSelf(), // Fallback to have self as first member if no members are present
                 secondMember = configData.members.getOrNull(1)?.let { member ->
-                    fetchGroupMember(now, fetchRecipientContext, member, settingsFetcher)
+                    fetchGroupMember(proDataContext?.takeIf { member.isAdmin }, member, settingsFetcher)
                 },
             ),
             mutedUntil = settings?.muteUntil,
@@ -751,8 +740,7 @@ class RecipientRepository @Inject constructor(
     }
 
     private inline fun createLegacyGroupRecipient(
-        now: Instant,
-        fetchRecipientContext: FetchRecipientContext?,
+        proDataContext: ProDataContext?,
         address: Address,
         config: GroupInfo.LegacyGroupInfo?,
         group: GroupRecord, // Local db data
@@ -786,10 +774,10 @@ class RecipientRepository @Inject constructor(
                     }
                 },
                 firstMember = memberAddresses.firstOrNull()
-                    ?.let { fetchLegacyGroupMember(it, now, fetchRecipientContext, settingsFetcher) }
+                    ?.let { fetchLegacyGroupMember(it, proDataContext, settingsFetcher) }
                     ?: getSelf(),  // Fallback to have self as first member if no members are present
                 secondMember = memberAddresses.getOrNull(1)
-                    ?.let { fetchLegacyGroupMember(it, now, fetchRecipientContext, settingsFetcher) },
+                    ?.let { fetchLegacyGroupMember(it, proDataContext, settingsFetcher) },
                 isCurrentUserAdmin = Address.Standard(myAccountId) in group.admins
             ),
             mutedUntil = settings?.muteUntil,

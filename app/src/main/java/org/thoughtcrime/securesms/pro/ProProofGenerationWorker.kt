@@ -14,8 +14,10 @@ import androidx.work.await
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
+import network.loki.messenger.libsession_util.ED25519
+import network.loki.messenger.libsession_util.pro.ProConfig
 import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
@@ -23,7 +25,6 @@ import org.thoughtcrime.securesms.pro.api.GenerateProProofRequest
 import org.thoughtcrime.securesms.pro.api.ProApiExecutor
 import org.thoughtcrime.securesms.pro.api.ProDetails
 import org.thoughtcrime.securesms.pro.api.successOrThrow
-import org.thoughtcrime.securesms.pro.db.ProDatabase
 import org.thoughtcrime.securesms.util.getRootCause
 import java.time.Duration
 import java.time.Instant
@@ -40,11 +41,10 @@ class ProProofGenerationWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
     private val proApiExecutor: ProApiExecutor,
-    private val proDatabase: ProDatabase,
     private val generateProProofRequest: GenerateProProofRequest.Factory,
     private val proDetailsRepository: ProDetailsRepository,
     private val loginStateRepository: LoginStateRepository,
-    private val snodeClock: SnodeClock,
+    private val configFactory: ConfigFactoryProtocol,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val proMasterKey = requireNotNull(loginStateRepository.peekLoginState()?.seeded?.proMasterPrivateKey) {
@@ -60,14 +60,21 @@ class ProProofGenerationWorker @AssistedInject constructor(
         }
 
         return try {
+            val rotatingPrivateKey = ED25519.generate(null).secretKey.data
+
             val proof = proApiExecutor.executeRequest(
                 request = generateProProofRequest.create(
                     masterPrivateKey = proMasterKey,
-                    rotatingPrivateKey = proDatabase.ensureValidRotatingKeys(snodeClock.currentTime()).ed25519PrivKey
+                    rotatingPrivateKey = rotatingPrivateKey
                 )
             ).successOrThrow()
 
-            proDatabase.updateCurrentProProof(proof)
+            configFactory.withMutableUserConfigs {
+                it.userProfile.setProConfig(ProConfig(
+                    proProof = proof,
+                    rotatingPrivateKey = rotatingPrivateKey))
+            }
+
 
             Log.d(WORK_NAME, "Successfully generated a new pro proof expiring at ${Instant.ofEpochMilli(proof.expiryMs)}")
             Result.success()

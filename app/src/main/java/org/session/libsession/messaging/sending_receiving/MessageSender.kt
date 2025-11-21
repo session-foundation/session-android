@@ -124,7 +124,7 @@ class MessageSender @Inject constructor(
             msg.toProto(builder, messageDataProvider)
 
             // Attach pro proof
-            proDatabase.getCurrentProProof()?.let { proof ->
+            configFactory.withUserConfigs { it.userProfile.getProConfig() }?.proProof?.let { proof ->
                 builder.proMessageBuilder.proofBuilder.copyFromLibSession(proof)
             }
 
