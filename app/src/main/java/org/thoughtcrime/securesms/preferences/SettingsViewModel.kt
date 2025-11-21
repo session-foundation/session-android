@@ -155,9 +155,11 @@ class SettingsViewModel @Inject constructor(
                     _uiState.update { it.copy(avatarData = data) }
                 }
         }
-
+        
         // refreshes the pro details data
-        proDetailsRepository.requestRefresh()
+        viewModelScope.launch {
+            proDetailsRepository.requestRefresh()
+        }
     }
 
     private fun getVersionNumber(): CharSequence {

@@ -1,5 +1,7 @@
 package org.thoughtcrime.securesms.pro
 
+import android.app.Application
+import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -8,14 +10,21 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.time.delay
 import kotlinx.coroutines.withTimeout
 import network.loki.messenger.libsession_util.pro.BackendRequests
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_APP_STORE
@@ -23,8 +32,11 @@ import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVID
 import network.loki.messenger.libsession_util.protocol.ProFeatures
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.snode.SnodeClock
+import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
@@ -44,11 +56,14 @@ import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
 import org.thoughtcrime.securesms.util.State
 import java.time.Duration
 import java.time.Instant
+import java.util.EnumSet
 import javax.inject.Inject
 import javax.inject.Singleton
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @Singleton
 class ProStatusManager @Inject constructor(
+    private val application: Application,
     private val prefs: TextSecurePreferences,
     recipientRepository: RecipientRepository,
     @param:ManagerScope private val scope: CoroutineScope,
@@ -57,6 +72,7 @@ class ProStatusManager @Inject constructor(
     private val proDatabase: ProDatabase,
     private val snodeClock: SnodeClock,
     private val proDetailsRepository: ProDetailsRepository,
+    private val configFactory: Lazy<ConfigFactoryProtocol>,
 ) : OnAppStartupComponent {
 
     //todo PRO state does not update after a successful pro purchase once getting back to the pro home
@@ -167,6 +183,120 @@ class ProStatusManager @Inject constructor(
         scope.launch {
             prefs.watchPostProStatus().collect {
                 _postProLaunchStatus.update { isPostPro() }
+            }
+        }
+
+        loginState.runWhileLoggedIn(scope) {
+            postProLaunchStatus
+                .collectLatest { postLaunch ->
+                    if (postLaunch) {
+                        RevocationListPollingWorker.schedule(application)
+                    } else {
+                        RevocationListPollingWorker.cancel(application)
+                    }
+                }
+        }
+
+        manageProDetailsRefreshScheduling()
+        manageCurrentProProofRevocation()
+    }
+
+    private fun manageProDetailsRefreshScheduling() {
+        loginState.runWhileLoggedIn(scope) {
+            postProLaunchStatus
+                .collectLatest { postLaunch ->
+                    if (postLaunch) {
+                        merge(
+                            configFactory.get()
+                                .userConfigsChanged(EnumSet.of(UserConfigType.USER_PROFILE))
+                                .map { "UserProfile changes" }, //TODO: also schedule it when the real config changes (not integrated yet)
+
+                            proDetailsRepository.loadState
+                                .mapNotNull { it.lastUpdated?.first?.expiry }
+                                .distinctUntilChanged()
+                                .mapLatest { expiry ->
+                                    // Schedule a refresh 30seconds after access expiry
+                                    val refreshTime = expiry.plusSeconds(30)
+
+                                    val now = snodeClock.currentTime()
+                                    if (now < refreshTime) {
+                                        val duration = Duration.between(now, refreshTime)
+                                        Log.d(
+                                            DebugLogGroup.PRO_SUBSCRIPTION.label,
+                                            "Delaying ProDetails refresh until $refreshTime due to access expiry"
+                                        )
+                                        delay(duration)
+                                    }
+
+                                    "ProDetails expiry reached"
+                                },
+
+                            proDatabase.currentProProofChangesNotification
+                                .onStart { emit(Unit) }
+                                .mapNotNull {
+                                    proDatabase.getCurrentProProof()?.expiryMs?.let(
+                                        Instant::ofEpochMilli
+                                    )
+                                }
+                                .mapLatest { expiry ->
+                                    // Schedule a refresh for a random number between 10 and 60 minutes before proof expiry
+                                    val now = snodeClock.currentTime()
+
+                                    val refreshTime =
+                                        expiry.minus(Duration.ofMinutes((10..60).random().toLong()))
+
+                                    if (now < refreshTime) {
+                                        Log.d(
+                                            DebugLogGroup.PRO_SUBSCRIPTION.label,
+                                            "Delaying ProDetails refresh until $refreshTime due to proof expiry"
+                                        )
+                                        delay(Duration.between(now, expiry))
+                                    }
+                                },
+
+                            flowOf("App starting up")
+                        ).collect { refreshReason ->
+                            Log.d(
+                                DebugLogGroup.PRO_SUBSCRIPTION.label,
+                                "Scheduling ProDetails fetch due to: $refreshReason"
+                            )
+
+                            proDetailsRepository.requestRefresh()
+                        }
+                    } else {
+                        FetchProDetailsWorker.cancel(application)
+                    }
+                }
+        }
+    }
+
+    private fun manageCurrentProProofRevocation() {
+        loginState.runWhileLoggedIn(scope) {
+            postProLaunchStatus.collectLatest { postLaunch ->
+                if (postLaunch) {
+                    combine(
+                        proDatabase.currentProProofChangesNotification
+                            .onStart { emit(Unit) }
+                            .mapNotNull { proDatabase.getCurrentProProof()?.genIndexHashHex },
+
+                        proDatabase.revocationChangeNotification
+                            .onStart { emit(Unit) },
+
+                        { proofGenIndexHash, _ ->
+                            proofGenIndexHash.takeIf { proDatabase.isRevoked(it) }
+                        }
+                    )
+                        .filterNotNull()
+                        .collectLatest { revokedHash ->
+                            if (revokedHash == proDatabase.getCurrentProProof()?.genIndexHashHex) {
+                                Log.w(
+                                    DebugLogGroup.PRO_SUBSCRIPTION.label,
+                                    "Current Pro proof has been revoked, clearing local proof"
+                                )
+                                proDatabase.updateCurrentProProof(null)
+                            }
+                        }
+                }
             }
         }
     }
