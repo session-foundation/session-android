@@ -659,6 +659,7 @@
         <item quantity="other">Invite Members</item>
     </plurals>
     <string name="inviteNewMemberGroupLink">Invite a new member to the group by entering your friend\'s Account ID, ONS or scanning their QR code {icon}</string>
+    <string name="inviteNewMemberGroupNoLink">Invite a new member to the group by entering your friend\'s Account ID, ONS or scanning their QR code</string>
     <string name="join">Join</string>
     <string name="later">Later</string>
     <string name="launchOnStartDescriptionDesktop">Launch {app_name} automatically when your computer starts up.</string>
@@ -1214,7 +1215,7 @@
     </plurals>
     <plurals name="removeMemberMessages">
         <item quantity="one">Remove member and their messages</item>
-        <item quantity="other">Remove member and their messages</item>
+        <item quantity="other">Remove members and their messages</item>
     </plurals>
     <string name="removePasswordFail">Failed to remove password</string>
     <string name="removePasswordModalDescription">Remove your current password for {app_name}. Locally stored data will be re-encrypted with a randomly generated key, stored on your device.</string>
