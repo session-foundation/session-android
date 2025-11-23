@@ -13,6 +13,7 @@ class GenerateProProofRequest @AssistedInject constructor(
     @Assisted private val rotatingPrivateKey: ByteArray,
     private val snodeClock: SnodeClock,
 ) : ApiRequest<GetProProofStatus, ProProof> {
+
     override val endpoint: String
         get() = "generate_pro_proof"
 

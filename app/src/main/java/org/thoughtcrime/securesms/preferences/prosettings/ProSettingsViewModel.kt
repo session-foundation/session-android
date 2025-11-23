@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavOptionsBuilder
 import com.squareup.phrase.Phrase
+import dagger.Lazy
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.ACTION_TYPE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
@@ -66,6 +68,7 @@ class ProSettingsViewModel @AssistedInject constructor(
     private val dateUtils: DateUtils,
     private val prefs: TextSecurePreferences,
     private val proDetailsRepository: ProDetailsRepository,
+    private val configFactory: Lazy<ConfigFactoryProtocol>,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -296,7 +299,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                     RefundPlanState(
                         proStatus = sub,
                         isQuickRefund = isQuickRefund,
-                        quickRefundUrl = sub.providerData.refundUrl
+                        quickRefundUrl = sub.providerData.refundPlatformUrl
                     )
                 )
             }
@@ -433,7 +436,9 @@ class ProSettingsViewModel @AssistedInject constructor(
             }
 
             is Commands.SetShowProBadge -> {
-                //todo PRO implement
+                configFactory.get().withMutableUserConfigs { configs ->
+                    configs.userProfile.setProBadge(command.show)
+                }
             }
 
             is Commands.RefeshProDetails -> {

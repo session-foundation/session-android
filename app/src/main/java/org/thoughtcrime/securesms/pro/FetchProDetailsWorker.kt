@@ -19,6 +19,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapNotNull
 import org.session.libsession.snode.SnodeClock
+import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
@@ -46,6 +47,7 @@ class FetchProDetailsWorker @AssistedInject constructor(
     private val proDatabase: ProDatabase,
     private val loginStateRepository: LoginStateRepository,
     private val snodeClock: SnodeClock,
+    private val configFactory: ConfigFactoryProtocol,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val proMasterKey =
@@ -64,6 +66,13 @@ class FetchProDetailsWorker @AssistedInject constructor(
                 "Fetched pro details, status = ${details.status}, expiry = ${details.expiry}"
             )
 
+            configFactory.withMutableUserConfigs {
+                if (details.expiry != null) {
+                    it.userProfile.setProAccessExpiryMs(details.expiry.toEpochMilli())
+                } else {
+                    it.userProfile.removeProAccessExpiry()
+                }
+            }
             proDatabase.updateProDetails(proDetails = details, updatedAt = snodeClock.currentTime())
 
             scheduleProofGenerationIfNeeded(details)
@@ -88,9 +97,11 @@ class FetchProDetailsWorker @AssistedInject constructor(
         if (details.status != ProDetails.DETAILS_STATUS_ACTIVE) {
             Log.d(TAG, "Pro is not active, clearing proof")
             ProProofGenerationWorker.cancel(context)
-            proDatabase.updateCurrentProProof(null)
+            configFactory.withMutableUserConfigs {
+                it.userProfile.removeProConfig()
+            }
         } else {
-            val currentProof = proDatabase.getCurrentProProof()
+            val currentProof = configFactory.withUserConfigs { it.userProfile.getProConfig() }?.proProof
 
             if (currentProof == null || currentProof.expiryMs <= now) {
                 Log.d(

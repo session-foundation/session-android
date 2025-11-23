@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.database.model
 
 import kotlinx.serialization.Serializable
-import network.loki.messenger.libsession_util.protocol.ProFeatures
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.utilities.serializable.InstantAsMillisSerializer
 import java.time.Instant
