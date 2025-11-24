@@ -15,7 +15,6 @@
     <string name="accountIdYoursDescription">Ez a te Felhasználó ID-d. Más felhasználók beszkennelhetik, hogy egy beszélgetést indítsanak el veled.</string>
     <string name="actualSize">Eredeti méret</string>
     <string name="add">Hozzáadás</string>
-    <string name="addAdmins">Adminisztrátorok hozzáadása</string>
     <string name="addAdminsDescription">Adja meg a felhasználó fiókazonosítóját, akit adminisztrátorrá kíván kinevezni.\n\nEgyszerre több felhasználó hozzáadásához adja meg az egyes fiókazonosítókat vesszővel elválasztva. Egyszerre legfeljebb 20 fiókazonosító adható meg.</string>
     <string name="adminCannotBeRemoved">Adminokat nem lehet eltávolítani.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> és <b>{count} másik személy</b> adminisztrátorrá lettek előléptetve.</string>

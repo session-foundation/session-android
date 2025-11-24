@@ -15,7 +15,6 @@
     <string name="accountIdYoursDescription">これはあなたのアカウントIDです。他のユーザーはこれをスキャンしてあなたと会話を始めることができます。</string>
     <string name="actualSize">実サイズ</string>
     <string name="add">追加</string>
-    <string name="addAdmins">管理者を追加する</string>
     <string name="addAdminsDescription">管理者に昇格させるユーザーのAccount IDを入力してください。\n\n複数のユーザーを追加するには、各Account IDをカンマで区切って入力してください。一度に最大20件まで指定できます。</string>
     <string name="adminCannotBeRemoved">アドミンを削除することはできません</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> と <b>{count}人</b> がアドミンに昇格しました</string>

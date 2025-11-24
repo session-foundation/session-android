@@ -19,7 +19,6 @@
         <item quantity="one">Admin əlavə et</item>
         <item quantity="other">Adminləri əlavə et</item>
     </plurals>
-    <string name="addAdmins">İnzibatçılar əlavə et</string>
     <string name="addAdminsDescription">Admin edəcəyiniz istifadəçinin Hesab ID-sini daxil edin.\n\nBirdən çox istifadəçi əlavə etmək üçün vergüllə ayrılmış hər Hesab ID-sini daxil edin. Bir dəfəyə 20-yə qədər Hesab ID-si daxil edilə bilər.</string>
     <string name="adminCannotBeDemoted">Adminlərin vəzifəsini azaltmaq və ya adminləri qrupdan xaric etmək mümkün deyil.</string>
     <string name="adminCannotBeRemoved">Adminlər xaric edilə bilməz.</string>
@@ -499,6 +498,7 @@
     <string name="failedResendInvite"><b>{group_name}</b> qrupundakı <b>{name}</b> üçün dəvət təkrar göndərilmədi</string>
     <string name="failedResendInviteMultiple"><b>{group_name}</b> qrupundakı <b>{name}</b> və <b>digər {count} nəfər</b> üçün dəvət təkrar göndərilmədi</string>
     <string name="failedResendInviteTwo"><b>{group_name}</b> qrupundakı <b>{name}</b> və <b>{other_name}</b> üçün dəvət təkrar göndərilmədi</string>
+    <string name="failedResendPromotionTwo"><b>{group_name}</b> qrupundakı <b>{name}</b> və <b>{other_name}</b> üçün dəvət təkrar göndərilmədi</string>
     <string name="failedToDownload">Endirmək uğursuz oldu</string>
     <string name="failures">Xətalar</string>
     <string name="feedback">Əks-əlaqə</string>

@@ -15,7 +15,6 @@
     <string name="accountIdYoursDescription">这是您的账户ID。其他用户可以扫描它来与您开始会话。</string>
     <string name="actualSize">实际尺寸</string>
     <string name="add">添加</string>
-    <string name="addAdmins">添加管理员</string>
     <string name="addAdminsDescription">请输入您正在授权为管理员的用户的帐户 ID。\n\n要添加多个用户，请输入用逗号分隔的每个帐户 ID。一次最多可以指定20个帐户 ID。</string>
     <string name="adminCannotBeRemoved">管理员无法被移除。</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b>和其他<b>{count}名</b>成员被设置为管理员。</string>
