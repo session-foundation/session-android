@@ -55,7 +55,6 @@ class ZoomingImageView @JvmOverloads constructor(
     private fun getSubsamplingOrientation(context: Context, uri: Uri): Int {
         var exifOrientation = ExifInterface.ORIENTATION_UNDEFINED
         try {
-            // This is blocking I/O! Must run in background.
             PartAuthority.getAttachmentStream(context, uri).use { input ->
                 val exif = ExifInterface(input)
                 exifOrientation = exif.getAttributeInt(
