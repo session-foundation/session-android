@@ -15,7 +15,6 @@
     <string name="accountIdYoursDescription">這是您的帳號 ID。其他使用者可以掃描來與你對話。</string>
     <string name="actualSize">實際大小</string>
     <string name="add">新增</string>
-    <string name="addAdmins">新增管理員</string>
     <string name="addAdminsDescription">請輸入您要晉升為管理員的使用者的 Account ID。\n\n若要新增多位使用者，請輸入以逗號分隔的每個 Account ID。一次最多可指定 20 個 Account ID。</string>
     <string name="adminCannotBeRemoved">無法移除管理員。</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> 和 <b>{count} 位其他成員</b> 被設置為管理員。</string>

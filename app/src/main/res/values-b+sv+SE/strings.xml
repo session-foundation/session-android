@@ -15,7 +15,6 @@
     <string name="accountIdYoursDescription">Detta är ditt konto-ID. Andra användare kan skanna det för att starta en konversation med dig.</string>
     <string name="actualSize">Aktuella storlek</string>
     <string name="add">Lägg till</string>
-    <string name="addAdmins">Lägg till administratörer</string>
     <string name="addAdminsDescription">Ange Account ID för användaren du gör till administratör.\n\nFör att lägga till flera användare, ange varje Account ID separerat med ett kommatecken. Upp till 20 Account ID:er kan anges åt gången.</string>
     <string name="adminCannotBeRemoved">Administratörer kan inte tas bort.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> och <b>{count} andra </b> blev befordrade till Admin.</string>

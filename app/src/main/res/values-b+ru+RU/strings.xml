@@ -15,7 +15,6 @@
     <string name="accountIdYoursDescription">Это ваш ID аккаунта. Другие пользователи могут сканировать его, чтобы начать беседу с вами.</string>
     <string name="actualSize">Фактический размер</string>
     <string name="add">Добавить</string>
-    <string name="addAdmins">Добавить администраторов</string>
     <string name="addAdminsDescription">Введите ID аккаунта пользователя, которого вы повышаете до администратора.\n\nЧтобы добавить нескольких пользователей, введите ID каждого аккаунта через запятую. Одновременно можно указать до 20 идентификаторов учётных записей.</string>
     <string name="adminCannotBeRemoved">Администраторов нельзя удалить.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> и <b>{count} других пользователей</b> назначены администраторами.</string>
