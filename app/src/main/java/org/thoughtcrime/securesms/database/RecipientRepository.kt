@@ -596,12 +596,21 @@ class RecipientRepository @Inject constructor(
                 } else {
                     // Is this a contact?
 
-                    //TODO: Collect pro status
-                    //fetchRecipientContext?.addProData(...)
-
                     configFactory.withUserConfigs { configs ->
-                        configs.contacts.get(address.accountId.hexString)
-                    }?.let { contact ->
+                        configs.contacts.get(address.accountId.hexString)?.let {
+                            it to configs.convoInfoVolatile.getOneToOne(address.accountId.hexString)
+                        }
+                    }?.let { (contact, convo) ->
+                        if (convo?.proProofInfo != null && proDataContext != null) {
+                            proDataContext.addProData(
+                                RecipientSettings.ProData(
+                                    showProBadge = contact.proFeatures.contains(ProFeature.PRO_BADGE),
+                                    expiry = convo.proProofInfo!!.expiry,
+                                    genIndexHash = convo.proProofInfo!!.genIndexHash.data.toHexString(),
+                                )
+                            )
+                        }
+
                         RecipientData.Contact(
                             name = contact.name,
                             nickname = contact.nickname.takeIf { it.isNotBlank() },
@@ -624,9 +633,6 @@ class RecipientRepository @Inject constructor(
                 val groupInfo = configFactory.getGroup(address.accountId) ?: return null
                 val groupMemberComparator =
                     GroupMemberComparator(loginStateRepository.requireLocalAccountId())
-
-                //TODO: Collect pro status
-                //fetchRecipientContext?.addProData(...)
 
                 configFactory.withGroupConfigs(address.accountId) { configs ->
                     RecipientData.Group(
@@ -656,12 +662,21 @@ class RecipientRepository @Inject constructor(
             is Address.Blinded,
             is Address.CommunityBlindedId -> {
                 val blinded = address.toBlinded() ?: return null
-                val contact =
-                    configFactory.withUserConfigs { it.contacts.getBlinded(blinded.blindedId.hexString) }
-                        ?: return null
+                val (contact, convo) = configFactory.withUserConfigs { configs ->
+                    configs.contacts.getBlinded(blinded.blindedId.hexString)?.let {
+                        it to configs.convoInfoVolatile.getBlindedOneToOne(blinded.blindedId.hexString)
+                    }
+                } ?: return null
 
-                //TODO: Collect pro status
-                //fetchRecipientContext?.addProData(...)
+                if (convo?.proProofInfo != null && proDataContext != null) {
+                    proDataContext.addProData(
+                        RecipientSettings.ProData(
+                            showProBadge = contact.proFeatures.contains(ProFeature.PRO_BADGE),
+                            expiry = convo.proProofInfo!!.expiry,
+                            genIndexHash = convo.proProofInfo!!.genIndexHash.data.toHexString(),
+                        )
+                    )
+                }
 
                 RecipientData.BlindedContact(
                     displayName = contact.name,

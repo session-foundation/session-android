@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.pro
 
 import android.app.Application
+import androidx.core.content.contentValuesOf
 import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -32,6 +33,7 @@ import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVID
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_GOOGLE_PLAY
 import network.loki.messenger.libsession_util.pro.ProConfig
 import network.loki.messenger.libsession_util.protocol.ProFeatures
+import network.loki.messenger.libsession_util.util.Conversation
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -40,6 +42,7 @@ import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageRecord
@@ -199,6 +202,48 @@ class ProStatusManager @Inject constructor(
 
         manageProDetailsRefreshScheduling()
         manageCurrentProProofRevocation()
+        manageOtherPeoplePro()
+    }
+
+    private fun manageOtherPeoplePro() {
+        loginState.runWhileLoggedIn(scope) {
+            postProLaunchStatus.collectLatest { postLaunch ->
+                if (postLaunch) {
+                    merge(
+                        configFactory.get().userConfigsChanged(EnumSet.of(UserConfigType.CONVO_INFO_VOLATILE)),
+                        proDatabase.revocationChangeNotification,
+                    ).onStart { emit(Unit) }
+                        .collect {
+                            // Go through all convo's pro proof and remove the ones that are revoked
+                            val revokedConversations = configFactory.get()
+                                .withUserConfigs { it.convoInfoVolatile.all() }
+                                .asSequence()
+                                .filterIsInstance<Conversation.WithProProofInfo>()
+                                .filter { convo ->
+                                    convo.proProofInfo?.genIndexHash?.let { proDatabase.isRevoked(it.data.toHexString()) } == true
+                                }
+                                .onEach { convo ->
+                                    convo.proProofInfo = null
+                                }
+                                .toList()
+
+                            if (revokedConversations.isNotEmpty()) {
+                                Log.d(
+                                    DebugLogGroup.PRO_DATA.label,
+                                    "Clearing Pro proof info for ${revokedConversations.size} conversations due to revocation"
+                                )
+
+                                configFactory.get()
+                                    .withMutableUserConfigs { configs ->
+                                        for (convo in revokedConversations) {
+                                            configs.convoInfoVolatile.set(convo)
+                                        }
+                                    }
+                            }
+                        }
+                }
+            }
+        }
     }
 
     private fun manageProDetailsRefreshScheduling() {
