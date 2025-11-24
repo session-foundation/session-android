@@ -5,7 +5,6 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import com.annimon.stream.Stream
 import dagger.hilt.android.lifecycle.HiltViewModel
 import org.session.libsession.utilities.Util.equals
@@ -25,7 +24,6 @@ import javax.inject.Inject
 /**
  * Manages the observable datasets available in [MediaSendActivity].
  */
-
 @HiltViewModel
 internal class MediaSendViewModel @Inject constructor(
     private val application: Application,
@@ -75,72 +73,77 @@ internal class MediaSendViewModel @Inject constructor(
     }
 
     fun onSelectedMediaChanged(context: Context, newMedia: List<Media?>) {
-        repository.getPopulatedMedia(context, newMedia,
-            { populatedMedia: List<Media> ->
-                runOnMain(
-                    {
-                        var filteredMedia: List<Media> =
-                            getFilteredMedia(context, populatedMedia, mediaConstraints)
-                        if (filteredMedia.size != newMedia.size) {
-                            error.setValue(Error.ITEM_TOO_LARGE)
-                        } else if (filteredMedia.size > MAX_SELECTED_FILES) {
-                            filteredMedia = filteredMedia.subList(0, MAX_SELECTED_FILES)
-                            error.setValue(Error.TOO_MANY_ITEMS)
-                        }
+        repository.getPopulatedMedia(context, newMedia) { populatedMedia: List<Media> ->
+            runOnMain {
+                // Use the new filter function that returns valid items AND errors
+                var (filteredMedia, errors) = getFilteredMedia(context, populatedMedia, mediaConstraints)
 
-                        if (filteredMedia.size > 0) {
-                            val computedId: String = Stream.of(filteredMedia)
-                                .skip(1)
-                                .reduce(filteredMedia.get(0).bucketId ?: Media.ALL_MEDIA_BUCKET_ID,
-                                    { id: String?, m: Media ->
-                                        if (equals(id, m.bucketId ?: Media.ALL_MEDIA_BUCKET_ID)) {
-                                            return@reduce id
-                                        } else {
-                                            return@reduce Media.ALL_MEDIA_BUCKET_ID
-                                        }
-                                    })
-                            bucketId.setValue(computedId)
-                        } else {
-                            bucketId.setValue(Media.ALL_MEDIA_BUCKET_ID)
-                            countButtonVisibility = CountButtonState.Visibility.CONDITIONAL
-                        }
+                // Report errors if they occurred
+                if (errors.contains(Error.ITEM_TOO_LARGE)) {
+                    error.setValue(Error.ITEM_TOO_LARGE)
+                } else if (errors.contains(Error.INVALID_TYPE)) {
+                    error.setValue(Error.INVALID_TYPE)
+                }
 
-                        selectedMedia.setValue(filteredMedia)
-                        countButtonState.setValue(
-                            CountButtonState(
-                                filteredMedia.size,
-                                countButtonVisibility
-                            )
-                        )
-                    })
-            })
+                if (filteredMedia.size > MAX_SELECTED_FILES) {
+                    filteredMedia = filteredMedia.subList(0, MAX_SELECTED_FILES)
+                    error.setValue(Error.TOO_MANY_ITEMS)
+                }
+
+                if (filteredMedia.isNotEmpty()) {
+                    val computedId: String = Stream.of(filteredMedia)
+                        .skip(1)
+                        .reduce(filteredMedia[0].bucketId ?: Media.ALL_MEDIA_BUCKET_ID) { id: String?, m: Media ->
+                            if (equals(id, m.bucketId ?: Media.ALL_MEDIA_BUCKET_ID)) {
+                                id
+                            } else {
+                                Media.ALL_MEDIA_BUCKET_ID
+                            }
+                        }
+                    bucketId.setValue(computedId)
+                } else {
+                    bucketId.setValue(Media.ALL_MEDIA_BUCKET_ID)
+                    countButtonVisibility = CountButtonState.Visibility.CONDITIONAL
+                }
+
+                selectedMedia.setValue(filteredMedia)
+                countButtonState.setValue(
+                    CountButtonState(
+                        filteredMedia.size,
+                        countButtonVisibility
+                    )
+                )
+            }
+        }
     }
 
     fun onSingleMediaSelected(context: Context, media: Media) {
-        repository.getPopulatedMedia(context, listOf(media),
-            { populatedMedia: List<Media> ->
-                runOnMain(
-                    {
-                        val filteredMedia: List<Media> =
-                            getFilteredMedia(context, populatedMedia, mediaConstraints)
-                        if (filteredMedia.isEmpty()) {
-                            error.setValue(Error.ITEM_TOO_LARGE)
-                            bucketId.setValue(Media.ALL_MEDIA_BUCKET_ID)
-                        } else {
-                            bucketId.setValue(filteredMedia.get(0).bucketId ?: Media.ALL_MEDIA_BUCKET_ID)
-                        }
+        repository.getPopulatedMedia(context, listOf(media)) { populatedMedia: List<Media> ->
+            runOnMain {
+                val (filteredMedia, errors) = getFilteredMedia(context, populatedMedia, mediaConstraints)
 
-                        countButtonVisibility = CountButtonState.Visibility.FORCED_OFF
+                if (filteredMedia.isEmpty()) {
+                    if (errors.contains(Error.ITEM_TOO_LARGE)) {
+                        error.setValue(Error.ITEM_TOO_LARGE)
+                    } else if (errors.contains(Error.INVALID_TYPE)) {
+                        error.setValue(Error.INVALID_TYPE)
+                    }
+                    bucketId.setValue(Media.ALL_MEDIA_BUCKET_ID)
+                } else {
+                    bucketId.setValue(filteredMedia[0].bucketId ?: Media.ALL_MEDIA_BUCKET_ID)
+                }
 
-                        selectedMedia.value = filteredMedia
-                        countButtonState.setValue(
-                            CountButtonState(
-                                filteredMedia.size,
-                                countButtonVisibility
-                            )
-                        )
-                    })
-            })
+                countButtonVisibility = CountButtonState.Visibility.FORCED_OFF
+
+                selectedMedia.value = filteredMedia
+                countButtonState.setValue(
+                    CountButtonState(
+                        filteredMedia.size,
+                        countButtonVisibility
+                    )
+                )
+            }
+        }
     }
 
     fun onMultiSelectStarted() {
@@ -273,14 +276,12 @@ internal class MediaSendViewModel @Inject constructor(
     }
 
     fun getMediaInBucket(context: Context, bucketId: String): LiveData<List<Media>> {
-        repository.getMediaInBucket(context, bucketId,
-            { value: List<Media> -> bucketMedia.postValue(value) })
+        repository.getMediaInBucket(context, bucketId) { value: List<Media> -> bucketMedia.postValue(value) }
         return bucketMedia
     }
 
     fun getFolders(context: Context): LiveData<List<MediaFolder>> {
-        repository.getFolders(context,
-            { value: List<MediaFolder> -> folders.postValue(value) })
+        repository.getFolders(context) { value: List<MediaFolder> -> folders.postValue(value) }
         return folders
     }
 
@@ -308,57 +309,77 @@ internal class MediaSendViewModel @Inject constructor(
         get() = if (selectedMedia.value == null) emptyList() else
             selectedMedia.value!!
 
+    /**
+     * Filters the input list of media.
+     * @return A Pair containing:
+     * 1. A List of Valid Media items.
+     * 2. A Set of Errors encountered during filtering (e.g. ITEM_TOO_LARGE, INVALID_TYPE).
+     */
     private fun getFilteredMedia(
         context: Context,
         media: List<Media>,
         mediaConstraints: MediaConstraints
-    ): List<Media> {
-        return Stream.of(media).filter(
-            { m: Media ->
-                MediaUtil.isGif(m.mimeType) ||
-                        MediaUtil.isImageType(m.mimeType) ||
-                        MediaUtil.isVideoType(m.mimeType)
-            })
-            .filter({ m: Media ->
-                (MediaUtil.isImageType(m.mimeType) && !MediaUtil.isGif(m.mimeType)) ||
-                        (MediaUtil.isGif(m.mimeType) && m.size < mediaConstraints.getGifMaxSize(
-                            context
-                        )) ||
-                        (MediaUtil.isVideoType(m.mimeType) && m.size < mediaConstraints.getVideoMaxSize(
-                            context
-                        ))
-            }).toList()
+    ): Pair<List<Media>, Set<Error>> {
+        val validMedia = ArrayList<Media>()
+        val errors = HashSet<Error>()
+
+        for (m in media) {
+            val isGif = MediaUtil.isGif(m.mimeType)
+            val isImage = MediaUtil.isImageType(m.mimeType)
+            val isVideo = MediaUtil.isVideoType(m.mimeType)
+
+            // Check Type
+            if (!isGif && !isImage && !isVideo) {
+                errors.add(Error.INVALID_TYPE)
+                continue
+            }
+
+            // Check Size constraints
+            val isSizeValid = when {
+                isGif -> m.size < mediaConstraints.getGifMaxSize(context)
+                isVideo -> m.size < mediaConstraints.getVideoMaxSize(context)
+                else -> true
+            }
+
+            if (!isSizeValid) {
+                errors.add(Error.ITEM_TOO_LARGE)
+                continue
+            }
+
+            validMedia.add(m)
+        }
+
+        return Pair(validMedia, errors)
     }
 
     override fun onCleared() {
         if (!sentMedia) {
             Stream.of(selectedMediaOrDefault)
-                .map({ obj: Media -> obj.uri })
-                .filter({ uri: Uri? ->
+                .map { obj: Media -> obj.uri }
+                .filter { uri: Uri? ->
                     BlobUtils.isAuthority(
                         uri!!
                     )
-                })
-                .forEach({ uri: Uri? ->
+                }
+                .forEach { uri: Uri? ->
                     BlobUtils.getInstance().delete(
                         application.applicationContext, uri!!
                     )
-                })
+                }
         }
     }
 
     internal enum class Error {
-        ITEM_TOO_LARGE, TOO_MANY_ITEMS
+        ITEM_TOO_LARGE, TOO_MANY_ITEMS, INVALID_TYPE
     }
 
     internal class CountButtonState(val count: Int, private val visibility: Visibility) {
         val isVisible: Boolean
             get() {
-                when (visibility) {
-                    Visibility.FORCED_ON -> return true
-                    Visibility.FORCED_OFF -> return false
-                    Visibility.CONDITIONAL -> return count > 0
-                    else -> return false
+                return when (visibility) {
+                    Visibility.FORCED_ON -> true
+                    Visibility.FORCED_OFF -> false
+                    Visibility.CONDITIONAL -> count > 0
                 }
             }
 

@@ -320,6 +320,12 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         ) { error: MediaSendViewModel.Error? ->
             if (error == null) return@observe
             when (error) {
+                MediaSendViewModel.Error.INVALID_TYPE -> Toast.makeText(
+                    this,
+                    "You can only share multiple images or videos", //TODO NEED A CROWDIN STRING
+                    Toast.LENGTH_LONG
+                ).show()
+
                 MediaSendViewModel.Error.ITEM_TOO_LARGE -> Toast.makeText(
                     this,
                     R.string.attachmentsErrorSize,
