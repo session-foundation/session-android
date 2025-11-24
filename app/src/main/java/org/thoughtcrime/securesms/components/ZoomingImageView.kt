@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.components
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.PointF
+import android.media.ExifInterface
 import android.net.Uri
 import android.os.AsyncTask
 import android.util.AttributeSet
@@ -49,8 +50,32 @@ class ZoomingImageView @JvmOverloads constructor(
         this.photoView = findViewById(R.id.image_view)
 
         this.subsamplingImageView = findViewById(R.id.subsampling_image_view)
+    }
 
-        subsamplingImageView.orientation = SubsamplingScaleImageView.ORIENTATION_USE_EXIF
+    private fun getSubsamplingOrientation(context: Context, uri: Uri): Int {
+        var exifOrientation = ExifInterface.ORIENTATION_UNDEFINED
+        try {
+            // This is blocking I/O! Must run in background.
+            PartAuthority.getAttachmentStream(context, uri).use { input ->
+                val exif = ExifInterface(input)
+                exifOrientation = exif.getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_UNDEFINED
+                )
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to read EXIF orientation", e)
+        }
+
+        return when (exifOrientation) {
+            ExifInterface.ORIENTATION_ROTATE_90,
+            ExifInterface.ORIENTATION_TRANSPOSE -> SubsamplingScaleImageView.ORIENTATION_90
+            ExifInterface.ORIENTATION_ROTATE_180,
+            ExifInterface.ORIENTATION_FLIP_VERTICAL -> SubsamplingScaleImageView.ORIENTATION_180
+            ExifInterface.ORIENTATION_ROTATE_270,
+            ExifInterface.ORIENTATION_TRANSVERSE -> SubsamplingScaleImageView.ORIENTATION_270
+            else -> SubsamplingScaleImageView.ORIENTATION_0
+        }
     }
 
     fun setInteractor(interactor: ZoomImageInteractions?) {
@@ -62,39 +87,33 @@ class ZoomingImageView @JvmOverloads constructor(
         val context = context
         val maxTextureSize = BitmapUtil.getMaxTextureSize()
 
-        Log.i(
-            TAG,
-            "Max texture size: $maxTextureSize"
-        )
-
-        object : AsyncTask<Void?, Void?, Pair<Int, Int>?>() {
-            override fun doInBackground(vararg params: Void?): Pair<Int, Int>? {
+        object : AsyncTask<Void?, Void?, ImageLoadResult?>() {
+            override fun doInBackground(vararg params: Void?): ImageLoadResult? {
                 if (MediaUtil.isGif(contentType)) return null
-
                 try {
-                    val inputStream = PartAuthority.getAttachmentStream(context, uri)
-                    return BitmapUtil.getDimensions(inputStream)
-                } catch (e: IOException) {
-                    Log.w(TAG, e)
-                    return null
-                } catch (e: BitmapDecodingException) {
+                    val dimStream = PartAuthority.getAttachmentStream(context, uri)
+                    val dimensions = BitmapUtil.getDimensions(dimStream)
+                    val orientation = getSubsamplingOrientation(context, uri)
+
+                    return ImageLoadResult(dimensions.first, dimensions.second, orientation)
+                } catch (e: Exception) {
                     Log.w(TAG, e)
                     return null
                 }
             }
 
-            override fun onPostExecute(dimensions: Pair<Int, Int>?) {
+            override fun onPostExecute(result: ImageLoadResult?) {
                 Log.i(
                     TAG,
-                    "Dimensions: " + (if (dimensions == null) "(null)" else dimensions.first.toString() + ", " + dimensions.second)
+                    "Dimensions: " + (if (result == null) "(null)" else "${result.width} , ${result.height} - orientation: ${result.orientation}")
                 )
 
-                if (dimensions == null || (dimensions.first <= maxTextureSize && dimensions.second <= maxTextureSize)) {
+                if (result == null || (result.width <= maxTextureSize && result.height <= maxTextureSize)) {
                     Log.i(TAG, "Loading in standard image view...")
                     setImageViewUri(glideRequests, uri)
                 } else {
                     Log.i(TAG, "Loading in subsampling image view...")
-                    setSubsamplingImageViewUri(uri)
+                    setSubsamplingImageViewUri(uri, result.orientation)
                 }
             }
         }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR)
@@ -116,12 +135,13 @@ class ZoomingImageView @JvmOverloads constructor(
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private fun setSubsamplingImageViewUri(uri: Uri) {
+    private fun setSubsamplingImageViewUri(uri: Uri, orientation: Int) {
         subsamplingImageView.setBitmapDecoderFactory(AttachmentBitmapDecoderFactory())
         subsamplingImageView.setRegionDecoderFactory(AttachmentRegionDecoderFactory())
-
         subsamplingImageView.visibility = VISIBLE
         photoView.visibility = GONE
+
+        subsamplingImageView.orientation = orientation
 
         val gestureDetector = GestureDetector(
             context,
@@ -132,7 +152,6 @@ class ZoomingImageView @JvmOverloads constructor(
                 }
             }
         )
-
         subsamplingImageView.setImage(ImageSource.uri(uri))
         subsamplingImageView.setOnTouchListener { v, event ->
             gestureDetector.onTouchEvent(event)
@@ -157,6 +176,8 @@ class ZoomingImageView @JvmOverloads constructor(
             return AttachmentRegionDecoder()
         }
     }
+
+    data class ImageLoadResult(val width: Int, val height: Int, val orientation: Int)
 
     companion object {
         private val TAG: String = ZoomingImageView::class.java.simpleName
