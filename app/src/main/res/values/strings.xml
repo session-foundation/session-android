@@ -457,7 +457,7 @@
     <string name="displayNameVisible">Your Display Name is visible to users, groups, and communities you interact with.</string>
     <string name="document">Document</string>
     <string name="donate">Donate</string>
-    <string name="donateSessionDescription">{app_name} is fighting powerful forces trying to weaken privacy, but we can’t continue this fight alone.\n\nDonating helps keep {app_name} secure, independent, and online.</string>
+    <string name="donateSessionDescription">Powerful forces are trying to weaken privacy, but we can’t continue this fight alone.\n\nDonating helps keep {app_name} secure, independent, and online.</string>
     <string name="donateSessionHelp">{app_name} Needs Your Help</string>
     <string name="done">Done</string>
     <string name="download">Download</string>
