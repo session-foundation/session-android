@@ -15,7 +15,6 @@
     <string name="accountIdYoursDescription">이는 당신의 계정 ID입니다. 다른 사용자가 이를 스캔하여 당신과 대화를 시작할 수 있습니다.</string>
     <string name="actualSize">실제 크기</string>
     <string name="add">추가</string>
-    <string name="addAdmins">관리자 추가</string>
     <string name="addAdminsDescription">관리자로 승격할 유저의 계정 ID를 입력하세요.\n\n한번에 여러 유저를 추가하려면 각 계정 ID를 쉼표로 구분하여 최대 20명까지 추가할 수 있습니다.</string>
     <string name="adminCannotBeRemoved">관리자는 추방될 수 없습니다.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}님</b>과 <b>{count}명</b>이 관리자(Admin)로 승격되었습니다.</string>

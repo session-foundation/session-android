@@ -21,7 +21,6 @@
         <item quantity="many">Přidat správce</item>
         <item quantity="other">Přidat správce</item>
     </plurals>
-    <string name="addAdmins">Přidat správce</string>
     <string name="addAdminsDescription">Zadejte ID účtu uživatele, kterého povyšujete na správce.\n\nChcete-li přidat více uživatelů, zadejte každé ID účtu oddělené čárkou. Najednou lze zadat až 20 ID účtů.</string>
     <string name="adminCannotBeDemoted">Správci nemohou být poníženi ani odebráni ze skupiny.</string>
     <string name="adminCannotBeRemoved">Správce nelze odebrat.</string>
@@ -538,6 +537,7 @@
     <string name="failedResendInvite">Nepodařilo se znovu odeslat pozvánku pro <b>{name}</b> ve skupině <b>{group_name}</b></string>
     <string name="failedResendInviteMultiple">Nepodařilo se znovu odeslat pozvánku pro <b>{name}</b> a <b>{count} dalších</b> ve skupině <b>{group_name}</b></string>
     <string name="failedResendInviteTwo">Nepodařilo se znovu odeslat pozvánku pro <b>{name}</b> a <b>{other_name}</b> ve skupině <b>{group_name}</b></string>
+    <string name="failedResendPromotionTwo">Nepodařilo se znovu odeslat pozvánku pro <b>{name}</b> a <b>{other_name}</b> ve skupině <b>{group_name}</b></string>
     <string name="failedToDownload">Stahování selhalo</string>
     <string name="failures">Chyby</string>
     <string name="feedback">Zpětná vazba</string>

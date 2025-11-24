@@ -15,7 +15,6 @@
     <string name="accountIdYoursDescription">Dit is uw Account-ID. Andere gebruikers kunnen het scannen om een gesprek met u te beginnen.</string>
     <string name="actualSize">Werkelijke grootte</string>
     <string name="add">Toevoegen</string>
-    <string name="addAdmins">Beheerders toevoegen</string>
     <string name="addAdminsDescription">Voer de account-ID in van de gebruiker die u promoot als admin.\n\nOm meerdere gebruikers toe te voegen, voer elk account-ID in, gescheiden door een komma. Tot 20 Account ID\'s kunnen tegelijkertijd worden opgegeven.</string>
     <string name="adminCannotBeRemoved">Admins kunnen niet worden verwijderd.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> en <b>{count} anderen</b> zijn gepromoveerd tot Admin.</string>
