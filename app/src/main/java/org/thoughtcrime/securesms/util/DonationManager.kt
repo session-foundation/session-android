@@ -15,7 +15,7 @@ class DonationManager @Inject constructor(
     val prefs: TextSecurePreferences
 ){
     companion object {
-        const val URL_DONATE = "https://session.foundation/donate#app"
+        const val URL_DONATE = "https://getsession.org/donate#app"
     }
 
     // increment in days between showing the donation CTA, matching the list index to the number of views of the CTA
