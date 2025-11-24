@@ -12,6 +12,7 @@ import com.squareup.phrase.Phrase
 import kotlinx.coroutines.delay
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.session.libsession.utilities.StringSubstitutionConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
@@ -22,6 +23,8 @@ import org.thoughtcrime.securesms.ui.AnimatedSessionProCTA
 import org.thoughtcrime.securesms.ui.CTAFeature
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.PinProCTA
+import org.thoughtcrime.securesms.ui.SessionProCTA
+import org.thoughtcrime.securesms.ui.SimpleSessionProCTA
 import org.thoughtcrime.securesms.ui.UserProfileModal
 import org.thoughtcrime.securesms.ui.theme.SessionMaterialTheme
 
@@ -158,18 +161,19 @@ fun HomeDialogs(
 
         if (showDonation && dialogsState.donationCTA) {
             val context = LocalContext.current
-            AnimatedSessionProCTA(
-                heroImageBg = R.drawable.cta_hero_generic_bg,
-                heroImageAnimatedFg = R.drawable.cta_hero_generic_fg,
-                title = stringResource(R.string.proExpired), //todo DONATION need crowdin strings
-                showProBadge = false,
-                text = Phrase.from(context,R.string.proExpiredDescription)
-                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+            SimpleSessionProCTA(
+                heroImage = R.drawable.cta_hero_flower,
+                title = Phrase.from(context,R.string.donateSessionHelp)
+                    .put(StringSubstitutionConstants.APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
                     .format()
-                    .toString(),//todo DONATION need crowdin strings
+                    .toString(),
+                showProBadge = false,
+                text = Phrase.from(context,R.string.donateSessionDescription)
+                    .put(StringSubstitutionConstants.APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
+                    .format()
+                    .toString(),
                 positiveButtonText = stringResource(R.string.donate),
-                negativeButtonText = stringResource(R.string.cancel), //todo DONATION need crowdin strings
+                negativeButtonText = stringResource(R.string.maybeLater),
                 onUpgrade = {
                     sendCommand(HideDonationCTADialog)
                     sendCommand(ShowDonationConfirmation)
