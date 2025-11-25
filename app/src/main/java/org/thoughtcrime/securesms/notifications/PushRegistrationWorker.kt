@@ -172,6 +172,10 @@ class PushRegistrationWorker @AssistedInject constructor(
         buildRequest: (T) -> Req,
         sendBatchRequest: suspend (Collection<Req>) -> List<Res>,
     ): List<Pair<T, kotlin.Result<Unit>>> {
+        if (items.isEmpty()) {
+            return emptyList()
+        }
+
         val results = ArrayList<Pair<T, kotlin.Result<Unit>>>(items.size)
 
         val batchRequestItems = mutableListOf<T>()
