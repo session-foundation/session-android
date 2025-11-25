@@ -53,7 +53,7 @@ class ProDetails(
     @Serializable(with = InstantAsMillisSerializer::class)
     val expiry: Instant? = null,
 
-    @SerialName("grace_duration_ms")
+    @SerialName("grace_period_duration_ms")
     val graceDurationMs: Long? = null,
 
     @SerialName("error_report")
@@ -64,6 +64,11 @@ class ProDetails(
 
     @SerialName("items")
     val paymentItems: List<Item> = emptyList(),
+
+    @SerialName("refund_requested_unix_ts_ms")
+    val refundRequestedAtMs: Int = 0,
+
+
 
     val version: Int,
 ) {
@@ -86,7 +91,7 @@ class ProDetails(
         @Serializable(with = InstantAsMillisSerializer::class)
         val expiry: Instant? = null,
 
-        @SerialName("grace_duration_ms")
+        @SerialName("grace_period_duration_ms")
         val graceDurationMs: Long? = null,
 
         @SerialName("platform_refund_expiry_unix_ts_ms")
