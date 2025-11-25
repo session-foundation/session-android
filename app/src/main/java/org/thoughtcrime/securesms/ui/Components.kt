@@ -1335,6 +1335,7 @@ fun ActionRowItem(
     onClick: () -> Unit,
     @StringRes qaTag: Int,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     subtitle: AnnotatedString? = null,
     titleColor: Color = LocalColors.current.text,
     subtitleColor: Color = LocalColors.current.text,
@@ -1347,7 +1348,9 @@ fun ActionRowItem(
     Row(
         modifier = modifier
             .heightIn(min = minHeight)
-            .clickable { onClick() }
+            .then(
+                if (enabled) Modifier.clickable { onClick() } else Modifier
+            )
             .padding(paddingValues)
             .qaTag(qaTag),
         verticalAlignment = Alignment.CenterVertically

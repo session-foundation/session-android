@@ -56,6 +56,7 @@ import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.pro.ProDataState
@@ -272,6 +273,7 @@ fun ProSettingsHome(
             Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
             ProSettings(
                 showProBadge = data.proDataState.showProBadge,
+                proStatus = data.proDataState.type,
                 subscriptionRefreshState = data.proDataState.refreshState,
                 inSheet = inSheet,
                 expiry = data.subscriptionExpiryLabel,
@@ -518,6 +520,7 @@ fun ProStatItem(
 fun ProSettings(
     modifier: Modifier = Modifier,
     showProBadge: Boolean,
+    proStatus: ProStatus.Active,
     subscriptionRefreshState: State<Unit>,
     inSheet: Boolean,
     expiry: CharSequence,
@@ -529,6 +532,8 @@ fun ProSettings(
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString(),
     ) {
+        val refunding = proStatus.refundInProgress
+
         // Cell content
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -543,6 +548,7 @@ fun ProSettings(
                     tint = LocalColors.current.text
                 )
             }
+
 
             val (subtitle, subColor, icon) = when(subscriptionRefreshState){
                 is State.Loading -> Triple<CharSequence, Color, @Composable BoxScope.() -> Unit>(
@@ -560,20 +566,37 @@ fun ProSettings(
                             LocalColors.current.warning, chevronIcon
                     )
 
-                is State.Success<*> -> Triple<CharSequence, Color, @Composable BoxScope.() -> Unit>(
-                        expiry,
-                            LocalColors.current.text, chevronIcon
-                )
+                is State.Success<*> -> {
+                    Triple<CharSequence, Color, @Composable BoxScope.() -> Unit>(
+                        if(refunding) Phrase.from(LocalContext.current, R.string.processingRefundRequest)
+                            .put(PLATFORM_KEY, proStatus.providerData.platform)
+                            .format().toString()
+                        else expiry,
+                        LocalColors.current.text,
+                        if(refunding){{
+                            Icon(
+                                modifier = Modifier.align(Alignment.Center)
+                                    .size(LocalDimensions.current.iconMedium)
+                                    .qaTag(R.string.qa_action_item_icon),
+                                painter = painterResource(id = R.drawable.ic_circle_warning_custom),
+                                contentDescription = null,
+                                tint = LocalColors.current.text
+                            )
+                        }} else chevronIcon
+                    )
+                }
             }
 
             ActionRowItem(
-                title = annotatedStringResource(
+                title = if(refunding) annotatedStringResource(R.string.proRequestedRefund)
+                else annotatedStringResource(
                     Phrase.from(LocalContext.current, R.string.updateAccess)
                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format().toString()
                 ),
                 subtitle = annotatedStringResource(subtitle),
                 subtitleColor = subColor,
+                enabled = !refunding,
                 endContent = {
                     Box(
                         modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)

@@ -4,18 +4,20 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
-import android.view.*
+import android.view.HapticFeedbackConstants
+import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.View
 import android.view.View.OnTouchListener
+import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.setPadding
 import com.google.android.flexbox.JustifyContent
-import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewEmojiReactionsBinding
-import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
 import org.session.libsession.utilities.ThemeUtil
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.components.emoji.EmojiImageView
@@ -24,7 +26,7 @@ import org.thoughtcrime.securesms.conversation.v2.ViewUtil
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.util.NumberUtil.getFormattedNumber
-import java.util.*
+import java.util.Date
 
 class EmojiReactionsView : ConstraintLayout, OnTouchListener {
     companion object {
@@ -154,28 +156,42 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
         }
     }
 
-    private fun buildSortedReactionsList(messageId: MessageId, records: List<ReactionRecord>, userPublicKey: String?, threshold: Int): List<Reaction> {
-        val counters: MutableMap<String, Reaction> = LinkedHashMap()
+    private fun buildSortedReactionsList(
+        messageId: MessageId,
+        records: List<ReactionRecord>,
+        userPublicKey: String?,
+        threshold: Int
+    ): List<Reaction> {
+        val reactions = arrayListOf<Reaction>()
 
-        records.forEach {
-            val baseEmoji = EmojiUtil.getCanonicalRepresentation(it.emoji)
-            val info = counters[baseEmoji]
-
-            if (info == null) {
-                counters[baseEmoji] = Reaction(messageId, it.emoji, it.count, it.sortId, it.dateReceived, userPublicKey == it.author)
-            }
-            else {
-                info.update(it.emoji, it.count, it.dateReceived, userPublicKey == it.author)
+        // First go through reaction records and create a sorted list of reaction data based on emoji
+        for (record in records) {
+            val baseEmoji = EmojiUtil.getCanonicalRepresentation(record.emoji)
+            val index = reactions.binarySearchBy(baseEmoji) { it.emoji }
+            if (index >= 0) {
+                reactions[index].update(
+                    count = record.count,
+                    lastSeen = record.dateReceived,
+                    userWasSender = record.author == userPublicKey
+                )
+            } else {
+                val reaction = Reaction(
+                    messageId = messageId,
+                    emoji = record.emoji,
+                    count = record.count,
+                    sortIndex = record.sortId,
+                    lastSeen = record.dateReceived,
+                    userWasSender = record.author == userPublicKey
+                )
+                reactions.add(-index - 1, reaction)
             }
         }
 
-        val reactions: List<Reaction> = ArrayList(counters.values)
-        Collections.sort(reactions, Collections.reverseOrder())
+        // Once we have a list of unique reactions, sort them by our desired criteria
+        reactions.sort()
 
-        return if (reactions.size >= threshold + 2 && threshold != Int.MAX_VALUE) {
-            val shortened: MutableList<Reaction> = ArrayList(threshold + 2)
-            shortened.addAll(reactions.subList(0, threshold + 2))
-            shortened
+        return if (threshold != Int.MAX_VALUE) {
+            reactions.take(threshold + 2)
         } else {
             reactions
         }
@@ -193,18 +209,12 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
             layoutParams.width = overflowItemSize
             root.layoutParams = layoutParams
         }
-        if (reaction.emoji != null) {
-            emojiView.setImageEmoji(reaction.emoji)
-            if (reaction.count >= 1) {
-                countView.text = getFormattedNumber(reaction.count)
-            } else {
-                countView.visibility = GONE
-                spacer.visibility = GONE
-            }
+        emojiView.setImageEmoji(reaction.emoji)
+        if (reaction.count >= 1) {
+            countView.text = getFormattedNumber(reaction.count)
         } else {
-            emojiView.visibility = GONE
+            countView.visibility = GONE
             spacer.visibility = GONE
-            countView.text = Phrase.from(context, R.string.andMore).put(COUNT_KEY, reaction.count.toInt()).format()
         }
         if (reaction.userWasSender && !isCompact) {
             root.background = ContextCompat.getDrawable(context, R.drawable.reaction_pill_background_selected)
@@ -257,40 +267,35 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
         }
     }
 
-    internal class Reaction(
-            internal val messageId: MessageId,
-            internal var emoji: String?,
-            internal var count: Long,
-            internal val sortIndex: Long,
-            internal var lastSeen: Long,
-            internal var userWasSender: Boolean
-    ) : Comparable<Reaction?> {
-        fun update(emoji: String, count: Long, lastSeen: Long, userWasSender: Boolean) {
-            if (!this.userWasSender) {
-                if (userWasSender || lastSeen > this.lastSeen) {
-                    this.emoji = emoji
-                }
-            }
-            this.count = this.count + count
-            this.lastSeen = Math.max(this.lastSeen, lastSeen)
+    class Reaction(
+        val messageId: MessageId,
+        val emoji: String,
+        var count: Long,
+        val sortIndex: Long,
+        var lastSeen: Long,
+        var userWasSender: Boolean,
+    ) : Comparable<Reaction> {
+        fun update(count: Long, lastSeen: Long, userWasSender: Boolean) {
+            this.count = this.count.coerceAtLeast(count)
+            this.lastSeen = this.lastSeen.coerceAtLeast(lastSeen)
             this.userWasSender = this.userWasSender || userWasSender
         }
 
-        fun merge(other: Reaction): Reaction {
-            count = count + other.count
-            lastSeen = Math.max(lastSeen, other.lastSeen)
-            userWasSender = userWasSender || other.userWasSender
-            return this
-        }
-
-        override fun compareTo(other: Reaction?): Int {
-            if (other == null) { return -1 }
-
-            if (this.count == other.count) {
-                return this.sortIndex.compareTo(other.sortIndex)
+        override fun compareTo(other: Reaction): Int {
+            var rc = this.sortIndex.compareTo(other.sortIndex)
+            if (rc == 0) {
+                rc = other.count.compareTo(count)
             }
 
-            return this.count.compareTo(other.count)
+            if (rc == 0) {
+                rc = other.lastSeen.compareTo(lastSeen)
+            }
+
+            if (rc == 0) {
+                rc = this.emoji.compareTo(other.emoji)
+            }
+
+            return rc
         }
     }
 }
