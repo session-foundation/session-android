@@ -45,7 +45,6 @@ class PushRegistrationHandler @Inject constructor(
     @param:ManagerScope private val scope: CoroutineScope,
     @param:PushNotificationModule.PushProcessingSemaphore
     private val semaphore: Semaphore,
-    private val storage: StorageProtocol,
     private val pushRegistrationDatabase: PushRegistrationDatabase,
     private val loginStateRepository: LoginStateRepository,
 ) : OnAppStartupComponent {
