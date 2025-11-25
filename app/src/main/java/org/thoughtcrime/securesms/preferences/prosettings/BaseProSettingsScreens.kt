@@ -1,46 +1,55 @@
 package org.thoughtcrime.securesms.preferences.prosettings
 
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.Cell
+import org.thoughtcrime.securesms.ui.DialogBg
 import org.thoughtcrime.securesms.ui.SessionProSettingsHeader
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.DangerFillButtonRect
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.components.inlineContentMap
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -48,8 +57,6 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.bold
-import network.loki.messenger.R
-import org.thoughtcrime.securesms.ui.DialogBg
 
 /**
  * Base structure used in most Pro Settings screen
@@ -58,42 +65,69 @@ import org.thoughtcrime.securesms.ui.DialogBg
 @Composable
 fun BaseProSettingsScreen(
     disabled: Boolean,
+    hideHomeAppBar: Boolean = false,
+    listState: LazyListState = rememberLazyListState(),
     onBack: () -> Unit,
     onHeaderClick: (() -> Unit)? = null,
     extraHeaderContent: @Composable (() -> Unit)? = null,
-    content: @Composable () -> Unit
+    content: @Composable LazyItemScope.() -> Unit
 ){
-    Scaffold(
-        topBar = {
-            BackAppBar(
-                title = "",
-                backgroundColor = Color.Transparent,
-                onBack = onBack,
-            )
-        },
-        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
-    ) { paddings ->
+    // Calculate scroll fraction
+    val density = LocalDensity.current
+    val thresholdPx = remember(density) { with(density) { 28.dp.toPx() } } // amount before the appbar gets fully opaque
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = paddings.calculateTopPadding() - LocalDimensions.current.appBarHeight)
-                .consumeWindowInsets(paddings)
-                .padding(
-                    horizontal = LocalDimensions.current.spacing,
+    // raw fraction 0..1 derived from scrolling
+    val rawFraction by remember {
+        derivedStateOf {
+            when {
+                listState.layoutInfo.totalItemsCount == 0 -> 0f
+                listState.firstVisibleItemIndex > 0 -> 1f
+                else -> (listState.firstVisibleItemScrollOffset / thresholdPx).coerceIn(0f, 1f)
+            }
+        }
+    }
+
+    // easing + smoothing of fraction
+    val easedFraction = remember(rawFraction) {
+        FastOutSlowInEasing.transform(rawFraction)
+    }
+
+    // setting the appbar's bg alpha based on scroll
+    val backgroundColor = LocalColors.current.background.copy(alpha = easedFraction)
+
+    Scaffold(
+        topBar = if(!hideHomeAppBar){{
+                BackAppBar(
+                    title = "",
+                    backgroundColor = backgroundColor,
+                    onBack = onBack,
                 )
-                .verticalScroll(rememberScrollState()),
+            }} else {{}},
+        contentWindowInsets = WindowInsets.systemBars,
+    ) { paddings ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .consumeWindowInsets(paddings),
+            state = listState,
+            contentPadding = PaddingValues(
+                start = LocalDimensions.current.spacing,
+                end = LocalDimensions.current.spacing,
+                top = (paddings.calculateTopPadding() - LocalDimensions.current.appBarHeight)
+                    .coerceAtLeast(0.dp) + 46.dp,
+                bottom = paddings.calculateBottomPadding() + LocalDimensions.current.spacing
+            ),
             horizontalAlignment = CenterHorizontally
         ) {
-            Spacer(Modifier.height(46.dp))
+            item {
+                SessionProSettingsHeader(
+                    disabled = disabled,
+                    onClick = onHeaderClick,
+                    extraContent = extraHeaderContent
+                )
+            }
 
-            SessionProSettingsHeader(
-                disabled = disabled,
-                onClick = onHeaderClick,
-                extraContent = extraHeaderContent
-            )
-
-            content()
+            item { content() }
         }
     }
 }
@@ -106,11 +140,11 @@ fun BaseProSettingsScreen(
 fun BaseCellButtonProSettingsScreen(
     disabled: Boolean,
     onBack: () -> Unit,
-    buttonText: String,
+    buttonText: String?,
     dangerButton: Boolean,
     onButtonClick: () -> Unit,
     title: CharSequence? = null,
-    content: @Composable () -> Unit
+    content: @Composable LazyItemScope.() -> Unit
 ) {
     BaseProSettingsScreen(
         disabled = disabled,
@@ -142,20 +176,22 @@ fun BaseCellButtonProSettingsScreen(
 
         Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
 
-        if(dangerButton) {
-            DangerFillButtonRect(
-                modifier = Modifier.fillMaxWidth()
-                    .widthIn(max = LocalDimensions.current.maxContentWidth),
-                text = buttonText,
-                onClick = onButtonClick
-            )
-        } else {
-            AccentFillButtonRect(
-                modifier = Modifier.fillMaxWidth()
-                    .widthIn(max = LocalDimensions.current.maxContentWidth),
-                text = buttonText,
-                onClick = onButtonClick
-            )
+        if(buttonText != null) {
+            if (dangerButton) {
+                DangerFillButtonRect(
+                    modifier = Modifier.fillMaxWidth()
+                        .widthIn(max = LocalDimensions.current.maxContentWidth),
+                    text = buttonText,
+                    onClick = onButtonClick
+                )
+            } else {
+                AccentFillButtonRect(
+                    modifier = Modifier.fillMaxWidth()
+                        .widthIn(max = LocalDimensions.current.maxContentWidth),
+                    text = buttonText,
+                    onClick = onButtonClick
+                )
+            }
         }
     }
 }
@@ -191,12 +227,13 @@ private fun PreviewBaseCellButton(
 fun BaseNonOriginatingProSettingsScreen(
     disabled: Boolean,
     onBack: () -> Unit,
-    buttonText: String,
+    buttonText: String?,
     dangerButton: Boolean,
     onButtonClick: () -> Unit,
     headerTitle: CharSequence?,
     contentTitle: String?,
     contentDescription: CharSequence?,
+    contentClick: (() -> Unit)? = null,
     linkCellsInfo: String?,
     linkCells: List<NonOriginatingLinkCellData> = emptyList(),
 ) {
@@ -219,9 +256,22 @@ fun BaseNonOriginatingProSettingsScreen(
         if (contentDescription != null) {
             Spacer(Modifier.height(LocalDimensions.current.xxxsSpacing))
             Text(
+                modifier = Modifier.then(
+                    // make the component clickable is there is an action
+                    if (contentClick != null) Modifier.clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = contentClick
+                    )
+                    else Modifier
+                ),
                 text = annotatedStringResource(contentDescription),
                 style = LocalType.current.base,
                 color = LocalColors.current.text,
+                inlineContent = inlineContentMap(
+                    textSize = LocalType.current.base.fontSize,
+                    imageColor = LocalColors.current.text,
+                ),
             )
         }
 

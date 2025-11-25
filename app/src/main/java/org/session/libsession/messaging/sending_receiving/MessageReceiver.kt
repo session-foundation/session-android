@@ -1,7 +1,8 @@
 package org.session.libsession.messaging.sending_receiving
 
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
-import org.session.libsession.messaging.MessagingModuleConfiguration
+import network.loki.messenger.libsession_util.util.KeyPair
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.CallMessage
 import org.session.libsession.messaging.messages.control.DataExtractionNotification
@@ -21,9 +22,15 @@ import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.math.abs
 
-object MessageReceiver {
+@Deprecated("This class only exists so the old BatchMessageReceiver can function. New code should use MessageHandler directly.")
+@Singleton
+class MessageReceiver @Inject constructor(
+    private val storage: StorageProtocol,
+) {
 
     internal sealed class Error(message: String) : Exception(message) {
         object DuplicateMessage: Error("Duplicate message.")
@@ -60,7 +67,6 @@ object MessageReceiver {
         currentClosedGroups: Set<String>?,
         closedGroupSessionId: String? = null,
     ): Pair<Message, SignalServiceProtos.Content> {
-        val storage = MessagingModuleConfiguration.shared.storage
         val userPublicKey = storage.getUserPublicKey()
         val isOpenGroupMessage = (openGroupServerID != null)
         var plaintext: ByteArray? = null
@@ -91,7 +97,7 @@ object MessageReceiver {
                         plaintext = decryptionResult.first
                         sender = decryptionResult.second
                     } else {
-                        val userX25519KeyPair = MessagingModuleConfiguration.shared.storage.getUserX25519KeyPair()
+                        val userX25519KeyPair = storage.getUserX25519KeyPair()
                         val decryptionResult = MessageDecrypter.decrypt(envelopeContent.toByteArray(), userX25519KeyPair)
                         plaintext = decryptionResult.first
                         sender = decryptionResult.second
@@ -105,10 +111,10 @@ object MessageReceiver {
                         sender = envelope.source
                         groupPublicKey = hexEncodedGroupPublicKey
                     } else {
-                        if (!MessagingModuleConfiguration.shared.storage.isLegacyClosedGroup(hexEncodedGroupPublicKey)) {
+                        if (!storage.isLegacyClosedGroup(hexEncodedGroupPublicKey)) {
                             throw Error.InvalidGroupPublicKey
                         }
-                        val encryptionKeyPairs = MessagingModuleConfiguration.shared.storage.getClosedGroupEncryptionKeyPairs(hexEncodedGroupPublicKey)
+                        val encryptionKeyPairs = storage.getClosedGroupEncryptionKeyPairs(hexEncodedGroupPublicKey)
                         if (encryptionKeyPairs.isEmpty()) {
                             throw Error.NoGroupKeyPair
                         }
@@ -117,7 +123,11 @@ object MessageReceiver {
                         var encryptionKeyPair = encryptionKeyPairs.removeAt(encryptionKeyPairs.lastIndex)
                         fun decrypt() {
                             try {
-                                val decryptionResult = MessageDecrypter.decrypt(envelopeContent.toByteArray(), encryptionKeyPair)
+                                val decryptionResult = MessageDecrypter.decrypt(envelopeContent.toByteArray(),
+                                    KeyPair(
+                                        pubKey = encryptionKeyPair.publicKey.serialize(),
+                                        secretKey = encryptionKeyPair.privateKey.serialize()
+                                    ))
                                 plaintext = decryptionResult.first
                                 sender = decryptionResult.second
                             } catch (e: Exception) {
@@ -172,7 +182,7 @@ object MessageReceiver {
         }
         val isUserBlindedSender = sender == openGroupPublicKey?.let {
             BlindKeyAPI.blind15KeyPairOrNull(
-                ed25519SecretKey = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()!!.secretKey.data,
+                ed25519SecretKey = storage.getUserED25519KeyPair()!!.secretKey.data,
                 serverPubKey = Hex.fromStringCondensed(it),
             )
         }?.let { AccountId(IdPrefix.BLINDED, it.pubKey.data).hexString }

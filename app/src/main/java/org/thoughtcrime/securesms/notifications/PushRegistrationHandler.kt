@@ -9,10 +9,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
@@ -23,6 +21,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.PushRegistrationDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.ManagerScope
@@ -46,8 +45,8 @@ class PushRegistrationHandler @Inject constructor(
     @param:ManagerScope private val scope: CoroutineScope,
     @param:PushNotificationModule.PushProcessingSemaphore
     private val semaphore: Semaphore,
-    private val storage: StorageProtocol,
     private val pushRegistrationDatabase: PushRegistrationDatabase,
+    private val loginStateRepository: LoginStateRepository,
 ) : OnAppStartupComponent {
 
     private var job: Job? = null
@@ -60,30 +59,23 @@ class PushRegistrationHandler @Inject constructor(
         job = scope.launch {
             val firstRun = AtomicBoolean(true)
 
-            @Suppress("OPT_IN_USAGE")
-            preferences.watchLocalNumber()
-                .filterNotNull()
-                .distinctUntilChanged()
-                .flatMapLatest { localNumber ->
-                    if (hasCoreIdentity()) {
-                        combine(
-                            configFactory.userConfigsChanged(
-                                    onlyConfigTypes = EnumSet.of(UserConfigType.USER_GROUPS),
-                                    debounceMills = 500
-                                )
-                                .castAwayType()
-                                .onStart { emit(Unit) },
-                            preferences.pushEnabled,
-                            tokenFetcher.token.filterNotNull().filter { !it.isBlank() }
-                        ) { _, enabled, token ->
-                            if (enabled) {
-                                desiredSubscriptions(localNumber, token)
-                            } else {
-                                emptyList()
-                            }
+            loginStateRepository
+                .flowWithLoggedInState {
+                    combine(
+                        configFactory.userConfigsChanged(
+                            onlyConfigTypes = EnumSet.of(UserConfigType.USER_GROUPS),
+                            debounceMills = 500
+                        )
+                            .castAwayType()
+                            .onStart { emit(Unit) },
+                        preferences.pushEnabled,
+                        tokenFetcher.token.filterNotNull().filter { !it.isBlank() }
+                    ) { _, enabled, token ->
+                        if (enabled) {
+                            desiredSubscriptions(loginStateRepository.requireLocalNumber(), token)
+                        } else {
+                            emptyList()
                         }
-                    } else {
-                        emptyFlow()
                     }
                 }
                 .distinctUntilChanged()
@@ -122,10 +114,6 @@ class PushRegistrationHandler @Inject constructor(
                 }
             }
         }
-
-    private fun hasCoreIdentity(): Boolean {
-        return preferences.getLocalNumber() != null && storage.getUserED25519KeyPair() != null
-    }
 
     companion object {
         private const val TAG = "PushRegistrationHandler"

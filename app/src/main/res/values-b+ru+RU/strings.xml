@@ -15,7 +15,6 @@
     <string name="accountIdYoursDescription">Это ваш ID аккаунта. Другие пользователи могут сканировать его, чтобы начать беседу с вами.</string>
     <string name="actualSize">Фактический размер</string>
     <string name="add">Добавить</string>
-    <string name="addAdmins">Добавить администраторов</string>
     <string name="addAdminsDescription">Введите ID аккаунта пользователя, которого вы повышаете до администратора.\n\nЧтобы добавить нескольких пользователей, введите ID каждого аккаунта через запятую. Одновременно можно указать до 20 идентификаторов учётных записей.</string>
     <string name="adminCannotBeRemoved">Администраторов нельзя удалить.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> и <b>{count} других пользователей</b> назначены администраторами.</string>
@@ -916,13 +915,9 @@
     <string name="proActivated">Активирован</string>
     <string name="proAlreadyPurchased">У вас уже есть</string>
     <string name="proAnimatedDisplayPicture">Вперёд! И загружай анимированные GIF и WebP для вашего изображения!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">Получите анимированное изображение профиля и другие разблокированные премиум функции с {app_pro}</string>
     <string name="proAnimatedDisplayPictureFeature">Анимированное изображение профиля</string>
     <string name="proAnimatedDisplayPictureModalDescription">пользователи могут загружать GIF-файлы</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Загружайте GIF с</string>
-    <string name="proCallToActionLongerMessages">Хотите отправлять более длинные сообщения? Отправляйте больше текста и используйте премиум функции с {app_pro}</string>
-    <string name="proCallToActionPinnedConversations">Хотите больше закреплений? Организуйте свои чаты и получайте доступ к премиум функциям с {app_pro}</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">Нужно более 5 закреплений? С {app_pro} организуйте свои чаты и получите доступ к премиум функциям</string>
     <string name="proFeatureListAnimatedDisplayPicture">Загрузка изображений в формате GIF и WebP</string>
     <string name="proFeatureListLargerGroups">Групповые чаты до 300 участников</string>
     <string name="proFeatureListLoadsMore">+ множество эксклюзивных функций</string>
@@ -934,7 +929,6 @@
     <string name="proIncreasedMessageLengthFeature">Увеличенная длина сообщения</string>
     <string name="proMessageInfoFeatures">Это сообщение использовало следующие функции {app_pro}:</string>
     <string name="proSendMore">Отправить еще с</string>
-    <string name="proUserProfileModalCallToAction">Хотите больше возможностей от {app_name}? Перейдите на {app_pro}, чтобы получить более мощный опыт обмена сообщениями.</string>
     <string name="profile">Профиль</string>
     <string name="profileDisplayPicture">Изображение профиля</string>
     <string name="profileDisplayPictureRemoveError">Не удалось удалить изображение профиля.</string>

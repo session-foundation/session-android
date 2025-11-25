@@ -16,8 +16,12 @@
     <string name="accountIdYoursDescription">This is your Account ID. Other users can scan it to start a conversation with you.</string>
     <string name="actualSize">Actual Size</string>
     <string name="add">Add</string>
-    <string name="addAdmins">Add Admins</string>
+    <plurals name="addAdmin">
+        <item quantity="one">Add Admin</item>
+        <item quantity="other">Add Admins</item>
+    </plurals>
     <string name="addAdminsDescription">Enter the Account ID of the user you are promoting to admin.\n\nTo add multiple users, enter each Account ID separated by a comma. Up to 20 Account IDs can be specified at a time.</string>
+    <string name="adminCannotBeDemoted">Admins cannot be demoted or removed from the group.</string>
     <string name="adminCannotBeRemoved">Admins cannot be removed.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> and <b>{count} others</b> were promoted to Admin.</string>
     <string name="adminPromote">Promote Admins</string>
@@ -42,12 +46,18 @@
     <string name="adminRemovedUser"><b>{name}</b> was removed as Admin.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> and <b>{count} others</b> were removed as Admin.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> and <b>{other_name}</b> were removed as Admin.</string>
+    <plurals name="adminSelected">
+        <item quantity="one">%1$d Admin Selected</item>
+        <item quantity="other">%1$d Admins Selected</item>
+    </plurals>
     <plurals name="adminSendingPromotion">
         <item quantity="one">Sending admin promotion</item>
         <item quantity="other">Sending admin promotions</item>
     </plurals>
     <string name="adminSettings">Admin Settings</string>
+    <string name="adminStatusYou">You cannot change your admin status. To leave the group, open the conversation settings and select Leave Group.</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> and <b>{other_name}</b> were promoted to Admin.</string>
+    <string name="admins">Admins</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonymous</string>
     <string name="appIcon">App Icon</string>
@@ -192,6 +202,10 @@
     <string name="callsVoiceAndVideoToggleDescription">Enables voice and video calls to and from other users.</string>
     <string name="callsYouCalled">You called {name}</string>
     <string name="callsYouMissedCallPermissions">You missed a call from <b>{name}</b> because you haven\'t enabled <b>Voice and Video Calls</b> in Privacy Settings.</string>
+    <string name="cameraAccessDeniedMessage">{app_name} needs access to your camera to enable video calls, but this permission has been denied. You can’t update your camera permissions during a call.\n\nWould you like to end the call now and enable camera access, or would you like to be reminded after the call?</string>
+    <string name="cameraAccessInstructions">To allow camera access, open settings and turn on the Camera permission.</string>
+    <string name="cameraAccessReminderMessage">During your last call, you tried to use video but couldn’t because camera access was previously denied. To allow camera access, open settings and turn on the Camera permission.</string>
+    <string name="cameraAccessRequired">Camera Access Required</string>
     <string name="cameraErrorNotFound">No camera found</string>
     <string name="cameraErrorUnavailable">Camera unavailable.</string>
     <string name="cameraGrantAccess">Grant Camera Access</string>
@@ -199,12 +213,18 @@
     <string name="cameraGrantAccessDescription">{app_name} needs camera access to take photos and videos, or scan QR codes.</string>
     <string name="cameraGrantAccessQr">{app_name} needs camera access to scan QR codes</string>
     <string name="cancel">Cancel</string>
-    <string name="cancelPlan">Cancel Plan</string>
+    <string name="cancelAccess">Cancel {pro}</string>
+    <string name="cancelProPlan">Cancel {pro} Plan</string>
+    <string name="cancelProPlatform">Cancel on the {platform} website, using the {platform_account} you signed up for {pro} with.</string>
+    <string name="cancelProPlatformStore">Cancel on the {platform_store} website, using the {platform_account} you signed up for {pro} with.</string>
     <string name="change">Change</string>
     <string name="changePasswordFail">Failed to change password</string>
     <string name="changePasswordModalDescription">Change your password for {app_name}. Locally stored data will be re-encrypted with your new password.</string>
     <string name="checkingProStatus">Checking {pro} Status</string>
-    <string name="checkingProStatusDescription">Checking your {pro} details. Some information on this page may be inaccurate until this check is complete.</string>
+    <string name="checkingProStatusContinue">Checking your {pro} status. You\'ll be able to continue once this check is complete.</string>
+    <string name="checkingProStatusDescription">Checking your {pro} details. Some actions on this page may be unavailable until this check is complete.</string>
+    <string name="checkingProStatusEllipsis">Checking {pro} Status...</string>
+    <string name="checkingProStatusRenew">Checking your {pro} details. You cannot renew until this check is complete.</string>
     <string name="checkingProStatusUpgradeDescription">Checking your {pro} status. You\'ll be able to upgrade to {pro} once this check is complete.</string>
     <string name="clear">Clear</string>
     <string name="clearAll">Clear All</string>
@@ -264,11 +284,17 @@
     <string name="communityUrl">Community URL</string>
     <string name="communityUrlCopy">Copy Community URL</string>
     <string name="confirm">Confirm</string>
+    <string name="confirmPromotion">Confirm Promotion</string>
+    <string name="confirmPromotionDescription">Are you sure? Admins cannot be demoted or removed from the group.</string>
     <string name="contactContacts">Contacts</string>
     <string name="contactDelete">Delete Contact</string>
     <string name="contactDeleteDescription">Are you sure you want to delete <b>{name}</b> from your contacts? New messages from <b>{name}</b> will arrive as a message request.</string>
     <string name="contactNone">You don\'t have any contacts yet</string>
     <string name="contactSelect">Select Contacts</string>
+    <plurals name="contactSelected">
+        <item quantity="one">%1$d Contact Selected</item>
+        <item quantity="other">%1$d Contacts Selected</item>
+    </plurals>
     <string name="contactUserDetails">User Details</string>
     <string name="contentDescriptionCamera">Camera</string>
     <string name="contentDescriptionChooseConversationType">Choose an action to start a conversation</string>
@@ -309,8 +335,8 @@
     <string name="copy">Copy</string>
     <string name="create">Create</string>
     <string name="creatingCall">Creating Call</string>
+    <string name="currentBilling">Current Billing</string>
     <string name="currentPassword">Current Password</string>
-    <string name="currentPlan">Current Plan</string>
     <string name="cut">Cut</string>
     <string name="darkMode">Dark Mode</string>
     <string name="databaseErrorClearDataWarning">Are you sure you want to delete all messages, attachments, and account data from this device and create a new account?</string>
@@ -337,6 +363,14 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">Please wait while the group is created...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">Failed to Update Group</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">You don’t have permission to delete others’ messages</string>
+    <plurals name="deleteAttachments">
+        <item quantity="one">Delete Selected Attachment</item>
+        <item quantity="other">Delete Selected Attachments</item>
+    </plurals>
+    <plurals name="deleteAttachmentsDescription">
+        <item quantity="one">Are you sure you want to delete the selected attachment? The message associated with the attachment will also be deleted.</item>
+        <item quantity="other">Are you sure you want to delete the selected attachments? The message associated with the attachments will also be deleted.</item>
+    </plurals>
     <string name="deleteContactDescription">Are you sure you want to delete <b>{name}</b> from your contacts?\n\nThis will delete your conversation, including all messages and attachments. Future messages from <b>{name}</b> will appear as a message request.</string>
     <string name="deleteConversationDescription">Are you sure you want to delete your conversation with <b>{name}</b>?\nThis will permanently delete all messages and attachments.</string>
     <plurals name="deleteMessage">
@@ -423,6 +457,8 @@
     <string name="displayNameVisible">Your Display Name is visible to users, groups, and communities you interact with.</string>
     <string name="document">Document</string>
     <string name="donate">Donate</string>
+    <string name="donateSessionDescription">Powerful forces are trying to weaken privacy, but we can’t continue this fight alone.\n\nDonating helps keep {app_name} secure, independent, and online.</string>
+    <string name="donateSessionHelp">{app_name} Needs Your Help</string>
     <string name="done">Done</string>
     <string name="download">Download</string>
     <string name="downloading">Downloading...</string>
@@ -452,22 +488,31 @@
     <string name="emojiReactsHoverYouNameTwoDesktop">You and {name} reacted with {emoji_name}</string>
     <string name="emojiReactsNotification">Reacted to your message {emoji}</string>
     <string name="enable">Enable</string>
+    <string name="enableCameraAccess">Enable Camera Access?</string>
     <string name="enableNotifications">Show notifications when you receive new messages.</string>
+    <string name="endCallToEnable">End Call to Enable</string>
     <string name="enjoyingSession">Enjoying {app_name}?</string>
     <string name="enjoyingSessionButtonNegative">Needs Work {emoji}</string>
     <string name="enjoyingSessionButtonPositive">It\'s Great {emoji}</string>
     <string name="enjoyingSessionDescription">You\'ve been using {app_name} for a little while, how’s it going? We’d really appreciate hearing your thoughts.</string>
     <string name="enter">Enter</string>
     <string name="enterPasswordDescription">Enter the password you set for {app_name}</string>
-    <string name="enterPasswordTooltip">Enter the password you use to unlock Session &amp;#13;
-on startup, not your Recovery Password</string>
-    <string name="errorCheckingProStatus">Error checking {pro} status.</string>
+    <string name="enterPasswordTooltip">Enter the password you use to unlock {app_name} on startup, not your Recovery Password</string>
+    <string name="errorCheckingProStatus">Error checking {pro} status</string>
     <string name="errorConnection">Please check your internet connection and try again.</string>
     <string name="errorCopyAndQuit">Copy Error and Quit</string>
     <string name="errorDatabase">Database Error</string>
     <string name="errorGeneric">Something went wrong. Please try again later.</string>
-    <string name="errorLoadingProPlan">Error loading {pro} plan.</string>
+    <string name="errorLoadingProAccess">Error loading {pro} access</string>
+    <string name="errorNoLookupOns">{app_name} was unable to search for this ONS. Please check your network connection and try again.</string>
     <string name="errorUnknown">An unknown error occurred.</string>
+    <string name="errorUnregisteredOns">This ONS is not registered. Please check it is correct and try again.</string>
+    <string name="failedResendInvite">Failed to resend invite to <b>{name}</b> in <b>{group_name}</b></string>
+    <string name="failedResendInviteMultiple">Failed to resend invite to <b>{name}</b> and <b>{count} others</b> in <b>{group_name}</b></string>
+    <string name="failedResendInviteTwo">Failed to resend invite to <b>{name}</b> and <b>{other_name}</b> in <b>{group_name}</b></string>
+    <string name="failedResendPromotion">Failed to resend promotion to <b>{name}</b> in <b>{group_name}</b></string>
+    <string name="failedResendPromotionMultiple">Failed to resend promotion to <b>{name}</b> and <b>{count} others</b> in <b>{group_name}</b></string>
+    <string name="failedResendPromotionTwo">Failed to resend promotion to <b>{name}</b> and <b>{other_name}</b> in <b>{group_name}</b></string>
     <string name="failedToDownload">Failed to download</string>
     <string name="failures">Failures</string>
     <string name="feedback">Feedback</string>
@@ -521,6 +566,9 @@ on startup, not your Recovery Password</string>
     <string name="groupLeaveDescription">Are you sure you want to leave <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Are you sure you want to leave <b>{group_name}</b>?\n\nThis will remove all members and delete all group content.</string>
     <string name="groupLeaveErrorFailed">Failed to leave {group_name}</string>
+    <string name="groupMemberInvitedHistory"><b>{name}</b> was invited to join the group. Chat history from the last 14 days was shared.</string>
+    <string name="groupMemberInvitedHistoryMultiple"><b>{name}</b> and <b>{count}</b> others were invited to join the group. Chat history from the last 14 days was shared.</string>
+    <string name="groupMemberInvitedHistoryTwo"><b>{name}</b> and <b>{other_name}</b> were invited to join the group. Chat history from the last 14 days was shared.</string>
     <string name="groupMemberLeft"><b>{name}</b> left the group.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> and <b>{count} others</b> left the group.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> and <b>{other_name}</b> left the group.</string>
@@ -532,6 +580,9 @@ on startup, not your Recovery Password</string>
     <string name="groupMemberNewTwo"><b>{name}</b> and <b>{other_name}</b> were invited to join the group.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>You</b> and <b>{count} others</b> were invited to join the group. Chat history was shared.</string>
     <string name="groupMemberNewYouHistoryTwo"><b>You</b> and <b>{other_name}</b> were invited to join the group. Chat history was shared.</string>
+    <string name="groupMemberRemoveFailed">Failed to remove <b>{name}</b> from <b>{group_name}</b></string>
+    <string name="groupMemberRemoveFailedMultiple">Failed to remove <b>{name}</b> and <b>{count} others</b> from <b>{group_name}</b></string>
+    <string name="groupMemberRemoveFailedOther">Failed to remove <b>{name}</b> and <b>{other_name}</b> from <b>{group_name}</b></string>
     <string name="groupMemberYouLeft"><b>You</b> left the group.</string>
     <string name="groupMembers">Group Members</string>
     <string name="groupMembersNone">There are no other members in this group.</string>
@@ -545,6 +596,7 @@ on startup, not your Recovery Password</string>
     <string name="groupNoMessages">You have no messages from <b>{group_name}</b>. Send a message to start the conversation!</string>
     <string name="groupNotUpdatedWarning">This group has not been updated in over 30 days. You may experience issues sending messages or viewing group information.</string>
     <string name="groupOnlyAdmin">You are the only admin in <b>{group_name}</b>.\n\nGroup members and settings cannot be changed without an admin.</string>
+    <string name="groupOnlyAdminLeave">You are the only admin in <b>{group_name}</b>.\n\nGroup members and settings cannot be changed without an admin. To leave the group without deleting it, please add a new admin first</string>
     <string name="groupPendingRemoval">Pending removal</string>
     <string name="groupPromotedYou"><b>You</b> were promoted to Admin.</string>
     <string name="groupPromotedYouMultiple"><b>You</b> and <b>{count} others</b> were promoted to Admin.</string>
@@ -594,6 +646,10 @@ on startup, not your Recovery Password</string>
     <string name="incognitoKeyboardDescription">Request incognito mode if available. Depending on the keyboard you are using, your keyboard may ignore this request.</string>
     <string name="info">Info</string>
     <string name="invalidShortcut">Invalid shortcut</string>
+    <plurals name="inviteContactsPlural">
+        <item quantity="one">Invite Contact</item>
+        <item quantity="other">Invite Contacts</item>
+    </plurals>
     <plurals name="inviteFailed">
         <item quantity="one">Invite Failed</item>
         <item quantity="other">Invites Failed</item>
@@ -602,6 +658,12 @@ on startup, not your Recovery Password</string>
         <item quantity="one">The invite could not be sent. Would you like to try again?</item>
         <item quantity="other">The invites could not be sent. Would you like to try again?</item>
     </plurals>
+    <plurals name="inviteMembers">
+        <item quantity="one">Invite Member</item>
+        <item quantity="other">Invite Members</item>
+    </plurals>
+    <string name="inviteNewMemberGroupLink">Invite a new member to the group by entering your friend\'s Account ID, ONS or scanning their QR code {icon}</string>
+    <string name="inviteNewMemberGroupNoLink">Invite a new member to the group by entering your friend\'s Account ID, ONS or scanning their QR code</string>
     <string name="join">Join</string>
     <string name="later">Later</string>
     <string name="launchOnStartDescriptionDesktop">Launch {app_name} automatically when your computer starts up.</string>
@@ -645,10 +707,16 @@ on startup, not your Recovery Password</string>
     <string name="lockAppUnlock">Tap to unlock</string>
     <string name="lockAppUnlocked">{app_name} is unlocked</string>
     <string name="logs">Logs</string>
+    <string name="manageAdmins">Manage Admins</string>
     <string name="manageMembers">Manage Members</string>
     <string name="managePro">Manage {pro}</string>
     <string name="max">Max</string>
+    <string name="maybeLater">Maybe Later</string>
     <string name="media">Media</string>
+    <plurals name="memberSelected">
+        <item quantity="one">%1$d Member Selected</item>
+        <item quantity="other">%1$d Members Selected</item>
+    </plurals>
     <plurals name="members">
         <item quantity="one">%1$d member</item>
         <item quantity="other">%1$d members</item>
@@ -658,7 +726,9 @@ on startup, not your Recovery Password</string>
         <item quantity="other">%1$d active members</item>
     </plurals>
     <string name="membersAddAccountIdOrOns">Add Account ID or ONS</string>
+    <string name="membersGroupPromotionAcceptInvite">Members can only be promoted once they\'ve accepted an invite to join the group.</string>
     <string name="membersInvite">Invite Contacts</string>
+    <string name="membersInviteNoContacts">You don’t have any contacts to invite to this group.\nGo back and invite members using their Account ID or ONS.</string>
     <plurals name="membersInviteSend">
         <item quantity="one">Send Invite</item>
         <item quantity="other">Send Invites</item>
@@ -667,8 +737,10 @@ on startup, not your Recovery Password</string>
     <string name="membersInviteShareDescriptionMultiple">Would you like to share group message history with <b>{name}</b> and <b>{count} others</b>?</string>
     <string name="membersInviteShareDescriptionTwo">Would you like to share group message history with <b>{name}</b> and <b>{other_name}</b>?</string>
     <string name="membersInviteShareMessageHistory">Share message history</string>
+    <string name="membersInviteShareMessageHistoryDays">Share message history from last 14 days</string>
     <string name="membersInviteShareNewMessagesOnly">Share new messages only</string>
     <string name="membersInviteTitle">Invite</string>
+    <string name="membersNonAdmins">Members (Non-Admins)</string>
     <string name="menuBar">Menu Bar</string>
     <string name="message">Message</string>
     <string name="messageBubbleReadMore">Read more</string>
@@ -687,6 +759,7 @@ on startup, not your Recovery Password</string>
     </plurals>
     <string name="messageNewDescriptionDesktop">Start a new conversation by entering your friend\'s Account ID or ONS.</string>
     <string name="messageNewDescriptionMobile">Start a new conversation by entering your friend\'s Account ID, ONS or scanning their QR code.</string>
+    <string name="messageNewDescriptionMobileLink">Start a new conversation by entering your friend\'s Account ID, ONS or scanning their QR code {icon}</string>
     <plurals name="messageNewYouveGot">
         <item quantity="one">You\'ve got a new message.</item>
         <item quantity="other">You\'ve got %1$d new messages.</item>
@@ -744,13 +817,17 @@ on startup, not your Recovery Password</string>
     <string name="nicknameRemove">Remove Nickname</string>
     <string name="nicknameSet">Set Nickname</string>
     <string name="no">No</string>
+    <string name="noNonAdminsInGroup">There are no non-admin members in this group.</string>
     <string name="noSuggestions">No Suggestions</string>
+    <string name="nonProLongerMessagesDescription">Send messages up to 10,000 characters in all conversations.</string>
+    <string name="nonProUnlimitedPinnedDescription">Organize chats with unlimited pinned conversations.</string>
     <string name="none">None</string>
     <string name="notNow">Not now</string>
     <string name="noteToSelf">Note to Self</string>
     <string name="noteToSelfEmpty">You have no messages in Note to Self.</string>
     <string name="noteToSelfHide">Hide Note to Self</string>
     <string name="noteToSelfHideDescription">Are you sure you want to hide Note to Self?</string>
+    <string name="noteTosPrivacyPolicy"><b>PLEASE NOTE</b>: By {action_type}, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
     <string name="notificationDisplay">Notification Display</string>
     <string name="notificationSenderNameAndPreview">Display the sender\'s name and a preview of the message content.</string>
     <string name="notificationSenderNameOnly">Display only the sender\'s name without any message content.</string>
@@ -795,7 +872,11 @@ on startup, not your Recovery Password</string>
     <string name="okay">Okay</string>
     <string name="on">On</string>
     <string name="onDevice">On your {device_type} device</string>
-    <string name="onDeviceDescription">Open this {app_name} account on an {device_type} device logged into the {platform_account} you originally signed up with. Then, change your plan via the {app_pro} settings.</string>
+    <string name="onDeviceCancelDescription">Open this {app_name} account on an {device_type} device logged into the {platform_account} you originally signed up with. Then, cancel {pro} via the {app_pro} settings.</string>
+    <string name="onDeviceDescription">Open this {app_name} account on an {device_type} device logged into the {platform_account} you originally signed up with. Then, update your {pro} access via the {app_pro} settings.</string>
+    <string name="onLinkedDevice">On a linked device</string>
+    <string name="onPlatformStoreWebsite">On the {platform_store} website</string>
+    <string name="onPlatformWebsite">On the {platform} website</string>
     <string name="onboardingAccountCreate">Create account</string>
     <string name="onboardingAccountCreated">Account Created</string>
     <string name="onboardingAccountExists">I have an account</string>
@@ -820,7 +901,9 @@ on startup, not your Recovery Password</string>
     <string name="onsErrorNotRecognized">We couldn\'t recognize this ONS. Please check it and try again.</string>
     <string name="onsErrorUnableToSearch">We were unable to search for this ONS. Please try again later.</string>
     <string name="open">Open</string>
-    <string name="openStoreWebsite">Open {platform_store} Website</string>
+    <string name="openPlatformStoreWebsite">Open {platform_store} Website</string>
+    <string name="openPlatformWebsite">Open {platform} Website</string>
+    <string name="openSettings">Open Settings</string>
     <string name="openSurvey">Open Survey</string>
     <string name="other">Other</string>
     <string name="password">Password</string>
@@ -854,6 +937,8 @@ on startup, not your Recovery Password</string>
     <string name="passwordStrengthIndicatorDescription">Setting a strong password helps protect your messages and attachments if your device is ever lost or stolen.</string>
     <string name="passwords">Passwords</string>
     <string name="paste">Paste</string>
+    <string name="paymentError">Payment Error</string>
+    <string name="paymentProError">Your payment has been processed successfully, but there was an error {action_type} your {pro} status.\n\nPlease check your network connection and retry.</string>
     <string name="permissionChange">Permission Change</string>
     <string name="permissionMusicAudioDenied">{app_name} needs music and audio access in order to send files, music and audio, but it has been permanently denied. Tap Settings → Permissions, and turn \"Music and audio\" on.</string>
     <string name="permissionsAppleMusic">{app_name} needs to use Apple Music to play media attachments.</string>
@@ -897,12 +982,34 @@ on startup, not your Recovery Password</string>
     <string name="preferences">Preferences</string>
     <string name="preview">Preview</string>
     <string name="previewNotification">Preview Notification</string>
+    <string name="proAccessActivatedAutoShort">Your {pro} access is active!\n\nYour {pro} access will automatically renew for another <b>{current_plan_length}</b> on <b>{date}</b>.</string>
+    <string name="proAccessActivatedNotAuto">Your {pro} access will expire on <b>{date}</b>.\n\nUpdate your {pro} access now to ensure you automatically renew before your {pro} access expires.</string>
+    <string name="proAccessActivatesAuto">Your {pro} access is active!\n\nYour {pro} access will automatically renew for another\n<b>{current_plan_length}</b> on <b>{date}</b>. Any updates you make here will take effect at your next renewal.</string>
+    <string name="proAccessError">{pro} Access Error</string>
+    <string name="proAccessExpireDate">Your {pro} access will expire on <b>{date}</b>.</string>
+    <string name="proAccessLoading">{pro} Access Loading</string>
+    <string name="proAccessLoadingDescription">Your {pro} access information is still being loaded. You cannot update until this process is complete.</string>
+    <string name="proAccessLoadingEllipsis">{pro} access loading...</string>
+    <string name="proAccessNetworkLoadError">Unable to connect to the network to load your {pro} access information. Updating {pro} via {app_name} will be disabled until connectivity is restored.\n\nPlease check your network connection and retry.</string>
+    <string name="proAccessNotFound">{pro} Access Not Found</string>
+    <string name="proAccessNotFoundDescription">{app_name} detected that your account does not have {pro} access. If you believe this is a mistake, please reach out to {app_name} support for assistance.</string>
+    <string name="proAccessRecover">Recover {pro} Access</string>
+    <string name="proAccessRenew">Renew {pro} Access</string>
+    <string name="proAccessRenewDesktop">Currently, {pro} access can only be purchased and renewed via the {platform_store} or {platform_store_other}. Because you are using {app_name} Desktop, you\'re not able to renew here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the {platform_store} and {platform_store_other}. <b>{pro} Roadmap</b> {icon}</string>
+    <string name="proAccessRenewPlatformStoreWebsite">Renew your {pro} access on the <b><font color="0">{platform_store} website</font></b> using the {platform_account} you signed up for {pro} with.</string>
+    <string name="proAccessRenewPlatformWebsite">Renew on the <b><font color="0">{platform} website</font></b> using the {platform_account} you signed up for {pro} with.</string>
+    <string name="proAccessRenewStart">Renew your {pro} access to start using powerful {app_pro} Beta features again.</string>
+    <string name="proAccessRestored">{pro} Access Recovered</string>
+    <string name="proAccessRestoredDescription">{app_name} detected and recovered {pro} access for your account. Your {pro} status has been restored!</string>
+    <string name="proAccessSignUp">Because you originally signed up for {app_pro} via the <b>{platform_store}</b>, you\'ll need to use your {platform_account} to update your {pro} access.</string>
+    <string name="proAccessUpgradeDesktop">Currently, {pro} access can only be purchased via the {platform_store} or {platform_store_other}. Because you are using {app_name} Desktop, you\'re not able to upgrade to {pro} here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the {platform_store} and {platform_store_other}. <b>{pro} Roadmap</b> {icon}</string>
     <string name="proActivated">Activated</string>
+    <string name="proActivatingActivation">activating</string>
     <string name="proAllSet">You\'re all set!</string>
-    <string name="proAllSetDescription">Your {app_pro} plan was updated! You will be billed when your current {pro} plan is automatically renewed on <b>{date}</b>.</string>
+    <string name="proAllSetDescription">Your {app_pro} access was updated! You will be billed when {pro} is automatically renewed on <b>{date}</b>.</string>
     <string name="proAlreadyPurchased">You’ve already got</string>
     <string name="proAnimatedDisplayPicture">Go ahead and upload GIFs and animated WebP images for your display picture!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">Get animated display pictures and unlock premium features with {app_pro}</string>
+    <string name="proAnimatedDisplayPictureCallToActionDescription">Get animated display pictures and unlock premium features with {app_pro} Beta</string>
     <string name="proAnimatedDisplayPictureFeature">Animated Display Picture</string>
     <string name="proAnimatedDisplayPictureModalDescription">users can upload GIFs</string>
     <string name="proAnimatedDisplayPictures">Animated Display Pictures</string>
@@ -921,21 +1028,23 @@ on startup, not your Recovery Password</string>
     <string name="proBilledAnnually">{price} Billed Annually</string>
     <string name="proBilledMonthly">{price} Billed Monthly</string>
     <string name="proBilledQuarterly">{price} Billed Quarterly</string>
-    <string name="proCallToActionLongerMessages">Want to send longer messages? Send more text and unlock premium features with {app_pro}</string>
-    <string name="proCallToActionPinnedConversations">Want more pins? Organize your chats and unlock premium features with {app_pro}</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">Want more than 5 pins? Organize your chats and unlock premium features with {app_pro}</string>
+    <string name="proCallToActionLongerMessages">Want to send longer messages?\nSend more text and unlock premium features with {app_pro} Beta</string>
+    <string name="proCallToActionPinnedConversations">Want more pins?\nOrganize your chats and unlock premium features with {app_pro} Beta</string>
+    <string name="proCallToActionPinnedConversationsMoreThan">Want more than {limit} pins?\nOrganize your chats and unlock premium features with {app_pro} Beta</string>
+    <string name="proCancelSorry">Sorry to see you cancel {pro}. Here\'s what you need to know before canceling your {pro} access.</string>
     <string name="proCancellation">Cancellation</string>
-    <string name="proCancellationDescription">Canceling your {app_pro} plan will prevent your plan from automatically renewing before your {pro} plan expires. Canceling {pro} does <b>not</b> result in a refund. You will continue to be able to use {app_pro} features until your plan expires.\n\n
-Because you originally signed up for {app_pro} via a <b>{platform_account}</b>, you\'ll need to use the same {platform_account} to cancel your plan.</string>
-    <string name="proCancellationOptions">Two ways to cancel your plan:</string>
-    <string name="proClearAllDataDevice">Are you sure you want to delete your data from this device?\n\n<b>{app_pro}</b> cannot be transferred to another account. Please save your Recovery Password to ensure you can restore your {pro} plan later.</string>
-    <string name="proClearAllDataNetwork">Are you sure you want to delete your data from the network? If you continue, you will not be able to restore your messages or contacts.\n\n<b>{app_pro}</b> cannot be transferred to another account. Please save your Recovery Password to ensure you can restore your {pro} plan later.</string>
-    <string name="proDiscountTooltip">Your current plan is already discounted by {percent}% of the full {app_pro} price.</string>
+    <string name="proCancellationDescription">Canceling {pro} access will prevent automatic renewal from occurring before {pro} access expires. Canceling {pro} does <b>not</b> result in a refund. You will continue to be able to use {app_pro} features until your {pro} access expires.\n\nBecause you originally signed up for {app_pro} using your <b>{platform_account}</b>, you\'ll need to use the same {platform_account} to cancel {pro}.</string>
+    <string name="proCancellationOptions">Two ways to cancel your {pro} access:</string>
+    <string name="proCancellationShortDescription">Canceling {pro} access will prevent automatic renewal from occurring before {pro} expires.\n\nCanceling {pro} does <b>not</b> result in a refund. You will continue to be able to use {app_pro} features until your {pro} access expires.</string>
+    <string name="proChooseAccess">Choose the {pro} access option that\'s right for you.\nLonger access means bigger discounts.</string>
+    <string name="proClearAllDataDevice">Are you sure you want to delete your data from this device?\n\n<b>{app_pro}</b> cannot be transferred to another account. Please save your Recovery Password to ensure you can restore your {pro} access later.</string>
+    <string name="proClearAllDataNetwork">Are you sure you want to delete your data from the network? If you continue, you will not be able to restore your messages or contacts.\n\n<b>{app_pro}</b> cannot be transferred to another account. Please save your Recovery Password to ensure you can restore your {pro} access later.</string>
+    <string name="proDiscountTooltip">Your {pro} access is already discounted by {percent}% of the full {app_pro} price.</string>
     <string name="proErrorRefreshingStatus">Error refreshing {pro} status</string>
     <string name="proExpired">Expired</string>
-    <string name="proExpiredDescription">Unfortunately, your {pro} plan has expired. Renew to keep accessing the exclusive perks and features of {app_pro}.</string>
+    <string name="proExpiredDescription">Unfortunately, your {pro} access has expired.\nRenew to reactivate the exclusive perks and features of {app_pro} Beta.</string>
     <string name="proExpiringSoon">Expiring Soon</string>
-    <string name="proExpiringSoonDescription">Your {pro} plan is expiring in <b>{time}</b>. Update your plan to keep accessing the exclusive perks and features of {app_pro}.</string>
+    <string name="proExpiringSoonDescription">Your {pro} access is expiring in <b>{time}</b>.\nUpdate now to keep accessing the exclusive perks and features of {app_pro} Beta</string>
     <string name="proExpiringTime">{pro} expiring in <b>{time}</b></string>
     <string name="proFaq">{pro} FAQ</string>
     <string name="proFaqDescription">Find answers to common questions in the {app_pro} FAQ.</string>
@@ -944,13 +1053,14 @@ Because you originally signed up for {app_pro} via a <b>{platform_account}</b>, 
     <string name="proFeatureListLoadsMore">Plus loads more exclusive features</string>
     <string name="proFeatureListLongerMessages">Messages up to 10,000 characters</string>
     <string name="proFeatureListPinnedConversations">Pin unlimited conversations</string>
+    <string name="proFullestPotential">Want to use {app_name} to its fullest potential?\nUpgrade to {app_pro} Beta to get access to loads of exclusive perks and features.</string>
     <string name="proGroupActivated">Group Activated</string>
     <string name="proGroupActivatedDescription">This group has expanded capacity! It can support up to 300 members because a group admin has</string>
     <plurals name="proGroupsUpgraded">
         <item quantity="one">%1$s Group Upgraded</item>
         <item quantity="other">%1$s Groups Upgraded</item>
     </plurals>
-    <string name="proImportantDescription">Requesting a refund is final. If approved, your {pro} plan will be canceled immediately and you will lose access to all {pro} features.</string>
+    <string name="proImportantDescription">Requesting a refund is final. If approved, your {pro} access will be canceled immediately and you will lose access to all {pro} features.</string>
     <string name="proIncreasedAttachmentSizeFeature">Increased Attachment Size</string>
     <string name="proIncreasedMessageLengthFeature">Increased Message Length</string>
     <string name="proLargerGroups">Larger Groups</string>
@@ -963,50 +1073,46 @@ Because you originally signed up for {app_pro} via a <b>{platform_account}</b>, 
         <item quantity="other">%1$s Longer Messages Sent</item>
     </plurals>
     <string name="proMessageInfoFeatures">This message used the following {app_pro} features:</string>
-    <string name="proOptionsRenewalSubtitle">Currently, there are three ways to renew:</string>
+    <string name="proNewInstallation">With a new installation</string>
+    <string name="proNewInstallationDescription">Reinstall {app_name} on this device via the {platform_store}, restore your account with your Recovery Password, and renew {pro} from the {app_pro} settings.</string>
+    <string name="proNewInstallationUpgrade">Reinstall {app_name} on this device via the {platform_store}, restore your account with your Recovery Password, and upgrade to {pro} from the {app_pro} settings.</string>
+    <string name="proOptionsRenewalSubtitle">For now, there are three ways to renew:</string>
+    <string name="proOptionsTwoRenewalSubtitle">For now, there are two ways to renew:</string>
     <string name="proPercentOff">{percent}% Off</string>
     <plurals name="proPinnedConversations">
         <item quantity="one">%1$s Pinned Conversation</item>
         <item quantity="other">%1$s Pinned Conversations</item>
     </plurals>
-    <string name="proPlanActivatedAuto">Your {app_pro} plan is active!\n\nYour plan will automatically renew for another <b>{current_plan}</b> on <b>{date}</b>. Updates to your plan take effect when {pro} is next renewed.</string>
-    <string name="proPlanActivatedAutoShort">Your {app_pro} plan is active!\n\nYour plan will automatically renew for another <b>{current_plan}</b> on <b>{date}</b>.</string>
-    <string name="proPlanActivatedNotAuto">Your {app_pro} plan will expire on <b>{date}</b>.\n\nUpdate your plan now to ensure uninterrupted access to exclusive Pro features.</string>
-    <string name="proPlanError">{pro} Plan Error</string>
-    <string name="proPlanExpireDate">Your {app_pro} plan will expire on <b>{date}</b>.</string>
-    <string name="proPlanLoading">{pro} Plan Loading</string>
-    <string name="proPlanLoadingDescription">Information about your {pro} plan is still being loaded. You cannot update your plan until this process is complete.</string>
-    <string name="proPlanLoadingEllipsis">{pro} plan loading...</string>
-    <string name="proPlanNetworkLoadError">Unable to connect to the network to load your current plan. Updating your plan via {app_name} will be disabled until connectivity is restored.\n\nPlease check your network connection and retry.</string>
-    <string name="proPlanNotFound">{pro} Plan Not Found</string>
-    <string name="proPlanNotFoundDescription">No active plan was found for your account. If you believe this is a mistake, please reach out to {app_name} support for assistance.</string>
-    <string name="proPlanPlatformRefund">Because you originally signed up for {app_pro} via the <b><font color="0">{platform_store} Store</font></b>, you\'ll need to use the same {platform_account} to request a refund.</string>
-    <string name="proPlanPlatformRefundLong">Because you originally signed up for {app_pro} via the <b><font color="0">{platform_store} Store</font></b>, your refund request will be processed by {app_name} Support.\n\nRequest a refund by hitting the button below and completing the refund request form.\n\nWhile {app_name} Support strives to process refund requests within 24-72 hours, processing may take longer during times of high request volume.</string>
-    <string name="proPlanRecover">Recover {pro} Plan</string>
-    <string name="proPlanRenew">Renew {pro} Plan</string>
-    <string name="proPlanRenewDesktop">Currently, {pro} plans can only be purchased and renewed via the {platform_store} or {platform_store} Stores. Because you are using {app_name} Desktop, you\'re not able to renew your plan here.\n\n{app_pro} developers are working hard on alternative payment options to allow users to purchase {pro} plans outside of the {platform_store} and {platform_store} Stores. <b>{pro} Roadmap</b> {icon}</string>
-    <string name="proPlanRenewDesktopLinked">Renew your plan in the {app_pro} settings on a linked device with {app_name} installed via the {platform_store} or {platform_store} Store.</string>
-    <string name="proPlanRenewDesktopStore">Renew your plan on the {platform_store} website using the {platform_account} you signed up for {pro} with.</string>
-    <string name="proPlanRenewStart">Renew your {app_pro} plan to start using powerful {app_pro} Beta features again.</string>
-    <string name="proPlanRenewSupport">Your {app_pro} plan has been renewed! Thank you for supporting the {network_name}.</string>
-    <string name="proPlanRestored">{pro} Plan Restored</string>
-    <string name="proPlanRestoredDescription">A valid plan for {app_pro} was detected and your {pro} status has been restored!</string>
-    <string name="proPlanSignUp">Because you originally signed up for {app_pro} via the <b>{platform_store}</b> Store, you\'ll need to use your {platform_account} to update your plan.</string>
+    <string name="proPlanPlatformRefund">Because you originally signed up for {app_pro} via the <b><font color="0">{platform_store}</font></b>, you\'ll need to use your {platform_account} to request a refund.</string>
+    <string name="proPlanPlatformRefundLong">Because you originally signed up for {app_pro} via the <b><font color="0">{platform_store}</font></b>, your refund request will be processed by {app_name} Support.\n\nRequest a refund by hitting the button below and completing the refund request form.\n\nWhile {app_name} Support strives to process refund requests within 24-72 hours, processing may take longer during times of high request volume.</string>
+    <string name="proPlanRenewSupport">Your {app_pro} access has been renewed! Thank you for supporting the {network_name}.</string>
     <string name="proPriceOneMonth">1 Month - {monthly_price} / Month</string>
     <string name="proPriceThreeMonths">3 Months - {monthly_price} / Month</string>
     <string name="proPriceTwelveMonths">12 Months - {monthly_price} / Month</string>
+    <string name="proReactivatingActivation">re-activating</string>
+    <string name="proRefundAccountDevice">Open this {app_name} account on an {device_type} device logged into the {platform_account} you originally signed up with. Then, request a refund via the {app_pro} settings.</string>
     <string name="proRefundDescription">We’re sorry to see you go. Here\'s what you need to know before requesting a refund.</string>
-    <string name="proRefundNextSteps">{platform_account} is now processing your refund request. This typically takes 24-48 hours. Depending on their decision, you may see your {pro} status change in {app_name}.</string>
+    <string name="proRefundNextSteps">{platform} is now processing your refund request. This typically takes 24-48 hours. Depending on their decision, you may see your {pro} status change in {app_name}.</string>
     <string name="proRefundRequestSessionSupport">Your refund request will be handled by {app_name} Support.\n\nRequest a refund by hitting the button below and completing the refund request form.\n\nWhile {app_name} Support strives to process refund requests within 24-72 hours, processing may take longer during times of high request volume.</string>
-    <string name="proRefundRequestStorePolicies">Your refund request will be handled exclusively by {platform_account} through the <b>{platform_account} website</b>.\n\nDue to {platform_account} refund policies, {app_name} developers have no ability to influence the outcome of refund requests. This includes whether the request is approved or denied, as well as whether a full or partial refund is issued.</string>
-    <string name="proRefundSupport">Please contact {platform_account} for further updates on your refund request. Due to {platform_account} refund policies, {app_name} developers have no ability to influence the outcome of refund requests.\n\n<font color="0">{platform_store} Refund Support</font></string>
+    <string name="proRefundRequestStorePolicies">Your refund request will be handled exclusively by {platform} through the <b>{platform} website</b>.\n\nDue to {platform} refund policies, {app_name} developers have no ability to influence the outcome of refund requests. This includes whether the request is approved or denied, as well as whether a full or partial refund is issued.</string>
+    <string name="proRefundSupport">Please contact {platform} for further updates on your refund request. Due to {platform} refund policies, {app_name} developers have no ability to influence the outcome of refund requests.\n\n<font color="0">{platform} Refund Support</font></string>
     <string name="proRefunding">Refunding {pro}</string>
-    <string name="proRefundingDescription">Refunds for {app_pro} plans are handled exclusively by {platform_account} through the {platform_store} Store.\n\nDue to {platform_account} refund policies, {app_name} developers have no ability to influence the outcome of refund requests. This includes whether the request is approved or denied, as well as whether a full or partial refund is issued.</string>
+    <string name="proRefundingDescription">Refunds for {app_pro} are handled exclusively by {platform} through the {platform_store}.\n\nDue to {platform} refund policies, {app_name} developers have no ability to influence the outcome of refund requests. This includes whether the request is approved or denied, as well as whether a full or partial refund is issued.</string>
+    <string name="proRenewAnimatedDisplayPicture">Want to use animated display pictures again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
     <string name="proRenewBeta">Renew {pro} Beta</string>
-    <string name="proRenewingNoAccessBilling">Currently, {pro} plans can only be purchased and renewed via the {platform_store} or {platform_store} Stores. Because you installed {app_name} using the {buildVariant}, you\'re not able to renew your plan here.\n\n{app_pro} developers are working hard on alternative payment options to allow users to purchase {pro} plans outside of the {platform_store} and {platform_store} Stores.<b> {pro} Roadmap</b> {icon}</string>
+    <string name="proRenewDesktopLinked">Renew your {pro} access from the {app_pro} settings on a linked device with {app_name} installed via the {platform_store} or {platform_store_other}.</string>
+    <string name="proRenewLongerMessages">Want to send longer messages again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
+    <string name="proRenewMaxPotential">Want to use {app_name} to its max potential again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
+    <string name="proRenewPinFiveConversations">Want to pin more than {limit} conversations again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
+    <string name="proRenewPinMoreConversations">Want to pin more conversations again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
+    <string name="proRenewTosPrivacy">By renewing, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
+    <string name="proRenewalUnsuccessful">Pro renewal unsuccessful, retrying soon</string>
+    <string name="proRenewingAction">renewing</string>
+    <string name="proRenewingNoAccessBilling">Currently, {pro} access can only be purchased and renewed via the {platform_store} or {platform_store_other}. Because you installed {app_name} using the {build_variant}, you\'re not able to renew here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the {platform_store} and {platform_store_other}.<b> {pro} Roadmap</b> {icon}</string>
     <string name="proRequestedRefund">Refund Requested</string>
     <string name="proSendMore">Send more with</string>
     <string name="proSettings">{pro} Settings</string>
+    <string name="proStartUsing">Start Using {pro}</string>
     <string name="proStats">Your {pro} Stats</string>
     <string name="proStatsLoading">{pro} Stats Loading</string>
     <string name="proStatsLoadingDescription">Your {pro} stats are loading, please wait.</string>
@@ -1016,16 +1122,29 @@ Because you originally signed up for {app_pro} via a <b>{platform_account}</b>, 
     <string name="proStatusLoading">{pro} Status Loading</string>
     <string name="proStatusLoadingDescription">Your {pro} information is being loaded. Some actions on this page may be unavailable until loading is complete.</string>
     <string name="proStatusLoadingSubtitle">{pro} status loading</string>
+    <string name="proStatusNetworkErrorContinue">Unable to connect to the network to check your {pro} status. You cannot continue until connectivity is restored.\n\nPlease check your network connection and retry.</string>
     <string name="proStatusNetworkErrorDescription">Unable to connect to the network to check your {pro} status. You cannot upgrade to {pro} until connectivity is restored.\n\nPlease check your network connection and retry.</string>
     <string name="proStatusRefreshNetworkError">Unable to connect to the network to refresh your {pro} status. Some actions on this page will be disabled until connectivity is restored.\n\nPlease check your network connection and retry.</string>
-    <string name="proSupportDescription">Need help with your {pro} plan? Submit a request to the support team.</string>
+    <string name="proStatusRenewError">Unable to connect to the network to load your current {pro} access. Renewing {pro} via {app_name} will be disabled until connectivity is restored.\n\nPlease check your network connection and retry.</string>
+    <string name="proSupportDescription">Need help with {pro}? Submit a request to the support team.</string>
+    <string name="proTosDescription">By {action_type}, you are {activation_type} {app_pro} via the {app_name} Protocol. {entity} will facilitate that activation but is not the provider of {app_pro}. {entity} is not responsible for the performance, availability, or functionality of {app_pro}.</string>
     <string name="proTosPrivacy">By updating, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
     <string name="proUnlimitedPins">Unlimited Pins</string>
     <string name="proUnlimitedPinsDescription">Organize all your chats with unlimited pinned conversations.</string>
-    <string name="proUpdatePlanDescription">You are currently on the <b>{current_plan} Plan</b>. Are you sure you want to switch to the <b>{selected_plan} Plan</b>?\n\nBy updating, your plan will automatically renew on <b>{date}</b> for an additional {selected_plan} of {pro} access.</string>
-    <string name="proUpdatePlanExpireDescription">Your plan will expire on <b>{date}</b>.\n\nBy updating, your plan will automatically renew on <b>{date}</b> for an additional {selected_plan} of Pro access.</string>
-    <string name="proUserProfileModalCallToAction">Want to get more out of {app_name}? Upgrade to {app_pro} for a more powerful messaging experience.</string>
-    <string name="processingRefundRequest">{platform_account} is processing your refund request</string>
+    <string name="proUpdateAccessDescription">Your current billing option grants <b>{current_plan_length}</b> of {pro} access. Are you sure you want to switch to the <b>{selected_plan_length_singular}</b> billing option?\n\nBy updating, your {pro} access will automatically renew on <b>{date}</b> for an additional <b>{selected_plan_length}</b> of {pro} access.</string>
+    <string name="proUpdateAccessExpireDescription">Your {pro} access will expire on <b>{date}</b>.\n\nBy updating, your {pro} access will automatically renew on <b>{date}</b> for an additional <b>{selected_plan_length}</b> of {pro} access.</string>
+    <string name="proUpdatingAction">updating</string>
+    <string name="proUpgradeAccess">Upgrade to {app_pro} Beta to get access to loads of exclusive perks and features.</string>
+    <string name="proUpgradeDesktopLinked">Upgrade to {pro} from the {app_pro} settings on a linked device with {app_name} installed via the {platform_store} or {platform_store_other}.</string>
+    <string name="proUpgradeNoAccessBilling">Currently, {pro} access can only be purchased via the {platform_store} or {platform_store_other}. Because you installed {app_name} using the {build_variant}, you\'re not able to upgrade to {pro} here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the {platform_store} and {platform_store_other}.<b> {pro} Roadmap</b> {icon}</string>
+    <string name="proUpgradeOption">For now, there is only one way to upgrade:</string>
+    <string name="proUpgradeOptionsTwo">For now, there are two ways to upgrade:</string>
+    <string name="proUpgraded">You have upgraded to {app_pro}!\nThank you for supporting the {network_name}.</string>
+    <string name="proUpgradingAction">upgrading</string>
+    <string name="proUpgradingTo">Upgrading to {pro}</string>
+    <string name="proUpgradingTosPrivacy">By upgrading, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
+    <string name="proUserProfileModalCallToAction">Want to get more out of {app_name}?\nUpgrade to {app_pro} Beta for a more powerful messaging experience.</string>
+    <string name="processingRefundRequest">{platform} is processing your refund request</string>
     <string name="profile">Profile</string>
     <string name="profileDisplayPicture">Display Picture</string>
     <string name="profileDisplayPictureRemoveError">Failed to remove display picture.</string>
@@ -1033,6 +1152,11 @@ Because you originally signed up for {app_pro} via a <b>{platform_account}</b>, 
     <string name="profileDisplayPictureSizeError">Please pick a smaller file.</string>
     <string name="profileErrorUpdate">Failed to update profile.</string>
     <string name="promote">Promote</string>
+    <string name="promoteAdminsWarning">Admins will be able to see the last 14 days of message history and cannot be demoted or removed from the group.</string>
+    <plurals name="promoteMember">
+        <item quantity="one">Promote Member</item>
+        <item quantity="other">Promote Members</item>
+    </plurals>
     <plurals name="promotionFailed">
         <item quantity="one">Promotion Failed</item>
         <item quantity="other">Promotions Failed</item>
@@ -1081,20 +1205,51 @@ Because you originally signed up for {app_pro} via a <b>{platform_account}</b>, 
     <string name="recoveryPasswordWarningSendDescription">This is your recovery password. If you send it to someone they\'ll have full access to your account.</string>
     <string name="recreateGroup">Recreate Group</string>
     <string name="redo">Redo</string>
-    <string name="refundPlanNonOriginatorApple">Because you originally signed up for {app_pro} via a different {platform_account}, you\'ll need to use that {platform_account} to update your plan.</string>
+    <string name="refundNonOriginatorApple">Because you originally signed up for {app_pro} via a different {platform_account}, you\'ll need to use that <b><font color="0">{platform_account}</font></b> to update your {pro} access.</string>
+    <string name="refundRequestOptions">Two ways to request a refund:</string>
     <string name="remainingCharactersOverTooltip">Reduce message length by {count}</string>
     <plurals name="remainingCharactersTooltip">
         <item quantity="one">%1$d character remaining</item>
         <item quantity="other">%1$d characters remaining</item>
     </plurals>
+    <string name="remindMeLater">Remind Me Later</string>
     <string name="remove">Remove</string>
+    <plurals name="removeMember">
+        <item quantity="one">Remove Member</item>
+        <item quantity="other">Remove Members</item>
+    </plurals>
+    <plurals name="removeMemberMessages">
+        <item quantity="one">Remove member and their messages</item>
+        <item quantity="other">Remove members and their messages</item>
+    </plurals>
     <string name="removePasswordFail">Failed to remove password</string>
     <string name="removePasswordModalDescription">Remove your current password for {app_name}. Locally stored data will be re-encrypted with a randomly generated key, stored on your device.</string>
+    <plurals name="removingMember">
+        <item quantity="one">Removing member</item>
+        <item quantity="other">Removing members</item>
+    </plurals>
     <string name="renew">Renew</string>
-    <string name="renewingPro">Renewing Pro</string>
+    <string name="renewingPro">Renewing {pro}</string>
     <string name="reply">Reply</string>
     <string name="requestRefund">Request Refund</string>
+    <string name="requestRefundPlatformWebsite">Request a refund on the <b><font color="0">{platform} website</font></b>, using the {platform_account} you signed up for {pro} with.</string>
     <string name="resend">Resend</string>
+    <plurals name="resendInvite">
+        <item quantity="one">Resend Invite</item>
+        <item quantity="other">Resend Invites</item>
+    </plurals>
+    <plurals name="resendPromotion">
+        <item quantity="one">Resend Promotion</item>
+        <item quantity="other">Resend Promotions</item>
+    </plurals>
+    <plurals name="resendingInvite">
+        <item quantity="one">Resending invite</item>
+        <item quantity="other">Resending invites</item>
+    </plurals>
+    <plurals name="resendingPromotion">
+        <item quantity="one">Resending promotion</item>
+        <item quantity="other">Resending promotions</item>
+    </plurals>
     <string name="resolving">Loading country information...</string>
     <string name="restart">Restart</string>
     <string name="resync">Resync</string>
@@ -1131,6 +1286,10 @@ Because you originally signed up for {app_pro} via a <b>{platform_account}</b>, 
     <string name="sending">Sending</string>
     <string name="sendingCallOffer">Sending Call Offer</string>
     <string name="sendingConnectionCandidates">Sending Connection Candidates</string>
+    <plurals name="sendingPromotion">
+        <item quantity="one">Sending Promotion</item>
+        <item quantity="other">Sending Promotions</item>
+    </plurals>
     <string name="sent">Sent:</string>
     <string name="sessionAppearance">Appearance</string>
     <string name="sessionClearData">Clear Data</string>
@@ -1166,6 +1325,7 @@ Because you originally signed up for {app_pro} via a <b>{platform_account}</b>, 
     <string name="shareAccountIdDescriptionCopied">Share with your friends wherever you usually speak with them — then move the conversation here.</string>
     <string name="shareExtensionDatabaseError">There is an issue opening the database. Please restart the app and try again.</string>
     <string name="shareExtensionNoAccountError">Oops! Looks like you don\'t have a {app_name} account yet.\n\nYou\'ll need to create one in the {app_name} app before you can share.</string>
+    <string name="shareGroupMessageHistory">Would you like to share group message history with this user?</string>
     <string name="shareToSession">Share to {app_name}</string>
     <string name="show">Show</string>
     <string name="showAll">Show All</string>
@@ -1195,6 +1355,9 @@ Because you originally signed up for {app_pro} via a <b>{platform_account}</b>, 
     <string name="undo">Undo</string>
     <string name="unknown">Unknown</string>
     <string name="unsupportedCpu">Unsupported CPU</string>
+    <string name="update">Update</string>
+    <string name="updateAccess">Update {pro} Access</string>
+    <string name="updateAccessTwo">Two ways to update your {pro} access:</string>
     <string name="updateApp">App updates</string>
     <string name="updateCommunityInformation">Update Community Information</string>
     <string name="updateCommunityInformationDescription">Community name and description are visible to all community members</string>
@@ -1209,8 +1372,6 @@ Because you originally signed up for {app_pro} via a <b>{platform_account}</b>, 
     <string name="updateGroupInformationEnterShorterDescription">Please enter a shorter group description</string>
     <string name="updateNewVersion">A new version of {app_name} is available, tap to update</string>
     <string name="updateNewVersionDescription">A new version ({version}) of {app_name} is available.</string>
-    <string name="updatePlan">Update Plan</string>
-    <string name="updatePlanTwo">Two ways to update your plan:</string>
     <string name="updateProfileInformation">Update Profile Information</string>
     <string name="updateProfileInformationDescription">Your display name and display picture are visible in all conversations.</string>
     <string name="updateReleaseNotes">Go to Release Notes</string>
@@ -1219,6 +1380,7 @@ Because you originally signed up for {app_pro} via a <b>{platform_account}</b>, 
     <string name="updated">Last updated {relative_time} ago</string>
     <string name="updates">Updates</string>
     <string name="updating">Updating...</string>
+    <string name="upgrade">Upgrade</string>
     <string name="upgradeSession">Upgrade {app_name}</string>
     <string name="upgradeTo">Upgrade to</string>
     <string name="uploading">Uploading</string>
@@ -1228,8 +1390,9 @@ Because you originally signed up for {app_pro} via a <b>{platform_account}</b>, 
     <string name="urlOpenDescription">Are you sure you want to open this URL in your browser?\n\n<b>{url}</b></string>
     <string name="urlOpenDescriptionAlternative">Links will open in your browser.</string>
     <string name="useFastMode">Use Fast Mode</string>
-    <string name="viaStoreWebsite">Via the {platform_store} website</string>
-    <string name="viaStoreWebsiteDescription">Change your plan using the {platform_account} you used to sign up with, via the <b><font color="0">{platform_store}</font></b> website.</string>
+    <string name="viaPlatformWebsiteDescription">Change your plan using the {platform_account} you used to sign up with, via the <b><font color="0">{platform} website</font></b> .</string>
+    <string name="viaStoreWebsite">Via the {platform} website</string>
+    <string name="viaStoreWebsiteDescription">Update your {pro} access using the {platform_account} you used to sign up with, via the <b><font color="0">{platform_store}</font></b> website.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Unable to play video.</string>
     <string name="view">View</string>
@@ -1238,6 +1401,7 @@ Because you originally signed up for {app_pro} via a <b>{platform_account}</b>, 
     <string name="waitFewMinutes">This can take a few minutes.</string>
     <string name="waitOneMoment">One moment please...</string>
     <string name="warning">Warning</string>
+    <string name="warningIosVersionEndingSupport">Support for iOS 15 has ended. Update to iOS 16 or later to continue receiving app updates.</string>
     <string name="window">Window</string>
     <string name="yes">Yes</string>
     <string name="you">You</string>

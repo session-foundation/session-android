@@ -4,10 +4,10 @@ import network.loki.messenger.libsession_util.SessionEncrypt
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.sending_receiving.MessageSender.Error
 import org.session.libsignal.utilities.Hex
-import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.removingIdPrefixIfNeeded
 
+@Deprecated("This class is deprecated and new code should try to encrypt/encode message using SessionProtocol API")
 object MessageEncrypter {
 
     /**
@@ -19,7 +19,7 @@ object MessageEncrypter {
      * @return the encrypted message.
      */
     internal fun encrypt(plaintext: ByteArray, recipientHexEncodedX25519PublicKey: String): ByteArray {
-        val userED25519KeyPair = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair() ?: throw Error.NoUserED25519KeyPair
+        val userED25519KeyPair = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair() ?: throw Error.NoUserED25519KeyPair()
         val recipientX25519PublicKey = Hex.fromStringCondensed(recipientHexEncodedX25519PublicKey.removingIdPrefixIfNeeded())
 
         try {
@@ -30,26 +30,8 @@ object MessageEncrypter {
             ).data
         } catch (exception: Exception) {
             Log.d("Loki", "Couldn't encrypt message due to error: $exception.")
-            throw Error.EncryptionFailed
+            throw Error.EncryptionFailed()
         }
-    }
-
-    internal fun encryptBlinded(
-        plaintext: ByteArray,
-        recipientBlindedId: String,
-        serverPublicKey: String
-    ): ByteArray {
-        if (IdPrefix.fromValue(recipientBlindedId) != IdPrefix.BLINDED) throw Error.SigningFailed
-        val userEdKeyPair =
-            MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair() ?: throw Error.NoUserED25519KeyPair
-        val recipientBlindedPublicKey = Hex.fromStringCondensed(recipientBlindedId.removingIdPrefixIfNeeded())
-
-        return SessionEncrypt.encryptForBlindedRecipient(
-            message = plaintext,
-            myEd25519Privkey = userEdKeyPair.secretKey.data,
-            serverPubKey = Hex.fromStringCondensed(serverPublicKey),
-            recipientBlindId = byteArrayOf(0x15) + recipientBlindedPublicKey
-        ).data
     }
 
 }

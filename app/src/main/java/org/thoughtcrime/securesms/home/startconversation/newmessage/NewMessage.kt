@@ -124,7 +124,7 @@ private fun EnterAccountId(
                         .fillMaxWidth(),
                     style = LocalType.current.small,
                     color = LocalColors.current.textSecondary,
-                    iconRes = R.drawable.ic_circle_help,
+                    iconRes = R.drawable.ic_square_arrow_up_right,
                     onClick = onHelp
                 )
             }

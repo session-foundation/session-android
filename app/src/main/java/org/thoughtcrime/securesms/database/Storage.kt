@@ -4,10 +4,11 @@ import android.content.Context
 import android.net.Uri
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.PRIORITY_PINNED
+import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.MutableConversationVolatileConfig
 import network.loki.messenger.libsession_util.ReadableUserGroupsConfig
+import network.loki.messenger.libsession_util.protocol.ProFeatures
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.Conversation
@@ -23,19 +24,16 @@ import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.GroupUpdated
-import org.session.libsession.messaging.messages.signal.IncomingEncryptedMessage
-import org.session.libsession.messaging.messages.signal.IncomingGroupMessage
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
 import org.session.libsession.messaging.messages.signal.IncomingTextMessage
-import org.session.libsession.messaging.messages.signal.OutgoingGroupMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.Attachment
-import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsession.messaging.messages.visible.Reaction
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
+import org.session.libsession.messaging.sending_receiving.attachments.PointerAttachment
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
@@ -49,7 +47,6 @@ import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.isCommunity
 import org.session.libsession.utilities.isCommunityInbox
@@ -59,12 +56,10 @@ import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
-import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.KeyHelper
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
-import org.thoughtcrime.securesms.crypto.KeyPairUtilities
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
@@ -72,7 +67,6 @@ import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.PartAuthority
-import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
 import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import java.time.Instant
@@ -80,7 +74,6 @@ import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
-import kotlin.math.max
 import network.loki.messenger.libsession_util.util.GroupMember as LibSessionGroupMember
 
 private const val TAG = "Storage"
@@ -94,7 +87,6 @@ open class Storage @Inject constructor(
     private val threadDatabase: ThreadDatabase,
     private val recipientDatabase: RecipientSettingsDatabase,
     private val attachmentDatabase: AttachmentDatabase,
-    private val draftDatabase: DraftDatabase,
     private val lokiAPIDatabase: LokiAPIDatabase,
     private val groupDatabase: GroupDatabase,
     private val lokiMessageDatabase: LokiMessageDatabase,
@@ -105,41 +97,24 @@ open class Storage @Inject constructor(
     private val notificationManager: MessageNotifier,
     private val messageDataProvider: MessageDataProvider,
     private val clock: SnodeClock,
-    private val preferences: TextSecurePreferences,
     private val openGroupManager: Lazy<OpenGroupManager>,
     private val recipientRepository: RecipientRepository,
+    private val loginStateRepository: LoginStateRepository,
 ) : Database(context, helper), StorageProtocol {
 
-    override fun getUserPublicKey(): String? { return preferences.getLocalNumber() }
+    override fun getUserPublicKey(): String? { return loginStateRepository.peekLoginState()?.accountId?.hexString }
 
-    override fun getUserX25519KeyPair(): ECKeyPair { return lokiAPIDatabase.getUserX25519KeyPair() }
+    override fun getUserX25519KeyPair(): KeyPair = requireNotNull(loginStateRepository.peekLoginState()) {
+        "No logged in state available"
+    }.accountX25519KeyPair
 
-    override fun getUserED25519KeyPair(): KeyPair? { return KeyPairUtilities.getUserED25519KeyPair(context) }
+    override fun getUserED25519KeyPair(): KeyPair? {
+        return loginStateRepository.peekLoginState()?.accountEd25519KeyPair
+    }
 
     override fun getUserBlindedAccountId(serverPublicKey: String): AccountId? {
         val myId = getUserPublicKey() ?: return null
         return AccountId(BlindKeyAPI.blind15Ids(myId, serverPublicKey).first())
-    }
-
-    override fun getUserProfile(): Profile {
-        return configFactory.withUserConfigs { configs ->
-            val pic = configs.userProfile.getPic()
-            Profile(
-                displayName = configs.userProfile.getName(),
-                profilePictureURL = pic.url.takeIf { it.isNotBlank() },
-                profileKey = pic.key.data.takeIf { pic.url.isNotBlank() },
-                profileUpdated = configs.userProfile.getProfileUpdatedSeconds().secondsToInstant(),
-            )
-        }
-    }
-
-    override fun getOrGenerateRegistrationID(): Int {
-        var registrationID = TextSecurePreferences.getLocalRegistrationId(context)
-        if (registrationID == 0) {
-            registrationID = KeyHelper.generateRegistrationId(false)
-            TextSecurePreferences.setLocalRegistrationId(context, registrationID)
-        }
-        return registrationID
     }
 
     override fun getAttachmentsForMessage(mmsMessageId: Long): List<DatabaseAttachment> {
@@ -345,20 +320,20 @@ open class Storage @Inject constructor(
             }
 
             val quote: Optional<QuoteModel> = if (quotes != null) Optional.of(quotes) else Optional.absent()
-            val linkPreviews: Optional<List<LinkPreview>> = if (linkPreview.isEmpty()) Optional.absent() else Optional.of(linkPreview.mapNotNull { it!! })
+            val linkPreviews = linkPreview.mapNotNull { it }
             val insertResult = if (isUserSender || isUserBlindedSender) {
                 val pointers = attachments.mapNotNull {
                     it.toSignalAttachment()
                 }
 
-                val mediaMessage = OutgoingMediaMessage.from(
-                    message,
-                    targetAddress,
-                    pointers,
-                    quote.orNull(),
-                    linkPreviews.orNull()?.firstOrNull(),
-                    expiresInMillis,
-                    expireStartedAt
+                val mediaMessage = OutgoingMediaMessage(
+                    message = message,
+                    recipient = targetAddress,
+                    attachments = pointers,
+                    outgoingQuote = quote.orNull(),
+                    linkPreview = linkPreviews.firstOrNull(),
+                    expiresInMillis = expiresInMillis,
+                    expireStartedAt = expireStartedAt
                 )
                 mmsDatabase.insertSecureDecryptedMessageOutbox(mediaMessage, message.threadID ?: -1, message.sentTimestamp!!, runThreadUpdate)
             } else {
@@ -366,7 +341,16 @@ open class Storage @Inject constructor(
                 val signalServiceAttachments = attachments.mapNotNull {
                     it.toSignalPointer()
                 }
-                val mediaMessage = IncomingMediaMessage.from(message, senderAddress, expiresInMillis, expireStartedAt, Optional.fromNullable(threadRecipient.address as? Address.GroupLike), signalServiceAttachments, quote, linkPreviews)
+                val mediaMessage = IncomingMediaMessage(
+                    message = message,
+                    from = senderAddress,
+                    expiresIn = expiresInMillis,
+                    expireStartedAt = expireStartedAt,
+                    group = threadRecipient.address as? Address.GroupLike,
+                    attachments = PointerAttachment.forPointers(Optional.of(signalServiceAttachments)),
+                    quote = quotes,
+                    linkPreviews = linkPreviews
+                )
                 mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, message.threadID!!, message.receivedTimestamp ?: 0, runThreadUpdate)
             }
 
@@ -376,14 +360,37 @@ open class Storage @Inject constructor(
             val isOpenGroupInvitation = (message.openGroupInvitation != null)
 
             val insertResult = if (isUserSender || isUserBlindedSender) {
-                val textMessage = if (isOpenGroupInvitation) OutgoingTextMessage.fromOpenGroupInvitation(message.openGroupInvitation, targetAddress, message.sentTimestamp, expiresInMillis, expireStartedAt)
-                else OutgoingTextMessage.from(message, targetAddress, expiresInMillis, expireStartedAt)
+                val textMessage = if (isOpenGroupInvitation) OutgoingTextMessage.fromOpenGroupInvitation(
+                    invitation = message.openGroupInvitation!!,
+                    recipient = targetAddress,
+                    sentTimestampMillis = message.sentTimestamp!!,
+                    expiresInMillis = expiresInMillis,
+                    expireStartedAtMillis = expireStartedAt
+                )!!
+                else OutgoingTextMessage(
+                    message = message,
+                    recipient = targetAddress,
+                    expiresInMillis = expiresInMillis,
+                    expireStartedAtMillis = expireStartedAt
+                )
+
                 smsDatabase.insertMessageOutbox(message.threadID ?: -1, textMessage, message.sentTimestamp!!, runThreadUpdate)
             } else {
-                val textMessage = if (isOpenGroupInvitation) IncomingTextMessage.fromOpenGroupInvitation(message.openGroupInvitation, senderAddress, message.sentTimestamp, expiresInMillis, expireStartedAt)
-                else IncomingTextMessage.from(message, senderAddress, Optional.fromNullable(threadRecipient.address as? Address.GroupLike), expiresInMillis, expireStartedAt)
-                val encrypted = IncomingEncryptedMessage(textMessage, textMessage.messageBody)
-                smsDatabase.insertMessageInbox(encrypted, message.receivedTimestamp ?: 0, runThreadUpdate)
+                val textMessage = if (isOpenGroupInvitation) IncomingTextMessage.fromOpenGroupInvitation(
+                    invitation = message.openGroupInvitation!!,
+                    sender = senderAddress,
+                    sentTimestampMillis = message.sentTimestamp!!,
+                    expiresInMillis = expiresInMillis,
+                    expireStartedAt = expireStartedAt
+                )!!
+                else IncomingTextMessage(
+                    message = message,
+                    sender = senderAddress,
+                    group = threadRecipient.address as? Address.GroupLike,
+                    expiresInMillis = expiresInMillis,
+                    expireStartedAt = expireStartedAt
+                )
+                smsDatabase.insertMessageInbox(textMessage.copy(isSecureMessage = true), message.receivedTimestamp ?: 0, runThreadUpdate)
             }
             messageID = insertResult.orNull()?.messageId?.let { MessageId(it, mms = false) }
         }
@@ -659,40 +666,6 @@ open class Storage @Inject constructor(
         groupDatabase.updateMembers(groupID, members)
     }
 
-    override fun insertOutgoingInfoMessage(context: Context, groupID: String, type: SignalServiceGroup.Type, name: String, members: Collection<String>, admins: Collection<String>, threadID: Long, sentTimestamp: Long): Long? {
-        val userPublicKey = getUserPublicKey()!!
-        val recipient = fromSerialized(groupID)
-        val updateData = UpdateMessageData.buildGroupUpdate(type, name, members)?.toJSON() ?: ""
-        val infoMessage = OutgoingGroupMediaMessage(
-            recipient,
-            updateData,
-            groupID,
-            null,
-            sentTimestamp,
-            0,
-            0,
-            true,
-            null,
-            listOf(),
-            listOf(),
-            null
-        )
-        val mmsDB = mmsDatabase
-        val mmsSmsDB = mmsSmsDatabase
-        if (mmsSmsDB.getMessageFor(threadID, sentTimestamp, userPublicKey) != null) {
-            Log.w(TAG, "Bailing from insertOutgoingInfoMessage because we believe the message has already been sent!")
-            return null
-        }
-        val infoMessageID = mmsDB.insertMessageOutbox(
-            infoMessage,
-            threadID,
-            false,
-            runThreadUpdate = true
-        )
-        mmsDB.markAsSent(infoMessageID, true)
-        return infoMessageID
-    }
-
     override fun isLegacyClosedGroup(publicKey: String): Boolean {
         return lokiAPIDatabase.isClosedGroup(publicKey)
     }
@@ -812,30 +785,29 @@ open class Storage @Inject constructor(
 
     private fun insertUpdateControlMessage(updateData: UpdateMessageData, sentTimestamp: Long, senderPublicKey: String?, closedGroup: AccountId): MessageId? {
         val userPublicKey = getUserPublicKey()!!
-        val address = fromSerialized(closedGroup.hexString)
+        val address = Address.Group(closedGroup)
         val recipient = recipientRepository.getRecipientSync(address)
         val threadDb = threadDatabase
         val threadID = threadDb.getThreadIdIfExistsFor(address)
         val expiryMode = recipient.expiryMode
-        val expiresInMillis = expiryMode?.expiryMillis ?: 0
+        val expiresInMillis = expiryMode.expiryMillis
         val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) sentTimestamp else 0
         val inviteJson = updateData.toJSON()
 
 
         if (senderPublicKey == null || senderPublicKey == userPublicKey) {
-            val infoMessage = OutgoingGroupMediaMessage(
-                address,
-                inviteJson,
-                closedGroup.hexString,
-                null,
-                sentTimestamp,
-                expiresInMillis,
-                expireStartedAt,
-                true,
-                null,
-                listOf(),
-                listOf(),
-                null
+            val infoMessage = OutgoingMediaMessage(
+                recipient = address,
+                body = inviteJson,
+                group = address,
+                avatar = null,
+                sentTimeMillis = sentTimestamp,
+                expiresInMillis = expiresInMillis,
+                expireStartedAtMillis = expireStartedAt,
+                isGroupUpdateMessage = true,
+                quote = null,
+                previews = listOf(),
+                messageContent = null
             )
             val mmsDB = mmsDatabase
             val mmsSmsDB = mmsSmsDatabase
@@ -850,10 +822,27 @@ open class Storage @Inject constructor(
             mmsDB.markAsSent(infoMessageID, true)
             return MessageId(infoMessageID, mms = true)
         } else {
-            val m = IncomingTextMessage(fromSerialized(senderPublicKey), 1, sentTimestamp, "", Optional.of(Address.Group(closedGroup)), expiresInMillis, expireStartedAt, true, false)
-            val infoMessage = IncomingGroupMessage(m, inviteJson, true)
+            val m = IncomingTextMessage(
+                message = inviteJson,
+                sender = fromSerialized(senderPublicKey),
+                sentTimestampMillis = sentTimestamp,
+                group = Address.Group(closedGroup),
+                push = true,
+                expiresInMillis = expiresInMillis,
+                expireStartedAt = expireStartedAt,
+                callType = -1,
+                hasMention = false,
+                isOpenGroupInvitation = false,
+                isSecureMessage = false,
+                proFeatures = ProFeatures.NONE,
+                isGroupMessage = true,
+                isGroupUpdateMessage = true,
+            )
             val smsDB = smsDatabase
-            val insertResult = smsDB.insertMessageInbox(infoMessage,  true)
+            val insertResult = smsDB.insertMessageInbox(m.copy(
+                isGroupUpdateMessage = true,
+                message = inviteJson
+            ),  true)
             return insertResult.orNull()?.messageId?.let { MessageId(it, mms = false) }
         }
     }
@@ -884,12 +873,7 @@ open class Storage @Inject constructor(
     }
 
     override fun getThreadIdForMms(mmsId: Long): Long {
-        val mmsDb = mmsDatabase
-        val cursor = mmsDb.getMessage(mmsId)
-        val reader = mmsDb.readerFor(cursor)
-        val threadId = reader.next?.threadId
-        cursor.close()
-        return threadId ?: -1
+        return mmsDatabase.getThreadIdForMessage(mmsId)
     }
 
     override fun getRecipientForThread(threadId: Long): Recipient? {
@@ -1060,19 +1044,18 @@ open class Storage @Inject constructor(
         val mediaMessage = IncomingMediaMessage(
             address,
             sentTimestamp,
-            -1,
             expiresInMillis,
             expireStartedAt,
             false,
             false,
-            Optional.absent(),
-            Optional.absent(),
-            Optional.absent(),
             null,
-            Optional.absent(),
-            Optional.absent(),
-            Optional.absent(),
-            Optional.of(message)
+            null,
+            emptyList(),
+            ProFeatures.NONE,
+            null,
+            null,
+            emptyList(),
+            message
         )
 
         mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, threadId, runThreadUpdate = true)
@@ -1085,21 +1068,20 @@ open class Storage @Inject constructor(
         val userPublicKey = getUserPublicKey() ?: return
 
         val message = IncomingMediaMessage(
-            fromSerialized(userPublicKey),
-            clock.currentTimeMills(),
-            -1,
-            0,
-            0,
-            true,
-            false,
-            Optional.absent(),
-            Optional.absent(),
-            Optional.absent(),
-            null,
-            Optional.absent(),
-            Optional.absent(),
-            Optional.absent(),
-            Optional.absent()
+            from = fromSerialized(userPublicKey),
+            sentTimeMillis = clock.currentTimeMills(),
+            expiresIn = 0,
+            expireStartedAt = 0,
+            isMessageRequestResponse = true,
+            hasMention = false,
+            body = null,
+            group = null,
+            attachments = emptyList(),
+            proFeatures = ProFeatures.NONE,
+            messageContent = null,
+            quote = null,
+            linkPreviews = emptyList(),
+            dataExtractionNotification = null
         )
         mmsDatabase.insertSecureDecryptedMessageInbox(message, threadId, runThreadUpdate = true)
     }
@@ -1110,7 +1092,14 @@ open class Storage @Inject constructor(
         val expiryMode = recipient.expiryMode.coerceSendToRead()
         val expiresInMillis = expiryMode.expiryMillis
         val expireStartedAt = if (expiryMode != ExpiryMode.NONE) clock.currentTimeMills() else 0
-        val callMessage = IncomingTextMessage.fromCallInfo(callMessageType, address, Optional.absent(), sentTimestamp, expiresInMillis, expireStartedAt)
+        val callMessage = IncomingTextMessage(
+            callMessageType = callMessageType,
+            sender = address,
+            group = null,
+            sentTimestampMillis = sentTimestamp,
+            expiresInMillis = expiresInMillis,
+            expireStartedAt = expireStartedAt
+        )
         smsDatabase.insertCallMessage(callMessage)
     }
 

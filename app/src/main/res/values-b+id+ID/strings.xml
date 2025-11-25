@@ -15,7 +15,6 @@
     <string name="accountIdYoursDescription">Ini adalah ID akun anda. Pengguna lain bisa memindainya untuk memulai percakapan dengan anda.</string>
     <string name="actualSize">Ukuran Sebenarnya</string>
     <string name="add">Tambahkan</string>
-    <string name="addAdmins">Tambah Admin</string>
     <string name="adminCannotBeRemoved">Admin tidak dapat dihapus.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> dan <b>{count} lainnya</b> dipromosikan menjadi Admin.</string>
     <string name="adminPromote">Promosikan Admin</string>

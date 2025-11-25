@@ -20,8 +20,6 @@ import android.content.Context;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
-import android.text.style.RelativeSizeSpan;
-import android.text.style.StyleSpan;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -33,8 +31,6 @@ import org.session.libsession.messaging.utilities.UpdateMessageBuilder;
 import org.session.libsession.messaging.utilities.UpdateMessageData;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.AddressKt;
-import org.session.libsession.utilities.IdentityKeyMismatch;
-import org.session.libsession.utilities.NetworkFailure;
 import org.session.libsession.utilities.ThemeUtil;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.AccountId;
@@ -57,8 +53,6 @@ import network.loki.messenger.R;
  */
 public abstract class MessageRecord extends DisplayRecord {
   private final Recipient individualRecipient;
-  private final List<IdentityKeyMismatch> mismatches;
-  private final List<NetworkFailure>      networkFailures;
   private final long                      expiresIn;
   private final long                      expireStarted;
   public  final long                      id;
@@ -67,6 +61,7 @@ public abstract class MessageRecord extends DisplayRecord {
 
   @Nullable
   private UpdateMessageData               groupUpdateMessage;
+  final long                              proFeaturesRawValue;
 
   public abstract boolean isMms();
   public abstract boolean isMmsNotification();
@@ -79,22 +74,20 @@ public abstract class MessageRecord extends DisplayRecord {
                 Recipient individualRecipient,
                 long dateSent, long dateReceived, long threadId,
                 int deliveryStatus, int deliveryReceiptCount, long type,
-                List<IdentityKeyMismatch> mismatches,
-                List<NetworkFailure> networkFailures,
                 long expiresIn, long expireStarted,
                 int readReceiptCount, List<ReactionRecord> reactions, boolean hasMention,
-                @Nullable MessageContent messageContent)
+                @Nullable MessageContent messageContent,
+                long proFeaturesRawValue)
   {
     super(body, conversationRecipient, dateSent, dateReceived,
       threadId, deliveryStatus, deliveryReceiptCount, type, readReceiptCount, messageContent);
     this.id                  = id;
     this.individualRecipient = individualRecipient;
-    this.mismatches          = mismatches;
-    this.networkFailures     = networkFailures;
     this.expiresIn           = expiresIn;
     this.expireStarted       = expireStarted;
     this.reactions           = reactions;
     this.hasMention          = hasMention;
+    this.proFeaturesRawValue = proFeaturesRawValue;
   }
 
   public long getId() {
@@ -109,9 +102,7 @@ public abstract class MessageRecord extends DisplayRecord {
   public long getType() {
     return type;
   }
-  public List<NetworkFailure> getNetworkFailures() {
-    return networkFailures;
-  }
+
   public long getExpiresIn() {
     return expiresIn;
   }
@@ -197,15 +188,7 @@ public abstract class MessageRecord extends DisplayRecord {
     return updateMessageData != null && updateMessageData.getKind() instanceof UpdateMessageData.Kind.GroupExpirationUpdated;
   }
 
-  protected SpannableString emphasisAdded(String sequence) {
-    SpannableString spannable = new SpannableString(sequence);
-    spannable.setSpan(new RelativeSizeSpan(0.9f), 0, sequence.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-    spannable.setSpan(new StyleSpan(android.graphics.Typeface.ITALIC), 0, sequence.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-    return spannable;
-  }
-
-  @Override
+    @Override
   public boolean equals(Object other) {
     return other instanceof MessageRecord
             && ((MessageRecord) other).getId() == getId()
