@@ -53,7 +53,6 @@ import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.util.ClearDataUtils
 import org.thoughtcrime.securesms.util.DateUtils
 import java.time.ZonedDateTime
-import kotlin.time.Instant
 
 
 @HiltViewModel(assistedFactory = DebugMenuViewModel.Factory::class)
@@ -115,6 +114,7 @@ class DebugMenuViewModel @AssistedInject constructor(
                 DebugSubscriptionStatus.EXPIRED,
                 DebugSubscriptionStatus.EXPIRED_EARLIER,
                 DebugSubscriptionStatus.EXPIRED_APPLE,
+                DebugSubscriptionStatus.AUTO_APPLE_REFUNDING,
             ),
             selectedDebugSubscriptionStatus = textSecurePreferences.getDebugSubscriptionType() ?: DebugSubscriptionStatus.AUTO_GOOGLE,
             debugProPlanStatus = setOf(
@@ -656,6 +656,7 @@ class DebugMenuViewModel @AssistedInject constructor(
 
     enum class DebugSubscriptionStatus(val label: String) {
         AUTO_GOOGLE("Auto Renewing (Google, 3 months)"),
+        AUTO_APPLE_REFUNDING("Refunding (Apple, 3 months)"),
         EXPIRING_GOOGLE("Expiring/Cancelled (Expires in 14 days, Google, 12 months)"),
         EXPIRING_GOOGLE_LATER("Expiring/Cancelled (Expires in 40 days, Google, 12 months)"),
         AUTO_APPLE("Auto Renewing (Apple, 1 months)"),

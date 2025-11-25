@@ -13,12 +13,14 @@ sealed interface ProStatus{
         val duration: ProSubscriptionDuration
         val providerData: PaymentProviderMetadata
         val quickRefundExpiry: Instant?
+        val refundInProgress: Boolean
 
         data class AutoRenewing(
             override val validUntil: Instant,
             override val duration: ProSubscriptionDuration,
             override val providerData: PaymentProviderMetadata,
-            override val quickRefundExpiry: Instant?
+            override val quickRefundExpiry: Instant?,
+            override val refundInProgress: Boolean
         ): Active
 
         data class Expiring(
@@ -26,6 +28,8 @@ sealed interface ProStatus{
             override val duration: ProSubscriptionDuration,
             override val providerData: PaymentProviderMetadata,
             override val quickRefundExpiry: Instant?
+            ,
+            override val refundInProgress: Boolean
         ): Active
 
         fun isWithinQuickRefundWindow(): Boolean {
