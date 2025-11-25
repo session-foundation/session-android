@@ -14,7 +14,6 @@
     <string name="accountIdYoursDescription">Dette er din kontoid. Andre brugere kan scanne den for at starte en samtale med dig.</string>
     <string name="actualSize">Faktisk størrelse</string>
     <string name="add">Tilføj</string>
-    <string name="addAdmins">Tilføj administratorer</string>
     <string name="adminCannotBeRemoved">Admins kan ikke fjernes.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> og <b>{count} andre</b> blev forfremmet til Admin.</string>
     <string name="adminPromote">Forfrem administratorer</string>

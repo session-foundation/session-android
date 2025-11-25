@@ -96,6 +96,7 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
+import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
@@ -265,6 +266,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var clock: SnodeClock
     @Inject lateinit var messageSender: MessageSender
     @Inject lateinit var resendMessageUtilities: ResendMessageUtilities
+    @Inject lateinit var messageNotifier: MessageNotifier
     @Inject @ManagerScope
     lateinit var scope: CoroutineScope
 
@@ -771,12 +773,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onResume() {
         super.onResume()
-        ApplicationContext.getInstance(this).messageNotifier.setVisibleThread(viewModel.threadId)
+        messageNotifier.setVisibleThread(viewModel.threadId)
     }
 
     override fun onPause() {
         super.onPause()
-        ApplicationContext.getInstance(this).messageNotifier.setVisibleThread(-1)
+        messageNotifier.setVisibleThread(-1)
     }
 
     override fun getSystemService(name: String): Any? {

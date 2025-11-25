@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -40,6 +41,12 @@ fun RefundPlanScreen(
     viewModel: ProSettingsViewModel,
     onBack: () -> Unit,
 ) {
+    LaunchedEffect(Unit) {
+        // ensuring we get the latest data here
+        // since we can deep link to this screen without going through the pro home screen
+        viewModel.ensureRefundState()
+    }
+
     val state by viewModel.refundPlanState.collectAsState()
 
     BaseStateProScreen(

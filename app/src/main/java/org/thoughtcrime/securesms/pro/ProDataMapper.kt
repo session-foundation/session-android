@@ -85,9 +85,9 @@ val previewAppleMetaData = PaymentProviderMetadata(
     platformAccount = "Apple Account",
     updateSubscriptionUrl = "https://www.apple.com/account/subscriptions",
     cancelSubscriptionUrl = "https://www.apple.com/account/subscriptions",
-    refundUrl = "https://www.apple.com/account/subscriptions",
+    refundPlatformUrl = "https://www.apple.com/account/subscriptions",
     refundSupportUrl = "https://www.apple.com/account/subscriptions",
-    refundAfterPlatformDeadlineUrl = "https://www.apple.com/account/subscriptions"
+    refundStatusUrl = "https://www.apple.com/account/subscriptions"
 )
 
 val previewAutoRenewingApple = ProStatus.Active.AutoRenewing(

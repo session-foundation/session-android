@@ -251,7 +251,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
 
             // Return the first active subscription
             result.purchasesList.firstOrNull {
-                it.purchaseState == Purchase.PurchaseState.PURCHASED //todo PRO Should we also OR PENDING here?
+                it.purchaseState == Purchase.PurchaseState.PURCHASED
             }
         } catch (e: Exception) {
             Log.e(DebugLogGroup.PRO_SUBSCRIPTION.label, "Error querying existing subscription", e)

@@ -20,7 +20,6 @@ import org.thoughtcrime.securesms.logging.PersistentLogger
 import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
 import org.thoughtcrime.securesms.notifications.BackgroundPollManager
 import org.thoughtcrime.securesms.notifications.PushRegistrationHandler
-import org.thoughtcrime.securesms.pro.ProStatePoller
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionCoordinator
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
@@ -71,7 +70,6 @@ class OnAppStartupComponents private constructor(
         avatarUploadManager: AvatarUploadManager,
         configToDatabaseSync: ConfigToDatabaseSync,
         subscriptionManagers: Set<@JvmSuppressWildcards SubscriptionManager>,
-        proStatePoller: ProStatePoller,
     ): this(
         components = listOf(
             configUploader,
@@ -103,7 +101,6 @@ class OnAppStartupComponents private constructor(
             subscriptionCoordinator,
             avatarUploadManager,
             configToDatabaseSync,
-            proStatePoller,
         ) + subscriptionManagers
     )
 }

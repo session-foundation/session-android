@@ -22,8 +22,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
+import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.protocol.ProFeature
 import network.loki.messenger.libsession_util.protocol.ProFeatures

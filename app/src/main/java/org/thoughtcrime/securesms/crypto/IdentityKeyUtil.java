@@ -20,7 +20,6 @@ package org.thoughtcrime.securesms.crypto;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.os.Build;
 
 import androidx.annotation.NonNull;
 
@@ -31,7 +30,6 @@ import org.session.libsignal.crypto.ecc.DjbECPrivateKey;
 import org.session.libsignal.crypto.ecc.DjbECPublicKey;
 import org.session.libsignal.crypto.ecc.ECKeyPair;
 import org.session.libsignal.crypto.ecc.ECPrivateKey;
-import org.session.libsignal.crypto.ecc.ECPublicKey;
 import org.session.libsignal.exceptions.InvalidKeyException;
 import org.session.libsignal.utilities.Base64;
 
@@ -40,7 +38,6 @@ import java.io.IOException;
 import kotlin.Unit;
 import kotlinx.coroutines.channels.BufferOverflow;
 import kotlinx.coroutines.flow.MutableSharedFlow;
-import kotlinx.coroutines.flow.MutableStateFlow;
 import kotlinx.coroutines.flow.SharedFlowKt;
 import network.loki.messenger.libsession_util.Curve25519;
 import network.loki.messenger.libsession_util.util.KeyPair;

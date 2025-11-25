@@ -105,7 +105,6 @@ protobuf {
 
 android {
     namespace = "network.loki.messenger"
-    useLibrary("org.apache.http.legacy")
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21

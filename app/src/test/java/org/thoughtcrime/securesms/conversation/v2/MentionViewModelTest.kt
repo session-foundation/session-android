@@ -7,7 +7,7 @@ import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.junit.Before
 import org.junit.Rule

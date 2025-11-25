@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.util.Util
 import org.session.libsession.utilities.StringSubstitutionConstants.LIMIT_KEY
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.pro.ProStatus
@@ -33,7 +34,7 @@ abstract class InputbarViewModel(
     fun onTextChanged(text: CharSequence) {
         // check the character limit
         val maxChars = proStatusManager.getCharacterLimit(currentUser.isPro)
-        val charsLeft = maxChars - text.length
+        val charsLeft = maxChars - Util.countCodepoints(text.toString())
 
         // update the char limit state based on characters left
         val charLimitState = if(charsLeft <= CHARACTER_LIMIT_THRESHOLD){
