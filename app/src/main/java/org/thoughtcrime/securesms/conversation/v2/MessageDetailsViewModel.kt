@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.conversation.v2
 
+import android.content.Context
 import android.net.Uri
 import android.text.format.Formatter
 import androidx.annotation.DrawableRes
@@ -9,6 +10,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -34,7 +36,6 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.IdPrefix
-import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.MediaPreviewArgs
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
@@ -68,7 +69,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val threadDb: ThreadDatabase,
     private val deprecationManager: LegacyGroupDeprecationManager,
-    private val context: ApplicationContext,
+    @param:ApplicationContext private val context: Context,
     private val avatarUtils: AvatarUtils,
     private val dateUtils: DateUtils,
     private val recipientRepository: RecipientRepository,
