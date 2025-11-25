@@ -24,6 +24,7 @@ import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.sending_receiving.notifications.Response
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix

@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
@@ -47,6 +46,7 @@ class PushRegistrationHandler @Inject constructor(
     @param:ManagerScope private val scope: CoroutineScope,
     @param:PushNotificationModule.PushProcessingSemaphore
     private val semaphore: Semaphore,
+    private val storage: StorageProtocol,
     private val pushRegistrationDatabase: PushRegistrationDatabase,
 ) : OnAppStartupComponent {
 
