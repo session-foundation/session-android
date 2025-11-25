@@ -132,11 +132,11 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
 
                     if (isGroupAdmin) {
                         text = context.getString(R.string.delete)
-                        contentDescription = context.getString(R.string.AccessibilityId_delete)
+                        contentDescription = context.getString(org.session.content_descriptions.R.string.AccessibilityId_delete)
                         drawableStartRes = R.drawable.ic_trash_2
                     } else {
                         text = context.getString(R.string.leave)
-                        contentDescription = context.getString(R.string.AccessibilityId_leave)
+                        contentDescription = context.getString(org.session.content_descriptions.R.string.AccessibilityId_leave)
                         drawableStartRes = R.drawable.ic_log_out
                     }
                 }
@@ -150,32 +150,32 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
                     // the button should read 'Delete' instead of 'Leave'
                     if (!group.shouldPoll || group.hasAdminKey()) {
                         text = context.getString(R.string.delete)
-                        contentDescription = context.getString(R.string.AccessibilityId_delete)
+                        contentDescription = context.getString(org.session.content_descriptions.R.string.AccessibilityId_delete)
                         drawableStartRes = R.drawable.ic_trash_2
                     } else {
                         text = context.getString(R.string.leave)
-                        contentDescription = context.getString(R.string.AccessibilityId_leave)
+                        contentDescription = context.getString(org.session.content_descriptions.R.string.AccessibilityId_leave)
                         drawableStartRes = R.drawable.ic_log_out
                     }
                 }
 
                 recipient.isCommunityRecipient -> {
                     text = context.getString(R.string.leave)
-                    contentDescription = context.getString(R.string.AccessibilityId_leave)
+                    contentDescription = context.getString(org.session.content_descriptions.R.string.AccessibilityId_leave)
                     drawableStartRes = R.drawable.ic_log_out
                 }
 
                 // note to self
                 recipient.isLocalNumber -> {
                     text = context.getString(R.string.hide)
-                    contentDescription = context.getString(R.string.AccessibilityId_clear)
+                    contentDescription = context.getString(org.session.content_descriptions.R.string.AccessibilityId_clear)
                     drawableStartRes = R.drawable.ic_eye_off
                 }
 
                 // 1on1
                 else -> {
                     text = context.getString(R.string.conversationsDelete)
-                    contentDescription = context.getString(R.string.AccessibilityId_delete)
+                    contentDescription = context.getString(org.session.content_descriptions.R.string.AccessibilityId_delete)
                     drawableStartRes = R.drawable.ic_trash_2
 
                     // also show delete contact for 1on1

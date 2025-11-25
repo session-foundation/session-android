@@ -51,7 +51,7 @@ fun GroupMinimumVersionBanner(modifier: Modifier = Modifier) {
                 horizontal = LocalDimensions.current.spacing,
                 vertical = LocalDimensions.current.xxxsSpacing
             )
-            .qaTag(R.string.AccessibilityId_versionWarning)
+            .qaTag(org.session.content_descriptions.R.string.AccessibilityId_versionWarning)
     )
 }
 
@@ -79,7 +79,7 @@ fun  MemberItem(
                 horizontal = LocalDimensions.current.smallSpacing,
                 vertical = LocalDimensions.current.xsSpacing
             )
-            .qaTag(R.string.AccessibilityId_contact),
+            .qaTag(org.session.content_descriptions.R.string.AccessibilityId_contact),
         horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing),
         verticalAlignment = CenterVertically,
     ) {
@@ -104,7 +104,7 @@ fun  MemberItem(
                     text = subtitle,
                     style = LocalType.current.small,
                     color = subtitleColor,
-                    modifier = Modifier.qaTag(R.string.AccessibilityId_contactStatus)
+                    modifier = Modifier.qaTag(org.session.content_descriptions.R.string.AccessibilityId_contactStatus)
                 )
             }
         }

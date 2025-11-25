@@ -65,7 +65,7 @@ class SessionDialogBuilder(val context: Context) {
     fun title(text: String?) {
         text(
             text = text,
-            qaTag = context.getString(R.string.AccessibilityId_modalTitle),
+            qaTag = context.getString(org.session.content_descriptions.R.string.AccessibilityId_modalTitle),
             style = R.style.TextAppearance_Session_Dialog_Title) { setPadding(dp20, 0, dp20, 0) }
     }
 
@@ -86,7 +86,7 @@ class SessionDialogBuilder(val context: Context) {
 
     private fun text(
         text: CharSequence?,
-        qaTag: String = context.getString(R.string.AccessibilityId_modalMessage),
+        qaTag: String = context.getString(org.session.content_descriptions.R.string.AccessibilityId_modalMessage),
         @StyleRes style: Int? = null,
         modify: TextView.() -> Unit
     ) {
@@ -160,7 +160,7 @@ class SessionDialogBuilder(val context: Context) {
 
     fun okButton(listener: (() -> Unit) = {}) = button(android.R.string.ok) { listener() }
 
-    fun cancelButton(listener: (() -> Unit) = {}) = button(android.R.string.cancel, R.string.AccessibilityId_cancel) { listener() }
+    fun cancelButton(listener: (() -> Unit) = {}) = button(android.R.string.cancel, org.session.content_descriptions.R.string.AccessibilityId_cancel) { listener() }
 
     fun button(
         @StringRes text: Int,

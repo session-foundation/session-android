@@ -99,7 +99,7 @@ fun ConversationAppBar(
                                 }
 
                                 ProBadgeText(
-                                    modifier = titleModifier.qaTag(R.string.AccessibilityId_conversationTitle),
+                                    modifier = titleModifier.qaTag(org.session.content_descriptions.R.string.AccessibilityId_conversationTitle),
                                     text = data.title,
                                     showBadge = data.showProBadge
                                 )
@@ -132,7 +132,7 @@ fun ConversationAppBar(
                                 ) {
                                     Icon(
                                         painter = painterResource(id = R.drawable.ic_phone),
-                                        contentDescription = stringResource(id = R.string.AccessibilityId_call),
+                                        contentDescription = stringResource(id = org.session.content_descriptions.R.string.AccessibilityId_call),
                                         tint = LocalColors.current.text,
                                         modifier = Modifier.size(LocalDimensions.current.iconMedium)
                                     )
@@ -142,7 +142,7 @@ fun ConversationAppBar(
                             // Avatar
                             if (data.showAvatar) {
                                 Avatar(
-                                    modifier = Modifier.qaTag(R.string.qa_conversation_avatar)
+                                    modifier = Modifier.qaTag(org.session.content_descriptions.R.string.qa_conversation_avatar)
                                         .padding(
                                             start = if(data.showCall) 0.dp else LocalDimensions.current.xsSpacing,
                                             end = LocalDimensions.current.xsSpacing
@@ -188,7 +188,7 @@ fun ConversationAppBar(
                         Spacer(Modifier.width(LocalDimensions.current.xsSpacing))
 
                         Text(
-                            modifier = Modifier.qaTag(R.string.qa_conversation_search_cancel)
+                            modifier = Modifier.qaTag(org.session.content_descriptions.R.string.qa_conversation_search_cancel)
                                 .clickable {
                                     onSearchCanceled()
                                 },

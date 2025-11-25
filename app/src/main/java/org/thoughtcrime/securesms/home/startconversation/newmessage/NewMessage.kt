@@ -106,7 +106,7 @@ private fun EnterAccountId(
                     text = state.newMessageIdOrOns,
                     modifier = Modifier
                         .padding(horizontal = LocalDimensions.current.spacing)
-                        .qaTag(R.string.AccessibilityId_sessionIdInput),
+                        .qaTag(org.session.content_descriptions.R.string.AccessibilityId_sessionIdInput),
                     placeholder = stringResource(R.string.accountIdOrOnsEnter),
                     onChange = callbacks::onChange,
                     onContinue = callbacks::onContinue,
@@ -119,7 +119,7 @@ private fun EnterAccountId(
                 BorderlessButtonWithIcon(
                     text = stringResource(R.string.messageNewDescriptionMobile),
                     modifier = Modifier
-                        .qaTag(R.string.AccessibilityId_messageNewDescriptionMobile)
+                        .qaTag(org.session.content_descriptions.R.string.AccessibilityId_messageNewDescriptionMobile)
                         .padding(horizontal = LocalDimensions.current.mediumSpacing)
                         .fillMaxWidth(),
                     style = LocalType.current.small,

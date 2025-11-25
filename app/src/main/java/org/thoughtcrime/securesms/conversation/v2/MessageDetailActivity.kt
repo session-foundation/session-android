@@ -550,7 +550,7 @@ fun ExpandButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
     ) {
         Icon(
             painter = painterResource(id = R.drawable.ic_maximize_2),
-            contentDescription = stringResource(id = R.string.AccessibilityId_expand),
+            contentDescription = stringResource(id = org.session.content_descriptions.R.string.AccessibilityId_expand),
             modifier = Modifier
                 .padding(LocalDimensions.current.xxsSpacing)
                 .size(LocalDimensions.current.xsSpacing),

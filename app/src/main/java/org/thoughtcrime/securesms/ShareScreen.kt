@@ -109,7 +109,7 @@ fun ShareList(
                         placeholder = stringResource(R.string.search),
                         modifier = Modifier
                             .padding(horizontal = LocalDimensions.current.smallSpacing)
-                            .qaTag(R.string.AccessibilityId_groupNameSearch),
+                            .qaTag(org.session.content_descriptions.R.string.AccessibilityId_groupNameSearch),
                         backgroundColor = LocalColors.current.backgroundSecondary,
                     )
 

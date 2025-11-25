@@ -95,7 +95,7 @@ class NotificationSettingsViewModel @AssistedInject constructor(
                     value = NotificationType.All,
                     title = GetString(R.string.notificationsAllMessages),
                     iconRes = R.drawable.ic_volume_2,
-                    qaTag = GetString(R.string.qa_conversation_settings_notifications_radio_all),
+                    qaTag = GetString(org.session.content_descriptions.R.string.qa_conversation_settings_notifications_radio_all),
                     selected = selectedOption is NotificationType.All
                 ),
                 // Mentions Only
@@ -103,7 +103,7 @@ class NotificationSettingsViewModel @AssistedInject constructor(
                     value = NotificationType.MentionsOnly,
                     title = GetString(R.string.notificationsMentionsOnly),
                     iconRes = R.drawable.ic_at_sign,
-                    qaTag = GetString(R.string.qa_conversation_settings_notifications_radio_mentions),
+                    qaTag = GetString(org.session.content_descriptions.R.string.qa_conversation_settings_notifications_radio_mentions),
                     selected = selectedOption is NotificationType.MentionsOnly
                 ),
                 // Mute
@@ -111,7 +111,7 @@ class NotificationSettingsViewModel @AssistedInject constructor(
                     value = NotificationType.Mute,
                     title = GetString(R.string.notificationsMute),
                     iconRes = R.drawable.ic_volume_off,
-                    qaTag = GetString(R.string.qa_conversation_settings_notifications_radio_mute),
+                    qaTag = GetString(org.session.content_descriptions.R.string.qa_conversation_settings_notifications_radio_mute),
                     selected = selectedOption is NotificationType.Mute
                 ),
             )
@@ -134,7 +134,7 @@ class NotificationSettingsViewModel @AssistedInject constructor(
                     RadioOption(
                         value = currentMutedUntil!!,
                         title = GetString(title),
-                        qaTag = GetString(R.string.qa_conversation_settings_notifications_radio_muted_until),
+                        qaTag = GetString(org.session.content_descriptions.R.string.qa_conversation_settings_notifications_radio_muted_until),
                         selected = selectedMuteDuration == currentMutedUntil
                     )
                 )
@@ -285,16 +285,16 @@ class NotificationSettingsViewModel @AssistedInject constructor(
     }
 
     private val debugMuteDurations = listOf(
-        TimeUnit.MINUTES.toMillis(1) to R.string.qa_conversation_settings_notifications_radio_1m,
-        TimeUnit.MINUTES.toMillis(5) to R.string.qa_conversation_settings_notifications_radio_5m,
+        TimeUnit.MINUTES.toMillis(1) to org.session.content_descriptions.R.string.qa_conversation_settings_notifications_radio_1m,
+        TimeUnit.MINUTES.toMillis(5) to org.session.content_descriptions.R.string.qa_conversation_settings_notifications_radio_5m,
     )
 
     private val muteDurations = listOf(
-        durationForever to R.string.qa_conversation_settings_notifications_radio_forever,
-        TimeUnit.HOURS.toMillis(1) to R.string.qa_conversation_settings_notifications_radio_1h,
-        TimeUnit.HOURS.toMillis(2) to R.string.qa_conversation_settings_notifications_radio_2h,
-        TimeUnit.DAYS.toMillis(1) to R.string.qa_conversation_settings_notifications_radio_1d,
-        TimeUnit.DAYS.toMillis(7) to R.string.qa_conversation_settings_notifications_radio_1w,
+        durationForever to org.session.content_descriptions.R.string.qa_conversation_settings_notifications_radio_forever,
+        TimeUnit.HOURS.toMillis(1) to org.session.content_descriptions.R.string.qa_conversation_settings_notifications_radio_1h,
+        TimeUnit.HOURS.toMillis(2) to org.session.content_descriptions.R.string.qa_conversation_settings_notifications_radio_2h,
+        TimeUnit.DAYS.toMillis(1) to org.session.content_descriptions.R.string.qa_conversation_settings_notifications_radio_1d,
+        TimeUnit.DAYS.toMillis(7) to org.session.content_descriptions.R.string.qa_conversation_settings_notifications_radio_1w,
     )
 
     @AssistedFactory

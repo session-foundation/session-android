@@ -209,7 +209,7 @@ private fun ThumbnailRow(
                                 contentScale = ContentScale.Inside,
                                 painter = painterResource(R.drawable.ic_check),
                                 colorFilter = ColorFilter.tint(Color.White),
-                                contentDescription = stringResource(R.string.AccessibilityId_select),
+                                contentDescription = stringResource(org.session.content_descriptions.R.string.AccessibilityId_select),
                             )
                         }
                     }

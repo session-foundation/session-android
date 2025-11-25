@@ -20,7 +20,7 @@ internal fun LoadingScreen(progress: Float) {
         Spacer(modifier = Modifier.weight(1f))
         ProgressArc(
             progress,
-            modifier = Modifier.qaTag(R.string.AccessibilityId_loadAccountProgressMessage)
+            modifier = Modifier.qaTag(org.session.content_descriptions.R.string.AccessibilityId_loadAccountProgressMessage)
         )
         Text(
             stringResource(R.string.waitOneMoment),

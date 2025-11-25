@@ -25,7 +25,7 @@ class BlockedDialog(private val recipient: Address, private val contactName: Str
 
         title(resources.getString(R.string.blockUnblock))
         text(spannable)
-        dangerButton(R.string.blockUnblock, R.string.AccessibilityId_unblockConfirm) { unblock() }
+        dangerButton(R.string.blockUnblock, org.session.content_descriptions.R.string.AccessibilityId_unblockConfirm) { unblock() }
         cancelButton { dismiss() }
     }
 

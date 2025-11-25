@@ -127,7 +127,7 @@ fun ConversationSettingsDialogs(
             content = {
                 SessionOutlinedTextField(
                     text = dialogsState.nicknameDialog.inputNickname ?: "",
-                    modifier = Modifier.qaTag(R.string.qa_conversation_settings_dialog_nickname_input)
+                    modifier = Modifier.qaTag(org.session.content_descriptions.R.string.qa_conversation_settings_dialog_nickname_input)
                         .focusRequester(focusRequester)
                         .padding(top = LocalDimensions.current.smallSpacing),
                     placeholder = stringResource(R.string.nicknameEnter),
@@ -145,14 +145,14 @@ fun ConversationSettingsDialogs(
                 DialogButtonData(
                     text = GetString(stringResource(id = R.string.save)),
                     enabled = dialogsState.nicknameDialog.setEnabled,
-                    qaTag = stringResource(R.string.qa_conversation_settings_dialog_nickname_set),
+                    qaTag = stringResource(org.session.content_descriptions.R.string.qa_conversation_settings_dialog_nickname_set),
                     onClick = { sendCommand(SetNickname) }
                 ),
                 DialogButtonData(
                     text = GetString(stringResource(R.string.remove)),
                     color = LocalColors.current.danger,
                     enabled = dialogsState.nicknameDialog.removeEnabled,
-                    qaTag = stringResource(R.string.qa_conversation_settings_dialog_nickname_remove),
+                    qaTag = stringResource(org.session.content_descriptions.R.string.qa_conversation_settings_dialog_nickname_remove),
                     onClick = {
                         sendCommand(RemoveNickname)
                     }
@@ -182,7 +182,7 @@ fun ConversationSettingsDialogs(
                     // group name
                     SessionOutlinedTextField(
                         text = dialogsState.groupEditDialog.inputName ?: "",
-                        modifier = Modifier.qaTag(R.string.qa_conversation_settings_dialog_groupname_input)
+                        modifier = Modifier.qaTag(org.session.content_descriptions.R.string.qa_conversation_settings_dialog_groupname_input)
                             .focusRequester(focusRequester)
                             .padding(top = LocalDimensions.current.smallSpacing),
                         innerPadding = PaddingValues(LocalDimensions.current.smallSpacing),
@@ -191,7 +191,7 @@ fun ConversationSettingsDialogs(
                              sendCommand(UpdateGroupName(updatedText))
                         },
                         showClear = true,
-                        clearQaTag = R.string.qa_input_clear_name,
+                        clearQaTag = org.session.content_descriptions.R.string.qa_input_clear_name,
                         singleLine = true,
                         error = dialogsState.groupEditDialog.errorName,
                     )
@@ -199,7 +199,7 @@ fun ConversationSettingsDialogs(
                     // group description
                     SessionOutlinedTextField(
                         text = dialogsState.groupEditDialog.inputtedDescription ?: "",
-                        modifier = Modifier.qaTag(R.string.qa_conversation_settings_dialog_groupname_description_input)
+                        modifier = Modifier.qaTag(org.session.content_descriptions.R.string.qa_conversation_settings_dialog_groupname_description_input)
                             .padding(top = LocalDimensions.current.xxsSpacing),
                         placeholder = stringResource(R.string.groupDescriptionEnter),
                         innerPadding = PaddingValues(LocalDimensions.current.smallSpacing),
@@ -209,7 +209,7 @@ fun ConversationSettingsDialogs(
                              sendCommand(UpdateGroupDescription(updatedText))
                         },
                         showClear = true,
-                        clearQaTag = R.string.qa_input_clear_description,
+                        clearQaTag = org.session.content_descriptions.R.string.qa_input_clear_description,
                         error = dialogsState.groupEditDialog.errorDescription,
                     )
                 }
@@ -218,13 +218,13 @@ fun ConversationSettingsDialogs(
                 DialogButtonData(
                     text = GetString(stringResource(id = R.string.save)),
                     enabled = dialogsState.groupEditDialog.saveEnabled,
-                    qaTag = stringResource(R.string.qa_conversation_settings_dialog_groupname_save),
+                    qaTag = stringResource(org.session.content_descriptions.R.string.qa_conversation_settings_dialog_groupname_save),
                     onClick = { sendCommand(SetGroupText) }
                 ),
                 DialogButtonData(
                     text = GetString(stringResource(R.string.cancel)),
                     color = LocalColors.current.danger,
-                    qaTag = stringResource(R.string.qa_conversation_settings_dialog_groupname_cancel),
+                    qaTag = stringResource(org.session.content_descriptions.R.string.qa_conversation_settings_dialog_groupname_cancel),
                 )
             )
         )
@@ -303,7 +303,7 @@ fun GroupAdminClearMessagesDialog(
                 option = RadioOption(
                     value = Unit,
                     title = GetString(stringResource(R.string.clearOnThisDevice)),
-                    qaTag = GetString(R.string.qa_conversation_settings_clear_messages_radio_device),
+                    qaTag = GetString(org.session.content_descriptions.R.string.qa_conversation_settings_clear_messages_radio_device),
                     selected = !deleteForEveryone
                 )
             ) {
@@ -314,7 +314,7 @@ fun GroupAdminClearMessagesDialog(
                 option = RadioOption(
                     value = Unit,
                     title = GetString(stringResource(R.string.clearMessagesForEveryone)),
-                    qaTag = GetString(R.string.qa_conversation_settings_clear_messages_radio_everyone),
+                    qaTag = GetString(org.session.content_descriptions.R.string.qa_conversation_settings_clear_messages_radio_everyone),
                     selected = deleteForEveryone,
                 )
             ) {

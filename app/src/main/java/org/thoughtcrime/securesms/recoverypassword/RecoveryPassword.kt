@@ -54,7 +54,7 @@ internal fun RecoveryPasswordScreen(
     Column(
         verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing),
         modifier = Modifier
-            .qaTag(R.string.AccessibilityId_sessionRecoveryPassword)
+            .qaTag(org.session.content_descriptions.R.string.AccessibilityId_sessionRecoveryPassword)
             .verticalScroll(rememberScrollState())
             .padding(bottom = LocalDimensions.current.smallSpacing)
             .padding(horizontal = LocalDimensions.current.spacing)
@@ -108,7 +108,7 @@ private fun RecoveryPasswordCell(
                     seed,
                     modifier = Modifier
                         .padding(vertical = LocalDimensions.current.spacing)
-                        .qaTag(R.string.AccessibilityId_qrCode),
+                        .qaTag(org.session.content_descriptions.R.string.AccessibilityId_qrCode),
                     icon = R.drawable.ic_recovery_password_custom
                 )
             }
@@ -144,7 +144,7 @@ private fun RecoveryPassword(mnemonic: String) {
     Text(
         mnemonic,
         modifier = Modifier
-            .qaTag(R.string.AccessibilityId_sessionRecoveryPasswordContainer)
+            .qaTag(org.session.content_descriptions.R.string.AccessibilityId_sessionRecoveryPasswordContainer)
             .padding(vertical = LocalDimensions.current.spacing)
             .border()
             .padding(LocalDimensions.current.spacing),
@@ -183,7 +183,7 @@ private fun HideRecoveryPasswordCell(
                 text = stringResource(R.string.hide),
                 modifier = Modifier
                     .widthIn(min = LocalDimensions.current.minSmallButtonWidth)
-                    .qaTag(R.string.AccessibilityId_recoveryPasswordHideRecoveryPassword),
+                    .qaTag(org.session.content_descriptions.R.string.AccessibilityId_recoveryPasswordHideRecoveryPassword),
                 color = LocalColors.current.danger,
                 onClick = { showHideRecoveryDialog = true }
             )

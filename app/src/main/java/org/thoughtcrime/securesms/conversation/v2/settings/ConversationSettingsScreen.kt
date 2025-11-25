@@ -130,7 +130,7 @@ fun ConversationSettings(
 
             // Profile picture
             AvatarQrWidget(
-                modifier = Modifier.qaTag(R.string.qa_conversation_settings_avatar),
+                modifier = Modifier.qaTag(org.session.content_descriptions.R.string.qa_conversation_settings_avatar),
                 showQR = data.showQR,
                 expandedAvatar = data.expandedAvatar,
                 showBadge = data.qrAddress != null,
@@ -201,7 +201,7 @@ fun ConversationSettings(
                 }
                 Text(
                     modifier = Modifier
-                        .qaTag(R.string.qa_conversation_settings_account_id)
+                        .qaTag(org.session.content_descriptions.R.string.qa_conversation_settings_account_id)
                         .pointerInput(Unit) {
                             detectTapGestures(
                                 onLongPress = { onLongPress() }

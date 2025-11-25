@@ -106,7 +106,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         OptionsItem(
             name = context.getString(R.string.accountIDCopy),
             icon = R.drawable.ic_copy,
-            qaTag = R.string.qa_conversation_settings_copy_account,
+            qaTag = org.session.content_descriptions.R.string.qa_conversation_settings_copy_account,
             onClick = ::copyAccountId
         )
     }
@@ -115,7 +115,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         OptionsItem(
             name = context.getString(R.string.searchConversation),
             icon = R.drawable.ic_search,
-            qaTag = R.string.qa_conversation_settings_search,
+            qaTag = org.session.content_descriptions.R.string.qa_conversation_settings_search,
             onClick = ::goBackToSearch
         )
     }
@@ -126,8 +126,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.disappearingMessages),
             subtitle = subtitle,
             icon = R.drawable.ic_timer,
-            qaTag = R.string.qa_conversation_settings_disappearing,
-            subtitleQaTag = R.string.qa_conversation_settings_disappearing_sub,
+            qaTag = org.session.content_descriptions.R.string.qa_conversation_settings_disappearing,
+            subtitleQaTag = org.session.content_descriptions.R.string.qa_conversation_settings_disappearing_sub,
             onClick = {
                 navigateTo(ConversationSettingsDestination.RouteDisappearingMessages)
             }
@@ -138,7 +138,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         OptionsItem(
             name = context.getString(R.string.pinConversation),
             icon = R.drawable.ic_pin,
-            qaTag = R.string.qa_conversation_settings_pin,
+            qaTag = org.session.content_descriptions.R.string.qa_conversation_settings_pin,
             onClick = ::pinConversation
         )
     }
@@ -147,7 +147,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         OptionsItem(
             name = context.getString(R.string.pinUnpinConversation),
             icon = R.drawable.ic_pin_off,
-            qaTag = R.string.qa_conversation_settings_pin,
+            qaTag = org.session.content_descriptions.R.string.qa_conversation_settings_pin,
             onClick = ::unpinConversation
         )
     }
@@ -157,8 +157,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.sessionNotifications),
             subtitle = subtitle,
             icon = iconRes,
-            qaTag = R.string.qa_conversation_settings_notifications,
-            subtitleQaTag = R.string.qa_conversation_settings_notifications_sub,
+            qaTag = org.session.content_descriptions.R.string.qa_conversation_settings_notifications,
+            subtitleQaTag = org.session.content_descriptions.R.string.qa_conversation_settings_notifications_sub,
             onClick = {
                 navigateTo(ConversationSettingsDestination.RouteNotifications)
             }
@@ -169,7 +169,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         OptionsItem(
             name = context.getString(R.string.attachments),
             icon = R.drawable.ic_file,
-            qaTag = R.string.qa_conversation_settings_attachments,
+            qaTag = org.session.content_descriptions.R.string.qa_conversation_settings_attachments,
             onClick = {
                 navigateTo(ConversationSettingsDestination.RouteAllMedia)
             }
@@ -180,7 +180,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         OptionsItem(
             name = context.getString(R.string.block),
             icon = R.drawable.ic_user_round_x,
-            qaTag = R.string.qa_conversation_settings_block,
+            qaTag = org.session.content_descriptions.R.string.qa_conversation_settings_block,
             onClick = ::confirmBlockUser
         )
     }
@@ -189,7 +189,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         OptionsItem(
             name = context.getString(R.string.blockUnblock),
             icon = R.drawable.ic_user_round_tick,
-            qaTag = R.string.qa_conversation_settings_block,
+            qaTag = org.session.content_descriptions.R.string.qa_conversation_settings_block,
             onClick = ::confirmUnblockUser
         )
     }
@@ -198,7 +198,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         OptionsItem(
             name = context.getString(R.string.clearMessages),
             icon = R.drawable.ic_message_trash_custom,
-            qaTag = R.string.qa_conversation_settings_clear_messages,
+            qaTag = org.session.content_descriptions.R.string.qa_conversation_settings_clear_messages,
             onClick = ::confirmClearMessages
         )
     }
@@ -207,7 +207,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         OptionsItem(
             name = context.getString(R.string.conversationsDelete),
             icon = R.drawable.ic_trash_2,
-            qaTag = R.string.qa_conversation_settings_delete_conversation,
+            qaTag = org.session.content_descriptions.R.string.qa_conversation_settings_delete_conversation,
             onClick = ::confirmDeleteConversation
         )
     }
@@ -216,7 +216,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         OptionsItem(
             name = context.getString(R.string.contactDelete),
             icon = R.drawable.ic_user_round_trash,
-            qaTag = R.string.qa_conversation_settings_delete_contact,
+            qaTag = org.session.content_descriptions.R.string.qa_conversation_settings_delete_contact,
             onClick = ::confirmDeleteContact
         )
     }
@@ -225,7 +225,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         OptionsItem(
             name = context.getString(R.string.noteToSelfHide),
             icon = R.drawable.ic_eye_off,
-            qaTag = R.string.qa_conversation_settings_hide_nts,
+            qaTag = org.session.content_descriptions.R.string.qa_conversation_settings_hide_nts,
             onClick = ::confirmHideNTS
         )
     }
@@ -234,7 +234,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         OptionsItem(
             name = context.getString(R.string.showNoteToSelf),
             icon = R.drawable.ic_eye,
-            qaTag = R.string.qa_conversation_settings_hide_nts,
+            qaTag = org.session.content_descriptions.R.string.qa_conversation_settings_hide_nts,
             onClick = ::confirmShowNTS
         )
     }
@@ -244,7 +244,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         OptionsItem(
             name = context.getString(R.string.groupMembers),
             icon = R.drawable.ic_users_round,
-            qaTag = R.string.qa_conversation_settings_group_members,
+            qaTag = org.session.content_descriptions.R.string.qa_conversation_settings_group_members,
             onClick = {
                 (address as? Address.Group)?.let {
                     navigateTo(ConversationSettingsDestination.RouteGroupMembers(it))
@@ -257,7 +257,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         OptionsItem(
             name = context.getString(R.string.membersInvite),
             icon = R.drawable.ic_user_round_plus,
-            qaTag = R.string.qa_conversation_settings_invite_contacts,
+            qaTag = org.session.content_descriptions.R.string.qa_conversation_settings_invite_contacts,
             onClick = {
                 navigateTo(ConversationSettingsDestination.RouteInviteToCommunity(
                     communityUrl = (recipient?.data as? RecipientData.Community)?.joinURL.orEmpty()
@@ -270,7 +270,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         OptionsItem(
             name = context.getString(R.string.manageMembers),
             icon = R.drawable.ic_user_round_pen,
-            qaTag = R.string.qa_conversation_settings_manage_members,
+            qaTag = org.session.content_descriptions.R.string.qa_conversation_settings_manage_members,
             onClick = {
                 (address as? Address.Group)?.let {
                     navigateTo(ConversationSettingsDestination.RouteManageMembers(it))
@@ -283,7 +283,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         OptionsItem(
             name = context.getString(R.string.groupLeave),
             icon = R.drawable.ic_log_out,
-            qaTag = R.string.qa_conversation_settings_leave_group,
+            qaTag = org.session.content_descriptions.R.string.qa_conversation_settings_leave_group,
             onClick = ::confirmLeaveGroup
         )
     }
@@ -292,7 +292,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         OptionsItem(
             name = context.getString(R.string.groupDelete),
             icon = R.drawable.ic_trash_2,
-            qaTag = R.string.qa_conversation_settings_delete_group,
+            qaTag = org.session.content_descriptions.R.string.qa_conversation_settings_delete_group,
             onClick = ::confirmLeaveGroup
         )
     }
@@ -302,7 +302,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         OptionsItem(
             name = context.getString(R.string.communityUrlCopy),
             icon = R.drawable.ic_copy,
-            qaTag = R.string.qa_conversation_settings_copy_community_url,
+            qaTag = org.session.content_descriptions.R.string.qa_conversation_settings_copy_community_url,
             onClick = ::copyCommunityUrl
         )
     }
@@ -311,7 +311,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         OptionsItem(
             name = context.getString(R.string.communityLeave),
             icon = R.drawable.ic_log_out,
-            qaTag = R.string.qa_conversation_settings_leave_community,
+            qaTag = org.session.content_descriptions.R.string.qa_conversation_settings_leave_community,
             onClick = ::confirmLeaveCommunity
         )
     }
@@ -338,7 +338,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val hasNotificationItem = _uiState.value.categories
             .flatMap { it.items }
             .flatMap { it.items }
-            .firstOrNull { it.qaTag == R.string.qa_conversation_settings_notifications }
+            .firstOrNull { it.qaTag == org.session.content_descriptions.R.string.qa_conversation_settings_notifications }
 
         // no need to do anything if the state doesn't have any notification item
         if (hasNotificationItem == null) return
@@ -359,7 +359,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                         items = category.items.map { subCategory ->
                             subCategory.copy(
                                 items = subCategory.items.map { item ->
-                                    if (item.qaTag == R.string.qa_conversation_settings_notifications) {
+                                    if (item.qaTag == org.session.content_descriptions.R.string.qa_conversation_settings_notifications) {
                                         item.copy(subtitle = notificationSubtitle, icon = notificationIconRes)
                                     } else item
                                 }
@@ -389,18 +389,18 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             // main name, and the description should show the real name in parentheses
             conversation.data is RecipientData.Contact && !conversation.data.nickname.isNullOrBlank() -> {
                 "(${conversation.data.name})" to // description
-                        context.getString(R.string.qa_conversation_settings_description_1on1) // description qa tag
+                        context.getString(org.session.content_descriptions.R.string.qa_conversation_settings_description_1on1) // description qa tag
             }
 
             conversation.data is RecipientData.Group -> {
                 conversation.data.description to // description
-                        context.getString(R.string.qa_conversation_settings_description_groups) // description qa tag
+                        context.getString(org.session.content_descriptions.R.string.qa_conversation_settings_description_groups) // description qa tag
             }
 
             conversation.data is RecipientData.Community -> {
                 (
                     conversation.data.roomInfo?.details?.description to // description
-                    context.getString(R.string.qa_conversation_settings_description_community) // description qa tag
+                    context.getString(org.session.content_descriptions.R.string.qa_conversation_settings_description_community) // description qa tag
                 )
             }
 
@@ -665,10 +665,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             _uiState.value.copy(
                 name = name,
                 nameQaTag = when {
-                    conversation.isLocalNumber -> context.getString(R.string.qa_conversation_settings_display_name_nts)
-                    conversation.is1on1 -> context.getString(R.string.qa_conversation_settings_display_name_1on1)
-                    conversation.isGroupV2Recipient -> context.getString(R.string.qa_conversation_settings_display_name_groups)
-                    conversation.isCommunityRecipient -> context.getString(R.string.qa_conversation_settings_display_name_community)
+                    conversation.isLocalNumber -> context.getString(org.session.content_descriptions.R.string.qa_conversation_settings_display_name_nts)
+                    conversation.is1on1 -> context.getString(org.session.content_descriptions.R.string.qa_conversation_settings_display_name_1on1)
+                    conversation.isGroupV2Recipient -> context.getString(org.session.content_descriptions.R.string.qa_conversation_settings_display_name_groups)
+                    conversation.isCommunityRecipient -> context.getString(org.session.content_descriptions.R.string.qa_conversation_settings_display_name_community)
                     else -> null
                 },
                 editCommand = editCommand,
@@ -743,8 +743,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                         .format(),
                     positiveText = context.getString(R.string.block),
                     negativeText = context.getString(R.string.cancel),
-                    positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_block_confirm),
-                    negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_block_cancel),
+                    positiveQaTag = context.getString(org.session.content_descriptions.R.string.qa_conversation_settings_dialog_block_confirm),
+                    negativeQaTag = context.getString(org.session.content_descriptions.R.string.qa_conversation_settings_dialog_block_cancel),
                     onPositive = ::blockUser,
                     onNegative = {}
                 )
@@ -762,8 +762,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                         .format(),
                     positiveText = context.getString(R.string.blockUnblock),
                     negativeText = context.getString(R.string.cancel),
-                    positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_unblock_confirm),
-                    negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_unblock_cancel),
+                    positiveQaTag = context.getString(org.session.content_descriptions.R.string.qa_conversation_settings_dialog_unblock_confirm),
+                    negativeQaTag = context.getString(org.session.content_descriptions.R.string.qa_conversation_settings_dialog_unblock_cancel),
                     onPositive = ::unblockUser,
                     onNegative = {}
                 )
@@ -799,8 +799,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     message = context.getText(R.string.hideNoteToSelfDescription),
                     positiveText = context.getString(R.string.hide),
                     negativeText = context.getString(R.string.cancel),
-                    positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_hide_nts_confirm),
-                    negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_hide_nts_cancel),
+                    positiveQaTag = context.getString(org.session.content_descriptions.R.string.qa_conversation_settings_dialog_hide_nts_confirm),
+                    negativeQaTag = context.getString(org.session.content_descriptions.R.string.qa_conversation_settings_dialog_hide_nts_cancel),
                     onPositive = ::hideNoteToSelf,
                     onNegative = {}
                 )
@@ -816,8 +816,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     message = context.getText(R.string.showNoteToSelfDescription),
                     positiveText = context.getString(R.string.show),
                     negativeText = context.getString(R.string.cancel),
-                    positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_show_nts_confirm),
-                    negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_show_nts_cancel),
+                    positiveQaTag = context.getString(org.session.content_descriptions.R.string.qa_conversation_settings_dialog_show_nts_confirm),
+                    negativeQaTag = context.getString(org.session.content_descriptions.R.string.qa_conversation_settings_dialog_show_nts_cancel),
                     positiveStyleDanger = false,
                     onPositive = ::showNoteToSelf,
                     onNegative = {}
@@ -848,8 +848,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                         .format(),
                     positiveText = context.getString(R.string.delete),
                     negativeText = context.getString(R.string.cancel),
-                    positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_delete_contact_confirm),
-                    negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_delete_contact_cancel),
+                    positiveQaTag = context.getString(org.session.content_descriptions.R.string.qa_conversation_settings_dialog_delete_contact_confirm),
+                    negativeQaTag = context.getString(org.session.content_descriptions.R.string.qa_conversation_settings_dialog_delete_contact_cancel),
                     onPositive = ::deleteContact,
                     onNegative = {}
                 )
@@ -877,8 +877,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                         .format(),
                     positiveText = context.getString(R.string.delete),
                     negativeText = context.getString(R.string.cancel),
-                    positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_delete_conversation_confirm),
-                    negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_delete_conversation_cancel),
+                    positiveQaTag = context.getString(org.session.content_descriptions.R.string.qa_conversation_settings_dialog_delete_conversation_confirm),
+                    negativeQaTag = context.getString(org.session.content_descriptions.R.string.qa_conversation_settings_dialog_delete_conversation_cancel),
                     onPositive = ::deleteConversation,
                     onNegative = {}
                 )
@@ -910,8 +910,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                         .format(),
                     positiveText = context.getString(R.string.leave),
                     negativeText = context.getString(R.string.cancel),
-                    positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_leave_community_confirm),
-                    negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_leave_community_cancel),
+                    positiveQaTag = context.getString(org.session.content_descriptions.R.string.qa_conversation_settings_dialog_leave_community_confirm),
+                    negativeQaTag = context.getString(org.session.content_descriptions.R.string.qa_conversation_settings_dialog_leave_community_cancel),
                     onPositive = ::leaveCommunity,
                     onNegative = {}
                 )
@@ -970,8 +970,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     message = message,
                     positiveText = context.getString(R.string.clear),
                     negativeText = context.getString(R.string.cancel),
-                    positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_clear_messages_confirm),
-                    negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_clear_messages_cancel),
+                    positiveQaTag = context.getString(org.session.content_descriptions.R.string.qa_conversation_settings_dialog_clear_messages_confirm),
+                    negativeQaTag = context.getString(org.session.content_descriptions.R.string.qa_conversation_settings_dialog_clear_messages_cancel),
                     onPositive = { clearMessages(false) },
                     onNegative = {}
                 )

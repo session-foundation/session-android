@@ -537,7 +537,7 @@ fun ProSettings(
                 Icon(
                     modifier = Modifier.align(Alignment.Center)
                         .size(LocalDimensions.current.iconMedium)
-                        .qaTag(R.string.qa_action_item_icon),
+                        .qaTag(org.session.content_descriptions.R.string.qa_action_item_icon),
                     painter = painterResource(id = R.drawable.ic_chevron_right),
                     contentDescription = null,
                     tint = LocalColors.current.text
@@ -581,7 +581,7 @@ fun ProSettings(
                         icon()
                     }
                 },
-                qaTag = R.string.qa_pro_settings_action_update_plan,
+                qaTag = org.session.content_descriptions.R.string.qa_pro_settings_action_update_plan,
                 onClick = { sendCommand(GoToChoosePlan(inSheet)) }
             )
             Divider()
@@ -598,7 +598,7 @@ fun ProSettings(
                         .format().toString()
                 ),
                 checked = showProBadge,
-                qaTag = R.string.qa_pro_settings_action_show_badge,
+                qaTag = org.session.content_descriptions.R.string.qa_pro_settings_action_show_badge,
                 onCheckedChange = { sendCommand(SetShowProBadge(it)) }
             )
         }
@@ -792,7 +792,7 @@ fun ProManage(
                     titleColor = LocalColors.current.danger,
                     icon = R.drawable.ic_circle_warning_custom,
                     iconColor = LocalColors.current.danger,
-                    qaTag = R.string.qa_pro_settings_action_request_refund,
+                    qaTag = org.session.content_descriptions.R.string.qa_pro_settings_action_request_refund,
                     onClick = {
                         sendCommand(GoToRefund)
                     }
@@ -807,7 +807,7 @@ fun ProManage(
                             .format().toString()
                     ),
                     icon = R.drawable.ic_refresh_cw,
-                    qaTag = R.string.qa_pro_settings_action_recover_plan,
+                    qaTag = org.session.content_descriptions.R.string.qa_pro_settings_action_recover_plan,
                     onClick = {
                         sendCommand(RefeshProDetails)
                     }
@@ -825,7 +825,7 @@ fun ProManage(
                         titleColor = LocalColors.current.danger,
                         icon = R.drawable.ic_circle_x_custom,
                         iconColor = LocalColors.current.danger,
-                        qaTag = R.string.qa_pro_settings_action_cancel_plan,
+                        qaTag = org.session.content_descriptions.R.string.qa_pro_settings_action_cancel_plan,
                         onClick = {
                             sendCommand(GoToCancel)
                         }
@@ -848,7 +848,7 @@ fun ProManage(
                         Icon(
                             modifier = Modifier.align(Alignment.Center)
                                 .size(LocalDimensions.current.iconMedium)
-                                .qaTag(R.string.qa_action_item_icon),
+                                .qaTag(org.session.content_descriptions.R.string.qa_action_item_icon),
                             painter = painterResource(id = R.drawable.ic_circle_plus),
                             contentDescription = null,
                             tint = color
@@ -894,7 +894,7 @@ fun ProManage(
                                 icon()
                             }
                         },
-                        qaTag = R.string.qa_pro_settings_action_renew_plan,
+                        qaTag = org.session.content_descriptions.R.string.qa_pro_settings_action_renew_plan,
                         onClick = { sendCommand(GoToChoosePlan(inSheet)) }
                     )
 
@@ -950,7 +950,7 @@ fun ProSettingsFooter(
                 icon = R.drawable.ic_square_arrow_up_right,
                 iconSize = LocalDimensions.current.iconMedium,
                 iconColor = iconColor,
-                qaTag = R.string.qa_pro_settings_action_faq,
+                qaTag = org.session.content_descriptions.R.string.qa_pro_settings_action_faq,
                 onClick = {
                     sendCommand(ShowOpenUrlDialog("https://getsession.org/faq#pro"))
                 }
@@ -966,7 +966,7 @@ fun ProSettingsFooter(
                 icon = R.drawable.ic_square_arrow_up_right,
                 iconSize = LocalDimensions.current.iconMedium,
                 iconColor = iconColor,
-                qaTag = R.string.qa_pro_settings_action_support,
+                qaTag = org.session.content_descriptions.R.string.qa_pro_settings_action_support,
                 onClick = {
                     sendCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
                 }

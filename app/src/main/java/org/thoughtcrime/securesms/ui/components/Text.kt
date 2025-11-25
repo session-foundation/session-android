@@ -146,7 +146,7 @@ fun SessionOutlinedTextField(
     maxLines: Int = if (singleLine) 1 else Int.MAX_VALUE,
     minLines: Int = 1,
     showClear: Boolean = false,
-    @StringRes clearQaTag: Int = R.string.qa_input_clear,
+    @StringRes clearQaTag: Int = org.session.content_descriptions.R.string.qa_input_clear,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default.copy(imeAction = if (singleLine) ImeAction.Done else ImeAction.Default)
 ) {
     // in order to allow the cursor to be at the end of the text by default
@@ -239,7 +239,7 @@ fun SessionOutlinedTextField(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = LocalDimensions.current.xsSpacing)
-                                .qaTag(R.string.qa_input_error),
+                                .qaTag(org.session.content_descriptions.R.string.qa_input_error),
                             textAlign = TextAlign.Center,
                             style = LocalType.current.base.bold(),
                             color = LocalColors.current.danger

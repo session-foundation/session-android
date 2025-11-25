@@ -599,7 +599,7 @@ class ConversationReactionOverlay : FrameLayout {
                 R.attr.menu_select_icon,
                 R.string.select,
                 { handleActionItemClicked(Action.SELECT) },
-                R.string.AccessibilityId_select
+                org.session.content_descriptions.R.string.AccessibilityId_select
             )
         }
 
@@ -607,7 +607,7 @@ class ConversationReactionOverlay : FrameLayout {
         val canWrite = openGroup == null || openGroup.write
         if (canWrite && !message.isPending && !message.isFailed && !message.isOpenGroupInvitation && !isDeleteOnly
             && !isDeprecatedLegacyGroup) {
-            items += ActionItem(R.attr.menu_reply_icon, R.string.reply, { handleActionItemClicked(Action.REPLY) }, R.string.AccessibilityId_reply)
+            items += ActionItem(R.attr.menu_reply_icon, R.string.reply, { handleActionItemClicked(Action.REPLY) }, org.session.content_descriptions.R.string.AccessibilityId_reply)
         }
         // Copy message text
         if (!containsControlMessage && hasText && !isDeleteOnly) {
@@ -623,7 +623,7 @@ class ConversationReactionOverlay : FrameLayout {
                 R.attr.menu_trash_icon,
                 R.string.delete,
                 { handleActionItemClicked(Action.DELETE) },
-                R.string.AccessibilityId_deleteMessage,
+                org.session.content_descriptions.R.string.AccessibilityId_deleteMessage,
                 message.subtitle,
                 ThemeUtil.getThemedColor(context, R.attr.danger)
             )
@@ -660,7 +660,7 @@ class ConversationReactionOverlay : FrameLayout {
                 items += ActionItem(R.attr.menu_save_icon,
                             R.string.save,
                             { handleActionItemClicked(Action.DOWNLOAD) },
-                            R.string.AccessibilityId_saveAttachment
+                            org.session.content_descriptions.R.string.AccessibilityId_saveAttachment
                 )
             }
         }

@@ -239,7 +239,7 @@ fun OutlineCopyButton(
     val interactionSource = remember { MutableInteractionSource() }
 
     Button(
-        modifier = modifier.qaTag(R.string.AccessibilityId_copy),
+        modifier = modifier.qaTag(org.session.content_descriptions.R.string.AccessibilityId_copy),
         interactionSource = interactionSource,
         style = style,
         type = ButtonType.Outline(color),

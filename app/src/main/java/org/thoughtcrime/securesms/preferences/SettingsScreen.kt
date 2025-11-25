@@ -221,7 +221,7 @@ fun Settings(
                         ) {
                             sendCommand(ShowAvatarDialog)
                         }
-                        .qaTag(R.string.AccessibilityId_profilePicture),
+                        .qaTag(org.session.content_descriptions.R.string.AccessibilityId_profilePicture),
                     contentAlignment = Alignment.Center
                 ) {
                     Avatar(
@@ -252,7 +252,7 @@ fun Settings(
 
             // name
             AnnotatedTextWithIcon(
-                modifier = Modifier.qaTag(R.string.AccessibilityId_displayName)
+                modifier = Modifier.qaTag(org.session.content_descriptions.R.string.AccessibilityId_displayName)
                     .fillMaxWidth()
                     .safeContentWidth()
                     .clickable(
@@ -266,7 +266,7 @@ fun Settings(
                 content = if(uiState.proDataState.type !is ProStatus.NeverSubscribed){{ // if we are pro or expired
                     ProBadge(
                         modifier = Modifier.padding(start = 4.dp)
-                            .qaTag(stringResource(R.string.qa_pro_badge_icon)),
+                            .qaTag(stringResource(org.session.content_descriptions.R.string.qa_pro_badge_icon)),
                         colors = if(uiState.proDataState.type is ProStatus.Active)
                             proBadgeColorStandard()
                         else proBadgeColorDisabled()
@@ -285,7 +285,7 @@ fun Settings(
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
             Text(
-                modifier = Modifier.qaTag(R.string.AccessibilityId_shareAccountId),
+                modifier = Modifier.qaTag(org.session.content_descriptions.R.string.AccessibilityId_shareAccountId),
                 text = uiState.accountID,
                 textAlign = TextAlign.Center,
                 style = LocalType.current.xl.monospace(),
@@ -454,11 +454,11 @@ fun Settings(
                         text = GetString(stringResource(id = R.string.save)),
                         enabled = uiState.usernameDialog.setEnabled,
                         onClick = { sendCommand(SetUsername) },
-                        qaTag = stringResource(R.string.qa_settings_dialog_username_save),
+                        qaTag = stringResource(org.session.content_descriptions.R.string.qa_settings_dialog_username_save),
                     ),
                     DialogButtonData(
                         text = GetString(stringResource(R.string.cancel)),
-                        qaTag = stringResource(R.string.qa_settings_dialog_username_cancel),
+                        qaTag = stringResource(org.session.content_descriptions.R.string.qa_settings_dialog_username_cancel),
                     )
                 )
             )
@@ -556,7 +556,7 @@ fun Buttons(
                                 contentDescription = null,
                             )
                         },
-                        modifier = Modifier.qaTag(R.string.qa_settings_item_pro),
+                        modifier = Modifier.qaTag(org.session.content_descriptions.R.string.qa_settings_item_pro),
                         colors = accentTextButtonColors()
                     ) {
                        activity?.push<ProSettingsActivity>()
@@ -569,7 +569,7 @@ fun Buttons(
                 ItemButton(
                     text = annotatedStringResource(R.string.sessionInviteAFriend),
                     iconRes = R.drawable.ic_user_round_plus,
-                    modifier = Modifier.qaTag(R.string.AccessibilityId_sessionInviteAFriend)
+                    modifier = Modifier.qaTag(org.session.content_descriptions.R.string.AccessibilityId_sessionInviteAFriend)
                 ) { context.sendInvitationToUseSession() }
             }
         }
@@ -583,7 +583,7 @@ fun Buttons(
                     text = annotatedStringResource(R.string.donate),
                     iconRes = R.drawable.ic_heart,
                     iconTint = LocalColors.current.accent,
-                    modifier = Modifier.qaTag(R.string.qa_settings_item_donate),
+                    modifier = Modifier.qaTag(org.session.content_descriptions.R.string.qa_settings_item_donate),
                 ) {
                     sendCommand(OnDonateClicked)
                 }
@@ -591,7 +591,7 @@ fun Buttons(
 
                 Crossfade(if (hasPaths) primaryGreen else primaryYellow, label = "path") {
                     ItemButton(
-                        modifier = Modifier.qaTag(R.string.qa_settings_item_path),
+                        modifier = Modifier.qaTag(org.session.content_descriptions.R.string.qa_settings_item_path),
                         text = annotatedStringResource(R.string.onionRoutingPath),
                         icon = {
                             PathDot(
@@ -606,7 +606,7 @@ fun Buttons(
 
                 // Add the token page option.
                 ItemButton(
-                    modifier = Modifier.qaTag(R.string.qa_settings_item_session_network),
+                    modifier = Modifier.qaTag(org.session.content_descriptions.R.string.qa_settings_item_session_network),
                     text = annotatedStringResource(NETWORK_NAME),
                     iconRes = R.drawable.ic_sent_custom
                 ) { activity?.push<TokenPageActivity>() }
@@ -618,23 +618,23 @@ fun Buttons(
         Cell {
             Column {
                 ItemButton(annotatedStringResource(R.string.sessionPrivacy),
-                    R.drawable.ic_lock_keyhole, Modifier.qaTag(R.string.AccessibilityId_sessionPrivacy)) { activity?.push<PrivacySettingsActivity>() }
+                    R.drawable.ic_lock_keyhole, Modifier.qaTag(org.session.content_descriptions.R.string.AccessibilityId_sessionPrivacy)) { activity?.push<PrivacySettingsActivity>() }
                 Divider()
 
                 ItemButton(annotatedStringResource(R.string.sessionNotifications),
-                    R.drawable.ic_volume_2, Modifier.qaTag(R.string.AccessibilityId_notifications)) { activity?.push<NotificationSettingsActivity>() }
+                    R.drawable.ic_volume_2, Modifier.qaTag(org.session.content_descriptions.R.string.AccessibilityId_notifications)) { activity?.push<NotificationSettingsActivity>() }
                 Divider()
 
                 ItemButton(annotatedStringResource(R.string.sessionConversations),
-                    R.drawable.ic_users_round, Modifier.qaTag(R.string.AccessibilityId_sessionConversations)) { activity?.push<ChatSettingsActivity>() }
+                    R.drawable.ic_users_round, Modifier.qaTag(org.session.content_descriptions.R.string.AccessibilityId_sessionConversations)) { activity?.push<ChatSettingsActivity>() }
                 Divider()
 
                 ItemButton(annotatedStringResource(R.string.sessionAppearance),
-                    R.drawable.ic_paintbrush_vertical, Modifier.qaTag(R.string.AccessibilityId_sessionAppearance)) { activity?.push<AppearanceSettingsActivity>() }
+                    R.drawable.ic_paintbrush_vertical, Modifier.qaTag(org.session.content_descriptions.R.string.AccessibilityId_sessionAppearance)) { activity?.push<AppearanceSettingsActivity>() }
                 Divider()
 
                 ItemButton(annotatedStringResource(R.string.sessionMessageRequests),
-                    R.drawable.ic_message_square_warning, Modifier.qaTag(R.string.AccessibilityId_sessionMessageRequests)) { activity?.push<MessageRequestsActivity>() }
+                    R.drawable.ic_message_square_warning, Modifier.qaTag(org.session.content_descriptions.R.string.AccessibilityId_sessionMessageRequests)) { activity?.push<MessageRequestsActivity>() }
             }
         }
 
@@ -647,19 +647,19 @@ fun Buttons(
                     ItemButton(
                         annotatedStringResource(R.string.sessionRecoveryPassword),
                         R.drawable.ic_recovery_password_custom,
-                        Modifier.qaTag(R.string.AccessibilityId_sessionRecoveryPasswordMenuItem)
+                        Modifier.qaTag(org.session.content_descriptions.R.string.AccessibilityId_sessionRecoveryPasswordMenuItem)
                     ) { activity?.push<RecoveryPasswordActivity>() }
                     Divider()
                 }
 
                 ItemButton(annotatedStringResource(R.string.sessionHelp),
-                    R.drawable.ic_question_custom, Modifier.qaTag(R.string.AccessibilityId_help)) { activity?.push<HelpSettingsActivity>() }
+                    R.drawable.ic_question_custom, Modifier.qaTag(org.session.content_descriptions.R.string.AccessibilityId_help)) { activity?.push<HelpSettingsActivity>() }
                 Divider()
 
                 ItemButton(
                     text = annotatedStringResource(R.string.sessionClearData),
                     iconRes = R.drawable.ic_trash_2,
-                    modifier = Modifier.qaTag(R.string.AccessibilityId_sessionClearData),
+                    modifier = Modifier.qaTag(org.session.content_descriptions.R.string.AccessibilityId_sessionClearData),
                     colors = dangerButtonColors(),
                 ) {
                     sendCommand(ShowClearDataDialog)
@@ -805,7 +805,7 @@ fun  AvatarBottomSheet(
             horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.spacing)
         ) {
             AvatarOption(
-                modifier = Modifier.qaTag(R.string.AccessibilityId_imageButton),
+                modifier = Modifier.qaTag(org.session.content_descriptions.R.string.AccessibilityId_imageButton),
                 title = stringResource(R.string.image),
                 iconRes = R.drawable.ic_image,
                 onClick = onGalleryPicked
@@ -813,7 +813,7 @@ fun  AvatarBottomSheet(
 
             if(showCamera) {
                 AvatarOption(
-                    modifier = Modifier.qaTag(R.string.AccessibilityId_cameraButton),
+                    modifier = Modifier.qaTag(org.session.content_descriptions.R.string.AccessibilityId_cameraButton),
                     title = stringResource(R.string.contentDescriptionCamera),
                     iconRes = R.drawable.ic_camera,
                     onClick = onCameraPicked
@@ -907,7 +907,7 @@ fun AvatarDialog(
                     ) {
                         startAvatarSelection()
                     }
-                    .qaTag(R.string.AccessibilityId_avatarPicker)
+                    .qaTag(org.session.content_descriptions.R.string.AccessibilityId_avatarPicker)
                     .background(
                         shape = CircleShape,
                         color = LocalColors.current.backgroundBubbleReceived,

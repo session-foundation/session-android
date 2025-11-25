@@ -59,7 +59,7 @@ class SearchContactActionBottomSheet : BottomSheetDialogFragment() {
                 ActionSheetItem(
                     text = stringResource(R.string.block),
                     leadingIcon = R.drawable.ic_user_round_x,
-                    qaTag = stringResource(R.string.AccessibilityId_block),
+                    qaTag = stringResource(org.session.content_descriptions.R.string.AccessibilityId_block),
                     onClick = {
                         showBlockConfirmation()
                         dismiss()
@@ -70,7 +70,7 @@ class SearchContactActionBottomSheet : BottomSheetDialogFragment() {
             ActionSheetItem(
                 text = stringResource(R.string.contactDelete),
                 leadingIcon = R.drawable.ic_trash_2,
-                qaTag = stringResource(R.string.AccessibilityId_delete),
+                qaTag = stringResource(org.session.content_descriptions.R.string.AccessibilityId_delete),
                 onClick = {
                     showDeleteConfirmation()
                     dismiss()
@@ -89,7 +89,7 @@ class SearchContactActionBottomSheet : BottomSheetDialogFragment() {
                 Phrase.from(context, R.string.blockDescription)
                     .put(NAME_KEY, contactName)
                     .format())
-            dangerButton(R.string.block, R.string.AccessibilityId_blockConfirm) {
+            dangerButton(R.string.block, org.session.content_descriptions.R.string.AccessibilityId_blockConfirm) {
                 callbacks?.onBlockContact(address)
                 callbacks = null
             }
@@ -108,7 +108,7 @@ class SearchContactActionBottomSheet : BottomSheetDialogFragment() {
                     .put(NAME_KEY, contactName)
                     .put(NAME_KEY, contactName)
                     .format())
-            dangerButton(R.string.delete, R.string.AccessibilityId_delete) {
+            dangerButton(R.string.delete, org.session.content_descriptions.R.string.AccessibilityId_delete) {
                 callbacks?.onDeleteContact(address)
                 callbacks = null
             }

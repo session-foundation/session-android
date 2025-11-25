@@ -94,7 +94,7 @@ fun NotificationSettings(
             AccentOutlineButton(
                 stringResource(R.string.set),
                 modifier = Modifier
-                    .qaTag(R.string.AccessibilityId_setButton)
+                    .qaTag(org.session.content_descriptions.R.string.AccessibilityId_setButton)
                     .align(Alignment.CenterHorizontally)
                     .padding(bottom = LocalDimensions.current.spacing),
                 enabled = state.enableButton,

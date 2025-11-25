@@ -77,7 +77,7 @@ internal fun StartConversationScreen(
                     textStyle = LocalType.current.xl,
                     iconRes = R.drawable.ic_message_square,
                     iconSize = LocalDimensions.current.iconMedium,
-                    modifier = Modifier.qaTag(R.string.AccessibilityId_messageNew),
+                    modifier = Modifier.qaTag(org.session.content_descriptions.R.string.AccessibilityId_messageNew),
                     minHeight = itemHeight,
                     onClick = {
                         navigateTo(StartConversationDestination.NewMessage)
@@ -94,7 +94,7 @@ internal fun StartConversationScreen(
                     textStyle = LocalType.current.xl,
                     iconRes = R.drawable.ic_users_group_custom,
                     iconSize = LocalDimensions.current.iconMedium,
-                    modifier = Modifier.qaTag(R.string.AccessibilityId_groupCreate),
+                    modifier = Modifier.qaTag(org.session.content_descriptions.R.string.AccessibilityId_groupCreate),
                     minHeight = itemHeight,
                     onClick = {
                         navigateTo(StartConversationDestination.CreateGroup)
@@ -111,7 +111,7 @@ internal fun StartConversationScreen(
                     textStyle = LocalType.current.xl,
                     iconRes = R.drawable.ic_globe,
                     iconSize = LocalDimensions.current.iconMedium,
-                    modifier = Modifier.qaTag(R.string.AccessibilityId_communityJoin),
+                    modifier = Modifier.qaTag(org.session.content_descriptions.R.string.AccessibilityId_communityJoin),
                     minHeight = itemHeight,
                     onClick = {
                         navigateTo(StartConversationDestination.JoinCommunity)
@@ -128,7 +128,7 @@ internal fun StartConversationScreen(
                     textStyle = LocalType.current.xl,
                     iconRes = R.drawable.ic_user_round_plus,
                     iconSize = LocalDimensions.current.iconMedium,
-                    modifier = Modifier.qaTag(R.string.AccessibilityId_sessionInviteAFriendButton),
+                    modifier = Modifier.qaTag(org.session.content_descriptions.R.string.AccessibilityId_sessionInviteAFriendButton),
                     minHeight = itemHeight,
                     onClick = {
                         navigateTo(StartConversationDestination.InviteFriend)
@@ -150,7 +150,7 @@ internal fun StartConversationScreen(
                     Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
                     QrImage(
                         string = accountId,
-                        Modifier.qaTag(R.string.AccessibilityId_qrCode),
+                        Modifier.qaTag(org.session.content_descriptions.R.string.AccessibilityId_qrCode),
                         icon = R.drawable.session
                     )
                 }

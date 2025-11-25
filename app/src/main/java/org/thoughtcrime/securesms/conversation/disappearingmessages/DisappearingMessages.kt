@@ -67,7 +67,7 @@ class DisappearingMessages @Inject constructor(
             ExpiryMode.NONE -> {
                 bodyText = context.getText(R.string.disappearingMessagesFollowSettingOff)
                 dangerButtonText = R.string.confirm
-                dangerButtonContentDescription = R.string.AccessibilityId_confirm
+                dangerButtonContentDescription = org.session.content_descriptions.R.string.AccessibilityId_confirm
             }
             is ExpiryMode.AfterSend -> {
                 bodyText = context.getSubbedCharSequence(
@@ -80,7 +80,7 @@ class DisappearingMessages @Inject constructor(
                 )
 
                 dangerButtonText = R.string.set
-                dangerButtonContentDescription = R.string.AccessibilityId_setButton
+                dangerButtonContentDescription = org.session.content_descriptions.R.string.AccessibilityId_setButton
             }
             is ExpiryMode.AfterRead -> {
                 bodyText = context.getSubbedCharSequence(
@@ -93,7 +93,7 @@ class DisappearingMessages @Inject constructor(
                 )
 
                 dangerButtonText = R.string.set
-                dangerButtonContentDescription = R.string.AccessibilityId_setButton
+                dangerButtonContentDescription = org.session.content_descriptions.R.string.AccessibilityId_setButton
             }
         }
 

@@ -154,7 +154,7 @@ internal fun LandingScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.CenterHorizontally)
-                    .qaTag(R.string.AccessibilityId_onboardingAccountCreate),
+                    .qaTag(org.session.content_descriptions.R.string.AccessibilityId_onboardingAccountCreate),
                 onClick = createAccount
             )
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
@@ -163,7 +163,7 @@ internal fun LandingScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.CenterHorizontally)
-                    .qaTag(R.string.AccessibilityId_onboardingAccountExists),
+                    .qaTag(org.session.content_descriptions.R.string.AccessibilityId_onboardingAccountExists),
                 onClick = loadAccount
             )
             BorderlessHtmlButton(
@@ -171,7 +171,7 @@ internal fun LandingScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.CenterHorizontally)
-                    .qaTag(R.string.AccessibilityId_urlOpenBrowser),
+                    .qaTag(org.session.content_descriptions.R.string.AccessibilityId_urlOpenBrowser),
                 onClick = { isUrlDialogVisible = true }
             )
             Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))

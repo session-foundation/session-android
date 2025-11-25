@@ -502,7 +502,7 @@ class VisibleMessageContentView : ConstraintLayout {
         )
         body = SearchUtil.getHighlightedSpan(Locale.getDefault(),
             {
-                BackgroundColorSpan(context.getColorFromAttr(R.attr.colorPrimary))
+                BackgroundColorSpan(context.getColorFromAttr(androidx.appcompat.R.attr.colorPrimary))
             }, body, searchQuery)
         body = SearchUtil.getHighlightedSpan(Locale.getDefault(),
             {

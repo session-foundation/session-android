@@ -134,7 +134,7 @@ fun CreateGroup(
                 placeholder = stringResource(R.string.groupNameEnter),
                 textStyle = LocalType.current.base,
                 modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)
-                    .qaTag(R.string.AccessibilityId_groupNameEnter),
+                    .qaTag(org.session.content_descriptions.R.string.AccessibilityId_groupNameEnter),
                 error = groupNameError.takeIf { it.isNotBlank() },
                 enabled = !showLoading,
                 innerPadding = PaddingValues(LocalDimensions.current.smallSpacing),
@@ -149,7 +149,7 @@ fun CreateGroup(
                 onClear = onContactSearchQueryClear,
                 placeholder = stringResource(R.string.searchContacts),
                 modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)
-                    .qaTag(R.string.AccessibilityId_groupNameSearch),
+                    .qaTag(org.session.content_descriptions.R.string.AccessibilityId_groupNameSearch),
                 enabled = !showLoading
             )
 
@@ -188,7 +188,7 @@ fun CreateGroup(
                 enabled = !showLoading,
                 modifier = Modifier
                     .padding(horizontal = LocalDimensions.current.spacing)
-                    .qaTag(R.string.AccessibilityId_groupCreate)
+                    .qaTag(org.session.content_descriptions.R.string.AccessibilityId_groupCreate)
             ) {
                 LoadingArcOr(
                     loading = showLoading

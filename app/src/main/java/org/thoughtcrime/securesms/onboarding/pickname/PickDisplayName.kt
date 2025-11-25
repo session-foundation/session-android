@@ -67,7 +67,7 @@ internal fun PickDisplayName(
 
             SessionOutlinedTextField(
                 text = state.displayName,
-                modifier = Modifier.fillMaxWidth().qaTag(R.string.AccessibilityId_displayNameEnter),
+                modifier = Modifier.fillMaxWidth().qaTag(org.session.content_descriptions.R.string.AccessibilityId_displayNameEnter),
                 placeholder = stringResource(R.string.displayNameEnter),
                 onChange = onChange,
                 onContinue = onContinue,

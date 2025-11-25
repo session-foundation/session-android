@@ -188,7 +188,7 @@ fun AppBarText(
 fun AppBarBackIcon(onBack: () -> Unit) {
     IconButton(
         modifier = Modifier.contentDescription(stringResource(R.string.back))
-            .qaTag(R.string.AccessibilityId_navigateBack),
+            .qaTag(org.session.content_descriptions.R.string.AccessibilityId_navigateBack),
         onClick = onBack
     ) {
         Icon(

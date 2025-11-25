@@ -152,7 +152,7 @@ class ControlMessageView : LinearLayout {
                     context.getString(R.string.messageRequestsAccepted)
                 }
 
-                binding.root.contentDescription = context.getString(R.string.AccessibilityId_message_request_config_message)
+                binding.root.contentDescription = context.getString(org.session.content_descriptions.R.string.AccessibilityId_message_request_config_message)
             }
             message.isCallLog -> {
                 val drawableRes = when {
