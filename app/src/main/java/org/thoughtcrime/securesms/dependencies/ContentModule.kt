@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.dependencies
 
+import android.content.ContentResolver
 import android.content.Context
 import dagger.Module
 import dagger.Provides
@@ -12,6 +13,6 @@ import dagger.hilt.components.SingletonComponent
 object ContentModule {
 
     @Provides
-    fun providesContentResolver(@ApplicationContext context: Context) = context.contentResolver
+    fun providesContentResolver(@ApplicationContext context: Context): ContentResolver = context.contentResolver
 
 }

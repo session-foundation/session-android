@@ -28,7 +28,7 @@ public class AttachmentStreamUriLoader implements ModelLoader<AttachmentModel, I
     return true;
   }
 
-  static class Factory implements ModelLoaderFactory<AttachmentModel, InputStream> {
+  public static class Factory implements ModelLoaderFactory<AttachmentModel, InputStream> {
 
     @Override
     public @NonNull ModelLoader<AttachmentModel, InputStream> build(@NonNull MultiModelLoaderFactory multiFactory) {

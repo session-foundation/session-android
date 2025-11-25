@@ -335,9 +335,8 @@ android {
 dependencies {
     implementation(project(":content-descriptions"))
 
-    ksp(libs.androidx.hilt.compiler)
+//    ksp(libs.androidx.hilt.compiler)
     ksp(libs.dagger.hilt.compiler)
-    ksp(libs.glide.ksp)
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.hilt.work)
     implementation(libs.roundedimageview)
@@ -483,6 +482,8 @@ dependencies {
 
     debugImplementation(libs.sqlite.web.viewer)
 }
+
+
 
 fun getLastCommitTimestamp(): String {
     return ByteArrayOutputStream().use { os ->
