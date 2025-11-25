@@ -24,7 +24,6 @@ import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.sending_receiving.notifications.Response
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
@@ -172,6 +171,10 @@ class PushRegistrationWorker @AssistedInject constructor(
         buildRequest: (T) -> Req,
         sendBatchRequest: suspend (Collection<Req>) -> List<Res>,
     ): List<Pair<T, kotlin.Result<Unit>>> {
+        if (items.isEmpty()) {
+            return emptyList()
+        }
+
         val results = ArrayList<Pair<T, kotlin.Result<Unit>>>(items.size)
 
         val batchRequestItems = mutableListOf<T>()
