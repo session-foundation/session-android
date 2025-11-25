@@ -1,6 +1,5 @@
 package org.session.libsession.database
 
-import android.content.Context
 import android.net.Uri
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.KeyPair
@@ -11,7 +10,6 @@ import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.messages.visible.Attachment
-import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsession.messaging.messages.visible.Reaction
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
@@ -26,7 +24,6 @@ import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
-import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
@@ -38,12 +35,8 @@ interface StorageProtocol {
     // General
     fun getUserPublicKey(): String?
     fun getUserED25519KeyPair(): KeyPair?
-    fun getUserX25519KeyPair(): ECKeyPair
+    fun getUserX25519KeyPair(): KeyPair
     fun getUserBlindedAccountId(serverPublicKey: String): AccountId?
-    fun getUserProfile(): Profile
-
-    // Signal
-    fun getOrGenerateRegistrationID(): Int
 
     // Jobs
     fun persistJob(job: Job)
@@ -92,7 +85,9 @@ interface StorageProtocol {
     fun addReceivedMessageTimestamp(timestamp: Long)
     fun removeReceivedMessageTimestamps(timestamps: Set<Long>)
     fun getAttachmentsForMessage(mmsMessageId: Long): List<DatabaseAttachment>
-    fun getMessageBy(timestamp: Long, author: String): MessageRecord?
+    fun getMessageBy(threadId: Long, timestamp: Long, author: String): MessageRecord?
+    @Deprecated("We shouldn't be querying messages by timestamp alone. Use `getMessageBy` when possible ")
+    fun getMessageByTimestamp(timestamp: Long, author: String, getQuote: Boolean): MessageRecord?
     fun updateSentTimestamp(messageId: MessageId, newTimestamp: Long)
     fun markAsResyncing(messageId: MessageId)
     fun markAsSyncing(messageId: MessageId)
@@ -118,8 +113,6 @@ interface StorageProtocol {
     fun addClosedGroupEncryptionKeyPair(encryptionKeyPair: ECKeyPair, groupPublicKey: String, timestamp: Long)
     fun removeAllClosedGroupEncryptionKeyPairs(groupPublicKey: String)
 
-    fun insertOutgoingInfoMessage(context: Context, groupID: String, type: SignalServiceGroup.Type, name: String,
-        members: Collection<String>, admins: Collection<String>, threadID: Long, sentTimestamp: Long): Long?
     fun isLegacyClosedGroup(publicKey: String): Boolean
     fun getClosedGroupEncryptionKeyPairs(groupPublicKey: String): MutableList<ECKeyPair>
     fun getLatestClosedGroupEncryptionKeyPair(groupPublicKey: String): ECKeyPair?
@@ -181,7 +174,15 @@ interface StorageProtocol {
         attachments: List<Attachment>,
         runThreadUpdate: Boolean
     ): MessageId?
-    fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean = false)
+    fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean = false, updateNotification: Boolean = true)
+
+    /**
+     * Marks the conversation as read up to and including the message with [messageId]. It will
+     * take the reactions associated with messages prior to and including that message into account.
+     *
+     * It will not do anything if the last seen of this thread is already set in the future.
+     */
+    fun markConversationAsReadUpToMessage(messageId: MessageId)
     fun markConversationAsUnread(threadId: Long)
     fun getLastSeen(threadId: Long): Long
     fun ensureMessageHashesAreSender(hashes: Set<String>, sender: String, closedGroupId: String): Boolean

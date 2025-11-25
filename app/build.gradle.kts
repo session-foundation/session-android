@@ -26,8 +26,8 @@ configurations.configureEach {
     exclude(module = "commons-logging")
 }
 
-val canonicalVersionCode = 420
-val canonicalVersionName = "1.28.0"
+val canonicalVersionCode = 432
+val canonicalVersionName = "1.30.0"
 
 val postFixSize = 10
 val abiPostFix = mapOf(
@@ -185,13 +185,12 @@ android {
             matchingFallbacks += "release"
 
             signingConfig = signingConfigs.getByName("debug")
-            applicationIdSuffix = ".$name"
 
             devNetDefaultOn(false)
             enablePermissiveNetworkSecurityConfig(true)
 
             setAlternativeAppName("Session QA")
-            setAuthorityPostfix(".qa")
+            setAuthorityPostfix("")
         }
 
         create("automaticQa") {
@@ -406,6 +405,7 @@ dependencies {
     implementation(libs.phrase)
     implementation(libs.copper.flow)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.guava)
     implementation(libs.kovenant)
     implementation(libs.kovenant.android)
     implementation(libs.opencsv)

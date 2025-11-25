@@ -31,7 +31,9 @@ import org.thoughtcrime.securesms.database.LokiUserDatabase;
 import org.thoughtcrime.securesms.database.MmsDatabase;
 import org.thoughtcrime.securesms.database.MmsSmsDatabase;
 import org.thoughtcrime.securesms.database.PushDatabase;
+import org.thoughtcrime.securesms.database.PushRegistrationDatabase;
 import org.thoughtcrime.securesms.database.ReactionDatabase;
+import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase;
 import org.thoughtcrime.securesms.database.RecipientDatabase;
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase;
 import org.thoughtcrime.securesms.database.SearchDatabase;
@@ -39,6 +41,7 @@ import org.thoughtcrime.securesms.database.SessionContactDatabase;
 import org.thoughtcrime.securesms.database.SessionJobDatabase;
 import org.thoughtcrime.securesms.database.SmsDatabase;
 import org.thoughtcrime.securesms.database.ThreadDatabase;
+import org.thoughtcrime.securesms.pro.db.ProDatabase;
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities;
 
 import javax.inject.Provider;
@@ -98,9 +101,14 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int lokiV50                          = 71;
   private static final int lokiV51                          = 72;
   private static final int lokiV52                          = 73;
+  private static final int lokiV53                          = 74;
+  private static final int lokiV54                          = 75;
+  private static final int lokiV55                          = 76;
+  private static final int lokiV56                          = 77;
+  private static final int lokiV57                          = 78;
 
   // Loki - onUpgrade(...) must be updated to use Loki version numbers if Signal makes any database changes
-  private static final int    DATABASE_VERSION         = lokiV52;
+  private static final int    DATABASE_VERSION         = lokiV57;
   private static final int    MIN_DATABASE_VERSION     = lokiV7;
   public static final String  DATABASE_NAME            = "session.db";
 
@@ -142,8 +150,6 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     );
 
     this.jsonProvider = jsonProvider;
-
-    Log.d(TAG, "SQLCipherOpenHelper created with database secret: " + databaseSecret.asString());
   }
 
   @Override
@@ -248,8 +254,8 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(ThreadDatabase.ADD_SNIPPET_CONTENT_COLUMN);
 
     executeStatements(db, RecipientSettingsDatabase.Companion.getMIGRATION_CREATE_TABLE());
+    ReactionDatabase.Companion.migrateToDropForeignConstraint(db);
     db.execSQL(RecipientSettingsDatabase.MIGRATE_DROP_OLD_TABLE);
-    executeStatements(db, ReactionDatabase.MIGRATE_REACTION_TABLE_TO_USE_RECIPIENT_SETTINGS);
     db.execSQL(BlindedIdMappingDatabase.DROP_TABLE_COMMAND);
     db.execSQL(ExpirationConfigurationDatabase.DROP_TABLE_COMMAND);
     db.execSQL(SessionContactDatabase.getDropTableCommand());
@@ -257,6 +263,18 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
     db.execSQL(CommunityDatabase.MIGRATE_CREATE_TABLE);
     executeStatements(db, CommunityDatabase.Companion.getMIGRATE_DROP_OLD_TABLES());
+
+    db.execSQL(SmsDatabase.ADD_LAST_MESSAGE_INDEX);
+    db.execSQL(MmsDatabase.ADD_LAST_MESSAGE_INDEX);
+
+    executeStatements(db, PushRegistrationDatabase.Companion.createTableStatements());
+
+    ReceivedMessageHashDatabase.Companion.createAndMigrateTable(db);
+
+    ProDatabase.Companion.createTable(db);
+    db.execSQL(MmsDatabase.ADD_PRO_FEATURES_COLUMN);
+    db.execSQL(SmsDatabase.ADD_PRO_FEATURES_COLUMN);
+    RecipientSettingsDatabase.Companion.migrateProStatusToProData(db);
   }
 
   @Override
@@ -570,8 +588,8 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
         executeStatements(db, RecipientSettingsDatabase.Companion.getMIGRATION_CREATE_TABLE());
         db.execSQL(RecipientSettingsDatabase.MIGRATE_MOVE_DATA_FROM_OLD_TABLE);
+        ReactionDatabase.Companion.migrateToDropForeignConstraint(db);
         db.execSQL(RecipientSettingsDatabase.MIGRATE_DROP_OLD_TABLE);
-        executeStatements(db, ReactionDatabase.MIGRATE_REACTION_TABLE_TO_USE_RECIPIENT_SETTINGS);
         db.execSQL(BlindedIdMappingDatabase.DROP_TABLE_COMMAND);
         db.execSQL(ExpirationConfigurationDatabase.DROP_TABLE_COMMAND);
         db.execSQL(SessionContactDatabase.getDropTableCommand());
@@ -580,6 +598,30 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         db.execSQL(CommunityDatabase.MIGRATE_CREATE_TABLE);
         CommunityDatabase.Companion.migrateFromOldTables(jsonProvider.get(), db);
         executeStatements(db, CommunityDatabase.Companion.getMIGRATE_DROP_OLD_TABLES());
+      }
+
+      if (oldVersion < lokiV53) {
+        MmsSmsDatabase.migrateLegacyCommunityAddresses2(db);
+      }
+
+      if (oldVersion < lokiV54) {
+        db.execSQL(SmsDatabase.ADD_LAST_MESSAGE_INDEX);
+        db.execSQL(MmsDatabase.ADD_LAST_MESSAGE_INDEX);
+      }
+
+      if (oldVersion < lokiV55) {
+        executeStatements(db, PushRegistrationDatabase.Companion.createTableStatements());
+      }
+
+      if (oldVersion < lokiV56) {
+        ReceivedMessageHashDatabase.Companion.createAndMigrateTable(db);
+      }
+
+      if (oldVersion < lokiV57) {
+          ProDatabase.Companion.createTable(db);
+          db.execSQL(MmsDatabase.ADD_PRO_FEATURES_COLUMN);
+          db.execSQL(SmsDatabase.ADD_PRO_FEATURES_COLUMN);
+          RecipientSettingsDatabase.Companion.migrateProStatusToProData(db);
       }
 
       db.setTransactionSuccessful();

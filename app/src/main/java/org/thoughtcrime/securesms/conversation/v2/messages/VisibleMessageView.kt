@@ -47,7 +47,6 @@ import org.session.libsession.utilities.modifyLayoutParams
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsession.utilities.truncatedForDisplay
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -61,6 +60,7 @@ import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.bold
+import org.thoughtcrime.securesms.util.AvatarBadge
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.disableClipping
@@ -176,7 +176,6 @@ class VisibleMessageView : FrameLayout {
         val isStartOfMessageCluster = isStartOfMessageCluster(message, previous, isGroupThread)
         val isEndOfMessageCluster = isEndOfMessageCluster(message, next, isGroupThread)
         // Show profile picture and sender name if this is a group thread AND the message is incoming
-        binding.moderatorIconImageView.isVisible = false
         binding.profilePictureView.visibility = when {
             threadRecipient.isGroupOrCommunityRecipient && !message.isOutgoing && isEndOfMessageCluster -> View.VISIBLE
             threadRecipient.isGroupOrCommunityRecipient -> View.INVISIBLE
@@ -200,21 +199,21 @@ class VisibleMessageView : FrameLayout {
 
         if (isGroupThread && !message.isOutgoing) {
             if (isEndOfMessageCluster) {
-                binding.profilePictureView.setThemedContent {
-                    Avatar(
-                        size = LocalDimensions.current.iconMediumAvatar,
-                        data = avatarUtils.getUIDataFromRecipient(sender),
-                        modifier = Modifier.clickable {
-                            delegate?.showUserProfileModal(message.recipient)
-                        }
-                    )
-                }
-
-                binding.moderatorIconImageView.isVisible = if (sender.address is Address.WithAccountId) {
+                val showProBadge = if (sender.address is Address.WithAccountId) {
                     (threadRecipient.data as? RecipientData.GroupLike)
                         ?.shouldShowAdminCrown(sender.address.accountId) == true
                 } else {
                     false
+                }
+                binding.profilePictureView.setThemedContent {
+                    Avatar(
+                        size = LocalDimensions.current.iconMediumAvatar,
+                        data = avatarUtils.getUIDataFromRecipient(sender),
+                        badge = if(showProBadge) AvatarBadge.Admin else AvatarBadge.None,
+                        modifier = Modifier.clickable {
+                            delegate?.showUserProfileModal(message.recipient)
+                        }
+                    )
                 }
             }
         }
@@ -231,7 +230,7 @@ class VisibleMessageView : FrameLayout {
                         text = sender.displayName(),
                         textStyle = LocalType.current.base.bold()
                             .copy(color = LocalColors.current.text),
-                        showBadge = message.recipient.proStatus.shouldShowProBadge(),
+                        showBadge = message.recipient.shouldShowProBadge,
                     )
 
                     if (sender.address is Address.Blinded) {
@@ -277,10 +276,10 @@ class VisibleMessageView : FrameLayout {
             if (capabilities.isNullOrEmpty() || capabilities.contains(OpenGroupApi.Capability.REACTIONS.name.lowercase())) {
                 emojiReactionsBinding.value.root.let { root ->
                     root.setReactions(message.messageId, message.reactions, message.isOutgoing, delegate)
-                    root.isVisible = true
-                    (root.layoutParams as ConstraintLayout.LayoutParams).apply {
+                    root.layoutParams = (root.layoutParams as ConstraintLayout.LayoutParams).apply {
                         horizontalBias = if (message.isOutgoing) 1f else 0f
                     }
+                    root.isVisible = true
                 }
             } else if (emojiReactionsBinding.isInitialized()) {
                 emojiReactionsBinding.value.root.isVisible = false
@@ -341,9 +340,11 @@ class VisibleMessageView : FrameLayout {
 
         // Set text & icons as appropriate for the message state. Note: Possible message states we care
         // about are: isFailed, isSyncFailed, isPending, isSyncing, isResyncing, isRead, and isSent.
-        messageStatus.messageText?.let{
+        messageStatus.messageTextRes?.let{
             binding.messageStatusTextView.setText(it)
-            binding.messageStatusTextView.contentDescription = context.getString(R.string.AccessibilityId_send_status) + it
+            binding.messageStatusTextView.contentDescription =
+                context.getString(R.string.AccessibilityId_send_status)+
+                        context.getString(it)
         }
         messageStatus.iconTint?.let(binding.messageStatusTextView::setTextColor)
         messageStatus.iconId?.let { ContextCompat.getDrawable(context, it) }
@@ -421,7 +422,7 @@ class VisibleMessageView : FrameLayout {
 
     data class MessageStatusInfo(@DrawableRes val iconId: Int?,
                                  @ColorInt val iconTint: Int?,
-                                 @StringRes val messageText: Int?)
+                                 @StringRes val messageTextRes: Int?)
 
     private fun getMessageStatusInfo(message: MessageRecord): MessageStatusInfo? = when {
         message.isFailed ->

@@ -53,6 +53,7 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.SSKEnvironment
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
@@ -71,7 +72,6 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.sskenvironment.ReadReceiptManager
 import java.security.SignatureException
 import javax.inject.Inject
@@ -84,6 +84,7 @@ internal fun MessageReceiver.isBlocked(publicKey: String): Boolean {
     return recipient?.blocked == true
 }
 
+@Deprecated(replaceWith = ReplaceWith("ReceivedMessageProcessor"), message = "Use ReceivedMessageProcessor instead")
 @Singleton
 class ReceivedMessageHandler @Inject constructor(
     @param:ApplicationContext private val context: Context,
@@ -101,6 +102,7 @@ class ReceivedMessageHandler @Inject constructor(
     @param:ManagerScope private val scope: CoroutineScope,
     private val configFactory: ConfigFactoryProtocol,
     private val messageRequestResponseHandler: Provider<MessageRequestResponseHandler>,
+    private val prefs: TextSecurePreferences,
 ) {
 
     suspend fun handle(
@@ -115,7 +117,11 @@ class ReceivedMessageHandler @Inject constructor(
         when (message) {
             is ReadReceipt -> handleReadReceipt(message)
             is TypingIndicator -> handleTypingIndicator(message)
-            is GroupUpdated -> handleGroupUpdated(message, (threadAddress as? Address.Group)?.accountId)
+            is GroupUpdated -> handleGroupUpdated(
+                message = message,
+                closedGroup = (threadAddress as? Address.Group)?.accountId,
+                proto = proto
+            )
             is ExpirationTimerUpdate -> {
                 // For groupsv2, there are dedicated mechanisms for handling expiration timers, and
                 // we want to avoid the 1-to-1 message format which is unauthenticated in a group settings.
@@ -130,7 +136,7 @@ class ReceivedMessageHandler @Inject constructor(
             }
             is DataExtractionNotification -> handleDataExtractionNotification(message)
             is UnsendRequest -> handleUnsendRequest(message)
-            is MessageRequestResponse -> messageRequestResponseHandler.get().handleExplicitRequestResponseMessage(message)
+            is MessageRequestResponse -> messageRequestResponseHandler.get().handleExplicitRequestResponseMessage(null, message, proto)
             is VisibleMessage -> handleVisibleMessage(
                 message = message,
                 proto = proto,
@@ -184,6 +190,9 @@ class ReceivedMessageHandler @Inject constructor(
     }
 
     private fun showTypingIndicatorIfNeeded(senderPublicKey: String) {
+        // We don't want to show other people's indicators if the toggle is off
+        if(!prefs.isTypingIndicatorsEnabled()) return
+
         val address = Address.fromSerialized(senderPublicKey)
         val threadID = storage.getThreadId(address) ?: return
         typingIndicators.didReceiveTypingStartedMessage(threadID, address, 1)
@@ -214,7 +223,6 @@ class ReceivedMessageHandler @Inject constructor(
         val senderPublicKey = message.sender!!
 
         val notification: DataExtractionNotificationInfoMessage = when(message.kind) {
-            is DataExtractionNotification.Kind.Screenshot -> DataExtractionNotificationInfoMessage(DataExtractionNotificationInfoMessage.Kind.SCREENSHOT)
             is DataExtractionNotification.Kind.MediaSaved -> DataExtractionNotificationInfoMessage(DataExtractionNotificationInfoMessage.Kind.MEDIA_SAVED)
             else -> return
         }
@@ -245,7 +253,7 @@ class ReceivedMessageHandler @Inject constructor(
 
         val timestamp = message.timestamp ?: return null
         val author = message.author ?: return null
-        val messageToDelete = storage.getMessageBy(timestamp, author) ?: return null
+        val messageToDelete = storage.getMessageByTimestamp(timestamp, author, false) ?: return null
         val messageIdToDelete = messageToDelete.messageId
         val messageType = messageToDelete.individualRecipient?.getType()
 
@@ -297,7 +305,7 @@ class ReceivedMessageHandler @Inject constructor(
         // Do nothing if the message was outdated
         if (messageIsOutdated(message, context.threadId)) { return null }
 
-        messageRequestResponseHandler.get().handleVisibleMessage(message)
+        messageRequestResponseHandler.get().handleVisibleMessage(null, message)
 
         // Handle group invite response if new closed group
         val threadRecipientAddress = context.threadAddress
@@ -327,7 +335,7 @@ class ReceivedMessageHandler @Inject constructor(
                 Address.fromSerialized(quote.author)
             }
 
-            val messageInfo = messageDataProvider.getMessageForQuote(quote.id, author)
+            val messageInfo = messageDataProvider.getMessageForQuote(context.threadId, quote.id, author)
             quoteMessageBody = messageInfo?.third
             quoteModel = if (messageInfo != null) {
                 val attachments = if (messageInfo.second) messageDataProvider.getAttachmentsAndLinkPreviewFor(messageInfo.first) else ArrayList()
@@ -376,7 +384,7 @@ class ReceivedMessageHandler @Inject constructor(
                     emoji = reaction.emoji!!,
                     messageTimestamp = reaction.timestamp!!,
                     threadId = context.threadId,
-                    author = reaction.publicKey!!,
+                    author = senderAddress.address,
                     notifyUnread = threadIsGroup
                 )
             }
@@ -410,8 +418,10 @@ class ReceivedMessageHandler @Inject constructor(
                 runThreadUpdate = runThreadUpdate
             ) ?: return null
 
-            // If we have previously "hidden" the sender, we should flip the flag back to visible
-            if (senderAddress is Address.Standard && senderAddress.address != userPublicKey) {
+            // If we have previously "hidden" the sender, we should flip the flag back to visible,
+            // and this should only be done only for 1:1 messages
+            if (senderAddress is Address.Standard && senderAddress.address != userPublicKey
+                && context.threadAddress is Address.Standard) {
                 val existingContact =
                     configFactory.withUserConfigs { it.contacts.get(senderAddress.accountId.hexString) }
 
@@ -437,14 +447,7 @@ class ReceivedMessageHandler @Inject constructor(
             // - must be done after the message is persisted)
             // - must be done after neccessary contact is created
             if (runProfileUpdate && senderAddress is Address.WithAccountId) {
-                val updates = ProfileUpdateHandler.Updates.create(
-                    name = message.profile?.displayName,
-                    picUrl = message.profile?.profilePictureURL,
-                    picKey = message.profile?.profileKey,
-                    blocksCommunityMessageRequests = message.blocksMessageRequests,
-                    proStatus = null,
-                    profileUpdateTime = message.profile?.profileUpdated,
-                )
+                val updates = ProfileUpdateHandler.Updates.create(proto)
 
                 if (updates != null) {
                     profileUpdateHandler.get().handleProfileUpdate(
@@ -483,7 +486,7 @@ class ReceivedMessageHandler @Inject constructor(
         return null
     }
 
-    private fun handleGroupUpdated(message: GroupUpdated, closedGroup: AccountId?) {
+    private fun handleGroupUpdated(message: GroupUpdated, closedGroup: AccountId?, proto: SignalServiceProtos.Content) {
         val inner = message.inner
         if (closedGroup == null &&
             !inner.hasInviteMessage() && !inner.hasPromoteMessage()) {
@@ -491,14 +494,7 @@ class ReceivedMessageHandler @Inject constructor(
         }
 
         // Update profile if needed
-        ProfileUpdateHandler.Updates.create(
-            name = message.profile?.displayName,
-            picUrl = message.profile?.profilePictureURL,
-            picKey = message.profile?.profileKey,
-            blocksCommunityMessageRequests = null,
-            proStatus = null,
-            profileUpdateTime = null
-        )?.let { updates ->
+        ProfileUpdateHandler.Updates.create(proto)?.let { updates ->
             profileUpdateHandler.get().handleProfileUpdate(
                 senderId = AccountId(message.sender!!),
                 updates = updates,
@@ -507,9 +503,9 @@ class ReceivedMessageHandler @Inject constructor(
         }
 
         when {
-            inner.hasInviteMessage() -> handleNewLibSessionClosedGroupMessage(message)
+            inner.hasInviteMessage() -> handleNewLibSessionClosedGroupMessage(message, proto)
             inner.hasInviteResponse() -> handleInviteResponse(message, closedGroup!!)
-            inner.hasPromoteMessage() -> handlePromotionMessage(message)
+            inner.hasPromoteMessage() -> handlePromotionMessage(message, proto)
             inner.hasInfoChangeMessage() -> handleGroupInfoChange(message, closedGroup!!)
             inner.hasMemberChangeMessage() -> handleMemberChange(message, closedGroup!!)
             inner.hasMemberLeftMessage() -> handleMemberLeft(message, closedGroup!!)
@@ -588,7 +584,7 @@ class ReceivedMessageHandler @Inject constructor(
         groupManagerV2.handleGroupInfoChange(message, closedGroup)
     }
 
-    private fun handlePromotionMessage(message: GroupUpdated) {
+    private fun handlePromotionMessage(message: GroupUpdated, proto: SignalServiceProtos.Content) {
         val promotion = message.inner.promoteMessage
         val seed = promotion.groupIdentitySeed.toByteArray()
         val sender = message.sender!!
@@ -601,7 +597,9 @@ class ReceivedMessageHandler @Inject constructor(
                         groupName = promotion.name,
                         adminKeySeed = seed,
                         promoter = adminId,
-                        promoterName = message.profile?.displayName,
+                        promoterName = if (proto.hasDataMessage() && proto.dataMessage.hasProfile() && proto.dataMessage.profile.hasDisplayName())
+                                proto.dataMessage.profile.displayName
+                            else null,
                         promoteMessageHash = message.serverHash!!,
                         promoteMessageTimestamp = message.sentTimestamp!!,
                     )
@@ -624,7 +622,7 @@ class ReceivedMessageHandler @Inject constructor(
         }
     }
 
-    private fun handleNewLibSessionClosedGroupMessage(message: GroupUpdated) {
+    private fun handleNewLibSessionClosedGroupMessage(message: GroupUpdated, proto: SignalServiceProtos.Content) {
         val storage = storage
         val ourUserId = storage.getUserPublicKey()!!
         val invite = message.inner.inviteMessage
@@ -645,7 +643,9 @@ class ReceivedMessageHandler @Inject constructor(
                         groupName = invite.name,
                         authData = invite.memberAuthData.toByteArray(),
                         inviter = adminId,
-                        inviterName = message.profile?.displayName,
+                        inviterName = if (proto.hasDataMessage() && proto.dataMessage.hasProfile() && proto.dataMessage.profile.hasDisplayName())
+                                proto.dataMessage.profile.displayName
+                            else null,
                         inviteMessageHash = message.serverHash!!,
                         inviteMessageTimestamp = message.sentTimestamp!!,
                     )
@@ -770,17 +770,13 @@ fun constructReactionRecords(
     out: MutableMap<MessageId, MutableList<ReactionRecord>>
 ) {
     if (reactions.isNullOrEmpty()) return
-    val communityAddress = context.threadAddress as? Address.Community ?: return
+    if (context.threadAddress !is Address.Community) return
     val messageId = context.messageDataProvider.getMessageID(openGroupMessageServerID, context.threadId) ?: return
 
     val outList = out.getOrPut(messageId) { arrayListOf() }
 
     for ((emoji, reaction) in reactions) {
-        val pendingUserReaction = OpenGroupApi.pendingReactions
-            .filter { it.server == communityAddress.serverUrl && it.room == communityAddress.room && it.messageId == openGroupMessageServerID && it.add }
-            .sortedByDescending { it.seqNo }
-            .any { it.emoji == emoji }
-        val shouldAddUserReaction = pendingUserReaction || reaction.you || reaction.reactors.contains(context.userPublicKey)
+        val shouldAddUserReaction = reaction.you || reaction.reactors.contains(context.userPublicKey)
         val reactorIds = reaction.reactors.filter { it != context.userBlindedKey && it != context.userPublicKey }
         val count = if (reaction.you) reaction.count - 1 else reaction.count
         // Add the first reaction (with the count)

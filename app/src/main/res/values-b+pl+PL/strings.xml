@@ -200,7 +200,6 @@
     <string name="cameraGrantAccessDescription">Aby robić zdjęcia, nagrywać filmy i skanować kody QR, aplikacja {app_name} potrzebuje dostępu do aparatu</string>
     <string name="cameraGrantAccessQr">Aby skanować kody QR, aplikacja {app_name} wymaga dostępu do aparatu</string>
     <string name="cancel">Anulowanie</string>
-    <string name="cancelPlan">Anuluj plan</string>
     <string name="change">Zmień</string>
     <string name="changePasswordFail">Nie udało się zmienić hasła</string>
     <string name="changePasswordModalDescription">Zmień hasło dla {app_name}. Dane przechowywane lokalnie zostaną ponownie zaszyfrowane nowym hasłem.</string>
@@ -310,7 +309,6 @@
     <string name="create">Utwórz</string>
     <string name="creatingCall">Tworzenie połączenia</string>
     <string name="currentPassword">Obecne hasło</string>
-    <string name="currentPlan">Obecny plan</string>
     <string name="cut">Wytnij</string>
     <string name="darkMode">Tryb ciemny</string>
     <string name="databaseErrorClearDataWarning">Czy na pewno chcesz usunąć wszystkie wiadomości, załączniki i dane konta z tego urządzenia i utworzyć nowe konto?</string>
@@ -925,10 +923,8 @@
     <string name="previewNotification">Podgląd powiadomień</string>
     <string name="proActivated">Aktywowano</string>
     <string name="proAllSet">Wszystko gotowe!</string>
-    <string name="proAllSetDescription">Twój plan {app_pro} został zaktualizowany! Opłata zostanie pobrana, kiedy Twój obecny plan {pro} odnowi się automatycznie <b>{date}</b>.</string>
     <string name="proAlreadyPurchased">Masz już</string>
     <string name="proAnimatedDisplayPicture">Możesz przesyłać GIF-y i animowane obrazy WebP jako swoje zdjęcie profilowe!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">Zyskaj animowane zdjęcia profilowe i odblokuj funkcje premium dzięki {app_pro}</string>
     <string name="proAnimatedDisplayPictureFeature">Animowany obraz profilowy</string>
     <string name="proAnimatedDisplayPictureModalDescription">użytkownicy mogą przesyłać GIF-y</string>
     <string name="proAnimatedDisplayPictures">Animowane obrazy profilu</string>
@@ -949,13 +945,7 @@
     <string name="proBilledAnnually">Opłata roczna: {price}</string>
     <string name="proBilledMonthly">Opłata miesięczna: {price}</string>
     <string name="proBilledQuarterly">Opłata kwartalna: {price}</string>
-    <string name="proCallToActionLongerMessages">Chcesz wysyłać dłuższe wiadomości? Wyślij więcej tekstu i odblokuj funkcje premium dzięki {app_pro}</string>
-    <string name="proCallToActionPinnedConversations">Chcesz przypinać więcej czatów? Zorganizuj konwersacje i odblokuj funkcje premium dzięki {app_pro}</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">Chcesz przypiąć więcej niż 5 czatów? Zorganizuj konwersacje i odblokuj funkcje premium dzięki {app_pro}</string>
-    <string name="proDiscountTooltip">Cena Twojego obecnego planu jest obniżona o {percent}% pełnej ceny {app_pro}.</string>
-    <string name="proExpiredDescription">Niestety, Twój plan {pro} wygasł. Odnów go, by odzyskać dostęp do ekskluzywnych korzyści i funkcji {app_pro}.</string>
     <string name="proExpiringSoon">Niedługo wygaśnie</string>
-    <string name="proExpiringSoonDescription">Twój plan {pro} wygasa za <b>{time}</b>. Zaktualizuj swój plan, aby zachować dostęp do ekskluzywnych korzyści i funkcji {app_pro}.</string>
     <string name="proFaq">FAQ {pro}</string>
     <string name="proFaqDescription">Znajdź odpowiedzi na często zadawane pytania w sekcji FAQ {app_pro}.</string>
     <string name="proFeatureListAnimatedDisplayPicture">Prześlij obrazy profilowe w formacie GIF i WebP</string>
@@ -971,7 +961,6 @@
         <item quantity="many">Ulepszono %1$s grup</item>
         <item quantity="other">Ulepszono %1$s grup</item>
     </plurals>
-    <string name="proImportantDescription">Wniosek o zwrot jest ostateczny. Jeżeli zostanie zatwierdzony, Twój plan {pro} zostanie natychmiast anulowany i utracisz dostęp do wszystkich funkcji {pro}.</string>
     <string name="proIncreasedAttachmentSizeFeature">Zwiększony rozmiar załączników</string>
     <string name="proIncreasedMessageLengthFeature">Zwiększona długość wiadomości</string>
     <string name="proLargerGroups">Większe grupy</string>
@@ -990,18 +979,6 @@
         <item quantity="many">%1$s przypiętych konwersacji</item>
         <item quantity="other">%1$s przypiętych konwersacji</item>
     </plurals>
-    <string name="proPlanActivatedAuto">Twój plan {app_pro} jest aktywny!\n\nZostanie on automatycznie odnowiony na kolejny <b>{current_plan}</b>, dnia <b>{date}</b>. Zmiany w Twoim planie wejdą w życie przy następnym odnowieniu subskrypcji {pro}.</string>
-    <string name="proPlanActivatedAutoShort">Twój plan {app_pro} jest aktywny!\n\nZostanie on automatycznie odnowiony na kolejny <b>{current_plan}</b>, dnia <b>{date}</b>.</string>
-    <string name="proPlanActivatedNotAuto">Twój plan {app_pro} wygasa <b>{date}</b>.\n\nZaktualizuj swój plan już teraz, by zapewnić sobie nieprzerwany dostęp do ekskluzywnych funkcji Pro.</string>
-    <string name="proPlanExpireDate">Twój plan {app_pro} wygasa <b>{date}</b>.</string>
-    <string name="proPlanNotFound">Nie znaleziono planu {pro}</string>
-    <string name="proPlanNotFoundDescription">Nie znaleziono aktywnych planów dla Twojego konta. Jeżeli uważasz, że to błąd, prosimy o kontakt z Supportem {app_name}.</string>
-    <string name="proPlanRecover">Odzyskaj plan {pro}</string>
-    <string name="proPlanRenew">Odnów plan {pro}</string>
-    <string name="proPlanRenewStart">Odnów swój plan {app_pro}, aby znów używać potężnych funkcji {app_pro} Beta.</string>
-    <string name="proPlanRenewSupport">Twój plan {app_pro} został odnowiony! Dziękujemy za wspieranie {network_name}.</string>
-    <string name="proPlanRestored">Plan {pro} został odzyskany</string>
-    <string name="proPlanRestoredDescription">Wykryto ważny plan {app_pro} oraz przywrócono Twój status {pro}!</string>
     <string name="proPriceOneMonth">1 miesiąc - {monthly_price} / miesiąc</string>
     <string name="proPriceThreeMonths">3 miesiące - {monthly_price} / miesiąc</string>
     <string name="proPriceTwelveMonths">12 miesięcy - {monthly_price} / miesiąc</string>
@@ -1012,11 +989,9 @@
     <string name="proSettings">Ustawienia {pro}</string>
     <string name="proStats">Twoje Statystyki {pro}</string>
     <string name="proStatsTooltip">Statystyki {pro} pokazują użycie na tym urządzeniu i mogą wyglądać różnie na połączonych urządzeniach</string>
-    <string name="proSupportDescription">Potrzebujesz pomocy z planem {pro}? Wyślij zgłoszenie zespołowi wsparcia.</string>
     <string name="proTosPrivacy">Dokonując zmian wyrażasz zgodę na <b>Warunki Świadczenia Usług</b> {app_pro} {icon} oraz <b>Politykę Prywatności</b> {icon}</string>
     <string name="proUnlimitedPins">Nielimitowane przypięcia</string>
     <string name="proUnlimitedPinsDescription">Organizuj swoje czaty z nielimitowaną możliwością przypinania konwersacji.</string>
-    <string name="proUserProfileModalCallToAction">Chcesz więcej z {app_name}? Uaktualnij do {app_pro}, aby uzyskać potężniejsze możliwości wiadomości.</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Zdjęcie profilowe</string>
     <string name="profileDisplayPictureRemoveError">Nie udało się usunąć zdjęcia profilowego.</string>
@@ -1199,8 +1174,6 @@
     <string name="updateGroupInformationEnterShorterDescription">Wprowadź krótszy opis grupy</string>
     <string name="updateNewVersion">Dostępna jest nowa wersja aplikacji {app_name}. Stuknij, aby zaktualizować</string>
     <string name="updateNewVersionDescription">Dostępna jest nowa wersja ({version}) aplikacji {app_name}.</string>
-    <string name="updatePlan">Zaktualizuj plan</string>
-    <string name="updatePlanTwo">Dwa sposoby na aktualizację planu:</string>
     <string name="updateProfileInformation">Zaktualizuj informacje w profilu</string>
     <string name="updateProfileInformationDescription">Twoja nazwa wyświetlana i obraz profilu są widoczne we wszystkich konwersacjach.</string>
     <string name="updateReleaseNotes">Przejdź do informacji o wersji</string>

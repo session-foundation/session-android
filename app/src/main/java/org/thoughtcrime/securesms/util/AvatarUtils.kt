@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.util
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Rect
@@ -28,6 +29,7 @@ import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.ui.theme.classicDark3
 import java.math.BigInteger
 import java.security.MessageDigest
 import java.util.Locale
@@ -101,7 +103,13 @@ class AvatarUtils @Inject constructor(
         // custom image
         val (remoteFile, customIcon, color) = when {
             // use custom image if there is one
-            recipient.avatar != null -> Triple(recipient.avatar!!, null, defaultColor)
+            recipient.avatar != null -> Triple(
+                recipient.avatar!!,
+                // for communities, have an icon fallback in case the image errors out
+                if(recipient.isCommunityRecipient) R.drawable.session_logo else null,
+                // communities should always have a neutral fallback bg
+                if(recipient.isCommunityRecipient) classicDark3 else defaultColor
+            )
 
             // communities without a custom image should use a default image
             recipient.isCommunityRecipient -> Triple(null, R.drawable.session_logo, null)
@@ -128,7 +136,7 @@ class AvatarUtils @Inject constructor(
         return avatarBgColors[(hash % avatarBgColors.size).toInt()]
     }
 
-    fun generateTextBitmap(pixelSize: Int, hashString: String, displayName: String?): BitmapDrawable {
+    fun generateTextBitmap(pixelSize: Int, hashString: String, displayName: String?): Bitmap {
         val colorPrimary = getColorFromKey(hashString)
 
         val labelText = when {
@@ -158,7 +166,7 @@ class AvatarUtils @Inject constructor(
         textBounds.top += (areaRect.height() - textBounds.bottom) * 0.5f
         canvas.drawText(labelText, textBounds.left, textBounds.top - textPaint.ascent(), textPaint)
 
-        return BitmapDrawable(context.resources, bitmap)
+        return bitmap
     }
 
     private fun getSha512(input: String): String {
@@ -223,7 +231,7 @@ data class AvatarUIElement(
 
 sealed class AvatarBadge(@DrawableRes val icon: Int){
     data object None: AvatarBadge(0)
-    data object Admin: AvatarBadge(R.drawable.ic_crown_custom_enlarged)
+    data object Admin: AvatarBadge(R.drawable.ic_crown_custom_enlarged_no_padding)
     data class Custom(@DrawableRes val iconRes: Int): AvatarBadge(iconRes)
 }
 

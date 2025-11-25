@@ -1,7 +1,6 @@
 package org.session.libsession.messaging.sending_receiving.pollers
 
 import com.fasterxml.jackson.core.type.TypeReference
-import com.google.protobuf.ByteString
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -15,15 +14,13 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.jobs.MessageReceiveParameters
 import org.session.libsession.messaging.jobs.OpenGroupDeleteJob
 import org.session.libsession.messaging.jobs.TrimThreadJob
 import org.session.libsession.messaging.messages.Message.Companion.senderOrSync
-import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
-import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.Endpoint
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.open_groups.OpenGroupApi.BatchRequest
@@ -31,27 +28,19 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi.BatchRequestInf
 import org.session.libsession.messaging.open_groups.OpenGroupApi.BatchResponse
 import org.session.libsession.messaging.open_groups.OpenGroupApi.Capability
 import org.session.libsession.messaging.open_groups.OpenGroupApi.DirectMessage
-import org.session.libsession.messaging.open_groups.OpenGroupApi.Message
 import org.session.libsession.messaging.open_groups.OpenGroupApi.getOrFetchServerCapabilities
 import org.session.libsession.messaging.open_groups.OpenGroupApi.parallelBatch
-import org.session.libsession.messaging.open_groups.OpenGroupMessage
-import org.session.libsession.messaging.sending_receiving.MessageReceiver
-import org.session.libsession.messaging.sending_receiving.ReceivedMessageHandler
-import org.session.libsession.snode.utilities.await
+import org.session.libsession.messaging.sending_receiving.MessageParser
+import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsignal.protos.SignalServiceProtos
-import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.HTTP.Verb.GET
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.CommunityDatabase
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
-import java.util.concurrent.TimeUnit
 
 private typealias PollRequestToken = Channel<Result<List<String>>>
 
@@ -66,16 +55,15 @@ private typealias PollRequestToken = Channel<Result<List<String>>>
 class OpenGroupPoller @AssistedInject constructor(
     private val storage: StorageProtocol,
     private val appVisibilityManager: AppVisibilityManager,
-    private val blindMappingRepository: BlindMappingRepository,
-    private val receivedMessageHandler: ReceivedMessageHandler,
-    private val batchMessageJobFactory: BatchMessageReceiveJob.Factory,
     private val configFactory: ConfigFactoryProtocol,
-    private val threadDatabase: ThreadDatabase,
     private val trimThreadJobFactory: TrimThreadJob.Factory,
     private val openGroupDeleteJobFactory: OpenGroupDeleteJob.Factory,
     private val communityDatabase: CommunityDatabase,
+    private val receivedMessageProcessor: ReceivedMessageProcessor,
+    private val messageParser: MessageParser,
     @Assisted private val server: String,
     @Assisted private val scope: CoroutineScope,
+    @Assisted private val pollerSemaphore: Semaphore,
 ) {
     companion object {
         private const val POLL_INTERVAL_MILLS: Long = 4000L
@@ -98,7 +86,11 @@ class OpenGroupPoller @AssistedInject constructor(
 
             Log.d(TAG, "Polling open group messages for server: $server")
             emit(PollState.Polling)
-            val pollResult = runCatching { pollOnce() }
+            val pollResult = runCatching {
+                pollerSemaphore.withPermit {
+                    pollOnce()
+                }
+            }
             tokens.forEach { it.trySend(pollResult) }
             emit(PollState.Idle(pollResult))
 
@@ -162,8 +154,6 @@ class OpenGroupPoller @AssistedInject constructor(
             return emptyList()
         }
 
-        val publicKey = allCommunities.first { it.community.baseUrl == server }.community.pubKeyHex
-
         poll(rooms)
             .asSequence()
             .filterNot { it.body == null }
@@ -173,16 +163,16 @@ class OpenGroupPoller @AssistedInject constructor(
                         handleRoomPollInfo(Address.Community(server, response.endpoint.roomToken), response.body as Map<*, *>)
                     }
                     is Endpoint.RoomMessagesRecent -> {
-                        handleMessages(server, response.endpoint.roomToken, response.body as List<OpenGroupApi.Message>)
+                        handleMessages(response.endpoint.roomToken, response.body as List<OpenGroupApi.Message>)
                     }
                     is Endpoint.RoomMessagesSince  -> {
-                        handleMessages(server, response.endpoint.roomToken, response.body as List<OpenGroupApi.Message>)
+                        handleMessages(response.endpoint.roomToken, response.body as List<OpenGroupApi.Message>)
                     }
                     is Endpoint.Inbox, is Endpoint.InboxSince -> {
-                        handleDirectMessages(server, false, response.body as List<OpenGroupApi.DirectMessage>)
+                        handleInboxMessages( response.body as List<DirectMessage>)
                     }
                     is Endpoint.Outbox, is Endpoint.OutboxSince -> {
-                        handleDirectMessages(server, true, response.body as List<OpenGroupApi.DirectMessage>)
+                        handleOutboxMessages( response.body as List<DirectMessage>)
                     }
                     else -> { /* We don't care about the result of any other calls (won't be polled for) */}
                 }
@@ -222,7 +212,7 @@ class OpenGroupPoller @AssistedInject constructor(
                             path = "/room/$room/messages/recent?t=r&reactors=5"
                         ),
                         endpoint = Endpoint.RoomMessagesRecent(room),
-                        responseType = object : TypeReference<List<Message>>(){}
+                        responseType = object : TypeReference<List<OpenGroupApi.Message>>(){}
                     )
                 } else {
                     BatchRequestInfo(
@@ -231,7 +221,7 @@ class OpenGroupPoller @AssistedInject constructor(
                             path = "/room/$room/messages/since/$lastMessageServerId?t=r&reactors=5"
                         ),
                         endpoint = Endpoint.RoomMessagesSince(room, lastMessageServerId),
-                        responseType = object : TypeReference<List<Message>>(){}
+                        responseType = object : TypeReference<List<OpenGroupApi.Message>>(){}
                     )
                 }
             )
@@ -283,141 +273,124 @@ class OpenGroupPoller @AssistedInject constructor(
                 }
             )
         }
-        return parallelBatch(server, requests).await()
+        return parallelBatch(server, requests)
     }
 
 
     private fun handleMessages(
-        server: String,
         roomToken: String,
         messages: List<OpenGroupApi.Message>
     ) {
-        val sortedMessages = messages.sortedBy { it.seqno }
-        sortedMessages.maxOfOrNull { it.seqno }?.let { seqNo ->
-            storage.setLastMessageServerID(roomToken, server, seqNo)
-            OpenGroupApi.pendingReactions.removeAll { !(it.seqNo == null || it.seqNo!! > seqNo) }
-        }
-        val (deletions, additions) = sortedMessages.partition { it.deleted }
-        handleNewMessages(server, roomToken, additions.map {
-            OpenGroupMessage(
-                serverID = it.id,
-                sender = it.sessionId,
-                sentTimestamp = (it.posted * 1000).toLong(),
-                base64EncodedData = it.data,
-                base64EncodedSignature = it.signature,
-                reactions = it.reactions
-            )
-        })
-        handleDeletedMessages(server, roomToken, deletions.map { it.id })
-    }
+        val (deletions, additions) = messages.partition { it.deleted }
 
-    private suspend fun handleDirectMessages(
-        server: String,
-        fromOutbox: Boolean,
-        messages: List<OpenGroupApi.DirectMessage>
-    ) {
-        if (messages.isEmpty()) return
-        val serverPublicKey = storage.getOpenGroupPublicKey(server)!!
-        val sortedMessages = messages.sortedBy { it.id }
-        val lastMessageId = sortedMessages.last().id
-        if (fromOutbox) {
-            storage.setLastOutboxMessageId(server, lastMessageId)
-        } else {
-            storage.setLastInboxMessageId(server, lastMessageId)
-        }
-        sortedMessages.forEach {
-            val encodedMessage = Base64.decode(it.message)
-            val envelope = SignalServiceProtos.Envelope.newBuilder()
-                .setTimestampMs(TimeUnit.SECONDS.toMillis(it.postedAt))
-                .setType(SignalServiceProtos.Envelope.Type.SESSION_MESSAGE)
-                .setContent(ByteString.copyFrom(encodedMessage))
-                .setSource(it.sender)
-                .build()
-            try {
-                val (message, proto) = MessageReceiver.parse(
-                    envelope.toByteArray(),
-                    null,
-                    fromOutbox,
-                    if (fromOutbox) it.recipient else it.sender,
-                    serverPublicKey,
-                    emptySet() // this shouldn't be necessary as we are polling open groups here
-                )
-                if (fromOutbox) {
-                    val syncTarget = blindMappingRepository.getMapping(
-                        serverUrl = server,
-                        blindedAddress = Address.Blinded(AccountId(it.recipient))
-                    )?.accountId?.hexString ?: it.recipient
-
-                    if (message is VisibleMessage) {
-                        message.syncTarget = syncTarget
-                    } else if (message is ExpirationTimerUpdate) {
-                        message.syncTarget = syncTarget
-                    }
-                }
-                val threadAddress = when (val addr = message.senderOrSync.toAddress()) {
-                    is Address.Blinded -> Address.CommunityBlindedId(serverUrl = server, blindedId = addr)
-                    is Address.Conversable -> addr
-                    else -> throw IllegalArgumentException("Unsupported address type: ${addr.debugString}")
-                }
-
-                val threadId = threadDatabase.getThreadIdIfExistsFor(threadAddress)
-                receivedMessageHandler.handle(
-                    message = message,
-                    proto = proto,
-                    threadId = threadId,
-                    threadAddress = threadAddress,
-                )
-            } catch (e: Exception) {
-                Log.e(TAG, "Couldn't handle direct message", e)
-            }
-        }
-    }
-
-    private fun handleNewMessages(server: String, roomToken: String, messages: List<OpenGroupMessage>) {
         val threadAddress = Address.Community(serverUrl = server, room = roomToken)
         // check thread still exists
         val threadId = storage.getThreadId(threadAddress) ?: return
-        val envelopes =  mutableListOf<Triple<Long?, SignalServiceProtos.Envelope, Map<String, OpenGroupApi.Reaction>?>>()
-        messages.sortedBy { it.serverID!! }.forEach { message ->
-            if (!message.base64EncodedData.isNullOrEmpty()) {
-                val envelope = SignalServiceProtos.Envelope.newBuilder()
-                    .setType(SignalServiceProtos.Envelope.Type.SESSION_MESSAGE)
-                    .setSource(message.sender!!)
-                    .setSourceDevice(1)
-                    .setContent(message.toProto().toByteString())
-                    .setTimestampMs(message.sentTimestamp)
-                    .build()
-                envelopes.add(Triple( message.serverID, envelope, message.reactions))
-            }
-        }
 
-        envelopes.chunked(BatchMessageReceiveJob.BATCH_DEFAULT_NUMBER).forEach { list ->
-            val parameters = list.map { (serverId, message, reactions) ->
-                MessageReceiveParameters(message.toByteArray(), openGroupMessageServerID = serverId, reactions = reactions)
-            }
-            JobQueue.shared.add(batchMessageJobFactory.create(
-                parameters,
-                fromCommunity = threadAddress
-            ))
-        }
+        if (additions.isNotEmpty()) {
+            receivedMessageProcessor.startProcessing("CommunityPoller(${threadAddress.debugString})") { ctx ->
+                for (msg in additions.sortedBy { it.seqno }) {
+                    try {
+                        // Set the last message server ID to each message as we process them, so that if processing fails halfway through,
+                        // we don't re-process messages we've already handled.
+                        storage.setLastMessageServerID(roomToken, server, msg.seqno)
 
-        if (envelopes.isNotEmpty()) {
+                        receivedMessageProcessor.processCommunityMessage(
+                            context = ctx,
+                            threadAddress = threadAddress,
+                            message = msg,
+                        )
+                    } catch (e: Exception) {
+                        Log.e(
+                            TAG,
+                            "Error processing open group message ${msg.id} in ${threadAddress.debugString}",
+                            e
+                        )
+                    }
+                }
+            }
+
             JobQueue.shared.add(trimThreadJobFactory.create(threadId))
         }
-    }
 
-    private fun handleDeletedMessages(server: String, roomToken: String, serverIds: List<Long>) {
-        val threadID = storage.getThreadId(Address.Community(serverUrl = server, room = roomToken)) ?: return
-
-        if (serverIds.isNotEmpty()) {
+        if (deletions.isNotEmpty()) {
             JobQueue.shared.add(
                 openGroupDeleteJobFactory.create(
-                    messageServerIds = serverIds.toLongArray(),
-                    threadId = threadID
+                    messageServerIds = LongArray(deletions.size) { i -> deletions[i].id },
+                    threadId = threadId
                 )
             )
         }
     }
+
+    /**
+     * Handle messages that are sent to us directly.
+     */
+    private fun handleInboxMessages(
+        messages: List<DirectMessage>
+    ) {
+        if (messages.isEmpty()) return
+        val sorted = messages.sortedBy { it.postedAt }
+
+        val serverPubKeyHex = storage.getOpenGroupPublicKey(server)
+            ?: run {
+                Log.e(TAG, "No community server public key cannot process inbox messages")
+                return
+            }
+
+        receivedMessageProcessor.startProcessing("CommunityInbox") { ctx ->
+            for (apiMessage in sorted) {
+                try {
+                    storage.setLastInboxMessageId(server, sorted.last().id)
+
+                    receivedMessageProcessor.processCommunityInboxMessage(
+                        context = ctx,
+                        message = apiMessage,
+                        communityServerUrl = server,
+                        communityServerPubKeyHex = serverPubKeyHex,
+                    )
+
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error processing inbox message", e)
+                }
+            }
+        }
+    }
+
+    /**
+     * Handle messages that we have sent out to others.
+     */
+    private fun handleOutboxMessages(
+        messages: List<DirectMessage>
+    ) {
+        if (messages.isEmpty()) return
+        val sorted = messages.sortedBy { it.postedAt }
+
+        val serverPubKeyHex = storage.getOpenGroupPublicKey(server)
+            ?: run {
+                Log.e(TAG, "No community server public key cannot process inbox messages")
+                return
+            }
+
+        receivedMessageProcessor.startProcessing("CommunityOutbox") { ctx ->
+            for (apiMessage in sorted) {
+                try {
+                    storage.setLastOutboxMessageId(server, sorted.last().id)
+
+                    receivedMessageProcessor.processCommunityOutboxMessage(
+                        context = ctx,
+                        msg = apiMessage,
+                        communityServerUrl = server,
+                        communityServerPubKeyHex = serverPubKeyHex,
+                    )
+
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error processing outbox message", e)
+                }
+            }
+        }
+    }
+
 
     sealed interface PollState {
         data class Idle(val lastPolled: Result<List<String>>?) : PollState
@@ -426,6 +399,6 @@ class OpenGroupPoller @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(server: String, scope: CoroutineScope): OpenGroupPoller
+        fun create(server: String, scope: CoroutineScope, pollerSemaphore: Semaphore): OpenGroupPoller
     }
 }

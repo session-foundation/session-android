@@ -28,30 +28,22 @@ import org.json.JSONException
 import org.json.JSONObject
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
-import org.session.libsession.messaging.messages.signal.OutgoingGroupMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
-import org.session.libsession.messaging.messages.signal.OutgoingSecureMediaMessage
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
-import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
-import org.session.libsession.utilities.Contact
-import org.session.libsession.utilities.IdentityKeyMismatch
-import org.session.libsession.utilities.IdentityKeyMismatchList
-import org.session.libsession.utilities.NetworkFailure
-import org.session.libsession.utilities.NetworkFailureList
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
 import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.toGroupString
-import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils.queue
 import org.session.libsignal.utilities.guava.Optional
+import org.thoughtcrime.securesms.database.MmsDatabase.Companion.MESSAGE_BOX
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -233,21 +225,6 @@ class MmsDatabase @Inject constructor(
         }
     }
 
-    private fun rawQuery(where: String, arguments: Array<String>?): Cursor {
-        val database = readableDatabase
-        return database.rawQuery(
-            "SELECT " + MMS_PROJECTION.joinToString(",") + " FROM " + TABLE_NAME +
-                    " LEFT OUTER JOIN " + AttachmentDatabase.TABLE_NAME + " ON (" + TABLE_NAME + "." + ID + " = " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.MMS_ID + ")" +
-                    " LEFT OUTER JOIN " + ReactionDatabase.TABLE_NAME + " ON (" + TABLE_NAME + "." + ID + " = " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.MESSAGE_ID + " AND " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.IS_MMS + " = 1)" +
-                    " WHERE " + where + " GROUP BY " + TABLE_NAME + "." + ID, arguments
-        )
-    }
-
-    fun getMessage(messageId: Long): Cursor {
-        val cursor = rawQuery(RAW_ID_WHERE, arrayOf(messageId.toString()))
-        return cursor
-    }
-
     override fun getExpiredMessageIDs(nowMills: Long): List<Long> {
         val query = "SELECT " + ID + " FROM " + TABLE_NAME +
                 " WHERE " + EXPIRES_IN + " > 0 AND " + EXPIRE_STARTED + " > 0 AND " + EXPIRE_STARTED + " + " + EXPIRES_IN + " <= ?"
@@ -413,151 +390,6 @@ class MmsDatabase @Inject constructor(
         return result
     }
 
-    @Throws(MmsException::class, NoSuchMessageException::class)
-    fun getOutgoingMessage(messageId: Long): OutgoingMediaMessage {
-        var cursor: Cursor? = null
-        try {
-            cursor = rawQuery(RAW_ID_WHERE, arrayOf(messageId.toString()))
-            if (cursor.moveToNext()) {
-                val associatedAttachments = attachmentDatabase.getAttachmentsForMessage(messageId)
-                val outboxType = cursor.getLong(cursor.getColumnIndexOrThrow(MESSAGE_BOX))
-                val body = cursor.getString(cursor.getColumnIndexOrThrow(BODY))
-                val timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(NORMALIZED_DATE_SENT))
-                val subscriptionId = cursor.getInt(cursor.getColumnIndexOrThrow(SUBSCRIPTION_ID))
-                val expiresIn = cursor.getLong(cursor.getColumnIndexOrThrow(EXPIRES_IN))
-                val expireStartedAt = cursor.getLong(cursor.getColumnIndexOrThrow(EXPIRE_STARTED))
-                val address = cursor.getString(cursor.getColumnIndexOrThrow(ADDRESS))
-                val threadId = cursor.getLong(cursor.getColumnIndexOrThrow(THREAD_ID))
-                val distributionType = threadDatabase.getDistributionType(threadId)
-                val mismatchDocument = cursor.getString(
-                    cursor.getColumnIndexOrThrow(
-                        MISMATCHED_IDENTITIES
-                    )
-                )
-                val networkDocument = cursor.getString(
-                    cursor.getColumnIndexOrThrow(
-                        NETWORK_FAILURE
-                    )
-                )
-                val quoteId = cursor.getLong(cursor.getColumnIndexOrThrow(QUOTE_ID))
-                val quoteAuthor = cursor.getString(cursor.getColumnIndexOrThrow(QUOTE_AUTHOR))
-                val quoteText = cursor.getString(cursor.getColumnIndexOrThrow(QUOTE_BODY)) // TODO: this should be the referenced quote
-                val quoteMissing = cursor.getInt(cursor.getColumnIndexOrThrow(QUOTE_MISSING)) == 1
-                val quoteAttachments = associatedAttachments
-                    .filter { obj: DatabaseAttachment -> obj.isQuote }
-                val contacts = getSharedContacts(cursor, associatedAttachments)
-                val contactAttachments: Set<Attachment> =
-                    contacts.mapNotNull { obj: Contact -> obj.avatarAttachment }.toSet()
-                val previews = getLinkPreviews(cursor, associatedAttachments)
-                val previewAttachments =
-                    previews.filter { lp: LinkPreview -> lp.getThumbnail().isPresent }
-                        .map { lp: LinkPreview -> lp.getThumbnail().get() }
-                val attachments = associatedAttachments
-                    .asSequence()
-                    .filterNot { obj: DatabaseAttachment -> obj.isQuote || contactAttachments.contains(obj) || previewAttachments.contains(obj) }
-                    .toList()
-                var networkFailures: List<NetworkFailure?>? = LinkedList()
-                var mismatches: List<IdentityKeyMismatch?>? = LinkedList()
-                var quote: QuoteModel? = null
-                if (quoteId > 0 && (!quoteText.isNullOrEmpty() || quoteAttachments.isNotEmpty())) {
-                    quote = QuoteModel(
-                        quoteId,
-                        fromSerialized(quoteAuthor),
-                        quoteText, // TODO: refactor this to use referenced quote
-                        quoteMissing,
-                        quoteAttachments
-                    )
-                }
-                if (!mismatchDocument.isNullOrEmpty()) {
-                    try {
-                        mismatches = JsonUtil.fromJson(
-                            mismatchDocument,
-                            IdentityKeyMismatchList::class.java
-                        ).list
-                    } catch (e: IOException) {
-                        Log.w(TAG, e)
-                    }
-                }
-                if (!networkDocument.isNullOrEmpty()) {
-                    try {
-                        networkFailures =
-                            JsonUtil.fromJson(networkDocument, NetworkFailureList::class.java).list
-                    } catch (e: IOException) {
-                        Log.w(TAG, e)
-                    }
-                }
-
-                val messageContentJson = cursor.getString(cursor.getColumnIndexOrThrow(MESSAGE_CONTENT))
-
-                val messageContent = runCatching {
-                    json.decodeFromString<MessageContent>(messageContentJson)
-                }.onFailure {
-                    Log.w(TAG, "Failed to decode message content for message ID $messageId", it)
-                }.getOrNull()
-
-                val message = OutgoingMediaMessage(
-                    fromSerialized(address),
-                    body,
-                    attachments,
-                    timestamp,
-                    subscriptionId,
-                    expiresIn,
-                    expireStartedAt,
-                    distributionType,
-                    quote,
-                    contacts,
-                    previews,
-                    networkFailures!!,
-                    mismatches!!,
-                    messageContent,
-                )
-                return if (MmsSmsColumns.Types.isSecureType(outboxType)) {
-                    OutgoingSecureMediaMessage(message)
-                } else message
-            }
-            throw NoSuchMessageException("No record found for id: $messageId")
-        } finally {
-            cursor?.close()
-        }
-    }
-
-    private fun getSharedContacts(
-        cursor: Cursor,
-        attachments: List<DatabaseAttachment>
-    ): List<Contact> {
-        val serializedContacts = cursor.getString(cursor.getColumnIndexOrThrow(SHARED_CONTACTS))
-        if (serializedContacts.isNullOrEmpty()) {
-            return emptyList()
-        }
-        val attachmentIdMap: MutableMap<AttachmentId?, DatabaseAttachment> = HashMap()
-        for (attachment in attachments) {
-            attachmentIdMap[attachment.attachmentId] = attachment
-        }
-        try {
-            val contacts: MutableList<Contact> = LinkedList()
-            val jsonContacts = JSONArray(serializedContacts)
-            for (i in 0 until jsonContacts.length()) {
-                val contact = Contact.deserialize(jsonContacts.getJSONObject(i).toString())
-                if (contact.avatar != null && contact.avatar!!.attachmentId != null) {
-                    val attachment = attachmentIdMap[contact.avatar!!.attachmentId]
-                    val updatedAvatar = Contact.Avatar(
-                        contact.avatar!!.attachmentId,
-                        attachment,
-                        contact.avatar!!.isProfile
-                    )
-                    contacts.add(Contact(contact, updatedAvatar))
-                } else {
-                    contacts.add(contact)
-                }
-            }
-            return contacts
-        } catch (e: JSONException) {
-            Log.w(TAG, "Failed to parse shared contacts.", e)
-        } catch (e: IOException) {
-            Log.w(TAG, "Failed to parse shared contacts.", e)
-        }
-        return emptyList()
-    }
 
     private fun getLinkPreviews(
         cursor: Cursor,
@@ -597,34 +429,29 @@ class MmsDatabase @Inject constructor(
     @Throws(MmsException::class)
     private fun insertMessageInbox(
         retrieved: IncomingMediaMessage,
-        contentLocation: String,
-        threadId: Long, mailbox: Long,
-        serverTimestamp: Long,
+        threadId: Long,
+        mailbox: Long, serverTimestamp: Long,
         runThreadUpdate: Boolean
     ): Optional<InsertResult> {
         if (threadId < 0 ) throw MmsException("No thread ID supplied!")
-        if (retrieved.messageContent is DisappearingMessageUpdate) deleteExpirationTimerMessages(threadId, false.takeUnless { retrieved.groupId != null })
+        if (retrieved.messageContent is DisappearingMessageUpdate)
+            deleteExpirationTimerMessages(threadId, false.takeUnless { retrieved.group != null })
         val contentValues = ContentValues()
         contentValues.put(DATE_SENT, retrieved.sentTimeMillis)
         contentValues.put(ADDRESS, retrieved.from.toString())
         contentValues.put(MESSAGE_BOX, mailbox)
         contentValues.put(THREAD_ID, threadId)
-        contentValues.put(CONTENT_LOCATION, contentLocation)
         contentValues.put(STATUS, Status.DOWNLOAD_INITIALIZED)
+        contentValues.put(PRO_FEATURES, retrieved.proFeatures.rawValue)
         // In open groups messages should be sorted by their server timestamp
         var receivedTimestamp = serverTimestamp
         if (serverTimestamp == 0L) {
             receivedTimestamp = retrieved.sentTimeMillis
         }
-        contentValues.put(
-            DATE_RECEIVED,
-            receivedTimestamp
-        ) // Loki - This is important due to how we handle GIFs
-        contentValues.put(PART_COUNT, retrieved.attachments.size)
-        contentValues.put(SUBSCRIPTION_ID, retrieved.subscriptionId)
+        contentValues.put(DATE_RECEIVED, receivedTimestamp) // Loki - This is important due to how we handle GIFs
         contentValues.put(EXPIRES_IN, retrieved.expiresIn)
         contentValues.put(EXPIRE_STARTED, retrieved.expireStartedAt)
-        contentValues.put(HAS_MENTION, retrieved.hasMention())
+        contentValues.put(HAS_MENTION, retrieved.hasMention)
         contentValues.put(MESSAGE_REQUEST_RESPONSE, retrieved.isMessageRequestResponse)
         if (!contentValues.containsKey(DATE_SENT)) {
             contentValues.put(DATE_SENT, contentValues.getAsLong(DATE_RECEIVED))
@@ -636,7 +463,7 @@ class MmsDatabase @Inject constructor(
             contentValues.put(QUOTE_MISSING, if (retrieved.quote.missing) 1 else 0)
             quoteAttachments = retrieved.quote.attachments
         }
-        if (retrieved.isPushMessage && isDuplicate(retrieved, threadId) ||
+        if (isDuplicate(retrieved, threadId) ||
             retrieved.isMessageRequestResponse && isDuplicateMessageRequestResponse(
                 retrieved,
                 threadId
@@ -650,7 +477,6 @@ class MmsDatabase @Inject constructor(
             messageContent = retrieved.messageContent,
             attachments = retrieved.attachments,
             quoteAttachments = quoteAttachments!!,
-            sharedContacts = retrieved.sharedContacts,
             linkPreviews = retrieved.linkPreviews,
             contentValues = contentValues,
         )
@@ -692,27 +518,21 @@ class MmsDatabase @Inject constructor(
         serverTimestamp: Long = 0,
         runThreadUpdate: Boolean
     ): Optional<InsertResult> {
-        var type = MmsSmsColumns.Types.BASE_INBOX_TYPE or MmsSmsColumns.Types.SECURE_MESSAGE_BIT
-        if (retrieved.isPushMessage) {
-            type = type or MmsSmsColumns.Types.PUSH_MESSAGE_BIT
-        }
-        if (retrieved.isScreenshotDataExtraction) {
-            type = type or MmsSmsColumns.Types.SCREENSHOT_EXTRACTION_BIT
-        }
+        var type = MmsSmsColumns.Types.BASE_INBOX_TYPE or MmsSmsColumns.Types.SECURE_MESSAGE_BIT or MmsSmsColumns.Types.PUSH_MESSAGE_BIT
         if (retrieved.isMediaSavedDataExtraction) {
             type = type or MmsSmsColumns.Types.MEDIA_SAVED_EXTRACTION_BIT
         }
         if (retrieved.isMessageRequestResponse) {
             type = type or MmsSmsColumns.Types.MESSAGE_REQUEST_RESPONSE_BIT
         }
-        return insertMessageInbox(retrieved, "", threadId, type, serverTimestamp, runThreadUpdate)
+        return insertMessageInbox(retrieved, threadId, type, serverTimestamp, runThreadUpdate)
     }
 
-    @JvmOverloads
     @Throws(MmsException::class)
     fun insertMessageOutbox(
         message: OutgoingMediaMessage,
-        threadId: Long, forceSms: Boolean,
+        threadId: Long,
+        forceSms: Boolean,
         serverTimestamp: Long = 0,
         runThreadUpdate: Boolean
     ): Long {
@@ -720,8 +540,8 @@ class MmsDatabase @Inject constructor(
         if (message.isSecure) type =
             type or (MmsSmsColumns.Types.SECURE_MESSAGE_BIT or MmsSmsColumns.Types.PUSH_MESSAGE_BIT)
         if (forceSms) type = type or MmsSmsColumns.Types.MESSAGE_FORCE_SMS_BIT
-        if (message.isGroup && message is OutgoingGroupMediaMessage) {
-            if (message.isUpdateMessage) type = type or MmsSmsColumns.Types.GROUP_UPDATE_MESSAGE_BIT
+        if (message.isGroup) {
+            if (message.isGroupUpdateMessage) type = type or MmsSmsColumns.Types.GROUP_UPDATE_MESSAGE_BIT
         }
         val earlyDeliveryReceipts = earlyDeliveryReceiptCache.remove(message.sentTimeMillis)
         val earlyReadReceipts = earlyReadReceiptCache.remove(message.sentTimeMillis)
@@ -736,10 +556,10 @@ class MmsDatabase @Inject constructor(
             receivedTimestamp = SnodeAPI.nowWithOffset
         }
         contentValues.put(DATE_RECEIVED, receivedTimestamp)
-        contentValues.put(SUBSCRIPTION_ID, message.subscriptionId)
-        contentValues.put(EXPIRES_IN, message.expiresIn)
-        contentValues.put(EXPIRE_STARTED, message.expireStartedAt)
+        contentValues.put(EXPIRES_IN, message.expiresInMillis)
+        contentValues.put(EXPIRE_STARTED, message.expireStartedAtMillis)
         contentValues.put(ADDRESS, message.recipient.toString())
+        contentValues.put(PRO_FEATURES, message.proFeatures.rawValue)
         contentValues.put(
             DELIVERY_RECEIPT_COUNT,
             Stream.of(earlyDeliveryReceipts.values).mapToLong { obj: Long -> obj }
@@ -750,10 +570,10 @@ class MmsDatabase @Inject constructor(
                 .sum())
         val quoteAttachments: MutableList<Attachment?> = LinkedList()
         if (message.outgoingQuote != null) {
-            contentValues.put(QUOTE_ID, message.outgoingQuote!!.id)
-            contentValues.put(QUOTE_AUTHOR, message.outgoingQuote!!.author.toString())
-            contentValues.put(QUOTE_MISSING, if (message.outgoingQuote!!.missing) 1 else 0)
-            quoteAttachments.addAll(message.outgoingQuote!!.attachments!!)
+            contentValues.put(QUOTE_ID, message.outgoingQuote.id)
+            contentValues.put(QUOTE_AUTHOR, message.outgoingQuote.author.toString())
+            contentValues.put(QUOTE_MISSING, if (message.outgoingQuote.missing) 1 else 0)
+            quoteAttachments.addAll(message.outgoingQuote.attachments!!)
         }
         if (isDuplicate(message, threadId)) {
             Log.w(TAG, "Ignoring duplicate media message (" + message.sentTimeMillis + ")")
@@ -764,7 +584,6 @@ class MmsDatabase @Inject constructor(
             messageContent = message.messageContent,
             attachments = message.attachments,
             quoteAttachments = quoteAttachments,
-            sharedContacts = message.sharedContacts,
             linkPreviews = message.linkPreviews,
             contentValues = contentValues,
         )
@@ -806,7 +625,6 @@ class MmsDatabase @Inject constructor(
         messageContent: MessageContent?,
         attachments: List<Attachment?>,
         quoteAttachments: List<Attachment?>,
-        sharedContacts: List<Contact>,
         linkPreviews: List<LinkPreview>,
         contentValues: ContentValues,
     ): Long {
@@ -815,17 +633,12 @@ class MmsDatabase @Inject constructor(
         val allAttachments: MutableList<Attachment?> = LinkedList()
         val thumbnailJobs: MutableList<AttachmentId> = ArrayList()  // Collector for thumbnail jobs
 
-        val contactAttachments =
-            Stream.of(sharedContacts).map { obj: Contact -> obj.avatarAttachment }
-                .filter { a: Attachment? -> a != null }
-                .toList()
         val previewAttachments =
             Stream.of(linkPreviews).filter { lp: LinkPreview -> lp.getThumbnail().isPresent }
                 .map { lp: LinkPreview -> lp.getThumbnail().get() }
                 .toList()
 
         allAttachments.addAll(attachments)
-        allAttachments.addAll(contactAttachments)
         allAttachments.addAll(previewAttachments)
 
         contentValues.put(BODY, body)
@@ -844,24 +657,7 @@ class MmsDatabase @Inject constructor(
                 thumbnailJobs  // This will collect all attachment IDs that need thumbnails
             )
 
-            val serializedContacts =
-                getSerializedSharedContacts(insertedAttachments, sharedContacts)
             val serializedPreviews = getSerializedLinkPreviews(insertedAttachments, linkPreviews)
-
-            if (!serializedContacts.isNullOrEmpty()) {
-                val contactValues = ContentValues()
-                contactValues.put(SHARED_CONTACTS, serializedContacts)
-                val database = readableDatabase
-                val rows = database.update(
-                    TABLE_NAME,
-                    contactValues,
-                    "$ID = ?",
-                    arrayOf(messageId.toString())
-                )
-                if (rows <= 0) {
-                    Log.w(TAG, "Failed to update message with shared contact data.")
-                }
-            }
 
             if (!serializedPreviews.isNullOrEmpty()) {
                 val contactValues = ContentValues()
@@ -956,13 +752,6 @@ class MmsDatabase @Inject constructor(
         db.update(SmsDatabase.TABLE_NAME, contentValues, "$THREAD_ID = ?", arrayOf("$fromId"))
     }
 
-    @Throws(NoSuchMessageException::class)
-    override fun getMessageRecord(messageId: Long): MessageRecord {
-        rawQuery(RAW_ID_WHERE, arrayOf("$messageId")).use { cursor ->
-            return Reader(cursor).next ?: throw NoSuchMessageException("No message for ID: $messageId")
-        }
-    }
-
     fun deleteThread(threadId: Long, updateThread: Boolean) {
         deleteThreads(listOf(threadId), updateThread)
     }
@@ -991,36 +780,6 @@ class MmsDatabase @Inject constructor(
         )
     }
 
-    private fun getSerializedSharedContacts(
-        insertedAttachmentIds: Map<Attachment?, AttachmentId?>,
-        contacts: List<Contact?>
-    ): String? {
-        if (contacts.isEmpty()) return null
-        val sharedContactJson = JSONArray()
-        for (contact in contacts) {
-            try {
-                var attachmentId: AttachmentId? = null
-                if (contact!!.avatarAttachment != null) {
-                    attachmentId = insertedAttachmentIds[contact.avatarAttachment]
-                }
-                val updatedAvatar = Contact.Avatar(
-                    attachmentId,
-                    contact.avatarAttachment,
-                    contact.avatar != null && contact.avatar!!
-                        .isProfile
-                )
-                val updatedContact = Contact(
-                    contact, updatedAvatar
-                )
-                sharedContactJson.put(JSONObject(updatedContact.serialize()))
-            } catch (e: JSONException) {
-                Log.w(TAG, "Failed to serialize shared contact. Skipping it.", e)
-            } catch (e: IOException) {
-                Log.w(TAG, "Failed to serialize shared contact. Skipping it.", e)
-            }
-        }
-        return sharedContactJson.toString()
-    }
 
     private fun getSerializedLinkPreviews(
         insertedAttachmentIds: Map<Attachment?, AttachmentId?>,
@@ -1203,44 +962,34 @@ class MmsDatabase @Inject constructor(
                 return getMediaMmsMessageRecord(cursor!!, getQuote)
             }
 
-        private fun getMediaMmsMessageRecord(cursor: Cursor, getQuote: Boolean): MediaMmsMessageRecord {
+        private fun getMediaMmsMessageRecord(cursor: Cursor, getQuote: Boolean): MmsMessageRecord {
             val id                   = cursor.getLong(cursor.getColumnIndexOrThrow(ID))
             val dateSent             = cursor.getLong(cursor.getColumnIndexOrThrow(NORMALIZED_DATE_SENT))
             val dateReceived         = cursor.getLong(cursor.getColumnIndexOrThrow(NORMALIZED_DATE_RECEIVED))
             val box                  = cursor.getLong(cursor.getColumnIndexOrThrow(MESSAGE_BOX))
             val threadId             = cursor.getLong(cursor.getColumnIndexOrThrow(THREAD_ID))
             val address              = cursor.getString(cursor.getColumnIndexOrThrow(ADDRESS))
-            val addressDeviceId      = cursor.getInt(cursor.getColumnIndexOrThrow(ADDRESS_DEVICE_ID))
             val deliveryReceiptCount = cursor.getInt(cursor.getColumnIndexOrThrow(DELIVERY_RECEIPT_COUNT))
             var readReceiptCount     = cursor.getInt(cursor.getColumnIndexOrThrow(READ_RECEIPT_COUNT))
             val body                 = cursor.getString(cursor.getColumnIndexOrThrow(BODY))
-            val partCount            = cursor.getInt(cursor.getColumnIndexOrThrow(PART_COUNT))
-            val mismatchDocument     = cursor.getString(cursor.getColumnIndexOrThrow(MISMATCHED_IDENTITIES))
-            val networkDocument      = cursor.getString(cursor.getColumnIndexOrThrow(NETWORK_FAILURE))
-            val subscriptionId       = cursor.getInt(cursor.getColumnIndexOrThrow(SUBSCRIPTION_ID))
             val expiresIn            = cursor.getLong(cursor.getColumnIndexOrThrow(EXPIRES_IN))
             val expireStarted        = cursor.getLong(cursor.getColumnIndexOrThrow(EXPIRE_STARTED))
             val hasMention           = cursor.getInt(cursor.getColumnIndexOrThrow(HAS_MENTION)) == 1
             val messageContentJson   = cursor.getString(cursor.getColumnIndexOrThrow(MESSAGE_CONTENT))
+            val proFeatures          = cursor.getLong(cursor.getColumnIndexOrThrow(PRO_FEATURES))
 
             if (!isReadReceiptsEnabled(context)) {
                 readReceiptCount = 0
             }
             val recipient = getRecipientFor(address)
-            val mismatches = getMismatchedIdentities(mismatchDocument)
-            val networkFailures = getFailures(networkDocument)
             val attachments = attachmentDatabase.getAttachment(
                 cursor
             )
-            val contacts: List<Contact?> = getSharedContacts(cursor, attachments)
-            val contactAttachments: Set<Attachment?> =
-                contacts.mapNotNull { it?.avatarAttachment }.toSet()
             val previews: List<LinkPreview?> = getLinkPreviews(cursor, attachments)
             val previewAttachments: Set<Attachment?> =
                 previews.mapNotNull { it?.getThumbnail()?.orNull() }.toSet()
             val slideDeck = getSlideDeck(
                 attachments
-                    .filterNot { o: DatabaseAttachment? -> o in contactAttachments }
                     .filterNot { o: DatabaseAttachment? -> o in previewAttachments }
             )
             val quote = if (getQuote) getQuote(cursor) else null
@@ -1253,39 +1002,30 @@ class MmsDatabase @Inject constructor(
             }.getOrNull()
 
             return MediaMmsMessageRecord(
-                id, recipient, recipient,
-                addressDeviceId, dateSent, dateReceived, deliveryReceiptCount,
-                threadId, body, slideDeck!!, partCount, box, mismatches,
-                networkFailures, subscriptionId, expiresIn, expireStarted,
-                readReceiptCount, quote, contacts, previews, reactions, hasMention,
-                messageContent
+                /* id = */ id,
+                /* conversationRecipient = */ recipient,
+                /* individualRecipient = */ recipient,
+                /* dateSent = */ dateSent,
+                /* dateReceived = */ dateReceived,
+                /* deliveryReceiptCount = */ deliveryReceiptCount,
+                /* threadId = */ threadId,
+                /* body = */ body,
+                /* slideDeck = */ slideDeck!!,
+                /* mailbox = */ box,
+                /* expiresIn = */ expiresIn,
+                /* expireStarted = */ expireStarted,
+                /* readReceiptCount = */ readReceiptCount,
+                /* quote = */ quote,
+                /* linkPreviews = */ previews,
+                /* reactions = */ reactions,
+                /* hasMention = */ hasMention,
+                /* messageContent = */ messageContent,
+                /* proFeaturesRawValue = */ proFeatures
             )
         }
 
         private fun getRecipientFor(serialized: String): Recipient {
             return recipientRepository.getRecipientSync(serialized.toAddress())
-        }
-
-        private fun getMismatchedIdentities(document: String?): List<IdentityKeyMismatch?>? {
-            if (!document.isNullOrEmpty()) {
-                try {
-                    return JsonUtil.fromJson(document, IdentityKeyMismatchList::class.java).list
-                } catch (e: IOException) {
-                    Log.w(TAG, e)
-                }
-            }
-            return LinkedList()
-        }
-
-        private fun getFailures(document: String?): List<NetworkFailure?>? {
-            if (!document.isNullOrEmpty()) {
-                try {
-                    return JsonUtil.fromJson(document, NetworkFailureList::class.java).list
-                } catch (ioe: IOException) {
-                    Log.w(TAG, ioe)
-                }
-            }
-            return LinkedList()
         }
 
         private fun getSlideDeck(attachments: List<DatabaseAttachment?>): SlideDeck? {
@@ -1298,8 +1038,9 @@ class MmsDatabase @Inject constructor(
         private fun getQuote(cursor: Cursor): Quote? {
             val quoteId = cursor.getLong(cursor.getColumnIndexOrThrow(QUOTE_ID))
             val quoteAuthor = cursor.getString(cursor.getColumnIndexOrThrow(QUOTE_AUTHOR))
+            val threadId = cursor.getLong(cursor.getColumnIndexOrThrow(THREAD_ID))
             if (quoteId == 0L || quoteAuthor.isNullOrBlank()) return null
-            val retrievedQuote = mmsSmsDatabase.get().getMessageFor(quoteId, quoteAuthor, false)
+            val retrievedQuote = mmsSmsDatabase.get().getMessageFor(threadId, quoteId, quoteAuthor, false)
             val quoteText = retrievedQuote?.body
             val quoteMissing = retrievedQuote == null
             val quoteDeck = (
@@ -1329,6 +1070,7 @@ class MmsDatabase @Inject constructor(
         const val DATE_SENT: String = "date"
         const val DATE_RECEIVED: String = "date_received"
         const val MESSAGE_BOX: String = "msg_box"
+        @Deprecated("No longer used.")
         const val CONTENT_LOCATION: String = "ct_l"
         const val EXPIRY: String = "exp"
 
@@ -1336,14 +1078,18 @@ class MmsDatabase @Inject constructor(
         const val MESSAGE_TYPE: String = "m_type"
         const val MESSAGE_SIZE: String = "m_size"
         const val STATUS: String = "st"
+        @Deprecated("No longer used.")
         const val TRANSACTION_ID: String = "tr_id"
+        @Deprecated("No longer used.")
         const val PART_COUNT: String = "part_count"
+        @Deprecated("No longer used.")
         const val NETWORK_FAILURE: String = "network_failures"
         const val QUOTE_ID: String = "quote_id"
         const val QUOTE_AUTHOR: String = "quote_author"
         const val QUOTE_BODY: String = "quote_body"
         const val QUOTE_ATTACHMENT: String = "quote_attachment"
         const val QUOTE_MISSING: String = "quote_missing"
+        @Deprecated("No longer used.")
         const val SHARED_CONTACTS: String = "shared_contacts"
         const val LINK_PREVIEWS: String = "previews"
 
@@ -1451,78 +1197,9 @@ class MmsDatabase @Inject constructor(
             WHERE ($MESSAGE_BOX & ${MmsSmsColumns.Types.EXPIRATION_TIMER_UPDATE_BIT}) != 0;
         """
 
-        private val MMS_PROJECTION: Array<String> = arrayOf(
-            "$TABLE_NAME.$ID AS $ID",
-            THREAD_ID,
-            MESSAGE_CONTENT,
-            "$DATE_SENT AS $NORMALIZED_DATE_SENT",
-            "$DATE_RECEIVED AS $NORMALIZED_DATE_RECEIVED",
-            MESSAGE_BOX,
-            READ,
-            CONTENT_LOCATION,
-            EXPIRY,
-            MESSAGE_TYPE,
-            MESSAGE_SIZE,
-            STATUS,
-            TRANSACTION_ID,
-            BODY,
-            PART_COUNT,
-            ADDRESS,
-            ADDRESS_DEVICE_ID,
-            DELIVERY_RECEIPT_COUNT,
-            READ_RECEIPT_COUNT,
-            MISMATCHED_IDENTITIES,
-            NETWORK_FAILURE,
-            SUBSCRIPTION_ID,
-            EXPIRES_IN,
-            EXPIRE_STARTED,
-            NOTIFIED,
-            QUOTE_ID,
-            QUOTE_AUTHOR,
-            QUOTE_BODY,
-            QUOTE_ATTACHMENT,
-            QUOTE_MISSING,
-            SHARED_CONTACTS,
-            LINK_PREVIEWS,
-            HAS_MENTION,
-            "json_group_array(json_object(" +
-                    "'" + AttachmentDatabase.ROW_ID + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.ROW_ID + ", " +
-                    "'" + AttachmentDatabase.UNIQUE_ID + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.UNIQUE_ID + ", " +
-                    "'" + AttachmentDatabase.MMS_ID + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.MMS_ID + ", " +
-                    "'" + AttachmentDatabase.SIZE + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.SIZE + ", " +
-                    "'" + AttachmentDatabase.FILE_NAME + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.FILE_NAME + ", " +
-                    "'" + AttachmentDatabase.DATA + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.DATA + ", " +
-                    "'" + AttachmentDatabase.THUMBNAIL + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.THUMBNAIL + ", " +
-                    "'" + AttachmentDatabase.CONTENT_TYPE + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.CONTENT_TYPE + ", " +
-                    "'" + AttachmentDatabase.CONTENT_LOCATION + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.CONTENT_LOCATION + ", " +
-                    "'" + AttachmentDatabase.FAST_PREFLIGHT_ID + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.FAST_PREFLIGHT_ID + "," +
-                    "'" + AttachmentDatabase.VOICE_NOTE + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.VOICE_NOTE + "," +
-                    "'" + AttachmentDatabase.WIDTH + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.WIDTH + "," +
-                    "'" + AttachmentDatabase.HEIGHT + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.HEIGHT + "," +
-                    "'" + AttachmentDatabase.QUOTE + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.QUOTE + ", " +
-                    "'" + AttachmentDatabase.CONTENT_DISPOSITION + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.CONTENT_DISPOSITION + ", " +
-                    "'" + AttachmentDatabase.NAME + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.NAME + ", " +
-                    "'" + AttachmentDatabase.TRANSFER_STATE + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.TRANSFER_STATE + ", " +
-                    "'" + AttachmentDatabase.CAPTION + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.CAPTION + ", " +
-                    "'" + AttachmentDatabase.STICKER_PACK_ID + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.STICKER_PACK_ID + ", " +
-                    "'" + AttachmentDatabase.STICKER_PACK_KEY + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.STICKER_PACK_KEY + ", " +
-                    "'" + AttachmentDatabase.AUDIO_DURATION + "', ifnull(" + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.AUDIO_DURATION + ", -1), " +
-                    "'" + AttachmentDatabase.STICKER_ID + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.STICKER_ID +
-                    ")) AS " + AttachmentDatabase.ATTACHMENT_JSON_ALIAS,
-            "json_group_array(json_object(" +
-                    "'" + ReactionDatabase.ROW_ID + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.ROW_ID + ", " +
-                    "'" + ReactionDatabase.MESSAGE_ID + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.MESSAGE_ID + ", " +
-                    "'" + ReactionDatabase.IS_MMS + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.IS_MMS + ", " +
-                    "'" + ReactionDatabase.AUTHOR_ID + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.AUTHOR_ID + ", " +
-                    "'" + ReactionDatabase.EMOJI + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.EMOJI + ", " +
-                    "'" + ReactionDatabase.SERVER_ID + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.SERVER_ID + ", " +
-                    "'" + ReactionDatabase.COUNT + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.COUNT + ", " +
-                    "'" + ReactionDatabase.SORT_ID + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.SORT_ID + ", " +
-                    "'" + ReactionDatabase.DATE_SENT + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.DATE_SENT + ", " +
-                    "'" + ReactionDatabase.DATE_RECEIVED + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.DATE_RECEIVED +
-                    ")) AS " + ReactionDatabase.REACTION_JSON_ALIAS
-        )
-        private const val RAW_ID_WHERE: String = "$TABLE_NAME._id = ?"
+        const val ADD_LAST_MESSAGE_INDEX: String =
+            "CREATE INDEX mms_thread_id_date_sent_index ON $TABLE_NAME ($THREAD_ID, $DATE_SENT)"
+
         const val CREATE_MESSAGE_REQUEST_RESPONSE_COMMAND = "ALTER TABLE $TABLE_NAME ADD COLUMN $MESSAGE_REQUEST_RESPONSE INTEGER DEFAULT 0;"
         const val CREATE_REACTIONS_UNREAD_COMMAND = "ALTER TABLE $TABLE_NAME ADD COLUMN $REACTIONS_UNREAD INTEGER DEFAULT 0;"
         const val CREATE_REACTIONS_LAST_SEEN_COMMAND = "ALTER TABLE $TABLE_NAME ADD COLUMN $REACTIONS_LAST_SEEN INTEGER DEFAULT 0;"
@@ -1543,5 +1220,9 @@ class MmsDatabase @Inject constructor(
             "INSERT INTO $TABLE_NAME ($COMMA_SEPARATED_COLUMNS) SELECT $COMMA_SEPARATED_COLUMNS FROM $TEMP_TABLE_NAME",
             "DROP TABLE $TEMP_TABLE_NAME"
         )
+
+        const val ADD_PRO_FEATURES_COLUMN = """
+            ALTER TABLE $TABLE_NAME ADD COLUMN $PRO_FEATURES INTEGER NOT NULL DEFAULT 0;
+        """
     }
 }

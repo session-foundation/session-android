@@ -350,28 +350,48 @@ public class AttachmentManager {
     }
 
     public static boolean hasFullAccess(Activity activity) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return Permissions.hasAll(activity,
+                    Manifest.permission.READ_MEDIA_IMAGES,
+                    Manifest.permission.READ_MEDIA_VIDEO);
+        } else {
+            return Permissions.hasAll(activity, android.Manifest.permission.READ_EXTERNAL_STORAGE);
+        }
+    }
+
+    public static boolean hasPartialAccess(@NonNull Context c) {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
-                Permissions.hasAll(activity,
-                        Manifest.permission.READ_MEDIA_IMAGES,
-                        Manifest.permission.READ_MEDIA_VIDEO);
+                Permissions.hasAll(c, Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED);
     }
 
     public static void managePhotoAccess(@NonNull Activity activity, @Nullable Runnable onAnyResult) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { // API 34+
-            Permissions.with(activity)
-                    .request(
-                            Manifest.permission.READ_MEDIA_IMAGES,
-                            Manifest.permission.READ_MEDIA_VIDEO,
-                            Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
-                    ).onAnyResult(() -> {
-                        if (onAnyResult != null) onAnyResult.run();
-                    })
-                    .execute();
+            if (hasPartialAccess(activity)) {
+                Permissions.with(activity)
+                        .request(
+                                Manifest.permission.READ_MEDIA_IMAGES,
+                                Manifest.permission.READ_MEDIA_VIDEO,
+                                Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
+                        )
+                        .onAnyResult(() -> {
+                            if (onAnyResult != null) onAnyResult.run();
+                        })
+                        .execute();
+            }
         } else {
             // older Android: no partial selector, send to App settings
             Intent i = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                     .setData(Uri.fromParts("package", activity.getPackageName(), null));
             activity.startActivity(i);
+        }
+    }
+
+    public static boolean shouldShowManagePhoto(@NonNull Activity activity){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE){
+            return !hasFullAccess(activity) && hasPartialAccess(activity);
+        }else{
+            // No partial access for <= API 33
+            return false;
         }
     }
 

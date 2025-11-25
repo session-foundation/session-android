@@ -18,14 +18,15 @@ private val REFRESH_TIME_MS = 4.hours.inWholeMilliseconds
 
 @Singleton
 class VersionDataFetcher @Inject constructor(
-    private val prefs: TextSecurePreferences
+    private val prefs: TextSecurePreferences,
+    private val fileServerApi: FileServerApi,
 ) : OnAppStartupComponent {
     private val handler = Handler(Looper.getMainLooper())
     private val fetchVersionData = Runnable {
         scope.launch {
             try {
                 // Perform the version check
-                val clientVersion = FileServerApi.getClientVersion()
+                val clientVersion = fileServerApi.getClientVersion()
                 Log.i(TAG, "Fetched version data: $clientVersion")
                 prefs.setLastVersionCheck()
                 startTimedVersionCheck()

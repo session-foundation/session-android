@@ -49,6 +49,8 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
             = "CREATE TABLE $legacyLastMessageHashValueTable2 ($snode TEXT, $publicKey TEXT, $lastMessageHashValue TEXT, PRIMARY KEY ($snode, $publicKey));"
         // Received message hash values
         private const val legacyReceivedMessageHashValuesTable3 = "received_message_hash_values_table_3"
+
+        @Deprecated("This table is deleted and replaced by ReceivedMessageHashDatabase")
         private const val receivedMessageHashValuesTable = "session_received_message_hash_values_table"
         private const val receivedMessageHashValues = "received_message_hash_values"
         private const val receivedMessageHashNamespace = "received_message_namespace"
@@ -128,6 +130,7 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
         const val INSERT_LAST_HASH_DATA = "INSERT OR IGNORE INTO $lastMessageHashValueTable2($snode, $publicKey, $lastMessageHashValue) SELECT $snode, $publicKey, $lastMessageHashValue FROM $legacyLastMessageHashValueTable2;"
         const val DROP_LEGACY_LAST_HASH = "DROP TABLE $legacyLastMessageHashValueTable2;"
 
+        @Deprecated("This table is deleted and replaced by ReceivedMessageHashDatabase, keeping here just for migration purpose")
         const val UPDATE_RECEIVED_INCLUDE_NAMESPACE_COMMAND = """
             CREATE TABLE IF NOT EXISTS $receivedMessageHashValuesTable(
                 $publicKey STRING, $receivedMessageHashValues TEXT, $receivedMessageHashNamespace INTEGER DEFAULT 0, PRIMARY KEY ($publicKey, $receivedMessageHashNamespace)
@@ -311,43 +314,6 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
         database.delete(lastMessageHashValueTable2, null, null)
     }
 
-    override fun getReceivedMessageHashValues(publicKey: String, namespace: Int): Set<String>? {
-        val database = readableDatabase
-        val query = "${Companion.publicKey} = ? AND ${Companion.receivedMessageHashNamespace} = ?"
-        return database.get(receivedMessageHashValuesTable, query, arrayOf( publicKey, namespace.toString() )) { cursor ->
-            val receivedMessageHashValuesAsString = cursor.getString(cursor.getColumnIndexOrThrow(Companion.receivedMessageHashValues))
-            receivedMessageHashValuesAsString.split("-").toSet()
-        }
-    }
-
-    override fun setReceivedMessageHashValues(publicKey: String, newValue: Set<String>, namespace: Int) {
-        val database = writableDatabase
-        val receivedMessageHashValuesAsString = newValue.joinToString("-")
-        val row = wrap(mapOf(
-            Companion.publicKey to publicKey,
-            Companion.receivedMessageHashValues to receivedMessageHashValuesAsString,
-            Companion.receivedMessageHashNamespace to namespace.toString()
-        ))
-        val query = "${Companion.publicKey} = ? AND $receivedMessageHashNamespace = ?"
-        database.insertOrUpdate(receivedMessageHashValuesTable, row, query, arrayOf( publicKey, namespace.toString() ))
-    }
-
-    override fun clearReceivedMessageHashValues(publicKey: String) {
-        writableDatabase
-            .delete(receivedMessageHashValuesTable, "${Companion.publicKey} = ?", arrayOf(publicKey))
-    }
-
-    override fun clearReceivedMessageHashValues() {
-        val database = writableDatabase
-        database.delete(receivedMessageHashValuesTable, null, null)
-    }
-
-    override fun clearReceivedMessageHashValuesByNamespaces(vararg namespaces: Int) {
-        // Note that we don't use SQL parameter as the given namespaces are integer anyway so there's little chance of SQL injection
-        writableDatabase
-            .delete(receivedMessageHashValuesTable, "$receivedMessageHashNamespace IN (${namespaces.joinToString(",")})", null)
-    }
-
     override fun getAuthToken(server: String): String? {
         val database = readableDatabase
         return database.get(openGroupAuthTokenTable, "${Companion.server} = ?", wrap(server)) { cursor ->
@@ -478,11 +444,6 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
 
     override fun setLastSnodePoolRefreshDate(date: Date) {
         TextSecurePreferences.setLastSnodePoolRefreshDate(context, date)
-    }
-
-    override fun getUserX25519KeyPair(): ECKeyPair {
-        val keyPair = IdentityKeyUtil.getIdentityKeyPair(context)
-        return ECKeyPair(DjbECPublicKey(keyPair.publicKey.serialize().removingIdPrefixIfNeeded()), DjbECPrivateKey(keyPair.privateKey.serialize()))
     }
 
     fun addClosedGroupEncryptionKeyPair(encryptionKeyPair: ECKeyPair, groupPublicKey: String, timestamp: Long) {

@@ -1,42 +1,36 @@
 package org.session.libsession.messaging.jobs
 
-import android.content.Context
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import dagger.hilt.android.qualifiers.ApplicationContext
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.DecodedAudio
-import org.session.libsession.utilities.DownloadUtilities
 import org.session.libsession.utilities.InputStreamMediaDataSource
-import org.session.libsignal.streams.AttachmentCipherInputStream
+import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.attachments.AttachmentProcessor
 import org.thoughtcrime.securesms.database.model.MessageId
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.InputStream
 
 class AttachmentDownloadJob @AssistedInject constructor(
     @Assisted("attachmentID") val attachmentID: Long,
     @Assisted val mmsMessageId: Long,
-    @param:ApplicationContext private val context: Context,
     private val storage: StorageProtocol,
     private val messageDataProvider: MessageDataProvider,
-    private val recipientRepository: RecipientRepository,
+    private val attachmentProcessor: AttachmentProcessor,
+    private val fileServerApi: FileServerApi,
 ) : Job {
     override var delegate: JobDelegate? = null
     override var id: String? = null
@@ -100,7 +94,8 @@ class AttachmentDownloadJob @AssistedInject constructor(
             } else if (exception == Error.NoAttachment
                     || exception == Error.NoThread
                     || exception == Error.NoSender
-                    || (exception is OnionRequestAPI.HTTPRequestFailedAtDestinationException && exception.statusCode == 400)) {
+                    || (exception is OnionRequestAPI.HTTPRequestFailedAtDestinationException && exception.statusCode == 400)
+                    || exception is NonRetryableException) {
                 attachment?.let { id ->
                     Log.d("AttachmentDownloadJob", "Setting attachment state = failed, have attachment")
                     messageDataProvider.setAttachmentState(AttachmentState.FAILED, id, mmsMessageId)
@@ -149,7 +144,6 @@ class AttachmentDownloadJob @AssistedInject constructor(
 
         val threadRecipient = storage.getRecipientForThread(threadID)
 
-        var tempFile: File? = null
         var attachment: DatabaseAttachment? = null
 
         try {
@@ -160,31 +154,57 @@ class AttachmentDownloadJob @AssistedInject constructor(
                 return
             }
             messageDataProvider.setAttachmentState(AttachmentState.DOWNLOADING, attachment.attachmentId, this.mmsMessageId)
-            val downloadedData = if (threadRecipient?.address !is Address.Community) {
+
+            val decrypted = if (threadRecipient?.address !is Address.Community) {
                 Log.d("AttachmentDownloadJob", "downloading normal attachment")
-                DownloadUtilities.downloadFromFileServer(attachment.url).body
+                val r = runCatching { fileServerApi.parseAttachmentUrl(attachment.url.toHttpUrl()) }
+                    .recover { throw NonRetryableException("Invalid file server URL", it) }
+                    .getOrThrow()
+
+                val key = requireNotNull(attachment.key) {
+                    throw NonRetryableException("Missing attachment key")
+                }.let(Base64::decode)
+
+                val cipherText = fileServerApi.download(
+                    fileId = r.fileId,
+                    fileServer = r.fileServer
+                ).body
+
+                runCatching {
+                    if (r.usesDeterministicEncryption) {
+                        attachmentProcessor.decryptDeterministically(
+                            ciphertext = cipherText,
+                            key = key
+                        )
+                    } else {
+                        attachmentProcessor.decryptAttachmentLegacy(
+                            ciphertext = cipherText,
+                            key = key,
+                            digest = attachment.digest
+                        )
+                    }
+                }.recover { throw NonRetryableException("Decryption failed", it) }
+                    .getOrThrow()
             } else {
                 Log.d("AttachmentDownloadJob", "downloading open group attachment")
                 val url = attachment.url.toHttpUrlOrNull()!!
                 val fileID = url.pathSegments.last()
-                OpenGroupApi.download(fileID, room = threadRecipient.address.room, server = threadRecipient.address.serverUrl).await()
-            }
-
-            tempFile = createTempFile().also { file ->
-                FileOutputStream(file).use {
-                    it.write(downloadedData.data, downloadedData.offset, downloadedData.len)
-                }
+                OpenGroupApi.download(fileID, room = threadRecipient.address.room, server = threadRecipient.address.serverUrl)
             }
 
             Log.d("AttachmentDownloadJob", "getting input stream")
-            val inputStream = getInputStream(tempFile, attachment)
 
             Log.d("AttachmentDownloadJob", "inserting attachment")
-            messageDataProvider.insertAttachment(mmsMessageId, attachment.attachmentId, inputStream)
+            messageDataProvider.insertAttachment(
+                messageId = mmsMessageId,
+                attachmentId = attachment.attachmentId,
+                stream = decrypted.inputStream()
+            )
+
             if (attachment.contentType.startsWith("audio/")) {
                 // process the duration
                     try {
-                        InputStreamMediaDataSource(getInputStream(tempFile, attachment)).use { mediaDataSource ->
+                        InputStreamMediaDataSource(decrypted.inputStream()).use { mediaDataSource ->
                             val durationMs = (DecodedAudio.create(mediaDataSource).totalDurationMicroseconds / 1000.0).toLong()
                             messageDataProvider.updateAudioAttachmentDuration(
                                 attachment.attachmentId,
@@ -197,24 +217,11 @@ class AttachmentDownloadJob @AssistedInject constructor(
                     }
             }
             Log.d("AttachmentDownloadJob", "deleting tempfile")
-            tempFile.delete()
             Log.d("AttachmentDownloadJob", "succeeding job")
             handleSuccess(dispatcherName)
         } catch (e: Exception) {
             Log.e("AttachmentDownloadJob", "Error processing attachment download", e)
-            tempFile?.delete()
             return handleFailure(e,attachment?.attachmentId)
-        }
-    }
-
-    private fun getInputStream(tempFile: File, attachment: DatabaseAttachment): InputStream {
-        // Assume we're retrieving an attachment for an open group server if the digest is not set
-        return if (attachment.digest?.size ?: 0 == 0 || attachment.key.isNullOrEmpty()) {
-            Log.d("AttachmentDownloadJob", "getting input stream with no attachment digest")
-            FileInputStream(tempFile)
-        } else {
-            Log.d("AttachmentDownloadJob", "getting input stream with attachment digest")
-            AttachmentCipherInputStream.createForAttachment(tempFile, attachment.size, Base64.decode(attachment.key), attachment.digest)
         }
     }
 
@@ -231,38 +238,29 @@ class AttachmentDownloadJob @AssistedInject constructor(
         delegate?.handleJobFailed(this, dispatcherName, e)
     }
 
-    private fun createTempFile(): File {
-        val file = File.createTempFile("push-attachment", "tmp", context.cacheDir)
-        file.deleteOnExit()
-        return file
-    }
-
     override fun serialize(): Data {
         return Data.Builder()
             .putLong(ATTACHMENT_ID_KEY, attachmentID)
             .putLong(TS_INCOMING_MESSAGE_ID_KEY, mmsMessageId)
-            .build();
+            .build()
     }
 
     override fun getFactoryKey(): String {
         return KEY
     }
 
-    class DeserializeFactory(private val factory: Factory) : Job.DeserializeFactory<AttachmentDownloadJob> {
+    @AssistedFactory
+    abstract class Factory : Job.DeserializeFactory<AttachmentDownloadJob> {
+        abstract fun create(
+            @Assisted("attachmentID") attachmentID: Long,
+            mmsMessageId: Long
+        ): AttachmentDownloadJob
 
         override fun create(data: Data): AttachmentDownloadJob {
-            return factory.create(
+            return create(
                 attachmentID = data.getLong(ATTACHMENT_ID_KEY),
                 mmsMessageId = data.getLong(TS_INCOMING_MESSAGE_ID_KEY)
             )
         }
-    }
-
-    @AssistedFactory
-    interface Factory {
-        fun create(
-            @Assisted("attachmentID") attachmentID: Long,
-            mmsMessageId: Long
-        ): AttachmentDownloadJob
     }
 }

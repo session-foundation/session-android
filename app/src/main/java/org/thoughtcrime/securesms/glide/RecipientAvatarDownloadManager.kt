@@ -1,26 +1,26 @@
 package org.thoughtcrime.securesms.glide
 
-import android.app.Application
-import androidx.work.await
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import network.loki.messenger.libsession_util.util.GroupInfo
-import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.attachments.RemoteFileDownloadWorker
+import org.thoughtcrime.securesms.attachments.AvatarDownloadManager
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import javax.inject.Inject
@@ -30,42 +30,54 @@ import javax.inject.Singleton
 @OptIn(FlowPreview::class)
 @Singleton
 class RecipientAvatarDownloadManager @Inject constructor(
-    private val application: Application,
     private val prefs: TextSecurePreferences,
     private val configFactory: ConfigFactory,
     @ManagerScope scope: CoroutineScope,
+    private val avatarDownloadManager: AvatarDownloadManager,
+    private val loginStateRepository: LoginStateRepository,
 ) {
+    private val avatarBulkDownloadSemaphore = Semaphore(5)
+
     init {
         scope.launch {
-            prefs.watchLocalNumber()
-                .map { it != null }
-                .flatMapLatest { isLoggedIn ->
-                    if (isLoggedIn) {
-                        (configFactory.configUpdateNotifications as Flow<*>)
-                            .debounce(500)
-                            .onStart { emit(Unit) }
-                            .map { getAllAvatars() }
-                    } else {
-                        flowOf(emptySet())
-                    }
-                }
-                .scan(State(emptySet())) { acc, newSet ->
+            loginStateRepository.flowWithLoggedInState {
+                (configFactory.configUpdateNotifications as Flow<*>)
+                    .debounce(500)
+                    .onStart { emit(Unit) }
+                    .map { getAllAvatars() }
+            }
+                .scan(State()) { acc, newSet ->
                     val toDownload = newSet - acc.downloadedAvatar
+                    val coroutineJobs = acc.downloadingJob.toMutableMap()
                     for (file in toDownload) {
                         Log.d(TAG, "Downloading $file")
-                        RemoteFileDownloadWorker.enqueue(application, file)
+                        coroutineJobs[file] = scope.launch {
+                            enqueueDownload(file)
+                        }
                     }
 
                     val toRemove = acc.downloadedAvatar - newSet
                     for (file in toRemove) {
                         Log.d(TAG, "Cancelling downloading of $file")
-                        RemoteFileDownloadWorker.cancel(application, file)
+                        coroutineJobs.remove(file)?.cancel()
                     }
 
-                    acc.copy(downloadedAvatar = newSet)
+                    acc.copy(downloadedAvatar = newSet, downloadingJob = coroutineJobs)
                 }
                 .collect()
             // Look at all the avatar URLs stored in the config and download them if necessary
+        }
+    }
+
+    private suspend fun enqueueDownload(file: RemoteFile) {
+        try {
+            avatarBulkDownloadSemaphore.withPermit {
+                avatarDownloadManager.download(file)
+            }
+        } catch (e: Exception) {
+            if (e !is CancellationException) {
+                Log.w(TAG, "Error downloading avatar $file", e)
+            }
         }
     }
 
@@ -115,7 +127,8 @@ class RecipientAvatarDownloadManager @Inject constructor(
     }
 
     private data class State(
-        val downloadedAvatar: Set<RemoteFile>
+        val downloadedAvatar: Set<RemoteFile> = emptySet(),
+        val downloadingJob: Map<RemoteFile, Job> = emptyMap()
     )
 
     companion object {

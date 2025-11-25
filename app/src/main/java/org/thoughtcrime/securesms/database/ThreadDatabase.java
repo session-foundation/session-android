@@ -38,7 +38,6 @@ import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.AddressKt;
 import org.session.libsession.utilities.ConfigFactoryProtocol;
 import org.session.libsession.utilities.ConfigFactoryProtocolKt;
-import org.session.libsession.utilities.DistributionTypes;
 import org.session.libsession.utilities.GroupUtil;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
@@ -56,7 +55,7 @@ import org.thoughtcrime.securesms.database.model.content.MessageContent;
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
-import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
+import org.thoughtcrime.securesms.notifications.MarkReadProcessor;
 import org.thoughtcrime.securesms.util.SharedConfigUtilsKt;
 
 import java.io.Closeable;
@@ -239,6 +238,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
   private final Lazy<@NonNull MessageNotifier> messageNotifier;
   private final Lazy<@NonNull MmsDatabase> mmsDatabase;
   private final Lazy<@NonNull SmsDatabase> smsDatabase;
+  private final Lazy<@NonNull MarkReadProcessor> markReadProcessor;
 
   @Inject
   public ThreadDatabase(@dagger.hilt.android.qualifiers.ApplicationContext Context context,
@@ -249,6 +249,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
                         Lazy<@NonNull MessageNotifier> messageNotifier,
                         Lazy<@NonNull MmsDatabase> mmsDatabase,
                         Lazy<@NonNull SmsDatabase> smsDatabase,
+                        Lazy<@NonNull MarkReadProcessor> markReadProcessor,
                         TextSecurePreferences prefs,
                         Json json) {
     super(context, databaseHelper);
@@ -258,6 +259,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
     this.messageNotifier = messageNotifier;
     this.mmsDatabase = mmsDatabase;
     this.smsDatabase = smsDatabase;
+    this.markReadProcessor = markReadProcessor;
 
     this.json = json;
     this.prefs = prefs;
@@ -487,22 +489,6 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
     for (Long threadId : dates.keySet()) {
       notifyThreadUpdated(threadId);
     }
-  }
-
-  public int getDistributionType(long threadId) {
-    SQLiteDatabase db     = getReadableDatabase();
-    Cursor         cursor = db.query(TABLE_NAME, new String[]{DISTRIBUTION_TYPE}, ID_WHERE, new String[]{String.valueOf(threadId)}, null, null, null);
-
-    try {
-      if (cursor != null && cursor.moveToNext()) {
-        return cursor.getInt(cursor.getColumnIndexOrThrow(DISTRIBUTION_TYPE));
-      }
-
-      return DistributionTypes.DEFAULT;
-    } finally {
-      if (cursor != null) cursor.close();
-    }
-
   }
 
   @NonNull
@@ -761,13 +747,15 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
   /**
    * @param threadId
    * @param lastSeenTime
+   * @param force
+   * @param updateNotifications - if true, update the notification state. Set to false if you already came from a notification interaction
    * @return true if we have set the last seen for the thread, false if there were no messages in the thread
    */
-  public boolean markAllAsRead(long threadId, long lastSeenTime, boolean force) {
+  public boolean markAllAsRead(long threadId, long lastSeenTime, boolean force, boolean updateNotifications) {
     if (mmsSmsDatabase.get().getConversationCount(threadId) <= 0 && !force) return false;
     List<MarkedMessageInfo> messages = setRead(threadId, lastSeenTime);
-    MarkReadReceiver.process(context, messages);
-    messageNotifier.get().updateNotification(context, threadId);
+    markReadProcessor.get().process(messages);
+    if(updateNotifications) messageNotifier.get().updateNotification(context, threadId);
     return setLastSeen(threadId, lastSeenTime);
   }
 
@@ -859,7 +847,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
       MessageRecord lastMessage = null;
 
       if (count > 0) {
-        lastMessage = mmsSmsDatabase.get().getLastMessage(threadId);
+        lastMessage = mmsSmsDatabase.get().getLastMessage(threadId, false, false);
       }
 
       final GroupThreadStatus groupThreadStatus;

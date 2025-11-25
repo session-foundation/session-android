@@ -9,11 +9,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -33,8 +30,8 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.isGroupV2
@@ -46,6 +43,7 @@ import org.session.libsession.utilities.upsertContact
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.CommunityDatabase
 import org.thoughtcrime.securesms.database.DraftDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
@@ -130,7 +128,6 @@ interface ConversationRepository {
 
 @Singleton
 class DefaultConversationRepository @Inject constructor(
-    private val textSecurePreferences: TextSecurePreferences,
     private val messageDataProvider: MessageDataProvider,
     private val threadDb: ThreadDatabase,
     private val communityDatabase: CommunityDatabase,
@@ -145,26 +142,27 @@ class DefaultConversationRepository @Inject constructor(
     private val recipientDatabase: RecipientSettingsDatabase,
     private val recipientRepository: RecipientRepository,
     @param:ManagerScope private val scope: CoroutineScope,
+    private val messageSender: MessageSender,
+    private val loginStateRepository: LoginStateRepository,
 ) : ConversationRepository {
 
-    override val conversationListAddressesFlow = configFactory
-        .userConfigsChanged(EnumSet.of(
-            UserConfigType.CONTACTS,
-            UserConfigType.USER_PROFILE,
-            UserConfigType.USER_GROUPS
-        ))
-        .castAwayType()
-        .onStart {
-            // Only start when we have a local number
-            textSecurePreferences.watchLocalNumber().filterNotNull().first()
+    override val conversationListAddressesFlow = loginStateRepository.flowWithLoggedInState {
+        configFactory
+            .userConfigsChanged(EnumSet.of(
+                UserConfigType.CONTACTS,
+                UserConfigType.USER_PROFILE,
+                UserConfigType.USER_GROUPS
+            ))
+            .castAwayType()
+            .onStart {
+                emit(Unit)
+            }
+            .map { getConversationListAddresses() }
+    }.stateIn(scope, SharingStarted.Eagerly, getConversationListAddresses())
 
-            emit(Unit)
-        }
-        .map { getConversationListAddresses() }
-        .stateIn(scope, SharingStarted.Eagerly, getConversationListAddresses())
-
-    private fun getConversationListAddresses() = buildSet {
-        val myAddress = Address.Standard(AccountId(textSecurePreferences.getLocalNumber() ?: return@buildSet ))
+    private fun getConversationListAddresses() = buildSet<Address.Conversable> {
+        val myAddress = loginStateRepository.getLocalNumber()?.toAddress() as? Address.Standard
+            ?: return@buildSet
 
         // Always have NTS - we should only "hide" them on home screen - the convo should never be deleted
         add(myAddress)
@@ -226,12 +224,13 @@ class DefaultConversationRepository @Inject constructor(
                                 it == TextSecurePreferences.SET_FORCE_POST_PRO
                     }
                 ).debounce(500)
-                    .onStart { emit(Unit) }
-                    .mapLatest {
-                        withContext(Dispatchers.Default) {
-                            threadDb.getThreads(allAddresses)
-                        }
-                    }
+                    .onStart { emit(allAddresses) }
+                    .map { allAddresses }
+            }
+            .map { addresses ->
+                withContext(Dispatchers.Default) {
+                    threadDb.getThreads(addresses)
+                }
             }
     }
 
@@ -275,17 +274,17 @@ class DefaultConversationRepository @Inject constructor(
             val outgoingTextMessage = OutgoingTextMessage.fromOpenGroupInvitation(
                 openGroupInvitation,
                 contact,
-                message.sentTimestamp,
+                message.sentTimestamp!!,
                 expirationConfig.expiryMillis,
                 expireStartedAt
-            )
+            )!!
 
             message.id = MessageId(
                 smsDb.insertMessageOutbox(contactThreadId, outgoingTextMessage, false, message.sentTimestamp!!, true),
                 false
             )
 
-            MessageSender.send(message, contact)
+            messageSender.send(message, contact)
         }
     }
 
@@ -386,7 +385,7 @@ class DefaultConversationRepository @Inject constructor(
     ) {
         messages.forEach { message ->
             lokiMessageDb.getServerID(message.messageId)?.let { messageServerID ->
-                OpenGroupApi.deleteMessage(messageServerID, community.room, community.serverUrl).await()
+                OpenGroupApi.deleteMessage(messageServerID, community.room, community.serverUrl)
             }
         }
     }
@@ -396,10 +395,10 @@ class DefaultConversationRepository @Inject constructor(
         messages: Set<MessageRecord>
     ) {
         // delete the messages remotely
-        val userAddress: Address? =  textSecurePreferences.getLocalNumber()?.let { Address.fromSerialized(it) }
         val userAuth = requireNotNull(storage.userAuth) {
             "User auth is required to delete messages remotely"
         }
+        val userAddress = userAuth.accountId.toAddress()
 
         messages.forEach { message ->
             // delete from swarm
@@ -410,12 +409,12 @@ class DefaultConversationRepository @Inject constructor(
 
             // send an UnsendRequest to user's swarm
             buildUnsendRequest(message).let { unsendRequest ->
-                userAddress?.let { MessageSender.send(unsendRequest, it) }
+                messageSender.send(unsendRequest, userAddress)
             }
 
             // send an UnsendRequest to recipient's swarm
             buildUnsendRequest(message).let { unsendRequest ->
-                MessageSender.send(unsendRequest, recipient)
+                messageSender.send(unsendRequest, recipient)
             }
         }
     }
@@ -428,7 +427,7 @@ class DefaultConversationRepository @Inject constructor(
             messages.forEach { message ->
                 // send an UnsendRequest to group's swarm
                 buildUnsendRequest(message).let { unsendRequest ->
-                    MessageSender.send(unsendRequest, recipient)
+                    messageSender.send(unsendRequest, recipient)
                 }
             }
         }
@@ -453,10 +452,10 @@ class DefaultConversationRepository @Inject constructor(
         messages: Set<MessageRecord>
     ) {
         // delete the messages remotely
-        val userAddress: Address? =  textSecurePreferences.getLocalNumber()?.let { Address.fromSerialized(it) }
         val userAuth = requireNotNull(storage.userAuth) {
             "User auth is required to delete messages remotely"
         }
+        val userAddress = userAuth.accountId.toAddress()
 
         messages.forEach { message ->
             // delete from swarm
@@ -467,14 +466,15 @@ class DefaultConversationRepository @Inject constructor(
 
             // send an UnsendRequest to user's swarm
             buildUnsendRequest(message).let { unsendRequest ->
-                userAddress?.let { MessageSender.send(unsendRequest, it) }
+                messageSender.send(unsendRequest, userAddress)
             }
         }
     }
 
     private fun buildUnsendRequest(message: MessageRecord): UnsendRequest {
         return UnsendRequest(
-            author = message.takeUnless { it.isOutgoing }?.run { individualRecipient.address.address } ?: textSecurePreferences.getLocalNumber(),
+            author = message.takeUnless { it.isOutgoing }?.run { individualRecipient.address.address }
+                ?: loginStateRepository.requireLocalNumber(),
             timestamp = message.timestamp
         )
     }
@@ -484,7 +484,7 @@ class DefaultConversationRepository @Inject constructor(
             publicKey = userId.hexString,
             room = community.room,
             server = community.serverUrl,
-        ).await()
+        )
     }
 
     override suspend fun banAndDeleteAll(community: Address.Community, userId: AccountId) = runCatching {
@@ -493,7 +493,7 @@ class DefaultConversationRepository @Inject constructor(
             publicKey = userId.hexString,
             room = community.room,
             server = community.serverUrl
-        ).await()
+        )
     }
 
     override suspend fun deleteMessageRequest(thread: ThreadRecord): Result<Unit> {
@@ -551,7 +551,7 @@ class DefaultConversationRepository @Inject constructor(
                 }
 
                 withContext(Dispatchers.Default) {
-                    MessageSender.send(message = MessageRequestResponse(true), address = recipient)
+                    messageSender.send(message = MessageRequestResponse(true), address = recipient)
 
                     // add a control message for our user
                     storage.insertMessageRequestResponseFromYou(threadDb.getOrCreateThreadIdFor(recipient))

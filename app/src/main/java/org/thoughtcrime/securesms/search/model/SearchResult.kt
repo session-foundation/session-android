@@ -11,7 +11,7 @@ import org.thoughtcrime.securesms.database.CursorList
 class SearchResult(
     val query: String = "",
     val contacts: List<Recipient> = emptyList(),
-    val conversations: List<GroupRecord> = emptyList(),
+    val conversations: List<Recipient> = emptyList(),
     val messages: CursorList<MessageResult> = CursorList.emptyList<MessageResult>()
 ) {
     fun size(): Int {

@@ -20,8 +20,6 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.text.TextUtils;
 
-import org.thoughtcrime.securesms.components.ComposeText;
-
 import network.loki.messenger.BuildConfig;
 
 public class Util {
@@ -29,10 +27,6 @@ public class Util {
   public static boolean isLowMemory(Context context) {
     ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
     return (activityManager.isLowRamDevice()) || activityManager.getLargeMemoryClass() <= 64;
-  }
-
-  public static boolean isEmpty(ComposeText value) {
-    return value == null || value.getText() == null || TextUtils.isEmpty(value.getTextTrimmed());
   }
 
   public static int getCanonicalVersionCode() {

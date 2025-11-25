@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.conversation.v2.utilities
 
-import android.content.Context
-import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.visible.LinkPreview
 import org.session.libsession.messaging.messages.visible.OpenGroupInvitation
@@ -9,15 +8,18 @@ import org.session.libsession.messaging.messages.visible.Quote
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.UpdateMessageData
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.toGroupString
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
+import javax.inject.Inject
 
-object ResendMessageUtilities {
+class ResendMessageUtilities @Inject constructor(
+    private val messageSender: MessageSender,
+    private val storage: StorageProtocol,
+) {
 
-    fun resend(context: Context, messageRecord: MessageRecord, userBlindedKey: String?, isResync: Boolean = false) {
+    suspend fun resend(accountId: String?, messageRecord: MessageRecord, userBlindedKey: String?, isResync: Boolean = false) {
         val recipient = messageRecord.recipient.address
         val message = VisibleMessage()
         message.id = messageRecord.messageId
@@ -45,7 +47,7 @@ object ResendMessageUtilities {
             messageRecord.linkPreviews.firstOrNull()?.let { message.linkPreview = LinkPreview.from(it) }
             messageRecord.quote?.quoteModel?.let {
                 message.quote = Quote.from(it)?.apply {
-                    if (userBlindedKey != null && publicKey == TextSecurePreferences.getLocalNumber(context)) {
+                    if (userBlindedKey != null && publicKey == accountId) {
                         publicKey = userBlindedKey
                     }
                 }
@@ -53,14 +55,14 @@ object ResendMessageUtilities {
             message.addSignalAttachments(messageRecord.slideDeck.asAttachments())
         }
         val sentTimestamp = message.sentTimestamp
-        val sender = MessagingModuleConfiguration.shared.storage.getUserPublicKey()
+        val sender = storage.getUserPublicKey()
         if (sentTimestamp != null && sender != null) {
             if (isResync) {
-                MessagingModuleConfiguration.shared.storage.markAsResyncing(messageRecord.messageId)
-                MessageSender.sendNonDurably(message, Destination.from(recipient), isSyncMessage = true)
+                storage.markAsResyncing(messageRecord.messageId)
+                messageSender.sendNonDurably(message, Destination.from(recipient), isSyncMessage = true)
             } else {
-                MessagingModuleConfiguration.shared.storage.markAsSending(messageRecord.messageId)
-                MessageSender.send(message, recipient)
+                storage.markAsSending(messageRecord.messageId)
+                messageSender.send(message, recipient)
             }
         }
     }

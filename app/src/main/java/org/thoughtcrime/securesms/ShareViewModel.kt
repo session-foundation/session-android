@@ -27,7 +27,6 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDD
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.RecipientData
-import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.model.ThreadRecord
@@ -71,10 +70,10 @@ class ShareViewModel @Inject constructor(
          ::filterContacts
     ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    val hasAnyConversations: StateFlow<Boolean> =
+    val hasAnyConversations: StateFlow<Boolean?> =
         conversationRepository.observeConversationList()
             .map { it.isNotEmpty() }
-            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private val _uiEvents = MutableSharedFlow<ShareUIEvent>(extraBufferCapacity = 1)
     val uiEvents: SharedFlow<ShareUIEvent> get() = _uiEvents
@@ -123,7 +122,7 @@ class ShareViewModel @Inject constructor(
                             else recipient.searchName,
                     address = recipient.address,
                     avatarUIData = avatarUtils.getUIDataFromRecipient(recipient),
-                    showProBadge = recipient.proStatus.shouldShowProBadge()
+                    showProBadge = recipient.shouldShowProBadge
                 )
             }.toList()
     }

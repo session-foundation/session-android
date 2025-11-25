@@ -5,11 +5,13 @@ import android.content.pm.PackageManager
 import android.telephony.TelephonyManager
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.boolean
@@ -29,6 +31,7 @@ import org.session.libsession.utilities.Debouncer
 import org.session.libsession.utilities.Util
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.ICE_CANDIDATES
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.webrtc.CallManager.StateEvent.AudioDeviceUpdate
 import org.thoughtcrime.securesms.webrtc.CallManager.StateEvent.AudioEnabled
 import org.thoughtcrime.securesms.webrtc.audio.AudioManagerCompat
@@ -68,8 +71,10 @@ import org.thoughtcrime.securesms.webrtc.data.State as CallState
 @Singleton
 class CallManager @Inject constructor(
     @param:ApplicationContext private val context: Context,
+    @param:ManagerScope private val scope: CoroutineScope,
     audioManager: AudioManagerCompat,
     private val storage: StorageProtocol,
+    private val messageSender: MessageSender,
 ): PeerConnection.Observer,
     SignalAudioManager.EventListener, CameraEventListener, DataChannel.Observer {
 
@@ -333,7 +338,17 @@ class CallManager @Inject constructor(
                     currentCallId
                 )
                     .applyExpiryMode(expectedRecipient)
-                    .also { MessageSender.sendNonDurably(it, currentRecipient, isSyncMessage = currentRecipient.isLocalNumber) }
+                    .also {
+                        scope.launch {
+                            runCatching {
+                                messageSender.sendNonDurably(
+                                    it,
+                                    currentRecipient,
+                                    isSyncMessage = currentRecipient.isLocalNumber
+                                )
+                            }
+                        }
+                    }
 
             }
         }
@@ -457,13 +472,13 @@ class CallManager @Inject constructor(
         }
     }
 
-    fun onNewOffer(offer: String, callId: UUID, recipient: Address): Promise<Unit, Exception> {
-        if (callId != this.callId) return Promise.ofFail(NullPointerException("No callId"))
-        if (recipient != this.recipient) return Promise.ofFail(NullPointerException("No recipient"))
-        val connection = peerConnection ?: return Promise.ofFail(NullPointerException("No peer connection wrapper"))
+    suspend fun onNewOffer(offer: String, callId: UUID, recipient: Address) {
+        if (callId != this.callId) throw NullPointerException("No callId")
+        if (recipient != this.recipient) throw NullPointerException("No recipient")
+        val connection = peerConnection ?: throw NullPointerException("No peer connection wrapper")
 
         val reconnected = stateProcessor.processEvent(Event.ReceiveOffer) && stateProcessor.processEvent(Event.SendAnswer)
-        return if (reconnected) {
+        if (reconnected) {
             Log.i("Loki", "Handling new offer, restarting ice session")
             connection.setNewRemoteDescription(SessionDescription(SessionDescription.Type.OFFER, offer))
             // re-established an ice
@@ -475,9 +490,16 @@ class CallManager @Inject constructor(
             pendingIncomingIceUpdates.clear()
             val answerMessage = CallMessage.answer(answer.description, callId).applyExpiryMode(recipient)
             Log.i("Loki", "Posting new answer")
-            MessageSender.sendNonDurably(answerMessage, recipient, isSyncMessage = recipient.isLocalNumber)
+
+            runCatching {
+                messageSender.sendNonDurably(
+                    answerMessage,
+                    recipient,
+                    isSyncMessage = recipient.isLocalNumber
+                )
+            }
         } else {
-            Promise.ofFail(Exception("Couldn't reconnect from current state"))
+            throw Exception("Couldn't reconnect from current state")
         }
     }
 
@@ -493,15 +515,15 @@ class CallManager @Inject constructor(
         }
     }
 
-    fun onIncomingCall(context: Context, isAlwaysTurn: Boolean = false): Promise<Unit, Exception> {
+    suspend fun onIncomingCall(context: Context, isAlwaysTurn: Boolean = false) {
         lockManager.updatePhoneState(LockManager.PhoneState.PROCESSING)
 
-        val callId = callId ?: return Promise.ofFail(NullPointerException("callId is null"))
-        val recipient = recipient ?: return Promise.ofFail(NullPointerException("recipient is null"))
-        val offer = pendingOffer ?: return Promise.ofFail(NullPointerException("pendingOffer is null"))
-        val factory = peerConnectionFactory ?: return Promise.ofFail(NullPointerException("peerConnectionFactory is null"))
-        val local = floatingRenderer ?: return Promise.ofFail(NullPointerException("localRenderer is null"))
-        val base = eglBase ?: return Promise.ofFail(NullPointerException("eglBase is null"))
+        val callId = callId ?: throw NullPointerException("callId is null")
+        val recipient = recipient ?: throw NullPointerException("recipient is null")
+        val offer = pendingOffer ?: throw NullPointerException("pendingOffer is null")
+        val factory = peerConnectionFactory ?: throw NullPointerException("peerConnectionFactory is null")
+        val local = floatingRenderer ?: throw NullPointerException("localRenderer is null")
+        val base = eglBase ?: throw NullPointerException("eglBase is null")
 
         val connection = PeerConnectionWrapper(
                 context,
@@ -521,12 +543,24 @@ class CallManager @Inject constructor(
         val answer = connection.createAnswer(MediaConstraints())
         connection.setLocalDescription(answer)
         val answerMessage = CallMessage.answer(answer.description, callId).applyExpiryMode(recipient)
-        val userAddress = storage.getUserPublicKey() ?: return Promise.ofFail(NullPointerException("No user public key"))
-        MessageSender.sendNonDurably(answerMessage, Address.fromSerialized(userAddress), isSyncMessage = true)
-        val sendAnswerMessage = MessageSender.sendNonDurably(CallMessage.answer(
-                answer.description,
-                callId
-        ).applyExpiryMode(recipient), recipient, isSyncMessage = recipient.isLocalNumber)
+        val userAddress = storage.getUserPublicKey() ?: throw NullPointerException("No user public key")
+
+        runCatching {
+            messageSender.sendNonDurably(
+                answerMessage,
+                Address.fromSerialized(userAddress),
+                isSyncMessage = true
+            )
+        }
+
+        runCatching {
+            messageSender.sendNonDurably(
+                CallMessage.answer(
+                    answer.description,
+                    callId
+                ).applyExpiryMode(recipient), recipient, isSyncMessage = recipient.isLocalNumber
+            )
+        }
 
         insertCallMessage(recipient.toString(), CallMessageType.CALL_INCOMING, false)
 
@@ -534,28 +568,27 @@ class CallManager @Inject constructor(
             val candidate = pendingIncomingIceUpdates.pop() ?: break
             connection.addIceCandidate(candidate)
         }
-        return sendAnswerMessage.success {
-            pendingOffer = null
-            pendingOfferTime = -1
-        }
+
+        pendingOffer = null
+        pendingOfferTime = -1
     }
 
-    fun onOutgoingCall(context: Context, isAlwaysTurn: Boolean = false): Promise<Unit, Exception> {
+    suspend fun onOutgoingCall(context: Context, isAlwaysTurn: Boolean = false) {
         lockManager.updatePhoneState(LockManager.PhoneState.IN_CALL)
 
-        val callId = callId ?: return Promise.ofFail(NullPointerException("callId is null"))
+        val callId = callId ?: throw NullPointerException("callId is null")
         val recipient = recipient
-                ?: return Promise.ofFail(NullPointerException("recipient is null"))
+                ?: throw NullPointerException("recipient is null")
         val factory = peerConnectionFactory
-                ?: return Promise.ofFail(NullPointerException("peerConnectionFactory is null"))
+                ?: throw NullPointerException("peerConnectionFactory is null")
         val local = floatingRenderer
-                ?: return Promise.ofFail(NullPointerException("localRenderer is null"))
-        val base = eglBase ?: return Promise.ofFail(NullPointerException("eglBase is null"))
+                ?: throw NullPointerException("localRenderer is null")
+        val base = eglBase ?: throw NullPointerException("eglBase is null")
 
         val sentOffer = stateProcessor.processEvent(Event.SendOffer)
 
         if (!sentOffer) {
-            return Promise.ofFail(Exception("Couldn't transition to sent offer state"))
+            throw Exception("Couldn't transition to sent offer state")
         } else {
             val connection = PeerConnectionWrapper(
                 context,
@@ -576,20 +609,26 @@ class CallManager @Inject constructor(
             connection.setLocalDescription(offer)
 
             Log.d("Loki", "Sending pre-offer")
-            return MessageSender.sendNonDurably(CallMessage.preOffer(
-                callId
-            ).applyExpiryMode(recipient), recipient, isSyncMessage = recipient.isLocalNumber).bind {
+            try {
+                messageSender.sendNonDurably(
+                    CallMessage.preOffer(
+                        callId
+                    ).applyExpiryMode(recipient), recipient, isSyncMessage = recipient.isLocalNumber
+                )
+
                 Log.d("Loki", "Sent pre-offer")
                 Log.d("Loki", "Sending offer")
                 postViewModelState(CallViewModel.State.CALL_OFFER_OUTGOING)
-                MessageSender.sendNonDurably(CallMessage.offer(
+
+                messageSender.sendNonDurably(CallMessage.offer(
                     offer.description,
                     callId
-                ).applyExpiryMode(recipient), recipient, isSyncMessage = recipient.isLocalNumber).success {
-                    Log.d("Loki", "Sent offer")
-                }.fail {
-                    Log.e("Loki", "Failed to send offer", it)
-                }
+                ).applyExpiryMode(recipient), recipient, isSyncMessage = recipient.isLocalNumber)
+
+                Log.d("Loki", "Sent offer")
+            } catch (e: Exception) {
+                Log.e("Loki", "Failed to send offer", e)
+                throw e
             }
         }
     }
@@ -599,10 +638,26 @@ class CallManager @Inject constructor(
         val recipient = recipient ?: return
         val userAddress = storage.getUserPublicKey() ?: return
         stateProcessor.processEvent(Event.DeclineCall) {
-            MessageSender.sendNonDurably(CallMessage.endCall(callId).applyExpiryMode(recipient), Address.fromSerialized(userAddress), isSyncMessage = true)
-            MessageSender.sendNonDurably(CallMessage.endCall(callId).applyExpiryMode(recipient), recipient, isSyncMessage = recipient.isLocalNumber)
-            insertCallMessage(recipient.toString(), CallMessageType.CALL_INCOMING)
+            scope.launch {
+                runCatching {
+                    messageSender.sendNonDurably(
+                        CallMessage.endCall(callId).applyExpiryMode(recipient),
+                        Address.fromSerialized(userAddress),
+                        isSyncMessage = true
+                    )
+                }
+            }
+            scope.launch {
+                runCatching {
+                    messageSender.sendNonDurably(
+                        CallMessage.endCall(callId).applyExpiryMode(recipient),
+                        recipient,
+                        isSyncMessage = recipient.isLocalNumber
+                    )
+                }
+            }
 
+            insertCallMessage(recipient.toString(), CallMessageType.CALL_INCOMING)
         }
     }
 
@@ -624,7 +679,15 @@ class CallManager @Inject constructor(
                 channel.send(buffer)
             }
 
-            MessageSender.sendNonDurably(CallMessage.endCall(callId).applyExpiryMode(recipient), recipient, isSyncMessage = recipient.isLocalNumber)
+            scope.launch {
+                runCatching {
+                    messageSender.sendNonDurably(
+                        CallMessage.endCall(callId).applyExpiryMode(recipient),
+                        recipient,
+                        isSyncMessage = recipient.isLocalNumber
+                    )
+                }
+            }
         }
     }
 
@@ -823,7 +886,7 @@ class CallManager @Inject constructor(
     }
 
     fun startIncomingRinger() {
-        signalAudioManager.handleCommand(AudioManagerCommand.StartIncomingRinger(true))
+        signalAudioManager.handleCommand(AudioManagerCommand.StartIncomingRinger)
     }
 
     fun startCommunication() {
@@ -855,7 +918,15 @@ class CallManager @Inject constructor(
                 mandatory.add(MediaConstraints.KeyValuePair("IceRestart", "true"))
             })
             connection.setLocalDescription(offer)
-            MessageSender.sendNonDurably(CallMessage.offer(offer.description, callId).applyExpiryMode(recipient), recipient, isSyncMessage = recipient.isLocalNumber)
+            scope.launch {
+                runCatching {
+                    messageSender.sendNonDurably(
+                        CallMessage.offer(offer.description, callId).applyExpiryMode(recipient),
+                        recipient,
+                        isSyncMessage = recipient.isLocalNumber
+                    )
+                }
+            }
         }
     }
 

@@ -17,24 +17,37 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.serialization.json.Json
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.protocol.ProFeatures
 import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.file_server.FileServer
 import org.session.libsession.utilities.TextSecurePreferences.Companion.AUTOPLAY_AUDIO_MESSAGES
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_DARK
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_LIGHT
+import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_HAS_COPIED_DONATION_URL
+import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_HAS_DONATED
+import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_SEEN_DONATION_CTA_AMOUNT
+import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW
 import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONMENT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FORCED_SHORT_TTL
+import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_COPIED_DONATION_URL
+import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_DONATED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_MESSAGE_REQUESTS
+import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN_PRO_EXPIRED
+import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN_PRO_EXPIRING
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HIDE_PASSWORD
+import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_SEEN_DONATION_CTA
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VACUUM_TIME
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VERSION_CHECK
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LEGACY_PREF_KEY_SELECTED_UI_MODE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.OCEAN_DARK
 import org.session.libsession.utilities.TextSecurePreferences.Companion.OCEAN_LIGHT
+import org.session.libsession.utilities.TextSecurePreferences.Companion.SEEN_DONATION_CTA_AMOUNT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED_ACCENT_COLOR
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED_STYLE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_CURRENT_USER_PRO
@@ -43,6 +56,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORC
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_POST_PRO
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_NOTIFICATION
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_WARNING
+import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW
 import org.session.libsession.utilities.TextSecurePreferences.Companion._events
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
@@ -102,8 +116,6 @@ interface TextSecurePreferences {
     fun getPreferredCameraDirection(): CameraSelector
     fun getNotificationPrivacy(): NotificationPrivacyPreference
     fun getRepeatAlertsCount(): Int
-    fun getLocalRegistrationId(): Int
-    fun setLocalRegistrationId(registrationId: Int)
     fun isInThreadNotifications(): Boolean
     fun isUniversalUnidentifiedAccess(): Boolean
     fun getUpdateApkRefreshTime(): Long
@@ -112,12 +124,8 @@ interface TextSecurePreferences {
     fun getUpdateApkDownloadId(): Long
     fun setUpdateApkDigest(value: String?)
     fun getUpdateApkDigest(): String?
-    fun getLocalNumber(): String?
-    fun watchLocalNumber(): StateFlow<String?>
     fun getHasLegacyConfig(): Boolean
     fun setHasLegacyConfig(newValue: Boolean)
-    fun setLocalNumber(localNumber: String)
-    fun removeLocalNumber()
     fun isEnterSendsEnabled(): Boolean
     fun isPasswordDisabled(): Boolean
     fun setPasswordDisabled(disabled: Boolean)
@@ -156,8 +164,6 @@ interface TextSecurePreferences {
     fun setStringSetPreference(key: String, value: Set<String>)
     fun getHasViewedSeed(): Boolean
     fun setHasViewedSeed(hasViewedSeed: Boolean)
-    fun setRestorationTime(time: Long)
-    fun getRestorationTime(): Long
     fun getLastSnodePoolRefreshDate(): Long
     fun setLastSnodePoolRefreshDate(date: Date)
     fun getLastOpenTimeDate(): Long
@@ -174,6 +180,10 @@ interface TextSecurePreferences {
     fun setForceIncomingMessagesAsPro(isPro: Boolean)
     fun forcePostPro(): Boolean
     fun setForcePostPro(postPro: Boolean)
+    fun hasSeenProExpiring(): Boolean
+    fun setHasSeenProExpiring()
+    fun hasSeenProExpired(): Boolean
+    fun setHasSeenProExpired()
     fun watchPostProStatus(): StateFlow<Boolean>
     fun setShownCallWarning(): Boolean
     fun setShownCallNotification(): Boolean
@@ -205,14 +215,40 @@ interface TextSecurePreferences {
     fun forcedShortTTL(): Boolean
     fun setForcedShortTTL(value: Boolean)
 
-    fun  getDebugMessageFeatures(): Set<ProStatusManager.MessageProFeature>
-    fun  setDebugMessageFeatures(features: Set<ProStatusManager.MessageProFeature>)
+    fun  getDebugMessageFeatures(): ProFeatures
+    fun  setDebugMessageFeatures(features: ProFeatures)
 
     fun getDebugSubscriptionType(): DebugMenuViewModel.DebugSubscriptionStatus?
     fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?)
+    fun getDebugProPlanStatus(): DebugMenuViewModel.DebugProPlanStatus?
+    fun setDebugProPlanStatus(status: DebugMenuViewModel.DebugProPlanStatus?)
+    fun getDebugForceNoBilling(): Boolean
+    fun setDebugForceNoBilling(hasBilling: Boolean)
+    fun getDebugIsWithinQuickRefund(): Boolean
+    fun setDebugIsWithinQuickRefund(isWithin: Boolean)
 
     fun setSubscriptionProvider(provider: String)
     fun getSubscriptionProvider(): String?
+
+    fun hasDonated(): Boolean
+    fun setHasDonated(hasDonated: Boolean)
+    fun hasCopiedDonationURL(): Boolean
+    fun setHasCopiedDonationURL(hasCopied: Boolean)
+    fun seenDonationCTAAmount(): Int
+    fun setSeenDonationCTAAmount(amount: Int)
+    fun lastSeenDonationCTA(): Long
+    fun setLastSeenDonationCTA(timestamp: Long)
+    fun showDonationCTAFromPositiveReview(): Boolean
+    fun setShowDonationCTAFromPositiveReview(show: Boolean)
+
+    fun hasDonatedDebug(): String?
+    fun setHasDonatedDebug(hasDonated: String?)
+    fun hasCopiedDonationURLDebug(): String?
+    fun setHasCopiedDonationURLDebug(hasCopied: String?)
+    fun seenDonationCTAAmountDebug(): String?
+    fun setSeenDonationCTAAmountDebug(amount: String?)
+    fun showDonationCTAFromPositiveReviewDebug(): String?
+    fun setShowDonationCTAFromPositiveReviewDebug(show: String?)
 
     var deprecationStateOverride: String?
     var deprecatedTimeOverride: ZonedDateTime?
@@ -226,6 +262,9 @@ interface TextSecurePreferences {
     var selectedActivityAliasName: String?
 
     var inAppReviewState: String?
+    var forcesDeterministicAttachmentEncryption: Boolean
+    var debugAvatarReupload: Boolean
+    var alternativeFileServer: FileServer?
 
 
     companion object {
@@ -257,7 +296,6 @@ interface TextSecurePreferences {
         const val PASSPHRASE_TIMEOUT_PREF = "pref_timeout_passphrase"
         const val ENTER_SENDS_PREF = "pref_enter_sends"
         const val THREAD_TRIM_ENABLED = "pref_trim_threads"
-        internal const val LOCAL_NUMBER_PREF = "pref_local_number"
         const val REGISTERED_GCM_PREF = "pref_gcm_registered"
         const val UPDATE_APK_REFRESH_TIME_PREF = "pref_update_apk_refresh_time"
         const val UPDATE_APK_DOWNLOAD_ID = "pref_update_apk_download_id"
@@ -265,6 +303,7 @@ interface TextSecurePreferences {
         const val IN_THREAD_NOTIFICATION_PREF = "pref_key_inthread_notifications"
         const val IN_APP_NOTIFICATION_SOUNDS = "pref_sound_when_app_open"
         const val MESSAGE_BODY_TEXT_SIZE_PREF = "pref_message_body_text_size"
+        @Deprecated("No longer used, kept for migration purposes")
         const val LOCAL_REGISTRATION_ID_PREF = "pref_local_registration_id"
         const val REPEAT_ALERTS_PREF = "pref_repeat_alerts"
         const val NOTIFICATION_PRIVACY_PREF = "pref_notification_privacy"
@@ -306,6 +345,8 @@ interface TextSecurePreferences {
         const val SET_FORCE_OTHER_USERS_PRO = "pref_force_other_users_pro"
         const val SET_FORCE_INCOMING_MESSAGE_PRO = "pref_force_incoming_message_pro"
         const val SET_FORCE_POST_PRO = "pref_force_post_pro"
+        const val HAS_SEEN_PRO_EXPIRING = "has_seen_pro_expiring"
+        const val HAS_SEEN_PRO_EXPIRED = "has_seen_pro_expired"
         const val CALL_NOTIFICATIONS_ENABLED = "pref_call_notifications_enabled"
         const val SHOWN_CALL_WARNING = "pref_shown_call_warning" // call warning is user-facing warning of enabling calls
         const val SHOWN_CALL_NOTIFICATION = "pref_shown_call_notification" // call notification is a prompt to check privacy settings
@@ -367,10 +408,26 @@ interface TextSecurePreferences {
 
         const val IN_APP_REVIEW_STATE = "in_app_review_state"
 
-        const val DEBUG_MESSAGE_FEATURES = "debug_message_features"
+        const val DEBUG_MESSAGE_FEATURES = "debug_message_features_long"
         const val DEBUG_SUBSCRIPTION_STATUS = "debug_subscription_status"
+        const val DEBUG_PRO_PLAN_STATUS = "debug_pro_plan_status"
+        const val DEBUG_FORCE_NO_BILLING = "debug_pro_has_billing"
+        const val DEBUG_WITHIN_QUICK_REFUND = "debug_within_quick_refund"
 
         const val SUBSCRIPTION_PROVIDER = "session_subscription_provider"
+        const val DEBUG_AVATAR_REUPLOAD = "debug_avatar_reupload"
+
+        // Donation
+        const val HAS_DONATED = "has_donated"
+        const val HAS_COPIED_DONATION_URL = "has_copied_donation_url"
+        const val SEEN_DONATION_CTA_AMOUNT = "seen_donation_cta_amount"
+        const val LAST_SEEN_DONATION_CTA = "last_seen_donation_cta"
+        const val SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW = "show_donation_cta_from_positive_review"
+
+        const val DEBUG_HAS_DONATED = "debug_has_donated"
+        const val DEBUG_HAS_COPIED_DONATION_URL = "debug_has_copied_donation_url"
+        const val DEBUG_SEEN_DONATION_CTA_AMOUNT = "debug_seen_donation_cta_amount"
+        const val DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW = "debug_show_donation_cta_from_positive_review"
 
         @JvmStatic
         fun getConfigurationMessageSynced(context: Context): Boolean {
@@ -621,15 +678,6 @@ interface TextSecurePreferences {
         @JvmStatic
         fun getUpdateApkDigest(context: Context): String? {
             return getStringPreference(context, UPDATE_APK_DIGEST, null)
-        }
-
-        @Deprecated(
-            "Use the dependency-injected TextSecurePreference instance instead",
-            ReplaceWith("TextSecurePreferences.getLocalNumber()")
-        )
-        @JvmStatic
-        fun getLocalNumber(context: Context): String? {
-            return preferenceInstance.getLocalNumber()
         }
 
         @JvmStatic
@@ -930,12 +978,6 @@ interface TextSecurePreferences {
             setBooleanPreference(context, FINGERPRINT_KEY_GENERATED, true)
         }
 
-        @JvmStatic
-        fun clearAll(context: Context) {
-            getDefaultSharedPreferences(context).edit().clear().commit()
-        }
-
-
         // ----- Get / set methods for if we have already warned the user that saving attachments will allow other apps to access them -----
         // Note: We only ever show the warning dialog about this ONCE - when the user accepts this fact we write true to the flag & never show again.
         @JvmStatic
@@ -967,9 +1009,9 @@ interface TextSecurePreferences {
 
 @Singleton
 class AppTextSecurePreferences @Inject constructor(
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context,
+    private val json: Json,
 ): TextSecurePreferences {
-    private val localNumberState = MutableStateFlow(getStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, null))
     private val postProLaunchState = MutableStateFlow(getBooleanPreference(SET_FORCE_POST_PRO, false))
     private val hiddenPasswordState = MutableStateFlow(getBooleanPreference(HIDE_PASSWORD, false))
 
@@ -1189,14 +1231,6 @@ class AppTextSecurePreferences @Inject constructor(
         }
     }
 
-    override fun getLocalRegistrationId(): Int {
-        return getIntegerPreference(TextSecurePreferences.LOCAL_REGISTRATION_ID_PREF, 0)
-    }
-
-    override fun setLocalRegistrationId(registrationId: Int) {
-        setIntegerPreference(TextSecurePreferences.LOCAL_REGISTRATION_ID_PREF, registrationId)
-    }
-
     override fun isInThreadNotifications(): Boolean {
         return getBooleanPreference(TextSecurePreferences.IN_THREAD_NOTIFICATION_PREF, true)
     }
@@ -1229,14 +1263,6 @@ class AppTextSecurePreferences @Inject constructor(
         return getStringPreference(TextSecurePreferences.UPDATE_APK_DIGEST, null)
     }
 
-    override fun getLocalNumber(): String? {
-        return localNumberState.value
-    }
-
-    override fun watchLocalNumber(): StateFlow<String?> {
-        return localNumberState
-    }
-
     override fun getHasLegacyConfig(): Boolean {
         return getBooleanPreference(TextSecurePreferences.HAS_RECEIVED_LEGACY_CONFIG, false)
     }
@@ -1244,17 +1270,6 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setHasLegacyConfig(newValue: Boolean) {
         setBooleanPreference(TextSecurePreferences.HAS_RECEIVED_LEGACY_CONFIG, newValue)
         _events.tryEmit(TextSecurePreferences.HAS_RECEIVED_LEGACY_CONFIG)
-    }
-
-    override fun setLocalNumber(localNumber: String) {
-        val normalised = localNumber.lowercase()
-        setStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, normalised)
-        localNumberState.value = normalised
-    }
-
-    override fun removeLocalNumber() {
-        localNumberState.value = null
-        removePreference(TextSecurePreferences.LOCAL_NUMBER_PREF)
     }
 
     override fun isEnterSendsEnabled(): Boolean {
@@ -1428,14 +1443,6 @@ class AppTextSecurePreferences @Inject constructor(
         setBooleanPreference("has_viewed_seed", hasViewedSeed)
     }
 
-    override fun setRestorationTime(time: Long) {
-        setLongPreference("restoration_time", time)
-    }
-
-    override fun getRestorationTime(): Long {
-        return getLongPreference("restoration_time", 0)
-    }
-
     override fun getLastSnodePoolRefreshDate(): Long {
         return getLongPreference("last_snode_pool_refresh_date", 0)
     }
@@ -1558,6 +1565,22 @@ class AppTextSecurePreferences @Inject constructor(
         _events.tryEmit(SET_FORCE_POST_PRO)
     }
 
+    override fun hasSeenProExpiring(): Boolean {
+        return getBooleanPreference(HAS_SEEN_PRO_EXPIRING, false)
+    }
+
+    override fun setHasSeenProExpiring() {
+        setBooleanPreference(HAS_SEEN_PRO_EXPIRING, true)
+    }
+
+    override fun hasSeenProExpired(): Boolean {
+        return getBooleanPreference(HAS_SEEN_PRO_EXPIRED, false)
+    }
+
+    override fun setHasSeenProExpired() {
+        setBooleanPreference(HAS_SEEN_PRO_EXPIRED, true)
+    }
+
     override fun watchPostProStatus(): StateFlow<Boolean> {
         return postProLaunchState
     }
@@ -1656,8 +1679,15 @@ class AppTextSecurePreferences @Inject constructor(
         return getBooleanPreference(AUTOPLAY_AUDIO_MESSAGES, false)
     }
 
+    /**
+     * Clear all prefs and reset our observables
+     */
     override fun clearAll() {
-        getDefaultSharedPreferences(context).edit().clear().commit()
+        pushEnabled.update { false }
+        postProLaunchState.update { false }
+        hiddenPasswordState.update { false }
+
+        getDefaultSharedPreferences(context).edit(commit = true) { clear() }
     }
 
     override fun getHidePassword() = getBooleanPreference(HIDE_PASSWORD, false)
@@ -1720,13 +1750,12 @@ class AppTextSecurePreferences @Inject constructor(
                 setStringPreference(TextSecurePreferences.DEPRECATING_START_TIME_OVERRIDE, value.toString())
             }
         }
-    override fun getDebugMessageFeatures(): Set<ProStatusManager.MessageProFeature> {
-        return getStringSetPreference( TextSecurePreferences.DEBUG_MESSAGE_FEATURES, emptySet())
-            ?.map { ProStatusManager.MessageProFeature.valueOf(it) }?.toSet() ?: emptySet()
+    override fun getDebugMessageFeatures(): ProFeatures {
+        return ProFeatures(getLongPreference( TextSecurePreferences.DEBUG_MESSAGE_FEATURES, 0))
     }
 
-    override fun setDebugMessageFeatures(features: Set<ProStatusManager.MessageProFeature>) {
-        setStringSetPreference(TextSecurePreferences.DEBUG_MESSAGE_FEATURES, features.map { it.name }.toSet())
+    override fun setDebugMessageFeatures(features: ProFeatures) {
+        setLongPreference(TextSecurePreferences.DEBUG_MESSAGE_FEATURES, features.rawValue)
     }
 
     override fun getDebugSubscriptionType(): DebugMenuViewModel.DebugSubscriptionStatus? {
@@ -1740,11 +1769,127 @@ class AppTextSecurePreferences @Inject constructor(
         _events.tryEmit(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS)
     }
 
+    override fun getDebugProPlanStatus(): DebugMenuViewModel.DebugProPlanStatus? {
+        return getStringPreference(TextSecurePreferences.DEBUG_PRO_PLAN_STATUS, null)?.let {
+            DebugMenuViewModel.DebugProPlanStatus.valueOf(it)
+        }
+    }
+
+    override fun setDebugProPlanStatus(status: DebugMenuViewModel.DebugProPlanStatus?) {
+        setStringPreference(TextSecurePreferences.DEBUG_PRO_PLAN_STATUS, status?.name)
+        _events.tryEmit(TextSecurePreferences.DEBUG_PRO_PLAN_STATUS)
+    }
+
+    override fun getDebugForceNoBilling(): Boolean {
+        return getBooleanPreference(TextSecurePreferences.DEBUG_FORCE_NO_BILLING, false)
+    }
+
+    override fun setDebugForceNoBilling(hasBilling: Boolean) {
+        setBooleanPreference(TextSecurePreferences.DEBUG_FORCE_NO_BILLING, hasBilling)
+        _events.tryEmit(TextSecurePreferences.DEBUG_FORCE_NO_BILLING)
+    }
+
+    override fun getDebugIsWithinQuickRefund(): Boolean {
+        return getBooleanPreference(TextSecurePreferences.DEBUG_WITHIN_QUICK_REFUND, false)
+    }
+
+    override fun setDebugIsWithinQuickRefund(isWithin: Boolean) {
+        setBooleanPreference(TextSecurePreferences.DEBUG_WITHIN_QUICK_REFUND, isWithin)
+        _events.tryEmit(TextSecurePreferences.DEBUG_FORCE_NO_BILLING)
+    }
+
     override fun getSubscriptionProvider(): String? {
         return getStringPreference(TextSecurePreferences.SUBSCRIPTION_PROVIDER, null)
     }
 
     override fun setSubscriptionProvider(provider: String) {
         setStringPreference(TextSecurePreferences.SUBSCRIPTION_PROVIDER, provider)
+    }
+
+    override var forcesDeterministicAttachmentEncryption: Boolean
+        get() = getBooleanPreference("forces_deterministic_attachment_upload", false)
+        set(value) {
+            setBooleanPreference("forces_deterministic_attachment_upload", value)
+        }
+
+    override var debugAvatarReupload: Boolean
+        get() = getBooleanPreference(TextSecurePreferences.DEBUG_AVATAR_REUPLOAD, false)
+        set(value) {
+            setBooleanPreference(TextSecurePreferences.DEBUG_AVATAR_REUPLOAD, value)
+            _events.tryEmit(TextSecurePreferences.DEBUG_AVATAR_REUPLOAD)
+        }
+
+    override var alternativeFileServer: FileServer?
+        get() = getStringPreference("alternative_file_server", null)?.let {
+            json.decodeFromString(it)
+        }
+
+        set(value) {
+            setStringPreference("alternative_file_server", value?.let {
+                json.encodeToString(it)
+            })
+        }
+
+    override fun hasDonated(): Boolean {
+        return getBooleanPreference(HAS_DONATED, false)
+    }
+    override fun setHasDonated(hasDonated: Boolean) {
+        setBooleanPreference(HAS_DONATED, hasDonated)
+    }
+
+    override fun hasCopiedDonationURL(): Boolean {
+        return getBooleanPreference(HAS_COPIED_DONATION_URL, false)
+    }
+    override fun setHasCopiedDonationURL(hasCopied: Boolean) {
+        setBooleanPreference(HAS_COPIED_DONATION_URL, hasCopied)
+    }
+
+    override fun seenDonationCTAAmount(): Int {
+        return getIntegerPreference(SEEN_DONATION_CTA_AMOUNT, 0)
+    }
+    override fun setSeenDonationCTAAmount(amount: Int) {
+        setIntegerPreference(SEEN_DONATION_CTA_AMOUNT, amount)
+    }
+
+    override fun lastSeenDonationCTA(): Long {
+        return getLongPreference(LAST_SEEN_DONATION_CTA, 0)
+    }
+    override fun setLastSeenDonationCTA(timestamp: Long) {
+        setLongPreference(LAST_SEEN_DONATION_CTA, timestamp)
+    }
+
+    override fun showDonationCTAFromPositiveReview(): Boolean {
+        return getBooleanPreference(SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW, false)
+    }
+    override fun setShowDonationCTAFromPositiveReview(show: Boolean) {
+        setBooleanPreference(SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW, show)
+    }
+
+    override fun hasDonatedDebug(): String? {
+        return getStringPreference(DEBUG_HAS_DONATED, null)
+    }
+    override fun setHasDonatedDebug(hasDonated: String?) {
+        setStringPreference(DEBUG_HAS_DONATED, hasDonated)
+    }
+
+    override fun hasCopiedDonationURLDebug(): String? {
+        return getStringPreference(DEBUG_HAS_COPIED_DONATION_URL, null)
+    }
+    override fun setHasCopiedDonationURLDebug(hasCopied: String?) {
+        setStringPreference(DEBUG_HAS_COPIED_DONATION_URL, hasCopied)
+    }
+
+    override fun seenDonationCTAAmountDebug(): String? {
+        return getStringPreference(DEBUG_SEEN_DONATION_CTA_AMOUNT, null)
+    }
+    override fun setSeenDonationCTAAmountDebug(amount: String?) {
+        setStringPreference(DEBUG_SEEN_DONATION_CTA_AMOUNT, amount)
+    }
+
+    override fun showDonationCTAFromPositiveReviewDebug(): String? {
+        return getStringPreference(DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW, null)
+    }
+    override fun setShowDonationCTAFromPositiveReviewDebug(show: String?) {
+        setStringPreference(DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW, show)
     }
 }

@@ -7,27 +7,30 @@ import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
-import org.session.libsession.utilities.AppTextSecurePreferences
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.MnemonicCodec
-import org.session.libsignal.utilities.hexEncodedPrivateKey
-import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
+import org.session.libsignal.utilities.toHexString
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.crypto.MnemonicUtilities
+import javax.inject.Inject
 
 @HiltViewModel
 class RecoveryPasswordViewModel @Inject constructor(
-    private val application: Application
+    private val application: Application,
+    private val prefs: TextSecurePreferences,
+    private val loginStateRepository: LoginStateRepository,
 ): AndroidViewModel(application) {
-    val prefs = AppTextSecurePreferences(application)
 
-    val seed = MutableStateFlow<String?>(null)
+    val seed: StateFlow<String?> = loginStateRepository
+        .loggedInState
+        .map { it?.seeded?.seed?.data?.toHexString() }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
     val mnemonic = seed.filterNotNull()
         .map {
             MnemonicCodec {
@@ -51,13 +54,6 @@ class RecoveryPasswordViewModel @Inject constructor(
 
         ClipData.newPlainText("Seed", normalisedMnemonic)
             .let(application.clipboard::setPrimaryClip)
-    }
-
-    init {
-        viewModelScope.launch(Dispatchers.IO) {
-            seed.emit(IdentityKeyUtil.retrieve(application, IdentityKeyUtil.LOKI_SEED)
-                ?: IdentityKeyUtil.getIdentityKeyPair(application).hexEncodedPrivateKey) // Legacy account
-        }
     }
 }
 

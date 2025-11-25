@@ -43,6 +43,7 @@ class InAppReviewViewModelTest : BaseViewModelTest() {
         val vm = InAppReviewViewModel(
             manager = manager,
             storeReviewManager = storeReviewManager,
+            prefs = mock()
         )
 
         vm.uiState.test {
@@ -76,6 +77,7 @@ class InAppReviewViewModelTest : BaseViewModelTest() {
         val vm = InAppReviewViewModel(
             manager = manager,
             storeReviewManager = storeReviewManager,
+            prefs = mock()
         )
 
         vm.uiState.test {
@@ -113,6 +115,7 @@ class InAppReviewViewModelTest : BaseViewModelTest() {
         val vm = InAppReviewViewModel(
             manager = manager,
             storeReviewManager = storeReviewManager,
+            prefs = mock()
         )
 
         vm.uiState.test {
@@ -148,6 +151,7 @@ class InAppReviewViewModelTest : BaseViewModelTest() {
         val vm = InAppReviewViewModel(
             manager = manager,
             storeReviewManager = storeReviewManager,
+            prefs = mock()
         )
 
         vm.uiState.test {
@@ -185,6 +189,7 @@ class InAppReviewViewModelTest : BaseViewModelTest() {
         val vm = InAppReviewViewModel(
             manager = manager,
             storeReviewManager = storeReviewManager,
+            prefs = mock()
         )
 
         vm.uiState.test {

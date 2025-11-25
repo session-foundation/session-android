@@ -73,9 +73,12 @@ class Attachment {
                     .setContentType(attachment.contentType)
                     .setId(attachment.id.toString().toLongOrNull() ?: 0L)
                     .setKey(ByteString.copyFrom(attachment.key))
-                    .setDigest(ByteString.copyFrom(attachment.digest.get()))
                     .setSize(attachment.size.get())
                     .setUrl(attachment.url)
+
+            if (attachment.digest.isPresent) {
+                builder.setDigest(ByteString.copyFrom(attachment.digest.get()))
+            }
             
             // Filenames are now mandatory for picked/shared files, Giphy GIFs, and captured photos.
             // The images associated with LinkPreviews don't have a "given name" so we'll use the

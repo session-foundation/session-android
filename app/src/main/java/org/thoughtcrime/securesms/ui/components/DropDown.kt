@@ -34,8 +34,11 @@ fun DropDown(
         modifier = modifier,
         selected = selectedText,
         values = values,
-        onValueSelected = onValueSelected,
-        labeler = { it.orEmpty() }
+        onValueSelected = {
+            onValueSelected(it!!)
+        },
+        labeler = { it.orEmpty() },
+        allowSelectingNullValue = false,
     )
 }
 
@@ -45,8 +48,9 @@ fun <T> DropDown(
     modifier: Modifier = Modifier,
     selected: T?,
     values: List<T>,
-    onValueSelected: (T) -> Unit,
+    onValueSelected: (T?) -> Unit,
     labeler: (T?) -> String,
+    allowSelectingNullValue: Boolean
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -93,7 +97,8 @@ fun <T> DropDown(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
-            values.forEach { item ->
+            (if (allowSelectingNullValue) (listOf(null) + values) else values)
+                .forEach { item ->
                 DropdownMenuItem(
                     text = {
                         Text(

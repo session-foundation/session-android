@@ -65,6 +65,7 @@ import dagger.hilt.android.lifecycle.withCreationCallback
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
+import network.loki.messenger.libsession_util.protocol.ProFeature
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.NonTranslatableStringConstants
@@ -372,7 +373,7 @@ fun CellMetadata(
 
 @Composable
 fun MessageProFeatures(
-    features: Set<ProStatusManager.MessageProFeature>,
+    features: Set<ProFeature>,
     badgeClickable: Boolean,
     sendCommand: (Commands) -> Unit,
     modifier: Modifier = Modifier,
@@ -402,13 +403,13 @@ fun MessageProFeatures(
                 textStyle = LocalType.current.large,
                 padding = PaddingValues(),
                 data = CTAFeature.Icon(
-                    text = when(it){
-                        ProStatusManager.MessageProFeature.ProBadge -> Phrase.from(LocalContext.current, R.string.appProBadge)
+                    text = when (it){
+                        ProFeature.PRO_BADGE -> Phrase.from(LocalContext.current, R.string.appProBadge)
                             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                             .format()
                             .toString()
-                        ProStatusManager.MessageProFeature.LongMessage -> stringResource(id = R.string.proIncreasedMessageLengthFeature)
-                        ProStatusManager.MessageProFeature.AnimatedAvatar -> stringResource(id = R.string.proAnimatedDisplayPictureFeature)
+                        ProFeature.HIGHER_CHARACTER_LIMIT -> stringResource(id = R.string.proIncreasedMessageLengthFeature)
+                        ProFeature.ANIMATED_AVATAR -> stringResource(id = R.string.proAnimatedDisplayPictureFeature)
                     }
                 )
             )
@@ -421,11 +422,7 @@ fun MessageProFeatures(
 fun PreviewMessageProFeatures(){
     PreviewTheme {
         MessageProFeatures(
-            features = setOf(
-                ProStatusManager.MessageProFeature.ProBadge,
-                ProStatusManager.MessageProFeature.LongMessage,
-                ProStatusManager.MessageProFeature.AnimatedAvatar
-            ),
+            features = ProFeature.entries.toSet(),
             badgeClickable = false,
             sendCommand = {}
         )
@@ -706,13 +703,22 @@ fun MessageDetailDialogs(
     if(state.proBadgeCTA != null){
         when(state.proBadgeCTA){
             is ProBadgeCTA.Generic ->
-                GenericProCTA(onDismissRequest = {sendCommand(Commands.HideProBadgeCTA)})
+                GenericProCTA(
+                    proSubscription = state.proBadgeCTA.proSubscription,
+                    onDismissRequest = {sendCommand(Commands.HideProBadgeCTA)}
+                )
 
             is ProBadgeCTA.LongMessage ->
-                LongMessageProCTA(onDismissRequest = {sendCommand(Commands.HideProBadgeCTA)})
+                LongMessageProCTA(
+                    proSubscription = state.proBadgeCTA.proSubscription,
+                    onDismissRequest = {sendCommand(Commands.HideProBadgeCTA)}
+                )
 
             is ProBadgeCTA.AnimatedProfile ->
-                AnimatedProfilePicProCTA(onDismissRequest = {sendCommand(Commands.HideProBadgeCTA)})
+                AnimatedProfilePicProCTA(
+                    proSubscription = state.proBadgeCTA.proSubscription,
+                    onDismissRequest = {sendCommand(Commands.HideProBadgeCTA)}
+                )
         }
     }
 

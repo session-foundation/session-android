@@ -26,11 +26,11 @@ import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.GroupConfigs
 import org.session.libsession.utilities.MutableGroupConfigs
 import org.session.libsession.utilities.MutableUserConfigs
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.UserConfigs
 import org.session.libsession.utilities.getGroup
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.configs.ConfigToDatabaseSync
 import org.thoughtcrime.securesms.database.ConfigDatabase
 import org.thoughtcrime.securesms.database.ConfigVariant
@@ -46,7 +46,7 @@ import kotlin.concurrent.write
 class ConfigFactory @Inject constructor(
     private val configDatabase: ConfigDatabase,
     private val storage: Lazy<StorageProtocol>,
-    private val textSecurePreferences: TextSecurePreferences,
+    private val loginStateRepository: LoginStateRepository,
     private val clock: SnodeClock,
     private val configToDatabaseSync: Lazy<ConfigToDatabaseSync>,
     @param:ManagerScope private val coroutineScope: CoroutineScope
@@ -72,15 +72,12 @@ class ConfigFactory @Inject constructor(
     private val _configUpdateNotifications = MutableSharedFlow<ConfigUpdateNotification>()
     override val configUpdateNotifications get() = _configUpdateNotifications
 
-    private fun requiresCurrentUserAccountId(): AccountId =
-        AccountId(requireNotNull(textSecurePreferences.getLocalNumber()) {
-            "No logged in user"
-        })
+    private fun requiresCurrentUserAccountId() = loginStateRepository.requireLocalAccountId()
 
     private fun requiresCurrentUserED25519SecKey(): ByteArray =
-        requireNotNull(storage.get().getUserED25519KeyPair()?.secretKey?.data) {
+        requireNotNull(loginStateRepository.peekLoginState()) {
             "No logged in user"
-        }
+        }.accountEd25519KeyPair.secretKey.data
 
     private fun ensureUserConfigsInitialized(): Pair<ReentrantReadWriteLock, UserConfigsImpl> {
         val userAccountId = requiresCurrentUserAccountId()
@@ -390,7 +387,7 @@ class ConfigFactory @Inject constructor(
         // We need to persist the data to the database to save timestamp after the push
         val userAccountId = requiresCurrentUserAccountId()
         for ((variant, data, timestamp) in dump) {
-            configDatabase.storeConfig(variant, userAccountId.hexString, data, timestamp)
+            configDatabase.storeConfig(variant, userAccountId.hexString, data, timestamp.toEpochMilli())
         }
     }
 
@@ -412,11 +409,11 @@ class ConfigFactory @Inject constructor(
                 if (pendingConfig != null) {
                     for (hash in hashes) {
                         configs.groupKeys.loadKey(
-                            pendingConfig,
-                            hash,
-                            timestamp,
-                            configs.groupInfo.pointer,
-                            configs.groupMembers.pointer
+                            message = pendingConfig,
+                            hash = hash,
+                            timestampMs = timestamp.toEpochMilli(),
+                            infoPtr = configs.groupInfo.pointer,
+                            membersPtr = configs.groupMembers.pointer
                         )
                     }
                 }
@@ -481,16 +478,6 @@ class ConfigFactory @Inject constructor(
                 buildMap {
                     put("subaccount", auth.subAccount)
                     put("subaccount_sig", auth.subAccountSig)
-                    put("signature", auth.signature)
-                }
-            }
-        }
-
-        override fun signForPushRegistry(data: ByteArray): Map<String, String> {
-            return factory.withGroupConfigs(accountId) {
-                val auth = it.groupKeys.subAccountSign(data, authData)
-                buildMap {
-                    put("subkey_tag", auth.subAccount)
                     put("signature", auth.signature)
                 }
             }
