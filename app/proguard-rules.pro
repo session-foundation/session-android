@@ -196,6 +196,12 @@
     void set*(***);
 }
 
+########## HUAWEI / HMS (minified builds) ##########
+# Device-only classes referenced by HMS internals — not present on Maven.
+-dontwarn android.telephony.HwTelephonyManager
+-dontwarn com.huawei.android.os.BuildEx$VERSION
+-dontwarn com.huawei.libcore.io.**
+
 # Misc suppressed warnings
 -dontwarn java.beans.BeanInfo
 -dontwarn java.beans.IntrospectionException
