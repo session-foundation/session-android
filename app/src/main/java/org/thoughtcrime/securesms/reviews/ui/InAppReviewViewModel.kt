@@ -48,7 +48,13 @@ class InAppReviewViewModel @Inject constructor(
 
                 UiState.StartPrompt -> {
                     when (event) {
-                        UiCommand.PositiveButtonClicked -> UiState.PositivePrompt
+                        // "It's Great" button clicked
+                        UiCommand.PositiveButtonClicked -> {
+                            // mark the app as needing to display the donation post positive review
+                            prefs.setShowDonationCTAFromPositiveReview(true)
+
+                            UiState.PositivePrompt
+                        }
                         UiCommand.NegativeButtonClicked -> UiState.NegativePrompt
                         UiCommand.CloseButtonClicked -> {
                             manager.onEvent(InAppReviewManager.Event.Dismiss)
@@ -62,9 +68,6 @@ class InAppReviewViewModel @Inject constructor(
                     // "Rate App" button clicked
                     UiCommand.PositiveButtonClicked -> {
                         manager.onEvent(InAppReviewManager.Event.Dismiss)
-
-                        // mark the app as needing to display the donation post positive review
-                        prefs.setShowDonationCTAFromPositiveReview(true)
 
                         if (runCatching { storeReviewManager.requestReviewFlow() }.isSuccess) {
                             UiState.Hidden

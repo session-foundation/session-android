@@ -149,24 +149,17 @@ fun BasicSessionAlertDialog(
             dismissOnBackPress = true,
             dismissOnClickOutside = true,
             usePlatformDefaultWidth = false,
-            decorFitsSystemWindows = false
+            decorFitsSystemWindows = true
         ),
         content = {
+            // control content size
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(blackAlpha40), // scrim
+                    .widthIn(max = LocalDimensions.current.maxDialogWidth)
+                    .fillMaxWidth(0.85f),
                 contentAlignment = Alignment.Center
             ) {
-                // control content size
-                Box(
-                    modifier = Modifier
-                        .widthIn(max = LocalDimensions.current.maxDialogWidth)
-                        .fillMaxWidth(0.85f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    content()
-                }
+                content()
             }
         }
     )
