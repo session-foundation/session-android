@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.home.startconversation.home
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -23,14 +22,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
@@ -165,8 +162,8 @@ private fun QrPanel(
             val qrModifier = if (getAdaptiveInfo().isLandscape) {
                 val shortest: Dp = min(maxWidth, maxHeight)
                 val qrSide = (shortest * 0.70f).coerceIn(
-                    LocalDimensions.current.minimumImgClamp,
-                    LocalDimensions.current.maximumImgClamp
+                    LocalDimensions.current.minContentSize,
+                    LocalDimensions.current.maxContentSize
                 )
                 Modifier.size(qrSide)
             } else {

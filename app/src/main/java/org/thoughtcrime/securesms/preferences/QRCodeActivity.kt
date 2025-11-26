@@ -181,8 +181,8 @@ private fun LandscapeContent(string: String) {
         // Scale QR to the shorter side to avoid overflow in landscape. Clamp for sanity
         val shortest: Dp = min(maxWidth, maxHeight)
         val qrSide = (shortest * 0.70f).coerceIn(
-            LocalDimensions.current.minimumImgClamp,
-            LocalDimensions.current.maximumImgClamp
+            LocalDimensions.current.minContentSize,
+            LocalDimensions.current.maxContentSize
         )
 
         Column(

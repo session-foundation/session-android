@@ -489,8 +489,8 @@ fun StatsSection(
         val targetWidth = leftMaxWidth
             .coerceAtMost(heightCap * aspect)
             .coerceIn(
-                LocalDimensions.current.smallMinimumImgClamp,
-                LocalDimensions.current.smallMaximumImgClamp
+                LocalDimensions.current.minContentSizeSmall,
+                LocalDimensions.current.maxContentSizeSmall
             ) // hard cap to keep tidy on very wide screens
 
 

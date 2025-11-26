@@ -117,8 +117,8 @@ private fun RecoveryPasswordCell(
                     val qrSide = widthTarget
                         .coerceAtMost(heightCap)
                         .coerceIn(
-                            LocalDimensions.current.mediumMinimumImgClamp,
-                            LocalDimensions.current.mediumMaximumImgClamp
+                            LocalDimensions.current.minContentSizeMedium,
+                            LocalDimensions.current.maxContentSizeMedium
                         )
 
                             QrImage(
