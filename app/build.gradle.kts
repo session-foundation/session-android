@@ -379,6 +379,12 @@ dependencies {
     if (huaweiEnabled) {
         val huaweiImplementation = configurations.maybeCreate("huaweiImplementation")
         huaweiImplementation(libs.huawei.push)
+
+        // These are compileOnly on the Huawei flavor so R8 can resolve optional HMS classes
+        // referenced by HMS Push during minification.
+        val huaweiCompileOnly = configurations.maybeCreate("huaweiCompileOnly")
+        huaweiCompileOnly(libs.huawei.hianalytics)
+        huaweiCompileOnly(libs.huawei.availableupdate)
     }
 
     implementation(libs.androidx.media3.exoplayer)
