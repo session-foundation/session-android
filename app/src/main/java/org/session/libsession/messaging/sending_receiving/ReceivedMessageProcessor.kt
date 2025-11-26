@@ -303,21 +303,19 @@ class ReceivedMessageProcessor @Inject constructor(
         }
 
         val messageServerId = message.id.toString()
+        val reactions = mutableListOf<ReactionRecord>()
 
         for ((emoji, reaction) in message.reactions.orEmpty()) {
             // We only really want up to 5 reactors per reaction to avoid excessive database load
             // Among the 5 reactors, we must include ourselves if we reacted to this message
             val otherReactorsToAdd = if (reaction.you) {
-                context.addPendingCommunityReaction(
-                    messageId,
-                    ReactionRecord(
-                        messageId = messageId,
-                        author = context.currentUserPublicKey,
-                        emoji = emoji,
-                        serverId = messageServerId,
-                        count = reaction.count,
-                        sortId = 0,
-                    )
+                reactions += ReactionRecord(
+                    messageId = messageId,
+                    author = context.currentUserPublicKey,
+                    emoji = emoji,
+                    serverId = messageServerId,
+                    count = reaction.count,
+                    sortId = 0,
                 )
 
                 val myBlindedIDs = context.getCurrentUserBlindedIDsByThread(threadAddress)
@@ -334,19 +332,18 @@ class ReceivedMessageProcessor @Inject constructor(
 
 
             for (reactor in otherReactorsToAdd) {
-                context.addPendingCommunityReaction(
-                    messageId,
-                    ReactionRecord(
-                        messageId = messageId,
-                        author = reactor,
-                        emoji = emoji,
-                        serverId = messageServerId,
-                        count = reaction.count,
-                        sortId = reaction.index,
-                    )
+                reactions += ReactionRecord(
+                    messageId = messageId,
+                    author = reactor,
+                    emoji = emoji,
+                    serverId = messageServerId,
+                    count = reaction.count,
+                    sortId = reaction.index,
                 )
             }
         }
+
+        context.setCommunityMessageReactions(messageId, reactions)
     }
 
     private fun handleReadReceipt(message: ReadReceipt) {
@@ -535,7 +532,7 @@ class ReceivedMessageProcessor @Inject constructor(
             null
 
 
-        var pendingCommunityReactions: HashMap<MessageId, MutableList<ReactionRecord>>? = null
+        var pendingCommunityReactions: HashMap<MessageId, List<ReactionRecord>>? = null
             private set
 
 
@@ -590,15 +587,14 @@ class ReceivedMessageProcessor @Inject constructor(
             return getCurrentUserBlindedIDsByServer(address.serverUrl)
         }
 
-        fun addPendingCommunityReaction(messageId: MessageId, reaction: ReactionRecord) {
+
+        fun setCommunityMessageReactions(messageId: MessageId, reactions: List<ReactionRecord>) {
             val reactionsMap = pendingCommunityReactions
-                ?: hashMapOf<MessageId, MutableList<ReactionRecord>>().also {
+                ?: hashMapOf<MessageId, List<ReactionRecord>>().also {
                     pendingCommunityReactions = it
                 }
 
-            reactionsMap.getOrPut(messageId) {
-                mutableListOf()
-            }.add(reaction)
+            reactionsMap[messageId] = reactions
         }
     }
 
