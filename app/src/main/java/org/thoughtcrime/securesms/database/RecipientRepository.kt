@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
-import network.loki.messenger.libsession_util.protocol.ProFeature
+import network.loki.messenger.libsession_util.protocol.ProProfileFeature
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.messaging.open_groups.GroupMemberRole
@@ -587,7 +587,7 @@ class RecipientRepository @Inject constructor(
                             proDataContext?.addProData(
                                 RecipientSettings.ProData(
                                     showProBadge = configs.userProfile.getProFeatures().contains(
-                                        ProFeature.PRO_BADGE
+                                        ProProfileFeature.PRO_BADGE
                                     ),
                                     expiry = Instant.ofEpochMilli(pro.proProof.expiryMs),
                                     genIndexHash = pro.proProof.genIndexHashHex,
@@ -615,7 +615,7 @@ class RecipientRepository @Inject constructor(
                         if (convo?.proProofInfo != null && proDataContext != null) {
                             proDataContext.addProData(
                                 RecipientSettings.ProData(
-                                    showProBadge = contact.proFeatures.contains(ProFeature.PRO_BADGE),
+                                    showProBadge = contact.proFeatures.contains(ProProfileFeature.PRO_BADGE),
                                     expiry = convo.proProofInfo!!.expiry,
                                     genIndexHash = convo.proProofInfo!!.genIndexHash.data.toHexString(),
                                 )
@@ -682,7 +682,7 @@ class RecipientRepository @Inject constructor(
                 if (convo?.proProofInfo != null && proDataContext != null) {
                     proDataContext.addProData(
                         RecipientSettings.ProData(
-                            showProBadge = contact.proFeatures.contains(ProFeature.PRO_BADGE),
+                            showProBadge = contact.proFeatures.contains(ProProfileFeature.PRO_BADGE),
                             expiry = convo.proProofInfo!!.expiry,
                             genIndexHash = convo.proProofInfo!!.genIndexHash.data.toHexString(),
                         )

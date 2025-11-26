@@ -25,9 +25,11 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.ED25519
-import network.loki.messenger.libsession_util.protocol.ProFeature
-import network.loki.messenger.libsession_util.protocol.ProFeatures
+import network.loki.messenger.libsession_util.protocol.ProMessageFeature
+import network.loki.messenger.libsession_util.util.BitSet
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
+import network.loki.messenger.libsession_util.util.asSequence
+import network.loki.messenger.libsession_util.util.toBitSet
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.file_server.FileServer
 import org.session.libsession.messaging.file_server.FileServerApi
@@ -356,9 +358,9 @@ class DebugMenuViewModel @AssistedInject constructor(
             }
 
             is Commands.SetMessageProFeature -> {
-                val features = _uiState.value.messageProFeature.toSet().toMutableSet()
+                val features = _uiState.value.messageProFeature.asSequence().toMutableSet()
                 if(command.set) features.add(command.feature) else features.remove(command.feature)
-                val newFeatures = ProFeatures.from(features)
+                val newFeatures = features.toBitSet()
                 textSecurePreferences.setDebugMessageFeatures(newFeatures)
                 _uiState.update {
                     it.copy(messageProFeature = newFeatures)
@@ -617,7 +619,7 @@ class DebugMenuViewModel @AssistedInject constructor(
         val forceCurrentUserAsPro: Boolean,
         val forceOtherUsersAsPro: Boolean,
         val forceIncomingMessagesAsPro: Boolean,
-        val messageProFeature: ProFeatures,
+        val messageProFeature: BitSet<ProMessageFeature>,
         val forcePostPro: Boolean,
         val forceShortTTl: Boolean,
         val forceDeprecationState: LegacyGroupDeprecationManager.DeprecationState?,
@@ -689,7 +691,7 @@ class DebugMenuViewModel @AssistedInject constructor(
         data class WithinQuickRefund(val set: Boolean) : Commands()
         data class ForcePostPro(val set: Boolean) : Commands()
         data class ForceShortTTl(val set: Boolean) : Commands()
-        data class SetMessageProFeature(val feature: ProFeature, val set: Boolean) : Commands()
+        data class SetMessageProFeature(val feature: ProMessageFeature, val set: Boolean) : Commands()
         data class ShowDeprecationChangeDialog(val state: LegacyGroupDeprecationManager.DeprecationState?) : Commands()
         object HideDeprecationChangeDialog : Commands()
         object OverrideDeprecationState : Commands()

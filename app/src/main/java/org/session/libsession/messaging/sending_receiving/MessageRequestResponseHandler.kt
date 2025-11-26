@@ -1,6 +1,6 @@
 package org.session.libsession.messaging.sending_receiving
 
-import network.loki.messenger.libsession_util.protocol.ProFeatures
+import network.loki.messenger.libsession_util.util.BitSet
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.ProfileUpdateHandler
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
@@ -161,7 +161,7 @@ class MessageRequestResponseHandler @Inject constructor(
                             body = null,
                             group = null,
                             attachments = emptyList(),
-                            proFeatures = ProFeatures.NONE,
+                            proFeatures = BitSet(),
                             messageContent = null,
                             quote = null,
                             linkPreviews = emptyList(),

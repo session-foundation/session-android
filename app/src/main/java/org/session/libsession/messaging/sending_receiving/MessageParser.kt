@@ -4,7 +4,6 @@ import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.SessionEncrypt
 import network.loki.messenger.libsession_util.pro.ProProof
 import network.loki.messenger.libsession_util.protocol.DecodedEnvelope
-import network.loki.messenger.libsession_util.protocol.ProFeatures
 import network.loki.messenger.libsession_util.protocol.SessionProtocol
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.messages.Message

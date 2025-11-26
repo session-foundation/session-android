@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import network.loki.messenger.libsession_util.protocol.ProFeatures
+import network.loki.messenger.libsession_util.util.BitSet
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
@@ -100,7 +100,7 @@ class ExpiringMessageManager @Inject constructor(
                 body = null,
                 group = groupAddress,
                 attachments = emptyList(),
-                proFeatures = ProFeatures.NONE,
+                proFeatures = BitSet(),
                 messageContent = DisappearingMessageUpdate(message.expiryMode),
                 quote = null,
                 linkPreviews = emptyList(),

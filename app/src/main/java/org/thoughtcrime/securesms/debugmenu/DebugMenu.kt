@@ -54,8 +54,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.protocol.ProFeature
-import network.loki.messenger.libsession_util.protocol.ProFeatures
+import network.loki.messenger.libsession_util.protocol.ProMessageFeature
+import network.loki.messenger.libsession_util.util.toBitSet
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.*
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Companion.FALSE
@@ -349,7 +349,7 @@ fun DebugMenu(
 
                 AnimatedVisibility(uiState.forceIncomingMessagesAsPro) {
                     Column {
-                        for (feature in ProFeature.entries) {
+                        for (feature in ProMessageFeature.entries) {
                             DebugCheckboxRow(
                                 text = "Message Feature: ${feature.name}",
                                 minHeight = 30.dp,
@@ -938,7 +938,7 @@ fun PreviewDebugMenu() {
                 forceOtherUsersAsPro = false,
                 forcePostPro = false,
                 forceShortTTl = false,
-                messageProFeature = ProFeatures.from(listOf(ProFeature.ANIMATED_AVATAR)),
+                messageProFeature = listOf(ProMessageFeature.HIGHER_CHARACTER_LIMIT).toBitSet(),
                 dbInspectorState = DebugMenuViewModel.DatabaseInspectorState.STARTED,
                 debugSubscriptionStatuses = setOf(DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE),
                 selectedDebugSubscriptionStatus = DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE,
