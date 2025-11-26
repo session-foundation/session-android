@@ -51,8 +51,9 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSi
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.mms.MediaConstraints
-import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.ProDataState
+import org.thoughtcrime.securesms.pro.ProDetailsRepository
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
 import org.thoughtcrime.securesms.ui.SimpleDialogData
@@ -60,6 +61,7 @@ import org.thoughtcrime.securesms.util.AnimatedImageUtils
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.ClearDataUtils
+import org.thoughtcrime.securesms.util.DonationManager
 import org.thoughtcrime.securesms.util.DonationManager.Companion.URL_DONATE
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import org.thoughtcrime.securesms.util.mapToStateFlow
@@ -82,6 +84,8 @@ class SettingsViewModel @Inject constructor(
     private val inAppReviewManager: InAppReviewManager,
     private val avatarUploadManager: AvatarUploadManager,
     private val attachmentProcessor: AttachmentProcessor,
+    private val proDetailsRepository: ProDetailsRepository,
+    private val donationManager: DonationManager,
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
 
@@ -152,6 +156,11 @@ class SettingsViewModel @Inject constructor(
                 .collectLatest { data ->
                     _uiState.update { it.copy(avatarData = data) }
                 }
+        }
+
+        // refreshes the pro details data
+        viewModelScope.launch {
+            proDetailsRepository.requestRefresh()
         }
     }
 
@@ -597,11 +606,21 @@ class SettingsViewModel @Inject constructor(
             is Commands.HideSimpleDialog -> {
                 _uiState.update { it.copy(showSimpleDialog = null) }
             }
-        }
-    }
 
-    private fun refreshSubscriptionData(){
-        //todo PRO implement properly
+            is Commands.OnLinkOpened -> {
+                // if the link was for donation, mark it as seen
+                if(command.url == URL_DONATE) {
+                    donationManager.onDonationSeen()
+                }
+            }
+
+            is Commands.OnLinkCopied -> {
+                // if the link was for donation, mark it as seen
+                if(command.url == URL_DONATE) {
+                    donationManager.onDonationCopied()
+                }
+            }
+        }
     }
 
     sealed class AvatarDialogState() {
@@ -680,5 +699,8 @@ class SettingsViewModel @Inject constructor(
         data object OnDonateClicked: Commands
 
         data class ClearData(val clearNetwork: Boolean): Commands
+
+        data class OnLinkOpened(val url: String) : Commands
+        data class OnLinkCopied(val url: String) : Commands
     }
 }

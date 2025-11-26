@@ -23,14 +23,16 @@ fun ProDetails.toProStatus(): ProStatus {
                     validUntil = expiry!!,
                     duration = paymentItem.planDuration.toSubscriptionDuration(),
                     providerData = paymentItem.paymentProvider.getMetadata(),
-                    quickRefundExpiry = paymentItem.platformExpiry
+                    quickRefundExpiry = paymentItem.platformExpiry,
+                    refundInProgress = refundRequestedAtMs > 0
                 )
             } else {
                 ProStatus.Active.Expiring(
                     validUntil = expiry!!,
                     duration = paymentItem.planDuration.toSubscriptionDuration(),
                     providerData = paymentItem.paymentProvider.getMetadata(),
-                    quickRefundExpiry = paymentItem.platformExpiry
+                    quickRefundExpiry = paymentItem.platformExpiry,
+                    refundInProgress = refundRequestedAtMs > 0
                 )
             }
         }
@@ -85,16 +87,17 @@ val previewAppleMetaData = PaymentProviderMetadata(
     platformAccount = "Apple Account",
     updateSubscriptionUrl = "https://www.apple.com/account/subscriptions",
     cancelSubscriptionUrl = "https://www.apple.com/account/subscriptions",
-    refundUrl = "https://www.apple.com/account/subscriptions",
+    refundPlatformUrl = "https://www.apple.com/account/subscriptions",
     refundSupportUrl = "https://www.apple.com/account/subscriptions",
-    refundAfterPlatformDeadlineUrl = "https://www.apple.com/account/subscriptions"
+    refundStatusUrl = "https://www.apple.com/account/subscriptions"
 )
 
 val previewAutoRenewingApple = ProStatus.Active.AutoRenewing(
     validUntil = Instant.now() + Duration.ofDays(14),
     duration = ProSubscriptionDuration.THREE_MONTHS,
     providerData = previewAppleMetaData,
-    quickRefundExpiry = Instant.now() + Duration.ofDays(14)
+    quickRefundExpiry = Instant.now() + Duration.ofDays(14),
+    refundInProgress = false
 )
 
 val previewExpiredApple = ProStatus.Expired(

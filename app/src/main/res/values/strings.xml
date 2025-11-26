@@ -20,7 +20,6 @@
         <item quantity="one">Add Admin</item>
         <item quantity="other">Add Admins</item>
     </plurals>
-    <string name="addAdmins">Add Admins</string>
     <string name="addAdminsDescription">Enter the Account ID of the user you are promoting to admin.\n\nTo add multiple users, enter each Account ID separated by a comma. Up to 20 Account IDs can be specified at a time.</string>
     <string name="adminCannotBeDemoted">Admins cannot be demoted or removed from the group.</string>
     <string name="adminCannotBeRemoved">Admins cannot be removed.</string>
@@ -458,6 +457,8 @@
     <string name="displayNameVisible">Your Display Name is visible to users, groups, and communities you interact with.</string>
     <string name="document">Document</string>
     <string name="donate">Donate</string>
+    <string name="donateSessionDescription">Powerful forces are trying to weaken privacy, but we can’t continue this fight alone.\n\nDonating helps keep {app_name} secure, independent, and online.</string>
+    <string name="donateSessionHelp">{app_name} Needs Your Help</string>
     <string name="done">Done</string>
     <string name="download">Download</string>
     <string name="downloading">Downloading...</string>
@@ -509,6 +510,9 @@
     <string name="failedResendInvite">Failed to resend invite to <b>{name}</b> in <b>{group_name}</b></string>
     <string name="failedResendInviteMultiple">Failed to resend invite to <b>{name}</b> and <b>{count} others</b> in <b>{group_name}</b></string>
     <string name="failedResendInviteTwo">Failed to resend invite to <b>{name}</b> and <b>{other_name}</b> in <b>{group_name}</b></string>
+    <string name="failedResendPromotion">Failed to resend promotion to <b>{name}</b> in <b>{group_name}</b></string>
+    <string name="failedResendPromotionMultiple">Failed to resend promotion to <b>{name}</b> and <b>{count} others</b> in <b>{group_name}</b></string>
+    <string name="failedResendPromotionTwo">Failed to resend promotion to <b>{name}</b> and <b>{other_name}</b> in <b>{group_name}</b></string>
     <string name="failedToDownload">Failed to download</string>
     <string name="failures">Failures</string>
     <string name="feedback">Feedback</string>
@@ -659,6 +663,7 @@
         <item quantity="other">Invite Members</item>
     </plurals>
     <string name="inviteNewMemberGroupLink">Invite a new member to the group by entering your friend\'s Account ID, ONS or scanning their QR code {icon}</string>
+    <string name="inviteNewMemberGroupNoLink">Invite a new member to the group by entering your friend\'s Account ID, ONS or scanning their QR code</string>
     <string name="join">Join</string>
     <string name="later">Later</string>
     <string name="launchOnStartDescriptionDesktop">Launch {app_name} automatically when your computer starts up.</string>
@@ -706,6 +711,7 @@
     <string name="manageMembers">Manage Members</string>
     <string name="managePro">Manage {pro}</string>
     <string name="max">Max</string>
+    <string name="maybeLater">Maybe Later</string>
     <string name="media">Media</string>
     <plurals name="memberSelected">
         <item quantity="one">%1$d Member Selected</item>
@@ -1214,7 +1220,7 @@
     </plurals>
     <plurals name="removeMemberMessages">
         <item quantity="one">Remove member and their messages</item>
-        <item quantity="other">Remove member and their messages</item>
+        <item quantity="other">Remove members and their messages</item>
     </plurals>
     <string name="removePasswordFail">Failed to remove password</string>
     <string name="removePasswordModalDescription">Remove your current password for {app_name}. Locally stored data will be re-encrypted with a randomly generated key, stored on your device.</string>
@@ -1280,6 +1286,10 @@
     <string name="sending">Sending</string>
     <string name="sendingCallOffer">Sending Call Offer</string>
     <string name="sendingConnectionCandidates">Sending Connection Candidates</string>
+    <plurals name="sendingPromotion">
+        <item quantity="one">Sending Promotion</item>
+        <item quantity="other">Sending Promotions</item>
+    </plurals>
     <string name="sent">Sent:</string>
     <string name="sessionAppearance">Appearance</string>
     <string name="sessionClearData">Clear Data</string>
@@ -1315,6 +1325,7 @@
     <string name="shareAccountIdDescriptionCopied">Share with your friends wherever you usually speak with them — then move the conversation here.</string>
     <string name="shareExtensionDatabaseError">There is an issue opening the database. Please restart the app and try again.</string>
     <string name="shareExtensionNoAccountError">Oops! Looks like you don\'t have a {app_name} account yet.\n\nYou\'ll need to create one in the {app_name} app before you can share.</string>
+    <string name="shareGroupMessageHistory">Would you like to share group message history with this user?</string>
     <string name="shareToSession">Share to {app_name}</string>
     <string name="show">Show</string>
     <string name="showAll">Show All</string>

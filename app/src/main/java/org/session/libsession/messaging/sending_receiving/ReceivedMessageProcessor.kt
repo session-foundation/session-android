@@ -6,7 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.ConfigBase
+import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.KeyPair
@@ -493,7 +493,7 @@ class ReceivedMessageProcessor @Inject constructor(
         threadAddress: Address.Standard
     ): Boolean {
         val hidden = configFactory.withUserConfigs { configs ->
-            configs.contacts.get(threadAddress.address)?.priority == ConfigBase.PRIORITY_HIDDEN
+            configs.contacts.get(threadAddress.address)?.priority == PRIORITY_HIDDEN
         }
 
         return hidden &&

@@ -265,7 +265,7 @@ fun SessionProCTA(
     }
 
     if(showDialog) {
-        BasicAlertDialog(
+        BasicSessionAlertDialog(
             modifier = modifier,
             onDismissRequest = onCancel,
             content = {

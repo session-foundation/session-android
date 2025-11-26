@@ -15,7 +15,6 @@
     <string name="accountIdYoursDescription">Ez a te Felhasználó ID-d. Más felhasználók beszkennelhetik, hogy egy beszélgetést indítsanak el veled.</string>
     <string name="actualSize">Eredeti méret</string>
     <string name="add">Hozzáadás</string>
-    <string name="addAdmins">Adminisztrátorok hozzáadása</string>
     <string name="addAdminsDescription">Adja meg a felhasználó fiókazonosítóját, akit adminisztrátorrá kíván kinevezni.\n\nEgyszerre több felhasználó hozzáadásához adja meg az egyes fiókazonosítókat vesszővel elválasztva. Egyszerre legfeljebb 20 fiókazonosító adható meg.</string>
     <string name="adminCannotBeRemoved">Adminokat nem lehet eltávolítani.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> és <b>{count} másik személy</b> adminisztrátorrá lettek előléptetve.</string>
@@ -51,7 +50,7 @@
     <string name="anonymous">Névtelen</string>
     <string name="appIcon">Alkalmazásikon</string>
     <string name="appIconAndNameChange">Az alkalmazás ikonjának és nevének módosítása</string>
-    <string name="appIconAndNameChangeConfirmation">Az alkalmazás ikonjának és nevének módosításához be kell zárni a Session alkalmazást. Az értesítések továbbra is az alapértelmezett Session ikont és nevet fogják használni.</string>
+    <string name="appIconAndNameChangeConfirmation">Az alkalmazás ikonjának és nevének módosításához be kell zárni a {app_name} alkalmazást. Az értesítések továbbra is az alapértelmezett {app_name} ikont és nevet fogják használni.</string>
     <string name="appIconAndNameDescription">Az alternatív alkalmazásikon és név megjelenik a kezdőképernyőn és az alkalmazásfiókban.</string>
     <string name="appIconAndNameSelectionDescription">A kiválasztott alkalmazás ikonja és neve megjelenik a kezdőképernyőn és az alkalmazásfiókban.</string>
     <string name="appIconAndNameSelectionTitle">Ikon és név</string>

@@ -19,12 +19,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -53,14 +56,9 @@ import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.GoToCancel
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.GoToChoosePlan
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.GoToRefund
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.OnHeaderClicked
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.OnProStatsClicked
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.SetShowProBadge
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.pro.ProDataState
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -103,13 +101,26 @@ import org.thoughtcrime.securesms.util.State
 fun ProSettingsHomeScreen(
     viewModel: ProSettingsViewModel,
     inSheet: Boolean,
+    shouldScrollToTop: Boolean = false,
+    onScrollToTopConsumed: () -> Unit = {},
     onBack: () -> Unit,
 ) {
     val data by viewModel.proSettingsUIState.collectAsState()
 
+    val listState = rememberLazyListState()
+
+    // check if we requested to scroll to the top
+    LaunchedEffect(shouldScrollToTop) {
+        if (shouldScrollToTop) {
+            listState.scrollToItem(0)
+            onScrollToTopConsumed()
+        }
+    }
+
     ProSettingsHome(
         data = data,
         inSheet = inSheet,
+        listState = listState,
         sendCommand = viewModel::onCommand,
         onBack = onBack,
     )
@@ -120,6 +131,7 @@ fun ProSettingsHomeScreen(
 fun ProSettingsHome(
     data: ProSettingsViewModel.ProSettingsState,
     inSheet: Boolean,
+    listState: LazyListState,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -132,6 +144,7 @@ fun ProSettingsHome(
     BaseProSettingsScreen(
         disabled = expiredInMainScreen,
         hideHomeAppBar = inSheet,
+        listState = listState,
         onBack = onBack,
         onHeaderClick = {
             // add a click handling if the subscription state is loading or errored
@@ -260,6 +273,7 @@ fun ProSettingsHome(
             Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
             ProSettings(
                 showProBadge = data.proDataState.showProBadge,
+                proStatus = data.proDataState.type,
                 subscriptionRefreshState = data.proDataState.refreshState,
                 inSheet = inSheet,
                 expiry = data.subscriptionExpiryLabel,
@@ -506,6 +520,7 @@ fun ProStatItem(
 fun ProSettings(
     modifier: Modifier = Modifier,
     showProBadge: Boolean,
+    proStatus: ProStatus.Active,
     subscriptionRefreshState: State<Unit>,
     inSheet: Boolean,
     expiry: CharSequence,
@@ -517,6 +532,8 @@ fun ProSettings(
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString(),
     ) {
+        val refunding = proStatus.refundInProgress
+
         // Cell content
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -531,6 +548,7 @@ fun ProSettings(
                     tint = LocalColors.current.text
                 )
             }
+
 
             val (subtitle, subColor, icon) = when(subscriptionRefreshState){
                 is State.Loading -> Triple<CharSequence, Color, @Composable BoxScope.() -> Unit>(
@@ -548,20 +566,37 @@ fun ProSettings(
                             LocalColors.current.warning, chevronIcon
                     )
 
-                is State.Success<*> -> Triple<CharSequence, Color, @Composable BoxScope.() -> Unit>(
-                        expiry,
-                            LocalColors.current.text, chevronIcon
-                )
+                is State.Success<*> -> {
+                    Triple<CharSequence, Color, @Composable BoxScope.() -> Unit>(
+                        if(refunding) Phrase.from(LocalContext.current, R.string.processingRefundRequest)
+                            .put(PLATFORM_KEY, proStatus.providerData.platform)
+                            .format().toString()
+                        else expiry,
+                        LocalColors.current.text,
+                        if(refunding){{
+                            Icon(
+                                modifier = Modifier.align(Alignment.Center)
+                                    .size(LocalDimensions.current.iconMedium)
+                                    .qaTag(R.string.qa_action_item_icon),
+                                painter = painterResource(id = R.drawable.ic_circle_warning_custom),
+                                contentDescription = null,
+                                tint = LocalColors.current.text
+                            )
+                        }} else chevronIcon
+                    )
+                }
             }
 
             ActionRowItem(
-                title = annotatedStringResource(
+                title = if(refunding) annotatedStringResource(R.string.proRequestedRefund)
+                else annotatedStringResource(
                     Phrase.from(LocalContext.current, R.string.updateAccess)
                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format().toString()
                 ),
                 subtitle = annotatedStringResource(subtitle),
                 subtitleColor = subColor,
+                enabled = !refunding,
                 endContent = {
                     Box(
                         modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)
@@ -795,9 +830,9 @@ fun ProManage(
                             .format().toString()
                     ),
                     icon = R.drawable.ic_refresh_cw,
-                    qaTag = R.string.qa_pro_settings_action_request_refund,
+                    qaTag = R.string.qa_pro_settings_action_recover_plan,
                     onClick = {
-                        //todo PRO implement
+                        sendCommand(RefeshProDetails)
                     }
                 )
             }
@@ -979,6 +1014,7 @@ fun PreviewProSettingsPro(
             ),
             inSheet = false,
             sendCommand = {},
+            listState = rememberLazyListState(),
             onBack = {},
         )
     }
@@ -999,6 +1035,7 @@ fun PreviewProSettingsProLoading(
                 ),
             ),
             inSheet = false,
+            listState = rememberLazyListState(),
             sendCommand = {},
             onBack = {},
         )
@@ -1020,6 +1057,7 @@ fun PreviewProSettingsProError(
                 ),
             ),
             inSheet = false,
+            listState = rememberLazyListState(),
             sendCommand = {},
             onBack = {},
         )
@@ -1041,6 +1079,7 @@ fun PreviewProSettingsExpired(
                 )
             ),
             inSheet = false,
+            listState = rememberLazyListState(),
             sendCommand = {},
             onBack = {},
         )
@@ -1062,6 +1101,7 @@ fun PreviewProSettingsExpiredInSheet(
                 )
             ),
             inSheet = true,
+            listState = rememberLazyListState(),
             sendCommand = {},
             onBack = {},
         )
@@ -1083,6 +1123,7 @@ fun PreviewProSettingsExpiredLoading(
                 )
             ),
             inSheet = false,
+            listState = rememberLazyListState(),
             sendCommand = {},
             onBack = {},
         )
@@ -1104,6 +1145,7 @@ fun PreviewProSettingsExpiredError(
                 )
             ),
             inSheet = false,
+            listState = rememberLazyListState(),
             sendCommand = {},
             onBack = {},
         )
@@ -1125,6 +1167,7 @@ fun PreviewProSettingsNonPro(
                 )
             ),
             inSheet = false,
+            listState = rememberLazyListState(),
             sendCommand = {},
             onBack = {},
         )
@@ -1146,6 +1189,7 @@ fun PreviewProSettingsNonProInSheet(
                 )
             ),
             inSheet = true,
+            listState = rememberLazyListState(),
             sendCommand = {},
             onBack = {},
         )

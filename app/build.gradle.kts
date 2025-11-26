@@ -26,7 +26,7 @@ configurations.configureEach {
     exclude(module = "commons-logging")
 }
 
-val canonicalVersionCode = 432
+val canonicalVersionCode = 433
 val canonicalVersionName = "1.30.0"
 
 val postFixSize = 10
@@ -105,7 +105,6 @@ protobuf {
 
 android {
     namespace = "network.loki.messenger"
-    useLibrary("org.apache.http.legacy")
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21

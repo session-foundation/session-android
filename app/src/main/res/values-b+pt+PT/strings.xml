@@ -15,7 +15,6 @@
     <string name="accountIdYoursDescription">Este é o seu ID da Conta. Outros utilizadores podem verificá-lo para iniciar uma conversa consigo.</string>
     <string name="actualSize">Tamanho Real</string>
     <string name="add">Adicionar</string>
-    <string name="addAdmins">Adicionar administradores</string>
     <string name="addAdminsDescription">Introduza o ID de Conta do utilizador que está a promover a administrador.\n\nPara adicionar vários utilizadores, introduza cada ID de Conta separado por vírgulas. Podem ser especificados até 20 IDs de Conta de cada vez.</string>
     <string name="adminCannotBeRemoved">Admins não podem ser removidos.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> e <b>{count} outros</b> foram promovidos a administradores.</string>

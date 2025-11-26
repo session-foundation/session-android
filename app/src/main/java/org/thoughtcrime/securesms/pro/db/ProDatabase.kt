@@ -8,13 +8,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import network.loki.messenger.libsession_util.ED25519
-import network.loki.messenger.libsession_util.pro.ProProof
-import org.session.libsession.utilities.serializable.ByteArrayAsHexSerializer
-import org.session.libsession.utilities.serializable.InstantAsMillisSerializer
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.Database
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
@@ -22,14 +16,9 @@ import org.thoughtcrime.securesms.pro.api.ProDetails
 import org.thoughtcrime.securesms.pro.api.ProRevocations
 import org.thoughtcrime.securesms.util.asSequence
 import java.time.Instant
-import java.util.Optional
-import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
-import kotlin.jvm.optionals.getOrNull
-import kotlin.time.Duration.Companion.days
-import kotlin.time.toJavaDuration
 
 @Singleton
 class ProDatabase @Inject constructor(
@@ -46,15 +35,6 @@ class ProDatabase @Inject constructor(
     )
 
     val revocationChangeNotification: SharedFlow<Unit> get() = mutableRevocationChangeNotification
-
-    private val mutableCurrentProProofChangesNotification = MutableSharedFlow<Unit>(
-        extraBufferCapacity = 10,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
-    )
-
-    val currentProProofChangesNotification: SharedFlow<Unit> get() = mutableCurrentProProofChangesNotification
-    private var currentProProof = AtomicReference(Optional.empty<ProProof>())
-
     fun getLastRevocationTicket(): Long? {
         val cursor = readableDatabase.query("SELECT CAST(value AS INTEGER) FROM pro_state WHERE name = '$STATE_NAME_LAST_TICKET'")
         return cursor.use {
@@ -63,41 +43,6 @@ class ProDatabase @Inject constructor(
             } else {
                 null
             }
-        }
-    }
-
-    fun ensureValidRotatingKeys(now: Instant): ProRotatingKeys {
-        writableDatabase.transaction {
-            // First read the database to see if we have a valid key
-            //language=roomsql
-            val existingKeys: ProRotatingKeys? = readableDatabase.rawQuery("""
-                SELECT value FROM pro_state
-                WHERE name = ?
-            """, STATE_NAME_ROTATING_KEYS).use { cursor ->
-                if (cursor.moveToFirst()) {
-                    json.decodeFromString(cursor.getString(0))
-                } else {
-                    null
-                }
-            }
-
-            if (existingKeys != null && existingKeys.expiry > now) {
-                return existingKeys
-            }
-
-            val keyPair = ED25519.generate(null)
-            val newKeys = ProRotatingKeys(
-                ed25519PubKey = keyPair.pubKey.data,
-                ed25519PrivKey = keyPair.secretKey.data,
-                expiry = now + ROTATING_KEY_VALIDITY_DAYS.days.toJavaDuration(),
-            )
-
-            execSQL("""
-                INSERT OR REPLACE INTO pro_state (name, value)
-                VALUES ('$STATE_NAME_ROTATING_KEYS', ?)
-            """, arrayOf(json.encodeToString(newKeys)))
-
-            return newKeys
         }
     }
 
@@ -183,52 +128,12 @@ class ProDatabase @Inject constructor(
         }
     }
 
-    fun getCurrentProProof(): ProProof? {
-        currentProProof.get()?.let {
-            return it.getOrNull()
-        }
+    private val mutableProDetailsChangeNotification = MutableSharedFlow<Unit>(
+        extraBufferCapacity = 10,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
 
-        //language=roomsql
-        return readableDatabase.rawQuery("""
-            SELECT value FROM pro_state
-            WHERE name = '?'
-        """, STATE_PRO_PROOF).use { cursor ->
-            if (cursor.moveToFirst()) {
-                json.decodeFromString<ProProof>(cursor.getString(0))
-            } else {
-                null
-            }
-        }.also {
-            currentProProof.set(Optional.ofNullable(it))
-        }
-    }
-
-    fun updateCurrentProProof(proProof: ProProof?) {
-        currentProProof.set(Optional.ofNullable(proProof))
-
-        val changes = if (proProof != null) {
-            writableDatabase.compileStatement("""
-                INSERT INTO pro_state(name, value)
-                VALUES (?, ?)
-                ON CONFLICT DO UPDATE SET value=excluded.value WHERE value != excluded.value
-            """).use { stmt ->
-                stmt.bindString(1, STATE_PRO_PROOF)
-                stmt.bindString(2, json.encodeToString(proProof))
-                stmt.executeUpdateDelete() > 0
-            }
-        } else {
-            writableDatabase.compileStatement("""
-                DELETE FROM pro_state
-                WHERE name = '$STATE_PRO_PROOF'
-            """).use { stmt ->
-                stmt.executeUpdateDelete() > 0
-            }
-        }
-
-        if (changes) {
-            mutableCurrentProProofChangesNotification.tryEmit(Unit)
-        }
-    }
+    val proDetailsChangeNotification: SharedFlow<Unit> get() = mutableProDetailsChangeNotification
 
     fun getProDetailsAndLastUpdated(): Pair<ProDetails, Instant>? {
         return readableDatabase.rawQuery("""
@@ -255,38 +160,30 @@ class ProDatabase @Inject constructor(
     }
 
     fun updateProDetails(proDetails: ProDetails, updatedAt: Instant) {
-        //language=roomsql
-        writableDatabase.rawExecSQL("""
-            INSERT OR REPLACE INTO pro_state (name, value)
+        val changes = writableDatabase.compileStatement("""
+            INSERT INTO pro_state (name, value)
             VALUES (?, ?), (?, ?)
-        """, STATE_PRO_DETAILS, json.encodeToString(proDetails),
-                    STATE_PRO_DETAILS_UPDATED_AT, updatedAt.toEpochMilli().toString())
-    }
+            ON CONFLICT DO UPDATE SET value=excluded.value
+            WHERE value != excluded.value
+        """).use { stmt ->
+            stmt.bindString(1, STATE_PRO_DETAILS)
+            stmt.bindString(2, json.encodeToString(proDetails))
+            stmt.bindString(3, STATE_PRO_DETAILS_UPDATED_AT)
+            stmt.bindString(4, updatedAt.toEpochMilli().toString())
+            stmt.executeUpdateDelete()
+        }
 
-    @Serializable
-    class ProRotatingKeys(
-        @Serializable(with = ByteArrayAsHexSerializer::class)
-        val ed25519PubKey: ByteArray,
-
-        @Serializable(with = ByteArrayAsHexSerializer::class)
-        val ed25519PrivKey: ByteArray,
-
-        @Serializable(with = InstantAsMillisSerializer::class)
-        @SerialName(JSON_NAME_EXPIRY)
-        val expiry: Instant,
-    ) {
-        companion object {
-            const val JSON_NAME_EXPIRY = "expiry_ms"
+        if (changes > 0) {
+            mutableProDetailsChangeNotification.tryEmit(Unit)
         }
     }
+
 
     companion object {
         private const val TAG = "ProRevocationDatabase"
 
         private const val STATE_NAME_LAST_TICKET = "last_ticket"
-        private const val STATE_NAME_ROTATING_KEYS = "rotating_private_key"
 
-        private const val STATE_PRO_PROOF = "pro_proof"
 
         private const val STATE_PRO_DETAILS = "pro_details"
         private const val STATE_PRO_DETAILS_UPDATED_AT = "pro_details_updated_at"

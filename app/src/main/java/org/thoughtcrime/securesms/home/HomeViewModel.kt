@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
+import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
@@ -39,6 +39,7 @@ import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
+import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
 import org.thoughtcrime.securesms.pro.ProStatus
@@ -174,8 +175,9 @@ class HomeViewModel @Inject constructor(
                     && !prefs.hasSeenProExpiring()
                 ){
                     val validUntil = subscription.type.validUntil
-
-                    if (validUntil.isBefore(now.plus(7, ChronoUnit.DAYS))) {
+                    val show = validUntil.isBefore(now.plus(7, ChronoUnit.DAYS))
+                    Log.d(DebugLogGroup.PRO_DATA.label, "Home: Pro active but not auto renewing (expiring). Valid until: $validUntil - Should show Expiring CTA? $show")
+                    if (show) {
                         _dialogsState.update { state ->
                             state.copy(
                                 proExpiringCTA = ProExpiringCTA(
@@ -188,9 +190,12 @@ class HomeViewModel @Inject constructor(
                 else if(subscription.type is ProStatus.Expired
                     && !prefs.hasSeenProExpired()) {
                     val validUntil = subscription.type.expiredAt
+                    val show = now.isBefore(validUntil.plus(30, ChronoUnit.DAYS))
+
+                    Log.d(DebugLogGroup.PRO_DATA.label, "Home: Pro expired. Expired at: $validUntil - Should show Expired CTA? $show")
 
                     // Check if now is within 30 days after expiry
-                    if (now.isBefore(validUntil.plus(30, ChronoUnit.DAYS))) {
+                    if (show) {
 
                         _dialogsState.update { state ->
                             state.copy(proExpiredCTA = true)

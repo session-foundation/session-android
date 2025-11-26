@@ -76,24 +76,7 @@ import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.TempAvatar
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.UserAvatar
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ClearData
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideAnimatedProCTA
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideAvatarPickerOptions
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideClearDataDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideSimpleDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideUrlDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideUsernameDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.OnAvatarDialogDismissed
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.OnDonateClicked
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.RemoveAvatar
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.SaveAvatar
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.SetUsername
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowAnimatedProCTA
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowAvatarDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowClearDataDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowUrlDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowUsernameDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.UpdateUsername
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsActivity
 import org.thoughtcrime.securesms.pro.ProDataState
@@ -418,6 +401,8 @@ fun Settings(
         if(uiState.showUrlDialog != null){
             OpenURLAlertDialog(
                 url = uiState.showUrlDialog,
+                onLinkOpened = { sendCommand(OnLinkOpened(uiState.showUrlDialog)) },
+                onLinkCopied = { sendCommand(OnLinkCopied(uiState.showUrlDialog)) },
                 onDismissRequest = { sendCommand(HideUrlDialog) }
             )
         }

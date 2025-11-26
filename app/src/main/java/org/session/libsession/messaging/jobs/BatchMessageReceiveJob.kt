@@ -10,7 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import network.loki.messenger.libsession_util.ConfigBase
+import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
@@ -144,7 +144,7 @@ class BatchMessageReceiveJob @AssistedInject constructor(
             message.groupPublicKey == null && // not a group
                     message.openGroupServerMessageID == null && // not a community
                     // not marked as hidden
-                    configs.contacts.get(message.senderOrSync)?.priority == ConfigBase.PRIORITY_HIDDEN &&
+                    configs.contacts.get(message.senderOrSync)?.priority == PRIORITY_HIDDEN &&
                     // the message's sentTimestamp is earlier than the sentTimestamp of the last config
                     message.sentTimestamp!! < contactConfigTimestamp
         }
