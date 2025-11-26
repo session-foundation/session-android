@@ -1,6 +1,7 @@
 package org.session.libsession.messaging.messages.signal
 
-import network.loki.messenger.libsession_util.protocol.ProFeatures
+import network.loki.messenger.libsession_util.protocol.ProMessageFeature
+import network.loki.messenger.libsession_util.util.BitSet
 import org.session.libsession.messaging.messages.visible.OpenGroupInvitation
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.utilities.UpdateMessageData
@@ -13,7 +14,7 @@ data class OutgoingTextMessage(
     val expireStartedAtMillis: Long,
     val sentTimestampMillis: Long,
     val isOpenGroupInvitation: Boolean,
-    val proFeatures: ProFeatures = ProFeatures.NONE,
+    val proFeatures: BitSet<ProMessageFeature> = BitSet()
 ) {
     constructor(
         message: VisibleMessage,

@@ -26,6 +26,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.protocol.ProFeature
+import network.loki.messenger.libsession_util.protocol.ProMessageFeature
+import network.loki.messenger.libsession_util.protocol.ProProfileFeature
+import network.loki.messenger.libsession_util.util.asSequence
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
@@ -200,7 +203,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
                     senderIsBlinded = IdPrefix.fromValue(sender.address.toString())?.isBlinded() ?: false,
                     thread = conversation,
                     readOnly = isDeprecatedLegacyGroup,
-                    proFeatures = proStatusManager.getMessageProFeatures(messageRecord).toSet(),
+                    proFeatures = proStatusManager.getMessageProFeatures(messageRecord).asSequence().toSet(),
                     proBadgeClickable = !recipientRepository.getSelf().isPro // no badge click if the current user is pro
                 )
             }
@@ -284,8 +287,8 @@ class MessageDetailsViewModel @AssistedInject constructor(
                         proBadgeCTA = when{
                             features.size > 1 -> ProBadgeCTA.Generic(proSubscription) // always show the generic cta when there are more than 1 feature
 
-                            features.contains(ProFeature.HIGHER_CHARACTER_LIMIT) -> ProBadgeCTA.LongMessage(proSubscription)
-                            features.contains(ProFeature.ANIMATED_AVATAR) -> ProBadgeCTA.AnimatedProfile(proSubscription)
+                            features.contains(ProMessageFeature.HIGHER_CHARACTER_LIMIT) -> ProBadgeCTA.LongMessage(proSubscription)
+                            features.contains(ProProfileFeature.ANIMATED_AVATAR) -> ProBadgeCTA.AnimatedProfile(proSubscription)
                             else -> ProBadgeCTA.Generic(proSubscription)
                         }
                     )

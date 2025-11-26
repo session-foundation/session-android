@@ -1,6 +1,7 @@
 package org.session.libsession.messaging.messages.signal
 
-import network.loki.messenger.libsession_util.protocol.ProFeatures
+import network.loki.messenger.libsession_util.protocol.ProMessageFeature
+import network.loki.messenger.libsession_util.util.BitSet
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
@@ -19,7 +20,7 @@ class IncomingMediaMessage(
     val body: String?,
     val group: Address.GroupLike?,
     val attachments: List<Attachment>,
-    val proFeatures: ProFeatures,
+    val proFeatures: BitSet<ProMessageFeature>,
     val messageContent: MessageContent?,
     val quote: QuoteModel?,
     val linkPreviews: List<LinkPreview>,

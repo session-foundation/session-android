@@ -20,7 +20,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.Json
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.protocol.ProFeatures
+import network.loki.messenger.libsession_util.protocol.ProMessageFeature
+import network.loki.messenger.libsession_util.util.BitSet
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.file_server.FileServer
 import org.session.libsession.utilities.TextSecurePreferences.Companion.AUTOPLAY_AUDIO_MESSAGES
@@ -215,8 +216,8 @@ interface TextSecurePreferences {
     fun forcedShortTTL(): Boolean
     fun setForcedShortTTL(value: Boolean)
 
-    fun  getDebugMessageFeatures(): ProFeatures
-    fun  setDebugMessageFeatures(features: ProFeatures)
+    fun  getDebugMessageFeatures(): BitSet<ProMessageFeature>
+    fun  setDebugMessageFeatures(features: BitSet<ProMessageFeature>)
 
     fun getDebugSubscriptionType(): DebugMenuViewModel.DebugSubscriptionStatus?
     fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?)
@@ -1556,7 +1557,7 @@ class AppTextSecurePreferences @Inject constructor(
     }
 
     override fun forcePostPro(): Boolean {
-        return getBooleanPreference(SET_FORCE_POST_PRO, false)
+        return postProLaunchState.value
     }
 
     override fun setForcePostPro(postPro: Boolean) {
@@ -1750,11 +1751,11 @@ class AppTextSecurePreferences @Inject constructor(
                 setStringPreference(TextSecurePreferences.DEPRECATING_START_TIME_OVERRIDE, value.toString())
             }
         }
-    override fun getDebugMessageFeatures(): ProFeatures {
-        return ProFeatures(getLongPreference( TextSecurePreferences.DEBUG_MESSAGE_FEATURES, 0))
+    override fun getDebugMessageFeatures(): BitSet<ProMessageFeature> {
+        return BitSet(getLongPreference( TextSecurePreferences.DEBUG_MESSAGE_FEATURES, 0))
     }
 
-    override fun setDebugMessageFeatures(features: ProFeatures) {
+    override fun setDebugMessageFeatures(features: BitSet<ProMessageFeature>) {
         setLongPreference(TextSecurePreferences.DEBUG_MESSAGE_FEATURES, features.rawValue)
     }
 

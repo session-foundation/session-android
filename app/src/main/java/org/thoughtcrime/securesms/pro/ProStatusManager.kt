@@ -31,7 +31,8 @@ import network.loki.messenger.libsession_util.pro.BackendRequests
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_APP_STORE
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_GOOGLE_PLAY
 import network.loki.messenger.libsession_util.pro.ProConfig
-import network.loki.messenger.libsession_util.protocol.ProFeatures
+import network.loki.messenger.libsession_util.protocol.ProMessageFeature
+import network.loki.messenger.libsession_util.util.BitSet
 import network.loki.messenger.libsession_util.util.Conversation
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.snode.SnodeClock
@@ -399,7 +400,7 @@ class ProStatusManager @Inject constructor(
     /**
      * This will get the list of Pro features from an incoming message
      */
-    fun getMessageProFeatures(message: MessageRecord): ProFeatures {
+    fun getMessageProFeatures(message: MessageRecord): BitSet<ProMessageFeature> {
         // use debug values if any
         if(prefs.forceIncomingMessagesAsPro()){
             return prefs.getDebugMessageFeatures()
