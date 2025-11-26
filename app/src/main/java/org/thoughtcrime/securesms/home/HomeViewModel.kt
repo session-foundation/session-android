@@ -177,7 +177,7 @@ class HomeViewModel @Inject constructor(
                 ){
                     val validUntil = subscription.type.validUntil
                     showExpiring = validUntil.isBefore(now.plus(7, ChronoUnit.DAYS))
-                    Log.d(DebugLogGroup.PRO_DATA.label, "Home: Pro active but not auto renewing (expiring). Valid until: $validUntil - Should show Expiring CTA? $show")
+                    Log.d(DebugLogGroup.PRO_DATA.label, "Home: Pro active but not auto renewing (expiring). Valid until: $validUntil - Should show Expiring CTA? $showExpiring")
                     if (showExpiring) {
                         _dialogsState.update { state ->
                             state.copy(
@@ -193,7 +193,7 @@ class HomeViewModel @Inject constructor(
                     val validUntil = subscription.type.expiredAt
                     showExpired = now.isBefore(validUntil.plus(30, ChronoUnit.DAYS))
 
-                    Log.d(DebugLogGroup.PRO_DATA.label, "Home: Pro expired. Expired at: $validUntil - Should show Expired CTA? $show")
+                    Log.d(DebugLogGroup.PRO_DATA.label, "Home: Pro expired. Expired at: $validUntil - Should show Expired CTA? $showExpired")
 
                     // Check if now is within 30 days after expiry
                     if (showExpired) {
