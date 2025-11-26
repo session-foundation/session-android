@@ -149,7 +149,7 @@ fun BasicSessionAlertDialog(
             dismissOnBackPress = true,
             dismissOnClickOutside = true,
             usePlatformDefaultWidth = false,
-            decorFitsSystemWindows = false
+            decorFitsSystemWindows = true
         ),
         content = {
             // control content size
