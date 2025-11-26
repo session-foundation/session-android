@@ -1,10 +1,11 @@
 package org.session.libsession.messaging.sending_receiving
 
-import network.loki.messenger.libsession_util.ED25519
+import dagger.Lazy
 import network.loki.messenger.libsession_util.SessionEncrypt
-import network.loki.messenger.libsession_util.pro.ProProof
 import network.loki.messenger.libsession_util.protocol.DecodedEnvelope
+import network.loki.messenger.libsession_util.protocol.DecodedPro
 import network.loki.messenger.libsession_util.protocol.SessionProtocol
+import network.loki.messenger.libsession_util.util.BitSet
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.CallMessage
@@ -20,13 +21,14 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
-import java.time.Instant
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -37,6 +39,7 @@ class MessageParser @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val storage: StorageProtocol,
     private val snodeClock: SnodeClock,
+    private val prefs: TextSecurePreferences,
 ) {
 
     //TODO: Obtain proBackendKey from somewhere
@@ -76,20 +79,10 @@ class MessageParser @Inject constructor(
         currentUserBlindedIDs: List<AccountId>,
         senderIdPrefix: IdPrefix
     ): Pair<Message, SignalServiceProtos.Content> {
-        val proFeatures = if (decodedEnvelope.proProof?.status(
-                senderED25519PubKey = decodedEnvelope.senderEd25519PubKey.data,
-                signedMessage = null,
-                now = decodedEnvelope.timestamp) == ProProof.Status.Valid
-        ) {
-            decodedEnvelope.proFeatures
-        } else {
-            ProFeatures.NONE
-        }
-
         return parseMessage(
             sender = AccountId(senderIdPrefix, decodedEnvelope.senderX25519PubKey.data),
             contentPlaintext = decodedEnvelope.contentPlainText.data,
-            proFeatures = proFeatures,
+            pro = decodedEnvelope.decodedPro,
             messageTimestampMs = decodedEnvelope.timestamp.toEpochMilli(),
             relaxSignatureCheck = relaxSignatureCheck,
             checkForBlockStatus = checkForBlockStatus,
@@ -102,7 +95,7 @@ class MessageParser @Inject constructor(
     private fun parseMessage(
         sender: AccountId,
         contentPlaintext: ByteArray,
-        proFeatures: ProFeatures,
+        pro: DecodedPro?,
         messageTimestampMs: Long,
         relaxSignatureCheck: Boolean,
         checkForBlockStatus: Boolean,
@@ -141,7 +134,11 @@ class MessageParser @Inject constructor(
         message.sentTimestamp = messageTimestampMs
         message.receivedTimestamp = snodeClock.currentTimeMills()
         message.isSenderSelf = isSenderSelf
-        (message as? VisibleMessage)?.proFeatures = proFeatures
+
+        // Only process pro features post pro launch
+        if (prefs.forcePostPro()) {
+            (message as? VisibleMessage)?.proFeatures = pro?.proMessageFeatures ?: BitSet()
+        }
 
         // Validate
         var isValid = message.isValid()
@@ -243,19 +240,9 @@ class MessageParser @Inject constructor(
 
         val sender = AccountId(msg.sessionId)
 
-        val proFeatures = if (decoded.proProof?.status(
-                senderED25519PubKey = sender.pubKeyBytes,
-                signedMessage = null,
-                now = Instant.ofEpochMilli((msg.posted * 1000.0).toLong())) == ProProof.Status.Valid
-        ) {
-            decoded.proFeatures
-        } else {
-            ProFeatures.NONE
-        }
-
         return parseMessage(
             contentPlaintext = decoded.contentPlainText.data,
-            proFeatures = proFeatures,
+            pro = decoded.decodedPro,
             relaxSignatureCheck = true,
             checkForBlockStatus = false,
             isForGroup = false,
@@ -290,27 +277,10 @@ class MessageParser @Inject constructor(
         )
 
         val sender = Address.Standard(AccountId(senderId))
-        val messageSent = Instant.ofEpochMilli((msg.postedAt * 1000.0).toLong())
-
-        val proProof = decoded.proProof
-        val proFeatures = if (proProof != null) {
-            val hasValidProof = ED25519.ed25519PubKeysFromCurve25519(sender.accountId.pubKeyBytes)
-                .any { senderEd25519PubKey ->
-                    proProof.status(senderEd25519PubKey, now = messageSent) == ProProof.Status.Valid
-                }
-
-            if (hasValidProof) {
-                decoded.proFeatures
-            } else {
-                ProFeatures.NONE
-            }
-        } else {
-            ProFeatures.NONE
-        }
 
         return parseMessage(
             contentPlaintext = decoded.contentPlainText.data,
-            proFeatures = proFeatures,
+            pro = decoded.decodedPro,
             relaxSignatureCheck = true,
             checkForBlockStatus = false,
             isForGroup = false,

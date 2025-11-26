@@ -1557,7 +1557,7 @@ class AppTextSecurePreferences @Inject constructor(
     }
 
     override fun forcePostPro(): Boolean {
-        return getBooleanPreference(SET_FORCE_POST_PRO, false)
+        return postProLaunchState.value
     }
 
     override fun setForcePostPro(postPro: Boolean) {
