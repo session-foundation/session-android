@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.pro
 
 import android.app.Application
-import androidx.core.content.contentValuesOf
 import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -125,35 +124,48 @@ class ProStatusManager @Inject constructor(
                         validUntil = Instant.now() + Duration.ofDays(14),
                         duration = ProSubscriptionDuration.THREE_MONTHS,
                         providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
-                        quickRefundExpiry = Instant.now() + Duration.ofDays(7)
+                        quickRefundExpiry = Instant.now() + Duration.ofDays(7),
+                        refundInProgress = false
+                    )
+
+                    DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE_REFUNDING -> ProStatus.Active.AutoRenewing(
+                        validUntil = Instant.now() + Duration.ofDays(14),
+                        duration = ProSubscriptionDuration.THREE_MONTHS,
+                        providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
+                        quickRefundExpiry = Instant.now() + Duration.ofDays(7),
+                        refundInProgress = true
                     )
 
                     DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> ProStatus.Active.Expiring(
                         validUntil = Instant.now() + Duration.ofDays(2),
                         duration = ProSubscriptionDuration.TWELVE_MONTHS,
                         providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
-                        quickRefundExpiry = Instant.now() + Duration.ofDays(7)
+                        quickRefundExpiry = Instant.now() + Duration.ofDays(7),
+                        refundInProgress = false
                     )
 
                     DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER -> ProStatus.Active.Expiring(
                         validUntil = Instant.now() + Duration.ofDays(40),
                         duration = ProSubscriptionDuration.TWELVE_MONTHS,
                         providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
-                        quickRefundExpiry = Instant.now() + Duration.ofDays(7)
+                        quickRefundExpiry = Instant.now() + Duration.ofDays(7),
+                        refundInProgress = false
                     )
 
                     DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> ProStatus.Active.AutoRenewing(
                         validUntil = Instant.now() + Duration.ofDays(14),
                         duration = ProSubscriptionDuration.ONE_MONTH,
                         providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
-                        quickRefundExpiry = Instant.now() + Duration.ofDays(7)
+                        quickRefundExpiry = Instant.now() + Duration.ofDays(7),
+                        refundInProgress = false
                     )
 
                     DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_APPLE -> ProStatus.Active.Expiring(
                         validUntil = Instant.now() + Duration.ofDays(2),
                         duration = ProSubscriptionDuration.ONE_MONTH,
                         providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
-                        quickRefundExpiry = Instant.now() + Duration.ofDays(7)
+                        quickRefundExpiry = Instant.now() + Duration.ofDays(7),
+                        refundInProgress = false
                     )
 
                     DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> ProStatus.Expired(
