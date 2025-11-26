@@ -201,6 +201,8 @@
 -dontwarn android.telephony.HwTelephonyManager
 -dontwarn com.huawei.android.os.BuildEx$VERSION
 -dontwarn com.huawei.libcore.io.**
+-dontwarn com.huawei.hianalytics.**
+-dontwarn com.huawei.hms.availableupdate.**
 
 # Misc suppressed warnings
 -dontwarn java.beans.BeanInfo
