@@ -276,6 +276,9 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
 
             endCallButton.animate().cancel()
             endCallButton.animate().rotation(rotation).start()
+
+            backArrow.animate().cancel()
+            backArrow.animate().rotation(rotation).start()
         }
     }
 
