@@ -263,6 +263,7 @@ fun ConversationSettingsDialogs(
                         iconRes = R.drawable.ic_pro_badge,
                         iconSize = 40.sp to 18.sp,
                         style = LocalType.current.large,
+                        textQaTag = stringResource(R.string.qa_cta_body)
                     )
                 },
                 content = { CTAImage(heroImage = R.drawable.cta_hero_group) },
