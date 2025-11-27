@@ -238,8 +238,9 @@ class CallViewModel @Inject constructor(
     fun setDeviceOrientation(orientation: Orientation, autoRotateOn: Boolean) {
         deviceOrientation = orientation
 
-        if(autoRotateOn) return // let the activity handle the rotation
-        callManager.setDeviceOrientation(deviceOrientation)
+        if(autoRotateOn){
+            callManager.setDeviceOrientation(deviceOrientation)
+        }
     }
 
     data class CallState(

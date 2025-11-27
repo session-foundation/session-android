@@ -1,7 +1,9 @@
 package org.thoughtcrime.securesms.mediasend
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -56,6 +58,9 @@ class CameraXFragment : Fragment() {
 
     private lateinit var orientationListener: OrientationEventListener
     private var lastRotation: Int = Surface.ROTATION_0
+
+    // Remember the activity's previous orientation policy
+    private var previousRequestedOrientation: Int? = null
 
     @Inject
     lateinit var prefs: TextSecurePreferences
@@ -121,12 +126,26 @@ class CameraXFragment : Fragment() {
         )
     }
 
+    @SuppressLint("SourceLockedOrientationActivity")
     override fun onResume() {
         super.onResume()
+        // Lock activity to portrait while camera is active
+        val activity = requireActivity()
+        if (previousRequestedOrientation == null) {
+            previousRequestedOrientation = activity.requestedOrientation
+        }
+        // handling the orientation for camera
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+
         orientationListener.enable()
     }
 
     override fun onPause() {
+        // Restore original orientation behavior
+        previousRequestedOrientation?.let { original ->
+            requireActivity().requestedOrientation = original
+        }
+
         orientationListener.disable()
         super.onPause()
     }
@@ -142,18 +161,16 @@ class CameraXFragment : Fragment() {
 
     private fun updateUiForRotation(rotation: Int = lastRotation) {
         val angle = when (rotation) {
-            Surface.ROTATION_0   -> 0f
-            Surface.ROTATION_90  -> 90f
+            Surface.ROTATION_0 -> 0f
+            Surface.ROTATION_90 -> 90f
             Surface.ROTATION_180 -> 180f
-            else                 -> 270f
+            else -> 270f
         }
 
-        if(!isAutoRotateOn()){
-            binding.cameraFlipButton.animate()
-                .rotation(angle)
-                .setDuration(150)
-                .start()
-        }
+        binding.cameraFlipButton.animate()
+            .rotation(angle)
+            .setDuration(150)
+            .start()
     }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
@@ -279,13 +296,6 @@ class CameraXFragment : Fragment() {
             .rotationBy(-180f)
             .setDuration(200)
             .start()
-    }
-
-    private fun isAutoRotateOn(): Boolean {
-        return Settings.System.getInt(
-            context?.contentResolver,
-            Settings.System.ACCELEROMETER_ROTATION, 0
-        ) == 1
     }
 
     override fun onDestroyView() {

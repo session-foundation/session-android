@@ -170,8 +170,6 @@
             android:name="org.thoughtcrime.securesms.preferences.HelpSettingsActivity"
             android:label="@string/sessionHelp"/>
         <activity android:name="org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity" />
-        <activity android:name="org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesActivity"
-            android:theme="@style/Theme.Session.DayNight.NoActionBar" />
         <activity android:name="org.thoughtcrime.securesms.groups.GroupMembersActivity"
             android:theme="@style/Theme.Session.DayNight.NoActionBar" />
         <activity android:name="org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsActivity"
@@ -251,7 +249,13 @@
         <activity
             android:name="org.thoughtcrime.securesms.mediasend.MediaSendActivity"
             android:theme="@style/Theme.Session.DayNight.NoActionBar"
-            android:windowSoftInputMode="stateHidden" />
+            android:windowSoftInputMode="stateHidden">
+
+            <!--To opt out of the API level 36 behavior-->
+            <property
+                android:name="android.window.PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY"
+                android:value="true" />
+        </activity>
         <activity
             android:name="org.thoughtcrime.securesms.MediaPreviewActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
@@ -283,6 +287,10 @@
             android:showForAllUsers="true"
             android:parentActivityName="org.thoughtcrime.securesms.home.HomeActivity"
             android:theme="@style/Theme.Session.DayNight.NoActionBar">
+            <!--To opt out of the API level 36 behavior-->
+            <property
+                android:name="android.window.PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY"
+                android:value="true" />
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="org.thoughtcrime.securesms.home.HomeActivity" />

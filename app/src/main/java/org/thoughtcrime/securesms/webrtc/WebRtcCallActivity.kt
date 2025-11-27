@@ -1,9 +1,11 @@
 package org.thoughtcrime.securesms.webrtc
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+import android.content.pm.ActivityInfo
 import android.content.res.ColorStateList
 import android.graphics.Outline
 import android.media.AudioManager
@@ -92,11 +94,15 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
         handleIntent(intent)
     }
 
+    @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
         super.onCreate(savedInstanceState, ready)
 
         binding = ActivityWebrtcBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // We handle the rotation of preview and buttons here
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
@@ -244,15 +250,12 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
 
     private fun updateControlsRotation() {
         with(binding) {
-            val rotation = if (!orientationManager.isAutoRotateOn()) {
+            val rotation =
                 when (viewModel.deviceOrientation) {
                     Orientation.LANDSCAPE -> -90f
                     Orientation.REVERSED_LANDSCAPE -> 90f
                     else -> 0f
                 }
-            } else {
-                0f
-            }
 
             userAvatar.animate().cancel()
             userAvatar.animate().rotation(rotation).start()
