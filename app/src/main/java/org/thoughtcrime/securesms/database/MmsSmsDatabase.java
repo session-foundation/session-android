@@ -56,6 +56,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext;
 import kotlin.Pair;
 import kotlin.Triple;
 import network.loki.messenger.libsession_util.protocol.ProFeature;
+import network.loki.messenger.libsession_util.protocol.ProMessageFeature;
 
 @Singleton
 public class MmsSmsDatabase extends Database {
@@ -428,11 +429,11 @@ public class MmsSmsDatabase extends Database {
     return count;
   }
 
-    public int getOutgoingFeatureCount(ProFeature feature) {
+    public int getOutgoingProFeatureCount(ProFeature feature) {
         long mask = 1L << feature.getBitIndex();
 
-        int smsCount = smsDatabase.get().getOutgoingFeatureCount(mask);
-        int mmsCount = mmsDatabase.get().getOutgoingFeatureCount(mask);
+        int smsCount = smsDatabase.get().getOutgoingProFeatureCount(mask);
+        int mmsCount = mmsDatabase.get().getOutgoingProFeatureCount(mask);
 
         return smsCount + mmsCount;
     }

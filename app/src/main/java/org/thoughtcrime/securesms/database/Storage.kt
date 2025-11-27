@@ -949,11 +949,11 @@ open class Storage @Inject constructor(
     }
 
     override fun getTotalSentProBadges(): Int {
-        return mmsSmsDatabase.getOutgoingFeatureCount(ProProfileFeature.PRO_BADGE)
+        return mmsSmsDatabase.getOutgoingProFeatureCount(ProProfileFeature.PRO_BADGE)
     }
 
     override fun getTotalSentLongMessages(): Int {
-        return mmsSmsDatabase.getOutgoingFeatureCount(ProMessageFeature.HIGHER_CHARACTER_LIMIT)
+        return mmsSmsDatabase.getOutgoingProFeatureCount(ProMessageFeature.HIGHER_CHARACTER_LIMIT)
     }
 
     override fun setPinned(address: Address, isPinned: Boolean) {

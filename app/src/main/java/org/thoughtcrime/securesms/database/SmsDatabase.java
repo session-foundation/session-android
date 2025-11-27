@@ -282,7 +282,7 @@ public class SmsDatabase extends MessagingDatabase {
     return isOutgoing;
   }
 
-    public int getOutgoingFeatureCount(long featureMask) {
+    public int getOutgoingProFeatureCount(long featureMask) {
         SQLiteDatabase db = getReadableDatabase();
 
         // get list of outgoing message types

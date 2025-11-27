@@ -112,7 +112,7 @@ class MmsDatabase @Inject constructor(
                 .any { MmsSmsColumns.Types.isOutgoingMessageType(it) }
         }
 
-    fun getOutgoingFeatureCount(featureMask: Long): Int {
+    fun getOutgoingProFeatureCount(featureMask: Long): Int {
         val db = readableDatabase
 
         // get list of outgoing message types
