@@ -818,7 +818,7 @@ class CallManager @Inject constructor(
         // set rotation to the video based on the device's orientation and the camera facing direction
         val rotation = when (orientation) {
             Orientation.PORTRAIT -> 0
-            Orientation.LANDSCAPE -> if (isCameraFrontFacing()) 90 else 180
+            Orientation.LANDSCAPE -> if (isCameraFrontFacing()) 90 else -90
             Orientation.REVERSED_LANDSCAPE -> 270
             else -> 0
         }
