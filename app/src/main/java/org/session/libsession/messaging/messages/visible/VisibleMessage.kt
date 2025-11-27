@@ -115,7 +115,7 @@ data class VisibleMessage(
 
         // Pro features
         if (!proFeatures.isEmpty) {
-            builder.proMessageBuilder.setFeatures(proFeatures.rawValue)
+            builder.proMessageBuilder.setMsgBitset(proFeatures.rawValue)
         }
     }
     // endregion
