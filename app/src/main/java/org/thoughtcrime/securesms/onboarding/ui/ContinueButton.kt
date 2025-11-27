@@ -15,7 +15,7 @@ fun ContinueAccentOutlineButton(modifier: Modifier, onContinue: () -> Unit) {
     AccentOutlineButton(
         stringResource(R.string.theContinue),
         modifier = modifier
-            .qaTag(R.string.AccessibilityId_theContinue)
+            .qaTag(org.session.content_descriptions.R.string.AccessibilityId_theContinue)
             .fillMaxWidth()
             .padding(horizontal = LocalDimensions.current.xlargeSpacing)
             .padding(bottom = LocalDimensions.current.smallSpacing),

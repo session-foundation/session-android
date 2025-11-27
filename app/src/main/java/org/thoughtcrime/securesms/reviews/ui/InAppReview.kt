@@ -181,8 +181,8 @@ private fun InAppReviewStartPrompt(
             .put(EMOJI_KEY, "\uD83D\uDE15")
             .format()
             .toString(),
-        positiveButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_great),
-        negativeButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_work),
+        positiveButtonQaTag = stringResource(org.session.content_descriptions.R.string.qa_inapp_review_dialog_button_great),
+        negativeButtonQaTag = stringResource(org.session.content_descriptions.R.string.qa_inapp_review_dialog_button_work),
         sendCommands = sendCommands
     )
 }
@@ -206,8 +206,8 @@ private fun InAppReviewPositivePrompt(
             .toString(),
         positiveButtonText = context.getString(R.string.rateSessionApp),
         negativeButtonText = context.getString(R.string.notNow),
-        positiveButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_rate),
-        negativeButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_not_now),
+        positiveButtonQaTag = stringResource(org.session.content_descriptions.R.string.qa_inapp_review_dialog_button_rate),
+        negativeButtonQaTag = stringResource(org.session.content_descriptions.R.string.qa_inapp_review_dialog_button_not_now),
         sendCommands = sendCommands
     )
 }
@@ -227,8 +227,8 @@ private fun InAppReviewNegativePrompt(
             .toString(),
         positiveButtonText = context.getString(R.string.openSurvey),
         negativeButtonText = context.getString(R.string.notNow),
-        positiveButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_survey),
-        negativeButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_not_now),
+        positiveButtonQaTag = stringResource(org.session.content_descriptions.R.string.qa_inapp_review_dialog_button_survey),
+        negativeButtonQaTag = stringResource(org.session.content_descriptions.R.string.qa_inapp_review_dialog_button_not_now),
         sendCommands = sendCommands
     )
 }

@@ -17,6 +17,6 @@ object CallModule {
 
     @Provides
     @Singleton
-    fun provideAudioManagerCompat(@ApplicationContext context: Context) = AudioManagerCompat.create(context)
+    fun provideAudioManagerCompat(@ApplicationContext context: Context): AudioManagerCompat = AudioManagerCompat.create(context)
 
 }

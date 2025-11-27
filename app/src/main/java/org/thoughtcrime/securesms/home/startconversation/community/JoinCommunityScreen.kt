@@ -119,7 +119,7 @@ private fun CommunityScreen(
                     text = state.communityUrl,
                     modifier = Modifier
                         .padding(horizontal = LocalDimensions.current.spacing)
-                        .qaTag(R.string.AccessibilityId_communityEnterUrl),
+                        .qaTag(org.session.content_descriptions.R.string.AccessibilityId_communityEnterUrl),
                     placeholder = stringResource(R.string.communityEnterUrl),
                     onChange = {
                         sendCommand(JoinCommunityViewModel.Commands.OnUrlChanged(it))
@@ -181,7 +181,7 @@ private fun CommunityScreen(
                     .padding(horizontal = LocalDimensions.current.xlargeSpacing)
                     .padding(bottom = LocalDimensions.current.smallSpacing)
                     .fillMaxWidth()
-                    .qaTag(R.string.AccessibilityId_communityJoin),
+                    .qaTag(org.session.content_descriptions.R.string.AccessibilityId_communityJoin),
                 enabled = state.isJoinButtonEnabled,
                 disabledColor = LocalColors.current.textSecondary,
                 onClick = {

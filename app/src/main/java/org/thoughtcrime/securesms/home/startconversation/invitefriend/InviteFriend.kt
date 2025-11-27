@@ -62,7 +62,7 @@ internal fun InviteFriend(
             Text(
                 accountId,
                 modifier = Modifier
-                    .qaTag(R.string.AccessibilityId_shareAccountId)
+                    .qaTag(org.session.content_descriptions.R.string.AccessibilityId_shareAccountId)
                     .fillMaxWidth()
                     .border()
                     .padding(LocalDimensions.current.spacing),

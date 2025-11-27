@@ -117,7 +117,7 @@ class VoiceMessageView @JvmOverloads constructor(
     }
 
     private fun renderIcon() {
-        val iconID = if (isPlaying) R.drawable.exo_icon_pause else R.drawable.exo_icon_play
+        val iconID = if (isPlaying) androidx.media3.ui.R.drawable.exo_icon_pause else androidx.media3.ui.R.drawable.exo_icon_play
         binding.voiceMessagePlaybackImageView.setImageResource(iconID)
     }
     // endregion

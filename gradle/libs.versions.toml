@@ -140,7 +140,6 @@ firebase-messaging = { module = "com.google.firebase:firebase-messaging", versio
 flexbox = { module = "com.google.android.flexbox:flexbox", version.ref = "flexboxVersion" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glideVersion" }
 glide-compose = { module = "com.github.bumptech.glide:compose", version = "1.0.0-beta01" }
-glide-ksp = { module = "com.github.bumptech.glide:ksp", version.ref = "glideVersion" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "daggerHiltVersion" }
 dagger-hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "daggerHiltVersion" }
 kotlinx-coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-guava", version.ref = "coroutinesVersion" }

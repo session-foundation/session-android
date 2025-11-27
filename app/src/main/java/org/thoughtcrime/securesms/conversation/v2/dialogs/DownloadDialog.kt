@@ -35,7 +35,7 @@ class AutoDownloadDialog(private val threadRecipient: Recipient,
             .format()
         text(explanation)
 
-        button(R.string.download, R.string.AccessibilityId_download) {
+        button(R.string.download, org.session.content_descriptions.R.string.AccessibilityId_download) {
             setAutoDownload()
         }
 

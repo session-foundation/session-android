@@ -167,7 +167,7 @@ fun ProBadgeText(
     onBadgeClick: (() -> Unit)? = null
 ) {
     Row(
-        modifier = modifier.qaTag(stringResource(R.string.qa_pro_badge_component)),
+        modifier = modifier.qaTag(stringResource(org.session.content_descriptions.R.string.qa_pro_badge_component)),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(textStyle.lineHeight.value.dp * 0.2f)
     ) {
@@ -181,7 +181,7 @@ fun ProBadgeText(
                 }
                 ProBadge(
                     modifier = proBadgeModifier.height(textStyle.lineHeight.value.dp * 0.8f)
-                        .qaTag(stringResource(R.string.qa_pro_badge_icon)),
+                        .qaTag(stringResource(org.session.content_descriptions.R.string.qa_pro_badge_icon)),
                     colors = badgeColors
                 )
             }
@@ -190,7 +190,7 @@ fun ProBadgeText(
         val textContent = @Composable {
             Text(
                 modifier = Modifier.weight(1f, fill = false)
-                    .qaTag(stringResource(R.string.qa_pro_badge_text)),
+                    .qaTag(stringResource(org.session.content_descriptions.R.string.qa_pro_badge_text)),
                 text = text,
                 style = textStyle,
                 maxLines = 1,
@@ -970,7 +970,7 @@ fun AvatarQrWidget(
                         string = address,
                         modifier = Modifier
                             .size(animatedSize)
-                            .qaTag(R.string.AccessibilityId_qrCode),
+                            .qaTag(org.session.content_descriptions.R.string.AccessibilityId_qrCode),
                         icon = R.drawable.session
                     )
                 }

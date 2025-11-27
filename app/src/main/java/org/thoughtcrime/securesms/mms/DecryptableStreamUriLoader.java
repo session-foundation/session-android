@@ -35,11 +35,11 @@ public class DecryptableStreamUriLoader implements ModelLoader<DecryptableUri, I
     return true;
   }
 
-  static class Factory implements ModelLoaderFactory<DecryptableUri, InputStream> {
+  public static class Factory implements ModelLoaderFactory<DecryptableUri, InputStream> {
 
     private final Context context;
 
-    Factory(Context context) {
+    public Factory(Context context) {
       this.context = context.getApplicationContext();
     }
 

@@ -93,7 +93,7 @@ class VisibleMessageView : FrameLayout {
 
     private val swipeToReplyIcon by lazy {
         val d = ContextCompat.getDrawable(context, R.drawable.ic_reply)!!.mutate()
-        d.setTint(context.getColorFromAttr(R.attr.colorControlNormal))
+        d.setTint(context.getColorFromAttr(androidx.appcompat.R.attr.colorControlNormal))
         d
     }
     private val swipeToReplyIconRect = Rect()
@@ -343,7 +343,7 @@ class VisibleMessageView : FrameLayout {
         messageStatus.messageTextRes?.let{
             binding.messageStatusTextView.setText(it)
             binding.messageStatusTextView.contentDescription =
-                context.getString(R.string.AccessibilityId_send_status)+
+                context.getString(org.session.content_descriptions.R.string.AccessibilityId_send_status)+
                         context.getString(it)
         }
         messageStatus.iconTint?.let(binding.messageStatusTextView::setTextColor)

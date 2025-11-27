@@ -1,12 +1,10 @@
 package org.thoughtcrime.securesms.dependencies
 
-import android.content.Context
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
@@ -75,14 +73,6 @@ abstract class AppBindings {
     @Binds
     abstract fun bindTypingIndicators(typingIndicators: TypingStatusRepository): SSKEnvironment.TypingIndicatorsProtocol
 
-}
-
-@Module
-@InstallIn(SingletonComponent::class)
-class ToasterModule {
-    @Provides
-    @Singleton
-    fun provideToaster(@ApplicationContext context: Context) = (context as org.thoughtcrime.securesms.ApplicationContext)
 }
 
 @EntryPoint

@@ -75,6 +75,7 @@ class RemoteFileLoader @Inject constructor(
         override fun getDataSource(): DataSource = DataSource.REMOTE
     }
 
+
     private data class RemoteFileKey(val file: RemoteFile) : Key {
         override fun updateDiskCacheKey(messageDigest: MessageDigest) {
             when (file) {

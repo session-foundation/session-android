@@ -30,7 +30,7 @@ public class EmojiVariationSelectorPopup extends PopupWindow {
     this.list     = (ViewGroup) getContentView();
 
     setBackgroundDrawable(
-            new ColorDrawable(ThemeUtil.getThemedColor(context, R.attr.colorPrimary))
+            new ColorDrawable(ThemeUtil.getThemedColor(context, androidx.appcompat.R.attr.colorPrimary))
     );
     setOutsideTouchable(true);
   }

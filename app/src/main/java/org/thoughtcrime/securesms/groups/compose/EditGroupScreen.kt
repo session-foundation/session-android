@@ -162,7 +162,7 @@ fun EditGroup(
                     AccentOutlineButton(
                         stringResource(R.string.membersInvite),
                         onClick = onAddMemberClick,
-                        modifier = Modifier.qaTag(R.string.AccessibilityId_membersInvite)
+                        modifier = Modifier.qaTag(org.session.content_descriptions.R.string.AccessibilityId_membersInvite)
                     )
                 }
             }
@@ -302,7 +302,7 @@ private fun MemberActionSheet(
                     title = context.resources.getQuantityString(R.plurals.groupRemoveUserOnly, 1),
                     iconRes = R.drawable.ic_trash_2,
                     onClick = onRemove,
-                    qaTag = R.string.AccessibilityId_removeContact
+                    qaTag = org.session.content_descriptions.R.string.AccessibilityId_removeContact
                 )
             }
 
@@ -319,7 +319,7 @@ private fun MemberActionSheet(
                     title = "Resend invitation",
                     iconRes = R.drawable.ic_mail,
                     onClick = onResendInvite,
-                    qaTag = R.string.AccessibilityId_resendInvite,
+                    qaTag = org.session.content_descriptions.R.string.AccessibilityId_resendInvite,
                 )
             }
 
@@ -328,7 +328,7 @@ private fun MemberActionSheet(
                     title = "Resend promotion",
                     iconRes = R.drawable.ic_mail,
                     onClick = onResendPromotion,
-                    qaTag = R.string.AccessibilityId_resendInvite,
+                    qaTag = org.session.content_descriptions.R.string.AccessibilityId_resendInvite,
                 )
             }
         }
@@ -365,7 +365,7 @@ fun EditMemberItem(
             Icon(
                 painter = painterResource(R.drawable.ic_circle_dots_custom),
                 tint = LocalColors.current.text,
-                contentDescription = stringResource(R.string.AccessibilityId_sessionSettings)
+                contentDescription = stringResource(org.session.content_descriptions.R.string.AccessibilityId_sessionSettings)
             )
         }
     }

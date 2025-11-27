@@ -1526,7 +1526,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             showSessionDialog {
                 title(R.string.callsPermissionsRequired)
                 text(R.string.callsPermissionsRequiredDescription)
-                button(R.string.sessionSettings, R.string.AccessibilityId_sessionSettings) {
+                button(R.string.sessionSettings, org.session.content_descriptions.R.string.AccessibilityId_sessionSettings) {
                     val intent = Intent(context, PrivacySettingsActivity::class.java)
                     // allow the screen to auto scroll to the appropriate toggle
                     intent.putExtra(PrivacySettingsActivity.SCROLL_AND_TOGGLE_KEY, CALL_NOTIFICATIONS_ENABLED)
@@ -1576,7 +1576,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 .put(NAME_KEY, name)
                 .format()
             )
-            dangerButton(R.string.block, R.string.AccessibilityId_blockConfirm) {
+            dangerButton(R.string.block, org.session.content_descriptions.R.string.AccessibilityId_blockConfirm) {
                 viewModel.block()
 
                 // Block confirmation toast added as per SS-64
@@ -1603,7 +1603,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     .put(NAME_KEY, recipient.displayName())
                     .format()
             )
-            dangerButton(R.string.blockUnblock, R.string.AccessibilityId_unblockConfirm) { viewModel.unblock() }
+            dangerButton(R.string.blockUnblock, org.session.content_descriptions.R.string.AccessibilityId_unblockConfirm) { viewModel.unblock() }
             cancelButton()
         }
     }

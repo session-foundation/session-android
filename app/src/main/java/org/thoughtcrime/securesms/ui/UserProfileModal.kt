@@ -124,7 +124,7 @@ fun UserProfileModal(
 
                 Text(
                     modifier = Modifier.weight(1f, fill = false)
-                        .qaTag(R.string.qa_conversation_settings_account_id),
+                        .qaTag(org.session.content_descriptions.R.string.qa_conversation_settings_account_id),
                     text = data.displayAddress,
                     textAlign = TextAlign.Center,
                     style = LocalType.current.base.monospace(),

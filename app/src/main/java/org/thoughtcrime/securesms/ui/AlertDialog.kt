@@ -205,7 +205,7 @@ fun AlertDialogContent(
                         style = LocalType.current.h7,
                         modifier = Modifier
                             .padding(bottom = LocalDimensions.current.xxsSpacing)
-                            .qaTag(R.string.AccessibilityId_modalTitle)
+                            .qaTag(org.session.content_descriptions.R.string.AccessibilityId_modalTitle)
                     )
                 }
                 text?.let {
@@ -228,7 +228,7 @@ fun AlertDialogContent(
                         textAlign = TextAlign.Center,
                         style = textStyle,
                         modifier = textModifier
-                            .qaTag(R.string.AccessibilityId_modalMessage)
+                            .qaTag(org.session.content_descriptions.R.string.AccessibilityId_modalMessage)
                     )
                 }
                 content()
@@ -388,7 +388,7 @@ fun LoadingDialog(
                             title,
                             modifier = Modifier
                                 .align(Alignment.CenterHorizontally)
-                                .qaTag(R.string.AccessibilityId_modalTitle),
+                                .qaTag(org.session.content_descriptions.R.string.AccessibilityId_modalTitle),
                             style = LocalType.current.large
                         )
                     }
@@ -517,7 +517,7 @@ fun TCPolicyDialog(
                         icon = R.drawable.ic_square_arrow_up_right,
                         iconSize = LocalDimensions.current.iconSmall,
                         paddingValues = PaddingValues(start = spacing),
-                        qaTag = R.string.AccessibilityId_onboardingTos,
+                        qaTag = org.session.content_descriptions.R.string.AccessibilityId_onboardingTos,
                         onClick = {
                             context.openUrl(tcsUrl)
                         }
@@ -530,7 +530,7 @@ fun TCPolicyDialog(
                         icon = R.drawable.ic_square_arrow_up_right,
                         iconSize = LocalDimensions.current.iconSmall,
                         paddingValues = PaddingValues(start = spacing),
-                        qaTag = R.string.AccessibilityId_onboardingPrivacy,
+                        qaTag = org.session.content_descriptions.R.string.AccessibilityId_onboardingPrivacy,
                         onClick = {
                             context.openUrl(privacyUrl)
                         }

@@ -113,7 +113,7 @@ fun BlockedContacts(
                 placeholder = stringResource(R.string.searchContacts),
                 modifier = Modifier
                     .padding(horizontal = LocalDimensions.current.smallSpacing)
-                    .qaTag(R.string.AccessibilityId_groupNameSearch),
+                    .qaTag(org.session.content_descriptions.R.string.AccessibilityId_groupNameSearch),
                 backgroundColor = LocalColors.current.backgroundSecondary,
             )
 
@@ -154,7 +154,7 @@ fun BlockedContacts(
                     enabled = contacts.any { it.selected },
                     modifier = Modifier
                         .padding(vertical = LocalDimensions.current.spacing)
-                        .qaTag(R.string.qa_unblock_button),
+                        .qaTag(org.session.content_descriptions.R.string.qa_unblock_button),
                 ) {
                     Text(
                         stringResource(id = R.string.blockUnblock)

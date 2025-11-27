@@ -1158,8 +1158,8 @@ class GroupManagerV2Impl @Inject constructor(
         var title = R.string.groupDelete
         var message: CharSequence = ""
         var positiveButton = R.string.delete
-        var positiveQaTag = R.string.qa_conversation_settings_dialog_delete_group_confirm
-        var negativeQaTag = R.string.qa_conversation_settings_dialog_delete_group_cancel
+        var positiveQaTag = org.session.content_descriptions.R.string.qa_conversation_settings_dialog_delete_group_confirm
+        var negativeQaTag = org.session.content_descriptions.R.string.qa_conversation_settings_dialog_delete_group_cancel
 
 
         if(!groupData.shouldPoll){
@@ -1178,8 +1178,8 @@ class GroupManagerV2Impl @Inject constructor(
 
             title = R.string.groupLeave
             positiveButton = R.string.leave
-            positiveQaTag = R.string.qa_conversation_settings_dialog_leave_group_confirm
-            negativeQaTag = R.string.qa_conversation_settings_dialog_leave_group_cancel
+            positiveQaTag = org.session.content_descriptions.R.string.qa_conversation_settings_dialog_leave_group_confirm
+            negativeQaTag = org.session.content_descriptions.R.string.qa_conversation_settings_dialog_leave_group_cancel
         }
 
 

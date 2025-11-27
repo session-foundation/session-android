@@ -505,7 +505,7 @@ class ConversationViewModel @AssistedInject constructor(
                     showDisappearingMessages(conversation)
                 },
                 icon = R.drawable.ic_clock_11,
-                qaTag = application.resources.getString(R.string.AccessibilityId_disappearingMessagesDisappear)
+                qaTag = application.resources.getString(org.session.content_descriptions.R.string.AccessibilityId_disappearingMessagesDisappear)
             )
         }
 

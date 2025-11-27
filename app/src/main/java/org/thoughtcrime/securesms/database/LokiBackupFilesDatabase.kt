@@ -6,7 +6,7 @@ import android.database.Cursor
 import android.net.Uri
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import java.lang.IllegalArgumentException
-import java.util.*
+import java.util.Date
 import javax.inject.Provider
 import kotlin.collections.ArrayList
 
@@ -50,6 +50,7 @@ class LokiBackupFilesDatabase(context: Context, databaseHelper: Provider<SQLCiph
             contentValues.put(COLUMN_URI, record.uri.toString())
             contentValues.put(COLUMN_FILE_SIZE, record.fileSize)
             contentValues.put(COLUMN_TIMESTAMP, record.timestamp.time)
+
             return contentValues
         }
     }
@@ -64,6 +65,7 @@ class LokiBackupFilesDatabase(context: Context, databaseHelper: Provider<SQLCiph
             return records
         }
     }
+
 
     fun insertBackupFile(record: BackupFileRecord): BackupFileRecord {
         val contentValues = mapRecordToValues(record)

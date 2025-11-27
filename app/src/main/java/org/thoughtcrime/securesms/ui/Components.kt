@@ -740,7 +740,7 @@ fun SearchBar(
                     innerTextField()
                     if (query.isEmpty() && placeholder != null) {
                         Text(
-                            modifier = Modifier.qaTag(R.string.qa_conversation_search_input),
+                            modifier = Modifier.qaTag(org.session.content_descriptions.R.string.qa_conversation_search_input),
                             text = placeholder,
                             color = LocalColors.current.textSecondary,
                             style = LocalType.current.xl
@@ -755,7 +755,7 @@ fun SearchBar(
                         LocalColors.current.textSecondary
                     ),
                     modifier = Modifier
-                        .qaTag(R.string.qa_input_clear)
+                        .qaTag(org.session.content_descriptions.R.string.qa_input_clear)
                         .padding(
                             horizontal = LocalDimensions.current.smallSpacing,
                             vertical = LocalDimensions.current.xxsSpacing
@@ -947,7 +947,7 @@ private fun CollapsibleFooterActions(
                     onClick = {
                         item.onClick()
                     },
-                    qaTag = R.string.qa_collapsing_footer_action,
+                    qaTag = org.session.content_descriptions.R.string.qa_collapsing_footer_action,
                     endContent = {
                         Box(
                             modifier = Modifier
@@ -960,7 +960,7 @@ private fun CollapsibleFooterActions(
                             val buttonModifier = if (single) Modifier else Modifier.fillMaxWidth()
                             SlimFillButtonRect(
                                 modifier = buttonModifier
-                                    .qaTag(stringResource(R.string.qa_collapsing_footer_action)+"_"+item.buttonLabel.string().lowercase())
+                                    .qaTag(stringResource(org.session.content_descriptions.R.string.qa_collapsing_footer_action)+"_"+item.buttonLabel.string().lowercase())
                                     .clearAndSetSemantics{},
                                 text = item.buttonLabel.string(),
                                 color = item.buttonColor
@@ -1365,7 +1365,7 @@ fun ActionRowItem(
                 title,
                 Modifier
                     .fillMaxWidth()
-                    .qaTag(R.string.qa_action_item_title),
+                    .qaTag(org.session.content_descriptions.R.string.qa_action_item_title),
                 style = textStyle,
                 color = titleColor
             )
@@ -1376,7 +1376,7 @@ fun ActionRowItem(
                     text = it,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .qaTag(R.string.qa_action_item_subtitle),
+                        .qaTag(org.session.content_descriptions.R.string.qa_action_item_subtitle),
                     style = subtitleStyle,
                     color = subtitleColor
                 )
@@ -1424,7 +1424,7 @@ fun IconActionRowItem(
                     modifier = Modifier
                         .align(Alignment.Center)
                         .size(iconSize)
-                        .qaTag(R.string.qa_action_item_icon),
+                        .qaTag(org.session.content_descriptions.R.string.qa_action_item_icon),
                     painter = painterResource(id = icon),
                     contentDescription = null,
                     tint = iconColor

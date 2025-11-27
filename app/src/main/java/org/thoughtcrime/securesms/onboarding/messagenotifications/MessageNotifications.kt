@@ -93,7 +93,7 @@ internal fun MessageNotificationsScreen(
                     if (BuildConfig.FLAVOR == "huawei") R.string.notificationsFastModeDescriptionHuawei
                     else R.string.notificationsFastModeDescription,
                     modifier = Modifier
-                        .qaTag(R.string.AccessibilityId_notificationsFastMode)
+                        .qaTag(org.session.content_descriptions.R.string.AccessibilityId_notificationsFastMode)
                         .fillMaxWidth(),
                     tag = R.string.recommended,
                     checked = state.pushEnabled,
@@ -111,7 +111,7 @@ internal fun MessageNotificationsScreen(
                     stringResource(R.string.notificationsSlowMode),
                     explanationTxt,
                     modifier = Modifier
-                        .qaTag(R.string.AccessibilityId_notificationsSlowMode)
+                        .qaTag(org.session.content_descriptions.R.string.AccessibilityId_notificationsSlowMode)
                         .fillMaxWidth(),
                     checked = state.pushDisabled,
                     onClick = { setEnabled(false) }

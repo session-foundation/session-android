@@ -82,7 +82,7 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
             text(Phrase.from(context, R.string.blockDescription)
                 .put(NAME_KEY, thread.recipient.displayName())
                 .format())
-            dangerButton(R.string.block, R.string.AccessibilityId_blockConfirm) {
+            dangerButton(R.string.block, org.session.content_descriptions.R.string.AccessibilityId_blockConfirm) {
                 doBlock()
             }
             button(R.string.no)

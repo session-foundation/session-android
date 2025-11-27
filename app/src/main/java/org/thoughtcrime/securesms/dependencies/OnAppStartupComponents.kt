@@ -10,6 +10,7 @@ import org.thoughtcrime.securesms.configs.ConfigUploader
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.disguise.AppDisguiseManager
 import org.thoughtcrime.securesms.emoji.EmojiIndexLoader
+import org.thoughtcrime.securesms.glide.GlideStartupModule
 import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.GroupPollerManager
 import org.thoughtcrime.securesms.groups.handler.AdminStateSync
@@ -40,6 +41,7 @@ class OnAppStartupComponents private constructor(
     }
 
     @Inject constructor(
+        glideStartupModule: GlideStartupModule,
         configUploader: ConfigUploader,
         snodeClock: SnodeClock,
         backgroundPollManager: BackgroundPollManager,
@@ -72,6 +74,7 @@ class OnAppStartupComponents private constructor(
         subscriptionManagers: Set<@JvmSuppressWildcards SubscriptionManager>,
     ): this(
         components = listOf(
+            glideStartupModule,
             configUploader,
             snodeClock,
             backgroundPollManager,

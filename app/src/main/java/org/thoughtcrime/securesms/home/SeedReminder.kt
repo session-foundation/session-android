@@ -68,7 +68,7 @@ internal fun SeedReminder(startRecoveryPasswordActivity: () -> Unit) {
                 text = stringResource(R.string.theContinue),
                 modifier = Modifier
                     .align(Alignment.CenterVertically)
-                    .qaTag(R.string.AccessibilityId_recoveryPasswordBanner),
+                    .qaTag(org.session.content_descriptions.R.string.AccessibilityId_recoveryPasswordBanner),
                 minWidth = 0.dp,
                 onClick = startRecoveryPasswordActivity
             )

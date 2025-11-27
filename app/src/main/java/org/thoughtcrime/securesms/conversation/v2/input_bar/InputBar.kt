@@ -100,15 +100,15 @@ class InputBar @JvmOverloads constructor(
     lateinit var recipientRepository: RecipientRepository
 
     private val attachmentsButton = InputBarButton(context, R.drawable.ic_plus).apply {
-        contentDescription = context.getString(R.string.AccessibilityId_attachmentsButton)
+        contentDescription = context.getString(org.session.content_descriptions.R.string.AccessibilityId_attachmentsButton)
     }
 
     val microphoneButton = InputBarButton(context, R.drawable.ic_mic).apply {
-        contentDescription = context.getString(R.string.AccessibilityId_voiceMessageNew)
+        contentDescription = context.getString(org.session.content_descriptions.R.string.AccessibilityId_voiceMessageNew)
     }
 
     private val sendButton = InputBarButton(context, R.drawable.ic_arrow_up, isSendButton = true).apply {
-        contentDescription = context.getString(R.string.AccessibilityId_send)
+        contentDescription = context.getString(org.session.content_descriptions.R.string.AccessibilityId_send)
     }
 
     private val textColor: Int by lazy {

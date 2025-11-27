@@ -64,6 +64,7 @@ fun buildMmsSmsCombinedQuery(
     // Custom where statement for reactions if provided
     val additionalReactionSelection = reactionSelection?.let { " AND ($it)" }.orEmpty()
 
+
     // If reactions are not requested, we just return an empty JSON array
     val smsReactionQuery = if (includeReactions) {
         """($reactionsQueryParts 
