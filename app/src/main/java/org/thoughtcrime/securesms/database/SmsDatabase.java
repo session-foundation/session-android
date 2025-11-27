@@ -282,6 +282,31 @@ public class SmsDatabase extends MessagingDatabase {
     return isOutgoing;
   }
 
+    public int getOutgoingFeatureCount(long featureMask) {
+        SQLiteDatabase db = getReadableDatabase();
+
+        // get list of outgoing message types
+        StringBuilder outgoingTypes = new StringBuilder();
+        long[] types = MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES;
+        for (int i = 0; i < types.length; i++) {
+            if (i > 0) outgoingTypes.append(",");
+            outgoingTypes.append(types[i]);
+        }
+
+        // outgoing clause
+        String outgoingSelection = "(" + TYPE + " & " + MmsSmsColumns.Types.BASE_TYPE_MASK + ") IN (" + outgoingTypes + ")";
+
+        // feature mask check
+        String where = "(" + PRO_FEATURES + " & " + featureMask + ") != 0 AND " + outgoingSelection;
+
+        try (Cursor cursor = db.query(TABLE_NAME, new String[]{"COUNT(*)"}, where, null, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                return cursor.getInt(0);
+            }
+        }
+        return 0;
+    }
+
   public boolean isDeletedMessage(long id) {
     SQLiteDatabase database     = getWritableDatabase();
     Cursor         cursor       = null;

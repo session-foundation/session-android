@@ -8,6 +8,8 @@ import network.loki.messenger.libsession_util.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.MutableConversationVolatileConfig
 import network.loki.messenger.libsession_util.ReadableUserGroupsConfig
+import network.loki.messenger.libsession_util.protocol.ProMessageFeature
+import network.loki.messenger.libsession_util.protocol.ProProfileFeature
 import network.loki.messenger.libsession_util.util.BitSet
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.Bytes
@@ -944,6 +946,14 @@ open class Storage @Inject constructor(
 
             totalPins
         }
+    }
+
+    override fun getTotalSentProBadges(): Int {
+        return mmsSmsDatabase.getOutgoingFeatureCount(ProProfileFeature.PRO_BADGE)
+    }
+
+    override fun getTotalSentLongMessages(): Int {
+        return mmsSmsDatabase.getOutgoingFeatureCount(ProMessageFeature.HIGHER_CHARACTER_LIMIT)
     }
 
     override fun setPinned(address: Address, isPinned: Boolean) {
