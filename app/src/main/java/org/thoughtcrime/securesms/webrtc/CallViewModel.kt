@@ -238,7 +238,7 @@ class CallViewModel @Inject constructor(
     fun setDeviceOrientation(orientation: Orientation, autoRotateOn: Boolean) {
         deviceOrientation = orientation
 
-        if(autoRotateOn){
+        if(!autoRotateOn){
             callManager.setDeviceOrientation(deviceOrientation)
         }
     }

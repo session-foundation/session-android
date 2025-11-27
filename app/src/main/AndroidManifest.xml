@@ -286,7 +286,8 @@
             android:launchMode="singleTop"
             android:showForAllUsers="true"
             android:parentActivityName="org.thoughtcrime.securesms.home.HomeActivity"
-            android:theme="@style/Theme.Session.DayNight.NoActionBar">
+            android:theme="@style/Theme.Session.DayNight.NoActionBar"
+            android:configChanges="orientation|screenSize|keyboardHidden|layoutDirection">
             <!--To opt out of the API level 36 behavior-->
             <property
                 android:name="android.window.PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY"
