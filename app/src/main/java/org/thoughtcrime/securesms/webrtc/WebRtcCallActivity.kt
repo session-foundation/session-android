@@ -463,9 +463,6 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
 
         val isLandscape = newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-        // Optional: animate between constraint sets
-//        TransitionManager.beginDelayedTransition(rootConstraintLayout)
-
         if (isLandscape) {
             landscapeConstraints.applyTo(rootConstraintLayout)
         } else {

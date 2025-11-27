@@ -288,10 +288,6 @@
             android:parentActivityName="org.thoughtcrime.securesms.home.HomeActivity"
             android:theme="@style/Theme.Session.DayNight.NoActionBar"
             android:configChanges="orientation|screenSize|keyboardHidden|layoutDirection">
-            <!--To opt out of the API level 36 behavior-->
-            <property
-                android:name="android.window.PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY"
-                android:value="true" />
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="org.thoughtcrime.securesms.home.HomeActivity" />
