@@ -272,8 +272,8 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     ReceivedMessageHashDatabase.Companion.createAndMigrateTable(db);
 
     ProDatabase.Companion.createTable(db);
-    db.execSQL(MmsDatabase.ADD_PRO_FEATURES_COLUMN);
-    db.execSQL(SmsDatabase.ADD_PRO_FEATURES_COLUMN);
+    MmsDatabase.Companion.addProFeatureColumns(db);
+    SmsDatabase.addProFeatureColumns(db);
     RecipientSettingsDatabase.Companion.migrateProStatusToProData(db);
   }
 
@@ -619,8 +619,8 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
       if (oldVersion < lokiV57) {
           ProDatabase.Companion.createTable(db);
-          db.execSQL(MmsDatabase.ADD_PRO_FEATURES_COLUMN);
-          db.execSQL(SmsDatabase.ADD_PRO_FEATURES_COLUMN);
+          MmsDatabase.Companion.addProFeatureColumns(db);
+          SmsDatabase.addProFeatureColumns(db);
           RecipientSettingsDatabase.Companion.migrateProStatusToProData(db);
       }
 

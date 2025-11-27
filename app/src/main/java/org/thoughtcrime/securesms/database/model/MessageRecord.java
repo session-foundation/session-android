@@ -40,8 +40,10 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import network.loki.messenger.R;
+import network.loki.messenger.libsession_util.protocol.ProFeature;
 
 /**
  * The base class for message record models that are displayed in
@@ -61,7 +63,7 @@ public abstract class MessageRecord extends DisplayRecord {
 
   @Nullable
   private UpdateMessageData               groupUpdateMessage;
-  final long                              proFeaturesRawValue;
+  public final Set<ProFeature>                   proFeatures;
 
   public abstract boolean isMms();
   public abstract boolean isMmsNotification();
@@ -77,7 +79,7 @@ public abstract class MessageRecord extends DisplayRecord {
                 long expiresIn, long expireStarted,
                 int readReceiptCount, List<ReactionRecord> reactions, boolean hasMention,
                 @Nullable MessageContent messageContent,
-                long proFeaturesRawValue)
+                Set<ProFeature> proFeatures)
   {
     super(body, conversationRecipient, dateSent, dateReceived,
       threadId, deliveryStatus, deliveryReceiptCount, type, readReceiptCount, messageContent);
@@ -87,7 +89,7 @@ public abstract class MessageRecord extends DisplayRecord {
     this.expireStarted       = expireStarted;
     this.reactions           = reactions;
     this.hasMention          = hasMention;
-    this.proFeaturesRawValue = proFeaturesRawValue;
+    this.proFeatures = proFeatures;
   }
 
   public long getId() {

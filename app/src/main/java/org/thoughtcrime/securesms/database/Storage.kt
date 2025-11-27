@@ -4,11 +4,10 @@ import android.content.Context
 import android.net.Uri
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
+import network.loki.messenger.libsession_util.MutableConversationVolatileConfig
 import network.loki.messenger.libsession_util.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
-import network.loki.messenger.libsession_util.MutableConversationVolatileConfig
 import network.loki.messenger.libsession_util.ReadableUserGroupsConfig
-import network.loki.messenger.libsession_util.util.BitSet
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.Conversation
@@ -834,7 +833,7 @@ open class Storage @Inject constructor(
                 hasMention = false,
                 isOpenGroupInvitation = false,
                 isSecureMessage = false,
-                proFeatures = BitSet(),
+                proFeatures = emptySet(),
                 isGroupMessage = true,
                 isGroupUpdateMessage = true,
             )
@@ -1051,7 +1050,7 @@ open class Storage @Inject constructor(
             null,
             null,
             emptyList(),
-            BitSet(),
+            emptySet(),
             null,
             null,
             emptyList(),
@@ -1077,7 +1076,7 @@ open class Storage @Inject constructor(
             body = null,
             group = null,
             attachments = emptyList(),
-            proFeatures = BitSet(),
+            proFeatures = emptySet(),
             messageContent = null,
             quote = null,
             linkPreviews = emptyList(),
