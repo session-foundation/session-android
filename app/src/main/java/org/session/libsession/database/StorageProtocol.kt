@@ -145,7 +145,7 @@ interface StorageProtocol {
     fun getLastUpdated(threadID: Long): Long
     fun trimThreadBefore(threadID: Long, timestamp: Long)
     fun getMessageCount(threadID: Long): Long
-    suspend fun getTotalPinned(): Int
+    fun getTotalPinned(): Int
     suspend fun getTotalSentProBadges(): Int
     suspend fun getTotalSentLongMessages(): Int
     fun setPinned(address: Address, isPinned: Boolean)

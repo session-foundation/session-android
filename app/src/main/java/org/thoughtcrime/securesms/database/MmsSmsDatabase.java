@@ -429,14 +429,16 @@ public class MmsSmsDatabase extends Database {
     return count;
   }
 
-    public int getOutgoingProFeatureCount(ProFeature feature) {
-        long mask = 1L << feature.getBitIndex();
-
-        int smsCount = smsDatabase.get().getOutgoingProFeatureCount(mask);
-        int mmsCount = mmsDatabase.get().getOutgoingProFeatureCount(mask);
-
-        return smsCount + mmsCount;
+    public int getOutgoingMessageProFeatureCount(long featureMask) {
+        return smsDatabase.get().getOutgoingMessageProFeatureCount(featureMask) +
+                mmsDatabase.get().getOutgoingMessageProFeatureCount(featureMask);
     }
+
+    public int getOutgoingProfileProFeatureCount(long featureMask) {
+        return smsDatabase.get().getOutgoingProfileProFeatureCount(featureMask) +
+                mmsDatabase.get().getOutgoingProfileProFeatureCount(featureMask);
+    }
+
 
   public void incrementReadReceiptCount(SyncMessageId syncMessageId, long timestamp) {
     smsDatabase.get().incrementReceiptCount(syncMessageId, false, true);

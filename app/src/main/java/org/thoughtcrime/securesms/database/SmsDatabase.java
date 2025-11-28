@@ -294,31 +294,36 @@ public class SmsDatabase extends MessagingDatabase {
     return isOutgoing;
   }
 
-    public int getOutgoingProFeatureCount(long featureMask) {
+    public int getOutgoingMessageProFeatureCount(long featureMask) {
+        return getOutgoingProFeatureCountInternal(PRO_MESSAGE_FEATURES, featureMask);
+    }
+
+    public int getOutgoingProfileProFeatureCount(long featureMask) {
+        return getOutgoingProFeatureCountInternal(PRO_PROFILE_FEATURES, featureMask);
+    }
+
+    private int getOutgoingProFeatureCountInternal(@NonNull String columnName, long featureMask) {
         SQLiteDatabase db = getReadableDatabase();
 
+        // outgoing clause
+        StringBuilder outgoingTypes = new StringBuilder();
         long[] types = MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES;
-        StringBuilder outgoingTypes = new StringBuilder(types.length * 3);
         for (int i = 0; i < types.length; i++) {
             if (i > 0) outgoingTypes.append(",");
             outgoingTypes.append(types[i]);
         }
 
-        // outgoing clause
         String outgoingSelection =
                 "(" + TYPE + " & " + MmsSmsColumns.Types.BASE_TYPE_MASK + ") IN (" + outgoingTypes + ")";
 
-        // feature check
-        String where =
-                "((" + PRO_MESSAGE_FEATURES + " & " + featureMask + ") != 0" +
-                        " OR (" + PRO_PROFILE_FEATURES + " & " + featureMask + ") != 0)" +
-                        " AND " + outgoingSelection;
+        String where = "(" + columnName + " & " + featureMask + ") != 0 AND " + outgoingSelection;
 
         try (Cursor cursor = db.query(TABLE_NAME, new String[]{"COUNT(*)"}, where, null, null, null, null)) {
             if (cursor != null && cursor.moveToFirst()) {
                 return cursor.getInt(0);
             }
         }
+
         return 0;
     }
 

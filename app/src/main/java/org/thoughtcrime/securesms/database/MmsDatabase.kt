@@ -117,24 +117,30 @@ class MmsDatabase @Inject constructor(
                 .any { MmsSmsColumns.Types.isOutgoingMessageType(it) }
         }
 
-    fun getOutgoingProFeatureCount(featureMask: Long): Int {
-        val db = readableDatabase
+    fun getOutgoingMessageProFeatureCount(featureMask: Long): Int {
+        return getOutgoingProFeatureCountInternal(PRO_MESSAGE_FEATURES, featureMask)
+    }
 
-        // get list of outgoing message types
+    fun getOutgoingProfileProFeatureCount(featureMask: Long): Int {
+        return getOutgoingProFeatureCountInternal(PRO_PROFILE_FEATURES, featureMask)
+    }
+
+    private fun getOutgoingProFeatureCountInternal(column: String, featureMask: Long): Int {
+        val db = readableDatabase
         val outgoingTypes = MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES.joinToString(",")
 
         // outgoing clause
         val outgoingSelection =
             "($MESSAGE_BOX & ${MmsSmsColumns.Types.BASE_TYPE_MASK}) IN ($outgoingTypes)"
 
-        // feature mask check
-        val where =
-            "(($PRO_MESSAGE_FEATURES & $featureMask) != 0 OR " +
-                    " ($PRO_PROFILE_FEATURES & $featureMask) != 0) AND $outgoingSelection"
+        val where = "($column & $featureMask) != 0 AND $outgoingSelection"
 
         db.query(TABLE_NAME, arrayOf("COUNT(*)"), where, null, null, null, null).use { cursor ->
-            return if (cursor.moveToFirst()) cursor.getInt(0) else 0
+            if (cursor.moveToFirst()) {
+                return cursor.getInt(0)
+            }
         }
+        return 0
     }
 
     fun isDeletedMessage(id: Long): Boolean =

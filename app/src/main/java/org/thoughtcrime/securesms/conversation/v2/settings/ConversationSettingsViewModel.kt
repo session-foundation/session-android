@@ -712,25 +712,23 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun pinConversation(){
-        viewModelScope.launch {
-            // check the pin limit before continuing
-            val totalPins = storage.getTotalPinned()
-            val maxPins =
-                proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().isPro)
-            if (totalPins >= maxPins) {
-                // the user has reached the pin limit, show the CTA
-                _dialogState.update {
-                    it.copy(
-                        pinCTA = PinProCTA(
-                            overTheLimit = totalPins > maxPins,
-                            proSubscription = proStatusManager.proDataState.value.type
-                        )
+        // check the pin limit before continuing
+        val totalPins = storage.getTotalPinned()
+        val maxPins =
+            proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().isPro)
+        if (totalPins >= maxPins) {
+            // the user has reached the pin limit, show the CTA
+            _dialogState.update {
+                it.copy(
+                    pinCTA = PinProCTA(
+                        overTheLimit = totalPins > maxPins,
+                        proSubscription = proStatusManager.proDataState.value.type
                     )
-                }
-            } else {
-                viewModelScope.launch {
-                    storage.setPinned(address, true)
-                }
+                )
+            }
+        } else {
+            viewModelScope.launch {
+                storage.setPinned(address, true)
             }
         }
     }
