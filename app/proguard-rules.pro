@@ -1,8 +1,6 @@
 ########## BASELINE / ATTRIBUTES ##########
 # Core attrs (serialization/DI/reflective access often rely on these)
 -keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod,MethodParameters,Record
-# Some tools repeat/override attribute keeps; keeping as provided
--keepattributes Signature,InnerClasses,EnclosingMethod
 
 # Honor @Keep if present
 -keep @androidx.annotation.Keep class * { *; }
@@ -17,7 +15,6 @@
 -keep class ** extends androidx.work.ListenableWorker
 
 ########## KOTLINX SERIALIZATION ##########
--keep class kotlinx.serialization.** { *; }
 -keepclassmembers class ** {
     @kotlinx.serialization.Serializable *;
     *** Companion;
@@ -26,11 +23,15 @@
 
 ########## JACKSON (CORE + ANNOTATIONS + DTOs) ##########
 # Keep Jackson packages and common annotated members
--keep class com.fasterxml.jackson.** { *; }
 -keepclassmembers class ** {
     @com.fasterxml.jackson.annotation.JsonCreator <init>(...);
     @com.fasterxml.jackson.annotation.JsonProperty *;
 }
+
+-keep class ** extends com.fasterxml.jackson.core.type.TypeReference { *; }
+-keep class * implements com.fasterxml.jackson.databind.util.Converter { public <init>(); public *; }
+-keep class * extends com.fasterxml.jackson.databind.JsonDeserializer { public <init>(); public *; }
+
 -dontwarn com.fasterxml.jackson.databind.**
 
 # Jackson DTO used by OpenGroupApi (reactions map values)
@@ -74,13 +75,6 @@
     void set*(***);
 }
 
-# TypeReference subclasses and repeated Jackson-annotation keep
--keep class ** extends com.fasterxml.jackson.core.type.TypeReference { *; }
--keepclassmembers class * {
-    @com.fasterxml.jackson.annotation.JsonCreator <init>(...);
-    @com.fasterxml.jackson.annotation.JsonProperty *;
-}
-
 # Converters / Deserializers
 -keep class org.session.libsession.snode.model.RetrieveMessageConverter { public <init>(); public *; }
 -keep class * implements com.fasterxml.jackson.databind.util.Converter { public <init>(); public *; }
@@ -112,10 +106,8 @@
 -keep class org.webrtc.** { *; }
 
 # Chromium-based bits
--keep class org.chromium.** { *; }
 -keep class org.chromium.base.** { *; }
 -keep class org.chromium.net.** { *; }
--keep class org.chromium.media.** { *; }
 
 # Keep all native bridges everywhere
 -keepclasseswithmembers,includedescriptorclasses class * {
