@@ -2045,7 +2045,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun onReactionLongClicked(messageId: MessageId, emoji: String?) {
         if (viewModel.recipient.isGroupOrCommunityRecipient) {
             val isUserCommunityModerator = viewModel.recipient.takeIf { it.isCommunityRecipient }?.currentUserRole?.canModerate == true
-            val fragment = ReactionsDialogFragment.create(messageId, isUserCommunityModerator, emoji, viewModel.canRemoveReaction)
+            val fragment = ReactionsDialogFragment.create(
+                messageId,
+                isUserCommunityModerator,
+                emoji,
+                viewModel.canRemoveReaction,
+                viewModel.recipient.isCommunityRecipient
+            )
             fragment.show(supportFragmentManager, TAG_REACTION_FRAGMENT)
         }
     }
