@@ -10,7 +10,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.updateContact
-import org.session.libsignal.protos.SignalServiceProtos
+import org.session.protos.SessionProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.BlindMappingRepository
@@ -205,8 +205,8 @@ class ProfileUpdateHandler @Inject constructor(
         }
 
         companion object {
-            fun create(content: SignalServiceProtos.Content): Updates? {
-                val profile: SignalServiceProtos.DataMessage.LokiProfile
+            fun create(content: SessionProtos.Content): Updates? {
+                val profile: SessionProtos.LokiProfile
                 val profilePicKey: ByteString?
 
                 when {

@@ -61,7 +61,7 @@ import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.getType
 import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.upsertContact
-import org.session.libsignal.protos.SignalServiceProtos
+import org.session.protos.SessionProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
@@ -108,7 +108,7 @@ class ReceivedMessageHandler @Inject constructor(
 
     suspend fun handle(
         message: Message,
-        proto: SignalServiceProtos.Content,
+        proto: SessionProtos.Content,
         threadId: Long,
         threadAddress: Address.Conversable,
     ) {
@@ -295,7 +295,7 @@ class ReceivedMessageHandler @Inject constructor(
 
     suspend fun handleVisibleMessage(
         message: VisibleMessage,
-        proto: SignalServiceProtos.Content,
+        proto: SessionProtos.Content,
         context: VisibleMessageHandlerContext,
         runThreadUpdate: Boolean,
         runProfileUpdate: Boolean
@@ -487,7 +487,7 @@ class ReceivedMessageHandler @Inject constructor(
         return null
     }
 
-    private fun handleGroupUpdated(message: GroupUpdated, closedGroup: AccountId?, proto: SignalServiceProtos.Content) {
+    private fun handleGroupUpdated(message: GroupUpdated, closedGroup: AccountId?, proto: SessionProtos.Content) {
         val inner = message.inner
         if (closedGroup == null &&
             !inner.hasInviteMessage() && !inner.hasPromoteMessage()) {
@@ -585,7 +585,7 @@ class ReceivedMessageHandler @Inject constructor(
         groupManagerV2.handleGroupInfoChange(message, closedGroup)
     }
 
-    private fun handlePromotionMessage(message: GroupUpdated, proto: SignalServiceProtos.Content) {
+    private fun handlePromotionMessage(message: GroupUpdated, proto: SessionProtos.Content) {
         val promotion = message.inner.promoteMessage
         val seed = promotion.groupIdentitySeed.toByteArray()
         val sender = message.sender!!
@@ -623,7 +623,7 @@ class ReceivedMessageHandler @Inject constructor(
         }
     }
 
-    private fun handleNewLibSessionClosedGroupMessage(message: GroupUpdated, proto: SignalServiceProtos.Content) {
+    private fun handleNewLibSessionClosedGroupMessage(message: GroupUpdated, proto: SessionProtos.Content) {
         val storage = storage
         val ourUserId = storage.getUserPublicKey()!!
         val invite = message.inner.inviteMessage
@@ -701,10 +701,10 @@ class ReceivedMessageHandler @Inject constructor(
 
 //endregion
 
-private fun SignalServiceProtos.Content.ExpirationType.expiryMode(durationSeconds: Long) = takeIf { durationSeconds > 0 }?.let {
+private fun SessionProtos.Content.ExpirationType.expiryMode(durationSeconds: Long) = takeIf { durationSeconds > 0 }?.let {
     when (it) {
-        SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_READ -> ExpiryMode.AfterRead(durationSeconds)
-        SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_SEND, SignalServiceProtos.Content.ExpirationType.UNKNOWN -> ExpiryMode.AfterSend(durationSeconds)
+        SessionProtos.Content.ExpirationType.DELETE_AFTER_READ -> ExpiryMode.AfterRead(durationSeconds)
+        SessionProtos.Content.ExpirationType.DELETE_AFTER_SEND, SessionProtos.Content.ExpirationType.UNKNOWN -> ExpiryMode.AfterSend(durationSeconds)
         else -> ExpiryMode.NONE
     }
 } ?: ExpiryMode.NONE

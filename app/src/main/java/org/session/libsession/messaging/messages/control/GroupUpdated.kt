@@ -1,11 +1,10 @@
 package org.session.libsession.messaging.messages.control
 
 import org.session.libsession.database.MessageDataProvider
-import org.session.libsignal.protos.SignalServiceProtos.Content
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMessage
+import org.session.protos.SessionProtos
 
 class GroupUpdated @JvmOverloads constructor(
-    val inner: GroupUpdateMessage = GroupUpdateMessage.getDefaultInstance(),
+    val inner: SessionProtos.GroupUpdateMessage = SessionProtos.GroupUpdateMessage.getDefaultInstance(),
 ): ControlMessage() {
 
     override fun isValid(): Boolean {
@@ -20,7 +19,7 @@ class GroupUpdated @JvmOverloads constructor(
                 && !inner.hasInviteResponse() && !inner.hasDeleteMemberContent()
 
     companion object {
-        fun fromProto(message: Content): GroupUpdated? =
+        fun fromProto(message: SessionProtos.Content): GroupUpdated? =
             if (message.hasDataMessage() && message.dataMessage.hasGroupUpdateMessage())
                 GroupUpdated(
                     inner = message.dataMessage.groupUpdateMessage,
@@ -28,7 +27,7 @@ class GroupUpdated @JvmOverloads constructor(
             else null
     }
 
-    override fun buildProto(builder: Content.Builder, messageDataProvider: MessageDataProvider) {
+    override fun buildProto(builder: SessionProtos.Content.Builder, messageDataProvider: MessageDataProvider) {
         builder.dataMessageBuilder
             .setGroupUpdateMessage(inner)
             .apply { profile?.let(this::setProfile) }
