@@ -30,8 +30,10 @@ import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.isGroup
 import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.displayName
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessages
 import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
@@ -72,6 +74,8 @@ class ControlMessageView : LinearLayout {
     @Inject lateinit var disappearingMessages: DisappearingMessages
     @Inject lateinit var dateUtils: DateUtils
     @Inject lateinit var recipientRepository: RecipientRepository
+    @Inject lateinit var loginStateRepository: LoginStateRepository
+    @Inject lateinit var threadDatabase: ThreadDatabase
 
     val controlContentView: View get() = binding.controlContentView
 
@@ -135,9 +139,9 @@ class ControlMessageView : LinearLayout {
             }
             message.isMessageRequestResponse -> {
                 val msgRecipient = message.recipient.address.toString()
-                val me = TextSecurePreferences.getLocalNumber(context)
+                val me = loginStateRepository.getLocalNumber()
                 binding.textView.text =  if (me == msgRecipient) { // you accepted the user's request
-                    DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(message.threadId)
+                    threadDatabase.getRecipientForThreadId(message.threadId)
                         ?.let { recipientRepository.getRecipientSync(it) }
                         ?.let { recipient ->  context.getSubbedCharSequence(
                             R.string.messageRequestYouHaveAccepted,

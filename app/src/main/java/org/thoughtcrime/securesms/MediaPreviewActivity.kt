@@ -71,7 +71,7 @@ import network.loki.messenger.databinding.MediaViewPageBinding
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.messages.control.DataExtractionNotification
 import org.session.libsession.messaging.messages.control.DataExtractionNotification.Kind.MediaSaved
-import org.session.libsession.messaging.sending_receiving.MessageSender.send
+import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.snode.SnodeAPI.nowWithOffset
 import org.session.libsession.utilities.Address
@@ -135,6 +135,9 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
 
     @Inject
     lateinit var recipientRepository: RecipientRepository
+
+    @Inject
+    lateinit var messageSender: MessageSender
 
     override val applyDefaultWindowInsets: Boolean
         get() = false
@@ -552,7 +555,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
                 nowWithOffset
             )
         )
-        send(message, conversationAddress!!)
+        messageSender.send(message, conversationAddress!!)
     }
 
     @SuppressLint("StaticFieldLeak")

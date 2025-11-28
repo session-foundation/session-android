@@ -21,11 +21,12 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
-import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.recipients.Recipient;
 
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+
+import network.loki.messenger.libsession_util.protocol.ProFeature;
 
 /**
  * The message record model which represents standard SMS messages.
@@ -35,38 +36,38 @@ import java.util.List;
  */
 public class SmsMessageRecord extends MessageRecord {
 
-  public SmsMessageRecord(long id,
-                          String body, Recipient recipient,
-                          Recipient individualRecipient,
-                          long dateSent, long dateReceived,
-                          int deliveryReceiptCount,
-                          long type, long threadId,
-                          int status, List<IdentityKeyMismatch> mismatches,
-                          long expiresIn, long expireStarted,
-                          int readReceiptCount, List<ReactionRecord> reactions, boolean hasMention)
-  {
-    super(id, body, recipient, individualRecipient,
-      dateSent, dateReceived, threadId, status, deliveryReceiptCount, type,
-      mismatches, new LinkedList<>(),
-      expiresIn, expireStarted, readReceiptCount, reactions, hasMention, null);
-  }
+    public SmsMessageRecord(long id,
+                            String body, Recipient recipient,
+                            Recipient individualRecipient,
+                            long dateSent, long dateReceived,
+                            int deliveryReceiptCount,
+                            long type, long threadId,
+                            int status,
+                            long expiresIn, long expireStarted,
+                            int readReceiptCount, List<ReactionRecord> reactions, boolean hasMention,
+                            Set<ProFeature> proFeatures) {
+        super(id, body, recipient, individualRecipient,
+                dateSent, dateReceived, threadId, status, deliveryReceiptCount, type,
+                expiresIn, expireStarted, readReceiptCount, reactions, hasMention, null,
+                proFeatures);
+    }
 
-  public long getType() {
-    return type;
-  }
+    public long getType() {
+        return type;
+    }
 
-  @Override
-  public CharSequence getDisplayBody(@NonNull Context context) {
-    return super.getDisplayBody(context);
-  }
+    @Override
+    public CharSequence getDisplayBody(@NonNull Context context) {
+        return super.getDisplayBody(context);
+    }
 
-  @Override
-  public boolean isMms() {
-    return false;
-  }
+    @Override
+    public boolean isMms() {
+        return false;
+    }
 
-  @Override
-  public boolean isMmsNotification() {
-    return false;
-  }
+    @Override
+    public boolean isMmsNotification() {
+        return false;
+    }
 }

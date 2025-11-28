@@ -19,7 +19,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
-import android.provider.MediaStore
 import android.provider.Settings
 import android.text.Spannable
 import android.text.SpannableStringBuilder
@@ -59,7 +58,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.annimon.stream.Stream
 import com.bumptech.glide.Glide
 import com.squareup.phrase.Phrase
-import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
 import kotlinx.coroutines.CancellationException
@@ -97,6 +95,7 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
+import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
@@ -118,16 +117,14 @@ import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.crypto.MnemonicCodec
 import org.session.libsignal.utilities.ListenableFuture
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.hexEncodedPrivateKey
-import org.thoughtcrime.securesms.ApplicationContext
+import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.FullComposeActivity.Companion.applyCommonPropertiesForCompose
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
-import org.thoughtcrime.securesms.attachments.ScreenshotObserver
 import org.thoughtcrime.securesms.audio.AudioRecorderHandle
 import org.thoughtcrime.securesms.audio.recordAudio
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.components.TypingStatusSender
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
-import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnReactionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ShowOpenUrlDialog
@@ -136,7 +133,6 @@ import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companio
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_REPLY
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_RESEND
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_SAVE
-import org.thoughtcrime.securesms.conversation.v2.dialogs.BlockedDialog
 import org.thoughtcrime.securesms.conversation.v2.dialogs.LinkPreviewDialog
 import org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarButton
 import org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarDelegate
@@ -153,13 +149,12 @@ import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDel
 import org.thoughtcrime.securesms.conversation.v2.search.SearchBottomBar
 import org.thoughtcrime.securesms.conversation.v2.search.SearchViewModel
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsActivity
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsActivity
 import org.thoughtcrime.securesms.conversation.v2.utilities.AttachmentManager
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.ResendMessageUtilities
-import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.crypto.MnemonicUtilities
-import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
@@ -265,21 +260,20 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var typingStatusSender: TypingStatusSender
     @Inject lateinit var openGroupManager: OpenGroupManager
     @Inject lateinit var clock: SnodeClock
+    @Inject lateinit var messageSender: MessageSender
+    @Inject lateinit var resendMessageUtilities: ResendMessageUtilities
+    @Inject lateinit var messageNotifier: MessageNotifier
     @Inject @ManagerScope
     lateinit var scope: CoroutineScope
+
+    @Inject
+    lateinit var loginStateRepository: LoginStateRepository
 
     override val applyDefaultWindowInsets: Boolean
         get() = false
 
     override val applyAutoScrimForNavigationBar: Boolean
         get() = false
-
-    private val screenshotObserver by lazy {
-        ScreenshotObserver(this, Handler(Looper.getMainLooper())) {
-            // post screenshot message
-            sendScreenshotNotification()
-        }
-    }
 
     private val screenWidth = Resources.getSystem().displayMetrics.widthPixels
     private val linkPreviewViewModel: LinkPreviewViewModel by lazy {
@@ -288,9 +282,22 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private val address: Address.Conversable by lazy {
-        requireNotNull(IntentCompat.getParcelableExtra(intent, ADDRESS, Address.Conversable::class.java)) {
-            "Address must be provided in the intent extras to open a conversation"
+        val fromExtras =
+            IntentCompat.getParcelableExtra(intent, ADDRESS, Address.Conversable::class.java)
+        if (fromExtras != null) {
+            return@lazy fromExtras
         }
+
+        // Fallback: parse from URI
+        val serialized = intent.data?.getQueryParameter(ADDRESS)
+        if (!serialized.isNullOrEmpty()) {
+            val parsed = fromSerialized(serialized)
+            if (parsed is Address.Conversable) {
+                return@lazy parsed
+            }
+        }
+
+        throw IllegalArgumentException("Address must be provided in the intent extras or URI")
     }
 
     private val viewModel: ConversationViewModel by viewModels(extrasProducer = {
@@ -348,16 +355,17 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         get() { return binding.conversationRecyclerView.layoutManager as LinearLayoutManager? }
 
     private val seed by lazy {
-        var hexEncodedSeed = IdentityKeyUtil.retrieve(this, IdentityKeyUtil.LOKI_SEED)
-        if (hexEncodedSeed == null) {
-            hexEncodedSeed = IdentityKeyUtil.getIdentityKeyPair(this).hexEncodedPrivateKey // Legacy account
+        val seedHex = loginStateRepository.peekLoginState()?.seeded?.seed?.data?.toHexString()
+
+        if (seedHex.isNullOrBlank()) {
+            return@lazy ""
         }
 
         val appContext = applicationContext
         val loadFileContents: (String) -> String = { fileName ->
             MnemonicUtilities.loadFileContents(appContext, fileName)
         }
-        MnemonicCodec(loadFileContents).encode(hexEncodedSeed, MnemonicCodec.Language.Configuration.english)
+        MnemonicCodec(loadFileContents).encode(seedHex, MnemonicCodec.Language.Configuration.english)
     }
 
     private val lastCursorLoaded = MutableSharedFlow<Long>(extraBufferCapacity = 1)
@@ -393,6 +401,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             retryFailedAttachments = viewModel::retryFailedAttachments,
             glide = glide,
             threadRecipientProvider = viewModel::recipient,
+            messageDB = mmsSmsDb,
         )
         adapter.visibleMessageViewDelegate = this
         adapter
@@ -533,7 +542,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         super.onCreate(savedInstanceState, isReady)
 
         // Check if address is null before proceeding with initialization
-        if (IntentCompat.getParcelableExtra(intent, ADDRESS, Address.Conversable::class.java) == null) {
+        if (
+                IntentCompat.getParcelableExtra(
+                    intent,
+                    ADDRESS,
+                    Address.Conversable::class.java
+                ) == null &&
+                intent.data?.getQueryParameter(ADDRESS).isNullOrEmpty()
+        ) {
             Log.w(TAG, "ConversationActivityV2 launched without ADDRESS extra - Returning home")
             val intent = Intent(this, HomeActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -696,9 +712,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     }
 
                     is ConversationUiEvent.ShowDisappearingMessages -> {
-                        val intent = Intent(this@ConversationActivityV2, DisappearingMessagesActivity::class.java).apply {
-                            putExtra(DisappearingMessagesActivity.ARG_ADDRESS, event.address)
-                        }
+                        val intent = ConversationSettingsActivity.createIntent(
+                            context = this@ConversationActivityV2,
+                            address = event.address,
+                            startDestination = ConversationSettingsDestination.RouteDisappearingMessages
+                        )
                         startActivity(intent)
                     }
 
@@ -751,19 +769,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onResume() {
         super.onResume()
-        ApplicationContext.getInstance(this).messageNotifier.setVisibleThread(viewModel.threadId)
-
-        contentResolver.registerContentObserver(
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-            true,
-            screenshotObserver
-        )
+        messageNotifier.setVisibleThread(viewModel.threadId)
     }
 
     override fun onPause() {
         super.onPause()
-        ApplicationContext.getInstance(this).messageNotifier.setVisibleThread(-1)
-        contentResolver.unregisterContentObserver(screenshotObserver)
+        messageNotifier.setVisibleThread(-1)
     }
 
     override fun getSystemService(name: String): Any? {
@@ -779,7 +790,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun onCreateLoader(id: Int, bundle: Bundle?): Loader<Cursor> {
-        return ConversationLoader(viewModel.threadId, false, this@ConversationActivityV2)
+        return ConversationLoader(
+            threadID = viewModel.threadId,
+            reverse = false,
+            context = this@ConversationActivityV2,
+            mmsSmsDatabase = mmsSmsDb
+        )
     }
 
     override fun onLoadFinished(loader: Loader<Cursor>, cursor: Cursor?) {
@@ -1692,7 +1708,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onReactionSelected(messageRecord: MessageRecord, emoji: String) {
         reactionDelegate.hide()
-        val oldRecord = messageRecord.reactions.find { it.author == textSecurePreferences.getLocalNumber() }
+        val oldRecord = messageRecord.reactions.find { it.author == loginStateRepository.getLocalNumber() }
         if (oldRecord != null && oldRecord.emoji == emoji) {
             sendEmojiRemoval(emoji, messageRecord)
         } else {
@@ -1744,32 +1760,48 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val reactionMessage = VisibleMessage()
         val emojiTimestamp = SnodeAPI.nowWithOffset
         reactionMessage.sentTimestamp = emojiTimestamp
-        val author = textSecurePreferences.getLocalNumber()
+        val author = loginStateRepository.getLocalNumber()
 
         if (author == null) {
             Log.w(TAG, "Unable to locate local number when sending emoji reaction - aborting.")
             return
         } else {
             // Put the message in the database
+            val messageId = originalMessage.messageId
+            val count = if (recipient.isCommunityRecipient) {
+                // ReactionRecord count is total number of reactions for this emoji/messageId in community,
+                // regardless of the author of each ReactionRecord.
+                // We set to the existing number for now and we'll increase all of them
+                // by 1 below.
+                originalMessage.reactions.firstOrNull { it.messageId == messageId && it.emoji == emoji }
+                    ?.count ?: 0
+            } else {
+                1
+            }
+
             val reaction = ReactionRecord(
-                messageId = originalMessage.messageId,
+                messageId = messageId,
                 author = author,
                 emoji = emoji,
-                count = 1,
+                count = count,
                 dateSent = emojiTimestamp,
                 dateReceived = emojiTimestamp
             )
             reactionDb.addReaction(reaction)
 
             val originalAuthor = if (originalMessage.isOutgoing) {
-                fromSerialized(viewModel.blindedPublicKey ?: textSecurePreferences.getLocalNumber()!!)
+                fromSerialized(viewModel.blindedPublicKey ?: loginStateRepository.requireLocalNumber())
             } else originalMessage.individualRecipient.address
 
             // Send it
             reactionMessage.reaction = Reaction.from(originalMessage.timestamp, originalAuthor.toString(), emoji, true)
             if (recipient.address is Address.Community) {
 
-                val messageServerId = lokiMessageDb.getServerID(originalMessage.messageId) ?:
+                // Increment the reaction count locally immediately. This
+                // has to apply on all the ReactionRecords with the same messageId/emoji per design.
+                reactionDb.updateAllCountFor(messageId, emoji, 1)
+
+                val messageServerId = lokiMessageDb.getServerID(messageId) ?:
                     return Log.w(TAG, "Failed to find message server ID when adding emoji reaction")
 
                 scope.launch {
@@ -1783,7 +1815,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     }
                 }
             } else {
-                MessageSender.send(reactionMessage, recipient.address)
+                messageSender.send(reactionMessage, recipient.address)
             }
 
             LoaderManager.getInstance(this).restartLoader(0, null, this)
@@ -1797,7 +1829,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val message = VisibleMessage()
         val emojiTimestamp = SnodeAPI.nowWithOffset
         message.sentTimestamp = emojiTimestamp
-        val author = textSecurePreferences.getLocalNumber()
+        val author = loginStateRepository.getLocalNumber()
 
         if (author == null) {
             Log.w(TAG, "Unable to locate local number when removing emoji reaction - aborting.")
@@ -1805,7 +1837,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         } else {
             reactionDb.deleteReaction(
                 emoji,
-                MessageId(originalMessage.id, originalMessage.isMms),
+                originalMessage.messageId,
                 author
             )
 
@@ -1815,12 +1847,16 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
             message.reaction = Reaction.from(
                 timestamp = originalMessage.timestamp,
-                author = originalAuthor.address, 
+                author = originalAuthor.address,
                 emoji = emoji,
                 react = false
             )
 
             if (recipient.address is Address.Community) {
+                // Decrement the reaction count locally immediately (they will
+                // get overwritten when we get the server update back)
+                reactionDb.updateAllCountFor(originalMessage.messageId, emoji, -1)
+
 
                 val messageServerId = lokiMessageDb.getServerID(originalMessage.messageId) ?:
                     return Log.w(TAG, "Failed to find message server ID when removing emoji reaction")
@@ -1836,14 +1872,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     }
                 }
             } else {
-                MessageSender.send(message, recipient.address)
+                messageSender.send(message, recipient.address)
             }
             LoaderManager.getInstance(this).restartLoader(0, null, this)
         }
     }
 
     override fun onCustomReactionSelected(messageRecord: MessageRecord, hasAddedCustomEmoji: Boolean) {
-        val oldRecord = messageRecord.reactions.find { record -> record.author == textSecurePreferences.getLocalNumber() }
+        val oldRecord = messageRecord.reactions.find { record -> record.author == loginStateRepository.getLocalNumber() }
 
         if (oldRecord != null && hasAddedCustomEmoji) {
             reactionDelegate.hide()
@@ -1861,12 +1897,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onReactWithAnyEmojiSelected(emoji: String, messageId: MessageId) {
         reactionDelegate.hide()
-        val message = if (messageId.mms) {
-            mmsDb.getMessageRecord(messageId.id)
-        } else {
-            smsDb.getMessageRecord(messageId.id)
-        }
-        val oldRecord = reactionDb.getReactions(messageId).find { it.author == textSecurePreferences.getLocalNumber() }
+        val message = mmsSmsDb.getMessageById(messageId) ?: return
+        val oldRecord = reactionDb.getReactions(messageId).find { it.author == loginStateRepository.getLocalNumber() }
         if (oldRecord?.emoji == emoji) {
             sendEmojiRemoval(emoji, message)
         } else {
@@ -1875,11 +1907,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun onRemoveReaction(emoji: String, messageId: MessageId) {
-        val message = if (messageId.mms) {
-            mmsDb.getMessageRecord(messageId.id)
-        } else {
-            smsDb.getMessageRecord(messageId.id)
-        }
+        val message = mmsSmsDb.getMessageById(messageId) ?: return
         sendEmojiRemoval(emoji, message)
     }
 
@@ -2002,11 +2030,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun onReactionClicked(emoji: String, messageId: MessageId, userWasSender: Boolean) {
-        val message = if (messageId.mms) {
-            mmsDb.getMessageRecord(messageId.id)
-        } else {
-            smsDb.getMessageRecord(messageId.id)
-        }
+        val message = mmsSmsDb.getMessageById(messageId) ?: return
         if (userWasSender && viewModel.canRemoveReaction) {
             sendEmojiRemoval(emoji, message)
         } else if (!userWasSender && viewModel.canReactToMessages) {
@@ -2017,7 +2041,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun onReactionLongClicked(messageId: MessageId, emoji: String?) {
         if (viewModel.recipient.isGroupOrCommunityRecipient) {
             val isUserCommunityModerator = viewModel.recipient.takeIf { it.isCommunityRecipient }?.currentUserRole?.canModerate == true
-            val fragment = ReactionsDialogFragment.create(messageId, isUserCommunityModerator, emoji, viewModel.canRemoveReaction)
+            val fragment = ReactionsDialogFragment.create(
+                messageId,
+                isUserCommunityModerator,
+                emoji,
+                viewModel.canRemoveReaction,
+                viewModel.recipient.isCommunityRecipient
+            )
             fragment.show(supportFragmentManager, TAG_REACTION_FRAGMENT)
         }
     }
@@ -2042,9 +2072,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun sendMessage() {
         val recipient = viewModel.recipient
 
+        // It shouldn't be possible to send a message to a blocked user anymore.
+        // But as a safety net:
         // show the unblock dialog when trying to send a message to a blocked contact
         if (recipient.isStandardRecipient && recipient.blocked) {
-            BlockedDialog(recipient.address, recipient.displayName()).show(supportFragmentManager, "Blocked Dialog")
+            unblock()
             return
         }
 
@@ -2113,7 +2145,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         message.sentTimestamp = sentTimestamp
         message.text = text
         val expiresInMillis = viewModel.recipient.expiryMode.expiryMillis
-        val outgoingTextMessage = OutgoingTextMessage.from(message, recipient.address, expiresInMillis, 0)
+        val outgoingTextMessage = OutgoingTextMessage(
+            message = message,
+            recipient = recipient.address,
+            expiresInMillis = expiresInMillis,
+            expireStartedAtMillis = 0
+        )
 
         // Clear the input bar
         binding.inputBar.text = ""
@@ -2130,7 +2167,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             ), false)
 
             waitForApprovalJobToBeSubmitted()
-            MessageSender.send(message, recipient.address)
+            messageSender.send(message, recipient.address)
         }
         // Send a typing stopped message
         typingStatusSender.onTypingStopped(viewModel.threadId)
@@ -2155,13 +2192,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val quote = quotedMessage?.let {
             val quotedAttachments = (it as? MmsMessageRecord)?.slideDeck?.asAttachments() ?: listOf()
             val sender = if (it.isOutgoing) {
-                fromSerialized(viewModel.blindedPublicKey ?: textSecurePreferences.getLocalNumber()!!)
+                fromSerialized(viewModel.blindedPublicKey ?: loginStateRepository.requireLocalNumber())
             } else it.individualRecipient.address
             QuoteModel(it.dateSent, sender, it.body, false, quotedAttachments)
         }
         val localQuote = quotedMessage?.let {
             val sender =
-                if (it.isOutgoing) fromSerialized(textSecurePreferences.getLocalNumber()!!)
+                if (it.isOutgoing) fromSerialized(loginStateRepository.requireLocalNumber())
                 else it.individualRecipient.address
             quote?.copy(author = sender)
         }
@@ -2169,7 +2206,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val expireStartedAtMs = if (viewModel.recipient.expiryMode is ExpiryMode.AfterSend) {
             sentTimestamp
         } else 0
-        val outgoingTextMessage = OutgoingMediaMessage.from(message, recipient.address, attachments, localQuote, linkPreview, expiresInMs, expireStartedAtMs)
+        val outgoingTextMessage = OutgoingMediaMessage(
+            message = message,
+            recipient = recipient.address,
+            attachments = attachments,
+            outgoingQuote = localQuote,
+            linkPreview = linkPreview,
+            expiresInMillis = expiresInMs,
+            expireStartedAt = expireStartedAtMs
+        )
 
         // Clear the input bar
         binding.inputBar.text = ""
@@ -2208,7 +2253,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
                 waitForApprovalJobToBeSubmitted()
 
-                MessageSender.send(message, recipient.address, quote, linkPreview)
+                messageSender.send(message, recipient.address, quote, linkPreview)
             }.onFailure {
                 withContext(Dispatchers.Main){
                     when (it) {
@@ -2547,11 +2592,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun resyncMessage(messages: Set<MessageRecord>) {
-        val accountId = textSecurePreferences.getLocalNumber()
+        val accountId = loginStateRepository.getLocalNumber()
         scope.launch {
             messages.iterator().forEach { messageRecord ->
                 runCatching {
-                    ResendMessageUtilities.resend(
+                    resendMessageUtilities.resend(
                         accountId,
                         messageRecord,
                         viewModel.blindedPublicKey,
@@ -2565,11 +2610,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun resendMessage(messages: Set<MessageRecord>) {
-        val accountId = textSecurePreferences.getLocalNumber()
+        val accountId = loginStateRepository.getLocalNumber()
         scope.launch {
             messages.iterator().forEach { messageRecord ->
                 runCatching {
-                    ResendMessageUtilities.resend(
+                    resendMessageUtilities.resend(
                         accountId,
                         messageRecord,
                         viewModel.blindedPublicKey
@@ -2718,21 +2763,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         this.actionMode = null
     }
 
-    private fun sendScreenshotNotification() {
-        val recipient = viewModel.recipient
-        if (recipient.isGroupOrCommunityRecipient) return
-        val kind = DataExtractionNotification.Kind.Screenshot()
-        val message = DataExtractionNotification(kind)
-        MessageSender.send(message, recipient.address)
-    }
-
     private fun sendMediaSavedNotification() {
         val recipient = viewModel.recipient
         if (recipient.isGroupOrCommunityRecipient) { return }
         val timestamp = SnodeAPI.nowWithOffset
         val kind = DataExtractionNotification.Kind.MediaSaved(timestamp)
         val message = DataExtractionNotification(kind)
-        MessageSender.send(message, recipient.address)
+        messageSender.send(message, recipient.address)
     }
 
     private fun endActionMode() {

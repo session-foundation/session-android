@@ -28,12 +28,14 @@ public class TypingStatusSender {
   private final Map<Long, TimerPair> selfTypingTimers;
   private final ThreadDatabase       threadDatabase;
   private final RecipientRepository  recipientRepository;
+  private final MessageSender messageSender;
 
   @Inject
-  public TypingStatusSender(ThreadDatabase threadDatabase, RecipientRepository recipientRepository) {
+  public TypingStatusSender(ThreadDatabase threadDatabase, RecipientRepository recipientRepository, MessageSender messageSender) {
       this.threadDatabase = threadDatabase;
       this.recipientRepository = recipientRepository;
       this.selfTypingTimers = new HashMap<>();
+      this.messageSender = messageSender;
   }
 
   public synchronized void onTypingStarted(long threadId) {
@@ -94,7 +96,7 @@ public class TypingStatusSender {
     } else {
       typingIndicator = new TypingIndicator(TypingIndicator.Kind.STOPPED);
     }
-    MessageSender.send(typingIndicator, recipient.getAddress());
+    messageSender.send(typingIndicator, recipient.getAddress());
   }
 
   private class StartRunnable implements Runnable {

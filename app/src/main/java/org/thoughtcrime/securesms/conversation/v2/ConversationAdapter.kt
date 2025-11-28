@@ -17,7 +17,6 @@ import org.thoughtcrime.securesms.database.MmsSmsColumns
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
@@ -33,8 +32,8 @@ class ConversationAdapter(
     private val retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
     private val glide: RequestManager,
     private val threadRecipientProvider: () -> Recipient,
+    val messageDB: MmsSmsDatabase,
 ) : CursorRecyclerViewAdapter<ViewHolder>(context) {
-    private val messageDB by lazy { DatabaseComponent.get(context).mmsSmsDatabase() }
     var selectedItems = mutableSetOf<MessageRecord>()
     var isAdmin: Boolean = false
     private var searchQuery: String? = null

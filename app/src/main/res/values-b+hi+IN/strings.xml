@@ -15,7 +15,6 @@
     <string name="accountIdYoursDescription">यह आपका Account ID है। अन्य उपयोगकर्ता आपके साथ बातचीत शुरू करने के लिए इसे स्कैन कर सकते हैं।</string>
     <string name="actualSize">वास्तविक आकार</string>
     <string name="add">जोड़ें</string>
-    <string name="addAdmins">एडमिन जोड़ें</string>
     <string name="addAdminsDescription">उस उपयोगकर्ता का Account ID दर्ज करें जिसे आप एडमिन बना रहे हैं।\n\nएक से अधिक उपयोगकर्ताओं को जोड़ने के लिए, प्रत्येक Account ID को कॉमा से अलग करके दर्ज करें। एक बार में अधिकतम 20 Account ID दर्ज किए जा सकते हैं।</string>
     <string name="adminCannotBeRemoved">एडमिन हटाए नहीं जा सकते।</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> और <b>{count} अन्य</b> को Admin बनाया गया।</string>
@@ -822,13 +821,9 @@
     <string name="proActivated">सक्रिय किया गया</string>
     <string name="proAlreadyPurchased">आपके पास पहले से ही है</string>
     <string name="proAnimatedDisplayPicture">आगे बढ़ें और अपनी डिस्प्ले तस्वीर के लिए GIF और एनिमेटेड WebP इमेज अपलोड करें!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">एनीमेटेड डिस्प्ले तस्वीरें प्राप्त करें और {app_pro} के साथ प्रीमियम सुविधाओं का अनलॉक करें</string>
     <string name="proAnimatedDisplayPictureFeature">एनिमेटेड डिस्प्ले तस्वीर</string>
     <string name="proAnimatedDisplayPictureModalDescription">उपयोगकर्ता GIF अपलोड कर सकते हैं</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">GIF अपलोड करें</string>
-    <string name="proCallToActionLongerMessages">लंबे संदेश भेजना चाहते हैं? अधिक टेक्स्ट भेजें और {app_pro} के साथ प्रीमियम सुविधाओं का अनलॉक करें</string>
-    <string name="proCallToActionPinnedConversations">अधिक पिन करना चाहते हैं? अपनी चैट व्यवस्थित करें और {app_pro} के साथ प्रीमियम सुविधाओं का अनलॉक करें</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">5 से अधिक पिन करना चाहते हैं? अपनी चैट व्यवस्थित करें और {app_pro} के साथ प्रीमियम सुविधाओं का अनलॉक करें</string>
     <string name="proFeatureListAnimatedDisplayPicture">GIF और WebP डिस्प्ले तस्वीरें अपलोड करें</string>
     <string name="proFeatureListLargerGroups">300 सदस्यों तक बड़े समूह चैट</string>
     <string name="proFeatureListLoadsMore">साथ में कई और विशेष सुविधाएं</string>
@@ -840,7 +835,6 @@
     <string name="proIncreasedMessageLengthFeature">बढ़ाई गई संदेश लंबाई</string>
     <string name="proMessageInfoFeatures">इस संदेश में निम्नलिखित {app_pro} विशेषताएँ उपयोग की गईं हैं:</string>
     <string name="proSendMore">इसके साथ और भेजें</string>
-    <string name="proUserProfileModalCallToAction">क्या आप {app_name} से अधिक प्राप्त करना चाहते हैं? एक अधिक शक्तिशाली संदेश अनुभव के लिए {app_pro} में अपग्रेड करें।</string>
     <string name="profile">प्रोफ़ाइल</string>
     <string name="profileDisplayPicture">प्रदर्शन चित्र</string>
     <string name="profileDisplayPictureRemoveError">डिस्प्ले तस्वीर हटाने में विफल।</string>

@@ -72,10 +72,12 @@ public class NotificationItem {
   }
 
   public PendingIntent getPendingIntent(Context context) {
-
-    Recipient notifyRecipients = threadRecipient != null ? threadRecipient : conversationRecipient;
+    Recipient notifyRecipients = getRecipient();
     final Intent intent = ConversationActivityV2.Companion.createIntent(context, (Address.Conversable) notifyRecipients.getAddress());
-    intent.setData((Uri.parse("custom://"+System.currentTimeMillis())));
+    intent.setData(Uri.parse("custom://" + System.currentTimeMillis())
+            .buildUpon()
+            .appendQueryParameter("address", notifyRecipients.getAddress().toString())
+            .build());
 
     int intentFlags = PendingIntent.FLAG_UPDATE_CURRENT;
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -83,8 +85,8 @@ public class NotificationItem {
     }
 
     return TaskStackBuilder.create(context)
-                           .addNextIntentWithParentStack(intent)
-                           .getPendingIntent(0, intentFlags);
+            .addNextIntentWithParentStack(intent)
+            .getPendingIntent(0, intentFlags);
   }
 
   public long getId() {

@@ -43,6 +43,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.BasicSessionAlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.components.CircularProgressIndicator
@@ -266,7 +267,7 @@ private fun DeleteConfirmationDialog(
 private fun ActionProgressDialog(
     text: String
 ) {
-    BasicAlertDialog(
+    BasicSessionAlertDialog(
         onDismissRequest = {},
     ) {
         Row(

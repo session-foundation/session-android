@@ -1,15 +1,15 @@
 package org.session.libsession.snode.model
 
-import com.fasterxml.jackson.annotation.JsonCreator
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.JsonNode
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
-data class BatchResponse @JsonCreator constructor(
-    @param:JsonProperty("results") val results: List<Item>,
-) {
-    data class Item @JsonCreator constructor(
-        @param:JsonProperty("code") val code: Int,
-        @param:JsonProperty("body") val body: JsonNode,
+@Serializable
+
+data class BatchResponse(val results: List<Item>, ) {
+    @Serializable
+    data class Item(
+        val code: Int,
+        val body: JsonElement,
     ) {
         val isSuccessful: Boolean
             get() = code in 200..299

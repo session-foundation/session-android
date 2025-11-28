@@ -24,6 +24,12 @@ data class AccountId(
 
     val prefix: IdPrefix? get() = IdPrefix.fromValue(hexString)
 
+    /**
+     * The public key bytes with the prefix removed.
+     *
+     * Note: the type of public key varies depending on the prefix. For STANDARD,
+     * it's an Curve25519 public key, otherwise, it should be an Ed25519 public key.
+     */
     val pubKeyBytes: ByteArray by lazy {
         Hex.fromStringCondensed(hexString.drop(2))
     }

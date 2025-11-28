@@ -1,6 +1,6 @@
 package org.session.libsession.utilities.recipients
 
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.GroupMember
@@ -20,10 +20,9 @@ sealed interface RecipientData {
     val priority: Long
     val profileUpdatedAt: Instant?
 
-    val proStatus: ProStatus
+    val proData: ProData?
 
-    // Marker interface to distinguish between config-based and other recipient data.
-    sealed interface ConfigBased
+    fun setProData(proData: ProData): RecipientData
 
     /**
      * Represents a group-like recipient, which can be a group or community.
@@ -50,19 +49,23 @@ sealed interface RecipientData {
         val displayName: String = "",
         override val avatar: RemoteFile? = null,
         override val priority: Long = PRIORITY_VISIBLE,
-        override val proStatus: ProStatus = ProStatus.None,
+        override val proData: ProData? = null,
         val acceptsBlindedCommunityMessageRequests: Boolean = false,
         override val profileUpdatedAt: Instant? = null,
-    ) : RecipientData
+    ) : RecipientData {
+        override fun setProData(proData: ProData): Generic = copy(proData = proData)
+    }
 
     data class BlindedContact(
         val displayName: String,
         override val avatar: RemoteFile.Encrypted?,
         override val priority: Long,
-        override val proStatus: ProStatus,
+        override val proData: ProData?,
         val acceptsBlindedCommunityMessageRequests: Boolean,
         override val profileUpdatedAt: Instant?
-    ) : ConfigBased, RecipientData
+    ) : RecipientData {
+        override fun setProData(proData: ProData): BlindedContact = copy(proData = proData)
+    }
 
     data class Community(
         val serverUrl: String,
@@ -95,6 +98,11 @@ sealed interface RecipientData {
         override val profileUpdatedAt: Instant?
             get() = null
 
+        override val proData: ProData?
+            get() = null
+
+        override fun setProData(proData: ProData): Community = this
+
         override fun hasAdmin(user: AccountId): Boolean {
             return roomInfo != null && (roomInfo.details.admins.contains(user.hexString) ||
                     roomInfo.details.moderators.contains(user.hexString) ||
@@ -106,9 +114,6 @@ sealed interface RecipientData {
             return roomInfo != null && (roomInfo.details.admins.contains(user.hexString) ||
                     roomInfo.details.moderators.contains(user.hexString))
         }
-
-        override val proStatus: ProStatus
-            get() = ProStatus.None
     }
 
     /**
@@ -119,9 +124,11 @@ sealed interface RecipientData {
         override val avatar: RemoteFile.Encrypted?,
         val expiryMode: ExpiryMode,
         override val priority: Long,
-        override val proStatus: ProStatus,
+        override val proData: ProData?,
         override val profileUpdatedAt: Instant?
-    ) : ConfigBased, RecipientData
+    ) : RecipientData {
+        override fun setProData(proData: ProData): Self = copy(proData = proData)
+    }
 
     /**
      * A recipient that was saved in your contact config.
@@ -135,11 +142,13 @@ sealed interface RecipientData {
         val blocked: Boolean,
         val expiryMode: ExpiryMode,
         override val priority: Long,
-        override val proStatus: ProStatus,
+        override val proData: ProData?,
         override val profileUpdatedAt: Instant?,
-    ) : ConfigBased, RecipientData {
+    ) : RecipientData {
         val displayName: String
             get() = nickname?.takeIf { it.isNotBlank() } ?: name
+
+        override fun setProData(proData: ProData): Contact = copy(proData = proData)
     }
 
     data class GroupMemberInfo(
@@ -156,55 +165,40 @@ sealed interface RecipientData {
         )
     }
 
-    /**
-     * Group data fetched from the config. It's named as "partial" because it does not include
-     * all the information we need to resemble a full group recipient, hence not implementing the
-     * [RecipientData] interface.
-     */
-    data class PartialGroup(
-        val name: String,
-        private val groupInfo: GroupInfo.ClosedGroupInfo,
-        val avatar: RemoteFile.Encrypted?,
-        val expiryMode: ExpiryMode,
-        val proStatus: ProStatus,
-        val members: List<GroupMemberInfo>,
-        val description: String?,
-    ) : ConfigBased {
-        val approved: Boolean get() = !groupInfo.invited
-        val priority: Long get() = groupInfo.priority
-        val isAdmin: Boolean get() = groupInfo.hasAdminKey()
-        val kicked: Boolean get() = groupInfo.kicked
-        val destroyed: Boolean get() = groupInfo.destroyed
-        val shouldPoll: Boolean get() = groupInfo.shouldPoll
-    }
 
     /**
      * Full group data that includes additional information that may not be present in the config.
      */
     data class Group(
-        val partial: PartialGroup,
-        override val firstMember: Recipient, // Used primarily to assemble the profile picture for the group.
+        val name: String,
+        private val groupInfo: GroupInfo.ClosedGroupInfo,
+        override val avatar: RemoteFile.Encrypted?,
+        val expiryMode: ExpiryMode,
+        val members: List<GroupMemberInfo>,
+        val description: String?,
+        override val proData: ProData?,
+        override val firstMember: Recipient?, // Used primarily to assemble the profile picture for the group.
         override val secondMember: Recipient?, // Used primarily to assemble the profile picture for the group.
     ) : RecipientData, GroupLike {
-        override val avatar: RemoteFile?
-            get() = partial.avatar
-
-        override val priority: Long
-            get() = partial.priority
-
-        override val proStatus: ProStatus
-            get() = partial.proStatus
+        val approved: Boolean get() = !groupInfo.invited
+        override val priority: Long get() = groupInfo.priority
+        val isAdmin: Boolean get() = groupInfo.hasAdminKey()
+        val kicked: Boolean get() = groupInfo.kicked
+        val destroyed: Boolean get() = groupInfo.destroyed
+        val shouldPoll: Boolean get() = groupInfo.shouldPoll
 
         override val profileUpdatedAt: Instant?
             get() = null
 
         override fun hasAdmin(user: AccountId): Boolean {
-            return partial.members.any { it.address.accountId == user && it.isAdmin }
+            return members.any { it.address.accountId == user && it.isAdmin }
         }
 
         override fun shouldShowAdminCrown(user: AccountId): Boolean {
             return hasAdmin(user)
         }
+
+        override fun setProData(proData: ProData): Group = copy(proData = proData)
     }
 
     data class LegacyGroup(
@@ -218,9 +212,6 @@ sealed interface RecipientData {
         override val avatar: RemoteFile?
             get() = null
 
-        override val proStatus: ProStatus
-            get() = ProStatus.None
-
         override fun hasAdmin(user: AccountId): Boolean {
             return members[user]?.canModerate == true
         }
@@ -231,5 +222,15 @@ sealed interface RecipientData {
 
         override val profileUpdatedAt: Instant?
             get() = null
+
+        override val proData: ProData?
+            get() = null
+
+        override fun setProData(proData: ProData): LegacyGroup = this
     }
+
+
+    data class ProData(
+        val showProBadge: Boolean,
+    )
 }

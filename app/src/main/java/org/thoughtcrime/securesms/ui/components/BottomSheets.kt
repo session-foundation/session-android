@@ -62,8 +62,8 @@ fun BaseBottomSheet(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
         shape = RoundedCornerShape(
-            topStart = LocalDimensions.current.xsSpacing,
-            topEnd = LocalDimensions.current.xsSpacing
+            topStart = LocalDimensions.current.contentSpacing,
+            topEnd = LocalDimensions.current.contentSpacing
         ),
         dragHandle = dragHandle,
         containerColor = LocalColors.current.backgroundSecondary

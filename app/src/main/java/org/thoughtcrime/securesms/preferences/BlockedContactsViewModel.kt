@@ -34,6 +34,7 @@ class BlockedContactsViewModel @Inject constructor(
     avatarUtils = avatarUtils,
     proStatusManager = proStatusManager,
     recipientRepository = recipientRepository,
+    context = context
 ) {
     private val _unblockDialog = MutableStateFlow(false)
     val unblockDialog: StateFlow<Boolean> = _unblockDialog

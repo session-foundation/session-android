@@ -17,7 +17,7 @@ fun Recipient.displayName(
         is RecipientData.Self -> data.name
         is RecipientData.Contact -> data.displayName
         is RecipientData.LegacyGroup -> data.name
-        is RecipientData.Group -> data.partial.name
+        is RecipientData.Group -> data.name
         is RecipientData.Generic -> data.displayName
         is RecipientData.Community -> data.roomInfo?.details?.name ?: data.room
         is RecipientData.BlindedContact -> data.displayName

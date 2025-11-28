@@ -5,10 +5,10 @@ import androidx.navigation.NavOptionsBuilder
 import dagger.hilt.android.scopes.ActivityRetainedScoped
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
+import org.session.libsignal.utilities.Log
 import javax.inject.Inject
 
-@ActivityRetainedScoped
-class UINavigator<T> @Inject constructor() {
+class UINavigator<T> () {
     private val _navigationActions = Channel<NavigationAction<T>>()
     val navigationActions = _navigationActions.receiveAsFlow()
 
@@ -38,6 +38,10 @@ class UINavigator<T> @Inject constructor() {
         _navigationActions.send(NavigationAction.NavigateToIntent(intent))
     }
 
+    suspend fun sendCustomAction(data: Any){
+        _navigationActions.send(NavigationAction.PerformCustomAction(data))
+    }
+
     suspend fun returnResult(code: String, value: Boolean) {
         _navigationActions.send(NavigationAction.ReturnResult(code, value))
     }
@@ -58,5 +62,9 @@ sealed interface NavigationAction<out T> {
     data class ReturnResult(
         val code: String,
         val value: Boolean
+    ) : NavigationAction<Nothing>
+
+    data class PerformCustomAction(
+        val data: Any
     ) : NavigationAction<Nothing>
 }

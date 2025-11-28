@@ -29,6 +29,7 @@ import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsignal.utilities.AccountId
+import java.time.Instant
 
 interface ConfigFactoryProtocol {
     val configUpdateNotifications: Flow<ConfigUpdateNotification>
@@ -103,7 +104,7 @@ class ConfigMessage(
 
 data class ConfigPushResult(
     val hashes: List<String>,
-    val timestamp: Long
+    val timestamp: Instant
 )
 
 enum class UserConfigType(val namespace: Int) {

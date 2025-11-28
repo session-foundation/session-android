@@ -57,7 +57,8 @@ class MediaOverviewViewModel @AssistedInject constructor(
     private val threadDatabase: ThreadDatabase,
     private val mediaDatabase: MediaDatabase,
     private val dateUtils: DateUtils,
-    private val recipientRepository: RecipientRepository,
+    recipientRepository: RecipientRepository,
+    private val messageSender: MessageSender,
 ) : AndroidViewModel(application) {
 
     private val timeBuckets by lazy { FixedTimeBuckets() }
@@ -293,7 +294,7 @@ class MediaOverviewViewModel @AssistedInject constructor(
                     val timestamp = SnodeAPI.nowWithOffset
                     val kind = DataExtractionNotification.Kind.MediaSaved(timestamp)
                     val message = DataExtractionNotification(kind)
-                    MessageSender.send(message, address)
+                    messageSender.send(message, address)
                 }
             }
 

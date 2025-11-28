@@ -7,8 +7,8 @@ import network.loki.messenger.libsession_util.allWithStatus
 import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.messaging.groups.GroupScope
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import javax.inject.Inject
@@ -23,15 +23,15 @@ import javax.inject.Inject
  * after the app is started, and only done once on every app process.
  */
 class CleanupInvitationHandler @Inject constructor(
-    private val prefs: TextSecurePreferences,
     private val configFactory: ConfigFactoryProtocol,
     private val groupScope: GroupScope,
+    private val loginStateRepository: LoginStateRepository,
     @param:ManagerScope private val scope: CoroutineScope
 ) : OnAppStartupComponent {
     override fun onPostAppStarted() {
         scope.launch {
             // Wait for the local number to be available
-            prefs.watchLocalNumber().first { it != null }
+            loginStateRepository.loggedInState.first { it != null }
 
             val allGroups = configFactory.withUserConfigs {
                 it.userGroups.allClosedGroupInfo()

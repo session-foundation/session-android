@@ -9,8 +9,8 @@ class DebugActivity : FullComposeActivity() {
 
     @Composable
     override fun ComposeContent() {
-        DebugMenuScreen(
-            onClose = { finish() }
+        DebugMenuNavHost(
+            onBack = { finish() }
         )
     }
 }

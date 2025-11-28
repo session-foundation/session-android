@@ -62,7 +62,7 @@ data class OpenGroupMessage(
             }.getOrNull() ?: return null
         }
         else {
-            val x25519PublicKey = MessagingModuleConfiguration.shared.storage.getUserX25519KeyPair().publicKey.serialize()
+            val x25519PublicKey = MessagingModuleConfiguration.shared.storage.getUserX25519KeyPair().pubKey.data
             if (sender != x25519PublicKey.toHexString() && !userEdKeyPair.pubKey.data.toHexString().equals(sender?.removingIdPrefixIfNeeded(), true)) return null
             try {
                 ED25519.sign(

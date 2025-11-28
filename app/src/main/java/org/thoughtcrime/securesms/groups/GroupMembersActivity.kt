@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.compose.runtime.Composable
 import androidx.core.content.IntentCompat
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.FullComposeScreenLockActivity

@@ -31,9 +31,9 @@ class DisappearingMessagesViewModel @AssistedInject constructor(
     @Assisted private val address: Address,
     @Assisted("isNewConfigEnabled")  private val isNewConfigEnabled: Boolean,
     @Assisted("showDebugOptions")    private val showDebugOptions: Boolean,
+    @Assisted private val navigator: UINavigator<ConversationSettingsDestination>,
     @param:ApplicationContext private val context: Context,
     private val disappearingMessages: DisappearingMessages,
-    private val navigator: UINavigator<ConversationSettingsDestination>,
     private val recipientRepository: RecipientRepository,
 ) : ViewModel() {
 
@@ -96,7 +96,8 @@ class DisappearingMessagesViewModel @AssistedInject constructor(
         fun create(
             address: Address,
             @Assisted("isNewConfigEnabled") isNewConfigEnabled: Boolean,
-            @Assisted("showDebugOptions")   showDebugOptions: Boolean
+            @Assisted("showDebugOptions")   showDebugOptions: Boolean,
+            navigator: UINavigator<ConversationSettingsDestination>
         ): DisappearingMessagesViewModel
     }
 }

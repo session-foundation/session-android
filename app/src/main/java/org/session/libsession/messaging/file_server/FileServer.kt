@@ -3,11 +3,11 @@ package org.session.libsession.messaging.file_server
 import kotlinx.serialization.Serializable
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import org.session.libsession.utilities.serializable.HttpSerializer
+import org.session.libsession.utilities.serializable.HttpUrlSerializer
 
 @Serializable
 data class FileServer(
-    @Serializable(with = HttpSerializer::class)
+    @Serializable(with = HttpUrlSerializer::class)
     val url: HttpUrl,
     val ed25519PublicKeyHex: String
 ) {

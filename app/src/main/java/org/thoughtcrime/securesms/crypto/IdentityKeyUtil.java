@@ -20,7 +20,6 @@ package org.thoughtcrime.securesms.crypto;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.os.Build;
 
 import androidx.annotation.NonNull;
 
@@ -31,7 +30,6 @@ import org.session.libsignal.crypto.ecc.DjbECPrivateKey;
 import org.session.libsignal.crypto.ecc.DjbECPublicKey;
 import org.session.libsignal.crypto.ecc.ECKeyPair;
 import org.session.libsignal.crypto.ecc.ECPrivateKey;
-import org.session.libsignal.crypto.ecc.ECPublicKey;
 import org.session.libsignal.exceptions.InvalidKeyException;
 import org.session.libsignal.utilities.Base64;
 
@@ -40,7 +38,6 @@ import java.io.IOException;
 import kotlin.Unit;
 import kotlinx.coroutines.channels.BufferOverflow;
 import kotlinx.coroutines.flow.MutableSharedFlow;
-import kotlinx.coroutines.flow.MutableStateFlow;
 import kotlinx.coroutines.flow.SharedFlowKt;
 import network.loki.messenger.libsession_util.Curve25519;
 import network.loki.messenger.libsession_util.util.KeyPair;
@@ -50,6 +47,7 @@ import network.loki.messenger.libsession_util.util.KeyPair;
  * 
  * @author Moxie Marlinspike
  */
+@Deprecated(forRemoval = true)
 public class IdentityKeyUtil {
 
   private static final String MASTER_SECRET_UTIL_PREFERENCES_NAME = "SecureSMS-Preferences";
@@ -63,7 +61,7 @@ public class IdentityKeyUtil {
   public static final String ED25519_PUBLIC_KEY                          = "pref_ed25519_public_key";
   public static final String ED25519_SECRET_KEY                          = "pref_ed25519_secret_key";
   public static final String NOTIFICATION_KEY                            = "pref_notification_key";
-  public static final String LOKI_SEED                                   = "loki_seed";
+  private static final String LOKI_SEED                                   = "loki_seed";
   public static final String HAS_MIGRATED_KEY                            = "has_migrated_keys";
 
   public static final MutableSharedFlow<Unit> CHANGES = SharedFlowKt.MutableSharedFlow(0, 1, BufferOverflow.DROP_LATEST);

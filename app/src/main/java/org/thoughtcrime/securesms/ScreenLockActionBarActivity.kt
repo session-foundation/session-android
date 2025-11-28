@@ -16,7 +16,6 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isScreenLockEnabled
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.home.HomeActivity
@@ -84,7 +83,8 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.i(TAG, "ScreenLockActionBarActivity.onCreate(" + savedInstanceState + ")")
 
-        val locked = KeyCachingService.isLocked(this) && isScreenLockEnabled(this) && getLocalNumber(this) != null
+        val locked = KeyCachingService.isLocked(this) && isScreenLockEnabled(this) &&
+                (applicationContext as ApplicationContext).loginStateRepository.get().peekLoginState() != null
         routeApplicationState(locked)
 
         super.onCreate(savedInstanceState)
@@ -166,7 +166,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
     private fun getApplicationState(locked: Boolean): Int {
         return if (migrationManager.migrationState.value.shouldShowUI) {
             STATE_DATABASE_MIGRATE
-        } else if (getLocalNumber(this) == null) {
+        } else if ((applicationContext as ApplicationContext).loginStateRepository.get().peekLoginState() == null) {
             STATE_WELCOME_SCREEN
         } else if (locked) {
             STATE_SCREEN_LOCKED

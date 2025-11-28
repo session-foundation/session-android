@@ -10,7 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import network.loki.messenger.libsession_util.ConfigBase
+import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
@@ -51,6 +51,7 @@ data class MessageReceiveParameters(
     val closedGroup: Destination.ClosedGroup? = null
 )
 
+@Deprecated("BatchMessageReceiveJob is now only here so that existing persisted jobs can be processed.")
 class BatchMessageReceiveJob @AssistedInject constructor(
     @Assisted private val messages: List<MessageReceiveParameters>,
     @Assisted val fromCommunity: Address.Community?, // The community the messages are received in, if any
@@ -62,6 +63,7 @@ class BatchMessageReceiveJob @AssistedInject constructor(
     private val messageNotifier: MessageNotifier,
     private val threadDatabase: ThreadDatabase,
     private val recipientRepository: RecipientRepository,
+    private val messageReceiver: MessageReceiver,
 ) : Job {
 
     override var delegate: JobDelegate? = null
@@ -105,6 +107,7 @@ class BatchMessageReceiveJob @AssistedInject constructor(
             fromCommunity = fromCommunity,
             threadDatabase = threadDatabase,
             recipientRepository = recipientRepository,
+            messageReceiver = messageReceiver,
         )
     }
 
@@ -141,7 +144,7 @@ class BatchMessageReceiveJob @AssistedInject constructor(
             message.groupPublicKey == null && // not a group
                     message.openGroupServerMessageID == null && // not a community
                     // not marked as hidden
-                    configs.contacts.get(message.senderOrSync)?.priority == ConfigBase.PRIORITY_HIDDEN &&
+                    configs.contacts.get(message.senderOrSync)?.priority == PRIORITY_HIDDEN &&
                     // the message's sentTimestamp is earlier than the sentTimestamp of the last config
                     message.sentTimestamp!! < contactConfigTimestamp
         }
@@ -157,7 +160,7 @@ class BatchMessageReceiveJob @AssistedInject constructor(
         messages.forEach { messageParameters ->
             val (data, serverHash, openGroupMessageServerID) = messageParameters
             try {
-                val (message, proto) = MessageReceiver.parse(
+                val (message, proto) = messageReceiver.parse(
                     data,
                     openGroupMessageServerID,
                     openGroupPublicKey = serverPublicKey,
@@ -358,7 +361,8 @@ class BatchMessageReceiveJob @AssistedInject constructor(
 
     @AssistedFactory
     abstract class Factory : Job.DeserializeFactory<BatchMessageReceiveJob> {
-        abstract fun create(
+        @Deprecated("New code should try to handle message directly instead of creating this job")
+        protected abstract fun create(
             messages: List<MessageReceiveParameters>,
             fromCommunity: Address.Community?,
         ): BatchMessageReceiveJob

@@ -270,12 +270,20 @@
         <item quantity="one">پیام را پاک کنید</item>
         <item quantity="other">پیام ها را پاک کنید</item>
     </plurals>
+    <plurals name="deleteMessageConfirm">
+        <item quantity="one">آیا مطمئن هستید که می‌خواهید این پیام را حذف کنید؟</item>
+        <item quantity="other">آیا مطمئن هستید که می‌خواهید این پیام‌ها را حذف کنید؟</item>
+    </plurals>
     <plurals name="deleteMessageDeleted">
         <item quantity="one">پیام پاک شد</item>
         <item quantity="other">پبام ها حذف شدند</item>
     </plurals>
     <string name="deleteMessageDeletedGlobally">این پیام حذف شده است</string>
     <string name="deleteMessageDeletedLocally">این پیام در این دستگاه پاک شد</string>
+    <plurals name="deleteMessageDescriptionDevice">
+        <item quantity="one">آیا مطمئن هستید که میخواهید این پیام را فقط از این دستگاه حذف کنید؟</item>
+        <item quantity="other">آیا مطمئن هستید که میخواهید همه پیامها را فقط از این دستگاه حذف کنید؟</item>
+    </plurals>
     <string name="deleteMessageDescriptionEveryone">آیا مطمئن هستید که می‌خواهید این پیام را برای همه حذف کنید؟</string>
     <string name="deleteMessageDeviceOnly">حذف فقط از این دستگاه</string>
     <string name="deleteMessageDevicesAll">حذف از تمام دستگاه‌هایم</string>

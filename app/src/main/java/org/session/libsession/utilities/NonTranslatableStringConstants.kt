@@ -15,5 +15,7 @@ object NonTranslatableStringConstants {
     const val APP_PRO                    = "Session Pro"
     const val SESSION_FOUNDATION         = "Session Foundation"
     const val PRO                        = "Pro"
+    const val ENTITY_RANGEPROOF          = "Rangeproof PTY LTD"
+    const val ENTITY_STF                 = "The Session Technology Foundation"
 }
 

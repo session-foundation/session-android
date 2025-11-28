@@ -20,11 +20,6 @@ interface LokiAPIDatabaseProtocol {
     fun clearLastMessageHashes(publicKey: String)
     fun clearLastMessageHashesByNamespaces(vararg namespaces: Int)
     fun clearAllLastMessageHashes()
-    fun getReceivedMessageHashValues(publicKey: String, namespace: Int): Set<String>?
-    fun setReceivedMessageHashValues(publicKey: String, newValue: Set<String>, namespace: Int)
-    fun clearReceivedMessageHashValues(publicKey: String)
-    fun clearReceivedMessageHashValues()
-    fun clearReceivedMessageHashValuesByNamespaces(vararg namespaces: Int)
     fun getAuthToken(server: String): String?
     fun setAuthToken(server: String, newValue: String?)
     fun getLastMessageServerID(room: String, server: String): Long?
@@ -35,7 +30,6 @@ interface LokiAPIDatabaseProtocol {
     fun setOpenGroupPublicKey(server: String, newValue: String)
     fun getLastSnodePoolRefreshDate(): Date?
     fun setLastSnodePoolRefreshDate(newValue: Date)
-    fun getUserX25519KeyPair(): ECKeyPair
     fun getClosedGroupEncryptionKeyPairs(groupPublicKey: String): List<ECKeyPair>
     fun getLatestClosedGroupEncryptionKeyPair(groupPublicKey: String): ECKeyPair?
     fun isClosedGroup(groupPublicKey: String): Boolean

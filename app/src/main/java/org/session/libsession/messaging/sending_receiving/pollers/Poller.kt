@@ -27,21 +27,23 @@ import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
-import org.session.libsession.messaging.MessagingModuleConfiguration
-import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
-import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.jobs.MessageReceiveParameters
-import org.session.libsession.snode.RawResponse
+import org.session.libsession.messaging.messages.Message.Companion.senderOrSync
+import org.session.libsession.messaging.sending_receiving.MessageParser
+import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
 import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.SnodeClock
+import org.session.libsession.snode.model.RetrieveMessageResponse
 import org.session.libsession.snode.utilities.await
+import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigMessage
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
-import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
+import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import kotlin.time.Duration.Companion.days
@@ -57,7 +59,10 @@ class Poller @AssistedInject constructor(
     private val preferences: TextSecurePreferences,
     private val appVisibilityManager: AppVisibilityManager,
     private val networkConnectivity: NetworkConnectivity,
-    private val batchMessageReceiveJobFactory: BatchMessageReceiveJob.Factory,
+    private val snodeClock: SnodeClock,
+    private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
+    private val processor: ReceivedMessageProcessor,
+    private val messageParser: MessageParser,
     @Assisted scope: CoroutineScope
 ) {
     private val userPublicKey: String
@@ -119,7 +124,7 @@ class Poller @AssistedInject constructor(
             // To migrate to multi part config, we'll need to fetch all the config messages so we
             // get the chance to process those multipart messages again...
             lokiApiDatabase.clearLastMessageHashesByNamespaces(*allConfigNamespaces)
-            lokiApiDatabase.clearReceivedMessageHashValuesByNamespaces(*allConfigNamespaces)
+            receivedMessageHashDatabase.removeAllByNamespaces(*allConfigNamespaces)
 
             preferences.migratedToMultiPartConfig = true
         }
@@ -208,60 +213,91 @@ class Poller @AssistedInject constructor(
         }
     }
 
-    private fun processPersonalMessages(snode: Snode, rawMessages: RawResponse) {
-        val messages = SnodeAPI.parseRawMessagesResponse(rawMessages, snode, userPublicKey)
-        val parameters = messages.map { (envelope, serverHash) ->
-            MessageReceiveParameters(envelope.toByteArray(), serverHash = serverHash)
+    private fun processPersonalMessages(messages: List<RetrieveMessageResponse.Message>) {
+        if (messages.isEmpty()) {
+            Log.d(TAG, "No personal messages to process")
+            return
         }
-        parameters.chunked(BatchMessageReceiveJob.BATCH_DEFAULT_NUMBER).forEach { chunk ->
-            JobQueue.shared.add(batchMessageReceiveJobFactory.create(
-                messages = chunk,
-                fromCommunity = null
-            ))
+
+        Log.d(TAG, "Received ${messages.size} personal messages from snode")
+
+        processor.startProcessing("Poller") { ctx ->
+            for (message in messages) {
+                if (receivedMessageHashDatabase.checkOrUpdateDuplicateState(
+                        swarmPublicKey = userPublicKey,
+                        namespace = Namespace.DEFAULT(),
+                        hash = message.hash
+                    )) {
+                    Log.d(TAG, "Skipping duplicated message ${message.hash}")
+                    continue
+                }
+
+                try {
+                    val (message, proto) = messageParser.parse1o1Message(
+                        data = message.data,
+                        serverHash = message.hash,
+                        currentUserEd25519PrivKey = ctx.currentUserEd25519KeyPair.secretKey.data,
+                        currentUserId = ctx.currentUserId
+                    )
+
+                    processor.processSwarmMessage(
+                        threadAddress = message.senderOrSync.toAddress() as Address.Conversable,
+                        message = message,
+                        proto = proto,
+                        context = ctx,
+                    )
+                } catch (ec: Exception) {
+                    Log.e(
+                        TAG,
+                        "Error while processing personal message with hash ${message.hash}",
+                        ec
+                    )
+                }
+            }
         }
     }
 
-    private fun processConfig(snode: Snode, rawMessages: RawResponse, forConfig: UserConfigType) {
-        Log.d(TAG, "Received ${rawMessages.size} messages for $forConfig")
-        val messages = rawMessages["messages"] as? List<*>
-        val namespace = forConfig.namespace
-        val processed = if (!messages.isNullOrEmpty()) {
-            SnodeAPI.updateLastMessageHashValueIfPossible(snode, userPublicKey, messages, namespace)
-            SnodeAPI.removeDuplicates(
-                publicKey = userPublicKey,
-                messages = messages,
-                messageHashGetter = { (it as? Map<*, *>)?.get("hash") as? String },
-                namespace = namespace,
-                updateStoredHashes = true
-            ).mapNotNull { rawMessageAsJSON ->
-                rawMessageAsJSON as Map<*, *> // removeDuplicates should have ensured this is always a map
-                val hashValue = rawMessageAsJSON["hash"] as? String ?: return@mapNotNull null
-                val b64EncodedBody = rawMessageAsJSON["data"] as? String ?: return@mapNotNull null
-                val timestamp = rawMessageAsJSON["t"] as? Long ?: SnodeAPI.nowWithOffset
-                val body = Base64.decode(b64EncodedBody)
-                ConfigMessage(data = body, hash = hashValue, timestamp = timestamp)
-            }
-        } else emptyList()
-
-        Log.d(TAG, "About to process ${processed.size} messages for $forConfig")
-
-        if (processed.isEmpty()) return
-
-        try {
-            configFactory.mergeUserConfigs(
-                userConfigType = forConfig,
-                messages = processed,
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "Error while merging user configs", e)
+    private fun processConfig(messages: List<RetrieveMessageResponse.Message>, forConfig: UserConfigType) {
+        if (messages.isEmpty()) {
+            Log.d(TAG, "No messages to process for $forConfig")
+            return
         }
 
-        Log.d(TAG, "Completed processing messages for $forConfig")
+        val newMessages = messages
+            .asSequence()
+            .filterNot { msg ->
+                receivedMessageHashDatabase.checkOrUpdateDuplicateState(
+                    swarmPublicKey = userPublicKey,
+                    namespace = forConfig.namespace,
+                    hash = msg.hash
+                )
+            }
+            .map { m->
+                ConfigMessage(
+                    data = m.data,
+                    hash = m.hash,
+                    timestamp = m.timestamp.toEpochMilli()
+                )
+            }
+            .toList()
+
+        if (newMessages.isNotEmpty()) {
+            try {
+                configFactory.mergeUserConfigs(
+                    userConfigType = forConfig,
+                    messages = newMessages
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Error while merging user configs for $forConfig", e)
+            }
+        }
+
+        Log.d(TAG, "Processed ${newMessages.size} new messages for config $forConfig")
     }
 
 
     private suspend fun poll(snode: Snode, pollOnlyUserProfileConfig: Boolean) = supervisorScope {
-        val userAuth = requireNotNull(MessagingModuleConfiguration.shared.storage.userAuth)
+        val userAuth = requireNotNull(storage.userAuth)
 
         // Get messages call wrapped in an async
         val fetchMessageTask = if (!pollOnlyUserProfileConfig) {
@@ -280,7 +316,7 @@ class Poller @AssistedInject constructor(
                         snode = snode,
                         publicKey = userPublicKey,
                         request = request,
-                        responseType = Map::class.java
+                        responseType = RetrieveMessageResponse.serializer()
                     )
                 }
             }
@@ -314,7 +350,12 @@ class Poller @AssistedInject constructor(
 
                     this.async {
                         type to runCatching {
-                            SnodeAPI.sendBatchRequest(snode, userPublicKey, request, Map::class.java)
+                            SnodeAPI.sendBatchRequest(
+                                snode = snode,
+                                publicKey = userPublicKey,
+                                request = request,
+                                responseType = RetrieveMessageResponse.serializer()
+                            )
                         }
                     }
                 }
@@ -329,7 +370,7 @@ class Poller @AssistedInject constructor(
                         SnodeAPI.buildAuthenticatedAlterTtlBatchRequest(
                             messageHashes = hashesToExtend.toList(),
                             auth = userAuth,
-                            newExpiry = SnodeAPI.nowWithOffset + 14.days.inWholeMilliseconds,
+                            newExpiry = snodeClock.currentTimeMills() + 14.days.inWholeMilliseconds,
                             extend = true
                         )
                     )
@@ -350,7 +391,18 @@ class Poller @AssistedInject constructor(
                 continue
             }
 
-            processConfig(snode, result.getOrThrow(), configType)
+            val messages = result.getOrThrow().messages
+            processConfig(messages = messages, forConfig = configType)
+
+            if (messages.isNotEmpty()) {
+                lokiApiDatabase.setLastMessageHashValue(
+                    snode = snode,
+                    publicKey = userPublicKey,
+                    newValue = messages
+                        .maxBy { it.timestamp }.hash,
+                    namespace = configType.namespace
+                )
+            }
         }
 
         // Process the messages if we requested them
@@ -359,7 +411,17 @@ class Poller @AssistedInject constructor(
             if (result.isFailure) {
                 Log.e(TAG, "Error while fetching messages", result.exceptionOrNull())
             } else {
-                processPersonalMessages(snode, result.getOrThrow())
+                val messages = result.getOrThrow().messages
+                processPersonalMessages(messages)
+
+                messages.maxByOrNull { it.timestamp }?.let { newest ->
+                    lokiApiDatabase.setLastMessageHashValue(
+                        snode = snode,
+                        publicKey = userPublicKey,
+                        newValue = newest.hash,
+                        namespace = Namespace.DEFAULT()
+                    )
+                }
             }
         }
     }

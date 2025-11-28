@@ -70,7 +70,6 @@ import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_N
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
-import org.session.libsession.utilities.recipients.ProStatus
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
@@ -79,15 +78,15 @@ import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogStat
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsActivity
-import org.thoughtcrime.securesms.pro.SubscriptionState
-import org.thoughtcrime.securesms.pro.SubscriptionType
-import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
+import org.thoughtcrime.securesms.pro.ProDataState
+import org.thoughtcrime.securesms.pro.ProStatus
+import org.thoughtcrime.securesms.pro.previewAutoRenewingApple
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.tokenpage.TokenPageActivity
 import org.thoughtcrime.securesms.ui.AccountIdHeader
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.AnimatedProfilePicProCTA
-import org.thoughtcrime.securesms.ui.AnimatedSessionProActivatedCTA
+import org.thoughtcrime.securesms.ui.CTAAnimatedImages
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.Divider
@@ -99,6 +98,7 @@ import org.thoughtcrime.securesms.ui.PathDot
 import org.thoughtcrime.securesms.ui.ProBadge
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.RadioOption
+import org.thoughtcrime.securesms.ui.SessionProCTA
 import org.thoughtcrime.securesms.ui.components.AcccentOutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.AnnotatedTextWithIcon
@@ -130,8 +130,6 @@ import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
 import org.thoughtcrime.securesms.util.State
 import org.thoughtcrime.securesms.util.push
-import java.time.Duration
-import java.time.Instant
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -265,11 +263,11 @@ fun Settings(
                     },
                 text = uiState.username,
                 iconSize = 53.sp to 24.sp,
-                content = if(uiState.isPro){{
+                content = if(uiState.proDataState.type !is ProStatus.NeverSubscribed){{ // if we are pro or expired
                     ProBadge(
                         modifier = Modifier.padding(start = 4.dp)
                             .qaTag(stringResource(R.string.qa_pro_badge_icon)),
-                        colors = if(uiState.subscriptionState is SubscriptionType.Active)
+                        colors = if(uiState.proDataState.type is ProStatus.Active)
                             proBadgeColorStandard()
                         else proBadgeColorDisabled()
                     )
@@ -301,7 +299,7 @@ fun Settings(
                 recoveryHidden = uiState.recoveryHidden,
                 hasPaths = uiState.hasPath,
                 postPro = uiState.isPostPro,
-                subscriptionState = uiState.subscriptionState,
+                proDataState = uiState.proDataState,
                 sendCommand = sendCommand
             )
 
@@ -383,7 +381,7 @@ fun Settings(
         if(uiState.showAvatarDialog) {
             AvatarDialog(
                 state = uiState.avatarDialogState,
-                isPro = uiState.isPro,
+                isPro = uiState.proDataState.type is ProStatus.Active,
                 isPostPro = uiState.isPostPro,
                 sendCommand = sendCommand,
                 startAvatarSelection = startAvatarSelection
@@ -393,7 +391,7 @@ fun Settings(
         // Animated avatar CTA
         if(uiState.showAnimatedProCTA){
             AnimatedProCTA(
-                isPro = uiState.isPro,
+                proSubscription = uiState.proDataState.type,
                 sendCommand = sendCommand
             )
         }
@@ -402,6 +400,8 @@ fun Settings(
         if(uiState.showUrlDialog != null){
             OpenURLAlertDialog(
                 url = uiState.showUrlDialog,
+                onLinkOpened = { sendCommand(OnLinkOpened(uiState.showUrlDialog)) },
+                onLinkCopied = { sendCommand(OnLinkCopied(uiState.showUrlDialog)) },
                 onDismissRequest = { sendCommand(HideUrlDialog) }
             )
         }
@@ -480,7 +480,7 @@ fun Buttons(
     recoveryHidden: Boolean,
     hasPaths: Boolean,
     postPro: Boolean,
-    subscriptionState: SubscriptionState,
+    proDataState: ProDataState,
     sendCommand: (SettingsViewModel.Commands) -> Unit,
 ) {
     Column(
@@ -525,22 +525,22 @@ fun Buttons(
                 if(postPro){
                    ItemButton(
                         text = annotatedStringResource(
-                            when (subscriptionState.type) {
-                                is SubscriptionType.Active -> Phrase.from(
+                            when (proDataState.type) {
+                                is ProStatus.Active -> Phrase.from(
                                     LocalContext.current,
                                     R.string.sessionProBeta
                                 )
                                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                                     .format().toString()
 
-                                is SubscriptionType.NeverSubscribed -> Phrase.from(
+                                is ProStatus.NeverSubscribed -> Phrase.from(
                                     LocalContext.current,
                                     R.string.upgradeSession
                                 )
                                     .put(APP_NAME_KEY, stringResource(R.string.app_name))
                                     .format().toString()
 
-                                is SubscriptionType.Expired -> Phrase.from(
+                                is ProStatus.Expired -> Phrase.from(
                                     LocalContext.current,
                                     R.string.proRenewBeta
                                 )
@@ -556,49 +556,10 @@ fun Buttons(
                                 contentDescription = null,
                             )
                         },
-                       endIcon = {
-                           when(subscriptionState.refreshState){
-                               is State.Loading -> {
-                                   Box(
-                                       modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)
-                                   ) {
-                                       SmallCircularProgressIndicator(
-                                           modifier = Modifier.align(Alignment.Center),
-                                           color = LocalColors.current.text
-                                       )
-                                   }
-                               }
-
-                               is State.Error -> {
-                                   Box(
-                                       modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)
-                                   ) {
-                                       Icon(
-                                           painter = painterResource(id = R.drawable.ic_triangle_alert),
-                                           tint = LocalColors.current.warning,
-                                           contentDescription = stringResource(id = R.string.qa_icon_error),
-                                           modifier = Modifier
-                                               .size(LocalDimensions.current.iconMedium)
-                                               .align(Alignment.Center),
-                                       )
-                                   }
-                               }
-
-                               else -> null
-                           }
-                       },
                         modifier = Modifier.qaTag(R.string.qa_settings_item_pro),
                         colors = accentTextButtonColors()
                     ) {
-                       // there is a special case when we have a subscription error or loading
-                       // but also no pro account
-                       if(subscriptionState.refreshState !is State.Success &&
-                           subscriptionState.type is SubscriptionType.NeverSubscribed
-                       ){
-                           sendCommand(ShowProErrorOrLoading)
-                       } else {
-                           activity?.push<ProSettingsActivity>()
-                       }
+                       activity?.push<ProSettingsActivity>()
                     }
 
                     Divider()
@@ -1031,14 +992,13 @@ fun AvatarDialog(
 
 @Composable
 fun AnimatedProCTA(
-    isPro: Boolean,
+    proSubscription: ProStatus,
     sendCommand: (SettingsViewModel.Commands) -> Unit,
 ){
-    if(isPro) {
-        AnimatedSessionProActivatedCTA (
-            heroImageBg = R.drawable.cta_hero_animated_bg,
-            heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
+    if(proSubscription is ProStatus.Active) {
+        SessionProCTA (
             title = stringResource(R.string.proActivated),
+            badgeAtStart = true,
             textContent = {
                 ProBadgeText(
                     modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -1050,7 +1010,9 @@ fun AnimatedProCTA(
 
                 // main message
                 Text(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    modifier = Modifier
+                        .qaTag(R.string.qa_cta_body)
+                        .align(Alignment.CenterHorizontally),
                     text = stringResource(R.string.proAnimatedDisplayPicture),
                     textAlign = TextAlign.Center,
                     style = LocalType.current.base.copy(
@@ -1058,10 +1020,19 @@ fun AnimatedProCTA(
                     )
                 )
             },
+            content = {
+                CTAAnimatedImages(
+                    heroImageBg = R.drawable.cta_hero_animated_bg,
+                    heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
+                )
+            },
+            positiveButtonText = null,
+            negativeButtonText = stringResource(R.string.close),
             onCancel = { sendCommand(HideAnimatedProCTA) }
         )
     } else {
         AnimatedProfilePicProCTA(
+            proSubscription = proSubscription,
             onDismissRequest = { sendCommand(HideAnimatedProCTA) },
         )
     }
@@ -1091,23 +1062,11 @@ private fun SettingsScreenPreview() {
                         )
                     )
                 ),
-                isPro = true,
                 isPostPro = true,
-                subscriptionState = SubscriptionState(
-                    type = SubscriptionType.Active.AutoRenewing(
-                        proStatus = ProStatus.Pro(
-                            visible = true,
-                            validUntil = Instant.now() + Duration.ofDays(14),
-                        ),
-                        duration = ProSubscriptionDuration.THREE_MONTHS,
-                        nonOriginatingSubscription = SubscriptionType.Active.NonOriginatingSubscription(
-                            device = "iPhone",
-                            store = "Apple App Store",
-                            platform = "Apple",
-                            platformAccount = "Apple Account",
-                            urlSubscription = "https://www.apple.com/account/subscriptions",
-                        )),
+                proDataState = ProDataState(
+                    type = previewAutoRenewingApple,
                     refreshState = State.Success(Unit),
+                    showProBadge = true
                 ),
                 username = "Atreyu",
                 accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
@@ -1121,96 +1080,6 @@ private fun SettingsScreenPreview() {
             onBack = {},
 
         )
-    }
-}
-
-@OptIn(ExperimentalSharedTransitionApi::class)
-@SuppressLint("UnusedContentLambdaTargetStateParameter")
-@Preview
-@Composable
-private fun SettingsScreenNoProPreview() {
-    PreviewTheme {
-        Settings (
-            uiState = SettingsViewModel.UIState(
-                showLoader = false,
-                avatarDialogState = SettingsViewModel.AvatarDialogState.NoAvatar,
-                recoveryHidden = false,
-                showUrlDialog = null,
-                showAvatarDialog = false,
-                showAvatarPickerOptionCamera = false,
-                showAvatarPickerOptions = false,
-                showAnimatedProCTA = false,
-                avatarData = AvatarUIData(
-                    listOf(
-                        AvatarUIElement(
-                            name = "TO",
-                            color = primaryBlue
-                        )
-                    )
-                ),
-                isPro = false,
-                isPostPro = true,
-                subscriptionState = SubscriptionState(
-                    type = SubscriptionType.NeverSubscribed,
-                    refreshState = State.Loading,
-                ),
-                username = "Atreyu",
-                accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
-                hasPath = true,
-                version = "1.26.0",
-            ),
-            sendCommand = {},
-            onGalleryPicked = {},
-            onCameraPicked = {},
-            startAvatarSelection = {},
-            onBack = {},
-
-            )
-    }
-}
-
-@OptIn(ExperimentalSharedTransitionApi::class)
-@SuppressLint("UnusedContentLambdaTargetStateParameter")
-@Preview
-@Composable
-private fun SettingsScreenProExpiredPreview() {
-    PreviewTheme {
-        Settings (
-            uiState = SettingsViewModel.UIState(
-                showLoader = false,
-                avatarDialogState = SettingsViewModel.AvatarDialogState.NoAvatar,
-                recoveryHidden = false,
-                showUrlDialog = null,
-                showAvatarDialog = false,
-                showAvatarPickerOptionCamera = false,
-                showAvatarPickerOptions = false,
-                showAnimatedProCTA = false,
-                avatarData = AvatarUIData(
-                    listOf(
-                        AvatarUIElement(
-                            name = "TO",
-                            color = primaryBlue
-                        )
-                    )
-                ),
-                isPro = true,
-                isPostPro = true,
-                subscriptionState = SubscriptionState(
-                    type = SubscriptionType.NeverSubscribed,
-                    refreshState = State.Error(Exception()),
-                ),
-                username = "Atreyu",
-                accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
-                hasPath = true,
-                version = "1.26.0",
-            ),
-            sendCommand = {},
-            onGalleryPicked = {},
-            onCameraPicked = {},
-            startAvatarSelection = {},
-            onBack = {},
-
-            )
     }
 }
 

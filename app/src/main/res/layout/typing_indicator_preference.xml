@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical">
+
+    <org.thoughtcrime.securesms.conversation.v2.components.TypingIndicatorViewContainer
+        android:id="@+id/pref_typing_indicator_view"
+        android:paddingTop="@dimen/small_spacing"
+        android:paddingEnd="@dimen/small_spacing"
+        android:scaleX="0.6"
+        android:scaleY="0.6"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/compose_preference"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+</LinearLayout>

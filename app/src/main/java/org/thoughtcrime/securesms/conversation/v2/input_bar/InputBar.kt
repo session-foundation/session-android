@@ -249,7 +249,7 @@ class InputBar @JvmOverloads constructor(
             binding.inputBarAdditionalContentContainer.addView(layout)
             val attachments = (message as? MmsMessageRecord)?.slideDeck
             val sender =
-                if (message.isOutgoing) recipientRepository.getRecipientSync(Address.fromSerialized(TextSecurePreferences.getLocalNumber(context)!!))
+                if (message.isOutgoing) recipientRepository.getSelf()
                 else message.individualRecipient
             it.bind(sender, message.body, attachments, thread, true, message.isOpenGroupInvitation, message.threadId, false, glide)
         }
@@ -365,7 +365,7 @@ class InputBar @JvmOverloads constructor(
     fun setCharLimitState(state: InputbarViewModel.InputBarCharLimitState?) {
         // handle char limit
         if(state != null){
-            binding.characterLimitText.text = state.count.toString()
+            binding.characterLimitText.text = state.countFormatted
             binding.characterLimitText.setTextColor(if(state.danger) dangerColor else textColor)
             binding.characterLimitContainer.setOnClickListener {
                 delegate?.onCharLimitTapped()

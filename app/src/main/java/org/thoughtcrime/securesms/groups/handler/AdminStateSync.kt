@@ -6,10 +6,10 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import java.util.EnumSet
@@ -26,7 +26,7 @@ import javax.inject.Singleton
 @Singleton
 class AdminStateSync @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
-    private val preferences: TextSecurePreferences,
+    private val loginStateRepository: LoginStateRepository,
     @param:ManagerScope private val scope: CoroutineScope
 ) : OnAppStartupComponent {
     private var job: Job? = null
@@ -35,37 +35,38 @@ class AdminStateSync @Inject constructor(
         require(job == null) { "Already started" }
 
         job = scope.launch {
-            configFactory.userConfigsChanged(onlyConfigTypes = setOf(UserConfigType.USER_GROUPS))
-                .collect {
-                    val localNumber = preferences.getLocalNumber() ?: return@collect
+            loginStateRepository.flowWithLoggedInState {
+                configFactory.userConfigsChanged(onlyConfigTypes = setOf(UserConfigType.USER_GROUPS))
+            }.collect {
+                val localNumber = loginStateRepository.requireLocalNumber()
 
-                    // Go through evey user groups and if we are admin of any of the groups,
-                    // make sure we mark any pending group promotion status as "accepted"
+                // Go through evey user groups and if we are admin of any of the groups,
+                // make sure we mark any pending group promotion status as "accepted"
 
-                    val allAdminGroups = configFactory.withUserConfigs { configs ->
-                        configs.userGroups.all()
-                            .asSequence()
-                            .mapNotNull {
-                                if ((it as? GroupInfo.ClosedGroupInfo)?.hasAdminKey() == true) {
-                                    AccountId(it.groupAccountId)
-                                } else {
-                                    null
-                                }
+                val allAdminGroups = configFactory.withUserConfigs { configs ->
+                    configs.userGroups.all()
+                        .asSequence()
+                        .mapNotNull {
+                            if ((it as? GroupInfo.ClosedGroupInfo)?.hasAdminKey() == true) {
+                                AccountId(it.groupAccountId)
+                            } else {
+                                null
                             }
-                    }
+                        }
+                }
 
-                    val groupToMarkAccepted = allAdminGroups
-                        .filter { groupId -> isMemberPromotionPending(groupId, localNumber) }
+                val groupToMarkAccepted = allAdminGroups
+                    .filter { groupId -> isMemberPromotionPending(groupId, localNumber) }
 
-                    for (groupId in groupToMarkAccepted) {
-                        configFactory.withMutableGroupConfigs(groupId) { groupConfigs ->
-                            groupConfigs.groupMembers.get(localNumber)?.let { member ->
-                                member.setPromotionAccepted()
-                                groupConfigs.groupMembers.set(member)
-                            }
+                for (groupId in groupToMarkAccepted) {
+                    configFactory.withMutableGroupConfigs(groupId) { groupConfigs ->
+                        groupConfigs.groupMembers.get(localNumber)?.let { member ->
+                            member.setPromotionAccepted()
+                            groupConfigs.groupMembers.set(member)
                         }
                     }
                 }
+            }
         }
     }
 

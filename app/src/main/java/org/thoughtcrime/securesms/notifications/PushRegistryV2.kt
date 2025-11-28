@@ -24,6 +24,7 @@ import org.session.libsession.snode.Version
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Device
 import org.session.libsignal.utilities.toHexString
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -32,13 +33,10 @@ typealias SignedUnsubscriptionRequest = JsonObject
 
 @Singleton
 class PushRegistryV2 @Inject constructor(
-    private val pushReceiver: PushReceiver,
     private val device: Device,
-    private val clock: SnodeClock
+    private val clock: SnodeClock,
+    private val loginStateRepository: LoginStateRepository,
 ) {
-    private val pnKey by lazy {
-        pushReceiver.getOrCreateNotificationKey()
-    }
 
     suspend fun register(
         requests: Collection<SignedSubscriptionRequest>
@@ -69,7 +67,9 @@ class PushRegistryV2 @Inject constructor(
             service = device.service,
             sig_ts = timestamp,
             service_info = mapOf("token" to token),
-            enc_key = pnKey.toHexString(),
+            enc_key = requireNotNull(loginStateRepository.peekLoginState()) {
+                "User must be logged in to register for push notifications"
+            }.notificationKey.data.toHexString(),
         ).let(Json::encodeToJsonElement).jsonObject + signed
     }
 

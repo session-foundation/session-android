@@ -15,12 +15,10 @@ import network.loki.messenger.databinding.ViewConversationBinding
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.ThreadRecord
-import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.setThemedContent
@@ -88,7 +86,7 @@ class ConversationView : LinearLayout {
 
         // Thread name and pro badge
         binding.conversationViewDisplayName.text = senderDisplayName
-        binding.iconPro.isVisible = thread.recipient.proStatus.shouldShowProBadge()
+        binding.iconPro.isVisible = thread.recipient.shouldShowProBadge
                 && !thread.recipient.isLocalNumber
 
         binding.timestampTextView.text = thread.date.takeIf { it != 0L }?.let { dateUtils.getDisplayFormattedTimeSpanString(

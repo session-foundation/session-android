@@ -15,11 +15,14 @@ public interface MmsSmsColumns {
   // It is NOT the address of the sender of any given message!
   public static final String ADDRESS                  = "address";
 
+  @Deprecated(forRemoval = true)
   public static final String ADDRESS_DEVICE_ID        = "address_device_id";
   public static final String DELIVERY_RECEIPT_COUNT   = "delivery_receipt_count";
   public static final String READ_RECEIPT_COUNT       = "read_receipt_count";
+  @Deprecated(forRemoval = true)
   public static final String MISMATCHED_IDENTITIES    = "mismatched_identities";
   public static final String UNIQUE_ROW_ID            = "unique_row_id";
+  @Deprecated(forRemoval = true)
   public static final String SUBSCRIPTION_ID          = "subscription_id";
   public static final String EXPIRES_IN               = "expires_in";
   public static final String EXPIRE_STARTED           = "expire_started";
@@ -39,6 +42,9 @@ public interface MmsSmsColumns {
   public static final String IS_GROUP_UPDATE          = "is_group_update";
 
   public static final String SERVER_HASH              = "server_hash";
+
+  public static final String PRO_MESSAGE_FEATURES     = "pro_message_features";
+  public static final String PRO_PROFILE_FEATURES     = "pro_profile_features";
 
   public static class Types {
     protected static final long TOTAL_MASK = 0xFFFFFFFF;

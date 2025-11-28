@@ -43,6 +43,7 @@ public final class ReactionsDialogFragment extends BottomSheetDialogFragment imp
   private static final String ARGS_IS_MODERATOR = "reactions.args.is.moderator";
   private static final String ARGS_EMOJI = "reactions.args.emoji";
   private static final String ARGS_CAN_REMOVE = "reactions.args.can.remove";
+  private static final String ARGS_FROM_COMMUNITY_THREAD = "reactions.args.from.community.thread";
 
   private ViewPager2                recipientPagerView;
   private ReactionViewPagerAdapter  recipientsAdapter;
@@ -53,7 +54,11 @@ public final class ReactionsDialogFragment extends BottomSheetDialogFragment imp
 
   private final LifecycleDisposable disposables = new LifecycleDisposable();
 
-  public static DialogFragment create(MessageId messageId, boolean isUserModerator, @Nullable String emoji, boolean canRemove) {
+  public static DialogFragment create(MessageId messageId,
+                                      boolean isUserModerator,
+                                      @Nullable String emoji,
+                                      boolean canRemove,
+                                      boolean fromCommunityThread) {
     Bundle         args     = new Bundle();
     DialogFragment fragment = new ReactionsDialogFragment();
 
@@ -62,6 +67,7 @@ public final class ReactionsDialogFragment extends BottomSheetDialogFragment imp
     args.putBoolean(ARGS_IS_MODERATOR, isUserModerator);
     args.putString(ARGS_EMOJI, emoji);
     args.putBoolean(ARGS_CAN_REMOVE, canRemove);
+    args.putBoolean(ARGS_FROM_COMMUNITY_THREAD, fromCommunityThread);
 
     fragment.setArguments(args);
 
@@ -158,7 +164,8 @@ public final class ReactionsDialogFragment extends BottomSheetDialogFragment imp
             getDefaultViewModelProviderFactory(),
             HiltViewModelExtensions.withCreationCallback(
                     getDefaultViewModelCreationExtras(),
-                    (ReactionsViewModel.Factory factory) -> factory.create(messageId)
+                    (ReactionsViewModel.Factory factory) -> factory.create(
+                            messageId, requireArguments().getBoolean(ARGS_FROM_COMMUNITY_THREAD))
             )
     ).get(ReactionsViewModel.class);
 

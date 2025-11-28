@@ -23,6 +23,7 @@ import org.session.libsession.utilities.Util;
 import org.session.libsignal.database.LokiOpenGroupDatabaseProtocol;
 import org.session.libsignal.messages.SignalServiceAttachmentPointer;
 import org.session.libsignal.utilities.guava.Optional;
+import org.thoughtcrime.securesms.auth.LoginStateRepository;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.util.BitmapUtil;
 
@@ -108,8 +109,12 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
 
   private final MutableSharedFlow<String> updateNotification = SharedFlowKt.MutableSharedFlow(0, 128, BufferOverflow.DROP_OLDEST);
 
-  public GroupDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper) {
+  private final LoginStateRepository loginStateRepository;
+
+  public GroupDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper, LoginStateRepository loginStateRepository) {
     super(context, databaseHelper);
+
+    this.loginStateRepository = loginStateRepository;
   }
 
   @NonNull
@@ -170,7 +175,7 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
     List<Address> filtered = new ArrayList<>();
 
     for (Address member : members) {
-      if (!includeSelf && Util.isOwnNumber(context, member.toString()))
+      if (!includeSelf && member.getAddress().equals(loginStateRepository.getLocalNumber()))
         continue;
 
       if (AddressKt.isStandard(member)) {
@@ -184,7 +189,7 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
   public @NonNull List<Address> getGroupMemberAddresses(String groupId, boolean includeSelf) {
     List<Address> members = getCurrentMembers(groupId, false);
     if (!includeSelf) {
-      String ownNumber = TextSecurePreferences.getLocalNumber(context);
+      String ownNumber = loginStateRepository.getLocalNumber();
       if (ownNumber == null) return members;
       Address ownAddress = Address.fromSerialized(ownNumber);
       int indexOfSelf = members.indexOf(ownAddress);

@@ -35,6 +35,7 @@ import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.mms.MediaConstraints
 import org.thoughtcrime.securesms.mms.MediaStream
 import org.thoughtcrime.securesms.mms.PartAuthority
@@ -108,7 +109,8 @@ class DatabaseAttachmentProvider @Inject constructor(
     }
 
     override fun getLinkPreviewAttachmentIDFor(mmsMessageId: Long): Long? {
-        val message = mmsDatabase.getOutgoingMessage(mmsMessageId)
+        val message = mmsSmsDatabase.getMessageById(MessageId(mmsMessageId, true))
+                as? MmsMessageRecord ?: return null
         return message.linkPreviews.firstOrNull()?.attachmentId?.rowId
     }
 

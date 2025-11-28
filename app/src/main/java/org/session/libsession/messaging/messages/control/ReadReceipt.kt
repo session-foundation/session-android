@@ -1,8 +1,8 @@
 package org.session.libsession.messaging.messages.control
 
+import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.messages.copyExpiration
 import org.session.libsignal.protos.SignalServiceProtos
-import org.session.libsignal.utilities.Log
 
 class ReadReceipt() : ControlMessage() {
     var timestamps: List<Long>? = null
@@ -33,24 +33,15 @@ class ReadReceipt() : ControlMessage() {
         this.timestamps = timestamps
     }
 
-    override fun toProto(): SignalServiceProtos.Content? {
-        val timestamps = timestamps
-        if (timestamps == null) {
-            Log.w(TAG, "Couldn't construct read receipt proto from: $this")
-            return null
-        }
-
-        return try {
-            SignalServiceProtos.Content.newBuilder()
-                .setReceiptMessage(
-                    SignalServiceProtos.ReceiptMessage.newBuilder()
-                        .setType(SignalServiceProtos.ReceiptMessage.Type.READ)
-                        .addAllTimestampMs(timestamps.asIterable()).build()
-                ).applyExpiryMode()
-                .build()
-        } catch (e: Exception) {
-            Log.w(TAG, "Couldn't construct read receipt proto from: $this")
-            null
-        }
+    protected override fun buildProto(
+        builder: SignalServiceProtos.Content.Builder,
+        messageDataProvider: MessageDataProvider
+    ) {
+        builder
+            .receiptMessageBuilder
+            .setType(SignalServiceProtos.ReceiptMessage.Type.READ)
+            .addAllTimestampMs(requireNotNull(timestamps) {
+                "Timestamps is null"
+            })
     }
 }

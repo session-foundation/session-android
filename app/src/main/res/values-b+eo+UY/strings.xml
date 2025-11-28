@@ -15,7 +15,6 @@
     <string name="accountIdYoursDescription">Ĉi tio estas via Konto IDENT. Aliaj uzantoj povas skani ĝin por komenci konversacion kun vi.</string>
     <string name="actualSize">Efektiva grandeco</string>
     <string name="add">Aldoni</string>
-    <string name="addAdmins">Aldoni administrantojn</string>
     <string name="adminCannotBeRemoved">Administrantoj ne povas esti forigitaj.</string>
     <string name="adminMorePromotedToAdmin"><b>{name} </b> kaj <b>{count} aliaj </b> estis promociitaj al Admin.</string>
     <string name="adminPromote">Promocii administrantojn</string>

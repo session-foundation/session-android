@@ -33,9 +33,7 @@ class LandingActivity: BaseActionBarActivity() {
         setComposeContent {
             LandingScreen(
                 createAccount = { startPickDisplayNameActivity() },
-                loadAccount = { start<LoadAccountActivity>() },
-                openTerms = { open("https://getsession.org/terms-of-service") },
-                openPrivacyPolicy = { open("https://getsession.org/privacy-policy") }
+                loadAccount = { start<LoadAccountActivity>() }
             )
         }
 
