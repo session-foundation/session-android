@@ -8,7 +8,7 @@ import androidx.annotation.Nullable;
 import org.session.libsignal.utilities.guava.Optional;
 import org.session.libsignal.messages.SignalServiceAttachment;
 import org.session.libsignal.utilities.Base64;
-import org.session.libsignal.protos.SignalServiceProtos;
+import org.session.protos.SessionProtos;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -53,11 +53,11 @@ public class PointerAttachment extends Attachment {
     return results;
   }
 
-  public static List<Attachment> forPointers(List<SignalServiceProtos.DataMessage.Quote.QuotedAttachment> pointers) {
+  public static List<Attachment> forPointers(List<SessionProtos.DataMessage.Quote.QuotedAttachment> pointers) {
     List<Attachment> results = new LinkedList<>();
 
     if (pointers != null) {
-      for (SignalServiceProtos.DataMessage.Quote.QuotedAttachment pointer : pointers) {
+      for (SessionProtos.DataMessage.Quote.QuotedAttachment pointer : pointers) {
         Optional<Attachment> result = forPointer(pointer);
 
         if (result.isPresent()) {
@@ -98,7 +98,7 @@ public class PointerAttachment extends Attachment {
 
   }
 
-  public static Optional<Attachment> forPointer(SignalServiceProtos.AttachmentPointer pointer) {
+  public static Optional<Attachment> forPointer(SessionProtos.AttachmentPointer pointer) {
     return Optional.of(new PointerAttachment(pointer.getContentType(),
             AttachmentState.PENDING.getValue(),
             (long)pointer.getSize(),
@@ -115,8 +115,8 @@ public class PointerAttachment extends Attachment {
             pointer.getUrl()));
   }
 
-  public static Optional<Attachment> forPointer(SignalServiceProtos.DataMessage.Quote.QuotedAttachment pointer) {
-    SignalServiceProtos.AttachmentPointer thumbnail = pointer.getThumbnail();
+  public static Optional<Attachment> forPointer(SessionProtos.DataMessage.Quote.QuotedAttachment pointer) {
+    SessionProtos.AttachmentPointer thumbnail = pointer.getThumbnail();
 
     return Optional.of(new PointerAttachment(pointer.getContentType(),
             AttachmentState.PENDING.getValue(),

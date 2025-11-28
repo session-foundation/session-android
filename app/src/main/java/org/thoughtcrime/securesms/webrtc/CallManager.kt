@@ -29,7 +29,7 @@ import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Debouncer
 import org.session.libsession.utilities.Util
-import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.ICE_CANDIDATES
+import org.session.protos.SessionProtos.CallMessage.Type.ICE_CANDIDATES
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.webrtc.CallManager.StateEvent.AudioDeviceUpdate

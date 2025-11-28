@@ -39,7 +39,7 @@ import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.getType
-import org.session.libsignal.protos.SignalServiceProtos
+import org.session.protos.SessionProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.BlindMappingRepository
@@ -129,7 +129,7 @@ class ReceivedMessageProcessor @Inject constructor(
         context: MessageProcessingContext,
         threadAddress: Address.Conversable,
         message: Message,
-        proto: SignalServiceProtos.Content,
+        proto: SessionProtos.Content,
     ) = withThreadLock(threadAddress) {
         // The logic to check if the message should be discarded due to being from a hidden contact.
         if (threadAddress is Address.Standard &&

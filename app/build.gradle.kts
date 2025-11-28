@@ -12,7 +12,6 @@ plugins {
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.dependency.analysis)
     alias(libs.plugins.google.services)
-    alias(libs.plugins.protobuf.compiler)
 
     id("generate-ip-country-data")
     id("rename-apk")
@@ -83,23 +82,6 @@ fun VariantDimension.setAuthorityPostfix(postfix: String) {
 kotlin {
     compilerOptions {
         jvmToolchain(21)
-    }
-}
-
-protobuf {
-    protoc {
-        artifact = libs.protoc.get().toString()
-    }
-
-    plugins {
-        generateProtoTasks {
-            all().forEach {
-                it.builtins {
-                    create("java") {
-                    }
-                }
-            }
-        }
     }
 }
 

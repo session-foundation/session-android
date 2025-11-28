@@ -32,10 +32,10 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.waitUntilGroupConfigsPushed
-import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
+import org.session.protos.SessionProtos
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
@@ -214,9 +214,9 @@ class RemoveGroupMemberHandler @Inject constructor(
         return messageSender.buildWrappedMessageToSnode(
             destination = Destination.ClosedGroup(groupAccountId),
             message = GroupUpdated(
-                SignalServiceProtos.DataMessage.GroupUpdateMessage.newBuilder()
+                SessionProtos.GroupUpdateMessage.newBuilder()
                     .setDeleteMemberContent(
-                        SignalServiceProtos.DataMessage.GroupUpdateDeleteMemberContentMessage.newBuilder()
+                        SessionProtos.GroupUpdateDeleteMemberContentMessage.newBuilder()
                             .apply {
                                 for (id in memberSessionIDs) {
                                     addMemberSessionIds(id)

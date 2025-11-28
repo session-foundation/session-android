@@ -15,8 +15,8 @@ import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsignal.crypto.PushTransportDetails
-import org.session.libsignal.protos.SignalServiceProtos
-import org.session.libsignal.protos.SignalServiceProtos.Envelope
+import org.session.protos.SessionProtos
+import org.session.protos.SessionProtos.Envelope
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
@@ -66,7 +66,7 @@ class MessageReceiver @Inject constructor(
         openGroupPublicKey: String? = null,
         currentClosedGroups: Set<String>?,
         closedGroupSessionId: String? = null,
-    ): Pair<Message, SignalServiceProtos.Content> {
+    ): Pair<Message, SessionProtos.Content> {
         val userPublicKey = storage.getUserPublicKey()
         val isOpenGroupMessage = (openGroupServerID != null)
         var plaintext: ByteArray? = null
@@ -84,7 +84,7 @@ class MessageReceiver @Inject constructor(
             sender = envelope.source
         } else {
             when (envelope.type) {
-                SignalServiceProtos.Envelope.Type.SESSION_MESSAGE -> {
+                SessionProtos.Envelope.Type.SESSION_MESSAGE -> {
                     if (IdPrefix.fromValue(envelope.source)?.isBlinded() == true) {
                         openGroupPublicKey ?: throw Error.InvalidGroupPublicKey
                         otherBlindedPublicKey ?: throw Error.DecryptionFailed
@@ -103,7 +103,7 @@ class MessageReceiver @Inject constructor(
                         sender = decryptionResult.second
                     }
                 }
-                SignalServiceProtos.Envelope.Type.CLOSED_GROUP_MESSAGE -> {
+                SessionProtos.Envelope.Type.CLOSED_GROUP_MESSAGE -> {
                     val hexEncodedGroupPublicKey = closedGroupSessionId ?: envelope.source
                     val sessionId = AccountId(hexEncodedGroupPublicKey)
                     if (sessionId.prefix == IdPrefix.GROUP) {
@@ -150,16 +150,16 @@ class MessageReceiver @Inject constructor(
             }
         }
         // Parse the proto
-        val proto = SignalServiceProtos.Content.parseFrom(PushTransportDetails.getStrippedPaddingMessageBody(plaintext))
+        val proto = SessionProtos.Content.parseFrom(PushTransportDetails.getStrippedPaddingMessageBody(plaintext))
 
         // Verify the signature timestamp inside the content is the same as in envelope.
         // If the message is from an open group, 6 hours of difference is allowed.
-        if (proto.hasSigTimestampMs()) {
+        if (proto.hasSigTimestamp()) {
             val isCommunityOrCommunityInbox = openGroupServerID != null || otherBlindedPublicKey != null
 
             if (
-                (isCommunityOrCommunityInbox && abs(proto.sigTimestampMs - envelope.timestampMs) > TimeUnit.HOURS.toMillis(6)) ||
-                (!isCommunityOrCommunityInbox && proto.sigTimestampMs != envelope.timestampMs)
+                (isCommunityOrCommunityInbox && abs(proto.sigTimestamp - envelope.timestamp) > TimeUnit.HOURS.toMillis(6)) ||
+                (!isCommunityOrCommunityInbox && proto.sigTimestamp != envelope.timestamp)
             ) {
                 throw Error.InvalidSignature
             }
@@ -200,8 +200,8 @@ class MessageReceiver @Inject constructor(
         // Finish parsing
         message.sender = sender
         message.recipient = userPublicKey
-        message.sentTimestamp = envelope.timestampMs
-        message.receivedTimestamp = if (envelope.hasServerTimestampMs()) envelope.serverTimestampMs else SnodeAPI.nowWithOffset
+        message.sentTimestamp = envelope.timestamp
+        message.receivedTimestamp = if (envelope.hasServerTimestamp()) envelope.serverTimestamp else SnodeAPI.nowWithOffset
         message.groupPublicKey = groupPublicKey
         message.openGroupServerMessageID = openGroupServerID
         // Validate
@@ -216,8 +216,8 @@ class MessageReceiver @Inject constructor(
         if (groupPublicKey != null && groupPublicKey !in (currentClosedGroups ?: emptySet()) && IdPrefix.fromValue(groupPublicKey) != IdPrefix.GROUP) {
             throw Error.NoGroupThread
         }
-        if (storage.isDuplicateMessage(envelope.timestampMs)) { throw Error.DuplicateMessage }
-        storage.addReceivedMessageTimestamp(envelope.timestampMs)
+        if (storage.isDuplicateMessage(envelope.timestamp)) { throw Error.DuplicateMessage }
+        storage.addReceivedMessageTimestamp(envelope.timestamp)
         // Return
         return Pair(message, proto)
     }

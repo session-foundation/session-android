@@ -21,8 +21,8 @@ import org.session.libsession.messaging.utilities.MessageAuthentication.buildGro
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.getGroup
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateInviteMessage
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMessage
+import org.session.protos.SessionProtos.GroupUpdateInviteMessage
+import org.session.protos.SessionProtos.GroupUpdateMessage
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 

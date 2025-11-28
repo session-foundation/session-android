@@ -1,7 +1,7 @@
 package org.session.libsession.messaging.messages.visible
 
-import org.session.libsignal.protos.SignalServiceProtos
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.Reaction.Action
+import org.session.protos.SessionProtos
+import org.session.protos.SessionProtos.DataMessage.Reaction.Action
 import org.session.libsignal.utilities.Log
 
 class Reaction() {
@@ -22,7 +22,7 @@ class Reaction() {
     companion object {
         const val TAG = "Quote"
 
-        fun fromProto(proto: SignalServiceProtos.DataMessage.Reaction): Reaction {
+        fun fromProto(proto: SessionProtos.DataMessage.Reaction): Reaction {
             val react = proto.action == Action.REACT
             return Reaction(publicKey = proto.author, emoji = proto.emoji, react = react, timestamp = proto.id, count = 1)
         }
@@ -42,7 +42,7 @@ class Reaction() {
         this.index = index
     }
 
-    fun toProto(): SignalServiceProtos.DataMessage.Reaction? {
+    fun toProto(): SessionProtos.DataMessage.Reaction? {
         val timestamp = timestamp
         val publicKey = publicKey
         val emoji = emoji
@@ -51,7 +51,7 @@ class Reaction() {
             Log.w(TAG, "Couldn't construct reaction proto from: $this")
             return null
         }
-        val reactionProto = SignalServiceProtos.DataMessage.Reaction.newBuilder()
+        val reactionProto = SessionProtos.DataMessage.Reaction.newBuilder()
         reactionProto.id = timestamp
         reactionProto.author = publicKey
         reactionProto.emoji = emoji

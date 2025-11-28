@@ -11,7 +11,7 @@ import org.session.libsession.messaging.utilities.MessageAuthentication.buildDel
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildGroupInviteSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildInfoChangeSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildMemberChangeSignature
-import org.session.libsignal.protos.SignalServiceProtos
+import org.session.protos.SessionProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
@@ -27,7 +27,7 @@ class GroupMessageHandler @Inject constructor(
     private val groupManagerV2: GroupManagerV2,
     @param:ManagerScope private val scope: CoroutineScope,
 ) {
-    fun handleGroupUpdated(message: GroupUpdated, groupId: AccountId?, proto: SignalServiceProtos.Content) {
+    fun handleGroupUpdated(message: GroupUpdated, groupId: AccountId?, proto: SessionProtos.Content) {
         val inner = message.inner
         if (groupId == null &&
             !inner.hasInviteMessage() && !inner.hasPromoteMessage()) {
@@ -55,7 +55,7 @@ class GroupMessageHandler @Inject constructor(
         }
     }
 
-    private fun handleNewLibSessionClosedGroupMessage(message: GroupUpdated, proto: SignalServiceProtos.Content) {
+    private fun handleNewLibSessionClosedGroupMessage(message: GroupUpdated, proto: SessionProtos.Content) {
         val storage = storage
         val ourUserId = storage.getUserPublicKey()!!
         val invite = message.inner.inviteMessage
@@ -117,7 +117,7 @@ class GroupMessageHandler @Inject constructor(
     }
 
 
-    private fun handlePromotionMessage(message: GroupUpdated, proto: SignalServiceProtos.Content) {
+    private fun handlePromotionMessage(message: GroupUpdated, proto: SessionProtos.Content) {
         val promotion = message.inner.promoteMessage
         val seed = promotion.groupIdentitySeed.toByteArray()
         val sender = message.sender!!

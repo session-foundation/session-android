@@ -8,7 +8,7 @@ package org.session.libsession.messaging.sending_receiving.attachments
 import android.util.Size
 import com.google.protobuf.ByteString
 import org.session.libsignal.utilities.guava.Optional
-import org.session.libsignal.protos.SignalServiceProtos
+import org.session.protos.SessionProtos
 import org.session.libsignal.messages.SignalServiceAttachment as SAttachment
 import java.io.InputStream
 import kotlin.math.round
@@ -35,8 +35,8 @@ class SessionServiceAttachmentStream(val inputStream: InputStream?, contentType:
         return false
     }
 
-    fun toProto(): SignalServiceProtos.AttachmentPointer? {
-        val builder = SignalServiceProtos.AttachmentPointer.newBuilder()
+    fun toProto(): SessionProtos.AttachmentPointer? {
+        val builder = SessionProtos.AttachmentPointer.newBuilder()
         builder.contentType = this.contentType
         builder.fileName = this.filename
 
@@ -47,7 +47,7 @@ class SessionServiceAttachmentStream(val inputStream: InputStream?, contentType:
         builder.size = this.length.toInt()
         builder.key = this.key
         builder.digest = ByteString.copyFrom(this.digest.get())
-        builder.flags = if (this.voiceNote) SignalServiceProtos.AttachmentPointer.Flags.VOICE_MESSAGE.number else 0
+        builder.flags = if (this.voiceNote) SessionProtos.AttachmentPointer.Flags.VOICE_MESSAGE.number else 0
 
         //TODO I did copy the behavior of iOS below, not sure if that's relevant here...
         if (this.shouldHaveImageSize()) {

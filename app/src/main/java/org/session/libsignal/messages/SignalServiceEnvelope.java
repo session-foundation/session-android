@@ -9,7 +9,7 @@ package org.session.libsignal.messages;
 import com.google.protobuf.ByteString;
 
 import org.session.libsignal.utilities.SignalServiceAddress;
-import org.session.libsignal.protos.SignalServiceProtos.Envelope;
+import org.session.protos.SessionProtos.Envelope;
 
 /**
  * This class represents an encrypted Signal Service envelope.
@@ -32,8 +32,8 @@ public class SignalServiceEnvelope {
     if (proto.getSourceDevice() > 0) {
       builder.setSourceDevice(proto.getSourceDevice());
     }
-    builder.setTimestampMs(proto.getTimestampMs());
-    builder.setServerTimestampMs(proto.getServerTimestampMs());
+    builder.setTimestamp(proto.getTimestamp());
+    builder.setServerTimestamp(proto.getServerTimestamp());
     if (proto.getContent() != null) {
       builder.setContent(ByteString.copyFrom(proto.getContent().toByteArray()));
     }
@@ -45,8 +45,8 @@ public class SignalServiceEnvelope {
                                        .setType(Envelope.Type.valueOf(type))
                                        .setSource(sender)
                                        .setSourceDevice(senderDevice)
-                                       .setTimestampMs(timestamp)
-                                       .setServerTimestampMs(serverTimestamp);
+                                       .setTimestamp(timestamp)
+                                       .setServerTimestamp(serverTimestamp);
 
     if (content != null)       builder.setContent(ByteString.copyFrom(content));
 
@@ -93,11 +93,11 @@ public class SignalServiceEnvelope {
    * @return The timestamp this envelope was sent.
    */
   public long getTimestamp() {
-    return envelope.getTimestampMs();
+    return envelope.getTimestamp();
   }
 
   public long getServerTimestamp() {
-    return envelope.getServerTimestampMs();
+    return envelope.getServerTimestamp();
   }
 
   /**
