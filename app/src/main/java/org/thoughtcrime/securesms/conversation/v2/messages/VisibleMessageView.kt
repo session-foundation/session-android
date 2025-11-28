@@ -275,7 +275,13 @@ class VisibleMessageView : FrameLayout {
             val capabilities = (threadRecipient.address as? Address.Community)?.serverUrl?.let { lokiApiDb.getServerCapabilities(it) }
             if (capabilities.isNullOrEmpty() || capabilities.contains(OpenGroupApi.Capability.REACTIONS.name.lowercase())) {
                 emojiReactionsBinding.value.root.let { root ->
-                    root.setReactions(message.messageId, message.reactions, message.isOutgoing, delegate)
+                    root.setReactions(
+                        messageId = message.messageId,
+                        threadRecipient = threadRecipient,
+                        records = message.reactions,
+                        outgoing = message.isOutgoing,
+                        delegate = delegate
+                    )
                     root.layoutParams = (root.layoutParams as ConstraintLayout.LayoutParams).apply {
                         horizontalBias = if (message.isOutgoing) 1f else 0f
                     }

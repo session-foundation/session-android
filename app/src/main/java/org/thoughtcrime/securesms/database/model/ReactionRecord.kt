@@ -7,10 +7,11 @@ data class ReactionRecord(
     val emoji: String,
     val serverId: String = "",
     /**
-     * Count of this emoji per message. Note that this means that multiple rows with the same
-     * messageId and emoji will have the same count value (due to having different author).
-     *
-     * So you MUST NOT sum these counts across rows for one message.
+     * The meaning of count depends on the context:
+     * - When the message is from community, this count represents the total number of reactions of this type and
+     *   it is the same across all ReactionRecords for the same emoji/messageId.
+     * - When the message is from a private chat, this count should be added up across all ReactionRecords for the
+     *   same emoji/messageId to get the total number of reactions of this type.
      */
     val count: Long = 0,
     val sortId: Long = 0,

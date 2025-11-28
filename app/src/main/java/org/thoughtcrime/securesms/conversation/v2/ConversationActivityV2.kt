@@ -1767,11 +1767,23 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             return
         } else {
             // Put the message in the database
+            val messageId = originalMessage.messageId
+            val count = if (recipient.isCommunityRecipient) {
+                // ReactionRecord count is total number of reactions for this emoji/messageId in community,
+                // regardless of the author of each ReactionRecord.
+                // We set to the existing number for now and we'll increase all of them
+                // by 1 below.
+                originalMessage.reactions.firstOrNull { it.messageId == messageId && it.emoji == emoji }
+                    ?.count ?: 0
+            } else {
+                1
+            }
+
             val reaction = ReactionRecord(
-                messageId = originalMessage.messageId,
+                messageId = messageId,
                 author = author,
                 emoji = emoji,
-                count = 1,
+                count = count,
                 dateSent = emojiTimestamp,
                 dateReceived = emojiTimestamp
             )
@@ -1785,7 +1797,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             reactionMessage.reaction = Reaction.from(originalMessage.timestamp, originalAuthor.toString(), emoji, true)
             if (recipient.address is Address.Community) {
 
-                val messageServerId = lokiMessageDb.getServerID(originalMessage.messageId) ?:
+                // Increment the reaction count locally immediately. This
+                // has to apply on all the ReactionRecords with the same messageId/emoji per design.
+                reactionDb.updateAllCountFor(messageId, emoji, 1)
+
+                val messageServerId = lokiMessageDb.getServerID(messageId) ?:
                     return Log.w(TAG, "Failed to find message server ID when adding emoji reaction")
 
                 scope.launch {
@@ -1821,7 +1837,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         } else {
             reactionDb.deleteReaction(
                 emoji,
-                MessageId(originalMessage.id, originalMessage.isMms),
+                originalMessage.messageId,
                 author
             )
 
@@ -1837,6 +1853,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             )
 
             if (recipient.address is Address.Community) {
+                // Decrement the reaction count locally immediately (they will
+                // get overwritten when we get the server update back)
+                reactionDb.updateAllCountFor(originalMessage.messageId, emoji, -1)
+
 
                 val messageServerId = lokiMessageDb.getServerID(originalMessage.messageId) ?:
                     return Log.w(TAG, "Failed to find message server ID when removing emoji reaction")
@@ -2021,7 +2041,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun onReactionLongClicked(messageId: MessageId, emoji: String?) {
         if (viewModel.recipient.isGroupOrCommunityRecipient) {
             val isUserCommunityModerator = viewModel.recipient.takeIf { it.isCommunityRecipient }?.currentUserRole?.canModerate == true
-            val fragment = ReactionsDialogFragment.create(messageId, isUserCommunityModerator, emoji, viewModel.canRemoveReaction)
+            val fragment = ReactionsDialogFragment.create(
+                messageId,
+                isUserCommunityModerator,
+                emoji,
+                viewModel.canRemoveReaction,
+                viewModel.recipient.isCommunityRecipient
+            )
             fragment.show(supportFragmentManager, TAG_REACTION_FRAGMENT)
         }
     }
