@@ -25,11 +25,15 @@ public class ReactionsViewModel extends ViewModel {
 
   private final MessageId           messageId;
   private final ReactionsRepository repository;
+  private final boolean fromCommunityThread;
 
   @AssistedInject
-  public ReactionsViewModel(@Assisted @NonNull MessageId messageId, final ReactionsRepository repository) {
+  public ReactionsViewModel(@Assisted @NonNull MessageId messageId,
+                            @Assisted boolean fromCommunityThread,
+                            final ReactionsRepository repository) {
     this.messageId  = messageId;
     this.repository = repository;
+    this.fromCommunityThread = fromCommunityThread;
   }
 
   public @NonNull
@@ -38,9 +42,11 @@ public class ReactionsViewModel extends ViewModel {
                      .map(reactionList -> Stream.of(reactionList)
                                                           .groupBy(ReactionDetails::getBaseEmoji)
                                                           .sorted(this::compareReactions)
-                                                          .map(entry -> new EmojiCount(entry.getKey(),
-                                                                                       getCountDisplayEmoji(entry.getValue()),
-                                                                                       entry.getValue()))
+                                                          .map(entry -> new EmojiCount(
+                                                                  entry.getKey(),
+                                                                  getCountDisplayEmoji(entry.getValue()),
+                                                                  entry.getValue(),
+                                                                  !fromCommunityThread))
                                                           .toList())
                      .observeOn(AndroidSchedulers.mainThread());
   }
@@ -75,6 +81,6 @@ public class ReactionsViewModel extends ViewModel {
   @AssistedFactory
   public interface Factory {
 
-    ReactionsViewModel create(@NonNull MessageId messageId);
+    ReactionsViewModel create(@NonNull MessageId messageId, boolean fromCommunityThread);
   }
 }
