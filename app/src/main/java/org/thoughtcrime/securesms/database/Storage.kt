@@ -4,10 +4,14 @@ import android.content.Context
 import android.net.Uri
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.MutableConversationVolatileConfig
 import network.loki.messenger.libsession_util.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.ReadableUserGroupsConfig
+import network.loki.messenger.libsession_util.protocol.ProMessageFeature
+import network.loki.messenger.libsession_util.protocol.ProProfileFeature
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.Conversation
@@ -903,8 +907,8 @@ open class Storage @Inject constructor(
         return mmsSmsDb.getConversationCount(threadID)
     }
 
-    override fun getTotalPinned(): Int {
-        return configFactory.withUserConfigs {
+    override suspend fun getTotalPinned(): Int = withContext(Dispatchers.IO) {
+        configFactory.withUserConfigs {
             var totalPins = 0
 
             // check if the note to self is pinned
@@ -945,12 +949,12 @@ open class Storage @Inject constructor(
         }
     }
 
-    override fun getTotalSentProBadges(): Int {
-        return mmsSmsDatabase.getOutgoingProFeatureCount(ProProfileFeature.PRO_BADGE)
+    override suspend fun getTotalSentProBadges(): Int = withContext(Dispatchers.IO) {
+        mmsSmsDatabase.getOutgoingProFeatureCount(ProProfileFeature.PRO_BADGE)
     }
 
-    override fun getTotalSentLongMessages(): Int {
-        return mmsSmsDatabase.getOutgoingProFeatureCount(ProMessageFeature.HIGHER_CHARACTER_LIMIT)
+    override suspend fun getTotalSentLongMessages(): Int = withContext(Dispatchers.IO) {
+        mmsSmsDatabase.getOutgoingProFeatureCount(ProMessageFeature.HIGHER_CHARACTER_LIMIT)
     }
 
     override fun setPinned(address: Address, isPinned: Boolean) {

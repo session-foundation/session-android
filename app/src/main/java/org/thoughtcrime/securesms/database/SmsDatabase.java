@@ -297,19 +297,22 @@ public class SmsDatabase extends MessagingDatabase {
     public int getOutgoingProFeatureCount(long featureMask) {
         SQLiteDatabase db = getReadableDatabase();
 
-        // get list of outgoing message types
-        StringBuilder outgoingTypes = new StringBuilder();
         long[] types = MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES;
+        StringBuilder outgoingTypes = new StringBuilder(types.length * 3);
         for (int i = 0; i < types.length; i++) {
             if (i > 0) outgoingTypes.append(",");
             outgoingTypes.append(types[i]);
         }
 
         // outgoing clause
-        String outgoingSelection = "(" + TYPE + " & " + MmsSmsColumns.Types.BASE_TYPE_MASK + ") IN (" + outgoingTypes + ")";
+        String outgoingSelection =
+                "(" + TYPE + " & " + MmsSmsColumns.Types.BASE_TYPE_MASK + ") IN (" + outgoingTypes + ")";
 
-        // feature mask check
-        String where = "(" + PRO_FEATURES + " & " + featureMask + ") != 0 AND " + outgoingSelection;
+        // feature check
+        String where =
+                "((" + PRO_MESSAGE_FEATURES + " & " + featureMask + ") != 0" +
+                        " OR (" + PRO_PROFILE_FEATURES + " & " + featureMask + ") != 0)" +
+                        " AND " + outgoingSelection;
 
         try (Cursor cursor = db.query(TABLE_NAME, new String[]{"COUNT(*)"}, where, null, null, null, null)) {
             if (cursor != null && cursor.moveToFirst()) {

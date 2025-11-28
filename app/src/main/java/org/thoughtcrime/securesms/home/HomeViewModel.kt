@@ -268,22 +268,25 @@ class HomeViewModel @Inject constructor(
     }
 
     fun setPinned(address: Address, pinned: Boolean) {
-        // check the pin limit before continuing
-        val totalPins = storage.getTotalPinned()
-        val maxPins = proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().isPro)
-        if (pinned && totalPins >= maxPins) {
-            // the user has reached the pin limit, show the CTA
-            _dialogsState.update {
-                it.copy(
-                    pinCTA = PinProCTA(
-                        overTheLimit = totalPins > maxPins,
-                        proSubscription = proStatusManager.proDataState.value.type
+        viewModelScope.launch {
+            // check the pin limit before continuing
+            val totalPins = storage.getTotalPinned()
+            val maxPins =
+                proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().isPro)
+            if (pinned && totalPins >= maxPins) {
+                // the user has reached the pin limit, show the CTA
+                _dialogsState.update {
+                    it.copy(
+                        pinCTA = PinProCTA(
+                            overTheLimit = totalPins > maxPins,
+                            proSubscription = proStatusManager.proDataState.value.type
+                        )
                     )
-                )
-            }
-        } else {
-            viewModelScope.launch(Dispatchers.Default) {
-                storage.setPinned(address, pinned)
+                }
+            } else {
+                viewModelScope.launch(Dispatchers.Default) {
+                    storage.setPinned(address, pinned)
+                }
             }
         }
     }

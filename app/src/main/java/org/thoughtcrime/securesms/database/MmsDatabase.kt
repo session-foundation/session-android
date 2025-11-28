@@ -124,17 +124,17 @@ class MmsDatabase @Inject constructor(
         val outgoingTypes = MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES.joinToString(",")
 
         // outgoing clause
-        val outgoingSelection = "($MESSAGE_BOX & ${MmsSmsColumns.Types.BASE_TYPE_MASK}) IN ($outgoingTypes)"
+        val outgoingSelection =
+            "($MESSAGE_BOX & ${MmsSmsColumns.Types.BASE_TYPE_MASK}) IN ($outgoingTypes)"
 
         // feature mask check
-        val where = "($PRO_FEATURES & $featureMask) != 0 AND $outgoingSelection"
+        val where =
+            "(($PRO_MESSAGE_FEATURES & $featureMask) != 0 OR " +
+                    " ($PRO_PROFILE_FEATURES & $featureMask) != 0) AND $outgoingSelection"
 
         db.query(TABLE_NAME, arrayOf("COUNT(*)"), where, null, null, null, null).use { cursor ->
-            if (cursor.moveToFirst()) {
-                return cursor.getInt(0)
-            }
+            return if (cursor.moveToFirst()) cursor.getInt(0) else 0
         }
-        return 0
     }
 
     fun isDeletedMessage(id: Long): Boolean =

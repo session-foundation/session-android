@@ -11,6 +11,7 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity.CLIPBOARD_SERVICE
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.squareup.phrase.Phrase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -711,20 +712,25 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun pinConversation(){
-        // check the pin limit before continuing
-        val totalPins = storage.getTotalPinned()
-        val maxPins = proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().isPro)
-        if(totalPins >= maxPins){
-            // the user has reached the pin limit, show the CTA
-            _dialogState.update {
-                it.copy(pinCTA = PinProCTA(
-                    overTheLimit = totalPins > maxPins,
-                    proSubscription = proStatusManager.proDataState.value.type
-                ))
-            }
-        } else {
-            viewModelScope.launch {
-                storage.setPinned(address, true)
+        viewModelScope.launch {
+            // check the pin limit before continuing
+            val totalPins = storage.getTotalPinned()
+            val maxPins =
+                proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().isPro)
+            if (totalPins >= maxPins) {
+                // the user has reached the pin limit, show the CTA
+                _dialogState.update {
+                    it.copy(
+                        pinCTA = PinProCTA(
+                            overTheLimit = totalPins > maxPins,
+                            proSubscription = proStatusManager.proDataState.value.type
+                        )
+                    )
+                }
+            } else {
+                viewModelScope.launch {
+                    storage.setPinned(address, true)
+                }
             }
         }
     }
