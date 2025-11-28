@@ -23,6 +23,7 @@
 
 ########## JACKSON (CORE + ANNOTATIONS + DTOs) ##########
 # Keep Jackson packages and common annotated members
+-keep class com.fasterxml.jackson.** { *; }
 -keepclassmembers class ** {
     @com.fasterxml.jackson.annotation.JsonCreator <init>(...);
     @com.fasterxml.jackson.annotation.JsonProperty *;
@@ -101,6 +102,13 @@
     public byte[] getKeyAsByteArray();
 }
 
+-keep class network.loki.messenger.libsession_util.util.GroupInfo$ClosedGroupInfo { *; }
+-keepnames class network.loki.messenger.libsession_util.util.GroupInfo$ClosedGroupInfo
+-keepclassmembers class network.loki.messenger.libsession_util.util.GroupInfo$ClosedGroupInfo {
+    public byte[] getAdminKeyAsByteArray();
+    public byte[] getAuthDataAsByteArray();
+}
+
 ########## WEBRTC / CHROMIUM JNI ##########
 # WebRTC public Java APIs (kept for JNI_OnLoad registration)
 -keep class org.webrtc.** { *; }
@@ -169,8 +177,8 @@
 -keepclassmembers class org.session.libsession.messaging.messages.Destination$OpenGroupInbox { <init>(); }
 
 # Keep the Enum serializer contructor Kryo reflects on
--keepclassmembers class com.esotericsoftware.kryo.serializers.DefaultSerializers$EnumSerializer {
-    public <init>(java.lang.Class);
+-keepclassmembers class com.esotericsoftware.kryo.serializers.** {
+    public <init>(...);
 }
 
 # Prevent enum unboxing/renaming for the enum field being serialized
@@ -187,6 +195,10 @@
     *** get*();
     void set*(***);
 }
+
+-keep class org.session.libsession.messaging.utilities.UpdateMessageData { *; }
+-keep class org.session.libsession.messaging.utilities.UpdateMessageData$* { *; }
+-keepnames class org.session.libsession.messaging.utilities.UpdateMessageData$*
 
 ########## HUAWEI / HMS (minified builds) ##########
 # Device-only classes referenced by HMS internals — not present on Maven.
