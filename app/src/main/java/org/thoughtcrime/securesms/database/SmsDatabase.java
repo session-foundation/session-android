@@ -23,6 +23,9 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 
+import androidx.collection.ArraySet;
+import androidx.sqlite.db.SupportSQLiteDatabase;
+
 import com.annimon.stream.Stream;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
@@ -43,6 +46,7 @@ import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.database.model.MessageId;
 import org.thoughtcrime.securesms.database.model.ReactionRecord;
 import org.thoughtcrime.securesms.database.model.SmsMessageRecord;
+import org.thoughtcrime.securesms.pro.ProFeatureExtKt;
 
 import java.io.Closeable;
 import java.util.ArrayList;
@@ -51,6 +55,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -58,6 +63,10 @@ import javax.inject.Singleton;
 
 import dagger.Lazy;
 import dagger.hilt.android.qualifiers.ApplicationContext;
+import network.loki.messenger.libsession_util.protocol.ProFeature;
+import network.loki.messenger.libsession_util.protocol.ProMessageFeature;
+import network.loki.messenger.libsession_util.protocol.ProProfileFeature;
+import network.loki.messenger.libsession_util.util.BitSet;
 
 /**
  * Database for storage of SMS messages.
@@ -128,7 +137,10 @@ public class SmsDatabase extends MessagingDatabase {
   public static final String ADD_IS_DELETED_COLUMN = "ALTER TABLE " + TABLE_NAME + " ADD COLUMN " + IS_DELETED_COLUMN_DEF;
   public static final String ADD_IS_GROUP_UPDATE_COLUMN = "ALTER TABLE " + TABLE_NAME +" ADD COLUMN " + IS_GROUP_UPDATE +" BOOL GENERATED ALWAYS AS (" + TYPE +" & " + GROUP_UPDATE_MESSAGE_BIT +" != 0) VIRTUAL";
 
-  public static final String ADD_PRO_FEATURES_COLUMN = "ALTER TABLE " + TABLE_NAME + " ADD COLUMN " + PRO_FEATURES + " INTEGER NOT NULL DEFAULT 0";
+  public static void addProFeatureColumns(SupportSQLiteDatabase db) {
+    db.execSQL("ALTER TABLE " + TABLE_NAME + " ADD COLUMN " + PRO_MESSAGE_FEATURES + " INTEGER NOT NULL DEFAULT 0");
+    db.execSQL("ALTER TABLE " + TABLE_NAME + " ADD COLUMN " + PRO_PROFILE_FEATURES + " INTEGER NOT NULL DEFAULT 0");
+  }
 
   private static final EarlyReceiptCache earlyDeliveryReceiptCache = new EarlyReceiptCache();
   private static final EarlyReceiptCache earlyReadReceiptCache     = new EarlyReceiptCache();
@@ -455,7 +467,8 @@ public class SmsDatabase extends MessagingDatabase {
     values.put(BODY, message.getMessage());
     values.put(TYPE, type);
     values.put(THREAD_ID, threadId);
-    values.put(PRO_FEATURES, message.getProFeaturesRawValue());
+    values.put(PRO_MESSAGE_FEATURES, ProFeatureExtKt.toProMessageBitSetValue(message.getProFeatures()));
+    values.put(PRO_PROFILE_FEATURES, ProFeatureExtKt.toProProfileBitSetValue(message.getProFeatures()));
 
     if (message.getPush() && isDuplicate(message, threadId)) {
       Log.w(TAG, "Duplicate message (" + message.getSentTimestampMillis() + "), ignoring...");
@@ -536,7 +549,8 @@ public class SmsDatabase extends MessagingDatabase {
     contentValues.put(EXPIRE_STARTED, message.getExpireStartedAtMillis());
     contentValues.put(DELIVERY_RECEIPT_COUNT, Stream.of(earlyDeliveryReceipts.values()).mapToLong(Long::longValue).sum());
     contentValues.put(READ_RECEIPT_COUNT, Stream.of(earlyReadReceipts.values()).mapToLong(Long::longValue).sum());
-    contentValues.put(PRO_FEATURES, message.getProFeaturesRawValue());
+    contentValues.put(PRO_MESSAGE_FEATURES, ProFeatureExtKt.toProMessageBitSetValue(message.getProFeatures()));
+    contentValues.put(PRO_PROFILE_FEATURES, ProFeatureExtKt.toProProfileBitSetValue(message.getProFeatures()));
 
     if (isDuplicate(message, threadId)) {
       Log.w(TAG, "Duplicate message (" + message.getSentTimestampMillis() + "), ignoring...");
@@ -724,7 +738,10 @@ public class SmsDatabase extends MessagingDatabase {
       long    expireStarted        = cursor.getLong(cursor.getColumnIndexOrThrow(SmsDatabase.EXPIRE_STARTED));
       String  body                 = cursor.getString(cursor.getColumnIndexOrThrow(SmsDatabase.BODY));
       boolean hasMention           = cursor.getInt(cursor.getColumnIndexOrThrow(SmsDatabase.HAS_MENTION)) == 1;
-      long    proFeatures          = cursor.getLong(cursor.getColumnIndexOrThrow(SmsDatabase.PRO_FEATURES));
+
+      final ArraySet<ProFeature> proFeatures = new ArraySet<>();
+      ProFeatureExtKt.toProMessageFeatures(cursor.getLong(cursor.getColumnIndexOrThrow(SmsDatabase.PRO_MESSAGE_FEATURES)), proFeatures);
+      ProFeatureExtKt.toProProfileFeatures(cursor.getLong(cursor.getColumnIndexOrThrow(SmsDatabase.PRO_PROFILE_FEATURES)), proFeatures);
 
       if (!TextSecurePreferences.isReadReceiptsEnabled(context)) {
         readReceiptCount = 0;

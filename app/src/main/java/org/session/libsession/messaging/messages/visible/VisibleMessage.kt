@@ -2,14 +2,17 @@ package org.session.libsession.messaging.messages.visible
 
 import androidx.annotation.Keep
 import network.loki.messenger.BuildConfig
+import network.loki.messenger.libsession_util.protocol.ProFeature
 import network.loki.messenger.libsession_util.protocol.ProMessageFeature
-import network.loki.messenger.libsession_util.util.BitSet
+import network.loki.messenger.libsession_util.protocol.ProProfileFeature
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.copyExpiration
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.pro.toProMessageBitSetValue
+import org.thoughtcrime.securesms.pro.toProProfileBitSetValue
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment as SignalAttachment
 
 /**
@@ -27,12 +30,12 @@ data class VisibleMessage(
     var reaction: Reaction? = null,
     var hasMention: Boolean = false,
     var blocksMessageRequests: Boolean = false,
-    var proFeatures: BitSet<ProMessageFeature> = BitSet()
+    var proFeatures: Set<ProFeature> = emptySet()
 ) : Message()  {
 
     // This empty constructor is needed for kryo serialization
     @Keep
-    constructor(): this(proFeatures = BitSet())
+    constructor(): this(proFeatures = emptySet())
 
     override val isSelfSendValid: Boolean = true
 
@@ -114,8 +117,16 @@ data class VisibleMessage(
         }
 
         // Pro features
-        if (!proFeatures.isEmpty) {
-            builder.proMessageBuilder.setMsgBitset(proFeatures.rawValue)
+        if (proFeatures.any { it is ProMessageFeature }) {
+            builder.proMessageBuilder.setMsgBitset(
+                proFeatures.toProMessageBitSetValue()
+            )
+        }
+
+        if (proFeatures.any { it is ProProfileFeature }) {
+            builder.proMessageBuilder.setProfileBitset(
+                proFeatures.toProProfileBitSetValue()
+            )
         }
     }
     // endregion

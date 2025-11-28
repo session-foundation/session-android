@@ -1,7 +1,6 @@
 package org.session.libsession.messaging.messages.signal
 
-import network.loki.messenger.libsession_util.protocol.ProMessageFeature
-import network.loki.messenger.libsession_util.util.BitSet
+import network.loki.messenger.libsession_util.protocol.ProFeature
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.messages.visible.OpenGroupInvitation
 import org.session.libsession.messaging.messages.visible.VisibleMessage
@@ -21,7 +20,7 @@ data class IncomingTextMessage(
     val hasMention: Boolean,
     val isOpenGroupInvitation: Boolean,
     val isSecureMessage: Boolean,
-    val proFeatures: BitSet<ProMessageFeature>,
+    val proFeatures: Set<ProFeature>,
     val isGroupMessage: Boolean = false,
     val isGroupUpdateMessage: Boolean = false,
 ) {
@@ -33,8 +32,6 @@ data class IncomingTextMessage(
             CallMessageType.CALL_MISSED,
             CallMessageType.CALL_FIRST_MISSED,
         )
-
-    val proFeaturesRawValue: Long get() = proFeatures.rawValue
 
     init {
         check(!isGroupUpdateMessage || isGroupMessage) {
@@ -81,7 +78,7 @@ data class IncomingTextMessage(
         hasMention = false,
         isOpenGroupInvitation = false,
         isSecureMessage = false,
-        proFeatures = BitSet(),
+        proFeatures = emptySet(),
     )
 
     companion object {
@@ -109,7 +106,7 @@ data class IncomingTextMessage(
                 hasMention = false,
                 isOpenGroupInvitation = true,
                 isSecureMessage = false,
-                proFeatures = BitSet(),
+                proFeatures = emptySet(),
             )
         }
     }

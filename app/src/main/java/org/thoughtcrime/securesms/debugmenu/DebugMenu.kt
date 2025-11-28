@@ -55,7 +55,7 @@ import androidx.compose.ui.unit.dp
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.protocol.ProMessageFeature
-import network.loki.messenger.libsession_util.util.toBitSet
+import network.loki.messenger.libsession_util.protocol.ProProfileFeature
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.*
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Companion.FALSE
@@ -65,7 +65,6 @@ import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Companion.SEEN_2
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Companion.SEEN_3
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Companion.SEEN_4
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Companion.TRUE
-import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonData
@@ -349,7 +348,7 @@ fun DebugMenu(
 
                 AnimatedVisibility(uiState.forceIncomingMessagesAsPro) {
                     Column {
-                        for (feature in ProMessageFeature.entries) {
+                        for (feature in (ProMessageFeature.entries + ProProfileFeature.entries)) {
                             DebugCheckboxRow(
                                 text = "Message Feature: ${feature.name}",
                                 minHeight = 30.dp,
@@ -938,7 +937,7 @@ fun PreviewDebugMenu() {
                 forceOtherUsersAsPro = false,
                 forcePostPro = false,
                 forceShortTTl = false,
-                messageProFeature = listOf(ProMessageFeature.HIGHER_CHARACTER_LIMIT).toBitSet(),
+                messageProFeature = setOf(ProMessageFeature.HIGHER_CHARACTER_LIMIT),
                 dbInspectorState = DebugMenuViewModel.DatabaseInspectorState.STARTED,
                 debugSubscriptionStatuses = setOf(DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE),
                 selectedDebugSubscriptionStatus = DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE,

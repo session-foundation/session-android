@@ -6,6 +6,7 @@ import network.loki.messenger.libsession_util.protocol.DecodedEnvelope
 import network.loki.messenger.libsession_util.protocol.DecodedPro
 import network.loki.messenger.libsession_util.protocol.SessionProtocol
 import network.loki.messenger.libsession_util.util.BitSet
+import network.loki.messenger.libsession_util.util.asSequence
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.CallMessage
@@ -137,7 +138,10 @@ class MessageParser @Inject constructor(
 
         // Only process pro features post pro launch
         if (prefs.forcePostPro()) {
-            (message as? VisibleMessage)?.proFeatures = pro?.proMessageFeatures ?: BitSet()
+            (message as? VisibleMessage)?.proFeatures = buildSet {
+                pro?.proMessageFeatures?.asSequence()?.let(::addAll)
+                pro?.proProfileFeatures?.asSequence()?.let(::addAll)
+            }
         }
 
         // Validate
