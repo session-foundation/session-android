@@ -923,7 +923,14 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
         binding.newConversationButton.applySafeInsetsMargins(
             typeMask = WindowInsetsCompat.Type.navigationBars(),
-            additionalInsets = Insets.of(0,0,0, resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset))
+            applyLeft = false,
+            applyRight = false,
+            additionalInsets = Insets.of(
+                0,
+                0,
+                0,
+                resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset)
+            )
         )
     }
 }
