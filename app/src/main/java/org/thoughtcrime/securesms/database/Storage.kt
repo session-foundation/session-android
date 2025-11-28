@@ -4,10 +4,15 @@ import android.content.Context
 import android.net.Uri
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.MutableConversationVolatileConfig
 import network.loki.messenger.libsession_util.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.ReadableUserGroupsConfig
+import network.loki.messenger.libsession_util.protocol.ProFeature
+import network.loki.messenger.libsession_util.protocol.ProMessageFeature
+import network.loki.messenger.libsession_util.protocol.ProProfileFeature
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.Conversation
@@ -942,6 +947,24 @@ open class Storage @Inject constructor(
             }
 
             totalPins
+        }
+    }
+
+    override suspend fun getTotalSentProBadges(): Int =
+        getTotalSentForFeature(ProProfileFeature.PRO_BADGE)
+
+    override suspend fun getTotalSentLongMessages(): Int =
+        getTotalSentForFeature(ProMessageFeature.HIGHER_CHARACTER_LIMIT)
+
+    suspend fun getTotalSentForFeature(feature: ProFeature): Int = withContext(Dispatchers.IO) {
+        val mask = 1L shl feature.bitIndex
+
+        when (feature) {
+            is ProMessageFeature ->
+                mmsSmsDatabase.getOutgoingMessageProFeatureCount(mask)
+
+            is ProProfileFeature ->
+                mmsSmsDatabase.getOutgoingProfileProFeatureCount(mask)
         }
     }
 

@@ -117,6 +117,32 @@ class MmsDatabase @Inject constructor(
                 .any { MmsSmsColumns.Types.isOutgoingMessageType(it) }
         }
 
+    fun getOutgoingMessageProFeatureCount(featureMask: Long): Int {
+        return getOutgoingProFeatureCountInternal(PRO_MESSAGE_FEATURES, featureMask)
+    }
+
+    fun getOutgoingProfileProFeatureCount(featureMask: Long): Int {
+        return getOutgoingProFeatureCountInternal(PRO_PROFILE_FEATURES, featureMask)
+    }
+
+    private fun getOutgoingProFeatureCountInternal(column: String, featureMask: Long): Int {
+        val db = readableDatabase
+        val outgoingTypes = MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES.joinToString(",")
+
+        // outgoing clause
+        val outgoingSelection =
+            "($MESSAGE_BOX & ${MmsSmsColumns.Types.BASE_TYPE_MASK}) IN ($outgoingTypes)"
+
+        val where = "($column & $featureMask) != 0 AND $outgoingSelection"
+
+        db.query(TABLE_NAME, arrayOf("COUNT(*)"), where, null, null, null, null).use { cursor ->
+            if (cursor.moveToFirst()) {
+                return cursor.getInt(0)
+            }
+        }
+        return 0
+    }
+
     fun isDeletedMessage(id: Long): Boolean =
         writableDatabase.query(
             TABLE_NAME,
@@ -703,7 +729,7 @@ class MmsDatabase @Inject constructor(
         val deletedMessageIDs: MutableList<Long>
         val deletedMessagesThreadIDs = hashSetOf<Long>()
 
-         writableDatabase.rawQuery(
+        writableDatabase.rawQuery(
             "DELETE FROM $TABLE_NAME WHERE $where RETURNING $ID, $THREAD_ID",
             *whereArgs
         ).use { cursor ->
@@ -1055,12 +1081,12 @@ class MmsDatabase @Inject constructor(
             val quoteText = retrievedQuote?.body
             val quoteMissing = retrievedQuote == null
             val quoteDeck = (
-                (retrievedQuote as? MmsMessageRecord)?.slideDeck ?:
-                Stream.of(attachmentDatabase.getAttachment(cursor))
-                    .filter { obj: DatabaseAttachment? -> obj!!.isQuote }
-                    .toList()
-                    .let { SlideDeck(context, it) }
-            )
+                    (retrievedQuote as? MmsMessageRecord)?.slideDeck ?:
+                    Stream.of(attachmentDatabase.getAttachment(cursor))
+                        .filter { obj: DatabaseAttachment? -> obj!!.isQuote }
+                        .toList()
+                        .let { SlideDeck(context, it) }
+                    )
             return Quote(
                 quoteId,
                 recipientRepository.getRecipientSync(quoteAuthor.toAddress()),

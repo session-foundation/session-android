@@ -58,7 +58,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.annimon.stream.Stream
 import com.bumptech.glide.Glide
 import com.squareup.phrase.Phrase
-import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
 import kotlinx.coroutines.CancellationException
@@ -119,7 +118,6 @@ import org.session.libsignal.crypto.MnemonicCodec
 import org.session.libsignal.utilities.ListenableFuture
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
-import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.FullComposeActivity.Companion.applyCommonPropertiesForCompose
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.audio.AudioRecorderHandle
@@ -135,7 +133,6 @@ import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companio
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_REPLY
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_RESEND
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_SAVE
-import org.thoughtcrime.securesms.conversation.v2.dialogs.BlockedDialog
 import org.thoughtcrime.securesms.conversation.v2.dialogs.LinkPreviewDialog
 import org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarButton
 import org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarDelegate
@@ -158,7 +155,6 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.AttachmentManager
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.ResendMessageUtilities
 import org.thoughtcrime.securesms.crypto.MnemonicUtilities
-import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
@@ -2076,9 +2072,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun sendMessage() {
         val recipient = viewModel.recipient
 
+        // It shouldn't be possible to send a message to a blocked user anymore.
+        // But as a safety net:
         // show the unblock dialog when trying to send a message to a blocked contact
         if (recipient.isStandardRecipient && recipient.blocked) {
-            BlockedDialog(recipient.address, recipient.displayName()).show(supportFragmentManager, "Blocked Dialog")
+            unblock()
             return
         }
 

@@ -291,6 +291,12 @@
     <string name="qa_action_item_icon">action-item-icon</string>
     <string name="qa_conversations_blocked_contact_item">qa-blocked-contacts-settings-item</string>
 
+    <!-- CTAs -->
+    <string name="qa_cta_body">cta-body</string>
+    <string name="qa_cta_feature">cta-feature-</string>
+    <string name="qa_cta_button_positive">cta-button-positive</string>
+    <string name="qa_cta_button_negative">cta-button-negative</string>
+
     <string name="qa_collapsing_footer_action">qa-collapsing-footer-action</string>
 
 </resources>
