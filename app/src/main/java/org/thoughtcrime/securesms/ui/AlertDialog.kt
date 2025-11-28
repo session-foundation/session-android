@@ -7,12 +7,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BasicAlertDialog
@@ -36,7 +39,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.URL_KEY
@@ -48,6 +53,9 @@ import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
+import org.thoughtcrime.securesms.ui.theme.ThemeColors
+import org.thoughtcrime.securesms.ui.theme.blackAlpha40
 import org.thoughtcrime.securesms.ui.theme.bold
 
 data class DialogButtonData(
@@ -110,7 +118,7 @@ fun AlertDialog(
     showCloseButton: Boolean = false,
     content: @Composable () -> Unit = {}
 ) {
-    BasicAlertDialog(
+    BasicSessionAlertDialog(
         modifier = modifier,
         onDismissRequest = onDismissRequest,
         content = {
@@ -123,6 +131,36 @@ fun AlertDialog(
                 showCloseButton = showCloseButton,
                 content = content
             )
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BasicSessionAlertDialog(
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit = {}
+){
+    BasicAlertDialog(
+        modifier = modifier,
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true,
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = true
+        ),
+        content = {
+            // control content size
+            Box(
+                modifier = Modifier
+                    .widthIn(max = LocalDimensions.current.maxDialogWidth)
+                    .fillMaxWidth(0.85f),
+                contentAlignment = Alignment.Center
+            ) {
+                content()
+            }
         }
     )
 }
@@ -147,7 +185,7 @@ fun AlertDialogContent(
                 Icon(
                     painter = painterResource(id = R.drawable.ic_x),
                     tint = LocalColors.current.text,
-                    contentDescription = "back"
+                    contentDescription = stringResource(R.string.close)
                 )
             }
         }
@@ -225,6 +263,8 @@ fun OpenURLAlertDialog(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     url: String,
+    onLinkOpened: (String) -> Unit = {},
+    onLinkCopied: (String) -> Unit = {},
     content: @Composable () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -242,11 +282,15 @@ fun OpenURLAlertDialog(
             DialogButtonData(
                 text = GetString(R.string.open),
                 color = LocalColors.current.danger,
-                onClick = { context.openUrl(url) }
+                onClick = {
+                    onLinkOpened(url)
+                    context.openUrl(url)
+                }
             ),
             DialogButtonData(
                 text = GetString(android.R.string.copyUrl),
                 onClick = {
+                    onLinkCopied(url)
                     context.copyURLToClipboard(url)
                     Toast.makeText(context, R.string.copied, Toast.LENGTH_SHORT).show()
                 }
@@ -319,17 +363,14 @@ fun LoadingDialog(
     modifier: Modifier = Modifier,
     title: String? = null,
 ){
-    BasicAlertDialog(
+    BasicSessionAlertDialog(
         modifier = modifier,
         onDismissRequest = {},
         content = {
             if (title.isNullOrBlank()) {
-                Box {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center),
-                        color = LocalColors.current.accent
-                    )
-                }
+                CircularProgressIndicator(
+                    color = LocalColors.current.accent
+                )
             } else {
                 DialogBg {
                     Column(
@@ -430,8 +471,86 @@ fun PreviewOpenURLDialog() {
 @Composable
 fun PreviewLoadingDialog() {
     PreviewTheme {
-        LoadingDialog(
-            title = stringResource(R.string.warning)
+        Box(Modifier.background(Color.White).fillMaxSize()) {
+            LoadingDialog()
+        }
+    }
+}
+
+@Preview
+@Composable
+fun PreviewLoadingTextDialog() {
+    PreviewTheme {
+        Box(Modifier.background(Color.White).fillMaxSize()) {
+            LoadingDialog(
+                title = stringResource(R.string.warning)
+            )
+        }
+    }
+}
+
+@Composable
+fun TCPolicyDialog(
+    tcsUrl: String,
+    privacyUrl: String,
+    onDismissRequest: () -> Unit
+){
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = stringResource(R.string.urlOpen),
+        text = stringResource(R.string.urlOpenBrowser),
+        showCloseButton = true,
+        content = {
+            Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
+            Cell(
+                bgColor = LocalColors.current.backgroundTertiary
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    val context = LocalContext.current
+                    val spacing = LocalDimensions.current.xsSpacing
+
+                    IconActionRowItem(
+                        title = annotatedStringResource(tcsUrl),
+                        textStyle = LocalType.current.large.bold(),
+                        icon = R.drawable.ic_square_arrow_up_right,
+                        iconSize = LocalDimensions.current.iconSmall,
+                        paddingValues = PaddingValues(start = spacing),
+                        qaTag = R.string.AccessibilityId_onboardingTos,
+                        onClick = {
+                            context.openUrl(tcsUrl)
+                        }
+                    )
+                    Divider(paddingValues = PaddingValues(horizontal = spacing))
+
+                    IconActionRowItem(
+                        title = annotatedStringResource(privacyUrl),
+                        textStyle = LocalType.current.large.bold(),
+                        icon = R.drawable.ic_square_arrow_up_right,
+                        iconSize = LocalDimensions.current.iconSmall,
+                        paddingValues = PaddingValues(start = spacing),
+                        qaTag = R.string.AccessibilityId_onboardingPrivacy,
+                        onClick = {
+                            context.openUrl(privacyUrl)
+                        }
+                    )
+                }
+            }
+        }
+    )
+}
+
+@Preview
+@Composable
+private fun PreviewCPolicyDialog(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        TCPolicyDialog(
+            tcsUrl = "https://getsession.org/",
+            privacyUrl = "https://getsession.org/",
+            onDismissRequest = {}
         )
     }
 }

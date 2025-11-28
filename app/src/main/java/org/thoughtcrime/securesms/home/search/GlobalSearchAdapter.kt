@@ -10,15 +10,10 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewGlobalSearchHeaderBinding
 import network.loki.messenger.databinding.ViewGlobalSearchResultBinding
 import network.loki.messenger.databinding.ViewGlobalSearchSubheaderBinding
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.recipients.shouldShowProBadge
-import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.util.DateUtils
@@ -197,14 +192,14 @@ class GlobalSearchAdapter(
 
                             is Address.Group -> {
                                 val data = (recipient.data as? RecipientData.Group)
-                                data?.partial?.members?.joinToString(", ") { it.name }
+                                data?.members?.joinToString(", ") { it.name }
                             }
 
                             else -> {
                                 null
                             }
                         },
-                        showProBadge = recipient.proStatus.shouldShowProBadge()
+                        showProBadge = recipient.shouldShowProBadge
                     )
         }
         data class Message(val messageResult: MessageResult, val unread: Int, val isSelf: Boolean, val showProBadge: Boolean) : Model

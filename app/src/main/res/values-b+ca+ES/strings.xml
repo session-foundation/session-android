@@ -15,7 +15,6 @@
     <string name="accountIdYoursDescription">Aquest és el vostre ID de compte. Els altres usuaris el poden escanejar per a encetar una conversa amb vós.</string>
     <string name="actualSize">Mida actual</string>
     <string name="add">Afegir</string>
-    <string name="addAdmins">Afegiu administradors</string>
     <string name="addAdminsDescription">Introdueix l\'ID del compte de l\'usuari que estàs promocionant a administrador.\n\nPer afegir diversos usuaris, introdueix cada ID del compte separat per una coma. Es poden especificar fins a 20 identificadors de compte alhora.</string>
     <string name="adminCannotBeRemoved">Els administradors no es poden eliminar.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> i <b>{count} altres</b> han estat ascendits a Admin.</string>
@@ -820,13 +819,9 @@
     <string name="preview">Vista prèvia</string>
     <string name="proAlreadyPurchased">Ja ho tens</string>
     <string name="proAnimatedDisplayPicture">Endavant i penja GIFs i imatges del webp animat per a la teva imatge de visualització!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">Obteniu imatges de visualització animada i desbloquegeu funcions premium amb {app_pro}</string>
     <string name="proAnimatedDisplayPictureFeature">Imatge de pantalla animada</string>
     <string name="proAnimatedDisplayPictureModalDescription">els usuaris poden penjar GIFs</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Penja els gifs amb</string>
-    <string name="proCallToActionLongerMessages">Voleu enviar missatges més llargs? Envia més text i desbloqueja funcions premium amb {app_pro}</string>
-    <string name="proCallToActionPinnedConversations">Vols més pins? Organitzes els teus xats i desbloqueges les funcions premium amb {app_pro}</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">Vols més de 5 pins? Organitzes els teus xats i desbloqueges les funcions premium amb {app_pro}</string>
     <string name="proFeatureListLargerGroups">Xateja de grups més grans fins a 300 membres</string>
     <string name="proFeatureListLoadsMore">Plus carrega funcions més exclusives</string>
     <string name="proFeatureListLongerMessages">Missatges de fins a 10,000 caràcters</string>
@@ -837,7 +832,6 @@
     <string name="proIncreasedMessageLengthFeature">Augment de la longitud del missatge</string>
     <string name="proMessageInfoFeatures">Aquest missatge va utilitzar les funcions següents {app_pro}:</string>
     <string name="proSendMore">Envia més amb</string>
-    <string name="proUserProfileModalCallToAction">Vols treure més informació de {app_name}? Actualitzes a {app_pro} per a una experiència de missatgeria més potent.</string>
     <string name="profile">Perfil</string>
     <string name="profileDisplayPicture">Imatge de perfil</string>
     <string name="profileDisplayPictureRemoveError">Error en eliminar la imatge de perfil.</string>

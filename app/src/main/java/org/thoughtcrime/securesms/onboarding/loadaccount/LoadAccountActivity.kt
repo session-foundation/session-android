@@ -43,7 +43,6 @@ class LoadAccountActivity : BaseActionBarActivity() {
 
         supportActionBar?.setTitle(R.string.loadAccount)
         prefs.setConfigurationMessageSynced(false)
-        prefs.setRestorationTime(System.currentTimeMillis())
 
         lifecycleScope.launch {
             viewModel.events.collect {

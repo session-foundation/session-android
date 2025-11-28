@@ -26,8 +26,8 @@ configurations.configureEach {
     exclude(module = "commons-logging")
 }
 
-val canonicalVersionCode = 432
-val canonicalVersionName = "1.29.3"
+val canonicalVersionCode = 433
+val canonicalVersionName = "1.30.0"
 
 val postFixSize = 10
 val abiPostFix = mapOf(
@@ -105,7 +105,6 @@ protobuf {
 
 android {
     namespace = "network.loki.messenger"
-    useLibrary("org.apache.http.legacy")
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
@@ -181,13 +180,12 @@ android {
             matchingFallbacks += "release"
 
             signingConfig = signingConfigs.getByName("debug")
-            applicationIdSuffix = ".$name"
 
             devNetDefaultOn(false)
             enablePermissiveNetworkSecurityConfig(true)
 
             setAlternativeAppName("Session QA")
-            setAuthorityPostfix(".qa")
+            setAuthorityPostfix("")
         }
 
         create("automaticQa") {
