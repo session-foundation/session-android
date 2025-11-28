@@ -31,8 +31,7 @@ import network.loki.messenger.libsession_util.pro.BackendRequests
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_APP_STORE
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_GOOGLE_PLAY
 import network.loki.messenger.libsession_util.pro.ProConfig
-import network.loki.messenger.libsession_util.protocol.ProMessageFeature
-import network.loki.messenger.libsession_util.util.BitSet
+import network.loki.messenger.libsession_util.protocol.ProFeature
 import network.loki.messenger.libsession_util.util.Conversation
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.snode.SnodeClock
@@ -46,7 +45,6 @@ import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageRecord
-import org.thoughtcrime.securesms.database.model.proFeatures
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.ManagerScope
@@ -400,7 +398,7 @@ class ProStatusManager @Inject constructor(
     /**
      * This will get the list of Pro features from an incoming message
      */
-    fun getMessageProFeatures(message: MessageRecord): BitSet<ProMessageFeature> {
+    fun getMessageProFeatures(message: MessageRecord): Set<ProFeature> {
         // use debug values if any
         if(prefs.forceIncomingMessagesAsPro()){
             return prefs.getDebugMessageFeatures()

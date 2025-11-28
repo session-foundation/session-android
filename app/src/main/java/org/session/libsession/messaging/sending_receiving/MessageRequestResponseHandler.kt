@@ -161,7 +161,7 @@ class MessageRequestResponseHandler @Inject constructor(
                             body = null,
                             group = null,
                             attachments = emptyList(),
-                            proFeatures = BitSet(),
+                            proFeatures = emptySet(),
                             messageContent = null,
                             quote = null,
                             linkPreviews = emptyList(),

@@ -24,6 +24,9 @@ import androidx.annotation.NonNull;
 import org.session.libsession.utilities.recipients.Recipient;
 
 import java.util.List;
+import java.util.Set;
+
+import network.loki.messenger.libsession_util.protocol.ProFeature;
 
 /**
  * The message record model which represents standard SMS messages.
@@ -42,11 +45,11 @@ public class SmsMessageRecord extends MessageRecord {
                             int status,
                             long expiresIn, long expireStarted,
                             int readReceiptCount, List<ReactionRecord> reactions, boolean hasMention,
-                            long proFeaturesRawValue) {
+                            Set<ProFeature> proFeatures) {
         super(id, body, recipient, individualRecipient,
                 dateSent, dateReceived, threadId, status, deliveryReceiptCount, type,
                 expiresIn, expireStarted, readReceiptCount, reactions, hasMention, null,
-                proFeaturesRawValue);
+                proFeatures);
     }
 
     public long getType() {

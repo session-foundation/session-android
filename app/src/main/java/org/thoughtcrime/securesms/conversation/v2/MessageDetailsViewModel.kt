@@ -203,7 +203,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
                     senderIsBlinded = IdPrefix.fromValue(sender.address.toString())?.isBlinded() ?: false,
                     thread = conversation,
                     readOnly = isDeprecatedLegacyGroup,
-                    proFeatures = proStatusManager.getMessageProFeatures(messageRecord).asSequence().toSet(),
+                    proFeatures = proStatusManager.getMessageProFeatures(messageRecord),
                     proBadgeClickable = !recipientRepository.getSelf().isPro // no badge click if the current user is pro
                 )
             }

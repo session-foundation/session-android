@@ -112,7 +112,8 @@ fun buildMmsSmsCombinedQuery(
             NULL AS ${MmsDatabase.LINK_PREVIEWS},
             ${MmsSmsColumns.HAS_MENTION},
             ($smsHashQuery) AS ${MmsSmsColumns.SERVER_HASH},
-            ${MmsSmsColumns.PRO_FEATURES}
+            ${MmsSmsColumns.PRO_MESSAGE_FEATURES},
+            ${MmsSmsColumns.PRO_PROFILE_FEATURES}
         FROM ${SmsDatabase.TABLE_NAME}
         $whereStatement
     """
@@ -202,7 +203,8 @@ fun buildMmsSmsCombinedQuery(
             ${MmsDatabase.LINK_PREVIEWS},
             ${MmsSmsColumns.HAS_MENTION},
             ($mmsHashQuery) AS ${MmsSmsColumns.SERVER_HASH},
-            ${MmsSmsColumns.PRO_FEATURES}
+            ${MmsSmsColumns.PRO_MESSAGE_FEATURES},
+            ${MmsSmsColumns.PRO_PROFILE_FEATURES}
         FROM ${MmsDatabase.TABLE_NAME}
         $whereStatement
     """

@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.os.Build
 import android.widget.Toast
+import androidx.collection.ArraySet
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
@@ -22,13 +23,11 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
-import network.loki.messenger.libsession_util.ED25519
-import network.loki.messenger.libsession_util.protocol.ProMessageFeature
-import network.loki.messenger.libsession_util.util.BitSet
+import network.loki.messenger.libsession_util.protocol.ProFeature
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
-import network.loki.messenger.libsession_util.util.asSequence
 import network.loki.messenger.libsession_util.util.toBitSet
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.file_server.FileServer
@@ -358,12 +357,11 @@ class DebugMenuViewModel @AssistedInject constructor(
             }
 
             is Commands.SetMessageProFeature -> {
-                val features = _uiState.value.messageProFeature.asSequence().toMutableSet()
+                val features = ArraySet(_uiState.value.messageProFeature)
                 if(command.set) features.add(command.feature) else features.remove(command.feature)
-                val newFeatures = features.toBitSet()
-                textSecurePreferences.setDebugMessageFeatures(newFeatures)
+                textSecurePreferences.setDebugMessageFeatures(features)
                 _uiState.update {
-                    it.copy(messageProFeature = newFeatures)
+                    it.copy(messageProFeature = features)
                 }
             }
 
@@ -619,7 +617,7 @@ class DebugMenuViewModel @AssistedInject constructor(
         val forceCurrentUserAsPro: Boolean,
         val forceOtherUsersAsPro: Boolean,
         val forceIncomingMessagesAsPro: Boolean,
-        val messageProFeature: BitSet<ProMessageFeature>,
+        val messageProFeature: Set<ProFeature>,
         val forcePostPro: Boolean,
         val forceShortTTl: Boolean,
         val forceDeprecationState: LegacyGroupDeprecationManager.DeprecationState?,
@@ -691,7 +689,7 @@ class DebugMenuViewModel @AssistedInject constructor(
         data class WithinQuickRefund(val set: Boolean) : Commands()
         data class ForcePostPro(val set: Boolean) : Commands()
         data class ForceShortTTl(val set: Boolean) : Commands()
-        data class SetMessageProFeature(val feature: ProMessageFeature, val set: Boolean) : Commands()
+        data class SetMessageProFeature(val feature: ProFeature, val set: Boolean) : Commands()
         data class ShowDeprecationChangeDialog(val state: LegacyGroupDeprecationManager.DeprecationState?) : Commands()
         object HideDeprecationChangeDialog : Commands()
         object OverrideDeprecationState : Commands()
