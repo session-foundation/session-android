@@ -12,6 +12,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -25,32 +26,41 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
+import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.ThreadRecord
+import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
+import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
+import org.thoughtcrime.securesms.util.DateUtils
+import org.thoughtcrime.securesms.util.DonationManager
+import org.thoughtcrime.securesms.util.DonationManager.Companion.URL_DONATE
 import org.thoughtcrime.securesms.util.UserProfileModalCommands
 import org.thoughtcrime.securesms.util.UserProfileModalData
 import org.thoughtcrime.securesms.util.UserProfileUtils
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val prefs: TextSecurePreferences,
+    private val loginStateRepository: LoginStateRepository,
     private val typingStatusRepository: TypingStatusRepository,
     private val configFactory: ConfigFactory,
     callManager: CallManager,
@@ -60,6 +70,8 @@ class HomeViewModel @Inject constructor(
     private val proStatusManager: ProStatusManager,
     private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
     private val recipientRepository: RecipientRepository,
+    private val dateUtils: DateUtils,
+    private val donationManager: DonationManager
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
@@ -81,6 +93,12 @@ class HomeViewModel @Inject constructor(
 
     private val _dialogsState = MutableStateFlow(DialogsState())
     val dialogsState: StateFlow<DialogsState> = _dialogsState
+
+    private val _uiEvents = MutableSharedFlow<UiEvent>(
+        replay = 0,
+        extraBufferCapacity = 1
+    )
+    val uiEvents: SharedFlow<UiEvent> = _uiEvents
 
     /**
      * A [StateFlow] that emits the list of threads and the typing status of each thread.
@@ -136,11 +154,62 @@ class HomeViewModel @Inject constructor(
 
     val shouldShowCurrentUserProBadge: StateFlow<Boolean> = recipientRepository
         .observeSelf()
-        .map { it.proStatus.shouldShowProBadge() }
+        .map { it.shouldShowProBadge }
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     private var userProfileModalJob: Job? = null
     private var userProfileModalUtils: UserProfileUtils? = null
+
+    init {
+        // observe subscription status
+        viewModelScope.launch {
+            proStatusManager.proDataState.collect { subscription ->
+                // show a CTA (only once per install) when
+                // - subscription is expiring in less than 7 days
+                // - subscription expired less than 30 days ago
+                val now = Instant.now()
+
+                var showExpiring: Boolean = false
+                var showExpired: Boolean = false
+
+                if(subscription.type is ProStatus.Active.Expiring
+                    && !prefs.hasSeenProExpiring()
+                ){
+                    val validUntil = subscription.type.validUntil
+                    showExpiring = validUntil.isBefore(now.plus(7, ChronoUnit.DAYS))
+                    Log.d(DebugLogGroup.PRO_DATA.label, "Home: Pro active but not auto renewing (expiring). Valid until: $validUntil - Should show Expiring CTA? $showExpiring")
+                    if (showExpiring) {
+                        _dialogsState.update { state ->
+                            state.copy(
+                                proExpiringCTA = ProExpiringCTA(
+                                    dateUtils.getExpiryString(validUntil)
+                                )
+                            )
+                        }
+                    }
+                }
+                else if(subscription.type is ProStatus.Expired
+                    && !prefs.hasSeenProExpired()) {
+                    val validUntil = subscription.type.expiredAt
+                    showExpired = now.isBefore(validUntil.plus(30, ChronoUnit.DAYS))
+
+                    Log.d(DebugLogGroup.PRO_DATA.label, "Home: Pro expired. Expired at: $validUntil - Should show Expired CTA? $showExpired")
+
+                    // Check if now is within 30 days after expiry
+                    if (showExpired) {
+                        _dialogsState.update { state ->
+                            state.copy(proExpiredCTA = true)
+                        }
+                    }
+                }
+
+                // check if we should display the donation CTA - unless we have a pro CTA already
+                if(!showExpiring && !showExpired && donationManager.shouldShowDonationCTA()){
+                    showDonationCTA()
+                }
+            }
+        }
+    }
 
     private fun observeTypingStatus(): Flow<Set<Long>> = typingStatusRepository
         .typingThreads
@@ -201,12 +270,16 @@ class HomeViewModel @Inject constructor(
     fun setPinned(address: Address, pinned: Boolean) {
         // check the pin limit before continuing
         val totalPins = storage.getTotalPinned()
-        val maxPins = proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().proStatus)
+        val maxPins =
+            proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().isPro)
         if (pinned && totalPins >= maxPins) {
             // the user has reached the pin limit, show the CTA
             _dialogsState.update {
                 it.copy(
-                    pinCTA = PinProCTA(overTheLimit = totalPins > maxPins)
+                    pinCTA = PinProCTA(
+                        overTheLimit = totalPins > maxPins,
+                        proSubscription = proStatusManager.proDataState.value.type
+                    )
                 )
             }
         } else {
@@ -233,7 +306,7 @@ class HomeViewModel @Inject constructor(
             is Commands.ShowStartConversationSheet -> {
                 _dialogsState.update { it.copy(showStartConversationSheet =
                     StartConversationSheetData(
-                        accountId = prefs.getLocalNumber()!!
+                        accountId = loginStateRepository.requireLocalNumber()
                     )
                 ) }
             }
@@ -241,8 +314,60 @@ class HomeViewModel @Inject constructor(
             is Commands.HideStartConversationSheet -> {
                 _dialogsState.update { it.copy(showStartConversationSheet = null) }
             }
+
+            is Commands.HideExpiringCTADialog -> {
+                prefs.setHasSeenProExpiring()
+                _dialogsState.update { it.copy(proExpiringCTA = null) }
+            }
+
+            is Commands.HideExpiredCTADialog -> {
+                prefs.setHasSeenProExpired()
+                _dialogsState.update { it.copy(proExpiredCTA = false) }
+            }
+
+            is Commands.GotoProSettings -> {
+                viewModelScope.launch {
+                    _uiEvents.emit(UiEvent.OpenProSettings(command.destination))
+                }
+            }
+
+            is Commands.HideDonationCTADialog -> {
+                _dialogsState.update { it.copy(donationCTA = false) }
+            }
+
+            is Commands.ShowDonationConfirmation -> {
+                showUrlDialog(URL_DONATE)
+            }
+
+            is Commands.HideUrlDialog -> {
+                _dialogsState.update { it.copy(showUrlDialog = null) }
+            }
+
+            is Commands.OnLinkOpened -> {
+                // if the link was for donation, mark it as seen
+                if(command.url == URL_DONATE) {
+                    donationManager.onDonationSeen()
+                }
+            }
+
+            is Commands.OnLinkCopied -> {
+                // if the link was for donation, mark it as seen
+                if(command.url == URL_DONATE) {
+                    donationManager.onDonationCopied()
+                }
+            }
         }
     }
+
+    fun showDonationCTA(){
+        _dialogsState.update { it.copy(donationCTA = true) }
+        donationManager.onDonationCTAViewed()
+    }
+
+    fun showUrlDialog(url: String) {
+        _dialogsState.update { it.copy(showUrlDialog = url) }
+    }
+
 
     fun showUserProfileModal(thread: ThreadRecord) {
         // get the helper class for the selected user
@@ -264,26 +389,50 @@ class HomeViewModel @Inject constructor(
     data class DialogsState(
         val pinCTA: PinProCTA? = null,
         val userProfileModal: UserProfileModalData? = null,
-        val showStartConversationSheet: StartConversationSheetData? = null
+        val showStartConversationSheet: StartConversationSheetData? = null,
+        val proExpiringCTA: ProExpiringCTA? = null,
+        val proExpiredCTA: Boolean = false,
+        val donationCTA: Boolean = false,
+        val showUrlDialog: String? = null,
     )
 
     data class PinProCTA(
-        val overTheLimit: Boolean
+        val overTheLimit: Boolean,
+        val proSubscription: ProStatus
+    )
+
+    data class ProExpiringCTA(
+        val expiry: String
     )
 
     data class StartConversationSheetData(
         val accountId: String
     )
 
+    sealed interface UiEvent {
+        data class OpenProSettings(val start: ProSettingsDestination) : UiEvent
+    }
+
     sealed interface Commands {
         data object HidePinCTADialog : Commands
+        data object HideExpiringCTADialog : Commands
+        data object HideExpiredCTADialog : Commands
+        data object ShowDonationConfirmation : Commands
+        data object HideDonationCTADialog : Commands
         data object HideUserProfileModal : Commands
+        data object HideUrlDialog : Commands
+        data class OnLinkOpened(val url: String) : Commands
+        data class OnLinkCopied(val url: String) : Commands
         data class HandleUserProfileCommand(
             val upmCommand: UserProfileModalCommands
         ) : Commands
 
         data object ShowStartConversationSheet : Commands
         data object HideStartConversationSheet : Commands
+
+        data class GotoProSettings(
+            val destination: ProSettingsDestination
+        ): Commands
     }
 
     companion object {

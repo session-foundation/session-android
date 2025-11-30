@@ -6,6 +6,7 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.delay
@@ -19,15 +20,13 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import network.loki.messenger.libsession_util.Namespace
-import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
-import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.jobs.MessageReceiveParameters
-import org.session.libsession.messaging.messages.Destination
-import org.session.libsession.snode.RawResponse
+import org.session.libsession.messaging.sending_receiving.MessageParser
+import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.model.BatchResponse
 import org.session.libsession.snode.model.RetrieveMessageResponse
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigMessage
 import org.session.libsession.utilities.getGroup
@@ -36,6 +35,7 @@ import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
+import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.getRootCause
 import java.time.Instant
@@ -51,7 +51,9 @@ class GroupPoller @AssistedInject constructor(
     private val clock: SnodeClock,
     private val appVisibilityManager: AppVisibilityManager,
     private val groupRevokedMessageHandler: GroupRevokedMessageHandler,
-    private val batchMessageReceiveJobFactory: BatchMessageReceiveJob.Factory,
+    private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
+    private val messageParser: MessageParser,
+    private val receivedMessageProcessor: ReceivedMessageProcessor,
 ) {
     companion object {
         private const val POLL_INTERVAL = 3_000L
@@ -254,8 +256,8 @@ class GroupPoller @AssistedInject constructor(
                             namespace = Namespace.REVOKED_GROUP_MESSAGES(),
                             maxSize = null,
                         ),
-                        RetrieveMessageResponse::class.java
-                    ).messages.filterNotNull()
+                        RetrieveMessageResponse.serializer()
+                    ).messages
                 }
 
                 if (configHashesToExtends.isNotEmpty() && adminKey != null) {
@@ -290,7 +292,7 @@ class GroupPoller @AssistedInject constructor(
                             namespace = Namespace.GROUP_MESSAGES(),
                             maxSize = null,
                         ),
-                        responseType = Map::class.java
+                        responseType = RetrieveMessageResponse.serializer()
                     )
                 }
 
@@ -313,8 +315,8 @@ class GroupPoller @AssistedInject constructor(
                                 namespace = ns,
                                 maxSize = null,
                             ),
-                            responseType = RetrieveMessageResponse::class.java
-                        ).messages.filterNotNull()
+                            responseType = RetrieveMessageResponse.serializer()
+                        ).messages
                     }
                 }
 
@@ -323,7 +325,7 @@ class GroupPoller @AssistedInject constructor(
                 // must be processed first.
                 pollingTasks += "polling and handling group config keys and messages" to async {
                     val result = runCatching {
-                        val (keysMessage, infoMessage, membersMessage) = groupConfigRetrieval.map { it.await() }
+                        val (keysMessage, infoMessage, membersMessage) = groupConfigRetrieval.awaitAll()
                         handleGroupConfigMessages(keysMessage, infoMessage, membersMessage)
                         saveLastMessageHash(snode, keysMessage, Namespace.GROUP_KEYS())
                         saveLastMessageHash(snode, infoMessage, Namespace.GROUP_INFO())
@@ -334,7 +336,16 @@ class GroupPoller @AssistedInject constructor(
                         }
 
                         val regularMessages = groupMessageRetrieval.await()
-                        handleMessages(regularMessages, snode)
+                        handleMessages(regularMessages.messages)
+
+                        regularMessages.messages.maxByOrNull { it.timestamp }?.let { newest ->
+                            lokiApiDatabase.setLastMessageHashValue(
+                                snode = snode,
+                                publicKey = groupId.hexString,
+                                newValue = newest.hash,
+                                namespace = Namespace.GROUP_MESSAGES()
+                            )
+                        }
                     }
 
                     // Revoke message must be handled regardless, and at the end
@@ -381,7 +392,7 @@ class GroupPoller @AssistedInject constructor(
 
                 if (badResponse != null) {
                     Log.e(TAG, "Group polling failed due to a server error", badResponse)
-                    pollState.swarmNodes -= currentSnode!!
+                    pollState.swarmNodes -= currentSnode
                 }
             }
         }
@@ -397,7 +408,7 @@ class GroupPoller @AssistedInject constructor(
     }
 
     private fun RetrieveMessageResponse.Message.toConfigMessage(): ConfigMessage {
-        return ConfigMessage(hash, data, timestamp ?: clock.currentTimeMills())
+        return ConfigMessage(hash, data, timestamp.toEpochMilli())
     }
 
     private fun saveLastMessageHash(
@@ -443,38 +454,47 @@ class GroupPoller @AssistedInject constructor(
         )
     }
 
-    private fun handleMessages(body: RawResponse, snode: Snode) {
-        val messages = configFactoryProtocol.withGroupConfigs(groupId) {
-            SnodeAPI.parseRawMessagesResponse(
-                rawResponse = body,
-                snode = snode,
-                publicKey = groupId.hexString,
-                decrypt = { data ->
-                    val (decrypted, sender) = it.groupKeys.decrypt(data) ?: return@parseRawMessagesResponse null
-                    decrypted to AccountId(sender)
-                },
-                namespace = Namespace.GROUP_MESSAGES(),
-            )
+    private fun handleMessages(messages: List<RetrieveMessageResponse.Message>) {
+        if (messages.isEmpty()) {
+            return
         }
 
-        val parameters = messages.map { (envelope, serverHash) ->
-            MessageReceiveParameters(
-                envelope.toByteArray(),
-                serverHash = serverHash,
-                closedGroup = Destination.ClosedGroup(groupId.hexString)
-            )
+        val start = System.currentTimeMillis()
+        val threadAddress = Address.Group(groupId)
+
+        receivedMessageProcessor.startProcessing("GroupPoller($groupId)") { ctx ->
+            for (message in messages) {
+                if (receivedMessageHashDatabase.checkOrUpdateDuplicateState(
+                        swarmPublicKey = groupId.hexString,
+                        namespace = Namespace.GROUP_MESSAGES(),
+                        hash = message.hash
+                    )) {
+                    Log.v(TAG, "Skipping duplicated group message ${message.hash} for group $groupId")
+                    continue
+                }
+
+                try {
+                    val (msg, proto) = messageParser.parseGroupMessage(
+                        data = message.data,
+                        serverHash = message.hash,
+                        groupId = groupId,
+                        currentUserId = ctx.currentUserId,
+                        currentUserEd25519PrivKey = ctx.currentUserEd25519KeyPair.secretKey.data,
+                    )
+
+                    receivedMessageProcessor.processSwarmMessage(
+                        threadAddress = threadAddress,
+                        message = msg,
+                        proto = proto,
+                        context = ctx,
+                    )
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error handling group message", e)
+                }
+            }
         }
 
-        parameters.chunked(BatchMessageReceiveJob.BATCH_DEFAULT_NUMBER).forEach { chunk ->
-            JobQueue.shared.add(batchMessageReceiveJobFactory.create(
-                messages = chunk,
-                fromCommunity = null
-            ))
-        }
-
-        if (messages.isNotEmpty()) {
-            Log.d(TAG, "Received and handled ${messages.size} group messages")
-        }
+        Log.d(TAG, "Handled ${messages.size} group messages for $groupId in ${System.currentTimeMillis() - start}ms")
     }
 
     /**

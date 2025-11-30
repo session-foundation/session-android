@@ -36,6 +36,9 @@
     <string name="adminRemovedUser"><b>{name}</b> ถูกปลดออกจากผู้ดูแลระบบ</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> และ <b>{count} คนอื่นๆ</b> ถูกลบออกจากสถานะ Admin.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> และ <b>{other_name}</b> ถูกลบออกจากสถานะ Admin.</string>
+    <plurals name="adminSendingPromotion">
+        <item quantity="other">กำลังส่งโปรโมชันของผู้ดูแลระบบ</item>
+    </plurals>
     <string name="adminSettings">การตั้งค่าผู้ดูแล</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> และ <b>{other_name}</b> ได้รับการเลื่อนตำแหน่งเป็นผู้ดูแลระบบ</string>
     <string name="andMore">+{count}</string>
@@ -121,6 +124,7 @@
     <string name="banUser">แบนผู้ใช้</string>
     <string name="banUserBanned">แบนผู้ใช้แล้ว.</string>
     <string name="block">บล็อก</string>
+    <string name="blockBlockedDescription">เลิกปิดกั้นผู้ติดต่อนี้เพื่อส่งข้อความ</string>
     <string name="blockBlockedNone">ไม่มีผู้ติดต่อที่ถูกปิดกั้น</string>
     <string name="blockBlockedUser">บล็อก {name}</string>
     <string name="blockDescription">คุณแน่ใจหรือไม่ว่าต้องการบล็อก <b>{name}?</b> ผู้ใช้ที่ถูกบล็อกจะไม่สามารถส่งคำร้องขอข้อความเชิญกลุ่ม หรือโทรหาคุณได้</string>
@@ -385,6 +389,9 @@
     <string name="groupInviteFailedMultiple">ไม่สามารถเชิญ {name} และอีก {count} คนเข้าร่วม {group_name} ได้</string>
     <string name="groupInviteFailedTwo">ไม่สามารถเชิญ {name} และ {other_name} เข้าร่วม {group_name} ได้</string>
     <string name="groupInviteFailedUser">ไม่สามารถเชิญ {name} เข้าร่วม {group_name} ได้</string>
+    <plurals name="groupInviteSending">
+        <item quantity="other">การส่งคำเชิญ</item>
+    </plurals>
     <string name="groupInviteSent">เชิญแล้ว</string>
     <string name="groupInviteSuccessful">เชิญเข้าร่วมกลุ่มสำเร็จ</string>
     <string name="groupInviteVersion">ผู้ใช้ต้องมีเวอร์ชันล่าสุดเพื่อรับคำเชิญ</string>
@@ -696,6 +703,9 @@
     <string name="redo">ทำซ้ำ</string>
     <string name="remove">เอาออก</string>
     <string name="removePasswordFail">ลบรหัสผ่านล้มเหลว</string>
+    <plurals name="removingMember">
+        <item quantity="other">กำลังลบสมาชิก</item>
+    </plurals>
     <string name="reply">ตอบกลับ</string>
     <string name="resend">ส่งอีกครั้ง</string>
     <string name="resolving">กำลังโหลดข้อมูลประเทศ...</string>

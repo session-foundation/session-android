@@ -15,7 +15,6 @@
     <string name="accountIdYoursDescription">Este es tu Account ID. Otros usuarios pueden escanearlo para iniciar una conversación contigo.</string>
     <string name="actualSize">Tamaño original</string>
     <string name="add">Añadir</string>
-    <string name="addAdmins">Añadir Administradores</string>
     <string name="addAdminsDescription">Ingrese el Account ID del usuario que desea promover a administrador.\n\nPara agregar varios usuarios, ingrese cada Account ID separado por una coma. Puede especificar hasta 20 Account ID a la vez.</string>
     <string name="adminCannotBeRemoved">Los administradores no pueden ser eliminados.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> y <b>{count} más</b> fueron promovidos a Admin.</string>
@@ -826,13 +825,9 @@
     <string name="proActivated">Activado</string>
     <string name="proAlreadyPurchased">Ya tienes</string>
     <string name="proAnimatedDisplayPicture">¡Adelante, sube GIFs e imágenes WebP animadas para tu imagen de perfil!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">Consigue imágenes de perfil animadas y desbloquea funciones premium con {app_pro}</string>
     <string name="proAnimatedDisplayPictureFeature">Imagen de perfil animada</string>
     <string name="proAnimatedDisplayPictureModalDescription">los usuarios pueden subir GIFs</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Sube GIFs con</string>
-    <string name="proCallToActionLongerMessages">¿Quieres enviar mensajes más largos? Envía más texto y desbloquea funciones premium con {app_pro}</string>
-    <string name="proCallToActionPinnedConversations">¿Quieres más conversaciones fijadas? Organiza tus chats y desbloquea funciones premium con {app_pro}</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">¿Quieres más de 5 conversaciones fijadas? Organiza tus chats y desbloquea funciones premium con {app_pro}</string>
     <string name="proFeatureListAnimatedDisplayPicture">Sube imágenes de perfil en formato GIF y WebP</string>
     <string name="proFeatureListLargerGroups">Chats grupales más grandes de hasta 300 miembros</string>
     <string name="proFeatureListLoadsMore">Y muchas funciones exclusivas más</string>
@@ -844,7 +839,6 @@
     <string name="proIncreasedMessageLengthFeature">Mayor longitud de mensaje</string>
     <string name="proMessageInfoFeatures">Este mensaje utilizó las siguientes funciones de {app_pro}:</string>
     <string name="proSendMore">Envía más con</string>
-    <string name="proUserProfileModalCallToAction">¿Quieres sacarle más provecho a {app_name}? Actualiza a {app_pro} para una experiencia de mensajería más potente.</string>
     <string name="profile">Perfil</string>
     <string name="profileDisplayPicture">Imagen de perfil</string>
     <string name="profileDisplayPictureRemoveError">Falló al remover foto de perfil.</string>

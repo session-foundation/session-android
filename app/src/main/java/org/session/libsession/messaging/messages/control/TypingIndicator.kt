@@ -1,8 +1,8 @@
 package org.session.libsession.messaging.messages.control
 
+import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.messages.copyExpiration
 import org.session.libsignal.protos.SignalServiceProtos
-import org.session.libsignal.utilities.Log
 
 class TypingIndicator() : ControlMessage() {
     var kind: Kind? = null
@@ -51,21 +51,12 @@ class TypingIndicator() : ControlMessage() {
         this.kind = kind
     }
 
-    override fun toProto(): SignalServiceProtos.Content? {
-        val timestamp = sentTimestamp
-        val kind = kind
-        if (timestamp == null || kind == null) {
-            Log.w(TAG, "Couldn't construct typing indicator proto from: $this")
-            return null
-        }
-        return try {
-            SignalServiceProtos.Content.newBuilder()
-                .setTypingMessage(SignalServiceProtos.TypingMessage.newBuilder().setTimestampMs(timestamp).setAction(kind.toProto()).build())
-                .applyExpiryMode()
-                .build()
-        } catch (e: Exception) {
-            Log.w(TAG, "Couldn't construct typing indicator proto from: $this")
-            null
-        }
+    protected override fun buildProto(
+        builder: SignalServiceProtos.Content.Builder,
+        messageDataProvider: MessageDataProvider
+    ) {
+        builder.typingMessageBuilder
+            .setTimestampMs(sentTimestamp!!)
+            .setAction(kind!!.toProto())
     }
 }

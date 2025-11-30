@@ -6,8 +6,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
@@ -21,6 +19,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.util.castAwayType
@@ -44,29 +43,23 @@ class OpenGroupPollerManager @Inject constructor(
     pollerFactory: OpenGroupPoller.Factory,
     configFactory: ConfigFactoryProtocol,
     preferences: TextSecurePreferences,
+    loginStateRepository: LoginStateRepository,
     @ManagerScope scope: CoroutineScope
 ) : OnAppStartupComponent {
     private val pollerSemaphore = Semaphore(3)
 
     val pollers: StateFlow<Map<String, PollerHandle>> =
-        preferences.watchLocalNumber()
-            .map { it != null }
-            .distinctUntilChanged()
-            .flatMapLatest { loggedIn ->
-                if (loggedIn) {
-                    configFactory
-                        .userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_GROUPS))
-                        .castAwayType()
-                        .onStart { emit(Unit) }
-                        .map {
-                            configFactory.withUserConfigs { configs ->
-                                configs.userGroups.allCommunityInfo()
-                            }.mapTo(hashSetOf()) { it.community.baseUrl }
-                        }
-                } else {
-                    flowOf(emptySet())
+        loginStateRepository.flowWithLoggedInState {
+            configFactory
+                .userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_GROUPS))
+                .castAwayType()
+                .onStart { emit(Unit) }
+                .map {
+                    configFactory.withUserConfigs { configs ->
+                        configs.userGroups.allCommunityInfo()
+                    }.mapTo(hashSetOf()) { it.community.baseUrl }
                 }
-            }
+        }
             .distinctUntilChanged()
             .scan(emptyMap<String, PollerHandle>()) { acc, value ->
                 if (acc.keys == value) {
