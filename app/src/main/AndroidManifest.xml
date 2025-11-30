@@ -249,13 +249,8 @@
         <activity
             android:name="org.thoughtcrime.securesms.mediasend.MediaSendActivity"
             android:theme="@style/Theme.Session.DayNight.NoActionBar"
-            android:windowSoftInputMode="stateHidden">
-
-            <!--To opt out of the API level 36 behavior-->
-            <property
-                android:name="android.window.PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY"
-                android:value="true" />
-        </activity>
+            android:windowSoftInputMode="stateHidden"
+            android:configChanges="orientation|screenSize|keyboardHidden"/>
         <activity
             android:name="org.thoughtcrime.securesms.MediaPreviewActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
