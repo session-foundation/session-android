@@ -2,14 +2,15 @@ package org.thoughtcrime.securesms.recoverypassword
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -31,6 +32,7 @@ import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.SessionShieldIcon
+import org.thoughtcrime.securesms.ui.adaptive.getAdaptiveInfo
 import org.thoughtcrime.securesms.ui.border
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
@@ -104,13 +106,34 @@ private fun RecoveryPasswordCell(
                 showQr,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
-                QrImage(
-                    seed,
-                    modifier = Modifier
-                        .padding(vertical = LocalDimensions.current.spacing)
-                        .qaTag(R.string.AccessibilityId_qrCode),
-                    icon = R.drawable.ic_recovery_password_custom
-                )
+                val config = getAdaptiveInfo()
+                val isLandscape = config.isLandscape
+
+                BoxWithConstraints {
+                    val availableWidth = maxWidth
+                    val widthTarget = availableWidth * if (isLandscape) 0.80f else 1f
+                    val heightCap = if (isLandscape) config.heightDp.dp * 0.70f else config.heightDp.dp * 1f
+
+                    val qrSide = widthTarget
+                        .coerceAtMost(heightCap)
+                        .coerceIn(
+                            LocalDimensions.current.minContentSizeMedium,
+                            LocalDimensions.current.maxContentSizeMedium
+                        )
+
+                            QrImage(
+                                seed,
+                                modifier = Modifier
+                                    .padding(
+                                        top = LocalDimensions.current.spacing,
+                                        bottom = LocalDimensions.current.smallSpacing
+                                    )
+                                    .size(qrSide)
+                                    .qaTag(R.string.AccessibilityId_qrCode),
+                                icon = R.drawable.ic_recovery_password_custom
+                            )
+
+                }
             }
 
             AnimatedVisibility(!showQr) {

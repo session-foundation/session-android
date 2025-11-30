@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.mediasend
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
@@ -78,10 +79,6 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
 
         setResult(RESULT_CANCELED)
 
-        if (savedInstanceState != null) {
-            return
-        }
-
         // Apply windowInsets for our own UI (not the fragment ones because they will want to do their own things)
         binding.mediasendBottomBar.applySafeInsetsPaddings()
 
@@ -91,29 +88,31 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
 
         viewModel.onBodyChanged(intent.getStringExtra(KEY_BODY)!!)
 
-        val media: List<Media?>? = intent.getParcelableArrayListExtra(KEY_MEDIA)
-        val isCamera = intent.getBooleanExtra(KEY_IS_CAMERA, false)
+        if (savedInstanceState == null) {
+            val media: List<Media?>? = intent.getParcelableArrayListExtra(KEY_MEDIA)
+            val isCamera = intent.getBooleanExtra(KEY_IS_CAMERA, false)
 
-        if (isCamera) {
-            val fragment: Fragment = CameraXFragment()
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.mediasend_fragment_container, fragment, TAG_CAMERA)
-                .commit()
-        } else if (!isEmpty(media)) {
-            viewModel.onSelectedMediaChanged(this, media!!)
+            if (isCamera) {
+                val fragment: Fragment = CameraXFragment()
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.mediasend_fragment_container, fragment, TAG_CAMERA)
+                    .commit()
+            } else if (!isEmpty(media)) {
+                viewModel.onSelectedMediaChanged(this, media!!)
 
-            val fragment: Fragment = MediaSendFragment.newInstance(recipient!!.address)
+                val fragment: Fragment = MediaSendFragment.newInstance(recipient!!.address)
 
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.mediasend_fragment_container, fragment, TAG_SEND)
-                .commit()
-        } else {
-            val fragment = MediaPickerFolderFragment.newInstance(
-                recipient!!
-            )
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.mediasend_fragment_container, fragment, TAG_FOLDER_PICKER)
-                .commit()
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.mediasend_fragment_container, fragment, TAG_SEND)
+                    .commit()
+            } else {
+                val fragment = MediaPickerFolderFragment.newInstance(
+                    recipient!!
+                )
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.mediasend_fragment_container, fragment, TAG_FOLDER_PICKER)
+                    .commit()
+            }
         }
 
         initializeCountButtonObserver()
@@ -496,6 +495,14 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         if (sendFragment != null && sendFragment.isVisible) {
             sendFragment.onRequestFullScreen(fullScreen)
         }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+
+        // Forward to CameraXFragment if it’s currently attached
+        (supportFragmentManager.findFragmentByTag(TAG_CAMERA) as? CameraXFragment)
+            ?.onHostConfigurationChanged(newConfig)
     }
 
     companion object {
