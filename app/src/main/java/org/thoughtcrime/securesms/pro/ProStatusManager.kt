@@ -381,8 +381,11 @@ class ProStatusManager @Inject constructor(
         // if the debug is set, return that
         if (prefs.forceIncomingMessagesAsPro()) return MAX_CHARACTER_PRO
 
-        // otherwise return the true value
-        return if(isPostPro()) MAX_CHARACTER_REGULAR else MAX_CHARACTER_PRO //todo PRO implement real logic once it's in
+        if (message.proFeatures.contains(ProMessageFeature.HIGHER_CHARACTER_LIMIT)) {
+            return MAX_CHARACTER_PRO
+        }
+
+        return MAX_CHARACTER_REGULAR
     }
 
     // Temporary method and concept that we should remove once Pro is out
