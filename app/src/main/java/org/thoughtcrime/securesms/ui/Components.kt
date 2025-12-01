@@ -427,15 +427,7 @@ fun Cell(
         modifier = modifier
             .then(
                 if (dropShadow)
-                    Modifier.dropShadow(
-                        shape = MaterialTheme.shapes.small,
-                        shadow = Shadow(
-                            radius = 4.dp,
-                            color = LocalColors.current.text,
-                            alpha = 0.25f,
-                            offset = DpOffset(0.dp, 4.dp)
-                        )
-                    )
+                    Modifier.sessionDropShadow()
                 else Modifier
             )
             .clip(MaterialTheme.shapes.small)

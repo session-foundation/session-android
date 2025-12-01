@@ -69,9 +69,9 @@ open class SelectContactsViewModel @AssistedInject constructor(
         ::filterContacts
     ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    val hasContacts: StateFlow<Boolean> = contactsFlow
+    val hasContacts: StateFlow<Boolean?> = contactsFlow
             .map { it.isNotEmpty() }
-            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     // Output
     val currentSelected: Set<Address>
