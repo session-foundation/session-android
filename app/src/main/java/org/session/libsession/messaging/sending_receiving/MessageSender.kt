@@ -35,7 +35,7 @@ import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsignal.protos.SignalServiceProtos
+import org.session.protos.SessionProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Hex
@@ -84,25 +84,25 @@ class MessageSender @Inject constructor(
     }
 
 
-    private fun SignalServiceProtos.DataMessage.Builder.copyProfileFromConfig() {
+    private fun SessionProtos.DataMessage.Builder.copyProfileFromConfig() {
         configFactory.withUserConfigs {
             val pic = it.userProfile.getPic()
 
             profileBuilder.setDisplayName(it.userProfile.getName().orEmpty())
                 .setProfilePicture(pic.url)
-                .setLastProfileUpdateSeconds(it.userProfile.getProfileUpdatedSeconds())
+                .setLastUpdateSeconds(it.userProfile.getProfileUpdatedSeconds())
 
             setProfileKey(ByteString.copyFrom(pic.keyAsByteArray))
         }
     }
 
-    private fun SignalServiceProtos.MessageRequestResponse.Builder.copyProfileFromConfig() {
+    private fun SessionProtos.MessageRequestResponse.Builder.copyProfileFromConfig() {
         configFactory.withUserConfigs {
             val pic = it.userProfile.getPic()
 
             profileBuilder.setDisplayName(it.userProfile.getName().orEmpty())
                 .setProfilePicture(pic.url)
-                .setLastProfileUpdateSeconds(it.userProfile.getProfileUpdatedSeconds())
+                .setLastUpdateSeconds(it.userProfile.getProfileUpdatedSeconds())
 
             setProfileKey(ByteString.copyFrom(pic.keyAsByteArray))
         }
@@ -117,9 +117,9 @@ class MessageSender @Inject constructor(
         }
     }
 
-    private fun buildProto(msg: Message): SignalServiceProtos.Content {
+    private fun buildProto(msg: Message): SessionProtos.Content {
         try {
-            val builder = SignalServiceProtos.Content.newBuilder()
+            val builder = SessionProtos.Content.newBuilder()
 
             msg.toProto(builder, messageDataProvider)
 

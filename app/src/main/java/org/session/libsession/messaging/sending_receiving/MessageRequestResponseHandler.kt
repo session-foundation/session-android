@@ -12,7 +12,7 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.upsertContact
-import org.session.libsignal.protos.SignalServiceProtos
+import org.session.protos.SessionProtos
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.MmsDatabase
@@ -69,7 +69,7 @@ class MessageRequestResponseHandler @Inject constructor(
     fun handleExplicitRequestResponseMessage(
         ctx: ReceivedMessageProcessor.MessageProcessingContext?,
         message: MessageRequestResponse,
-        proto: SignalServiceProtos.Content,
+        proto: SessionProtos.Content,
     ) {
         val (sender, receiver) = fetchSenderAndReceiver(message) ?: return
         // Always handle explicit request response

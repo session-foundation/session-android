@@ -25,7 +25,7 @@ import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.upsertContact
-import org.session.libsignal.protos.SignalServiceProtos
+import org.session.protos.SessionProtos
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.database.Storage
@@ -54,7 +54,7 @@ class VisibleMessageHandler @Inject constructor(
         message: VisibleMessage,
         threadId: Long,
         threadAddress: Address.Conversable,
-        proto: SignalServiceProtos.Content,
+        proto: SessionProtos.Content,
         runThreadUpdate: Boolean,
         runProfileUpdate: Boolean,
     ): MessageId? {
