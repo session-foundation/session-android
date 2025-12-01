@@ -369,7 +369,8 @@ open class Storage @Inject constructor(
                     recipient = targetAddress,
                     sentTimestampMillis = message.sentTimestamp!!,
                     expiresInMillis = expiresInMillis,
-                    expireStartedAtMillis = expireStartedAt
+                    expireStartedAtMillis = expireStartedAt,
+                    proFeatures = message.proFeatures
                 )!!
                 else OutgoingTextMessage(
                     message = message,

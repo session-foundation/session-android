@@ -37,7 +37,8 @@ data class OutgoingTextMessage private constructor(
             sentTimestampMillis: Long,
             expiresInMillis: Long,
             expireStartedAtMillis: Long,
-        ): OutgoingTextMessage? {
+            proFeatures: Set<ProFeature>,
+            ): OutgoingTextMessage? {
             return OutgoingTextMessage(
                 recipient = recipient,
                 message = UpdateMessageData.buildOpenGroupInvitation(
@@ -48,7 +49,7 @@ data class OutgoingTextMessage private constructor(
                 expireStartedAtMillis = expireStartedAtMillis,
                 sentTimestampMillis = sentTimestampMillis,
                 isOpenGroupInvitation = true,
-                proFeatures = emptySet() //todo PRO this needs to be set properly
+                proFeatures = proFeatures
             )
         }
     }

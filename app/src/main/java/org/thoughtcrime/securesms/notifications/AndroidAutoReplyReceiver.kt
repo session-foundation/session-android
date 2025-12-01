@@ -39,6 +39,7 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.mms.MmsException
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import javax.inject.Inject
 
 /**
@@ -67,6 +68,9 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
     @Inject
     lateinit var messageSender: MessageSender
 
+    @Inject
+    lateinit var proStatusManager: ProStatusManager
+
     @SuppressLint("StaticFieldLeak")
     override fun onReceive(context: Context, intent: Intent) {
         if (REPLY_ACTION != intent.getAction()) return
@@ -92,6 +96,7 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
 
                     val message = VisibleMessage()
                     message.text = responseText.toString()
+                    proStatusManager.addProFeatures(message)
                     message.sentTimestamp = nowWithOffset
                     messageSender.send(message, address!!)
                     val expiryMode = recipientRepository.getRecipientSync(address).expiryMode
