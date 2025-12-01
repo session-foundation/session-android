@@ -190,6 +190,7 @@ import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.mms.VideoSlide
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.PrivacySettingsActivity
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.reactions.ReactionsDialogFragment
 import org.thoughtcrime.securesms.reactions.any.ReactWithAnyEmojiDialogFragment
 import org.thoughtcrime.securesms.showSessionDialog
@@ -263,6 +264,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var messageSender: MessageSender
     @Inject lateinit var resendMessageUtilities: ResendMessageUtilities
     @Inject lateinit var messageNotifier: MessageNotifier
+    @Inject lateinit var proStatusManager: ProStatusManager
     @Inject @ManagerScope
     lateinit var scope: CoroutineScope
 
@@ -2144,6 +2146,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val message = VisibleMessage().applyExpiryMode(viewModel.address)
         message.sentTimestamp = sentTimestamp
         message.text = text
+        // pro features
+        proStatusManager.addProFeatures(message)
         val expiresInMillis = viewModel.recipient.expiryMode.expiryMillis
         val outgoingTextMessage = OutgoingTextMessage(
             message = message,
@@ -2206,6 +2210,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val expireStartedAtMs = if (viewModel.recipient.expiryMode is ExpiryMode.AfterSend) {
             sentTimestamp
         } else 0
+        // pro features
+        proStatusManager.addProFeatures(message)
         val outgoingTextMessage = OutgoingMediaMessage(
             message = message,
             recipient = recipient.address,

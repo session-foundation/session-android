@@ -32,7 +32,10 @@ import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVID
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_GOOGLE_PLAY
 import network.loki.messenger.libsession_util.pro.ProConfig
 import network.loki.messenger.libsession_util.protocol.ProFeature
+import network.loki.messenger.libsession_util.protocol.ProMessageFeature
 import network.loki.messenger.libsession_util.util.Conversation
+import network.loki.messenger.libsession_util.util.Util
+import network.loki.messenger.libsession_util.util.asSequence
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -47,6 +50,7 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.pro.api.AddPaymentErrorStatus
@@ -405,6 +409,23 @@ class ProStatusManager @Inject constructor(
         }
 
         return message.proFeatures
+    }
+
+    /**
+     * Adds Pro features, if any, to an outgoing visible message
+     */
+    fun addProFeatures(visibleMessage: VisibleMessage){
+        val proFeatures: MutableSet<ProFeature> = mutableSetOf()
+
+        configFactory.get().withUserConfigs { configs ->
+            proFeatures += configs.userProfile.getProFeatures().asSequence()
+        }
+
+        if(Util.countCodepoints(visibleMessage.text.orEmpty()) > MAX_CHARACTER_REGULAR){
+            proFeatures += ProMessageFeature.HIGHER_CHARACTER_LIMIT
+        }
+
+        visibleMessage.proFeatures = proFeatures
     }
 
     /**
