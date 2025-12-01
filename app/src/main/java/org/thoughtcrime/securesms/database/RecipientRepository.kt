@@ -430,15 +430,13 @@ class RecipientRepository @Inject constructor(
 
         // Calculate the ProData for this recipient
         val proDataList = proDataContext?.proDataList
-        var proData = if (!proDataList.isNullOrEmpty()) {
-            proDataList.removeAll {
-                it.isExpired(now) || proDatabase.isRevoked(it.genIndexHash)
-            }
 
-            // The pro data that goes into the recipient, should show the one with the most information
-            proDataList.firstOrNull { it.showProBadge }?.let {
-                RecipientData.ProData(it.showProBadge)
-            }
+        proDataList?.removeAll {
+            it.isExpired(now) || proDatabase.isRevoked(it.genIndexHash)
+        }
+
+        var proData = if (!proDataList.isNullOrEmpty()) {
+            RecipientData.ProData(showProBadge = proDataList.any { it.showProBadge })
         } else {
             null
         }
@@ -583,7 +581,17 @@ class RecipientRepository @Inject constructor(
                     configFactory.withUserConfigs { configs ->
                         val pro = configs.userProfile.getProConfig()
 
-                        if (pro != null) {
+                        if (prefs.forceCurrentUserAsPro()) {
+                            proDataContext?.addProData(
+                                RecipientSettings.ProData(
+                                    showProBadge = configs.userProfile.getProFeatures().contains(
+                                        ProProfileFeature.PRO_BADGE
+                                    ),
+                                    expiry = Instant.now().plusSeconds(3600),
+                                    genIndexHash = "a1b2c3d4",
+                                )
+                            )
+                        } else if (pro != null) {
                             proDataContext?.addProData(
                                 RecipientSettings.ProData(
                                     showProBadge = configs.userProfile.getProFeatures().contains(
