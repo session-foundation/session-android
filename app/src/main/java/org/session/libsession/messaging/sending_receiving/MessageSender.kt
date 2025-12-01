@@ -90,7 +90,7 @@ class MessageSender @Inject constructor(
 
             profileBuilder.setDisplayName(it.userProfile.getName().orEmpty())
                 .setProfilePicture(pic.url)
-                .setLastProfileUpdateSeconds(it.userProfile.getProfileUpdatedSeconds())
+                .setLastUpdateSeconds(it.userProfile.getProfileUpdatedSeconds())
 
             setProfileKey(ByteString.copyFrom(pic.keyAsByteArray))
         }
@@ -102,7 +102,7 @@ class MessageSender @Inject constructor(
 
             profileBuilder.setDisplayName(it.userProfile.getName().orEmpty())
                 .setProfilePicture(pic.url)
-                .setLastProfileUpdateSeconds(it.userProfile.getProfileUpdatedSeconds())
+                .setLastUpdateSeconds(it.userProfile.getProfileUpdatedSeconds())
 
             setProfileKey(ByteString.copyFrom(pic.keyAsByteArray))
         }

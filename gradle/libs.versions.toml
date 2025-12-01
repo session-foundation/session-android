@@ -29,7 +29,7 @@ kotlinVersion = "2.2.21"
 kryoVersion = "5.6.2"
 kspVersion = "2.3.3"
 legacySupportV13Version = "1.0.0"
-libsessionUtilAndroidVersion = "1.0.9-7-gf2e3e9b"
+libsessionUtilAndroidVersion = "1.0.9-10-gf77214c"
 media3ExoplayerVersion = "1.8.0"
 mockitoCoreVersion = "5.20.0"
 navVersion = "2.9.5"
@@ -52,7 +52,6 @@ materialVersion = "1.13.0"
 mockitoKotlinVersion = "6.1.0"
 okhttpVersion = "5.3.0"
 preferenceVersion = "1.2.1"
-protobufVersion = "4.33.1"
 recyclerviewVersion = "1.4.0"
 robolectricVersion = "4.14.1"
 roundedimageviewVersion = "2.1.0"
@@ -156,7 +155,6 @@ okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttpVersion"
 opencsv = { module = "com.opencsv:opencsv", version.ref = "opencsvVersion" }
 photoview = { module = "com.github.chrisbanes:PhotoView", version.ref = "photoviewVersion" }
 phrase = { module = "com.squareup.phrase:phrase", version.ref = "phraseVersion" }
-protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobufVersion" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectricVersion" }
 roundedimageview = { module = "com.makeramen:roundedimageview", version.ref = "roundedimageviewVersion" }
 rxbinding = { module = "com.jakewharton.rxbinding3:rxbinding", version.ref = "rxbindingVersion" }

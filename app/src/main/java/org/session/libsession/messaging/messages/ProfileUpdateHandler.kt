@@ -260,8 +260,8 @@ class ProfileUpdateHandler @Inject constructor(
                     name = name,
                     pic = pic,
                     blocksCommunityMessageRequests = blocksCommunityMessageRequests,
-                    profileUpdateTime = if (profile.hasLastProfileUpdateSeconds()) {
-                        Instant.ofEpochSecond(profile.lastProfileUpdateSeconds)
+                    profileUpdateTime = if (profile.hasLastUpdateSeconds()) {
+                        Instant.ofEpochSecond(profile.lastUpdateSeconds)
                     } else {
                         null
                     }
