@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.pro
 
 import android.app.Application
+import androidx.collection.ArraySet
 import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -415,7 +416,7 @@ class ProStatusManager @Inject constructor(
      * Adds Pro features, if any, to an outgoing visible message
      */
     fun addProFeatures(visibleMessage: VisibleMessage){
-        val proFeatures: MutableSet<ProFeature> = mutableSetOf()
+        val proFeatures = ArraySet<ProFeature>()
 
         configFactory.get().withUserConfigs { configs ->
             proFeatures += configs.userProfile.getProFeatures().asSequence()

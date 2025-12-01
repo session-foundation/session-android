@@ -124,8 +124,12 @@ class MessageSender @Inject constructor(
             msg.toProto(builder, messageDataProvider)
 
             // Attach pro proof
-            configFactory.withUserConfigs { it.userProfile.getProConfig() }?.proProof?.let { proof ->
-                builder.proMessageBuilder.proofBuilder.copyFromLibSession(proof)
+            val proProof = configFactory.withUserConfigs { it.userProfile.getProConfig() }?.proProof
+            if (proProof != null && proProof.expiryMs > snodeClock.currentTimeMills()) {
+                builder.proMessageBuilder.proofBuilder.copyFromLibSession(proProof)
+            } else {
+                // If we don't have any valid pro proof, clear the pro message
+                builder.clearProMessage()
             }
 
             // Attach the user's profile if needed
