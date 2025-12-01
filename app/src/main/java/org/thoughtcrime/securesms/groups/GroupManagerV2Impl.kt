@@ -12,9 +12,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.Namespace
+import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.Bytes.Companion.toBytes
 import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.ExpiryMode
@@ -48,15 +48,16 @@ import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.waitUntilGroupConfigsPushed
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateDeleteMemberContentMessage
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateInfoChangeMessage
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateInviteResponseMessage
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMemberChangeMessage
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMessage
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
+import org.session.protos.SessionProtos.GroupUpdateDeleteMemberContentMessage
+import org.session.protos.SessionProtos.GroupUpdateInfoChangeMessage.Type
+import org.session.protos.SessionProtos.GroupUpdateInfoChangeMessage.newBuilder
+import org.session.protos.SessionProtos.GroupUpdateInviteResponseMessage
+import org.session.protos.SessionProtos.GroupUpdateMemberChangeMessage
+import org.session.protos.SessionProtos.GroupUpdateMessage
+import org.session.protos.SessionProtos.GroupUpdatePromoteMessage
 import org.thoughtcrime.securesms.configs.ConfigUploader
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
@@ -519,7 +520,7 @@ class GroupManagerV2Impl @Inject constructor(
             val promoteMessage = GroupUpdated(
                 GroupUpdateMessage.newBuilder()
                     .setPromoteMessage(
-                        DataMessage.GroupUpdatePromoteMessage.newBuilder()
+                        GroupUpdatePromoteMessage.newBuilder()
                             .setGroupIdentitySeed(ByteString.copyFrom(adminKey).substring(0, 32))
                             .setName(groupName)
                     )
@@ -913,16 +914,16 @@ class GroupManagerV2Impl @Inject constructor(
 
             val timestamp = clock.currentTimeMills()
             val signature = ED25519.sign(
-                message = buildInfoChangeSignature(GroupUpdateInfoChangeMessage.Type.NAME, timestamp),
+                message = buildInfoChangeSignature(Type.NAME, timestamp),
                 ed25519PrivateKey = adminKey
             )
 
             val message = GroupUpdated(
                 GroupUpdateMessage.newBuilder()
                     .setInfoChangeMessage(
-                        GroupUpdateInfoChangeMessage.newBuilder()
+                        newBuilder()
                             .setUpdatedName(newName)
-                            .setType(GroupUpdateInfoChangeMessage.Type.NAME)
+                            .setType(Type.NAME)
                             .setAdminSignature(ByteString.copyFrom(signature))
                     )
                     .build()
@@ -1099,7 +1100,7 @@ class GroupManagerV2Impl @Inject constructor(
     }
 
     override fun handleGroupInfoChange(message: GroupUpdated, groupId: AccountId) {
-        if (message.inner.hasInfoChangeMessage() && message.inner.infoChangeMessage.hasUpdatedExpirationSeconds()) {
+        if (message.inner.hasInfoChangeMessage() && message.inner.infoChangeMessage.hasUpdatedExpiration()) {
             // If we receive a disappearing message update, we need to remove the existing timer control message
             storage.deleteGroupInfoMessages(
                 groupId,
@@ -1128,16 +1129,16 @@ class GroupManagerV2Impl @Inject constructor(
         // Construct a message to notify the group members about the expiration timer change
         val timestamp = clock.currentTimeMills()
         val signature = ED25519.sign(
-            message = buildInfoChangeSignature(GroupUpdateInfoChangeMessage.Type.DISAPPEARING_MESSAGES, timestamp),
+            message = buildInfoChangeSignature(Type.DISAPPEARING_MESSAGES, timestamp),
             ed25519PrivateKey = adminKey
         )
 
         val message = GroupUpdated(
             GroupUpdateMessage.newBuilder()
                 .setInfoChangeMessage(
-                    GroupUpdateInfoChangeMessage.newBuilder()
-                        .setType(GroupUpdateInfoChangeMessage.Type.DISAPPEARING_MESSAGES)
-                        .setUpdatedExpirationSeconds(mode.expirySeconds.toInt())
+                    newBuilder()
+                        .setType(Type.DISAPPEARING_MESSAGES)
+                        .setUpdatedExpiration(mode.expirySeconds.toInt())
                         .setAdminSignature(ByteString.copyFrom(signature))
 
                 )
