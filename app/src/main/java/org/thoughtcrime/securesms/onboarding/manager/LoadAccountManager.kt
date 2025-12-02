@@ -4,6 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
@@ -25,9 +26,10 @@ class LoadAccountManager @Inject constructor(
             database.clearAllLastMessageHashes()
             receivedMessageHashDatabase.removeAll()
 
-            loginStateRepository.update {
-                require(it == null) {
-                    "Attempting to restore an account when one already exists!"
+            loginStateRepository.update { old ->
+                if (old != null) {
+                    Log.wtf("LoadAccountManager", "Tried to load account when already logged in!")
+                    return@update old
                 }
 
                 LoggedInState.generate(seed)

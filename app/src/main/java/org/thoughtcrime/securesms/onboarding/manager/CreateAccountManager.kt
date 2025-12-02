@@ -5,6 +5,7 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
@@ -26,8 +27,9 @@ class CreateAccountManager @Inject constructor(
             receivedMessageHashDatabase.removeAll()
 
             loginStateRepository.update { oldState ->
-                require(oldState == null) {
-                    "Attempting to create a new account when one already exists!"
+                if (oldState != null) {
+                    Log.wtf("CreateAccountManager", "Tried to create account when already logged in!")
+                    return@update oldState
                 }
 
                 LoggedInState.generate(seed = null)
