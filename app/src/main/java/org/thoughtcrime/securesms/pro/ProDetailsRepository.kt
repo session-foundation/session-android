@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import org.session.libsession.snode.SnodeClock
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.api.ProDetails
@@ -27,6 +28,7 @@ class ProDetailsRepository @Inject constructor(
     private val db: ProDatabase,
     private val snodeClock: SnodeClock,
     @ManagerScope scope: CoroutineScope,
+    loginStateRepository: LoginStateRepository,
 ) {
     sealed interface LoadState {
         val lastUpdated: Pair<ProDetails, Instant>?
@@ -46,31 +48,33 @@ class ProDetailsRepository @Inject constructor(
     }
 
 
-    val loadState: StateFlow<LoadState> = combine(
-        FetchProDetailsWorker.watch(application)
-            .map { it.state }
-            .distinctUntilChanged(),
+    val loadState: StateFlow<LoadState> = loginStateRepository.flowWithLoggedInState {
+        combine(
+            FetchProDetailsWorker.watch(application)
+                .map { it.state }
+                .distinctUntilChanged(),
 
-        db.proDetailsChangeNotification
-            .onStart { emit(Unit) }
-            .map { db.getProDetailsAndLastUpdated() }
-    ) { state, last ->
-        when (state) {
-            WorkInfo.State.ENQUEUED, WorkInfo.State.BLOCKED -> LoadState.Loading(last, waitingForNetwork = true)
-            WorkInfo.State.RUNNING -> LoadState.Loading(last, waitingForNetwork = false)
-            WorkInfo.State.SUCCEEDED -> {
-                if (last != null) {
-                    Log.d(DebugLogGroup.PRO_DATA.label, "Successfully fetched Pro details from backend")
-                    LoadState.Loaded(last)
-                } else {
-                    // This should never happen, but just in case...
-                    LoadState.Error(null)
+            db.proDetailsChangeNotification
+                .onStart { emit(Unit) }
+                .map { db.getProDetailsAndLastUpdated() }
+        ) { state, last ->
+            when (state) {
+                WorkInfo.State.ENQUEUED, WorkInfo.State.BLOCKED -> LoadState.Loading(last, waitingForNetwork = true)
+                WorkInfo.State.RUNNING -> LoadState.Loading(last, waitingForNetwork = false)
+                WorkInfo.State.SUCCEEDED -> {
+                    if (last != null) {
+                        Log.d(DebugLogGroup.PRO_DATA.label, "Successfully fetched Pro details from backend")
+                        LoadState.Loaded(last)
+                    } else {
+                        // This should never happen, but just in case...
+                        LoadState.Error(null)
+                    }
                 }
-            }
 
-            WorkInfo.State.FAILED, WorkInfo.State.CANCELLED -> LoadState.Error(last)
+                WorkInfo.State.FAILED, WorkInfo.State.CANCELLED -> LoadState.Error(last)
+            }
         }
-    }.stateIn(scope, SharingStarted.Eagerly, LoadState.Init)
+    } .stateIn(scope, SharingStarted.Eagerly, LoadState.Init)
 
 
     /**
