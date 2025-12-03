@@ -849,7 +849,6 @@
     <string name="notificationsFastModeDescriptionIos">You\'ll be notified of new messages reliably and immediately using Apple\'s notification Servers.</string>
     <string name="notificationsGenericOnly">Display a generic {app_name} notification without the sender\'s name or message content.</string>
     <string name="notificationsGoToDevice">Go to device notification settings</string>
-    <string name="temp_do_not_commit">Run App in the Background</string>
     <string name="notificationsHeaderAllMessages">Notifications - All</string>
     <string name="notificationsHeaderMentionsOnly">Notifications - Mentions Only</string>
     <string name="notificationsHeaderMute">Notifications - Muted</string>

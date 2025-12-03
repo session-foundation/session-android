@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
+import com.squareup.phrase.Phrase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +32,7 @@ import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.AccountId
@@ -178,9 +180,13 @@ class HomeViewModel @Inject constructor(
                 _dialogsState.update {
                     it.copy(
                         showSimpleDialog = SimpleDialogData(
-                            title = "Run Session in the Background?",
-                            message = "Since you’re using slow mode we recommend allowing Session to run in the background to improve notifications. Your system may still decide to limit Session, but allowing can improve notification consistency.\n\nYou can change this later in Settings.",
-                            positiveText = "Allow",
+                            title = Phrase.from(context, R.string.runSessionBackground)
+                                .put(APP_NAME_KEY, context.getString(R.string.app_name))
+                                .format().toString(),
+                            message = Phrase.from(context, R.string.runSessionBackgroundDescription)
+                                .put(APP_NAME_KEY, context.getString(R.string.app_name))
+                                .format().toString(),
+                            positiveText = context.getString(R.string.allow),
                             negativeText = context.getString(R.string.cancel),
                             positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_whitelist_confirm),
                             negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_whitelist_cancel),

@@ -20,14 +20,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.preference.Preference
+import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
@@ -49,13 +52,12 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
     @Inject
     lateinit var prefs: TextSecurePreferences
 
-    //todo WHITELIST uncomment prefs after seeing the dialog
-//todo WHITELIST remove hardcoded strings
-
     var showWhitelistEnableDialog by mutableStateOf(false)
     var showWhitelistDisableDialog by mutableStateOf(false)
 
     var whiteListControl: SwitchPreferenceCompat? = null
+
+    private val composeView by lazy { ComposeView(requireContext()) }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -80,9 +82,8 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
             )
         )
 
-        val compose = ComposeView(requireContext()).apply { id = R.id.composeHost }
         wrapper.addView(
-            compose,
+            composeView,
             FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT,
@@ -97,7 +98,7 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         //set up compose content
-        view.findViewById<ComposeView>(R.id.composeHost).apply {
+        composeView.apply {
             setViewCompositionStrategy(
                 ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
             )
@@ -108,11 +109,15 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
                             // hide dialog
                             showWhitelistEnableDialog = false
                         },
-                        title = "Run Session in the Background?",
-                        text = "Since you’re using slow mode we recommend allowing Session to run in the background to improve notifications. Your system may still decide to limit Session, but allowing can improve notification consistency.\n\nYou can change this later in Settings.",
+                        title = Phrase.from(context, R.string.runSessionBackground)
+                            .put(APP_NAME_KEY, getString(R.string.app_name))
+                            .format().toString(),
+                        text = Phrase.from(context, R.string.runSessionBackgroundDescription)
+                            .put(APP_NAME_KEY, getString(R.string.app_name))
+                            .format().toString(),
                         buttons = listOf(
                             DialogButtonData(
-                                text = GetString("Allow"),
+                                text = GetString(getString(R.string.allow)),
                                 qaTag = getString(R.string.qa_conversation_settings_dialog_whitelist_confirm),
                                 onClick = {
                                     openSystemBgWhitelist()
@@ -132,8 +137,10 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
                             // hide dialog
                             showWhitelistDisableDialog = false
                         },
-                        title = "Limit Background Activity?",
-                        text = "You have previously allowed Session to run in the background to improve notification reliability. Changing this permission could result in less reliable notifications.",
+                        title = stringResource(R.string.limitBackgroundActivity),
+                        text = Phrase.from(context, R.string.limitBackgroundActivityDescription)
+                            .put(APP_NAME_KEY, getString(R.string.app_name))
+                            .format().toString(),
                         buttons = listOf(
                             DialogButtonData(
                                 text = GetString("Change Setting"),
@@ -256,8 +263,6 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
 
     override fun onResume() {
         super.onResume()
-
-        Log.w("", "*** ON RESUME!!")
 
         whiteListControl?.isChecked = requireContext().isWhitelistedFromDoze()
     }
