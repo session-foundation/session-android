@@ -29,14 +29,17 @@ import org.session.libsignal.utilities.Log
 class InviteContactsJob @AssistedInject constructor(
     @Assisted val groupSessionId: String,
     @Assisted val memberSessionIds: Array<String>,
+    @Assisted val isReinvite: Boolean,
     private val configFactory: ConfigFactoryProtocol,
     private val messageSender: MessageSender,
+
 ) : Job {
 
     companion object {
         const val KEY = "InviteContactJob"
         private const val GROUP = "group"
         private const val MEMBER = "member"
+        private const val REINVITE = "reinvite"
 
     }
 
@@ -130,10 +133,17 @@ class InviteContactsJob @AssistedInject constructor(
                     inviteeAccountIds = failures.map { it.first },
                     groupName = groupName.orEmpty(),
                     underlying = firstError,
-                ).format(MessagingModuleConfiguration.shared.context,
-                    MessagingModuleConfiguration.shared.recipientRepository).let {
+                    isReinvite = isReinvite
+                ).format(
+                    MessagingModuleConfiguration.shared.context,
+                    MessagingModuleConfiguration.shared.recipientRepository
+                ).let {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(MessagingModuleConfiguration.shared.context, it, Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            MessagingModuleConfiguration.shared.context,
+                            it,
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                 }
             }
@@ -144,6 +154,7 @@ class InviteContactsJob @AssistedInject constructor(
         Data.Builder()
             .putString(GROUP, groupSessionId)
             .putStringArray(MEMBER, memberSessionIds)
+            .putBoolean(REINVITE, isReinvite)
             .build()
 
     override fun getFactoryKey(): String = KEY
@@ -153,14 +164,17 @@ class InviteContactsJob @AssistedInject constructor(
         abstract fun create(
             groupSessionId: String,
             memberSessionIds: Array<String>,
+            isReinvite: Boolean
         ): InviteContactsJob
 
         override fun create(data: Data): InviteContactsJob? {
             val groupSessionId = data.getString(GROUP) ?: return null
             val memberSessionIds = data.getStringArray(MEMBER) ?: return null
+            val reinvite = data.getBooleanOrDefault(REINVITE, false)
             return create(
                 groupSessionId = groupSessionId,
                 memberSessionIds = memberSessionIds,
+                isReinvite = reinvite
             )
         }
     }

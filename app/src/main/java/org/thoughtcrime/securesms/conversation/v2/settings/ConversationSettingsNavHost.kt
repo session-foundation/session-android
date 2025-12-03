@@ -26,12 +26,11 @@ import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.Disappear
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.*
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsScreen
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsViewModel
-import org.thoughtcrime.securesms.groups.EditGroupViewModel
+import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel
 import org.thoughtcrime.securesms.groups.GroupMembersViewModel
 import org.thoughtcrime.securesms.groups.SelectContactsViewModel
-import org.thoughtcrime.securesms.groups.compose.EditGroupScreen
+import org.thoughtcrime.securesms.groups.compose.ManageGroupMembersScreen
 import org.thoughtcrime.securesms.groups.compose.GroupMembersScreen
-import org.thoughtcrime.securesms.groups.compose.GroupMinimumVersionBanner
 import org.thoughtcrime.securesms.groups.compose.InviteContactsScreen
 import org.thoughtcrime.securesms.media.MediaOverviewScreen
 import org.thoughtcrime.securesms.media.MediaOverviewViewModel
@@ -185,20 +184,12 @@ fun ConversationSettingsNavHost(
                 val data: RouteManageMembers = backStackEntry.toRoute()
 
                 val viewModel =
-                    hiltViewModel<EditGroupViewModel, EditGroupViewModel.Factory> { factory ->
-                        factory.create(data.groupAddress)
+                    hiltViewModel<ManageGroupMembersViewModel, ManageGroupMembersViewModel.Factory> { factory ->
+                        factory.create(data.groupAddress, navigator)
                     }
 
-                EditGroupScreen(
+                ManageGroupMembersScreen(
                     viewModel = viewModel,
-                    navigateToInviteContact = {
-                        navController.navigate(
-                            RouteInviteToGroup(
-                                groupAddress = data.groupAddress,
-                                excludingAccountIDs = viewModel.excludingAccountIDsFromContactSelection.toList()
-                            )
-                        )
-                    },
                     onBack = dropUnlessResumed {
                         handleBack()
                     },
@@ -222,22 +213,20 @@ fun ConversationSettingsNavHost(
                         RouteManageMembers(data.groupAddress)
                     )
                 }
-                val editGroupViewModel: EditGroupViewModel = hiltViewModel(parentEntry)
+                val manageGroupMembersViewModel: ManageGroupMembersViewModel = hiltViewModel(parentEntry)
 
                 InviteContactsScreen(
                     viewModel = viewModel,
                     onDoneClicked = dropUnlessResumed {
                         //send invites from the manage group screen
-                        editGroupViewModel.onContactSelected(viewModel.currentSelected)
+                        manageGroupMembersViewModel.onContactSelected(viewModel.currentSelected)
 
                         handleBack()
                     },
                     onBack = dropUnlessResumed {
                         handleBack()
                     },
-                    banner = {
-                        GroupMinimumVersionBanner()
-                    }
+                    banner = {}
                 )
             }
 
