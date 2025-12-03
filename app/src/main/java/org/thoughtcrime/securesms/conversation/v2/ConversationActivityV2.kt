@@ -2097,9 +2097,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         if (sentMessageInfo != null) {
             messageToScrollAuthor.set(sentMessageInfo.first)
             messageToScrollTimestamp.set(sentMessageInfo.second)
-            binding.conversationRecyclerView.postDelayed({
-                binding.conversationRecyclerView.handleScrollToBottom()
-            }, 500L)
         }
     }
 
