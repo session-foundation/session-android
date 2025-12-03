@@ -1843,6 +1843,7 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setHasCheckedDozeWhitelist(hasChecked: Boolean) {
         setBooleanPreference(HAS_CHECKED_DOZE_WHITELIST, hasChecked)
+    }
 
     override fun hasDonated(): Boolean {
         return getBooleanPreference(HAS_DONATED, false)

@@ -370,6 +370,8 @@ class HomeViewModel @Inject constructor(
 
             is Commands.HideSimpleDialog -> {
                 _dialogsState.update { it.copy(showSimpleDialog = null) }
+            }
+
             is Commands.HideDonationCTADialog -> {
                 _dialogsState.update { it.copy(donationCTA = false) }
             }
