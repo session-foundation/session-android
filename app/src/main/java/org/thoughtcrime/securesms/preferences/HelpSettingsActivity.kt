@@ -18,6 +18,7 @@ import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.ui.getSubbedCharSequence
 import org.thoughtcrime.securesms.ui.getSubbedString
+import org.thoughtcrime.securesms.ui.openUrl
 
 @AndroidEntryPoint
 class HelpSettingsActivity: ScreenLockActionBarActivity() {
@@ -68,19 +69,19 @@ class HelpSettingsFragment: CorrectedPreferenceFragment() {
                 true
             }
             TRANSLATE -> {
-                openLink(CROWDIN_URL)
+                requireContext().openUrl(CROWDIN_URL)
                 true
             }
             FEEDBACK -> {
-                openLink(FEEDBACK_URL)
+                requireContext().openUrl(FEEDBACK_URL)
                 true
             }
             FAQ -> {
-                openLink(FAQ_URL)
+                requireContext().openUrl(FAQ_URL)
                 true
             }
             SUPPORT -> {
-                openLink(SUPPORT_URL)
+                requireContext().openUrl(SUPPORT_URL)
                 true
             }
             else -> super.onPreferenceTreeClick(preference)
@@ -115,14 +116,4 @@ class HelpSettingsFragment: CorrectedPreferenceFragment() {
             }
             .execute()
     }
-
-    private fun openLink(url: String) {
-        try {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-            startActivity(intent)
-        } catch (e: Exception) {
-            Toast.makeText(requireActivity(), requireContext().getString(R.string.errorUnknown), Toast.LENGTH_LONG).show()
-        }
-    }
-
 }

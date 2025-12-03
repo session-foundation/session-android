@@ -3,8 +3,6 @@ package org.thoughtcrime.securesms
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -15,9 +13,7 @@ import android.widget.LinearLayout
 import android.widget.LinearLayout.VERTICAL
 import android.widget.Space
 import android.widget.TextView
-import androidx.annotation.AttrRes
 import androidx.annotation.ColorRes
-import androidx.annotation.DrawableRes
 import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
 import androidx.annotation.StyleRes
@@ -194,9 +190,6 @@ public fun Context.copyURLToClipboard(url: String) {
     val clip = ClipData.newPlainText(url, url)
     clipboard.setPrimaryClip(clip)
 }
-
-// Method to actually open a given URL via an Intent that will use the default browser
-fun Context.openUrl(url: String) = Intent(Intent.ACTION_VIEW, Uri.parse(url)).let(::startActivity)
 
 fun Fragment.showSessionDialog(build: SessionDialogBuilder.() -> Unit): AlertDialog =
     SessionDialogBuilder(requireContext()).apply { build() }.show()
