@@ -18,11 +18,6 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent" />
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/camera_controls_safe_area"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
         <ImageButton
             android:id="@+id/camera_close_button"
             android:layout_width="wrap_content"
@@ -40,7 +35,7 @@
             android:id="@+id/camera_capture_button"
             android:layout_width="80dp"
             android:layout_height="80dp"
-            android:layout_marginBottom="@dimen/medium_spacing"
+            android:layout_marginEnd="@dimen/medium_spacing"
             android:background="@drawable/ic_camera_shutter"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -61,7 +56,5 @@
             app:layout_constraintTop_toBottomOf="@id/camera_capture_button"
             app:layout_constraintEnd_toEndOf="@id/camera_capture_button"
             app:layout_constraintStart_toStartOf="@id/camera_capture_button"/>
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -249,8 +249,12 @@
         <activity
             android:name="org.thoughtcrime.securesms.mediasend.MediaSendActivity"
             android:theme="@style/Theme.Session.DayNight.NoActionBar"
+            android:windowSoftInputMode="stateHidden"/>
+        <activity
+            android:name="org.thoughtcrime.securesms.mediasend.CameraXActivity"
+            android:theme="@style/Theme.Session.DayNight.NoActionBar"
             android:windowSoftInputMode="stateHidden"
-            android:configChanges="orientation|screenSize|keyboardHidden"/>
+            android:configChanges="orientation|screenSize|keyboardHidden|layoutDirection"/>
         <activity
             android:name="org.thoughtcrime.securesms.MediaPreviewActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"

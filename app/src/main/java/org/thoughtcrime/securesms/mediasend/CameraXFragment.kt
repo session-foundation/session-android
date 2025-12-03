@@ -123,8 +123,6 @@ class CameraXFragment : Fragment() {
      * This is reused on initial inflate and after reinflation on config changes.
      */
     private fun setupUi(binding: CameraxFragmentBinding) {
-        binding.cameraControlsSafeArea.applySafeInsetsMargins()
-
         binding.cameraCaptureButton.setSafeOnClickListener { takePhoto() }
         binding.cameraFlipButton.setSafeOnClickListener { flipCamera() }
         binding.cameraCloseButton.setSafeOnClickListener {
