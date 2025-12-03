@@ -1,10 +1,13 @@
 package org.thoughtcrime.securesms.ui
 
 import android.content.Intent
+import android.widget.Toast
+import androidx.navigation.NavController
 import androidx.navigation.NavOptionsBuilder
 import dagger.hilt.android.scopes.ActivityRetainedScoped
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
+import network.loki.messenger.R
 import org.session.libsignal.utilities.Log
 import javax.inject.Inject
 
@@ -44,6 +47,21 @@ class UINavigator<T> () {
 
     suspend fun returnResult(code: String, value: Boolean) {
         _navigationActions.send(NavigationAction.ReturnResult(code, value))
+    }
+}
+
+fun NavController.handleIntent(intent: Intent){
+    try {
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        val isWebUrl = intent.action == Intent.ACTION_VIEW &&
+                intent.data != null &&
+                (intent.data?.scheme == "http" || intent.data?.scheme == "https")
+
+        if(isWebUrl) {
+            Toast.makeText(context, R.string.browserNotFound, Toast.LENGTH_LONG).show()
+            Log.w("Dialog", "No browser found to open link", e)
+        }
     }
 }
 
