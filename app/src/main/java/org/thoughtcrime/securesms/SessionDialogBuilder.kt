@@ -3,8 +3,6 @@ package org.thoughtcrime.securesms
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -15,10 +13,7 @@ import android.widget.LinearLayout
 import android.widget.LinearLayout.VERTICAL
 import android.widget.Space
 import android.widget.TextView
-import android.widget.Toast
-import androidx.annotation.AttrRes
 import androidx.annotation.ColorRes
-import androidx.annotation.DrawableRes
 import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
 import androidx.annotation.StyleRes
@@ -27,7 +22,6 @@ import androidx.core.text.HtmlCompat
 import androidx.core.view.updateMargins
 import androidx.fragment.app.Fragment
 import network.loki.messenger.R
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.util.toPx
 
 @DslMarker
