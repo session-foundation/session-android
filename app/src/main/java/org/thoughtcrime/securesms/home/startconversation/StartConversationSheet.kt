@@ -43,6 +43,7 @@ import org.thoughtcrime.securesms.ui.ObserveAsEvents
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
+import org.thoughtcrime.securesms.ui.handleIntent
 import org.thoughtcrime.securesms.ui.horizontalSlideComposable
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 
@@ -125,7 +126,7 @@ fun StartConversationNavHost(
             NavigationAction.NavigateUp -> navController.navigateUp()
 
             is NavigationAction.NavigateToIntent -> {
-                navController.context.startActivity(action.intent)
+                navController.handleIntent(action.intent)
             }
 
             else -> {}
