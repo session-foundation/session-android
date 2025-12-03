@@ -9,7 +9,6 @@ import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.SnodeAPI.nowWithOffset
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
 import org.session.libsession.utilities.associateByNotNull
@@ -18,12 +17,14 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ExpiryType
+import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MarkedMessageInfo
+import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import javax.inject.Inject
 
 class MarkReadProcessor @Inject constructor(
@@ -31,9 +32,12 @@ class MarkReadProcessor @Inject constructor(
     private val recipientRepository: RecipientRepository,
     private val messageSender: MessageSender,
     private val mmsSmsDatabase: MmsSmsDatabase,
+    private val mmsDatabase: MmsDatabase,
+    private val smsDatabase: SmsDatabase,
     private val threadDb: ThreadDatabase,
     private val storage: StorageProtocol,
     private val snodeClock: SnodeClock,
+    private val lokiMessageDatabase: LokiMessageDatabase,
 ) {
     fun process(
         markedReadMessages: List<MarkedMessageInfo>
@@ -55,12 +59,12 @@ class MarkReadProcessor @Inject constructor(
             }
             .forEach {
                 val db = if (it.expirationInfo.id.mms) {
-                    DatabaseComponent.get(context).mmsDatabase()
+                    mmsDatabase
                 } else {
-                    DatabaseComponent.get(context).smsDatabase()
+                    smsDatabase
                 }
 
-                db.markExpireStarted(it.expirationInfo.id.id, nowWithOffset)
+                db.markExpireStarted(it.expirationInfo.id.id, snodeClock.currentTimeMills())
             }
 
         hashToDisappearAfterReadMessage(context, markedReadMessages)?.let { hashToMessages ->
@@ -78,11 +82,9 @@ class MarkReadProcessor @Inject constructor(
         context: Context,
         markedReadMessages: List<MarkedMessageInfo>
     ): Map<String, MarkedMessageInfo>? {
-        val loki = DatabaseComponent.get(context).lokiMessageDatabase()
-
         return markedReadMessages
             .filter { it.expiryType == ExpiryType.AFTER_READ }
-            .associateByNotNull { it.expirationInfo.run { loki.getMessageServerHash(id) } }
+            .associateByNotNull { it.expirationInfo.run { lokiMessageDatabase.getMessageServerHash(id) } }
             .takeIf { it.isNotEmpty() }
     }
 

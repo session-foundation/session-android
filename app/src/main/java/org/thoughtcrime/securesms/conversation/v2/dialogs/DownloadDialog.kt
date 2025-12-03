@@ -7,7 +7,6 @@ import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
@@ -16,7 +15,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.CONVERSATION
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.createSessionDialog
-import org.thoughtcrime.securesms.database.SessionContactDatabase
 import javax.inject.Inject
 
 /** Shown when receiving media from a contact for the first time, to confirm that
@@ -27,7 +25,6 @@ class AutoDownloadDialog(private val threadRecipient: Recipient,
 ) : DialogFragment() {
 
     @Inject lateinit var storage: StorageProtocol
-    @Inject lateinit var contactDB: SessionContactDatabase
     @Inject lateinit var attachmentDownloadJobFactory: AttachmentDownloadJob.Factory
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog = createSessionDialog {
@@ -50,7 +47,7 @@ class AutoDownloadDialog(private val threadRecipient: Recipient,
 
         val attachmentId = databaseAttachment.attachmentId.rowId
         if (databaseAttachment.transferState == AttachmentState.PENDING.value
-            && MessagingModuleConfiguration.shared.storage.getAttachmentUploadJob(attachmentId) == null) {
+            && storage.getAttachmentUploadJob(attachmentId) == null) {
             // start download
             JobQueue.shared.add(attachmentDownloadJobFactory.create(attachmentId, databaseAttachment.mmsId))
         }

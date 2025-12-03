@@ -35,12 +35,14 @@ import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
+import javax.inject.Inject
 
 private val TITLES = listOf(R.string.view, R.string.scan)
 
 @AndroidEntryPoint
 class QRCodeActivity : ScreenLockActionBarActivity() {
 
+    @Inject
     lateinit var loginStateRepository: LoginStateRepository
 
     override val applyDefaultWindowInsets: Boolean

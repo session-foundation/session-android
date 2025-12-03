@@ -44,8 +44,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
+import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.util.BitSet
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.BlindedContact
 import network.loki.messenger.libsession_util.util.ExpiryMode
@@ -73,7 +74,6 @@ import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.recipients.effectiveNotifyType
 import org.session.libsession.utilities.recipients.getType
 import org.session.libsession.utilities.recipients.repeatedWithEffectiveNotifyTypeChange
-import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsession.utilities.toGroupString
 import org.session.libsession.utilities.upsertContact
 import org.session.libsession.utilities.userConfigsChanged
@@ -526,7 +526,7 @@ class ConversationViewModel @AssistedInject constructor(
                 application.resources.getQuantityString(R.plurals.membersActive, userCount, userCount)
             } else {
                 val userCount = if (conversation.data is RecipientData.Group) {
-                    conversation.data.partial.members.size
+                    conversation.data.members.size
                 } else { // legacy closed groups
                     groupDb.getGroupMemberAddresses(conversation.address.toGroupString(), true).size
                 }
@@ -553,7 +553,7 @@ class ConversationViewModel @AssistedInject constructor(
             showSearch = showSearch,
             avatarUIData = avatarData,
             // show the pro badge when a conversation/user is pro, except for communities
-            showProBadge = conversation.proStatus.shouldShowProBadge() && !conversation.isLocalNumber // do not show for note to self
+            showProBadge = conversation.shouldShowProBadge && !conversation.isLocalNumber // do not show for note to self
         ).also {
             // also preload the larger version of the avatar in case the user goes to the settings
             avatarData.elements.mapNotNull { it.remoteFile }.forEach {
@@ -647,7 +647,7 @@ class ConversationViewModel @AssistedInject constructor(
             // this would be a request from us instead.
             (
                     (recipient.data is RecipientData.Contact && !recipient.data.approved) ||
-                            (recipient.data is RecipientData.Group && !recipient.data.partial.approved)
+                            (recipient.data is RecipientData.Group && !recipient.data.approved)
             ) &&
 
             // Req 2: the type of conversation supports message request
@@ -1382,7 +1382,8 @@ class ConversationViewModel @AssistedInject constructor(
                                 createdEpochSeconds = ZonedDateTime.now().toEpochSecond(),
                                 profilePic = recipient.data.avatar?.toUserPic() ?: UserPic.DEFAULT,
                                 profileUpdatedEpochSeconds = recipient.data.profileUpdatedAt?.toEpochSeconds() ?: 0L,
-                                priority = PRIORITY_VISIBLE
+                                priority = PRIORITY_VISIBLE,
+                                proFeatures = BitSet(),
                             )
                         )
                     }

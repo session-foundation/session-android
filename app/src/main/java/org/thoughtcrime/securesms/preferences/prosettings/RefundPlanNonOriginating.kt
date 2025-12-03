@@ -17,21 +17,17 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACC
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
-import org.session.libsession.utilities.recipients.ProStatus
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
-import org.thoughtcrime.securesms.pro.SubscriptionDetails
-import org.thoughtcrime.securesms.pro.SubscriptionType
-import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
+import org.thoughtcrime.securesms.pro.ProStatus
+import org.thoughtcrime.securesms.pro.previewAutoRenewingApple
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
-import java.time.Duration
-import java.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun RefundPlanNonOriginating(
-    subscription: SubscriptionType.Active,
+    subscription: ProStatus.Active,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ){
@@ -42,41 +38,41 @@ fun RefundPlanNonOriginating(
         onBack = onBack,
         headerTitle = stringResource(R.string.proRefundDescription),
         buttonText = Phrase.from(context.getText(R.string.openPlatformWebsite))
-            .put(PLATFORM_KEY, subscription.subscriptionDetails.platform)
+            .put(PLATFORM_KEY, subscription.providerData.platform)
             .format().toString(),
         dangerButton = true,
         onButtonClick = {
-            sendCommand(ShowOpenUrlDialog(subscription.subscriptionDetails.refundUrl))
+            sendCommand(ShowOpenUrlDialog(subscription.providerData.refundSupportUrl))
         },
         contentTitle = Phrase.from(context.getText(R.string.proRefunding))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString(),
         contentDescription = Phrase.from(context.getText(R.string.proPlanPlatformRefund))
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-            .put(PLATFORM_STORE_KEY, subscription.subscriptionDetails.store)
-            .put(PLATFORM_ACCOUNT_KEY, subscription.subscriptionDetails.platformAccount)
+            .put(PLATFORM_STORE_KEY, subscription.providerData.store)
+            .put(PLATFORM_ACCOUNT_KEY, subscription.providerData.platformAccount)
             .format(),
         linkCellsInfo = stringResource(R.string.refundRequestOptions),
         linkCells = listOf(
             NonOriginatingLinkCellData(
                 title =  Phrase.from(context.getText(R.string.onDevice))
-                    .put(DEVICE_TYPE_KEY, subscription.subscriptionDetails.device)
+                    .put(DEVICE_TYPE_KEY, subscription.providerData.device)
                     .format(),
                 info = Phrase.from(context.getText(R.string.proRefundAccountDevice))
                     .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
-                    .put(DEVICE_TYPE_KEY, subscription.subscriptionDetails.device)
-                    .put(PLATFORM_ACCOUNT_KEY, subscription.subscriptionDetails.platformAccount)
+                    .put(DEVICE_TYPE_KEY, subscription.providerData.device)
+                    .put(PLATFORM_ACCOUNT_KEY, subscription.providerData.platformAccount)
                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                     .format(),
                 iconRes = R.drawable.ic_smartphone
             ),
             NonOriginatingLinkCellData(
                 title =  Phrase.from(context.getText(R.string.onPlatformWebsite))
-                    .put(PLATFORM_KEY, subscription.subscriptionDetails.platform)
+                    .put(PLATFORM_KEY, subscription.providerData.platform)
                     .format(),
                 info = Phrase.from(context.getText(R.string.requestRefundPlatformWebsite))
-                    .put(PLATFORM_KEY, subscription.subscriptionDetails.platform)
-                    .put(PLATFORM_ACCOUNT_KEY, subscription.subscriptionDetails.platformAccount)
+                    .put(PLATFORM_KEY, subscription.providerData.platform)
+                    .put(PLATFORM_ACCOUNT_KEY, subscription.providerData.platformAccount)
                     .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .format(),
                 iconRes = R.drawable.ic_globe
@@ -93,21 +89,7 @@ private fun PreviewUpdatePlan(
     PreviewTheme(colors) {
         val context = LocalContext.current
         RefundPlanNonOriginating (
-            subscription = SubscriptionType.Active.AutoRenewing(
-                proStatus = ProStatus.Pro(
-                    visible = true,
-                    validUntil = Instant.now() + Duration.ofDays(14),
-                ),
-                duration = ProSubscriptionDuration.THREE_MONTHS,
-                subscriptionDetails = SubscriptionDetails(
-                    device = "iOS",
-                    store = "Apple App Store",
-                    platform = "Apple",
-                    platformAccount = "Apple Account",
-                    subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                    refundUrl = "https://www.apple.com/account/subscriptions",
-                )
-            ),
+            subscription = previewAutoRenewingApple,
             sendCommand = {},
             onBack = {},
         )

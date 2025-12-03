@@ -10,12 +10,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
+import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
+import network.loki.messenger.libsession_util.util.Util
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
@@ -60,7 +61,7 @@ import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.getType
 import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.upsertContact
-import org.session.libsignal.protos.SignalServiceProtos
+import org.session.protos.SessionProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
@@ -107,7 +108,7 @@ class ReceivedMessageHandler @Inject constructor(
 
     suspend fun handle(
         message: Message,
-        proto: SignalServiceProtos.Content,
+        proto: SessionProtos.Content,
         threadId: Long,
         threadAddress: Address.Conversable,
     ) {
@@ -117,7 +118,11 @@ class ReceivedMessageHandler @Inject constructor(
         when (message) {
             is ReadReceipt -> handleReadReceipt(message)
             is TypingIndicator -> handleTypingIndicator(message)
-            is GroupUpdated -> handleGroupUpdated(message, (threadAddress as? Address.Group)?.accountId)
+            is GroupUpdated -> handleGroupUpdated(
+                message = message,
+                closedGroup = (threadAddress as? Address.Group)?.accountId,
+                proto = proto
+            )
             is ExpirationTimerUpdate -> {
                 // For groupsv2, there are dedicated mechanisms for handling expiration timers, and
                 // we want to avoid the 1-to-1 message format which is unauthenticated in a group settings.
@@ -132,7 +137,7 @@ class ReceivedMessageHandler @Inject constructor(
             }
             is DataExtractionNotification -> handleDataExtractionNotification(message)
             is UnsendRequest -> handleUnsendRequest(message)
-            is MessageRequestResponse -> messageRequestResponseHandler.get().handleExplicitRequestResponseMessage(null, message)
+            is MessageRequestResponse -> messageRequestResponseHandler.get().handleExplicitRequestResponseMessage(null, message, proto)
             is VisibleMessage -> handleVisibleMessage(
                 message = message,
                 proto = proto,
@@ -290,7 +295,7 @@ class ReceivedMessageHandler @Inject constructor(
 
     suspend fun handleVisibleMessage(
         message: VisibleMessage,
-        proto: SignalServiceProtos.Content,
+        proto: SessionProtos.Content,
         context: VisibleMessageHandlerContext,
         runThreadUpdate: Boolean,
         runProfileUpdate: Boolean
@@ -390,7 +395,7 @@ class ReceivedMessageHandler @Inject constructor(
 
             // Verify the incoming message length and truncate it if needed, before saving it to the db
             val maxChars = proStatusManager.getIncomingMessageMaxLength(message)
-            val messageText = message.text?.take(maxChars) // truncate to max char limit for this message
+            val messageText = message.text?.let { Util.truncateCodepoints(it, maxChars) } // truncate to max char limit for this message
             message.text = messageText
             message.hasMention = listOfNotNull(userPublicKey, context.userBlindedKey)
                 .any { key ->
@@ -443,14 +448,7 @@ class ReceivedMessageHandler @Inject constructor(
             // - must be done after the message is persisted)
             // - must be done after neccessary contact is created
             if (runProfileUpdate && senderAddress is Address.WithAccountId) {
-                val updates = ProfileUpdateHandler.Updates.create(
-                    name = message.profile?.displayName,
-                    picUrl = message.profile?.profilePictureURL,
-                    picKey = message.profile?.profileKey,
-                    blocksCommunityMessageRequests = message.blocksMessageRequests,
-                    proStatus = null,
-                    profileUpdateTime = message.profile?.profileUpdated,
-                )
+                val updates = ProfileUpdateHandler.Updates.create(proto)
 
                 if (updates != null) {
                     profileUpdateHandler.get().handleProfileUpdate(
@@ -489,7 +487,7 @@ class ReceivedMessageHandler @Inject constructor(
         return null
     }
 
-    private fun handleGroupUpdated(message: GroupUpdated, closedGroup: AccountId?) {
+    private fun handleGroupUpdated(message: GroupUpdated, closedGroup: AccountId?, proto: SessionProtos.Content) {
         val inner = message.inner
         if (closedGroup == null &&
             !inner.hasInviteMessage() && !inner.hasPromoteMessage()) {
@@ -497,14 +495,7 @@ class ReceivedMessageHandler @Inject constructor(
         }
 
         // Update profile if needed
-        ProfileUpdateHandler.Updates.create(
-            name = message.profile?.displayName,
-            picUrl = message.profile?.profilePictureURL,
-            picKey = message.profile?.profileKey,
-            blocksCommunityMessageRequests = null,
-            proStatus = null,
-            profileUpdateTime = null
-        )?.let { updates ->
+        ProfileUpdateHandler.Updates.create(proto)?.let { updates ->
             profileUpdateHandler.get().handleProfileUpdate(
                 senderId = AccountId(message.sender!!),
                 updates = updates,
@@ -513,9 +504,9 @@ class ReceivedMessageHandler @Inject constructor(
         }
 
         when {
-            inner.hasInviteMessage() -> handleNewLibSessionClosedGroupMessage(message)
+            inner.hasInviteMessage() -> handleNewLibSessionClosedGroupMessage(message, proto)
             inner.hasInviteResponse() -> handleInviteResponse(message, closedGroup!!)
-            inner.hasPromoteMessage() -> handlePromotionMessage(message)
+            inner.hasPromoteMessage() -> handlePromotionMessage(message, proto)
             inner.hasInfoChangeMessage() -> handleGroupInfoChange(message, closedGroup!!)
             inner.hasMemberChangeMessage() -> handleMemberChange(message, closedGroup!!)
             inner.hasMemberLeftMessage() -> handleMemberLeft(message, closedGroup!!)
@@ -594,7 +585,7 @@ class ReceivedMessageHandler @Inject constructor(
         groupManagerV2.handleGroupInfoChange(message, closedGroup)
     }
 
-    private fun handlePromotionMessage(message: GroupUpdated) {
+    private fun handlePromotionMessage(message: GroupUpdated, proto: SessionProtos.Content) {
         val promotion = message.inner.promoteMessage
         val seed = promotion.groupIdentitySeed.toByteArray()
         val sender = message.sender!!
@@ -607,7 +598,9 @@ class ReceivedMessageHandler @Inject constructor(
                         groupName = promotion.name,
                         adminKeySeed = seed,
                         promoter = adminId,
-                        promoterName = message.profile?.displayName,
+                        promoterName = if (proto.hasDataMessage() && proto.dataMessage.hasProfile() && proto.dataMessage.profile.hasDisplayName())
+                                proto.dataMessage.profile.displayName
+                            else null,
                         promoteMessageHash = message.serverHash!!,
                         promoteMessageTimestamp = message.sentTimestamp!!,
                     )
@@ -630,7 +623,7 @@ class ReceivedMessageHandler @Inject constructor(
         }
     }
 
-    private fun handleNewLibSessionClosedGroupMessage(message: GroupUpdated) {
+    private fun handleNewLibSessionClosedGroupMessage(message: GroupUpdated, proto: SessionProtos.Content) {
         val storage = storage
         val ourUserId = storage.getUserPublicKey()!!
         val invite = message.inner.inviteMessage
@@ -651,7 +644,9 @@ class ReceivedMessageHandler @Inject constructor(
                         groupName = invite.name,
                         authData = invite.memberAuthData.toByteArray(),
                         inviter = adminId,
-                        inviterName = message.profile?.displayName,
+                        inviterName = if (proto.hasDataMessage() && proto.dataMessage.hasProfile() && proto.dataMessage.profile.hasDisplayName())
+                                proto.dataMessage.profile.displayName
+                            else null,
                         inviteMessageHash = message.serverHash!!,
                         inviteMessageTimestamp = message.sentTimestamp!!,
                     )
@@ -706,10 +701,10 @@ class ReceivedMessageHandler @Inject constructor(
 
 //endregion
 
-private fun SignalServiceProtos.Content.ExpirationType.expiryMode(durationSeconds: Long) = takeIf { durationSeconds > 0 }?.let {
+private fun SessionProtos.Content.ExpirationType.expiryMode(durationSeconds: Long) = takeIf { durationSeconds > 0 }?.let {
     when (it) {
-        SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_READ -> ExpiryMode.AfterRead(durationSeconds)
-        SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_SEND, SignalServiceProtos.Content.ExpirationType.UNKNOWN -> ExpiryMode.AfterSend(durationSeconds)
+        SessionProtos.Content.ExpirationType.DELETE_AFTER_READ -> ExpiryMode.AfterRead(durationSeconds)
+        SessionProtos.Content.ExpirationType.DELETE_AFTER_SEND, SessionProtos.Content.ExpirationType.UNKNOWN -> ExpiryMode.AfterSend(durationSeconds)
         else -> ExpiryMode.NONE
     }
 } ?: ExpiryMode.NONE

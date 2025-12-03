@@ -1,6 +1,5 @@
 package org.session.libsession.database
 
-import android.content.Context
 import android.net.Uri
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.KeyPair
@@ -11,7 +10,6 @@ import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.messages.visible.Attachment
-import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsession.messaging.messages.visible.Reaction
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
@@ -26,7 +24,6 @@ import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
-import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
@@ -40,7 +37,6 @@ interface StorageProtocol {
     fun getUserED25519KeyPair(): KeyPair?
     fun getUserX25519KeyPair(): KeyPair
     fun getUserBlindedAccountId(serverPublicKey: String): AccountId?
-    fun getUserProfile(): Profile
 
     // Jobs
     fun persistJob(job: Job)
@@ -117,8 +113,6 @@ interface StorageProtocol {
     fun addClosedGroupEncryptionKeyPair(encryptionKeyPair: ECKeyPair, groupPublicKey: String, timestamp: Long)
     fun removeAllClosedGroupEncryptionKeyPairs(groupPublicKey: String)
 
-    fun insertOutgoingInfoMessage(context: Context, groupID: String, type: SignalServiceGroup.Type, name: String,
-        members: Collection<String>, admins: Collection<String>, threadID: Long, sentTimestamp: Long): Long?
     fun isLegacyClosedGroup(publicKey: String): Boolean
     fun getClosedGroupEncryptionKeyPairs(groupPublicKey: String): MutableList<ECKeyPair>
     fun getLatestClosedGroupEncryptionKeyPair(groupPublicKey: String): ECKeyPair?
@@ -152,6 +146,8 @@ interface StorageProtocol {
     fun trimThreadBefore(threadID: Long, timestamp: Long)
     fun getMessageCount(threadID: Long): Long
     fun getTotalPinned(): Int
+    suspend fun getTotalSentProBadges(): Int
+    suspend fun getTotalSentLongMessages(): Int
     fun setPinned(address: Address, isPinned: Boolean)
     fun isRead(threadId: Long) : Boolean
     fun setThreadCreationDate(threadId: Long, newDate: Long)

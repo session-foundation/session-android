@@ -1,14 +1,14 @@
 package org.session.libsession.messaging.messages
 
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import org.session.libsession.database.StorageProtocol
+import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.utilities.Address
-import org.session.libsignal.protos.SignalServiceProtos
-import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
+import org.session.protos.SessionProtos
+import org.session.protos.SessionProtos.Content.ExpirationType
 import org.thoughtcrime.securesms.database.model.MessageId
 
 abstract class Message {
@@ -48,22 +48,36 @@ abstract class Message {
             && sender != null
             && recipient != null
 
-    abstract fun toProto(): SignalServiceProtos.Content?
+    protected abstract fun buildProto(
+        builder: SessionProtos.Content.Builder,
+        messageDataProvider: MessageDataProvider
+    )
 
-    abstract fun shouldDiscardIfBlocked(): Boolean
-
-    fun SignalServiceProtos.Content.Builder.applyExpiryMode() = apply {
-        expirationTimerSeconds = expiryMode.expirySeconds.toInt()
-        expirationType = when (expiryMode) {
+    fun toProto(
+        builder: SessionProtos.Content.Builder,
+        messageDataProvider: MessageDataProvider
+    ) {
+        // First apply common message data
+        // * Expiry mode
+        builder.expirationTimer = expiryMode.expirySeconds.toInt()
+        builder.expirationType = when (expiryMode) {
             is ExpiryMode.AfterSend -> ExpirationType.DELETE_AFTER_SEND
             is ExpiryMode.AfterRead -> ExpirationType.DELETE_AFTER_READ
             else -> ExpirationType.UNKNOWN
         }
+
+        // * Timestamps
+        builder.setSigTimestamp(sentTimestamp!!)
+
+        // Then ask the subclasses to build their specific proto
+        buildProto(builder, messageDataProvider)
     }
+
+    abstract fun shouldDiscardIfBlocked(): Boolean
 }
 
-inline fun <reified M: Message> M.copyExpiration(proto: SignalServiceProtos.Content): M = apply {
-    (proto.takeIf { it.hasExpirationTimerSeconds() }?.expirationTimerSeconds ?: proto.dataMessage?.expireTimerSeconds)?.let { duration ->
+inline fun <reified M: Message> M.copyExpiration(proto: SessionProtos.Content): M = apply {
+    proto.takeIf { it.hasExpirationTimer() }?.expirationTimer?.let { duration ->
         expiryMode = when (proto.expirationType.takeIf { duration > 0 }) {
             ExpirationType.DELETE_AFTER_SEND -> ExpiryMode.AfterSend(duration.toLong())
             ExpirationType.DELETE_AFTER_READ -> ExpiryMode.AfterRead(duration.toLong())
@@ -72,20 +86,10 @@ inline fun <reified M: Message> M.copyExpiration(proto: SignalServiceProtos.Cont
     }
 }
 
-fun SignalServiceProtos.Content.expiryMode(): ExpiryMode =
-    (takeIf { it.hasExpirationTimerSeconds() }?.expirationTimerSeconds ?: dataMessage?.expireTimerSeconds)?.let { duration ->
-        when (expirationType.takeIf { duration > 0 }) {
-            ExpirationType.DELETE_AFTER_SEND -> ExpiryMode.AfterSend(duration.toLong())
-            ExpirationType.DELETE_AFTER_READ -> ExpiryMode.AfterRead(duration.toLong())
-            else -> ExpiryMode.NONE
-        }
-    } ?: ExpiryMode.NONE
-
 /**
  * Apply ExpiryMode from the current setting.
  */
 inline fun <reified M: Message> M.applyExpiryMode(recipientAddress: Address): M = apply {
     expiryMode = MessagingModuleConfiguration.shared.recipientRepository.getRecipientSync(recipientAddress)
-        ?.expiryMode?.coerceSendToRead(coerceDisappearAfterSendToRead)
-        ?: ExpiryMode.NONE
+        .expiryMode.coerceSendToRead(coerceDisappearAfterSendToRead)
 }

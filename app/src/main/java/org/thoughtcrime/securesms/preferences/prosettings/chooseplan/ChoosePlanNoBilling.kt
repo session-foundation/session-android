@@ -24,21 +24,19 @@ import org.thoughtcrime.securesms.preferences.prosettings.BaseNonOriginatingProS
 import org.thoughtcrime.securesms.preferences.prosettings.NonOriginatingLinkCellData
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
+import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.pro.SubscriptionDetails
-import org.thoughtcrime.securesms.pro.SubscriptionType
-import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
+import org.thoughtcrime.securesms.pro.getPlatformDisplayName
+import org.thoughtcrime.securesms.pro.previewExpiredApple
 import org.thoughtcrime.securesms.ui.components.iconExternalLink
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
-import java.time.Duration
-import java.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun ChoosePlanNoBilling(
-    subscription: SubscriptionType,
+    subscription: ProStatus,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ){
@@ -48,12 +46,12 @@ fun ChoosePlanNoBilling(
     val defaultAppleStore = ProStatusManager.DEFAULT_APPLE_STORE
 
     val headerTitle = when(subscription) {
-        is SubscriptionType.Expired -> Phrase.from(context.getText(R.string.proAccessRenewStart))
+        is ProStatus.Expired -> Phrase.from(context.getText(R.string.proAccessRenewStart))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format()
 
-        is SubscriptionType.NeverSubscribed -> Phrase.from(context.getText(R.string.proUpgradeAccess))
+        is ProStatus.NeverSubscribed -> Phrase.from(context.getText(R.string.proUpgradeAccess))
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format()
 
@@ -61,11 +59,11 @@ fun ChoosePlanNoBilling(
     }
 
     val contentTitle = when(subscription) {
-        is SubscriptionType.Expired -> Phrase.from(context.getText(R.string.renewingPro))
+        is ProStatus.Expired -> Phrase.from(context.getText(R.string.renewingPro))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString()
 
-        is SubscriptionType.NeverSubscribed-> Phrase.from(context.getText(R.string.proUpgradingTo))
+        is ProStatus.NeverSubscribed-> Phrase.from(context.getText(R.string.proUpgradingTo))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString()
 
@@ -73,7 +71,7 @@ fun ChoosePlanNoBilling(
     }
 
     val contentDescription: CharSequence = when(subscription) {
-        is SubscriptionType.Expired -> Phrase.from(context.getText(R.string.proRenewingNoAccessBilling))
+        is ProStatus.Expired -> Phrase.from(context.getText(R.string.proRenewingNoAccessBilling))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(PLATFORM_STORE_KEY, defaultGoogleStore)
             .put(PLATFORM_STORE2_KEY, defaultAppleStore)
@@ -90,7 +88,7 @@ fun ChoosePlanNoBilling(
             .put(ICON_KEY, iconExternalLink)
             .format()
 
-        is SubscriptionType.NeverSubscribed -> Phrase.from(context.getText(R.string.proUpgradeNoAccessBilling))
+        is ProStatus.NeverSubscribed -> Phrase.from(context.getText(R.string.proUpgradeNoAccessBilling))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(PLATFORM_STORE_KEY, defaultGoogleStore)
             .put(PLATFORM_STORE2_KEY, defaultAppleStore)
@@ -107,13 +105,13 @@ fun ChoosePlanNoBilling(
     }
     
     val cellsInfo = when(subscription) {
-        is SubscriptionType.Expired -> stringResource(R.string.proOptionsRenewalSubtitle)
-        is SubscriptionType.NeverSubscribed -> stringResource(R.string.proUpgradeOptionsTwo)
+        is ProStatus.Expired -> stringResource(R.string.proOptionsRenewalSubtitle)
+        is ProStatus.NeverSubscribed -> stringResource(R.string.proUpgradeOptionsTwo)
         else -> ""
     }
 
     val cell1Text: CharSequence = when(subscription) {
-        is SubscriptionType.Expired -> Phrase.from(context.getText(R.string.proRenewDesktopLinked))
+        is ProStatus.Expired -> Phrase.from(context.getText(R.string.proRenewDesktopLinked))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
             .put(PLATFORM_STORE_KEY, defaultGoogleStore)
@@ -121,7 +119,7 @@ fun ChoosePlanNoBilling(
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format()
 
-        is SubscriptionType.NeverSubscribed -> Phrase.from(context.getText(R.string.proUpgradeDesktopLinked))
+        is ProStatus.NeverSubscribed -> Phrase.from(context.getText(R.string.proUpgradeDesktopLinked))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
             .put(PLATFORM_STORE_KEY, defaultGoogleStore)
@@ -133,14 +131,14 @@ fun ChoosePlanNoBilling(
     }
 
     val cell2Text: CharSequence = when(subscription) {
-        is SubscriptionType.Expired -> Phrase.from(context.getText(R.string.proNewInstallationDescription))
+        is ProStatus.Expired -> Phrase.from(context.getText(R.string.proNewInstallationDescription))
             .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
             .put(PLATFORM_STORE_KEY, defaultGoogleStore)
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format()
 
-        is SubscriptionType.NeverSubscribed -> Phrase.from(context.getText(R.string.proNewInstallationUpgrade))
+        is ProStatus.NeverSubscribed -> Phrase.from(context.getText(R.string.proNewInstallationUpgrade))
             .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
             .put(PLATFORM_STORE_KEY, defaultGoogleStore)
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
@@ -170,15 +168,15 @@ fun ChoosePlanNoBilling(
         )
 
         // optional cell 3
-        if(subscription is SubscriptionType.Expired) {
+        if(subscription is ProStatus.Expired) {
             add(
                 NonOriginatingLinkCellData(
                     title = Phrase.from(context.getText(R.string.onPlatformStoreWebsite))
-                        .put(PLATFORM_STORE_KEY, subscription.subscriptionDetails.getPlatformDisplayName())
+                        .put(PLATFORM_STORE_KEY, subscription.providerData.getPlatformDisplayName())
                         .format(),
                     info = Phrase.from(context.getText(R.string.proAccessRenewPlatformWebsite))
-                        .put(PLATFORM_KEY, subscription.subscriptionDetails.getPlatformDisplayName())
-                        .put(PLATFORM_ACCOUNT_KEY, subscription.subscriptionDetails.platformAccount)
+                        .put(PLATFORM_KEY, subscription.providerData.getPlatformDisplayName())
+                        .put(PLATFORM_ACCOUNT_KEY, subscription.providerData.platformAccount)
                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format(),
                     iconRes = R.drawable.ic_globe
@@ -192,14 +190,14 @@ fun ChoosePlanNoBilling(
         disabled = false,
         onBack = onBack,
         headerTitle = headerTitle,
-        buttonText = if(subscription is SubscriptionType.Expired) Phrase.from(context.getText(R.string.openPlatformWebsite))
-            .put(PLATFORM_KEY, subscription.subscriptionDetails.getPlatformDisplayName())
+        buttonText = if(subscription is ProStatus.Expired) Phrase.from(context.getText(R.string.openPlatformWebsite))
+            .put(PLATFORM_KEY, subscription.providerData.getPlatformDisplayName())
             .format().toString()
         else null,
         dangerButton = false,
         onButtonClick = {
-            if(subscription is SubscriptionType.Expired) {
-                sendCommand(ShowOpenUrlDialog(subscription.subscriptionDetails.subscriptionUrl))
+            if(subscription is ProStatus.Expired) {
+                sendCommand(ShowOpenUrlDialog(subscription.providerData.updateSubscriptionUrl))
             }
         },
         contentTitle = contentTitle,
@@ -221,17 +219,7 @@ private fun PreviewNonOrigExpiredUpdatePlan(
     PreviewTheme(colors) {
         val context = LocalContext.current
         ChoosePlanNoBilling (
-            subscription = SubscriptionType.Expired(
-                expiredAt = Instant.now() - Duration.ofDays(14),
-                SubscriptionDetails(
-                    device = "iOS",
-                    store = "Apple App Store",
-                    platform = "Apple",
-                    platformAccount = "Apple Account",
-                    subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                    refundUrl = "https://www.apple.com/account/subscriptions",
-                )
-            ),
+            subscription = previewExpiredApple,
             sendCommand = {},
             onBack = {},
         )
@@ -246,7 +234,7 @@ private fun PreviewNoBiilingBrandNewPlan(
     PreviewTheme(colors) {
         val context = LocalContext.current
         ChoosePlanNoBilling (
-            subscription = SubscriptionType.NeverSubscribed,
+            subscription = ProStatus.NeverSubscribed,
             sendCommand = {},
             onBack = {},
         )

@@ -38,13 +38,10 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.utilities.await
-import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.recipients.isPro
 import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.NoExternalStorageException
@@ -54,9 +51,9 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSi
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.mms.MediaConstraints
-import org.thoughtcrime.securesms.mms.PushMediaConstraints
+import org.thoughtcrime.securesms.pro.ProDataState
+import org.thoughtcrime.securesms.pro.ProDetailsRepository
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
 import org.thoughtcrime.securesms.ui.SimpleDialogData
@@ -64,8 +61,9 @@ import org.thoughtcrime.securesms.util.AnimatedImageUtils
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.ClearDataUtils
+import org.thoughtcrime.securesms.util.DonationManager
+import org.thoughtcrime.securesms.util.DonationManager.Companion.URL_DONATE
 import org.thoughtcrime.securesms.util.NetworkConnectivity
-import org.thoughtcrime.securesms.util.State
 import org.thoughtcrime.securesms.util.mapToStateFlow
 import java.io.File
 import java.io.IOException
@@ -86,6 +84,8 @@ class SettingsViewModel @Inject constructor(
     private val inAppReviewManager: InAppReviewManager,
     private val avatarUploadManager: AvatarUploadManager,
     private val attachmentProcessor: AttachmentProcessor,
+    private val proDetailsRepository: ProDetailsRepository,
+    private val donationManager: DonationManager,
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
 
@@ -101,7 +101,7 @@ class SettingsViewModel @Inject constructor(
         version = getVersionNumber(),
         recoveryHidden = prefs.getHidePassword(),
         isPostPro = proStatusManager.isPostPro(),
-        subscriptionState = getDefaultSubscriptionStateData(),
+        proDataState = getDefaultSubscriptionStateData(),
     ))
     val uiState: StateFlow<UIState>
         get() = _uiState
@@ -121,8 +121,8 @@ class SettingsViewModel @Inject constructor(
 
         // observe subscription status
         viewModelScope.launch {
-            proStatusManager.subscriptionState.collect { state ->
-                _uiState.update { it.copy(subscriptionState = state) }
+            proStatusManager.proDataState.collect { state ->
+                _uiState.update { it.copy(proDataState = state) }
             }
         }
 
@@ -156,6 +156,11 @@ class SettingsViewModel @Inject constructor(
                 .collectLatest { data ->
                     _uiState.update { it.copy(avatarData = data) }
                 }
+        }
+
+        // refreshes the pro details data
+        viewModelScope.launch {
+            proDetailsRepository.requestRefresh()
         }
     }
 
@@ -266,7 +271,7 @@ class SettingsViewModel @Inject constructor(
             ?: return Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
 
         // if the selected avatar is animated but the user isn't pro, show the animated pro CTA
-        if (tempAvatar.isAnimated && !selfRecipient.value.proStatus.isPro() && proStatusManager.isPostPro()) {
+        if (tempAvatar.isAnimated && !selfRecipient.value.isPro && proStatusManager.isPostPro()) {
             showAnimatedProCTA()
             return
         }
@@ -394,7 +399,7 @@ class SettingsViewModel @Inject constructor(
 
     private fun clearData(clearNetwork: Boolean) {
         val currentClearState = uiState.value.clearDataDialog
-        val isPro = selfRecipient.value.proStatus.isPro()
+        val isPro = selfRecipient.value.isPro
         // show loading
         _uiState.update { it.copy(clearDataDialog = ClearDataState.Clearing) }
 
@@ -595,17 +600,27 @@ class SettingsViewModel @Inject constructor(
                 viewModelScope.launch {
                     inAppReviewManager.onEvent(InAppReviewManager.Event.DonateButtonClicked)
                 }
-                showUrlDialog( "https://session.foundation/donate#app")
+                showUrlDialog(URL_DONATE)
             }
 
             is Commands.HideSimpleDialog -> {
                 _uiState.update { it.copy(showSimpleDialog = null) }
             }
-        }
-    }
 
-    private fun refreshSubscriptionData(){
-        //todo PRO implement properly
+            is Commands.OnLinkOpened -> {
+                // if the link was for donation, mark it as seen
+                if(command.url == URL_DONATE) {
+                    donationManager.onDonationSeen()
+                }
+            }
+
+            is Commands.OnLinkCopied -> {
+                // if the link was for donation, mark it as seen
+                if(command.url == URL_DONATE) {
+                    donationManager.onDonationCopied()
+                }
+            }
+        }
     }
 
     sealed class AvatarDialogState() {
@@ -656,7 +671,7 @@ class SettingsViewModel @Inject constructor(
         val usernameDialog: UsernameDialogData? = null,
         val showSimpleDialog: SimpleDialogData? = null,
         val isPostPro: Boolean,
-        val subscriptionState: SubscriptionState,
+        val proDataState: ProDataState,
     )
 
     sealed interface Commands {
@@ -684,5 +699,8 @@ class SettingsViewModel @Inject constructor(
         data object OnDonateClicked: Commands
 
         data class ClearData(val clearNetwork: Boolean): Commands
+
+        data class OnLinkOpened(val url: String) : Commands
+        data class OnLinkCopied(val url: String) : Commands
     }
 }

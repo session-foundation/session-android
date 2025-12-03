@@ -15,7 +15,6 @@
     <string name="accountIdYoursDescription">Bu sizin Hesap Kimliğiniz. Diğer kullanıcılar, sizinle bir oturum başlatmak için tarayabilir.</string>
     <string name="actualSize">Normal Boyut</string>
     <string name="add">Ekle</string>
-    <string name="addAdmins">Yönetici Ekle</string>
     <string name="addAdminsDescription">Yönetici olarak atadığınız kullanıcının Hesap Kimliğini girin.\n\nBirden fazla kullanıcı eklemek için her Hesap Kimliğini virgülle ayırarak girin. Tek seferde en fazla 20 Hesap Kimliği belirtilebilir.</string>
     <string name="adminCannotBeRemoved">Yöneticiler kaldırılamaz.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> ve <b>{count} diğer</b> yönetici olarak terfi etti.</string>

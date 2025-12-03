@@ -15,7 +15,6 @@
     <string name="accountIdYoursDescription">Este es tu Account ID. Otros usuarios pueden escanearlo para iniciar una conversación contigo.</string>
     <string name="actualSize">Tamaño original</string>
     <string name="add">Añadir</string>
-    <string name="addAdmins">Añadir Administradores</string>
     <string name="addAdminsDescription">Ingrese el Account ID del usuario que desea promover a administrador.\n\nPara agregar varios usuarios, ingrese cada Account ID separado por una coma. Puede especificar hasta 20 Account ID a la vez.</string>
     <string name="adminCannotBeRemoved">Los administradores no pueden ser eliminados.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> y <b>{count} más</b> fueron promovidos a Admin.</string>

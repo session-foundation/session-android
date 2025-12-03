@@ -231,7 +231,7 @@ data class AvatarUIElement(
 
 sealed class AvatarBadge(@DrawableRes val icon: Int){
     data object None: AvatarBadge(0)
-    data object Admin: AvatarBadge(R.drawable.ic_crown_custom_enlarged)
+    data object Admin: AvatarBadge(R.drawable.ic_crown_custom_enlarged_no_padding)
     data class Custom(@DrawableRes val iconRes: Int): AvatarBadge(iconRes)
 }
 

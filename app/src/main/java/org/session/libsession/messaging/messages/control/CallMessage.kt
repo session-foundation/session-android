@@ -1,17 +1,16 @@
 package org.session.libsession.messaging.messages.control
 
-import org.session.libsession.messaging.messages.applyExpiryMode
+import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.messages.copyExpiration
-import org.session.libsignal.protos.SignalServiceProtos
-import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.ANSWER
-import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.END_CALL
-import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.OFFER
-import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.PRE_OFFER
-import org.session.libsignal.utilities.Log
+import org.session.protos.SessionProtos
+import org.session.protos.SessionProtos.CallMessage.Type.ANSWER
+import org.session.protos.SessionProtos.CallMessage.Type.END_CALL
+import org.session.protos.SessionProtos.CallMessage.Type.OFFER
+import org.session.protos.SessionProtos.CallMessage.Type.PRE_OFFER
 import java.util.UUID
 
 class CallMessage(): ControlMessage() {
-    var type: SignalServiceProtos.CallMessage.Type? = null
+    var type: SessionProtos.CallMessage.Type? = null
     var sdps: List<String> = listOf()
     var sdpMLineIndexes: List<Int> = listOf()
     var sdpMids: List<String> = listOf()
@@ -27,7 +26,7 @@ class CallMessage(): ControlMessage() {
     override fun isValid(): Boolean = super.isValid() && type != null && callId != null
             && (sdps.isNotEmpty() || type in listOf(END_CALL, PRE_OFFER))
 
-    constructor(type: SignalServiceProtos.CallMessage.Type,
+    constructor(type: SessionProtos.CallMessage.Type,
                 sdps: List<String>,
                 sdpMLineIndexes: List<Int>,
                 sdpMids: List<String>,
@@ -65,7 +64,7 @@ class CallMessage(): ControlMessage() {
 
         fun endCall(callId: UUID) = CallMessage(END_CALL, emptyList(), emptyList(), emptyList(), callId)
 
-        fun fromProto(proto: SignalServiceProtos.Content): CallMessage? {
+        fun fromProto(proto: SessionProtos.Content): CallMessage? {
             val callMessageProto = if (proto.hasCallMessage()) proto.callMessage else return null
             val type = callMessageProto.type
             val sdps = callMessageProto.sdpsList
@@ -77,23 +76,16 @@ class CallMessage(): ControlMessage() {
         }
     }
 
-    override fun toProto(): SignalServiceProtos.Content? {
-        val nonNullType = type ?: run {
-            Log.w(TAG,"Couldn't construct call message request proto from: $this")
-            return null
-        }
-
-        val callMessage = SignalServiceProtos.CallMessage.newBuilder()
-            .setType(nonNullType)
+    protected override fun buildProto(
+        builder: SessionProtos.Content.Builder,
+        messageDataProvider: MessageDataProvider
+    ) {
+        builder.callMessageBuilder
+            .setType(type!!)
             .addAllSdps(sdps)
             .addAllSdpMLineIndexes(sdpMLineIndexes)
             .addAllSdpMids(sdpMids)
             .setUuid(callId!!.toString())
-
-        return SignalServiceProtos.Content.newBuilder()
-            .applyExpiryMode()
-            .setCallMessage(callMessage)
-            .build()
     }
 
     override fun equals(other: Any?): Boolean {
