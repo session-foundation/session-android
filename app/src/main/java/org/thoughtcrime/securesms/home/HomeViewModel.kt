@@ -174,7 +174,7 @@ class HomeViewModel @Inject constructor(
             && !prefs.pushEnabled.value // the user is in slow mode
             && !context.isWhitelistedFromDoze() // the user isn't yet whitelisted
         ){
-           // prefs.setHasCheckedDozeWhitelist(true)
+            prefs.setHasCheckedDozeWhitelist(true)
             viewModelScope.launch {
                 delay(1500)
                 _dialogsState.update {

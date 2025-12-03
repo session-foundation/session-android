@@ -194,7 +194,7 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
                 // open whitelist dialog when setting to slow mode if first time
                 if(!newValue && !prefs.hasCheckedDozeWhitelist()){
                     showWhitelistEnableDialog = true
-                    //prefs.setHasCheckedDozeWhitelist(true)
+                    prefs.setHasCheckedDozeWhitelist(true)
                 }
                 true
             }
