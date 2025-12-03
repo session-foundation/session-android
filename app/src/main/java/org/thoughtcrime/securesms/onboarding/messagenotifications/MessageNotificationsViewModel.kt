@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -37,7 +36,7 @@ internal class MessageNotificationsViewModel(
     }
 
     fun onContinue() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             if (state is State.CreateAccount) createAccountManager.createAccount(state.displayName)
 
             prefs.setPushEnabled(uiStates.value.pushEnabled)

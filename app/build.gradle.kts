@@ -12,7 +12,6 @@ plugins {
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.dependency.analysis)
     alias(libs.plugins.google.services)
-    alias(libs.plugins.protobuf.compiler)
 
     id("generate-ip-country-data")
     id("rename-apk")
@@ -26,7 +25,7 @@ configurations.configureEach {
     exclude(module = "commons-logging")
 }
 
-val canonicalVersionCode = 430
+val canonicalVersionCode = 433
 val canonicalVersionName = "1.30.0"
 
 val postFixSize = 10
@@ -86,26 +85,8 @@ kotlin {
     }
 }
 
-protobuf {
-    protoc {
-        artifact = libs.protoc.get().toString()
-    }
-
-    plugins {
-        generateProtoTasks {
-            all().forEach {
-                it.builtins {
-                    create("java") {
-                    }
-                }
-            }
-        }
-    }
-}
-
 android {
     namespace = "network.loki.messenger"
-    useLibrary("org.apache.http.legacy")
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
@@ -395,7 +376,6 @@ dependencies {
     implementation(libs.androidx.sqlite.ktx)
     implementation(libs.sqlcipher.android)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.protobuf.java)
     implementation(libs.jackson.databind)
     implementation(libs.okhttp)
     implementation(libs.phrase)

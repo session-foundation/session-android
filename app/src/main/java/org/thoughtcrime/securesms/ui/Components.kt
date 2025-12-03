@@ -105,6 +105,8 @@ import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
@@ -425,15 +427,7 @@ fun Cell(
         modifier = modifier
             .then(
                 if (dropShadow)
-                    Modifier.dropShadow(
-                        shape = MaterialTheme.shapes.small,
-                        shadow = Shadow(
-                            radius = 4.dp,
-                            color = LocalColors.current.text,
-                            alpha = 0.25f,
-                            offset = DpOffset(0.dp, 4.dp)
-                        )
-                    )
+                    Modifier.sessionDropShadow()
                 else Modifier
             )
             .clip(MaterialTheme.shapes.small)
@@ -939,9 +933,12 @@ private fun CollapsibleFooterActions(
                 val annotatedTitle = remember(titleText) { AnnotatedString(titleText) }
 
                 ActionRowItem(
-                    modifier = Modifier.background(LocalColors.current.backgroundTertiary),
+                    modifier = Modifier.background(LocalColors.current.backgroundTertiary)
+                        .semantics(mergeDescendants = true){},
                     title = annotatedTitle,
-                    onClick = {},
+                    onClick = {
+                        item.onClick()
+                    },
                     qaTag = R.string.qa_collapsing_footer_action,
                     endContent = {
                         Box(
@@ -952,11 +949,16 @@ private fun CollapsibleFooterActions(
                                     else Modifier.width(equalWidthDp)
                                 )
                         ) {
+                            val buttonModifier = if (single) Modifier else Modifier.fillMaxWidth()
                             SlimFillButtonRect(
-                                modifier = if (single) Modifier else Modifier.fillMaxWidth(),
+                                modifier = buttonModifier
+                                    .qaTag(stringResource(R.string.qa_collapsing_footer_action)+"_"+item.buttonLabel.string().lowercase())
+                                    .clearAndSetSemantics{},
                                 text = item.buttonLabel.string(),
                                 color = item.buttonColor
-                            ) { item.onClick() }
+                            ) {
+                                item.onClick()
+                            }
                         }
                     }
                 )
@@ -1325,6 +1327,7 @@ fun ActionRowItem(
     onClick: () -> Unit,
     @StringRes qaTag: Int,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     subtitle: AnnotatedString? = null,
     titleColor: Color = LocalColors.current.text,
     subtitleColor: Color = LocalColors.current.text,
@@ -1337,7 +1340,9 @@ fun ActionRowItem(
     Row(
         modifier = modifier
             .heightIn(min = minHeight)
-            .clickable { onClick() }
+            .then(
+                if (enabled) Modifier.clickable { onClick() } else Modifier
+            )
             .padding(paddingValues)
             .qaTag(qaTag),
         verticalAlignment = Alignment.CenterVertically

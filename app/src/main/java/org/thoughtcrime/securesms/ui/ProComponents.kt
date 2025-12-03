@@ -91,8 +91,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsNavHost
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.pro.SubscriptionDetails
-import org.thoughtcrime.securesms.pro.SubscriptionType
+import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
@@ -104,9 +103,8 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
+import org.thoughtcrime.securesms.util.AvatarBadge
 import org.thoughtcrime.securesms.util.AvatarUIData
-import java.time.Duration
-import java.time.Instant
 
 
 @Composable
@@ -241,6 +239,7 @@ fun SessionProCTA(
     modifier: Modifier = Modifier,
     title: String = stringResource(R.string.upgradeTo),
     titleColor: Color = LocalColors.current.text,
+    showProBadge: Boolean = true,
     badgeAtStart: Boolean = false,
     disabled: Boolean = false,
     features: List<CTAFeature> = emptyList(),
@@ -266,7 +265,7 @@ fun SessionProCTA(
     }
 
     if(showDialog) {
-        BasicAlertDialog(
+        BasicSessionAlertDialog(
             modifier = modifier,
             onDismissRequest = onCancel,
             content = {
@@ -296,6 +295,7 @@ fun SessionProCTA(
                                     modifier = Modifier.align(Alignment.CenterHorizontally),
                                     text = title,
                                     textStyle = LocalType.current.h5.copy(color = titleColor),
+                                    showBadge = showProBadge,
                                     badgeAtStart = badgeAtStart,
                                     badgeColors = if (disabled) proBadgeColorDisabled() else proBadgeColorStandard(),
                                 )
@@ -310,7 +310,10 @@ fun SessionProCTA(
                                 // features
                                 if (features.isNotEmpty()) {
                                     features.forEachIndexed { index, feature ->
-                                        ProCTAFeature(data = feature)
+                                        ProCTAFeature(
+                                            modifier = Modifier.qaTag(stringResource(R.string.qa_cta_feature) + index.toString()),
+                                            data = feature
+                                        )
                                         if (index < features.size - 1) {
                                             Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
                                         }
@@ -330,7 +333,9 @@ fun SessionProCTA(
                                 ) {
                                     positiveButtonText?.let {
                                         AccentFillButtonRect(
-                                            modifier = Modifier.then(
+                                            modifier = Modifier
+                                                .qaTag(R.string.qa_cta_button_positive)
+                                                .then(
                                                 if (negativeButtonText != null)
                                                     Modifier.weight(1f)
                                                 else Modifier
@@ -342,7 +347,9 @@ fun SessionProCTA(
 
                                     negativeButtonText?.let {
                                         TertiaryFillButtonRect(
-                                            modifier = Modifier.then(
+                                            modifier = Modifier
+                                                .qaTag(R.string.qa_cta_button_negative)
+                                                .then(
                                                 if (positiveButtonText != null)
                                                     Modifier.weight(1f)
                                                 else Modifier
@@ -428,6 +435,7 @@ fun SimpleSessionProCTA(
     text: String,
     modifier: Modifier = Modifier,
     title: String = stringResource(R.string.upgradeTo),
+    showProBadge: Boolean = true,
     badgeAtStart: Boolean = false,
     features: List<CTAFeature> = emptyList(),
     positiveButtonText: String? = stringResource(R.string.theContinue),
@@ -438,10 +446,13 @@ fun SimpleSessionProCTA(
     SessionProCTA(
         modifier = modifier,
         title = title,
+        showProBadge = showProBadge,
         badgeAtStart = badgeAtStart,
         textContent = {
             Text(
-                modifier = Modifier.align(Alignment.CenterHorizontally),
+                modifier = Modifier
+                    .qaTag(R.string.qa_cta_body)
+                    .align(Alignment.CenterHorizontally),
                 text = text,
                 textAlign = TextAlign.Center,
                 style = LocalType.current.base.copy(
@@ -480,6 +491,7 @@ fun AnimatedSessionProCTA(
     text: String,
     modifier: Modifier = Modifier,
     title: String = stringResource(R.string.upgradeTo),
+    showProBadge: Boolean = true,
     badgeAtStart: Boolean = false,
     disabled: Boolean = false,
     features: List<CTAFeature> = emptyList(),
@@ -492,7 +504,9 @@ fun AnimatedSessionProCTA(
         modifier = modifier,
         textContent = {
             Text(
-                modifier = Modifier.align(Alignment.CenterHorizontally),
+                modifier = Modifier
+                    .qaTag(R.string.qa_cta_body)
+                    .align(Alignment.CenterHorizontally),
                 text = text,
                 textAlign = TextAlign.Center,
                 style = LocalType.current.base.copy(
@@ -514,6 +528,7 @@ fun AnimatedSessionProCTA(
         negativeButtonText = negativeButtonText,
         title = title,
         titleColor = if(disabled) LocalColors.current.disabled else LocalColors.current.text,
+        showProBadge = showProBadge,
         badgeAtStart = badgeAtStart,
         disabled = disabled
     )
@@ -565,11 +580,11 @@ fun CTAAnimatedImages(
 // Reusable generic Pro CTA
 @Composable
 fun GenericProCTA(
-    proSubscription: SubscriptionType,
+    proSubscription: ProStatus,
     onDismissRequest: () -> Unit,
 ){
     val context = LocalContext.current
-    val expired = proSubscription is SubscriptionType.Expired
+    val expired = proSubscription is ProStatus.Expired
 
     AnimatedSessionProCTA(
         heroImageBg = R.drawable.cta_hero_generic_bg,
@@ -600,10 +615,10 @@ fun GenericProCTA(
 // Reusable long message  Pro CTA
 @Composable
 fun LongMessageProCTA(
-    proSubscription: SubscriptionType,
+    proSubscription: ProStatus,
     onDismissRequest: () -> Unit,
 ){
-    val expired = proSubscription is SubscriptionType.Expired
+    val expired = proSubscription is ProStatus.Expired
     val context = LocalContext.current
 
     SimpleSessionProCTA(
@@ -632,10 +647,10 @@ fun LongMessageProCTA(
 // Reusable animated profile pic Pro CTA
 @Composable
 fun AnimatedProfilePicProCTA(
-    proSubscription: SubscriptionType,
+    proSubscription: ProStatus,
     onDismissRequest: () -> Unit,
 ){
-    val expired = proSubscription is SubscriptionType.Expired
+    val expired = proSubscription is ProStatus.Expired
     val context = LocalContext.current
 
     AnimatedSessionProCTA(
@@ -668,11 +683,11 @@ fun AnimatedProfilePicProCTA(
 @Composable
 fun PinProCTA(
     overTheLimit: Boolean,
-    proSubscription: SubscriptionType,
+    proSubscription: ProStatus,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
 ){
-    val expired = proSubscription is SubscriptionType.Expired
+    val expired = proSubscription is ProStatus.Expired
     val context = LocalContext.current
 
     val title = when{
@@ -854,7 +869,7 @@ fun AvatarQrWidget(
         label = "corner_radius"
     )
 
-    // Scale animations for content
+    // Scale animations for content (used when going from QR back to avatar)
     val avatarScale by animateFloatAsState(
         targetValue = if (showQR) 0.8f else 1f,
         animationSpec = animationSpecFast,
@@ -939,7 +954,6 @@ fun AvatarQrWidget(
             }
             Avatar(
                 modifier = avatarModifier
-                    .size(animatedSize)
                     .graphicsLayer(
                         alpha = avatarAlpha,
                         scaleX = avatarScale,
@@ -948,7 +962,7 @@ fun AvatarQrWidget(
                 ,
                 size = animatedSize,
                 maxSizeLoad = LocalDimensions.current.iconXXLargeAvatar,
-                data = avatarUIData
+                data = avatarUIData,
             )
 
             // QR with scale and alpha

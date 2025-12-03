@@ -20,7 +20,6 @@
         <item quantity="one">Add Admin</item>
         <item quantity="other">Add Admins</item>
     </plurals>
-    <string name="addAdmins">Add Admins</string>
     <string name="addAdminsDescription">Enter the Account ID of the user you are promoting to admin.\n\nTo add multiple users, enter each Account ID separated by a comma. Up to 20 Account IDs can be specified at a time.</string>
     <string name="adminCannotBeDemoted">Admins cannot be demoted or removed from the group.</string>
     <string name="adminCannotBeRemoved">Admins cannot be removed.</string>
@@ -59,6 +58,7 @@
     <string name="adminStatusYou">You cannot change your admin status. To leave the group, open the conversation settings and select Leave Group.</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> and <b>{other_name}</b> were promoted to Admin.</string>
     <string name="admins">Admins</string>
+    <string name="allow">Allow</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonymous</string>
     <string name="appIcon">App Icon</string>
@@ -175,6 +175,7 @@
     <string name="blockUnblockNameTwo">Are you sure you want to unblock <b>{name}</b> and 1 other?</string>
     <string name="blockUnblockedUser">Unblocked {name}</string>
     <string name="blockedContactsManageDescription">View and manage blocked contacts.</string>
+    <string name="browserNotFound">No browser found to open that URL, try copying the URL instead</string>
     <string name="call">Call</string>
     <string name="callsCalledYou">{name} called you</string>
     <string name="callsCannotStart">You cannot start a new call. Finish your current call first.</string>
@@ -221,6 +222,7 @@
     <string name="change">Change</string>
     <string name="changePasswordFail">Failed to change password</string>
     <string name="changePasswordModalDescription">Change your password for {app_name}. Locally stored data will be re-encrypted with your new password.</string>
+    <string name="changeSetting">Change Setting</string>
     <string name="checkingProStatus">Checking {pro} Status</string>
     <string name="checkingProStatusContinue">Checking your {pro} status. You\'ll be able to continue once this check is complete.</string>
     <string name="checkingProStatusDescription">Checking your {pro} details. Some actions on this page may be unavailable until this check is complete.</string>
@@ -411,6 +413,7 @@
     <string name="deleteMessagesDescriptionEveryone">Are you sure you want to delete these messages for everyone?</string>
     <string name="deleting">Deleting</string>
     <string name="developerToolsToggle">Toggle Developer Tools</string>
+    <string name="deviceNotificationSettings">Device Notification Settings</string>
     <string name="dictationStart">Start Dictation...</string>
     <string name="disappearingMessages">Disappearing Messages</string>
     <string name="disappearingMessagesCountdownBig">Message will delete in {time_large}</string>
@@ -458,6 +461,8 @@
     <string name="displayNameVisible">Your Display Name is visible to users, groups, and communities you interact with.</string>
     <string name="document">Document</string>
     <string name="donate">Donate</string>
+    <string name="donateSessionDescription">Powerful forces are trying to weaken privacy, but we can’t continue this fight alone.\n\nDonating helps keep {app_name} secure, independent, and online.</string>
+    <string name="donateSessionHelp">{app_name} Needs Your Help</string>
     <string name="done">Done</string>
     <string name="download">Download</string>
     <string name="downloading">Downloading...</string>
@@ -509,6 +514,9 @@
     <string name="failedResendInvite">Failed to resend invite to <b>{name}</b> in <b>{group_name}</b></string>
     <string name="failedResendInviteMultiple">Failed to resend invite to <b>{name}</b> and <b>{count} others</b> in <b>{group_name}</b></string>
     <string name="failedResendInviteTwo">Failed to resend invite to <b>{name}</b> and <b>{other_name}</b> in <b>{group_name}</b></string>
+    <string name="failedResendPromotion">Failed to resend promotion to <b>{name}</b> in <b>{group_name}</b></string>
+    <string name="failedResendPromotionMultiple">Failed to resend promotion to <b>{name}</b> and <b>{count} others</b> in <b>{group_name}</b></string>
+    <string name="failedResendPromotionTwo">Failed to resend promotion to <b>{name}</b> and <b>{other_name}</b> in <b>{group_name}</b></string>
     <string name="failedToDownload">Failed to download</string>
     <string name="failures">Failures</string>
     <string name="feedback">Feedback</string>
@@ -659,6 +667,7 @@
         <item quantity="other">Invite Members</item>
     </plurals>
     <string name="inviteNewMemberGroupLink">Invite a new member to the group by entering your friend\'s Account ID, ONS or scanning their QR code {icon}</string>
+    <string name="inviteNewMemberGroupNoLink">Invite a new member to the group by entering your friend\'s Account ID, ONS or scanning their QR code</string>
     <string name="join">Join</string>
     <string name="later">Later</string>
     <string name="launchOnStartDescriptionDesktop">Launch {app_name} automatically when your computer starts up.</string>
@@ -678,6 +687,8 @@
     <string name="legacyGroupMemberNewYouOther"><b>You</b> and <b>{other_name}</b> joined the group.</string>
     <string name="legacyGroupMemberTwoNew"><b>{name}</b> and <b>{other_name}</b> joined the group.</string>
     <string name="legacyGroupMemberYouNew"><b>You</b> joined the group.</string>
+    <string name="limitBackgroundActivity">Limit Background Activity?</string>
+    <string name="limitBackgroundActivityDescription">You currently allow {app_name} to run in the background to improve notification reliability. Changing this setting could result in less reliable notifications.</string>
     <string name="linkPreviews">Link Previews</string>
     <string name="linkPreviewsDescription">Show link previews for supported URLs.</string>
     <string name="linkPreviewsEnable">Enable Link Previews</string>
@@ -706,6 +717,7 @@
     <string name="manageMembers">Manage Members</string>
     <string name="managePro">Manage {pro}</string>
     <string name="max">Max</string>
+    <string name="maybeLater">Maybe Later</string>
     <string name="media">Media</string>
     <plurals name="memberSelected">
         <item quantity="one">%1$d Member Selected</item>
@@ -1215,7 +1227,7 @@
     </plurals>
     <plurals name="removeMemberMessages">
         <item quantity="one">Remove member and their messages</item>
-        <item quantity="other">Remove member and their messages</item>
+        <item quantity="other">Remove members and their messages</item>
     </plurals>
     <string name="removePasswordFail">Failed to remove password</string>
     <string name="removePasswordModalDescription">Remove your current password for {app_name}. Locally stored data will be re-encrypted with a randomly generated key, stored on your device.</string>
@@ -1251,6 +1263,9 @@
     <string name="retry">Retry</string>
     <string name="reviewLimit">Review Limit</string>
     <string name="reviewLimitDescription">It looks like you\'ve already reviewed {app_name} recently, thanks for your feedback!</string>
+    <string name="runAppBackground">Run App in the Background</string>
+    <string name="runSessionBackground">Run {app_name} in the Background?</string>
+    <string name="runSessionBackgroundDescription">Since you’re using slow mode, we recommend allowing {app_name} to run in the background to improve notifications. This can improve notification consistency, although your system may still automatically limit background activity.\n\nYou can change this later in Settings.</string>
     <string name="save">Save</string>
     <string name="saved">Saved</string>
     <string name="savedMessages">Saved messages</string>
@@ -1281,6 +1296,10 @@
     <string name="sending">Sending</string>
     <string name="sendingCallOffer">Sending Call Offer</string>
     <string name="sendingConnectionCandidates">Sending Connection Candidates</string>
+    <plurals name="sendingPromotion">
+        <item quantity="one">Sending Promotion</item>
+        <item quantity="other">Sending Promotions</item>
+    </plurals>
     <string name="sent">Sent:</string>
     <string name="sessionAppearance">Appearance</string>
     <string name="sessionClearData">Clear Data</string>
@@ -1316,6 +1335,7 @@
     <string name="shareAccountIdDescriptionCopied">Share with your friends wherever you usually speak with them — then move the conversation here.</string>
     <string name="shareExtensionDatabaseError">There is an issue opening the database. Please restart the app and try again.</string>
     <string name="shareExtensionNoAccountError">Oops! Looks like you don\'t have a {app_name} account yet.\n\nYou\'ll need to create one in the {app_name} app before you can share.</string>
+    <string name="shareGroupMessageHistory">Would you like to share group message history with this user?</string>
     <string name="shareToSession">Share to {app_name}</string>
     <string name="show">Show</string>
     <string name="showAll">Show All</string>

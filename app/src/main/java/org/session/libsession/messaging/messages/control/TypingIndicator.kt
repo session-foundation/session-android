@@ -1,8 +1,8 @@
 package org.session.libsession.messaging.messages.control
 
+import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.messages.copyExpiration
-import org.session.libsignal.protos.SignalServiceProtos
-import org.session.libsignal.utilities.Log
+import org.session.protos.SessionProtos
 
 class TypingIndicator() : ControlMessage() {
     var kind: Kind? = null
@@ -19,7 +19,7 @@ class TypingIndicator() : ControlMessage() {
     companion object {
         const val TAG = "TypingIndicator"
 
-        fun fromProto(proto: SignalServiceProtos.Content): TypingIndicator? {
+        fun fromProto(proto: SessionProtos.Content): TypingIndicator? {
             val typingIndicatorProto = if (proto.hasTypingMessage()) proto.typingMessage else return null
             val kind = Kind.fromProto(typingIndicatorProto.action)
             return TypingIndicator(kind = kind)
@@ -32,17 +32,17 @@ class TypingIndicator() : ControlMessage() {
 
         companion object {
             @JvmStatic
-            fun fromProto(proto: SignalServiceProtos.TypingMessage.Action): Kind =
+            fun fromProto(proto: SessionProtos.TypingMessage.Action): Kind =
                 when (proto) {
-                    SignalServiceProtos.TypingMessage.Action.STARTED -> STARTED
-                    SignalServiceProtos.TypingMessage.Action.STOPPED -> STOPPED
+                    SessionProtos.TypingMessage.Action.STARTED -> STARTED
+                    SessionProtos.TypingMessage.Action.STOPPED -> STOPPED
                 }
         }
 
-        fun toProto(): SignalServiceProtos.TypingMessage.Action {
+        fun toProto(): SessionProtos.TypingMessage.Action {
             when (this) {
-                STARTED -> return SignalServiceProtos.TypingMessage.Action.STARTED
-                STOPPED -> return SignalServiceProtos.TypingMessage.Action.STOPPED
+                STARTED -> return SessionProtos.TypingMessage.Action.STARTED
+                STOPPED -> return SessionProtos.TypingMessage.Action.STOPPED
             }
         }
     }
@@ -51,21 +51,12 @@ class TypingIndicator() : ControlMessage() {
         this.kind = kind
     }
 
-    override fun toProto(): SignalServiceProtos.Content? {
-        val timestamp = sentTimestamp
-        val kind = kind
-        if (timestamp == null || kind == null) {
-            Log.w(TAG, "Couldn't construct typing indicator proto from: $this")
-            return null
-        }
-        return try {
-            SignalServiceProtos.Content.newBuilder()
-                .setTypingMessage(SignalServiceProtos.TypingMessage.newBuilder().setTimestampMs(timestamp).setAction(kind.toProto()).build())
-                .applyExpiryMode()
-                .build()
-        } catch (e: Exception) {
-            Log.w(TAG, "Couldn't construct typing indicator proto from: $this")
-            null
-        }
+    override fun buildProto(
+        builder: SessionProtos.Content.Builder,
+        messageDataProvider: MessageDataProvider
+    ) {
+        builder.typingMessageBuilder
+            .setTimestamp(sentTimestamp!!)
+            .setAction(kind!!.toProto())
     }
 }

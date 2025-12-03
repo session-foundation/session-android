@@ -58,6 +58,7 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.castAwayType
 import java.util.EnumSet
 import javax.inject.Inject
@@ -144,6 +145,7 @@ class DefaultConversationRepository @Inject constructor(
     @param:ManagerScope private val scope: CoroutineScope,
     private val messageSender: MessageSender,
     private val loginStateRepository: LoginStateRepository,
+    private val proStatusManager: ProStatusManager,
 ) : ConversationRepository {
 
     override val conversationListAddressesFlow = loginStateRepository.flowWithLoggedInState {
@@ -268,16 +270,18 @@ class DefaultConversationRepository @Inject constructor(
                 url = community.joinURL
             }
             message.openGroupInvitation = openGroupInvitation
+            proStatusManager.addProFeatures(message)
             val contactThreadId = threadDb.getOrCreateThreadIdFor(contact)
             val expirationConfig = recipientRepository.getRecipientSync(contact).expiryMode
             val expireStartedAt = if (expirationConfig is ExpiryMode.AfterSend) message.sentTimestamp!! else 0
             val outgoingTextMessage = OutgoingTextMessage.fromOpenGroupInvitation(
                 openGroupInvitation,
                 contact,
-                message.sentTimestamp,
+                message.sentTimestamp!!,
                 expirationConfig.expiryMillis,
-                expireStartedAt
-            )
+                expireStartedAt,
+                proFeatures = message.proFeatures
+            )!!
 
             message.id = MessageId(
                 smsDb.insertMessageOutbox(contactThreadId, outgoingTextMessage, false, message.sentTimestamp!!, true),

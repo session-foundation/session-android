@@ -80,7 +80,6 @@ class ConfigToDatabaseSync @Inject constructor(
     private val lokiAPIDatabase: LokiAPIDatabase,
     private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     private val clock: SnodeClock,
-    private val preferences: TextSecurePreferences,
     private val conversationRepository: ConversationRepository,
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val lokiMessageDatabase: LokiMessageDatabase,

@@ -12,6 +12,7 @@ import com.squareup.phrase.Phrase
 import kotlinx.coroutines.delay
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.session.libsession.utilities.StringSubstitutionConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
@@ -23,7 +24,9 @@ import org.thoughtcrime.securesms.ui.AnimatedSessionProCTA
 import org.thoughtcrime.securesms.ui.CTAFeature
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.PinProCTA
+import org.thoughtcrime.securesms.ui.SimpleSessionProCTA
 import org.thoughtcrime.securesms.ui.UserProfileModal
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -176,12 +179,57 @@ fun HomeDialogs(
                 positiveButtonText = stringResource(R.string.renew),
                 negativeButtonText = stringResource(R.string.cancel),
                 onUpgrade = {
-                    sendCommand(HomeViewModel.Commands.HideExpiredCTADialog)
-                    sendCommand(HomeViewModel.Commands.GotoProSettings(ProSettingsDestination.ChoosePlan))
+                    sendCommand(HideExpiredCTADialog)
+                    sendCommand(GotoProSettings(ProSettingsDestination.ChoosePlan))
                 },
                 onCancel = {
-                    sendCommand(HomeViewModel.Commands.HideExpiredCTADialog)
+                    sendCommand(HideExpiredCTADialog)
                 }
+            )
+        }
+
+        // we need a delay before displaying this.
+        // Setting the delay in the VM does not account for render and it seems to appear immediately
+        var showDonation by remember { mutableStateOf(false) }
+        LaunchedEffect(dialogsState.donationCTA) {
+            showDonation = false
+            if (dialogsState.donationCTA) {
+                delay(1500)
+                showDonation = true
+            }
+        }
+
+        if (showDonation && dialogsState.donationCTA) {
+            val context = LocalContext.current
+            SimpleSessionProCTA(
+                heroImage = R.drawable.cta_hero_flower,
+                title = Phrase.from(context,R.string.donateSessionHelp)
+                    .put(StringSubstitutionConstants.APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
+                    .format()
+                    .toString(),
+                showProBadge = false,
+                text = Phrase.from(context,R.string.donateSessionDescription)
+                    .put(StringSubstitutionConstants.APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
+                    .format()
+                    .toString(),
+                positiveButtonText = stringResource(R.string.donate),
+                negativeButtonText = stringResource(R.string.maybeLater),
+                onUpgrade = {
+                    sendCommand(HideDonationCTADialog)
+                    sendCommand(ShowDonationConfirmation)
+                },
+                onCancel = {
+                    sendCommand(HideDonationCTADialog)
+                }
+            )
+        }
+
+        if(dialogsState.showUrlDialog != null){
+            OpenURLAlertDialog(
+                url = dialogsState.showUrlDialog,
+                onLinkOpened = { sendCommand(OnLinkOpened(dialogsState.showUrlDialog)) },
+                onLinkCopied = { sendCommand(OnLinkCopied(dialogsState.showUrlDialog)) },
+                onDismissRequest = { sendCommand(HideUrlDialog) }
             )
         }
     }

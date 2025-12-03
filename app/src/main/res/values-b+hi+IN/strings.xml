@@ -15,7 +15,6 @@
     <string name="accountIdYoursDescription">यह आपका Account ID है। अन्य उपयोगकर्ता आपके साथ बातचीत शुरू करने के लिए इसे स्कैन कर सकते हैं।</string>
     <string name="actualSize">वास्तविक आकार</string>
     <string name="add">जोड़ें</string>
-    <string name="addAdmins">एडमिन जोड़ें</string>
     <string name="addAdminsDescription">उस उपयोगकर्ता का Account ID दर्ज करें जिसे आप एडमिन बना रहे हैं।\n\nएक से अधिक उपयोगकर्ताओं को जोड़ने के लिए, प्रत्येक Account ID को कॉमा से अलग करके दर्ज करें। एक बार में अधिकतम 20 Account ID दर्ज किए जा सकते हैं।</string>
     <string name="adminCannotBeRemoved">एडमिन हटाए नहीं जा सकते।</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> और <b>{count} अन्य</b> को Admin बनाया गया।</string>

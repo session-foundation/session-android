@@ -4,7 +4,6 @@ import android.content.Context
 import com.google.protobuf.ByteString
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
@@ -13,9 +12,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.Namespace
+import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.Bytes.Companion.toBytes
 import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.ExpiryMode
@@ -32,7 +31,6 @@ import org.session.libsession.messaging.jobs.InviteContactsJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.control.GroupUpdated
-import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildDeleteMemberContentSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildInfoChangeSignature
@@ -50,15 +48,16 @@ import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.waitUntilGroupConfigsPushed
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateDeleteMemberContentMessage
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateInfoChangeMessage
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateInviteResponseMessage
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMemberChangeMessage
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMessage
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
+import org.session.protos.SessionProtos.GroupUpdateDeleteMemberContentMessage
+import org.session.protos.SessionProtos.GroupUpdateInfoChangeMessage.Type
+import org.session.protos.SessionProtos.GroupUpdateInfoChangeMessage.newBuilder
+import org.session.protos.SessionProtos.GroupUpdateInviteResponseMessage
+import org.session.protos.SessionProtos.GroupUpdateMemberChangeMessage
+import org.session.protos.SessionProtos.GroupUpdateMessage
+import org.session.protos.SessionProtos.GroupUpdatePromoteMessage
 import org.thoughtcrime.securesms.configs.ConfigUploader
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
@@ -121,7 +120,6 @@ class GroupManagerV2Impl @Inject constructor(
     ): Recipient = withContext(dispatcher) {
         val ourAccountId =
             requireNotNull(storage.getUserPublicKey()) { "Our account ID is not available" }
-        val ourProfile = storage.getUserProfile()
 
         val groupCreationTimestamp = clock.currentTimeMills()
 
@@ -161,10 +159,14 @@ class GroupManagerV2Impl @Inject constructor(
             }
 
             // Add ourselves as admin
+            val (ourName, ourPic) = configFactory.withUserConfigs { configs ->
+                configs.userProfile.getName().orEmpty() to configs.userProfile.getPic()
+            }
+
             newGroupConfigs.groupMembers.set(
                 newGroupConfigs.groupMembers.getOrConstruct(ourAccountId).apply {
-                    setName(ourProfile.displayName.orEmpty())
-                    setProfilePic(ourProfile.profilePicture ?: UserPic.DEFAULT)
+                    setName(ourName)
+                    setProfilePic(ourPic)
                     setPromotionAccepted()
                 }
             )
@@ -201,7 +203,7 @@ class GroupManagerV2Impl @Inject constructor(
                 "Failed to create a thread for the group"
             }
 
-            val recipient = recipientRepository.getRecipient(Address.fromSerialized(groupId.hexString))!!
+            val recipient = recipientRepository.getRecipient(Address.fromSerialized(groupId.hexString))
 
             // Invite members
             JobQueue.shared.add(
@@ -518,7 +520,7 @@ class GroupManagerV2Impl @Inject constructor(
             val promoteMessage = GroupUpdated(
                 GroupUpdateMessage.newBuilder()
                     .setPromoteMessage(
-                        DataMessage.GroupUpdatePromoteMessage.newBuilder()
+                        GroupUpdatePromoteMessage.newBuilder()
                             .setGroupIdentitySeed(ByteString.copyFrom(adminKey).substring(0, 32))
                             .setName(groupName)
                     )
@@ -660,7 +662,7 @@ class GroupManagerV2Impl @Inject constructor(
                 .setIsApproved(true)
             val responseData = GroupUpdateMessage.newBuilder()
                 .setInviteResponse(inviteResponse)
-            val responseMessage = GroupUpdated(responseData.build(), profile = storage.getUserProfile())
+            val responseMessage = GroupUpdated(responseData.build())
             // this will fail the first couple of times :)
             runCatching {
                 messageSender.sendNonDurably(
@@ -912,16 +914,16 @@ class GroupManagerV2Impl @Inject constructor(
 
             val timestamp = clock.currentTimeMills()
             val signature = ED25519.sign(
-                message = buildInfoChangeSignature(GroupUpdateInfoChangeMessage.Type.NAME, timestamp),
+                message = buildInfoChangeSignature(Type.NAME, timestamp),
                 ed25519PrivateKey = adminKey
             )
 
             val message = GroupUpdated(
                 GroupUpdateMessage.newBuilder()
                     .setInfoChangeMessage(
-                        GroupUpdateInfoChangeMessage.newBuilder()
+                        newBuilder()
                             .setUpdatedName(newName)
-                            .setType(GroupUpdateInfoChangeMessage.Type.NAME)
+                            .setType(Type.NAME)
                             .setAdminSignature(ByteString.copyFrom(signature))
                     )
                     .build()
@@ -1098,7 +1100,7 @@ class GroupManagerV2Impl @Inject constructor(
     }
 
     override fun handleGroupInfoChange(message: GroupUpdated, groupId: AccountId) {
-        if (message.inner.hasInfoChangeMessage() && message.inner.infoChangeMessage.hasUpdatedExpirationSeconds()) {
+        if (message.inner.hasInfoChangeMessage() && message.inner.infoChangeMessage.hasUpdatedExpiration()) {
             // If we receive a disappearing message update, we need to remove the existing timer control message
             storage.deleteGroupInfoMessages(
                 groupId,
@@ -1127,16 +1129,16 @@ class GroupManagerV2Impl @Inject constructor(
         // Construct a message to notify the group members about the expiration timer change
         val timestamp = clock.currentTimeMills()
         val signature = ED25519.sign(
-            message = buildInfoChangeSignature(GroupUpdateInfoChangeMessage.Type.DISAPPEARING_MESSAGES, timestamp),
+            message = buildInfoChangeSignature(Type.DISAPPEARING_MESSAGES, timestamp),
             ed25519PrivateKey = adminKey
         )
 
         val message = GroupUpdated(
             GroupUpdateMessage.newBuilder()
                 .setInfoChangeMessage(
-                    GroupUpdateInfoChangeMessage.newBuilder()
-                        .setType(GroupUpdateInfoChangeMessage.Type.DISAPPEARING_MESSAGES)
-                        .setUpdatedExpirationSeconds(mode.expirySeconds.toInt())
+                    newBuilder()
+                        .setType(Type.DISAPPEARING_MESSAGES)
+                        .setUpdatedExpiration(mode.expirySeconds.toInt())
                         .setAdminSignature(ByteString.copyFrom(signature))
 
                 )
@@ -1196,15 +1198,4 @@ class GroupManagerV2Impl @Inject constructor(
         val firstError = this.results.firstOrNull { it.code != 200 }
         require(firstError == null) { "$errorMessage: ${firstError!!.body}" }
     }
-
-    private val Profile.profilePicture: UserPic?
-        get() {
-            val url = this.profilePictureURL
-            val key = this.profileKey
-            return if (url != null && key != null) {
-                UserPic(url, key)
-            } else {
-                null
-            }
-        }
 }

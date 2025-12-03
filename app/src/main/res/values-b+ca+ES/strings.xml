@@ -15,7 +15,6 @@
     <string name="accountIdYoursDescription">Aquest és el vostre ID de compte. Els altres usuaris el poden escanejar per a encetar una conversa amb vós.</string>
     <string name="actualSize">Mida actual</string>
     <string name="add">Afegir</string>
-    <string name="addAdmins">Afegiu administradors</string>
     <string name="addAdminsDescription">Introdueix l\'ID del compte de l\'usuari que estàs promocionant a administrador.\n\nPer afegir diversos usuaris, introdueix cada ID del compte separat per una coma. Es poden especificar fins a 20 identificadors de compte alhora.</string>
     <string name="adminCannotBeRemoved">Els administradors no es poden eliminar.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> i <b>{count} altres</b> han estat ascendits a Admin.</string>

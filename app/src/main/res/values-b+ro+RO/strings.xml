@@ -15,7 +15,6 @@
     <string name="accountIdYoursDescription">Acesta este ID-ul tău de cont. Alți utilizatori îl pot scana pentru a începe o conversație cu tine.</string>
     <string name="actualSize">Mărime actuală</string>
     <string name="add">Adaugă</string>
-    <string name="addAdmins">Adaugă administratori</string>
     <string name="addAdminsDescription">Introdu ID-ul contului utilizatorului pe care îl promovezi ca administrator.\n\nPentru a adăuga mai mulți utilizatori, introduceți fiecare ID al contului separat prin virgulă. Pot fi specificate până la 20 de ID-uri de cont o dată.</string>
     <string name="adminCannotBeRemoved">Administratorii nu pot fi eliminați.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> și <b>{count} alții</b> au fost promovați la nivel de administrator.</string>

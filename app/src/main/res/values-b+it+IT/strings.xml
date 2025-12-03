@@ -15,7 +15,6 @@
     <string name="accountIdYoursDescription">Questo è il tuo ID utente. Altri utenti possono scansionarlo per iniziare una conversazione con te.</string>
     <string name="actualSize">Dimensione attuale</string>
     <string name="add">Aggiungi</string>
-    <string name="addAdmins">Aggiungi amministratori</string>
     <string name="addAdminsDescription">Inserisci l\'Account ID dell\'utente che vuoi promuovere ad amministratore.\n\nPer aggiungere più utenti, inserisci ogni Account ID separato da una virgola. È possibile specificare fino a 20 Account ID alla volta.</string>
     <string name="adminCannotBeRemoved">Gli amministratori non possono essere rimossi.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> e <b>altri {count}</b> sono ora amministratori.</string>

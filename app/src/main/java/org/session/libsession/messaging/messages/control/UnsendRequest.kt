@@ -1,8 +1,8 @@
 package org.session.libsession.messaging.messages.control
 
+import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.messages.copyExpiration
-import org.session.libsignal.protos.SignalServiceProtos
-import org.session.libsignal.utilities.Log
+import org.session.protos.SessionProtos
 
 class UnsendRequest(var timestamp: Long? = null, var author: String? = null): ControlMessage() {
 
@@ -20,26 +20,17 @@ class UnsendRequest(var timestamp: Long? = null, var author: String? = null): Co
     companion object {
         const val TAG = "UnsendRequest"
 
-        fun fromProto(proto: SignalServiceProtos.Content): UnsendRequest? =
-            proto.takeIf { it.hasUnsendRequest() }?.unsendRequest?.run { UnsendRequest(timestampMs, author) }?.copyExpiration(proto)
+        fun fromProto(proto: SessionProtos.Content): UnsendRequest? =
+            proto.takeIf { it.hasUnsendRequest() }?.unsendRequest?.run { UnsendRequest(timestamp, author) }?.copyExpiration(proto)
     }
 
-    override fun toProto(): SignalServiceProtos.Content? {
-        val timestamp = timestamp
-        val author = author
-        if (timestamp == null || author == null) {
-            Log.w(TAG, "Couldn't construct unsend request proto from: $this")
-            return null
-        }
-        return try {
-            SignalServiceProtos.Content.newBuilder()
-                .setUnsendRequest(SignalServiceProtos.UnsendRequest.newBuilder().setTimestampMs(timestamp).setAuthor(author).build())
-                .applyExpiryMode()
-                .build()
-        } catch (e: Exception) {
-            Log.w(TAG, "Couldn't construct unsend request proto from: $this")
-            null
-        }
+    override fun buildProto(
+        builder: SessionProtos.Content.Builder,
+        messageDataProvider: MessageDataProvider
+    ) {
+        builder.unsendRequestBuilder
+            .setTimestamp(timestamp!!)
+            .setAuthor(author!!)
     }
 
 }

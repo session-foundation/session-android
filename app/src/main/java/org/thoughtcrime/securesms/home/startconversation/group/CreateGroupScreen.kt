@@ -38,6 +38,7 @@ import org.thoughtcrime.securesms.ui.SearchBar
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
+import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -86,6 +87,7 @@ fun CreateGroupScreen(
         onContactItemClicked = viewModel::onContactItemClicked,
         showLoading = viewModel.isLoading.collectAsState().value,
         items = viewModel.contacts.collectAsState().value,
+        hasContacts = viewModel.hasContacts.collectAsState().value,
         onCreateClicked = viewModel::onCreateClicked,
         onBack = onBack,
     )
@@ -103,6 +105,7 @@ fun CreateGroup(
     onContactItemClicked: (address: Address) -> Unit,
     showLoading: Boolean,
     items: List<ContactItem>,
+    hasContacts: Boolean?,
     onCreateClicked: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
@@ -160,7 +163,13 @@ fun CreateGroup(
                     .nestedScroll(rememberNestedScrollInteropConnection()),
                 fadingColor = LocalColors.current.backgroundSecondary
             ) { bottomContentPadding ->
-                if(items.isEmpty() && contactSearchQuery.isEmpty()){
+                if(hasContacts == null){
+                    SmallCircularProgressIndicator(
+                        modifier = Modifier.padding(top = LocalDimensions.current.spacing)
+                            .align(Alignment.TopCenter),
+                    )
+                }
+                else if(!hasContacts && contactSearchQuery.isEmpty()){
                     Text(
                         modifier = Modifier.fillMaxWidth()
                             .padding(top = LocalDimensions.current.xsSpacing),
@@ -245,6 +254,7 @@ private fun CreateGroupPreview(
             onContactItemClicked = {},
             showLoading = false,
             items = previewMembers,
+            hasContacts = true,
             onCreateClicked = {},
             onBack = {},
             modifier = Modifier.background(LocalColors.current.backgroundSecondary),
@@ -270,6 +280,7 @@ private fun CreateEmptyGroupPreview(
             onContactItemClicked = {},
             showLoading = false,
             items = previewMembers,
+            hasContacts = false,
             onCreateClicked = {},
             onBack = {},
             modifier = Modifier.background(LocalColors.current.backgroundSecondary),
@@ -294,6 +305,7 @@ private fun CreateEmptyGroupPreviewWithSearch(
             onContactItemClicked = {},
             showLoading = false,
             items = previewMembers,
+            hasContacts = true,
             onCreateClicked = {},
             onBack = {},
             modifier = Modifier.background(LocalColors.current.backgroundSecondary),
