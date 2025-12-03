@@ -4,7 +4,7 @@ import androidx.annotation.StringRes
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateDeleteMemberContentMessage
+import org.session.protos.SessionProtos.GroupUpdateDeleteMemberContentMessage
 import org.session.libsignal.utilities.AccountId
 
 /**

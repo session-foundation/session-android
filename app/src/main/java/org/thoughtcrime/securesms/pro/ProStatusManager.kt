@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.pro
 
 import android.app.Application
+import androidx.collection.ArraySet
 import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -31,7 +32,11 @@ import network.loki.messenger.libsession_util.pro.BackendRequests
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_APP_STORE
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_GOOGLE_PLAY
 import network.loki.messenger.libsession_util.pro.ProConfig
-import network.loki.messenger.libsession_util.protocol.ProFeatures
+import network.loki.messenger.libsession_util.protocol.ProFeature
+import network.loki.messenger.libsession_util.protocol.ProMessageFeature
+import network.loki.messenger.libsession_util.util.Conversation
+import network.loki.messenger.libsession_util.util.Util
+import network.loki.messenger.libsession_util.util.asSequence
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -40,10 +45,10 @@ import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageRecord
-import org.thoughtcrime.securesms.database.model.proFeatures
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.ManagerScope
@@ -73,105 +78,119 @@ class ProStatusManager @Inject constructor(
     private val loginState: LoginStateRepository,
     private val proDatabase: ProDatabase,
     private val snodeClock: SnodeClock,
-    private val proDetailsRepository: ProDetailsRepository,
+    private val proDetailsRepository: Lazy<ProDetailsRepository>,
     private val configFactory: Lazy<ConfigFactoryProtocol>,
 ) : OnAppStartupComponent {
 
-    val proDataState: StateFlow<ProDataState> = combine(
-        recipientRepository.observeSelf().map { it.shouldShowProBadge }.distinctUntilChanged(),
-        proDetailsRepository.loadState,
-        (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS } as Flow<*>)
-            .onStart { emit(Unit) }
-            .map { prefs.getDebugSubscriptionType() },
-        (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_PRO_PLAN_STATUS } as Flow<*>)
-            .onStart { emit(Unit) }
-            .map { prefs.getDebugProPlanStatus() },
-        (TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO } as Flow<*>)
-            .onStart { emit(Unit) }
-            .map { prefs.forceCurrentUserAsPro() },
-    ){ shouldShowProBadge, proDetailsState, debugSubscription, debugProPlanStatus, forceCurrentUserAsPro ->
-        val proDataRefreshState = when(debugProPlanStatus){
-            DebugMenuViewModel.DebugProPlanStatus.LOADING -> State.Loading
-            DebugMenuViewModel.DebugProPlanStatus.ERROR -> State.Error(Exception())
-            else -> {
-                // calculate the real refresh state here
-                when(proDetailsState){
-                    is ProDetailsRepository.LoadState.Loading -> State.Loading
-                    is ProDetailsRepository.LoadState.Error -> State.Error(Exception())
-                    else -> State.Success(Unit)
+    val proDataState: StateFlow<ProDataState> = loginState.flowWithLoggedInState {
+        combine(
+            recipientRepository.observeSelf().map { it.shouldShowProBadge }.distinctUntilChanged(),
+            proDetailsRepository.get().loadState,
+            (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS } as Flow<*>)
+                .onStart { emit(Unit) }
+                .map { prefs.getDebugSubscriptionType() },
+            (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_PRO_PLAN_STATUS } as Flow<*>)
+                .onStart { emit(Unit) }
+                .map { prefs.getDebugProPlanStatus() },
+            (TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO } as Flow<*>)
+                .onStart { emit(Unit) }
+                .map { prefs.forceCurrentUserAsPro() },
+        ){ shouldShowProBadge, proDetailsState, debugSubscription, debugProPlanStatus, forceCurrentUserAsPro ->
+            val proDataRefreshState = when(debugProPlanStatus){
+                DebugMenuViewModel.DebugProPlanStatus.LOADING -> State.Loading
+                DebugMenuViewModel.DebugProPlanStatus.ERROR -> State.Error(Exception())
+                else -> {
+                    // calculate the real refresh state here
+                    when(proDetailsState){
+                        is ProDetailsRepository.LoadState.Loading -> State.Loading
+                        is ProDetailsRepository.LoadState.Error -> State.Error(Exception())
+                        else -> State.Success(Unit)
+                    }
                 }
             }
+
+            if(!forceCurrentUserAsPro){
+                Log.d(DebugLogGroup.PRO_DATA.label, "ProStatusManager: Getting REAL Pro data state")
+
+                ProDataState(
+                    type = proDetailsState.lastUpdated?.first?.toProStatus() ?: ProStatus.NeverSubscribed,
+                    showProBadge = shouldShowProBadge,
+                    refreshState = proDataRefreshState
+                )
+            }// debug data
+            else {
+                Log.d(DebugLogGroup.PRO_DATA.label, "ProStatusManager: Getting DEBUG Pro data state")
+                val subscriptionState = debugSubscription ?: DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE
+
+                ProDataState(
+                    type = when(subscriptionState){
+                        DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> ProStatus.Active.AutoRenewing(
+                            validUntil = Instant.now() + Duration.ofDays(14),
+                            duration = ProSubscriptionDuration.THREE_MONTHS,
+                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
+                            quickRefundExpiry = Instant.now() + Duration.ofDays(7),
+                            refundInProgress = false
+                        )
+
+                        DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE_REFUNDING -> ProStatus.Active.AutoRenewing(
+                            validUntil = Instant.now() + Duration.ofDays(14),
+                            duration = ProSubscriptionDuration.THREE_MONTHS,
+                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
+                            quickRefundExpiry = Instant.now() + Duration.ofDays(7),
+                            refundInProgress = true
+                        )
+
+                        DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> ProStatus.Active.Expiring(
+                            validUntil = Instant.now() + Duration.ofDays(2),
+                            duration = ProSubscriptionDuration.TWELVE_MONTHS,
+                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
+                            quickRefundExpiry = Instant.now() + Duration.ofDays(7),
+                            refundInProgress = false
+                        )
+
+                        DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER -> ProStatus.Active.Expiring(
+                            validUntil = Instant.now() + Duration.ofDays(40),
+                            duration = ProSubscriptionDuration.TWELVE_MONTHS,
+                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
+                            quickRefundExpiry = Instant.now() + Duration.ofDays(7),
+                            refundInProgress = false
+                        )
+
+                        DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> ProStatus.Active.AutoRenewing(
+                            validUntil = Instant.now() + Duration.ofDays(14),
+                            duration = ProSubscriptionDuration.ONE_MONTH,
+                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
+                            quickRefundExpiry = Instant.now() + Duration.ofDays(7),
+                            refundInProgress = false
+                        )
+
+                        DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_APPLE -> ProStatus.Active.Expiring(
+                            validUntil = Instant.now() + Duration.ofDays(2),
+                            duration = ProSubscriptionDuration.ONE_MONTH,
+                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
+                            quickRefundExpiry = Instant.now() + Duration.ofDays(7),
+                            refundInProgress = false
+                        )
+
+                        DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> ProStatus.Expired(
+                            expiredAt = Instant.now() - Duration.ofDays(14),
+                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!
+                        )
+                        DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_EARLIER -> ProStatus.Expired(
+                            expiredAt = Instant.now() - Duration.ofDays(60),
+                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!
+                        )
+                        DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE -> ProStatus.Expired(
+                            expiredAt = Instant.now() - Duration.ofDays(14),
+                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!
+                        )
+                    },
+
+                    refreshState = proDataRefreshState,
+                    showProBadge = shouldShowProBadge,
+                )
+            }
         }
-
-        if(!forceCurrentUserAsPro){
-            Log.d(DebugLogGroup.PRO_DATA.label, "ProStatusManager: Getting REAL Pro data state")
-
-            ProDataState(
-                type = proDetailsState.lastUpdated?.first?.toProStatus() ?: ProStatus.NeverSubscribed,
-                showProBadge = shouldShowProBadge,
-                refreshState = proDataRefreshState
-            )
-        }// debug data
-        else {
-            Log.d(DebugLogGroup.PRO_DATA.label, "ProStatusManager: Getting DEBUG Pro data state")
-            val subscriptionState = debugSubscription ?: DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE
-
-            ProDataState(
-                type = when(subscriptionState){
-                    DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> ProStatus.Active.AutoRenewing(
-                        validUntil = Instant.now() + Duration.ofDays(14),
-                        duration = ProSubscriptionDuration.THREE_MONTHS,
-                        providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
-                        quickRefundExpiry = Instant.now() + Duration.ofDays(7)
-                    )
-
-                    DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> ProStatus.Active.Expiring(
-                        validUntil = Instant.now() + Duration.ofDays(2),
-                        duration = ProSubscriptionDuration.TWELVE_MONTHS,
-                        providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
-                        quickRefundExpiry = Instant.now() + Duration.ofDays(7)
-                    )
-
-                    DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER -> ProStatus.Active.Expiring(
-                        validUntil = Instant.now() + Duration.ofDays(40),
-                        duration = ProSubscriptionDuration.TWELVE_MONTHS,
-                        providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
-                        quickRefundExpiry = Instant.now() + Duration.ofDays(7)
-                    )
-
-                    DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> ProStatus.Active.AutoRenewing(
-                        validUntil = Instant.now() + Duration.ofDays(14),
-                        duration = ProSubscriptionDuration.ONE_MONTH,
-                        providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
-                        quickRefundExpiry = Instant.now() + Duration.ofDays(7)
-                    )
-
-                    DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_APPLE -> ProStatus.Active.Expiring(
-                        validUntil = Instant.now() + Duration.ofDays(2),
-                        duration = ProSubscriptionDuration.ONE_MONTH,
-                        providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
-                        quickRefundExpiry = Instant.now() + Duration.ofDays(7)
-                    )
-
-                    DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> ProStatus.Expired(
-                        expiredAt = Instant.now() - Duration.ofDays(14),
-                        providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!
-                    )
-                    DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_EARLIER -> ProStatus.Expired(
-                        expiredAt = Instant.now() - Duration.ofDays(60),
-                        providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!
-                    )
-                    DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE -> ProStatus.Expired(
-                        expiredAt = Instant.now() - Duration.ofDays(14),
-                        providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!
-                    )
-                },
-
-                refreshState = proDataRefreshState,
-                showProBadge = shouldShowProBadge,
-            )
-        }
-
     }.stateIn(scope, SharingStarted.Eagerly,
         initialValue = getDefaultSubscriptionStateData()
     )
@@ -199,6 +218,48 @@ class ProStatusManager @Inject constructor(
 
         manageProDetailsRefreshScheduling()
         manageCurrentProProofRevocation()
+        manageOtherPeoplePro()
+    }
+
+    private fun manageOtherPeoplePro() {
+        loginState.runWhileLoggedIn(scope) {
+            postProLaunchStatus.collectLatest { postLaunch ->
+                if (postLaunch) {
+                    merge(
+                        configFactory.get().userConfigsChanged(EnumSet.of(UserConfigType.CONVO_INFO_VOLATILE)),
+                        proDatabase.revocationChangeNotification,
+                    ).onStart { emit(Unit) }
+                        .collect {
+                            // Go through all convo's pro proof and remove the ones that are revoked
+                            val revokedConversations = configFactory.get()
+                                .withUserConfigs { it.convoInfoVolatile.all() }
+                                .asSequence()
+                                .filterIsInstance<Conversation.WithProProofInfo>()
+                                .filter { convo ->
+                                    convo.proProofInfo?.genIndexHash?.let { proDatabase.isRevoked(it.data.toHexString()) } == true
+                                }
+                                .onEach { convo ->
+                                    convo.proProofInfo = null
+                                }
+                                .toList()
+
+                            if (revokedConversations.isNotEmpty()) {
+                                Log.d(
+                                    DebugLogGroup.PRO_DATA.label,
+                                    "Clearing Pro proof info for ${revokedConversations.size} conversations due to revocation"
+                                )
+
+                                configFactory.get()
+                                    .withMutableUserConfigs { configs ->
+                                        for (convo in revokedConversations) {
+                                            configs.convoInfoVolatile.set(convo)
+                                        }
+                                    }
+                            }
+                        }
+                }
+            }
+        }
     }
 
     private fun manageProDetailsRefreshScheduling() {
@@ -217,7 +278,7 @@ class ProStatusManager @Inject constructor(
                                 .distinctUntilChanged()
                                 .map { "ProAccessExpiry in config changes" },
 
-                            proDetailsRepository.loadState
+                            proDetailsRepository.get().loadState
                                 .mapNotNull { it.lastUpdated?.first?.expiry }
                                 .distinctUntilChanged()
                                 .mapLatest { expiry ->
@@ -264,7 +325,7 @@ class ProStatusManager @Inject constructor(
                                 "Scheduling ProDetails fetch due to: $refreshReason"
                             )
 
-                            proDetailsRepository.requestRefresh()
+                            proDetailsRepository.get().requestRefresh()
                         }
                     } else {
                         FetchProDetailsWorker.cancel(application)
@@ -320,8 +381,11 @@ class ProStatusManager @Inject constructor(
         // if the debug is set, return that
         if (prefs.forceIncomingMessagesAsPro()) return MAX_CHARACTER_PRO
 
-        // otherwise return the true value
-        return if(isPostPro()) MAX_CHARACTER_REGULAR else MAX_CHARACTER_PRO //todo PRO implement real logic once it's in
+        if (message.proFeatures.contains(ProMessageFeature.HIGHER_CHARACTER_LIMIT)) {
+            return MAX_CHARACTER_PRO
+        }
+
+        return MAX_CHARACTER_REGULAR
     }
 
     // Temporary method and concept that we should remove once Pro is out
@@ -342,13 +406,30 @@ class ProStatusManager @Inject constructor(
     /**
      * This will get the list of Pro features from an incoming message
      */
-    fun getMessageProFeatures(message: MessageRecord): ProFeatures {
+    fun getMessageProFeatures(message: MessageRecord): Set<ProFeature> {
         // use debug values if any
         if(prefs.forceIncomingMessagesAsPro()){
             return prefs.getDebugMessageFeatures()
         }
 
         return message.proFeatures
+    }
+
+    /**
+     * Adds Pro features, if any, to an outgoing visible message
+     */
+    fun addProFeatures(visibleMessage: VisibleMessage){
+        val proFeatures = ArraySet<ProFeature>()
+
+        configFactory.get().withUserConfigs { configs ->
+            proFeatures += configs.userProfile.getProFeatures().asSequence()
+        }
+
+        if(Util.countCodepoints(visibleMessage.text.orEmpty()) > MAX_CHARACTER_REGULAR){
+            proFeatures += ProMessageFeature.HIGHER_CHARACTER_LIMIT
+        }
+
+        visibleMessage.proFeatures = proFeatures
     }
 
     /**
@@ -393,7 +474,7 @@ class ProStatusManager @Inject constructor(
                             configs.userProfile.setProBadge(true)
                         }
                         // refresh the pro details
-                        proDetailsRepository.requestRefresh()
+                        proDetailsRepository.get().requestRefresh()
                     }
 
                     is ProApiResponse.Failure -> {

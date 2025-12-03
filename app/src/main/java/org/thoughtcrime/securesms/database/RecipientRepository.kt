@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
@@ -27,7 +28,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
-import network.loki.messenger.libsession_util.protocol.ProFeature
+import network.loki.messenger.libsession_util.protocol.ProProfileFeature
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.messaging.open_groups.GroupMemberRole
@@ -54,6 +55,7 @@ import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.RecipientSettings
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.groups.GroupMemberComparator
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.db.ProDatabase
 import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
 import java.lang.ref.WeakReference
@@ -84,6 +86,7 @@ class RecipientRepository @Inject constructor(
     @param:ManagerScope private val managerScope: CoroutineScope,
     private val proDatabase: ProDatabase,
     private val snodeClock: Lazy<SnodeClock>,
+    private val proStatusManager: Lazy<ProStatusManager> // Only needed temporary to check post-pro
 ) {
     private val recipientFlowCache = LruCache<Address, WeakReference<SharedFlow<Recipient>>>(512)
 
@@ -183,7 +186,11 @@ class RecipientRepository @Inject constructor(
     ): Pair<Recipient, Flow<*>?> {
         val now = snodeClock.get().currentTime()
 
-        val proDataContext = ProDataContext()
+        val proDataContext = if (proStatusManager.get().postProLaunchStatus.value) {
+            ProDataContext()
+        } else {
+            null
+        }
 
         // Fetch data from config first, this may contain partial information for some kind of recipient
         val configData = getDataFromConfig(
@@ -422,16 +429,14 @@ class RecipientRepository @Inject constructor(
         }
 
         // Calculate the ProData for this recipient
-        val proDataList = proDataContext.proDataList
-        var proData = if (!proDataList.isNullOrEmpty()) {
-            proDataList.removeAll {
-                it.isExpired(now) || proDatabase.isRevoked(it.genIndexHash)
-            }
+        val proDataList = proDataContext?.proDataList
 
-            // The pro data that goes into the recipient, should show the one with the most information
-            proDataList.firstOrNull { it.showProBadge }?.let {
-                RecipientData.ProData(it.showProBadge)
-            }
+        proDataList?.removeAll {
+            it.isExpired(now) || proDatabase.isRevoked(it.genIndexHash)
+        }
+
+        var proData = if (!proDataList.isNullOrEmpty()) {
+            RecipientData.ProData(showProBadge = proDataList.any { it.showProBadge })
         } else {
             null
         }
@@ -462,6 +467,10 @@ class RecipientRepository @Inject constructor(
             changeSources.add(flowOf("Pro proof expires")
                 .onStart { delay(delayMills) })
         }
+
+        // Add post-pro status as a change source to ensure recipients are updated after
+        // post-pro launch flag is toggled.
+        changeSources?.add(proStatusManager.get().postProLaunchStatus.drop(1))
 
         return updatedValue to changeSources?.let { merge(*it.toTypedArray()) }
     }
@@ -572,11 +581,21 @@ class RecipientRepository @Inject constructor(
                     configFactory.withUserConfigs { configs ->
                         val pro = configs.userProfile.getProConfig()
 
-                        if (pro != null) {
+                        if (prefs.forceCurrentUserAsPro()) {
                             proDataContext?.addProData(
                                 RecipientSettings.ProData(
                                     showProBadge = configs.userProfile.getProFeatures().contains(
-                                        ProFeature.PRO_BADGE
+                                        ProProfileFeature.PRO_BADGE
+                                    ),
+                                    expiry = Instant.now().plusSeconds(3600),
+                                    genIndexHash = "a1b2c3d4",
+                                )
+                            )
+                        } else if (pro != null) {
+                            proDataContext?.addProData(
+                                RecipientSettings.ProData(
+                                    showProBadge = configs.userProfile.getProFeatures().contains(
+                                        ProProfileFeature.PRO_BADGE
                                     ),
                                     expiry = Instant.ofEpochMilli(pro.proProof.expiryMs),
                                     genIndexHash = pro.proProof.genIndexHashHex,
@@ -596,12 +615,21 @@ class RecipientRepository @Inject constructor(
                 } else {
                     // Is this a contact?
 
-                    //TODO: Collect pro status
-                    //fetchRecipientContext?.addProData(...)
-
                     configFactory.withUserConfigs { configs ->
-                        configs.contacts.get(address.accountId.hexString)
-                    }?.let { contact ->
+                        configs.contacts.get(address.accountId.hexString)?.let {
+                            it to configs.convoInfoVolatile.getOneToOne(address.accountId.hexString)
+                        }
+                    }?.let { (contact, convo) ->
+                        if (convo?.proProofInfo != null && proDataContext != null) {
+                            proDataContext.addProData(
+                                RecipientSettings.ProData(
+                                    showProBadge = contact.proFeatures.contains(ProProfileFeature.PRO_BADGE),
+                                    expiry = convo.proProofInfo!!.expiry,
+                                    genIndexHash = convo.proProofInfo!!.genIndexHash.data.toHexString(),
+                                )
+                            )
+                        }
+
                         RecipientData.Contact(
                             name = contact.name,
                             nickname = contact.nickname.takeIf { it.isNotBlank() },
@@ -624,9 +652,6 @@ class RecipientRepository @Inject constructor(
                 val groupInfo = configFactory.getGroup(address.accountId) ?: return null
                 val groupMemberComparator =
                     GroupMemberComparator(loginStateRepository.requireLocalAccountId())
-
-                //TODO: Collect pro status
-                //fetchRecipientContext?.addProData(...)
 
                 configFactory.withGroupConfigs(address.accountId) { configs ->
                     RecipientData.Group(
@@ -656,12 +681,21 @@ class RecipientRepository @Inject constructor(
             is Address.Blinded,
             is Address.CommunityBlindedId -> {
                 val blinded = address.toBlinded() ?: return null
-                val contact =
-                    configFactory.withUserConfigs { it.contacts.getBlinded(blinded.blindedId.hexString) }
-                        ?: return null
+                val (contact, convo) = configFactory.withUserConfigs { configs ->
+                    configs.contacts.getBlinded(blinded.blindedId.hexString)?.let {
+                        it to configs.convoInfoVolatile.getBlindedOneToOne(blinded.blindedId.hexString)
+                    }
+                } ?: return null
 
-                //TODO: Collect pro status
-                //fetchRecipientContext?.addProData(...)
+                if (convo?.proProofInfo != null && proDataContext != null) {
+                    proDataContext.addProData(
+                        RecipientSettings.ProData(
+                            showProBadge = contact.proFeatures.contains(ProProfileFeature.PRO_BADGE),
+                            expiry = convo.proProofInfo!!.expiry,
+                            genIndexHash = convo.proProofInfo!!.genIndexHash.data.toHexString(),
+                        )
+                    )
+                }
 
                 RecipientData.BlindedContact(
                     displayName = contact.name,

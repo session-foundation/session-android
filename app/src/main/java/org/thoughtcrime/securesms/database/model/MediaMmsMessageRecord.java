@@ -26,6 +26,9 @@ import org.thoughtcrime.securesms.database.model.content.MessageContent;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 
 import java.util.List;
+import java.util.Set;
+
+import network.loki.messenger.libsession_util.protocol.ProFeature;
 
 /**
  * Represents the message record model for MMS messages that contain
@@ -48,12 +51,12 @@ public class MediaMmsMessageRecord extends MmsMessageRecord {
                                @NonNull List<LinkPreview> linkPreviews,
                                @NonNull List<ReactionRecord> reactions, boolean hasMention,
                                @Nullable MessageContent messageContent,
-                               long proFeaturesRawValue)
+                               Set<ProFeature> proFeatures)
   {
     super(id, body, conversationRecipient, individualRecipient, dateSent,
       dateReceived, threadId, Status.STATUS_NONE, deliveryReceiptCount, mailbox,
       expiresIn, expireStarted, slideDeck, readReceiptCount, quote,
-            linkPreviews, reactions, hasMention, messageContent, proFeaturesRawValue);
+            linkPreviews, reactions, hasMention, messageContent, proFeatures);
   }
 
     @Override

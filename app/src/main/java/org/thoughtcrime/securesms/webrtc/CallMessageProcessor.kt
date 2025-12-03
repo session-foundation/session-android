@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.webrtc
 
 import android.Manifest
 import android.content.Context
+import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
@@ -14,12 +15,12 @@ import org.session.libsession.messaging.utilities.WebRtcUtils
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.ANSWER
-import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.END_CALL
-import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.ICE_CANDIDATES
-import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.OFFER
-import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.PRE_OFFER
-import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.PROVISIONAL_ANSWER
+import org.session.protos.SessionProtos.CallMessage.Type.ANSWER
+import org.session.protos.SessionProtos.CallMessage.Type.END_CALL
+import org.session.protos.SessionProtos.CallMessage.Type.ICE_CANDIDATES
+import org.session.protos.SessionProtos.CallMessage.Type.OFFER
+import org.session.protos.SessionProtos.CallMessage.Type.PRE_OFFER
+import org.session.protos.SessionProtos.CallMessage.Type.PROVISIONAL_ANSWER
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ManagerScope
@@ -35,7 +36,7 @@ class CallMessageProcessor @Inject constructor(
     private val textSecurePreferences: TextSecurePreferences,
     private val storage: StorageProtocol,
     private val webRtcBridge: WebRtcCallBridge,
-    private val recipientRepository: RecipientRepository,
+    private val recipientRepository: Lazy<RecipientRepository>,
     @ManagerScope scope: CoroutineScope
 ) : OnAppStartupComponent {
 
@@ -50,7 +51,7 @@ class CallMessageProcessor @Inject constructor(
                 val nextMessage = WebRtcUtils.SIGNAL_QUEUE.receive()
                 Log.d("Loki", nextMessage.type?.name ?: "CALL MESSAGE RECEIVED")
                 val sender = nextMessage.sender ?: continue
-                val approvedContact = recipientRepository.getRecipient(Address.fromSerialized(sender))?.approved == true
+                val approvedContact = recipientRepository.get().getRecipient(Address.fromSerialized(sender))?.approved == true
                 Log.i("Loki", "Contact is approved?: $approvedContact")
                 if (!approvedContact && storage.getUserPublicKey() != sender) continue
 

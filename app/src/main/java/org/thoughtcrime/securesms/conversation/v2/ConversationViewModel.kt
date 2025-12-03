@@ -46,6 +46,7 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.util.BitSet
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.BlindedContact
 import network.loki.messenger.libsession_util.util.ExpiryMode
@@ -1381,7 +1382,8 @@ class ConversationViewModel @AssistedInject constructor(
                                 createdEpochSeconds = ZonedDateTime.now().toEpochSecond(),
                                 profilePic = recipient.data.avatar?.toUserPic() ?: UserPic.DEFAULT,
                                 profileUpdatedEpochSeconds = recipient.data.profileUpdatedAt?.toEpochSeconds() ?: 0L,
-                                priority = PRIORITY_VISIBLE
+                                priority = PRIORITY_VISIBLE,
+                                proFeatures = BitSet(),
                             )
                         )
                     }

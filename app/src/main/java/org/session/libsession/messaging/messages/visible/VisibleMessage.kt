@@ -2,13 +2,17 @@ package org.session.libsession.messaging.messages.visible
 
 import androidx.annotation.Keep
 import network.loki.messenger.BuildConfig
-import network.loki.messenger.libsession_util.protocol.ProFeatures
+import network.loki.messenger.libsession_util.protocol.ProFeature
+import network.loki.messenger.libsession_util.protocol.ProMessageFeature
+import network.loki.messenger.libsession_util.protocol.ProProfileFeature
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.copyExpiration
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
-import org.session.libsignal.protos.SignalServiceProtos
+import org.session.protos.SessionProtos
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.pro.toProMessageBitSetValue
+import org.thoughtcrime.securesms.pro.toProProfileBitSetValue
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment as SignalAttachment
 
 /**
@@ -26,12 +30,24 @@ data class VisibleMessage(
     var reaction: Reaction? = null,
     var hasMention: Boolean = false,
     var blocksMessageRequests: Boolean = false,
-    var proFeatures: ProFeatures = ProFeatures.NONE
+    /**
+     * The pro features enabled for this message.
+     *
+     * Note:
+     * * When this message is an incoming message, the pro features will only be populated
+     * if we can prove that the sender has an active pro subscription.
+     *
+     * * When this message represents an outgoing message, this property can be populated by
+     * application code at their wishes but the actual translating to protobuf onto the wired will
+     * be checked against the current user's pro proof, if no active pro subscription is found,
+     * the pro features will not be sent in the protobuf messages.
+     */
+    var proFeatures: Set<ProFeature> = emptySet()
 ) : Message()  {
 
     // This empty constructor is needed for kryo serialization
     @Keep
-    constructor(): this(proFeatures = ProFeatures.NONE)
+    constructor(): this(proFeatures = emptySet())
 
     override val isSelfSendValid: Boolean = true
 
@@ -52,7 +68,7 @@ data class VisibleMessage(
     companion object {
         const val TAG = "VisibleMessage"
 
-        fun fromProto(proto: SignalServiceProtos.Content): VisibleMessage? =
+        fun fromProto(proto: SessionProtos.Content): VisibleMessage? =
             proto.dataMessage?.let { VisibleMessage().apply {
                 if (it.hasSyncTarget()) syncTarget = it.syncTarget
                 text = it.body
@@ -67,7 +83,7 @@ data class VisibleMessage(
     }
 
     protected override fun buildProto(
-        builder: SignalServiceProtos.Content.Builder,
+        builder: SessionProtos.Content.Builder,
         messageDataProvider: MessageDataProvider
     ) {
         val dataMessage = builder.dataMessageBuilder
@@ -113,8 +129,16 @@ data class VisibleMessage(
         }
 
         // Pro features
-        if (proFeatures != ProFeatures.NONE) {
-            builder.proMessageBuilder.setFeatures(proFeatures.rawValue)
+        if (proFeatures.any { it is ProMessageFeature }) {
+            builder.proMessageBuilder.setMsgBitset(
+                proFeatures.toProMessageBitSetValue()
+            )
+        }
+
+        if (proFeatures.any { it is ProProfileFeature }) {
+            builder.proMessageBuilder.setProfileBitset(
+                proFeatures.toProProfileBitSetValue()
+            )
         }
     }
     // endregion

@@ -15,13 +15,18 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.ACTION_TYPE_KEY
@@ -69,6 +74,7 @@ class ProSettingsViewModel @AssistedInject constructor(
     private val prefs: TextSecurePreferences,
     private val proDetailsRepository: ProDetailsRepository,
     private val configFactory: Lazy<ConfigFactoryProtocol>,
+    private val storage: StorageProtocol,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -184,8 +190,11 @@ class ProSettingsViewModel @AssistedInject constructor(
     private fun generateState(proDataState: ProDataState){
         val subType = proDataState.type
 
+        // calculate stats for pro users
+        if(subType is ProStatus.Active) refreshProStats()
+
         _proSettingsUIState.update {
-            ProSettingsState(
+            it.copy(
                 proDataState = proDataState,
                 subscriptionExpiryLabel = when(subType){
                     is ProStatus.Active.AutoRenewing ->
@@ -206,14 +215,6 @@ class ProSettingsViewModel @AssistedInject constructor(
                     is ProStatus.Active -> subType.duration.expiryFromNow()
                     else -> ""
                 },
-                proStats = State.Success( //todo PRO calculate properly
-                    ProStats(
-                        groupsUpdated = 0,
-                        pinnedConversations = 12,
-                        proBadges = 6400,
-                        longMessages = 215,
-                    )
-                )
             )
         }
     }
@@ -808,6 +809,53 @@ class ProSettingsViewModel @AssistedInject constructor(
     ){
         viewModelScope.launch {
             navigator.navigate(destination, navOptions)
+        }
+    }
+
+    private fun refreshProStats(){
+        viewModelScope.launch {
+            // show a loader for the stats
+            _proSettingsUIState.update {
+                it.copy(
+                    proStats = State.Loading
+                )
+            }
+
+            // calculate pro stats values
+            try {
+                val stats = withContext(Dispatchers.IO) {
+                    val pinsDeferred = async {
+                        storage.getTotalPinned()
+                    }
+
+                    val badgesDeferred = async {
+                        storage.getTotalSentProBadges()
+                    }
+
+                    val longMsgDeferred = async {
+                        storage.getTotalSentLongMessages()
+                    }
+
+                    ProStats(
+                        groupsUpdated = 0,
+                        pinnedConversations = pinsDeferred.await(),
+                        proBadges = badgesDeferred.await(),
+                        longMessages = longMsgDeferred.await(),
+                    )
+                }
+
+                // update ui with results
+                _proSettingsUIState.update {
+                    it.copy(proStats = State.Success(stats))
+                }
+            } catch (e: Exception) {
+                // currently the UI doesn't have an error display
+                // it will look like it's still loading
+                // but the logic is there in case we have a look for stats errors
+                _proSettingsUIState.update {
+                    it.copy(proStats = State.Error(e))
+                }
+            }
         }
     }
 

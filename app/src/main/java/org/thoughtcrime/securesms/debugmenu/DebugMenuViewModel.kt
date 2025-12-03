@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.os.Build
 import android.widget.Toast
+import androidx.collection.ArraySet
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
@@ -22,12 +23,12 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
-import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.protocol.ProFeature
-import network.loki.messenger.libsession_util.protocol.ProFeatures
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
+import network.loki.messenger.libsession_util.util.toBitSet
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.file_server.FileServer
 import org.session.libsession.messaging.file_server.FileServerApi
@@ -53,7 +54,6 @@ import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.util.ClearDataUtils
 import org.thoughtcrime.securesms.util.DateUtils
 import java.time.ZonedDateTime
-import kotlin.time.Instant
 
 
 @HiltViewModel(assistedFactory = DebugMenuViewModel.Factory::class)
@@ -115,6 +115,7 @@ class DebugMenuViewModel @AssistedInject constructor(
                 DebugSubscriptionStatus.EXPIRED,
                 DebugSubscriptionStatus.EXPIRED_EARLIER,
                 DebugSubscriptionStatus.EXPIRED_APPLE,
+                DebugSubscriptionStatus.AUTO_APPLE_REFUNDING,
             ),
             selectedDebugSubscriptionStatus = textSecurePreferences.getDebugSubscriptionType() ?: DebugSubscriptionStatus.AUTO_GOOGLE,
             debugProPlanStatus = setOf(
@@ -356,12 +357,11 @@ class DebugMenuViewModel @AssistedInject constructor(
             }
 
             is Commands.SetMessageProFeature -> {
-                val features = _uiState.value.messageProFeature.toSet().toMutableSet()
+                val features = ArraySet(_uiState.value.messageProFeature)
                 if(command.set) features.add(command.feature) else features.remove(command.feature)
-                val newFeatures = ProFeatures.from(features)
-                textSecurePreferences.setDebugMessageFeatures(newFeatures)
+                textSecurePreferences.setDebugMessageFeatures(features)
                 _uiState.update {
-                    it.copy(messageProFeature = newFeatures)
+                    it.copy(messageProFeature = features)
                 }
             }
 
@@ -617,7 +617,7 @@ class DebugMenuViewModel @AssistedInject constructor(
         val forceCurrentUserAsPro: Boolean,
         val forceOtherUsersAsPro: Boolean,
         val forceIncomingMessagesAsPro: Boolean,
-        val messageProFeature: ProFeatures,
+        val messageProFeature: Set<ProFeature>,
         val forcePostPro: Boolean,
         val forceShortTTl: Boolean,
         val forceDeprecationState: LegacyGroupDeprecationManager.DeprecationState?,
@@ -656,6 +656,7 @@ class DebugMenuViewModel @AssistedInject constructor(
 
     enum class DebugSubscriptionStatus(val label: String) {
         AUTO_GOOGLE("Auto Renewing (Google, 3 months)"),
+        AUTO_APPLE_REFUNDING("Refunding (Apple, 3 months)"),
         EXPIRING_GOOGLE("Expiring/Cancelled (Expires in 14 days, Google, 12 months)"),
         EXPIRING_GOOGLE_LATER("Expiring/Cancelled (Expires in 40 days, Google, 12 months)"),
         AUTO_APPLE("Auto Renewing (Apple, 1 months)"),

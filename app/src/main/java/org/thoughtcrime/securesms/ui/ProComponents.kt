@@ -265,7 +265,7 @@ fun SessionProCTA(
     }
 
     if(showDialog) {
-        BasicAlertDialog(
+        BasicSessionAlertDialog(
             modifier = modifier,
             onDismissRequest = onCancel,
             content = {
@@ -310,7 +310,10 @@ fun SessionProCTA(
                                 // features
                                 if (features.isNotEmpty()) {
                                     features.forEachIndexed { index, feature ->
-                                        ProCTAFeature(data = feature)
+                                        ProCTAFeature(
+                                            modifier = Modifier.qaTag(stringResource(R.string.qa_cta_feature) + index.toString()),
+                                            data = feature
+                                        )
                                         if (index < features.size - 1) {
                                             Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
                                         }
@@ -330,7 +333,9 @@ fun SessionProCTA(
                                 ) {
                                     positiveButtonText?.let {
                                         AccentFillButtonRect(
-                                            modifier = Modifier.then(
+                                            modifier = Modifier
+                                                .qaTag(R.string.qa_cta_button_positive)
+                                                .then(
                                                 if (negativeButtonText != null)
                                                     Modifier.weight(1f)
                                                 else Modifier
@@ -342,7 +347,9 @@ fun SessionProCTA(
 
                                     negativeButtonText?.let {
                                         TertiaryFillButtonRect(
-                                            modifier = Modifier.then(
+                                            modifier = Modifier
+                                                .qaTag(R.string.qa_cta_button_negative)
+                                                .then(
                                                 if (positiveButtonText != null)
                                                     Modifier.weight(1f)
                                                 else Modifier
@@ -443,7 +450,9 @@ fun SimpleSessionProCTA(
         badgeAtStart = badgeAtStart,
         textContent = {
             Text(
-                modifier = Modifier.align(Alignment.CenterHorizontally),
+                modifier = Modifier
+                    .qaTag(R.string.qa_cta_body)
+                    .align(Alignment.CenterHorizontally),
                 text = text,
                 textAlign = TextAlign.Center,
                 style = LocalType.current.base.copy(
@@ -495,7 +504,9 @@ fun AnimatedSessionProCTA(
         modifier = modifier,
         textContent = {
             Text(
-                modifier = Modifier.align(Alignment.CenterHorizontally),
+                modifier = Modifier
+                    .qaTag(R.string.qa_cta_body)
+                    .align(Alignment.CenterHorizontally),
                 text = text,
                 textAlign = TextAlign.Center,
                 style = LocalType.current.base.copy(

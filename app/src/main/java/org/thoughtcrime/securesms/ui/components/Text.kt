@@ -258,6 +258,7 @@ fun AnnotatedTextWithIcon(
     modifier: Modifier = Modifier,
     style: TextStyle = LocalType.current.base,
     color: Color = Color.Unspecified,
+    textQaTag: String? = null,
     iconSize: Pair<TextUnit, TextUnit> = 12.sp to 12.sp,
     iconPaddingValues: PaddingValues = PaddingValues(start = style.lineHeight.value.dp * 0.2f),
     onIconClick: (() -> Unit)? = null
@@ -296,6 +297,7 @@ fun AnnotatedTextWithIcon(
     modifier: Modifier = Modifier,
     style: TextStyle = LocalType.current.base,
     color: Color = Color.Unspecified,
+    textQaTag: String? = null,
     iconSize: Pair<TextUnit, TextUnit> = 12.sp to 12.sp,
 ) {
     var inlineContent: Map<String, InlineTextContent> = mapOf()
@@ -330,7 +332,11 @@ fun AnnotatedTextWithIcon(
 
     Text(
         text = annotated,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth()
+            .then(
+                if (textQaTag != null) Modifier.qaTag(textQaTag)
+                else Modifier
+            ),
         style = style,
         color = color,
         textAlign = TextAlign.Center,
