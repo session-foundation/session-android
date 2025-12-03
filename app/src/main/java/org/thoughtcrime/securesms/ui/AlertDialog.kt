@@ -280,9 +280,12 @@ fun OpenURLAlertDialog(
             DialogButtonData(
                 text = GetString(R.string.open),
                 color = LocalColors.current.danger,
+                dismissOnClick = false,
                 onClick = {
-                    onLinkOpened(url)
-                    context.openUrl(url)
+                    if(context.openUrl(url)){
+                        onLinkOpened(url)
+                        onDismissRequest()
+                    }
                 }
             ),
             DialogButtonData(

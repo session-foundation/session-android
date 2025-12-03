@@ -43,13 +43,20 @@ fun Context.createThemedComposeView(content: @Composable () -> Unit): ComposeVie
 }
 
 // Method to actually open a given URL via an Intent that will use the default browser
-fun Context.openUrl(url: String) {
+/**
+ * Returns false if the phone was unable to open the link
+ * Returns true otherwise
+ */
+fun Context.openUrl(url: String): Boolean {
     try {
         startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        return true
     } catch (e: Exception) {
-        Toast.makeText(this, R.string.errorGeneric, Toast.LENGTH_LONG).show()
+        Toast.makeText(this, R.string.browserNotFound, Toast.LENGTH_LONG).show()
         Log.w("Dialog", "No browser found to open link", e)
     }
+
+    return false
 }
 
 // Extension method to use the Phrase library to substitute strings & return a CharSequence.
