@@ -15,6 +15,7 @@ import kotlinx.serialization.Serializable
 import org.thoughtcrime.securesms.ui.NavigationAction
 import org.thoughtcrime.securesms.ui.ObserveAsEvents
 import org.thoughtcrime.securesms.ui.UINavigator
+import org.thoughtcrime.securesms.ui.handleIntent
 import org.thoughtcrime.securesms.ui.horizontalSlideComposable
 
 // Destinations
@@ -63,7 +64,7 @@ fun DebugMenuNavHost(
             NavigationAction.NavigateUp -> handleBack()
 
             is NavigationAction.NavigateToIntent -> {
-                navController.context.startActivity(action.intent)
+                navController.handleIntent(action.intent)
             }
 
             else -> {}
