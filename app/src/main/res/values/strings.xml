@@ -58,6 +58,7 @@
     <string name="adminStatusYou">You cannot change your admin status. To leave the group, open the conversation settings and select Leave Group.</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> and <b>{other_name}</b> were promoted to Admin.</string>
     <string name="admins">Admins</string>
+    <string name="allow">Allow</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonymous</string>
     <string name="appIcon">App Icon</string>
@@ -174,6 +175,7 @@
     <string name="blockUnblockNameTwo">Are you sure you want to unblock <b>{name}</b> and 1 other?</string>
     <string name="blockUnblockedUser">Unblocked {name}</string>
     <string name="blockedContactsManageDescription">View and manage blocked contacts.</string>
+    <string name="browserNotFound">No browser found to open that URL, try copying the URL instead</string>
     <string name="call">Call</string>
     <string name="callsCalledYou">{name} called you</string>
     <string name="callsCannotStart">You cannot start a new call. Finish your current call first.</string>
@@ -220,6 +222,7 @@
     <string name="change">Change</string>
     <string name="changePasswordFail">Failed to change password</string>
     <string name="changePasswordModalDescription">Change your password for {app_name}. Locally stored data will be re-encrypted with your new password.</string>
+    <string name="changeSetting">Change Setting</string>
     <string name="checkingProStatus">Checking {pro} Status</string>
     <string name="checkingProStatusContinue">Checking your {pro} status. You\'ll be able to continue once this check is complete.</string>
     <string name="checkingProStatusDescription">Checking your {pro} details. Some actions on this page may be unavailable until this check is complete.</string>
@@ -410,6 +413,7 @@
     <string name="deleteMessagesDescriptionEveryone">Are you sure you want to delete these messages for everyone?</string>
     <string name="deleting">Deleting</string>
     <string name="developerToolsToggle">Toggle Developer Tools</string>
+    <string name="deviceNotificationSettings">Device Notification Settings</string>
     <string name="dictationStart">Start Dictation...</string>
     <string name="disappearingMessages">Disappearing Messages</string>
     <string name="disappearingMessagesCountdownBig">Message will delete in {time_large}</string>
@@ -683,6 +687,8 @@
     <string name="legacyGroupMemberNewYouOther"><b>You</b> and <b>{other_name}</b> joined the group.</string>
     <string name="legacyGroupMemberTwoNew"><b>{name}</b> and <b>{other_name}</b> joined the group.</string>
     <string name="legacyGroupMemberYouNew"><b>You</b> joined the group.</string>
+    <string name="limitBackgroundActivity">Limit Background Activity?</string>
+    <string name="limitBackgroundActivityDescription">You currently allow {app_name} to run in the background to improve notification reliability. Changing this setting could result in less reliable notifications.</string>
     <string name="linkPreviews">Link Previews</string>
     <string name="linkPreviewsDescription">Show link previews for supported URLs.</string>
     <string name="linkPreviewsEnable">Enable Link Previews</string>
@@ -1256,6 +1262,9 @@
     <string name="retry">Retry</string>
     <string name="reviewLimit">Review Limit</string>
     <string name="reviewLimitDescription">It looks like you\'ve already reviewed {app_name} recently, thanks for your feedback!</string>
+    <string name="runAppBackground">Run App in the Background</string>
+    <string name="runSessionBackground">Run {app_name} in the Background?</string>
+    <string name="runSessionBackgroundDescription">Since you’re using slow mode, we recommend allowing {app_name} to run in the background to improve notifications. This can improve notification consistency, although your system may still automatically limit background activity.\n\nYou can change this later in Settings.</string>
     <string name="save">Save</string>
     <string name="saved">Saved</string>
     <string name="savedMessages">Saved messages</string>
