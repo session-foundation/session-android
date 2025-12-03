@@ -15,6 +15,7 @@ import android.widget.LinearLayout
 import android.widget.LinearLayout.VERTICAL
 import android.widget.Space
 import android.widget.TextView
+import android.widget.Toast
 import androidx.annotation.AttrRes
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
@@ -26,6 +27,7 @@ import androidx.core.text.HtmlCompat
 import androidx.core.view.updateMargins
 import androidx.fragment.app.Fragment
 import network.loki.messenger.R
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.util.toPx
 
 @DslMarker
@@ -194,9 +196,6 @@ public fun Context.copyURLToClipboard(url: String) {
     val clip = ClipData.newPlainText(url, url)
     clipboard.setPrimaryClip(clip)
 }
-
-// Method to actually open a given URL via an Intent that will use the default browser
-fun Context.openUrl(url: String) = Intent(Intent.ACTION_VIEW, Uri.parse(url)).let(::startActivity)
 
 fun Fragment.showSessionDialog(build: SessionDialogBuilder.() -> Unit): AlertDialog =
     SessionDialogBuilder(requireContext()).apply { build() }.show()

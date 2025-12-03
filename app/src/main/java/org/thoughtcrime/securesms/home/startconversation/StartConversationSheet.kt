@@ -38,7 +38,6 @@ import org.thoughtcrime.securesms.home.startconversation.invitefriend.InviteFrie
 import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessage
 import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessageViewModel
 import org.thoughtcrime.securesms.home.startconversation.newmessage.State
-import org.thoughtcrime.securesms.openUrl
 import org.thoughtcrime.securesms.ui.NavigationAction
 import org.thoughtcrime.securesms.ui.ObserveAsEvents
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog

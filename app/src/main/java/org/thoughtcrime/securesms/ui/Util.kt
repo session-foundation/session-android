@@ -3,8 +3,11 @@ package org.thoughtcrime.securesms.ui
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.Intent
+import android.net.Uri
 import android.view.View
 import android.view.ViewTreeObserver
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.core.FiniteAnimationSpec
@@ -24,6 +27,8 @@ import com.squareup.phrase.Phrase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import network.loki.messenger.R
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ui.theme.SessionMaterialTheme
 
 fun Activity.setComposeContent(content: @Composable () -> Unit) {
@@ -35,6 +40,16 @@ fun Activity.setComposeContent(content: @Composable () -> Unit) {
 fun Fragment.createThemedComposeView(content: @Composable () -> Unit): ComposeView = requireContext().createThemedComposeView(content)
 fun Context.createThemedComposeView(content: @Composable () -> Unit): ComposeView = ComposeView(this).apply {
     setThemedContent(content)
+}
+
+// Method to actually open a given URL via an Intent that will use the default browser
+fun Context.openUrl(url: String) {
+    try {
+        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+    } catch (e: Exception) {
+        Toast.makeText(this, R.string.errorGeneric, Toast.LENGTH_LONG).show()
+        Log.w("Dialog", "No browser found to open link", e)
+    }
 }
 
 // Extension method to use the Phrase library to substitute strings & return a CharSequence.
