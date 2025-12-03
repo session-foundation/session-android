@@ -133,6 +133,13 @@ android {
         buildConfigField("String", "USER_AGENT", "\"OWA\"")
         buildConfigField("int", "CANONICAL_VERSION_CODE", "$canonicalVersionCode")
 
+        buildConfigField("org.thoughtcrime.securesms.pro.ProBackendConfig", "PRO_BACKEND_DEV", """
+            new org.thoughtcrime.securesms.pro.ProBackendConfig(
+                "https://pro-backend-dev.getsession.org",
+                "fc947730f49eb01427a66e050733294d9e520e545c7a27125a780634e0860a27"
+            )
+        """.trimIndent())
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments["clearPackageData"] = "true"
         testOptions {
@@ -183,11 +190,17 @@ android {
             enableUnitTestCoverage = false
             signingConfig = signingConfigs.getByName("debug")
 
-            applicationIdSuffix = ".${name}"
+//            applicationIdSuffix = ".${name}"
             enablePermissiveNetworkSecurityConfig(true)
             devNetDefaultOn(false)
             setAlternativeAppName("Session Debug")
             setAuthorityPostfix(".debug")
+
+            packaging {
+                jniLibs {
+                    keepDebugSymbols += "**/*.so"
+                }
+            }
         }
     }
 
@@ -388,15 +401,9 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.rxbinding)
 
-    if (hasIncludedLibSessionUtilProject) {
-        implementation(
-            group = libs.libsession.util.android.get().group,
-            name = libs.libsession.util.android.get().name,
-            version = "dev-snapshot"
-        )
-    } else {
-        implementation(libs.libsession.util.android)
-    }
+    // If libsession_util project is included into the build, use that, otherwise use the published version
+    findProject(":libsession-util-android")?.let(::implementation)
+        ?: implementation(libs.libsession.util.android)
 
     implementation(libs.kryo)
     testImplementation(libs.junit)

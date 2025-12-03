@@ -25,6 +25,7 @@ import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
+import org.thoughtcrime.securesms.util.AnimatedImageUtils
 import org.thoughtcrime.securesms.util.castAwayType
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -114,22 +115,21 @@ class AvatarUploadManager @Inject constructor(
             it.write(pictureData)
         }
 
+        val isAnimated = AnimatedImageUtils.isAnimated(pictureData)
+
         Log.d(DebugLogGroup.AVATAR.label, "Avatar file written to local storage")
 
         // Now that we have the file both locally and remotely, we can update the user profile
-        val oldPic = configFactory.withMutableUserConfigs {
-            val result = it.userProfile.getPic()
+        val oldPic = configFactory.withMutableUserConfigs { configs ->
+            val result = configs.userProfile.getPic()
             val userPic = remoteFile.toUserPic()
             if (isReupload) {
-                it.userProfile.setPic(userPic)
-
-                // TODO: We'll need to call this when the libsession re-enables the re-uploaded
-                // avatar logic.
-                // it.userProfile.setReuploadedPic(userPic)
+                configs.userProfile.setReuploadedPic(userPic)
             } else {
-                it.userProfile.setPic(userPic)
+                configs.userProfile.setPic(userPic)
             }
 
+            configs.userProfile.setAnimatedAvatar(isAnimated)
             result.toRemoteFile()
         }
 
