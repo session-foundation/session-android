@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.webrtc
 
 import android.Manifest
 import android.content.Context
+import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.calls.CallMessageType
