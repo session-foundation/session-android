@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.pro
 
 import android.app.Application
+import androidx.collection.ArraySet
 import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -32,7 +33,10 @@ import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVID
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_GOOGLE_PLAY
 import network.loki.messenger.libsession_util.pro.ProConfig
 import network.loki.messenger.libsession_util.protocol.ProFeature
+import network.loki.messenger.libsession_util.protocol.ProMessageFeature
 import network.loki.messenger.libsession_util.util.Conversation
+import network.loki.messenger.libsession_util.util.Util
+import network.loki.messenger.libsession_util.util.asSequence
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -377,8 +381,11 @@ class ProStatusManager @Inject constructor(
         // if the debug is set, return that
         if (prefs.forceIncomingMessagesAsPro()) return MAX_CHARACTER_PRO
 
-        // otherwise return the true value
-        return if(isPostPro()) MAX_CHARACTER_REGULAR else MAX_CHARACTER_PRO //todo PRO implement real logic once it's in
+        if (message.proFeatures.contains(ProMessageFeature.HIGHER_CHARACTER_LIMIT)) {
+            return MAX_CHARACTER_PRO
+        }
+
+        return MAX_CHARACTER_REGULAR
     }
 
     // Temporary method and concept that we should remove once Pro is out
@@ -406,6 +413,23 @@ class ProStatusManager @Inject constructor(
         }
 
         return message.proFeatures
+    }
+
+    /**
+     * Adds Pro features, if any, to an outgoing visible message
+     */
+    fun addProFeatures(visibleMessage: VisibleMessage){
+        val proFeatures = ArraySet<ProFeature>()
+
+        configFactory.get().withUserConfigs { configs ->
+            proFeatures += configs.userProfile.getProFeatures().asSequence()
+        }
+
+        if(Util.countCodepoints(visibleMessage.text.orEmpty()) > MAX_CHARACTER_REGULAR){
+            proFeatures += ProMessageFeature.HIGHER_CHARACTER_LIMIT
+        }
+
+        visibleMessage.proFeatures = proFeatures
     }
 
     /**

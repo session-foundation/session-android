@@ -7,8 +7,8 @@ import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.utilities.Address
-import org.session.libsignal.protos.SignalServiceProtos
-import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
+import org.session.protos.SessionProtos
+import org.session.protos.SessionProtos.Content.ExpirationType
 import org.thoughtcrime.securesms.database.model.MessageId
 
 abstract class Message {
@@ -49,17 +49,17 @@ abstract class Message {
             && recipient != null
 
     protected abstract fun buildProto(
-        builder: SignalServiceProtos.Content.Builder,
+        builder: SessionProtos.Content.Builder,
         messageDataProvider: MessageDataProvider
     )
 
     fun toProto(
-        builder: SignalServiceProtos.Content.Builder,
+        builder: SessionProtos.Content.Builder,
         messageDataProvider: MessageDataProvider
     ) {
         // First apply common message data
         // * Expiry mode
-        builder.expirationTimerSeconds = expiryMode.expirySeconds.toInt()
+        builder.expirationTimer = expiryMode.expirySeconds.toInt()
         builder.expirationType = when (expiryMode) {
             is ExpiryMode.AfterSend -> ExpirationType.DELETE_AFTER_SEND
             is ExpiryMode.AfterRead -> ExpirationType.DELETE_AFTER_READ
@@ -67,7 +67,7 @@ abstract class Message {
         }
 
         // * Timestamps
-        builder.setSigTimestampMs(sentTimestamp!!)
+        builder.setSigTimestamp(sentTimestamp!!)
 
         // Then ask the subclasses to build their specific proto
         buildProto(builder, messageDataProvider)
@@ -76,8 +76,8 @@ abstract class Message {
     abstract fun shouldDiscardIfBlocked(): Boolean
 }
 
-inline fun <reified M: Message> M.copyExpiration(proto: SignalServiceProtos.Content): M = apply {
-    (proto.takeIf { it.hasExpirationTimerSeconds() }?.expirationTimerSeconds ?: proto.dataMessage?.expireTimerSeconds)?.let { duration ->
+inline fun <reified M: Message> M.copyExpiration(proto: SessionProtos.Content): M = apply {
+    proto.takeIf { it.hasExpirationTimer() }?.expirationTimer?.let { duration ->
         expiryMode = when (proto.expirationType.takeIf { duration > 0 }) {
             ExpirationType.DELETE_AFTER_SEND -> ExpiryMode.AfterSend(duration.toLong())
             ExpirationType.DELETE_AFTER_READ -> ExpiryMode.AfterRead(duration.toLong())

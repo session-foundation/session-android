@@ -78,6 +78,7 @@ import org.thoughtcrime.securesms.ui.components.iconExternalLink
 import org.thoughtcrime.securesms.ui.components.inlineContentMap
 import org.thoughtcrime.securesms.ui.components.radioButtonColors
 import org.thoughtcrime.securesms.ui.qaTag
+import org.thoughtcrime.securesms.ui.sessionDropShadow
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -269,6 +270,7 @@ private fun PlanItem(
     onClick: () -> Unit
 ){
     val density = LocalDensity.current
+    val isLight = LocalColors.current.isLight
 
     // outer box
     Box(modifier = modifier.fillMaxWidth()) {
@@ -276,13 +278,17 @@ private fun PlanItem(
         Box(
             modifier = modifier
                 .padding(top = if(proPlan.badges.isNotEmpty()) maxOf(badgePadding, 9.dp) else 0.dp) // 9.dp is a simple fallback to match default styling
+                .then(
+                    if(isLight) Modifier.sessionDropShadow()
+                    else Modifier
+                )
                 .background(
                     color = LocalColors.current.backgroundSecondary,
                     shape = MaterialTheme.shapes.small
                 )
                 .border(
                     width = 1.dp,
-                    color = if(proPlan.selected) LocalColors.current.accent else LocalColors.current.borders,
+                    color = if(proPlan.selected) LocalColors.current.accentText else LocalColors.current.borders,
                     shape = MaterialTheme.shapes.small
                 )
                 .clip(MaterialTheme.shapes.small)
@@ -320,7 +326,7 @@ private fun PlanItem(
                     enabled = enabled,
                     colors = radioButtonColors(
                         unselectedBorder = LocalColors.current.borders,
-                        selectedBorder = LocalColors.current.accent,
+                        selectedBorder = LocalColors.current.accentText,
                     )
                 )
             }
