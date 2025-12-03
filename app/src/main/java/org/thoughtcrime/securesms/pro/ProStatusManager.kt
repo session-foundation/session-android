@@ -297,7 +297,7 @@ class ProStatusManager @Inject constructor(
                             .distinctUntilChanged()
                             .map { "ProAccessExpiry in config changes" },
 
-                        proDetailsRepository.loadState
+                        proDetailsRepository.get().loadState
                             .mapNotNull { it.lastUpdated?.first?.expiry }
                             .distinctUntilChanged()
                             .mapLatest { expiry ->
@@ -344,7 +344,7 @@ class ProStatusManager @Inject constructor(
                             "Scheduling ProDetails fetch due to: $refreshReason"
                         )
 
-                        proDetailsRepository.requestRefresh()
+                        proDetailsRepository.get().requestRefresh()
                     }
                 } else {
                     FetchProDetailsWorker.cancel(application)

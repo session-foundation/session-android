@@ -14,6 +14,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
 
+/**
+ * A handler that starts on app startup and listens for authentication state changes.
+ *
+ * * When the user logs in, it will invoke `doWhileLoggedIn` on all registered [AuthAwareComponent]s.
+ * * When the user logs out, it will invoke `onLoggedOut` on all registered [AuthAwareComponent]s.
+ */
 @Singleton
 class AuthAwareComponentsHandler @Inject constructor(
     private val components: Lazy<AuthAwareComponents>,

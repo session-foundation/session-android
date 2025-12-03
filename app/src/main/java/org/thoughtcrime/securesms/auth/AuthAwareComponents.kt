@@ -16,6 +16,12 @@ import org.thoughtcrime.securesms.service.ExpiringMessageManager
 import org.thoughtcrime.securesms.webrtc.CallMessageProcessor
 import javax.inject.Inject
 
+/**
+ * A collection of all [AuthAwareComponent]s in the application.
+ *
+ * This class is primarily used to inject all [AuthAwareComponent]s into a single location,
+ * so that they can be started and stopped based on authentication state changes.
+ */
 class AuthAwareComponents(
     val components: List<Lazy<out AuthAwareComponent>>,
 )  {
