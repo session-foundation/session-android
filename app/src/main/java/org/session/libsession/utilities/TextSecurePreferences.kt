@@ -20,25 +20,37 @@ import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.Json
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.protocol.ProFeature
+import network.loki.messenger.libsession_util.protocol.ProMessageFeature
+import network.loki.messenger.libsession_util.protocol.ProProfileFeature
+import network.loki.messenger.libsession_util.util.toBitSet
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.file_server.FileServer
 import org.session.libsession.utilities.TextSecurePreferences.Companion.AUTOPLAY_AUDIO_MESSAGES
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_DARK
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_LIGHT
+import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_HAS_COPIED_DONATION_URL
+import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_HAS_DONATED
+import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_SEEN_DONATION_CTA_AMOUNT
+import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW
 import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONMENT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FORCED_SHORT_TTL
+import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_COPIED_DONATION_URL
+import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_DONATED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_MESSAGE_REQUESTS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN_PRO_EXPIRED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN_PRO_EXPIRING
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HIDE_PASSWORD
+import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_SEEN_DONATION_CTA
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VACUUM_TIME
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VERSION_CHECK
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LEGACY_PREF_KEY_SELECTED_UI_MODE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.OCEAN_DARK
 import org.session.libsession.utilities.TextSecurePreferences.Companion.OCEAN_LIGHT
+import org.session.libsession.utilities.TextSecurePreferences.Companion.SEEN_DONATION_CTA_AMOUNT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED_ACCENT_COLOR
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED_STYLE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_CURRENT_USER_PRO
@@ -47,10 +59,12 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORC
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_POST_PRO
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_NOTIFICATION
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_WARNING
+import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW
 import org.session.libsession.utilities.TextSecurePreferences.Companion._events
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
-import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.toProMessageFeatures
+import org.thoughtcrime.securesms.pro.toProProfileFeatures
 import java.io.IOException
 import java.time.ZonedDateTime
 import java.util.Arrays
@@ -205,8 +219,8 @@ interface TextSecurePreferences {
     fun forcedShortTTL(): Boolean
     fun setForcedShortTTL(value: Boolean)
 
-    fun  getDebugMessageFeatures(): Set<ProStatusManager.MessageProFeature>
-    fun  setDebugMessageFeatures(features: Set<ProStatusManager.MessageProFeature>)
+    fun  getDebugMessageFeatures(): Set<ProFeature>
+    fun  setDebugMessageFeatures(features: Set<ProFeature>)
 
     fun getDebugSubscriptionType(): DebugMenuViewModel.DebugSubscriptionStatus?
     fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?)
@@ -219,6 +233,26 @@ interface TextSecurePreferences {
 
     fun setSubscriptionProvider(provider: String)
     fun getSubscriptionProvider(): String?
+
+    fun hasDonated(): Boolean
+    fun setHasDonated(hasDonated: Boolean)
+    fun hasCopiedDonationURL(): Boolean
+    fun setHasCopiedDonationURL(hasCopied: Boolean)
+    fun seenDonationCTAAmount(): Int
+    fun setSeenDonationCTAAmount(amount: Int)
+    fun lastSeenDonationCTA(): Long
+    fun setLastSeenDonationCTA(timestamp: Long)
+    fun showDonationCTAFromPositiveReview(): Boolean
+    fun setShowDonationCTAFromPositiveReview(show: Boolean)
+
+    fun hasDonatedDebug(): String?
+    fun setHasDonatedDebug(hasDonated: String?)
+    fun hasCopiedDonationURLDebug(): String?
+    fun setHasCopiedDonationURLDebug(hasCopied: String?)
+    fun seenDonationCTAAmountDebug(): String?
+    fun setSeenDonationCTAAmountDebug(amount: String?)
+    fun showDonationCTAFromPositiveReviewDebug(): String?
+    fun setShowDonationCTAFromPositiveReviewDebug(show: String?)
 
     var deprecationStateOverride: String?
     var deprecatedTimeOverride: ZonedDateTime?
@@ -378,7 +412,8 @@ interface TextSecurePreferences {
 
         const val IN_APP_REVIEW_STATE = "in_app_review_state"
 
-        const val DEBUG_MESSAGE_FEATURES = "debug_message_features"
+        const val DEBUG_PRO_MESSAGE_FEATURES = "debug_pro_message_features"
+        const val DEBUG_PRO_PROFILE_FEATURES = "debug_pro_profile_features"
         const val DEBUG_SUBSCRIPTION_STATUS = "debug_subscription_status"
         const val DEBUG_PRO_PLAN_STATUS = "debug_pro_plan_status"
         const val DEBUG_FORCE_NO_BILLING = "debug_pro_has_billing"
@@ -386,6 +421,18 @@ interface TextSecurePreferences {
 
         const val SUBSCRIPTION_PROVIDER = "session_subscription_provider"
         const val DEBUG_AVATAR_REUPLOAD = "debug_avatar_reupload"
+
+        // Donation
+        const val HAS_DONATED = "has_donated"
+        const val HAS_COPIED_DONATION_URL = "has_copied_donation_url"
+        const val SEEN_DONATION_CTA_AMOUNT = "seen_donation_cta_amount"
+        const val LAST_SEEN_DONATION_CTA = "last_seen_donation_cta"
+        const val SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW = "show_donation_cta_from_positive_review"
+
+        const val DEBUG_HAS_DONATED = "debug_has_donated"
+        const val DEBUG_HAS_COPIED_DONATION_URL = "debug_has_copied_donation_url"
+        const val DEBUG_SEEN_DONATION_CTA_AMOUNT = "debug_seen_donation_cta_amount"
+        const val DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW = "debug_show_donation_cta_from_positive_review"
 
         @JvmStatic
         fun getConfigurationMessageSynced(context: Context): Boolean {
@@ -1514,7 +1561,7 @@ class AppTextSecurePreferences @Inject constructor(
     }
 
     override fun forcePostPro(): Boolean {
-        return getBooleanPreference(SET_FORCE_POST_PRO, false)
+        return postProLaunchState.value
     }
 
     override fun setForcePostPro(postPro: Boolean) {
@@ -1708,13 +1755,16 @@ class AppTextSecurePreferences @Inject constructor(
                 setStringPreference(TextSecurePreferences.DEPRECATING_START_TIME_OVERRIDE, value.toString())
             }
         }
-    override fun getDebugMessageFeatures(): Set<ProStatusManager.MessageProFeature> {
-        return getStringSetPreference( TextSecurePreferences.DEBUG_MESSAGE_FEATURES, emptySet())
-            ?.map { ProStatusManager.MessageProFeature.valueOf(it) }?.toSet() ?: emptySet()
+    override fun getDebugMessageFeatures(): Set<ProFeature> {
+        return buildSet {
+            getLongPreference(TextSecurePreferences.DEBUG_PRO_MESSAGE_FEATURES, 0L).toProMessageFeatures(this)
+            getLongPreference(TextSecurePreferences.DEBUG_PRO_PROFILE_FEATURES, 0L).toProProfileFeatures(this)
+        }
     }
 
-    override fun setDebugMessageFeatures(features: Set<ProStatusManager.MessageProFeature>) {
-        setStringSetPreference(TextSecurePreferences.DEBUG_MESSAGE_FEATURES, features.map { it.name }.toSet())
+    override fun setDebugMessageFeatures(features: Set<ProFeature>) {
+        setLongPreference(TextSecurePreferences.DEBUG_PRO_MESSAGE_FEATURES, features.filterIsInstance<ProMessageFeature>().toBitSet().rawValue)
+        setLongPreference(TextSecurePreferences.DEBUG_PRO_PROFILE_FEATURES, features.filterIsInstance<ProProfileFeature>().toBitSet().rawValue)
     }
 
     override fun getDebugSubscriptionType(): DebugMenuViewModel.DebugSubscriptionStatus? {
@@ -1788,4 +1838,67 @@ class AppTextSecurePreferences @Inject constructor(
                 json.encodeToString(it)
             })
         }
+
+    override fun hasDonated(): Boolean {
+        return getBooleanPreference(HAS_DONATED, false)
+    }
+    override fun setHasDonated(hasDonated: Boolean) {
+        setBooleanPreference(HAS_DONATED, hasDonated)
+    }
+
+    override fun hasCopiedDonationURL(): Boolean {
+        return getBooleanPreference(HAS_COPIED_DONATION_URL, false)
+    }
+    override fun setHasCopiedDonationURL(hasCopied: Boolean) {
+        setBooleanPreference(HAS_COPIED_DONATION_URL, hasCopied)
+    }
+
+    override fun seenDonationCTAAmount(): Int {
+        return getIntegerPreference(SEEN_DONATION_CTA_AMOUNT, 0)
+    }
+    override fun setSeenDonationCTAAmount(amount: Int) {
+        setIntegerPreference(SEEN_DONATION_CTA_AMOUNT, amount)
+    }
+
+    override fun lastSeenDonationCTA(): Long {
+        return getLongPreference(LAST_SEEN_DONATION_CTA, 0)
+    }
+    override fun setLastSeenDonationCTA(timestamp: Long) {
+        setLongPreference(LAST_SEEN_DONATION_CTA, timestamp)
+    }
+
+    override fun showDonationCTAFromPositiveReview(): Boolean {
+        return getBooleanPreference(SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW, false)
+    }
+    override fun setShowDonationCTAFromPositiveReview(show: Boolean) {
+        setBooleanPreference(SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW, show)
+    }
+
+    override fun hasDonatedDebug(): String? {
+        return getStringPreference(DEBUG_HAS_DONATED, null)
+    }
+    override fun setHasDonatedDebug(hasDonated: String?) {
+        setStringPreference(DEBUG_HAS_DONATED, hasDonated)
+    }
+
+    override fun hasCopiedDonationURLDebug(): String? {
+        return getStringPreference(DEBUG_HAS_COPIED_DONATION_URL, null)
+    }
+    override fun setHasCopiedDonationURLDebug(hasCopied: String?) {
+        setStringPreference(DEBUG_HAS_COPIED_DONATION_URL, hasCopied)
+    }
+
+    override fun seenDonationCTAAmountDebug(): String? {
+        return getStringPreference(DEBUG_SEEN_DONATION_CTA_AMOUNT, null)
+    }
+    override fun setSeenDonationCTAAmountDebug(amount: String?) {
+        setStringPreference(DEBUG_SEEN_DONATION_CTA_AMOUNT, amount)
+    }
+
+    override fun showDonationCTAFromPositiveReviewDebug(): String? {
+        return getStringPreference(DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW, null)
+    }
+    override fun setShowDonationCTAFromPositiveReviewDebug(show: String?) {
+        setStringPreference(DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW, show)
+    }
 }

@@ -31,6 +31,7 @@ import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.SearchBar
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.OutlineButton
+import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -83,7 +84,7 @@ fun BlockedContactsScreen(
 @Composable
 fun BlockedContacts(
     contacts: List<ContactItem>,
-    hasContacts: Boolean,
+    hasContacts: Boolean?,
     onContactItemClicked: (address: Address) -> Unit,
     searchQuery: String,
     onSearchQueryChanged: (String) -> Unit,
@@ -122,15 +123,21 @@ fun BlockedContacts(
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
             BottomFadingEdgeBox(modifier = Modifier.weight(1f)) { bottomContentPadding ->
-                if(!hasContacts){
-                    Text(
+                when(hasContacts) {
+                    // null means we don't yet have a result, so show a loader
+                    null -> SmallCircularProgressIndicator(
+                        modifier = Modifier.padding(top = LocalDimensions.current.spacing)
+                            .align(Alignment.TopCenter),
+                    )
+
+                    false -> Text(
                         text = stringResource(id = R.string.blockBlockedNone),
                         modifier = Modifier.padding(top = LocalDimensions.current.spacing)
                             .align(Alignment.TopCenter),
                         style = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
                     )
-                } else {
-                    LazyColumn(
+
+                    true -> LazyColumn(
                         state = scrollState,
                         contentPadding = PaddingValues(bottom = bottomContentPadding),
                     ) {

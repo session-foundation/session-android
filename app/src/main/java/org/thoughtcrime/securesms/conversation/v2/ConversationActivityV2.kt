@@ -95,6 +95,7 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
+import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
@@ -117,7 +118,6 @@ import org.session.libsignal.crypto.MnemonicCodec
 import org.session.libsignal.utilities.ListenableFuture
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
-import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.FullComposeActivity.Companion.applyCommonPropertiesForCompose
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.audio.AudioRecorderHandle
@@ -133,7 +133,6 @@ import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companio
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_REPLY
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_RESEND
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_SAVE
-import org.thoughtcrime.securesms.conversation.v2.dialogs.BlockedDialog
 import org.thoughtcrime.securesms.conversation.v2.dialogs.LinkPreviewDialog
 import org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarButton
 import org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarDelegate
@@ -156,7 +155,6 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.AttachmentManager
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.ResendMessageUtilities
 import org.thoughtcrime.securesms.crypto.MnemonicUtilities
-import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
@@ -192,6 +190,7 @@ import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.mms.VideoSlide
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.PrivacySettingsActivity
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.reactions.ReactionsDialogFragment
 import org.thoughtcrime.securesms.reactions.any.ReactWithAnyEmojiDialogFragment
 import org.thoughtcrime.securesms.showSessionDialog
@@ -261,10 +260,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var typingStatusRepository: TypingStatusRepository
     @Inject lateinit var typingStatusSender: TypingStatusSender
     @Inject lateinit var openGroupManager: OpenGroupManager
-    @Inject lateinit var attachmentDatabase: AttachmentDatabase
     @Inject lateinit var clock: SnodeClock
     @Inject lateinit var messageSender: MessageSender
     @Inject lateinit var resendMessageUtilities: ResendMessageUtilities
+    @Inject lateinit var messageNotifier: MessageNotifier
+    @Inject lateinit var proStatusManager: ProStatusManager
     @Inject @ManagerScope
     lateinit var scope: CoroutineScope
 
@@ -403,6 +403,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             retryFailedAttachments = viewModel::retryFailedAttachments,
             glide = glide,
             threadRecipientProvider = viewModel::recipient,
+            messageDB = mmsSmsDb,
         )
         adapter.visibleMessageViewDelegate = this
         adapter
@@ -770,12 +771,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onResume() {
         super.onResume()
-        ApplicationContext.getInstance(this).messageNotifier.setVisibleThread(viewModel.threadId)
+        messageNotifier.setVisibleThread(viewModel.threadId)
     }
 
     override fun onPause() {
         super.onPause()
-        ApplicationContext.getInstance(this).messageNotifier.setVisibleThread(-1)
+        messageNotifier.setVisibleThread(-1)
     }
 
     override fun getSystemService(name: String): Any? {
@@ -791,7 +792,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun onCreateLoader(id: Int, bundle: Bundle?): Loader<Cursor> {
-        return ConversationLoader(viewModel.threadId, false, this@ConversationActivityV2)
+        return ConversationLoader(
+            threadID = viewModel.threadId,
+            reverse = false,
+            context = this@ConversationActivityV2,
+            mmsSmsDatabase = mmsSmsDb
+        )
     }
 
     override fun onLoadFinished(loader: Loader<Cursor>, cursor: Cursor?) {
@@ -1763,11 +1769,23 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             return
         } else {
             // Put the message in the database
+            val messageId = originalMessage.messageId
+            val count = if (recipient.isCommunityRecipient) {
+                // ReactionRecord count is total number of reactions for this emoji/messageId in community,
+                // regardless of the author of each ReactionRecord.
+                // We set to the existing number for now and we'll increase all of them
+                // by 1 below.
+                originalMessage.reactions.firstOrNull { it.messageId == messageId && it.emoji == emoji }
+                    ?.count ?: 0
+            } else {
+                1
+            }
+
             val reaction = ReactionRecord(
-                messageId = originalMessage.messageId,
+                messageId = messageId,
                 author = author,
                 emoji = emoji,
-                count = 1,
+                count = count,
                 dateSent = emojiTimestamp,
                 dateReceived = emojiTimestamp
             )
@@ -1781,7 +1799,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             reactionMessage.reaction = Reaction.from(originalMessage.timestamp, originalAuthor.toString(), emoji, true)
             if (recipient.address is Address.Community) {
 
-                val messageServerId = lokiMessageDb.getServerID(originalMessage.messageId) ?:
+                // Increment the reaction count locally immediately. This
+                // has to apply on all the ReactionRecords with the same messageId/emoji per design.
+                reactionDb.updateAllCountFor(messageId, emoji, 1)
+
+                val messageServerId = lokiMessageDb.getServerID(messageId) ?:
                     return Log.w(TAG, "Failed to find message server ID when adding emoji reaction")
 
                 scope.launch {
@@ -1817,7 +1839,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         } else {
             reactionDb.deleteReaction(
                 emoji,
-                MessageId(originalMessage.id, originalMessage.isMms),
+                originalMessage.messageId,
                 author
             )
 
@@ -1833,6 +1855,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             )
 
             if (recipient.address is Address.Community) {
+                // Decrement the reaction count locally immediately (they will
+                // get overwritten when we get the server update back)
+                reactionDb.updateAllCountFor(originalMessage.messageId, emoji, -1)
+
 
                 val messageServerId = lokiMessageDb.getServerID(originalMessage.messageId) ?:
                     return Log.w(TAG, "Failed to find message server ID when removing emoji reaction")
@@ -1873,11 +1899,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onReactWithAnyEmojiSelected(emoji: String, messageId: MessageId) {
         reactionDelegate.hide()
-        val message = if (messageId.mms) {
-            mmsDb.getMessageRecord(messageId.id)
-        } else {
-            smsDb.getMessageRecord(messageId.id)
-        }
+        val message = mmsSmsDb.getMessageById(messageId) ?: return
         val oldRecord = reactionDb.getReactions(messageId).find { it.author == loginStateRepository.getLocalNumber() }
         if (oldRecord?.emoji == emoji) {
             sendEmojiRemoval(emoji, message)
@@ -1887,11 +1909,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun onRemoveReaction(emoji: String, messageId: MessageId) {
-        val message = if (messageId.mms) {
-            mmsDb.getMessageRecord(messageId.id)
-        } else {
-            smsDb.getMessageRecord(messageId.id)
-        }
+        val message = mmsSmsDb.getMessageById(messageId) ?: return
         sendEmojiRemoval(emoji, message)
     }
 
@@ -2014,11 +2032,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun onReactionClicked(emoji: String, messageId: MessageId, userWasSender: Boolean) {
-        val message = if (messageId.mms) {
-            mmsDb.getMessageRecord(messageId.id)
-        } else {
-            smsDb.getMessageRecord(messageId.id)
-        }
+        val message = mmsSmsDb.getMessageById(messageId) ?: return
         if (userWasSender && viewModel.canRemoveReaction) {
             sendEmojiRemoval(emoji, message)
         } else if (!userWasSender && viewModel.canReactToMessages) {
@@ -2029,7 +2043,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun onReactionLongClicked(messageId: MessageId, emoji: String?) {
         if (viewModel.recipient.isGroupOrCommunityRecipient) {
             val isUserCommunityModerator = viewModel.recipient.takeIf { it.isCommunityRecipient }?.currentUserRole?.canModerate == true
-            val fragment = ReactionsDialogFragment.create(messageId, isUserCommunityModerator, emoji, viewModel.canRemoveReaction)
+            val fragment = ReactionsDialogFragment.create(
+                messageId,
+                isUserCommunityModerator,
+                emoji,
+                viewModel.canRemoveReaction,
+                viewModel.recipient.isCommunityRecipient
+            )
             fragment.show(supportFragmentManager, TAG_REACTION_FRAGMENT)
         }
     }
@@ -2054,9 +2074,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun sendMessage() {
         val recipient = viewModel.recipient
 
+        // It shouldn't be possible to send a message to a blocked user anymore.
+        // But as a safety net:
         // show the unblock dialog when trying to send a message to a blocked contact
         if (recipient.isStandardRecipient && recipient.blocked) {
-            BlockedDialog(recipient.address, recipient.displayName()).show(supportFragmentManager, "Blocked Dialog")
+            unblock()
             return
         }
 
@@ -2124,8 +2146,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val message = VisibleMessage().applyExpiryMode(viewModel.address)
         message.sentTimestamp = sentTimestamp
         message.text = text
+        // pro features
+        proStatusManager.addProFeatures(message)
         val expiresInMillis = viewModel.recipient.expiryMode.expiryMillis
-        val outgoingTextMessage = OutgoingTextMessage.from(message, recipient.address, expiresInMillis, 0)
+        val outgoingTextMessage = OutgoingTextMessage(
+            message = message,
+            recipient = recipient.address,
+            expiresInMillis = expiresInMillis,
+            expireStartedAtMillis = 0
+        )
 
         // Clear the input bar
         binding.inputBar.text = ""
@@ -2181,7 +2210,17 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val expireStartedAtMs = if (viewModel.recipient.expiryMode is ExpiryMode.AfterSend) {
             sentTimestamp
         } else 0
-        val outgoingTextMessage = OutgoingMediaMessage.from(message, recipient.address, attachments, localQuote, linkPreview, expiresInMs, expireStartedAtMs)
+        // pro features
+        proStatusManager.addProFeatures(message)
+        val outgoingTextMessage = OutgoingMediaMessage(
+            message = message,
+            recipient = recipient.address,
+            attachments = attachments,
+            outgoingQuote = localQuote,
+            linkPreview = linkPreview,
+            expiresInMillis = expiresInMs,
+            expireStartedAt = expireStartedAtMs
+        )
 
         // Clear the input bar
         binding.inputBar.text = ""

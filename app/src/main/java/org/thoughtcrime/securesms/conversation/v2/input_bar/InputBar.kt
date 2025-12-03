@@ -365,7 +365,7 @@ class InputBar @JvmOverloads constructor(
     fun setCharLimitState(state: InputbarViewModel.InputBarCharLimitState?) {
         // handle char limit
         if(state != null){
-            binding.characterLimitText.text = state.count.toString()
+            binding.characterLimitText.text = state.countFormatted
             binding.characterLimitText.setTextColor(if(state.danger) dangerColor else textColor)
             binding.characterLimitContainer.setOnClickListener {
                 delegate?.onCharLimitTapped()

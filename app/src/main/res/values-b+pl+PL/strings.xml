@@ -15,7 +15,6 @@
     <string name="accountIdYoursDescription">To Twój identyfikator konta. Inni użytkownicy mogą go zeskanować, aby rozpocząć z Tobą rozmowę.</string>
     <string name="actualSize">Rzeczywisty rozmiar</string>
     <string name="add">Dodaj</string>
-    <string name="addAdmins">Dodaj administratorów</string>
     <string name="addAdminsDescription">Wprowadź identyfikator konta użytkownika, którego chcesz awansować na administratora.\n\nAby dodać wielu użytkowników, wpisz każdy identyfikator konta oddzielone przecinkiem. Można jednocześnie podać maksymalnie 20 identyfikatorów kont.</string>
     <string name="adminCannotBeRemoved">Nie można usuwać administratorów.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> i <b>{count} innych</b> zostali awansowani na administratów.</string>

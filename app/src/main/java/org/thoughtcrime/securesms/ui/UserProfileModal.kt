@@ -38,7 +38,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.pro.SubscriptionType
+import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.ui.components.SlimAccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
@@ -273,7 +273,7 @@ private fun PreviewUPM(
             sendCommand = { command ->
                 when(command){
                     UserProfileModalCommands.ShowProCTA -> {
-                        data = data.copy(showProCTA = GenericCTAData(SubscriptionType.NeverSubscribed))
+                        data = data.copy(showProCTA = GenericCTAData(ProStatus.NeverSubscribed))
                     }
                     UserProfileModalCommands.HideSessionProCTA -> {
                         data = data.copy(showProCTA = null)
@@ -333,7 +333,7 @@ private fun PreviewUPMResolved(
             sendCommand = { command ->
                 when(command){
                     UserProfileModalCommands.ShowProCTA -> {
-                        data = data.copy(showProCTA = GenericCTAData(SubscriptionType.NeverSubscribed))
+                        data = data.copy(showProCTA = GenericCTAData(ProStatus.NeverSubscribed))
                     }
                     UserProfileModalCommands.HideSessionProCTA -> {
                         data = data.copy(showProCTA = null)
@@ -416,7 +416,7 @@ private fun PreviewUPMCTA(
                 enableMessage = false,
                 expandedAvatar = true,
                 showQR = false,
-                showProCTA = GenericCTAData(SubscriptionType.NeverSubscribed),
+                showProCTA = GenericCTAData(ProStatus.NeverSubscribed),
                 avatarUIData = AvatarUIData(
                     listOf(
                         AvatarUIElement(

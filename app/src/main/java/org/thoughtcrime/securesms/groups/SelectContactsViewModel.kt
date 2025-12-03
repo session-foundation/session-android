@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.home.search.searchName
@@ -44,15 +43,15 @@ open class SelectContactsViewModel @AssistedInject constructor(
     private val recipientRepository: RecipientRepository,
     @param:ApplicationContext private val context: Context,
 ) : ViewModel() {
+    // Input: The search query
+    private val mutableSearchQuery = MutableStateFlow("")
+
     // Input: The selected contact account IDs
     private val mutableSelectedContacts = MutableStateFlow(emptySet<SelectedContact>())
 
     // Input: The manually added items to select from. This will be combined (and deduped) with the contacts
     // the user has. This is useful for selecting contacts that are not in the user's contacts list.
     private val mutableManuallyAddedContacts = MutableStateFlow(emptySet<Address>())
-
-    // Input: The search query
-    private val mutableSearchQuery = MutableStateFlow("")
 
     // Output: The search query
     val searchQuery: StateFlow<String> get() = mutableSearchQuery
@@ -120,7 +119,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
                         address = contact.address,
                         avatarUIData = avatarData,
                         selected = selectedAddresses.contains(contact.address),
-                        showProBadge = contact.proStatus.shouldShowProBadge()
+                        showProBadge = contact.shouldShowProBadge
                     )
                 )
             }

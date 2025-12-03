@@ -65,6 +65,9 @@ import dagger.hilt.android.lifecycle.withCreationCallback
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
+import network.loki.messenger.libsession_util.protocol.ProFeature
+import network.loki.messenger.libsession_util.protocol.ProMessageFeature
+import network.loki.messenger.libsession_util.protocol.ProProfileFeature
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.NonTranslatableStringConstants
@@ -310,7 +313,7 @@ fun CellMetadata(
                 verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
             ) {
                 // Message Pro features
-                if(proFeatures.isNotEmpty()) {
+                if (!proFeatures.isEmpty()) {
                     MessageProFeatures(
                         features = proFeatures,
                         badgeClickable = proBadgeClickable,
@@ -372,7 +375,7 @@ fun CellMetadata(
 
 @Composable
 fun MessageProFeatures(
-    features: Set<ProStatusManager.MessageProFeature>,
+    features: Set<ProFeature>,
     badgeClickable: Boolean,
     sendCommand: (Commands) -> Unit,
     modifier: Modifier = Modifier,
@@ -397,18 +400,18 @@ fun MessageProFeatures(
             style = LocalType.current.large
         )
 
-        features.forEach {
+        features.forEach { feature ->
             ProCTAFeature(
                 textStyle = LocalType.current.large,
                 padding = PaddingValues(),
                 data = CTAFeature.Icon(
-                    text = when(it){
-                        ProStatusManager.MessageProFeature.ProBadge -> Phrase.from(LocalContext.current, R.string.appProBadge)
+                    text = when (feature){
+                        ProProfileFeature.PRO_BADGE -> Phrase.from(LocalContext.current, R.string.appProBadge)
                             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                             .format()
                             .toString()
-                        ProStatusManager.MessageProFeature.LongMessage -> stringResource(id = R.string.proIncreasedMessageLengthFeature)
-                        ProStatusManager.MessageProFeature.AnimatedAvatar -> stringResource(id = R.string.proAnimatedDisplayPictureFeature)
+                        ProMessageFeature.HIGHER_CHARACTER_LIMIT -> stringResource(id = R.string.proIncreasedMessageLengthFeature)
+                        ProProfileFeature.ANIMATED_AVATAR -> stringResource(id = R.string.proAnimatedDisplayPictureFeature)
                     }
                 )
             )
@@ -421,11 +424,7 @@ fun MessageProFeatures(
 fun PreviewMessageProFeatures(){
     PreviewTheme {
         MessageProFeatures(
-            features = setOf(
-                ProStatusManager.MessageProFeature.ProBadge,
-                ProStatusManager.MessageProFeature.LongMessage,
-                ProStatusManager.MessageProFeature.AnimatedAvatar
-            ),
+            features = (ProMessageFeature.entries + ProProfileFeature.entries).toSet(),
             badgeClickable = false,
             sendCommand = {}
         )

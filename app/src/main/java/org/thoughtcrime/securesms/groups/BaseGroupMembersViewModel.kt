@@ -26,9 +26,7 @@ import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.GroupDisplayInfo
-import org.session.libsession.utilities.recipients.ProStatus
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.util.AvatarUIData
@@ -68,7 +66,7 @@ abstract class BaseGroupMembersViewModel(
                     for ((member, status) in rawMembers) {
                         memberState.add(createGroupMember(
                             member = member, status = status,
-                            proStatus = recipientRepository.getRecipient(member.accountId().toAddress()).proStatus,
+                            shouldShowProBadge = recipientRepository.getRecipient(member.accountId().toAddress()).shouldShowProBadge,
                             myAccountId = currentUserId,
                             amIAdmin = displayInfo.isUserAdmin
                         ))
@@ -114,7 +112,7 @@ abstract class BaseGroupMembersViewModel(
     private suspend fun createGroupMember(
         member: GroupMember,
         status: GroupMember.Status,
-        proStatus: ProStatus,
+        shouldShowProBadge: Boolean,
         myAccountId: AccountId,
         amIAdmin: Boolean,
     ): GroupMemberState {
@@ -147,7 +145,7 @@ abstract class BaseGroupMembersViewModel(
             status = status.takeIf { !isMyself }, // Status is only meant for other members
             highlightStatus = highlightStatus,
             showAsAdmin = member.isAdminOrBeingPromoted(status),
-            showProBadge = proStatus.shouldShowProBadge(),
+            showProBadge = shouldShowProBadge,
             avatarUIData = avatarUtils.getUIDataFromAccountId(memberAccountId.hexString),
             clickable = !isMyself,
             statusLabel = getMemberLabel(status, context, amIAdmin)

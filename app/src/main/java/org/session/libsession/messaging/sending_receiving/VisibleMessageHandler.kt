@@ -3,10 +3,11 @@ package org.session.libsession.messaging.sending_receiving
 import android.text.TextUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
+import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.ExpiryMode
+import network.loki.messenger.libsession_util.util.Util
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
@@ -24,7 +25,7 @@ import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.upsertContact
-import org.session.libsignal.protos.SignalServiceProtos
+import org.session.protos.SessionProtos
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.database.Storage
@@ -53,7 +54,7 @@ class VisibleMessageHandler @Inject constructor(
         message: VisibleMessage,
         threadId: Long,
         threadAddress: Address.Conversable,
-        proto: SignalServiceProtos.Content,
+        proto: SessionProtos.Content,
         runThreadUpdate: Boolean,
         runProfileUpdate: Boolean,
     ): MessageId? {
@@ -147,7 +148,7 @@ class VisibleMessageHandler @Inject constructor(
 
             // Verify the incoming message length and truncate it if needed, before saving it to the db
             val maxChars = proStatusManager.getIncomingMessageMaxLength(message)
-            val messageText = message.text?.take(maxChars) // truncate to max char limit for this message
+            val messageText = message.text?.let { Util.truncateCodepoints(it, maxChars) } // truncate to max char limit for this message
             message.text = messageText
             message.hasMention = (sequenceOf(ctx.currentUserPublicKey) + ctx.getCurrentUserBlindedIDsByThread(threadAddress).asSequence())
                 .any { key ->
@@ -202,14 +203,7 @@ class VisibleMessageHandler @Inject constructor(
             // - must be done after the message is persisted)
             // - must be done after neccessary contact is created
             if (runProfileUpdate && senderAddress is Address.WithAccountId) {
-                val updates = ProfileUpdateHandler.Updates.create(
-                    name = message.profile?.displayName,
-                    picUrl = message.profile?.profilePictureURL,
-                    picKey = message.profile?.profileKey,
-                    blocksCommunityMessageRequests = message.blocksMessageRequests,
-                    proStatus = null,
-                    profileUpdateTime = message.profile?.profileUpdated,
-                )
+                val updates = ProfileUpdateHandler.Updates.create(proto)
 
                 if (updates != null) {
                     profileUpdateHandler.get().handleProfileUpdate(

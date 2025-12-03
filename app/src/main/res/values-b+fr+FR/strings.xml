@@ -19,7 +19,6 @@
         <item quantity="one">Ajouter un administrateur</item>
         <item quantity="other">Ajouter des administrateurs</item>
     </plurals>
-    <string name="addAdmins">Ajouter des administrateurs</string>
     <string name="addAdminsDescription">Entrez l\'identifiant du compte de l\'utilisateur que vous souhaitez promouvoir en administrateur.\n\nPour ajouter plusieurs utilisateurs, saisissez chaque identifiant de compte séparé par une virgule. Vous pouvez spécifier jusqu\'à 20 identifiants à la fois.</string>
     <string name="adminCannotBeDemoted">Les admins ne peuvent pas être rétrogradés ou retirés du groupe.</string>
     <string name="adminCannotBeRemoved">Les administrateurs ne peuvent pas être supprimés.</string>
@@ -508,6 +507,7 @@
     <string name="failedResendInvite">Échec du renvoi de l\'invitation à <b>{name}</b> dans <b>{group_name}</b></string>
     <string name="failedResendInviteMultiple">Échec du renvoi de <b>{name}</b> et de <b>{count} autres</b> dans <b>{group_name}</b></string>
     <string name="failedResendInviteTwo">Échec du renvoi de l\'invitation à <b>{name}</b> et <b>{other_name}</b> dans <b>{group_name}</b></string>
+    <string name="failedResendPromotionTwo">Échec du renvoi de l\'invitation à <b>{name}</b> et <b>{other_name}</b> dans <b>{group_name}</b></string>
     <string name="failedToDownload">Échec du téléchargement</string>
     <string name="failures">Échecs</string>
     <string name="feedback">Donner votre avis</string>
