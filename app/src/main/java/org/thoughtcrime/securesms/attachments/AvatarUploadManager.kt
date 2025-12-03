@@ -121,11 +121,7 @@ class AvatarUploadManager @Inject constructor(
             val result = it.userProfile.getPic()
             val userPic = remoteFile.toUserPic()
             if (isReupload) {
-                it.userProfile.setPic(userPic)
-
-                // TODO: We'll need to call this when the libsession re-enables the re-uploaded
-                // avatar logic.
-                // it.userProfile.setReuploadedPic(userPic)
+                it.userProfile.setReuploadedPic(userPic)
             } else {
                 it.userProfile.setPic(userPic)
             }
