@@ -81,8 +81,10 @@ internal class MediaSendViewModel @Inject constructor(
                 // Report errors if they occurred
                 if (errors.contains(Error.ITEM_TOO_LARGE)) {
                     error.setValue(Error.ITEM_TOO_LARGE)
-                } else if (errors.contains(Error.INVALID_TYPE)) {
-                    error.setValue(Error.INVALID_TYPE)
+                } else if (errors.contains(Error.INVALID_TYPE_ONLY)) {
+                    error.setValue(Error.INVALID_TYPE_ONLY)
+                }else if (errors.contains(Error.MIXED_TYPE)) {
+                    error.setValue(Error.MIXED_TYPE)
                 }
 
                 if (filteredMedia.size > MAX_SELECTED_FILES) {
@@ -125,8 +127,10 @@ internal class MediaSendViewModel @Inject constructor(
                 if (filteredMedia.isEmpty()) {
                     if (errors.contains(Error.ITEM_TOO_LARGE)) {
                         error.setValue(Error.ITEM_TOO_LARGE)
-                    } else if (errors.contains(Error.INVALID_TYPE)) {
-                        error.setValue(Error.INVALID_TYPE)
+                    } else if (errors.contains(Error.INVALID_TYPE_ONLY)) {
+                        error.setValue(Error.INVALID_TYPE_ONLY)
+                    }else if (errors.contains(Error.MIXED_TYPE)) {
+                        error.setValue(Error.MIXED_TYPE)
                     }
                     bucketId.setValue(Media.ALL_MEDIA_BUCKET_ID)
                 } else {
@@ -323,14 +327,29 @@ internal class MediaSendViewModel @Inject constructor(
         val validMedia = ArrayList<Media>()
         val errors = HashSet<Error>()
 
+        // when sharing multiple media, only certain types are valid: images and video
+        // currently we can't multi-share other types
+        val validMultiMediaCount = media.count {
+            MediaUtil.isGif(it.mimeType)
+                    || MediaUtil.isImageType(it.mimeType)
+                    || MediaUtil.isVideoType(it.mimeType)
+        }
+
+        // if there are no valid types at all, return early
+        if(validMultiMediaCount == 0){
+            errors.add(Error.INVALID_TYPE_ONLY)
+            return Pair(validMedia, errors)
+        }
+
+
         for (m in media) {
             val isGif = MediaUtil.isGif(m.mimeType)
-            val isImage = MediaUtil.isImageType(m.mimeType)
             val isVideo = MediaUtil.isVideoType(m.mimeType)
+            val isImage = MediaUtil.isImageType(m.mimeType)
 
-            // Check Type
+            // Check Type - Not a valid multi share?
             if (!isGif && !isImage && !isVideo) {
-                errors.add(Error.INVALID_TYPE)
+                errors.add(Error.MIXED_TYPE)
                 continue
             }
 
@@ -370,7 +389,7 @@ internal class MediaSendViewModel @Inject constructor(
     }
 
     internal enum class Error {
-        ITEM_TOO_LARGE, TOO_MANY_ITEMS, INVALID_TYPE
+        ITEM_TOO_LARGE, TOO_MANY_ITEMS, INVALID_TYPE_ONLY, MIXED_TYPE
     }
 
     internal class CountButtonState(val count: Int, private val visibility: Visibility) {
