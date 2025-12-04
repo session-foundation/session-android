@@ -107,7 +107,16 @@ fun Activity.requestDozeWhitelist() {
         startActivity(intent) // shows the system dialog for this specific app
     } catch (_: ActivityNotFoundException) {
         // Fallback to the general settings list
-        startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+        try {
+            val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+            startActivity(intent)
+        } catch (_: ActivityNotFoundException) {
+            try {
+                startActivity(Intent(Settings.ACTION_SETTINGS))
+            } catch (_: ActivityNotFoundException) {
+                Toast.makeText(this, R.string.errorGeneric, Toast.LENGTH_LONG).show()
+            }
+        }
     }
 }
 

@@ -52,12 +52,12 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
     @Inject
     lateinit var prefs: TextSecurePreferences
 
-    var showWhitelistEnableDialog by mutableStateOf(false)
-    var showWhitelistDisableDialog by mutableStateOf(false)
+    private var showWhitelistEnableDialog by mutableStateOf(false)
+    private var showWhitelistDisableDialog by mutableStateOf(false)
 
-    var whiteListControl: SwitchPreferenceCompat? = null
+    private var whiteListControl: SwitchPreferenceCompat? = null
 
-    private val composeView by lazy { ComposeView(requireContext()) }
+    private var composeView: ComposeView? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -82,6 +82,7 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
             )
         )
 
+        composeView = ComposeView(requireContext())
         wrapper.addView(
             composeView,
             FrameLayout.LayoutParams(
@@ -98,7 +99,7 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         //set up compose content
-        composeView.apply {
+        composeView?.apply {
             setViewCompositionStrategy(
                 ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
             )
