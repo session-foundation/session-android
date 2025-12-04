@@ -39,9 +39,9 @@ import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.getType
-import org.session.protos.SessionProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.session.protos.SessionProtos
 import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.Storage
@@ -515,7 +515,7 @@ class ReceivedMessageProcessor @Inject constructor(
 
         var maxOutgoingMessageTimestamp: Long = 0L
 
-        val currentUserEd25519KeyPair: KeyPair by lazy(LazyThreadSafetyMode.NONE) {
+        val currentUserEd25519KeyPair: KeyPair by lazy {
             requireNotNull(storage.getUserED25519KeyPair()) {
                 "No current user ED25519 key pair available"
             }
@@ -524,7 +524,7 @@ class ReceivedMessageProcessor @Inject constructor(
         val currentUserPublicKey: String get() = currentUserId.hexString
 
 
-        val contactConfigTimestamp: Long by lazy(LazyThreadSafetyMode.NONE) {
+        val contactConfigTimestamp: Long by lazy {
             configFactory.getConfigTimestamp(UserConfigType.CONTACTS, currentUserPublicKey)
         }
 
