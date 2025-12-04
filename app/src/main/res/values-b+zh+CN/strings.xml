@@ -15,6 +15,9 @@
     <string name="accountIdYoursDescription">这是您的账户ID。其他用户可以扫描它来与您开始会话。</string>
     <string name="actualSize">实际尺寸</string>
     <string name="add">添加</string>
+    <plurals name="addAdmin">
+        <item quantity="other">添加管理者</item>
+    </plurals>
     <string name="addAdminsDescription">请输入您正在授权为管理员的用户的帐户 ID。\n\n要添加多个用户，请输入用逗号分隔的每个帐户 ID。一次最多可以指定20个帐户 ID。</string>
     <string name="adminCannotBeRemoved">管理员无法被移除。</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b>和其他<b>{count}名</b>成员被设置为管理员。</string>
@@ -40,6 +43,9 @@
     <string name="adminRemovedUser"><b>{name}</b>被移除了管理员身份。</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b>和其他<b>{count}人</b>的管理身份被移除。</string>
     <string name="adminRemovedUserOther"><b>{name}</b>和<b>{other_name}</b>的管理身份被移除。</string>
+    <plurals name="adminSelected">
+        <item quantity="other">%1$d 管理者已选中</item>
+    </plurals>
     <plurals name="adminSendingPromotion">
         <item quantity="other">发送管理员推广信息</item>
     </plurals>
@@ -258,6 +264,9 @@
     <string name="contactDeleteDescription">您确定要删除联系人<b>{name}</b>吗？来自<b>{name}</b>的新消息将被视为消息请求。</string>
     <string name="contactNone">您还没有任何联系人</string>
     <string name="contactSelect">选择联系人</string>
+    <plurals name="contactSelected">
+        <item quantity="other">%1$d 已选择联系人</item>
+    </plurals>
     <string name="contactUserDetails">用户详情</string>
     <string name="contentDescriptionCamera">相机</string>
     <string name="contentDescriptionChooseConversationType">选择一个方式开始会话</string>
@@ -319,6 +328,12 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">正在创建群组，请稍候...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">更新群组失败</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">您无权删除他人的消息</string>
+    <plurals name="deleteAttachments">
+        <item quantity="other">删除选定的附件</item>
+    </plurals>
+    <plurals name="deleteAttachmentsDescription">
+        <item quantity="other">您确定要删除选定的附件吗?与附件关联的消息也将被删除。</item>
+    </plurals>
     <string name="deleteContactDescription">您确定要删除联系人<b>{name}</b>吗？\n\n该操作将删除你们的会话，包括所有消息和附件。来自<b>{name}</b>的新消息将被视为消息请求。</string>
     <string name="deleteConversationDescription">您确定要删除您与<b>{name}</b>的会话吗？\n该操作将永久删除所有消息和附件。</string>
     <plurals name="deleteMessage">
@@ -555,8 +570,14 @@
     <string name="incognitoKeyboardDescription">启用隐身模式（如果可用）。您正在使用的键盘可能会忽略此请求。</string>
     <string name="info">信息</string>
     <string name="invalidShortcut">无效的快捷方式</string>
+    <plurals name="inviteContactsPlural">
+        <item quantity="other">邀请联系人</item>
+    </plurals>
     <plurals name="inviteFailedDescription">
         <item quantity="other">无法发送邀请。您想重试吗？</item>
+    </plurals>
+    <plurals name="inviteMembers">
+        <item quantity="other">邀请成员</item>
     </plurals>
     <string name="join">加入</string>
     <string name="later">稍后</string>
@@ -601,6 +622,9 @@
     <string name="manageMembers">管理成员</string>
     <string name="max">最大</string>
     <string name="media">媒体</string>
+    <plurals name="memberSelected">
+        <item quantity="other">%1$d 成员已选中</item>
+    </plurals>
     <plurals name="members">
         <item quantity="other">%1$d位成员</item>
     </plurals>
@@ -829,6 +853,9 @@
     <string name="proAnimatedDisplayPictureFeature">动画头像</string>
     <string name="proAnimatedDisplayPictureModalDescription">用户可上传 GIF</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">使用 PRO 上传 GIF</string>
+    <plurals name="proBadgesSent">
+        <item quantity="other">%1$s %2$s 已发送徽章</item>
+    </plurals>
     <string name="proFeatureListAnimatedDisplayPicture">上传 GIF 和 WebP 头像</string>
     <string name="proFeatureListLargerGroups">更大的群组聊天，最多可容纳 300 名成员</string>
     <string name="proFeatureListLoadsMore">还有更多专属功能等你解锁</string>
@@ -836,10 +863,19 @@
     <string name="proFeatureListPinnedConversations">无限固定对话</string>
     <string name="proGroupActivated">群组已激活</string>
     <string name="proGroupActivatedDescription">该群组已扩容！因管理员升级为 PRO，现支持最多 300 名成员</string>
+    <plurals name="proGroupsUpgraded">
+        <item quantity="other">%1$s 群组升级</item>
+    </plurals>
     <string name="proIncreasedAttachmentSizeFeature">附件大小已增加</string>
     <string name="proIncreasedMessageLengthFeature">消息长度已增加</string>
     <string name="proLargerGroupsDescription">您作为管理员的群组自动升级成支持300名成员。</string>
+    <plurals name="proLongerMessagesSent">
+        <item quantity="other">%1$s 发送更长的消息</item>
+    </plurals>
     <string name="proMessageInfoFeatures">此消息使用了以下 {app_pro} 功能：</string>
+    <plurals name="proPinnedConversations">
+        <item quantity="other">%1$s 个置顶聊天</item>
+    </plurals>
     <string name="proSendMore">发送更多内容，体验</string>
     <string name="profile">个人资料</string>
     <string name="profileDisplayPicture">头像</string>
@@ -848,6 +884,9 @@
     <string name="profileDisplayPictureSizeError">请选择一个更小的文件。</string>
     <string name="profileErrorUpdate">更新资料失败。</string>
     <string name="promote">授权</string>
+    <plurals name="promoteMember">
+        <item quantity="other">提升成员</item>
+    </plurals>
     <plurals name="promotionFailed">
         <item quantity="other">授权失败</item>
     </plurals>
@@ -895,9 +934,18 @@
         <item quantity="other">还剩 %1$d 个字符</item>
     </plurals>
     <string name="remove">移除</string>
+    <plurals name="removeMember">
+        <item quantity="other">移除成员</item>
+    </plurals>
     <string name="removePasswordFail">移除密码失败</string>
     <string name="reply">回复</string>
     <string name="resend">重新发送</string>
+    <plurals name="resendInvite">
+        <item quantity="other">重新发送邀请</item>
+    </plurals>
+    <plurals name="resendingInvite">
+        <item quantity="other">重新发送邀请</item>
+    </plurals>
     <string name="resolving">正在读取国家列表...</string>
     <string name="restart">重新启动</string>
     <string name="resync">重新同步</string>
