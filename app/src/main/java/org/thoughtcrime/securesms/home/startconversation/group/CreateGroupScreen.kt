@@ -127,8 +127,6 @@ fun CreateGroup(
             modifier = modifier.padding(paddings).consumeWindowInsets(paddings),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            GroupMinimumVersionBanner()
-
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
             SessionOutlinedTextField(

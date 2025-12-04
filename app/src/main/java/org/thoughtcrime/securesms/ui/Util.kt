@@ -10,6 +10,7 @@ import android.os.PowerManager
 import android.provider.Settings
 import android.view.View
 import android.view.ViewTreeObserver
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.core.FiniteAnimationSpec
@@ -29,6 +30,8 @@ import com.squareup.phrase.Phrase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import network.loki.messenger.R
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ui.theme.SessionMaterialTheme
 
 fun Activity.setComposeContent(content: @Composable () -> Unit) {
@@ -40,6 +43,23 @@ fun Activity.setComposeContent(content: @Composable () -> Unit) {
 fun Fragment.createThemedComposeView(content: @Composable () -> Unit): ComposeView = requireContext().createThemedComposeView(content)
 fun Context.createThemedComposeView(content: @Composable () -> Unit): ComposeView = ComposeView(this).apply {
     setThemedContent(content)
+}
+
+// Method to actually open a given URL via an Intent that will use the default browser
+/**
+ * Returns false if the phone was unable to open the link
+ * Returns true otherwise
+ */
+fun Context.openUrl(url: String): Boolean {
+    try {
+        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        return true
+    } catch (e: Exception) {
+        Toast.makeText(this, R.string.browserNotFound, Toast.LENGTH_LONG).show()
+        Log.w("Dialog", "No browser found to open link", e)
+    }
+
+    return false
 }
 
 // Extension method to use the Phrase library to substitute strings & return a CharSequence.

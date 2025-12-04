@@ -126,6 +126,7 @@
     <string name="qa_conversation_settings_hide_nts">hide-nts-menu-option</string>
     <string name="qa_conversation_settings_copy_community_url">copy-community-url-menu-option</string>
     <string name="qa_conversation_settings_leave_community">leave-community-menu-option</string>
+    <string name="qa_conversation_settings_manage_admins">manage-admins-menu-option</string>
     <string name="qa_conversation_settings_manage_members">manage-members-menu-option</string>
     <string name="qa_conversation_settings_group_members">group-members-menu-option</string>
     <string name="qa_conversation_settings_invite_contacts">invite-contacts-menu-option</string>

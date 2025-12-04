@@ -6,6 +6,7 @@ import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.protos.SessionProtos.GroupUpdateDeleteMemberContentMessage
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.groups.MemberInvite
 
 /**
  * Business logic handling group v2 operations like inviting members,
@@ -23,6 +24,11 @@ interface GroupManagerV2 {
         newMembers: List<AccountId>,
         shareHistory: Boolean,
         isReinvite: Boolean, // Whether this comes from a re-invite
+    )
+
+    suspend fun reinviteMembers(
+        group: AccountId,
+        invites: List<MemberInvite>
     )
 
     suspend fun removeMembers(
