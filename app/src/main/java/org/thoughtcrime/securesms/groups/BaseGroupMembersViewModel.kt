@@ -87,6 +87,16 @@ abstract class BaseGroupMembersViewModel(
         ::filterContacts
     ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
+    // Output: List of only NON-ADMINS
+    val nonAdminMembers: StateFlow<List<GroupMemberState>> = members
+        .map { list -> list.filter { !it.showAsAdmin } }
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    val hasNonAdminMembers: StateFlow<Boolean> =
+        groupInfo
+            .map { pair -> pair?.second.orEmpty().any { !it.showAsAdmin } }
+            .stateIn(viewModelScope, SharingStarted.Lazily, false)
+
     fun onSearchQueryChanged(query: String) {
         mutableSearchQuery.value = query
     }
@@ -138,7 +148,7 @@ abstract class BaseGroupMembersViewModel(
             showProBadge = shouldShowProBadge,
             avatarUIData = avatarUtils.getUIDataFromAccountId(memberAccountId.hexString),
             clickable = !isMyself,
-            statusLabel = getMemberLabel(status, context, amIAdmin),
+            statusLabel = getMemberLabel(status, context, amIAdmin)
         )
     }
 
@@ -170,14 +180,33 @@ abstract class BaseGroupMembersViewModel(
         }
     }
 
-    // Refer to notion doc for the sorting logic
+    // Refer to manage members/admin PRD for the sorting logic
     private fun sortMembers(members: List<GroupMemberState>, currentUserId: AccountId) =
         members.sortedWith(
-            compareBy<GroupMemberState>{ it.accountId != currentUserId } // Current user comes first
-                .thenBy { !it.showAsAdmin } // Admins come first
-                .thenComparing(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name }) // Sort by name (case insensitive)
-                .thenBy { it.accountId } // Last resort: sort by account ID
+            compareBy<GroupMemberState> { stateOrder(it.status) }
+                .thenBy { it.accountId != currentUserId }
+                .thenComparing(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
+                .thenBy { it.accountId }
         )
+}
+
+private fun stateOrder(status: GroupMember.Status?): Int = when (status) {
+    // 1. Invite failed
+    GroupMember.Status.INVITE_FAILED -> 0
+    // 2. Invite not sent
+    GroupMember.Status.INVITE_NOT_SENT -> 1
+    // 3. Sending invite
+    GroupMember.Status.INVITE_SENDING -> 2
+    // 4. Invite sent
+    GroupMember.Status.INVITE_SENT -> 3
+    // 5. Invite status unknown
+    GroupMember.Status.INVITE_UNKNOWN -> 4
+    // 6. Pending removal
+    GroupMember.Status.REMOVED,
+    GroupMember.Status.REMOVED_UNKNOWN,
+    GroupMember.Status.REMOVED_INCLUDING_MESSAGES -> 5
+    // 7. Member (everything else)
+    else -> 6
 }
 
 data class GroupMemberState(
@@ -193,7 +222,7 @@ data class GroupMemberState(
     val canRemove: Boolean,
     val canPromote: Boolean,
     val clickable: Boolean,
-    val statusLabel: String,
+    val statusLabel: String
 ) {
     val canEdit: Boolean get() = canRemove || canPromote || canResendInvite || canResendPromotion
 }

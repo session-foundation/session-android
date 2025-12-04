@@ -25,8 +25,8 @@ configurations.configureEach {
     exclude(module = "commons-logging")
 }
 
-val canonicalVersionCode = 433
-val canonicalVersionName = "1.30.0"
+val canonicalVersionCode = 434
+val canonicalVersionName = "1.30.1"
 
 val postFixSize = 10
 val abiPostFix = mapOf(
