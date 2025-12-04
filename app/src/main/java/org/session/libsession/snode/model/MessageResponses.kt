@@ -34,7 +34,7 @@ data class RetrieveMessageResponse(
         @SerialName("data")
         val dataB64: String? = null,
     ) {
-        val data: ByteArray by lazy(LazyThreadSafetyMode.NONE) {
+        val data: ByteArray by lazy {
             Base64.decode(dataB64, Base64.DEFAULT)
         }
 
