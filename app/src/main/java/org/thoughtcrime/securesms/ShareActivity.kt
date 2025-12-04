@@ -74,16 +74,6 @@ class ShareActivity : FullComposeScreenLockActivity() {
     }
 
     private fun initializeMedia() {
-        val streamExtra = intent.getParcelableExtra<Uri?>(Intent.EXTRA_STREAM)
-        var charSequenceExtra: CharSequence? = null
-        try {
-            charSequenceExtra = intent.getCharSequenceExtra(Intent.EXTRA_TEXT)
-        }
-        catch (e: Exception) {
-            // It's not necessarily an issue if there's no text extra when sharing files - but we do
-            // have to catch any failed attempt.
-        }
-
-        viewModel.initialiseMedia(streamExtra, charSequenceExtra, intent)
+        viewModel.initialiseMedia(intent)
     }
 }
