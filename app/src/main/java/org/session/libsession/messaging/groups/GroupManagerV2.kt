@@ -125,6 +125,10 @@ interface GroupManagerV2 {
 
     fun getLeaveGroupConfirmationDialogData(groupId: AccountId, name: String): ConfirmDialogData?
 
+    fun getAdminLeaveGroupDialogData(groupId : AccountId, name : String) : ConfirmDialogData?
+
+    fun isCurrentUserLastAdmin(groupId : AccountId) : Boolean
+
     data class ConfirmDialogData(
         val title: String,
         val message: CharSequence,

@@ -15,6 +15,7 @@ import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.allWithStatus
 import network.loki.messenger.libsession_util.util.Bytes.Companion.toBytes
 import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.ExpiryMode
@@ -564,16 +565,16 @@ class GroupManagerV2Impl @Inject constructor(
 
             // Wait and gather all the promote message sending result into a result map
             val promotedByMemberIDs = promotionDeferred
-                .mapValues {
-                    runCatching { it.value.await() }.isSuccess
+                .mapValues { (_, deferred) ->
+                    runCatching { deferred.await() }
                 }
 
             // Update each member's status
             configFactory.withMutableGroupConfigs(group) { configs ->
                 promotedByMemberIDs.asSequence()
-                    .mapNotNull { (member, success) ->
+                    .mapNotNull { (member, result) ->
                         configs.groupMembers.get(member.hexString)?.apply {
-                            if (success) {
+                            if (result.isSuccess) {
                                 setPromotionSent()
                             } else {
                                 setPromotionFailed()
@@ -583,6 +584,25 @@ class GroupManagerV2Impl @Inject constructor(
                     .forEach(configs.groupMembers::set)
             }
 
+            val failedMembers = promotedByMemberIDs
+                .filterValues { it.isFailure }
+                .keys
+                .toList()
+
+            if (failedMembers.isNotEmpty()) {
+                val cause = promotedByMemberIDs.values
+                    .firstOrNull { it.isFailure }
+                    ?.exceptionOrNull()
+                    ?: RuntimeException("Failed to promote ${failedMembers.size} member(s)")
+
+                throw GroupInviteException(
+                    isPromotion = true,
+                    inviteeAccountIds = failedMembers.map { it.hexString },
+                    groupName = groupName ?: "",
+                    isReinvite = isRepromote,
+                    underlying = cause
+                )
+            }
 
             if (!isRepromote) {
                 messageSender.sendAndAwait(message, Address.fromSerialized(group.hexString))
@@ -1207,7 +1227,6 @@ class GroupManagerV2Impl @Inject constructor(
             negativeQaTag = R.string.qa_conversation_settings_dialog_leave_group_cancel
         }
 
-
         return GroupManagerV2.ConfirmDialogData(
                 title = application.getString(title),
                 message = message,
@@ -1216,6 +1235,63 @@ class GroupManagerV2Impl @Inject constructor(
                 positiveQaTag = positiveQaTag,
                 negativeQaTag = negativeQaTag,
             )
+    }
+
+    override fun getAdminLeaveGroupDialogData(
+        groupId: AccountId,
+        name: String
+    ): GroupManagerV2.ConfirmDialogData? {
+        val title = R.string.groupLeave
+        var message: CharSequence = ""
+        var positiveButton = R.string.leave
+        var negativeButton = R.string.cancel
+        var positiveQaTag = R.string.qa_conversation_settings_dialog_leave_group_confirm
+        var negativeQaTag = R.string.qa_conversation_settings_dialog_leave_group_cancel
+
+        if (isCurrentUserLastAdmin(groupId)) {
+            message = Phrase.from(application, R.string.groupOnlyAdmin)
+                .put(GROUP_NAME_KEY, name)
+                .format()
+            positiveButton = R.string.add
+            negativeButton = R.string.groupDelete
+        } else {
+            message = Phrase.from(application, R.string.groupLeaveDescription)
+                .put(GROUP_NAME_KEY, name)
+                .format()
+        }
+
+        return GroupManagerV2.ConfirmDialogData(
+            title = application.getString(title),
+            message = message,
+            positiveText = positiveButton,
+            negativeText = negativeButton,
+            positiveQaTag = positiveQaTag,
+            negativeQaTag = negativeQaTag,
+        )
+    }
+
+    override fun isCurrentUserLastAdmin(groupId: AccountId): Boolean {
+        val currentUserId = checkNotNull(storage.getUserPublicKey()) { "User public key is null" }
+
+        val membersWithStatus = configFactory.withGroupConfigs(groupId) {
+            it.groupMembers.allWithStatus()
+        }
+
+        var adminCount = 0
+        var amAdmin = false
+
+        for ((member, status) in membersWithStatus) {
+            val isAdminLike = status == GroupMember.Status.PROMOTION_ACCEPTED && !member.isRemoved(status)
+            if (!isAdminLike) continue
+
+            adminCount++
+
+            if (member.accountId() == currentUserId) {
+                amAdmin = true
+            }
+        }
+
+        return amAdmin && adminCount == 1
     }
 
     private fun BatchResponse.requireAllRequestsSuccessful(errorMessage: String) {

@@ -18,10 +18,11 @@ class UINavigator<T> () {
 
     suspend fun navigate(
         destination: T,
-        navOptions: NavOptionsBuilder.() -> Unit = {}
+        navOptions: NavOptionsBuilder.() -> Unit = {},
+        debounce : Boolean = true // For when intentionally chaining navigations
     ) {
         val currentTime = System.currentTimeMillis()
-        if (currentTime - lastNavigationTime > navigationDebounceTime) {
+        if (!debounce || currentTime - lastNavigationTime > navigationDebounceTime) {
             lastNavigationTime = currentTime
             _navigationActions.send(NavigationAction.Navigate(
                 destination = destination,

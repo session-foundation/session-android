@@ -47,7 +47,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.GroupMember
-import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.GroupMemberState
 import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel
@@ -112,8 +111,6 @@ fun ManageMembers(
 ) {
 
     val searchFocused = uiState.isSearchFocused
-    val showingError = uiState.error
-    val showingOngoingAction = uiState.ongoingAction
 
     val handleBack: () -> Unit = {
         when {
@@ -262,7 +259,7 @@ fun ManageMembers(
     }
 
     if (uiState.removeMembersDialog.visible) {
-        ShowRemoveMembersDialog(
+        RemoveMembersDialog(
             state = uiState.removeMembersDialog,
             sendCommand = sendCommand
         )
@@ -271,51 +268,10 @@ fun ManageMembers(
     if (uiState.inProgress) {
         LoadingDialog()
     }
-
-    val context = LocalContext.current
-
-    LaunchedEffect(showingError) {
-        if (showingError != null) {
-            Toast.makeText(context, showingError, Toast.LENGTH_SHORT).show()
-            sendCommand(DismissError)
-        }
-    }
-    LaunchedEffect(showingOngoingAction) {
-        if (showingOngoingAction != null) {
-            Toast.makeText(context, showingOngoingAction, Toast.LENGTH_SHORT).show()
-            sendCommand(DismissResend)
-        }
-    }
 }
 
 @Composable
-fun ManageMemberItem(
-    member: GroupMemberState,
-    onClick: (address: Address) -> Unit,
-    modifier: Modifier = Modifier,
-    selected: Boolean = false
-) {
-    RadioMemberItem(
-        address = Address.fromSerialized(member.accountId.hexString),
-        title = member.name,
-        subtitle = member.statusLabel,
-        subtitleColor = if (member.highlightStatus) {
-            LocalColors.current.danger
-        } else {
-            LocalColors.current.textSecondary
-        },
-        showAsAdmin = member.showAsAdmin,
-        showProBadge = member.showProBadge,
-        avatarUIData = member.avatarUIData,
-        onClick = onClick,
-        modifier = modifier,
-        enabled = true,
-        selected = selected
-    )
-}
-
-@Composable
-fun ShowRemoveMembersDialog(
+fun RemoveMembersDialog(
     state: ManageGroupMembersViewModel.RemoveMembersDialogState,
     modifier: Modifier = Modifier,
     sendCommand: (ManageGroupMembersViewModel.Commands) -> Unit
@@ -414,6 +370,7 @@ private fun EditGroupPreviewSheet() {
             showProBadge = true,
             clickable = true,
             statusLabel = "Invited",
+            isSelf = false
         )
         val twoMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
@@ -435,7 +392,8 @@ private fun EditGroupPreviewSheet() {
             showAsAdmin = true,
             showProBadge = true,
             clickable = true,
-            statusLabel = "Promotion failed"
+            statusLabel = "Promotion failed",
+            isSelf = false
         )
         val threeMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
@@ -457,7 +415,8 @@ private fun EditGroupPreviewSheet() {
             showAsAdmin = false,
             showProBadge = false,
             clickable = true,
-            statusLabel = ""
+            statusLabel = "",
+            isSelf = true
         )
 
         val (_, _) = remember { mutableStateOf<String?>(null) }
@@ -510,6 +469,7 @@ private fun EditGroupEditNamePreview(
             showProBadge = true,
             clickable = true,
             statusLabel = "Invited",
+            isSelf = false
         )
         val twoMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
@@ -531,7 +491,8 @@ private fun EditGroupEditNamePreview(
             showAsAdmin = true,
             showProBadge = true,
             clickable = true,
-            statusLabel = "Promotion failed"
+            statusLabel = "Promotion failed",
+            isSelf = false
         )
         val threeMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
@@ -553,7 +514,8 @@ private fun EditGroupEditNamePreview(
             showAsAdmin = false,
             showProBadge = false,
             clickable = true,
-            statusLabel = ""
+            statusLabel = "",
+            isSelf = false
         )
 
         ManageMembers(
