@@ -1,16 +1,12 @@
 package org.thoughtcrime.securesms.groups.handler
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import network.loki.messenger.libsession_util.allWithStatus
 import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.messaging.groups.GroupScope
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.utilities.AccountId
-import org.thoughtcrime.securesms.auth.LoginStateRepository
-import org.thoughtcrime.securesms.dependencies.ManagerScope
-import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
+import org.thoughtcrime.securesms.auth.AuthAwareComponent
+import org.thoughtcrime.securesms.auth.LoggedInState
 import javax.inject.Inject
 
 /**
@@ -25,35 +21,28 @@ import javax.inject.Inject
 class CleanupInvitationHandler @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val groupScope: GroupScope,
-    private val loginStateRepository: LoginStateRepository,
-    @param:ManagerScope private val scope: CoroutineScope
-) : OnAppStartupComponent {
-    override fun onPostAppStarted() {
-        scope.launch {
-            // Wait for the local number to be available
-            loginStateRepository.loggedInState.first { it != null }
+) : AuthAwareComponent {
+    override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
+        val allGroups = configFactory.withUserConfigs {
+            it.userGroups.allClosedGroupInfo()
+        }
 
-            val allGroups = configFactory.withUserConfigs {
-                it.userGroups.allClosedGroupInfo()
-            }
-
-            allGroups
-                .asSequence()
-                .filter { !it.kicked && !it.destroyed && it.hasAdminKey() }
-                .forEach { group ->
-                    val groupId = AccountId(group.groupAccountId)
-                    groupScope.launch(groupId, debugName = "CleanupInvitationHandler") {
-                        configFactory.withMutableGroupConfigs(groupId) { configs ->
-                            configs.groupMembers
-                                .allWithStatus()
-                                .filter { it.second == GroupMember.Status.INVITE_SENDING }
-                                .forEach { (member, _) ->
-                                    member.setInviteFailed()
-                                    configs.groupMembers.set(member)
-                                }
-                        }
+        allGroups
+            .asSequence()
+            .filter { !it.kicked && !it.destroyed && it.hasAdminKey() }
+            .forEach { group ->
+                val groupId = AccountId(group.groupAccountId)
+                groupScope.launch(groupId, debugName = "CleanupInvitationHandler") {
+                    configFactory.withMutableGroupConfigs(groupId) { configs ->
+                        configs.groupMembers
+                            .allWithStatus()
+                            .filter { it.second == GroupMember.Status.INVITE_SENDING }
+                            .forEach { (member, _) ->
+                                member.setInviteFailed()
+                                configs.groupMembers.set(member)
+                            }
                     }
                 }
-        }
+            }
     }
 }
