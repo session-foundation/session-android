@@ -73,6 +73,8 @@ data class SimpleDialogData(
     val message: CharSequence,
     val positiveText: String? = null,
     val positiveStyleDanger: Boolean = true,
+
+    val negativeStyleDanger: Boolean = false,
     val showXIcon: Boolean = false,
     val negativeText: String? = null,
     val positiveQaTag: String? = null,
@@ -243,8 +245,8 @@ fun AlertDialogContent(
                             color = it.color,
                             enabled = it.enabled
                         ) {
-                            it.onClick()
                             if (it.dismissOnClick) onDismissRequest()
+                            it.onClick()
                         }
                     }
                 }

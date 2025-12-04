@@ -10,6 +10,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.getOrNull
 import org.session.libsession.database.StorageProtocol
@@ -56,11 +58,6 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
 ) : BaseGroupMembersViewModel(groupAddress, context, storage, configFactory, avatarUtils, recipientRepository) {
     private val groupId = groupAddress.accountId
 
-    // Output: The name of the group. This is the current name of the group, not the name being edited.
-    val groupName: StateFlow<String> = groupInfo
-        .map { it?.first?.name.orEmpty() }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), "")
-
     // Output: whether we should show the "add members" button
     val showAddMembers: StateFlow<Boolean> = groupInfo
         .map { it?.first?.isUserAdmin == true }
@@ -80,19 +77,29 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
             OptionsItem(
                 name = context.getString(R.string.membersInvite),
                 icon = R.drawable.ic_user_round_plus,
-                onClick = ::navigateInviteContacts
+                onClick = ::navigateToInviteContacts
             ),
             OptionsItem(
                 name = context.getString(R.string.accountIdOrOnsInvite),
                 icon = R.drawable.ic_user_round_search,
-                onClick = {
-                    // TODO: Add navigation
-                }
+                onClick = ::navigateToInviteAccountId
             )
         )
     }
 
-    private val _uiState = MutableStateFlow(UiState(options = optionsList))
+    private val adminOptionsList: List<OptionsItem> by lazy {
+        listOf(
+            OptionsItem(
+                // use plural version of this string resource
+                name = context.resources.getQuantityString(R.plurals.promoteMember,2,2),
+                icon = R.drawable.ic_add_admin_custom,
+                onClick = ::navigateToInviteContacts
+            ),
+        )
+    }
+
+    private val _uiState =
+        MutableStateFlow(UiState(options = optionsList, adminOptions = adminOptionsList))
     val uiState: StateFlow<UiState> = _uiState
 
     private val showRemoveMembersDialog = MutableStateFlow(false)
@@ -125,7 +132,7 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         _uiState.update { it.copy(isSearchFocused = isFocused) }
     }
 
-    private fun navigateInviteContacts() {
+    private fun navigateToInviteContacts() {
         viewModelScope.launch {
             navigator.navigate(
                 ConversationSettingsDestination.RouteInviteToGroup(
@@ -136,9 +143,29 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         }
     }
 
-    fun onContactSelected(contacts: Set<Address>) {
-        performGroupOperation(
+    private fun navigateToInviteAccountId(){
+        viewModelScope.launch {
+            navigator.navigate(
+                ConversationSettingsDestination.RouteInviteAccountIdToGroup(
+                    groupAddress,
+                    excludingAccountIDsFromContactSelection.toList()
+                )
+            )
+        }
+    }
+
+    fun onSendInviteClicked(contacts: Set<Address>, shareHistory : Boolean) {
+        val sendInviteText = context.resources.getQuantityString(
+            R.plurals.groupInviteSending,
+            contacts.size,
+            contacts.size
+        )
+
+        showToast(sendInviteText)
+
+        performGroupOperationCore(
             showLoading = false,
+            setLoading = ::setLoading,
             errorMessage = { err ->
                 if (err is GroupInviteException) {
                     err.format(context, recipientRepository).toString()
@@ -150,7 +177,7 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
             groupManager.inviteMembers(
                 groupId,
                 contacts.map { AccountId(it.toString()) }.toList(),
-                shareHistory = false,
+                shareHistory = shareHistory,
                 isReinvite = false,
             )
         }
@@ -158,8 +185,9 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
 
     fun onResendInviteClicked() {
         if (selectedMembers.value.isEmpty()) return
-        performGroupOperation(
+        performGroupOperationCore(
             showLoading = false,
+            setLoading = ::setLoading,
             errorMessage = { err ->
                 if (err is GroupInviteException) {
                     err.format(context, recipientRepository).toString()
@@ -179,12 +207,15 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
 
             removeSearchState(true)
 
-            _uiState.update { it ->
-                it.copy(error = context.resources.getQuantityString(
-                    R.plurals.resendingInvite,
-                    invites.size,
-                    invites.size
-                ))
+            val errorText = context.resources.getQuantityString(
+                R.plurals.resendingInvite,
+                invites.size,
+                invites.size
+            )
+
+            // is it better move the invites list outside the operation?
+            withContext(Dispatchers.Main) {
+                showToast(errorText) // now safely on main thread
             }
 
             // Reinvite with per-member shareHistory
@@ -204,22 +235,16 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         }
     }
 
-    fun onPromoteContact(memberSessionId: AccountId) {
-        performGroupOperation(showLoading = false) {
-            groupManager.promoteMember(groupId, listOf(memberSessionId), isRepromote = false)
-        }
-    }
-
     fun onRemoveContact(removeMessages: Boolean) {
-        _uiState.update { it ->
-            it.copy(ongoingAction =context.resources.getQuantityString(
-                R.plurals.removingMember,
-                selectedMembers.value.size,
-                selectedMembers.value.size
-            ))
-        }
+        val removeText = context.resources.getQuantityString(
+            R.plurals.removingMember,
+            selectedMembers.value.size,
+            selectedMembers.value.size
+        )
 
-        performGroupOperation(showLoading = false) {
+        showToast(removeText)
+
+        performGroupOperationCore(showLoading = false, setLoading = ::setLoading) {
             val accountIdList = selectedMembers.value.map { it.accountId }
 
             removeSearchState(true)
@@ -232,55 +257,6 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         }
     }
 
-    fun onResendPromotionClicked(memberSessionId: AccountId) {
-        performGroupOperation(showLoading = false) {
-            groupManager.promoteMember(groupId, listOf(memberSessionId), isRepromote = true)
-        }
-    }
-
-    fun onDismissError() {
-        _uiState.update { it.copy(error = null) }
-    }
-
-    /**
-     * Perform a group operation, such as inviting a member, removing a member.
-     *
-     * This is a helper function that encapsulates the common error handling and progress tracking.
-     */
-    private fun performGroupOperation(
-        showLoading: Boolean = true,
-        errorMessage: ((Throwable) -> String?)? = null,
-        operation: suspend () -> Unit
-    ) {
-        viewModelScope.launch {
-            if (showLoading) {
-                _uiState.update { it.copy(inProgress = true) }
-            }
-
-            // We need to use GlobalScope here because we don't want
-            // any group operation to be cancelled when the view model is cleared.
-            @Suppress("OPT_IN_USAGE")
-            val task = GlobalScope.async {
-                operation()
-            }
-
-            try {
-                task.await()
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        error = errorMessage?.invoke(e)
-                            ?: context.getString(R.string.errorUnknown)
-                    )
-                }
-            } finally {
-                if (showLoading) {
-                    _uiState.update { it.copy(inProgress = false) }
-                }
-            }
-        }
-    }
-
     fun clearSelection(){
         _mutableSelectedMembers.value = emptySet()
     }
@@ -289,19 +265,19 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         footerCollapsed.update { !it }
     }
 
-    fun onDismissResend() {
-        _uiState.update { it.copy(ongoingAction = null) }
+    private fun toggleRemoveMembersDialog(visible : Boolean){
+        showRemoveMembersDialog.value = visible
     }
 
-    private fun toggleRemoveDialog(visible : Boolean){
-        showRemoveMembersDialog.value = visible
+    private fun setLoading(isLoading : Boolean){
+        _uiState.update { it.copy(inProgress = true) }
     }
 
     fun onCommand(command: Commands) {
         when (command) {
-            is Commands.ShowRemoveDialog -> toggleRemoveDialog(true)
+            is Commands.ShowRemoveMembersDialog -> toggleRemoveMembersDialog(true)
 
-            is Commands.DismissRemoveDialog -> toggleRemoveDialog(false)
+            is Commands.DismissRemoveMembersDialog -> toggleRemoveMembersDialog(false)
 
             is Commands.RemoveMembers -> onRemoveContact(command.removeMessages)
 
@@ -311,10 +287,6 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
 
             is Commands.ToggleFooter -> toggleFooter()
 
-            is Commands.DismissError -> onDismissError()
-
-            is Commands.DismissResend -> onDismissResend()
-
             is Commands.MemberClick -> onMemberItemClicked(command.member)
 
             is Commands.RemoveSearchState -> removeSearchState(command.clearSelection)
@@ -322,6 +294,8 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
             is Commands.SearchFocusChange -> onSearchFocusChanged(command.focus)
 
             is Commands.SearchQueryChange -> onSearchQueryChanged(command.query)
+
+            is Commands.SendInvites -> onSendInviteClicked(command.address, command.shareHistory)
         }
     }
 
@@ -394,7 +368,7 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
                 ),
                 buttonLabel = GetString(context.getString(R.string.remove)),
                 isDanger = true,
-                onClick = { onCommand(Commands.ShowRemoveDialog) }
+                onClick = { onCommand(Commands.ShowRemoveMembersDialog) }
             )
         )
 
@@ -408,10 +382,9 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
 
     data class UiState(
         val options : List<OptionsItem> = emptyList(),
+        val adminOptions : List<OptionsItem> = emptyList(),
 
         val inProgress: Boolean = false,
-        val error: String? = null,
-        val ongoingAction: String? = null,
 
         // search UI state:
         val searchQuery: String = "",
@@ -446,18 +419,16 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
     )
 
     sealed interface Commands {
-        data object ShowRemoveDialog : Commands
-        data object DismissRemoveDialog : Commands
-
-        data object DismissError : Commands
-
-        data object DismissResend : Commands
+        data object ShowRemoveMembersDialog : Commands
+        data object DismissRemoveMembersDialog : Commands
 
         data object ToggleFooter : Commands
 
         data object CloseFooter : Commands
 
         data object ClearSelection : Commands
+
+        data class SendInvites(val address : Set<Address>, val shareHistory: Boolean) : Commands
 
         data class RemoveSearchState(val clearSelection : Boolean) : Commands
 
