@@ -85,6 +85,9 @@ import org.thoughtcrime.securesms.reviews.ui.InAppReviewViewModel
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
 import org.thoughtcrime.securesms.ui.components.Avatar
+import org.thoughtcrime.securesms.ui.findActivity
+import org.thoughtcrime.securesms.ui.isWhitelistedFromDoze
+import org.thoughtcrime.securesms.ui.requestDozeWhitelist
 import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.util.AvatarUtils
@@ -249,6 +252,10 @@ class HomeActivity : ScreenLockActionBarActivity(),
                                     event.start
                                 )
                             )
+                        }
+
+                        is HomeViewModel.UiEvent.ShowWhiteListSystemDialog -> {
+                            requestDozeWhitelist()
                         }
                     }
                 }

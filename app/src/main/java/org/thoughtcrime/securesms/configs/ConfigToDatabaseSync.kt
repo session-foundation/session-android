@@ -24,6 +24,7 @@ import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
@@ -35,6 +36,8 @@ import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.AuthAwareComponent
+import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.CommunityDatabase
 import org.thoughtcrime.securesms.database.DraftDatabase
@@ -86,35 +89,28 @@ class ConfigToDatabaseSync @Inject constructor(
     private val messageNotifier: MessageNotifier,
     private val recipientSettingsDatabase: RecipientSettingsDatabase,
     private val avatarCacheCleaner: AvatarCacheCleaner,
-    private val loginStateRepository: LoginStateRepository,
     @param:ManagerScope private val scope: CoroutineScope,
-) : OnAppStartupComponent {
-    init {
-        // Sync conversations from config -> database
-        scope.launch {
-            loginStateRepository.flowWithLoggedInState {
-                combine(
-                    conversationRepository.conversationListAddressesFlow,
-                    configFactory.userConfigsChanged(EnumSet.of(UserConfigType.CONVO_INFO_VOLATILE))
-                        .castAwayType()
-                        .onStart { emit(Unit) }
-                        .map { _ -> configFactory.withUserConfigs { it.convoInfoVolatile.all() } },
-                    ::Pair
-                )
-            }
-                .distinctUntilChanged()
-                .collectLatest { (conversations, convoInfo) ->
-                    try {
-                        ensureConversations(conversations)
-                        updateConvoVolatile(convoInfo)
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error updating conversations from config", e)
-                    }
+) : AuthAwareComponent {
+    override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
+        combine(
+            conversationRepository.conversationListAddressesFlow,
+            configFactory.userConfigsChanged(EnumSet.of(UserConfigType.CONVO_INFO_VOLATILE))
+                .castAwayType()
+                .onStart { emit(Unit) }
+                .map { _ -> configFactory.withUserConfigs { it.convoInfoVolatile.all() } },
+            ::Pair
+        ).distinctUntilChanged()
+            .collectLatest { (conversations, convoInfo) ->
+                try {
+                    ensureConversations(conversations, loggedInState.accountId)
+                    updateConvoVolatile(convoInfo)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error updating conversations from config", e)
                 }
-        }
+            }
     }
 
-    private fun ensureConversations(addresses: Set<Address.Conversable>) {
+    private fun ensureConversations(addresses: Set<Address.Conversable>, myAccountId: AccountId) {
         val result = threadDatabase.ensureThreads(addresses)
 
         if (result.deletedThreads.isNotEmpty()) {
@@ -139,7 +135,7 @@ class ConfigToDatabaseSync @Inject constructor(
 
                 when (address) {
                     is Address.Community -> deleteCommunityData(address, threadId)
-                    is Address.LegacyGroup -> deleteLegacyGroupData(address)
+                    is Address.LegacyGroup -> deleteLegacyGroupData(address, myAccountId)
                     is Address.Group -> deleteGroupData(address)
                     is Address.Blinded,
                     is Address.CommunityBlindedId,
@@ -160,7 +156,7 @@ class ConfigToDatabaseSync @Inject constructor(
             when (address) {
                 is Address.Community -> onCommunityAdded(address, threadId)
                 is Address.Group -> onGroupAdded(address, threadId)
-                is Address.LegacyGroup -> onLegacyGroupAdded(address, threadId)
+                is Address.LegacyGroup -> onLegacyGroupAdded(address, threadId, myAccountId)
                 is Address.Blinded,
                 is Address.CommunityBlindedId,
                 is Address.Standard,
@@ -192,7 +188,8 @@ class ConfigToDatabaseSync @Inject constructor(
 
     private fun onLegacyGroupAdded(
         address: Address.LegacyGroup,
-        threadId: Long
+        threadId: Long,
+        myAccountId: AccountId,
     ) {
         val group = configFactory.withUserConfigs { it.userGroups.getLegacyGroupInfo(address.groupPublicKeyHex) }
             ?: return
@@ -208,7 +205,7 @@ class ConfigToDatabaseSync @Inject constructor(
         val keyPair = ECKeyPair(DjbECPublicKey(group.encPubKey.data), DjbECPrivateKey(group.encSecKey.data))
         storage.addClosedGroupEncryptionKeyPair(keyPair, group.accountId, clock.currentTimeMills())
         // Notify the PN server
-        PushRegistryV1.subscribeGroup(group.accountId, publicKey = loginStateRepository.requireLocalNumber())
+        PushRegistryV1.subscribeGroup(group.accountId, publicKey = myAccountId.hexString)
         threadDatabase.setCreationDate(threadId, formationTimestamp)
     }
 
@@ -251,17 +248,15 @@ class ConfigToDatabaseSync @Inject constructor(
         communityDatabase.deleteRoomInfo(address)
     }
 
-    private fun deleteLegacyGroupData(address: Address.LegacyGroup) {
-        val myAddress = loginStateRepository.requireLocalNumber()
-
+    private fun deleteLegacyGroupData(address: Address.LegacyGroup, myAccountId: AccountId) {
         // Mark the group as inactive
         storage.setActive(address.address, false)
         storage.removeClosedGroupPublicKey(address.groupPublicKeyHex)
         // Remove the key pairs
         storage.removeAllClosedGroupEncryptionKeyPairs(address.groupPublicKeyHex)
-        storage.removeMember(address.address, Address.fromSerialized(myAddress))
+        storage.removeMember(address.address, myAccountId.toAddress())
         // Notify the PN server
-        PushRegistryV1.unsubscribeGroup(closedGroupPublicKey = address.groupPublicKeyHex, publicKey = myAddress)
+        PushRegistryV1.unsubscribeGroup(closedGroupPublicKey = address.groupPublicKeyHex, publicKey = myAccountId.hexString)
         messageNotifier.updateNotification(context)
     }
 

@@ -15,7 +15,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.Log
@@ -42,7 +41,6 @@ private const val TAG = "OpenGroupPollerManager"
 class OpenGroupPollerManager @Inject constructor(
     pollerFactory: OpenGroupPoller.Factory,
     configFactory: ConfigFactoryProtocol,
-    preferences: TextSecurePreferences,
     loginStateRepository: LoginStateRepository,
     @ManagerScope scope: CoroutineScope
 ) : OnAppStartupComponent {

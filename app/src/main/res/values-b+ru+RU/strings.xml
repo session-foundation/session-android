@@ -15,6 +15,12 @@
     <string name="accountIdYoursDescription">Это ваш ID аккаунта. Другие пользователи могут сканировать его, чтобы начать беседу с вами.</string>
     <string name="actualSize">Фактический размер</string>
     <string name="add">Добавить</string>
+    <plurals name="addAdmin">
+        <item quantity="one">Добавить Админа</item>
+        <item quantity="few">Добавить Админов</item>
+        <item quantity="many">Добавить Админов</item>
+        <item quantity="other">Добавить Админов</item>
+    </plurals>
     <string name="addAdminsDescription">Введите ID аккаунта пользователя, которого вы повышаете до администратора.\n\nЧтобы добавить нескольких пользователей, введите ID каждого аккаунта через запятую. Одновременно можно указать до 20 идентификаторов учётных записей.</string>
     <string name="adminCannotBeRemoved">Администраторов нельзя удалить.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> и <b>{count} других пользователей</b> назначены администраторами.</string>
@@ -40,6 +46,12 @@
     <string name="adminRemovedUser"><b>{name}</b> был(а) снят(а) с должности администратора.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> и <b>{count} других пользователей</b> были удалены админом.</string>
     <string name="adminRemovedUserOther">Пользователи <b>{name}</b> и <b>{other_name}</b> были удалены админом.</string>
+    <plurals name="adminSelected">
+        <item quantity="one">Выбран %1$d Админ</item>
+        <item quantity="few">Выбрано %1$d Админа</item>
+        <item quantity="many">Выбрано %1$d Админов</item>
+        <item quantity="other">Выбрано %1$d Админов</item>
+    </plurals>
     <plurals name="adminSendingPromotion">
         <item quantity="one">Отправление запроса в админы</item>
         <item quantity="few">Отправление запросов в админы</item>
@@ -67,6 +79,7 @@
     <string name="appNameNotes">Заметки</string>
     <string name="appNameStocks">Акции</string>
     <string name="appNameWeather">Погода</string>
+    <string name="appProBadge">Значок {app_pro}</string>
     <string name="appearanceAutoDarkMode">Автоматический тёмный режим</string>
     <string name="appearanceHideMenuBar">Спрятать системное меню</string>
     <string name="appearanceLanguage">Язык</string>
@@ -198,6 +211,7 @@
     <string name="cameraGrantAccessDescription">{app_name} требуется доступ к камере для съемки фото, видео, а также сканирования QR-кодов.</string>
     <string name="cameraGrantAccessQr">{app_name} требуется доступ к камере для сканирования QR-кодов</string>
     <string name="cancel">Отмена</string>
+    <string name="cancelAccess">Отменить {pro}</string>
     <string name="change">Изменить</string>
     <string name="changePasswordFail">Не удалось изменить пароль</string>
     <string name="changePasswordModalDescription">Измените пароль для {app_name}. Локально сохранённые данные будут повторно зашифрованы с использованием нового пароля.</string>
@@ -266,6 +280,12 @@
     <string name="contactDeleteDescription">Вы уверены, что хотите удалить <b>{name}</b> из ваших контактов? Новые сообщения от <b>{name}</b> будут поступать как запросы сообщений.</string>
     <string name="contactNone">У вас еще нет контактов</string>
     <string name="contactSelect">Выбрать контакты</string>
+    <plurals name="contactSelected">
+        <item quantity="one">Выбран %1$d контакт</item>
+        <item quantity="few">Выбрано %1$d контакта</item>
+        <item quantity="many">Выбрано %1$d контактов</item>
+        <item quantity="other">Выбрано %1$d контактов</item>
+    </plurals>
     <string name="contactUserDetails">Сведения о пользователе</string>
     <string name="contentDescriptionCamera">Камера</string>
     <string name="contentDescriptionChooseConversationType">Выберите действие для начала беседы</string>
@@ -306,6 +326,7 @@
     <string name="copy">Скопировать</string>
     <string name="create">Создать</string>
     <string name="creatingCall">Создание вызова</string>
+    <string name="currentPassword">Текущий Пароль</string>
     <string name="cut">Вырезать</string>
     <string name="darkMode">Тёмный режим</string>
     <string name="databaseErrorClearDataWarning">Вы уверены, что хотите удалить все сообщения, вложения и данные учетной записи с этого устройства и создать новую учетную запись?</string>
@@ -332,6 +353,18 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">Пожалуйста, подождите, пока группа будет создана...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">Ошибка при обновлении группы</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">У вас недостаточно прав для удаления других сообщений</string>
+    <plurals name="deleteAttachments">
+        <item quantity="one">Удалить Выбранное Вложение</item>
+        <item quantity="few">Удалить Выбранные Вложения</item>
+        <item quantity="many">Удалить Выбранные Вложения</item>
+        <item quantity="other">Удалить Выбранные Вложения</item>
+    </plurals>
+    <plurals name="deleteAttachmentsDescription">
+        <item quantity="one">Вы действительно хотите удалить выбранное вложение? Связанное с ним сообщение также будет удалено.</item>
+        <item quantity="few">Вы действительно хотите удалить выбранное вложения? Связанное с ними сообщение также будет удалено.</item>
+        <item quantity="many">Вы действительно хотите удалить выбранное вложения? Связанное с ними сообщение также будет удалено.</item>
+        <item quantity="other">Вы действительно хотите удалить выбранное вложения? Связанное с ними сообщение также будет удалено.</item>
+    </plurals>
     <string name="deleteContactDescription">Вы уверены, что хотите удалить <b>{name}</b> из контактов?\n\nВаша переписка будет удалена, включая все сообщения и вложения. Последующие сообщения от <b>{name}</b> будут появляться в виде запроса на общение.</string>
     <string name="deleteConversationDescription">Вы уверены, что хотите удалить свою беседу с <b>{name}</b>?\nЭто приведет к безвозвратному удалению всех сообщений и вложений.</string>
     <plurals name="deleteMessage">
@@ -601,10 +634,17 @@
     <string name="hideOthers">Скрыть других</string>
     <string name="image">Изображение</string>
     <string name="images">изображения</string>
+    <string name="important">Важно</string>
     <string name="incognitoKeyboard">Клавиатура «Инкогнито»</string>
     <string name="incognitoKeyboardDescription">Запросить режим «Инкогнито», если доступно. В зависимости от клавиатуры, которую вы используете, она может проигнорировать этот запрос.</string>
     <string name="info">Информация</string>
     <string name="invalidShortcut">Недопустимый ярлык</string>
+    <plurals name="inviteContactsPlural">
+        <item quantity="one">Пригласить Контакт</item>
+        <item quantity="few">Пригласить Контакты</item>
+        <item quantity="many">Пригласить Контакты</item>
+        <item quantity="other">Пригласить Контакты</item>
+    </plurals>
     <plurals name="inviteFailed">
         <item quantity="one">Ошибка отправки приглашения</item>
         <item quantity="few">Ошибка отправки приглашений</item>
@@ -616,6 +656,12 @@
         <item quantity="few">Приглашения не были отправлены. Повторить попытку?</item>
         <item quantity="many">Приглашения не были отправлены. Повторить попытку?</item>
         <item quantity="other">Приглашения не были отправлены. Повторить попытку?</item>
+    </plurals>
+    <plurals name="inviteMembers">
+        <item quantity="one">Пригласить Участника</item>
+        <item quantity="few">Пригласить Участников</item>
+        <item quantity="many">Пригласить Участников</item>
+        <item quantity="other">Пригласить Участников</item>
     </plurals>
     <string name="join">Присоединиться</string>
     <string name="later">Позже</string>
@@ -643,6 +689,7 @@
     <string name="linkPreviewsSendModalDescription">Ваши метаданные не будут полностью защищены при отправке ссылок с предпросмотром.</string>
     <string name="linkPreviewsTurnedOff">Предпросмотры ссылок выключены</string>
     <string name="linkPreviewsTurnedOffDescription">{app_name} необходимо посетить сайты, на которые даются отправляемые и получаемые ссылки, чтобы создать для них превью.\n\nВы можете включить эту функцию в настройках {app_name}.</string>
+    <string name="links">Ссылки</string>
     <string name="loadAccount">Загрузить аккаунт</string>
     <string name="loadAccountProgressMessage">Загрузка вашего аккаунта</string>
     <string name="loading">Загрузка...</string>
@@ -655,9 +702,16 @@
     <string name="lockAppStatus">Статус блокировки</string>
     <string name="lockAppUnlock">Разблокировать</string>
     <string name="lockAppUnlocked">Приложение {app_name} разблокировано</string>
+    <string name="logs">Отчёты</string>
     <string name="manageMembers">Управление участниками</string>
     <string name="max">Максимальный</string>
     <string name="media">Медиа</string>
+    <plurals name="memberSelected">
+        <item quantity="one">Выбран %1$d Участник</item>
+        <item quantity="few">Выбрано %1$d Участника</item>
+        <item quantity="many">Выбрано %1$d Участников</item>
+        <item quantity="other">Выбрано %1$d Участников</item>
+    </plurals>
     <plurals name="members">
         <item quantity="one">%1$d Участник</item>
         <item quantity="few">%1$d участника</item>
@@ -758,7 +812,9 @@
     <string name="modalMessageCharacterTooLongTitle">Сообщение слишком длинное</string>
     <string name="modalMessageTooLongDescription">Пожалуйста, сократите свое сообщение до {limit} символов.</string>
     <string name="modalMessageTooLongTitle">Сообщение слишком длинное</string>
+    <string name="newPassword">Новый Пароль</string>
     <string name="next">Далее</string>
+    <string name="nextSteps">Следующие Шаги</string>
     <string name="nicknameDescription">Выберите псевдоним для <b>{name}</b>. Он будет отображаться в индивидуальных и групповых беседах.</string>
     <string name="nicknameEnter">Введите ник</string>
     <string name="nicknameErrorShorter">Пожалуйста, введите более короткий псевдоним</string>
@@ -909,15 +965,57 @@
     <string name="pinConversation">Закрепить беседу</string>
     <string name="pinUnpin">Открепить</string>
     <string name="pinUnpinConversation">Открепить беседу</string>
+    <string name="plusLoadsMore">И многое другое...</string>
+    <string name="plusLoadsMoreDescription">Новые функции в {pro} скоро. Узнай о них первым в <b>{pro} Плане Развития</b> {icon}</string>
     <string name="preferences">Предпочтения</string>
     <string name="preview">Предварительный просмотр</string>
     <string name="previewNotification">Предпросмотр уведомления</string>
+    <string name="proAccessActivatedAutoShort">Ваш доступ к {pro} активен!\n\n{pro} автоматически продлевается <b>{date}</b> на <b>{current_plan_length}</b>.</string>
+    <string name="proAccessActivatedNotAuto">Ваш {pro} истечёт <b>{date}</b>.\n\nПродлите {pro} сейчас, чтобы автоматически продлить его до окончания срока действия.</string>
+    <string name="proAccessActivatesAuto">Ваш доступ к {pro} активен!\n\n{pro} будет автоматически продлён <b>{date}</b> ещё на\n<b>{current_plan_length}</b>. Все внесённые здесь изменения вступят в силу при следующем продлении.</string>
+    <string name="proAccessExpireDate">Ваш доступ {pro} истекает <b>{date}</b>.</string>
+    <string name="proAccessNotFound">Доступ к {pro} не найден</string>
+    <string name="proAccessNotFoundDescription">{app_name} не обнаружил у вас доступа к {pro}. Если это ошибка, пожалуйста, обратитесь в службу поддержки {app_name} за помощью.</string>
+    <string name="proAccessRecover">Восстановить доступ к {pro}</string>
+    <string name="proAccessRenew">Возобновить доступ к {pro}</string>
+    <string name="proAccessRenewStart">Продлите доступ к {pro}, чтобы снова начать использовать мощные функции бета-версии {app_pro}.</string>
+    <string name="proAccessRestored">Доступ к {pro} Восстановлен</string>
+    <string name="proAccessRestoredDescription">{app_name} обнаружил и восстановил доступ вашего аккаунта к {pro}. Ваш статус {pro} был восстановлен!</string>
     <string name="proActivated">Активирован</string>
+    <string name="proAllSet">Готово!</string>
+    <string name="proAllSetDescription">Ваш доступ к {app_pro} возобновлён! Списание средств произойдёт автоматически при продлении {pro} <b>{date}</b>.</string>
     <string name="proAlreadyPurchased">У вас уже есть</string>
     <string name="proAnimatedDisplayPicture">Вперёд! И загружай анимированные GIF и WebP для вашего изображения!</string>
+    <string name="proAnimatedDisplayPictureCallToActionDescription">Получите анимированный профиль и другие премиум функции с {app_pro} Beta</string>
     <string name="proAnimatedDisplayPictureFeature">Анимированное изображение профиля</string>
     <string name="proAnimatedDisplayPictureModalDescription">пользователи могут загружать GIF-файлы</string>
+    <string name="proAnimatedDisplayPictures">Анимированный Картинки Профиля</string>
+    <string name="proAnimatedDisplayPicturesDescription">Устанавливайте GIF и WebP картинки в свой профиль.</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Загружайте GIF с</string>
+    <string name="proAutoRenewTime">{pro} автопродление через <b>{time}</b></string>
+    <string name="proBadgeVisible">Показывать значок {app_pro} другим пользователям</string>
+    <string name="proBadges">Значки</string>
+    <string name="proBadgesDescription">Покажите свою поддержку {app_name}, добавив эксклюзивный значок рядом с вашим именем.</string>
+    <plurals name="proBadgesSent">
+        <item quantity="one">%1$s %2$s Значок отправлен</item>
+        <item quantity="few">%1$s %2$s Значки отправлены</item>
+        <item quantity="many">%1$s %2$s Значки отправлены</item>
+        <item quantity="other">%1$s %2$s Значки отправлены</item>
+    </plurals>
+    <string name="proBetaFeatures">Функции {pro} Beta</string>
+    <string name="proBilledAnnually">{price} в год</string>
+    <string name="proBilledMonthly">{price} в месяц</string>
+    <string name="proBilledQuarterly">{price} — оплата раз в квартал</string>
+    <string name="proCallToActionLongerMessages">Хотите отправлять сообщения подлиннее?\nОтправляй больше текста и открой премиум функции с {app_pro} Beta</string>
+    <string name="proCallToActionPinnedConversations">Хотите больше закреплений?\nОрганизовывайте свои чаты и получите доступ к премиум функциям с {app_pro} Beta</string>
+    <string name="proCallToActionPinnedConversationsMoreThan">Нужно больше, чем {limit} закреплений?\nОрганизовывайте свои чаты и получите доступ к премиум функциям с {app_pro} Beta</string>
+    <string name="proDiscountTooltip">Ваш доступ к {pro} уже со скидкой в {percent}% от полной стоимости {app_pro}.</string>
+    <string name="proExpired">Срок действия истёк</string>
+    <string name="proExpiredDescription">К сожалению, ваш доступ к {pro} истёк.\nПродлите его, чтобы снова получить эксклюзивные преимущества и функции {app_pro} Beta.</string>
+    <string name="proExpiringSoon">Срок Действия Истекает</string>
+    <string name="proExpiringSoonDescription">Ваш доступ {pro} истечёт через <b>{time}</b>.\nПродлите сейчас, чтобы сохранить доступ к эксклюзивным привилегиям и функциям {app_pro} Beta</string>
+    <string name="proFaq">{pro} Вопросы</string>
+    <string name="proFaqDescription">Найдите ответы на часто задаваемые вопросы в разделе справки {app_pro}.</string>
     <string name="proFeatureListAnimatedDisplayPicture">Загрузка изображений в формате GIF и WebP</string>
     <string name="proFeatureListLargerGroups">Групповые чаты до 300 участников</string>
     <string name="proFeatureListLoadsMore">+ множество эксклюзивных функций</string>
@@ -925,10 +1023,45 @@
     <string name="proFeatureListPinnedConversations">Закрепление неограниченного количества бесед</string>
     <string name="proGroupActivated">Группа активирована</string>
     <string name="proGroupActivatedDescription">У этой группы увеличена вместимость! Теперь она поддерживает до 300 участников, потому что администратор группы активировал</string>
+    <plurals name="proGroupsUpgraded">
+        <item quantity="one">%1$s Группа Улучшена</item>
+        <item quantity="few">%1$s Группы Улучшены</item>
+        <item quantity="many">%1$s Групп Улучшены</item>
+        <item quantity="other">%1$s Групп Улучшены</item>
+    </plurals>
+    <string name="proImportantDescription">Форма запроса на возврат средств готова. При одобрении, ваш доступ к {pro} будет отключён, и вы потеряете доступ ко всем его функциям.</string>
     <string name="proIncreasedAttachmentSizeFeature">Увеличенный размер вложений</string>
     <string name="proIncreasedMessageLengthFeature">Увеличенная длина сообщения</string>
+    <string name="proLargerGroups">Большие Группы</string>
+    <string name="proLargerGroupsDescription">Группы, в которых вы являетесь админом, автоматически поддерживают до 300 участников.</string>
+    <string name="proLongerMessages">Большие Сообщения</string>
+    <string name="proLongerMessagesDescription">Вы можете отправлять сообщения длиной до 10 000 символов во всех переписках.</string>
+    <plurals name="proLongerMessagesSent">
+        <item quantity="one">Отправлено %1$s Длинное Сообщение</item>
+        <item quantity="few">Отправлено %1$s Длинных Сообщения</item>
+        <item quantity="many">Отправлено %1$s Длинных Сообщений</item>
+        <item quantity="other">Отправлено %1$s Длинных Сообщений</item>
+    </plurals>
     <string name="proMessageInfoFeatures">Это сообщение использовало следующие функции {app_pro}:</string>
+    <plurals name="proPinnedConversations">
+        <item quantity="one">%1$s Закреплённый Чат</item>
+        <item quantity="few">%1$s Закреплённых Чатов</item>
+        <item quantity="many">%1$s Закреплённых Чатов</item>
+        <item quantity="other">%1$s Закреплённых Чатов</item>
+    </plurals>
+    <string name="proPlanRenewSupport">Ваш доступ к {app_pro} был продлен! Спасибо за поддержку {network_name}.</string>
+    <string name="proPriceTwelveMonths">12 месяцев - {monthly_price} / месяц</string>
+    <string name="proRefundDescription">Нам жаль, что вы уходите. Вот что необходимо знать перед запросом возврата средств.</string>
+    <string name="proRefunding">Возвращаем средства</string>
+    <string name="proRequestedRefund">Возврат Средств Запрошен</string>
     <string name="proSendMore">Отправить еще с</string>
+    <string name="proStats">Вашы {pro} Статы</string>
+    <string name="proStatsTooltip">Статы {pro} отражают использование на этом устройстве и может отображаться иначе на подключённых устройствах</string>
+    <string name="proSupportDescription">Нужна помощь с {pro}? Отправьте запрос в службу поддержки.</string>
+    <string name="proTosPrivacy">Подтверждая, вы соглашаетесь с <b>Условиями Использования</b> {icon} и <b>Политикой Конфиденциальности</b> {icon} от {app_pro}</string>
+    <string name="proUnlimitedPins">Неограниченные Закрепления</string>
+    <string name="proUnlimitedPinsDescription">Организовывайте все чаты с неограниченными закреплениями.</string>
+    <string name="proUserProfileModalCallToAction">Хотите больше от {app_name}?\nПереходите на {app_pro} Beta, чтобы получить улучшенный опыт обмена сообщениями.</string>
     <string name="profile">Профиль</string>
     <string name="profileDisplayPicture">Изображение профиля</string>
     <string name="profileDisplayPictureRemoveError">Не удалось удалить изображение профиля.</string>
@@ -936,6 +1069,12 @@
     <string name="profileDisplayPictureSizeError">Пожалуйста, выберите файл меньшего размера.</string>
     <string name="profileErrorUpdate">Ошибка обновления профиля.</string>
     <string name="promote">Повысить</string>
+    <plurals name="promoteMember">
+        <item quantity="one">Повысить Участника</item>
+        <item quantity="few">Повысить Участников</item>
+        <item quantity="many">Повысить Участников</item>
+        <item quantity="other">Повысить Участников</item>
+    </plurals>
     <plurals name="promotionFailed">
         <item quantity="one">Перевод не удался</item>
         <item quantity="few">Переводы не удались</item>
@@ -996,10 +1135,54 @@
         <item quantity="other">%1$d символов осталось</item>
     </plurals>
     <string name="remove">Удалить</string>
+    <plurals name="removeMember">
+        <item quantity="one">Удалить участника</item>
+        <item quantity="few">Удалить участников</item>
+        <item quantity="many">Удалить участника</item>
+        <item quantity="other">Удалить участников</item>
+    </plurals>
+    <plurals name="removeMemberMessages">
+        <item quantity="one">Удалить участника и его сообщения</item>
+        <item quantity="few">Удалить участников и их сообщения</item>
+        <item quantity="many">Удалить участников и их сообщения</item>
+        <item quantity="other">Удалить участников и их сообщения</item>
+    </plurals>
     <string name="removePasswordFail">Не удалось удалить пароль</string>
     <string name="removePasswordModalDescription">Удалите текущий пароль для {app_name}. Локально сохранённые данные будут повторно зашифрованы с использованием случайно сгенерированного ключа, хранящегося на вашем устройстве.</string>
+    <plurals name="removingMember">
+        <item quantity="one">Удаление участника</item>
+        <item quantity="few">Удаление участников</item>
+        <item quantity="many">Удаление участников</item>
+        <item quantity="other">Удаление участников</item>
+    </plurals>
+    <string name="renew">Обновить</string>
     <string name="reply">Ответить</string>
+    <string name="requestRefund">Запросить Возврат</string>
     <string name="resend">Отправить повторно</string>
+    <plurals name="resendInvite">
+        <item quantity="one">Повторно отправить приглашение</item>
+        <item quantity="few">Отправить приглашения повторно</item>
+        <item quantity="many">Отправить приглашения повторно</item>
+        <item quantity="other">Отправить приглашения повторно</item>
+    </plurals>
+    <plurals name="resendPromotion">
+        <item quantity="one">Повторить Повышение</item>
+        <item quantity="few">Повторить Повышения</item>
+        <item quantity="many">Повторить Повышения</item>
+        <item quantity="other">Повторить Повышения</item>
+    </plurals>
+    <plurals name="resendingInvite">
+        <item quantity="one">Повторная отправка приглашения</item>
+        <item quantity="few">Повторная отправка приглашений</item>
+        <item quantity="many">Повторная отправка приглашений</item>
+        <item quantity="other">Повторная отправка приглашений</item>
+    </plurals>
+    <plurals name="resendingPromotion">
+        <item quantity="one">Повтор Повышения</item>
+        <item quantity="few">Повтор Повышений</item>
+        <item quantity="many">Повтор Повышений</item>
+        <item quantity="other">Повтор Повышений</item>
+    </plurals>
     <string name="resolving">Загружаем страны...</string>
     <string name="restart">Перезапуск</string>
     <string name="resync">Ресинхронизировать</string>
@@ -1056,6 +1239,7 @@
     <string name="sessionNotifications">Уведомления</string>
     <string name="sessionPermissions">Разрешения</string>
     <string name="sessionPrivacy">Конфиденциальность</string>
+    <string name="sessionProBeta">{app_pro} Beta</string>
     <string name="sessionRecoveryPassword">Пароль восстановления</string>
     <string name="sessionSettings">Настройки</string>
     <string name="set">Установить</string>
@@ -1085,6 +1269,7 @@
     <string name="theContinue">Продолжить</string>
     <string name="theDefault">По умолчанию</string>
     <string name="theError">Ошибка</string>
+    <string name="theReturn">Вернуться</string>
     <string name="themePreview">Предпросмотр темы</string>
     <string name="tooltipAccountIdVisible">ID аккаунта <b>{name}</b> виден\nна основе ваших предыдущих взаимодействий</string>
     <string name="tooltipBlindedIdCommunities">Скрытые ID используются в сообществах\nдля уменьшения спама и повышения конфиденциальности</string>
@@ -1096,6 +1281,8 @@
     <string name="unavailable">Недоступно</string>
     <string name="undo">Отменить</string>
     <string name="unknown">Неизвестно</string>
+    <string name="updateAccess">Обновить {pro} Привилегии</string>
+    <string name="updateAccessTwo">Два способа обновить доступ к {pro}:</string>
     <string name="updateApp">Обновления приложения</string>
     <string name="updateCommunityInformation">Обновить информацию о сообществе</string>
     <string name="updateCommunityInformationDescription">Название и описание Community видны всем участникам Community</string>
@@ -1117,13 +1304,16 @@
     <string name="updateVersion">Версия {version}</string>
     <string name="updated">Последнее обновление {relative_time}</string>
     <string name="updates">Обновления</string>
+    <string name="updating">Обновление...</string>
     <string name="upgradeTo">Обновить до</string>
     <string name="uploading">Загрузка</string>
     <string name="urlCopy">Копировать ссылку</string>
     <string name="urlOpen">Открыть ссылку</string>
     <string name="urlOpenBrowser">Откроется в вашем браузере.</string>
     <string name="urlOpenDescription">Вы уверены, что хотите открыть эту ссылку в вашем браузере?\n\n<b>{url}</b></string>
+    <string name="urlOpenDescriptionAlternative">Ссылки откроются в вашем браузере.</string>
     <string name="useFastMode">Использовать быстрый режим</string>
+    <string name="viaStoreWebsite">Через сайт {platform}</string>
     <string name="video">Видео</string>
     <string name="videoErrorPlay">Невозможно воспроизвести видео.</string>
     <string name="view">Просмотреть</string>

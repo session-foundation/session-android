@@ -280,6 +280,19 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         )
     }
 
+    private val optionManageAdmins: OptionsItem by lazy{
+        OptionsItem(
+            name = context.getString(R.string.manageAdmins),
+            icon = R.drawable.ic_add_admin_custom,
+            qaTag = R.string.qa_conversation_settings_manage_members,
+            onClick = {
+                (address as? Address.Group)?.let {
+                    navigateTo(ConversationSettingsDestination.RouteManageMembers(it))
+                }
+            }
+        )
+    }
+
     private val optionLeaveGroup: OptionsItem by lazy{
         OptionsItem(
             name = context.getString(R.string.groupLeave),
@@ -567,6 +580,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                         dangerOptions.addAll(
                             listOf(
                                 optionClearMessages,
+                                optionLeaveGroup,
                                 optionDeleteGroup
                             )
                         )
@@ -575,6 +589,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                         adminOptions.addAll(
                             listOf(
                                 optionManageMembers,
+                                optionManageAdmins,
                                 optionDisappearingMessage(disappearingSubtitle)
                             )
                         )

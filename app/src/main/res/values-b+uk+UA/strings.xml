@@ -15,6 +15,12 @@
     <string name="accountIdYoursDescription">Це ваш Account ID. Інші користувачі можуть просканувати його, щоб почати розмову з вами.</string>
     <string name="actualSize">Актуальний розмір</string>
     <string name="add">Додати</string>
+    <plurals name="addAdmin">
+        <item quantity="one">Додати адміністратора</item>
+        <item quantity="few">Додати адміністраторів</item>
+        <item quantity="many">Додати адміністраторів</item>
+        <item quantity="other">Додати адміністраторів</item>
+    </plurals>
     <string name="addAdminsDescription">Введіть ідентифікатор облікового запису користувача, якого ви призначаєте адміністратором.\n\nЩоб додати кількох користувачів, введіть ідентифікатори їхніх облікових записів, розділяючи їх комами. Одночасно можна вказати до 20 ідентифікаторів облікових записів.</string>
     <string name="adminCannotBeRemoved">Адміністратори не можуть бути видалені.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> та ще <b>{count} інших</b> було підвищено до адміністраторів.</string>
@@ -343,6 +349,12 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">Будь ласка, зачекайте поки створюється група...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">Не вдалося оновити групу</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">У вас немає прав на видалення інших повідомлень</string>
+    <plurals name="deleteAttachmentsDescription">
+        <item quantity="one">Ви впевнені, що хочете видалити вибране вкладення? Повідомлення, пов\'язане з цим вкладенням, також буде видалено.</item>
+        <item quantity="few">Ви впевнені, що хочете видалити вибрані вкладення? Повідомлення, пов\'язане з цим вкладенням, також буде видалено.</item>
+        <item quantity="many">Ви впевнені, що хочете видалити вибрані вкладення? Повідомлення, пов\'язане з цим вкладенням, також буде видалено.</item>
+        <item quantity="other">Ви впевнені, що хочете видалити вибрані вкладення? Повідомлення, пов\'язане з цим вкладенням, також буде видалено.</item>
+    </plurals>
     <string name="deleteContactDescription">Ви впевнені, що хочете видалити <b>{name}</b> зі своїх контактів?\n\nЦе призведе до видалення вашої розмови, включно з усіма повідомленнями та вкладеннями. Майбутні повідомлення від <b>{name}</b> відображатимуться як запит на повідомлення.</string>
     <string name="deleteConversationDescription">Ви дійсно хочете видалити розмову з <b>{name}</b>?\n Це назавжди видалить усі повідомлення та вкладення.</string>
     <plurals name="deleteMessage">
@@ -631,6 +643,12 @@
         <item quantity="few">Неможливо надіслати запрошення. Бажаєте спробувати ще раз?</item>
         <item quantity="many">Неможливо надіслати запрошення. Бажаєте спробувати ще раз?</item>
         <item quantity="other">Неможливо надіслати запрошення. Бажаєте спробувати ще раз?</item>
+    </plurals>
+    <plurals name="inviteMembers">
+        <item quantity="one">Запросити учасника</item>
+        <item quantity="few">Запросити учасників</item>
+        <item quantity="many">Запросити учасників</item>
+        <item quantity="other">Запросити учасників</item>
     </plurals>
     <string name="join">Приєднатися</string>
     <string name="later">Пізніше</string>
@@ -1022,6 +1040,12 @@
     <string name="profileDisplayPictureSizeError">Будь ласка, виберіть файл меншого розміру.</string>
     <string name="profileErrorUpdate">Не вдалося оновити профіль.</string>
     <string name="promote">Підвищити</string>
+    <plurals name="promoteMember">
+        <item quantity="one">Підвищити учасника</item>
+        <item quantity="few">Підвищити учасників</item>
+        <item quantity="many">Підвищити учасників</item>
+        <item quantity="other">Підвищити учасників</item>
+    </plurals>
     <plurals name="promotionFailed">
         <item quantity="one">Підвищення прав не відбулось</item>
         <item quantity="few">Підвищення прав не відбулось</item>
@@ -1083,12 +1107,24 @@
     </plurals>
     <string name="remindMeLater">Нагадати пізніше</string>
     <string name="remove">Видалити</string>
+    <plurals name="removeMember">
+        <item quantity="one">Видалити учасника</item>
+        <item quantity="few">Видалити учасників</item>
+        <item quantity="many">Видалити учасників</item>
+        <item quantity="other">Видалити учасників</item>
+    </plurals>
     <string name="removePasswordFail">Не вдалося видалити пароль</string>
     <string name="removePasswordModalDescription">Видаліть свій поточний пароль для {app_name}. Локально збережені дані буде повторно зашифровано випадково згенерованим ключем, який зберігатиметься на вашому пристрої.</string>
     <string name="renew">Поновити</string>
     <string name="reply">Відповісти</string>
     <string name="requestRefund">Запит на повернення коштів</string>
     <string name="resend">Надіслати повторно</string>
+    <plurals name="resendingInvite">
+        <item quantity="one">Повторне надсилання запрошення</item>
+        <item quantity="few">Повторне надсилання запрошень</item>
+        <item quantity="many">Повторне надсилання запрошень</item>
+        <item quantity="other">Повторне надсилання запрошень</item>
+    </plurals>
     <string name="resolving">Завантаження інформації про країни...</string>
     <string name="restart">Перезапустити</string>
     <string name="resync">Синхронізувати повторно</string>

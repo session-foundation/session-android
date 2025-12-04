@@ -42,8 +42,4 @@ class LandingActivity: BaseActionBarActivity() {
         // AC: This is a temporary workaround to trick the old code that the screen is unlocked.
         KeyCachingService.setMasterSecret(applicationContext, Object())
     }
-
-    private fun open(url: String) {
-        Intent(Intent.ACTION_VIEW, Uri.parse(url)).let(::startActivity)
-    }
 }
