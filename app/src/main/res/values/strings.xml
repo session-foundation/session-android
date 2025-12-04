@@ -1338,7 +1338,7 @@
     <string name="shareGroupMessageHistory">Would you like to share group message history with this user?</string>
     <string name="shareToSession">Share to {app_name}</string>
     <string name="sharingSupportMultipleMedia">Sorry, {app_name} only supports sharing multiple images and videos at once</string>
-    <string name="sharingSupportMultipleMediaExcluded">Sharing only supports images and videos. Non-media files have been excluded</string>
+    <string name="sharingSupportMultipleMediaExcluded">Sharing only supports media. Non-media files have been excluded</string>
     <string name="show">Show</string>
     <string name="showAll">Show All</string>
     <string name="showLess">Show Less</string>
