@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.preferences
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.media.RingtoneManager
 import android.net.Uri
@@ -9,16 +10,40 @@ import android.os.AsyncTask
 import android.os.Bundle
 import android.provider.Settings
 import android.text.TextUtils
-import androidx.preference.ListPreference
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.preference.Preference
+import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.components.SwitchPreferenceCompat
 import org.thoughtcrime.securesms.notifications.NotificationChannels
 import org.thoughtcrime.securesms.preferences.widgets.DropDownPreference
+import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.DialogButtonData
+import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.isWhitelistedFromDoze
+import org.thoughtcrime.securesms.ui.requestDozeWhitelist
+import org.thoughtcrime.securesms.ui.setThemedContent
+import org.thoughtcrime.securesms.ui.theme.LocalColors
 import java.util.Arrays
 import javax.inject.Inject
 
@@ -27,8 +52,139 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
     @Inject
     lateinit var prefs: TextSecurePreferences
 
+    private var showWhitelistEnableDialog by mutableStateOf(false)
+    private var showWhitelistDisableDialog by mutableStateOf(false)
+
+    private var whiteListControl: SwitchPreferenceCompat? = null
+
+    private var composeView: ComposeView? = null
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        // We will wrap the existing screen in a framelayout in order to add custom compose content
+        val preferenceView = super.onCreateView(inflater, container, savedInstanceState)
+
+        val wrapper = FrameLayout(requireContext()).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        }
+
+        wrapper.addView(
+            preferenceView,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+        )
+
+        composeView = ComposeView(requireContext())
+        wrapper.addView(
+            composeView,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                Gravity.TOP
+            )
+        )
+
+        return wrapper
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        //set up compose content
+        composeView?.apply {
+            setViewCompositionStrategy(
+                ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
+            )
+            setThemedContent {
+                if(showWhitelistEnableDialog) {
+                    AlertDialog(
+                        onDismissRequest = {
+                            // hide dialog
+                            showWhitelistEnableDialog = false
+                        },
+                        title = Phrase.from(context, R.string.runSessionBackground)
+                            .put(APP_NAME_KEY, getString(R.string.app_name))
+                            .format().toString(),
+                        text = Phrase.from(context, R.string.runSessionBackgroundDescription)
+                            .put(APP_NAME_KEY, getString(R.string.app_name))
+                            .format().toString(),
+                        buttons = listOf(
+                            DialogButtonData(
+                                text = GetString(getString(R.string.allow)),
+                                qaTag = getString(R.string.qa_conversation_settings_dialog_whitelist_confirm),
+                                onClick = {
+                                    openSystemBgWhitelist()
+                                }
+                            ),
+                            DialogButtonData(
+                                text = GetString(getString(R.string.cancel)),
+                                qaTag = getString(R.string.qa_conversation_settings_dialog_whitelist_cancel),
+                            ),
+                        )
+                    )
+                }
+
+                if(showWhitelistDisableDialog) {
+                    AlertDialog(
+                        onDismissRequest = {
+                            // hide dialog
+                            showWhitelistDisableDialog = false
+                        },
+                        title = stringResource(R.string.limitBackgroundActivity),
+                        text = Phrase.from(context, R.string.limitBackgroundActivityDescription)
+                            .put(APP_NAME_KEY, getString(R.string.app_name))
+                            .format().toString(),
+                        buttons = listOf(
+                            DialogButtonData(
+                                text = GetString("Change Setting"),
+                                qaTag = getString(R.string.qa_conversation_settings_dialog_whitelist_confirm),
+                                color = LocalColors.current.danger,
+                                onClick = {
+                                    // we can't disable it ourselves, but we can take the user to the right settings instead
+                                    openBatteryOptimizationSettings()
+                                }
+                            ),
+                            DialogButtonData(
+                                text = GetString(getString(R.string.cancel)),
+                                qaTag = getString(R.string.qa_conversation_settings_dialog_whitelist_cancel),
+                            ),
+                        )
+                    )
+                }
+            }
+        }
+    }
+
     override fun onCreate(paramBundle: Bundle?) {
         super.onCreate(paramBundle)
+        // whitelist control
+        whiteListControl = findPreference<SwitchPreferenceCompat>("whitelist_background")!!
+        whiteListControl?.onPreferenceClickListener =
+            Preference.OnPreferenceClickListener {
+                // if already whitelisted, show toast
+                if(requireContext().isWhitelistedFromDoze()){
+                    showWhitelistDisableDialog = true
+                } else {
+                    openSystemBgWhitelist()
+                }
+                true
+            }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                prefs.pushEnabled.collect { enabled ->
+                    whiteListControl?.isVisible = !enabled
+                }
+            }
+        }
 
         // Set up FCM toggle
         val fcmKey = "pref_key_use_fcm"
@@ -36,6 +192,11 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
         fcmPreference.isChecked = prefs.pushEnabled.value
         fcmPreference.setOnPreferenceChangeListener { _: Preference, newValue: Any ->
                 prefs.setPushEnabled(newValue as Boolean)
+                // open whitelist dialog when setting to slow mode if first time
+                if(!newValue && !prefs.hasCheckedDozeWhitelist()){
+                    showWhitelistEnableDialog = true
+                    prefs.setHasCheckedDozeWhitelist(true)
+                }
                 true
             }
 
@@ -86,7 +247,7 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
                 true
             }
 
-        findPreference<Preference>(TextSecurePreferences.NOTIFICATION_PRIORITY_PREF)!!.onPreferenceClickListener =
+        findPreference<Preference>("system_notifications")!!.onPreferenceClickListener =
             Preference.OnPreferenceClickListener {
                 val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
                 intent.putExtra(
@@ -99,6 +260,33 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
             }
 
         initializeMessageVibrateSummary(findPreference<Preference>(TextSecurePreferences.VIBRATE_PREF) as SwitchPreferenceCompat?)
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        whiteListControl?.isChecked = requireContext().isWhitelistedFromDoze()
+    }
+
+    // Opens the system Battery Optimization settings
+    private fun openBatteryOptimizationSettings() {
+        try {
+            val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
+                data = Uri.parse("package:${requireContext().packageName}")
+            }
+
+            startActivity(intent)
+        } catch (e: ActivityNotFoundException) {
+            // Fallback: open the generic Battery Optimization settings screen
+            val fallbackIntent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(fallbackIntent)
+        }
+    }
+
+    private fun openSystemBgWhitelist(){
+        requireActivity().requestDozeWhitelist()
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
