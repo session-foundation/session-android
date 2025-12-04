@@ -4,10 +4,6 @@ import android.Manifest
 import android.content.Context
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.messages.control.CallMessage
@@ -15,16 +11,16 @@ import org.session.libsession.messaging.utilities.WebRtcUtils
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsignal.utilities.Log
 import org.session.protos.SessionProtos.CallMessage.Type.ANSWER
 import org.session.protos.SessionProtos.CallMessage.Type.END_CALL
 import org.session.protos.SessionProtos.CallMessage.Type.ICE_CANDIDATES
 import org.session.protos.SessionProtos.CallMessage.Type.OFFER
 import org.session.protos.SessionProtos.CallMessage.Type.PRE_OFFER
 import org.session.protos.SessionProtos.CallMessage.Type.PROVISIONAL_ANSWER
-import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.AuthAwareComponent
+import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.database.RecipientRepository
-import org.thoughtcrime.securesms.dependencies.ManagerScope
-import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.webrtc.IceCandidate
 import javax.inject.Inject
@@ -36,51 +32,48 @@ class CallMessageProcessor @Inject constructor(
     private val textSecurePreferences: TextSecurePreferences,
     private val storage: StorageProtocol,
     private val webRtcBridge: WebRtcCallBridge,
-    private val recipientRepository: Lazy<RecipientRepository>,
-    @ManagerScope scope: CoroutineScope
-) : OnAppStartupComponent {
+    private val recipientRepository: RecipientRepository,
+) : AuthAwareComponent {
 
     companion object {
         private const val TAG = "CallMessageProcessor"
         private const val VERY_EXPIRED_TIME = 15 * 60 * 1000L
     }
 
-    init {
-        scope.launch(IO) {
-            while (isActive) {
-                val nextMessage = WebRtcUtils.SIGNAL_QUEUE.receive()
-                Log.d("Loki", nextMessage.type?.name ?: "CALL MESSAGE RECEIVED")
-                val sender = nextMessage.sender ?: continue
-                val approvedContact = recipientRepository.get().getRecipient(Address.fromSerialized(sender))?.approved == true
-                Log.i("Loki", "Contact is approved?: $approvedContact")
-                if (!approvedContact && storage.getUserPublicKey() != sender) continue
+    override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
+        while (true) {
+            val nextMessage = WebRtcUtils.SIGNAL_QUEUE.receive()
+            Log.d("Loki", nextMessage.type?.name ?: "CALL MESSAGE RECEIVED")
+            val sender = nextMessage.sender ?: continue
+            val approvedContact = recipientRepository.getRecipient(Address.fromSerialized(sender))?.approved == true
+            Log.i("Loki", "Contact is approved?: $approvedContact")
+            if (!approvedContact && storage.getUserPublicKey() != sender) continue
 
-                // If the user has not enabled voice/video calls or if the user has not granted audio/microphone permissions
-                if (
-                    !textSecurePreferences.isCallNotificationsEnabled() ||
-                        !Permissions.hasAll(context, Manifest.permission.RECORD_AUDIO)
-                    ) {
-                    Log.d("Loki","Dropping call message if call notifications disabled")
-                    if (nextMessage.type != PRE_OFFER) continue
-                    val sentTimestamp = nextMessage.sentTimestamp ?: continue
-                    insertMissedCall(sender, sentTimestamp)
-                    continue
-                }
+            // If the user has not enabled voice/video calls or if the user has not granted audio/microphone permissions
+            if (
+                !textSecurePreferences.isCallNotificationsEnabled() ||
+                !Permissions.hasAll(context, Manifest.permission.RECORD_AUDIO)
+            ) {
+                Log.d("Loki","Dropping call message if call notifications disabled")
+                if (nextMessage.type != PRE_OFFER) continue
+                val sentTimestamp = nextMessage.sentTimestamp ?: continue
+                insertMissedCall(sender, sentTimestamp)
+                continue
+            }
 
-                val isVeryExpired = (nextMessage.sentTimestamp?:0) + VERY_EXPIRED_TIME < SnodeAPI.nowWithOffset
-                if (isVeryExpired) {
-                    Log.e("Loki", "Dropping very expired call message")
-                    continue
-                }
+            val isVeryExpired = (nextMessage.sentTimestamp?:0) + VERY_EXPIRED_TIME < SnodeAPI.nowWithOffset
+            if (isVeryExpired) {
+                Log.e("Loki", "Dropping very expired call message")
+                continue
+            }
 
-                when (nextMessage.type) {
-                    OFFER -> incomingCall(nextMessage)
-                    ANSWER -> incomingAnswer(nextMessage)
-                    END_CALL -> incomingHangup(nextMessage)
-                    ICE_CANDIDATES -> handleIceCandidates(nextMessage)
-                    PRE_OFFER -> incomingPreOffer(nextMessage)
-                    PROVISIONAL_ANSWER, null -> {} // TODO: if necessary
-                }
+            when (nextMessage.type) {
+                OFFER -> incomingCall(nextMessage)
+                ANSWER -> incomingAnswer(nextMessage)
+                END_CALL -> incomingHangup(nextMessage)
+                ICE_CANDIDATES -> handleIceCandidates(nextMessage)
+                PRE_OFFER -> incomingPreOffer(nextMessage)
+                PROVISIONAL_ANSWER, null -> {} // TODO: if necessary
             }
         }
     }
