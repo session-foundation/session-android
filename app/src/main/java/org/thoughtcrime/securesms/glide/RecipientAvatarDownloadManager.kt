@@ -14,7 +14,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import network.loki.messenger.libsession_util.util.GroupInfo
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
 import org.session.libsignal.utilities.AccountId
@@ -30,7 +29,6 @@ import javax.inject.Singleton
 @OptIn(FlowPreview::class)
 @Singleton
 class RecipientAvatarDownloadManager @Inject constructor(
-    private val prefs: TextSecurePreferences,
     private val configFactory: ConfigFactory,
     @ManagerScope scope: CoroutineScope,
     private val avatarDownloadManager: AvatarDownloadManager,

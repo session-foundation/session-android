@@ -1,19 +1,19 @@
 package org.session.libsession.messaging.messages.signal
 
-import network.loki.messenger.libsession_util.protocol.ProFeatures
+import network.loki.messenger.libsession_util.protocol.ProFeature
 import org.session.libsession.messaging.messages.visible.OpenGroupInvitation
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.Address
 
-data class OutgoingTextMessage(
+data class OutgoingTextMessage private constructor(
     val recipient: Address,
     val message: String?,
     val expiresInMillis: Long,
     val expireStartedAtMillis: Long,
     val sentTimestampMillis: Long,
     val isOpenGroupInvitation: Boolean,
-    val proFeatures: ProFeatures = ProFeatures.NONE,
+    val proFeatures: Set<ProFeature>
 ) {
     constructor(
         message: VisibleMessage,
@@ -27,9 +27,8 @@ data class OutgoingTextMessage(
         expireStartedAtMillis = expireStartedAtMillis,
         sentTimestampMillis = message.sentTimestamp!!,
         isOpenGroupInvitation = false,
+        proFeatures = message.proFeatures
     )
-
-    val proFeaturesRawValue: Long get() = proFeatures.rawValue
 
     companion object {
         fun fromOpenGroupInvitation(
@@ -38,7 +37,8 @@ data class OutgoingTextMessage(
             sentTimestampMillis: Long,
             expiresInMillis: Long,
             expireStartedAtMillis: Long,
-        ): OutgoingTextMessage? {
+            proFeatures: Set<ProFeature>,
+            ): OutgoingTextMessage? {
             return OutgoingTextMessage(
                 recipient = recipient,
                 message = UpdateMessageData.buildOpenGroupInvitation(
@@ -49,6 +49,7 @@ data class OutgoingTextMessage(
                 expireStartedAtMillis = expireStartedAtMillis,
                 sentTimestampMillis = sentTimestampMillis,
                 isOpenGroupInvitation = true,
+                proFeatures = proFeatures
             )
         }
     }

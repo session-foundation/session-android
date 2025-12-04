@@ -171,13 +171,16 @@ class HomeViewModel @Inject constructor(
                 // - subscription expired less than 30 days ago
                 val now = Instant.now()
 
+                var showExpiring: Boolean = false
+                var showExpired: Boolean = false
+
                 if(subscription.type is ProStatus.Active.Expiring
                     && !prefs.hasSeenProExpiring()
                 ){
                     val validUntil = subscription.type.validUntil
-                    val show = validUntil.isBefore(now.plus(7, ChronoUnit.DAYS))
-                    Log.d(DebugLogGroup.PRO_DATA.label, "Home: Pro active but not auto renewing (expiring). Valid until: $validUntil - Should show Expiring CTA? $show")
-                    if (show) {
+                    showExpiring = validUntil.isBefore(now.plus(7, ChronoUnit.DAYS))
+                    Log.d(DebugLogGroup.PRO_DATA.label, "Home: Pro active but not auto renewing (expiring). Valid until: $validUntil - Should show Expiring CTA? $showExpiring")
+                    if (showExpiring) {
                         _dialogsState.update { state ->
                             state.copy(
                                 proExpiringCTA = ProExpiringCTA(
@@ -190,24 +193,23 @@ class HomeViewModel @Inject constructor(
                 else if(subscription.type is ProStatus.Expired
                     && !prefs.hasSeenProExpired()) {
                     val validUntil = subscription.type.expiredAt
-                    val show = now.isBefore(validUntil.plus(30, ChronoUnit.DAYS))
+                    showExpired = now.isBefore(validUntil.plus(30, ChronoUnit.DAYS))
 
-                    Log.d(DebugLogGroup.PRO_DATA.label, "Home: Pro expired. Expired at: $validUntil - Should show Expired CTA? $show")
+                    Log.d(DebugLogGroup.PRO_DATA.label, "Home: Pro expired. Expired at: $validUntil - Should show Expired CTA? $showExpired")
 
                     // Check if now is within 30 days after expiry
-                    if (show) {
-
+                    if (showExpired) {
                         _dialogsState.update { state ->
                             state.copy(proExpiredCTA = true)
                         }
                     }
                 }
-            }
-        }
 
-        // check if we should display the donation CTA
-        if(donationManager.shouldShowDonationCTA()){
-            showDonationCTA()
+                // check if we should display the donation CTA - unless we have a pro CTA already
+                if(!showExpiring && !showExpired && donationManager.shouldShowDonationCTA()){
+                    showDonationCTA()
+                }
+            }
         }
     }
 
@@ -270,7 +272,8 @@ class HomeViewModel @Inject constructor(
     fun setPinned(address: Address, pinned: Boolean) {
         // check the pin limit before continuing
         val totalPins = storage.getTotalPinned()
-        val maxPins = proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().isPro)
+        val maxPins =
+            proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().isPro)
         if (pinned && totalPins >= maxPins) {
             // the user has reached the pin limit, show the CTA
             _dialogsState.update {

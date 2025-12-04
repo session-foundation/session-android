@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
-import network.loki.messenger.libsession_util.protocol.ProFeature
+import network.loki.messenger.libsession_util.protocol.ProProfileFeature
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.messaging.open_groups.GroupMemberRole
@@ -430,15 +430,13 @@ class RecipientRepository @Inject constructor(
 
         // Calculate the ProData for this recipient
         val proDataList = proDataContext?.proDataList
-        var proData = if (!proDataList.isNullOrEmpty()) {
-            proDataList.removeAll {
-                it.isExpired(now) || proDatabase.isRevoked(it.genIndexHash)
-            }
 
-            // The pro data that goes into the recipient, should show the one with the most information
-            proDataList.firstOrNull { it.showProBadge }?.let {
-                RecipientData.ProData(it.showProBadge)
-            }
+        proDataList?.removeAll {
+            it.isExpired(now) || proDatabase.isRevoked(it.genIndexHash)
+        }
+
+        var proData = if (!proDataList.isNullOrEmpty()) {
+            RecipientData.ProData(showProBadge = proDataList.any { it.showProBadge })
         } else {
             null
         }
@@ -583,11 +581,21 @@ class RecipientRepository @Inject constructor(
                     configFactory.withUserConfigs { configs ->
                         val pro = configs.userProfile.getProConfig()
 
-                        if (pro != null) {
+                        if (prefs.forceCurrentUserAsPro()) {
                             proDataContext?.addProData(
                                 RecipientSettings.ProData(
                                     showProBadge = configs.userProfile.getProFeatures().contains(
-                                        ProFeature.PRO_BADGE
+                                        ProProfileFeature.PRO_BADGE
+                                    ),
+                                    expiry = Instant.now().plusSeconds(3600),
+                                    genIndexHash = "a1b2c3d4",
+                                )
+                            )
+                        } else if (pro != null) {
+                            proDataContext?.addProData(
+                                RecipientSettings.ProData(
+                                    showProBadge = configs.userProfile.getProFeatures().contains(
+                                        ProProfileFeature.PRO_BADGE
                                     ),
                                     expiry = Instant.ofEpochMilli(pro.proProof.expiryMs),
                                     genIndexHash = pro.proProof.genIndexHashHex,
@@ -615,7 +623,7 @@ class RecipientRepository @Inject constructor(
                         if (convo?.proProofInfo != null && proDataContext != null) {
                             proDataContext.addProData(
                                 RecipientSettings.ProData(
-                                    showProBadge = contact.proFeatures.contains(ProFeature.PRO_BADGE),
+                                    showProBadge = contact.proFeatures.contains(ProProfileFeature.PRO_BADGE),
                                     expiry = convo.proProofInfo!!.expiry,
                                     genIndexHash = convo.proProofInfo!!.genIndexHash.data.toHexString(),
                                 )
@@ -682,7 +690,7 @@ class RecipientRepository @Inject constructor(
                 if (convo?.proProofInfo != null && proDataContext != null) {
                     proDataContext.addProData(
                         RecipientSettings.ProData(
-                            showProBadge = contact.proFeatures.contains(ProFeature.PRO_BADGE),
+                            showProBadge = contact.proFeatures.contains(ProProfileFeature.PRO_BADGE),
                             expiry = convo.proProofInfo!!.expiry,
                             genIndexHash = convo.proProofInfo!!.genIndexHash.data.toHexString(),
                         )

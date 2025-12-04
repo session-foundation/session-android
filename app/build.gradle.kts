@@ -12,7 +12,6 @@ plugins {
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.dependency.analysis)
     alias(libs.plugins.google.services)
-    alias(libs.plugins.protobuf.compiler)
 
     id("generate-ip-country-data")
     id("rename-apk")
@@ -26,8 +25,8 @@ configurations.configureEach {
     exclude(module = "commons-logging")
 }
 
-val canonicalVersionCode = 433
-val canonicalVersionName = "1.30.0"
+val canonicalVersionCode = 434
+val canonicalVersionName = "1.30.1"
 
 val postFixSize = 10
 val abiPostFix = mapOf(
@@ -83,23 +82,6 @@ fun VariantDimension.setAuthorityPostfix(postfix: String) {
 kotlin {
     compilerOptions {
         jvmToolchain(21)
-    }
-}
-
-protobuf {
-    protoc {
-        artifact = libs.protoc.get().toString()
-    }
-
-    plugins {
-        generateProtoTasks {
-            all().forEach {
-                it.builtins {
-                    create("java") {
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -394,7 +376,6 @@ dependencies {
     implementation(libs.androidx.sqlite.ktx)
     implementation(libs.sqlcipher.android)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.protobuf.java)
     implementation(libs.jackson.databind)
     implementation(libs.okhttp)
     implementation(libs.phrase)

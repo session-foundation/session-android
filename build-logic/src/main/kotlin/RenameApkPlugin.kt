@@ -20,6 +20,10 @@ class RenameApkPlugin : Plugin<Project> {
         project.plugins.withId("com.android.application") {
             val androidComponents = project.extensions.getByType(ApplicationAndroidComponentsExtension::class.java)
             androidComponents.onVariants { variant ->
+                if (variant.buildType == "debug") {
+                    return@onVariants
+                }
+
                 val taskProvider = project.tasks.register(
                     "rename${variant.name.capitalized()}Apk",
                     RenameApkTask::class.java,

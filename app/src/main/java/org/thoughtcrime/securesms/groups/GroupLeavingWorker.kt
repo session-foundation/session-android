@@ -12,9 +12,7 @@ import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
 import org.session.libsession.messaging.groups.GroupScope
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.notifications.TokenFetcher
@@ -24,13 +22,12 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.waitUntilGroupConfigsPushed
 import org.session.libsignal.exceptions.NonRetryableException
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMessage
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.session.protos.SessionProtos
+import org.session.protos.SessionProtos.GroupUpdateMessage
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.notifications.PushRegistryV2
 
 @HiltWorker
@@ -102,7 +99,7 @@ class GroupLeavingWorker @AssistedInject constructor(
                         messageSender.send(
                             GroupUpdated(
                                 GroupUpdateMessage.newBuilder()
-                                    .setMemberLeftNotificationMessage(DataMessage.GroupUpdateMemberLeftNotificationMessage.getDefaultInstance())
+                                    .setMemberLeftNotificationMessage(SessionProtos.GroupUpdateMemberLeftNotificationMessage.getDefaultInstance())
                                     .build()
                             ),
                             address,
@@ -114,7 +111,7 @@ class GroupLeavingWorker @AssistedInject constructor(
                         messageSender.send(
                             GroupUpdated(
                                 GroupUpdateMessage.newBuilder()
-                                    .setMemberLeftMessage(DataMessage.GroupUpdateMemberLeftMessage.getDefaultInstance())
+                                    .setMemberLeftMessage(SessionProtos.GroupUpdateMemberLeftMessage.getDefaultInstance())
                                     .build()
                             ),
                             address,

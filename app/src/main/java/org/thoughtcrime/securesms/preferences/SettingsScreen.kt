@@ -1011,7 +1011,9 @@ fun AnimatedProCTA(
 
                 // main message
                 Text(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    modifier = Modifier
+                        .qaTag(R.string.qa_cta_body)
+                        .align(Alignment.CenterHorizontally),
                     text = stringResource(R.string.proAnimatedDisplayPicture),
                     textAlign = TextAlign.Center,
                     style = LocalType.current.base.copy(

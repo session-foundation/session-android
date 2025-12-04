@@ -88,12 +88,12 @@ fun InviteContacts(
     onToggleFooter: () -> Unit,
     onCloseFooter: () -> Unit,
 ) {
-    val colors = LocalColors.current
+
     val trayItems = listOf(
         CollapsibleFooterItemData(
             label = GetString(LocalResources.current.getString(R.string.membersInvite)),
             buttonLabel = GetString(LocalResources.current.getString(R.string.membersInviteTitle)),
-            buttonColor = colors.accent,
+            isDanger = false,
             onClick = { onDoneClicked() }
         )
     )
