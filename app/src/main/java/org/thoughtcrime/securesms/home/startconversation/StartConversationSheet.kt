@@ -38,12 +38,12 @@ import org.thoughtcrime.securesms.home.startconversation.invitefriend.InviteFrie
 import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessage
 import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessageViewModel
 import org.thoughtcrime.securesms.home.startconversation.newmessage.State
-import org.thoughtcrime.securesms.openUrl
 import org.thoughtcrime.securesms.ui.NavigationAction
 import org.thoughtcrime.securesms.ui.ObserveAsEvents
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
+import org.thoughtcrime.securesms.ui.handleIntent
 import org.thoughtcrime.securesms.ui.horizontalSlideComposable
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 
@@ -126,7 +126,7 @@ fun StartConversationNavHost(
             NavigationAction.NavigateUp -> navController.navigateUp()
 
             is NavigationAction.NavigateToIntent -> {
-                navController.context.startActivity(action.intent)
+                navController.handleIntent(action.intent)
             }
 
             else -> {}
