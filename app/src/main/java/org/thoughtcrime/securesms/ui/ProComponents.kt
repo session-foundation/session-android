@@ -38,7 +38,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -77,9 +76,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideSubcomposition
-import com.bumptech.glide.integration.compose.RequestState
 import com.squareup.phrase.Phrase
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
@@ -90,8 +89,8 @@ import org.session.libsession.utilities.StringSubstitutionConstants.LIMIT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsNavHost
-import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.ProStatus
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
@@ -103,7 +102,6 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
-import org.thoughtcrime.securesms.util.AvatarBadge
 import org.thoughtcrime.securesms.util.AvatarUIData
 
 
@@ -310,7 +308,10 @@ fun SessionProCTA(
                                 // features
                                 if (features.isNotEmpty()) {
                                     features.forEachIndexed { index, feature ->
-                                        ProCTAFeature(data = feature)
+                                        ProCTAFeature(
+                                            modifier = Modifier.qaTag(stringResource(R.string.qa_cta_feature) + index.toString()),
+                                            data = feature
+                                        )
                                         if (index < features.size - 1) {
                                             Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
                                         }
@@ -330,7 +331,9 @@ fun SessionProCTA(
                                 ) {
                                     positiveButtonText?.let {
                                         AccentFillButtonRect(
-                                            modifier = Modifier.then(
+                                            modifier = Modifier
+                                                .qaTag(R.string.qa_cta_button_positive)
+                                                .then(
                                                 if (negativeButtonText != null)
                                                     Modifier.weight(1f)
                                                 else Modifier
@@ -342,7 +345,9 @@ fun SessionProCTA(
 
                                     negativeButtonText?.let {
                                         TertiaryFillButtonRect(
-                                            modifier = Modifier.then(
+                                            modifier = Modifier
+                                                .qaTag(R.string.qa_cta_button_negative)
+                                                .then(
                                                 if (positiveButtonText != null)
                                                     Modifier.weight(1f)
                                                 else Modifier
@@ -443,7 +448,9 @@ fun SimpleSessionProCTA(
         badgeAtStart = badgeAtStart,
         textContent = {
             Text(
-                modifier = Modifier.align(Alignment.CenterHorizontally),
+                modifier = Modifier
+                    .qaTag(R.string.qa_cta_body)
+                    .align(Alignment.CenterHorizontally),
                 text = text,
                 textAlign = TextAlign.Center,
                 style = LocalType.current.base.copy(
@@ -464,12 +471,14 @@ fun SimpleSessionProCTA(
 fun CTAImage(
     @DrawableRes heroImage: Int,
 ){
-    Image(
+    AsyncImage(
         modifier = Modifier
             .fillMaxWidth()
             .background(LocalColors.current.accent),
         contentScale = ContentScale.FillWidth,
-        painter = painterResource(id = heroImage),
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(heroImage)
+            .build(),
         contentDescription = null,
     )
 }
@@ -495,7 +504,9 @@ fun AnimatedSessionProCTA(
         modifier = modifier,
         textContent = {
             Text(
-                modifier = Modifier.align(Alignment.CenterHorizontally),
+                modifier = Modifier
+                    .qaTag(R.string.qa_cta_body)
+                    .align(Alignment.CenterHorizontally),
                 text = text,
                 textAlign = TextAlign.Center,
                 style = LocalType.current.base.copy(
@@ -530,40 +541,33 @@ fun CTAAnimatedImages(
     @DrawableRes heroImageAnimatedFg: Int,
     disabled: Boolean = false
 ){
-    Image(
+    AsyncImage(
         modifier = Modifier
             .fillMaxWidth()
             .background(
                 if(disabled) LocalColors.current.disabled
                 else LocalColors.current.accent
             ),
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(heroImageBg)
+            .build(),
         contentScale = ContentScale.FillWidth,
-        painter = painterResource(id = heroImageBg),
         contentDescription = null,
     )
 
-    GlideSubcomposition(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(IntrinsicSize.Min),
-        model = heroImageAnimatedFg,
-    ){
-        when (state) {
-            is RequestState.Success -> {
-                Image(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentScale = ContentScale.FillWidth,
-                    painter = painter,
-                    colorFilter = if(disabled)
-                        ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
-                    else null,
-                    contentDescription = null,
-                )
-            }
-
-            else -> {}
+    AsyncImage(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(heroImageAnimatedFg)
+            .build(),
+        contentDescription = null,
+        contentScale = ContentScale.FillWidth,
+        modifier = Modifier.fillMaxWidth(),
+        colorFilter = if (disabled) {
+            ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
+        } else {
+            null
         }
-    }
+    )
 }
 
 // Reusable generic Pro CTA
@@ -702,7 +706,7 @@ fun PinProCTA(
             .format()
             .toString()
     }
-    
+
     SimpleSessionProCTA(
         modifier = modifier,
         heroImage = R.drawable.cta_hero_pins,

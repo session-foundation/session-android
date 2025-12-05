@@ -20,7 +20,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.Json
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.protocol.ProFeatures
+import network.loki.messenger.libsession_util.protocol.ProFeature
+import network.loki.messenger.libsession_util.protocol.ProMessageFeature
+import network.loki.messenger.libsession_util.protocol.ProProfileFeature
+import network.loki.messenger.libsession_util.util.toBitSet
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.file_server.FileServer
 import org.session.libsession.utilities.TextSecurePreferences.Companion.AUTOPLAY_AUDIO_MESSAGES
@@ -34,6 +37,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_SH
 import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONMENT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FORCED_SHORT_TTL
+import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_CHECKED_DOZE_WHITELIST
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_COPIED_DONATION_URL
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_DONATED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_MESSAGE_REQUESTS
@@ -60,7 +64,8 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOW_DON
 import org.session.libsession.utilities.TextSecurePreferences.Companion._events
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
-import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.toProMessageFeatures
+import org.thoughtcrime.securesms.pro.toProProfileFeatures
 import java.io.IOException
 import java.time.ZonedDateTime
 import java.util.Arrays
@@ -110,7 +115,6 @@ interface TextSecurePreferences {
     fun setHasSeenGIFMetaDataWarning()
     fun isGifSearchInGridLayout(): Boolean
     fun setIsGifSearchInGridLayout(isGrid: Boolean)
-    fun getNotificationPriority(): Int
     fun getMessageBodyTextSize(): Int
     fun setPreferredCameraDirection(value: CameraSelector)
     fun getPreferredCameraDirection(): CameraSelector
@@ -215,8 +219,8 @@ interface TextSecurePreferences {
     fun forcedShortTTL(): Boolean
     fun setForcedShortTTL(value: Boolean)
 
-    fun  getDebugMessageFeatures(): ProFeatures
-    fun  setDebugMessageFeatures(features: ProFeatures)
+    fun  getDebugMessageFeatures(): Set<ProFeature>
+    fun  setDebugMessageFeatures(features: Set<ProFeature>)
 
     fun getDebugSubscriptionType(): DebugMenuViewModel.DebugSubscriptionStatus?
     fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?)
@@ -230,6 +234,8 @@ interface TextSecurePreferences {
     fun setSubscriptionProvider(provider: String)
     fun getSubscriptionProvider(): String?
 
+    fun hasCheckedDozeWhitelist(): Boolean
+    fun setHasCheckedDozeWhitelist(hasChecked: Boolean)
     fun hasDonated(): Boolean
     fun setHasDonated(hasDonated: Boolean)
     fun hasCopiedDonationURL(): Boolean
@@ -307,7 +313,6 @@ interface TextSecurePreferences {
         const val LOCAL_REGISTRATION_ID_PREF = "pref_local_registration_id"
         const val REPEAT_ALERTS_PREF = "pref_repeat_alerts"
         const val NOTIFICATION_PRIVACY_PREF = "pref_notification_privacy"
-        const val NOTIFICATION_PRIORITY_PREF = "pref_notification_priority"
         const val MEDIA_DOWNLOAD_MOBILE_PREF = "pref_media_download_mobile"
         const val MEDIA_DOWNLOAD_WIFI_PREF = "pref_media_download_wifi"
         const val MEDIA_DOWNLOAD_ROAMING_PREF = "pref_media_download_roaming"
@@ -408,7 +413,8 @@ interface TextSecurePreferences {
 
         const val IN_APP_REVIEW_STATE = "in_app_review_state"
 
-        const val DEBUG_MESSAGE_FEATURES = "debug_message_features_long"
+        const val DEBUG_PRO_MESSAGE_FEATURES = "debug_pro_message_features"
+        const val DEBUG_PRO_PROFILE_FEATURES = "debug_pro_profile_features"
         const val DEBUG_SUBSCRIPTION_STATUS = "debug_subscription_status"
         const val DEBUG_PRO_PLAN_STATUS = "debug_pro_plan_status"
         const val DEBUG_FORCE_NO_BILLING = "debug_pro_has_billing"
@@ -416,6 +422,8 @@ interface TextSecurePreferences {
 
         const val SUBSCRIPTION_PROVIDER = "session_subscription_provider"
         const val DEBUG_AVATAR_REUPLOAD = "debug_avatar_reupload"
+
+        const val HAS_CHECKED_DOZE_WHITELIST = "has_checked_doze_whitelist"
 
         // Donation
         const val HAS_DONATED = "has_donated"
@@ -1193,11 +1201,6 @@ class AppTextSecurePreferences @Inject constructor(
         setBooleanPreference(TextSecurePreferences.GIF_GRID_LAYOUT, isGrid)
     }
 
-    override fun getNotificationPriority(): Int {
-        return getStringPreference(
-            TextSecurePreferences.NOTIFICATION_PRIORITY_PREF, NotificationCompat.PRIORITY_HIGH.toString())!!.toInt()
-    }
-
     override fun getMessageBodyTextSize(): Int {
         return getStringPreference(TextSecurePreferences.MESSAGE_BODY_TEXT_SIZE_PREF, "16")!!.toInt()
     }
@@ -1556,7 +1559,7 @@ class AppTextSecurePreferences @Inject constructor(
     }
 
     override fun forcePostPro(): Boolean {
-        return getBooleanPreference(SET_FORCE_POST_PRO, false)
+        return postProLaunchState.value
     }
 
     override fun setForcePostPro(postPro: Boolean) {
@@ -1750,12 +1753,16 @@ class AppTextSecurePreferences @Inject constructor(
                 setStringPreference(TextSecurePreferences.DEPRECATING_START_TIME_OVERRIDE, value.toString())
             }
         }
-    override fun getDebugMessageFeatures(): ProFeatures {
-        return ProFeatures(getLongPreference( TextSecurePreferences.DEBUG_MESSAGE_FEATURES, 0))
+    override fun getDebugMessageFeatures(): Set<ProFeature> {
+        return buildSet {
+            getLongPreference(TextSecurePreferences.DEBUG_PRO_MESSAGE_FEATURES, 0L).toProMessageFeatures(this)
+            getLongPreference(TextSecurePreferences.DEBUG_PRO_PROFILE_FEATURES, 0L).toProProfileFeatures(this)
+        }
     }
 
-    override fun setDebugMessageFeatures(features: ProFeatures) {
-        setLongPreference(TextSecurePreferences.DEBUG_MESSAGE_FEATURES, features.rawValue)
+    override fun setDebugMessageFeatures(features: Set<ProFeature>) {
+        setLongPreference(TextSecurePreferences.DEBUG_PRO_MESSAGE_FEATURES, features.filterIsInstance<ProMessageFeature>().toBitSet().rawValue)
+        setLongPreference(TextSecurePreferences.DEBUG_PRO_PROFILE_FEATURES, features.filterIsInstance<ProProfileFeature>().toBitSet().rawValue)
     }
 
     override fun getDebugSubscriptionType(): DebugMenuViewModel.DebugSubscriptionStatus? {
@@ -1829,6 +1836,14 @@ class AppTextSecurePreferences @Inject constructor(
                 json.encodeToString(it)
             })
         }
+
+    override fun hasCheckedDozeWhitelist(): Boolean {
+        return getBooleanPreference(HAS_CHECKED_DOZE_WHITELIST, false)
+    }
+
+    override fun setHasCheckedDozeWhitelist(hasChecked: Boolean) {
+        setBooleanPreference(HAS_CHECKED_DOZE_WHITELIST, hasChecked)
+    }
 
     override fun hasDonated(): Boolean {
         return getBooleanPreference(HAS_DONATED, false)

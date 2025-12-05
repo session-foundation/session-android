@@ -126,6 +126,7 @@
     <string name="qa_conversation_settings_hide_nts">hide-nts-menu-option</string>
     <string name="qa_conversation_settings_copy_community_url">copy-community-url-menu-option</string>
     <string name="qa_conversation_settings_leave_community">leave-community-menu-option</string>
+    <string name="qa_conversation_settings_manage_admins">manage-admins-menu-option</string>
     <string name="qa_conversation_settings_manage_members">manage-members-menu-option</string>
     <string name="qa_conversation_settings_group_members">group-members-menu-option</string>
     <string name="qa_conversation_settings_invite_contacts">invite-contacts-menu-option</string>
@@ -135,6 +136,8 @@
     <string name="qa_conversation_settings_dialog_hide_nts_cancel">hide-nts-cancel-button</string>
     <string name="qa_conversation_settings_dialog_show_nts_confirm">show-nts-confirm-button</string>
     <string name="qa_conversation_settings_dialog_show_nts_cancel">show-nts-cancel-button</string>
+    <string name="qa_conversation_settings_dialog_whitelist_confirm">whitelist-confirm-button</string>
+    <string name="qa_conversation_settings_dialog_whitelist_cancel">whitelist-cancel-button</string>
     <string name="qa_conversation_settings_dialog_block_confirm">block-user-confirm-button</string>
     <string name="qa_conversation_settings_dialog_block_cancel">block-user-cancel-button</string>
     <string name="qa_conversation_settings_dialog_unblock_confirm">unblock-user-confirm-button</string>
@@ -290,6 +293,12 @@
     <string name="qa_action_item_subtitle">action-item-subtitle</string>
     <string name="qa_action_item_icon">action-item-icon</string>
     <string name="qa_conversations_blocked_contact_item">qa-blocked-contacts-settings-item</string>
+
+    <!-- CTAs -->
+    <string name="qa_cta_body">cta-body</string>
+    <string name="qa_cta_feature">cta-feature-</string>
+    <string name="qa_cta_button_positive">cta-button-positive</string>
+    <string name="qa_cta_button_negative">cta-button-negative</string>
 
     <string name="qa_collapsing_footer_action">qa-collapsing-footer-action</string>
 

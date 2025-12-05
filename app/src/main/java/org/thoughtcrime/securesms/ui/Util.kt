@@ -1,10 +1,16 @@
 package org.thoughtcrime.securesms.ui
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.Intent
+import android.net.Uri
+import android.os.PowerManager
+import android.provider.Settings
 import android.view.View
 import android.view.ViewTreeObserver
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.core.FiniteAnimationSpec
@@ -24,6 +30,8 @@ import com.squareup.phrase.Phrase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import network.loki.messenger.R
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ui.theme.SessionMaterialTheme
 
 fun Activity.setComposeContent(content: @Composable () -> Unit) {
@@ -35,6 +43,23 @@ fun Activity.setComposeContent(content: @Composable () -> Unit) {
 fun Fragment.createThemedComposeView(content: @Composable () -> Unit): ComposeView = requireContext().createThemedComposeView(content)
 fun Context.createThemedComposeView(content: @Composable () -> Unit): ComposeView = ComposeView(this).apply {
     setThemedContent(content)
+}
+
+// Method to actually open a given URL via an Intent that will use the default browser
+/**
+ * Returns false if the phone was unable to open the link
+ * Returns true otherwise
+ */
+fun Context.openUrl(url: String): Boolean {
+    try {
+        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        return true
+    } catch (e: Exception) {
+        Toast.makeText(this, R.string.browserNotFound, Toast.LENGTH_LONG).show()
+        Log.w("Dialog", "No browser found to open link", e)
+    }
+
+    return false
 }
 
 // Extension method to use the Phrase library to substitute strings & return a CharSequence.
@@ -65,6 +90,34 @@ fun Context.findActivity(): Activity {
         context = context.baseContext
     }
     throw IllegalStateException("Permissions should be called in the context of an Activity")
+}
+
+fun Context.isWhitelistedFromDoze(): Boolean {
+    val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+    return pm.isIgnoringBatteryOptimizations(packageName)
+}
+
+fun Activity.requestDozeWhitelist() {
+    if (isWhitelistedFromDoze()) return
+
+    val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+        data = Uri.parse("package:$packageName")
+    }
+    try {
+        startActivity(intent) // shows the system dialog for this specific app
+    } catch (_: ActivityNotFoundException) {
+        // Fallback to the general settings list
+        try {
+            val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+            startActivity(intent)
+        } catch (_: ActivityNotFoundException) {
+            try {
+                startActivity(Intent(Settings.ACTION_SETTINGS))
+            } catch (_: ActivityNotFoundException) {
+                Toast.makeText(this, R.string.errorGeneric, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
 }
 
 inline fun <T : View> T.afterMeasured(crossinline block: T.() -> Unit) {

@@ -1,15 +1,10 @@
 package org.thoughtcrime.securesms.attachments
 
 import android.app.Application
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.encrypt.Attachments
 import network.loki.messenger.libsession_util.util.Bytes
@@ -21,10 +16,9 @@ import org.session.libsession.utilities.Util
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.auth.LoginStateRepository
+import org.thoughtcrime.securesms.auth.AuthAwareComponent
+import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
-import org.thoughtcrime.securesms.dependencies.ManagerScope
-import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.util.castAwayType
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -40,33 +34,22 @@ class AvatarUploadManager @Inject constructor(
     private val application: Application,
     private val configFactory: ConfigFactoryProtocol,
     private val prefs: TextSecurePreferences,
-    @ManagerScope scope: CoroutineScope,
     private val localEncryptedFileOutputStreamFactory: LocalEncryptedFileOutputStream.Factory,
     private val fileServerApi: FileServerApi,
     private val attachmentProcessor: AttachmentProcessor,
-    loginStateRepository: LoginStateRepository,
-) : OnAppStartupComponent {
-    init {
-        // Manage scheduling/cancellation of the AvatarReuploadWorker based on login state
-        scope.launch {
-            combine(
-                loginStateRepository.loggedInState
-                    .map { it != null }
-                    .distinctUntilChanged(),
-                TextSecurePreferences._events.filter { it == TextSecurePreferences.DEBUG_AVATAR_REUPLOAD }
-                    .castAwayType()
-                    .onStart { emit(Unit) }
-            ) { loggedIn, _ -> loggedIn }
-                .collectLatest { loggedIn ->
-                    if (loggedIn) {
-                        AvatarReuploadWorker.schedule(application, prefs)
-                    } else {
-                        AvatarReuploadWorker.cancel(application)
-                    }
-                }
-        }
+) : AuthAwareComponent {
+    override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
+        TextSecurePreferences._events.filter { it == TextSecurePreferences.DEBUG_AVATAR_REUPLOAD }
+            .castAwayType()
+            .onStart { emit(Unit) }
+            .collectLatest {
+                AvatarReuploadWorker.schedule(application, prefs)
+            }
     }
 
+    override fun onLoggedOut() {
+        AvatarReuploadWorker.cancel(application)
+    }
 
     /**
      * Uploads the given avatar image data to the file server, updates the user profile to point to
@@ -121,11 +104,7 @@ class AvatarUploadManager @Inject constructor(
             val result = it.userProfile.getPic()
             val userPic = remoteFile.toUserPic()
             if (isReupload) {
-                it.userProfile.setPic(userPic)
-
-                // TODO: We'll need to call this when the libsession re-enables the re-uploaded
-                // avatar logic.
-                // it.userProfile.setReuploadedPic(userPic)
+                it.userProfile.setReuploadedPic(userPic)
             } else {
                 it.userProfile.setPic(userPic)
             }

@@ -978,6 +978,7 @@
     <string name="proAllSetDescription">{app_pro} erişiminiz güncəllənib! {pro} abunəliyiniz <b>{date}</b> tarixində avtomatik yeniləndiyi zaman ödəniş haqqı alınacaq.</string>
     <string name="proAlreadyPurchased">Artıq yüksəltdiniz</string>
     <string name="proAnimatedDisplayPicture">Getdik və ekran şəkliniz üçün GIF-lər və animasiyalı WebP təsvirləri yükləyin!</string>
+    <string name="proAnimatedDisplayPictureCallToActionDescription">{app_pro} Beta ilə animasiyalı ekran şəkilləri əldə edin və premium özəlliklərin kilidini açın</string>
     <string name="proAnimatedDisplayPictureFeature">Animasiyalı profil şəkli</string>
     <string name="proAnimatedDisplayPictureModalDescription">istifadəçiləri GIF-ləri yükləyə bilər</string>
     <string name="proAnimatedDisplayPictures">Animasiyalı ekran şəkilləri</string>
@@ -996,6 +997,9 @@
     <string name="proBilledAnnually">{price} - illik haqq</string>
     <string name="proBilledMonthly">{price} - aylıq haqq</string>
     <string name="proBilledQuarterly">{price} - rüblük haqq</string>
+    <string name="proCallToActionLongerMessages">Daha uzun mesajlar göndərmək istəyirsiniz?\n{app_pro} Beta ilə daha çox mesaj göndərin və premim özəlliklərin kilidini açın</string>
+    <string name="proCallToActionPinnedConversations">Daha çoxunu sancmaq istəyirsiniz?\n{app_pro} Beta ilə söhbətlərinizi təşkil edin və premium özəlliklərin kilidini açın</string>
+    <string name="proCallToActionPinnedConversationsMoreThan">{limit} danışıqdan çoxunu sancmaq istəyirsiniz?\n{app_pro} Beta ilə söhbətlərinizi təşkil edin və premium özəlliklərin kilidini açın</string>
     <string name="proCancellation">Ləğv etmə</string>
     <string name="proCancellationOptions">{pro} erişiminizi ləğv etməyin iki yolu var:</string>
     <string name="proDiscountTooltip">Tam {app_pro} qiymətinə sahib {pro} erişiminiz üçün artıq {percent}% endirim var.</string>
@@ -1072,6 +1076,7 @@
     <string name="proTosPrivacy">Güncəlləyərək, {app_pro} <b>Xidmət Şərtləri</b> {icon} və <b>Məxfilik Siyasəti</b> {icon} ilə razılaşırsınız</string>
     <string name="proUnlimitedPins">Limitsiz sancma</string>
     <string name="proUnlimitedPinsDescription">Limitsiz sancılmış danışıqla bütün söhbətlərinizi təşkil edin.</string>
+    <string name="proUserProfileModalCallToAction">{app_name} tətbiqindən daha çox faydalanmaq istəyirsiniz?\nDaha güclü mesajlaşma təcrübəsi üçün {app_pro} Betaya yüksəldin.</string>
     <string name="processingRefundRequest">{platform} geri ödəmə tələbinizi emal edir</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Ekran şəkli</string>

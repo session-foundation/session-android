@@ -6,8 +6,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.core.JsonParseException
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsignal.messages.SignalServiceGroup
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateInfoChangeMessage
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMemberChangeMessage.Type
+import org.session.protos.SessionProtos.GroupUpdateInfoChangeMessage
+import org.session.protos.SessionProtos.GroupUpdateMemberChangeMessage.Type
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import java.util.Collections
@@ -132,7 +132,7 @@ class UpdateMessageData () {
                         GroupUpdateInfoChangeMessage.Type.NAME -> Kind.GroupNameChange(infoChange.updatedName)
                         GroupUpdateInfoChangeMessage.Type.AVATAR -> Kind.GroupAvatarUpdated
                         GroupUpdateInfoChangeMessage.Type.DISAPPEARING_MESSAGES -> Kind.GroupExpirationUpdated(
-                            updatedExpiration = infoChange.updatedExpirationSeconds.toLong(),
+                            updatedExpiration = infoChange.updatedExpiration.toLong(),
                             updatingAdmin = groupUpdated.sender.orEmpty()
                         )
                         else -> null
