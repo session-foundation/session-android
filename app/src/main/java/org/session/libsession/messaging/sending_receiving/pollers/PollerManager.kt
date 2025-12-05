@@ -1,20 +1,11 @@
 package org.session.libsession.messaging.sending_receiving.pollers
 
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import org.thoughtcrime.securesms.auth.LoginStateRepository
-import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
+import org.thoughtcrime.securesms.auth.AuthAwareComponent
+import org.thoughtcrime.securesms.auth.LoggedInState
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -26,27 +17,15 @@ import javax.inject.Singleton
  */
 @Singleton
 class PollerManager @Inject constructor(
-    provider: Poller.Factory,
-    loginStateRepository: LoginStateRepository,
-) : OnAppStartupComponent {
-    @OptIn(DelicateCoroutinesApi::class)
-    private val currentPoller: StateFlow<Poller?> = channelFlow {
-        loginStateRepository
-            .loggedInState
-            .map { it != null }
-            .distinctUntilChanged()
-            .collectLatest { loggedIn ->
-                if (loggedIn) {
-                    coroutineScope {
-                        val poller = provider.create(this)
-                        send(poller)
-                        awaitCancellation()
-                    }
-                } else {
-                    send(null)
-                }
-            }
-    }.stateIn(GlobalScope, SharingStarted.Eagerly, null)
+    private val provider: Poller.Factory,
+) : AuthAwareComponent {
+    private val currentPoller = MutableStateFlow<Poller?>(null)
+
+    override suspend fun doWhileLoggedIn(loggedInState: LoggedInState): Unit = coroutineScope {
+        val poller = provider.create(this)
+        currentPoller.value = poller
+    }
+
 
     val isPolling: Boolean
         get() = currentPoller.value?.pollState?.value == Poller.PollState.Polling

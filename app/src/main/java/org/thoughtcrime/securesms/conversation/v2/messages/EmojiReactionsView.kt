@@ -19,6 +19,7 @@ import com.google.android.flexbox.JustifyContent
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewEmojiReactionsBinding
 import org.session.libsession.utilities.ThemeUtil
+import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.components.emoji.EmojiImageView
 import org.thoughtcrime.securesms.components.emoji.EmojiUtil
@@ -68,7 +69,11 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
         binding.layoutEmojiContainer.removeAllViews()
     }
 
-    fun setReactions(messageId: MessageId, records: List<ReactionRecord>, outgoing: Boolean, delegate: VisibleMessageViewDelegate?) {
+    fun setReactions(messageId: MessageId,
+                     threadRecipient: Recipient,
+                     records: List<ReactionRecord>,
+                     outgoing: Boolean,
+                     delegate: VisibleMessageViewDelegate?) {
         this.delegate = delegate
         if (records == this.records) {
             return
@@ -81,7 +86,7 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
             extended = false
         }
         this.messageId = messageId
-        displayReactions(messageId, if (extended) Int.MAX_VALUE else DEFAULT_THRESHOLD)
+        displayReactions(messageId, threadRecipient, if (extended) Int.MAX_VALUE else DEFAULT_THRESHOLD)
     }
 
     override fun onTouch(v: View, event: MotionEvent): Boolean {
@@ -94,12 +99,18 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
         return true
     }
 
-    private fun displayReactions(messageId: MessageId, threshold: Int) {
+    private fun displayReactions(messageId: MessageId, threadRecipient: Recipient, threshold: Int) {
         val userPublicKey = (context.applicationContext as ApplicationContext).loginStateRepository
             .get()
             .getLocalNumber()
 
-        val reactions = buildSortedReactionsList(messageId, records!!, userPublicKey, threshold)
+        val reactions = buildSortedReactionsList(
+            messageId = messageId,
+            threadRecipient = threadRecipient,
+            records = records!!,
+            userPublicKey = userPublicKey,
+            threshold = threshold
+        )
         binding.layoutEmojiContainer.removeAllViews()
         val overflowContainer = LinearLayout(context)
         overflowContainer.orientation = LinearLayout.HORIZONTAL
@@ -116,7 +127,7 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
                 val pill = buildPill(context, this, reaction, true)
                 pill.setOnClickListener { v: View? ->
                     extended = true
-                    displayReactions(messageId, Int.MAX_VALUE)
+                    displayReactions(messageId, threadRecipient, Int.MAX_VALUE)
                 }
                 pill.findViewById<View>(R.id.reactions_pill_count).visibility = GONE
                 pill.findViewById<View>(R.id.reactions_pill_spacer).visibility = GONE
@@ -148,7 +159,7 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
             for (id in binding.groupShowLess.referencedIds) {
                 findViewById<View>(id).setOnClickListener { view: View? ->
                     extended = false
-                    displayReactions(messageId, DEFAULT_THRESHOLD)
+                    displayReactions(messageId, threadRecipient, DEFAULT_THRESHOLD)
                 }
             }
         } else {
@@ -158,11 +169,14 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
 
     private fun buildSortedReactionsList(
         messageId: MessageId,
+        threadRecipient: Recipient,
         records: List<ReactionRecord>,
         userPublicKey: String?,
         threshold: Int
     ): List<Reaction> {
         val reactions = arrayListOf<Reaction>()
+
+        val accumulateReactionCount = !threadRecipient.isCommunityRecipient
 
         // First go through reaction records and create a sorted list of reaction data based on emoji
         for (record in records) {
@@ -171,6 +185,7 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
             if (index >= 0) {
                 reactions[index].update(
                     count = record.count,
+                    accumulateCount = accumulateReactionCount,
                     lastSeen = record.dateReceived,
                     userWasSender = record.author == userPublicKey
                 )
@@ -275,8 +290,13 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
         var lastSeen: Long,
         var userWasSender: Boolean,
     ) : Comparable<Reaction> {
-        fun update(count: Long, lastSeen: Long, userWasSender: Boolean) {
-            this.count = this.count.coerceAtLeast(count)
+        fun update(count: Long, accumulateCount: Boolean, lastSeen: Long, userWasSender: Boolean) {
+            if (accumulateCount) {
+                this.count += count
+            } else {
+                this.count = this.count.coerceAtLeast(count)
+            }
+
             this.lastSeen = this.lastSeen.coerceAtLeast(lastSeen)
             this.userWasSender = this.userWasSender || userWasSender
         }

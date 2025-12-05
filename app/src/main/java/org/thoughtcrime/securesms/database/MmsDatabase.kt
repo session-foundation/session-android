@@ -19,6 +19,7 @@ package org.thoughtcrime.securesms.database
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.annimon.stream.Stream
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -54,6 +55,10 @@ import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpda
 import org.thoughtcrime.securesms.database.model.content.MessageContent
 import org.thoughtcrime.securesms.mms.MmsException
 import org.thoughtcrime.securesms.mms.SlideDeck
+import org.thoughtcrime.securesms.pro.toProMessageBitSetValue
+import org.thoughtcrime.securesms.pro.toProMessageFeatures
+import org.thoughtcrime.securesms.pro.toProProfileBitSetValue
+import org.thoughtcrime.securesms.pro.toProProfileFeatures
 import org.thoughtcrime.securesms.util.asSequence
 import java.io.Closeable
 import java.io.IOException
@@ -111,6 +116,32 @@ class MmsDatabase @Inject constructor(
                 .map(cursor::getLong)
                 .any { MmsSmsColumns.Types.isOutgoingMessageType(it) }
         }
+
+    fun getOutgoingMessageProFeatureCount(featureMask: Long): Int {
+        return getOutgoingProFeatureCountInternal(PRO_MESSAGE_FEATURES, featureMask)
+    }
+
+    fun getOutgoingProfileProFeatureCount(featureMask: Long): Int {
+        return getOutgoingProFeatureCountInternal(PRO_PROFILE_FEATURES, featureMask)
+    }
+
+    private fun getOutgoingProFeatureCountInternal(column: String, featureMask: Long): Int {
+        val db = readableDatabase
+        val outgoingTypes = MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES.joinToString(",")
+
+        // outgoing clause
+        val outgoingSelection =
+            "($MESSAGE_BOX & ${MmsSmsColumns.Types.BASE_TYPE_MASK}) IN ($outgoingTypes)"
+
+        val where = "($column & $featureMask) != 0 AND $outgoingSelection"
+
+        db.query(TABLE_NAME, arrayOf("COUNT(*)"), where, null, null, null, null).use { cursor ->
+            if (cursor.moveToFirst()) {
+                return cursor.getInt(0)
+            }
+        }
+        return 0
+    }
 
     fun isDeletedMessage(id: Long): Boolean =
         writableDatabase.query(
@@ -442,7 +473,8 @@ class MmsDatabase @Inject constructor(
         contentValues.put(MESSAGE_BOX, mailbox)
         contentValues.put(THREAD_ID, threadId)
         contentValues.put(STATUS, Status.DOWNLOAD_INITIALIZED)
-        contentValues.put(PRO_FEATURES, retrieved.proFeatures.rawValue)
+        contentValues.put(PRO_MESSAGE_FEATURES, retrieved.proFeatures.toProMessageBitSetValue())
+        contentValues.put(PRO_PROFILE_FEATURES, retrieved.proFeatures.toProProfileBitSetValue())
         // In open groups messages should be sorted by their server timestamp
         var receivedTimestamp = serverTimestamp
         if (serverTimestamp == 0L) {
@@ -559,7 +591,8 @@ class MmsDatabase @Inject constructor(
         contentValues.put(EXPIRES_IN, message.expiresInMillis)
         contentValues.put(EXPIRE_STARTED, message.expireStartedAtMillis)
         contentValues.put(ADDRESS, message.recipient.toString())
-        contentValues.put(PRO_FEATURES, message.proFeatures.rawValue)
+        contentValues.put(PRO_PROFILE_FEATURES, message.proFeatures.toProProfileBitSetValue())
+        contentValues.put(PRO_MESSAGE_FEATURES, message.proFeatures.toProMessageBitSetValue())
         contentValues.put(
             DELIVERY_RECEIPT_COUNT,
             Stream.of(earlyDeliveryReceipts.values).mapToLong { obj: Long -> obj }
@@ -696,7 +729,7 @@ class MmsDatabase @Inject constructor(
         val deletedMessageIDs: MutableList<Long>
         val deletedMessagesThreadIDs = hashSetOf<Long>()
 
-         writableDatabase.rawQuery(
+        writableDatabase.rawQuery(
             "DELETE FROM $TABLE_NAME WHERE $where RETURNING $ID, $THREAD_ID",
             *whereArgs
         ).use { cursor ->
@@ -976,7 +1009,11 @@ class MmsDatabase @Inject constructor(
             val expireStarted        = cursor.getLong(cursor.getColumnIndexOrThrow(EXPIRE_STARTED))
             val hasMention           = cursor.getInt(cursor.getColumnIndexOrThrow(HAS_MENTION)) == 1
             val messageContentJson   = cursor.getString(cursor.getColumnIndexOrThrow(MESSAGE_CONTENT))
-            val proFeatures          = cursor.getLong(cursor.getColumnIndexOrThrow(PRO_FEATURES))
+
+            val proFeatures = buildSet {
+                cursor.getLong(cursor.getColumnIndexOrThrow(PRO_MESSAGE_FEATURES)).toProMessageFeatures(this)
+                cursor.getLong(cursor.getColumnIndexOrThrow(PRO_PROFILE_FEATURES)).toProProfileFeatures(this)
+            }
 
             if (!isReadReceiptsEnabled(context)) {
                 readReceiptCount = 0
@@ -1020,7 +1057,7 @@ class MmsDatabase @Inject constructor(
                 /* reactions = */ reactions,
                 /* hasMention = */ hasMention,
                 /* messageContent = */ messageContent,
-                /* proFeaturesRawValue = */ proFeatures
+                /* proFeatures = */ proFeatures
             )
         }
 
@@ -1044,12 +1081,12 @@ class MmsDatabase @Inject constructor(
             val quoteText = retrievedQuote?.body
             val quoteMissing = retrievedQuote == null
             val quoteDeck = (
-                (retrievedQuote as? MmsMessageRecord)?.slideDeck ?:
-                Stream.of(attachmentDatabase.getAttachment(cursor))
-                    .filter { obj: DatabaseAttachment? -> obj!!.isQuote }
-                    .toList()
-                    .let { SlideDeck(context, it) }
-            )
+                    (retrievedQuote as? MmsMessageRecord)?.slideDeck ?:
+                    Stream.of(attachmentDatabase.getAttachment(cursor))
+                        .filter { obj: DatabaseAttachment? -> obj!!.isQuote }
+                        .toList()
+                        .let { SlideDeck(context, it) }
+                    )
             return Quote(
                 quoteId,
                 recipientRepository.getRecipientSync(quoteAuthor.toAddress()),
@@ -1221,8 +1258,9 @@ class MmsDatabase @Inject constructor(
             "DROP TABLE $TEMP_TABLE_NAME"
         )
 
-        const val ADD_PRO_FEATURES_COLUMN = """
-            ALTER TABLE $TABLE_NAME ADD COLUMN $PRO_FEATURES INTEGER NOT NULL DEFAULT 0;
-        """
+        fun addProFeatureColumns(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $PRO_PROFILE_FEATURES INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $PRO_MESSAGE_FEATURES INTEGER NOT NULL DEFAULT 0")
+        }
     }
 }

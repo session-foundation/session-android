@@ -3,11 +3,9 @@ package org.thoughtcrime.securesms.groups.handler
 import android.content.Context
 import com.google.protobuf.ByteString
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.Namespace
@@ -32,13 +30,12 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.waitUntilGroupConfigsPushed
-import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.auth.LoginStateRepository
-import org.thoughtcrime.securesms.dependencies.ManagerScope
-import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
+import org.session.protos.SessionProtos
+import org.thoughtcrime.securesms.auth.AuthAwareComponent
+import org.thoughtcrime.securesms.auth.LoggedInState
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -58,27 +55,23 @@ class RemoveGroupMemberHandler @Inject constructor(
     private val messageDataProvider: MessageDataProvider,
     private val storage: StorageProtocol,
     private val groupScope: GroupScope,
-    @ManagerScope scope: CoroutineScope,
     private val messageSender: MessageSender,
-    private val loginStateRepository: LoginStateRepository,
-) : OnAppStartupComponent {
-    init {
-        scope.launch {
-            loginStateRepository.flowWithLoggedInState { configFactory.configUpdateNotifications }
-                .filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
-                .collect { update ->
-                    val adminKey = configFactory.getGroup(update.groupId)?.adminKey?.data
-                    if (adminKey != null) {
-                        groupScope.launch(update.groupId, "Handle possible group removals") {
-                            try {
-                                processPendingRemovalsForGroup(update.groupId, adminKey)
-                            } catch (ec: Exception) {
-                                Log.e("RemoveGroupMemberHandler", "Error processing pending removals", ec)
-                            }
+) : AuthAwareComponent {
+    override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
+        configFactory.configUpdateNotifications
+            .filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
+            .collect { update ->
+                val adminKey = configFactory.getGroup(update.groupId)?.adminKey?.data
+                if (adminKey != null) {
+                    groupScope.launch(update.groupId, "Handle possible group removals") {
+                        try {
+                            processPendingRemovalsForGroup(update.groupId, adminKey)
+                        } catch (ec: Exception) {
+                            Log.e("RemoveGroupMemberHandler", "Error processing pending removals", ec)
                         }
                     }
                 }
-        }
+            }
     }
 
     private suspend fun processPendingRemovalsForGroup(
@@ -214,9 +207,9 @@ class RemoveGroupMemberHandler @Inject constructor(
         return messageSender.buildWrappedMessageToSnode(
             destination = Destination.ClosedGroup(groupAccountId),
             message = GroupUpdated(
-                SignalServiceProtos.DataMessage.GroupUpdateMessage.newBuilder()
+                SessionProtos.GroupUpdateMessage.newBuilder()
                     .setDeleteMemberContent(
-                        SignalServiceProtos.DataMessage.GroupUpdateDeleteMemberContentMessage.newBuilder()
+                        SessionProtos.GroupUpdateDeleteMemberContentMessage.newBuilder()
                             .apply {
                                 for (id in memberSessionIDs) {
                                     addMemberSessionIds(id)
