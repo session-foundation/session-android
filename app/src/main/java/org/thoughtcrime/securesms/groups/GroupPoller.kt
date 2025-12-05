@@ -474,7 +474,7 @@ class GroupPoller @AssistedInject constructor(
                 }
 
                 try {
-                    val (msg, proto) = messageParser.parseGroupMessage(
+                    val result = messageParser.parseGroupMessage(
                         data = message.data,
                         serverHash = message.hash,
                         groupId = groupId,
@@ -484,9 +484,10 @@ class GroupPoller @AssistedInject constructor(
 
                     receivedMessageProcessor.processSwarmMessage(
                         threadAddress = threadAddress,
-                        message = msg,
-                        proto = proto,
+                        message = result.message,
+                        proto = result.proto,
                         context = ctx,
+                        pro = result.pro,
                     )
                 } catch (e: Exception) {
                     Log.e(TAG, "Error handling group message", e)

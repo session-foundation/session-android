@@ -48,6 +48,7 @@ import org.session.libsession.messaging.utilities.MessageAuthentication.buildInf
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildMemberChangeSignature
 import org.session.libsession.messaging.utilities.WebRtcUtils
 import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -104,6 +105,7 @@ class ReceivedMessageHandler @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val messageRequestResponseHandler: Provider<MessageRequestResponseHandler>,
     private val prefs: TextSecurePreferences,
+    private val clock: SnodeClock,
 ) {
 
     suspend fun handle(
@@ -137,7 +139,7 @@ class ReceivedMessageHandler @Inject constructor(
             }
             is DataExtractionNotification -> handleDataExtractionNotification(message)
             is UnsendRequest -> handleUnsendRequest(message)
-            is MessageRequestResponse -> messageRequestResponseHandler.get().handleExplicitRequestResponseMessage(null, message, proto)
+            is MessageRequestResponse -> messageRequestResponseHandler.get().handleExplicitRequestResponseMessage(null, message, proto, null)
             is VisibleMessage -> handleVisibleMessage(
                 message = message,
                 proto = proto,
@@ -448,7 +450,7 @@ class ReceivedMessageHandler @Inject constructor(
             // - must be done after the message is persisted)
             // - must be done after neccessary contact is created
             if (runProfileUpdate && senderAddress is Address.WithAccountId) {
-                val updates = ProfileUpdateHandler.Updates.create(proto)
+                val updates = ProfileUpdateHandler.Updates.create(proto, clock.currentTimeMills(), null)
 
                 if (updates != null) {
                     profileUpdateHandler.get().handleProfileUpdate(
@@ -495,7 +497,7 @@ class ReceivedMessageHandler @Inject constructor(
         }
 
         // Update profile if needed
-        ProfileUpdateHandler.Updates.create(proto)?.let { updates ->
+        ProfileUpdateHandler.Updates.create(proto, clock.currentTimeMills(), null)?.let { updates ->
             profileUpdateHandler.get().handleProfileUpdate(
                 senderId = AccountId(message.sender!!),
                 updates = updates,

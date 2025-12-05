@@ -1,6 +1,8 @@
 package org.session.libsession.messaging.messages
 
 import com.google.protobuf.ByteString
+import network.loki.messenger.libsession_util.pro.ProProof
+import network.loki.messenger.libsession_util.protocol.DecodedPro
 import network.loki.messenger.libsession_util.protocol.ProProfileFeature
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.BitSet
@@ -77,9 +79,7 @@ class ProfileUpdateHandler @Inject constructor(
                             profilePicture = updates.pic
                         }
 
-                        if (updates.proFeatures != null) {
-                            proFeatures = updates.proFeatures
-                        }
+                        proFeatures = updates.proFeatures
 
                         if (updates.profileUpdateTime != null) {
                             profileUpdatedEpochSeconds = updates.profileUpdateTime.toEpochSeconds()
@@ -115,9 +115,7 @@ class ProfileUpdateHandler @Inject constructor(
                             c.name = updates.name
                         }
 
-                        if (updates.proFeatures != null) {
-                            c.proFeatures = updates.proFeatures
-                        }
+                        c.proFeatures = updates.proFeatures
 
                         if (updates.profileUpdateTime != null) {
                             c.profileUpdatedEpochSeconds = updates.profileUpdateTime.toEpochSeconds()
@@ -154,16 +152,15 @@ class ProfileUpdateHandler @Inject constructor(
                         r.copy(
                             name = updates.name ?: r.name,
                             profilePic = updates.pic ?: r.profilePic,
-                            blocksCommunityMessagesRequests = updates.blocksCommunityMessageRequests ?: r.blocksCommunityMessagesRequests,
+                            blocksCommunityMessagesRequests = updates.blocksCommunityMessageRequests,
                             proData = updates.proProof?.let {
                                 RecipientSettings.ProData(
                                     info = it,
-                                    features = updates.proFeatures ?: BitSet()
+                                    features = updates.proFeatures,
                                 )
                             },
                         )
-                    } else if (updates.blocksCommunityMessageRequests != null &&
-                            r.blocksCommunityMessagesRequests != updates.blocksCommunityMessageRequests) {
+                    } else if (r.blocksCommunityMessagesRequests != updates.blocksCommunityMessageRequests) {
                         r.copy(blocksCommunityMessagesRequests = updates.blocksCommunityMessageRequests)
                     } else {
                         r
@@ -190,22 +187,17 @@ class ProfileUpdateHandler @Inject constructor(
     }
 
     class Updates private constructor(
-        // Name to update, must be non-blank if provided.
-        val name: String? = null,
-        val pic: UserPic? = null,
-        val proProof: Conversation.ProProofInfo? = null,
-        val proFeatures: BitSet<ProProfileFeature>? = null,
-        val blocksCommunityMessageRequests: Boolean? = null,
+        val name: String?,
+        val pic: UserPic?,
+        val proProof: Conversation.ProProofInfo?,
+        val proFeatures: BitSet<ProProfileFeature>,
+        val blocksCommunityMessageRequests: Boolean,
         val profileUpdateTime: Instant?,
     ) {
-        init {
-            check(name == null || name.isNotBlank()) {
-                "Name must be non-blank if provided"
-            }
-        }
-
         companion object {
-            fun create(content: SessionProtos.Content): Updates? {
+            fun create(content: SessionProtos.Content,
+                       nowMills: Long,
+                       pro: DecodedPro?): Updates? {
                 val profile: SessionProtos.LokiProfile
                 val profilePicKey: ByteString?
 
@@ -248,18 +240,31 @@ class ProfileUpdateHandler @Inject constructor(
                     content.dataMessage.hasBlocksCommunityMessageRequests()) {
                     content.dataMessage.blocksCommunityMessageRequests
                 } else {
-                    null
+                    true
                 }
 
-                if (name == null && pic == null && blocksCommunityMessageRequests == null) {
-                    // Nothing is updated..
-                    return null
+                val proProofInfo: Conversation.ProProofInfo?
+                val proFeatures: BitSet<ProProfileFeature>
+
+                if (pro?.status == ProProof.STATUS_VALID &&
+                    pro.proof != null &&
+                    pro.proof!!.expiryMs > nowMills) {
+                    proProofInfo = Conversation.ProProofInfo(
+                        genIndexHash = pro.proof!!.genIndexHashHex.hexToByteArray(),
+                        expiryMs = pro.proof!!.expiryMs,
+                    )
+                    proFeatures = pro.proProfileFeatures
+                } else {
+                    proProofInfo = null
+                    proFeatures = BitSet()
                 }
 
                 return Updates(
                     name = name,
                     pic = pic,
                     blocksCommunityMessageRequests = blocksCommunityMessageRequests,
+                    proProof = proProofInfo,
+                    proFeatures = proFeatures,
                     profileUpdateTime = if (profile.hasLastUpdateSeconds()) {
                         Instant.ofEpochSecond(profile.lastUpdateSeconds)
                     } else {

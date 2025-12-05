@@ -6,17 +6,18 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.decodeFromStream
-import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.session.libsession.snode.OnionRequestAPI.sendOnionRequest
 import org.session.libsession.snode.utilities.await
+import org.thoughtcrime.securesms.pro.ProBackendConfig
 import javax.inject.Inject
+import javax.inject.Provider
 
 class ProApiExecutor @Inject constructor(
-    private val json: Json
+    private val json: Json,
+    private val proConfigProvider: Provider<ProBackendConfig>,
 ) {
     @Serializable
     private data class RawProApiResponse(
@@ -52,21 +53,21 @@ class ProApiExecutor @Inject constructor(
      */
     @OptIn(ExperimentalSerializationApi::class)
     suspend fun <Status, Res> executeRequest(
-        serverUrl: HttpUrl = "https://pro-backend-dev.getsession.org".toHttpUrl(),
-        serverX25519PubKeyHex: String = "920b81e9bf1a06e70814432668c61487d6fdbe13faaee3b09ebc56223061f140",
         request: ApiRequest<Status, Res>
     ): ProApiResponse<Res, Status> {
+        val config = proConfigProvider.get()
+
         val rawResp = sendOnionRequest(
             request = Request.Builder()
-                .url(serverUrl.resolve(request.endpoint)!!)
+                .url(config.url.resolve(request.endpoint)!!)
                 .post(
                     request.buildJsonBody().toRequestBody(
                         "application/json".toMediaType()
                     )
                 )
                 .build(),
-            server = serverUrl.host,
-            x25519PublicKey = serverX25519PubKeyHex
+            server = config.url.host,
+            x25519PublicKey = config.x25519PubKeyHex
         ).await().body!!.inputStream().use {
             json.decodeFromStream<RawProApiResponse>(it)
         }

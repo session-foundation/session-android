@@ -16,7 +16,6 @@ import kotlinx.serialization.json.Json
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.SessionEncrypt
-import okio.ByteString.Companion.decodeHex
 import org.session.libsession.messaging.messages.Message.Companion.senderOrSync
 import org.session.libsession.messaging.sending_receiving.MessageParser
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
@@ -31,15 +30,12 @@ import org.session.libsession.utilities.getGroup
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.auth.LoginStateRepository
-import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.groups.GroupRevokedMessageHandler
 import org.thoughtcrime.securesms.home.HomeActivity
-import java.security.SecureRandom
 import javax.inject.Inject
 
 private const val TAG = "PushHandler"
@@ -62,7 +58,7 @@ class PushReceiver @Inject constructor(
      */
     fun onPushDataReceived(dataMap: Map<String, String>?) {
         Log.d(TAG, "Push data received: $dataMap")
-        addMessageReceiveJob(dataMap?.asPushData())
+        onPushDataReceived(dataMap?.asPushData())
     }
 
     /**
@@ -70,10 +66,10 @@ class PushReceiver @Inject constructor(
      * but it shouldn't happen. Old code used to send different data so this is kept as a safety
      */
     fun onPushDataReceived(data: ByteArray?) {
-        addMessageReceiveJob(PushData(data = data, metadata = null))
+        onPushDataReceived(PushData(data = data, metadata = null))
     }
 
-    private fun addMessageReceiveJob(pushData: PushData?) {
+    private fun onPushDataReceived(pushData: PushData?) {
         try {
             val namespace = pushData?.metadata?.namespace
             when {
@@ -105,7 +101,7 @@ class PushReceiver @Inject constructor(
                                     hash = pushData.metadata.msg_hash
                             )) {
                                 receivedMessageProcessor.startProcessing("GroupPushReceive($groupId)") { ctx ->
-                                    val (msg, proto) = messageParser.parseGroupMessage(
+                                    val result = messageParser.parseGroupMessage(
                                         data = pushData.data,
                                         serverHash = pushData.metadata.msg_hash,
                                         groupId = groupId,
@@ -115,9 +111,10 @@ class PushReceiver @Inject constructor(
 
                                     receivedMessageProcessor.processSwarmMessage(
                                         threadAddress = Address.Group(groupId),
-                                        message = msg,
-                                        proto = proto,
+                                        message = result.message,
+                                        proto = result.proto,
                                         context = ctx,
+                                        pro = result.pro,
                                     )
                                 }
                             }
@@ -175,7 +172,7 @@ class PushReceiver @Inject constructor(
 
                     if (!isDuplicated) {
                         receivedMessageProcessor.startProcessing("PushReceiver") { ctx ->
-                            val (message, proto) = messageParser.parse1o1Message(
+                            val result = messageParser.parse1o1Message(
                                 data = pushData.data,
                                 serverHash = pushData.metadata?.msg_hash,
                                 currentUserId = ctx.currentUserId,
@@ -183,10 +180,11 @@ class PushReceiver @Inject constructor(
                             )
 
                             receivedMessageProcessor.processSwarmMessage(
-                                threadAddress = message.senderOrSync.toAddress() as Address.Conversable,
-                                message = message,
-                                proto = proto,
+                                threadAddress = result.message.senderOrSync.toAddress() as Address.Conversable,
+                                message = result.message,
+                                proto = result.proto,
                                 context = ctx,
+                                pro = result.pro
                             )
                         }
                     }

@@ -1,11 +1,13 @@
 package org.session.libsession.messaging.sending_receiving
 
+import network.loki.messenger.libsession_util.protocol.DecodedPro
 import network.loki.messenger.libsession_util.util.BitSet
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.ProfileUpdateHandler
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
 import org.session.libsession.messaging.messages.visible.VisibleMessage
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -31,6 +33,7 @@ class MessageRequestResponseHandler @Inject constructor(
     private val smsDatabase: SmsDatabase,
     private val threadDatabase: ThreadDatabase,
     private val blindMappingRepository: BlindMappingRepository,
+    private val clock: SnodeClock,
 ) {
 
     fun handleVisibleMessage(
@@ -70,6 +73,7 @@ class MessageRequestResponseHandler @Inject constructor(
         ctx: ReceivedMessageProcessor.MessageProcessingContext?,
         message: MessageRequestResponse,
         proto: SessionProtos.Content,
+        pro: DecodedPro?,
     ) {
         val (sender, receiver) = fetchSenderAndReceiver(message) ?: return
         // Always handle explicit request response
@@ -82,7 +86,7 @@ class MessageRequestResponseHandler @Inject constructor(
 
         // Always process the profile update if any. We don't need
         // to process profile for other kind of messages as they should be handled elsewhere
-        ProfileUpdateHandler.Updates.create(proto)?.let { updates ->
+        ProfileUpdateHandler.Updates.create(proto, clock.currentTimeMills(), pro)?.let { updates ->
             profileUpdateHandler.get().handleProfileUpdate(
                 senderId = (sender.address as Address.Standard).accountId,
                 updates = updates,

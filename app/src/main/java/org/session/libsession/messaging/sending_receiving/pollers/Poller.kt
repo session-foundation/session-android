@@ -233,7 +233,7 @@ class Poller @AssistedInject constructor(
                 }
 
                 try {
-                    val (message, proto) = messageParser.parse1o1Message(
+                    val result = messageParser.parse1o1Message(
                         data = message.data,
                         serverHash = message.hash,
                         currentUserEd25519PrivKey = ctx.currentUserEd25519KeyPair.secretKey.data,
@@ -241,10 +241,11 @@ class Poller @AssistedInject constructor(
                     )
 
                     processor.processSwarmMessage(
-                        threadAddress = message.senderOrSync.toAddress() as Address.Conversable,
-                        message = message,
-                        proto = proto,
+                        threadAddress = result.message.senderOrSync.toAddress() as Address.Conversable,
+                        message = result.message,
+                        proto = result.proto,
                         context = ctx,
+                        pro = result.pro,
                     )
                 } catch (ec: Exception) {
                     Log.e(
