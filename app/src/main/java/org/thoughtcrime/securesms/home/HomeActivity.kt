@@ -89,6 +89,7 @@ import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
+import org.thoughtcrime.securesms.util.applyBottomInsetMargin
 import org.thoughtcrime.securesms.util.applySafeInsetsMargins
 import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.disableClipping
@@ -921,16 +922,9 @@ class HomeActivity : ScreenLockActionBarActivity(),
             }
         )
 
-        binding.newConversationButton.applySafeInsetsMargins(
+        binding.newConversationButton.applyBottomInsetMargin(
             typeMask = WindowInsetsCompat.Type.navigationBars(),
-            applyLeft = false,
-            applyRight = false,
-            additionalInsets = Insets.of(
-                0,
-                0,
-                0,
-                resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset)
-            )
+            extraBottom = resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset)
         )
     }
 }

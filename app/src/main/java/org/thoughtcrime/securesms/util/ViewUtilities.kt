@@ -155,10 +155,6 @@ fun View.applySafeInsetsMargins(
     @InsetsType
     typeMask: Int = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime(),
     additionalInsets : Insets = Insets.NONE, // for additional offsets
-    applyTop: Boolean = true,
-    applyBottom: Boolean = true,
-    applyLeft: Boolean = true,
-    applyRight: Boolean = true,
 ) {
     ViewCompat.setOnApplyWindowInsetsListener(this) { view, windowInsets ->
         // Get system bars insets
@@ -168,10 +164,10 @@ fun View.applySafeInsetsMargins(
         val lp = view.layoutParams as? MarginLayoutParams
         if (lp != null) {
             lp.setMargins(
-                additionalInsets.left + (if(applyLeft) systemBarsInsets.left else 0),
-                additionalInsets.top + (if(applyTop) systemBarsInsets.top else 0),
-                additionalInsets.right + (if (applyRight) systemBarsInsets.right else 0),
-                additionalInsets.bottom + (if(applyBottom) systemBarsInsets.bottom else 0)
+                additionalInsets.left + systemBarsInsets.left,
+                additionalInsets.top + systemBarsInsets.top,
+                additionalInsets.right + systemBarsInsets.right,
+                additionalInsets.bottom + systemBarsInsets.bottom
             )
             view.layoutParams = lp
 
@@ -185,6 +181,28 @@ fun View.applySafeInsetsMargins(
             Log.w("ViewUtils", "Cannot apply insets to view with no margins")
             windowInsets
         }
+    }
+}
+
+/**
+ * Independent helper for applying inset safe bottom margin to
+ * so we don't contradict [applySafeInsetsMargins] with apply* flags
+ */
+fun View.applyBottomInsetMargin(
+    @InsetsType typeMask: Int = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime(),
+    extraBottom: Int = 0,
+    consumeInsets: Boolean = true
+) {
+    ViewCompat.setOnApplyWindowInsetsListener(this) { view, windowInsets ->
+        val insets = windowInsets.getInsets(typeMask)
+        val lp = view.layoutParams as? MarginLayoutParams
+
+        if (lp != null) {
+            lp.bottomMargin = insets.bottom + extraBottom
+            view.layoutParams = lp
+        }
+
+        if (consumeInsets) WindowInsetsCompat.CONSUMED else windowInsets
     }
 }
 
