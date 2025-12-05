@@ -78,8 +78,6 @@
 
 # Converters / Deserializers
 -keep class org.session.libsession.snode.model.RetrieveMessageConverter { public <init>(); public *; }
--keep class * implements com.fasterxml.jackson.databind.util.Converter { public <init>(); public *; }
--keep class * extends com.fasterxml.jackson.databind.JsonDeserializer { public <init>(); public *; }
 
 ########## JNI LOGGER / NATIVE ENTRYPOINTS ##########
 # Logging interface & implementations (JNI looks up log(String,String,int))
@@ -129,9 +127,6 @@
 
 ########## CONVERSATION / MODELS (JNI + REFLECTION) ##########
 # Conversation.* types constructed via JNI with (String,long,boolean)
--keepclassmembers class network.loki.messenger.libsession_util.util.Conversation$OneToOne {
-    public <init>(java.lang.String, long, boolean);
-}
 -keepclassmembers class network.loki.messenger.libsession_util.util.Conversation$* {
     public <init>(java.lang.String, long, boolean);
 }
