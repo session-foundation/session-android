@@ -88,49 +88,64 @@
             tools:listitem="@layout/view_mention_candidate_v2"
             tools:visibility="gone" />
 
-        <LinearLayout
-            android:id="@+id/attachmentOptionsContainer"
+        <androidx.core.widget.NestedScrollView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_marginBottom="8dp"
-            android:elevation="8dp"
-            android:orientation="vertical"
+            android:clipToPadding="false"
+            android:fillViewport="false"
+            android:overScrollMode="never"
+            app:layout_constrainedHeight="true"
             app:layout_constraintBottom_toTopOf="@+id/inputBar"
-            app:layout_constraintStart_toStartOf="parent">
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="1">
 
-            <FrameLayout
-                android:id="@+id/gifButtonContainer"
-                android:layout_width="@dimen/input_bar_button_expanded_size"
-                android:layout_height="@dimen/input_bar_button_expanded_size"
-                android:alpha="0"
-                android:contentDescription="@string/AccessibilityId_gif" />
+            <LinearLayout
+                android:id="@+id/attachmentOptionsContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_marginBottom="8dp"
+                android:elevation="8dp"
+                android:gravity="bottom"
+                android:orientation="vertical"
+                app:layout_constraintBottom_toTopOf="@+id/inputBar"
+                app:layout_constraintStart_toStartOf="parent">
 
-            <FrameLayout
-                android:id="@+id/documentButtonContainer"
-                android:layout_width="@dimen/input_bar_button_expanded_size"
-                android:layout_height="@dimen/input_bar_button_expanded_size"
-                android:layout_marginTop="8dp"
-                android:alpha="0"
-                android:contentDescription="@string/AccessibilityId_files" />
+                <FrameLayout
+                    android:id="@+id/gifButtonContainer"
+                    android:layout_width="@dimen/input_bar_button_expanded_size"
+                    android:layout_height="@dimen/input_bar_button_expanded_size"
+                    android:alpha="0"
+                    android:contentDescription="@string/AccessibilityId_gif" />
 
-            <FrameLayout
-                android:id="@+id/libraryButtonContainer"
-                android:layout_width="@dimen/input_bar_button_expanded_size"
-                android:layout_height="@dimen/input_bar_button_expanded_size"
-                android:layout_marginTop="8dp"
-                android:alpha="0"
-                android:contentDescription="@string/AccessibilityId_image" />
+                <FrameLayout
+                    android:id="@+id/documentButtonContainer"
+                    android:layout_width="@dimen/input_bar_button_expanded_size"
+                    android:layout_height="@dimen/input_bar_button_expanded_size"
+                    android:layout_marginTop="8dp"
+                    android:alpha="0"
+                    android:contentDescription="@string/AccessibilityId_files" />
 
-            <FrameLayout
-                android:id="@+id/cameraButtonContainer"
-                android:layout_width="@dimen/input_bar_button_expanded_size"
-                android:layout_height="@dimen/input_bar_button_expanded_size"
-                android:layout_marginTop="8dp"
-                android:alpha="0"
-                android:contentDescription="@string/AccessibilityId_camera" />
+                <FrameLayout
+                    android:id="@+id/libraryButtonContainer"
+                    android:layout_width="@dimen/input_bar_button_expanded_size"
+                    android:layout_height="@dimen/input_bar_button_expanded_size"
+                    android:layout_marginTop="8dp"
+                    android:alpha="0"
+                    android:contentDescription="@string/AccessibilityId_image" />
 
-        </LinearLayout>
+                <FrameLayout
+                    android:id="@+id/cameraButtonContainer"
+                    android:layout_width="@dimen/input_bar_button_expanded_size"
+                    android:layout_height="@dimen/input_bar_button_expanded_size"
+                    android:layout_marginTop="8dp"
+                    android:alpha="0"
+                    android:contentDescription="@string/AccessibilityId_camera" />
+
+            </LinearLayout>
+
+        </androidx.core.widget.NestedScrollView>
 
         <TextView
             android:id="@+id/textSendAfterApproval"

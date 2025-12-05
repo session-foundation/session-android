@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.mediasend
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -25,11 +26,13 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import dagger.hilt.android.AndroidEntryPoint
+import network.loki.messenger.R
 import network.loki.messenger.databinding.CameraxFragmentBinding
 import org.session.libsession.utilities.MediaTypes
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.providers.BlobUtils
 import org.thoughtcrime.securesms.util.applySafeInsetsMargins
+import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.setSafeOnClickListener
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.ExecutorService
@@ -55,6 +58,8 @@ class CameraXFragment : Fragment() {
     private lateinit var orientationListener: OrientationEventListener
     private var lastRotation: Int = Surface.ROTATION_0
 
+    private var cameraInitialized = false
+
     @Inject
     lateinit var prefs: TextSecurePreferences
 
@@ -68,13 +73,15 @@ class CameraXFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-        binding = CameraxFragmentBinding.inflate(inflater, container, false)
+        val orientation = resources.configuration.orientation
+        binding = inflateBindingForOrientation(inflater, container, orientation)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         cameraExecutor = Executors.newSingleThreadExecutor()
 
+        setupUi(binding)
         // permissions should be handled prior to landing in this fragment
         // but this is added for safety
         if (allPermissionsGranted()) {
@@ -83,14 +90,6 @@ class CameraXFragment : Fragment() {
             ActivityCompat.requestPermissions(
                 requireActivity(), REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
             )
-        }
-
-        binding.cameraControlsSafeArea.applySafeInsetsMargins()
-
-        binding.cameraCaptureButton.setSafeOnClickListener { takePhoto() }
-        binding.cameraFlipButton.setSafeOnClickListener { flipCamera() }
-        binding.cameraCloseButton.setSafeOnClickListener {
-            requireActivity().onBackPressedDispatcher.onBackPressed()
         }
 
         // keep track of orientation changes
@@ -110,6 +109,24 @@ class CameraXFragment : Fragment() {
                     updateUiForRotation(newRotation)
                 }
             }
+        }
+
+        binding.root.applySafeInsetsPaddings(
+            applyTop = false,
+            applyBottom = false,
+            consumeInsets = false
+        )
+    }
+
+    /**
+     * Wire up listeners and insets for a given binding.
+     * This is reused on initial inflate and after reinflation on config changes.
+     */
+    private fun setupUi(binding: CameraxFragmentBinding) {
+        binding.cameraCaptureButton.setSafeOnClickListener { takePhoto() }
+        binding.cameraFlipButton.setSafeOnClickListener { flipCamera() }
+        binding.cameraCloseButton.setSafeOnClickListener {
+            requireActivity().onBackPressedDispatcher.onBackPressed()
         }
     }
 
@@ -134,10 +151,10 @@ class CameraXFragment : Fragment() {
 
     private fun updateUiForRotation(rotation: Int = lastRotation) {
         val angle = when (rotation) {
-            Surface.ROTATION_0   -> 0f
-            Surface.ROTATION_90  -> 90f
+            Surface.ROTATION_0 -> 0f
+            Surface.ROTATION_90 -> 90f
             Surface.ROTATION_180 -> 180f
-            else                 -> 270f
+            else -> 270f
         }
 
         binding.cameraFlipButton.animate()
@@ -189,12 +206,17 @@ class CameraXFragment : Fragment() {
 
         // wait for initialisation to complete
         cameraController.initializationFuture.addListener({
-            val hasFront = cameraController.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA)
-            val hasBack  = cameraController.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)
-
-            binding.cameraFlipButton.visibility =
-                if (hasFront && hasBack) View.VISIBLE else View.GONE
+            cameraInitialized = true
+            updateFlipButtonVisibility(binding)
         }, ContextCompat.getMainExecutor(requireContext()))
+    }
+
+    private fun updateFlipButtonVisibility(binding: CameraxFragmentBinding) {
+        val hasFront = cameraController.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA)
+        val hasBack  = cameraController.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)
+
+        binding.cameraFlipButton.visibility =
+            if (hasFront && hasBack) View.VISIBLE else View.GONE
     }
 
     private fun takePhoto() {
@@ -269,6 +291,64 @@ class CameraXFragment : Fragment() {
             .rotationBy(-180f)
             .setDuration(200)
             .start()
+    }
+
+    // host activity will call this
+    fun onHostConfigurationChanged(newConfig: Configuration) {
+        // If the fragment's view/binding isn't ready, there's nothing to update
+        if (!::binding.isInitialized) return
+
+        val oldRoot = binding.root
+        val parent = oldRoot.parent as? ViewGroup ?: return
+        val index = parent.indexOfChild(oldRoot)
+
+        // Remove the old view from its parent
+        parent.removeViewAt(index)
+
+        // Inflate a new binding; Resources will choose layout or layout-land automatically
+        val inflater = LayoutInflater.from(requireContext())
+        val newBinding = inflateBindingForOrientation(inflater, parent, newConfig.orientation)
+
+        // Update our binding reference
+        binding = newBinding
+
+        // Add the new root at the same index
+        parent.addView(newBinding.root, index)
+
+        // Re-wire UI and insets for the new binding
+        setupUi(newBinding)
+        newBinding.root.applySafeInsetsPaddings(
+            applyTop = false,
+            applyBottom = false,
+            consumeInsets = false
+        )
+
+        // Re-attach the existing camera controller to the new PreviewView
+        if (::cameraController.isInitialized) {
+            newBinding.previewView.controller = cameraController
+
+            if (cameraInitialized) {
+                updateFlipButtonVisibility(newBinding)
+            }
+        }
+
+        // No cameraController changes needed, it stays alive and PreviewView keeps working
+    }
+
+    private fun inflateBindingForOrientation(
+        inflater: LayoutInflater,
+        parent: ViewGroup?,
+        orientation: Int
+    ): CameraxFragmentBinding {
+        val layoutId = if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            R.layout.camerax_fragment_landscape
+        } else {
+            R.layout.camerax_fragment_portrait
+        }
+
+        // Inflate the raw view, then bind it
+        val root = inflater.inflate(layoutId, parent, false)
+        return CameraxFragmentBinding.bind(root)
     }
 
     override fun onDestroyView() {

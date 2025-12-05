@@ -119,7 +119,7 @@ fun EditText.addTextChangedListener(listener: (String) -> Unit) {
 @JvmOverloads
 fun View.applySafeInsetsPaddings(
     @InsetsType
-    typeMask: Int = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime(),
+    typeMask: Int = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime() or WindowInsetsCompat.Type.displayCutout() ,
     consumeInsets: Boolean = true,
     applyTop: Boolean = true,
     applyBottom: Boolean = true,
@@ -154,7 +154,7 @@ fun View.applySafeInsetsMargins(
     consumeInsets: Boolean = true,
     @InsetsType
     typeMask: Int = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime(),
-    additionalInsets : Insets = Insets.NONE // for additional offsets
+    additionalInsets : Insets = Insets.NONE, // for additional offsets
 ) {
     ViewCompat.setOnApplyWindowInsetsListener(this) { view, windowInsets ->
         // Get system bars insets
@@ -163,7 +163,12 @@ fun View.applySafeInsetsMargins(
         // Update view margins to account for system bars
         val lp = view.layoutParams as? MarginLayoutParams
         if (lp != null) {
-            lp.setMargins(additionalInsets.left + systemBarsInsets.left, additionalInsets.top + systemBarsInsets.top, additionalInsets.right + systemBarsInsets.right, additionalInsets.bottom + systemBarsInsets.bottom)
+            lp.setMargins(
+                additionalInsets.left + systemBarsInsets.left,
+                additionalInsets.top + systemBarsInsets.top,
+                additionalInsets.right + systemBarsInsets.right,
+                additionalInsets.bottom + systemBarsInsets.bottom
+            )
             view.layoutParams = lp
 
             if (consumeInsets) {
@@ -176,6 +181,28 @@ fun View.applySafeInsetsMargins(
             Log.w("ViewUtils", "Cannot apply insets to view with no margins")
             windowInsets
         }
+    }
+}
+
+/**
+ * Independent helper for applying inset safe bottom margin to
+ * so we don't contradict [applySafeInsetsMargins] with apply* flags
+ */
+fun View.applyBottomInsetMargin(
+    @InsetsType typeMask: Int = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime(),
+    extraBottom: Int = 0,
+    consumeInsets: Boolean = true
+) {
+    ViewCompat.setOnApplyWindowInsetsListener(this) { view, windowInsets ->
+        val insets = windowInsets.getInsets(typeMask)
+        val lp = view.layoutParams as? MarginLayoutParams
+
+        if (lp != null) {
+            lp.bottomMargin = insets.bottom + extraBottom
+            view.layoutParams = lp
+        }
+
+        if (consumeInsets) WindowInsetsCompat.CONSUMED else windowInsets
     }
 }
 
