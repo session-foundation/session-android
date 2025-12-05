@@ -42,6 +42,9 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class CameraXActivity : ScreenLockActionBarActivity() {
 
+    override val applyDefaultWindowInsets: Boolean
+        get() = false
+
     companion object {
         private const val TAG = "CameraXActivity"
         private const val REQUEST_CODE_PERMISSIONS = 10
@@ -87,6 +90,7 @@ class CameraXActivity : ScreenLockActionBarActivity() {
         landscapeConstraints.clone(this, R.layout.activity_camerax_landscape)
 
         setupUi()
+        applyViewInsets()
         initializeCountButton()
 
         // Permissions should ideally be handled before launching this Activity,
@@ -98,12 +102,6 @@ class CameraXActivity : ScreenLockActionBarActivity() {
                 this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
             )
         }
-
-        binding.root.applySafeInsetsPaddings(
-            applyTop = true,
-            applyBottom = true,
-            consumeInsets = false
-        )
 
         lifecycleScope.launch {
             orientationManager.orientation.collect { orientation ->
@@ -303,6 +301,15 @@ class CameraXActivity : ScreenLockActionBarActivity() {
             } else {
                 binding.mediasendCountContainer.mediasendCountButton.setOnClickListener(null)
             }
+    }
+
+    private fun applyViewInsets(){
+        binding.cameraCloseButton.applySafeInsetsPaddings()
+        binding.root.applySafeInsetsPaddings(
+            applyTop = false,
+            applyBottom = true,
+            consumeInsets = false
+        )
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
