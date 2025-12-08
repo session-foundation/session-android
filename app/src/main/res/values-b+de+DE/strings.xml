@@ -15,7 +15,13 @@
     <string name="accountIdYoursDescription">Dies ist deine Account-ID. Andere Benutzer können sie scannen, um eine Unterhaltung mit dir zu beginnen.</string>
     <string name="actualSize">Originalgröße</string>
     <string name="add">Hinzufügen</string>
+    <plurals name="addAdmin">
+        <item quantity="one">Administrator hinzufügen</item>
+        <item quantity="other">Administratoren hinzufügen</item>
+    </plurals>
+    <string name="addAdminSingular">Admin hinzufügen</string>
     <string name="addAdminsDescription">Gib die Account-ID des Nutzers ein, den du zum Administrator ernennst.\n\nUm mehrere Nutzer hinzuzufügen, gib jede Account-ID durch ein Komma getrennt ein. Es können bis zu 20 Account-IDs gleichzeitig angegeben werden.</string>
+    <string name="adminCannotBeDemoted">Administratoren können nicht herabgestuft oder aus der Gruppe entfernt werden.</string>
     <string name="adminCannotBeRemoved">Admins können nicht entfernt werden.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> und <b>{count} andere</b> wurden zu Admin befördert.</string>
     <string name="adminPromote">Admins befördern</string>
@@ -40,12 +46,19 @@
     <string name="adminRemovedUser"><b>{name}</b> wurde als Admin entfernt.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> und <b>{count} andere</b> wurden als Admin entfernt.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> und <b>{other_name}</b> wurden als Administrator entfernt.</string>
+    <plurals name="adminSelected">
+        <item quantity="one">%1$d Administrator ausgewählt</item>
+        <item quantity="other">%1$d Administratoren ausgewählt</item>
+    </plurals>
     <plurals name="adminSendingPromotion">
         <item quantity="one">Admin Beförderung senden</item>
         <item quantity="other">Admin Beförderungen senden</item>
     </plurals>
     <string name="adminSettings">Admin-Einstellungen</string>
+    <string name="adminStatusYou">Du kannst deinen eigenen Administratorstatus nicht ändern. Um die Gruppe zu verlassen, öffne die Unterhaltungseinstellungen und wähle Gruppe verlassen.</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> und <b>{other_name}</b> wurden zu Admin befördert.</string>
+    <string name="admins">Administratoren</string>
+    <string name="allow">Zulassen</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonym</string>
     <string name="appIcon">App-Symbol</string>
@@ -162,6 +175,7 @@
     <string name="blockUnblockNameTwo">Bist du sicher, dass du <b>{name}</b> und eine weitere Person entblocken möchtest?</string>
     <string name="blockUnblockedUser">{name} entsperrt</string>
     <string name="blockedContactsManageDescription">Blockierte Kontakte anzeigen und verwalten.</string>
+    <string name="browserNotFound">Kein Browser gefunden, um diese URL zu öffnen. Versuche stattdessen, die URL zu kopieren.</string>
     <string name="call">Anrufen</string>
     <string name="callsCalledYou">{name} hat angerufen</string>
     <string name="callsCannotStart">Du kannst keinen neuen Anruf starten. Beende zuerst deinen aktuellen Anruf.</string>
@@ -190,6 +204,10 @@
     <string name="callsVoiceAndVideoToggleDescription">Aktiviert Sprach- und Videoanrufe an und von anderen Benutzern.</string>
     <string name="callsYouCalled">Du hast {name} angerufen</string>
     <string name="callsYouMissedCallPermissions">Du hast einen Anruf von <b>{name}</b> verpasst, weil du <b>Sprach- und Videoanrufe</b> in den Datenschutzeinstellungen nicht aktiviert hast.</string>
+    <string name="cameraAccessDeniedMessage">{app_name} benötigt Zugriff auf Ihre Kamera, um Videoanrufe zu ermöglichen, aber diese Berechtigung wurde verweigert. Während eines Anrufs können Sie die Kameraberechtigung nicht ändern.\n\nMöchten Sie den Anruf jetzt beenden und den Kamerazugriff aktivieren oder lieber nach dem Anruf daran erinnert werden?</string>
+    <string name="cameraAccessInstructions">Um den Kamerazugriff zu erlauben, öffnen Sie die Einstellungen und aktivieren Sie die Berechtigung für die Kamera.</string>
+    <string name="cameraAccessReminderMessage">Während Ihres letzten Anrufs haben Sie versucht, Video zu verwenden, konnten dies jedoch nicht, da der Kamerazugriff zuvor verweigert wurde. Um den Kamerazugriff zu erlauben, öffnen Sie die Einstellungen und aktivieren Sie die Kameraberechtigung.</string>
+    <string name="cameraAccessRequired">Zugriff auf Kamera erforderlich</string>
     <string name="cameraErrorNotFound">Keine Kamera gefunden</string>
     <string name="cameraErrorUnavailable">Kamera nicht verfügbar.</string>
     <string name="cameraGrantAccess">Kamerazugriff gewähren</string>
@@ -197,9 +215,20 @@
     <string name="cameraGrantAccessDescription">{app_name} benötigt die Berechtigung »Kamera«, um Fotos oder Videos aufzunehmen oder QR-Codes zu scannen.</string>
     <string name="cameraGrantAccessQr">{app_name} benötigt Kamera-Zugriff um QR-Codes zu scannen</string>
     <string name="cancel">Abbrechen</string>
+    <string name="cancelAccess">{pro} kündigen</string>
+    <string name="cancelProPlan">{pro}-Plan kündigen</string>
+    <string name="cancelProPlatform">Kündigen Sie auf der {platform}-Website, indem Sie das {platform_account} verwenden, mit dem Sie sich für {pro} registriert haben.</string>
+    <string name="cancelProPlatformStore">Kündigen Sie auf der {platform_store}-Website, indem Sie das {platform_account} verwenden, mit dem Sie sich für {pro} registriert haben.</string>
     <string name="change">Ändern</string>
     <string name="changePasswordFail">Passwortänderung fehlgeschlagen</string>
     <string name="changePasswordModalDescription">Ändere dein Passwort für {app_name}. Lokal gespeicherte Dateien werden mit deinem neuen Passwort entschlüsselt.</string>
+    <string name="changeSetting">Einstellung ändern</string>
+    <string name="checkingProStatus">{pro}-Status wird überprüft</string>
+    <string name="checkingProStatusContinue">{pro}-Status wird überprüft. Du kannst fortfahren, sobald diese Prüfung abgeschlossen ist.</string>
+    <string name="checkingProStatusDescription">Deine {pro}-Details werden überprüft. Manche Aktionen auf dieser Seite sind erst verfügbar, wenn die Überprüfung abgeschlossen ist.</string>
+    <string name="checkingProStatusEllipsis">{pro}-Status wird geprüft...</string>
+    <string name="checkingProStatusRenew">Ihre {pro}-Details werden überprüft. Eine Verlängerung ist erst möglich, wenn die Überprüfung abgeschlossen ist.</string>
+    <string name="checkingProStatusUpgradeDescription">Dein {pro}-Status wird überprüft. Du kannst auf {pro} upgraden, sobald die Überprüfung abgeschlossen ist.</string>
     <string name="clear">Löschen</string>
     <string name="clearAll">Alles löschen</string>
     <string name="clearDataAll">Alle Daten löschen</string>
@@ -258,11 +287,17 @@
     <string name="communityUrl">Community-URL</string>
     <string name="communityUrlCopy">Community-URL kopieren</string>
     <string name="confirm">Bestätigen</string>
+    <string name="confirmPromotion">Beförderung bestätigen</string>
+    <string name="confirmPromotionDescription">Bist du sicher? Administratoren können nicht herabgestuft oder aus der Gruppe entfernt werden.</string>
     <string name="contactContacts">Kontakte</string>
     <string name="contactDelete">Kontakt löschen</string>
     <string name="contactDeleteDescription">Bist du sicher, dass du <b>{name}</b> aus deinen Kontakten löschen möchtest? Neue Nachrichten von <b>{name}</b> werden als Nachrichtenanfrage eintreffen.</string>
     <string name="contactNone">Du hast noch keine Kontakte</string>
     <string name="contactSelect">Kontakte auswählen</string>
+    <plurals name="contactSelected">
+        <item quantity="one">%1$d Kontakt ausgewählt</item>
+        <item quantity="other">%1$d Kontakte ausgewählt</item>
+    </plurals>
     <string name="contactUserDetails">Kontaktdetails ansehen</string>
     <string name="contentDescriptionCamera">Kamera</string>
     <string name="contentDescriptionChooseConversationType">Wähle eine Aktion, um eine Unterhaltung zu starten</string>
@@ -270,6 +305,7 @@
     <string name="contentDescriptionMessageComposition">Nachricht verfassen</string>
     <string name="contentDescriptionQuoteThumbnail">Miniaturbild aus zitierter Nachricht</string>
     <string name="contentDescriptionStartConversation">Erstelle eine Unterhaltung mit einem neuen Kontakt</string>
+    <string name="contentNotificationDescription">Wähle den Inhalt, der bei eingehenden Nachrichten in lokalen Benachrichtigungen angezeigt wird.</string>
     <string name="conversationsAddToHome">Zum Startbildschirm hinzufügen</string>
     <string name="conversationsAddedToHome">Zum Startbildschirm hinzugefügt</string>
     <string name="conversationsAudioMessages">Audio-Nachrichten</string>
@@ -283,6 +319,8 @@
     <string name="conversationsEmpty">Es sind keine Nachrichten in {conversation_name}.</string>
     <string name="conversationsEnter">Eingabetaste</string>
     <string name="conversationsEnterDescription">Definiere, wie Eingabe- und Umschalttaste in Konversationen funktionieren.</string>
+    <string name="conversationsEnterNewLine">UMSCHALT + Eingabetaste sendet eine Nachricht, Eingabetaste beginnt eine neue Zeile.</string>
+    <string name="conversationsEnterSends">Die Eingabetaste sendet eine Nachricht, Umschalttaste + Eingabetaste beginnt eine neue Zeile.</string>
     <string name="conversationsGroups">Gruppen</string>
     <string name="conversationsMessageTrimming">Nachrichtenkürzung</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Communities kürzen</string>
@@ -300,6 +338,7 @@
     <string name="copy">Kopieren</string>
     <string name="create">Erstellen</string>
     <string name="creatingCall">Anruf wird erstellt</string>
+    <string name="currentBilling">Aktuelle Abrechnung</string>
     <string name="currentPassword">Aktuelles Passwort</string>
     <string name="cut">Ausschneiden</string>
     <string name="darkMode">Dunkelmodus</string>
@@ -327,6 +366,14 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">Bitte warte, während die Gruppe erstellt wird...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">Fehler beim Aktualisieren der Gruppe</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">Du hast nicht die Berechtigung, Nachrichten anderer Teilnehmer zu löschen</string>
+    <plurals name="deleteAttachments">
+        <item quantity="one">Ausgewählten Anhang löschen</item>
+        <item quantity="other">Ausgewählte Anhänge löschen</item>
+    </plurals>
+    <plurals name="deleteAttachmentsDescription">
+        <item quantity="one">Möchten Sie den ausgewählten Anhang wirklich löschen? Die zugehörige Nachricht wird ebenfalls gelöscht.</item>
+        <item quantity="other">Möchten Sie die ausgewählten Anhänge wirklich löschen? Die zugehörige Nachricht wird ebenfalls gelöscht.</item>
+    </plurals>
     <string name="deleteContactDescription">Möchtest du <b>{name}</b> wirklich aus deinen Kontakten löschen?\n\nDies wird deine Unterhaltung einschließlich aller Nachrichten und Anhänge löschen. Zukünftige Nachrichten von <b>{name}</b> erscheinen als Nachrichtenanfrage.</string>
     <string name="deleteConversationDescription">Möchtest du deine Unterhaltung mit <b>{name}</b> wirklich löschen?\nDies wird alle Nachrichten und Anhänge dauerhaft löschen.</string>
     <plurals name="deleteMessage">
@@ -366,6 +413,7 @@
     <string name="deleteMessagesDescriptionEveryone">Möchtest du diese Nachrichten wirklich für alle löschen?</string>
     <string name="deleting">Wird gelöscht</string>
     <string name="developerToolsToggle">Entwicklertools ein-/ausblenden</string>
+    <string name="deviceNotificationSettings">Benachrichtigungseinstellungen des Geräts</string>
     <string name="dictationStart">Diktat starten...</string>
     <string name="disappearingMessages">Verschwindende Nachrichten</string>
     <string name="disappearingMessagesCountdownBig">Nachricht wird in {time_large} gelöscht</string>
@@ -413,6 +461,8 @@
     <string name="displayNameVisible">Ihr Anzeigename ist für Benutzer, Gruppen und Gemeinschaften sichtbar, mit denen Sie interagieren.</string>
     <string name="document">Dokument</string>
     <string name="donate">Spenden</string>
+    <string name="donateSessionDescription">Mächtige Kräfte versuchen, die Privatsphäre zu schwächen – aber wir können diesen Kampf nicht alleine führen.\n\nMit einer Spende hilfst du dabei, {app_name} sicher, unabhängig und online zu halten.</string>
+    <string name="donateSessionHelp">{app_name} braucht deine Hilfe</string>
     <string name="done">Fertig</string>
     <string name="download">Herunterladen</string>
     <string name="downloading">Wird heruntergeladen...</string>
@@ -442,17 +492,31 @@
     <string name="emojiReactsHoverYouNameTwoDesktop">Du und {name} haben mit {emoji_name} reagiert</string>
     <string name="emojiReactsNotification">Hat auf deine Nachricht mit {emoji} reagiert</string>
     <string name="enable">Aktivieren</string>
+    <string name="enableCameraAccess">Kamerazugriff aktivieren?</string>
     <string name="enableNotifications">Benachrichtigungen anzeigen, wenn du neue Nachrichten erhältst.</string>
+    <string name="endCallToEnable">Anruf beenden, um zu aktivieren</string>
     <string name="enjoyingSession">Gefällt dir {app_name}?</string>
     <string name="enjoyingSessionButtonNegative">Verbesserungswürdig {emoji}</string>
     <string name="enjoyingSessionButtonPositive">Großartig {emoji}</string>
     <string name="enjoyingSessionDescription">Du nutzt {app_name} jetzt schon eine Weile – wie läuft’s? Wir würden uns sehr über dein Feedback freuen.</string>
     <string name="enter">Bestätigen</string>
+    <string name="enterPasswordDescription">Geben Sie das Passwort ein, das Sie für {app_name} festgelegt haben</string>
+    <string name="enterPasswordTooltip">Geben Sie das Passwort ein, das Sie beim Starten zum Entsperren von {app_name} verwenden – nicht Ihr Wiederherstellungskennwort</string>
+    <string name="errorCheckingProStatus">Fehler bei der Überprüfung des {pro}-Status</string>
     <string name="errorConnection">Bitte überprüfe deine Internetverbindung und versuche es erneut.</string>
     <string name="errorCopyAndQuit">Fehler kopieren und beenden</string>
     <string name="errorDatabase">Datenbankfehler</string>
     <string name="errorGeneric">Etwas ist schiefgelaufen. Bitte versuche es später erneut.</string>
+    <string name="errorLoadingProAccess">Fehler beim Laden des {pro}-Zugriffs</string>
+    <string name="errorNoLookupOns">{app_name} konnte diese ONS nicht finden. Bitte überprüfe deine Netzwerkverbindung und versuche es erneut.</string>
     <string name="errorUnknown">Ein unbekannter Fehler ist aufgetreten.</string>
+    <string name="errorUnregisteredOns">Diese ONS ist nicht registriert. Bitte prüfe die Eingabe und versuche es erneut.</string>
+    <string name="failedResendInvite">Einladung an <b>{name}</b> in <b>{group_name}</b> konnte nicht erneut gesendet werden</string>
+    <string name="failedResendInviteMultiple">Einladung an <b>{name}</b> und <b>{count} weitere</b> in <b>{group_name}</b> konnte nicht erneut gesendet werden</string>
+    <string name="failedResendInviteTwo">Einladung an <b>{name}</b> und <b>{other_name}</b> in <b>{group_name}</b> konnte nicht erneut gesendet werden</string>
+    <string name="failedResendPromotion">Fehler beim erneuten Senden der Beförderung an <b>{name}</b> in <b>{group_name}</b></string>
+    <string name="failedResendPromotionMultiple">Fehler beim erneuten Senden der Beförderung an <b>{name}</b> und <b>{count} weitere</b> in <b>{group_name}</b></string>
+    <string name="failedResendPromotionTwo">Fehler beim erneuten Senden der Beförderung an <b>{name}</b> und <b>{other_name}</b> in <b>{group_name}</b></string>
     <string name="failedToDownload">Herunterladen fehlgeschlagen</string>
     <string name="failures">Fehler</string>
     <string name="feedback">Feedback</string>
@@ -506,6 +570,9 @@
     <string name="groupLeaveDescription">Bist du sicher, dass du <b> {group_name}</b> verlassen möchtest?</string>
     <string name="groupLeaveDescriptionAdmin">Bist du sicher, dass du <b>{group_name}</b> verlassen möchtest?\n\nDadurch werden alle Mitglieder entfernt und alle Gruppendaten gelöscht.</string>
     <string name="groupLeaveErrorFailed">Fehler beim Verlassen von {group_name}</string>
+    <string name="groupMemberInvitedHistory"><b>{name}</b> wurde eingeladen, der Gruppe beizutreten. Der Nachrichtenverlauf der letzten 14 Tage wurde geteilt.</string>
+    <string name="groupMemberInvitedHistoryMultiple"><b>{name}</b> und <b>{count}</b> weitere wurden eingeladen, der Gruppe beizutreten. Der Nachrichtenverlauf der letzten 14 Tage wurde geteilt.</string>
+    <string name="groupMemberInvitedHistoryTwo"><b>{name}</b> und <b>{other_name}</b> wurden eingeladen, der Gruppe beizutreten. Der Nachrichtenverlauf der letzten 14 Tage wurde geteilt.</string>
     <string name="groupMemberLeft"><b>{name}</b> hat die Gruppe verlassen.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> und <b>{count} andere</b> haben die Gruppe verlassen.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> und <b>{other_name}</b> haben die Gruppe verlassen.</string>
@@ -517,6 +584,9 @@
     <string name="groupMemberNewTwo"><b>{name}</b> und <b>{other_name}</b> wurden eingeladen, der Gruppe beizutreten.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Du</b> und <b>{count} andere</b> wurden eingeladen, der Gruppe beizutreten. Der Chatverlauf wurde freigegeben.</string>
     <string name="groupMemberNewYouHistoryTwo"><b>Du</b> und <b>{other_name}</b> wurden eingeladen der Gruppe beizutreten. Chat-Verlauf wurde geteilt.</string>
+    <string name="groupMemberRemoveFailed"><b>{name}</b> konnte nicht aus <b>{group_name}</b> entfernt werden</string>
+    <string name="groupMemberRemoveFailedMultiple"><b>{name}</b> und <b>{count} weitere</b> konnten nicht aus <b>{group_name}</b> entfernt werden</string>
+    <string name="groupMemberRemoveFailedOther"><b>{name}</b> und <b>{other_name}</b> konnten nicht aus <b>{group_name}</b> entfernt werden</string>
     <string name="groupMemberYouLeft"><b>Du</b> hast die Gruppe verlassen.</string>
     <string name="groupMembers">Gruppenmitglieder</string>
     <string name="groupMembersNone">Es gibt keine anderen Mitglieder in dieser Gruppe.</string>
@@ -530,6 +600,7 @@
     <string name="groupNoMessages">Du hast keine Nachrichten von <b>{group_name}</b>. Sende eine Nachricht, um das Gespräch zu beginnen!</string>
     <string name="groupNotUpdatedWarning">Diese Gruppe wurde seit über 30 Tagen nicht aktualisiert. Beim Senden von Nachrichten oder beim Anzeigen der Gruppeninformationen können Probleme auftreten.</string>
     <string name="groupOnlyAdmin">Du bist der einzige Admin in <b>{group_name}</b>.\n\nGruppenmitglieder und -einstellungen können ohne einen Admin nicht geändert werden.</string>
+    <string name="groupOnlyAdminLeave">Du bist der einzige Administrator in <b>{group_name}</b>.\n\nGruppenmitglieder und Einstellungen können ohne Administrator nicht geändert werden. Um die Gruppe zu verlassen, ohne sie zu löschen, füge bitte zuerst einen neuen Administrator hinzu.</string>
     <string name="groupPendingRemoval">Ausstehende Entfernung</string>
     <string name="groupPromotedYou"><b>Du</b> wurdest zum Admin befördert.</string>
     <string name="groupPromotedYouMultiple"><b>Du</b> und <b>{count} andere</b> wurden zu Admin befördert.</string>
@@ -569,14 +640,20 @@
     <string name="helpTranslateSessionDescription">Hilf mit, {app_name} in über 80 Sprachen zu übersetzen!</string>
     <string name="helpWedLoveYourFeedback">Wir würden uns über dein Feedback freuen</string>
     <string name="hide">Ausblenden</string>
+    <string name="hideMenuBarDescription">Sichtbarkeit der Systemmenüleiste umschalten.</string>
     <string name="hideNoteToSelfDescription">Möchtest du <b>Notiz an mich</b> wirklich aus deiner Unterhaltungsliste ausblenden?</string>
     <string name="hideOthers">Andere ausblenden</string>
     <string name="image">Bild</string>
     <string name="images">Bilder</string>
+    <string name="important">Wichtig</string>
     <string name="incognitoKeyboard">Inkognito-Tastatur</string>
     <string name="incognitoKeyboardDescription">Fordere den Inkognito-Modus an, wenn verfügbar. Abhängig von der Tastatur, die du verwendest, kann deine Tastatur diese Anfrage ignorieren.</string>
     <string name="info">Info</string>
     <string name="invalidShortcut">Ungültige Verknüpfung</string>
+    <plurals name="inviteContactsPlural">
+        <item quantity="one">Kontakt einladen</item>
+        <item quantity="other">Kontakte einladen</item>
+    </plurals>
     <plurals name="inviteFailed">
         <item quantity="one">Einladung fehlgeschlagen</item>
         <item quantity="other">Einladungen fehlgeschlagen</item>
@@ -585,8 +662,17 @@
         <item quantity="one">Die Einladung konnte nicht gesendet werden. Möchtest du es erneut versuchen?</item>
         <item quantity="other">Die Einladungen konnten nicht gesendet werden. Möchtest du es erneut versuchen?</item>
     </plurals>
+    <plurals name="inviteMembers">
+        <item quantity="one">Mitglied einladen</item>
+        <item quantity="other">Mitglieder einladen</item>
+    </plurals>
+    <string name="inviteNewMemberGroupLink">Lade ein neues Mitglied in die Gruppe ein, indem du die Account-ID oder ONS deines Freundes eingibst oder seinen QR-Code scannst {icon}</string>
+    <string name="inviteNewMemberGroupNoLink">Lade ein neues Mitglied zur Gruppe ein, indem du die Account-ID, den ONS deines Freundes eingibst oder dessen QR-Code scannst</string>
     <string name="join">Beitreten</string>
     <string name="later">Später</string>
+    <string name="launchOnStartDescriptionDesktop">Starten Sie {app_name} automatisch, wenn Ihr Computer hochfährt.</string>
+    <string name="launchOnStartDesktop">Beim Start starten</string>
+    <string name="launchOnStartupDisabledDesktop">Diese Einstellung wird unter Linux von Ihrem System verwaltet. Um den automatischen Start zu aktivieren, fügen Sie {app_name} in den Systemeinstellungen zu Ihren Autostart-Anwendungen hinzu.</string>
     <string name="learnMore">Mehr erfahren</string>
     <string name="leave">Verlassen</string>
     <string name="leaving">Verlassen...</string>
@@ -601,6 +687,8 @@
     <string name="legacyGroupMemberNewYouOther"><b>Du</b> und <b>{other_name}</b> seid der Gruppe beigetreten.</string>
     <string name="legacyGroupMemberTwoNew"><b>{name}</b> und <b>{other_name}</b> sind der Gruppe beigetreten.</string>
     <string name="legacyGroupMemberYouNew"><b>Du</b> bist der Gruppe beigetreten.</string>
+    <string name="limitBackgroundActivity">Hintergrundaktivität einschränken?</string>
+    <string name="limitBackgroundActivityDescription">Du erlaubst derzeit, dass {app_name} im Hintergrund läuft, um die Zuverlässigkeit der Benachrichtigungen zu verbessern. Eine Änderung dieser Einstellung kann zu weniger zuverlässigen Benachrichtigungen führen.</string>
     <string name="linkPreviews">Link-Vorschauen</string>
     <string name="linkPreviewsDescription">Zeige Link-Vorschauen für unterstützte URLs.</string>
     <string name="linkPreviewsEnable">Link-Vorschau aktivieren</string>
@@ -625,9 +713,16 @@
     <string name="lockAppUnlock">Tippe zum Entsperren</string>
     <string name="lockAppUnlocked">{app_name} ist entsperrt</string>
     <string name="logs">Protokolle</string>
+    <string name="manageAdmins">Admins verwalten</string>
     <string name="manageMembers">Mitglieder verwalten</string>
+    <string name="managePro">{pro} verwalten</string>
     <string name="max">Maximal</string>
+    <string name="maybeLater">Vielleicht später</string>
     <string name="media">Medien</string>
+    <plurals name="memberSelected">
+        <item quantity="one">%1$d Mitglied ausgewählt</item>
+        <item quantity="other">%1$d Mitglieder ausgewählt</item>
+    </plurals>
     <plurals name="members">
         <item quantity="one">%1$d Mitglied</item>
         <item quantity="other">%1$d Mitglieder</item>
@@ -637,7 +732,9 @@
         <item quantity="other">%1$d aktive Mitglieder</item>
     </plurals>
     <string name="membersAddAccountIdOrOns">Account-ID oder ONS hinzufügen</string>
+    <string name="membersGroupPromotionAcceptInvite">Mitglieder können erst befördert werden, nachdem sie eine Einladung zur Gruppenmitgliedschaft angenommen haben.</string>
     <string name="membersInvite">Kontakte einladen</string>
+    <string name="membersInviteNoContacts">Du hast keine Kontakte, die du in diese Gruppe einladen könntest.\nGehe zurück und lade Mitglieder über ihre Account-ID oder ONS ein.</string>
     <plurals name="membersInviteSend">
         <item quantity="one">Einladung senden</item>
         <item quantity="other">Einladungen senden</item>
@@ -646,8 +743,10 @@
     <string name="membersInviteShareDescriptionMultiple">Möchtest du den Nachrichtenverlauf der Gruppe mit <b>{name}</b> und <b>{count} anderen</b> teilen?</string>
     <string name="membersInviteShareDescriptionTwo">Möchtest du den Nachrichtenverlauf der Gruppe mit <b>{name}</b> und <b>{other_name}</b> teilen?</string>
     <string name="membersInviteShareMessageHistory">Nachrichtenverlauf teilen</string>
+    <string name="membersInviteShareMessageHistoryDays">Nachrichtenverlauf der letzten 14 Tage teilen</string>
     <string name="membersInviteShareNewMessagesOnly">Nur neue Nachrichten teilen</string>
     <string name="membersInviteTitle">Einladen</string>
+    <string name="membersNonAdmins">Mitglieder (keine Admins)</string>
     <string name="menuBar">Menüleiste</string>
     <string name="message">Nachricht</string>
     <string name="messageBubbleReadMore">Weiterlesen</string>
@@ -666,6 +765,7 @@
     </plurals>
     <string name="messageNewDescriptionDesktop">Beginne eine neue Unterhaltung durch Eingabe der Account-ID oder des ONS deines Kontakts.</string>
     <string name="messageNewDescriptionMobile">Beginne eine neue Unterhaltung durch Eingabe der Account-ID, des ONS oder Scannen des QR-Codes deines Kontakts.</string>
+    <string name="messageNewDescriptionMobileLink">Beginne eine neue Unterhaltung, indem du die Account-ID oder ONS deines Freundes eingibst oder seinen QR-Code scannst {icon}</string>
     <plurals name="messageNewYouveGot">
         <item quantity="one">Du hast eine neue Nachricht.</item>
         <item quantity="other">Du hast %1$d neue Nachrichten.</item>
@@ -716,19 +816,24 @@
     <string name="modalMessageTooLongTitle">Nachricht zu lang</string>
     <string name="newPassword">Neues Passwort</string>
     <string name="next">Weiter</string>
+    <string name="nextSteps">Nächste Schritte</string>
     <string name="nicknameDescription">Wähle einen Spitznamen für <b>{name}</b>. Dieser wird dir in deinen Einzel- und Gruppengesprächen angezeigt.</string>
     <string name="nicknameEnter">Spitzname eingeben</string>
     <string name="nicknameErrorShorter">Bitte gib einen kürzeren Spitznamen ein</string>
     <string name="nicknameRemove">Spitzname entfernen</string>
     <string name="nicknameSet">Spitzname festlegen</string>
     <string name="no">Nein</string>
+    <string name="noNonAdminsInGroup">Es gibt keine Mitglieder ohne Admin-Status in dieser Gruppe.</string>
     <string name="noSuggestions">Keine Vorschläge</string>
+    <string name="nonProLongerMessagesDescription">Versenden Sie Nachrichten mit bis zu 10.000 Zeichen in allen Unterhaltungen.</string>
+    <string name="nonProUnlimitedPinnedDescription">Organisieren Sie Chats mit unbegrenzt vielen angehefteten Unterhaltungen.</string>
     <string name="none">Keine</string>
     <string name="notNow">Nicht jetzt</string>
     <string name="noteToSelf">Notiz an mich</string>
     <string name="noteToSelfEmpty">Du hast keine Nachrichten in »Notiz an mich«.</string>
     <string name="noteToSelfHide">»Notiz an mich« ausblenden</string>
     <string name="noteToSelfHideDescription">Bist du sicher, dass du »Notiz an mich« ausblenden möchtest?</string>
+    <string name="noteTosPrivacyPolicy"><b>BITTE BEACHTEN</b>: Durch {action_type} stimmst du den <b>Nutzungsbedingungen</b> {icon} und der <b>Datenschutzrichtlinie</b> {icon} von {app_pro} zu</string>
     <string name="notificationDisplay">Benachrichtigungsanzeige</string>
     <string name="notificationSenderNameAndPreview">Zeigt den Namen des Absenders und eine Vorschau des Nachrichteninhalts an.</string>
     <string name="notificationSenderNameOnly">Nur den Namen des Absenders ohne Nachrichteninhalt anzeigen.</string>
@@ -772,6 +877,12 @@
     <string name="off">Aus</string>
     <string name="okay">Okay</string>
     <string name="on">Aktiv</string>
+    <string name="onDevice">Auf deinem {device_type}-Gerät</string>
+    <string name="onDeviceCancelDescription">Öffnen Sie dieses {app_name}-Konto auf einem {device_type}-Gerät, das mit dem {platform_account} angemeldet ist, mit dem Sie sich ursprünglich registriert haben. Kündigen Sie dann {pro} über die {app_pro}-Einstellungen.</string>
+    <string name="onDeviceDescription">Öffne dieses {app_name}-Konto auf einem {device_type}-Gerät, das beim {platform_account} angemeldet ist, mit dem du dich ursprünglich registriert hast. Aktualisiere anschließend deinen {pro}-Zugang über die {app_pro}-Einstellungen.</string>
+    <string name="onLinkedDevice">Auf einem verknüpften Gerät</string>
+    <string name="onPlatformStoreWebsite">Auf der {platform_store}-Website</string>
+    <string name="onPlatformWebsite">Auf der {platform}-Website</string>
     <string name="onboardingAccountCreate">Account erstellen</string>
     <string name="onboardingAccountCreated">Account erstellt</string>
     <string name="onboardingAccountExists">Ich habe einen Account</string>
@@ -796,10 +907,14 @@
     <string name="onsErrorNotRecognized">Wir konnten dieses ONS nicht erkennen. Bitte überprüfe es und versuche es erneut.</string>
     <string name="onsErrorUnableToSearch">Die Suche nach dieses ONS war nicht möglich. Bitte versuche es später noch einmal.</string>
     <string name="open">Öffnen</string>
+    <string name="openPlatformStoreWebsite">{platform_store}-Website öffnen</string>
+    <string name="openPlatformWebsite">{platform}-Website öffnen</string>
+    <string name="openSettings">Einstellungen öffnen</string>
     <string name="openSurvey">Umfrage starten</string>
     <string name="other">Sonstiges</string>
     <string name="password">Passwort</string>
     <string name="passwordChange">Passwort ändern</string>
+    <string name="passwordChangeShortDescription">Ändere das Passwort, das zum Entsperren von {app_name} erforderlich ist.</string>
     <string name="passwordChangedDescriptionToast">Dein Passwort wurde geändert. Bitte bewahre es sicher auf.</string>
     <string name="passwordConfirm">Passwort bestätigen</string>
     <string name="passwordCreate">Passwort erstellen</string>
@@ -818,14 +933,18 @@
     <string name="passwordRemovedDescriptionToast">Dein Passwort wurde entfernt.</string>
     <string name="passwordSet">Passwort festlegen</string>
     <string name="passwordSetDescriptionToast">Dein Passwort wurde festgelegt. Bitte bewahre es sicher auf.</string>
+    <string name="passwordSetShortDescription">Passwort zum Entsperren von {app_name} beim Start erforderlich.</string>
     <string name="passwordStrengthCharLength">Länger als 12 Zeichen</string>
     <string name="passwordStrengthIncludeNumber">Enthält eine Zahl</string>
     <string name="passwordStrengthIncludesLowercase">Enthält einen Kleinbuchstaben</string>
+    <string name="passwordStrengthIncludesSymbol">Enthält ein Symbol</string>
     <string name="passwordStrengthIncludesUppercase">Enthält einen Großbuchstaben</string>
     <string name="passwordStrengthIndicator">Passwortstärke-Anzeige</string>
     <string name="passwordStrengthIndicatorDescription">Ein schwieriges Passwort hilft deine Nachrichten und Anlagen zu schützen, wenn dein Gerät jemals verloren geht oder gestohlen wird.</string>
     <string name="passwords">Passwörter</string>
     <string name="paste">Einfügen</string>
+    <string name="paymentError">Zahlungsfehler</string>
+    <string name="paymentProError">Deine Zahlung wurde erfolgreich verarbeitet, aber es gab einen Fehler beim {action_type} deines {pro}-Status.\n\nBitte überprüfe deine Netzwerkverbindung und versuche es erneut.</string>
     <string name="permissionChange">Berechtigungsänderung</string>
     <string name="permissionMusicAudioDenied">{app_name} benötigt Musik- und Audiozugriff, um Dateien, Musik und Audio zu senden, aber der Zugriff wurde dauerhaft verweigert. Bitte öffne die Einstellungen, wähle »Berechtigungen« und aktiviere »Musik und Audio«.</string>
     <string name="permissionsAppleMusic">{app_name} benötigt Zugriff auf Apple Music, um Medienanhänge abzuspielen.</string>
@@ -864,31 +983,171 @@
     <string name="pinConversation">Unterhaltung anheften</string>
     <string name="pinUnpin">Lösen</string>
     <string name="pinUnpinConversation">Unterhaltung lösen</string>
+    <string name="plusLoadsMore">Und vieles mehr...</string>
+    <string name="plusLoadsMoreDescription">Neue Funktionen kommen bald zu {pro}. Erfahre, was als Nächstes geplant ist auf der <b>{pro} Roadmap</b> {icon}</string>
     <string name="preferences">Einstellungen</string>
     <string name="preview">Vorschau</string>
     <string name="previewNotification">Benachrichtigungsvorschau</string>
+    <string name="proAccessActivatedAutoShort">Dein {pro}-Zugang ist aktiv!\n\nDein {pro}-Zugang wird am <b>{date}</b> automatisch für weitere <b>{current_plan_length}</b> verlängert.</string>
+    <string name="proAccessActivatedNotAuto">Dein {pro}-Zugang läuft am <b>{date}</b> ab.\n\nAktualisiere jetzt deinen {pro}-Zugang, damit er automatisch verlängert wird, bevor dein {pro}-Zugang abläuft.</string>
+    <string name="proAccessActivatesAuto">Dein {pro}-Zugang ist aktiv!\n\nDein {pro}-Zugang wird am <b>{date}</b> automatisch für weitere\n<b>{current_plan_length}</b> verlängert. Alle hier vorgenommenen Änderungen treten bei der nächsten Verlängerung in Kraft.</string>
+    <string name="proAccessError">{pro}-Zugriffsfehler</string>
+    <string name="proAccessExpireDate">Dein {pro}-Zugang läuft am <b>{date}</b> ab.</string>
+    <string name="proAccessLoading">{pro}-Zugriff wird geladen</string>
+    <string name="proAccessLoadingDescription">Deine {pro}-Zugriffsdaten werden noch geladen. Du kannst erst ein Update durchführen, wenn dieser Vorgang abgeschlossen ist.</string>
+    <string name="proAccessLoadingEllipsis">{pro}-Zugriff wird geladen...</string>
+    <string name="proAccessNetworkLoadError">Keine Verbindung zum Netzwerk möglich, um deine {pro}-Zugriffsinformationen zu laden. Die Aktualisierung von {pro} über {app_name} ist deaktiviert, bis die Verbindung wiederhergestellt ist.\n\nBitte überprüfe deine Netzwerkverbindung und versuche es erneut.</string>
+    <string name="proAccessNotFound">{pro}-Zugang nicht gefunden</string>
+    <string name="proAccessNotFoundDescription">{app_name} hat festgestellt, dass dein Konto keinen {pro}-Zugang besitzt. Wenn du glaubst, dass es sich um einen Fehler handelt, kontaktiere bitte den {app_name}-Support.</string>
+    <string name="proAccessRecover">{pro}-Zugang wiederherstellen</string>
+    <string name="proAccessRenew">{pro}-Zugang verlängern</string>
+    <string name="proAccessRenewDesktop">Derzeit kann der Zugriff auf {pro} nur über den {platform_store} oder {platform_store_other} erworben und verlängert werden. Da Sie {app_name} Desktop verwenden, können Sie hier keine Verlängerung durchführen.\n\nDie Entwickler von {app_name} arbeiten intensiv an alternativen Zahlungsmöglichkeiten, damit Nutzer {pro}-Zugriff auch außerhalb des {platform_store} und {platform_store_other} erwerben können. <b>{pro} Roadmap</b> {icon}</string>
+    <string name="proAccessRenewPlatformStoreWebsite">Verlängern Sie Ihren {pro}-Zugang auf der <b><font color="0">{platform_store}-Website</font></b> mit dem {platform_account}, mit dem Sie sich für {pro} registriert haben.</string>
+    <string name="proAccessRenewPlatformWebsite">Verlängern Sie auf der <b><font color="0">{platform}-Website</font></b>, indem Sie das {platform_account} verwenden, mit dem Sie sich für {pro} registriert haben.</string>
+    <string name="proAccessRenewStart">Verlängere deinen {pro}-Zugang, um die leistungsstarken {app_pro} Beta-Funktionen wieder nutzen zu können.</string>
+    <string name="proAccessRestored">{pro}-Zugang wiederhergestellt</string>
+    <string name="proAccessRestoredDescription">{app_name} hat deinen {pro}-Zugang erkannt und wiederhergestellt. Dein {pro}-Status wurde zurückgesetzt!</string>
+    <string name="proAccessSignUp">Da Sie sich ursprünglich über den <b>{platform_store}</b> für {app_pro} angemeldet haben, müssen Sie Ihr {platform_account} verwenden, um Ihren {pro}-Zugang zu aktualisieren.</string>
+    <string name="proAccessUpgradeDesktop">Derzeit kann der Zugriff auf {pro} nur über den {platform_store} oder {platform_store_other} erworben werden. Da du {app_name} Desktop verwendest, kannst du hier kein Upgrade auf {pro} durchführen.\n\nDie Entwickler von {app_name} arbeiten intensiv an alternativen Zahlungsmethoden, um den Erwerb des {pro}-Zugangs auch außerhalb des {platform_store} und {platform_store_other} zu ermöglichen. <b>{pro} Roadmap</b> {icon}</string>
     <string name="proActivated">Aktiviert</string>
+    <string name="proActivatingActivation">aktivieren</string>
+    <string name="proAllSet">Alles erledigt!</string>
+    <string name="proAllSetDescription">Dein Zugang zu {app_pro} wurde aktualisiert! Die Abrechnung erfolgt, wenn {pro} am <b>{date}</b> automatisch verlängert wird.</string>
     <string name="proAlreadyPurchased">Du hast bereits</string>
     <string name="proAnimatedDisplayPicture">Lade GIF- und animierte WebP-Bilder als Profilbild hoch!</string>
+    <string name="proAnimatedDisplayPictureCallToActionDescription">Hole dir animierte Profilbilder und schalte Premium-Funktionen mit {app_pro} Beta frei</string>
     <string name="proAnimatedDisplayPictureFeature">Animiertes Profilbild</string>
     <string name="proAnimatedDisplayPictureModalDescription">Nutzer können GIFs hochladen</string>
+    <string name="proAnimatedDisplayPictures">Animierte Profilbilder</string>
+    <string name="proAnimatedDisplayPicturesDescription">Lege animierte GIF- und WebP-Bilder als dein Profilbild fest.</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">GIFs hochladen mit</string>
     <string name="proAutoRenewTime">Automatische {pro} Erneuerung in <b>{time}</b></string>
+    <string name="proBadge">{pro}-Abzeichen</string>
+    <string name="proBadgeVisible">{app_pro}-Abzeichen anderen Nutzern anzeigen</string>
+    <string name="proBadges">Abzeichen</string>
+    <string name="proBadgesDescription">Zeige deine Unterstützung für {app_name} mit einem exklusiven Abzeichen neben deinem Anzeigenamen.</string>
+    <plurals name="proBadgesSent">
+        <item quantity="one">%1$s %2$s-Abzeichen gesendet</item>
+        <item quantity="other">%1$s %2$s-Abzeichen gesendet</item>
+    </plurals>
+    <string name="proBetaFeatures">{pro} Beta-Funktionen</string>
+    <string name="proBilledAnnually">{price} jährlich abgerechnet</string>
+    <string name="proBilledMonthly">{price} monatlich abgerechnet</string>
+    <string name="proBilledQuarterly">{price} vierteljährlich abgerechnet</string>
+    <string name="proCallToActionLongerMessages">Möchtest du längere Nachrichten senden?\nSende mehr Text und schalte Premium-Funktionen mit {app_pro} Beta frei</string>
+    <string name="proCallToActionPinnedConversations">Mehr Anheftungen gewünscht?\nOrganisiere deine Chats und schalte Premium-Funktionen mit {app_pro} Beta frei</string>
+    <string name="proCallToActionPinnedConversationsMoreThan">Mehr als {limit} Anheftungen gewünscht?\nOrganisiere deine Chats und schalte Premium-Funktionen mit {app_pro} Beta frei</string>
+    <string name="proCancelSorry">Es ist schade, dass Sie {pro} kündigen möchten. Folgendes sollten Sie wissen, bevor Sie den {pro}-Zugriff kündigen.</string>
+    <string name="proCancellation">Kündigung</string>
+    <string name="proCancellationOptions">Zwei Möglichkeiten, den {pro}-Zugriff zu kündigen:</string>
+    <string name="proCancellationShortDescription">Die Kündigung Ihres {pro}-Zugriffs verhindert, dass dieser automatisch verlängert wird, bevor {pro} abläuft.\n\nDas Kündigen von {pro} führt <b>nicht</b> zu einer Rückerstattung. Sie können die {app_pro}-Funktionen weiterhin nutzen, bis Ihr {pro}-Zugriff abläuft.</string>
+    <string name="proChooseAccess">Wählen Sie die {pro}-Zugriffsoption, die am besten zu Ihnen passt.\nLängerer Zugang bedeutet größere Rabatte.</string>
+    <string name="proClearAllDataDevice">Möchten Sie Ihre Daten wirklich von diesem Gerät löschen?\n\n<b>{app_pro}</b> kann nicht auf ein anderes Konto übertragen werden. Bitte speichern Sie Ihr Wiederherstellungskennwort, um sicherzustellen, dass Sie Ihren {pro}-Zugriff später wiederherstellen können.</string>
+    <string name="proClearAllDataNetwork">Möchten Sie Ihre Daten wirklich aus dem Netzwerk löschen? Wenn Sie fortfahren, können Sie Ihre Nachrichten und Kontakte nicht wiederherstellen.\n\n<b>{app_pro}</b> kann nicht auf ein anderes Konto übertragen werden. Bitte speichern Sie Ihr Wiederherstellungskennwort, um sicherzustellen, dass Sie Ihren {pro}-Zugriff später wiederherstellen können.</string>
+    <string name="proDiscountTooltip">Dein {pro}-Zugang ist bereits um {percent}% vom vollen {app_pro}-Preis reduziert.</string>
+    <string name="proErrorRefreshingStatus">Fehler beim Aktualisieren des {pro}-Status</string>
     <string name="proExpired">Abgelaufen</string>
+    <string name="proExpiredDescription">Leider ist dein {pro}-Zugang abgelaufen.\nVerlängere ihn, um die exklusiven Vorteile und Funktionen der {app_pro} Beta wieder zu nutzen.</string>
+    <string name="proExpiringSoon">Läuft bald ab</string>
+    <string name="proExpiringSoonDescription">Dein {pro}-Zugang läuft in <b>{time}</b> ab.\nAktualisiere jetzt, um weiterhin die exklusiven Vorteile und Funktionen der {app_pro} Beta zu nutzen</string>
+    <string name="proExpiringTime">{pro} läuft ab in <b>{time}</b></string>
     <string name="proFaq">{pro} FAQ</string>
+    <string name="proFaqDescription">Finde Antworten auf häufig gestellte Fragen in den {app_pro} FAQ.</string>
     <string name="proFeatureListAnimatedDisplayPicture">GIF- und WebP-Profilbilder hochladen</string>
     <string name="proFeatureListLargerGroups">Größere Gruppenchats mit bis zu 300 Mitgliedern</string>
     <string name="proFeatureListLoadsMore">Und viele weitere exklusive Funktionen</string>
     <string name="proFeatureListLongerMessages">Nachrichten mit bis zu 10.000 Zeichen</string>
     <string name="proFeatureListPinnedConversations">Unbegrenzt viele Unterhaltungen anheften</string>
+    <string name="proFullestPotential">Möchten Sie {app_name} in vollem Umfang nutzen?\nUpgrade auf {app_pro} Beta, um Zugriff auf zahlreiche exklusive Vorteile und Funktionen zu erhalten.</string>
     <string name="proGroupActivated">Gruppe aktiviert</string>
     <string name="proGroupActivatedDescription">Diese Gruppe hat mehr Kapazität! Sie kann bis zu 300 Mitglieder unterstützen, da ein Gruppen-Administrator</string>
+    <plurals name="proGroupsUpgraded">
+        <item quantity="one">%1$s Gruppe aktualisiert</item>
+        <item quantity="other">%1$s Gruppen aktualisiert</item>
+    </plurals>
+    <string name="proImportantDescription">Das Anfordern einer Rückerstattung ist endgültig. Wenn sie genehmigt wird, wird dein {pro}-Zugang sofort storniert und du verlierst den Zugriff auf alle {pro}-Funktionen.</string>
     <string name="proIncreasedAttachmentSizeFeature">Erhöhte Anhangsgröße</string>
     <string name="proIncreasedMessageLengthFeature">Erhöhte Nachrichtenlänge</string>
+    <string name="proLargerGroups">Größere Gruppen</string>
+    <string name="proLargerGroupsDescription">Gruppen, in denen du Administrator bist, werden automatisch erweitert, um bis zu 300 Mitglieder zu unterstützen.</string>
+    <string name="proLargerGroupsTooltip">Größere Gruppenchats (mit bis zu 300 Mitgliedern) kommen bald für alle Pro-Beta-Nutzer!</string>
+    <string name="proLongerMessages">Längere Nachrichten</string>
+    <string name="proLongerMessagesDescription">Du kannst in allen Unterhaltungen Nachrichten mit bis zu 10.000 Zeichen senden.</string>
+    <plurals name="proLongerMessagesSent">
+        <item quantity="one">%1$s längere Nachricht gesendet</item>
+        <item quantity="other">%1$s längere Nachrichten gesendet</item>
+    </plurals>
     <string name="proMessageInfoFeatures">Diese Nachricht verwendet die folgenden {app_pro}-Funktionen:</string>
+    <string name="proNewInstallation">Mit einer Neuinstallation</string>
+    <string name="proNewInstallationDescription">Installieren Sie {app_name} über den {platform_store} auf diesem Gerät neu, stellen Sie Ihr Konto mit Ihrem Wiederherstellungskennwort wieder her, und verlängern Sie {pro} über die {app_pro}-Einstellungen.</string>
+    <string name="proNewInstallationUpgrade">Installieren Sie {app_name} auf diesem Gerät über den {platform_store} erneut, stellen Sie Ihr Konto mit Ihrem Wiederherstellungskennwort wieder her und führen Sie das Upgrade auf {pro} über die {app_pro}-Einstellungen durch.</string>
+    <string name="proOptionsRenewalSubtitle">Derzeit gibt es drei Möglichkeiten zur Verlängerung:</string>
+    <string name="proOptionsTwoRenewalSubtitle">Momentan gibt es zwei Möglichkeiten zur Verlängerung:</string>
+    <string name="proPercentOff">{percent}% Rabatt</string>
+    <plurals name="proPinnedConversations">
+        <item quantity="one">%1$s angeheftete Unterhaltung</item>
+        <item quantity="other">%1$s angeheftete Unterhaltungen</item>
+    </plurals>
+    <string name="proPlanPlatformRefund">Da Sie sich ursprünglich über den <b><font color="0">{platform_store}</font></b> für {app_pro} registriert haben, müssen Sie Ihr {platform_account} verwenden, um eine Rückerstattung zu beantragen.</string>
+    <string name="proPlanPlatformRefundLong">Da Sie sich ursprünglich über den <b><font color="0">{platform_store}</font></b> für {app_pro} registriert haben, wird Ihre Rückerstattungsanfrage vom {app_name} Support bearbeitet.\n\nFordern Sie eine Rückerstattung an, indem Sie auf die Schaltfläche unten klicken und das Rückerstattungsformular ausfüllen.\n\nDer {app_name} Support bemüht sich, Rückerstattungen innerhalb von 24–72 Stunden zu bearbeiten. Bei hohem Anfrageaufkommen kann die Bearbeitung jedoch länger dauern.</string>
+    <string name="proPlanRenewSupport">Dein Zugang zu {app_pro} wurde verlängert! Vielen Dank für deine Unterstützung von {network_name}.</string>
+    <string name="proPriceOneMonth">1 Monat – {monthly_price} / Monat</string>
+    <string name="proPriceThreeMonths">3 Monate – {monthly_price} / Monat</string>
+    <string name="proPriceTwelveMonths">12 Monate – {monthly_price} / Monat</string>
+    <string name="proReactivatingActivation">erneut aktivieren</string>
+    <string name="proRefundAccountDevice">Öffnen Sie dieses {app_name}-Konto auf einem {device_type}-Gerät, bei dem Sie mit dem {platform_account} angemeldet sind, mit dem Sie sich ursprünglich registriert haben. Fordern Sie dann eine Rückerstattung über die {app_pro}-Einstellungen an.</string>
+    <string name="proRefundDescription">Es ist schade, dass du gehst. Das solltest du wissen, bevor du eine Rückerstattung beantragst.</string>
+    <string name="proRefundNextSteps">{platform} bearbeitet derzeit deine Rückerstattungsanfrage. Dies dauert in der Regel 24–48 Stunden. Abhängig von der Entscheidung kann sich dein {pro}-Status in {app_name} ändern.</string>
+    <string name="proRefundRequestSessionSupport">Ihre Rückerstattungsanfrage wird vom {app_name} Support bearbeitet.\n\nFordern Sie eine Rückerstattung an, indem Sie auf die Schaltfläche unten klicken und das Rückerstattungsformular ausfüllen.\n\nDer {app_name} Support bemüht sich, Rückerstattungsanfragen innerhalb von 24–72 Stunden zu bearbeiten, jedoch kann es bei hohem Anfrageaufkommen zu Verzögerungen kommen.</string>
+    <string name="proRefundRequestStorePolicies">Ihre Rückerstattungsanfrage wird ausschließlich von {platform} über die <b>{platform}-Website</b> bearbeitet.\n\nAufgrund der Rückerstattungsrichtlinien von {platform} haben die Entwickler von {app_name} keinen Einfluss auf das Ergebnis der Rückerstattungsanfrage. Dies betrifft sowohl die Genehmigung oder Ablehnung der Anfrage als auch die Entscheidung über eine vollständige oder teilweise Rückerstattung.</string>
+    <string name="proRefundSupport">Bitte kontaktiere {platform}, um weitere Informationen zu deiner Rückerstattungsanfrage zu erhalten. Aufgrund der Rückerstattungsrichtlinien von {platform} haben die Entwickler von {app_name} keinerlei Einfluss auf das Ergebnis von Rückerstattungsanfragen.\n\n<font color="0">{platform}-Rückerstattungssupport</font></string>
+    <string name="proRefunding">{pro} wird zurückerstattet</string>
+    <string name="proRefundingDescription">Rückerstattungen für {app_pro} werden ausschließlich von {platform} über den {platform_store} abgewickelt.\n\nAufgrund der Rückerstattungsrichtlinien von {platform} haben die Entwickler von {app_name} keinerlei Einfluss auf das Ergebnis von Rückerstattungsanfragen. Dies betrifft sowohl die Genehmigung oder Ablehnung der Anfrage als auch die Entscheidung über eine vollständige oder teilweise Rückerstattung.</string>
+    <string name="proRenewAnimatedDisplayPicture">Möchtest du wieder animierte Profilbilder verwenden?\nVerlängere deinen {pro}-Zugang, um die Funktionen freizuschalten, die dir gefehlt haben.</string>
+    <string name="proRenewBeta">{pro} Beta verlängern</string>
+    <string name="proRenewDesktopLinked">Verlängern Sie Ihren {pro}-Zugang in den Einstellungen von {app_pro} auf einem verknüpften Gerät mit installiertem {app_name} über den {platform_store} oder {platform_store_other}.</string>
+    <string name="proRenewLongerMessages">Möchtest du wieder längere Nachrichten senden?\nVerlängere deinen {pro}-Zugang, um die Funktionen freizuschalten, die dir gefehlt haben.</string>
+    <string name="proRenewMaxPotential">Möchtest du {app_name} wieder mit vollem Potenzial nutzen?\nVerlängere deinen {pro}-Zugang, um die Funktionen freizuschalten, die dir gefehlt haben.</string>
+    <string name="proRenewPinFiveConversations">Möchtest du wieder mehr als {limit} Unterhaltungen anpinnen?\nVerlängere deinen {pro}-Zugang, um die Funktionen freizuschalten, die dir gefehlt haben.</string>
+    <string name="proRenewPinMoreConversations">Möchtest du wieder mehr Unterhaltungen anpinnen?\nVerlängere deinen {pro}-Zugang, um die Funktionen freizuschalten, die dir gefehlt haben.</string>
+    <string name="proRenewTosPrivacy">Durch die Verlängerung stimmst du den <b>Nutzungsbedingungen</b> {icon} und der <b>Datenschutzerklärung</b> {icon} von {app_pro} zu</string>
+    <string name="proRenewalUnsuccessful">Verlängerung von Pro fehlgeschlagen, neuer Versuch in Kürze</string>
+    <string name="proRenewingAction">verlängern</string>
+    <string name="proRenewingNoAccessBilling">Derzeit kann der {pro}-Zugriff nur über den {platform_store} oder {platform_store_other} gekauft und verlängert werden. Da Sie {app_name} mit dem Build {build_variant} installiert haben, können Sie hier nicht verlängern.\n\nDie Entwickler von {app_name} arbeiten intensiv an alternativen Zahlungsmethoden, um es Nutzern zu ermöglichen, den {pro}-Zugriff außerhalb des {platform_store} und {platform_store_other} zu erwerben.<b> {pro}-Roadmap</b> {icon}</string>
+    <string name="proRequestedRefund">Rückerstattung beantragt</string>
     <string name="proSendMore">Mehr senden mit</string>
+    <string name="proSettings">{pro}-Einstellungen</string>
+    <string name="proStartUsing">{pro} jetzt verwenden</string>
     <string name="proStats">Deine {pro} Statistik</string>
+    <string name="proStatsLoading">{pro}-Statistiken werden geladen</string>
+    <string name="proStatsLoadingDescription">Deine {pro}-Statistiken werden geladen, bitte warten.</string>
+    <string name="proStatsTooltip">Die {pro}-Statistiken spiegeln die Nutzung auf diesem Gerät wider und können auf verknüpften Geräten abweichen</string>
+    <string name="proStatusError">Fehler beim {pro}-Status</string>
+    <string name="proStatusInfoInaccurateNetworkError">Keine Netzwerkverbindung zur Überprüfung deines {pro}-Status möglich. Die Informationen auf dieser Seite könnten ungenau sein, bis die Verbindung wiederhergestellt ist.\n\nBitte überprüfe deine Netzwerkverbindung und versuche es erneut.</string>
+    <string name="proStatusLoading">{pro}-Status wird geladen</string>
+    <string name="proStatusLoadingDescription">Deine {pro}-Informationen werden geladen. Einige Aktionen auf dieser Seite sind erst verfügbar, wenn das Laden abgeschlossen ist.</string>
+    <string name="proStatusLoadingSubtitle">{pro}-Status wird geladen</string>
+    <string name="proStatusNetworkErrorContinue">Verbindung zum Netzwerk zur Überprüfung deines {pro}-Status nicht möglich. Du kannst erst fortfahren, wenn die Verbindung wiederhergestellt ist.\n\nBitte überprüfe deine Netzwerkverbindung und versuche es erneut.</string>
+    <string name="proStatusNetworkErrorDescription">Keine Netzwerkverbindung zur Überprüfung deines {pro}-Status möglich. Du kannst nicht auf {pro} upgraden, bis die Verbindung wiederhergestellt ist.\n\nBitte überprüfe deine Netzwerkverbindung und versuche es erneut.</string>
+    <string name="proStatusRefreshNetworkError">Keine Verbindung zum Netzwerk möglich, um deinen {pro}-Status zu aktualisieren. Einige Aktionen auf dieser Seite sind deaktiviert, bis die Verbindung wiederhergestellt ist.\n\nBitte überprüfe deine Netzwerkverbindung und versuche es erneut.</string>
+    <string name="proStatusRenewError">Keine Verbindung zum Netzwerk, um Ihren aktuellen {pro}-Zugang zu laden. Die Verlängerung von {pro} über {app_name} ist deaktiviert, bis die Verbindung wiederhergestellt ist.\n\nBitte überprüfen Sie Ihre Netzwerkverbindung und versuchen Sie es erneut.</string>
+    <string name="proSupportDescription">Benötigst du Hilfe mit {pro}? Sende eine Anfrage an das Support-Team.</string>
+    <string name="proTosDescription">Durch {action_type} wird {app_pro} über das {app_name}-Protokoll {activation_type}. {entity} erleichtert diese Aktivierung, ist jedoch nicht der Anbieter von {app_pro}. {entity} ist nicht verantwortlich für Leistung, Verfügbarkeit oder Funktionalität von {app_pro}.</string>
     <string name="proTosPrivacy">Durch die Aktualisierung stimmst du den <b>Nutzungsbedingungen</b> {icon} und der <b>Datenschutzerklärung</b> {icon} von {app_pro} zu</string>
+    <string name="proUnlimitedPins">Unbegrenzte Anheftungen</string>
+    <string name="proUnlimitedPinsDescription">Organisiere all deine Chats mit unbegrenzt vielen angehefteten Konversationen.</string>
+    <string name="proUpdatingAction">aktualisieren</string>
+    <string name="proUpgradeAccess">Upgrade auf {app_pro} Beta, um Zugriff auf zahlreiche exklusive Vorteile und Funktionen zu erhalten.</string>
+    <string name="proUpgradeDesktopLinked">Upgrade auf {pro} über die {app_pro}-Einstellungen auf einem verknüpften Gerät mit {app_name}, installiert über den {platform_store} oder {platform_store_other}.</string>
+    <string name="proUpgradeNoAccessBilling">Derzeit kann der {pro}-Zugang nur über den {platform_store} oder den {platform_store_other} erworben werden. Da Sie {app_name} mit der {build_variant} installiert haben, ist ein Upgrade auf {pro} hier nicht möglich.\n\nDie Entwickler von {app_name} arbeiten intensiv an alternativen Zahlungsmöglichkeiten, um den Erwerb von {pro}-Zugang außerhalb des {platform_store} und {platform_store_other} zu ermöglichen.<b> {pro}-Roadmap</b> {icon}</string>
+    <string name="proUpgradeOption">Aktuell gibt es nur eine Möglichkeit zum Upgrade:</string>
+    <string name="proUpgradeOptionsTwo">Momentan gibt es zwei Upgrade-Möglichkeiten:</string>
+    <string name="proUpgraded">Sie haben auf {app_pro} upgegradet!\nVielen Dank für Ihre Unterstützung des {network_name}.</string>
+    <string name="proUpgradingAction">upgraden</string>
+    <string name="proUpgradingTo">Upgrade auf {pro} wird durchgeführt</string>
+    <string name="proUpgradingTosPrivacy">Durch das Upgrade stimmen Sie den <b>Nutzungsbedingungen</b> {icon} und der <b>Datenschutzerklärung</b> {icon} von {app_pro} zu</string>
+    <string name="proUserProfileModalCallToAction">Willst du mehr aus {app_name} herausholen?\nUpgrade auf {app_pro} Beta für ein leistungsstärkeres Nachrichten-Erlebnis.</string>
+    <string name="processingRefundRequest">{platform} bearbeitet deine Rückerstattungsanfrage</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Anzeigebild</string>
     <string name="profileDisplayPictureRemoveError">Fehler beim Entfernen des Profilbildes.</string>
@@ -896,6 +1155,11 @@
     <string name="profileDisplayPictureSizeError">Bitte wähle eine kleinere Datei.</string>
     <string name="profileErrorUpdate">Das Profil konnte nicht aktualisiert werden.</string>
     <string name="promote">Befördern</string>
+    <string name="promoteAdminsWarning">Administratoren können den Nachrichtenverlauf der letzten 14 Tage sehen und nicht herabgestuft oder aus der Gruppe entfernt werden.</string>
+    <plurals name="promoteMember">
+        <item quantity="one">Mitglied befördern</item>
+        <item quantity="other">Mitglieder befördern</item>
+    </plurals>
     <plurals name="promotionFailed">
         <item quantity="one">Beförderung fehlgeschlagen</item>
         <item quantity="other">Beförderungen fehlgeschlagen</item>
@@ -944,23 +1208,60 @@
     <string name="recoveryPasswordWarningSendDescription">Dies ist dein Wiederherstellungspasswort. Wenn du es jemandem sendest, wird diese Person vollen Zugriff auf deinen Account haben.</string>
     <string name="recreateGroup">Gruppe neu erstellen</string>
     <string name="redo">Wiederholen</string>
+    <string name="refundNonOriginatorApple">Da du dich ursprünglich mit einem anderen {platform_account} für {app_pro} angemeldet hast, musst du dieses <b><font color="0">{platform_account}</font></b> verwenden, um deinen {pro}-Zugang zu aktualisieren.</string>
+    <string name="refundRequestOptions">Zwei Möglichkeiten, eine Rückerstattung anzufordern:</string>
     <string name="remainingCharactersOverTooltip">Nachricht um {count} Zeichen kürzen</string>
     <plurals name="remainingCharactersTooltip">
         <item quantity="one">%1$d Zeichen verbleibt</item>
         <item quantity="other">%1$d Zeichen verbleiben</item>
     </plurals>
+    <string name="remindMeLater">Später erinnern</string>
     <string name="remove">Entfernen</string>
+    <plurals name="removeMember">
+        <item quantity="one">Mitglied entfernen</item>
+        <item quantity="other">Mitglieder entfernen</item>
+    </plurals>
+    <plurals name="removeMemberMessages">
+        <item quantity="one">Mitglied und dessen Nachrichten entfernen</item>
+        <item quantity="other">Mitglieder und deren Nachrichten entfernen</item>
+    </plurals>
     <string name="removePasswordFail">Fehler beim Entfernen des Passworts</string>
     <string name="removePasswordModalDescription">Entferne dein aktuelles Passwort für {app_name}. Lokal gespeicherte Daten werden mit einem zufällig generierten Schlüssel, der auf deinem Gerät gespeichert wird, erneut verschlüsselt.</string>
+    <plurals name="removingMember">
+        <item quantity="one">Mitglied wird entfernt</item>
+        <item quantity="other">Mitglieder werden entfernt</item>
+    </plurals>
+    <string name="renew">Verlängern</string>
+    <string name="renewingPro">{pro} wird verlängert</string>
     <string name="reply">Antworten</string>
     <string name="requestRefund">Rückerstattung anfordern</string>
+    <string name="requestRefundPlatformWebsite">Fordern Sie eine Rückerstattung über die <b><font color="0">{platform}-Website</font></b> an, indem Sie das {platform_account} verwenden, mit dem Sie sich für {pro} registriert haben.</string>
     <string name="resend">Erneut senden</string>
+    <plurals name="resendInvite">
+        <item quantity="one">Einladung erneut senden</item>
+        <item quantity="other">Einladungen erneut senden</item>
+    </plurals>
+    <plurals name="resendPromotion">
+        <item quantity="one">Beförderung erneut senden</item>
+        <item quantity="other">Beförderungen erneut senden</item>
+    </plurals>
+    <plurals name="resendingInvite">
+        <item quantity="one">Einladung wird erneut gesendet</item>
+        <item quantity="other">Einladungen werden erneut gesendet</item>
+    </plurals>
+    <plurals name="resendingPromotion">
+        <item quantity="one">Beförderung wird erneut gesendet</item>
+        <item quantity="other">Beförderungen werden erneut gesendet</item>
+    </plurals>
     <string name="resolving">Länder werden geladen ...</string>
     <string name="restart">Neustart</string>
     <string name="resync">Erneut synchronisieren</string>
     <string name="retry">Erneut versuchen</string>
     <string name="reviewLimit">Bewertungsgrenze</string>
     <string name="reviewLimitDescription">Du hast {app_name} anscheinend kürzlich bewertet – danke für dein Feedback!</string>
+    <string name="runAppBackground">App im Hintergrund ausführen</string>
+    <string name="runSessionBackground">{app_name} im Hintergrund ausführen?</string>
+    <string name="runSessionBackgroundDescription">Da du den Langsammodus verwendest, empfehlen wir, {app_name} im Hintergrund auszuführen, um die Benachrichtigungen zu verbessern. Dies kann die Konsistenz der Benachrichtigungen erhöhen, obwohl dein System die Hintergrundaktivität dennoch automatisch einschränken kann.\n\nDu kannst diese Einstellung später unter \"Einstellungen\" ändern.</string>
     <string name="save">Speichern</string>
     <string name="saved">Gespeichert</string>
     <string name="savedMessages">Gespeicherte Nachrichten</string>
@@ -969,6 +1270,8 @@
     <string name="screenSecurity">Bildschirmschutz</string>
     <string name="screenshotNotifications">Bildschirmfoto-Benachrichtigungen</string>
     <string name="screenshotNotificationsDescription">Erhalte eine Benachrichtigung, wenn ein Kontakt ein Bildschirmfoto in einer Unterhaltung macht.</string>
+    <string name="screenshotProtectionDescriptionDesktop">Das {app_name}-Fenster in auf diesem Gerät aufgenommenen Screenshots verbergen.</string>
+    <string name="screenshotProtectionDesktop">Screenshot-Schutz</string>
     <string name="screenshotTaken"><b>{name}</b> hat einen Screenshot gemacht.</string>
     <string name="search">Suchen</string>
     <string name="searchContacts">Kontakte durchsuchen</string>
@@ -989,6 +1292,10 @@
     <string name="sending">Wird gesendet ...</string>
     <string name="sendingCallOffer">Rufangebot wird gesendet</string>
     <string name="sendingConnectionCandidates">Verbindungskandidaten werden gesendet</string>
+    <plurals name="sendingPromotion">
+        <item quantity="one">Admin-Beförderung wird gesendet</item>
+        <item quantity="other">Admin-Beförderungen werden gesendet</item>
+    </plurals>
     <string name="sent">Gesendet:</string>
     <string name="sessionAppearance">Darstellung</string>
     <string name="sessionClearData">Daten löschen</string>
@@ -1015,14 +1322,19 @@
     <string name="set">Speichern</string>
     <string name="setCommunityDisplayPicture">Community-Anzeigebild festlegen</string>
     <string name="setPasswordModalDescription">Setze ein Passwort für {app_name}. Lokal gespeicherte Dateien werden mit diesem Passwort verschlüsselt. Du wirst jedes Mal nach diesem Passwort gefragt, wenn du {app_name} startest.</string>
+    <string name="settingsCannotChangeDesktop">Einstellung kann nicht aktualisiert werden</string>
     <string name="settingsRestartDescription">Du musst {app_name} neu starten, um die neuen Einstellungen zu übernehmen.</string>
     <string name="settingsScreenSecurityDesktop">Bildschirmschutz</string>
+    <string name="settingsStartCategoryDesktop">Autostart</string>
     <string name="share">Teilen</string>
     <string name="shareAccountIdDescription">Lade deine Kontakte ein, mit dir auf {app_name} zu chatten, indem du deine Account-ID mit ihnen teilst.</string>
     <string name="shareAccountIdDescriptionCopied">Teile deine Account-ID mit Freunden und verlegt das Gespräch dann hierher.</string>
     <string name="shareExtensionDatabaseError">Ein Datenbankfehler ist aufgetreten. Bitte starte die App neu und versuche es erneut.</string>
     <string name="shareExtensionNoAccountError">Ups! Sieht so aus, als hättest du noch kein {app_name} Konto.\n\nDu musst eines in der {app_name} App erstellen, bevor du teilen kannst.</string>
+    <string name="shareGroupMessageHistory">Möchtest du den Nachrichtenverlauf der Gruppe mit diesem Nutzer teilen?</string>
     <string name="shareToSession">Teilen auf {app_name}</string>
+    <string name="sharingSupportMultipleMedia">{app_name} unterstützt nur das gleichzeitige Teilen mehrerer Bilder und Videos.</string>
+    <string name="sharingSupportMultipleMediaExcluded">Freigabe unterstützt nur Mediendateien. Nicht-Mediendateien wurden ausgeschlossen.</string>
     <string name="show">Anzeigen</string>
     <string name="showAll">Alle anzeigen</string>
     <string name="showLess">Weniger anzeigen</string>
@@ -1038,16 +1350,22 @@
     <string name="theContinue">Weiter</string>
     <string name="theDefault">Standard</string>
     <string name="theError">Fehler</string>
+    <string name="theReturn">Zurück</string>
     <string name="themePreview">Design-Vorschau</string>
     <string name="tooltipAccountIdVisible">Die Account-ID von <b>{name}</b> ist basierend auf deinen vorherigen Interaktionen sichtbar</string>
     <string name="tooltipBlindedIdCommunities">Verschleierte IDs werden in Communities verwendet, um Spam zu reduzieren und die Privatsphäre zu erhöhen</string>
     <string name="translate">Übersetzen</string>
+    <string name="tray">Infobereich</string>
     <string name="tryAgain">Erneut versuchen</string>
     <string name="typingIndicators">Tipp-Indikatoren</string>
     <string name="typingIndicatorsDescription">Sehe und teile Tippindikatoren.</string>
     <string name="unavailable">Nicht verfügbar</string>
     <string name="undo">Rückgängig</string>
     <string name="unknown">Unbekannt</string>
+    <string name="unsupportedCpu">Nicht unterstützte CPU</string>
+    <string name="update">Aktualisieren</string>
+    <string name="updateAccess">{pro}-Zugang aktualisieren</string>
+    <string name="updateAccessTwo">Zwei Möglichkeiten, deinen {pro}-Zugang zu aktualisieren:</string>
     <string name="updateApp">App-Aktualisierungen</string>
     <string name="updateCommunityInformation">Community-Informationen aktualisieren</string>
     <string name="updateCommunityInformationDescription">Community-Name und -Beschreibung sind für alle Mitglieder der Community sichtbar.</string>
@@ -1070,13 +1388,19 @@
     <string name="updated">Zuletzt aktualisiert vor {relative_time}</string>
     <string name="updates">Aktualisierungen</string>
     <string name="updating">Wird aktualisiert...</string>
+    <string name="upgrade">Upgrade</string>
+    <string name="upgradeSession">{app_name} aktualisieren</string>
     <string name="upgradeTo">Upgrade auf</string>
     <string name="uploading">Wird hochgeladen</string>
     <string name="urlCopy">Link kopieren</string>
     <string name="urlOpen">URL öffnen</string>
     <string name="urlOpenBrowser">Dies wird in deinem Browser geöffnet.</string>
     <string name="urlOpenDescription">Bist du sicher, dass du diese URL in deinem Browser öffnen wollen?\n\n<b>{url}</b></string>
+    <string name="urlOpenDescriptionAlternative">Links werden in deinem Browser geöffnet.</string>
     <string name="useFastMode">Schnellen Modus verwenden</string>
+    <string name="viaPlatformWebsiteDescription">Ändern Sie Ihren Plan mit dem {platform_account}, mit dem Sie sich registriert haben, über die <b><font color="0">{platform}-Website</font></b>.</string>
+    <string name="viaStoreWebsite">Über die {platform}-Website</string>
+    <string name="viaStoreWebsiteDescription">Aktualisiere deinen {pro}-Zugang mithilfe des {platform_account}, mit dem du dich registriert hast, über die Website von <b><font color="0">{platform_store}</font></b>.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Videowiedergabe fehlgeschlagen.</string>
     <string name="view">Anzeigen</string>
@@ -1085,9 +1409,11 @@
     <string name="waitFewMinutes">Dies kann einige Minuten dauern.</string>
     <string name="waitOneMoment">Einen Moment bitte...</string>
     <string name="warning">Warnung</string>
+    <string name="warningIosVersionEndingSupport">Die Unterstützung für iOS 15 wurde beendet. Aktualisieren Sie auf iOS 16 oder neuer, um weiterhin App-Updates zu erhalten.</string>
     <string name="window">Fenster</string>
     <string name="yes">Ja</string>
     <string name="you">Du</string>
+    <string name="yourCpuIsUnsupportedSSE42">Ihre CPU unterstützt keine SSE 4.2-Befehlssätze, die von {app_name} unter Linux x64-Betriebssystemen zur Bildverarbeitung benötigt werden. Bitte aktualisieren Sie auf eine kompatible CPU oder verwenden Sie ein anderes Betriebssystem.</string>
     <string name="yourRecoveryPassword">Dein Wiederherstellungspasswort</string>
     <string name="zoomFactor">Vergrößerungsfaktor</string>
     <string name="zoomFactorDescription">Passe die Größe von Text und visuellen Elementen an.</string>
