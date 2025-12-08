@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.snode.OnionRequestAPI
+import org.session.libsession.utilities.getColorFromAttr
 import org.thoughtcrime.securesms.util.toPx
 
 class PathStatusView : View {
@@ -38,10 +39,13 @@ class PathStatusView : View {
         ContextCompat.getColor(context, R.color.accent_green)
     }
 
-    private val invalidColor by lazy {
-        ContextCompat.getColor(context, R.color.accent_orange)
+    private val buildingColor by lazy {
+        context.getColorFromAttr(R.attr.warning)
     }
 
+    private val errorColor by lazy {
+        context.getColorFromAttr(R.attr.danger)
+    }
 
     private var updateJob: Job? = null
 
@@ -73,15 +77,24 @@ class PathStatusView : View {
         super.onAttachedToWindow()
 
         updateJob = GlobalScope.launch {
-            OnionRequestAPI.hasPath
-                .collectLatest { pathsBuilt ->
+            OnionRequestAPI.pathStatus
+                .collectLatest { status ->
                     withContext(Dispatchers.Main) {
-                        if (pathsBuilt) {
-                            mainColor = validColor
-                            sessionShadowColor = validColor
-                        } else {
-                            mainColor = invalidColor
-                            sessionShadowColor = invalidColor
+                        when (status) {
+                            OnionRequestAPI.PathStatus.READY -> {
+                                mainColor = validColor
+                                sessionShadowColor = validColor
+                            }
+
+                            OnionRequestAPI.PathStatus.BUILDING -> {
+                                mainColor = buildingColor
+                                sessionShadowColor = buildingColor
+                            }
+
+                            OnionRequestAPI.PathStatus.ERROR -> {
+                                mainColor = errorColor
+                                sessionShadowColor = errorColor
+                            }
                         }
 
                         invalidate()

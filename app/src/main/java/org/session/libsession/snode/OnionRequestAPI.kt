@@ -1,12 +1,13 @@
 package org.session.libsession.snode
 
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import nl.komponents.kovenant.Deferred
@@ -57,10 +58,25 @@ object OnionRequestAPI {
     )
 
     val paths: StateFlow<List<Path>> get() = mutablePaths
-    val hasPath: StateFlow<Boolean> = mutablePaths
-        .drop(1)
-        .map { it.isNotEmpty() }
-        .stateIn(GlobalScope, SharingStarted.Eagerly, paths.value.isNotEmpty())
+
+    enum class PathStatus {
+        READY,      // green
+        BUILDING,   // orange
+        ERROR       // red (offline, no path, repeated failures, etc.)
+    }
+
+    private val mutablePathStatus = MutableStateFlow(
+        if (database.getOnionRequestPaths().isNotEmpty()) PathStatus.READY else PathStatus.ERROR
+    )
+
+    @OptIn(FlowPreview::class)
+    val pathStatus: StateFlow<PathStatus> get() = mutablePathStatus
+        .debounce(250)
+        .stateIn(
+            scope = GlobalScope,
+            started = SharingStarted.Eagerly,
+            initialValue = PathStatus.BUILDING
+        )
 
     private val NON_PENALIZING_STATUSES = setOf(403, 404, 406, 425)
 
@@ -70,11 +86,18 @@ object OnionRequestAPI {
             mutablePaths
                 .drop(1) // Drop the first result where it just comes from the db
                 .collectLatest {
-                if (it.isEmpty()) {
-                    database.clearOnionRequestPaths()
-                } else {
-                    database.setOnionRequestPaths(it)
-                }
+                    // Update status based on new paths
+                    mutablePathStatus.value = if (it.isNotEmpty()) {
+                        PathStatus.READY
+                    } else {
+                        PathStatus.ERROR
+                    }
+
+                    if (it.isEmpty()) {
+                        database.clearOnionRequestPaths()
+                    } else {
+                        database.setOnionRequestPaths(it)
+                    }
             }
         }
     }
@@ -192,14 +215,15 @@ object OnionRequestAPI {
     }
 
     private fun updatePathsSafe(newPaths: List<Path>) {
-        if (arePathsDisjoint(newPaths)) {
-            mutablePaths.value = newPaths
+        val safe = if (arePathsDisjoint(newPaths)) {
+            newPaths
         } else {
             Log.w("Loki", "Trying to set the mutablePath with paths that have overlapping snodes... Pruning.")
-            // We do NOT trigger a rebuild here. We just save the safe state.
-            // The next call to getPath() will notice the count is low and rebuild then.
-            mutablePaths.value = sanitizePaths(newPaths)
+            sanitizePaths(newPaths)
         }
+
+        mutablePaths.value = safe
+        mutablePathStatus.value = if (safe.isNotEmpty()) PathStatus.READY else PathStatus.ERROR
     }
 
     /**
@@ -207,6 +231,8 @@ object OnionRequestAPI {
      * enough (reliable) snodes are available.
      */
     private fun buildPaths(reusablePaths: List<Path>): Promise<List<Path>, Exception> {
+        mutablePathStatus.value = PathStatus.BUILDING
+
         // making sure we have safe lists of path without repeated snodes
         val safeReusablePaths = if (arePathsDisjoint(reusablePaths)) {
             reusablePaths
@@ -217,7 +243,9 @@ object OnionRequestAPI {
 
         val existingBuildPathsPromise = buildPathsPromise
         if (existingBuildPathsPromise != null) { return existingBuildPathsPromise }
+
         Log.d("Loki", "Building onion request paths.")
+
         val promise = SnodeAPI.getRandomSnode().bind { // Just used to populate the snode pool
             val reusableGuardSnodes = safeReusablePaths.map { it[0] }
             getGuardSnodes(reusableGuardSnodes).map { guardSnodes ->
@@ -227,10 +255,8 @@ object OnionRequestAPI {
                 if (unusedSnodes.count() < pathSnodeCount) { throw InsufficientSnodesException() }
                 // Don't test path snodes as this would reveal the user's IP to them
                 guardSnodes.minus(reusableGuardSnodes).map { guardSnode ->
-                    val result = listOf( guardSnode ) + (0 until (pathSize - 1)).mapIndexed() { index, _ ->
-                        var pathSnode = unusedSnodes.secureRandom()
-
-                        // remove the snode from the unused list and return it
+                    val result = listOf(guardSnode) + (0 until (pathSize - 1)).map {
+                        val pathSnode = unusedSnodes.secureRandom()
                         unusedSnodes = unusedSnodes.minus(pathSnode)
                         pathSnode
                     }
@@ -242,8 +268,17 @@ object OnionRequestAPI {
                 mutablePaths.value
             }
         }
-        promise.success { buildPathsPromise = null }
-        promise.fail { buildPathsPromise = null }
+
+        promise.success {
+            buildPathsPromise = null
+            mutablePathStatus.value = PathStatus.READY
+        }
+        promise.fail {
+            buildPathsPromise = null
+            // Path building failed; we’re in an error state.
+            mutablePathStatus.value = PathStatus.ERROR
+        }
+
         buildPathsPromise = promise
         return promise
     }
