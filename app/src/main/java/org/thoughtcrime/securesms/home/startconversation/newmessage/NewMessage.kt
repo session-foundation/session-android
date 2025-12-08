@@ -137,7 +137,7 @@ private fun EnterAccountId(
                 Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
 
                 BorderlessButtonWithIcon(
-                    text = stringResource(if(isInvite) R.string.inviteNewMemberGroupLink else R.string.messageNewDescriptionMobile),
+                    text = stringResource(if(isInvite) R.string.inviteNewMemberGroupNoLink else R.string.messageNewDescriptionMobile),
                     modifier = Modifier
                         .qaTag(R.string.AccessibilityId_messageNewDescriptionMobile)
                         .padding(horizontal = LocalDimensions.current.mediumSpacing)
