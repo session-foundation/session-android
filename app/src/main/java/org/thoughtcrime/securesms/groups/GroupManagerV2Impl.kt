@@ -1252,7 +1252,7 @@ class GroupManagerV2Impl @Inject constructor(
             message = Phrase.from(application, R.string.groupOnlyAdmin)
                 .put(GROUP_NAME_KEY, name)
                 .format()
-            positiveButton = R.string.add
+            positiveButton = R.string.addAdminSingular
             negativeButton = R.string.groupDelete
         } else {
             message = Phrase.from(application, R.string.groupLeaveDescription)
