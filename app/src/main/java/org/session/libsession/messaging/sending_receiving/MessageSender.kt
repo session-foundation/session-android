@@ -6,10 +6,9 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
-import network.loki.messenger.libsession_util.Namespace
-import network.loki.messenger.libsession_util.ReadableUserProfile
 import network.loki.messenger.libsession_util.protocol.SessionProtocol
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
@@ -22,7 +21,6 @@ import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.applyExpiryMode
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.control.GroupUpdated
-import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.LinkPreview
 import org.session.libsession.messaging.messages.visible.Quote
@@ -35,16 +33,15 @@ import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.protos.SessionProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
+import org.session.protos.SessionProtos
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.copyFromLibSession
-import org.thoughtcrime.securesms.pro.db.ProDatabase
 import org.thoughtcrime.securesms.service.ExpiringMessageManager
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -61,7 +58,6 @@ class MessageSender @Inject constructor(
     private val messageDataProvider: MessageDataProvider,
     private val messageSendJobFactory: MessageSendJob.Factory,
     private val messageExpirationManager: ExpiringMessageManager,
-    private val proDatabase: ProDatabase,
     private val snodeClock: SnodeClock,
     @param:ManagerScope private val scope: CoroutineScope,
 ) {
@@ -187,27 +183,34 @@ class MessageSender @Inject constructor(
             throw Error.InvalidMessage()
         }
 
+        val proRotatingEd25519PrivKey = configFactory.withUserConfigs { configs ->
+            configs.userProfile.getProConfig()
+        }?.rotatingPrivateKey?.data
+
+        val messagePlaintext = buildProto(message).toByteArray()
+
+
         val messageContent = when (destination) {
             is Destination.Contact -> {
                 SessionProtocol.encodeFor1o1(
-                    plaintext = buildProto(message).toByteArray(),
+                    plaintext = messagePlaintext,
                     myEd25519PrivKey = userEd25519PrivKey,
                     timestampMs = message.sentTimestamp!!,
                     recipientPubKey = Hex.fromStringCondensed(destination.publicKey),
-                    proRotatingEd25519PrivKey = null,
+                    proRotatingEd25519PrivKey = proRotatingEd25519PrivKey,
                 )
             }
 
             is Destination.ClosedGroup -> {
                 SessionProtocol.encodeForGroup(
-                    plaintext = buildProto(message).toByteArray(),
+                    plaintext = messagePlaintext,
                     myEd25519PrivKey = userEd25519PrivKey,
                     timestampMs = message.sentTimestamp!!,
                     groupEd25519PublicKey = Hex.fromStringCondensed(destination.publicKey),
                     groupEd25519PrivateKey = configFactory.withGroupConfigs(AccountId(destination.publicKey)) {
                         it.groupKeys.groupEncKey()
                     },
-                    proRotatingEd25519PrivKey = null
+                    proRotatingEd25519PrivKey = proRotatingEd25519PrivKey,
                 )
             }
 
@@ -351,7 +354,9 @@ class MessageSender @Inject constructor(
                     }
                     val plaintext = SessionProtocol.encodeForCommunity(
                         plaintext = content.toByteArray(),
-                        proRotatingEd25519PrivKey = null
+                        proRotatingEd25519PrivKey = configFactory.withUserConfigs { configs ->
+                            configs.userProfile.getProConfig()
+                        }?.rotatingPrivateKey?.data,
                     )
 
                     val openGroupMessage = OpenGroupMessage(
