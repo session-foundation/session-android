@@ -140,44 +140,54 @@ object OnionRequestAPI {
     }
 
     // region Private API
+    /**
+     * Tests the given snode. The returned promise errors out if the snode is faulty; the promise is fulfilled otherwise.
+     */
+    private fun testSnode(snode: Snode): Promise<Unit, Exception> {
+        return GlobalScope.asyncPromise { // No need to block the shared context for this
+            val url = "${snode.address}:${snode.port}/get_stats/v1"
+            val response = HTTP.execute(HTTP.Verb.GET, url, 3).decodeToString()
+            val json = JsonUtil.fromJson(response, Map::class.java)
+            val version = json["version"] as? String
+            require(version != null) { "Missing snode version." }
+            require(version >= "2.0.7") { "Unsupported snode version: $version." }
+        }
+    }
 
     /**
      * Finds `targetGuardSnodeCount` guard snodes to use for path building. The returned promise errors out if not
      * enough (reliable) snodes are available.
      */
     private fun getGuardSnodes(reusableGuardSnodes: List<Snode>): Promise<Set<Snode>, Exception> {
-        // If we already have enough guards, reuse them.
-        if (guardSnodes.size >= targetGuardSnodeCount) {
+        if (guardSnodes.count() >= targetGuardSnodeCount) {
             return Promise.of(guardSnodes)
-        }
-
-        Log.d("Loki", "Populating guard snode cache.")
-
-        // We call getRandomSnode only to ensure the snode pool is populated.
-        return SnodeAPI.getRandomSnode().map {
-            // Exclude guards we’re reusing (and any guards already in the cache, for safety)
-            var unusedSnodes = SnodeAPI.snodePool
-                .minus(reusableGuardSnodes)
-                .minus(guardSnodes)
-
-            val reusableGuardSnodeCount = reusableGuardSnodes.size
-            val neededGuardCount = targetGuardSnodeCount - reusableGuardSnodeCount
-
-            if (unusedSnodes.size < neededGuardCount) {
-                throw InsufficientSnodesException()
+        } else {
+            Log.d("Loki", "Populating guard snode cache.")
+            return SnodeAPI.getRandomSnode().bind { // Just used to populate the snode pool
+                var unusedSnodes = SnodeAPI.snodePool.minus(reusableGuardSnodes)
+                val reusableGuardSnodeCount = reusableGuardSnodes.count()
+                if (unusedSnodes.count() < (targetGuardSnodeCount - reusableGuardSnodeCount)) { throw InsufficientSnodesException() }
+                fun getGuardSnode(): Promise<Snode, Exception> {
+                    val candidate = unusedSnodes.secureRandomOrNull()
+                        ?: return Promise.ofFail(InsufficientSnodesException())
+                    unusedSnodes = unusedSnodes.minus(candidate)
+                    Log.d("Loki", "Testing guard snode: $candidate.")
+                    // Loop until a reliable guard snode is found
+                    val deferred = deferred<Snode, Exception>()
+                    testSnode(candidate).success {
+                        deferred.resolve(candidate)
+                    }.fail {
+                        deferred.reject(it)
+                    }
+                    return deferred.promise
+                }
+                val promises = (0 until (targetGuardSnodeCount - reusableGuardSnodeCount)).map { getGuardSnode() }
+                all(promises).map { guardSnodes ->
+                    val guardSnodesAsSet = (guardSnodes + reusableGuardSnodes).toSet()
+                    OnionRequestAPI.guardSnodes = guardSnodesAsSet
+                    guardSnodesAsSet
+                }
             }
-
-            val newGuardSnodes = (0 until neededGuardCount).map {
-                val candidate = unusedSnodes.secureRandom()
-                unusedSnodes = unusedSnodes - candidate
-                Log.d("Loki", "Selected guard snode: $candidate.")
-                candidate
-            }
-
-            val guardSnodesAsSet = (newGuardSnodes + reusableGuardSnodes).toSet()
-            OnionRequestAPI.guardSnodes = guardSnodesAsSet
-
-            guardSnodesAsSet
         }
     }
 
