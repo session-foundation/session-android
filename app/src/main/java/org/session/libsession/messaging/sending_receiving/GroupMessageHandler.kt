@@ -3,6 +3,7 @@ package org.session.libsession.messaging.sending_receiving
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import network.loki.messenger.libsession_util.ED25519
+import network.loki.messenger.libsession_util.protocol.DecodedPro
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.messages.ProfileUpdateHandler
@@ -11,6 +12,7 @@ import org.session.libsession.messaging.utilities.MessageAuthentication.buildDel
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildGroupInviteSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildInfoChangeSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildMemberChangeSignature
+import org.session.libsession.snode.SnodeClock
 import org.session.protos.SessionProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
@@ -26,8 +28,14 @@ class GroupMessageHandler @Inject constructor(
     private val storage: StorageProtocol,
     private val groupManagerV2: GroupManagerV2,
     @param:ManagerScope private val scope: CoroutineScope,
+    private val clock: SnodeClock,
 ) {
-    fun handleGroupUpdated(message: GroupUpdated, groupId: AccountId?, proto: SessionProtos.Content) {
+    fun handleGroupUpdated(
+        message: GroupUpdated,
+        groupId: AccountId?,
+        proto: SessionProtos.Content,
+        pro: DecodedPro?
+    ) {
         val inner = message.inner
         if (groupId == null &&
             !inner.hasInviteMessage() && !inner.hasPromoteMessage()) {
@@ -35,7 +43,7 @@ class GroupMessageHandler @Inject constructor(
         }
 
         // Update profile if needed
-        ProfileUpdateHandler.Updates.create(proto)?.let { updates ->
+        ProfileUpdateHandler.Updates.create(proto, clock.currentTimeMills(), pro)?.let { updates ->
             profileUpdateHandler.handleProfileUpdate(
                 senderId = AccountId(message.sender!!),
                 updates = updates,
