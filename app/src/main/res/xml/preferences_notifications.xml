@@ -13,7 +13,6 @@
 
         <org.thoughtcrime.securesms.components.SwitchPreferenceCompat
             android:title="@string/runAppBackground"
-            app:isPreferenceVisible="false"
             android:defaultValue="false"
             android:key="whitelist_background" />
 

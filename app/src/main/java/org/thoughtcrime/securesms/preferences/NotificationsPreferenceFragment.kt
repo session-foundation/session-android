@@ -178,14 +178,6 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
                 true
             }
 
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                prefs.pushEnabled.collect { enabled ->
-                    whiteListControl?.isVisible = !enabled
-                }
-            }
-        }
-
         // Set up FCM toggle
         val fcmKey = "pref_key_use_fcm"
         val fcmPreference: SwitchPreferenceCompat = findPreference(fcmKey)!!
