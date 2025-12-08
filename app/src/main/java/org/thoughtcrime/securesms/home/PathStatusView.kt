@@ -11,7 +11,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
@@ -30,6 +29,19 @@ class PathStatusView : View {
         result.isAntiAlias = true
         result
     }
+
+    private val unknownColor by lazy {
+        ContextCompat.getColor(context, R.color.classic_dark_4)
+    }
+
+    private val validColor by lazy {
+        ContextCompat.getColor(context, R.color.accent_green)
+    }
+
+    private val invalidColor by lazy {
+        ContextCompat.getColor(context, R.color.accent_orange)
+    }
+
 
     private var updateJob: Job? = null
 
@@ -51,6 +63,10 @@ class PathStatusView : View {
 
     private fun initialize() {
         setWillNotDraw(false)
+        //set the unknown color until we have data
+        mainColor = unknownColor
+        sessionShadowColor = unknownColor
+        invalidate()
     }
 
     override fun onAttachedToWindow() {
@@ -61,17 +77,14 @@ class PathStatusView : View {
                 .collectLatest { pathsBuilt ->
                     withContext(Dispatchers.Main) {
                         if (pathsBuilt) {
-                            setBackgroundResource(R.drawable.accent_dot)
-                            val hasPathsColor = context.getColor(R.color.accent_green)
-                            mainColor = hasPathsColor
-                            sessionShadowColor = hasPathsColor
+                            mainColor = validColor
+                            sessionShadowColor = validColor
                         } else {
-                            setBackgroundResource(R.drawable.paths_building_dot)
-                            val pathsBuildingColor =
-                                ContextCompat.getColor(context, R.color.paths_building)
-                            mainColor = pathsBuildingColor
-                            sessionShadowColor = pathsBuildingColor
+                            mainColor = invalidColor
+                            sessionShadowColor = invalidColor
                         }
+
+                        invalidate()
                     }
                 }
         }
