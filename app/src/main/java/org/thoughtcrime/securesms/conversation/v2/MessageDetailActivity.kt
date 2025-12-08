@@ -339,7 +339,7 @@ fun CellMetadata(
                                         .align(Alignment.CenterVertically),
                                     size = LocalDimensions.current.iconLarge,
                                     data = senderAvatarData,
-                                    badge = if (state.senderHasAdminCrown) { AvatarBadge.Admin } else AvatarBadge.None
+                                    badge = if (state.senderHasAdminCrown) { AvatarBadge.ResourceBadge.Admin } else AvatarBadge.None
                                 )
                                 Spacer(modifier = Modifier.width(LocalDimensions.current.smallSpacing))
                             }

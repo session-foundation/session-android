@@ -11,6 +11,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.text.TextPaint
 import android.text.TextUtils
 import androidx.annotation.DrawableRes
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
@@ -229,10 +230,17 @@ data class AvatarUIElement(
     val freezeFrame: Boolean = true,
 )
 
-sealed class AvatarBadge(@DrawableRes val icon: Int){
-    data object None: AvatarBadge(0)
-    data object Admin: AvatarBadge(R.drawable.ic_crown_custom_enlarged_no_padding)
-    data class Custom(@DrawableRes val iconRes: Int): AvatarBadge(iconRes)
+sealed class AvatarBadge{
+    data object None: AvatarBadge()
+
+    sealed class ResourceBadge(@DrawableRes val icon: Int): AvatarBadge() {
+        data object Admin: ResourceBadge(R.drawable.ic_crown_custom_enlarged_no_padding)
+        data class Custom(@DrawableRes val iconRes: Int): ResourceBadge(iconRes)
+    }
+
+    data class ComposeBadge(
+        val content: @Composable () -> Unit
+    ): AvatarBadge()
 }
 
 fun ImageRequest.Builder.avatarOptions(

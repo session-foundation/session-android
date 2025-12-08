@@ -209,7 +209,7 @@ class VisibleMessageView : FrameLayout {
                     Avatar(
                         size = LocalDimensions.current.iconMediumAvatar,
                         data = avatarUtils.getUIDataFromRecipient(sender),
-                        badge = if(showProBadge) AvatarBadge.Admin else AvatarBadge.None,
+                        badge = if(showProBadge) AvatarBadge.ResourceBadge.Admin else AvatarBadge.None,
                         modifier = Modifier.clickable {
                             delegate?.showUserProfileModal(message.recipient)
                         }

@@ -86,7 +86,7 @@ fun  MemberItem(
         Avatar(
             size = LocalDimensions.current.iconLarge,
             data = avatarUIData,
-            badge = if (showAsAdmin) { AvatarBadge.Admin } else AvatarBadge.None
+            badge = if (showAsAdmin) { AvatarBadge.ResourceBadge.Admin } else AvatarBadge.None
         )
 
         Column(
