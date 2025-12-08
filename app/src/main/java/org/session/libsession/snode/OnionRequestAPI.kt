@@ -313,7 +313,7 @@ object OnionRequestAPI {
         // Don't test the new snode as this would reveal the user's IP
         oldPaths.removeAt(pathIndex)
         val newPaths = oldPaths + listOf( path )
-        mutablePaths.value = newPaths
+        updatePathsSafe(newPaths)
     }
 
     private fun dropPath(path: Path) {
@@ -322,7 +322,7 @@ object OnionRequestAPI {
         val pathIndex = paths.indexOf(path)
         if (pathIndex == -1) { return }
         paths.removeAt(pathIndex)
-        mutablePaths.value = paths
+        updatePathsSafe(paths)
     }
 
     /**
