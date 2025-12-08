@@ -52,7 +52,9 @@ object OnionRequestAPI {
 
     var guardSnodes = setOf<Snode>()
 
-    private val mutablePaths = MutableStateFlow(database.getOnionRequestPaths())
+    private val mutablePaths = MutableStateFlow(
+        sanitizePaths(database.getOnionRequestPaths())
+    )
 
     val paths: StateFlow<List<Path>> get() = mutablePaths
     val hasPath: StateFlow<Boolean> = mutablePaths
@@ -117,6 +119,26 @@ object OnionRequestAPI {
         class Server(val host: String, val target: String, val x25519PublicKey: String, val scheme: String, val port: Int) : Destination("$host")
     }
 
+    // Helper to check for ANY duplicate snodes across all paths
+    private fun arePathsDisjoint(paths: List<Path>): Boolean {
+        val allNodes = paths.flatten()
+        val uniqueNodes = allNodes.toSet()
+
+        // If the count of nodes equals the count of unique nodes,
+        // there are no duplicates anywhere.
+        return allNodes.size == uniqueNodes.size
+    }
+
+    // If paths overlap, keep the first one, drop the rest.
+    private fun sanitizePaths(paths: List<Path>): List<Path> {
+        if (arePathsDisjoint(paths)) return paths
+
+        Log.w("Loki", "Paths contained overlapping Snodes. Dropping backups.")
+        // Return only the first path, or empty list if none exist.
+        // This forces the app to rebuild the second path from scratch, safely.
+        return paths.take(1)
+    }
+
     // region Private API
     /**
      * Tests the given snode. The returned promise errors out if the snode is faulty; the promise is fulfilled otherwise.
@@ -169,18 +191,37 @@ object OnionRequestAPI {
         }
     }
 
+    private fun updatePathsSafe(newPaths: List<Path>) {
+        if (arePathsDisjoint(newPaths)) {
+            mutablePaths.value = newPaths
+        } else {
+            Log.w("Loki", "Trying to set the mutablePath with paths that have overlapping snodes... Pruning.")
+            // We do NOT trigger a rebuild here. We just save the safe state.
+            // The next call to getPath() will notice the count is low and rebuild then.
+            mutablePaths.value = sanitizePaths(newPaths)
+        }
+    }
+
     /**
      * Builds and returns `targetPathCount` paths. The returned promise errors out if not
      * enough (reliable) snodes are available.
      */
     private fun buildPaths(reusablePaths: List<Path>): Promise<List<Path>, Exception> {
+        // making sure we have safe lists of path without repeated snodes
+        val safeReusablePaths = if (arePathsDisjoint(reusablePaths)) {
+            reusablePaths
+        } else {
+            // If the input is bad, discard the backups and keep only the main path
+            sanitizePaths(reusablePaths)
+        }
+
         val existingBuildPathsPromise = buildPathsPromise
         if (existingBuildPathsPromise != null) { return existingBuildPathsPromise }
         Log.d("Loki", "Building onion request paths.")
         val promise = SnodeAPI.getRandomSnode().bind { // Just used to populate the snode pool
-            val reusableGuardSnodes = reusablePaths.map { it[0] }
+            val reusableGuardSnodes = safeReusablePaths.map { it[0] }
             getGuardSnodes(reusableGuardSnodes).map { guardSnodes ->
-                var unusedSnodes = SnodeAPI.snodePool.minus(guardSnodes).minus(reusablePaths.flatten())
+                var unusedSnodes = SnodeAPI.snodePool.minus(guardSnodes).minus(safeReusablePaths.flatten())
                 val reusableGuardSnodeCount = reusableGuardSnodes.count()
                 val pathSnodeCount = (targetGuardSnodeCount - reusableGuardSnodeCount) * pathSize - (targetGuardSnodeCount - reusableGuardSnodeCount)
                 if (unusedSnodes.count() < pathSnodeCount) { throw InsufficientSnodesException() }
@@ -197,8 +238,8 @@ object OnionRequestAPI {
                     result
                 }
             }.map { paths ->
-                mutablePaths.value = paths + reusablePaths
-                paths
+                updatePathsSafe(paths + safeReusablePaths)
+                mutablePaths.value
             }
         }
         promise.success { buildPathsPromise = null }
