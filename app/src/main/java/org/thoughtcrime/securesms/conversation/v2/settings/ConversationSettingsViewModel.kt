@@ -11,7 +11,6 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity.CLIPBOARD_SERVICE
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.squareup.phrase.Phrase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -30,7 +29,6 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
-import network.loki.messenger.libsession_util.allWithStatus
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
@@ -294,33 +292,36 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         )
     }
 
-    private val optionLeaveGroup: OptionsItem by lazy{
+    private val optionLeaveGroup: OptionsItem by lazy {
         OptionsItem(
             name = context.getString(R.string.groupLeave),
             icon = R.drawable.ic_log_out,
             qaTag = R.string.qa_conversation_settings_leave_group,
-            onClick = ::confirmLeaveGroup
+            onClick = ::handleLeaveOptionClick
         )
     }
 
-    private val optionDeleteGroup: OptionsItem by lazy{
+    // Delete option for non-admins and groups the user was kicked
+    // This will not delete the group from the config
+    private val optionDeleteGroup: OptionsItem by lazy {
         OptionsItem(
             name = context.getString(R.string.groupDelete),
             icon = R.drawable.ic_trash_2,
             qaTag = R.string.qa_conversation_settings_delete_group,
-            onClick = ::confirmLeaveGroup
+            onClick = { confirmLeaveOrDeleteGroup(deleteGroup = false) }
         )
     }
 
-    private val optionAdminLeaveGroup: OptionsItem by lazy{
+    // Delete option for admin that
+    // Always pass TRUE for confirmLeaveOrDeleteGroup()
+    private val optionAdminDeleteGroup: OptionsItem by lazy {
         OptionsItem(
-            name = context.getString(R.string.groupLeave),
-            icon = R.drawable.ic_log_out,
-            qaTag = R.string.qa_conversation_settings_leave_group,
-            onClick = ::confirmAdminLeaveGroup
+            name = context.getString(R.string.groupDelete),
+            icon = R.drawable.ic_trash_2,
+            qaTag = R.string.qa_conversation_settings_delete_group,
+            onClick = { confirmLeaveOrDeleteGroup(deleteGroup = true) }
         )
     }
-
 
     // Community
     private val optionCopyCommunityURL: OptionsItem by lazy{
@@ -591,8 +592,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                         dangerOptions.addAll(
                             listOf(
                                 optionClearMessages,
-                                optionAdminLeaveGroup,
-                                optionDeleteGroup
+                                optionLeaveGroup,
+                                optionAdminDeleteGroup
                             )
                         )
 
@@ -1037,9 +1038,40 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    private fun confirmAdminLeaveGroup(){
+    /**
+     * Entry point for the "Leave group" menu item.
+     *
+     * - For admins, branches to an admin-specific flow (only admin vs multiple admins).
+     * - For non-admins, just shows a standard leave confirmation and leaves the group.
+     */
+    private fun handleLeaveOptionClick(){
         val groupV2Id = (address as? Address.Group)?.accountId ?: return
-        val isUserLastAdmin = groupManager.isCurrentUserLastAdmin(groupV2Id)
+        val isAdmin = groupManagerV2.isCurrentUserGroupAdmin(groupV2Id)
+
+        if(isAdmin){
+            val isUserLastAdmin = groupManager.isCurrentUserLastAdmin(groupV2Id)
+            confirmAdminLeaveGroup(isUserLastAdmin)
+        }else{
+            confirmLeaveOrDeleteGroup(false)
+        }
+    }
+
+    /**
+     * Admin-specific "Leave group" confirmation.
+     *
+     * @param isUserLastAdmin Whether the current user is the only admin.
+     *
+     * Behavior:
+     * - If there is only one admin:
+     *   - Primary action: go to Manage Admins (so they can promote others).
+     *   - Secondary action: open a second confirmation to delete/leave the group.
+     *
+     * - If there are multiple admins:
+     *   - Primary action: leave the group without deleting it.
+     *   - Secondary action: do nothing.
+     */
+    private fun confirmAdminLeaveGroup(isUserLastAdmin : Boolean){
+        val groupV2Id = (address as? Address.Group)?.accountId ?: return
         _dialogState.update { state ->
             val dialogData = groupManager.getAdminLeaveGroupDialogData(
                 groupV2Id,
@@ -1065,13 +1097,15 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                                 )
                             )
                         }else{
-                            // there are other admins
+                            // there are other admins so admin can leave without deleting
                             leaveGroup(deleteGroup = false)
                         }
                     },
                     positiveStyleDanger = !isUserLastAdmin,
                     onNegative = {
-                        if (isUserLastAdmin) confirmLeaveGroup()
+                        // Show confirmation dialog to delete or leave the group
+                        // put True here since this option is to "Delete Group"
+                        if (isUserLastAdmin) confirmLeaveOrDeleteGroup(deleteGroup = true)
                     },
                     negativeStyleDanger = isUserLastAdmin // red color on the right
                 )
@@ -1079,9 +1113,19 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    private fun confirmLeaveGroup(){
+    /**
+     * Show the confirmation dialog for LEAVING or DELETING the group.
+     *
+     * This is used for:
+     *  - Non-admins leaving the group
+     *  - Admins confirming "Delete group"
+     *  - Users cleaning up a kicked/destroyed group
+     *
+     * @param deleteGroup this will be passed on to [leaveGroup] to determine if
+     * we want to Delete the group or simply Leave.
+     */
+    private fun confirmLeaveOrDeleteGroup(deleteGroup : Boolean){
         val groupV2Id = (address as? Address.Group)?.accountId ?: return
-        val isAdmin = groupManagerV2.isCurrentUserGroupAdmin(groupV2Id)
         _dialogState.update { state ->
             val dialogData = groupManager.getLeaveGroupConfirmationDialogData(
                 groupV2Id,
@@ -1096,13 +1140,18 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     negativeText = context.getString(dialogData.negativeText),
                     positiveQaTag = dialogData.positiveQaTag?.let { context.getString(it) },
                     negativeQaTag = dialogData.negativeQaTag?.let { context.getString(it) },
-                    onPositive = {leaveGroup(deleteGroup = isAdmin)},
+                    onPositive = {leaveGroup(deleteGroup = deleteGroup)},
                     onNegative = {}
                 )
             )
         }
     }
 
+    /**
+     * @param deleteGroup will determine if we want to Delete the group or simply leave.
+     *
+     * Note that the worker will always delete the group if the only admin tries to leave.
+     */
     private fun leaveGroup(deleteGroup: Boolean = false) {
         val conversation = recipient ?: return
         viewModelScope.launch {
@@ -1110,7 +1159,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
             try {
                 withContext(Dispatchers.Default) {
-                    groupManagerV2.leaveGroup(AccountId(conversation.address.toString()), deleteGroup)
+                    groupManagerV2.leaveGroup(
+                        groupId = AccountId(conversation.address.toString()),
+                        deleteGroup = deleteGroup
+                    )
                 }
                 hideLoading()
                 goBackHome()
