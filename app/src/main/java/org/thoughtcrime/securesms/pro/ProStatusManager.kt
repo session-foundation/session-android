@@ -6,6 +6,7 @@ import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
@@ -23,10 +25,10 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
-import kotlinx.coroutines.time.delay
 import kotlinx.coroutines.withTimeout
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.pro.BackendRequests
@@ -68,6 +70,7 @@ import java.time.Instant
 import java.util.EnumSet
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Singleton
@@ -282,6 +285,7 @@ class ProStatusManager @Inject constructor(
 
     }
 
+    @OptIn(FlowPreview::class)
     private suspend fun manageProDetailsRefreshScheduling() {
         postProLaunchStatus
             .collectLatest { postLaunch ->
@@ -300,52 +304,38 @@ class ProStatusManager @Inject constructor(
                         proDetailsRepository.get().loadState
                             .mapNotNull { it.lastUpdated?.first?.expiry }
                             .distinctUntilChanged()
-                            .mapLatest { expiry ->
-                                // Schedule a refresh 30seconds after access expiry
-                                val refreshTime = expiry.plusSeconds(30)
-
-                                val now = snodeClock.currentTime()
-                                if (now < refreshTime) {
-                                    val duration = Duration.between(now, refreshTime)
-                                    Log.d(
-                                        DebugLogGroup.PRO_SUBSCRIPTION.label,
-                                        "Delaying ProDetails refresh until $refreshTime due to access expiry"
-                                    )
-                                    delay(duration)
+                            .transformLatest { expiry ->
+                                // Schedule a refresh for 30 seconds after access expiry
+                                if (snodeClock.delayUntil(expiry.plusSeconds(30))) {
+                                    emit("30 seconds after Access expiry reached")
                                 }
-
-                                "ProDetails expiry reached"
                             },
 
                         configFactory.get()
                             .watchUserProConfig()
                             .filterNotNull()
+                            .distinctUntilChanged()
                             .mapLatest { proConfig ->
                                 val expiry = Instant.ofEpochMilli(proConfig.proProof.expiryMs)
                                 // Schedule a refresh for a random number between 10 and 60 minutes before proof expiry
-                                val now = snodeClock.currentTime()
 
                                 val refreshTime =
                                     expiry.minus(Duration.ofMinutes((10..60).random().toLong()))
 
-                                if (now < refreshTime) {
-                                    Log.d(
-                                        DebugLogGroup.PRO_SUBSCRIPTION.label,
-                                        "Delaying ProDetails refresh until $refreshTime due to proof expiry"
-                                    )
-                                    delay(Duration.between(now, expiry))
-                                }
+                                snodeClock.delayUntil(refreshTime)
+                                "Pro proof expiry reached"
                             },
 
                         flowOf("App starting up")
-                    ).collect { refreshReason ->
-                        Log.d(
-                            DebugLogGroup.PRO_SUBSCRIPTION.label,
-                            "Scheduling ProDetails fetch due to: $refreshReason"
-                        )
+                    ).debounce(500.milliseconds)
+                        .collect { refreshReason ->
+                            Log.d(
+                                DebugLogGroup.PRO_SUBSCRIPTION.label,
+                                "Scheduling ProDetails fetch due to: $refreshReason"
+                            )
 
-                        proDetailsRepository.get().requestRefresh()
-                    }
+                            proDetailsRepository.get().requestRefresh(force = true)
+                        }
                 } else {
                     FetchProDetailsWorker.cancel(application)
                 }

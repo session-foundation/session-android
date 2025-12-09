@@ -27,16 +27,13 @@ sealed interface ProStatus{
             override val validUntil: Instant,
             override val duration: ProSubscriptionDuration,
             override val providerData: PaymentProviderMetadata,
-            override val quickRefundExpiry: Instant?
-            ,
+            override val quickRefundExpiry: Instant?,
             override val refundInProgress: Boolean
         ): Active
 
         fun isWithinQuickRefundWindow(): Boolean {
             return quickRefundExpiry != null && quickRefundExpiry!!.isAfter(Instant.now())
         }
-
-
     }
 
     data class Expired(
