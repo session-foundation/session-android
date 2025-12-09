@@ -29,7 +29,6 @@ import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
-import kotlinx.coroutines.time.delay
 import kotlinx.coroutines.withTimeout
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.pro.BackendRequests
@@ -306,11 +305,7 @@ class ProStatusManager @Inject constructor(
                             .mapNotNull { it.lastUpdated?.first?.expiry }
                             .distinctUntilChanged()
                             .transformLatest { expiry ->
-                                // Schedule a refresh 0 and 30seconds after access expiry
-                                if (snodeClock.delayUntil(expiry)) {
-                                    emit("Access expiry reached")
-                                }
-
+                                // Schedule a refresh for 30 seconds after access expiry
                                 if (snodeClock.delayUntil(expiry.plusSeconds(30))) {
                                     emit("30 seconds after Access expiry reached")
                                 }
