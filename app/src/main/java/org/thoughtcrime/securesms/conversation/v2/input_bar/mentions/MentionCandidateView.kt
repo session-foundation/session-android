@@ -13,7 +13,7 @@ fun ViewMentionCandidateV2Binding.update(candidate: MentionViewModel.Candidate) 
         Avatar(
             size = LocalDimensions.current.iconMediumAvatar,
             data = candidate.member.avatarData,
-            badge = if (candidate.member.showAdminCrown) AvatarBadge.Admin else AvatarBadge.None
+            badge = if (candidate.member.showAdminCrown) AvatarBadge.ResourceBadge.Admin else AvatarBadge.None
         )
     }
 }
