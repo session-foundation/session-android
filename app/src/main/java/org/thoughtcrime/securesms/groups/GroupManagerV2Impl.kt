@@ -1200,11 +1200,50 @@ class GroupManagerV2Impl @Inject constructor(
     override fun getLeaveGroupConfirmationDialogData(groupId: AccountId, name: String): GroupManagerV2.ConfirmDialogData? {
         val groupData = configFactory.getGroup(groupId) ?: return null
 
-        var title = R.string.groupDelete
+        val title = R.string.groupLeave
+        var message: CharSequence = Phrase.from(application, R.string.groupLeaveDescription)
+            .put(GROUP_NAME_KEY, name)
+            .format()
+        var positiveButton = R.string.leave
+        var negativeButton = R.string.cancel
+        val positiveQaTag = R.string.qa_conversation_settings_dialog_leave_group_confirm
+        val negativeQaTag = R.string.qa_conversation_settings_dialog_leave_group_cancel
+        var showCloseButton = false
+
+        // safety guard in case we are trying to leave a group we were kicked from
+        if(!groupData.shouldPoll){
+            return getDeleteGroupConfirmationDialogData(groupId, name)
+        }
+
+        // if an admin tries to leave while being the only admin in the group
+        if (isCurrentUserLastAdmin(groupId)) {
+            message = Phrase.from(application, R.string.groupOnlyAdmin)
+                .put(GROUP_NAME_KEY, name)
+                .format()
+            positiveButton = R.string.addAdminSingular
+            negativeButton = R.string.groupDelete
+            showCloseButton = true
+        }
+
+        return GroupManagerV2.ConfirmDialogData(
+                title = application.getString(title),
+                message = message,
+                positiveText = positiveButton,
+                negativeText = negativeButton,
+                positiveQaTag = positiveQaTag,
+                negativeQaTag = negativeQaTag,
+                showCloseButton = showCloseButton
+            )
+    }
+
+    override fun getDeleteGroupConfirmationDialogData(groupId: AccountId, name: String): GroupManagerV2.ConfirmDialogData? {
+        val groupData = configFactory.getGroup(groupId) ?: return null
+
+        val title = R.string.groupDelete
         var message: CharSequence = ""
-        var positiveButton = R.string.delete
-        var positiveQaTag = R.string.qa_conversation_settings_dialog_delete_group_confirm
-        var negativeQaTag = R.string.qa_conversation_settings_dialog_delete_group_cancel
+        val positiveButton = R.string.delete
+        val positiveQaTag = R.string.qa_conversation_settings_dialog_delete_group_confirm
+        val negativeQaTag = R.string.qa_conversation_settings_dialog_delete_group_cancel
 
 
         if(!groupData.shouldPoll){
@@ -1216,55 +1255,13 @@ class GroupManagerV2Impl @Inject constructor(
             message = Phrase.from(application, R.string.groupDeleteDescription)
                 .put(GROUP_NAME_KEY, name)
                 .format()
-        } else {
-            message = Phrase.from(application, R.string.groupLeaveDescription)
-                .put(GROUP_NAME_KEY, name)
-                .format()
-
-            title = R.string.groupLeave
-            positiveButton = R.string.leave
-            positiveQaTag = R.string.qa_conversation_settings_dialog_leave_group_confirm
-            negativeQaTag = R.string.qa_conversation_settings_dialog_leave_group_cancel
-        }
-
-        return GroupManagerV2.ConfirmDialogData(
-                title = application.getString(title),
-                message = message,
-                positiveText = positiveButton,
-                negativeText = R.string.cancel,
-                positiveQaTag = positiveQaTag,
-                negativeQaTag = negativeQaTag,
-            )
-    }
-
-    override fun getAdminLeaveGroupDialogData(
-        groupId: AccountId,
-        name: String
-    ): GroupManagerV2.ConfirmDialogData? {
-        val title = R.string.groupLeave
-        var message: CharSequence = ""
-        var positiveButton = R.string.leave
-        var negativeButton = R.string.cancel
-        var positiveQaTag = R.string.qa_conversation_settings_dialog_leave_group_confirm
-        var negativeQaTag = R.string.qa_conversation_settings_dialog_leave_group_cancel
-
-        if (isCurrentUserLastAdmin(groupId)) {
-            message = Phrase.from(application, R.string.groupOnlyAdmin)
-                .put(GROUP_NAME_KEY, name)
-                .format()
-            positiveButton = R.string.addAdminSingular
-            negativeButton = R.string.groupDelete
-        } else {
-            message = Phrase.from(application, R.string.groupLeaveDescription)
-                .put(GROUP_NAME_KEY, name)
-                .format()
         }
 
         return GroupManagerV2.ConfirmDialogData(
             title = application.getString(title),
             message = message,
             positiveText = positiveButton,
-            negativeText = negativeButton,
+            negativeText = R.string.cancel,
             positiveQaTag = positiveQaTag,
             negativeQaTag = negativeQaTag,
         )
