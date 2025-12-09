@@ -322,7 +322,7 @@ class ProSettingsViewModel @AssistedInject constructor(
 
         viewModelScope.launch {
             _refundPlanState.update {
-                val isQuickRefund = if(prefs.getDebugIsWithinQuickRefund() && prefs.forceCurrentUserAsPro()) true // debug mode
+                val isQuickRefund = if(prefs.forceCurrentUserAsPro()) prefs.getDebugIsWithinQuickRefund()// debug mode
                 else sub.isWithinQuickRefundWindow()
 
                 State.Success(
