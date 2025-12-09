@@ -97,7 +97,7 @@ class SettingsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(UIState(
         username = "",
         accountID = selfRecipient.value.address.address,
-        hasPath = true,
+        pathStatus = OnionRequestAPI.PathStatus.BUILDING,
         version = getVersionNumber(),
         recoveryHidden = prefs.getHidePassword(),
         isPostPro = proStatusManager.isPostPro(),
@@ -144,8 +144,8 @@ class SettingsViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            OnionRequestAPI.hasPath.collect { data ->
-                _uiState.update { it.copy(hasPath = data) }
+            OnionRequestAPI.pathStatus.collect { status ->
+                _uiState.update { it.copy(pathStatus = status) }
             }
         }
 
@@ -656,7 +656,7 @@ class SettingsViewModel @Inject constructor(
     data class UIState(
         val username: String,
         val accountID: String,
-        val hasPath: Boolean,
+        val pathStatus: OnionRequestAPI.PathStatus,
         val version: CharSequence = "",
         val showLoader: Boolean = false,
         val avatarDialogState: AvatarDialogState = AvatarDialogState.NoAvatar,

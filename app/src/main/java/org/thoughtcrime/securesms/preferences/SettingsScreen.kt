@@ -65,6 +65,7 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.squareup.phrase.Phrase
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
+import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
@@ -75,7 +76,26 @@ import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.TempAvatar
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.UserAvatar
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.*
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ClearData
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideAnimatedProCTA
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideAvatarPickerOptions
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideClearDataDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideSimpleDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideUrlDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideUsernameDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.OnAvatarDialogDismissed
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.OnDonateClicked
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.OnLinkCopied
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.OnLinkOpened
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.RemoveAvatar
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.SaveAvatar
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.SetUsername
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowAnimatedProCTA
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowAvatarDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowClearDataDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowUrlDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowUsernameDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.UpdateUsername
 import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsActivity
 import org.thoughtcrime.securesms.pro.ProDataState
@@ -125,7 +145,6 @@ import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.ui.theme.monospace
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.ui.theme.primaryGreen
-import org.thoughtcrime.securesms.ui.theme.primaryYellow
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
 import org.thoughtcrime.securesms.util.State
@@ -297,7 +316,7 @@ fun Settings(
             // Buttons
             Buttons(
                 recoveryHidden = uiState.recoveryHidden,
-                hasPaths = uiState.hasPath,
+                pathStatus = uiState.pathStatus,
                 postPro = uiState.isPostPro,
                 proDataState = uiState.proDataState,
                 sendCommand = sendCommand
@@ -478,7 +497,7 @@ fun Settings(
 @Composable
 fun Buttons(
     recoveryHidden: Boolean,
-    hasPaths: Boolean,
+    pathStatus: OnionRequestAPI.PathStatus,
     postPro: Boolean,
     proDataState: ProDataState,
     sendCommand: (SettingsViewModel.Commands) -> Unit,
@@ -589,7 +608,11 @@ fun Buttons(
                 }
                 Divider()
 
-                Crossfade(if (hasPaths) primaryGreen else primaryYellow, label = "path") {
+                Crossfade(when (pathStatus){
+                        OnionRequestAPI.PathStatus.BUILDING -> LocalColors.current.warning
+                        OnionRequestAPI.PathStatus.ERROR -> LocalColors.current.danger
+                        else -> primaryGreen
+                    }, label = "path") {
                     ItemButton(
                         modifier = Modifier.qaTag(R.string.qa_settings_item_path),
                         text = annotatedStringResource(R.string.onionRoutingPath),
@@ -1070,7 +1093,7 @@ private fun SettingsScreenPreview() {
                 ),
                 username = "Atreyu",
                 accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
-                hasPath = true,
+                pathStatus = OnionRequestAPI.PathStatus.READY,
                 version = "1.26.0",
             ),
             sendCommand = {},

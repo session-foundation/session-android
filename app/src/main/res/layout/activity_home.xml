@@ -38,14 +38,6 @@
                         app:layout_constraintBottom_toBottomOf="parent"
                         android:contentDescription="@string/AccessibilityId_profilePicture" />
 
-                    <org.thoughtcrime.securesms.home.PathStatusView
-                        android:id="@+id/pathStatusView"
-                        android:layout_width="@dimen/path_status_view_size"
-                        android:layout_height="@dimen/path_status_view_size"
-                        app:layout_constraintBottom_toBottomOf="@+id/profileButton"
-                        app:layout_constraintEnd_toEndOf="@+id/profileButton"/>
-
-
                     <ImageView
                         android:id="@+id/sessionHeaderImage"
                         android:layout_width="125dp"

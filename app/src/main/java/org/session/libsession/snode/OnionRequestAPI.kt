@@ -1,12 +1,13 @@
 package org.session.libsession.snode
 
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import nl.komponents.kovenant.Deferred
@@ -52,13 +53,30 @@ object OnionRequestAPI {
 
     var guardSnodes = setOf<Snode>()
 
-    private val mutablePaths = MutableStateFlow(database.getOnionRequestPaths())
+    private val mutablePaths = MutableStateFlow(
+        sanitizePaths(database.getOnionRequestPaths())
+    )
 
     val paths: StateFlow<List<Path>> get() = mutablePaths
-    val hasPath: StateFlow<Boolean> = mutablePaths
-        .drop(1)
-        .map { it.isNotEmpty() }
-        .stateIn(GlobalScope, SharingStarted.Eagerly, paths.value.isNotEmpty())
+
+    enum class PathStatus {
+        READY,      // green
+        BUILDING,   // orange
+        ERROR       // red (offline, no path, repeated failures, etc.)
+    }
+
+    private val mutablePathStatus = MutableStateFlow(
+        if (database.getOnionRequestPaths().isNotEmpty()) PathStatus.READY else PathStatus.ERROR
+    )
+
+    @OptIn(FlowPreview::class)
+    val pathStatus: StateFlow<PathStatus> get() = mutablePathStatus
+        .debounce(250)
+        .stateIn(
+            scope = GlobalScope,
+            started = SharingStarted.Eagerly,
+            initialValue = PathStatus.BUILDING
+        )
 
     private val NON_PENALIZING_STATUSES = setOf(403, 404, 406, 425)
 
@@ -68,11 +86,18 @@ object OnionRequestAPI {
             mutablePaths
                 .drop(1) // Drop the first result where it just comes from the db
                 .collectLatest {
-                if (it.isEmpty()) {
-                    database.clearOnionRequestPaths()
-                } else {
-                    database.setOnionRequestPaths(it)
-                }
+                    // Update status based on new paths
+                    mutablePathStatus.value = if (it.isNotEmpty()) {
+                        PathStatus.READY
+                    } else {
+                        PathStatus.ERROR
+                    }
+
+                    if (it.isEmpty()) {
+                        database.clearOnionRequestPaths()
+                    } else {
+                        database.setOnionRequestPaths(it)
+                    }
             }
         }
     }
@@ -115,6 +140,26 @@ object OnionRequestAPI {
     internal sealed class Destination(val description: String) {
         class Snode(val snode: org.session.libsignal.utilities.Snode) : Destination("Service node ${snode.ip}:${snode.port}")
         class Server(val host: String, val target: String, val x25519PublicKey: String, val scheme: String, val port: Int) : Destination("$host")
+    }
+
+    // Helper to check for ANY duplicate snodes across all paths
+    private fun arePathsDisjoint(paths: List<Path>): Boolean {
+        val allNodes = paths.flatten()
+        val uniqueNodes = allNodes.toSet()
+
+        // If the count of nodes equals the count of unique nodes,
+        // there are no duplicates anywhere.
+        return allNodes.size == uniqueNodes.size
+    }
+
+    // If paths overlap, keep the first one, drop the rest.
+    private fun sanitizePaths(paths: List<Path>): List<Path> {
+        if (arePathsDisjoint(paths)) return paths
+
+        Log.w("Loki", "Paths contained overlapping Snodes. Dropping backups.")
+        // Return only the first path, or empty list if none exist.
+        // This forces the app to rebuild the second path from scratch, safely.
+        return paths.take(1)
     }
 
     // region Private API
@@ -169,27 +214,49 @@ object OnionRequestAPI {
         }
     }
 
+    private fun updatePathsSafe(newPaths: List<Path>) {
+        val safe = if (arePathsDisjoint(newPaths)) {
+            newPaths
+        } else {
+            Log.w("Loki", "Trying to set the mutablePath with paths that have overlapping snodes... Pruning.")
+            sanitizePaths(newPaths)
+        }
+
+        mutablePaths.value = safe
+        mutablePathStatus.value = if (safe.isNotEmpty()) PathStatus.READY else PathStatus.ERROR
+    }
+
     /**
      * Builds and returns `targetPathCount` paths. The returned promise errors out if not
      * enough (reliable) snodes are available.
      */
     private fun buildPaths(reusablePaths: List<Path>): Promise<List<Path>, Exception> {
+        mutablePathStatus.value = PathStatus.BUILDING
+
+        // making sure we have safe lists of path without repeated snodes
+        val safeReusablePaths = if (arePathsDisjoint(reusablePaths)) {
+            reusablePaths
+        } else {
+            // If the input is bad, discard the backups and keep only the main path
+            sanitizePaths(reusablePaths)
+        }
+
         val existingBuildPathsPromise = buildPathsPromise
         if (existingBuildPathsPromise != null) { return existingBuildPathsPromise }
+
         Log.d("Loki", "Building onion request paths.")
+
         val promise = SnodeAPI.getRandomSnode().bind { // Just used to populate the snode pool
-            val reusableGuardSnodes = reusablePaths.map { it[0] }
+            val reusableGuardSnodes = safeReusablePaths.map { it[0] }
             getGuardSnodes(reusableGuardSnodes).map { guardSnodes ->
-                var unusedSnodes = SnodeAPI.snodePool.minus(guardSnodes).minus(reusablePaths.flatten())
+                var unusedSnodes = SnodeAPI.snodePool.minus(guardSnodes).minus(safeReusablePaths.flatten())
                 val reusableGuardSnodeCount = reusableGuardSnodes.count()
                 val pathSnodeCount = (targetGuardSnodeCount - reusableGuardSnodeCount) * pathSize - (targetGuardSnodeCount - reusableGuardSnodeCount)
                 if (unusedSnodes.count() < pathSnodeCount) { throw InsufficientSnodesException() }
                 // Don't test path snodes as this would reveal the user's IP to them
                 guardSnodes.minus(reusableGuardSnodes).map { guardSnode ->
-                    val result = listOf( guardSnode ) + (0 until (pathSize - 1)).mapIndexed() { index, _ ->
-                        var pathSnode = unusedSnodes.secureRandom()
-
-                        // remove the snode from the unused list and return it
+                    val result = listOf(guardSnode) + (0 until (pathSize - 1)).map {
+                        val pathSnode = unusedSnodes.secureRandom()
                         unusedSnodes = unusedSnodes.minus(pathSnode)
                         pathSnode
                     }
@@ -197,12 +264,21 @@ object OnionRequestAPI {
                     result
                 }
             }.map { paths ->
-                mutablePaths.value = paths + reusablePaths
-                paths
+                updatePathsSafe(paths + safeReusablePaths)
+                mutablePaths.value
             }
         }
-        promise.success { buildPathsPromise = null }
-        promise.fail { buildPathsPromise = null }
+
+        promise.success {
+            buildPathsPromise = null
+            mutablePathStatus.value = PathStatus.READY
+        }
+        promise.fail {
+            buildPathsPromise = null
+            // Path building failed; we’re in an error state.
+            mutablePathStatus.value = PathStatus.ERROR
+        }
+
         buildPathsPromise = promise
         return promise
     }
@@ -272,7 +348,7 @@ object OnionRequestAPI {
         // Don't test the new snode as this would reveal the user's IP
         oldPaths.removeAt(pathIndex)
         val newPaths = oldPaths + listOf( path )
-        mutablePaths.value = newPaths
+        updatePathsSafe(newPaths)
     }
 
     private fun dropPath(path: Path) {
@@ -281,7 +357,7 @@ object OnionRequestAPI {
         val pathIndex = paths.indexOf(path)
         if (pathIndex == -1) { return }
         paths.removeAt(pathIndex)
-        mutablePaths.value = paths
+        updatePathsSafe(paths)
     }
 
     /**
