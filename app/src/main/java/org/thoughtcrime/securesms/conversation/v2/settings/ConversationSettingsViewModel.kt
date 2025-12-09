@@ -1065,6 +1065,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                                 )
                             )
                         }else{
+                            // there are other admins
                             leaveGroup(deleteGroup = false)
                         }
                     },
