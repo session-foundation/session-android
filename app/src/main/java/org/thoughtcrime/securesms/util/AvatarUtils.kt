@@ -249,6 +249,7 @@ fun ImageRequest.Builder.avatarOptions(
 ): ImageRequest.Builder = this.size(sizePx, sizePx)
     .precision(Precision.INEXACT)
     .apply {
+        memoryCacheKeyExtra("freezeFrame", freezeFrame.toString())
         if (freezeFrame) {
             decoderFactory(BitmapFactoryDecoder.Factory())
         }
