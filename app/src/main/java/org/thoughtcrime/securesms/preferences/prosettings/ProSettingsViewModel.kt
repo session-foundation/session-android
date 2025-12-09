@@ -63,6 +63,7 @@ import org.thoughtcrime.securesms.util.CurrencyFormatter
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.State
 import java.math.BigDecimal
+import java.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -200,6 +201,7 @@ class ProSettingsViewModel @AssistedInject constructor(
 
         while (true) {
             val now = clock.currentTime()
+
             _proSettingsUIState.update {
                 it.copy(
                     proDataState = proDataState,
@@ -207,13 +209,17 @@ class ProSettingsViewModel @AssistedInject constructor(
                         is ProStatus.Active.AutoRenewing ->
                             Phrase.from(context, R.string.proAutoRenewTime)
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                .put(TIME_KEY, dateUtils.getExpiryString(subType.validUntil, now))
+                                .put(TIME_KEY, dateUtils.getExpiryString(
+                                    remaining = Duration.between(now, subType.validUntil)
+                                        .coerceAtLeast(Duration.ZERO)))
                                 .format()
 
                         is ProStatus.Active.Expiring ->
                             Phrase.from(context, R.string.proExpiringTime)
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                .put(TIME_KEY, dateUtils.getExpiryString(subType.validUntil, now))
+                                .put(TIME_KEY, dateUtils.getExpiryString(
+                                    remaining = Duration.between(now, subType.validUntil)
+                                        .coerceAtLeast(Duration.ZERO)))
                                 .format()
 
                         else -> ""

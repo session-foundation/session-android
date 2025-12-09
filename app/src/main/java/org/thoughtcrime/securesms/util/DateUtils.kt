@@ -199,18 +199,18 @@ class DateUtils @Inject constructor(
                 date1.hour == date2.hour
     }
 
-    fun getExpiryString(instant: Instant?, now: Instant = Instant.now()): String {
-        if (instant == null) return context.getString(R.string.proExpired)
-
-        val remaining = Duration.between(now, instant)
-
+    fun getExpiryString(remaining: Duration): String {
         // Already expired
-        if (remaining.isNegative || remaining.isZero) {
+        if (remaining.isNegative) {
             return context.getString(R.string.proExpired)
         }
 
         val locale = context.resources.configuration.locales[0]
         val format = MeasureFormat.getInstance(locale, MeasureFormat.FormatWidth.WIDE)
+
+        if (remaining.isZero) {
+            return format.format(Measure(0, MeasureUnit.SECOND))
+        }
 
         // Round any fractional second up to the next whole second
         val totalSeconds = remaining.seconds + if (remaining.nano > 0) 1 else 0
@@ -237,6 +237,13 @@ class DateUtils @Inject constructor(
                 format.format(Measure(minutes, MeasureUnit.MINUTE))
             }
         }
+    }
+
+    fun getExpiryString(instant: Instant?, now: Instant = Instant.now()): String {
+        if (instant == null) return context.getString(R.string.proExpired)
+        return getExpiryString(
+            remaining = Duration.between(now, instant)
+        )
     }
 
     // Helper methods

@@ -6,6 +6,7 @@ import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
@@ -69,6 +71,7 @@ import java.time.Instant
 import java.util.EnumSet
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Singleton
@@ -283,6 +286,7 @@ class ProStatusManager @Inject constructor(
 
     }
 
+    @OptIn(FlowPreview::class)
     private suspend fun manageProDetailsRefreshScheduling() {
         postProLaunchStatus
             .collectLatest { postLaunch ->
@@ -303,17 +307,12 @@ class ProStatusManager @Inject constructor(
                             .distinctUntilChanged()
                             .transformLatest { expiry ->
                                 // Schedule a refresh 0 and 30seconds after access expiry
-                                val now = snodeClock.currentTime()
-                                if (now < expiry) {
-                                    Log.d(
-                                        DebugLogGroup.PRO_SUBSCRIPTION.label,
-                                        "Delaying ProDetails refresh until $expiry due to access expiry"
-                                    )
-                                    delay(expiry.toEpochMilli() - now.toEpochMilli())
-                                    emit("ProDetails expiry reached")
+                                if (snodeClock.delayUntil(expiry)) {
+                                    emit("Access expiry reached")
+                                }
 
-                                    delay(30_000L)
-                                    emit("30 seconds after ProDetails expiry reached")
+                                if (snodeClock.delayUntil(expiry.plusSeconds(30))) {
+                                    emit("30 seconds after Access expiry reached")
                                 }
                             },
 
@@ -324,31 +323,24 @@ class ProStatusManager @Inject constructor(
                             .mapLatest { proConfig ->
                                 val expiry = Instant.ofEpochMilli(proConfig.proProof.expiryMs)
                                 // Schedule a refresh for a random number between 10 and 60 minutes before proof expiry
-                                val now = snodeClock.currentTime()
 
                                 val refreshTime =
                                     expiry.minus(Duration.ofMinutes((10..60).random().toLong()))
 
-                                if (now < refreshTime) {
-                                    Log.d(
-                                        DebugLogGroup.PRO_SUBSCRIPTION.label,
-                                        "Delaying ProDetails refresh until $refreshTime due to proof expiry"
-                                    )
-                                    delay(Duration.between(now, expiry))
-                                }
-
+                                snodeClock.delayUntil(refreshTime)
                                 "Pro proof expiry reached"
                             },
 
                         flowOf("App starting up")
-                    ).collect { refreshReason ->
-                        Log.d(
-                            DebugLogGroup.PRO_SUBSCRIPTION.label,
-                            "Scheduling ProDetails fetch due to: $refreshReason"
-                        )
+                    ).debounce(500.milliseconds)
+                        .collect { refreshReason ->
+                            Log.d(
+                                DebugLogGroup.PRO_SUBSCRIPTION.label,
+                                "Scheduling ProDetails fetch due to: $refreshReason"
+                            )
 
-                        proDetailsRepository.get().requestRefresh()
-                    }
+                            proDetailsRepository.get().requestRefresh(force = true)
+                        }
                 } else {
                     FetchProDetailsWorker.cancel(application)
                 }
