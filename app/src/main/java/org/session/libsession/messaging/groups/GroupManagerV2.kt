@@ -58,7 +58,7 @@ interface GroupManagerV2 {
     )
 
     suspend fun handleMemberLeftMessage(memberId: AccountId, group: AccountId)
-    suspend fun leaveGroup(groupId: AccountId)
+    suspend fun leaveGroup(groupId: AccountId, deleteGroup : Boolean = false)
     suspend fun promoteMember(group: AccountId, members: List<AccountId>, isRepromote: Boolean)
 
     suspend fun handleInvitation(
@@ -127,6 +127,7 @@ interface GroupManagerV2 {
 
     fun getAdminLeaveGroupDialogData(groupId : AccountId, name : String) : ConfirmDialogData?
 
+    fun isCurrentUserGroupAdmin(groupId : AccountId) : Boolean
     fun isCurrentUserLastAdmin(groupId : AccountId) : Boolean
 
     data class ConfirmDialogData(

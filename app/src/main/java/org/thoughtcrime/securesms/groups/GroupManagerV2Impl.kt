@@ -490,12 +490,12 @@ class GroupManagerV2Impl @Inject constructor(
         }
     }
 
-    override suspend fun leaveGroup(groupId: AccountId) {
+    override suspend fun leaveGroup(groupId: AccountId, deleteGroup : Boolean) {
         // Insert the control message immediately so we can see the leaving message
         storage.insertGroupInfoLeaving(groupId)
 
         // The group leaving work could start or wait depend on the network condition
-        GroupLeavingWorker.schedule(context = application, groupId)
+        GroupLeavingWorker.schedule(context = application, groupId, deleteGroup)
     }
 
     override suspend fun promoteMember(
@@ -1270,23 +1270,31 @@ class GroupManagerV2Impl @Inject constructor(
         )
     }
 
+    private fun adminMembers(groupId: AccountId): Sequence<GroupMember> =
+        configFactory.withGroupConfigs(groupId) {
+            it.groupMembers.allWithStatus()
+                .filter { (member, status) ->
+                    status == GroupMember.Status.PROMOTION_ACCEPTED && !member.isRemoved(status)
+                }
+                .map { (member, _) -> member }
+        }
+
+
+    override fun isCurrentUserGroupAdmin(groupId: AccountId): Boolean {
+        val currentUserId = checkNotNull(storage.getUserPublicKey()) { "User public key is null" }
+        return adminMembers(groupId).any { it.accountId() == currentUserId }
+    }
+
     override fun isCurrentUserLastAdmin(groupId: AccountId): Boolean {
         val currentUserId = checkNotNull(storage.getUserPublicKey()) { "User public key is null" }
-
-        val membersWithStatus = configFactory.withGroupConfigs(groupId) {
-            it.groupMembers.allWithStatus()
-        }
 
         var adminCount = 0
         var amAdmin = false
 
-        for ((member, status) in membersWithStatus) {
-            val isAdminLike = status == GroupMember.Status.PROMOTION_ACCEPTED && !member.isRemoved(status)
-            if (!isAdminLike) continue
-
+        for (member in adminMembers(groupId)) {
             adminCount++
 
-            if (member.accountId() == currentUserId) {
+            if (!amAdmin && member.accountId() == currentUserId) {
                 amAdmin = true
             }
         }

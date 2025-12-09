@@ -1065,7 +1065,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                                 )
                             )
                         }else{
-                            leaveGroup()
+                            leaveGroup(deleteGroup = false)
                         }
                     },
                     positiveStyleDanger = !isUserLastAdmin,
@@ -1080,7 +1080,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     private fun confirmLeaveGroup(){
         val groupV2Id = (address as? Address.Group)?.accountId ?: return
-
+        val isAdmin = groupManagerV2.isCurrentUserGroupAdmin(groupV2Id)
         _dialogState.update { state ->
             val dialogData = groupManager.getLeaveGroupConfirmationDialogData(
                 groupV2Id,
@@ -1095,25 +1095,25 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     negativeText = context.getString(dialogData.negativeText),
                     positiveQaTag = dialogData.positiveQaTag?.let { context.getString(it) },
                     negativeQaTag = dialogData.negativeQaTag?.let { context.getString(it) },
-                    onPositive = ::leaveGroup,
+                    onPositive = {leaveGroup(deleteGroup = isAdmin)},
                     onNegative = {}
                 )
             )
         }
     }
 
-    private fun leaveGroup() {
+    private fun leaveGroup(deleteGroup: Boolean = false) {
         val conversation = recipient ?: return
         viewModelScope.launch {
             showLoading()
 
             try {
                 withContext(Dispatchers.Default) {
-                    groupManagerV2.leaveGroup(AccountId(conversation.address.toString()))
+                    groupManagerV2.leaveGroup(AccountId(conversation.address.toString()), deleteGroup)
                 }
                 hideLoading()
                 goBackHome()
-            } catch (e: Exception){
+            } catch (e: Exception) {
                 hideLoading()
 
                 val txt = Phrase.from(context, R.string.groupLeaveErrorFailed)
