@@ -199,10 +199,9 @@ class DateUtils @Inject constructor(
                 date1.hour == date2.hour
     }
 
-    fun getExpiryString(instant: Instant?): String {
+    fun getExpiryString(instant: Instant?, now: Instant = Instant.now()): String {
         if (instant == null) return context.getString(R.string.proExpired)
 
-        val now = Instant.now()
         val remaining = Duration.between(now, instant)
 
         // Already expired

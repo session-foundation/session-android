@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
@@ -300,26 +301,26 @@ class ProStatusManager @Inject constructor(
                         proDetailsRepository.get().loadState
                             .mapNotNull { it.lastUpdated?.first?.expiry }
                             .distinctUntilChanged()
-                            .mapLatest { expiry ->
-                                // Schedule a refresh 30seconds after access expiry
-                                val refreshTime = expiry.plusSeconds(30)
-
+                            .transformLatest { expiry ->
+                                // Schedule a refresh 0 and 30seconds after access expiry
                                 val now = snodeClock.currentTime()
-                                if (now < refreshTime) {
-                                    val duration = Duration.between(now, refreshTime)
+                                if (now < expiry) {
                                     Log.d(
                                         DebugLogGroup.PRO_SUBSCRIPTION.label,
-                                        "Delaying ProDetails refresh until $refreshTime due to access expiry"
+                                        "Delaying ProDetails refresh until $expiry due to access expiry"
                                     )
-                                    delay(duration)
-                                }
+                                    delay(expiry.toEpochMilli() - now.toEpochMilli())
+                                    emit("ProDetails expiry reached")
 
-                                "ProDetails expiry reached"
+                                    delay(30_000L)
+                                    emit("30 seconds after ProDetails expiry reached")
+                                }
                             },
 
                         configFactory.get()
                             .watchUserProConfig()
                             .filterNotNull()
+                            .distinctUntilChanged()
                             .mapLatest { proConfig ->
                                 val expiry = Instant.ofEpochMilli(proConfig.proProof.expiryMs)
                                 // Schedule a refresh for a random number between 10 and 60 minutes before proof expiry
@@ -335,6 +336,8 @@ class ProStatusManager @Inject constructor(
                                     )
                                     delay(Duration.between(now, expiry))
                                 }
+
+                                "Pro proof expiry reached"
                             },
 
                         flowOf("App starting up")
