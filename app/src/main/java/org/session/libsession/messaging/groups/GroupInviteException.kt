@@ -43,7 +43,7 @@ class GroupInviteException(
 
         if (second != null && third != null) {
             val errorString =
-                if (isPromotion) R.string.adminPromotionFailedDescriptionMultiple else
+                if (isPromotion)  if (isReinvite) R.string.failedResendPromotionMultiple else R.string.adminPromotionFailedDescriptionMultiple else
                     if (isReinvite) R.string.failedResendInviteMultiple else R.string.groupInviteFailedMultiple
             return Phrase.from(context, errorString)
                 .put(NAME_KEY, first)
@@ -51,7 +51,7 @@ class GroupInviteException(
                 .put(GROUP_NAME_KEY, groupName)
                 .format()
         } else if (second != null) {
-            val errorString = if (isPromotion) R.string.adminPromotionFailedDescriptionTwo else
+            val errorString = if (isPromotion) if (isReinvite) R.string.failedResendPromotionTwo else  R.string.adminPromotionFailedDescriptionTwo else
                 if (isReinvite) R.string.failedResendInviteTwo else R.string.groupInviteFailedTwo
             return Phrase.from(context, errorString)
                 .put(NAME_KEY, first)
@@ -59,7 +59,7 @@ class GroupInviteException(
                 .put(GROUP_NAME_KEY, groupName)
                 .format()
         } else {
-            val errorString = if (isPromotion) R.string.adminPromotionFailedDescription else
+            val errorString = if (isPromotion) if (isReinvite) R.string.failedResendPromotion else R.string.adminPromotionFailedDescription else
                 if (isReinvite) R.string.failedResendInvite else R.string.groupInviteFailedUser
             return Phrase.from(context, errorString)
                 .put(NAME_KEY, first)
