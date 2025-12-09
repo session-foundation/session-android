@@ -151,6 +151,7 @@
     <string name="qa_conversation_settings_dialog_delete_group_confirm">delete-group-confirm-button</string>
     <string name="qa_conversation_settings_dialog_delete_group_cancel">delete-group-cancel-button</string>
     <string name="qa_conversation_settings_dialog_leave_group_confirm">leave-group-confirm-button</string>
+    <string name="qa_conversation_settings_dialog_add_admin">add-admin-button</string>
     <string name="qa_conversation_settings_dialog_leave_group_cancel">leave-group-cancel-button</string>
     <string name="qa_conversation_settings_dialog_clear_messages_confirm">clear-all-messages-confirm-button</string>
     <string name="qa_conversation_settings_dialog_clear_messages_cancel">clear-all-messages-cancel-button</string>

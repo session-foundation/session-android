@@ -19,6 +19,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
+import org.thoughtcrime.securesms.util.AnimatedImageUtils
 import org.thoughtcrime.securesms.util.castAwayType
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -97,18 +98,21 @@ class AvatarUploadManager @Inject constructor(
             it.write(pictureData)
         }
 
+        val isAnimated = AnimatedImageUtils.isAnimated(pictureData)
+
         Log.d(DebugLogGroup.AVATAR.label, "Avatar file written to local storage")
 
         // Now that we have the file both locally and remotely, we can update the user profile
-        val oldPic = configFactory.withMutableUserConfigs {
-            val result = it.userProfile.getPic()
+        val oldPic = configFactory.withMutableUserConfigs { configs ->
+            val result = configs.userProfile.getPic()
             val userPic = remoteFile.toUserPic()
             if (isReupload) {
-                it.userProfile.setReuploadedPic(userPic)
+                configs.userProfile.setReuploadedPic(userPic)
             } else {
-                it.userProfile.setPic(userPic)
+                configs.userProfile.setPic(userPic)
             }
 
+            configs.userProfile.setAnimatedAvatar(isAnimated)
             result.toRemoteFile()
         }
 

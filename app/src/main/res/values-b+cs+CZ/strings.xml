@@ -21,6 +21,7 @@
         <item quantity="many">Přidat správce</item>
         <item quantity="other">Přidat správce</item>
     </plurals>
+    <string name="addAdminSingular">Přidat správce</string>
     <string name="addAdminsDescription">Zadejte ID účtu uživatele, kterého povyšujete na správce.\n\nChcete-li přidat více uživatelů, zadejte každé ID účtu oddělené čárkou. Najednou lze zadat až 20 ID účtů.</string>
     <string name="adminCannotBeDemoted">Správci nemohou být poníženi ani odebráni ze skupiny.</string>
     <string name="adminCannotBeRemoved">Správce nelze odebrat.</string>
@@ -1429,6 +1430,8 @@
     <string name="shareExtensionNoAccountError">Ups! Vypadá to, že ještě nemáte účet {app_name}.\n\nPřed sdílením si ho budete muset v aplikaci {app_name} vytvořit.</string>
     <string name="shareGroupMessageHistory">Chcete sdílet historii zpráv skupiny s tímto uživatelem?</string>
     <string name="shareToSession">Sdílet do {app_name}</string>
+    <string name="sharingSupportMultipleMedia">Je nám líto, {app_name} podporuje pouze sdílení více obrázků a videí najednou</string>
+    <string name="sharingSupportMultipleMediaExcluded">Sdílení podporuje pouze média. Soubory, které nejsou médii, byly vyloučeny</string>
     <string name="show">Zobrazit</string>
     <string name="showAll">Zobrazit všechny</string>
     <string name="showLess">Zobrazit méně</string>

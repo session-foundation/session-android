@@ -491,7 +491,7 @@ class ProStatusManager @Inject constructor(
                             configs.userProfile.setProBadge(true)
                         }
                         // refresh the pro details
-                        proDetailsRepository.get().requestRefresh()
+                        proDetailsRepository.get().requestRefresh(force = true)
                     }
 
                     is ProApiResponse.Failure -> {
