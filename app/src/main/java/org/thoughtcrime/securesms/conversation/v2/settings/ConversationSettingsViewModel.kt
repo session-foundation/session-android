@@ -30,6 +30,7 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.allWithStatus
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
@@ -284,10 +285,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         OptionsItem(
             name = context.getString(R.string.manageAdmins),
             icon = R.drawable.ic_add_admin_custom,
-            qaTag = R.string.qa_conversation_settings_manage_members,
+            qaTag = R.string.qa_conversation_settings_manage_admins,
             onClick = {
                 (address as? Address.Group)?.let {
-                    navigateTo(ConversationSettingsDestination.RouteManageMembers(it))
+                    navigateTo(ConversationSettingsDestination.RouteManageAdmins(it))
                 }
             }
         )
@@ -310,6 +311,16 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             onClick = ::confirmLeaveGroup
         )
     }
+
+    private val optionAdminLeaveGroup: OptionsItem by lazy{
+        OptionsItem(
+            name = context.getString(R.string.groupLeave),
+            icon = R.drawable.ic_log_out,
+            qaTag = R.string.qa_conversation_settings_leave_group,
+            onClick = ::confirmAdminLeaveGroup
+        )
+    }
+
 
     // Community
     private val optionCopyCommunityURL: OptionsItem by lazy{
@@ -580,7 +591,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                         dangerOptions.addAll(
                             listOf(
                                 optionClearMessages,
-                                optionLeaveGroup,
+                                optionAdminLeaveGroup,
                                 optionDeleteGroup
                             )
                         )
@@ -1026,8 +1037,50 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
+    private fun confirmAdminLeaveGroup(){
+        val groupV2Id = (address as? Address.Group)?.accountId ?: return
+        val isUserLastAdmin = groupManager.isCurrentUserLastAdmin(groupV2Id)
+        _dialogState.update { state ->
+            val dialogData = groupManager.getAdminLeaveGroupDialogData(
+                groupV2Id,
+                _uiState.value.name
+            ) ?: return
+
+            state.copy(
+                showSimpleDialog = SimpleDialogData(
+                    title = dialogData.title,
+                    message = dialogData.message,
+                    positiveText = context.getString(dialogData.positiveText),
+                    negativeText = context.getString(dialogData.negativeText),
+                    positiveQaTag = dialogData.positiveQaTag?.let { context.getString(it) },
+                    negativeQaTag = dialogData.negativeQaTag?.let { context.getString(it) },
+                    onPositive = {
+                        if (isUserLastAdmin){
+                            // Calling this to have the ManageAdminScreen in the backstack so we can
+                            // get its VM and PromoteMembersScreen can navigate back to it after sending promotions
+                            navigateTo(
+                                ConversationSettingsDestination.RouteManageAdmins(
+                                    groupAddress = address,
+                                    navigateToPromoteMembers = true
+                                )
+                            )
+                        }else{
+                            leaveGroup()
+                        }
+                    },
+                    positiveStyleDanger = !isUserLastAdmin,
+                    onNegative = {
+                        if (isUserLastAdmin) confirmLeaveGroup()
+                    },
+                    negativeStyleDanger = isUserLastAdmin // red color on the right
+                )
+            )
+        }
+    }
+
     private fun confirmLeaveGroup(){
         val groupV2Id = (address as? Address.Group)?.accountId ?: return
+
         _dialogState.update { state ->
             val dialogData = groupManager.getLeaveGroupConfirmationDialogData(
                 groupV2Id,
@@ -1040,8 +1093,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     message = dialogData.message,
                     positiveText = context.getString(dialogData.positiveText),
                     negativeText = context.getString(dialogData.negativeText),
-                    positiveQaTag = dialogData.positiveQaTag?.let{ context.getString(it) },
-                    negativeQaTag = dialogData.negativeQaTag?.let{ context.getString(it) },
+                    positiveQaTag = dialogData.positiveQaTag?.let { context.getString(it) },
+                    negativeQaTag = dialogData.negativeQaTag?.let { context.getString(it) },
                     onPositive = ::leaveGroup,
                     onNegative = {}
                 )

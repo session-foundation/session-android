@@ -1,13 +1,11 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <resources>
-    <color name="unimportant">#D8D8D8</color>
     <color name="profile_picture_background">#353535</color>
     <color name="action_bar_background">#161616</color>
     <color name="separator">#36383C</color>
     <color name="app_icon_background">#333132</color>
     <color name="compose_view_background">#1B1B1B</color>
     <color name="compose_text_view_background">#141414</color>
-    <color name="paths_building">#FFCE3A</color>
     <color name="cell_selected">#0C0C0C</color>
 
     <color name="accent_green">#ff31F196</color>

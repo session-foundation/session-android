@@ -154,38 +154,36 @@ fun StartConversationNavHost(
             val viewModel = hiltViewModel<NewMessageViewModel>()
             val uiState by viewModel.state.collectAsState(State())
 
-            val helpUrl = "https://getsession.org/account-ids"
-
-            LaunchedEffect(Unit) {
-                scope.launch {
-                    viewModel.success.collect {
-                        context.startActivity(
-                            ConversationActivityV2.createIntent(
-                                context,
-                                address = it.address
+                LaunchedEffect(Unit) {
+                    scope.launch {
+                        viewModel.success.collect {
+                            context.startActivity(
+                                ConversationActivityV2.createIntent(
+                                    context,
+                                    address = it.address
+                                )
                             )
-                        )
 
-                        onClose()
+                            onClose()
+                        }
                     }
                 }
-            }
 
-            NewMessage(
-                uiState,
-                viewModel.qrErrors,
-                viewModel,
-                onBack = { scope.launch { navigator.navigateUp() } },
-                onClose = onClose,
-                onHelp = { viewModel.onCommand(NewMessageViewModel.Commands.ShowUrlDialog) }
-            )
-            if (uiState.showUrlDialog) {
-                OpenURLAlertDialog(
-                    url = helpUrl,
-                    onDismissRequest = { viewModel.onCommand(NewMessageViewModel.Commands.DismissUrlDialog) }
+                NewMessage(
+                    uiState,
+                    viewModel.qrErrors,
+                    viewModel,
+                    onBack = { scope.launch { navigator.navigateUp() } },
+                    onClose = onClose,
+                    onHelp = { viewModel.onCommand(NewMessageViewModel.Commands.ShowUrlDialog) }
                 )
+                if (uiState.showUrlDialog != null) {
+                    OpenURLAlertDialog(
+                        url = uiState.showUrlDialog!!,
+                        onDismissRequest = { viewModel.onCommand(NewMessageViewModel.Commands.DismissUrlDialog) }
+                    )
+                }
             }
-        }
 
         // Create Group
         horizontalSlideComposable<StartConversationDestination.CreateGroup> {
