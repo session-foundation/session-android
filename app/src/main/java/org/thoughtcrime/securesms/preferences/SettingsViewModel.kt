@@ -190,7 +190,9 @@ class SettingsViewModel @Inject constructor(
     fun onAvatarPicked(result: CropImageView.CropResult) {
         when {
             result.isSuccessful -> {
-                onAvatarPicked("file://${result.getUriFilePath(context)!!}".toUri())
+                result.uriContent?.let { uri ->
+                    onAvatarPicked(uri)
+                } ?: Log.e(TAG, "Cropping successful but uriContent was null")
             }
 
             result is CropImage.CancelledResult -> {
