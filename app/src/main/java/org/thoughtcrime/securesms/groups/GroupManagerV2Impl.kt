@@ -1245,6 +1245,12 @@ class GroupManagerV2Impl @Inject constructor(
         val positiveQaTag = R.string.qa_conversation_settings_dialog_delete_group_confirm
         val negativeQaTag = R.string.qa_conversation_settings_dialog_delete_group_cancel
 
+        val isAdmin = groupData.hasAdminKey()
+
+        // safety guard. You can't delete as a non admin that can poll this group
+        if(!isAdmin && groupData.shouldPoll) {
+            return getLeaveGroupConfirmationDialogData(groupId, name)
+        }
 
         if(!groupData.shouldPoll){
             message = Phrase.from(application, R.string.groupDeleteDescriptionMember)
