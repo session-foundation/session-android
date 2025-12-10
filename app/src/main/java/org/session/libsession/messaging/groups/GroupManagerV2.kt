@@ -125,7 +125,7 @@ interface GroupManagerV2 {
 
     fun getLeaveGroupConfirmationDialogData(groupId: AccountId, name: String): ConfirmDialogData?
 
-    fun getAdminLeaveGroupDialogData(groupId : AccountId, name : String) : ConfirmDialogData?
+    fun getDeleteGroupConfirmationDialogData(groupId : AccountId, name : String) : ConfirmDialogData?
 
     fun isCurrentUserGroupAdmin(groupId : AccountId) : Boolean
     fun isCurrentUserLastAdmin(groupId : AccountId) : Boolean
@@ -137,5 +137,6 @@ interface GroupManagerV2 {
         @StringRes val negativeText: Int,
         @StringRes val positiveQaTag: Int?,
         @StringRes val negativeQaTag: Int?,
+        val showCloseButton: Boolean = false
     )
 }
