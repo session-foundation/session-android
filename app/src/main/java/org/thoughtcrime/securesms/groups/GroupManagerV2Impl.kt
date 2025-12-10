@@ -490,12 +490,12 @@ class GroupManagerV2Impl @Inject constructor(
         }
     }
 
-    override suspend fun leaveGroup(groupId: AccountId) {
+    override suspend fun leaveGroup(groupId: AccountId, deleteGroup : Boolean) {
         // Insert the control message immediately so we can see the leaving message
         storage.insertGroupInfoLeaving(groupId)
 
         // The group leaving work could start or wait depend on the network condition
-        GroupLeavingWorker.schedule(context = application, groupId)
+        GroupLeavingWorker.schedule(context = application, groupId, deleteGroup)
     }
 
     override suspend fun promoteMember(
@@ -1200,64 +1200,28 @@ class GroupManagerV2Impl @Inject constructor(
     override fun getLeaveGroupConfirmationDialogData(groupId: AccountId, name: String): GroupManagerV2.ConfirmDialogData? {
         val groupData = configFactory.getGroup(groupId) ?: return null
 
-        var title = R.string.groupDelete
-        var message: CharSequence = ""
-        var positiveButton = R.string.delete
-        var positiveQaTag = R.string.qa_conversation_settings_dialog_delete_group_confirm
-        var negativeQaTag = R.string.qa_conversation_settings_dialog_delete_group_cancel
-
-
-        if(!groupData.shouldPoll){
-            message = Phrase.from(application, R.string.groupDeleteDescriptionMember)
-                .put(GROUP_NAME_KEY, name)
-                .format()
-
-        } else if (groupData.hasAdminKey()) {
-            message = Phrase.from(application, R.string.groupDeleteDescription)
-                .put(GROUP_NAME_KEY, name)
-                .format()
-        } else {
-            message = Phrase.from(application, R.string.groupLeaveDescription)
-                .put(GROUP_NAME_KEY, name)
-                .format()
-
-            title = R.string.groupLeave
-            positiveButton = R.string.leave
-            positiveQaTag = R.string.qa_conversation_settings_dialog_leave_group_confirm
-            negativeQaTag = R.string.qa_conversation_settings_dialog_leave_group_cancel
-        }
-
-        return GroupManagerV2.ConfirmDialogData(
-                title = application.getString(title),
-                message = message,
-                positiveText = positiveButton,
-                negativeText = R.string.cancel,
-                positiveQaTag = positiveQaTag,
-                negativeQaTag = negativeQaTag,
-            )
-    }
-
-    override fun getAdminLeaveGroupDialogData(
-        groupId: AccountId,
-        name: String
-    ): GroupManagerV2.ConfirmDialogData? {
         val title = R.string.groupLeave
-        var message: CharSequence = ""
+        var message: CharSequence = Phrase.from(application, R.string.groupLeaveDescription)
+            .put(GROUP_NAME_KEY, name)
+            .format()
         var positiveButton = R.string.leave
         var negativeButton = R.string.cancel
-        var positiveQaTag = R.string.qa_conversation_settings_dialog_leave_group_confirm
-        var negativeQaTag = R.string.qa_conversation_settings_dialog_leave_group_cancel
+        val positiveQaTag = R.string.qa_conversation_settings_dialog_leave_group_confirm
+        val negativeQaTag = R.string.qa_conversation_settings_dialog_leave_group_cancel
+        var showCloseButton = false
 
+        if (!groupData.shouldPoll) {
+            return getDeleteGroupConfirmationDialogData(groupId, name)
+        }
+        // if an admin tries to leave while being the only admin in the group
         if (isCurrentUserLastAdmin(groupId)) {
             message = Phrase.from(application, R.string.groupOnlyAdmin)
                 .put(GROUP_NAME_KEY, name)
                 .format()
+
             positiveButton = R.string.addAdminSingular
             negativeButton = R.string.groupDelete
-        } else {
-            message = Phrase.from(application, R.string.groupLeaveDescription)
-                .put(GROUP_NAME_KEY, name)
-                .format()
+            showCloseButton = true
         }
 
         return GroupManagerV2.ConfirmDialogData(
@@ -1267,26 +1231,74 @@ class GroupManagerV2Impl @Inject constructor(
             negativeText = negativeButton,
             positiveQaTag = positiveQaTag,
             negativeQaTag = negativeQaTag,
+            showCloseButton = showCloseButton
         )
+    }
+
+    override fun getDeleteGroupConfirmationDialogData(
+        groupId: AccountId,
+        name: String
+    ): GroupManagerV2.ConfirmDialogData? {
+        val groupData = configFactory.getGroup(groupId) ?: return null
+
+        val title = R.string.groupDelete
+        var message: CharSequence = ""
+        val positiveButton = R.string.delete
+        val positiveQaTag = R.string.qa_conversation_settings_dialog_delete_group_confirm
+        val negativeQaTag = R.string.qa_conversation_settings_dialog_delete_group_cancel
+
+        val isAdmin = groupData.hasAdminKey()
+
+        // safety guard. You can't delete as a non admin that can poll this group
+        if(!isAdmin && groupData.shouldPoll) {
+            return getLeaveGroupConfirmationDialogData(groupId, name)
+        }
+
+        if (!groupData.shouldPoll) {
+            message = Phrase.from(application, R.string.groupDeleteDescriptionMember)
+                .put(GROUP_NAME_KEY, name)
+                .format()
+        } else if (groupData.hasAdminKey()) {
+            message = Phrase.from(application, R.string.groupDeleteDescription)
+                .put(GROUP_NAME_KEY, name)
+                .format()
+        }
+
+        return GroupManagerV2.ConfirmDialogData(
+            title = application.getString(title),
+            message = message,
+            positiveText = positiveButton,
+            negativeText = R.string.cancel,
+            positiveQaTag = positiveQaTag,
+            negativeQaTag = negativeQaTag,
+        )
+    }
+
+    private fun adminMembers(groupId: AccountId): Sequence<GroupMember> =
+        configFactory.withGroupConfigs(groupId) {
+            it.groupMembers.allWithStatus()
+                .filter { (member, status) ->
+                    status == GroupMember.Status.PROMOTION_ACCEPTED && !member.isRemoved(status)
+                }
+                .map { (member, _) -> member }
+        }
+
+
+    override fun isCurrentUserGroupAdmin(groupId: AccountId): Boolean {
+        val currentUserId = checkNotNull(storage.getUserPublicKey()) { "User public key is null" }
+        return adminMembers(groupId).any { it.accountId() == currentUserId }
     }
 
     override fun isCurrentUserLastAdmin(groupId: AccountId): Boolean {
         val currentUserId = checkNotNull(storage.getUserPublicKey()) { "User public key is null" }
 
-        val membersWithStatus = configFactory.withGroupConfigs(groupId) {
-            it.groupMembers.allWithStatus()
-        }
-
         var adminCount = 0
         var amAdmin = false
 
-        for ((member, status) in membersWithStatus) {
-            val isAdminLike = status == GroupMember.Status.PROMOTION_ACCEPTED && !member.isRemoved(status)
-            if (!isAdminLike) continue
-
+        for (member in adminMembers(groupId)) {
             adminCount++
 
-            if (member.accountId() == currentUserId) {
+            if (!amAdmin && member.accountId() == currentUserId) {
                 amAdmin = true
             }
         }

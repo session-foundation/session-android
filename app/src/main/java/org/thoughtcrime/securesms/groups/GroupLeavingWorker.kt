@@ -46,6 +46,9 @@ class GroupLeavingWorker @AssistedInject constructor(
             "Group ID must be provided"
         }.let(::AccountId)
 
+        // delete this group instead of leaving.
+        val deleteGroup = inputData.getBoolean(KEY_DELETE_GROUP, false)
+
         Log.d(TAG, "Group leaving work started for $groupId")
 
         return groupScope.launchAndWait(groupId, "GroupLeavingWorker") {
@@ -124,8 +127,9 @@ class GroupLeavingWorker @AssistedInject constructor(
                         }
                     }
 
-                    // If we are the only admin, leaving this group will destroy the group
-                    if (weAreTheOnlyAdmin) {
+                    // We now have an admin option to leave group so we need a way of Deleting the group
+                    // even if there are more admins
+                    if (weAreTheOnlyAdmin || deleteGroup) {
                         configFactory.withMutableGroupConfigs(groupId) { configs ->
                             configs.groupInfo.destroyGroup()
                         }
@@ -161,15 +165,19 @@ class GroupLeavingWorker @AssistedInject constructor(
         private const val TAG = "GroupLeavingWorker"
 
         private const val KEY_GROUP_ID = "group_id"
+        private const val KEY_DELETE_GROUP = "delete_group"
 
-        fun schedule(context: Context, groupId: AccountId) {
+        fun schedule(context: Context, groupId: AccountId, deleteGroup : Boolean = false) {
             WorkManager.getInstance(context)
                 .enqueue(
                     OneTimeWorkRequestBuilder<GroupLeavingWorker>()
                         .addTag(KEY_GROUP_ID)
                         .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
                         .setInputData(
-                            Data.Builder().putString(KEY_GROUP_ID, groupId.hexString).build()
+                            Data.Builder()
+                                .putString(KEY_GROUP_ID, groupId.hexString)
+                                .putBoolean(KEY_DELETE_GROUP, deleteGroup)
+                                .build()
                         )
                         .build()
                 )
