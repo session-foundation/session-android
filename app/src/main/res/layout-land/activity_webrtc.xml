@@ -43,8 +43,8 @@
         app:layout_constraintBottom_toTopOf="@id/titleContainer"
         app:layout_constraintWidth_max="@dimen/extra_large_profile_picture_size"
         app:layout_constraintHeight_max="@dimen/extra_large_profile_picture_size"
-        app:layout_constraintWidth_min="@dimen/large_profile_picture_size"
-        app:layout_constraintHeight_min="@dimen/large_profile_picture_size"
+        app:layout_constraintWidth_min="@dimen/extra_large_profile_picture_size"
+        app:layout_constraintHeight_min="@dimen/extra_large_profile_picture_size"
         app:layout_constraintDimensionRatio="H,1:1"/>
 
     <ImageView
