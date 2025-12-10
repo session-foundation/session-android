@@ -9,18 +9,17 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.core.graphics.Insets
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
@@ -99,7 +98,6 @@ import org.thoughtcrime.securesms.util.AvatarBadge
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.applyBottomInsetMargin
-import org.thoughtcrime.securesms.util.applySafeInsetsMargins
 import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.fadeIn
@@ -260,6 +258,20 @@ class HomeActivity : ScreenLockActionBarActivity(),
             homeViewModel.onSearchClicked()
         }
         binding.sessionToolbar.disableClipping()
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val searchHandled = homeViewModel.isSearchOpen.value &&
+                        binding.globalSearchInputLayout.handleBackPressed()
+                if (searchHandled) return
+
+                if (homeViewModel.onBackPressed()) {
+                    return
+                }
+
+                finish()
+            }
+        })
 
         lifecycleScope.launch {
             homeViewModel.shouldShowCurrentUserProBadge
@@ -595,16 +607,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
     // endregion
 
     // region Interaction
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        if (homeViewModel.isSearchOpen.value && binding.globalSearchInputLayout.handleBackPressed()) {
-            return
-        }
-
-        if (!homeViewModel.onBackPressed()) {
-            super.onBackPressed()
-        }
-    }
 
     override fun onConversationClick(thread: ThreadRecord) {
         push(ConversationActivityV2.createIntent(this, address = thread.recipient.address as Address.Conversable))

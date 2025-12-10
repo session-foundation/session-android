@@ -1,10 +1,8 @@
 package org.thoughtcrime.securesms.mediasend
 
 import android.Manifest
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
@@ -16,6 +14,7 @@ import android.view.animation.OvershootInterpolator
 import android.view.animation.ScaleAnimation
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.core.view.ViewGroupCompat
 import androidx.fragment.app.Fragment
@@ -80,6 +79,12 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
             ViewGroupCompat.installCompatInsetsDispatch(it.root)
         }
 
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true){
+            override fun handleOnBackPressed() {
+                handleBackPressed()
+            }
+        })
+
         setResult(RESULT_CANCELED)
 
         // Apply windowInsets for our own UI (not the fragment ones because they will want to do their own things)
@@ -134,24 +139,23 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         }
     }
 
-    override fun onBackPressed() {
+    private fun handleBackPressed() {
         val fm = supportFragmentManager
         val isCameraFlow = intent.getBooleanExtra(KEY_IS_CAMERA, false)
 
         if (lastEntryFromCameraCapture) {
             if (isCameraFlow && fm.backStackEntryCount == 1) {
-                super.onBackPressed()
-                viewModel.onImageCaptureUndo(this)
+                viewModel.onImageCaptureUndo(this@MediaSendActivity)
+                fm.popBackStack()
             }
-
             lastEntryFromCameraCapture = false
             navigateToCamera()
             return
-        }else{
-            super.onBackPressed()
         }
 
-        if (isCameraFlow && fm.backStackEntryCount == 0) {
+        if (fm.backStackEntryCount > 0) {
+            fm.popBackStack()
+        } else {
             setResult(RESULT_CANCELED, Intent())
             finish()
         }
@@ -593,3 +597,4 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         }
     }
 }
+
