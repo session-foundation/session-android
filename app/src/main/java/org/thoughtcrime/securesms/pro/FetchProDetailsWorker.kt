@@ -63,7 +63,8 @@ class FetchProDetailsWorker @AssistedInject constructor(
 
             Log.d(
                 TAG,
-                "Fetched pro details, status = ${details.status}, expiry = ${details.expiry}"
+                "Fetched pro details, status = ${details.status}, " +
+                        "autoRenew = ${details.autoRenewing}, expiry = ${details.expiry}"
             )
 
             configFactory.withMutableUserConfigs { configs ->

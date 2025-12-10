@@ -75,7 +75,7 @@ class ConfigUploader @Inject constructor(
     private fun pathBecomesAvailable(): Flow<*> = networkConnectivity.networkAvailable
         .flatMapLatest { hasNetwork ->
             if (hasNetwork) {
-                OnionRequestAPI.hasPath.filter { it }
+                OnionRequestAPI.pathStatus.filter { it == OnionRequestAPI.PathStatus.READY }
             } else {
                 emptyFlow()
             }
