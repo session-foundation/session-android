@@ -12,18 +12,31 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.groups.ContactItem
+import org.thoughtcrime.securesms.groups.GroupMemberState
+import org.thoughtcrime.securesms.groups.InviteMembersViewModel
+import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.DialogButtonData
+import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.ProBadgeText
+import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.components.Avatar
+import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
 import org.thoughtcrime.securesms.ui.components.RadioButtonIndicator
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -56,7 +69,7 @@ fun GroupMinimumVersionBanner(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun  MemberItem(
+fun MemberItem(
     address: Address,
     title: String,
     avatarUIData: AvatarUIData,
@@ -69,7 +82,7 @@ fun  MemberItem(
     content: @Composable RowScope.() -> Unit = {},
 ) {
     var itemModifier = modifier
-    if(onClick != null){
+    if (onClick != null) {
         itemModifier = itemModifier.clickable(onClick = { onClick(address) })
     }
 
@@ -86,7 +99,7 @@ fun  MemberItem(
         Avatar(
             size = LocalDimensions.current.iconLarge,
             data = avatarUIData,
-            badge = if (showAsAdmin) { AvatarBadge.Admin } else AvatarBadge.None
+            badge = if (showAsAdmin) { AvatarBadge.ResourceBadge.Admin } else AvatarBadge.None
         )
 
         Column(
@@ -125,7 +138,8 @@ fun RadioMemberItem(
     showProBadge: Boolean,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
-    subtitleColor: Color = LocalColors.current.textSecondary
+    subtitleColor: Color = LocalColors.current.textSecondary,
+    showRadioButton: Boolean = true
 ) {
     MemberItem(
         address = address,
@@ -133,15 +147,17 @@ fun RadioMemberItem(
         title = title,
         subtitle = subtitle,
         subtitleColor = subtitleColor,
-        onClick = if(enabled) onClick else null,
+        onClick = if (enabled) onClick else null,
         showAsAdmin = showAsAdmin,
         showProBadge = showProBadge,
         modifier = modifier
-    ){
-        RadioButtonIndicator(
-            selected = selected,
-            enabled = enabled
-        )
+    ) {
+        if (showRadioButton) {
+            RadioButtonIndicator(
+                selected = selected,
+                enabled = enabled
+            )
+        }
     }
 }
 
@@ -165,6 +181,91 @@ fun LazyListScope.multiSelectMemberList(
             onClick = { onContactItemClicked(contact.address) }
         )
     }
+}
+
+@Composable
+fun InviteMembersDialog(
+    state: InviteMembersViewModel.InviteContactsDialogState,
+    modifier: Modifier = Modifier,
+    onInviteClicked: (Boolean) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var shareHistory by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        modifier = modifier,
+        onDismissRequest = {
+            // hide dialog
+            onDismiss()
+        },
+        title = annotatedStringResource(R.string.membersInviteTitle),
+        text = annotatedStringResource(state.inviteContactsBody),
+        content = {
+            DialogTitledRadioButton(
+                option = RadioOption(
+                    value = Unit,
+                    title = GetString(LocalResources.current.getString(R.string.membersInviteShareMessageHistoryDays)),
+                    selected = !shareHistory
+                )
+            ) {
+                shareHistory = false
+            }
+
+            DialogTitledRadioButton(
+                option = RadioOption(
+                    value = Unit,
+                    title = GetString(LocalResources.current.getString(R.string.membersInviteShareNewMessagesOnly)),
+                    selected = shareHistory,
+                )
+            ) {
+                shareHistory = true
+            }
+        },
+        buttons = listOf(
+            DialogButtonData(
+                text = GetString(state.inviteText),
+                color = LocalColors.current.danger,
+                dismissOnClick = false,
+                onClick = {
+                    onDismiss()
+                    onInviteClicked(shareHistory)
+                }
+            ),
+            DialogButtonData(
+                text = GetString(stringResource(R.string.cancel)),
+                onClick = {
+                    onDismiss()
+                }
+            )
+        )
+    )
+}
+
+@Composable
+fun ManageMemberItem(
+    member: GroupMemberState,
+    onClick: (address: Address) -> Unit,
+    modifier: Modifier = Modifier,
+    selected: Boolean = false
+) {
+    RadioMemberItem(
+        address = Address.fromSerialized(member.accountId.hexString),
+        title = member.name,
+        subtitle = member.statusLabel,
+        subtitleColor = if (member.highlightStatus) {
+            LocalColors.current.danger
+        } else {
+            LocalColors.current.textSecondary
+        },
+        showAsAdmin = member.showAsAdmin,
+        showProBadge = member.showProBadge,
+        avatarUIData = member.avatarUIData,
+        onClick = onClick,
+        modifier = modifier,
+        enabled = true,
+        selected = selected,
+        showRadioButton = !member.isSelf
+    )
 }
 
 @Preview

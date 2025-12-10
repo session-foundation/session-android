@@ -298,6 +298,21 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         ) { error: MediaSendViewModel.Error? ->
             if (error == null) return@observe
             when (error) {
+                MediaSendViewModel.Error.INVALID_TYPE_ONLY -> Toast.makeText(
+                    this,
+                    Phrase.from(
+                        this,
+                        R.string.sharingSupportMultipleMedia
+                    ).put(APP_NAME_KEY, getString(R.string.app_name)).format().toString(),
+                    Toast.LENGTH_LONG
+                ).show()
+
+                MediaSendViewModel.Error.MIXED_TYPE -> Toast.makeText(
+                    this,
+                    R.string.sharingSupportMultipleMediaExcluded,
+                    Toast.LENGTH_LONG
+                ).show()
+
                 MediaSendViewModel.Error.ITEM_TOO_LARGE -> Toast.makeText(
                     this,
                     R.string.attachmentsErrorSize,

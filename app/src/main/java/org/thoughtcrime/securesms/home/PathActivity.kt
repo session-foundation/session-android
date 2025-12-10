@@ -209,10 +209,14 @@ class PathActivity : ScreenLockActionBarActivity() {
         private var dotAnimationRepeatInterval: Long = 0
         private var job: Job? = null
 
+        private val validColor by lazy {
+            ContextCompat.getColor(context, R.color.accent_green)
+        }
+
         private val dotView by lazy {
             val result = PathDotView(context)
             result.setBackgroundResource(R.drawable.accent_dot)
-            result.mainColor = context.getAccentColor()
+            result.mainColor = validColor
             result
         }
 
