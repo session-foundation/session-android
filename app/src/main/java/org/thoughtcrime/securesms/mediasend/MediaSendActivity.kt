@@ -1,10 +1,13 @@
 package org.thoughtcrime.securesms.mediasend
 
 import android.Manifest
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
+import android.provider.AlarmClock.EXTRA_MESSAGE
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.AccelerateInterpolator
@@ -25,6 +28,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.MediasendActivityBinding
+import org.session.libsession.snode.SnodeAPI.KEY_BODY
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.MediaTypes
@@ -65,6 +69,8 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
 
     private var lastEntryFromCameraCapture: Boolean = false
 
+    private lateinit var backCallback: OnBackPressedCallback
+
     override val applyDefaultWindowInsets: Boolean
         get() = false // we want to handle window insets manually here for fullscreen fragments like the camera screen
 
@@ -79,11 +85,12 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
             ViewGroupCompat.installCompatInsetsDispatch(it.root)
         }
 
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true){
+        backCallback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                handleBackPressed()
+                handleBackPressedCompat()
             }
-        })
+        }
+        onBackPressedDispatcher.addCallback(this, backCallback)
 
         setResult(RESULT_CANCELED)
 
@@ -139,23 +146,34 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         }
     }
 
-    private fun handleBackPressed() {
+    private fun dispatchSystemBack() {
+        // Temporarily disable our callback to avoid recursion,
+        // then delegate to the default back behaviour (pop fragment / finish activity).
+        backCallback.isEnabled = false
+        onBackPressedDispatcher.onBackPressed()
+        backCallback.isEnabled = true
+    }
+
+    private fun handleBackPressedCompat() {
         val fm = supportFragmentManager
         val isCameraFlow = intent.getBooleanExtra(KEY_IS_CAMERA, false)
 
         if (lastEntryFromCameraCapture) {
             if (isCameraFlow && fm.backStackEntryCount == 1) {
-                viewModel.onImageCaptureUndo(this@MediaSendActivity)
-                fm.popBackStack()
+                // Equivalent of super.onBackPressed() from the old code
+                dispatchSystemBack()
+                viewModel.onImageCaptureUndo(this)
             }
+
             lastEntryFromCameraCapture = false
             navigateToCamera()
             return
+        } else {
+            // Equivalent of super.onBackPressed() in the old else branch
+            dispatchSystemBack()
         }
 
-        if (fm.backStackEntryCount > 0) {
-            fm.popBackStack()
-        } else {
+        if (isCameraFlow && supportFragmentManager.backStackEntryCount == 0) {
             setResult(RESULT_CANCELED, Intent())
             finish()
         }
