@@ -25,6 +25,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import coil3.ImageLoader
 import com.squareup.phrase.Phrase
+import dagger.Lazy
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
@@ -40,6 +41,7 @@ import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
+import org.thoughtcrime.securesms.conversation.v2.messages.MessageFormatter
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
 import org.thoughtcrime.securesms.database.MmsSmsColumns.NOTIFIED
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
@@ -75,6 +77,7 @@ class DefaultMessageNotifier @Inject constructor(
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val imageLoader: Provider<ImageLoader>,
     private val loginStateRepository: LoginStateRepository,
+    private val messageFormatter: Lazy<MessageFormatter>,
 ) : MessageNotifier {
     override fun setVisibleThread(threadId: Long) {
         visibleThread = threadId
@@ -572,21 +575,22 @@ class DefaultMessageNotifier @Inject constructor(
             if (record == null) break // Bail if there are no more MessageRecords
 
             val threadId = record.threadId
-            val threadRecipients = if (threadId != -1L) {
+            val threadRecipient = if (threadId != -1L) {
                 threadDatabase.getRecipientForThreadId(threadId)
                     ?.let(recipientRepository::getRecipientSync)
             } else null
 
+            if (threadRecipient == null) continue
+
             // Start by checking various scenario that we should skip
 
             // Skip if muted or calls
-            if (threadRecipients?.isMuted() == true) continue
+            if (threadRecipient.isMuted()) continue
             if (record.isIncomingCall || record.isOutgoingCall) continue
 
             // Handle message requests early
-            val isMessageRequest = threadRecipients != null &&
-                    !threadRecipients.isGroupOrCommunityRecipient &&
-                    !threadRecipients.approved &&
+            val isMessageRequest = !threadRecipient.isGroupOrCommunityRecipient &&
+                    !threadRecipient.approved &&
                     !threadDatabase.getLastSeenAndHasSent(threadId).second()
 
             // Do not repeat request notifications once the thread has >1 messages
@@ -596,13 +600,19 @@ class DefaultMessageNotifier @Inject constructor(
                 if (msgCount > 1) continue
             }
 
+            var body = messageFormatter.get().formatMessageBody(
+                context = context,
+                message = record,
+                threadRecipient = threadRecipient,
+            )
+
             // Check notification settings
-            if (threadRecipients?.notifyType == NotifyType.NONE) continue
+            if (threadRecipient.notifyType == NotifyType.NONE) continue
 
             val userPublicKey = loginStateRepository.requireLocalNumber()
 
             // Check mentions-only setting
-            if (threadRecipients?.notifyType == NotifyType.MENTIONS) {
+            if (threadRecipient.notifyType == NotifyType.MENTIONS) {
                 var blindedPublicKey = cache[threadId]
                 if (blindedPublicKey == null) {
                     blindedPublicKey = generateBlindedId(threadId, context)
@@ -610,7 +620,6 @@ class DefaultMessageNotifier @Inject constructor(
                 }
 
                 var isMentioned = false
-                val body = record.getDisplayBody(context).toString()
 
                 // Check for @mentions
                 if (body.contains("@$userPublicKey") ||
@@ -658,7 +667,6 @@ class DefaultMessageNotifier @Inject constructor(
                 }
 
                 // Prepare message body
-                var body: CharSequence = record.getDisplayBody(context)
                 var slideDeck: SlideDeck? = null
 
                 if (isMessageRequest) {
@@ -695,7 +703,7 @@ class DefaultMessageNotifier @Inject constructor(
                         record.isMms || record.isMmsNotification,
                         record.individualRecipient,
                         record.recipient,
-                        threadRecipients,
+                        threadRecipient,
                         threadId,
                         body,
                         record.timestamp,
@@ -708,8 +716,7 @@ class DefaultMessageNotifier @Inject constructor(
             // Only if: it's OUR message AND it has reactions AND it's NOT an unread incoming message
             else if (record.isOutgoing &&
                 hasUnreadReactions &&
-                threadRecipients != null &&
-                !threadRecipients.isGroupOrCommunityRecipient
+                !threadRecipient.isGroupOrCommunityRecipient
             ) {
 
                 var blindedPublicKey = cache[threadId]
@@ -750,7 +757,7 @@ class DefaultMessageNotifier @Inject constructor(
                                 record.isMms || record.isMmsNotification,
                                 reactor,
                                 reactor,
-                                threadRecipients,
+                                threadRecipient,
                                 threadId,
                                 emoji,
                                 latestReaction.dateSent, null,

@@ -2,14 +2,13 @@ package org.thoughtcrime.securesms.home
 
 import android.content.Context
 import androidx.recyclerview.widget.DiffUtil
-import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.util.getConversationUnread
+import org.thoughtcrime.securesms.conversation.v2.messages.MessageFormatter
 
 class HomeDiffUtil(
         private val old: HomeViewModel.Data,
         private val new: HomeViewModel.Data,
         private val context: Context,
-        private val configFactory: ConfigFactory
+        private val messageFormatter: MessageFormatter,
 ): DiffUtil.Callback() {
 
     override fun getOldListSize(): Int = old.items.size
@@ -60,7 +59,8 @@ class HomeDiffUtil(
         if (isSameItem) { isSameItem = (oldItem.recipient == newItem.recipient) }
 
         // Note: Two instances of 'SpannableString' may not equate even though their content matches
-        if (isSameItem) { isSameItem = (oldItem.getDisplayBody(context).toString() == newItem.getDisplayBody(context).toString()) }
+        if (isSameItem) { isSameItem = (messageFormatter.formatThreadSnippet(context, oldItem).toString()
+                == messageFormatter.formatThreadSnippet(context, newItem).toString()) }
 
         if (isSameItem) {
             isSameItem = (
