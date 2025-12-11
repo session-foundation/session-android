@@ -600,16 +600,16 @@ class DefaultMessageNotifier @Inject constructor(
                 if (msgCount > 1) continue
             }
 
+            // Check notification settings
+            if (threadRecipient.notifyType == NotifyType.NONE) continue
+
+            val userPublicKey = loginStateRepository.requireLocalNumber()
+
             var body = messageFormatter.get().formatMessageBody(
                 context = context,
                 message = record,
                 threadRecipient = threadRecipient,
             )
-
-            // Check notification settings
-            if (threadRecipient.notifyType == NotifyType.NONE) continue
-
-            val userPublicKey = loginStateRepository.requireLocalNumber()
 
             // Check mentions-only setting
             if (threadRecipient.notifyType == NotifyType.MENTIONS) {
