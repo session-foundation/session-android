@@ -38,7 +38,6 @@ class JobQueue : JobDelegate {
         for (job in channel) {
             if (!isActive) break
             val communityAddress = when (job) {
-                is BatchMessageReceiveJob -> job.fromCommunity?.address
                 is OpenGroupDeleteJob -> job.address?.address
                 is TrimThreadJob -> job.communityAddress?.address
                 else -> null
@@ -132,10 +131,8 @@ class JobQueue : JobDelegate {
                     is OpenGroupDeleteJob -> {
                         openGroupQueue.send(job)
                     }
-                    is TrimThreadJob,
-                    is BatchMessageReceiveJob -> {
-                        if ((job is BatchMessageReceiveJob && job.fromCommunity != null)
-                            || (job is TrimThreadJob && job.communityAddress != null)) {
+                    is TrimThreadJob -> {
+                        if (job.communityAddress != null) {
                             openGroupQueue.send(job)
                         } else {
                             rxQueue.send(job)
@@ -223,7 +220,6 @@ class JobQueue : JobDelegate {
             AttachmentDownloadJob.KEY,
             MessageSendJob.KEY,
             NotifyPNServerJob.KEY,
-            BatchMessageReceiveJob.KEY,
             OpenGroupDeleteJob.KEY,
             InviteContactsJob.KEY,
         )
@@ -247,16 +243,6 @@ class JobQueue : JobDelegate {
         if (job is MessageSendJob && error is MessageSendJob.AwaitingAttachmentUploadException) {
             Log.i("Loki", "Message send job waiting for attachment upload to finish (id: ${job.id}).")
             return
-        }
-
-        // Batch message receive job, re-queue non-permanently failed jobs
-        if (job is BatchMessageReceiveJob && job.failureCount <= 0) {
-            val replacementParameters = job.failures.toList()
-            if (replacementParameters.isNotEmpty()) {
-                val newJob = job.recreateWithNewMessages(replacementParameters)
-                newJob.failureCount = job.failureCount + 1
-                add(newJob)
-            }
         }
 
         // Regular job failure
