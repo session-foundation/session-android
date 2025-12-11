@@ -138,6 +138,7 @@ class ConversationAdapter(
                 viewHolder.view.bind(
                     message = message,
                     previous = messageBefore,
+                    threadRecipient = threadRecipientProvider(),
                     longPress = { onItemLongPress(message, viewHolder.adapterPosition, viewHolder.view) }
                 )
             }
