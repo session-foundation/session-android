@@ -149,8 +149,12 @@ android {
 
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
-
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                file("proguard-rules.pro")
+            )
             devNetDefaultOn(false)
             enablePermissiveNetworkSecurityConfig(false)
             setAlternativeAppName(null)
@@ -186,7 +190,11 @@ android {
 
         getByName("debug") {
             isDefault = true
-            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                file("proguard-rules.pro")
+            )
+            
             enableUnitTestCoverage = false
             signingConfig = signingConfigs.getByName("debug")
 
@@ -364,6 +372,11 @@ dependencies {
     if (huaweiEnabled) {
         val huaweiImplementation = configurations.maybeCreate("huaweiImplementation")
         huaweiImplementation(libs.huawei.push)
+
+        // These are compileOnly on the Huawei flavor so R8 can resolve optional HMS classes
+        // referenced by HMS Push during minification.
+        compileOnly(libs.huawei.hianalytics)
+        compileOnly(libs.huawei.availableupdate)
     }
 
     implementation(libs.androidx.media3.exoplayer)
