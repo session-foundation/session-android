@@ -142,7 +142,6 @@ interface StorageProtocol {
     fun getOrCreateThreadIdFor(address: Address): Long
     fun getThreadId(address: Address): Long?
     fun getThreadIdForMms(mmsId: Long): Long
-    fun getLastUpdated(threadID: Long): Long
     fun trimThreadBefore(threadID: Long, timestamp: Long)
     fun getMessageCount(threadID: Long): Long
     fun getTotalPinned(): Int

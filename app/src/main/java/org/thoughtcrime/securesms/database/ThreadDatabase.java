@@ -515,31 +515,6 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
   }
 
   /**
-   * @return All threads in the database, with their thread ID and Address. Note that
-   *   threads don't necessarily mean conversations, as whether you have a conversation
-   *   or not depend on the config data. This method returns all threads that exist
-   *   in the database, normally this is useful only for data integrity purposes.
-   */
-  public List<kotlin.Pair<Address, Long>> getAllThreads() {
-    return getAllThreads(getReadableDatabase());
-  }
-
-  private List<kotlin.Pair<Address, Long>> getAllThreads(SQLiteDatabase db) {
-    final String query = "SELECT " + ID + ", " + ADDRESS + " FROM " + TABLE_NAME + " WHERE nullif(" + ADDRESS + ", '') IS NOT NULL";
-    try (Cursor cursor = db.rawQuery(query, null)) {
-      List<kotlin.Pair<Address, Long>> threads = new ArrayList<>(cursor.getCount());
-      while (cursor.moveToNext()) {
-        long threadId = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
-        String address = cursor.getString(cursor.getColumnIndexOrThrow(ADDRESS));
-        if (address != null && !address.isEmpty()) {
-          threads.add(new kotlin.Pair<>(Address.fromSerialized(address), threadId));
-        }
-      }
-      return threads;
-    }
-  }
-
-  /**
    * @param threadId
    * @param timestamp
    * @return true if we have set the last seen for the thread, false if there were no messages in the thread
@@ -590,21 +565,6 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
       }
 
       return new Pair<>(-1L, false);
-    } finally {
-      if (cursor != null) cursor.close();
-    }
-  }
-
-  public long getLastUpdated(long threadId) {
-    SQLiteDatabase db     = getReadableDatabase();
-    Cursor         cursor = db.query(TABLE_NAME, new String[]{THREAD_CREATION_DATE}, ID_WHERE, new String[]{String.valueOf(threadId)}, null, null, null);
-
-    try {
-      if (cursor != null && cursor.moveToFirst()) {
-        return cursor.getLong(0);
-      }
-
-      return -1L;
     } finally {
       if (cursor != null) cursor.close();
     }
