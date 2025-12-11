@@ -5,7 +5,6 @@ import javax.inject.Inject
 class SessionJobManagerFactories @Inject constructor(
     private val attachmentDownloadJobFactory: AttachmentDownloadJob.Factory,
     private val attachmentUploadJobFactory: AttachmentUploadJob.Factory,
-    private val batchFactory: BatchMessageReceiveJob.Factory,
     private val trimThreadFactory: TrimThreadJob.Factory,
     private val messageSendJobFactory: MessageSendJob.Factory,
     private val deleteJobFactory: OpenGroupDeleteJob.Factory,
@@ -19,7 +18,6 @@ class SessionJobManagerFactories @Inject constructor(
             MessageSendJob.KEY to messageSendJobFactory,
             NotifyPNServerJob.KEY to NotifyPNServerJob.DeserializeFactory(),
             TrimThreadJob.KEY to trimThreadFactory,
-            BatchMessageReceiveJob.KEY to batchFactory,
             OpenGroupDeleteJob.KEY to deleteJobFactory,
             InviteContactsJob.KEY to inviteContactsJobFactory,
         )
