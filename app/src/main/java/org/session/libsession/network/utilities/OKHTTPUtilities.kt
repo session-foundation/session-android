@@ -1,4 +1,4 @@
-package org.session.libsession.utilities
+package org.session.libsession.network.utilities
 
 import okhttp3.MultipartBody
 import okhttp3.Request
@@ -43,7 +43,7 @@ internal fun Request.getBodyForOnionRequest(): Any? {
             return bodyAsData
         } else {
             val charset = body.contentType()?.charset() ?: Charsets.UTF_8
-            return bodyAsData?.toString(charset)
+            return bodyAsData.toString(charset)
         }
     } catch (e: IOException) {
         return null
