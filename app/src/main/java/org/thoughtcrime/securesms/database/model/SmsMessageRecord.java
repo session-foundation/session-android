@@ -17,10 +17,6 @@
 
 package org.thoughtcrime.securesms.database.model;
 
-import android.content.Context;
-
-import androidx.annotation.NonNull;
-
 import org.session.libsession.utilities.recipients.Recipient;
 
 import java.util.List;
@@ -56,10 +52,6 @@ public class SmsMessageRecord extends MessageRecord {
         return type;
     }
 
-    @Override
-    public CharSequence getDisplayBody(@NonNull Context context) {
-        return super.getDisplayBody(context);
-    }
 
     @Override
     public boolean isMms() {

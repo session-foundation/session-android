@@ -1,50 +1,219 @@
-package org.session.libsession.messaging.utilities
+package org.thoughtcrime.securesms.conversation.v2.messages
 
 import android.content.Context
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.calls.CallMessageType
-import org.session.libsession.messaging.calls.CallMessageType.CALL_FIRST_MISSED
-import org.session.libsession.messaging.calls.CallMessageType.CALL_INCOMING
-import org.session.libsession.messaging.calls.CallMessageType.CALL_MISSED
-import org.session.libsession.messaging.calls.CallMessageType.CALL_OUTGOING
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
-import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage.Kind.MEDIA_SAVED
-import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage.Kind.SCREENSHOT
+import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ExpirationUtil
+import org.session.libsession.utilities.StringSubstitutionConstants.AUTHOR_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DISAPPEARING_MESSAGES_TYPE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.MESSAGE_SNIPPET_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.OTHER_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
+import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getGroup
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
+import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.database.model.GroupThreadStatus
+import org.thoughtcrime.securesms.database.model.MessageRecord
+import org.thoughtcrime.securesms.database.model.ThreadRecord
+import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
+import org.thoughtcrime.securesms.ui.getSubbedCharSequence
+import javax.inject.Inject
 
-object UpdateMessageBuilder {
-    const val TAG = "UpdateMessageBuilder"
 
+class MessageFormatter @Inject constructor(
+    private val configFactory: ConfigFactoryProtocol,
+    private val recipientRepository: RecipientRepository,
+    private val loginStateRepository: LoginStateRepository,
+) {
 
-    val storage = MessagingModuleConfiguration.shared.storage
-    val recipientRepository = MessagingModuleConfiguration.shared.recipientRepository
+    fun formatMessageBody(
+        context: Context,
+        message: MessageRecord,
+        threadRecipient: Recipient
+    ): CharSequence {
+        when {
+            message.isGroupUpdateMessage -> {
+                val updateMessageData: UpdateMessageData = message.getGroupUpdateMessage() ?: return ""
 
-    private fun getGroupMemberName(senderAddress: String): String {
-        return recipientRepository.getRecipientSync(Address.fromSerialized(senderAddress))
-            .displayName()
+                val text = SpannableString(
+                    buildGroupUpdateMessage(
+                        context = context,
+                        updateMessageData = updateMessageData,
+                        isOutgoing = message.isOutgoing,
+                        messageTimestamp = message.timestamp,
+                        expireStarted = message.expireStarted
+                    )
+                )
+
+                if (updateMessageData.isGroupErrorQuitKind()) {
+                    text.setSpan(
+                        ForegroundColorSpan(ThemeUtil.getThemedColor(context, R.attr.danger)),
+                        0,
+                        text.length,
+                        Spannable.SPAN_INCLUSIVE_EXCLUSIVE
+                    )
+                } else if (updateMessageData.isGroupLeavingKind()) {
+                    text.setSpan(
+                        ForegroundColorSpan(
+                            ThemeUtil.getThemedColor(
+                                context,
+                                android.R.attr.textColorTertiary
+                            )
+                        ), 0, text.length, Spannable.SPAN_INCLUSIVE_EXCLUSIVE
+                    )
+                }
+
+                return text
+            }
+            message.messageContent is DisappearingMessageUpdate -> {
+                val isGroup = threadRecipient.isGroupOrCommunityRecipient
+                return buildExpirationTimerMessage(
+                    context,
+                    (message.messageContent as DisappearingMessageUpdate).expiryMode,
+                    isGroup,
+                    message.individualRecipient,
+                    message.isOutgoing
+                )
+            }
+            message.isDataExtractionNotification -> {
+                if (message.isScreenshotNotification) return SpannableString(
+                    buildDataExtractionMessage(
+                        context = context,
+                        kind = DataExtractionNotificationInfoMessage.Kind.SCREENSHOT,
+                        sender = message.individualRecipient
+                    )
+                )
+                else if (message.isMediaSavedNotification) return SpannableString(
+                    buildDataExtractionMessage(
+                        context = context,
+                        kind = DataExtractionNotificationInfoMessage.Kind.MEDIA_SAVED,
+                        sender = message.individualRecipient
+                    )
+                )
+            }
+            message.isCallLog -> {
+                val callType = if (message.isIncomingCall) {
+                    CallMessageType.CALL_INCOMING
+                } else if (message.isOutgoingCall) {
+                    CallMessageType.CALL_OUTGOING
+                } else if (message.isMissedCall) {
+                    CallMessageType.CALL_MISSED
+                } else {
+                    CallMessageType.CALL_FIRST_MISSED
+                }
+
+                return SpannableString(
+                    buildCallMessage(
+                        context = context,
+                        type = callType,
+                        sender = message.individualRecipient
+                    )
+                )
+            }
+            message.isMessageRequestResponse -> {
+                return if (message.recipient.isSelf) {
+                    // you accepted the user's request
+                    context.getSubbedCharSequence(
+                        R.string.messageRequestYouHaveAccepted,
+                        NAME_KEY to threadRecipient.displayName()
+                    )
+                } else {
+                    // the user accepted your request
+                    context.getString(R.string.messageRequestsAccepted)
+                }
+            }
+        }
+
+        return SpannableString(message.body)
     }
 
-    @JvmStatic
-    fun buildGroupUpdateMessage(
+    fun formatThreadSnippet(
         context: Context,
-        groupV2Id: AccountId?, // null for legacy groups
+        thread: ThreadRecord
+    ): CharSequence {
+        val lastMessage = thread.lastMessage
+
+        return when {
+            thread.groupThreadStatus == GroupThreadStatus.Kicked -> {
+                Phrase.from(context, R.string.groupRemovedYou)
+                    .put(GROUP_NAME_KEY, thread.recipient.displayName())
+                    .format()
+                    .toString()
+            }
+
+            thread.groupThreadStatus == GroupThreadStatus.Destroyed -> {
+                Phrase.from(context, R.string.groupDeletedMemberDescription)
+                    .put(GROUP_NAME_KEY, thread.recipient.displayName())
+                    .format()
+                    .toString()
+            }
+
+            lastMessage == null -> {
+                // no need to display anything if there are no messages
+                ""
+            }
+
+            // We will show different text for community invitation on the thread list
+            lastMessage.isOpenGroupInvitation -> {
+                context.getString(R.string.communityInvitation)
+            }
+
+            else -> {
+                val text = formatMessageBody(
+                    context = context,
+                    message = lastMessage,
+                    threadRecipient = thread.recipient
+                )
+
+                when {
+                    // There are certain messages that we want to keep their formatting
+                    lastMessage.groupUpdateMessage?.isGroupLeavingKind() == true ||
+                            lastMessage.groupUpdateMessage?.isGroupErrorQuitKind() == true -> {
+                        text
+                    }
+
+                    // For group/community threads, we want to prefix the snippet with the author's name
+                    thread.recipient.isGroupOrCommunityRecipient -> {
+                        val prefix = if (lastMessage.isOutgoing) {
+                            context.getString(R.string.you)
+                        } else {
+                            lastMessage.individualRecipient.displayName()
+                        }
+
+                        Phrase.from(context.getString(R.string.messageSnippetGroup))
+                            .put(AUTHOR_KEY, prefix)
+                            .put(MESSAGE_SNIPPET_KEY, text.toString())
+                            .format()
+                    }
+
+                    // For all other messages, convert to plain string to avoid weird snippet appearances
+                    else -> text.toString()
+                }
+            }
+        }
+    }
+
+    private fun buildGroupUpdateMessage(
+        context: Context,
         updateMessageData: UpdateMessageData,
-        configFactory: ConfigFactoryProtocol,
         isOutgoing: Boolean,
         messageTimestamp: Long,
         expireStarted: Long,
@@ -103,14 +272,14 @@ object UpdateMessageBuilder {
 
             // --- Group member(s) removed ---
             is UpdateMessageData.Kind.GroupMemberRemoved -> {
-                val userPublicKey = storage.getUserPublicKey()!!
+                val userPublicKey = loginStateRepository.requireLocalNumber()
 
                 // 1st case: you are part of the removed members
                 return if (userPublicKey in updateData.updatedMembers) {
                     if (isOutgoing) context.getText(R.string.groupMemberYouLeft) // You chose to leave
                     else Phrase.from(context, R.string.groupRemovedYou)            // You were forced to leave
-                            .put(GROUP_NAME_KEY, updateData.groupName)
-                            .format()
+                        .put(GROUP_NAME_KEY, updateData.groupName)
+                        .format()
                 }
                 else // 2nd case: you are not part of the removed members
                 {
@@ -120,7 +289,7 @@ object UpdateMessageBuilder {
                             0 -> {
                                 Log.w(TAG, "Somehow you asked to remove zero members.")
                                 "" // Return an empty string - we don't want to show the error in the conversation
-                                }
+                            }
                             1 -> Phrase.from(context, R.string.groupRemoved)
                                 .put(NAME_KEY, getGroupMemberName(updateData.updatedMembers.elementAt(0)))
                                 .format()
@@ -129,9 +298,9 @@ object UpdateMessageBuilder {
                                 .put(OTHER_NAME_KEY, getGroupMemberName(updateData.updatedMembers.elementAt(1)))
                                 .format()
                             else -> Phrase.from(context, R.string.groupRemovedMultiple)
-                                    .put(NAME_KEY, getGroupMemberName(updateData.updatedMembers.elementAt(0)))
-                                    .put(COUNT_KEY, updateData.updatedMembers.size - 1)
-                                    .format()
+                                .put(NAME_KEY, getGroupMemberName(updateData.updatedMembers.elementAt(0)))
+                                .put(COUNT_KEY, updateData.updatedMembers.size - 1)
+                                .format()
                         }
                     }
                     else // b.) Someone else is the person doing the removing of one or more members
@@ -184,15 +353,18 @@ object UpdateMessageBuilder {
             }
             is UpdateMessageData.Kind.GroupAvatarUpdated -> context.getString(R.string.groupDisplayPictureUpdated)
             is UpdateMessageData.Kind.GroupExpirationUpdated -> {
-                buildExpirationTimerMessage(context, updateData.updatedExpiration, isGroup = true,
-                    senderId = updateData.updatingAdmin,
+                buildExpirationTimerMessage(
+                    context = context,
+                    duration = updateData.updatedExpiration,
+                    isGroup = true,
+                    sender = recipientRepository.getRecipientSync(updateData.updatingAdmin.toAddress()),
                     isOutgoing = isOutgoing,
                     timestamp = messageTimestamp,
                     expireStarted = expireStarted
                 )
             }
             is UpdateMessageData.Kind.GroupMemberUpdated -> {
-                val userPublicKey = storage.getUserPublicKey()!!
+                val userPublicKey = loginStateRepository.requireLocalNumber()
                 val number = updateData.sessionIds.size
                 val containsUser = updateData.sessionIds.contains(userPublicKey)
                 val historyShared = updateData.historyShared
@@ -207,7 +379,7 @@ object UpdateMessageBuilder {
                                 .put(NAME_KEY, getGroupMemberName(updateData.sessionIds.first()))
                                 .format()
                             number == 2 && containsUser -> Phrase.from(context,
-                                    if (historyShared) R.string.groupMemberNewYouHistoryTwo else R.string.groupInviteYouAndOtherNew)
+                                if (historyShared) R.string.groupMemberNewYouHistoryTwo else R.string.groupInviteYouAndOtherNew)
                                 .put(OTHER_NAME_KEY, getGroupMemberName(updateData.sessionIds.first { it != userPublicKey }))
                                 .format()
                             number == 2 -> Phrase.from(context,
@@ -319,21 +491,19 @@ object UpdateMessageBuilder {
         }
     }
 
+    private fun getGroupMemberName(senderAddress: String): String {
+        return recipientRepository.getRecipientSync(Address.fromSerialized(senderAddress))
+            .displayName()
+    }
+
     fun buildExpirationTimerMessage(
         context: Context,
         mode: ExpiryMode,
         isGroup: Boolean,  // Note: isGroup should cover both closed groups AND communities
-        senderId: String?,
+        sender: Recipient,
         isOutgoing: Boolean,
     ): CharSequence {
-        if (!isOutgoing && senderId == null) {
-            Log.w(TAG, "buildExpirationTimerMessage: Cannot build for outgoing message when senderId is null.")
-            return ""
-        }
-
-        val senderName = if (isOutgoing) context.getString(R.string.you) else getGroupMemberName(
-            senderId!!
-        )
+        val senderName = if (isOutgoing) context.getString(R.string.you) else sender.displayName()
 
         // Case 1.) Disappearing messages have been turned off..
         if (mode == ExpiryMode.NONE) {
@@ -390,13 +560,40 @@ object UpdateMessageBuilder {
         }
     }
 
+    fun buildDataExtractionMessage(context: Context,
+                                   kind: DataExtractionNotificationInfoMessage.Kind,
+                                   sender: Recipient): CharSequence {
+
+        return when (kind) {
+            DataExtractionNotificationInfoMessage.Kind.SCREENSHOT -> Phrase.from(context, R.string.screenshotTaken)
+                .put(NAME_KEY, sender.displayName())
+                .format()
+
+            DataExtractionNotificationInfoMessage.Kind.MEDIA_SAVED -> Phrase.from(context, R.string.attachmentsMediaSaved)
+                .put(NAME_KEY, sender.displayName())
+                .format()
+        }
+    }
+
+    fun buildCallMessage(context: Context, type: CallMessageType, sender: Recipient): String {
+        return when (type) {
+            CallMessageType.CALL_INCOMING -> Phrase.from(context, R.string.callsCalledYou).put(NAME_KEY, sender.displayName())
+                .format().toString()
+
+            CallMessageType.CALL_OUTGOING -> Phrase.from(context, R.string.callsYouCalled).put(NAME_KEY, sender.displayName())
+                .format().toString()
+
+            CallMessageType.CALL_MISSED, CallMessageType.CALL_FIRST_MISSED -> Phrase.from(context, R.string.callsMissedCallFrom)
+                .put(NAME_KEY, sender.displayName()).format().toString()
+        }
+    }
 
     @Deprecated("Use the version with ExpiryMode instead. This will be removed in a future release.")
     fun buildExpirationTimerMessage(
         context: Context,
         duration: Long,
         isGroup: Boolean, // Note: isGroup should cover both closed groups AND communities
-        senderId: String? = null,
+        sender: Recipient,
         isOutgoing: Boolean = false,
         timestamp: Long,
         expireStarted: Long
@@ -409,41 +606,12 @@ object UpdateMessageBuilder {
                 else -> ExpiryMode.AfterRead(duration)
             },
             isGroup = isGroup,
-            senderId = senderId,
+            sender = sender,
             isOutgoing = isOutgoing,
         )
     }
 
-    fun buildDataExtractionMessage(context: Context,
-                                   kind: DataExtractionNotificationInfoMessage.Kind,
-                                   senderId: String? = null): CharSequence {
-
-        val senderName = if (senderId != null) getGroupMemberName(senderId) else context.getString(R.string.unknown)
-
-        return when (kind) {
-            SCREENSHOT  -> Phrase.from(context, R.string.screenshotTaken)
-                .put(NAME_KEY, senderName)
-                .format()
-
-            MEDIA_SAVED -> Phrase.from(context, R.string.attachmentsMediaSaved)
-                .put(NAME_KEY, senderName)
-                .format()
-        }
-    }
-
-    fun buildCallMessage(context: Context, type: CallMessageType, senderId: String): String {
-        val senderName = recipientRepository.getRecipientSync(Address.fromSerialized(senderId))
-            .displayName()
-
-        return when (type) {
-            CALL_INCOMING -> Phrase.from(context, R.string.callsCalledYou).put(NAME_KEY, senderName)
-                .format().toString()
-
-            CALL_OUTGOING -> Phrase.from(context, R.string.callsYouCalled).put(NAME_KEY, senderName)
-                .format().toString()
-
-            CALL_MISSED, CALL_FIRST_MISSED -> Phrase.from(context, R.string.callsMissedCallFrom)
-                .put(NAME_KEY, senderName).format().toString()
-        }
+    companion object {
+        private const val TAG = "MessageFormatter"
     }
 }
