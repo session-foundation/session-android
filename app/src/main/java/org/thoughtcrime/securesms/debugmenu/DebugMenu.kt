@@ -11,11 +11,15 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -46,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
@@ -121,7 +126,8 @@ fun DebugMenu(
         },
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
-        }
+        },
+        contentWindowInsets = WindowInsets.safeDrawing,
     ) { contentPadding ->
         // display a snackbar when required
         LaunchedEffect(uiState.snackMessage) {
@@ -173,13 +179,21 @@ fun DebugMenu(
             LoadingDialog(title = "Applying changes...")
         }
 
+        val layoutDirection = LocalLayoutDirection.current
+        val safeInsetsPadding = PaddingValues(
+            start = contentPadding.calculateStartPadding(layoutDirection) + LocalDimensions.current.spacing,
+            end = contentPadding.calculateEndPadding(layoutDirection) + LocalDimensions.current.spacing,
+            top = contentPadding.calculateTopPadding(),
+            bottom = contentPadding.calculateBottomPadding(),
+        )
+
         Column(
             modifier = Modifier
                 .background(LocalColors.current.background)
-                .padding(horizontal = LocalDimensions.current.spacing)
+                .padding(safeInsetsPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            Spacer(modifier = Modifier.height(contentPadding.calculateTopPadding()))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             // Info pane
             val clipboardManager = LocalClipboardManager.current
@@ -284,7 +298,8 @@ fun DebugMenu(
                             style = LocalType.current.base
                         )
                         DropDown(
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
                                 .padding(top = LocalDimensions.current.xxsSpacing),
                             selectedText = uiState.selectedDebugSubscriptionStatus.label,
                             values = uiState.debugSubscriptionStatuses.map { it.label },
@@ -315,7 +330,8 @@ fun DebugMenu(
                     style = LocalType.current.base
                 )
                 DropDown(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
                         .padding(top = LocalDimensions.current.xxsSpacing),
                     selectedText = uiState.selectedDebugProPlanStatus.label,
                     values = uiState.debugProPlanStatus.map { it.label },

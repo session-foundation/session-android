@@ -542,7 +542,7 @@ fun Buttons(
 
         Cell {
             Column {
-                if(postPro){
+                if(!postPro){
                    ItemButton(
                         text = annotatedStringResource(
                             when (proDataState.type) {
