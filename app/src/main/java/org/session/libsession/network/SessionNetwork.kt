@@ -1,195 +1,234 @@
 package org.session.libsession.network
 
+import okhttp3.Request
 import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.network.model.OnionError
 import org.session.libsession.network.model.OnionResponse
 import org.session.libsession.network.model.Path
 import org.session.libsession.network.onion.OnionTransport
-import org.session.libsession.network.onion.Version
 import org.session.libsession.network.onion.PathManager
-import org.session.libsignal.utilities.Snode
+import org.session.libsession.network.onion.Version
+import org.session.libsession.network.utilities.getBodyForOnionRequest
+import org.session.libsession.network.utilities.getHeadersForOnionRequest
+import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.Snode
 
 /**
- * High-level façade over onion routing:
- *
- *  - asks PathManager for a path
- *  - uses OnionTransport to send over that path
- *  - maps OnionError -> path/node repair via PathManager
- *  - decides whether to retry once with a new path
+ * High-level onion request manager.
+ * It prepares payloads, chooses onion paths, analyzes failures, repairs the path graph,
+ * implements retry rules, and returns final user-level responses.
+ * It does not build onion encryption or send anything over the network, that part
+ * is left to an implementation of an OnionTransport
  */
 class SessionNetwork(
     private val pathManager: PathManager,
     private val transport: OnionTransport,
+    private val maxAttempts: Int = 3
 ) {
 
     /**
-     * Main entry point for “send an onion request”.
-     *
-     * - destination: Snode or Server (file server, open group, etc.)
-     * - payload: the already-built request body to wrap in an onion
-     * - version: V2/V3/V4 onion protocol
+     * Send an onion request to a *service node* (RPC).
      */
-    suspend fun sendOnionRequest(
-        destination: OnionDestination,
-        payload: ByteArray,
-        version: Version = Version.V4,
+    suspend fun sendToSnode(
+        method: Snode.Method,
+        parameters: Map<*, *>,
+        snode: Snode,
+        version: Version = Version.V4
     ): Result<OnionResponse> {
-        // If the destination is a specific snode, try not to route *through* it
-        val snodeToExclude: Snode? = when (destination) {
-            is OnionDestination.SnodeDestination  -> destination.snode
-            is OnionDestination.ServerDestination -> null
-        }
+        val payload = JsonUtil.toJson(
+            mapOf(
+                "method" to method.rawValue,
+                "params" to parameters
+            )
+        ).toByteArray()
 
-        // 1. Pick a path
-        val initialPath = try {
-            pathManager.getPath(exclude = snodeToExclude)
-        } catch (t: Throwable) {
-            return Result.failure(t)
-        }
+        val destination = OnionDestination.SnodeDestination(snode)
 
-        // 2. First attempt
-        val first = transport.send(
-            path = initialPath,
+        // Exclude the snode itself from being in the path (matches old behaviour)
+        return sendWithRetry(
             destination = destination,
             payload = payload,
-            version = version
+            version = version,
+            snodeToExclude = snode
         )
-
-        if (first.isSuccess) {
-            return first
-        }
-
-        val error = first.exceptionOrNull()
-        if (error !is OnionError) {
-            // Some unexpected exception coming out of the transport.
-            Log.w("SessionNetwork", "Non-OnionError failure: $error")
-            return Result.failure(error ?: IllegalStateException("Unknown failure"))
-        }
-
-        // 3. Let PathManager react (drop path / snode)
-        handleOnionError(initialPath, error)
-
-        // 4. Decide whether to retry
-        if (!shouldRetry(error)) {
-            return Result.failure(error)
-        }
-
-        // 5. Retry once with a new path
-        val retryPath = try {
-            pathManager.getPath(exclude = snodeToExclude)
-        } catch (t: Throwable) {
-            // Couldn't even get a new path; keep original onion error
-            return Result.failure(error)
-        }
-
-        val retry = transport.send(
-            path = retryPath,
-            destination = destination,
-            payload = payload,
-            version = version
-        )
-
-        // If second attempt fails with an OnionError, update paths again
-        val retryErr = retry.exceptionOrNull()
-        if (retryErr is OnionError) {
-            handleOnionError(retryPath, retryErr)
-        }
-
-        return retry
     }
 
     /**
-     * Map a specific OnionError to PathManager operations (node/path surgery).
+     * Send an onion request to an HTTP server via the snode network.
      */
-    private fun handleOnionError(path: Path, error: OnionError) {
-        when (error) {
-            is OnionError.GuardConnectionFailed -> {
-                // Guard is the first node in the path.
-                Log.w("SessionNetwork", "Guard connection failed for ${error.guard}, dropping path")
-                pathManager.handleBadPath(path)
+    suspend fun sendToServer(
+        request: Request,
+        serverBaseUrl: String,
+        x25519PublicKey: String,
+        version: Version = Version.V4
+    ): Result<OnionResponse> {
+        val url = request.url
+        val payload = generatePayload(request, serverBaseUrl, version)
+
+        val destination = OnionDestination.ServerDestination(
+            host = url.host,
+            target = version.value,
+            x25519PublicKey = x25519PublicKey,
+            scheme = url.scheme,
+            port = url.port
+        )
+
+        return sendWithRetry(
+            destination = destination,
+            payload = payload,
+            version = version,
+            snodeToExclude = null
+        )
+    }
+
+    private suspend fun sendWithRetry(
+        destination: OnionDestination,
+        payload: ByteArray,
+        version: Version,
+        snodeToExclude: Snode?
+    ): Result<OnionResponse> {
+        var lastError: Throwable? = null
+
+        repeat(maxAttempts) { attempt ->
+            val path = pathManager.getPath(exclude = snodeToExclude)
+
+            val result = transport.send(
+                path = path,
+                destination = destination,
+                payload = payload,
+                version = version
+            )
+
+            if (result.isSuccess) return result
+
+            val error = result.exceptionOrNull()
+            if (error !is OnionError) {
+                // Transport returned some unexpected Throwable
+                return Result.failure(error ?: IllegalStateException("Unknown transport error"))
             }
 
-            is OnionError.GuardProtocolError -> {
-                Log.w(
-                    "SessionNetwork",
-                    "Guard protocol error code=${error.code}, dropping path"
-                )
+            Log.w("Onion", "Onion error on attempt ${attempt + 1}/$maxAttempts: $error")
+
+            handleError(path, error)
+
+            if (!mustRetry(error, attempt)) {
+                return Result.failure(error)
+            }
+
+            lastError = error
+        }
+
+        return Result.failure(lastError ?: IllegalStateException("Unknown onion error"))
+    }
+
+    /**
+     * Decide whether to retry based on the error type and current attempt.
+     */
+    private fun mustRetry(error: OnionError, attempt: Int): Boolean {
+        if (attempt + 1 >= maxAttempts) return false
+
+        return when (error) {
+            is OnionError.DestinationError,
+            is OnionError.ClockOutOfSync -> {
+                false
+            }
+            is OnionError.GuardConnectionFailed,
+            is OnionError.GuardProtocolError,
+            is OnionError.IntermediateNodeFailed,
+            is OnionError.InvalidResponse,
+            is OnionError.Unknown -> {
+                true
+            }
+        }
+    }
+
+    /**
+     * Map an OnionError into path-level healing operations.
+     */
+    private fun handleError(path: Path, error: OnionError) {
+        when (error) {
+            is OnionError.GuardConnectionFailed,
+            is OnionError.GuardProtocolError,
+            is OnionError.InvalidResponse,
+            is OnionError.Unknown -> {
+                // We don't know which hop is bad; drop the whole path.
+                Log.w("Onion", "Dropping entire path due to error: $error")
                 pathManager.handleBadPath(path)
             }
 
             is OnionError.IntermediateNodeFailed -> {
                 val failedKey = error.failedPublicKey
-                if (failedKey != null) {
-                    val badNode = findNodeByEd25519(path, failedKey)
-                    if (badNode != null) {
-                        Log.w("SessionNetwork", "Intermediate node failed: $badNode, repairing path")
-                        pathManager.handleBadSnode(badNode)
+                if (failedKey == null) {
+                    Log.w("Onion", "Intermediate node failed but no key given; dropping path")
+                    pathManager.handleBadPath(path)
+                } else {
+                    val bad = path.firstOrNull { it.publicKeySet?.ed25519Key == failedKey }
+                    if (bad != null) {
+                        Log.w("Onion", "Dropping bad snode $bad in path")
+                        pathManager.handleBadSnode(bad)
                     } else {
-                        Log.w(
-                            "SessionNetwork",
-                            "Intermediate node failed; key not found in path. Dropping path."
-                        )
+                        Log.w("Onion", "Failed node key not in path; dropping path")
                         pathManager.handleBadPath(path)
                     }
-                } else {
-                    Log.w("SessionNetwork", "Intermediate node failed (no failed key); dropping path")
-                    pathManager.handleBadPath(path)
                 }
             }
 
-            is OnionError.DestinationUnreachable -> {
-                // Exit node is usually last in the path
-                val exit = error.exitNode ?: path.lastOrNull()
-                if (exit != null && path.contains(exit)) {
-                    Log.w("SessionNetwork", "Destination unreachable; marking exit node $exit as bad")
-                    pathManager.handleBadSnode(exit)
-                } else {
-                    Log.w("SessionNetwork", "Destination unreachable; dropping entire path")
-                    pathManager.handleBadPath(path)
-                }
-            }
-
-            is OnionError.DestinationError -> {
-                // Pure app-level error (404, 401, etc.): path is fine.
-                Log.i("SessionNetwork", "Destination error ${error.code}, not penalising path")
-            }
-
+            is OnionError.DestinationError,
             is OnionError.ClockOutOfSync -> {
-                // Network is “working” but user must fix their device clock.
-                Log.w("SessionNetwork", "Clock out of sync: code=${error.code}")
-            }
-
-            is OnionError.InvalidResponse -> {
-                Log.w("SessionNetwork", "Invalid onion response, dropping path")
-                pathManager.handleBadPath(path)
-            }
-
-            is OnionError.Unknown -> {
-                Log.w("SessionNetwork", "Unknown onion error, dropping path: ${error.underlying}")
-                pathManager.handleBadPath(path)
+                // Path is considered healthy; do not mutate paths.
+                Log.d("Onion", "Application or clock error; not penalizing path")
             }
         }
     }
 
     /**
-     * Policy: when does it make sense to try again with a new path?
+     * Equivalent to the old generatePayload() from OnionRequestAPI.
      */
-    private fun shouldRetry(error: OnionError): Boolean =
-        when (error) {
-            is OnionError.GuardConnectionFailed  -> true   // try another guard/path
-            is OnionError.GuardProtocolError     -> true   // different guard may succeed
-            is OnionError.IntermediateNodeFailed -> true   // path surgery then retry
-            is OnionError.DestinationUnreachable -> true   // exit/node connectivity
-            is OnionError.DestinationError       -> false  // app-level; retrying won’t fix 404/401
-            is OnionError.ClockOutOfSync         -> false  // must fix clock
-            is OnionError.InvalidResponse        -> true   // treat as corrupt path
-            is OnionError.Unknown                -> true   // conservative
+    private fun generatePayload(request: Request, server: String, version: Version): ByteArray {
+        val headers = request.getHeadersForOnionRequest().toMutableMap()
+        val url = request.url
+        val urlAsString = url.toString()
+        val body = request.getBodyForOnionRequest() ?: "null"
+
+        val endpoint = if (server.length < urlAsString.length) {
+            urlAsString.substringAfter(server)
+        } else {
+            ""
         }
 
-    /**
-     * Find a node in the path by its ed25519 public key.
-     */
-    private fun findNodeByEd25519(path: Path, ed25519: String): Snode? =
-        path.firstOrNull { it.publicKeySet?.ed25519Key == ed25519 }
+        return if (version == Version.V4) {
+            if (request.body != null &&
+                headers.keys.none { it.equals("Content-Type", ignoreCase = true) }
+            ) {
+                headers["Content-Type"] = "application/json"
+            }
+
+            val requestPayload = mapOf(
+                "endpoint" to endpoint,
+                "method" to request.method,
+                "headers" to headers
+            )
+
+            val requestData = JsonUtil.toJson(requestPayload).toByteArray()
+            val prefixData = "l${requestData.size}:".toByteArray(Charsets.US_ASCII)
+            val suffixData = "e".toByteArray(Charsets.US_ASCII)
+
+            if (request.body != null) {
+                val bodyData = if (body is ByteArray) body else body.toString().toByteArray()
+                val bodyLengthData = "${bodyData.size}:".toByteArray(Charsets.US_ASCII)
+                prefixData + requestData + bodyLengthData + bodyData + suffixData
+            } else {
+                prefixData + requestData + suffixData
+            }
+        } else {
+            val payload = mapOf(
+                "body" to body,
+                "endpoint" to endpoint.removePrefix("/"),
+                "method" to request.method,
+                "headers" to headers
+            )
+            JsonUtil.toJson(payload).toByteArray()
+        }
+    }
 }

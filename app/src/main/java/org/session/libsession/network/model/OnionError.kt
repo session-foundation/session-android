@@ -14,14 +14,13 @@ sealed class OnionError(message: String, cause: Throwable? = null) : Exception(m
     ) : OnionError("Failed to connect to guard ${guard.ip}:${guard.port}", underlying)
 
     /**
-     * Guard responded with a valid HTTP response but rejected the onion request as such.
-     * E.g. 4xx/5xx from the guard itself, protocol mismatch, overloaded, etc.
+     * Guard or intermediate nodes - specifically: errors not from the encrypred payload)
      */
     data class GuardProtocolError(
         val guard: Snode?,
         val code: Int,
         val body: String?
-    ) : OnionError("Guard ${guard?.ip}:${guard?.port} rejected onion request with $code", null)
+    ) : OnionError("Guard ${guard?.ip}:${guard?.port} error with staatus $code", null)
 
     /**
      * The onion chain broke mid-path: one hop reported that the next node was not found.
@@ -31,16 +30,6 @@ sealed class OnionError(message: String, cause: Throwable? = null) : Exception(m
         val reportingNode: Snode?,
         val failedPublicKey: String?
     ) : OnionError("Intermediate node failure (failedPublicKey=$failedPublicKey)", null)
-
-    /**
-     * The exit node tried to reach the destination (server or snode) but failed at the network layer.
-     * DNS failure, connection refused, timeout, etc.
-     */
-    data class DestinationUnreachable(
-        val exitNode: Snode?,
-        val destination: String,
-        val underlying: Throwable?
-    ) : OnionError("Exit node could not reach destination $destination", underlying)
 
     /**
      * The destination (server or snode) responded with a non-success application-level status.
