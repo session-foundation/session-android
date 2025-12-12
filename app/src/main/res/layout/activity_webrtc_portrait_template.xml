@@ -31,6 +31,8 @@
         app:layout_constraintVertical_bias="0.4"
         android:layout_width="@dimen/extra_large_profile_picture_size"
         android:layout_height="@dimen/extra_large_profile_picture_size"
+        android:minWidth="@dimen/extra_large_profile_picture_size"
+        android:minHeight="@dimen/extra_large_profile_picture_size"
         android:visibility="gone"/>
 
     <androidx.compose.ui.platform.ComposeView
@@ -41,7 +43,9 @@
         app:layout_constraintBottom_toBottomOf="@id/fullscreen_renderer_container"
         app:layout_constraintVertical_bias="0.4"
         android:layout_width="@dimen/extra_large_profile_picture_size"
-        android:layout_height="@dimen/extra_large_profile_picture_size" />
+        android:layout_height="@dimen/extra_large_profile_picture_size"
+        android:minWidth="@dimen/extra_large_profile_picture_size"
+        android:minHeight="@dimen/extra_large_profile_picture_size"/>
 
     <ImageView
         android:id="@+id/back_arrow"

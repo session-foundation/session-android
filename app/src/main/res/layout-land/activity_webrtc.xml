@@ -31,6 +31,8 @@
         app:layout_constraintVertical_bias="0.4"
         android:layout_width="@dimen/extra_large_profile_picture_size"
         android:layout_height="@dimen/extra_large_profile_picture_size"
+        app:layout_constraintWidth_min="@dimen/large_profile_picture_size"
+        app:layout_constraintHeight_min="@dimen/large_profile_picture_size"
         android:visibility="gone"/>
 
     <androidx.compose.ui.platform.ComposeView
@@ -43,8 +45,8 @@
         app:layout_constraintBottom_toTopOf="@id/titleContainer"
         app:layout_constraintWidth_max="@dimen/extra_large_profile_picture_size"
         app:layout_constraintHeight_max="@dimen/extra_large_profile_picture_size"
-        app:layout_constraintWidth_min="@dimen/medium_profile_picture_size"
-        app:layout_constraintHeight_min="@dimen/medium_profile_picture_size"
+        app:layout_constraintWidth_min="@dimen/large_profile_picture_size"
+        app:layout_constraintHeight_min="@dimen/large_profile_picture_size"
         app:layout_constraintDimensionRatio="H,1:1"/>
 
     <ImageView
@@ -83,7 +85,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/controlGroupBarrier"
-        android:layout_marginBottom="@dimen/very_small_spacing"
+        android:layout_marginBottom="@dimen/normal_padding"
         android:gravity="center"
         android:orientation="vertical">
 
