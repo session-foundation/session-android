@@ -1,9 +1,11 @@
 package org.thoughtcrime.securesms.conversation.v2.input_bar
 
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.res.Resources
 import android.net.Uri
 import android.util.AttributeSet
+import android.util.Log
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import android.widget.RelativeLayout
@@ -22,6 +24,9 @@ class InputBarEditText : AppCompatEditText {
 
     var allowMultimediaInput: Boolean = true
 
+    private val clipboard by lazy {
+        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    }
 
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
@@ -30,11 +35,40 @@ class InputBarEditText : AppCompatEditText {
     override fun onTextChanged(text: CharSequence, start: Int, lengthBefore: Int, lengthAfter: Int) {
         super.onTextChanged(text, start, lengthBefore, lengthAfter)
         delegate?.inputBarEditTextContentChanged(text)
+
+        //  - A "chunk" got inserted (lengthAfter >= 3)
+        //  - If it matches clipboard OR is large enough, treat it as paste.
+        if (lengthAfter >= 3) { // catch most real paste
+            val inserted = safeSubSequence(text, start, start + lengthAfter)
+            if (!inserted.isNullOrEmpty()) {
+                // We can only get the latest copied item from the clipboard
+                val clipText = clipboard.primaryClip
+                    ?.getItemAt(0)
+                    ?.coerceToText(context)
+                    ?.toString()
+
+                val copiedFromClipboard = !clipText.isNullOrEmpty() && inserted == clipText
+
+                // Bulk insert will mostly come from IME that supports clipboard history
+                val isBulkInsert = inserted.length >= 5 // small enough to catch URIs
+
+                if (copiedFromClipboard || isBulkInsert) {
+                    delegate?.onPaste()
+                }
+            }
+        }
+
         // Calculate the width manually to get it right even before layout has happened (i.e.
         // when restoring a draft). The 64 DP is the horizontal margin around the input bar
         // edit text.
         val width = (screenWidth - 2 * toPx(64.0f, resources)).roundToInt()
         if (width < 0) { return } // screenWidth initially evaluates to 0
+    }
+
+    // Small helper to avoid IndexOutOfBounds on weird IME behavior
+    private fun safeSubSequence(text: CharSequence, start: Int, end: Int): String? {
+        if (start < 0 || end > text.length || start >= end) return null
+        return text.subSequence(start, end).toString()
     }
 
     override fun onCreateInputConnection(editorInfo: EditorInfo): InputConnection? {
@@ -62,12 +96,15 @@ class InputBarEditText : AppCompatEditText {
 
                     true // return true if succeeded
                 }
+
+
+
         return InputConnectionCompat.createWrapper(ic, editorInfo, callback)
     }
-
 }
 
 interface InputBarEditTextDelegate {
     fun inputBarEditTextContentChanged(text: CharSequence)
     fun commitInputContent(contentUri: Uri)
+    fun onPaste()
 }

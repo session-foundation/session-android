@@ -20,7 +20,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewInputBarBinding
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
-import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
@@ -300,6 +299,10 @@ class InputBar @JvmOverloads constructor(
         requestLayout()
     }
 
+    override fun onPaste() {
+        delegate?.onInputBarEditTextPasted()
+    }
+
     private fun showOrHideInputIfNeeded() {
         if (!showInput) {
             cancelQuoteDraft()
@@ -383,6 +386,7 @@ class InputBar @JvmOverloads constructor(
 
 interface InputBarDelegate {
     fun inputBarEditTextContentChanged(newContent: CharSequence)
+    fun onInputBarEditTextPasted() {} // no-op by default
     fun toggleAttachmentOptions()
     fun showVoiceMessageUI()
     fun startRecordingVoiceMessage()
