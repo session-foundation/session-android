@@ -50,6 +50,7 @@ import org.thoughtcrime.securesms.pro.ProFeatureExtKt;
 
 import java.io.Closeable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -63,6 +64,8 @@ import javax.inject.Singleton;
 
 import dagger.Lazy;
 import dagger.hilt.android.qualifiers.ApplicationContext;
+import kotlin.collections.ArraysKt;
+import kotlin.collections.CollectionsKt;
 import network.loki.messenger.libsession_util.protocol.ProFeature;
 import network.loki.messenger.libsession_util.protocol.ProMessageFeature;
 import network.loki.messenger.libsession_util.protocol.ProProfileFeature;
@@ -142,6 +145,21 @@ public class SmsDatabase extends MessagingDatabase {
     db.execSQL("ALTER TABLE " + TABLE_NAME + " ADD COLUMN " + PRO_PROFILE_FEATURES + " INTEGER NOT NULL DEFAULT 0");
   }
 
+  public static void addOutgoingColumn(SupportSQLiteDatabase db) {
+      final String allOutgoingMessageTypeSet = ArraysKt.joinToString(
+              Types.OUTGOING_MESSAGE_TYPES,
+              ",",
+                "(",
+                ")",
+              -1,
+              "",
+              (value) -> Long.toString(value)
+      );
+
+      db.execSQL("ALTER TABLE " + TABLE_NAME + " ADD COLUMN " + IS_OUTGOING +
+              " BOOLEAN GENERATED ALWAYS AS ((" + TYPE + " & " + MmsSmsColumns.Types.BASE_TYPE_MASK +") IN " + allOutgoingMessageTypeSet + ") VIRTUAL");
+  }
+
   private static final EarlyReceiptCache earlyDeliveryReceiptCache = new EarlyReceiptCache();
   private static final EarlyReceiptCache earlyReadReceiptCache     = new EarlyReceiptCache();
 
@@ -175,7 +193,7 @@ public class SmsDatabase extends MessagingDatabase {
 
     long threadId = getThreadIdForMessage(id);
 
-    threadDatabase.get().update(threadId, false);
+    threadDatabase.get().notifyThreadUpdated(threadId);
   }
 
   public long getThreadIdForMessage(long id) {
@@ -254,7 +272,7 @@ public class SmsDatabase extends MessagingDatabase {
                     "WHERE " + ID + " = ? RETURNING " + THREAD_ID, startedAtTimestamp, id)) {
       if (cursor.moveToNext()) {
         long threadId = cursor.getLong(0);
-        threadDatabase.get().update(threadId, false);
+        threadDatabase.get().notifyThreadUpdated(threadId);
       }
     }
   }
@@ -306,17 +324,7 @@ public class SmsDatabase extends MessagingDatabase {
         SQLiteDatabase db = getReadableDatabase();
 
         // outgoing clause
-        StringBuilder outgoingTypes = new StringBuilder();
-        long[] types = MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES;
-        for (int i = 0; i < types.length; i++) {
-            if (i > 0) outgoingTypes.append(",");
-            outgoingTypes.append(types[i]);
-        }
-
-        String outgoingSelection =
-                "(" + TYPE + " & " + MmsSmsColumns.Types.BASE_TYPE_MASK + ") IN (" + outgoingTypes + ")";
-
-        String where = "(" + columnName + " & " + featureMask + ") != 0 AND " + outgoingSelection;
+        String where = "(" + columnName + " & " + featureMask + ") != 0 AND " + IS_OUTGOING;
 
         try (Cursor cursor = db.query(TABLE_NAME, new String[]{"COUNT(*)"}, where, null, null, null, null)) {
             if (cursor != null && cursor.moveToFirst()) {
@@ -378,7 +386,7 @@ public class SmsDatabase extends MessagingDatabase {
                              ID + " = ?",
                              new String[] {String.valueOf(cursor.getLong(cursor.getColumnIndexOrThrow(ID)))});
 
-            threadDatabase.get().update(threadId, false);
+            threadDatabase.get().notifyThreadUpdated(threadId);
             foundMessage = true;
           }
         }
@@ -486,7 +494,7 @@ public class SmsDatabase extends MessagingDatabase {
       long           messageId = db.insert(TABLE_NAME, null, values);
 
       if (runThreadUpdate) {
-        threadDatabase.get().update(threadId, true);
+        threadDatabase.get().notifyThreadUpdated(threadId);
       }
 
       return Optional.of(new InsertResult(messageId, threadId));
@@ -565,20 +573,7 @@ public class SmsDatabase extends MessagingDatabase {
       return -1;
     }
 
-    SQLiteDatabase db        = getWritableDatabase();
-    long           messageId = db.insert(TABLE_NAME, ADDRESS, contentValues);
-
-    if (runThreadUpdate) {
-      threadDatabase.get().update(threadId, true);
-    }
-    long lastSeen = threadDatabase.get().getLastSeenAndHasSent(threadId).first();
-    if (lastSeen < message.getSentTimestampMillis()) {
-      threadDatabase.get().setLastSeen(threadId, message.getSentTimestampMillis());
-    }
-
-    threadDatabase.get().setHasSent(threadId, true);
-
-    return messageId;
+    return getWritableDatabase().insert(TABLE_NAME, ADDRESS, contentValues);
   }
   @Override
   public List<Long> getExpiredMessageIDs(long nowMills) {
@@ -672,7 +667,7 @@ public class SmsDatabase extends MessagingDatabase {
 
     if (updateThread) {
       for (final long threadId : deletedMessageThreadIds) {
-        threadDatabase.get().update(threadId, false);
+        threadDatabase.get().notifyThreadUpdated(threadId);
       }
     }
 

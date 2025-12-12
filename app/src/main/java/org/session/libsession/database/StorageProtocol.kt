@@ -148,7 +148,6 @@ interface StorageProtocol {
     suspend fun getTotalSentProBadges(): Int
     suspend fun getTotalSentLongMessages(): Int
     fun setPinned(address: Address, isPinned: Boolean)
-    fun isRead(threadId: Long) : Boolean
     fun setThreadCreationDate(threadId: Long, newDate: Long)
     fun getLastLegacyRecipient(threadRecipient: String): String?
     fun setLastLegacyRecipient(threadRecipient: String, senderRecipient: String?)
@@ -175,7 +174,8 @@ interface StorageProtocol {
         attachments: List<Attachment>,
         runThreadUpdate: Boolean
     ): MessageId?
-    fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean = false, updateNotification: Boolean = true)
+
+    fun updateConversationLastSeenIfNeeded(threadAddress: Address.Conversable, lastSeenTime: Long)
 
     /**
      * Marks the conversation as read up to and including the message with [messageId]. It will
@@ -185,13 +185,11 @@ interface StorageProtocol {
      */
     fun markConversationAsReadUpToMessage(messageId: MessageId)
     fun markConversationAsUnread(threadId: Long)
-    fun getLastSeen(threadId: Long): Long
+    fun getLastSeen(threadAddress: Address.Conversable): Long
     fun ensureMessageHashesAreSender(hashes: Set<String>, sender: String, closedGroupId: String): Boolean
-    fun updateThread(threadId: Long, unarchive: Boolean)
     fun insertDataExtractionNotificationMessage(senderPublicKey: String, message: DataExtractionNotificationInfoMessage, sentTimestamp: Long)
     fun insertMessageRequestResponseFromYou(threadId: Long)
     fun insertCallMessage(senderPublicKey: String, callMessageType: CallMessageType, sentTimestamp: Long)
-    fun conversationHasOutgoing(userPublicKey: String): Boolean
     fun deleteMessagesByHash(threadId: Long, hashes: List<String>)
     fun deleteMessagesByUser(threadId: Long, userSessionId: String)
     fun clearAllMessages(threadId: Long): List<String?>

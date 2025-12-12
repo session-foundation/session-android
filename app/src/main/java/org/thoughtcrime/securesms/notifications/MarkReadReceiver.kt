@@ -9,7 +9,9 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.snode.SnodeClock
+import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -20,6 +22,9 @@ class MarkReadReceiver : BroadcastReceiver() {
     @Inject
     lateinit var clock: SnodeClock
 
+    @Inject
+    lateinit var threadDatabase: ThreadDatabase
+
 
     override fun onReceive(context: Context, intent: Intent) {
         if (CLEAR_ACTION != intent.action) return
@@ -29,10 +34,9 @@ class MarkReadReceiver : BroadcastReceiver() {
             val currentTime = clock.currentTimeMills()
             threadIds.forEach {
                 Log.i(TAG, "Marking as read: $it")
-                storage.markConversationAsRead(
-                    threadId = it,
+                storage.updateConversationLastSeenIfNeeded(
+                    threadAddress = threadDatabase.getRecipientForThreadId(it) as? Address.Conversable ?: return@forEach,
                     lastSeenTime = currentTime,
-                    force = true
                 )
             }
         }

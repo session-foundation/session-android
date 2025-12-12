@@ -1,27 +1,59 @@
 package org.thoughtcrime.securesms.util
 
 import network.loki.messenger.libsession_util.ReadableConversationVolatileConfig
+import network.loki.messenger.libsession_util.util.Conversation
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.MutableUserConfigs
 
-
-fun ReadableConversationVolatileConfig.getConversationUnread(recipientAddress: Address.Conversable): Boolean {
-    return when (recipientAddress) {
+fun ReadableConversationVolatileConfig.get(address: Address.Conversable): Conversation? {
+    return when (address) {
         is Address.Standard -> {
-            getOneToOne(recipientAddress.accountId.hexString)?.unread == true
+            getOneToOne(address.accountId.hexString)
         }
 
         is Address.Group -> {
-            getClosedGroup(recipientAddress.accountId.hexString)?.unread == true
+            getClosedGroup(address.accountId.hexString)
         }
 
         is Address.LegacyGroup -> {
-            getLegacyClosedGroup(recipientAddress.groupPublicKeyHex)?.unread == true
+            getLegacyClosedGroup(address.groupPublicKeyHex)
         }
 
         is Address.Community -> {
-            getCommunity(baseUrl = recipientAddress.serverUrl, room = recipientAddress.room)?.unread == true
+            getCommunity(baseUrl = address.serverUrl, room = address.room)
         }
 
-        is Address.CommunityBlindedId -> false
+        is Address.CommunityBlindedId -> {
+            getBlindedOneToOne(address.blindedId.address)
+        }
+    }
+}
+
+fun MutableUserConfigs.getOrConstructConvo(address: Address.Conversable): Conversation {
+    return when (address) {
+        is Address.Standard -> {
+            convoInfoVolatile.getOrConstructOneToOne(address.accountId.hexString)
+        }
+
+        is Address.Group -> {
+            convoInfoVolatile.getOrConstructClosedGroup(address.accountId.hexString)
+        }
+
+        is Address.LegacyGroup -> {
+            convoInfoVolatile.getOrConstructLegacyGroup(address.groupPublicKeyHex)
+        }
+
+        is Address.Community -> {
+            convoInfoVolatile.getOrConstructCommunity(baseUrl = address.serverUrl, room = address.room, pubKeyHex = requireNotNull(
+                userGroups.getCommunityInfo(
+                    baseUrl = address.serverUrl,
+                    room = address.room
+                )
+            ) { "Community does not exist" }.community.pubKeyHex)
+        }
+
+        is Address.CommunityBlindedId -> {
+            convoInfoVolatile.getOrConstructedBlindedOneToOne(address.blindedId.address)
+        }
     }
 }

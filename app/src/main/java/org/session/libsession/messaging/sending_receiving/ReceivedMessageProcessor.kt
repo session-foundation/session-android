@@ -101,18 +101,12 @@ class ReceivedMessageProcessor @Inject constructor(
         try {
             return block(context)
         } finally {
-            for (threadId in context.threadIDs.values) {
-                if (context.maxOutgoingMessageTimestamp > 0L &&
-                    context.maxOutgoingMessageTimestamp > storage.getLastSeen(threadId)
-                ) {
-                    storage.markConversationAsRead(
-                        threadId,
-                        context.maxOutgoingMessageTimestamp,
-                        force = true
-                    )
-                }
+            for ((threadAddress, threadId) in context.threadIDs) {
+                storage.updateConversationLastSeenIfNeeded(
+                    threadAddress = threadAddress,
+                    context.maxOutgoingMessageTimestamp,
+                )
 
-                storage.updateThread(threadId, true)
                 notificationManager.updateNotification(this.context, threadId)
             }
 

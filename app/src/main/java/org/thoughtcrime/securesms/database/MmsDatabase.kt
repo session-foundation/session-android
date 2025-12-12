@@ -127,13 +127,7 @@ class MmsDatabase @Inject constructor(
 
     private fun getOutgoingProFeatureCountInternal(column: String, featureMask: Long): Int {
         val db = readableDatabase
-        val outgoingTypes = MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES.joinToString(",")
-
-        // outgoing clause
-        val outgoingSelection =
-            "($MESSAGE_BOX & ${MmsSmsColumns.Types.BASE_TYPE_MASK}) IN ($outgoingTypes)"
-
-        val where = "($column & $featureMask) != 0 AND $outgoingSelection"
+        val where = "($column & $featureMask) != 0 AND $IS_OUTGOING"
 
         db.query(TABLE_NAME, arrayOf("COUNT(*)"), where, null, null, null, null).use { cursor ->
             if (cursor.moveToFirst()) {
@@ -212,7 +206,6 @@ class MmsDatabase @Inject constructor(
                         )
                         groupReceiptDatabase
                             .update(ourAddress, id, status, timestamp)
-                        threadDatabase.update(threadId, false)
                     }
                 }
             }
@@ -297,7 +290,7 @@ class MmsDatabase @Inject constructor(
                     " WHERE " + ID + " = ?", arrayOf(id.toString() + "")
         )
         if (threadId.isPresent) {
-            threadDatabase.update(threadId.get(), false)
+            threadDatabase.notifyThreadUpdated(threadId.get())
         }
     }
 
@@ -513,7 +506,7 @@ class MmsDatabase @Inject constructor(
             contentValues = contentValues,
         )
         if (runThreadUpdate) {
-            threadDatabase.update(threadId, true)
+            threadDatabase.notifyThreadUpdated(threadId)
         }
         return Optional.of(InsertResult(messageId, threadId))
     }
@@ -639,16 +632,7 @@ class MmsDatabase @Inject constructor(
                 -1
             )
         }
-        with (threadDatabase) {
-            val lastSeen = getLastSeenAndHasSent(threadId).first()
-            if (lastSeen < message.sentTimeMillis) {
-                setLastSeen(threadId, message.sentTimeMillis)
-            }
-            setHasSent(threadId, true)
-            if (runThreadUpdate) {
-                update(threadId, true)
-            }
-        }
+
         return messageId
     }
 
@@ -752,7 +736,7 @@ class MmsDatabase @Inject constructor(
 
         if (updateThread) {
             for (threadId in deletedMessagesThreadIDs) {
-                threadDatabase.update(threadId, false)
+                threadDatabase.notifyThreadUpdated(threadId)
             }
         }
 
@@ -971,9 +955,8 @@ class MmsDatabase @Inject constructor(
      * @param outgoing if true only delete outgoing messages, if false only delete incoming messages, if null delete both.
      */
     private fun deleteExpirationTimerMessages(threadId: Long, outgoing: Boolean? = null) {
-        val outgoingClause = outgoing?.takeIf { ExpirationConfiguration.isNewConfigEnabled }?.let {
-            val comparison = if (it) "IN" else "NOT IN"
-            " AND $MESSAGE_BOX & ${MmsSmsColumns.Types.BASE_TYPE_MASK} $comparison (${MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES.joinToString()})"
+        val outgoingClause = outgoing?.let {
+            " AND $IS_OUTGOING"
         } ?: ""
 
         val where = "$THREAD_ID = ? AND $MESSAGE_CONTENT->>'$.${MessageContent.DISCRIMINATOR}' == '${DisappearingMessageUpdate.TYPE_NAME}' " + outgoingClause
@@ -1261,6 +1244,11 @@ class MmsDatabase @Inject constructor(
         fun addProFeatureColumns(db: SupportSQLiteDatabase) {
             db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $PRO_PROFILE_FEATURES INTEGER NOT NULL DEFAULT 0")
             db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $PRO_MESSAGE_FEATURES INTEGER NOT NULL DEFAULT 0")
+        }
+
+        fun addOutgoingColumn(db: SupportSQLiteDatabase) {
+            val outgoingTypeSet = MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES.joinToString(separator = ",", prefix = "(", postfix = ")")
+            db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $IS_OUTGOING BOOLEAN GENERATED ALWAYS AS (($MESSAGE_BOX & ${MmsSmsColumns.Types.BASE_TYPE_MASK}) IN ${outgoingTypeSet}) VIRTUAL")
         }
     }
 }

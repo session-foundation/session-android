@@ -641,6 +641,7 @@ class RecipientRepository @Inject constructor(
                             priority = contact.priority,
                             proData = null, // final ProData will be calculated later
                             profileUpdatedAt = contact.profileUpdatedEpochSeconds.secondsToInstant(),
+                            createdAt = Instant.ofEpochSecond(contact.createdEpochSeconds)
                         )
                     }
                 }

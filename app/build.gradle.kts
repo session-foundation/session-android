@@ -190,7 +190,7 @@ android {
             enableUnitTestCoverage = false
             signingConfig = signingConfigs.getByName("debug")
 
-            applicationIdSuffix = ".${name}"
+//            applicationIdSuffix = ".${name}"
             enablePermissiveNetworkSecurityConfig(true)
             devNetDefaultOn(false)
             setAlternativeAppName("Session Debug")

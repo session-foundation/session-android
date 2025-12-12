@@ -141,6 +141,7 @@ sealed interface RecipientData {
         val approvedMe: Boolean,
         val blocked: Boolean,
         val expiryMode: ExpiryMode,
+        val createdAt: Instant,
         override val priority: Long,
         override val proData: ProData?,
         override val profileUpdatedAt: Instant?,

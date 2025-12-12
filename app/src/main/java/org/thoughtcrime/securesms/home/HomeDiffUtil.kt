@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.home
 
 import android.content.Context
 import androidx.recyclerview.widget.DiffUtil
+import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.conversation.v2.messages.MessageFormatter
 
 class HomeDiffUtil(
@@ -68,7 +69,6 @@ class HomeDiffUtil(
                 oldItem.isDelivered == newItem.isDelivered &&
                 oldItem.isSent == newItem.isSent &&
                 oldItem.isPending == newItem.isPending &&
-                oldItem.lastSeen == newItem.lastSeen &&
                 oldItem.isUnread == newItem.isUnread &&
                 old.isTyping == new.isTyping
             )
