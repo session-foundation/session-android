@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.conversation.v2.input_bar
 
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.res.Resources
 import android.net.Uri
@@ -23,6 +24,9 @@ class InputBarEditText : AppCompatEditText {
 
     var allowMultimediaInput: Boolean = true
 
+    private val clipboard by lazy {
+        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    }
 
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
@@ -37,8 +41,6 @@ class InputBarEditText : AppCompatEditText {
         if (lengthAfter >= 3) { // catch most real paste
             val inserted = safeSubSequence(text, start, start + lengthAfter)
             if (!inserted.isNullOrEmpty()) {
-                val clipboard =
-                    context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
                 // We can only get the latest copied item from the clipboard
                 val clipText = clipboard.primaryClip
                     ?.getItemAt(0)
