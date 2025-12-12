@@ -1,15 +1,25 @@
 package org.thoughtcrime.securesms.home.search
 
 import android.content.Context
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.core.os.BundleCompat
+import androidx.core.view.doOnLayout
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
@@ -52,7 +62,11 @@ class SearchContactActionBottomSheet : BottomSheetDialogFragment() {
         savedInstanceState: Bundle?
     ): View = createThemedComposeView {
         Column(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(
+                    WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
+                )
         ) {
             // Only standard address can be blocked
             if (address is Address.Standard) {
@@ -113,6 +127,18 @@ class SearchContactActionBottomSheet : BottomSheetDialogFragment() {
                 callbacks = null
             }
             cancelButton()
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        val dlg = dialog as? BottomSheetDialog ?: return
+        val sheet = dlg.findViewById<FrameLayout>(R.id.design_bottom_sheet) ?: return
+
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            val behavior = BottomSheetBehavior.from(sheet)
+            behavior.state = BottomSheetBehavior.STATE_EXPANDED
         }
     }
 

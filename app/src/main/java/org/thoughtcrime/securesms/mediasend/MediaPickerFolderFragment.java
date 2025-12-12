@@ -131,7 +131,7 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
       actionBar.setTitle(txt);
       actionBar.setDisplayHomeAsUpEnabled(true);
       actionBar.setHomeButtonEnabled(true);
-      toolbar.setNavigationOnClickListener(v -> requireActivity().onBackPressed());
+      toolbar.setNavigationOnClickListener(v -> requireActivity().getOnBackPressedDispatcher().onBackPressed());
     }
 
     initToolbarOptions();

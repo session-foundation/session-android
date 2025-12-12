@@ -23,13 +23,10 @@
                     android:background="?attr/colorPrimary"
                     app:layout_scrollFlags="scroll|enterAlways"/>
 
-            <com.google.android.material.tabs.TabLayout
-                    android:id="@+id/tab_layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:tabRippleColor="@color/cell_selected"
-                    app:tabIndicatorColor="?colorAccent"
-                    android:scrollbars="horizontal"/>
+            <androidx.compose.ui.platform.ComposeView
+                android:id="@+id/composeTabs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
 
         </com.google.android.material.appbar.AppBarLayout>
 

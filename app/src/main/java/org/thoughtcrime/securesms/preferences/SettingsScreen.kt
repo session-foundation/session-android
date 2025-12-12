@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
@@ -212,7 +213,7 @@ fun Settings(
                 }
             )
         },
-        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
+        contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
     ) { paddings ->
         // MAIN SCREEN CONTENT
         Column(
@@ -347,7 +348,7 @@ fun Settings(
             )
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-            Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
+            Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.safeDrawing))
         }
 
         // DIALOGS AND SHEETS
@@ -541,7 +542,7 @@ fun Buttons(
 
         Cell {
             Column {
-                if(postPro){
+                if(!postPro){
                    ItemButton(
                         text = annotatedStringResource(
                             when (proDataState.type) {

@@ -89,10 +89,7 @@ class CallViewModel @Inject constructor(
         get() = callManager.videoState
 
     var deviceOrientation: Orientation = Orientation.UNKNOWN
-        set(value) {
-            field = value
-            callManager.setDeviceOrientation(value)
-        }
+        set(value) { field = value }
 
     val currentCallState get() = callManager.currentCallState
 
@@ -238,6 +235,13 @@ class CallViewModel @Inject constructor(
 
     fun hangUp() = rtcCallBridge.handleLocalHangup(null)
 
+    fun setDeviceOrientation(orientation: Orientation, autoRotateOn: Boolean) {
+        deviceOrientation = orientation
+
+        if(!autoRotateOn){
+            callManager.setDeviceOrientation(deviceOrientation)
+        }
+    }
 
     data class CallState(
         val callLabelTitle: String?,
