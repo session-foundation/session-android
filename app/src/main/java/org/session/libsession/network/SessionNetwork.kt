@@ -134,7 +134,8 @@ class SessionNetwork(
                 false
             }
             is OnionError.GuardConnectionFailed,
-            is OnionError.GuardProtocolError,
+            is OnionError.PathError,
+            is OnionError.PathErrorNonPenalizing,
             is OnionError.IntermediateNodeFailed,
             is OnionError.InvalidResponse,
             is OnionError.Unknown -> {
@@ -149,7 +150,7 @@ class SessionNetwork(
     private fun handleError(path: Path, error: OnionError) {
         when (error) {
             is OnionError.GuardConnectionFailed,
-            is OnionError.GuardProtocolError,
+            is OnionError.PathError,
             is OnionError.InvalidResponse,
             is OnionError.Unknown -> {
                 // We don't know which hop is bad; drop the whole path.
@@ -174,10 +175,11 @@ class SessionNetwork(
                 }
             }
 
+            is OnionError.PathErrorNonPenalizing,
             is OnionError.DestinationError,
             is OnionError.ClockOutOfSync -> {
                 // Path is considered healthy; do not mutate paths.
-                Log.d("Onion", "Application or clock error; not penalizing path")
+                Log.d("Onion", "Non penalizing error: $error")
             }
         }
     }

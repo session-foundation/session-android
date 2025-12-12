@@ -14,13 +14,23 @@ sealed class OnionError(message: String, cause: Throwable? = null) : Exception(m
     ) : OnionError("Failed to connect to guard ${guard.ip}:${guard.port}", underlying)
 
     /**
-     * Guard or intermediate nodes - specifically: errors not from the encrypred payload)
+     * Guard or intermediate nodes - specifically: errors not from the encrypted payload)
      */
-    data class GuardProtocolError(
-        val guard: Snode?,
+    data class PathError(
+        val node: Snode?,
         val code: Int,
         val body: String?
-    ) : OnionError("Guard ${guard?.ip}:${guard?.port} error with staatus $code", null)
+    ) : OnionError("Node ${node?.ip}:${node?.port} error with status $code - Path penalizing", null)
+
+    /**
+     * Guard or intermediate nodes - specifically: errors not from the encrypted payload)
+     * These errors should not penalize the path
+     */
+    data class PathErrorNonPenalizing(
+        val node: Snode?,
+        val code: Int,
+        val body: String?
+    ) : OnionError("Node ${node?.ip}:${node?.port} error with status $code - NON Path penalizing", null)
 
     /**
      * The onion chain broke mid-path: one hop reported that the next node was not found.

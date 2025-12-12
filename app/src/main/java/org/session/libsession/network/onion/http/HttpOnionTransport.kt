@@ -62,7 +62,7 @@ class HttpOnionTransport : OnionTransport {
             HTTP.execute(HTTP.Verb.POST, url, body)
         } catch (httpEx: HTTP.HTTPRequestFailedException) {
             // HTTP error from guard (we never got an onion-level response)
-            return Result.failure(mapGuardHttpError(guard, httpEx))
+            return Result.failure(mapPathHttpError(guard, httpEx))
         } catch (t: Throwable) {
             // TCP / DNS / TLS / timeout etc. reaching guard
             return Result.failure(OnionError.GuardConnectionFailed(guard, t))
@@ -78,10 +78,11 @@ class HttpOnionTransport : OnionTransport {
     }
 
     /**
-     * Map HTTP errors from the guard (before onion decryption)
+     * Map HTTP errors from the guard or intermediate nodes, whose errors are  not encrypted
+     * (before onion decryption)
      */
-    private fun mapGuardHttpError(
-        guard: Snode,
+    private fun mapPathHttpError(
+        node: Snode,
         ex: HTTP.HTTPRequestFailedException
     ): OnionError {
         val json = ex.json
@@ -93,22 +94,23 @@ class HttpOnionTransport : OnionTransport {
         if (message != null && message.startsWith(prefix)) {
             val failedPk = message.removePrefix(prefix)
             return OnionError.IntermediateNodeFailed(
-                reportingNode = guard,
+                reportingNode = node,
                 failedPublicKey = failedPk
             )
         }
 
         // Non-penalising codes: treat as destination-level error (path OK)
         if (statusCode in NON_PENALIZING_STATUSES || message == "Loki Server error") {
-            return OnionError.DestinationError(
+            return OnionError.PathErrorNonPenalizing(
+                node = node,
                 code = statusCode,
                 body = message
             )
         }
 
         // Otherwise: guard rejected / misbehaved
-        return OnionError.GuardProtocolError(
-            guard = guard,
+        return OnionError.PathError(
+            node = node,
             code = statusCode,
             body = message
         )
