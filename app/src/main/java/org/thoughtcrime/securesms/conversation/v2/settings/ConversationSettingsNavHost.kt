@@ -155,7 +155,9 @@ fun ConversationSettingsNavHost(
 ){
     SharedTransitionLayout {
         val navController = rememberNavController()
-        val navigator: UINavigator<ConversationSettingsDestination> = remember { UINavigator() }
+
+        val navigatorHolder: ConversationSettingsNavigatorHolder = hiltViewModel()
+        val navigator: UINavigator<ConversationSettingsDestination> = navigatorHolder.navigator
 
         val handleBack: () -> Unit = {
             if (navController.previousBackStackEntry != null) {

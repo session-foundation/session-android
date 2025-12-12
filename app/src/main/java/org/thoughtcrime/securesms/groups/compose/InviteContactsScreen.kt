@@ -121,7 +121,7 @@ fun InviteContacts(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
+                    .windowInsetsPadding(WindowInsets.safeDrawing)
                     .imePadding()
             ) {
                 CollapsibleFooterAction(
