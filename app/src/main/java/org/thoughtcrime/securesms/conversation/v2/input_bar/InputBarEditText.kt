@@ -24,10 +24,6 @@ class InputBarEditText : AppCompatEditText {
 
     var allowMultimediaInput: Boolean = true
 
-    private val clipboard by lazy {
-        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    }
-
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
     constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
@@ -36,23 +32,16 @@ class InputBarEditText : AppCompatEditText {
         super.onTextChanged(text, start, lengthBefore, lengthAfter)
         delegate?.inputBarEditTextContentChanged(text)
 
-        //  - A "chunk" got inserted (lengthAfter >= 3)
-        //  - If it matches clipboard OR is large enough, treat it as paste.
+        // - A "chunk" got inserted (lengthAfter >= 3)
+        // - If it is large enough, treat it as paste. We do this because some IME's clipboard history
+        //   will not be treated as a "paste" but instead just a normal text insertion
         if (lengthAfter >= 3) { // catch most real paste
             val inserted = safeSubSequence(text, start, start + lengthAfter)
             if (!inserted.isNullOrEmpty()) {
-                // We can only get the latest copied item from the clipboard
-                val clipText = clipboard.primaryClip
-                    ?.getItemAt(0)
-                    ?.coerceToText(context)
-                    ?.toString()
-
-                val copiedFromClipboard = !clipText.isNullOrEmpty() && inserted == clipText
-
                 // Bulk insert will mostly come from IME that supports clipboard history
                 val isBulkInsert = inserted.length >= 5 // small enough to catch URIs
 
-                if (copiedFromClipboard || isBulkInsert) {
+                if (isBulkInsert) {
                     delegate?.onPaste()
                 }
             }
