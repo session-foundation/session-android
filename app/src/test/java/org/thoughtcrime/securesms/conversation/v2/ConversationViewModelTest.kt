@@ -36,6 +36,7 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
+import java.time.Instant
 import java.time.ZonedDateTime
 
 private val STANDARD_ADDRESS =
@@ -71,7 +72,8 @@ class ConversationViewModelTest : BaseViewModelTest() {
             approvedMe = true,
             blocked = false,
             expiryMode = ExpiryMode.NONE,
-            1,
+            createdAt = Instant.now(),
+            priority = 1,
             proData = null,
             profileUpdatedAt = null
         )

@@ -27,6 +27,7 @@ import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsD
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OptionsCardData
 import org.thoughtcrime.securesms.ui.UINavigator
+import java.time.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
@@ -253,7 +254,8 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 expiryMode = ExpiryMode.NONE,
                 priority = 1,
                 proData = null,
-                profileUpdatedAt = null
+                profileUpdatedAt = null,
+                createdAt = Instant.now(),
             )
         )
         )
@@ -307,7 +309,8 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 expiryMode = ExpiryMode.AfterSend(time.inWholeSeconds),
                 priority = 1,
                 proData = null,
-                profileUpdatedAt = null
+                profileUpdatedAt = null,
+                createdAt = Instant.now(),
             )
         )
         )
@@ -368,7 +371,8 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 expiryMode = ExpiryMode.AfterSend(time.inWholeSeconds),
                 priority = 1,
                 proData = null,
-                profileUpdatedAt = null
+                profileUpdatedAt = null,
+                createdAt = Instant.now(),
             )
         )
         )
@@ -429,7 +433,8 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 expiryMode = ExpiryMode.AfterRead(time.inWholeSeconds),
                 priority = 1,
                 proData = null,
-                profileUpdatedAt = null
+                profileUpdatedAt = null,
+                createdAt = Instant.now(),
             )
         )
         )
@@ -492,7 +497,8 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 expiryMode = ExpiryMode.AfterRead(time.inWholeSeconds),
                 priority = 1,
                 proData = null,
-                profileUpdatedAt = null
+                profileUpdatedAt = null,
+                createdAt = Instant.now(),
             )
         )
         )
@@ -562,7 +568,6 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
         context = application,
         disappearingMessages = disappearingMessages,
         navigator = navigator,
-        isNewConfigEnabled = true,
         showDebugOptions = false,
         recipientRepository = mock {
             onBlocking { getRecipient(recipient.address) } doReturn recipient
