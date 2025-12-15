@@ -32,6 +32,7 @@ import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.GroupThreadStatus
 import org.thoughtcrime.securesms.database.model.MessageRecord
+import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
 import org.thoughtcrime.securesms.ui.getSubbedCharSequence
@@ -174,6 +175,22 @@ class MessageFormatter @Inject constructor(
             // We will show different text for community invitation on the thread list
             lastMessage.isOpenGroupInvitation -> {
                 context.getString(R.string.communityInvitation)
+            }
+
+            // Show a placeholder text for messages with attachments
+            lastMessage is MmsMessageRecord -> {
+                val placeholderBody = lastMessage.slideDeck.body
+                val messageBody = lastMessage.body
+
+                if (placeholderBody.isNotBlank()) {
+                    if (messageBody.isNotBlank()) {
+                        "$placeholderBody: $messageBody"
+                    } else {
+                        placeholderBody
+                    }
+                } else {
+                    messageBody
+                }
             }
 
             else -> {
