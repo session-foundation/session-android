@@ -26,7 +26,6 @@ import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.search.model.SearchResult
-import org.thoughtcrime.securesms.util.Stopwatch
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -46,19 +45,9 @@ class SearchRepository @Inject constructor(
             // If the sanitized search is empty then abort without search
             val cleanQuery = sanitizeQuery(query).trim { it <= ' ' }
 
-            val timer = Stopwatch("FtsQuery")
-            timer.split("clean")
-
             val contacts = queryContacts(cleanQuery)
-            timer.split("Contacts")
-
             val conversations = queryConversations(cleanQuery)
-            timer.split("Conversations")
-
             val messages = queryMessages(cleanQuery)
-            timer.split("Messages")
-
-            timer.stop(TAG)
 
             SearchResult(
                 cleanQuery,
