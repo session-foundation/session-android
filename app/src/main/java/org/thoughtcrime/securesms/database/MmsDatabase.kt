@@ -19,6 +19,7 @@ package org.thoughtcrime.securesms.database
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
+import androidx.collection.MutableLongSet
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.annimon.stream.Stream
 import dagger.Lazy
@@ -27,7 +28,6 @@ import kotlinx.serialization.json.Json
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
-import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
@@ -347,10 +347,16 @@ class MmsDatabase @Inject constructor(
     }
 
     override fun markExpireStarted(messageId: Long, startedTimestamp: Long) {
-        val contentValues = ContentValues()
-        contentValues.put(EXPIRE_STARTED, startedTimestamp)
-        val db = writableDatabase
-        db.update(TABLE_NAME, contentValues, ID_WHERE, arrayOf(messageId.toString()))
+        //language=roomsql
+        writableDatabase.rawQuery("""
+            UPDATE $TABLE_NAME SET $EXPIRE_STARTED = ?
+            WHERE $ID = ?
+            RETURNING $THREAD_ID
+        """, startedTimestamp, messageId).use { cursor ->
+            if (cursor.moveToNext()) {
+                threadDatabase.notifyThreadUpdated(cursor.getLong(0))
+            }
+        }
     }
 
     fun markAsNotified(id: Long) {
@@ -362,56 +368,59 @@ class MmsDatabase @Inject constructor(
 
     fun setMessagesRead(threadId: Long, beforeTime: Long): List<MarkedMessageInfo> {
         return setMessagesRead(
-            THREAD_ID + " = ? AND (" + READ + " = 0) AND " + DATE_SENT + " <= ?",
-            arrayOf(threadId.toString(), beforeTime.toString())
+            "$THREAD_ID = ? AND ($READ = 0) AND $DATE_SENT <= ?",
+            threadId,
+            beforeTime
         )
     }
 
     fun setMessagesRead(threadId: Long): List<MarkedMessageInfo> {
-        return setMessagesRead(
-            THREAD_ID + " = ? AND (" + READ + " = 0)",
-            arrayOf(threadId.toString())
+        return setMessagesRead("$THREAD_ID = ? AND ($READ = 0)",threadId
         )
     }
 
-    private fun setMessagesRead(where: String, arguments: Array<String>?): List<MarkedMessageInfo> {
-        val database = writableDatabase
-        val result: MutableList<MarkedMessageInfo> = LinkedList()
-        var cursor: Cursor? = null
-        database.beginTransaction()
-        try {
-            cursor = database.query(
-                TABLE_NAME,
-                arrayOf(ID, ADDRESS, DATE_SENT, MESSAGE_BOX, EXPIRES_IN, EXPIRE_STARTED),
-                where,
-                arguments,
-                null,
-                null,
-                null
-            )
-            while (cursor != null && cursor.moveToNext()) {
-                if (MmsSmsColumns.Types.isSecureType(cursor.getLong(3))) {
-                    val timestamp = cursor.getLong(2)
-                    val syncMessageId = SyncMessageId(fromSerialized(cursor.getString(1)), timestamp)
-                    val expirationInfo = ExpirationInfo(
-                        id = MessageId(cursor.getLong(0), mms = true),
-                        timestamp = timestamp,
-                        expiresIn = cursor.getLong(4),
-                        expireStarted = cursor.getLong(5),
+    private fun setMessagesRead(where: String, vararg args: Any?): List<MarkedMessageInfo> {
+        val updatedThreadIDs = MutableLongSet(1)
+
+        //language=roomsql
+        val messages = writableDatabase.rawQuery("""
+        UPDATE $TABLE_NAME 
+        SET $READ = 1
+        WHERE $where
+        RETURNING $ID, 
+                  $ADDRESS, 
+                  $THREAD_ID, 
+                  $DATE_SENT, 
+                  $EXPIRES_IN,
+                  $EXPIRE_STARTED
+    """, *args).use { cursor ->
+            cursor.asSequence()
+                .map {
+                    val timestamp = cursor.getLong(3)
+
+                    updatedThreadIDs += cursor.getLong(2)
+
+                    MarkedMessageInfo(
+                        syncMessageId = SyncMessageId(
+                            cursor.getString(1).toAddress(),
+                            timestamp
+                        ),
+                        expirationInfo = ExpirationInfo(
+                            id = MessageId(cursor.getLong(0), true),
+                            timestamp = timestamp,
+                            expiresIn = cursor.getLong(4),
+                            expireStarted = cursor.getLong(5)
+                        )
                     )
-                    result.add(MarkedMessageInfo(syncMessageId, expirationInfo))
                 }
-            }
-            val contentValues = ContentValues()
-            contentValues.put(READ, 1)
-            contentValues.put(REACTIONS_UNREAD, 0)
-            database.update(TABLE_NAME, contentValues, where, arguments)
-            database.setTransactionSuccessful()
-        } finally {
-            cursor?.close()
-            database.endTransaction()
+                .toList()
         }
-        return result
+
+        updatedThreadIDs.forEach {
+            threadDatabase.notifyThreadUpdated(it)
+        }
+
+        return messages
     }
 
 
@@ -766,7 +775,7 @@ class MmsDatabase @Inject constructor(
         contentValues.put(THREAD_ID, toId)
 
         val db = writableDatabase
-        db.update(SmsDatabase.TABLE_NAME, contentValues, "$THREAD_ID = ?", arrayOf("$fromId"))
+        db.update(TABLE_NAME, contentValues, "$THREAD_ID = ?", arrayOf("$fromId"))
     }
 
     fun deleteThread(threadId: Long, updateThread: Boolean) {
@@ -939,25 +948,15 @@ class MmsDatabase @Inject constructor(
 
     fun readerFor(cursor: Cursor?, getQuote: Boolean = true) = Reader(cursor, getQuote)
 
-    fun setQuoteMissing(messageId: Long): Int {
-        val contentValues = ContentValues()
-        contentValues.put(QUOTE_MISSING, 1)
-        val database = writableDatabase
-        return database!!.update(
-            TABLE_NAME,
-            contentValues,
-            "$ID = ?",
-            arrayOf<String?>(messageId.toString())
-        )
-    }
-
     /**
      * @param outgoing if true only delete outgoing messages, if false only delete incoming messages, if null delete both.
      */
     private fun deleteExpirationTimerMessages(threadId: Long, outgoing: Boolean? = null) {
-        val outgoingClause = outgoing?.let {
-            " AND $IS_OUTGOING"
-        } ?: ""
+        val outgoingClause = when (outgoing) {
+            null -> ""
+            true -> " AND $IS_OUTGOING"
+            false -> " AND NOT $IS_OUTGOING"
+        }
 
         val where = "$THREAD_ID = ? AND $MESSAGE_CONTENT->>'$.${MessageContent.DISCRIMINATOR}' == '${DisappearingMessageUpdate.TYPE_NAME}' " + outgoingClause
 

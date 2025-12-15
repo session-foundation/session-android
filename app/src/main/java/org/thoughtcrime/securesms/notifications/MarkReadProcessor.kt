@@ -2,20 +2,33 @@ package org.thoughtcrime.securesms.notifications
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
+import network.loki.messenger.libsession_util.util.Conversation
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
+import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
+import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.associateByNotNull
 import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
+import org.session.libsession.utilities.userConfigsChanged
+import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.AuthAwareComponent
+import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ExpiryType
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MarkedMessageInfo
@@ -25,8 +38,13 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.util.castAwayType
+import java.util.EnumSet
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class MarkReadProcessor @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val recipientRepository: RecipientRepository,
@@ -38,7 +56,88 @@ class MarkReadProcessor @Inject constructor(
     private val storage: StorageProtocol,
     private val snodeClock: SnodeClock,
     private val lokiMessageDatabase: LokiMessageDatabase,
-) {
+    private val configFactory: ConfigFactoryProtocol,
+    @param:ManagerScope private val scope: CoroutineScope,
+) : AuthAwareComponent {
+
+    override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
+        processLastSeenChanges()
+    }
+
+    private suspend fun processLastSeenChanges() {
+
+        data class LastSeenChanges(
+            val previousSeen: Map<Address.Conversable, Long>? = null,
+            val currentSeen: Map<Address.Conversable, Long>? = null,
+        )
+
+        // Observe the config changes, figuring out the individual changes to each conversation
+        configFactory.userConfigsChanged(
+            onlyConfigTypes = EnumSet.of(UserConfigType.CONVO_INFO_VOLATILE),
+            debounceMills = 500L
+        ).castAwayType()
+            .onStart { emit(Unit) }
+            .map {
+                buildMap {
+                    configFactory.withUserConfigs { configs ->
+                        configs.convoInfoVolatile.all()
+                    }.forEach { convo ->
+                        val address = when (convo) {
+                            is Conversation.ClosedGroup ->
+                                Address.Group(AccountId(convo.accountId))
+
+                            is Conversation.Community ->
+                                Address.Community(
+                                    serverUrl = convo.baseCommunityInfo.baseUrl,
+                                    room = convo.baseCommunityInfo.room
+                                )
+
+                            is Conversation.OneToOne ->
+                                Address.Standard(AccountId(convo.accountId))
+
+                            is Conversation.BlindedOneToOne,
+                            is Conversation.LegacyGroup,
+                            null -> null
+                        }
+
+                        if (address != null && convo != null) {
+                            put(address, convo.lastRead)
+                        }
+                    }
+                }
+            }
+            .distinctUntilChanged()
+            .scan(LastSeenChanges()) { acc, current ->
+                acc.copy(
+                    currentSeen = current,
+                    previousSeen = acc.currentSeen,
+                )
+            }
+            .distinctUntilChanged()
+            .collectLatest { (previousSeen, currentSeen) ->
+                if (previousSeen != null && currentSeen != null) {
+                    currentSeen
+                        .asSequence()
+                        .filter { (key, value) ->
+                            previousSeen[key] != value
+                        }
+                        .forEach { changed ->
+                            val threadId = threadDb.getThreadIdIfExistsFor(changed.key)
+                            if (threadId != -1L) {
+                                val allUnreadMessages = buildList {
+                                    addAll(smsDatabase.setMessagesRead(threadId, changed.value))
+                                    addAll(mmsDatabase.setMessagesRead(threadId, changed.value))
+                                }
+
+                                Log.d(TAG, "Processing mark read for ${changed.key.debugString}, messageCount = ${allUnreadMessages.size}")
+                                process(allUnreadMessages)
+                            }
+                        }
+                }
+            }
+    }
+
+
     fun process(
         markedReadMessages: List<MarkedMessageInfo>
     ) {
@@ -64,11 +163,12 @@ class MarkReadProcessor @Inject constructor(
                     smsDatabase
                 }
 
+                Log.d(TAG, "Marking message ${it.expirationInfo.id.id} as started for disappear after read")
                 db.markExpireStarted(it.expirationInfo.id.id, snodeClock.currentTimeMills())
             }
 
-        hashToDisappearAfterReadMessage(context, markedReadMessages)?.let { hashToMessages ->
-            GlobalScope.launch {
+        hashToDisappearAfterReadMessage(markedReadMessages)?.let { hashToMessages ->
+            scope.launch {
                 try {
                     shortenExpiryOfDisappearingAfterRead(hashToMessages)
                 } catch (e: Exception) {
@@ -79,7 +179,6 @@ class MarkReadProcessor @Inject constructor(
     }
 
     private fun hashToDisappearAfterReadMessage(
-        context: Context,
         markedReadMessages: List<MarkedMessageInfo>
     ): Map<String, MarkedMessageInfo>? {
         return markedReadMessages

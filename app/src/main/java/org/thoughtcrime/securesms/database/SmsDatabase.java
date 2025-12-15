@@ -43,20 +43,16 @@ import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
-import org.thoughtcrime.securesms.database.model.MessageId;
 import org.thoughtcrime.securesms.database.model.ReactionRecord;
 import org.thoughtcrime.securesms.database.model.SmsMessageRecord;
 import org.thoughtcrime.securesms.pro.ProFeatureExtKt;
 
 import java.io.Closeable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -65,11 +61,7 @@ import javax.inject.Singleton;
 import dagger.Lazy;
 import dagger.hilt.android.qualifiers.ApplicationContext;
 import kotlin.collections.ArraysKt;
-import kotlin.collections.CollectionsKt;
 import network.loki.messenger.libsession_util.protocol.ProFeature;
-import network.loki.messenger.libsession_util.protocol.ProMessageFeature;
-import network.loki.messenger.libsession_util.protocol.ProProfileFeature;
-import network.loki.messenger.libsession_util.util.BitSet;
 
 /**
  * Database for storage of SMS messages.
@@ -164,7 +156,7 @@ public class SmsDatabase extends MessagingDatabase {
   private static final EarlyReceiptCache earlyReadReceiptCache     = new EarlyReceiptCache();
 
   private final RecipientRepository recipientRepository;
-  private final Lazy<@NonNull ThreadDatabase> threadDatabase;
+  final Lazy<@NonNull ThreadDatabase> threadDatabase;
   private final Lazy<@NonNull ReactionDatabase> reactionDatabase;
 
   @Inject
@@ -187,25 +179,14 @@ public class SmsDatabase extends MessagingDatabase {
     Log.i("MessageDatabase", "Updating ID: " + id + " to base type: " + maskOn);
 
     SQLiteDatabase db = getWritableDatabase();
-    db.execSQL("UPDATE " + TABLE_NAME +
+    try (final Cursor cursor = db.rawQuery("UPDATE " + TABLE_NAME +
                " SET " + TYPE + " = (" + TYPE + " & " + (Types.TOTAL_MASK - maskOff) + " | " + maskOn + " )" +
-               " WHERE " + ID + " = ?", new String[] {id+""});
-
-    long threadId = getThreadIdForMessage(id);
-
-    threadDatabase.get().notifyThreadUpdated(threadId);
-  }
-
-  public long getThreadIdForMessage(long id) {
-    String sql        = "SELECT " + THREAD_ID + " FROM " + TABLE_NAME + " WHERE " + ID + " = ?";
-    String[] sqlArgs  = new String[] {id+""};
-    SQLiteDatabase db = getReadableDatabase();
-
-    try (Cursor cursor = db.rawQuery(sql, sqlArgs)) {
-          if (cursor != null && cursor.moveToFirst())
-              return cursor.getLong(0);
-          else
-              return -1;
+               " WHERE " + ID + " = ?" +
+               " RETURNING " + THREAD_ID, id)) {
+        if (cursor.moveToNext()) {
+            long threadId = cursor.getLong(0);
+            threadDatabase.get().notifyThreadUpdated(threadId);
+        }
     }
   }
 
@@ -264,9 +245,6 @@ public class SmsDatabase extends MessagingDatabase {
 
   @Override
   public void markExpireStarted(long id, long startedAtTimestamp) {
-    ContentValues contentValues = new ContentValues();
-    contentValues.put(EXPIRE_STARTED, startedAtTimestamp);
-
     SQLiteDatabase db = getWritableDatabase();
     try (final Cursor cursor = db.rawQuery("UPDATE " + TABLE_NAME + " SET " + EXPIRE_STARTED + " = ? " +
                     "WHERE " + ID + " = ? RETURNING " + THREAD_ID, startedAtTimestamp, id)) {
@@ -404,37 +382,21 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   public List<MarkedMessageInfo> setMessagesRead(long threadId, long beforeTime) {
-    return setMessagesRead(THREAD_ID + " = ? AND (" + READ + " = 0) AND " + DATE_SENT + " <= ?", new String[]{threadId+"", beforeTime+""});
+    return SmsDatabaseExtKt.setMessagesRead(
+            this,
+            THREAD_ID + " = ? AND (" + READ + " = 0) AND " + DATE_SENT + " <= ?",
+            threadId,
+            beforeTime
+    );
   }
   public List<MarkedMessageInfo> setMessagesRead(long threadId) {
-    return setMessagesRead(THREAD_ID + " = ? AND (" + READ + " = 0)", new String[] {String.valueOf(threadId)});
+    return SmsDatabaseExtKt.setMessagesRead(
+            this,
+            THREAD_ID + " = ? AND (" + READ + " = 0)",
+            threadId
+    );
   }
 
-  private List<MarkedMessageInfo> setMessagesRead(String where, String[] arguments) {
-    SQLiteDatabase          database  = getWritableDatabase();
-    List<MarkedMessageInfo> results   = new LinkedList<>();
-    database.beginTransaction();
-    try (final Cursor cursor = database.query(TABLE_NAME, new String[] {ID, ADDRESS, DATE_SENT, TYPE, EXPIRES_IN, EXPIRE_STARTED}, where, arguments, null, null, null)) {
-      while (cursor != null && cursor.moveToNext()) {
-        long timestamp = cursor.getLong(2);
-        SyncMessageId  syncMessageId  = new SyncMessageId(Address.fromSerialized(cursor.getString(1)), timestamp);
-        ExpirationInfo expirationInfo = new ExpirationInfo(new MessageId(cursor.getLong(0), false), timestamp, cursor.getLong(4), cursor.getLong(5));
-
-        results.add(new MarkedMessageInfo(syncMessageId, expirationInfo));
-      }
-
-      ContentValues contentValues = new ContentValues();
-      contentValues.put(READ, 1);
-      contentValues.put(REACTIONS_UNREAD, 0);
-
-      database.update(TABLE_NAME, contentValues, where, arguments);
-      database.setTransactionSuccessful();
-    } finally {
-      database.endTransaction();
-    }
-
-    return results;
-  }
 
   public void updateSentTimestamp(long messageId, long newTimestamp) {
     SQLiteDatabase db = getWritableDatabase();

@@ -12,8 +12,8 @@ import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
+import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerProtocol
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
@@ -21,6 +21,7 @@ import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.MessagingDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
+import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.Storage
@@ -71,7 +72,7 @@ class ExpiringMessageManager @Inject constructor(
         val sentTimestamp = message.sentTimestamp
         val groupAddress = message.groupPublicKey?.toAddress() as? Address.GroupLike
         val expiresInMillis = message.expiryMode.expiryMillis
-        val address = fromSerialized(senderPublicKey!!)
+        val address = senderPublicKey!!.toAddress()
         var recipient = recipientRepository.getRecipientSync(address)
 
         // if the sender is blocked, we don't display the update, except if it's in a closed group
@@ -100,7 +101,11 @@ class ExpiringMessageManager @Inject constructor(
                 dataExtractionNotification = null
             )
             //insert the timer update message
-            mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, threadId, runThreadUpdate = true)
+            mmsDatabase.insertSecureDecryptedMessageInbox(
+                mediaMessage,
+                threadId,
+                runThreadUpdate = true
+            )
                 .orNull()
                 ?.let { MessageId(it.messageId, mms = true) }
         } catch (ioe: IOException) {
@@ -119,7 +124,8 @@ class ExpiringMessageManager @Inject constructor(
         val groupId = message.groupPublicKey?.toAddress() as? Address.GroupLike
         val duration = message.expiryMode.expiryMillis
         try {
-            val serializedAddress = groupId ?: (message.syncTarget ?: message.recipient!!).toAddress()
+            val serializedAddress =
+                groupId ?: (message.syncTarget ?: message.recipient!!).toAddress()
 
             message.threadID = storage.get().getOrCreateThreadIdFor(serializedAddress)
             val content = DisappearingMessageUpdate(message.expiryMode)
@@ -198,7 +204,8 @@ class ExpiringMessageManager @Inject constructor(
         // If we receive a message that is sent from ourselves (aka the sync message), we
         // will start the expiry timer regardless
         if (message.expiryMode is ExpiryMode.AfterSend ||
-            (message.expiryMode != ExpiryMode.NONE && message.isSenderSelf)) {
+            (message.expiryMode != ExpiryMode.NONE && message.isSenderSelf)
+        ) {
             getDatabase(messageId.mms)
                 .markExpireStarted(messageId.id, clock.currentTimeMills())
         }
@@ -209,7 +216,10 @@ class ExpiringMessageManager @Inject constructor(
             val expiredMessages = db.getExpiredMessageIDs(clock.currentTimeMills())
 
             if (expiredMessages.isNotEmpty()) {
-                Log.d(TAG, "Deleting ${expiredMessages.size} expired messages from ${db.javaClass.simpleName}")
+                Log.d(
+                    TAG,
+                    "Deleting ${expiredMessages.size} expired messages from ${db.javaClass.simpleName}"
+                )
                 for (messageId in expiredMessages) {
                     try {
                         db.deleteMessage(messageId)
@@ -230,12 +240,18 @@ class ExpiringMessageManager @Inject constructor(
 
             if (nextExpiration > 0) {
                 val delayMills = nextExpiration - now
-                Log.d(TAG, "Wait for up to $delayMills ms for next expiration in ${db.javaClass.simpleName}")
+                Log.d(
+                    TAG,
+                    "Wait for up to $delayMills ms for next expiration in ${db.javaClass.simpleName}"
+                )
                 withTimeoutOrNull(delayMills) {
                     dbChanges.first()
                 }
             } else {
-                Log.d(TAG, "No next expiration found, waiting for any change in ${db.javaClass.simpleName}")
+                Log.d(
+                    TAG,
+                    "No next expiration found, waiting for any change in ${db.javaClass.simpleName}"
+                )
                 // If there are no next expiration, just wait for any change in the database
                 dbChanges.first()
             }
