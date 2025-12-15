@@ -172,13 +172,13 @@ class SnodeDirectory @Inject constructor(
         )
     }
 
-    fun getGuardSnodes(
+    suspend fun getGuardSnodes(
         existingGuards: Set<Snode>,
         targetGuardCount: Int
     ): Set<Snode> {
         if (existingGuards.size >= targetGuardCount) return existingGuards
 
-        var unused = getSnodePool().minus(existingGuards)
+        var unused = ensurePoolPopulated().minus(existingGuards)
         val needed = targetGuardCount - existingGuards.size
 
         if (unused.size < needed) {

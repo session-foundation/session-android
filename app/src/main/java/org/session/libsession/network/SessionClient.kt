@@ -28,6 +28,11 @@ class SessionClient @Inject constructor(
     private val snodeClock: SnodeClock,
 ) {
 
+    //todo ONION no retry logic atm
+    //todo ONION missing alterTTL
+    //todo ONION missing batch logic
+    //todo ONION missing snode error handling
+
     /**
      * - Uses onion routing via SessionNetwork.
      * - Expects the snode to return a JSON body (storage_rpc style).
