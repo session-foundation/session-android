@@ -1183,6 +1183,8 @@
     <string name="rateSession">Rate {app_name}?</string>
     <string name="rateSessionApp">Rate App</string>
     <string name="rateSessionModalDescription">We\'re glad you\'re enjoying {app_name}, if you have a moment, rating us in the {storevariant} helps others discover private, secure messaging!</string>
+    <string name="rateSessionModalDescriptionUpdated">{app_name} runs no ads, sells no data, and answers only to its users. Your {storevariant} rating helps more people find messaging that actually respects their privacy.</string>
+    <string name="rateUs">Rate Us</string>
     <string name="read">Read</string>
     <string name="readReceipts">Read Receipts</string>
     <string name="readReceiptsDescription">Show read receipts for all messages you send and receive.</string>
