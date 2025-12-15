@@ -1,10 +1,32 @@
+package org.session.libsession.network
+
+import android.os.SystemClock
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
+import java.util.Date
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/**
+ * A class that manages the network time by querying the network time from a random snode. The
+ * primary goal of this class is to provide a time that is not tied to current system time and not
+ * prone to time changes locally.
+ *
+ * Before the first network query is successfully, calling [currentTimeMills] will return the current
+ * system time.
+ */
 @Singleton
 class SnodeClock @Inject constructor(
-    @ManagerScope private val scope: CoroutineScope,
-    private val snodeDirectory: SnodeDirectory,
-    private val sessionNetwork: SessionNetwork
+    @param:ManagerScope private val scope: CoroutineScope
 ) : OnAppStartupComponent {
-
     private val instantState = MutableStateFlow<Instant?>(null)
     private var job: Job? = null
 
@@ -14,20 +36,17 @@ class SnodeClock @Inject constructor(
         job = scope.launch {
             while (true) {
                 try {
-                    val node = pickRandomSnode() ?: run {
-                        Log.e("SnodeClock", "No snodes available in pool; cannot query network time.")
-                        delay(3_000L)
-                        continue
-                    }
-
+                    val node = SnodeAPI.getRandomSnode().await()
                     val requestStarted = SystemClock.elapsedRealtime()
 
-                    val networkTime = fetchNetworkTime(node)
-
+                    var networkTime = SnodeAPI.getNetworkTime(node).await().second
                     val requestEnded = SystemClock.elapsedRealtime()
-                    var adjustedNetworkTime = networkTime - (requestEnded - requestStarted) / 2
 
-                    val inst = Instant(requestStarted, adjustedNetworkTime)
+                    // Adjust the network time to account for the time it took to make the request
+                    // so that the network time equals to the time when the request was started
+                    networkTime -= (requestEnded - requestStarted) / 2
+
+                    val inst = Instant(requestStarted, networkTime)
 
                     Log.d("SnodeClock", "Network time: ${Date(inst.now())}, system time: ${Date()}")
 
@@ -35,61 +54,48 @@ class SnodeClock @Inject constructor(
                 } catch (e: Exception) {
                     Log.e("SnodeClock", "Failed to get network time. Retrying in a few seconds", e)
                 } finally {
+                    // Retry frequently if we haven't got any result before
                     val delayMills = if (instantState.value == null) {
                         3_000L
                     } else {
-                        3_600_000L
+                        3600_000L
                     }
+
                     delay(delayMills)
                 }
             }
         }
     }
 
-    private fun pickRandomSnode(): Snode? {
-        val pool = snodeDirectory.getSnodePool()
-        if (pool.isEmpty()) return null
-        return pool.random()
+    /**
+     * Wait for the network adjusted time to come through.
+     */
+    suspend fun waitForNetworkAdjustedTime(): Long {
+        return instantState.filterNotNull().first().now()
     }
 
-    private suspend fun fetchNetworkTime(snode: Snode): Long {
-        val result = sessionNetwork.sendToSnode(
-            method     = Snode.Method.Info,
-            parameters = emptyMap<String, Any>(),
-            snode      = snode,
-            version    = Version.V4
-        )
-
-        if (result.isFailure) {
-            throw result.exceptionOrNull()
-                ?: IllegalStateException("Unknown error getting network time")
-        }
-
-        val response = result.getOrThrow()
-        val body = response.body ?: error("Empty body for Info RPC")
-
-        @Suppress("UNCHECKED_CAST")
-        val json = JsonUtil.fromJson(body, Map::class.java) as Map<*, *>
-        val timestamp = json["timestamp"] as? Long
-            ?: throw IllegalStateException("Missing timestamp in Info response")
-
-        return timestamp
+    /**
+     * Get the current time in milliseconds. If the network time is not available yet, this method
+     * will return the current system time.
+     */
+    fun currentTimeMills(): Long {
+        return instantState.value?.now() ?: System.currentTimeMillis()
     }
 
-    // rest of your SnodeClock unchanged...
+    fun currentTimeSeconds(): Long {
+        return currentTimeMills() / 1000
+    }
 
-    suspend fun waitForNetworkAdjustedTime(): Long =
-        instantState.filterNotNull().first().now()
+    fun currentTime(): java.time.Instant {
+        return java.time.Instant.ofEpochMilli(currentTimeMills())
+    }
 
-    fun currentTimeMills(): Long =
-        instantState.value?.now() ?: System.currentTimeMillis()
-
-    fun currentTimeSeconds(): Long =
-        currentTimeMills() / 1000
-
-    fun currentTime(): java.time.Instant =
-        java.time.Instant.ofEpochMilli(currentTimeMills())
-
+    /**
+     * Delay until the specified instant. If the instant is in the past or now, this method returns
+     * immediately.
+     *
+     * @return true if delayed, false if the instant is in the past
+     */
     suspend fun delayUntil(instant: java.time.Instant): Boolean {
         val now = currentTimeMills()
         val target = instant.toEpochMilli()
