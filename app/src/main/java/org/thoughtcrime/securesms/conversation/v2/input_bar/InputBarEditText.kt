@@ -1,21 +1,15 @@
 package org.thoughtcrime.securesms.conversation.v2.input_bar
 
-import android.content.ClipboardManager
 import android.content.Context
 import android.content.res.Resources
 import android.net.Uri
 import android.util.AttributeSet
-import android.util.Log
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
-import android.widget.RelativeLayout
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.view.inputmethod.EditorInfoCompat
 import androidx.core.view.inputmethod.InputConnectionCompat
-import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities
 import org.thoughtcrime.securesms.util.toPx
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.roundToInt
 
 class InputBarEditText : AppCompatEditText {
