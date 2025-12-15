@@ -79,6 +79,9 @@ class PathManager(
 
         _isBuilding.value = true
         try {
+            // Ensure we actually have a usable pool before doing anything
+            val pool = directory.ensurePoolPopulated()
+
             val safeReusable = sanitizePaths(reusablePaths)
             val reusableGuards = safeReusable.map { it.first() }.toSet()
 
@@ -87,7 +90,7 @@ class PathManager(
                 targetGuardCount = targetPathCount
             )
 
-            var unused = directory.getSnodePool()
+            var unused = pool
                 .minus(guardSnodes)
                 .minus(safeReusable.flatten().toSet())
 
