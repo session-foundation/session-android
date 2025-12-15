@@ -183,11 +183,6 @@ android {
 
         getByName("debug") {
             isDefault = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                file("proguard-rules.pro")
-            )
-            
             enableUnitTestCoverage = false
             signingConfig = signingConfigs.getByName("debug")
 
