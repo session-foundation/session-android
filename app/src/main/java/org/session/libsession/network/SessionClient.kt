@@ -1,0 +1,239 @@
+package org.session.libsession.network
+
+import org.session.libsession.network.onion.Version
+import org.session.libsession.network.snode.SnodeDirectory
+import org.session.libsession.network.snode.SwarmDirectory
+import org.session.libsession.snode.SnodeMessage
+import org.session.libsession.snode.SwarmAuth
+import org.session.libsignal.crypto.shuffledRandom
+import org.session.libsignal.utilities.JsonUtil
+import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.Snode
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/**
+ * High-level client for interacting with snodes
+ */
+@Singleton
+class SessionClient @Inject constructor(
+    private val sessionNetwork: SessionNetwork,
+    private val swarmDirectory: SwarmDirectory,
+    private val snodeDirectory: SnodeDirectory,
+    private val snodeClock: SnodeClock,
+) {
+
+    /**
+     * - Uses onion routing via SessionNetwork.
+     * - Expects the snode to return a JSON body (storage_rpc style).
+     * - Returns that JSON as a Map for now.
+     *
+     * NOTE: This does *not* do any snode-failure accounting yet; that will be layered
+     *       on later (e.g. path/snode penalisation based on error codes).
+     */
+    suspend fun invoke(
+        method: Snode.Method,
+        snode: Snode,
+        parameters: Map<String, Any>,
+        version: Version = Version.V4
+    ): Map<*, *> {
+        val result = sessionNetwork.sendToSnode(
+            method = method,
+            parameters = parameters,
+            snode = snode,
+            version = version
+        )
+
+        if (result.isFailure) {
+            throw result.exceptionOrNull()
+                ?: IllegalStateException("Unknown error invoking $method on $snode")
+        }
+
+        val onionResponse = result.getOrThrow()
+        val body = onionResponse.body
+            ?: throw IllegalStateException("Empty body from snode for method $method")
+
+        @Suppress("UNCHECKED_CAST")
+        return JsonUtil.fromJson(body, Map::class.java) as Map<*, *>
+    }
+
+    // endregion
+
+    // region Swarm target selection
+
+    /**
+     * Rough equivalent of old getSingleTargetSnode(publicKey).
+     *
+     * Picks one snode from the user's swarm for a given account.
+     * We deliberately randomise to avoid hammering a single node.
+     */
+    private suspend fun getSingleTargetSnode(publicKey: String): Snode {
+        val swarm = swarmDirectory.getSwarm(publicKey)
+        require(swarm.isNotEmpty()) {
+            "Swarm is empty for pubkey=$publicKey"
+        }
+        // Old code used shuffledRandom(); we can approximate with shuffled() then random()
+        return swarm.shuffledRandom().random()
+    }
+
+    // endregion
+
+    // region Auth helpers (adapted from old SnodeAPI.buildAuthenticatedParameters)
+
+    /**
+     * Build parameters required to call authenticated storage API.
+     *
+     * @param auth The authentication data required to sign the request
+     * @param namespace The namespace of the messages. Null if not relevant.
+     * @param verificationData A function that returns the data to be signed.
+     *                         It gets the namespace text and timestamp.
+     * @param timestamp The timestamp to be used in the request. Default is network-adjusted time.
+     * @param builder Lambda for additional custom parameters.
+     */
+    private fun buildAuthenticatedParameters(
+        auth: SwarmAuth,
+        namespace: Int?,
+        verificationData: ((namespaceText: String, timestamp: Long) -> Any)? = null,
+        timestamp: Long = snodeClock.currentTimeMills(),
+        builder: MutableMap<String, Any>.() -> Unit = {}
+    ): Map<String, Any> {
+        return buildMap {
+            // Callers can add their own params first
+            this.builder()
+
+            if (verificationData != null) {
+                val namespaceText = when (namespace) {
+                    null, 0 -> ""
+                    else -> namespace.toString()
+                }
+
+                val verifyData = when (val v = verificationData(namespaceText, timestamp)) {
+                    is String -> v.toByteArray()
+                    is ByteArray -> v
+                    else -> throw IllegalArgumentException("verificationData must return String or ByteArray")
+                }
+
+                putAll(auth.sign(verifyData))
+                put("timestamp", timestamp)
+            }
+
+            put("pubkey", auth.accountId.hexString)
+            if (namespace != null && namespace != 0) {
+                put("namespace", namespace)
+            }
+
+            auth.ed25519PublicKeyHex?.let { put("pubkey_ed25519", it) }
+        }
+    }
+
+    // endregion
+
+    // region sendMessage
+
+    /**
+     * Rough port of old SnodeAPI.sendMessage, but:
+     * - No additional "outer" retry layer yet (we rely on SessionNetwork's onion retry).
+     * - No batching; we send a single SendMessage RPC.
+     *
+     * TODO:
+     *  - Wire in higher-level retryWithUniformInterval-style behaviour if needed.
+     *  - Return a strongly typed StoreMessageResponse once the model & serialization are wired.
+     */
+    suspend fun sendMessage(
+        message: SnodeMessage,
+        auth: SwarmAuth?,
+        namespace: Int = 0,
+        version: Version = Version.V4
+    ): Map<*, *> {
+        val params: Map<String, Any> = if (auth != null) {
+            check(auth.accountId.hexString == message.recipient) {
+                "Message sent to ${message.recipient} but authenticated with ${auth.accountId.hexString}"
+            }
+
+            val timestamp = snodeClock.currentTimeMills()
+
+            buildAuthenticatedParameters(
+                auth = auth,
+                namespace = namespace,
+                verificationData = { ns, t ->
+                    "${Snode.Method.SendMessage.rawValue}$ns$t"
+                },
+                timestamp = timestamp
+            ) {
+                put("sig_timestamp", timestamp)
+                putAll(message.toJSON())
+            }
+        } else {
+            buildMap {
+                putAll(message.toJSON())
+                if (namespace != 0) {
+                    put("namespace", namespace)
+                }
+            }
+        }
+
+        val target = getSingleTargetSnode(message.recipient)
+
+        Log.d("SessionClient", "Sending message to ${target.address}:${target.port} for ${message.recipient}")
+
+        // In old code this went through batch API; here we do a simple single-RPC SendMessage.
+        val json = invoke(
+            method = Snode.Method.SendMessage,
+            snode = target,
+            parameters = params,
+            version = version
+        )
+
+        // Later you can map this Map<*, *> into StoreMessageResponse via kotlinx.serialization.
+        return json
+    }
+
+    // endregion
+
+    // region deleteMessage
+
+    /**
+     * Simplified version of old SnodeAPI.deleteMessage.
+     *
+     * Differences vs old code:
+     *  - We do NOT (yet) verify the per-snode signatures of deletions.
+     *  - We do a single DeleteMessage RPC; no extra retryWithUniformInterval wrapper for now.
+     *  - We return the raw JSON map so you can layer richer logic on top later.
+     */
+    suspend fun deleteMessage(
+        publicKey: String,
+        auth: SwarmAuth,
+        serverHashes: List<String>,
+        version: Version = Version.V4
+    ): Map<*, *> {
+        val params = buildAuthenticatedParameters(
+            auth = auth,
+            namespace = null,
+            verificationData = { _, _ ->
+                buildString {
+                    append(Snode.Method.DeleteMessage.rawValue)
+                    serverHashes.forEach(this::append)
+                }
+            }
+        ) {
+            this["messages"] = serverHashes
+        }
+
+        val snode = getSingleTargetSnode(publicKey)
+
+        Log.d("SessionClient", "Deleting messages on ${snode.address}:${snode.port} for $publicKey")
+
+        val json = invoke(
+            method = Snode.Method.DeleteMessage,
+            snode = snode,
+            parameters = params,
+            version = version
+        )
+
+        // Old code walked json["swarm"] and verified ED25519 signatures.
+        // You can port that verification logic into a separate helper later if you want parity.
+        return json
+    }
+
+    // endregion
+}
