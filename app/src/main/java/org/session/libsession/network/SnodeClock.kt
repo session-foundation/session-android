@@ -28,6 +28,7 @@ import javax.inject.Singleton
 class SnodeClock @Inject constructor(
     @param:ManagerScope private val scope: CoroutineScope,
     private val snodeDirectory: SnodeDirectory,
+    private val sessionClient: SessionClient
 ) : OnAppStartupComponent {
 
     private val instantState = MutableStateFlow<Instant?>(null)
@@ -42,7 +43,7 @@ class SnodeClock @Inject constructor(
                     val node = snodeDirectory.getRandomSnode()
                     val requestStarted = SystemClock.elapsedRealtime()
 
-                    var networkTime = SnodeAPI.getNetworkTime(node).await().second
+                    var networkTime = sessionClient.getNetworkTime(node).second
                     val requestEnded = SystemClock.elapsedRealtime()
 
                     // Adjust network time to halfway through the request duration

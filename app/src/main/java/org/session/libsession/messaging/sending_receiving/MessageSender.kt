@@ -28,6 +28,7 @@ import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.open_groups.OpenGroupApi.Capability
 import org.session.libsession.messaging.open_groups.OpenGroupMessage
+import org.session.libsession.network.SessionClient
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.SnodeMessage
@@ -59,6 +60,7 @@ class MessageSender @Inject constructor(
     private val messageSendJobFactory: MessageSendJob.Factory,
     private val messageExpirationManager: ExpiringMessageManager,
     private val snodeClock: SnodeClock,
+    private val sessionClient: SessionClient,
     @param:ManagerScope private val scope: CoroutineScope,
 ) {
 
@@ -243,14 +245,14 @@ class MessageSender @Inject constructor(
                             "Unable to authorize group message send"
                         }
 
-                        SnodeAPI.sendMessage(
+                        sessionClient.sendMessage(
                             auth = groupAuth,
                             message = snodeMessage,
                             namespace = Namespace.GROUP_MESSAGES(),
                         )
                     }
                     is Destination.Contact -> {
-                        SnodeAPI.sendMessage(snodeMessage, auth = null, namespace = Namespace.DEFAULT())
+                        sessionClient.sendMessage(snodeMessage, auth = null, namespace = Namespace.DEFAULT())
                     }
                     is Destination.OpenGroup,
                     is Destination.OpenGroupInbox -> throw IllegalStateException("Destination should not be an open group.")

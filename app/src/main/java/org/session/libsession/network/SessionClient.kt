@@ -1,14 +1,19 @@
 package org.session.libsession.network
 
+import network.loki.messenger.libsession_util.Hash
+import network.loki.messenger.libsession_util.SessionEncrypt
 import org.session.libsession.network.onion.Version
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsignal.crypto.shuffledRandom
+import org.session.libsignal.utilities.Base64
+import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -46,20 +51,16 @@ class SessionClient @Inject constructor(
 
         if (result.isFailure) {
             throw result.exceptionOrNull()
-                ?: IllegalStateException("Unknown error invoking $method on $snode")
+                ?: Error.Generic("Unknown error invoking $method on $snode")
         }
 
         val onionResponse = result.getOrThrow()
         val body = onionResponse.body
-            ?: throw IllegalStateException("Empty body from snode for method $method")
+            ?: throw Error.Generic("Empty body from snode for method $method")
 
         @Suppress("UNCHECKED_CAST")
         return JsonUtil.fromJson(body, Map::class.java) as Map<*, *>
     }
-
-    // endregion
-
-    // region Swarm target selection
 
     /**
      * Rough equivalent of old getSingleTargetSnode(publicKey).
@@ -75,10 +76,6 @@ class SessionClient @Inject constructor(
         // Old code used shuffledRandom(); we can approximate with shuffled() then random()
         return swarm.shuffledRandom().random()
     }
-
-    // endregion
-
-    // region Auth helpers (adapted from old SnodeAPI.buildAuthenticatedParameters)
 
     /**
      * Build parameters required to call authenticated storage API.
@@ -125,10 +122,6 @@ class SessionClient @Inject constructor(
             auth.ed25519PublicKeyHex?.let { put("pubkey_ed25519", it) }
         }
     }
-
-    // endregion
-
-    // region sendMessage
 
     /**
      * Rough port of old SnodeAPI.sendMessage, but:
@@ -188,10 +181,6 @@ class SessionClient @Inject constructor(
         return json
     }
 
-    // endregion
-
-    // region deleteMessage
-
     /**
      * Simplified version of old SnodeAPI.deleteMessage.
      *
@@ -235,5 +224,93 @@ class SessionClient @Inject constructor(
         return json
     }
 
-    // endregion
+    suspend fun getNetworkTime(
+        snode: Snode,
+        version: Version = Version.V4
+    ): Pair<Snode, Long> {
+        val json = invoke(
+            method = Snode.Method.Info,
+            snode = snode,
+            parameters = emptyMap(),
+            version = version
+        )
+
+        val timestamp = json["timestamp"] as? Long
+            ?: throw Error.Generic("Missing 'timestamp' in Info response")
+
+        return snode to timestamp
+    }
+
+    /**
+     * Resolve an ONS name into an account ID (33-byte value as hex string).
+     *
+     * Rough port of old SnodeAPI.getAccountID:
+     *  - Lowercases the name.
+     *  - Asks 3 different snodes for the ONS resolution.
+     *  - Decrypts the result and requires all 3 to match.
+     *
+     * Throws if validation fails.
+     */
+    suspend fun getAccountID(onsName: String): String {
+        val validationCount = 3
+        val onsNameLower = onsName.lowercase(Locale.US)
+
+        // Build request params for ons_resolve via OxenDaemonRPCCall
+        val params: Map<String, Any> = buildMap {
+            this["method"] = "ons_resolve"
+            this["params"] = buildMap<String, Any> {
+                this["type"] = 0 // session account type
+                this["name_hash"] = Base64.encodeBytes(
+                    Hash.hash32(onsNameLower.toByteArray())
+                )
+            }
+        }
+
+        // Ask 3 different snodes
+        val results = mutableListOf<String>()
+
+        repeat(validationCount) {
+            val snode = snodeDirectory.getRandomSnode()
+
+            val json = invoke(
+                method = Snode.Method.OxenDaemonRPCCall,
+                snode = snode,
+                parameters = params,
+                version = Version.V4
+            )
+
+            @Suppress("UNCHECKED_CAST")
+            val intermediate = json["result"] as? Map<*, *>
+                ?: throw Error.Generic("Invalid ONS response: missing 'result'")
+
+            val hexEncodedCiphertext = intermediate["encrypted_value"] as? String
+                ?: throw Error.Generic("Invalid ONS response: missing 'encrypted_value'")
+
+            val ciphertext = Hex.fromStringCondensed(hexEncodedCiphertext)
+            val nonce = (intermediate["nonce"] as? String)?.let(Hex::fromStringCondensed)
+
+            val accountId = SessionEncrypt.decryptOnsResponse(
+                lowercaseName = onsNameLower,
+                ciphertext = ciphertext,
+                nonce = nonce
+            )
+
+            results += accountId
+        }
+
+        // All 3 must be equal for us to trust the result
+        if (results.size == validationCount && results.toSet().size == 1) {
+            return results.first()
+        } else {
+            throw Error.ValidationFailed
+        }
+    }
+
+    // Error
+    sealed class Error(val description: String) : Exception(description) {
+        data class Generic(val info: String = "An error occurred.") : Error(info)
+
+        // ONS
+        object ValidationFailed : Error("ONS name validation failed.")
+    }
 }
