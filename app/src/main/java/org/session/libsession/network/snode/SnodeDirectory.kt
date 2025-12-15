@@ -1,5 +1,7 @@
 package org.session.libsession.network.snode
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.session.libsession.utilities.Environment
 import org.session.libsignal.crypto.secureRandom
 import org.session.libsignal.utilities.HTTP
@@ -7,16 +9,20 @@ import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.prettifiedDescription
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class SnodeDirectory(
+@Singleton
+class SnodeDirectory @Inject constructor(
     private val storage: SnodePoolStorage,
     private val environment: Environment,
-) {
+    @ManagerScope private val scope: CoroutineScope,
+) : OnAppStartupComponent {
 
     companion object {
-        // Old SnodeAPI used these defaults
         private const val MINIMUM_SNODE_POOL_COUNT = 12
-        // Use port 4443 to enforce pinned certificates (same as old seedNodePort)
         private const val SEED_NODE_PORT = 4443
 
         private const val KEY_IP = "public_ip"
@@ -45,6 +51,19 @@ class SnodeDirectory(
         }
     }
 
+    override fun onPostAppStarted() {
+        // Ensure we have a populated snode pool on launch
+        scope.launch {
+            try {
+                ensurePoolPopulated()
+                Log.d("SnodeDirectory", "Snode pool populated on startup.")
+            } catch (e: Exception) {
+                Log.e("SnodeDirectory", "Failed to populate snode pool on startup", e)
+                //todo ONION should we have a failsafe here or is it ok ro rely on future call to getRandomSnode?
+            }
+        }
+    }
+
     fun getSnodePool(): Set<Snode> = storage.getSnodePool()
 
     fun updateSnodePool(newPool: Set<Snode>) {
@@ -68,7 +87,6 @@ class SnodeDirectory(
             return current
         }
 
-        // Pool too small or empty: bootstrap from a seed node.
         val target = seedNodePool.random()
         Log.d("SnodeDirectory", "Populating snode pool using seed node: $target")
 
@@ -131,9 +149,8 @@ class SnodeDirectory(
     /**
      * Returns a random snode from the generic snode pool.
      *
-     * Uses [ensurePoolPopulated] under the hood, so callers get the old semantics:
-     * lazy bootstrap on first use, but we also expose [ensurePoolPopulated] for
-     * explicit bootstrap at app startup or before heavy operations.
+     * Uses [ensurePoolPopulated] under the hood, so you still get lazy bootstrap if
+     * startup population failed or hasn’t run yet.
      */
     suspend fun getRandomSnode(): Snode {
         val pool = ensurePoolPopulated()
