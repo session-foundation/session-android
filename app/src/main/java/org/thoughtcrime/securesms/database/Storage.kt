@@ -195,6 +195,17 @@ open class Storage @Inject constructor(
         }
     }
 
+    override fun updateConversationLastSeenIfNeeded(
+        threadId: Long,
+        lastSeenTime: Long
+    ) {
+        val threadAddress = threadDatabase.getRecipientForThreadId(threadId) as? Address.Conversable ?: return
+        updateConversationLastSeenIfNeeded(
+            threadAddress = threadAddress,
+            lastSeenTime = lastSeenTime
+        )
+    }
+
     override fun markConversationAsReadUpToMessage(messageId: MessageId) {
         val maxTimestampMillsAndThreadId = mmsSmsDatabase.getMaxTimestampInThreadUpTo(messageId)
         if (maxTimestampMillsAndThreadId != null) {
@@ -1009,8 +1020,6 @@ open class Storage @Inject constructor(
             smsDatabase.deleteMessagesFrom(threadID, fromUser.toString())
             mmsDatabase.deleteMessagesFrom(threadID, fromUser.toString())
         }
-
-        threadDb.setRead(threadID, true)
 
         return true
     }

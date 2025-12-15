@@ -28,7 +28,6 @@ import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
@@ -48,7 +47,6 @@ import javax.inject.Inject
  */
 @AndroidEntryPoint
 class RemoteReplyReceiver : BroadcastReceiver() {
-    @Inject
     lateinit var threadDatabase: ThreadDatabase
 
     @Inject
@@ -68,9 +66,6 @@ class RemoteReplyReceiver : BroadcastReceiver() {
 
     @Inject
     lateinit var recipientRepository: RecipientRepository
-
-    @Inject
-    lateinit var markReadProcessor: MarkReadProcessor
 
     @Inject
     lateinit var messageSender: MessageSender
@@ -153,10 +148,14 @@ class RemoteReplyReceiver : BroadcastReceiver() {
                         }
                     }
 
-                    val messageIds = threadDatabase.setRead(threadId, true)
+                    if (address is Address.Conversable) {
+                        storage.updateConversationLastSeenIfNeeded(
+                            threadAddress = address,
+                            lastSeenTime = clock.currentTimeMills()
+                        )
+                    }
 
                     messageNotifier.updateNotification(context)
-                    markReadProcessor.process(messageIds)
 
                     return null
                 }

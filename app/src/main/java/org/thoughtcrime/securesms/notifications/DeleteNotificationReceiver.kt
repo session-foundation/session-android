@@ -9,11 +9,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
-import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.Storage
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import javax.inject.Inject
 
@@ -35,7 +33,6 @@ class DeleteNotificationReceiver : BroadcastReceiver() {
     @Inject lateinit var smsDb: SmsDatabase
     @Inject lateinit var mmsDb: MmsDatabase
     @Inject lateinit var storage: Storage
-    @Inject lateinit var threadDatabase: ThreadDatabase
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != DELETE_NOTIFICATION_ACTION) return
@@ -53,7 +50,7 @@ class DeleteNotificationReceiver : BroadcastReceiver() {
                     val now = System.currentTimeMillis()
                     for (threadId in threadIds){
                         storage.updateConversationLastSeenIfNeeded(
-                            threadAddress = threadDatabase.getRecipientForThreadId(threadId) as? Address.Conversable ?: continue,
+                            threadId = threadId,
                             lastSeenTime = now
                         )
                     }

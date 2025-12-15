@@ -26,14 +26,8 @@ import android.os.AsyncTask;
 import androidx.core.app.NotificationManagerCompat;
 
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
-import org.session.libsignal.utilities.Log;
-import org.thoughtcrime.securesms.ApplicationContext;
-import org.thoughtcrime.securesms.database.MarkedMessageInfo;
-import org.thoughtcrime.securesms.database.ThreadDatabase;
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
-
-import java.util.LinkedList;
-import java.util.List;
+import org.session.libsession.snode.SnodeClock;
+import org.thoughtcrime.securesms.database.Storage;
 
 import javax.inject.Inject;
 
@@ -50,9 +44,9 @@ public class AndroidAutoHeardReceiver extends BroadcastReceiver {
   public static final String THREAD_IDS_EXTRA      = "car_heard_thread_ids";
   public static final String NOTIFICATION_ID_EXTRA = "car_notification_id";
 
-  @Inject MarkReadProcessor markReadProcessor;
+  @Inject Storage storage;
   @Inject MessageNotifier messageNotifier;
-  @Inject ThreadDatabase threadDb;
+  @Inject SnodeClock clock;
 
   @SuppressLint("StaticFieldLeak")
   @Override
@@ -70,19 +64,14 @@ public class AndroidAutoHeardReceiver extends BroadcastReceiver {
       new AsyncTask<Void, Void, Void>() {
         @Override
         protected Void doInBackground(Void... params) {
-          List<MarkedMessageInfo> messageIdsCollection = new LinkedList<>();
+            long now = clock.currentTimeMills();
+            for (long threadId : threadIds) {
+                storage.updateConversationLastSeenIfNeeded(threadId, now);
+            }
 
-          for (long threadId : threadIds) {
-            Log.i(TAG, "Marking meassage as read: " + threadId);
-            List<MarkedMessageInfo> messageIds = threadDb.setRead(threadId, true);
+            messageNotifier.updateNotification(context);
 
-            messageIdsCollection.addAll(messageIds);
-          }
-
-          messageNotifier.updateNotification(context);
-          markReadProcessor.process(messageIdsCollection);
-
-          return null;
+            return null;
         }
       }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }

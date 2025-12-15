@@ -176,6 +176,7 @@ interface StorageProtocol {
     ): MessageId?
 
     fun updateConversationLastSeenIfNeeded(threadAddress: Address.Conversable, lastSeenTime: Long)
+    fun updateConversationLastSeenIfNeeded(threadId: Long, lastSeenTime: Long)
 
     /**
      * Marks the conversation as read up to and including the message with [messageId]. It will

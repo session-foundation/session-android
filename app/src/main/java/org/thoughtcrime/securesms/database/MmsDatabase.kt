@@ -642,6 +642,10 @@ class MmsDatabase @Inject constructor(
             )
         }
 
+        if (runThreadUpdate) {
+            threadDatabase.notifyThreadUpdated(threadId)
+        }
+
         return messageId
     }
 
@@ -720,8 +724,9 @@ class MmsDatabase @Inject constructor(
         where: String,
         vararg whereArgs: Any?): Boolean {
         val deletedMessageIDs: MutableList<Long>
-        val deletedMessagesThreadIDs = hashSetOf<Long>()
+        val deletedMessagesThreadIDs = MutableLongSet(1)
 
+        //language=roomsql
         writableDatabase.rawQuery(
             "DELETE FROM $TABLE_NAME WHERE $where RETURNING $ID, $THREAD_ID",
             *whereArgs
@@ -744,9 +749,7 @@ class MmsDatabase @Inject constructor(
         }
 
         if (updateThread) {
-            for (threadId in deletedMessagesThreadIDs) {
-                threadDatabase.notifyThreadUpdated(threadId)
-            }
+            deletedMessagesThreadIDs.forEach(threadDatabase::notifyThreadUpdated)
         }
 
         return deletedMessageIDs.isNotEmpty()

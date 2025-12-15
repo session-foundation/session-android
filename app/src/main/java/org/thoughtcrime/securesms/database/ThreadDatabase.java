@@ -31,7 +31,6 @@ import org.json.JSONArray;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
-import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.ConfigFactoryProtocol;
 import org.session.libsession.utilities.GroupUtil;
@@ -46,7 +45,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -333,47 +331,6 @@ public class ThreadDatabase extends Database {
     smsDatabase.get().deleteMessagesInThreadBeforeDate(threadId, timestamp);
     mmsDatabase.get().deleteMessagesInThreadBeforeDate(threadId, timestamp, false);
     notifyThreadUpdated(threadId);
-  }
-
-  public List<MarkedMessageInfo> setRead(long threadId, long lastReadTime) {
-
-    final List<MarkedMessageInfo> smsRecords = smsDatabase.get().setMessagesRead(threadId, lastReadTime);
-    final List<MarkedMessageInfo> mmsRecords = mmsDatabase.get().setMessagesRead(threadId, lastReadTime);
-
-    ContentValues contentValues = new ContentValues(2);
-    contentValues.put(READ, smsRecords.isEmpty() && mmsRecords.isEmpty());
-    contentValues.put(LAST_SEEN, lastReadTime);
-
-    SQLiteDatabase db = getWritableDatabase();
-    db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {threadId+""});
-
-    notifyThreadUpdated(threadId);
-
-    return CollectionsKt.plus(smsRecords, mmsRecords);
-  }
-
-  public List<MarkedMessageInfo> setRead(long threadId, boolean lastSeen) {
-    ContentValues contentValues = new ContentValues(1);
-    contentValues.put(READ, 1);
-    contentValues.put(UNREAD_COUNT, 0);
-    contentValues.put(UNREAD_MENTION_COUNT, 0);
-
-    if (lastSeen) {
-      contentValues.put(LAST_SEEN, SnodeAPI.getNowWithOffset());
-    }
-
-    SQLiteDatabase db = getWritableDatabase();
-    db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {threadId+""});
-
-    final List<MarkedMessageInfo> smsRecords = smsDatabase.get().setMessagesRead(threadId);
-    final List<MarkedMessageInfo> mmsRecords = mmsDatabase.get().setMessagesRead(threadId);
-
-    notifyThreadUpdated(threadId);
-
-    return new LinkedList<MarkedMessageInfo>() {{
-      addAll(smsRecords);
-      addAll(mmsRecords);
-    }};
   }
 
   public void setCreationDate(long threadId, long date) {
