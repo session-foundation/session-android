@@ -52,19 +52,20 @@ class SnodeDirectory(
     }
 
     /**
-     * Returns a random snode from the generic snode pool.
+     * Ensure the snode pool is populated to at least [minCount] elements.
      *
-     * Behaviour:
-     * - If the pool has at least [MINIMUM_SNODE_POOL_COUNT] nodes, return a random one.
-     * - Otherwise, bootstrap the pool from a random seed node (get_n_service_nodes),
-     *   persist it, and return a random snode from the new pool.
+     * - If the current pool is already large enough, returns it unchanged.
+     * - Otherwise, bootstraps from a random seed node (get_n_service_nodes),
+     *   persists the new pool, and returns it.
      *
-     * Throws if, after bootstrap, the pool is still empty or parsing fails.
+     * Throws if the seed node returns an empty list or parsing fails.
      */
-    suspend fun getRandomSnode(): Snode {
-        val pool = getSnodePool()
-        if (pool.size >= MINIMUM_SNODE_POOL_COUNT) {
-            return pool.secureRandom()
+    suspend fun ensurePoolPopulated(
+        minCount: Int = MINIMUM_SNODE_POOL_COUNT
+    ): Set<Snode> {
+        val current = getSnodePool()
+        if (current.size >= minCount) {
+            return current
         }
 
         // Pool too small or empty: bootstrap from a seed node.
@@ -124,12 +125,21 @@ class SnodeDirectory(
         Log.d("SnodeDirectory", "Persisting snode pool with ${newPool.size} snodes.")
         updateSnodePool(newPool)
 
-        return newPool.secureRandom()
+        return newPool
     }
 
     /**
-     * Shared snode factory used by both seed bootstrap and (later) swarm parsing.
+     * Returns a random snode from the generic snode pool.
+     *
+     * Uses [ensurePoolPopulated] under the hood, so callers get the old semantics:
+     * lazy bootstrap on first use, but we also expose [ensurePoolPopulated] for
+     * explicit bootstrap at app startup or before heavy operations.
      */
+    suspend fun getRandomSnode(): Snode {
+        val pool = ensurePoolPopulated()
+        return pool.secureRandom()
+    }
+
     fun createSnode(
         address: String?,
         port: Int?,
