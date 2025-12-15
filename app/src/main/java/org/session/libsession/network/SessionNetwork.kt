@@ -112,11 +112,13 @@ class SessionNetwork(
 
             handleError(path, error)
 
-            if (!mustRetry(error, attempt)) {
+            if (!shouldRetry(error, attempt)) {
                 return Result.failure(error)
             }
 
             lastError = error
+
+            //todo ONION we might want some backoff/delay logic here
         }
 
         return Result.failure(lastError ?: IllegalStateException("Unknown onion error"))
@@ -125,9 +127,10 @@ class SessionNetwork(
     /**
      * Decide whether to retry based on the error type and current attempt.
      */
-    private fun mustRetry(error: OnionError, attempt: Int): Boolean {
+    private fun shouldRetry(error: OnionError, attempt: Int): Boolean {
         if (attempt + 1 >= maxAttempts) return false
 
+        //todo ONION I'm making assumptions here - this is for the low level SessionNetwork reties. Might want to fully define this
         return when (error) {
             is OnionError.DestinationError,
             is OnionError.ClockOutOfSync -> {
@@ -176,10 +179,14 @@ class SessionNetwork(
             }
 
             is OnionError.PathErrorNonPenalizing,
-            is OnionError.DestinationError,
-            is OnionError.ClockOutOfSync -> {
+            is OnionError.DestinationError -> {
                 // Path is considered healthy; do not mutate paths.
                 Log.d("Onion", "Non penalizing error: $error")
+            }
+
+            is OnionError.ClockOutOfSync -> {
+                // todo ONION - should we reset the SnodeClock?
+                Log.d("Onion", "Clock out of sync (non-penalizing): $error")
             }
         }
     }

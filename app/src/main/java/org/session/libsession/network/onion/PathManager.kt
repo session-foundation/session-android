@@ -23,7 +23,7 @@ import org.session.libsignal.utilities.Snode
 class PathManager(
     private val scope: CoroutineScope,
     private val directory: SnodeDirectory,
-    private val storage: SnodePathStorage,   // mapping of old get/setOnionRequestPaths
+    private val storage: SnodePathStorage,
     private val pathSize: Int = 3,
     private val targetPathCount: Int = 2,
 ) {

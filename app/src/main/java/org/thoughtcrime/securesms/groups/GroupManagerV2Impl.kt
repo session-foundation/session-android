@@ -39,7 +39,7 @@ import org.session.libsession.messaging.utilities.MessageAuthentication.buildMem
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.model.BatchResponse
 import org.session.libsession.snode.utilities.await

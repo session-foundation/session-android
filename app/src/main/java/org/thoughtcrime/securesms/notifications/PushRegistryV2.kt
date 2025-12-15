@@ -18,7 +18,7 @@ import org.session.libsession.messaging.sending_receiving.notifications.Subscrip
 import org.session.libsession.messaging.sending_receiving.notifications.UnsubscribeResponse
 import org.session.libsession.messaging.sending_receiving.notifications.UnsubscriptionRequest
 import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.snode.Version
 import org.session.libsession.snode.utilities.await

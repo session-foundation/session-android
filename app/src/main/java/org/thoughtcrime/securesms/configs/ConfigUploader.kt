@@ -23,7 +23,7 @@ import org.session.libsession.database.userAuth
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.snode.model.StoreMessageResponse

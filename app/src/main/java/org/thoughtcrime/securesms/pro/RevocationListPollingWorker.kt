@@ -13,7 +13,7 @@ import androidx.work.WorkerParameters
 import androidx.work.await
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.pro.api.GetProRevocationRequest
