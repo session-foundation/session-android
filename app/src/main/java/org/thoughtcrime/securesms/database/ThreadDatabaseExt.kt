@@ -5,6 +5,7 @@ import androidx.sqlite.db.transaction
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.recipients.RecipientData
+import org.session.libsession.utilities.withUserConfigs
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.util.asSequence
 import org.thoughtcrime.securesms.util.get
@@ -146,7 +147,8 @@ fun ThreadDatabase.queryThreads(addresses: Collection<Address.Conversable>): Lis
 
                     val date = when {
                         lastMessage != null -> lastMessage.dateReceived
-                        threadRecipient.data is RecipientData.Contact -> threadRecipient.data.name
+                        threadRecipient.data is RecipientData.Contact -> threadRecipient.data.createdAt.toEpochMilli()
+                        threadRecipient.data is RecipientData.Group -> threadRecipient.data.joinedAt.toEpochMilli()
                         else -> 0L
                     }
 
@@ -158,7 +160,7 @@ fun ThreadDatabase.queryThreads(addresses: Collection<Address.Conversable>): Lis
                         unreadCount = smsUnreadCount.toInt() + mmsUnreadCount.toInt(),
                         unreadMentionCount = smsUnreadMentionCount.toInt() + mmsUnreadMentionCount.toInt(),
                         isUnread = unread,
-                        date = 0L,
+                        date = date,
                         invitingAdminId = invitingAdminId
                     )
                 }
