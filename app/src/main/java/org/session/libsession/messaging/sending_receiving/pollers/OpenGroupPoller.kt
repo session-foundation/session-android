@@ -20,7 +20,6 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.OpenGroupDeleteJob
 import org.session.libsession.messaging.jobs.TrimThreadJob
-import org.session.libsession.messaging.messages.Message.Companion.senderOrSync
 import org.session.libsession.messaging.open_groups.Endpoint
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.open_groups.OpenGroupApi.BatchRequest
@@ -33,9 +32,8 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi.parallelBatch
 import org.session.libsession.messaging.sending_receiving.MessageParser
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsignal.utilities.Base64
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.HTTP.Verb.GET
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log

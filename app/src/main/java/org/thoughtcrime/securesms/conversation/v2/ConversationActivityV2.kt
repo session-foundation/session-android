@@ -113,6 +113,7 @@ import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.isBlinded
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.crypto.MnemonicCodec
 import org.session.libsignal.utilities.ListenableFuture
 import org.session.libsignal.utilities.Log

@@ -35,6 +35,9 @@ import org.session.libsession.utilities.MutableGroupConfigs
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.userConfigsChanged
+import org.session.libsession.utilities.withMutableGroupConfigs
+import org.session.libsession.utilities.withMutableUserConfigs
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
