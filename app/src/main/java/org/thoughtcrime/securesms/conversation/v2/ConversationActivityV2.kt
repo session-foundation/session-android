@@ -1322,7 +1322,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         if (textSecurePreferences.isLinkPreviewsEnabled()) {
             linkPreviewViewModel.onTextChanged(this, inputBarText, 0, 0)
         }
-        if (LinkPreviewUtil.findWhitelistedUrls(newContent.toString()).isNotEmpty()
+
+        // use the normalised version of the text's body to get the characters amount with the
+        // mentions as their account id
+        viewModel.onTextChanged(mentionViewModel.deconstructMessageMentions())
+    }
+
+    override fun onInputBarEditTextPasted() {
+        val inputBarText = binding.inputBar.text
+        if (LinkPreviewUtil.findWhitelistedUrls(inputBarText).isNotEmpty()
             && !textSecurePreferences.isLinkPreviewsEnabled() && !textSecurePreferences.hasSeenLinkPreviewSuggestionDialog()) {
             LinkPreviewDialog {
                 setUpLinkPreviewObserver()
@@ -1331,10 +1339,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }.show(supportFragmentManager, "Link Preview Dialog")
             textSecurePreferences.setHasSeenLinkPreviewSuggestionDialog()
         }
-
-        // use the normalised version of the text's body to get the characters amount with the
-        // mentions as their account id
-        viewModel.onTextChanged(mentionViewModel.deconstructMessageMentions())
     }
 
     override fun toggleAttachmentOptions() {
