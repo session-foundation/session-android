@@ -7,6 +7,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.Bytes
+import network.loki.messenger.libsession_util.util.Contact
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.junit.Rule
@@ -245,17 +246,12 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
         val viewModel = createViewModel(Recipient(
             address = STANDARD_ADDRESS,
             data = RecipientData.Contact(
-                name = "Contact",
-                nickname = null,
-                avatar = null,
-                approved = true,
-                approvedMe = true,
-                blocked = false,
-                expiryMode = ExpiryMode.NONE,
-                priority = 1,
-                proData = null,
-                profileUpdatedAt = null,
-                createdAt = Instant.now(),
+                configData = Contact(
+                    id = "contact-id",
+                    name = "Contact",
+                    expiryMode = ExpiryMode.NONE
+                ),
+                proData = null
             )
         )
         )
@@ -300,17 +296,12 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
         val viewModel = createViewModel(Recipient(
             address = STANDARD_ADDRESS,
             data = RecipientData.Contact(
-                name = "Contact",
-                nickname = null,
-                avatar = null,
-                approved = true,
-                approvedMe = true,
-                blocked = false,
-                expiryMode = ExpiryMode.AfterSend(time.inWholeSeconds),
-                priority = 1,
+                configData = Contact(
+                    id = "contact-id",
+                    name = "Contact",
+                    expiryMode = ExpiryMode.AfterSend(time.inWholeSeconds),
+                ),
                 proData = null,
-                profileUpdatedAt = null,
-                createdAt = Instant.now(),
             )
         )
         )
@@ -362,17 +353,12 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
         val viewModel = createViewModel(Recipient(
             address = STANDARD_ADDRESS,
             data = RecipientData.Contact(
-                name = "Contact",
-                nickname = null,
-                avatar = null,
-                approved = true,
-                approvedMe = true,
-                blocked = false,
-                expiryMode = ExpiryMode.AfterSend(time.inWholeSeconds),
-                priority = 1,
+                configData = Contact(
+                    id = "contact-id",
+                    name = "Contact",
+                    expiryMode = ExpiryMode.AfterSend(time.inWholeSeconds),
+                ),
                 proData = null,
-                profileUpdatedAt = null,
-                createdAt = Instant.now(),
             )
         )
         )
@@ -424,17 +410,12 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
         val viewModel = createViewModel(Recipient(
             address = STANDARD_ADDRESS,
             data = RecipientData.Contact(
-                name = "Contact",
-                nickname = null,
-                avatar = null,
-                approved = true,
-                approvedMe = true,
-                blocked = false,
-                expiryMode = ExpiryMode.AfterRead(time.inWholeSeconds),
-                priority = 1,
+                configData = Contact(
+                    id = "contact-id",
+                    name = "Contact",
+                    expiryMode = ExpiryMode.AfterRead(time.inWholeSeconds),
+                ),
                 proData = null,
-                profileUpdatedAt = null,
-                createdAt = Instant.now(),
             )
         )
         )
@@ -488,17 +469,11 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
         val viewModel = createViewModel(Recipient(
             address = STANDARD_ADDRESS,
             data = RecipientData.Contact(
-                name = "Contact",
-                nickname = null,
-                avatar = null,
-                approved = true,
-                approvedMe = true,
-                blocked = false,
-                expiryMode = ExpiryMode.AfterRead(time.inWholeSeconds),
-                priority = 1,
+                configData = Contact(
+                    id = "contact-id",
+                    expiryMode = ExpiryMode.AfterRead(time.inWholeSeconds),
+                ),
                 proData = null,
-                profileUpdatedAt = null,
-                createdAt = Instant.now(),
             )
         )
         )

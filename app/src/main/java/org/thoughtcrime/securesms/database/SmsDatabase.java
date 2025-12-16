@@ -140,12 +140,12 @@ public class SmsDatabase extends MessagingDatabase {
   public static void addOutgoingColumn(SupportSQLiteDatabase db) {
       final String allOutgoingMessageTypeSet = ArraysKt.joinToString(
               Types.OUTGOING_MESSAGE_TYPES,
-              ",",
-                "(",
-                ")",
-              -1,
-              "",
-              (value) -> Long.toString(value)
+              /* separator */ ",",
+              /* prefix */    "(",
+              /* postfix */   ")",
+              /* limit */     -1,
+              /* truncated */ "",
+              /* transform */ (value) -> Long.toString(value)
       );
 
       db.execSQL("ALTER TABLE " + TABLE_NAME + " ADD COLUMN " + IS_OUTGOING +

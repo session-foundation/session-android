@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
+import network.loki.messenger.libsession_util.util.Contact
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.MatcherAssert.assertThat
@@ -36,7 +37,6 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
-import java.time.Instant
 import java.time.ZonedDateTime
 
 private val STANDARD_ADDRESS =
@@ -65,17 +65,17 @@ class ConversationViewModelTest : BaseViewModelTest() {
     private val standardRecipient = Recipient(
         address = STANDARD_ADDRESS,
         data = RecipientData.Contact(
-            name = "Test User",
-            nickname = "Test User",
-            avatar = null,
-            approved = true,
-            approvedMe = true,
-            blocked = false,
-            expiryMode = ExpiryMode.NONE,
-            createdAt = Instant.now(),
-            priority = 1,
+            configData = Contact(
+                id = "contact-1",
+                name = "Test User",
+                nickname = "Test User",
+                approved = true,
+                approvedMe = true,
+                blocked = false,
+                expiryMode = ExpiryMode.NONE,
+                createdEpochSeconds = System.currentTimeMillis() / 1000L,
+            ),
             proData = null,
-            profileUpdatedAt = null
         )
     )
 
