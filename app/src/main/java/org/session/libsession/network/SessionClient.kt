@@ -1,7 +1,12 @@
 package org.session.libsession.network
 
+import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 import network.loki.messenger.libsession_util.Hash
 import network.loki.messenger.libsession_util.SessionEncrypt
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.network.onion.Version
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.network.snode.SwarmDirectory
@@ -26,12 +31,13 @@ class SessionClient @Inject constructor(
     private val swarmDirectory: SwarmDirectory,
     private val snodeDirectory: SnodeDirectory,
     private val snodeClock: SnodeClock,
+    private val json: Json,
 ) {
 
     //todo ONION no retry logic atm
     //todo ONION missing alterTTL
     //todo ONION missing batch logic
-    //todo ONION missing snode error handling
+    //todo ONION figure out stream logic for invoke - old code had a decodeFromStream path
 
     /**
      * - Uses onion routing via SessionNetwork.
@@ -41,16 +47,20 @@ class SessionClient @Inject constructor(
      * NOTE: This does *not* do any snode-failure accounting yet; that will be layered
      *       on later (e.g. path/snode penalisation based on error codes).
      */
-    suspend fun invoke(
+    @OptIn(ExperimentalSerializationApi::class)
+    suspend fun <Res> invoke(
         method: Snode.Method,
         snode: Snode,
         parameters: Map<String, Any>,
+        responseDeserializationStrategy: DeserializationStrategy<Res>,
+        publicKey: String? = null,
         version: Version = Version.V4
-    ): Map<*, *> {
+    ): Res {
         val result = sessionNetwork.sendToSnode(
             method = method,
             parameters = parameters,
             snode = snode,
+            publicKey = publicKey,
             version = version
         )
 
@@ -63,8 +73,12 @@ class SessionClient @Inject constructor(
         val body = onionResponse.body
             ?: throw Error.Generic("Empty body from snode for method $method")
 
-        @Suppress("UNCHECKED_CAST")
-        return JsonUtil.fromJson(body, Map::class.java) as Map<*, *>
+        return body.inputStream().use { inputStream ->
+            json.decodeFromStream(
+                deserializer = responseDeserializationStrategy,
+                stream = inputStream
+            )
+        }
     }
 
     /**
@@ -78,7 +92,7 @@ class SessionClient @Inject constructor(
         require(swarm.isNotEmpty()) {
             "Swarm is empty for pubkey=$publicKey"
         }
-        // Old code used shuffledRandom(); we can approximate with shuffled() then random()
+
         return swarm.shuffledRandom().random()
     }
 
@@ -179,7 +193,8 @@ class SessionClient @Inject constructor(
             method = Snode.Method.SendMessage,
             snode = target,
             parameters = params,
-            version = version
+            version = version,
+            publicKey = message.recipient
         )
 
         // Later you can map this Map<*, *> into StoreMessageResponse via kotlinx.serialization.
@@ -221,7 +236,8 @@ class SessionClient @Inject constructor(
             method = Snode.Method.DeleteMessage,
             snode = snode,
             parameters = params,
-            version = version
+            version = version,
+            publicKey = publicKey
         )
 
         // Old code walked json["swarm"] and verified ED25519 signatures.
