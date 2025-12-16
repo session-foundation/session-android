@@ -6,7 +6,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import network.loki.messenger.libsession_util.Hash
 import network.loki.messenger.libsession_util.SessionEncrypt
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.network.onion.Version
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.network.snode.SwarmDirectory
@@ -14,6 +13,7 @@ import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsignal.crypto.shuffledRandom
 import org.session.libsignal.utilities.Base64
+import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
@@ -21,9 +21,10 @@ import org.session.libsignal.utilities.Snode
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.collections.get
 
 /**
- * High-level client for interacting with snodes
+ * High-level client for interacting with snodes.
  */
 @Singleton
 class SessionClient @Inject constructor(
@@ -37,25 +38,20 @@ class SessionClient @Inject constructor(
     //todo ONION no retry logic atm
     //todo ONION missing alterTTL
     //todo ONION missing batch logic
-    //todo ONION figure out stream logic for invoke - old code had a decodeFromStream path
 
     /**
-     * - Uses onion routing via SessionNetwork.
-     * - Expects the snode to return a JSON body (storage_rpc style).
-     * - Returns that JSON as a Map for now.
+     * Single source of truth for RPC invocation.
      *
-     * NOTE: This does *not* do any snode-failure accounting yet; that will be layered
-     *       on later (e.g. path/snode penalisation based on error codes).
+     * - Uses onion routing via SessionNetwork.
+     * - Returns the raw response body as a ByteArraySlice.
      */
-    @OptIn(ExperimentalSerializationApi::class)
-    suspend fun <Res> invoke(
+    private suspend fun invokeRaw(
         method: Snode.Method,
         snode: Snode,
         parameters: Map<String, Any>,
-        responseDeserializationStrategy: DeserializationStrategy<Res>,
         publicKey: String? = null,
         version: Version = Version.V4
-    ): Res {
+    ): ByteArraySlice {
         val result = sessionNetwork.sendToSnode(
             method = method,
             parameters = parameters,
@@ -70,8 +66,26 @@ class SessionClient @Inject constructor(
         }
 
         val onionResponse = result.getOrThrow()
-        val body = onionResponse.body
+        return onionResponse.body
             ?: throw Error.Generic("Empty body from snode for method $method")
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    suspend fun <Res> invokeTyped(
+        method: Snode.Method,
+        snode: Snode,
+        parameters: Map<String, Any>,
+        responseDeserializationStrategy: DeserializationStrategy<Res>,
+        publicKey: String? = null,
+        version: Version = Version.V4
+    ): Res {
+        val body = invokeRaw(
+            method = method,
+            snode = snode,
+            parameters = parameters,
+            publicKey = publicKey,
+            version = version
+        )
 
         return body.inputStream().use { inputStream ->
             json.decodeFromStream(
@@ -81,18 +95,31 @@ class SessionClient @Inject constructor(
         }
     }
 
+    suspend fun invoke(
+        method: Snode.Method,
+        snode: Snode,
+        parameters: Map<String, Any>,
+        publicKey: String? = null,
+        version: Version = Version.V4
+    ): Map<*, *> {
+        val body = invokeRaw(
+            method = method,
+            snode = snode,
+            parameters = parameters,
+            publicKey = publicKey,
+            version = version
+        )
+
+        return JsonUtil.fromJson(body.decodeToString(), Map::class.java) as Map<*, *>
+    }
+
     /**
-     * Rough equivalent of old getSingleTargetSnode(publicKey).
-     *
      * Picks one snode from the user's swarm for a given account.
      * We deliberately randomise to avoid hammering a single node.
      */
     private suspend fun getSingleTargetSnode(publicKey: String): Snode {
         val swarm = swarmDirectory.getSwarm(publicKey)
-        require(swarm.isNotEmpty()) {
-            "Swarm is empty for pubkey=$publicKey"
-        }
-
+        require(swarm.isNotEmpty()) { "Swarm is empty for pubkey=$publicKey" }
         return swarm.shuffledRandom().random()
     }
 
@@ -146,10 +173,6 @@ class SessionClient @Inject constructor(
      * Rough port of old SnodeAPI.sendMessage, but:
      * - No additional "outer" retry layer yet (we rely on SessionNetwork's onion retry).
      * - No batching; we send a single SendMessage RPC.
-     *
-     * TODO:
-     *  - Wire in higher-level retryWithUniformInterval-style behaviour if needed.
-     *  - Return a strongly typed StoreMessageResponse once the model & serialization are wired.
      */
     suspend fun sendMessage(
         message: SnodeMessage,
@@ -189,16 +212,13 @@ class SessionClient @Inject constructor(
         Log.d("SessionClient", "Sending message to ${target.address}:${target.port} for ${message.recipient}")
 
         // In old code this went through batch API; here we do a simple single-RPC SendMessage.
-        val json = invoke(
+        return invoke(
             method = Snode.Method.SendMessage,
             snode = target,
             parameters = params,
             version = version,
             publicKey = message.recipient
         )
-
-        // Later you can map this Map<*, *> into StoreMessageResponse via kotlinx.serialization.
-        return json
     }
 
     /**
@@ -232,17 +252,13 @@ class SessionClient @Inject constructor(
 
         Log.d("SessionClient", "Deleting messages on ${snode.address}:${snode.port} for $publicKey")
 
-        val json = invoke(
+        return invoke(
             method = Snode.Method.DeleteMessage,
             snode = snode,
             parameters = params,
             version = version,
             publicKey = publicKey
         )
-
-        // Old code walked json["swarm"] and verified ED25519 signatures.
-        // You can port that verification logic into a separate helper later if you want parity.
-        return json
     }
 
     suspend fun getNetworkTime(
@@ -255,10 +271,8 @@ class SessionClient @Inject constructor(
             parameters = emptyMap(),
             version = version
         )
-
-        val timestamp = json["timestamp"] as? Long
-            ?: throw Error.Generic("Missing 'timestamp' in Info response")
-
+        
+        val timestamp = json["timestamp"] as? Long ?: -1
         return snode to timestamp
     }
 
