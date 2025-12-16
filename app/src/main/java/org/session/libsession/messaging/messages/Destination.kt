@@ -2,6 +2,7 @@ package org.session.libsession.messaging.messages
 
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.withUserConfigs
 
 sealed class Destination {
 
