@@ -50,7 +50,7 @@ internal class MediaSendViewModel @Inject constructor(
 
     var body: CharSequence
         private set
-    private var countButtonVisibility: CountButtonState.Visibility
+
     private var sentMedia: Boolean = false
     private var lastImageCapture: Optional<Media>
 
@@ -74,7 +74,7 @@ internal class MediaSendViewModel @Inject constructor(
         uiState.map { it.folders }.asLiveData()
 
     private val countButtonStateLiveData: LiveData<CountButtonState> =
-        uiState.map { CountButtonState(it.count, it.countVisibility.toLegacyVisibility()) }
+        uiState.map { CountButtonState(it.count, it.countVisibility) }
             .asLiveData()
 
     private val cameraButtonVisibilityLiveData: LiveData<Boolean> =
@@ -82,13 +82,12 @@ internal class MediaSendViewModel @Inject constructor(
 
     init {
         this.savedDrawState = HashMap()
-        this.countButtonVisibility = CountButtonState.Visibility.FORCED_OFF
         this.lastImageCapture = Optional.absent()
         this.body = ""
 
         _uiState.value = MediaSendUiState(
             position = -1,
-            countVisibility = CountVisibility.FORCED_OFF,
+            countVisibility = CountButtonState.Visibility.FORCED_OFF,
             showCameraButton = false
         )
     }
@@ -131,7 +130,7 @@ internal class MediaSendViewModel @Inject constructor(
                     }
 
                 val newVisibility =
-                    if (filteredMedia.isEmpty()) CountVisibility.CONDITIONAL
+                    if (filteredMedia.isEmpty()) CountButtonState.Visibility.CONDITIONAL
                     else _uiState.value.countVisibility
 
                 _uiState.update {
@@ -160,8 +159,6 @@ internal class MediaSendViewModel @Inject constructor(
                     }
                 }
 
-                countButtonVisibility = CountButtonState.Visibility.FORCED_OFF
-
                 val newBucketId =
                     if (filteredMedia.isEmpty()) Media.ALL_MEDIA_BUCKET_ID
                     else (filteredMedia[0].bucketId ?: Media.ALL_MEDIA_BUCKET_ID)
@@ -170,7 +167,7 @@ internal class MediaSendViewModel @Inject constructor(
                     it.copy(
                         selectedMedia = filteredMedia,
                         bucketId = newBucketId,
-                        countVisibility = CountVisibility.FORCED_OFF
+                        countVisibility = CountButtonState.Visibility.FORCED_OFF
                     )
                 }
             }
@@ -178,13 +175,13 @@ internal class MediaSendViewModel @Inject constructor(
     }
 
     fun onMultiSelectStarted() {
-        _uiState.update { it.copy(countVisibility = CountVisibility.FORCED_ON) }
+        _uiState.update { it.copy(countVisibility = CountButtonState.Visibility.FORCED_ON) }
     }
 
     fun onImageEditorStarted() {
         _uiState.update {
             it.copy(
-                countVisibility = CountVisibility.FORCED_OFF,
+                countVisibility = CountButtonState.Visibility.FORCED_OFF,
                 showCameraButton = false
             )
         }
@@ -193,7 +190,7 @@ internal class MediaSendViewModel @Inject constructor(
     fun onCameraStarted() {
         _uiState.update {
             it.copy(
-                countVisibility = CountVisibility.CONDITIONAL,
+                countVisibility = CountButtonState.Visibility.CONDITIONAL,
                 showCameraButton = false
             )
         }
@@ -202,7 +199,7 @@ internal class MediaSendViewModel @Inject constructor(
     fun onItemPickerStarted() {
         _uiState.update {
             it.copy(
-                countVisibility = CountVisibility.CONDITIONAL,
+                countVisibility = CountButtonState.Visibility.CONDITIONAL,
                 showCameraButton = true
             )
         }
@@ -211,7 +208,7 @@ internal class MediaSendViewModel @Inject constructor(
     fun onFolderPickerStarted() {
         _uiState.update {
             it.copy(
-                countVisibility = CountVisibility.CONDITIONAL,
+                countVisibility = CountButtonState.Visibility.CONDITIONAL,
                 showCameraButton = true
             )
         }
@@ -274,7 +271,7 @@ internal class MediaSendViewModel @Inject constructor(
         selected.add(media)
 
         val newVisibility =
-            if (selected.size == 1) CountVisibility.FORCED_OFF else CountVisibility.CONDITIONAL
+            if (selected.size == 1) CountButtonState.Visibility.FORCED_OFF else CountButtonState.Visibility.CONDITIONAL
 
         _uiState.update {
             it.copy(
@@ -459,26 +456,17 @@ internal class MediaSendViewModel @Inject constructor(
         val bucketMedia: List<Media> = emptyList(),
         val selectedMedia: List<Media> = emptyList(),
         val position: Int = -1,
-        val countVisibility: CountVisibility = CountVisibility.FORCED_OFF,
+        val countVisibility: CountButtonState.Visibility = CountButtonState.Visibility.FORCED_OFF,
         val showCameraButton: Boolean = false
     ) {
         val count: Int get() = selectedMedia.size
         val showCountButton: Boolean get() =
             when (countVisibility) {
-                CountVisibility.FORCED_ON -> true
-                CountVisibility.FORCED_OFF -> false
-                CountVisibility.CONDITIONAL -> count > 0
+                CountButtonState.Visibility.FORCED_ON -> true
+                CountButtonState.Visibility.FORCED_OFF -> false
+                CountButtonState.Visibility.CONDITIONAL -> count > 0
             }
     }
-
-    enum class CountVisibility { CONDITIONAL, FORCED_ON, FORCED_OFF }
-
-    private fun CountVisibility.toLegacyVisibility(): CountButtonState.Visibility =
-        when (this) {
-            CountVisibility.CONDITIONAL -> CountButtonState.Visibility.CONDITIONAL
-            CountVisibility.FORCED_ON -> CountButtonState.Visibility.FORCED_ON
-            CountVisibility.FORCED_OFF -> CountButtonState.Visibility.FORCED_OFF
-        }
 
     sealed interface MediaSendEffect {
         data class ShowError(val error: Error) : MediaSendEffect
