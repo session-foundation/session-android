@@ -1,5 +1,6 @@
 package org.session.libsession.network.onion.http
 
+import org.session.libsession.network.model.ErrorStatus
 import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.network.model.OnionError
 import org.session.libsession.network.model.OnionResponse
@@ -15,16 +16,6 @@ import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.toHexString
 
-private val NON_PENALIZING_STATUSES = setOf(403, 404, 406, 425)
-private const val REQUIRE_BLINDING_MESSAGE =
-    "Invalid authentication: this server requires the use of blinded ids"
-
-/**
- * Builds onion layers, sends them over HTTP to the guard,
- * receives and decrypts the onion response,
- * and maps low-level protocol/transport errors into onion errors.
- * It does not choose paths, retry, or apply healing logic.
- */
 class HttpOnionTransport : OnionTransport {
 
     override suspend fun send(
@@ -65,7 +56,7 @@ class HttpOnionTransport : OnionTransport {
             return Result.failure(mapPathHttpError(guard, httpEx))
         } catch (t: Throwable) {
             // TCP / DNS / TLS / timeout etc. reaching guard
-            return Result.failure(OnionError.GuardConnectionFailed(guard, t))
+            return Result.failure(OnionError.GuardUnreachable(guard, t))
         }
 
         // We have an onion-level response from the guard; decrypt & interpret
@@ -78,15 +69,16 @@ class HttpOnionTransport : OnionTransport {
     }
 
     /**
-     * Map HTTP errors from the guard or intermediate nodes, whose errors are  not encrypted
-     * (before onion decryption)
+     * Errors thrown by the guard / path hop BEFORE we get an onion-encrypted reply.
      */
     private fun mapPathHttpError(
         node: Snode,
         ex: HTTP.HTTPRequestFailedException
     ): OnionError {
         val json = ex.json
-        val message = json?.get("result") as? String
+        val message = (json?.get("result") as? String)
+            ?: (json?.get("message") as? String)
+
         val statusCode = ex.statusCode
 
         // Special onion path error: "Next node not found: <ed25519>"
@@ -99,26 +91,16 @@ class HttpOnionTransport : OnionTransport {
             )
         }
 
-        // Non-penalising codes: treat as destination-level error (path OK)
-        if (statusCode in NON_PENALIZING_STATUSES || message == "Loki Server error") {
-            return OnionError.PathErrorNonPenalizing(
-                node = node,
-                code = statusCode,
-                body = message
-            )
-        }
-
-        // Otherwise: guard rejected / misbehaved
         return OnionError.PathError(
             node = node,
-            code = statusCode,
-            body = message
+            status = ErrorStatus(
+                code = statusCode,
+                message = message,
+                body = null
+            )
         )
     }
 
-    /**
-     * Handle an onion-encrypted response
-     */
     private fun handleResponse(
         rawResponse: ByteArray,
         destinationSymmetricKey: ByteArray,
@@ -129,11 +111,7 @@ class HttpOnionTransport : OnionTransport {
             Version.V4 -> handleV4Response(rawResponse, destinationSymmetricKey, destination)
             Version.V2, Version.V3 -> {
                 //todo ONION add support for v2/v3
-                Result.failure(
-                    OnionError.Unknown(
-                        UnsupportedOperationException("Need to implement - TEMP")
-                    )
-                )
+                Result.failure(OnionError.Unknown(UnsupportedOperationException("Need to implement v2/v3")))
             }
         }
     }
@@ -145,104 +123,69 @@ class HttpOnionTransport : OnionTransport {
     ): Result<OnionResponse> {
         try {
             if (response.size <= AESGCM.ivSize) {
-                return Result.failure(OnionError.InvalidResponse(response))
+                return Result.failure(OnionError.InvalidResponse())
             }
 
-            val plaintext = AESGCM.decrypt(response, symmetricKey = destinationSymmetricKey)
+            val decrypted = AESGCM.decrypt(response, symmetricKey = destinationSymmetricKey)
 
-            if (plaintext.isEmpty() || plaintext[0] != 'l'.code.toByte()) {
-                return Result.failure(OnionError.InvalidResponse(response))
+            if (decrypted.isEmpty() || decrypted[0] != 'l'.code.toByte()) {
+                return Result.failure(OnionError.InvalidResponse())
             }
 
-            val infoSepIdx = plaintext.indexOfFirst { it == ':'.code.toByte() }
-            if (infoSepIdx <= 1) {
-                return Result.failure(OnionError.InvalidResponse(response))
-            }
+            val infoSepIdx = decrypted.indexOfFirst { it == ':'.code.toByte() }
+            if (infoSepIdx <= 1) return Result.failure(OnionError.InvalidResponse())
 
-            val infoLenSlice = plaintext.slice(1 until infoSepIdx)
-            val infoLength = infoLenSlice
-                .toByteArray()
-                .toString(Charsets.US_ASCII)
-                .toIntOrNull()
-                ?: return Result.failure(OnionError.InvalidResponse(response))
+            val infoLenSlice = decrypted.slice(1 until infoSepIdx)
+            val infoLength = infoLenSlice.toByteArray().toString(Charsets.US_ASCII).toIntOrNull()
+                ?: return Result.failure(OnionError.InvalidResponse())
 
             val infoStartIndex = "l$infoLength".length + 1
             val infoEndIndex = infoStartIndex + infoLength
-            if (infoEndIndex > plaintext.size) {
-                return Result.failure(OnionError.InvalidResponse(response))
-            }
+            if (infoEndIndex > decrypted.size) return Result.failure(OnionError.InvalidResponse())
 
-            val infoBytes = plaintext.slice(infoStartIndex until infoEndIndex).toByteArray()
+            val infoBytes = decrypted.slice(infoStartIndex until infoEndIndex).toByteArray()
             @Suppress("UNCHECKED_CAST")
             val responseInfo = JsonUtil.fromJson(infoBytes, Map::class.java) as Map<*, *>
 
             val statusCode = responseInfo["code"].toString().toInt()
 
-            // clock out-of-sync special handling
-            if (statusCode == 406 || statusCode == 425) {
-                val body = "Your clock is out of sync with the service node network."
-                return Result.failure(
-                    OnionError.ClockOutOfSync(
-                        code = statusCode,
-                        body = body
-                    )
-                )
-            }
-
             if (statusCode !in 200..299) {
-                // For 400 from server, we might have a body in the second part
-                val responseBodySlice =
+                // Optional "body" part for some server errors (notably 400)
+                val bodySlice =
                     if (destination is OnionDestination.ServerDestination && statusCode == 400) {
-                        plaintext.getBody(infoLength, infoEndIndex)
+                        decrypted.getBody(infoLength, infoEndIndex)
                     } else null
-
-                val bodyStr = responseBodySlice?.decodeToString()
-                val bodyOrMsg = bodyStr ?: (responseInfo["message"]?.toString())
-
-                // Special case: require blinding message (still treated as destination error)
-                //todo ONION do we need to make this distinction since it amounts to the same in the end?
-                if (bodyStr == REQUIRE_BLINDING_MESSAGE) {
-                    return Result.failure(
-                        OnionError.DestinationError(
-                            code = statusCode,
-                            body = bodyStr
-                        )
-                    )
-                }
 
                 return Result.failure(
                     OnionError.DestinationError(
-                        code = statusCode,
-                        body = bodyOrMsg
+                        status = ErrorStatus(
+                            code = statusCode,
+                            message = responseInfo["message"]?.toString(),
+                            body = bodySlice
+                        )
                     )
                 )
             }
 
-            // 2xx: success. There may or may not be a body.
-            val responseBody = plaintext.getBody(infoLength, infoEndIndex)
+            val responseBody = decrypted.getBody(infoLength, infoEndIndex)
             return if (responseBody.isEmpty()) {
                 Result.success(OnionResponse(info = responseInfo, body = null))
             } else {
                 Result.success(OnionResponse(info = responseInfo, body = responseBody))
             }
         } catch (t: Throwable) {
-            return Result.failure(OnionError.InvalidResponse(response))
+            return Result.failure(OnionError.InvalidResponse(t))
         }
     }
 
-    /**
-     * V4 layout helper: extracts the optional body part from `lN:json...e`.
-     */
     private fun ByteArray.getBody(infoLength: Int, infoEndIndex: Int): ByteArraySlice {
         val infoLengthStringLength = infoLength.toString().length
-        // minimum layout: l<infoLength>:<info>e
-        if (size <= infoLength + infoLengthStringLength + 2 /* l and e */) {
-            return ByteArraySlice.EMPTY
-        }
-        // There is extra data: parse the second length / body section.
+        if (size <= infoLength + infoLengthStringLength + 2) return ByteArraySlice.EMPTY
+
         val dataSlice = view(infoEndIndex + 1 until size - 1)
         val dataSepIdx = dataSlice.asList().indexOfFirst { it.toInt() == ':'.code }
         if (dataSepIdx == -1) return ByteArraySlice.EMPTY
+
         return dataSlice.view(dataSepIdx + 1 until dataSlice.len)
     }
 }

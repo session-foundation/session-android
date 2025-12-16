@@ -194,4 +194,14 @@ class SnodeDirectory @Inject constructor(
 
         return (existingGuards + newGuards).toSet()
     }
+
+    /**
+     * Remove a snode from the pool by its ed25519 key.
+     */
+    fun dropSnodeFromPool(ed25519Key: String) {
+        val current = getSnodePool()
+        val hit = current.firstOrNull { it.publicKeySet?.ed25519Key == ed25519Key } ?: return
+        Log.w("SnodeDirectory", "Dropping snode from pool (ed25519=$ed25519Key): $hit")
+        updateSnodePool(current - hit)
+    }
 }

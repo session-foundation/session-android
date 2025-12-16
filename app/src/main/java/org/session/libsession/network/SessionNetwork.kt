@@ -1,10 +1,14 @@
 package org.session.libsession.network
 
 import okhttp3.Request
+import kotlinx.coroutines.delay
 import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.network.model.OnionError
 import org.session.libsession.network.model.OnionResponse
 import org.session.libsession.network.model.Path
+import org.session.libsession.network.onion.OnionErrorManager
+import org.session.libsession.network.onion.OnionFailureContext
+import org.session.libsession.network.onion.FailureDecision
 import org.session.libsession.network.onion.OnionTransport
 import org.session.libsession.network.onion.PathManager
 import org.session.libsession.network.onion.Version
@@ -13,27 +17,40 @@ import org.session.libsession.network.utilities.getHeadersForOnionRequest
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
+import kotlin.random.Random
 
 /**
  * High-level onion request manager.
- * It prepares payloads, chooses onion paths, analyzes failures, repairs the path graph,
- * implements retry rules, and returns final user-level responses.
- * It does not build onion encryption or send anything over the network, that part
- * is left to an implementation of an OnionTransport
+ *
+ * Responsibilities:
+ * - Prepare payloads
+ * - Choose onion paths
+ * - Retry loop + (light) retry timing/backoff
+ * - Delegate all “what do we do with this OnionError?” decisions to OnionErrorManager
+ *
+ * Not responsible for:
+ * - Onion crypto construction or transport I/O (OnionTransport)
+ * - Policy / healing logic (OnionErrorManager)
  */
 class SessionNetwork(
     private val pathManager: PathManager,
     private val transport: OnionTransport,
-    private val maxAttempts: Int = 3
+    private val errorManager: OnionErrorManager,
+    private val maxAttempts: Int = 2,
+    private val baseRetryDelayMs: Long = 250L,
+    private val maxRetryDelayMs: Long = 2_000L
 ) {
 
     /**
      * Send an onion request to a *service node* (RPC).
+     *
+     * @param publicKey Optional: used by OnionErrorManager for swarm-specific handling (e.g. 421).
      */
     suspend fun sendToSnode(
         method: Snode.Method,
         parameters: Map<*, *>,
         snode: Snode,
+        publicKey: String? = null,
         version: Version = Version.V4
     ): Result<OnionResponse> {
         val payload = JsonUtil.toJson(
@@ -45,12 +62,14 @@ class SessionNetwork(
 
         val destination = OnionDestination.SnodeDestination(snode)
 
-        // Exclude the snode itself from being in the path (matches old behaviour)
+        // Exclude the destination snode itself from being in the path (old behaviour)
         return sendWithRetry(
             destination = destination,
             payload = payload,
             version = version,
-            snodeToExclude = snode
+            snodeToExclude = snode,
+            targetSnode = snode,
+            publicKey = publicKey
         )
     }
 
@@ -78,7 +97,9 @@ class SessionNetwork(
             destination = destination,
             payload = payload,
             version = version,
-            snodeToExclude = null
+            snodeToExclude = null,
+            targetSnode = null,
+            publicKey = null
         )
     }
 
@@ -86,12 +107,18 @@ class SessionNetwork(
         destination: OnionDestination,
         payload: ByteArray,
         version: Version,
-        snodeToExclude: Snode?
+        snodeToExclude: Snode?,
+        targetSnode: Snode?,
+        publicKey: String?
     ): Result<OnionResponse> {
         var lastError: Throwable? = null
 
-        repeat(maxAttempts) { attempt ->
-            val path = pathManager.getPath(exclude = snodeToExclude)
+        for (attempt in 1..maxAttempts) {
+            val path: Path = try {
+                pathManager.getPath(exclude = snodeToExclude)
+            } catch (t: Throwable) {
+                return Result.failure(t)
+            }
 
             val result = transport.send(
                 path = path,
@@ -102,97 +129,50 @@ class SessionNetwork(
 
             if (result.isSuccess) return result
 
-            val error = result.exceptionOrNull()
-            if (error !is OnionError) {
-                // Transport returned some unexpected Throwable
-                return Result.failure(error ?: IllegalStateException("Unknown transport error"))
+            val throwable = result.exceptionOrNull()
+                ?: IllegalStateException("Unknown onion transport error")
+
+            val onionError = throwable as? OnionError
+                ?: return Result.failure(throwable)
+
+            Log.w("Onion", "Onion error on attempt $attempt/$maxAttempts: $onionError")
+
+            lastError = onionError
+
+            // Delegate all handling + retry decision
+            val decision = errorManager.onFailure(
+                error = onionError,
+                ctx = OnionFailureContext(
+                    path = path,
+                    destination = destination,
+                    targetSnode = targetSnode,
+                    publicKey = publicKey
+                )
+            )
+
+            when (decision) {
+                is FailureDecision.Fail -> return Result.failure(decision.throwable)
+                FailureDecision.Retry -> {
+                    if (attempt >= maxAttempts) break
+                    delay(computeBackoffDelayMs(attempt))
+                    continue
+                }
             }
-
-            Log.w("Onion", "Onion error on attempt ${attempt + 1}/$maxAttempts: $error")
-
-            handleError(path, error)
-
-            if (!shouldRetry(error, attempt)) {
-                return Result.failure(error)
-            }
-
-            lastError = error
-
-            //todo ONION we might want some backoff/delay logic here
         }
 
         return Result.failure(lastError ?: IllegalStateException("Unknown onion error"))
     }
 
-    /**
-     * Decide whether to retry based on the error type and current attempt.
-     */
-    private fun shouldRetry(error: OnionError, attempt: Int): Boolean {
-        if (attempt + 1 >= maxAttempts) return false
-
-        //todo ONION I'm making assumptions here - this is for the low level SessionNetwork reties. Might want to fully define this
-        return when (error) {
-            is OnionError.DestinationError,
-            is OnionError.ClockOutOfSync -> {
-                false
-            }
-            is OnionError.GuardConnectionFailed,
-            is OnionError.PathError,
-            is OnionError.PathErrorNonPenalizing,
-            is OnionError.IntermediateNodeFailed,
-            is OnionError.InvalidResponse,
-            is OnionError.Unknown -> {
-                true
-            }
-        }
+    private fun computeBackoffDelayMs(attempt: Int): Long {
+        // Exponential-ish: base * 2^(attempt-1), with jitter, capped
+        val exp = baseRetryDelayMs * (1L shl (attempt - 1).coerceAtMost(5))
+        val capped = exp.coerceAtMost(maxRetryDelayMs)
+        val jitter = Random.nextLong(0, capped / 3 + 1)
+        return capped + jitter
     }
 
     /**
-     * Map an OnionError into path-level healing operations.
-     */
-    private fun handleError(path: Path, error: OnionError) {
-        when (error) {
-            is OnionError.GuardConnectionFailed,
-            is OnionError.PathError,
-            is OnionError.InvalidResponse,
-            is OnionError.Unknown -> {
-                // We don't know which hop is bad; drop the whole path.
-                Log.w("Onion", "Dropping entire path due to error: $error")
-                pathManager.handleBadPath(path)
-            }
-
-            is OnionError.IntermediateNodeFailed -> {
-                val failedKey = error.failedPublicKey
-                if (failedKey == null) {
-                    Log.w("Onion", "Intermediate node failed but no key given; dropping path")
-                    pathManager.handleBadPath(path)
-                } else {
-                    val bad = path.firstOrNull { it.publicKeySet?.ed25519Key == failedKey }
-                    if (bad != null) {
-                        Log.w("Onion", "Dropping bad snode $bad in path")
-                        pathManager.handleBadSnode(bad)
-                    } else {
-                        Log.w("Onion", "Failed node key not in path; dropping path")
-                        pathManager.handleBadPath(path)
-                    }
-                }
-            }
-
-            is OnionError.PathErrorNonPenalizing,
-            is OnionError.DestinationError -> {
-                // Path is considered healthy; do not mutate paths.
-                Log.d("Onion", "Non penalizing error: $error")
-            }
-
-            is OnionError.ClockOutOfSync -> {
-                // todo ONION - should we reset the SnodeClock?
-                Log.d("Onion", "Clock out of sync (non-penalizing): $error")
-            }
-        }
-    }
-
-    /**
-     * Equivalent to the old generatePayload() from OnionRequestAPI.
+     * Equivalent to old generatePayload() from OnionRequestAPI.
      */
     private fun generatePayload(request: Request, server: String, version: Version): ByteArray {
         val headers = request.getHeadersForOnionRequest().toMutableMap()

@@ -2,6 +2,7 @@ package org.session.libsession.network.snode
 
 import org.session.libsession.network.SessionNetwork
 import org.session.libsession.network.onion.Version
+import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Snode
 
@@ -69,7 +70,7 @@ class SwarmDirectory(
         return list.asSequence()
             .mapNotNull { it as? Map<*, *> }
             .mapNotNull { raw ->
-                createSnode(
+                snodeDirectory.createSnode(
                     address    = raw["ip"] as? String,
                     port       = (raw["port"] as? String)?.toInt(),
                     ed25519Key = raw["pubkey_ed25519"] as? String,
@@ -79,20 +80,27 @@ class SwarmDirectory(
             .toList()
     }
 
-    private fun createSnode(
-        address: String?,
-        port: Int?,
-        ed25519Key: String?,
-        x25519Key: String?
-    ): Snode? {
-        return Snode(
-            address?.takeUnless { it == "0.0.0.0" }?.let { "https://$it" } ?: return null,
-            port ?: return null,
-            Snode.KeySet(
-                ed25519Key ?: return null,
-                x25519Key ?: return null
-            ),
-            Snode.Version.ZERO // or parse from response if present
-        )
+    /**
+     * Handles 421: snode says it's no longer associated with this pubkey.
+     *
+     * Old behaviour: if response contains snodes -> replace cached swarm.
+     * Otherwise invalidate (caller may also drop the target snode from cached swarm).
+     *
+     * @return true if swarm was updated from body JSON, false otherwise.
+     */
+    fun tryUpdateSwarmFrom421(publicKey: String, body: ByteArraySlice?): Boolean {
+        if (body == null || body.isEmpty()) return false
+
+        val json: Map<*, *> = try {
+            JsonUtil.fromJson(body.copyToBytes(), Map::class.java) as Map<*, *>
+        } catch (_: Throwable) {
+            return false
+        }
+
+        val snodes = parseSnodes(json).toSet()
+        if (snodes.isEmpty()) return false
+
+        storage.setSwarm(publicKey, snodes)
+        return true
     }
 }
