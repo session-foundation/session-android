@@ -110,7 +110,7 @@ public class MediaPickerItemFragment extends Fragment implements MediaPickerItem
       onMediaSelectionChanged(new ArrayList<>(viewModel.getSelectedMedia().getValue()));
     }
 
-    viewModel.getMediaInBucket(requireContext(), bucketId).observe(getViewLifecycleOwner(), adapter::setMedia);
+    viewModel.getMediaInBucket(bucketId).observe(getViewLifecycleOwner(), adapter::setMedia);
 
     initMediaObserver(viewModel);
   }
