@@ -472,6 +472,7 @@ fun Settings(
                     DialogButtonData(
                         text = GetString(stringResource(id = R.string.save)),
                         enabled = uiState.usernameDialog.setEnabled,
+                        dismissOnClick = false,
                         onClick = { sendCommand(SetUsername) },
                         qaTag = stringResource(R.string.qa_settings_dialog_username_save),
                     ),

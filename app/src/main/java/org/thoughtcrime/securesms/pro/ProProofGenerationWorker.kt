@@ -18,6 +18,7 @@ import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.pro.ProConfig
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
