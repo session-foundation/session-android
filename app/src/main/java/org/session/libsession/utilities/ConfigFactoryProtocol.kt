@@ -34,11 +34,56 @@ import java.time.Instant
 interface ConfigFactoryProtocol {
     val configUpdateNotifications: Flow<ConfigUpdateNotification>
 
-    fun <T> withUserConfigs(cb: (UserConfigs) -> T): T
-    fun <T> withMutableUserConfigs(cb: (MutableUserConfigs) -> T): T
-    fun mergeUserConfigs(userConfigType: UserConfigType, messages: List<ConfigMessage>)
+    /**
+     * Dangerously access the user configs. You must call the returned release function
+     * to release the lock after you are done with the configs.
+     *
+     * **Warning:** Improper use of this function may lead to deadlocks or data corruption.
+     * It's better to use [withUserConfigs] instead.
+     *
+     * @return A pair of the user configs and a release function.
+     */
+    fun dangerouslyAccessUserConfigs(): Pair<UserConfigs, () -> Unit>
 
-    fun <T> withGroupConfigs(groupId: AccountId, cb: (GroupConfigs) -> T): T
+    /**
+     * Dangerously access the mutable user configs. You must call the returned release function
+     * to release the lock after you are done with the configs. The release function must be called
+     * as soon as possible and must be called in the same thread as this function.
+     *
+     * **Warning:** Improper use of this function may lead to deadlocks or data corruption.
+     * It's better to use [withMutableUserConfigs] instead.
+     *
+     * @return A pair of the mutable user configs and a release function.
+     */
+    fun dangerouslyAccessMutableUserConfigs(): Pair<MutableUserConfigs, () -> Unit>
+
+    /**
+     * Dangerously access the group configs for the given group ID. You must call the returned
+     * release function to release the lock after you are done with the configs. The release
+     * function must be called as soon as possible and must be called in the same thread as
+     * this function.
+     *
+     * **Warning:** Improper use of this function may lead to deadlocks or data corruption.
+     * It's better to use [withGroupConfigs] instead.
+     *
+     * @return A pair of the group configs and a release function.
+     */
+    fun dangerouslyAccessGroupConfigs(groupId: AccountId): Pair<GroupConfigs, () -> Unit>
+
+    /**
+     * Dangerously access the mutable group configs for the given group ID. You must call the
+     * returned release function to release the lock after you are done with the configs. The
+     * release function must be called as soon as possible and must be called in the same thread
+     * as this function.
+     *
+     * **Warning:** Improper use of this function may lead to deadlocks or data corruption.
+     * It's better to use [withMutableGroupConfigs] instead.
+     *
+     * @return A pair of the mutable group configs and a release function.
+     */
+    fun dangerouslyAccessMutableGroupConfigs(groupId: AccountId): Pair<MutableGroupConfigs, () -> Unit>
+
+    fun mergeUserConfigs(userConfigType: UserConfigType, messages: List<ConfigMessage>)
 
     /**
      * Create a new group config instance. Note this does not save the group configs to the database.
@@ -53,11 +98,6 @@ interface ConfigFactoryProtocol {
      * function is only useful when you just created a new group and want to save the configs.
      */
     fun saveGroupConfigs(groupId: AccountId, groupConfigs: MutableGroupConfigs)
-
-    /**
-     * @param recreateConfigInstances If true, the group configs will be recreated before calling the callback. This is useful when you have received an admin key or otherwise.
-     */
-    fun <T> withMutableGroupConfigs(groupId: AccountId, cb: (MutableGroupConfigs) -> T): T
 
     fun canPerformChange(variant: String, publicKey: String, changeTimestampMs: Long): Boolean
 
@@ -112,6 +152,42 @@ enum class UserConfigType(val namespace: Int) {
     USER_PROFILE(Namespace.USER_PROFILE()),
     CONVO_INFO_VOLATILE(Namespace.CONVO_INFO_VOLATILE()),
     USER_GROUPS(Namespace.USER_GROUPS()),
+}
+
+inline fun <T> ConfigFactoryProtocol.withUserConfigs(cb: (UserConfigs) -> T): T {
+    val (configs, release) = dangerouslyAccessUserConfigs()
+    return try {
+        cb(configs)
+    } finally {
+        release()
+    }
+}
+
+inline fun <T> ConfigFactoryProtocol.withMutableUserConfigs(cb: (MutableUserConfigs) -> T): T {
+    val (configs, release) = dangerouslyAccessMutableUserConfigs()
+    return try {
+        cb(configs)
+    } finally {
+        release()
+    }
+}
+
+inline fun <T> ConfigFactoryProtocol.withGroupConfigs(groupId: AccountId, cb: (GroupConfigs) -> T): T {
+    val (configs, release) = dangerouslyAccessGroupConfigs(groupId)
+    return try {
+        cb(configs)
+    } finally {
+        release()
+    }
+}
+
+inline fun <T> ConfigFactoryProtocol.withMutableGroupConfigs(groupId: AccountId, cb: (MutableGroupConfigs) -> T): T {
+    val (configs, release) = dangerouslyAccessMutableGroupConfigs(groupId)
+    return try {
+        cb(configs)
+    } finally {
+        release()
+    }
 }
 
 val ConfigFactoryProtocol.currentUserName: String get() = withUserConfigs { it.userProfile.getName().orEmpty() }

@@ -1,7 +1,6 @@
 package org.session.libsession.messaging.sending_receiving
 
 import network.loki.messenger.libsession_util.protocol.DecodedPro
-import network.loki.messenger.libsession_util.util.BitSet
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.ProfileUpdateHandler
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
@@ -14,8 +13,10 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.upsertContact
-import org.session.protos.SessionProtos
+import org.session.libsession.utilities.withMutableUserConfigs
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.Log
+import org.session.protos.SessionProtos
 import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
