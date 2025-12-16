@@ -88,7 +88,7 @@ class SwarmDirectory(
      *
      * @return true if swarm was updated from body JSON, false otherwise.
      */
-    fun tryUpdateSwarmFrom421(publicKey: String, body: ByteArraySlice?): Boolean {
+    fun updateSwarmFromResponse(publicKey: String, body: ByteArraySlice?): Boolean {
         if (body == null || body.isEmpty()) return false
 
         val json: Map<*, *> = try {

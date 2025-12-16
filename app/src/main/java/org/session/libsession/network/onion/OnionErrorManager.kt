@@ -1,7 +1,6 @@
 package org.session.libsession.network.onion
 
 import org.session.libsession.network.SnodeClock
-import org.session.libsession.network.model.ErrorOrigin
 import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.network.model.OnionError
 import org.session.libsession.network.model.Path
@@ -43,13 +42,10 @@ class OnionErrorManager @Inject constructor(
             return if (resetOk) FailureDecision.Retry else FailureDecision.Fail(error)
         }
 
-        // 400 (except blinding), 403, 404: do not penalise path or snode; retry
+        // 400, 403, 404: do not penalise path or snode; No retries
         if (code == 400 || code == 403 || code == 404) {
-            // carve-out: destination 400 with blinding message is caller-handled
-            if (code == 400 && bodyText?.contains(REQUIRE_BLINDING_MESSAGE) == true) {
-                return FailureDecision.Fail(error)
-            }
-            return FailureDecision.Retry
+            //todo ONION need to move the REQUIRE_BLINDING_MESSAGE logic out of here, it should be handled at the calling site, in this case the community poller, to then call /capabilities once
+            return FailureDecision.Fail(error)
         }
 
         // --------------------------------------------------------------------
@@ -81,7 +77,8 @@ class OnionErrorManager @Inject constructor(
             }
 
             is OnionError.GuardUnreachable -> {
-                // Networky: penalise path; retry
+                // penalise path; retry
+                //todo ONION not sure yet whether we should punish the path here, or even if we should retry as it is likely a "no connection" issue
                 pathManager.handleBadPath(ctx.path)
                 return FailureDecision.Retry
             }
@@ -89,6 +86,7 @@ class OnionErrorManager @Inject constructor(
             // InvalidResponse / Unknown: treat as path failure (penalise path; retry)
             is OnionError.InvalidResponse,
             is OnionError.Unknown -> {
+                //todo ONION also not sure whether to penalise path and retry here...
                 pathManager.handleBadPath(ctx.path)
                 return FailureDecision.Retry
             }
@@ -106,7 +104,7 @@ class OnionErrorManager @Inject constructor(
                 val targetSnode = ctx.targetSnode
 
                 val updated = if (publicKey != null) {
-                    swarmDirectory.tryUpdateSwarmFrom421(
+                    swarmDirectory.updateSwarmFromResponse(
                         publicKey = publicKey,
                         body = status.body
                     )
