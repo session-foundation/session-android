@@ -200,6 +200,7 @@ class HttpOnionTransport : OnionTransport {
                 val bodyOrMsg = bodyStr ?: (responseInfo["message"]?.toString())
 
                 // Special case: require blinding message (still treated as destination error)
+                //todo ONION do we need to make this distinction since it amounts to the same in the end?
                 if (bodyStr == REQUIRE_BLINDING_MESSAGE) {
                     return Result.failure(
                         OnionError.DestinationError(
