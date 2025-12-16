@@ -473,6 +473,7 @@ fun Settings(
                         text = GetString(stringResource(id = R.string.save)),
                         enabled = uiState.usernameDialog.setEnabled,
                         onClick = { sendCommand(SetUsername) },
+                        dismissOnClick = false, // The command will hide the dialog
                         qaTag = stringResource(R.string.qa_settings_dialog_username_save),
                     ),
                     DialogButtonData(
