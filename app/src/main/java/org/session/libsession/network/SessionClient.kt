@@ -21,7 +21,6 @@ import org.session.libsignal.utilities.Snode
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.collections.get
 
 /**
  * High-level client for interacting with snodes.
@@ -110,7 +109,7 @@ class SessionClient @Inject constructor(
             version = version
         )
 
-        return JsonUtil.fromJson(body.decodeToString(), Map::class.java) as Map<*, *>
+        return JsonUtil.fromJson(body, Map::class.java) as Map<*, *>
     }
 
     /**
@@ -271,8 +270,14 @@ class SessionClient @Inject constructor(
             parameters = emptyMap(),
             version = version
         )
-        
-        val timestamp = json["timestamp"] as? Long ?: -1
+
+        val timestamp = when (val t = json["timestamp"]) {
+            is Long -> t
+            is Int -> t.toLong()
+            is Double -> t.toLong()
+            else -> -1
+        }
+
         return snode to timestamp
     }
 

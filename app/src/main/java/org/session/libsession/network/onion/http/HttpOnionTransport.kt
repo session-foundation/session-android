@@ -143,9 +143,8 @@ class HttpOnionTransport : OnionTransport {
             val infoEndIndex = infoStartIndex + infoLength
             if (infoEndIndex > decrypted.size) return Result.failure(OnionError.InvalidResponse())
 
-            val infoBytes = decrypted.slice(infoStartIndex until infoEndIndex).toByteArray()
-            @Suppress("UNCHECKED_CAST")
-            val responseInfo = JsonUtil.fromJson(infoBytes, Map::class.java) as Map<*, *>
+            val infoSlice = decrypted.view(infoStartIndex until infoEndIndex)
+            val responseInfo = JsonUtil.fromJson(infoSlice, Map::class.java) as Map<*, *>
 
             val statusCode = responseInfo["code"].toString().toInt()
 

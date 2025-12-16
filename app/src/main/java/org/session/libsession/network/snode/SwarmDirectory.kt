@@ -47,8 +47,7 @@ class SwarmDirectory(
 
         val onionResponse = result.getOrThrow()
         val body = onionResponse.body ?: error("Empty GetSwarm body")
-        //todo ONION double check usage of copytoBytes are ok here and further down
-        val json = JsonUtil.fromJson(body.copyToBytes(), Map::class.java) as Map<*, *>
+        val json = JsonUtil.fromJson(body, Map::class.java) as Map<*, *>
 
         return parseSnodes(json).toSet()
     }
@@ -93,7 +92,7 @@ class SwarmDirectory(
         if (body == null || body.isEmpty()) return false
 
         val json: Map<*, *> = try {
-            JsonUtil.fromJson(body.copyToBytes(), Map::class.java) as Map<*, *>
+            JsonUtil.fromJson(body, Map::class.java) as Map<*, *>
         } catch (_: Throwable) {
             return false
         }
