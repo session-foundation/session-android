@@ -16,6 +16,8 @@ import kotlinx.coroutines.sync.withPermit
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
+import org.session.libsession.utilities.withGroupConfigs
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.attachments.AvatarDownloadManager

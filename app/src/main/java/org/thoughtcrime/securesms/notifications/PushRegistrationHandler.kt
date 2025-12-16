@@ -15,6 +15,7 @@ import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.userConfigsChanged
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState

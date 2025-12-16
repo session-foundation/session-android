@@ -12,22 +12,21 @@ import androidx.preference.PreferenceDataStore
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isPasswordDisabled
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setScreenLockEnabled
+import org.session.libsession.utilities.withMutableUserConfigs
 import org.thoughtcrime.securesms.components.SwitchPreferenceCompat
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
-import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.areNotificationsEnabled
 import org.thoughtcrime.securesms.util.IntentUtils
-import java.time.Instant
-import java.time.ZonedDateTime
+import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.areNotificationsEnabled
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class PrivacySettingsPreferenceFragment : CorrectedPreferenceFragment() {

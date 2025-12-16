@@ -4,6 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoggedInState

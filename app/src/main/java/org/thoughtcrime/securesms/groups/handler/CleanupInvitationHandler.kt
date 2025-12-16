@@ -4,6 +4,8 @@ import network.loki.messenger.libsession_util.allWithStatus
 import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.messaging.groups.GroupScope
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.withMutableGroupConfigs
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
