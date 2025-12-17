@@ -48,6 +48,8 @@ import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemote
 import org.session.libsession.utilities.toBlinded
 import org.session.libsession.utilities.toGroupString
 import org.session.libsession.utilities.userConfigsChanged
+import org.session.libsession.utilities.withGroupConfigs
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository

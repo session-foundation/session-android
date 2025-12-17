@@ -40,6 +40,7 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigMessage
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode

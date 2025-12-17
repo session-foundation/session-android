@@ -40,6 +40,7 @@ import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.getType
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.session.protos.SessionProtos

@@ -57,10 +57,12 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.updateContact
+import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.conversation.v2.messages.MessageFormatter
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsActivity
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.GroupDatabase
@@ -141,6 +143,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var recipientRepository: RecipientRepository
     @Inject lateinit var avatarUtils: AvatarUtils
     @Inject lateinit var loginStateRepository: LoginStateRepository
+    @Inject lateinit var messageFormatter: MessageFormatter
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
@@ -149,7 +152,13 @@ class HomeActivity : ScreenLockActionBarActivity(),
     private val publicKey: String by lazy { loginStateRepository.requireLocalNumber() }
 
     private val homeAdapter: HomeAdapter by lazy {
-        HomeAdapter(context = this, configFactory = configFactory, listener = this, ::showMessageRequests, ::hideMessageRequests)
+        HomeAdapter(
+            context = this,
+            messageFormatter = messageFormatter,
+            listener = this,
+            showMessageRequests = ::showMessageRequests,
+            hideMessageRequests = ::hideMessageRequests,
+        )
     }
 
     private val globalSearchAdapter by lazy {

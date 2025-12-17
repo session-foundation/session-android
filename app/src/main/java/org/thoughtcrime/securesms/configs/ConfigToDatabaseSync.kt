@@ -30,6 +30,9 @@ import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.allConfigAddresses
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.userConfigsChanged
+import org.session.libsession.utilities.withGroupConfigs
+import org.session.libsession.utilities.withMutableUserConfigs
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair

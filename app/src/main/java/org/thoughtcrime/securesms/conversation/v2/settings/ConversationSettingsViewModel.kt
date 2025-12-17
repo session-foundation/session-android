@@ -46,6 +46,8 @@ import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.upsertContact
+import org.session.libsession.utilities.withMutableUserConfigs
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2

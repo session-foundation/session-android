@@ -30,6 +30,8 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.waitUntilGroupConfigsPushed
+import org.session.libsession.utilities.withGroupConfigs
+import org.session.libsession.utilities.withMutableGroupConfigs
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log

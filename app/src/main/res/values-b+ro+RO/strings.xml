@@ -15,7 +15,14 @@
     <string name="accountIdYoursDescription">Acesta este ID-ul tău de cont. Alți utilizatori îl pot scana pentru a începe o conversație cu tine.</string>
     <string name="actualSize">Mărime actuală</string>
     <string name="add">Adaugă</string>
+    <plurals name="addAdmin">
+        <item quantity="one">Adaugă administrator</item>
+        <item quantity="few">Adaugă administratori</item>
+        <item quantity="other">Adaugă administratori</item>
+    </plurals>
+    <string name="addAdminSingular">Adaugă administrator</string>
     <string name="addAdminsDescription">Introdu ID-ul contului utilizatorului pe care îl promovezi ca administrator.\n\nPentru a adăuga mai mulți utilizatori, introduceți fiecare ID al contului separat prin virgulă. Pot fi specificate până la 20 de ID-uri de cont o dată.</string>
+    <string name="adminCannotBeDemoted">Administratorii nu pot fi retrogradați sau eliminați din grup.</string>
     <string name="adminCannotBeRemoved">Administratorii nu pot fi eliminați.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> și <b>{count} alții</b> au fost promovați la nivel de administrator.</string>
     <string name="adminPromote">Promovează administratorii</string>
@@ -40,13 +47,21 @@
     <string name="adminRemovedUser"><b>{name}</b> a fost eliminat ca administrator.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> și <b>alți {count}</b> au fost eliminați ca administratori.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> și <b>{other_name}</b> au fost eliminați ca administratori.</string>
+    <plurals name="adminSelected">
+        <item quantity="one">%1$d Administrator selectat</item>
+        <item quantity="few">%1$d Administratori selectați</item>
+        <item quantity="other">%1$d administratori selectați</item>
+    </plurals>
     <plurals name="adminSendingPromotion">
         <item quantity="one">Se trimite promovarea la nivel de administrator</item>
         <item quantity="few">Se trimit promovările la nivel de administrator</item>
         <item quantity="other">Se trimit promovările la nivel de administrator</item>
     </plurals>
     <string name="adminSettings">Setări administrator</string>
+    <string name="adminStatusYou">Nu îți poți schimba statutul de administrator. Pentru a părăsi grupul, deschide setările conversației și selectează Părăsește grupul.</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> și <b>{other_name}</b> au fost promovați la nivel de administrator.</string>
+    <string name="admins">Administratori</string>
+    <string name="allow">Permite</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonim</string>
     <string name="appIcon">Pictogramă</string>
@@ -163,6 +178,7 @@
     <string name="blockUnblockNameTwo">Ești sigur/ă că dorești să deblochezi pe <b>{name}</b> și 1 altă persoană?</string>
     <string name="blockUnblockedUser">{name} a fost deblocat/ă</string>
     <string name="blockedContactsManageDescription">Vezi și gestionează contactele blocate.</string>
+    <string name="browserNotFound">Nu s-a găsit niciun browser pentru a deschide acel URL, încearcă să copiezi URL-ul în schimb</string>
     <string name="call">Apelează</string>
     <string name="callsCalledYou">{name} te-a apelat</string>
     <string name="callsCannotStart">Nu poți iniția un apel nou. Termină mai întâi apelul actual.</string>
@@ -187,9 +203,14 @@
     <string name="callsSettings">Apeluri (Beta)</string>
     <string name="callsVoiceAndVideo">Apeluri vocale și video</string>
     <string name="callsVoiceAndVideoBeta">Apeluri vocale și video (Beta)</string>
+    <string name="callsVoiceAndVideoModalDescription">IP-ul tău este vizibil pentru partenerul de apel și un server {session_foundation} în timpul utilizării apelurilor beta.</string>
     <string name="callsVoiceAndVideoToggleDescription">Activează apelurile vocale și video către și de la alți utilizatori.</string>
     <string name="callsYouCalled">Ai apelat pe {name}</string>
     <string name="callsYouMissedCallPermissions">Ai ratat un apel de la <b>{name}</b> pentru că nu ai activat <b>Apeluri vocale și video</b> în setările de confidențialitate.</string>
+    <string name="cameraAccessDeniedMessage">{app_name} are nevoie de acces la camera ta pentru a activa apelurile video, dar această permisiune a fost refuzată. Nu poți modifica permisiunile camerei în timpul unui apel.\n\nVrei să închei apelul acum și să activezi accesul la cameră sau vrei să primești un memento după apel?</string>
+    <string name="cameraAccessInstructions">Pentru a permite accesul la cameră, deschide setările și activează permisiunea Cameră.</string>
+    <string name="cameraAccessReminderMessage">În timpul ultimului apel, ai încercat să folosești video, dar nu ai reușit deoarece accesul la cameră a fost refuzat anterior. Pentru a permite accesul la cameră, deschide setările și activează permisiunea Cameră.</string>
+    <string name="cameraAccessRequired">Este necesar accesul la cameră</string>
     <string name="cameraErrorNotFound">Nu s-a găsit camera</string>
     <string name="cameraErrorUnavailable">Cameră indisponibilă.</string>
     <string name="cameraGrantAccess">Acordă acces cameră foto</string>
@@ -198,9 +219,19 @@
     <string name="cameraGrantAccessQr">{app_name} are nevoie de acces la cameră pentru a scana coduri QR</string>
     <string name="cancel">Anulare</string>
     <string name="cancelAccess">Anulează {pro}</string>
+    <string name="cancelProPlan">Anulează planul {pro}</string>
+    <string name="cancelProPlatform">Anulează pe site-ul {platform}, folosind contul {platform_account} cu care te-ai înregistrat la {pro}.</string>
+    <string name="cancelProPlatformStore">Anulează pe site-ul {platform_store}, folosind contul {platform_account} cu care te-ai înregistrat la {pro}.</string>
     <string name="change">Schimba</string>
     <string name="changePasswordFail">Eroare la modificarea parolei</string>
     <string name="changePasswordModalDescription">Modifică parola ta pentru {app_name}. Datele stocate local vor fi re-criptate cu noua ta parolă.</string>
+    <string name="changeSetting">Modifică setarea</string>
+    <string name="checkingProStatus">Verificare stare {pro}</string>
+    <string name="checkingProStatusContinue">Se verifică starea contului {pro}. Vei putea continua după finalizarea acestei verificări.</string>
+    <string name="checkingProStatusDescription">Se verifică detaliile tale {pro}. Unele acțiuni de pe această pagină ar putea fi indisponibile până la finalizarea verificării.</string>
+    <string name="checkingProStatusEllipsis">Se verifică statutul {pro}...</string>
+    <string name="checkingProStatusRenew">Se verifică detaliile {pro}. Nu poți reînnoi până când această verificare nu este completă.</string>
+    <string name="checkingProStatusUpgradeDescription">Se verifică starea ta {pro}. Vei putea face upgrade la {pro} după finalizarea verificării.</string>
     <string name="clear">Șterge</string>
     <string name="clearAll">Șterge tot</string>
     <string name="clearDataAll">Șterge toate datele</string>
@@ -260,11 +291,18 @@
     <string name="communityUrl">URL-ul comunității</string>
     <string name="communityUrlCopy">Copiere adresă URL comunitate</string>
     <string name="confirm">Confirmă</string>
+    <string name="confirmPromotion">Confirmă promovarea</string>
+    <string name="confirmPromotionDescription">Ești sigur? Administratorii nu pot fi retrogradați sau eliminați din grup.</string>
     <string name="contactContacts">Contacte</string>
     <string name="contactDelete">Șterge contact</string>
     <string name="contactDeleteDescription">Ești sigur că vrei să ștergi pe <b>{name}</b> din contactele tale? Mesajele noi de la <b>{name}</b> vor ajunge ca o solicitare de mesaj.</string>
     <string name="contactNone">Încă nu ai contacte</string>
     <string name="contactSelect">Selectare contacte</string>
+    <plurals name="contactSelected">
+        <item quantity="one">%1$d Contact selectat</item>
+        <item quantity="few">%1$d Contacte selectate</item>
+        <item quantity="other">%1$d contacte selectate</item>
+    </plurals>
     <string name="contactUserDetails">Detalii utilizator</string>
     <string name="contentDescriptionCamera">Cameră</string>
     <string name="contentDescriptionChooseConversationType">Alegeți o acțiune pentru a începe o conversație</string>
@@ -272,6 +310,7 @@
     <string name="contentDescriptionMessageComposition">Compunere mesaj</string>
     <string name="contentDescriptionQuoteThumbnail">Pictograma imaginii din mesajul citat</string>
     <string name="contentDescriptionStartConversation">Creează o conversație cu un nou contact</string>
+    <string name="contentNotificationDescription">Alege conținutul afișat în notificările locale când primești un mesaj.</string>
     <string name="conversationsAddToHome">Adaugă pe ecranul principal</string>
     <string name="conversationsAddedToHome">Adăugat pe ecranul principal</string>
     <string name="conversationsAudioMessages">Mesaje audio</string>
@@ -284,9 +323,13 @@
     <string name="conversationsDeleted">Conversație ștearsă</string>
     <string name="conversationsEmpty">Nu există mesaje în {conversation_name}.</string>
     <string name="conversationsEnter">Introduceți tasta</string>
+    <string name="conversationsEnterDescription">Definește modul în care funcționează tastele Enter și Shift+Enter în conversații.</string>
+    <string name="conversationsEnterNewLine">SHIFT + ENTER trimite un mesaj, ENTER începe o linie nouă.</string>
+    <string name="conversationsEnterSends">ENTER trimite un mesaj, SHIFT + ENTER începe o linie nouă.</string>
     <string name="conversationsGroups">Grupuri</string>
     <string name="conversationsMessageTrimming">Scurtarea mesajelor</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Ajustare comunități</string>
+    <string name="conversationsMessageTrimmingTrimCommunitiesDescription">Șterge automat mesajele mai vechi de 6 luni din comunitățile cu peste 2000 de mesaje.</string>
     <string name="conversationsNew">Conversație nouă</string>
     <string name="conversationsNone">Încă nu ai conversații</string>
     <string name="conversationsSendWithEnterKey">Apasă Enter pentru a trimite</string>
@@ -300,6 +343,7 @@
     <string name="copy">Copiază</string>
     <string name="create">Creează</string>
     <string name="creatingCall">Se creează apelul</string>
+    <string name="currentBilling">Facturare curentă</string>
     <string name="currentPassword">Parola curentă</string>
     <string name="cut">Decupează</string>
     <string name="darkMode">Mod întunecat</string>
@@ -327,6 +371,16 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">Te rugăm să aștepți până când grupul este creat...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">Eroare la actualizarea grupului</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">Nu aveți permisiunea de a șterge mesajele altora</string>
+    <plurals name="deleteAttachments">
+        <item quantity="one">Șterge atașamentul selectat</item>
+        <item quantity="few">Șterge atașamentele selectate</item>
+        <item quantity="other">Șterge atașamentele selectate</item>
+    </plurals>
+    <plurals name="deleteAttachmentsDescription">
+        <item quantity="one">Ești sigur că vrei să ștergi atașamentul selectat? Și mesajul asociat cu atașamentul va fi șters.</item>
+        <item quantity="few">Ești sigur că vrei să ștergi atașamentele selectate? Mesajul asociat cu atașamentele va fi de asemenea șters.</item>
+        <item quantity="other">Ești sigur că vrei să ștergi atașamentele selectate? Și mesajul asociat cu atașamentele va fi șters.</item>
+    </plurals>
     <string name="deleteContactDescription">Ești sigur/ă că dorești să ștergi <b>{name}</b> din contactele tale?\n\nAceasta va șterge conversația ta, inclusiv toate mesajele și atașamentele. Mesajele viitoare de la <b>{name}</b> vor apărea ca o solicitare de mesaj.</string>
     <string name="deleteConversationDescription">Ești sigur/ă că dorești să ștergi conversația cu <b>{name}</b>?\nAceasta va șterge definitiv toate mesajele și fișierele atașate.</string>
     <plurals name="deleteMessage">
@@ -373,6 +427,7 @@
     <string name="deleteMessagesDescriptionEveryone">Ești sigur că vrei să ștergi aceste mesaje pentru toată lumea?</string>
     <string name="deleting">Se șterge</string>
     <string name="developerToolsToggle">Comutare unelte dezvoltator</string>
+    <string name="deviceNotificationSettings">Setări notificări dispozitiv</string>
     <string name="dictationStart">Începe dictarea...</string>
     <string name="disappearingMessages">Mesaje temporare</string>
     <string name="disappearingMessagesCountdownBig">Mesajul va fi șters în {time_large}</string>
@@ -420,6 +475,8 @@
     <string name="displayNameVisible">Numele tău de afișare este vizibil utilizatorilor, grupurilor și comunităților cu care interacționezi.</string>
     <string name="document">Document</string>
     <string name="donate">Donează</string>
+    <string name="donateSessionDescription">Forțe puternice încearcă să slăbească confidențialitatea, dar nu putem duce această luptă singuri.\n\nDonațiile ajută la menținerea {app_name} sigur, independent și online.</string>
+    <string name="donateSessionHelp">{app_name} are nevoie de ajutorul tău</string>
     <string name="done">Terminat</string>
     <string name="download">Descarcă</string>
     <string name="downloading">Se descarcă...</string>
@@ -450,16 +507,31 @@
     <string name="emojiReactsHoverYouNameTwoDesktop">Tu și {name} ați reacționat cu {emoji_name}</string>
     <string name="emojiReactsNotification">A reacționat la mesajul tău {emoji}</string>
     <string name="enable">Activare</string>
+    <string name="enableCameraAccess">Activezi accesul la Cameră?</string>
+    <string name="enableNotifications">Afișează notificări când primești mesaje noi.</string>
+    <string name="endCallToEnable">Încheie apelul pentru a activa</string>
     <string name="enjoyingSession">Îți place {app_name}?</string>
     <string name="enjoyingSessionButtonNegative">Mai e de lucru {emoji}</string>
     <string name="enjoyingSessionButtonPositive">Este grozav {emoji}</string>
     <string name="enjoyingSessionDescription">Folosești {app_name} de ceva timp, cum ți se pare? Ne-ar face mare plăcere să aflăm părerea ta.</string>
     <string name="enter">Intră</string>
+    <string name="enterPasswordDescription">Introdu parola setată pentru {app_name}</string>
+    <string name="enterPasswordTooltip">Introdu parola pe care o folosești pentru a debloca {app_name} la pornire, nu Parola de recuperare</string>
+    <string name="errorCheckingProStatus">Eroare la verificarea stării {pro}</string>
     <string name="errorConnection">Vă rugăm să verificați conexiunea la internet și să încercați din nou.</string>
     <string name="errorCopyAndQuit">Copiază eroare și închide aplicația</string>
     <string name="errorDatabase">Eroare de bază de date</string>
     <string name="errorGeneric">Ceva nu a mers bine. Te rugăm să încerci din nou mai târziu.</string>
+    <string name="errorLoadingProAccess">Eroare la încărcarea accesului {pro}</string>
+    <string name="errorNoLookupOns">{app_name} nu a putut căuta acest ONS. Verifică conexiunea la rețea și încearcă din nou.</string>
     <string name="errorUnknown">O eroare neașteptată a avut loc.</string>
+    <string name="errorUnregisteredOns">Acest ONS nu este înregistrat. Verifică dacă este corect și încearcă din nou.</string>
+    <string name="failedResendInvite">Eșec la retrimiterea invitației către <b>{name}</b> în <b>{group_name}</b></string>
+    <string name="failedResendInviteMultiple">Eșec la retrimiterea invitației către <b>{name}</b> și <b>{count} alți</b> în <b>{group_name}</b></string>
+    <string name="failedResendInviteTwo">Eșec la retrimiterea invitației către <b>{name}</b> și <b>{other_name}</b> în <b>{group_name}</b></string>
+    <string name="failedResendPromotion">Promovarea nu a putut fi retrimisă către <b>{name}</b> în <b>{group_name}</b></string>
+    <string name="failedResendPromotionMultiple">Promovarea nu a putut fi retrimisă către <b>{name}</b> și <b>{count} alți</b> în <b>{group_name}</b></string>
+    <string name="failedResendPromotionTwo">Promovarea nu a putut fi retrimisă către <b>{name}</b> și <b>{other_name}</b> în <b>{group_name}</b></string>
     <string name="failedToDownload">Descărcarea a eșuat</string>
     <string name="failures">Erori</string>
     <string name="feedback">Feedback</string>
@@ -514,6 +586,9 @@
     <string name="groupLeaveDescription">Ești sigur/ă că vrei să părăsești grupul <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Ești sigur/ă că vrei să părăsești <b>{group_name}</b>?\n\nAceastă acțiune va elimina toți membrii și va șterge tot conținutul grupului.</string>
     <string name="groupLeaveErrorFailed">Nu s-a putut părăsi grupul {group_name}</string>
+    <string name="groupMemberInvitedHistory"><b>{name}</b> a fost invitat(ă) să se alăture grupului. Istoricul conversațiilor din ultimele 14 zile a fost partajat.</string>
+    <string name="groupMemberInvitedHistoryMultiple"><b>{name}</b> și încă <b>{count}</b> au fost invitați să se alăture grupului. Istoricul conversațiilor din ultimele 14 zile a fost partajat.</string>
+    <string name="groupMemberInvitedHistoryTwo"><b>{name}</b> și <b>{other_name}</b> au fost invitați să se alăture grupului. Istoricul conversațiilor din ultimele 14 zile a fost partajat.</string>
     <string name="groupMemberLeft"><b>{name}</b> a părăsit grupul.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> și <b>alți {count}</b> au părăsit grupul.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> și <b>{other_name}</b> au părăsit grupul.</string>
@@ -525,6 +600,9 @@
     <string name="groupMemberNewTwo"><b>{name}</b> și <b>{other_name}</b> au fost invitați să se alăture grupului.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Tu</b> și <b>alți {count}</b> ați fost invitați să vă alăturați grupului. Istoricul conversațiilor a fost partajat.</string>
     <string name="groupMemberNewYouHistoryTwo"><b>Dumneavoastră</b> și <b>{other_name}</b> ați fost invitați să vă alăturați grupului. Istoricul conversațiilor a fost partajat.</string>
+    <string name="groupMemberRemoveFailed">A eșuat eliminarea lui <b>{name}</b> din <b>{group_name}</b></string>
+    <string name="groupMemberRemoveFailedMultiple">A eșuat eliminarea lui <b>{name}</b> și a <b>{count} alți</b> din <b>{group_name}</b></string>
+    <string name="groupMemberRemoveFailedOther">A eșuat eliminarea lui <b>{name}</b> și <b>{other_name}</b> din <b>{group_name}</b></string>
     <string name="groupMemberYouLeft"><b>Tu</b> ai părăsit grupul.</string>
     <string name="groupMembers">Membrii grupului</string>
     <string name="groupMembersNone">Nu există alți membri în acest grup.</string>
@@ -538,6 +616,7 @@
     <string name="groupNoMessages">Nu ai mesaje din <b>{group_name}</b>. Trimite un mesaj pentru a începe conversația!</string>
     <string name="groupNotUpdatedWarning">Acest grup nu a fost actualizat de peste 30 de zile. Este posibil să întâmpinați probleme la trimiterea mesajelor sau vizualizarea informațiilor grupului.</string>
     <string name="groupOnlyAdmin">Ești singurul administrator din <b>{group_name}</b>.\n\nMembrii și setările grupului nu pot fi modificate fără un administrator.</string>
+    <string name="groupOnlyAdminLeave">Ești singurul administrator din <b>{group_name}</b>.\n\nMembrii și setările grupului nu pot fi modificate fără un administrator. Pentru a părăsi grupul fără să-l ștergi, te rugăm să adaugi mai întâi un nou administrator.</string>
     <string name="groupPendingRemoval">În curs de eliminare</string>
     <string name="groupPromotedYou"><b>Tu</b> ai fost promovat/ă la nivel de administrator.</string>
     <string name="groupPromotedYouMultiple"><b>Tu</b> și <b>alți {count}</b> ați fost promovați la nivel de administrator.</string>
@@ -567,16 +646,19 @@
     <string name="groupUpdated">Grupul a fost actualizat.</string>
     <string name="handlingConnectionCandidates">Se gestionează candidații pentru conexiune</string>
     <string name="helpFAQ">Întrebări frecvente</string>
+    <string name="helpFAQDescription">Consultă întrebările frecvente {app_name} pentru răspunsuri la întrebări comune.</string>
     <string name="helpHelpUsTranslateSession">Ajută-ne să traducem {app_name}</string>
     <string name="helpReportABug">Raportează o eroare</string>
     <string name="helpReportABugDescription">Împărtășește câteva detalii pentru a ne ajuta să rezolvăm problema. Exportă jurnalele, apoi încarcă fișierul prin Serviciul de asistență {app_name}.</string>
     <string name="helpReportABugExportLogs">Exportare jurnale</string>
     <string name="helpReportABugExportLogsDescription">Exportă jurnalele, apoi încarcă fișierul prin Serviciul de asistență {app_name}.</string>
     <string name="helpReportABugExportLogsSaveToDesktop">Salvează pe desktop</string>
+    <string name="helpReportABugExportLogsSaveToDesktopDescription">Salvează acest fișier, apoi partajează-l cu dezvoltatorii {app_name}.</string>
     <string name="helpSupport">Asistență</string>
     <string name="helpTranslateSessionDescription">Ajută la traducerea aplicației {app_name} în peste 80 de limbi!</string>
     <string name="helpWedLoveYourFeedback">Ne-ar plăcea feedback-ul tău</string>
     <string name="hide">Ascunde</string>
+    <string name="hideMenuBarDescription">Comută vizibilitatea barei de meniu a sistemului.</string>
     <string name="hideNoteToSelfDescription">Ești sigur/ă că dorești să ascunzi <b>Notă personală</b> din lista ta de conversații?</string>
     <string name="hideOthers">Ascunde altele</string>
     <string name="image">Imagine</string>
@@ -586,6 +668,11 @@
     <string name="incognitoKeyboardDescription">Solicită modul incognito, dacă este disponibil. În funcție de tastatura pe care o folosești, este posibil ca tastatura ta să ignore această solicitare.</string>
     <string name="info">Info</string>
     <string name="invalidShortcut">Scurtătură incorectă</string>
+    <plurals name="inviteContactsPlural">
+        <item quantity="one">Invită persoana de contact</item>
+        <item quantity="few">Invită persoanele de contact</item>
+        <item quantity="other">Invită persoanele de contact</item>
+    </plurals>
     <plurals name="inviteFailed">
         <item quantity="one">Invitație eșuată</item>
         <item quantity="few">Invitații eșuate</item>
@@ -596,8 +683,18 @@
         <item quantity="few">Invitațiile nu au putut fi trimise. Doriți să încercați din nou?</item>
         <item quantity="other">Invitațiile nu au putut fi trimise. Doriți să încercați din nou?</item>
     </plurals>
+    <plurals name="inviteMembers">
+        <item quantity="one">Invită ca membru</item>
+        <item quantity="few">Invită ca membri</item>
+        <item quantity="other">Invită membri</item>
+    </plurals>
+    <string name="inviteNewMemberGroupLink">Invită un nou membru în grup introducând ID-ul de cont al prietenului tău, ONS sau scanând codul său QR {icon}</string>
+    <string name="inviteNewMemberGroupNoLink">Invită un nou membru în grup introducând ID-ul de cont, ONS-ul prietenului tău sau scanând codul său QR</string>
     <string name="join">Alătură-te</string>
     <string name="later">Mai târziu</string>
+    <string name="launchOnStartDescriptionDesktop">Lansează {app_name} automat când computerul pornește.</string>
+    <string name="launchOnStartDesktop">Lansare la pornire</string>
+    <string name="launchOnStartupDisabledDesktop">Această setare este gestionată de sistemul dvs. în Linux. Pentru a activa pornirea automată, adăugați {app_name} în aplicațiile de pornire din setările sistemului.</string>
     <string name="learnMore">Află mai mult</string>
     <string name="leave">Părăsește</string>
     <string name="leaving">Se părăsește...</string>
@@ -612,6 +709,8 @@
     <string name="legacyGroupMemberNewYouOther"><b>Tu</b> și <b>{other_name}</b> v-ați alăturat grupului.</string>
     <string name="legacyGroupMemberTwoNew"><b>{name}</b> și <b>{other_name}</b> s-au alăturat grupului.</string>
     <string name="legacyGroupMemberYouNew"><b>Te-ai</b> alăturat grupului.</string>
+    <string name="limitBackgroundActivity">Limitezi activitatea în fundal?</string>
+    <string name="limitBackgroundActivityDescription">Permiți în prezent ca {app_name} să ruleze în fundal pentru a îmbunătăți fiabilitatea notificărilor. Modificarea acestei setări ar putea duce la notificări mai puțin fiabile.</string>
     <string name="linkPreviews">Previzualizări ale linkurilor</string>
     <string name="linkPreviewsDescription">Afișează previzualizări ale linkurilor pentru URL-urile acceptate.</string>
     <string name="linkPreviewsEnable">Activează previzualizarea linkurilor</string>
@@ -636,9 +735,17 @@
     <string name="lockAppUnlock">Atingeți pentru a debloca</string>
     <string name="lockAppUnlocked">{app_name} este deblocată</string>
     <string name="logs">Loguri</string>
+    <string name="manageAdmins">Gestionează administratori</string>
     <string name="manageMembers">Gestionează membri</string>
+    <string name="managePro">Administrează {pro}</string>
     <string name="max">Maximum</string>
+    <string name="maybeLater">Poate mai târziu</string>
     <string name="media">Media</string>
+    <plurals name="memberSelected">
+        <item quantity="one">%1$d Membru selectat</item>
+        <item quantity="few">%1$d Membri selectați</item>
+        <item quantity="other">%1$d membri selectați</item>
+    </plurals>
     <plurals name="members">
         <item quantity="one">%1$d membru</item>
         <item quantity="few">%1$d membri</item>
@@ -650,7 +757,9 @@
         <item quantity="other">%1$d membri activi</item>
     </plurals>
     <string name="membersAddAccountIdOrOns">Adaugă ID-ul contului sau ONS</string>
+    <string name="membersGroupPromotionAcceptInvite">Membrii pot fi promovați doar după ce acceptă invitația de a se alătura grupului.</string>
     <string name="membersInvite">Invită contacte</string>
+    <string name="membersInviteNoContacts">Nu ai niciun contact de invitat în acest grup.\nÎntoarce-te și invită membri folosind ID-ul de cont sau ONS-ul lor.</string>
     <plurals name="membersInviteSend">
         <item quantity="one">Trimite invitația</item>
         <item quantity="few">Trimite invitațiile</item>
@@ -660,8 +769,10 @@
     <string name="membersInviteShareDescriptionMultiple">Doriți să partajați istoricul mesajelor de grup cu <b>{name}</b> și <b>alți {count}</b>?</string>
     <string name="membersInviteShareDescriptionTwo">Doriți să partajați istoricul mesajelor de grup cu <b>{name}</b> și <b>{other_name}</b>?</string>
     <string name="membersInviteShareMessageHistory">Distribuie istoricul mesajelor</string>
+    <string name="membersInviteShareMessageHistoryDays">Partajează istoricul mesajelor din ultimele 14 zile</string>
     <string name="membersInviteShareNewMessagesOnly">Distribuie doar mesajele noi</string>
     <string name="membersInviteTitle">Invită</string>
+    <string name="membersNonAdmins">Membri (non-administratori)</string>
     <string name="menuBar">Bara de meniu</string>
     <string name="message">Mesaj</string>
     <string name="messageBubbleReadMore">Citește mai mult</string>
@@ -681,6 +792,7 @@
     </plurals>
     <string name="messageNewDescriptionDesktop">Începe o conversație nouă introducând ID-ul de cont sau ONS al prietenului tău.</string>
     <string name="messageNewDescriptionMobile">Începe o conversație nouă introducând ID-ul de cont sau ONS al prietenului tău, sau scanează codul său QR.</string>
+    <string name="messageNewDescriptionMobileLink">Începe o conversație nouă introducând ID-ul de cont, ONS-ul prietenului tău sau scanând codul său QR {icon}</string>
     <plurals name="messageNewYouveGot">
         <item quantity="one">Ai primit un mesaj nou.</item>
         <item quantity="few">Ai %1$d mesaje noi.</item>
@@ -741,14 +853,20 @@
     <string name="nicknameRemove">Elimină pseudonimul</string>
     <string name="nicknameSet">Setează pseudonim</string>
     <string name="no">Nu</string>
+    <string name="noNonAdminsInGroup">Nu există membri non-administratori în acest grup.</string>
     <string name="noSuggestions">Fără sugestii</string>
+    <string name="nonProLongerMessagesDescription">Poți trimite mesaje de până la 10.000 de caractere în toate conversațiile.</string>
+    <string name="nonProUnlimitedPinnedDescription">Organizează conversațiile prin fixarea unui număr nelimitat de chaturi.</string>
     <string name="none">Fără</string>
     <string name="notNow">Nu acum</string>
     <string name="noteToSelf">Notă personală</string>
     <string name="noteToSelfEmpty">Nu ai mesaje în Notă personală.</string>
     <string name="noteToSelfHide">Ascunde Notă personală</string>
     <string name="noteToSelfHideDescription">Ești sigur/ă că dorești ascunderea Notei personale?</string>
+    <string name="noteTosPrivacyPolicy"><b>VĂ RUGĂM SĂ REȚINEȚI</b>: Prin {action_type}, sunteți de acord cu <b>Termenii și condițiile</b> {icon} și <b>Politica de confidențialitate</b> {icon} ale {app_pro}</string>
     <string name="notificationDisplay">Vizualizare notificări</string>
+    <string name="notificationSenderNameAndPreview">Afișează numele expeditorului și o previzualizare a conținutului mesajului.</string>
+    <string name="notificationSenderNameOnly">Afișează doar numele expeditorului fără niciun conținut de mesaj.</string>
     <string name="notificationsAllMessages">Toate mesajele</string>
     <string name="notificationsContent">Conținut notificări</string>
     <string name="notificationsContentDescription">Informaţiile prezentate în notificări.</string>
@@ -759,6 +877,7 @@
     <string name="notificationsFastModeDescription">Veți fi notificat de mesaje noi imediat și în siguranță folosind serverele de notificare Google.</string>
     <string name="notificationsFastModeDescriptionHuawei">Vei fi notificat în legătură cu noile mesaje imediat și în mod fiabil folosind serverele de notificări Huawei.</string>
     <string name="notificationsFastModeDescriptionIos">Veți fi notificat de mesaje noi imediat și în siguranță folosind serverele de notificare Apple.</string>
+    <string name="notificationsGenericOnly">Afișează o notificare generică {app_name} fără numele expeditorului sau conținutul mesajului.</string>
     <string name="notificationsGoToDevice">Mergi la setările de notificare ale dispozitivului</string>
     <string name="notificationsHeaderAllMessages">Notificări - Toate</string>
     <string name="notificationsHeaderMentionsOnly">Notificări - Doar mențiuni</string>
@@ -766,6 +885,7 @@
     <string name="notificationsIosGroup">{name} către {conversation_name}</string>
     <string name="notificationsIosRestart">Este posibil să fi primit mesaje în timp ce {device} a fost repornit.</string>
     <string name="notificationsLedColor">Culoare LED</string>
+    <string name="notificationsMakeSound">Redă un sunet când primești mesaje noi.</string>
     <string name="notificationsMentionsOnly">Doar mențiuni</string>
     <string name="notificationsMessage">Notificări mesaje</string>
     <string name="notificationsMostRecent">Cel mai recent de la: {name}</string>
@@ -787,6 +907,12 @@
     <string name="off">Dezactivat</string>
     <string name="okay">OK</string>
     <string name="on">Activat</string>
+    <string name="onDevice">Pe dispozitivul tău {device_type}</string>
+    <string name="onDeviceCancelDescription">Deschide acest cont {app_name} pe un dispozitiv {device_type} conectat la contul {platform_account} cu care te-ai înregistrat inițial. Apoi, anulează {pro} din setările {app_pro}.</string>
+    <string name="onDeviceDescription">Deschide acest cont {app_name} pe un dispozitiv {device_type} conectat la {platform_account} cu care te-ai înregistrat inițial. Apoi, actualizează accesul tău {pro} din setările {app_pro}.</string>
+    <string name="onLinkedDevice">Pe un dispozitiv conectat</string>
+    <string name="onPlatformStoreWebsite">Pe site-ul {platform_store}</string>
+    <string name="onPlatformWebsite">Pe site-ul {platform}</string>
     <string name="onboardingAccountCreate">Creează un cont</string>
     <string name="onboardingAccountCreated">Cont creat</string>
     <string name="onboardingAccountExists">Am deja un cont</string>
@@ -811,6 +937,9 @@
     <string name="onsErrorNotRecognized">Nu am putut recunoaște acest ONS. Vă rugăm să verificați și să încercați din nou.</string>
     <string name="onsErrorUnableToSearch">Nu am putut căuta acest ONS. Vă rugăm să încercați din nou mai târziu.</string>
     <string name="open">Deschide</string>
+    <string name="openPlatformStoreWebsite">Deschide site-ul {platform_store}</string>
+    <string name="openPlatformWebsite">Deschide site-ul {platform}</string>
+    <string name="openSettings">Deschide setările</string>
     <string name="openSurvey">Deschide sondajul</string>
     <string name="other">Altele</string>
     <string name="password">Parolă</string>
@@ -834,14 +963,18 @@
     <string name="passwordRemovedDescriptionToast">Parola ta a fost ștearsă.</string>
     <string name="passwordSet">Setează parola</string>
     <string name="passwordSetDescriptionToast">Parola ta a fost setata. Securizați-va parola.</string>
+    <string name="passwordSetShortDescription">Solicită parolă pentru a debloca {app_name} la pornire.</string>
     <string name="passwordStrengthCharLength">Mai mare de 12 caractere</string>
     <string name="passwordStrengthIncludeNumber">Include un număr</string>
     <string name="passwordStrengthIncludesLowercase">Include o literă mică</string>
+    <string name="passwordStrengthIncludesSymbol">Include un simbol</string>
     <string name="passwordStrengthIncludesUppercase">Include o literă mare</string>
     <string name="passwordStrengthIndicator">Indicator de parolă puternică</string>
     <string name="passwordStrengthIndicatorDescription">Setarea unei parole puternice ajută la protejarea mesajelor și fișierelor în cazul pierderii sau furtului dispozitivului dumneavoastră.</string>
     <string name="passwords">Parole</string>
     <string name="paste">Lipire</string>
+    <string name="paymentError">Eroare de plată</string>
+    <string name="paymentProError">Plata a fost procesată cu succes, însă a apărut o eroare la {action_type} statutului dvs. {pro}.\n\nVă rugăm să verificați conexiunea la rețea și să încercați din nou.</string>
     <string name="permissionChange">Modificare permisiune</string>
     <string name="permissionMusicAudioDenied">{app_name} are nevoie de acces la funcția de muzică și bibliotecă audio pentru a trimite fișiere, muzică și înregistrări audio, dar accesul a fost refuzat definitiv. Mergi la Setări → Permisiuni și activează funcția „Muzică și audio”.</string>
     <string name="permissionsAppleMusic">{app_name} are nevoie de acces la Apple Music pentru a reda atașamente media.</string>
@@ -888,31 +1021,67 @@
     <string name="proAccessActivatedAutoShort">Accesul tău {pro} este activ!\n\nAccesul tău {pro} se va reînnoi automat pentru încă <b>{current_plan_length}</b> pe data de <b>{date}</b>.</string>
     <string name="proAccessActivatedNotAuto">Accesul tău {pro} va expira pe <b>{date}</b>.\n\n Reînnoiește accesul tău {pro} acum pentru a te asigura că se va reînnoi automat înainte de expirarea accesului {pro}.</string>
     <string name="proAccessActivatesAuto">Accesul tău {pro} este activ!\n\nAccesul {pro} se va reînnoi automat pentru încă\n<b>{current_plan_length}</b> în data de <b>{date}</b>. Orice modificare făcută aici va intra în vigoare la următoarea reînnoire.</string>
+    <string name="proAccessError">Eroare de acces {pro}</string>
     <string name="proAccessExpireDate">Accesul tău {pro} va expira pe <b>{date}</b>.</string>
+    <string name="proAccessLoading">Accesul {pro} se încarcă</string>
+    <string name="proAccessLoadingDescription">Informațiile tale de acces {pro} sunt încă în curs de încărcare. Nu poți face actualizări până la finalizarea acestui proces.</string>
+    <string name="proAccessLoadingEllipsis">acces {pro} se încarcă...</string>
+    <string name="proAccessNetworkLoadError">Nu s-a putut realiza conexiunea la rețea pentru a încărca informațiile despre accesul {pro}. Actualizarea {pro} prin {app_name} va fi dezactivată până când conexiunea este restabilită.\n\nVă rugăm să verificați conexiunea la rețea și să încercați din nou.</string>
     <string name="proAccessNotFound">Accesul la {pro} nu putut fi găsit</string>
+    <string name="proAccessNotFoundDescription">{app_name} a detectat că contul tău nu are acces {pro}. Dacă crezi că este o greșeală, te rugăm să contactezi asistența {app_name} pentru ajutor.</string>
     <string name="proAccessRecover">Recuperează accesul {pro}</string>
     <string name="proAccessRenew">Reînnoiește accesul {pro}</string>
+    <string name="proAccessRenewDesktop">În prezent, accesul {pro} poate fi achiziționat și reînnoit doar prin {platform_store} sau {platform_store_other}. Deoarece folosești {app_name} Desktop, nu îl poți reînnoi aici.\n\nDezvoltatorii {app_name} lucrează intens la opțiuni alternative de plată pentru a permite utilizatorilor să achiziționeze accesul {pro} în afara {platform_store} și {platform_store_other}. <b>Foaia de parcurs {pro}</b> {icon}</string>
+    <string name="proAccessRenewPlatformStoreWebsite">Reînnoiește-ți accesul la {pro} pe <b><font color="0">site-ul {platform_store}</font></b> folosind contul {platform_account} cu care te-ai înregistrat pentru {pro}.</string>
+    <string name="proAccessRenewPlatformWebsite">Reînnoiește pe <b><font color="0">site-ul {platform}</font></b> folosind contul {platform_account} cu care te-ai înregistrat la {pro}.</string>
+    <string name="proAccessRenewStart">Reînnoiește-ți accesul {pro} pentru a începe din nou să folosești funcționalitățile beta avansate {app_pro}.</string>
     <string name="proAccessRestored">Acces {pro} recuperat</string>
     <string name="proAccessRestoredDescription">{app_name} a detectat și a readus accesul {pro} pentru contul tău. Statutul tău {pro} a fost restabilit!</string>
+    <string name="proAccessSignUp">Deoarece te-ai înregistrat inițial la {app_pro} prin <b>{platform_store}</b>, va trebui să folosești contul tău {platform_account} pentru a-ți actualiza accesul la {pro}.</string>
     <string name="proActivated">Activat</string>
+    <string name="proActivatingActivation">activare</string>
     <string name="proAllSet">Totul este gata!</string>
     <string name="proAllSetDescription">Accesul tău la {app_pro} a fost actualizat! Vei fi facturat când {pro} se va reînnoi automat pe <b>{date}</b>.</string>
     <string name="proAlreadyPurchased">Deja ai</string>
     <string name="proAnimatedDisplayPicture">Mergi mai departe și încarcă GIF-uri și imagini WebP animate pentru imaginea ta de profil!</string>
+    <string name="proAnimatedDisplayPictureCallToActionDescription">Obține imagini de profil animate și deblochează funcționalități premium cu {app_pro} Beta</string>
     <string name="proAnimatedDisplayPictureFeature">Poză de profil animată</string>
     <string name="proAnimatedDisplayPictureModalDescription">utilizatorii pot încărca GIF-uri</string>
     <string name="proAnimatedDisplayPictures">Poze de profil animate</string>
     <string name="proAnimatedDisplayPicturesDescription">Setează GIF-uri animate și imagini WebP animate ca imagine de profil.</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Încarcă GIF-uri cu</string>
     <string name="proAutoRenewTime">{pro} se va reînnoi automat în <b>{time}</b></string>
+    <string name="proBadge">Insigna {pro}</string>
     <string name="proBadgeVisible">Afișează insigna {app_pro} altor utilizatori</string>
     <string name="proBadges">Insigne</string>
     <string name="proBadgesDescription">Arată susținerea ta pentru {app_name} cu o insignă exclusivă afișată lângă numele tău.</string>
+    <plurals name="proBadgesSent">
+        <item quantity="one">%1$s Insignă %2$s trimisă</item>
+        <item quantity="few">%1$s Insigne %2$s trimise</item>
+        <item quantity="other">%1$s insigne %2$s trimise</item>
+    </plurals>
     <string name="proBetaFeatures">Caracteristici {pro} Beta</string>
+    <string name="proBilledAnnually">{price} Facturat anual</string>
+    <string name="proBilledMonthly">{price} Facturat lunar</string>
+    <string name="proBilledQuarterly">{price} Facturat trimestrial</string>
+    <string name="proCallToActionLongerMessages">Vrei să trimiți mesaje mai lungi?\nTrimite mai mult text și deblochează funcții premium cu {app_pro} Beta</string>
+    <string name="proCallToActionPinnedConversations">Vrei mai multe fixări?\nOrganizează-ți conversațiile și deblochează funcționalități premium cu {app_pro} Beta</string>
+    <string name="proCallToActionPinnedConversationsMoreThan">Vrei mai mult de {limit} fixări?\nOrganizează-ți conversațiile și deblochează funcții premium cu {app_pro} Beta</string>
+    <string name="proCancelSorry">Ne pare rău că renunți la {pro}. Iată ce trebuie să știi înainte de a anula accesul la {pro}.</string>
+    <string name="proCancellation">Anulare</string>
+    <string name="proCancellationDescription">Anularea accesului {pro} va împiedica reînnoirea automată înainte ca accesul {pro} să expire. Anularea {pro} nu <b>include</b> o rambursare. Vei putea continua să folosești funcțiile {app_pro} până când accesul tău {pro} va expira.\n\nPentru că te-ai înregistrat inițial la {app_pro} cu contul tău <b>{platform_account}</b>, trebuie să folosești același {platform_account} pentru a anula {pro}.</string>
+    <string name="proCancellationOptions">Două moduri de a anula accesul {pro}:</string>
+    <string name="proCancellationShortDescription">Anularea accesului {pro} va împiedica reînnoirea automată înainte ca {pro} să expire.\n\nAnularea {pro} <b>nu</b> implică rambursarea sumei. Vei putea folosi în continuare funcțiile {app_pro} până la expirarea accesului {pro}.</string>
+    <string name="proChooseAccess">Alege opțiunea de acces {pro} potrivită pentru tine.\nAccesul pe durată mai lungă înseamnă reduceri mai mari.</string>
+    <string name="proClearAllDataDevice">Ești sigur că vrei să ștergi datele tale de pe acest dispozitiv?\n\n<b>{app_pro}</b> nu poate fi transferat către un alt cont. Te rugăm să salvezi Parola de recuperare pentru a te asigura că poți restabili mai târziu accesul tău {pro}.</string>
+    <string name="proClearAllDataNetwork">Ești sigur că vrei să ștergi datele tale din rețea? Dacă continui, nu vei putea recupera mesajele sau contactele.\n\n<b>{app_pro}</b> nu poate fi transferat către un alt cont. Te rugăm să salvezi Parola de recuperare pentru a te asigura că poți restabili mai târziu accesul tău {pro}.</string>
     <string name="proDiscountTooltip">Accesul tău {pro} are deja o reducere de {percent}% din prețul complet al {app_pro}.</string>
+    <string name="proErrorRefreshingStatus">Eroare la reîmprospătarea statutului {pro}</string>
     <string name="proExpired">Expirat</string>
     <string name="proExpiredDescription">Din păcate, accesul tău {pro} a expirat. Reînnoiește-l pentru a reactiva beneficiile și funcționalitățile exclusive ale {app_pro}.</string>
     <string name="proExpiringSoon">Expiră în curând</string>
+    <string name="proExpiringSoonDescription">Accesul tău {pro} expiră în <b>{time}</b>.\nActualizează acum pentru a continua să beneficiezi de avantajele și funcționalitățile exclusive ale {app_pro} Beta</string>
+    <string name="proExpiringTime">{pro} va expira în <b>{time}</b></string>
     <string name="proFaq">Întrebări frecvente {pro}</string>
     <string name="proFaqDescription">Găsește răspunsuri la întrebările frecvente în secțiunea {app_pro} FAQ.</string>
     <string name="proFeatureListAnimatedDisplayPicture">Încarcă imagini de profil GIF și WebP</string>
@@ -920,26 +1089,101 @@
     <string name="proFeatureListLoadsMore">Și multe alte funcționalități exclusive</string>
     <string name="proFeatureListLongerMessages">Mesaje de până la 10.000 de caractere</string>
     <string name="proFeatureListPinnedConversations">Fixează un număr nelimitat de conversații</string>
+    <string name="proFullestPotential">Vrei să folosești {app_name} la întregul său potențial?\nFă upgrade la {app_pro} Beta pentru a avea acces la o mulțime de beneficii și funcții exclusive.</string>
     <string name="proGroupActivated">Grup activat</string>
     <string name="proGroupActivatedDescription">Acest grup are capacitate extinsă! Poate susține până la 300 de membri deoarece un administrator de grup are</string>
+    <plurals name="proGroupsUpgraded">
+        <item quantity="one">%1$s Grup upgradat</item>
+        <item quantity="few">%1$s Grupuri upgradate</item>
+        <item quantity="other">%1$s grupuri upgradate</item>
+    </plurals>
     <string name="proImportantDescription">Solicitarea unei rambursări este definitivă. Dacă este aprobată, accesul tău {pro} va fi anulat imediat și vei pierde accesul la toate funcționalitățile {pro}.</string>
     <string name="proIncreasedAttachmentSizeFeature">Dimensiune mărită a atașamentului</string>
     <string name="proIncreasedMessageLengthFeature">Lungime extinsă a mesajului</string>
     <string name="proLargerGroups">Grupuri mai mari</string>
     <string name="proLargerGroupsDescription">Grupurile în care ești administrator sunt actualizate automat pentru a permite 300 de membri.</string>
+    <string name="proLargerGroupsTooltip">Discuțiile de grup mai mari (până la 300 de membri) vor fi disponibile în curând pentru toți utilizatorii Pro Beta!</string>
     <string name="proLongerMessages">Mesaje mai lungi</string>
     <string name="proLongerMessagesDescription">Poți trimite mesaje de până la 10.000 de caractere în toate conversațiile.</string>
+    <plurals name="proLongerMessagesSent">
+        <item quantity="one">%1$s Mesaj mai lung trimis</item>
+        <item quantity="few">%1$s Mesaje mai lungi trimise</item>
+        <item quantity="other">%1$s mesaje mai lungi trimise</item>
+    </plurals>
     <string name="proMessageInfoFeatures">Acest mesaj a folosit următoarele funcționalități {app_pro}:</string>
+    <string name="proNewInstallation">Cu o instalare nouă</string>
+    <string name="proNewInstallationDescription">Reinstalează {app_name} pe acest dispozitiv prin intermediul {platform_store}, restaurează-ți contul folosind Parola de Recuperare și reînnoiește {pro} din setările {app_pro}.</string>
+    <string name="proNewInstallationUpgrade">Reinstalează {app_name} pe acest dispozitiv prin {platform_store}, recuperează-ți contul folosind Parola de recuperare și upgradează la {pro} din setările {app_pro}.</string>
+    <string name="proOptionsRenewalSubtitle">Deocamdată, există trei moduri de a reînnoi:</string>
+    <string name="proOptionsTwoRenewalSubtitle">Momentan, există două moduri de reînnoire:</string>
+    <string name="proPercentOff">Reducere de {percent}%</string>
+    <plurals name="proPinnedConversations">
+        <item quantity="one">%1$s Conversație fixată</item>
+        <item quantity="few">%1$s Conversații fixate</item>
+        <item quantity="other">%1$s conversații fixate</item>
+    </plurals>
+    <string name="proPlanPlatformRefund">Deoarece te-ai înregistrat inițial la {app_pro} prin <b><font color="0">{platform_store}</font></b>, va trebui să folosești contul tău {platform_account} pentru a solicita o rambursare.</string>
+    <string name="proPlanPlatformRefundLong">Pentru că v-ați înregistrat inițial pentru {app_pro} prin intermediul <b><font color="0">{platform_store}</font></b>, solicitarea dvs. de rambursare va fi procesată de Asistența {app_name}.\n\nSolicitați o rambursare apăsând butonul de mai jos și completând formularul de cerere de rambursare.\n\nDeși Asistența {app_name} depune eforturi pentru a procesa solicitările de rambursare în 24–72 de ore, procesarea poate dura mai mult în perioadele cu volum mare de cereri.</string>
+    <string name="proPlanRenewSupport">Accesul tău {app_pro} a fost reînnoit! Îți mulțumim că susții {network_name}.</string>
+    <string name="proPriceOneMonth">1 lună - {monthly_price} / lună</string>
+    <string name="proPriceThreeMonths">3 luni - {monthly_price} / lună</string>
+    <string name="proPriceTwelveMonths">12 luni - {monthly_price} / lună</string>
+    <string name="proReactivatingActivation">reactivare</string>
+    <string name="proRefundAccountDevice">Deschide acest cont {app_name} pe un dispozitiv {device_type} conectat la contul {platform_account} cu care te-ai înregistrat inițial. Apoi, solicită o rambursare din setările {app_pro}.</string>
     <string name="proRefundDescription">Ne pare rău că pleci. Iată ce trebuie să știi înainte de a solicita o rambursare.</string>
+    <string name="proRefundNextSteps">{platform} procesează acum solicitarea ta de rambursare. De obicei, poate dura între 24 și 48 de ore. În funcție de decizia lor, este posibil să observi o modificare a statutului {pro} în {app_name}.</string>
+    <string name="proRefundRequestSessionSupport">Cererea ta de rambursare va fi gestionată de echipa de asistență {app_name}.\n\nSolicită o rambursare apăsând butonul de mai jos și completând formularul de cerere de rambursare.\n\nDeși asistența {app_name} depune eforturi pentru a procesa cererile de rambursare în 24–72 de ore, procesarea poate dura mai mult în perioadele cu volum ridicat de solicitări.</string>
+    <string name="proRefundRequestStorePolicies">Cererea ta de rambursare va fi gestionată exclusiv de {platform} prin intermediul <b>site-ului {platform}</b>.\n\nDin cauza politicilor de rambursare ale {platform}, dezvoltatorii {app_name} nu pot influența rezultatul cererilor de rambursare. Acest lucru include dacă cererea este aprobată sau respinsă, precum și dacă se acordă o rambursare completă sau parțială.</string>
+    <string name="proRefundSupport">Te rugăm să contactezi {platform} pentru actualizări suplimentare privind solicitarea ta de rambursare. Din cauza politicilor de rambursare ale {platform}, dezvoltatorii {app_name} nu au nicio posibilitate de a influența rezultatul solicitărilor de rambursare.\n\n<font color="0">Asistență rambursare {platform}</font></string>
     <string name="proRefunding">Se rambursează {pro}</string>
+    <string name="proRefundingDescription">Rambursările pentru {app_pro} sunt gestionate exclusiv de {platform} prin intermediul {platform_store}.\n\nDin cauza politicilor de rambursare ale {platform}, dezvoltatorii {app_name} nu pot influența rezultatul solicitărilor de rambursare. Aceasta include dacă solicitarea este aprobată sau refuzată, precum și dacă se acordă o rambursare integrală sau parțială.</string>
+    <string name="proRenewAnimatedDisplayPicture">Vrei să folosești din nou poze de profil animate?\nReînnoiește-ți accesul {pro} pentru a debloca funcțiile de care ai fost privat.</string>
+    <string name="proRenewBeta">Reînnoiește {pro} Beta</string>
+    <string name="proRenewDesktopLinked">Reînnoiește-ți accesul la {pro} din setările {app_pro} de pe un dispozitiv asociat care are instalată aplicația {app_name} prin {platform_store} sau {platform_store_other}.</string>
+    <string name="proRenewLongerMessages">Vrei să trimiți din nou mesaje mai lungi?\nReînnoiește-ți accesul {pro} pentru a debloca funcțiile de care ai fost privat.</string>
+    <string name="proRenewMaxPotential">Vrei să folosești din nou {app_name} la potențialul său maxim?\nReînnoiește accesul {pro} pentru a debloca funcționalitățile care ți-au lipsit.</string>
+    <string name="proRenewPinFiveConversations">Vrei să fixezi din nou mai mult de {limit} conversații?\nReînnoiește accesul {pro} pentru a debloca funcționalitățile care ți-au lipsit.</string>
+    <string name="proRenewPinMoreConversations">Vrei să fixezi din nou mai multe conversații?\nReînnoiește accesul {pro} pentru a debloca funcționalitățile care ți-au lipsit.</string>
+    <string name="proRenewTosPrivacy">Prin reînnoire, ești de acord cu <b>Termenii de utilizare</b> {icon} și <b>Politica de confidențialitate</b> {icon} ale {app_pro}</string>
+    <string name="proRenewalUnsuccessful">Reînnoirea Pro a eșuat, se va reîncerca în curând</string>
+    <string name="proRenewingAction">reînnoire</string>
+    <string name="proRenewingNoAccessBilling">În prezent, accesul {pro} poate fi achiziționat și reînnoit doar prin intermediul {platform_store} sau {platform_store_other}. Deoarece ai instalat {app_name} folosind {build_variant}, nu poți reînnoi de aici.\n\nDezvoltatorii {app_name} lucrează intens la opțiuni alternative de plată, pentru a permite utilizatorilor să cumpere accesul {pro} în afara {platform_store} și {platform_store_other}.<b> Planul {pro}</b> {icon}</string>
     <string name="proRequestedRefund">Rambursare solicitată</string>
     <string name="proSendMore">Trimite mai mult cu</string>
+    <string name="proSettings">Setări {pro}</string>
+    <string name="proStartUsing">Începe să folosești {pro}</string>
     <string name="proStats">Statisticile tale {pro}</string>
+    <string name="proStatsLoading">Statistici {pro} se încarcă</string>
+    <string name="proStatsLoadingDescription">Statistica ta {pro} se încarcă, te rugăm să aștepți.</string>
     <string name="proStatsTooltip">Statistica {pro} reflectă utilizarea pe acest dispozitiv și poate apărea diferit pe alte dispozitive conectate</string>
+    <string name="proStatusError">Eroare stare {pro}</string>
+    <string name="proStatusInfoInaccurateNetworkError">Nu s-a putut realiza conexiunea la rețea pentru a verifica statutul {pro}. Informațiile afișate pe această pagină pot fi inexacte până când conexiunea este restabilită.\n\nVă rugăm să verificați conexiunea la rețea și să încercați din nou.</string>
+    <string name="proStatusLoading">Stare {pro} se încarcă</string>
+    <string name="proStatusLoadingDescription">Informațiile tale {pro} sunt în curs de încărcare. Unele acțiuni de pe această pagină ar putea fi indisponibile până la finalizarea încărcării.</string>
+    <string name="proStatusLoadingSubtitle">Se încarcă statutul {pro}</string>
+    <string name="proStatusNetworkErrorContinue">Conexiunea la rețea nu a reușit pentru a verifica starea contului {pro}. Nu poți continua până când conexiunea nu este restabilită.\n\nTe rugăm să verifici conexiunea la rețea și să încerci din nou.</string>
+    <string name="proStatusNetworkErrorDescription">Nu s-a putut realiza conexiunea la rețea pentru verificarea stării {pro}. Nu poți face upgrade la {pro} până când conexiunea nu este restabilită.\n\nVerifică conexiunea la rețea și încearcă din nou.</string>
+    <string name="proStatusRefreshNetworkError">Nu s-a putut realiza conexiunea la rețea pentru a reîmprospăta statutul {pro}. Unele acțiuni de pe această pagină vor fi dezactivate până când conexiunea este restabilită.\n\nVă rugăm să verificați conexiunea la rețea și să încercați din nou.</string>
+    <string name="proStatusRenewError">Nu se poate realiza conexiunea la rețea pentru a încărca accesul tău {pro} curent. Reînnoirea {pro} prin {app_name} va fi dezactivată până la restabilirea conexiunii.\n\nVerifică conexiunea la rețea și încearcă din nou.</string>
     <string name="proSupportDescription">Ai nevoie de ajutor cu {pro}? Trimite o solicitare către Echipa de Suport.</string>
+    <string name="proTosDescription">Prin {action_type}, sunteți {activation_type} {app_pro} prin protocolul {app_name}. {entity} va facilita această activare, dar nu este furnizorul {app_pro}. {entity} nu este responsabil pentru performanța, disponibilitatea sau funcționalitatea {app_pro}.</string>
     <string name="proTosPrivacy">Prin actualizare, sunteți de acord cu <b>Termenii și condițiile</b> {icon} și <b>Politica de confidențialitate</b> {icon} ale {app_pro}</string>
     <string name="proUnlimitedPins">Pin-uri nelimitate</string>
     <string name="proUnlimitedPinsDescription">Organizează-ți toate conversațiile prin fixarea unui număr nelimitat de chaturi.</string>
+    <string name="proUpdateAccessDescription">Opțiunea dvs. actuală de facturare oferă <b>{current_plan_length}</b> de acces {pro}. Sigur doriți să treceți la opțiunea de facturare pe <b>{selected_plan_length_singular}</b>?\n\nPrin actualizare, accesul dvs. la {pro} se va reînnoi automat pe <b>{date}</b> pentru încă <b>{selected_plan_length}</b> de acces {pro}.</string>
+    <string name="proUpdateAccessExpireDescription">Accesul dvs. {pro} va expira pe <b>{date}</b>.\n\nPrin actualizare, accesul dvs. la {pro} se va reînnoi automat pe <b>{date}</b> pentru încă <b>{selected_plan_length}</b> de acces {pro}.</string>
+    <string name="proUpdatingAction">actualizare</string>
+    <string name="proUpgradeAccess">Upgradează la {app_pro} Beta pentru a avea acces la numeroase beneficii și funcționalități exclusive.</string>
+    <string name="proUpgradeDesktopLinked">Upgradează la {pro} din setările {app_pro} de pe un dispozitiv asociat, unde {app_name} este instalat prin {platform_store} sau {platform_store_other}.</string>
+    <string name="proUpgradeNoAccessBilling">În prezent, accesul {pro} poate fi achiziționat doar prin {platform_store} sau {platform_store_other}. Deoarece ai instalat {app_name} utilizând {build_variant}, nu poți face upgrade la {pro} de aici.\n\nDezvoltatorii {app_name} lucrează intens la opțiuni alternative de plată pentru a permite utilizatorilor să achiziționeze accesul la {pro} în afara {platform_store} și {platform_store_other}.<b> Foaie de parcurs {pro}</b> {icon}</string>
+    <string name="proUpgradeOption">Deocamdată, există o singură modalitate de a face upgrade:</string>
+    <string name="proUpgradeOptionsTwo">Deocamdată, există două modalități de a face upgrade:</string>
+    <string name="proUpgraded">Ai făcut upgrade la {app_pro}!\nÎți mulțumim că susții {network_name}.</string>
+    <string name="proUpgradingAction">actualizare</string>
+    <string name="proUpgradingTo">Upgradează la {pro}</string>
+    <string name="proUpgradingTosPrivacy">Prin actualizare, ești de acord cu <b>Termenii și condițiile</b> {icon} și <b>Politica de confidențialitate</b> {icon} ale {app_pro}</string>
+    <string name="proUserProfileModalCallToAction">Vrei să profiți mai mult de {app_name}?\nFă upgrade la {app_pro} Beta pentru o experiență de mesagerie mai puternică.</string>
+    <string name="processingRefundRequest">{platform} îți procesează solicitarea de rambursare</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Afișează imaginea</string>
     <string name="profileDisplayPictureRemoveError">Nu s-a putut elimina imaginea de profil.</string>
@@ -947,6 +1191,12 @@
     <string name="profileDisplayPictureSizeError">Vă rugăm alegeți un fișier mai mic.</string>
     <string name="profileErrorUpdate">Eroare la actualizarea profilului.</string>
     <string name="promote">Promovează</string>
+    <string name="promoteAdminsWarning">Administratorii vor putea vedea istoricul mesajelor din ultimele 14 zile și nu pot fi retrogradați sau eliminați din grup.</string>
+    <plurals name="promoteMember">
+        <item quantity="one">Promovează membrul</item>
+        <item quantity="few">Promovează membrii</item>
+        <item quantity="other">Promovează membrii</item>
+    </plurals>
     <plurals name="promotionFailed">
         <item quantity="one">Promovare eșuată</item>
         <item quantity="few">Promovări eșuate</item>
@@ -978,6 +1228,7 @@
     <string name="recommended">Recomandat</string>
     <string name="recoveryPasswordBannerDescription">Salvați parola de recuperare pentru a vă asigura că nu pierdeți accesul la contul dumneavoastră.</string>
     <string name="recoveryPasswordBannerTitle">Salvează parola de recuperare</string>
+    <string name="recoveryPasswordDescription">Folosește parola de recuperare pentru a încărca contul tău pe dispozitive noi.\n\nContul nu poate fi recuperat fără parola de recuperare. Asigură-te că este stocată într-un loc sigur și securizat — și <b>nu o împărtăși cu nimeni</b>.</string>
     <string name="recoveryPasswordEnter">Introduceți parola de recuperare</string>
     <string name="recoveryPasswordErrorLoad">A apărut o eroare la încărcarea parolei de recuperare.\n\nTe rugăm să exporți jurnalele, apoi să încarci fișierul prin intermediul Biroului de asistență {app_name} pentru a ajuta la soluționarea acestei probleme.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Vă rugăm să verificați parola de recuperare și să încercați din nou.</string>
@@ -996,25 +1247,68 @@
     <string name="recoveryPasswordWarningSendDescription">Aceasta este parola ta de recuperare. Dacă o trimiți cuiva, acea persoană va avea acces complet la contul tău.</string>
     <string name="recreateGroup">Recreează grup</string>
     <string name="redo">Repetă</string>
+    <string name="refundNonOriginatorApple">Pentru că te-ai înregistrat inițial la {app_pro} folosind un alt {platform_account}, va trebui să folosești acel <b><font color="0">{platform_account}</font></b> pentru a-ți actualiza accesul {pro}.</string>
+    <string name="refundRequestOptions">Două moduri de a solicita o rambursare:</string>
     <string name="remainingCharactersOverTooltip">Redu lungimea mesajului cu {count}</string>
     <plurals name="remainingCharactersTooltip">
         <item quantity="one">%1$d caracter rămas</item>
         <item quantity="few">%1$d caractere rămase</item>
         <item quantity="other">%1$d de caractere rămase</item>
     </plurals>
+    <string name="remindMeLater">Amintește-mi mai târziu</string>
     <string name="remove">Elimină</string>
+    <plurals name="removeMember">
+        <item quantity="one">Elimină membrul</item>
+        <item quantity="few">Elimină membrii</item>
+        <item quantity="other">Elimină membrii</item>
+    </plurals>
+    <plurals name="removeMemberMessages">
+        <item quantity="one">Elimină membrul și mesajele acestuia</item>
+        <item quantity="few">Elimină membrii și mesajele acestora</item>
+        <item quantity="other">Elimină membrii și mesajele acestora</item>
+    </plurals>
     <string name="removePasswordFail">Eroare la eliminarea parolei</string>
     <string name="removePasswordModalDescription">Elimină parola actuală pentru {app_name}. Datele stocate local vor fi re-criptate cu o cheie generată aleatoriu, stocată pe dispozitivul tău.</string>
+    <plurals name="removingMember">
+        <item quantity="one">Se elimină membrul</item>
+        <item quantity="few">Se elimină membrii</item>
+        <item quantity="other">Se elimină membrii</item>
+    </plurals>
     <string name="renew">Reînnoiește</string>
+    <string name="renewingPro">Reînnoire {pro}</string>
     <string name="reply">Răspunde</string>
     <string name="requestRefund">Solicită rambursare</string>
+    <string name="requestRefundPlatformWebsite">Solicită o rambursare pe <b><font color="0">site-ul {platform}</font></b>, folosind contul {platform_account} cu care te-ai înregistrat la {pro}.</string>
     <string name="resend">Retrimite</string>
+    <plurals name="resendInvite">
+        <item quantity="one">Retrimite invitația</item>
+        <item quantity="few">Retrimite invitațiile</item>
+        <item quantity="other">Retrimite invitațiile</item>
+    </plurals>
+    <plurals name="resendPromotion">
+        <item quantity="one">Retrimite promovarea</item>
+        <item quantity="few">Retrimite promovările</item>
+        <item quantity="other">Retrimite promovările</item>
+    </plurals>
+    <plurals name="resendingInvite">
+        <item quantity="one">Se retrimite invitația</item>
+        <item quantity="few">Se retrimit invitațiile</item>
+        <item quantity="other">Se retrimit invitațiile</item>
+    </plurals>
+    <plurals name="resendingPromotion">
+        <item quantity="one">Se retrimite promovarea</item>
+        <item quantity="few">Se retrimit promovările</item>
+        <item quantity="other">Se retrimit promovările</item>
+    </plurals>
     <string name="resolving">Se încarcă informațiile despre țară...</string>
     <string name="restart">Repornește</string>
     <string name="resync">Resincronizează</string>
     <string name="retry">Reîncearcă</string>
     <string name="reviewLimit">Limită de recenzii</string>
     <string name="reviewLimitDescription">Se pare că ai evaluat deja recent {app_name}, îți mulțumim pentru feedback!</string>
+    <string name="runAppBackground">Rulează aplicația în fundal</string>
+    <string name="runSessionBackground">Rulezi {app_name} în fundal?</string>
+    <string name="runSessionBackgroundDescription">Deoarece folosești Modul Lent, îți recomandăm să permiți rularea {app_name} în fundal pentru a îmbunătăți notificările. Acest lucru poate îmbunătăți consistența notificărilor, deși sistemul tău poate limita automat activitatea în fundal.\n\nPoți modifica această opțiune mai târziu din Setări.</string>
     <string name="save">Salvează</string>
     <string name="saved">Salvat</string>
     <string name="savedMessages">Mesaje salvate</string>
@@ -1023,6 +1317,8 @@
     <string name="screenSecurity">Securitate ecran</string>
     <string name="screenshotNotifications">Notificări captură ecran</string>
     <string name="screenshotNotificationsDescription">Primește o notificare atunci când un contact face o captură de ecran a unei conversații unu-la-unu.</string>
+    <string name="screenshotProtectionDescriptionDesktop">Ascunde fereastra {app_name} în capturile de ecran realizate pe acest dispozitiv.</string>
+    <string name="screenshotProtectionDesktop">Protecție captură ecran</string>
     <string name="screenshotTaken"><b>{name}</b> a făcut o captură de ecran.</string>
     <string name="search">Căutați</string>
     <string name="searchContacts">Cauta contacte</string>
@@ -1044,6 +1340,11 @@
     <string name="sending">Trimitere</string>
     <string name="sendingCallOffer">Se trimite oferta de apel</string>
     <string name="sendingConnectionCandidates">Se trimit candidații pentru conexiune</string>
+    <plurals name="sendingPromotion">
+        <item quantity="one">Se trimite promovarea</item>
+        <item quantity="few">Se trimit promovări</item>
+        <item quantity="other">Se trimit promovări</item>
+    </plurals>
     <string name="sent">Trimis:</string>
     <string name="sessionAppearance">Aspect</string>
     <string name="sessionClearData">Șterge datele</string>
@@ -1070,14 +1371,19 @@
     <string name="set">Setează</string>
     <string name="setCommunityDisplayPicture">Setează imaginea afișată de Comunitate</string>
     <string name="setPasswordModalDescription">Setează o parolă pentru {app_name}. Datele stocate local vor fi criptate cu această parolă. Ți se va cere să introduci această parolă de fiecare dată când pornește {app_name}.</string>
+    <string name="settingsCannotChangeDesktop">Setarea nu poate fi actualizată</string>
     <string name="settingsRestartDescription">Trebuie să reporniți {app_name} pentru a aplica noile setări.</string>
     <string name="settingsScreenSecurityDesktop">Securitate ecran</string>
+    <string name="settingsStartCategoryDesktop">Pornire</string>
     <string name="share">Distribuie</string>
     <string name="shareAccountIdDescription">Invită-ți prietenul să converseze cu tine pe {app_name} partajându-i ID-ul contului tău.</string>
     <string name="shareAccountIdDescriptionCopied">Împărtășește cu prietenii tăi oriunde comunici de obicei cu ei — apoi mută conversația aici.</string>
     <string name="shareExtensionDatabaseError">A apărut o eroare la deschiderea bazei de date. Te rugăm să repornești aplicația și să încerci din nou.</string>
     <string name="shareExtensionNoAccountError">Ups! Se pare că nu ai încă un cont {app_name}.\n\nVa trebui să creezi unul în aplicația {app_name} înainte de a putea partaja.</string>
+    <string name="shareGroupMessageHistory">Doriți să partajați istoricul mesajelor de grup cu acest utilizator?</string>
     <string name="shareToSession">Distribuie către {app_name}</string>
+    <string name="sharingSupportMultipleMedia">Ne pare rău, {app_name} acceptă doar partajarea simultană a mai multor imagini și videoclipuri</string>
+    <string name="sharingSupportMultipleMediaExcluded">Partajarea acceptă doar fișiere media. Fișierele non-media au fost excluse</string>
     <string name="show">Afișează</string>
     <string name="showAll">Afișează tot</string>
     <string name="showLess">Afișează mai puțin</string>
@@ -1098,12 +1404,15 @@
     <string name="tooltipAccountIdVisible">ID-ul contului <b>{name}</b> este vizibil în baza interacțiunilor anterioare</string>
     <string name="tooltipBlindedIdCommunities">ID-urile cenzurate sunt utilizate în comunități pentru a reduce mesajele spam și a crește confidențialitatea</string>
     <string name="translate">Traducere</string>
+    <string name="tray">Tavă de sistem</string>
     <string name="tryAgain">Încercați din nou</string>
     <string name="typingIndicators">Indicatori tastare</string>
     <string name="typingIndicatorsDescription">Vizualizează și distribuie indicatorii de tastare.</string>
     <string name="unavailable">Indisponibil</string>
     <string name="undo">Anulează</string>
     <string name="unknown">Necunoscut</string>
+    <string name="unsupportedCpu">CPU incompatibil</string>
+    <string name="update">Actualizează</string>
     <string name="updateAccess">Actualizează accesul {pro}</string>
     <string name="updateAccessTwo">Două moduri de a actualiza accesul {pro}:</string>
     <string name="updateApp">Actualizări aplicație</string>
@@ -1128,6 +1437,8 @@
     <string name="updated">Ultima actualizare acum {relative_time}</string>
     <string name="updates">Actualizări</string>
     <string name="updating">Actualizare...</string>
+    <string name="upgrade">Actualizează</string>
+    <string name="upgradeSession">Upgrade {app_name}</string>
     <string name="upgradeTo">Actualizează la</string>
     <string name="uploading">Încărcare</string>
     <string name="urlCopy">Copiați adresa URL</string>
@@ -1136,6 +1447,9 @@
     <string name="urlOpenDescription">Ești sigur/ă că dorești să deschizi acest URL în browserul tău?\n\n<b>{url}</b></string>
     <string name="urlOpenDescriptionAlternative">Linkurile se vor deschide în browserul tău.</string>
     <string name="useFastMode">Folosește modul rapid</string>
+    <string name="viaPlatformWebsiteDescription">Schimbă-ți planul utilizând contul {platform_account} cu care te-ai înregistrat, prin intermediul <b><font color="0">site-ului {platform}</font></b>.</string>
+    <string name="viaStoreWebsite">Prin intermediul site-ului {platform}</string>
+    <string name="viaStoreWebsiteDescription">Actualizează-ți accesul {pro} folosind {platform_account} pe care l-ai utilizat la înregistrare, prin intermediul site-ului <b><font color="0">{platform_store}</font></b>.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Videoclipul nu poate fi redat.</string>
     <string name="view">Vizualizare</string>
@@ -1144,9 +1458,12 @@
     <string name="waitFewMinutes">Poate dura câteva minute.</string>
     <string name="waitOneMoment">Un moment, vă rog...</string>
     <string name="warning">Atenţie</string>
+    <string name="warningIosVersionEndingSupport">Asistența pentru iOS 15 s-a încheiat. Actualizează la iOS 16 sau o versiune mai nouă pentru a continua să primești actualizări ale aplicației.</string>
     <string name="window">Fereastră</string>
     <string name="yes">Da</string>
     <string name="you">Tu</string>
+    <string name="yourCpuIsUnsupportedSSE42">Procesorul dumneavoastră nu suportă instrucțiunile SSE 4.2, necesare pentru ca {app_name} să proceseze imagini pe sistemele de operare Linux x64. Vă rugăm să faceți upgrade la un procesor compatibil sau să utilizați un alt sistem de operare.</string>
     <string name="yourRecoveryPassword">Parola de recuperare</string>
+    <string name="zoomFactor">Factor de mărire</string>
     <string name="zoomFactorDescription">Ajustează dimensiunea textului și a elementelor vizuale.</string>
 </resources>

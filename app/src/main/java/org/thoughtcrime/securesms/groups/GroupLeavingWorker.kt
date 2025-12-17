@@ -21,6 +21,8 @@ import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.waitUntilGroupConfigsPushed
+import org.session.libsession.utilities.withGroupConfigs
+import org.session.libsession.utilities.withMutableGroupConfigs
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log

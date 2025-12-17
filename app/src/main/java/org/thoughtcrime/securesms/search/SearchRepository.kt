@@ -1,68 +1,60 @@
 package org.thoughtcrime.securesms.search
 
-import android.content.Context
 import android.database.Cursor
-import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.Lazy
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.concurrent.SignalExecutors
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.CursorList
 import org.thoughtcrime.securesms.database.MmsSmsColumns
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SearchDatabase
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.search.model.SearchResult
-import org.thoughtcrime.securesms.util.Stopwatch
 import javax.inject.Inject
 import javax.inject.Singleton
 
 // Class to manage data retrieval for search
 @Singleton
 class SearchRepository @Inject constructor(
-    @param:ApplicationContext private val context: Context,
     private val searchDatabase: SearchDatabase,
     private val recipientRepository: RecipientRepository,
-    private val conversationRepository: ConversationRepository,
+    private val conversationRepository: Lazy<ConversationRepository>,
     private val configFactory: ConfigFactoryProtocol,
+    @param:ManagerScope private val scope: CoroutineScope,
 ) {
-    private val executor = SignalExecutors.SERIAL
+    private val searchSemaphore = Semaphore(1)
 
-    fun query(query: String, callback: (SearchResult) -> Unit) {
-        // If the sanitized search is empty then abort without search
-        val cleanQuery = sanitizeQuery(query).trim { it <= ' ' }
+    suspend fun query(query: String): SearchResult = withContext(Dispatchers.Default) {
+        searchSemaphore.withPermit {
+            // If the sanitized search is empty then abort without search
+            val cleanQuery = sanitizeQuery(query).trim { it <= ' ' }
 
-        executor.execute {
-            val timer =
-                Stopwatch("FtsQuery")
-            timer.split("clean")
-
-            val contacts =
-                queryContacts(cleanQuery)
-            timer.split("Contacts")
-
-            val conversations =
-                queryConversations(cleanQuery)
-            timer.split("Conversations")
-
+            val contacts = queryContacts(cleanQuery)
+            val conversations = queryConversations(cleanQuery)
             val messages = queryMessages(cleanQuery)
-            timer.split("Messages")
 
-            timer.stop(TAG)
-            callback(
-                SearchResult(
-                    cleanQuery,
-                    contacts,
-                    conversations,
-                    messages
-                )
+            SearchResult(
+                cleanQuery,
+                contacts,
+                conversations,
+                messages
             )
         }
     }
@@ -75,9 +67,10 @@ class SearchRepository @Inject constructor(
             return
         }
 
-        executor.execute {
-            val messages = queryMessages(cleanQuery, threadId)
-            callback(messages)
+        scope.launch {
+            searchSemaphore.withPermit {
+                callback(queryMessages(cleanQuery, threadId))
+            }
         }
     }
 
@@ -157,8 +150,8 @@ class SearchRepository @Inject constructor(
             .toList()
     }
 
-    private fun queryMessages(query: String): CursorList<MessageResult> {
-        val allConvo = conversationRepository.conversationListAddressesFlow.value
+    private suspend fun queryMessages(query: String): CursorList<MessageResult> {
+        val allConvo = conversationRepository.get().conversationListAddressesFlow.first()
         val messages = searchDatabase.queryMessages(query, allConvo)
         return if (messages != null)
             CursorList(messages, MessageModelBuilder())
@@ -211,10 +204,6 @@ class SearchRepository @Inject constructor(
 
             return MessageResult(conversationRecipient, messageRecipient, body, threadId, sentMs)
         }
-    }
-
-    interface Callback<E> {
-        fun onResult(result: E)
     }
 
     companion object {

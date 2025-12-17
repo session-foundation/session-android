@@ -21,6 +21,8 @@ import org.session.libsession.messaging.utilities.MessageAuthentication.buildGro
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.getGroup
+import org.session.libsession.utilities.withGroupConfigs
+import org.session.libsession.utilities.withMutableGroupConfigs
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.session.protos.SessionProtos.GroupUpdateInviteMessage
