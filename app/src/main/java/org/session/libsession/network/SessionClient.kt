@@ -225,6 +225,8 @@ class SessionClient @Inject constructor(
         return JsonUtil.fromJson(body, Map::class.java) as Map<*, *>
     }
 
+    //todo ONION the methods below haven't been fully refactored - This is part of the next step of this refactor
+
     // Client methods
 
     /**
@@ -276,12 +278,15 @@ class SessionClient @Inject constructor(
         )
     }
 
+    @Suppress("UNCHECKED_CAST")
     suspend fun deleteMessage(
         publicKey: String,
         auth: SwarmAuth,
         serverHashes: List<String>,
         version: Version = Version.V4
     ): Map<*, *> {
+        val snode = getSingleTargetSnode(publicKey)
+
         val params = buildAuthenticatedParameters(
             auth = auth,
             namespace = null,
@@ -295,18 +300,54 @@ class SessionClient @Inject constructor(
             this["messages"] = serverHashes
         }
 
-        val snode = getSingleTargetSnode(publicKey)
-
-        Log.d("SessionClient", "Deleting messages on ${snode.address}:${snode.port} for $publicKey")
-
-        return invoke(
+        val rawResponse = invoke(
             method = Snode.Method.DeleteMessage,
             snode = snode,
             parameters = params,
-            version = version,
-            publicKey = publicKey
+            publicKey = publicKey,
+            version = version
         )
+
+        val swarms = rawResponse["swarm"] as? Map<String, Any> ?: throw Error.Generic("Missing swarm in delete response")
+
+        val deletedMessages: Map<String, Boolean> = swarms.mapValuesNotNull { (hexSnodePublicKey, rawJSON) ->
+            val json = rawJSON as? Map<String, Any> ?: return@mapValuesNotNull null
+
+            val isFailed = json["failed"] as? Boolean ?: false
+            val statusCode = json["code"]?.toString()
+            val reason = json["reason"] as? String
+
+            if (isFailed) {
+                Log.d("SessionClient", "DeleteMessage failed on $hexSnodePublicKey: $reason ($statusCode)")
+                false
+            } else {
+                val hashes = (json["deleted"] as? List<*>)?.filterIsInstance<String>()
+                    ?: return@mapValuesNotNull false
+
+                val signature = json["signature"] as? String
+                    ?: return@mapValuesNotNull false
+
+                // Signature: ( PUBKEY_HEX || RMSG[0]..RMSG[N] || DMSG[0]..DMSG[M] )
+                val message = sequenceOf(auth.accountId.hexString)
+                    .plus(serverHashes)
+                    .plus(hashes)
+                    .toByteArray()
+
+                ED25519.verify(
+                    ed25519PublicKey = Hex.fromStringCondensed(hexSnodePublicKey),
+                    signature = Base64.decode(signature),
+                    message = message
+                )
+            }
+        }
+
+        if (deletedMessages.entries.all { !it.value }) {
+            throw Error.Generic("DeleteMessage did not succeed on any swarm member")
+        }
+
+        return rawResponse
     }
+
 
     suspend fun deleteAllMessages(
         auth: SwarmAuth,
