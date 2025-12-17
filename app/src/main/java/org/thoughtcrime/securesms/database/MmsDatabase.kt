@@ -234,6 +234,9 @@ class MmsDatabase @Inject constructor(
             if (it.moveToFirst()) it.getLong(0) else null
         }
 
+        if (threadId != null) {
+            threadDatabase.notifyThreadUpdated(threadId)
+        }
     }
 
     fun getThreadIdForMessage(id: Long): Long {
