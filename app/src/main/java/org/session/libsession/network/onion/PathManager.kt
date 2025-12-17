@@ -22,8 +22,11 @@ import org.session.libsession.network.snode.SnodePathStorage
 import org.session.libsignal.crypto.secureRandom
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class PathManager(
+@Singleton
+class PathManager @Inject constructor(
     private val scope: CoroutineScope,
     private val directory: SnodeDirectory,
     private val storage: SnodePathStorage,

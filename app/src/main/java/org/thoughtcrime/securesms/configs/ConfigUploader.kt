@@ -21,14 +21,14 @@ import network.loki.messenger.libsession_util.util.ConfigPush
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
 import org.session.libsession.network.SessionClient
-import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.snode.OwnedSwarmAuth
-import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.network.SnodeClock
+import org.session.libsession.network.model.PathStatus
+import org.session.libsession.network.onion.PathManager
+import org.session.libsession.network.snode.SwarmDirectory
+import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.snode.model.StoreMessageResponse
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigPushResult
 import org.session.libsession.utilities.ConfigUpdateNotification
@@ -64,7 +64,9 @@ class ConfigUploader @Inject constructor(
     private val storageProtocol: StorageProtocol,
     private val clock: SnodeClock,
     private val networkConnectivity: NetworkConnectivity,
-    private val sessionClient: SessionClient
+    private val swarmDirectory: SwarmDirectory,
+    private val sessionClient: SessionClient,
+    private val pathManager: PathManager
 ) : AuthAwareComponent {
     /**
      * A flow that only emits when
@@ -77,7 +79,7 @@ class ConfigUploader @Inject constructor(
     private fun pathBecomesAvailable(): Flow<*> = networkConnectivity.networkAvailable
         .flatMapLatest { hasNetwork ->
             if (hasNetwork) {
-                OnionRequestAPI.pathStatus.filter { it == OnionRequestAPI.PathStatus.READY }
+                pathManager.status.filter { it == PathStatus.READY }
             } else {
                 emptyFlow()
             }
@@ -198,7 +200,7 @@ class ConfigUploader @Inject constructor(
 
         Log.d(TAG, "Pushing group configs")
 
-        val snode = sessionClient.getSingleTargetSnode(groupId.hexString)
+        val snode = swarmDirectory.getSingleTargetSnode(groupId.hexString)
         val auth = OwnedSwarmAuth.ofClosedGroup(groupId, adminKey)
 
         // Keys push is different: it doesn't have the delete call so we don't call pushConfig.
@@ -283,10 +285,10 @@ class ConfigUploader @Inject constructor(
             push.messages
                 .map { message ->
                     async {
-                        SnodeAPI.sendBatchRequest(
+                        sessionClient.sendBatchRequest(
                             snode = snode,
                             publicKey = auth.accountId.hexString,
-                            request = SnodeAPI.buildAuthenticatedStoreBatchInfo(
+                            request = sessionClient.buildAuthenticatedStoreBatchInfo(
                                 namespace,
                                 SnodeMessage(
                                     auth.accountId.hexString,
@@ -304,10 +306,10 @@ class ConfigUploader @Inject constructor(
         }
 
         if (push.obsoleteHashes.isNotEmpty()) {
-            SnodeAPI.sendBatchRequest(
+            sessionClient.sendBatchRequest(
                 snode = snode,
                 publicKey = auth.accountId.hexString,
-                request = SnodeAPI.buildAuthenticatedDeleteBatchInfo(auth, push.obsoleteHashes)
+                request = sessionClient.buildAuthenticatedDeleteBatchInfo(auth, push.obsoleteHashes)
             )
         }
 
@@ -343,7 +345,7 @@ class ConfigUploader @Inject constructor(
 
         Log.d(TAG, "Pushing ${pushes.size} user configs")
 
-        val snode = SnodeAPI.getSingleTargetSnode(userAuth.accountId.hexString).await()
+        val snode = swarmDirectory.getSingleTargetSnode(userAuth.accountId.hexString)
 
         val pushTasks = pushes.map { (configType, configPush) ->
             async {
