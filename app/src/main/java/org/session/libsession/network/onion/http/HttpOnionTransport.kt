@@ -15,8 +15,11 @@ import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.toHexString
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class HttpOnionTransport : OnionTransport {
+@Singleton
+class HttpOnionTransport @Inject constructor() : OnionTransport {
 
     override suspend fun send(
         path: List<Snode>,

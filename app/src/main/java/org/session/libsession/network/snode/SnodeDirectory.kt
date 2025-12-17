@@ -3,6 +3,7 @@ package org.session.libsession.network.snode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.session.libsession.utilities.Environment
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.secureRandom
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.JsonUtil
@@ -17,7 +18,7 @@ import javax.inject.Singleton
 @Singleton
 class SnodeDirectory @Inject constructor(
     private val storage: SnodePoolStorage,
-    private val environment: Environment,
+    private val prefs: TextSecurePreferences,
     @ManagerScope private val scope: CoroutineScope,
 ) : OnAppStartupComponent {
 
@@ -32,7 +33,7 @@ class SnodeDirectory @Inject constructor(
         private const val KEY_VERSION = "storage_server_version"
     }
 
-    private val seedNodePool: Set<String> = when (environment) {
+    private val seedNodePool: Set<String> = when (prefs.getEnvironment()) {
         Environment.DEV_NET -> setOf("http://sesh-net.local:1280")
         Environment.TEST_NET -> setOf("http://public.loki.foundation:38157")
         Environment.MAIN_NET -> setOf(

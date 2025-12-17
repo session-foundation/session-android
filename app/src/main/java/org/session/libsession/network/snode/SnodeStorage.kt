@@ -4,8 +4,8 @@ package org.session.libsession.network.snode
 import org.session.libsession.network.model.Path
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
-
-//todo ONION  need a hilt module to inject all of these
+import javax.inject.Inject
+import javax.inject.Singleton
 
 interface SnodePathStorage {
     fun getOnionRequestPaths(): List<Path>
@@ -24,7 +24,8 @@ interface SnodePoolStorage {
 }
 
 
-class DbSnodePathStorage(private val db: LokiAPIDatabase) : SnodePathStorage {
+@Singleton
+class DbSnodePathStorage @Inject constructor(private val db: LokiAPIDatabase) : SnodePathStorage {
     override fun getOnionRequestPaths(): List<Path> {
         return db.getOnionRequestPaths()
     }
@@ -38,7 +39,8 @@ class DbSnodePathStorage(private val db: LokiAPIDatabase) : SnodePathStorage {
     }
 }
 
-class DbSwarmStorage(private val db: LokiAPIDatabase) : SwarmStorage {
+@Singleton
+class DbSwarmStorage @Inject constructor(private val db: LokiAPIDatabase) : SwarmStorage {
     override fun getSwarm(publicKey: String): Set<Snode> {
         return db.getSwarm(publicKey) ?: emptySet() // Handle potential null return
     }
@@ -48,7 +50,8 @@ class DbSwarmStorage(private val db: LokiAPIDatabase) : SwarmStorage {
     }
 }
 
-class DbSnodePoolStorage(private val db: LokiAPIDatabase) : SnodePoolStorage {
+@Singleton
+class DbSnodePoolStorage @Inject constructor(private val db: LokiAPIDatabase) : SnodePoolStorage {
     override fun getSnodePool(): Set<Snode> {
         return db.getSnodePool()
     }

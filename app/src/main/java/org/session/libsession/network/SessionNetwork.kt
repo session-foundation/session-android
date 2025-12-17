@@ -17,6 +17,8 @@ import org.session.libsession.network.utilities.getHeadersForOnionRequest
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.random.Random
 
 /**
@@ -32,7 +34,8 @@ import kotlin.random.Random
  * - Onion crypto construction or transport I/O (OnionTransport)
  * - Policy / healing logic (OnionErrorManager)
  */
-class SessionNetwork(
+@Singleton
+class SessionNetwork @Inject constructor(
     private val pathManager: PathManager,
     private val transport: OnionTransport,
     private val errorManager: OnionErrorManager,
