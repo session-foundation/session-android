@@ -56,8 +56,6 @@ import dagger.Lazy;
 import dagger.hilt.android.qualifiers.ApplicationContext;
 import kotlin.Pair;
 import kotlin.Triple;
-import network.loki.messenger.libsession_util.protocol.ProFeature;
-import network.loki.messenger.libsession_util.protocol.ProMessageFeature;
 
 @Singleton
 public class MmsSmsDatabase extends Database {
@@ -69,7 +67,7 @@ public class MmsSmsDatabase extends Database {
   public static final String MMS_TRANSPORT = "mms";
   public static final String SMS_TRANSPORT = "sms";
 
-  private static final String PROJECTION_ALL = "*";
+  static final String PROJECTION_ALL = "*";
 
   private final LoginStateRepository loginStateRepository;
   private final Lazy<@NonNull ThreadDatabase> threadDatabase;
@@ -198,13 +196,6 @@ public class MmsSmsDatabase extends Database {
     return getConversation(threadId, reverse, 0, 0);
   }
 
-  public Cursor getConversationSnippet(long threadId) {
-    String order     = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
-    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
-
-    return queryTables(PROJECTION_ALL, selection, true, null, order, null);
-  }
-
   public List<String> getRecentChatMemberAddresses(long threadId, int limit) {
     String projection = "DISTINCT " + MmsSmsColumns.ADDRESS;
     String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
@@ -324,7 +315,7 @@ public class MmsSmsDatabase extends Database {
    */
   @Nullable
   public Pair<Long, Long> getMaxTimestampInThreadUpTo(@NonNull final MessageId messageId) {
-    Pair<String, Object[]> query = MmsSmsDatabaseSQLKt.buildMaxTimestampInThreadUpToQuery(messageId);
+    Pair<String, Object[]> query = MmsSmsDatabaseExtKt.buildMaxTimestampInThreadUpToQuery(messageId);
     try (Cursor cursor = getReadableDatabase().rawQuery(query.getFirst(), query.getSecond())) {
       if (cursor != null && cursor.moveToFirst()) {
         return new Pair<>(cursor.getLong(0), cursor.getLong(1));
@@ -575,7 +566,7 @@ public class MmsSmsDatabase extends Database {
     migrateLegacyCommunityAddresses2(db, MmsDatabase.TABLE_NAME);
   }
 
-  private Cursor queryTables(
+  Cursor queryTables(
           @NonNull String projection,
           @Nullable String selection,
           boolean includeReactions,
@@ -583,7 +574,7 @@ public class MmsSmsDatabase extends Database {
           @Nullable String order,
           @Nullable String limit) {
     SQLiteDatabase db = getReadableDatabase();
-    String query = MmsSmsDatabaseSQLKt.buildMmsSmsCombinedQuery(projection,
+    String query = MmsSmsDatabaseExtKt.buildMmsSmsCombinedQuery(projection,
             selection,
             includeReactions,
             additionalReactionSelection,

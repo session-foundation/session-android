@@ -1,6 +1,8 @@
 package org.thoughtcrime.securesms.database
 
+import androidx.sqlite.db.transaction
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.database.model.MessageRecord
 
 /**
  * Build a combined query to fetch both MMS and SMS messages in one go, the high level idea is to
@@ -280,4 +282,10 @@ fun buildMaxTimestampInThreadUpToQuery(id: MessageId): Pair<String, Array<Any>> 
         FROM $msgTable mainMessage
         WHERE mainMessage.${MmsSmsColumns.ID} = ?
     """ to arrayOf(id.id)
+}
+
+fun MmsSmsDatabase.getAndMarkAsNotified(lastSeenByThreadIDs: Map<Long, Long>): List<MessageRecord> {
+    if (lastSeenByThreadIDs.isEmpty()) return emptyList()
+
+    TODO()
 }

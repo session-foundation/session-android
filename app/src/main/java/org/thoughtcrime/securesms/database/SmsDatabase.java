@@ -24,8 +24,6 @@ import android.content.Context;
 import android.database.Cursor;
 
 import androidx.collection.ArraySet;
-import androidx.collection.LongList;
-import androidx.collection.LongSet;
 import androidx.collection.MutableLongSet;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
@@ -33,6 +31,7 @@ import com.annimon.stream.Stream;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -53,7 +52,6 @@ import org.thoughtcrime.securesms.pro.ProFeatureExtKt;
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -73,7 +71,7 @@ import network.loki.messenger.libsession_util.protocol.ProFeature;
  * @author Moxie Marlinspike
  */
 @Singleton
-public class SmsDatabase extends MessagingDatabase {
+public class SmsDatabase extends MessagingDatabase implements MmsSmsColumns {
 
   private static final String TAG = SmsDatabase.class.getSimpleName();
 
@@ -173,10 +171,6 @@ public class SmsDatabase extends MessagingDatabase {
     this.recipientRepository = recipientRepository;
     this.threadDatabase = threadDatabase;
     this.reactionDatabase = reactionDatabase;
-  }
-
-  protected String getTableName() {
-    return TABLE_NAME;
   }
 
   private void updateTypeBitmask(long id, long maskOff, long maskOn) {
@@ -339,10 +333,6 @@ public class SmsDatabase extends MessagingDatabase {
     return isDeleted;
   }
 
-  @Override
-  public String getTypeColumn() {
-    return TYPE;
-  }
 
   public void incrementReceiptCount(SyncMessageId messageId, boolean deliveryReceipt, boolean readReceipt) {
     SQLiteDatabase database     = getWritableDatabase();
@@ -351,7 +341,7 @@ public class SmsDatabase extends MessagingDatabase {
 
     try {
       cursor = database.query(TABLE_NAME, new String[] {ID, THREAD_ID, ADDRESS, TYPE},
-                              DATE_SENT + " = ?", new String[] {String.valueOf(messageId.getTimetamp())},
+                              DATE_SENT + " = ?", new String[] {String.valueOf(messageId.getTimestamp())},
                               null, null, null, null);
 
       while (cursor.moveToNext()) {
@@ -375,8 +365,8 @@ public class SmsDatabase extends MessagingDatabase {
       }
 
       if (!foundMessage) {
-        if (deliveryReceipt) earlyDeliveryReceiptCache.increment(messageId.getTimetamp(), messageId.getAddress());
-        if (readReceipt)     earlyReadReceiptCache.increment(messageId.getTimetamp(), messageId.getAddress());
+        if (deliveryReceipt) earlyDeliveryReceiptCache.increment(messageId.getTimestamp(), messageId.getAddress());
+        if (readReceipt)     earlyReadReceiptCache.increment(messageId.getTimestamp(), messageId.getAddress());
       }
 
     } finally {
@@ -545,7 +535,7 @@ public class SmsDatabase extends MessagingDatabase {
     return id;
   }
   @Override
-  public List<Long> getExpiredMessageIDs(long nowMills) {
+  public @NotNull List<Long> getExpiredMessageIDs(long nowMills) {
     String query = "SELECT " + ID + " FROM " + TABLE_NAME +
             " WHERE " + EXPIRES_IN + " > 0 AND " + EXPIRE_STARTED + " > 0 AND " + EXPIRE_STARTED + " + " + EXPIRES_IN + " <= ?";
 

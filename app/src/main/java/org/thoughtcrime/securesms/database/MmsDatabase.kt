@@ -45,6 +45,7 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils.queue
 import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.database.MmsDatabase.Companion.MESSAGE_BOX
+import org.thoughtcrime.securesms.database.MmsSmsColumns.*
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -79,10 +80,9 @@ class MmsDatabase @Inject constructor(
     private val reactionDatabase: ReactionDatabase,
     private val mmsSmsDatabase: Lazy<MmsSmsDatabase>,
     private val groupDatabase: GroupDatabase,
-) : MessagingDatabase(context, databaseHelper) {
+) : MessagingDatabase(context, databaseHelper), MmsSmsColumns {
     private val earlyDeliveryReceiptCache = EarlyReceiptCache()
     private val earlyReadReceiptCache = EarlyReceiptCache()
-    override fun getTableName() = TABLE_NAME
 
     fun getMessageCountForThread(threadId: Long): Int {
         val db = readableDatabase
@@ -168,7 +168,7 @@ class MmsDatabase @Inject constructor(
                 TABLE_NAME,
                 arrayOf(ID, THREAD_ID, MESSAGE_BOX, ADDRESS),
                 "$DATE_SENT = ?",
-                arrayOf(messageId.timetamp.toString()),
+                arrayOf(messageId.timestamp.toString()),
                 null,
                 null,
                 null,
@@ -211,11 +211,11 @@ class MmsDatabase @Inject constructor(
             }
             if (!found) {
                 if (deliveryReceipt) earlyDeliveryReceiptCache.increment(
-                    messageId.timetamp,
+                    messageId.timestamp,
                     messageId.address
                 )
                 if (readReceipt) earlyReadReceiptCache.increment(
-                    messageId.timetamp,
+                    messageId.timestamp,
                     messageId.address
                 )
             }
@@ -744,8 +744,6 @@ class MmsDatabase @Inject constructor(
 
         return deletedMessageIDs.isNotEmpty()
     }
-
-    override fun getTypeColumn(): String = MESSAGE_BOX
 
     override fun deleteMessage(messageId: Long) {
         doDeleteMessages(

@@ -221,7 +221,7 @@ class MarkReadProcessor @Inject constructor(
             .filter { recipientRepository.getRecipientSync(it.address).shouldSendReadReceipt }
             .groupBy { it.address }
             .forEach { (address, messages) ->
-                messages.map { it.timetamp }
+                messages.map { it.timestamp }
                     .let(::ReadReceipt)
                     .apply { sentTimestamp = snodeClock.currentTimeMills() }
                     .let { messageSender.send(it, address) }

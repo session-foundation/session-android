@@ -61,7 +61,7 @@ class ExpiringMessageManager @Inject constructor(
         }
     }
 
-    private fun getDatabase(mms: Boolean) = if (mms) mmsDatabase else smsDatabase
+    private fun getDatabase(mms: Boolean): MessagingDatabase = if (mms) mmsDatabase else smsDatabase
 
     private fun insertIncomingExpirationTimerMessage(
         message: ExpirationTimerUpdate,
@@ -227,7 +227,7 @@ class ExpiringMessageManager @Inject constructor(
                 }
             }
 
-            val nextExpiration = db.nextExpiringTimestamp
+            val nextExpiration = db.getNextExpiringTimestamp()
             val now = clock.currentTimeMills()
 
             if (nextExpiration > 0 && nextExpiration <= now) {

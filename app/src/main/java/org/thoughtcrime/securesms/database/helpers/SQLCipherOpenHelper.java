@@ -29,6 +29,7 @@ import org.thoughtcrime.securesms.database.LokiMessageDatabase;
 import org.thoughtcrime.securesms.database.LokiThreadDatabase;
 import org.thoughtcrime.securesms.database.LokiUserDatabase;
 import org.thoughtcrime.securesms.database.MmsDatabase;
+import org.thoughtcrime.securesms.database.MmsSmsColumns;
 import org.thoughtcrime.securesms.database.MmsSmsDatabase;
 import org.thoughtcrime.securesms.database.PushDatabase;
 import org.thoughtcrime.securesms.database.PushRegistrationDatabase;
@@ -554,7 +555,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
           db.execSQL(SmsDatabase.ADD_IS_DELETED_COLUMN);
         }
 
-        if (!columnExists(db, MmsDatabase.TABLE_NAME, MmsDatabase.IS_DELETED)) {
+        if (!columnExists(db, MmsDatabase.TABLE_NAME, MmsSmsColumns.IS_DELETED)) {
           db.execSQL(MmsDatabase.ADD_IS_DELETED_COLUMN);
         }
       }

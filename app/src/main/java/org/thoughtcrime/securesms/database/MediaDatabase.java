@@ -108,7 +108,7 @@ public class MediaDatabase extends Database {
       AttachmentDatabase       attachmentDatabase = DatabaseComponent.get(context).attachmentDatabase();
       List<DatabaseAttachment> attachments        = attachmentDatabase.getAttachment(cursor);
       String                   serializedAddress  = cursor.getString(cursor.getColumnIndexOrThrow(MmsDatabase.ADDRESS));
-      boolean                  outgoing           = MessagingDatabase.Types.isOutgoingMessageType(cursor.getLong(cursor.getColumnIndexOrThrow(MmsDatabase.MESSAGE_BOX)));
+      boolean                  outgoing           = MmsSmsColumns.Types.isOutgoingMessageType(cursor.getLong(cursor.getColumnIndexOrThrow(MmsDatabase.MESSAGE_BOX)));
       Address                  address            = null;
 
       if (serializedAddress != null) {

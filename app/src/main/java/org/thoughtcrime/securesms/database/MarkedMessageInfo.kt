@@ -5,7 +5,7 @@ import org.thoughtcrime.securesms.database.MessagingDatabase.SyncMessageId
 
 data class MarkedMessageInfo(val syncMessageId: SyncMessageId, val expirationInfo: ExpirationInfo) {
     val expiryType get() = when {
-        syncMessageId.timetamp == expirationInfo.expireStarted -> ExpiryType.AFTER_SEND
+        syncMessageId.timestamp == expirationInfo.expireStarted -> ExpiryType.AFTER_SEND
         expirationInfo.expiresIn > 0 -> ExpiryType.AFTER_READ
         else -> ExpiryType.NONE
     }

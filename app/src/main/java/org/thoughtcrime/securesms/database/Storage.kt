@@ -558,7 +558,7 @@ open class Storage @Inject constructor(
         getMmsDatabaseElseSms(messageId.mms).markAsSyncing(messageId.id)
     }
 
-    private fun getMmsDatabaseElseSms(isMms: Boolean) =
+    private fun getMmsDatabaseElseSms(isMms: Boolean): MessagingDatabase =
         if (isMms) mmsDatabase
         else smsDatabase
 
