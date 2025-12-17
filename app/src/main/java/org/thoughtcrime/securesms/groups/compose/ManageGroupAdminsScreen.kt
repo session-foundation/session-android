@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.groups.compose
 
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -10,18 +9,16 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,13 +26,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -45,7 +43,6 @@ import network.loki.messenger.R
 import org.thoughtcrime.securesms.groups.GroupMemberState
 import org.thoughtcrime.securesms.groups.ManageGroupAdminsViewModel
 import org.thoughtcrime.securesms.groups.ManageGroupAdminsViewModel.Commands.*
-import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.CollapsibleFooterAction
 import org.thoughtcrime.securesms.ui.CollapsibleFooterActionData
@@ -54,7 +51,7 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.LoadingDialog
-import org.thoughtcrime.securesms.ui.SearchBarWithClose
+import org.thoughtcrime.securesms.ui.adaptive.getAdaptiveInfo
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.getCellBottomShape
@@ -66,6 +63,8 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
+import kotlin.collections.forEachIndexed
+import kotlin.collections.lastIndex
 
 @Composable
 fun ManageGroupAdminsScreen(
@@ -94,6 +93,8 @@ fun ManageAdmins(
 ) {
 
     val searchFocused = uiState.isSearchFocused
+    val isLandscape = getAdaptiveInfo().isLandscape
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     val handleBack: () -> Unit = {
         when {
@@ -102,21 +103,58 @@ fun ManageAdmins(
         }
     }
 
+    val searchLabel: @Composable (Modifier) -> Unit = { modifier ->
+        if (!searchFocused) {
+            Text(
+                modifier = Modifier.padding(
+                    start = LocalDimensions.current.mediumSpacing
+                ),
+                text = LocalResources.current.getString(R.string.admins),
+                style = LocalType.current.base,
+                color = LocalColors.current.textSecondary
+            )
+        }
+    }
+
+    val searchHeader: @Composable (Modifier) -> Unit = { modifier ->
+        MembersSearchHeader(
+            searchFocused = searchFocused,
+            searchQuery = searchQuery,
+            onQueryChange = { sendCommand(SearchQueryChange(it)) },
+            onClear = { sendCommand(SearchQueryChange("")) },
+            onFocusChanged = { sendCommand(SearchFocusChange(it)) },
+            modifier = modifier
+        )
+    }
+
+    LaunchedEffect(isLandscape, searchFocused) {
+        if (isLandscape && searchFocused) {
+            scrollBehavior.state.heightOffset = scrollBehavior.state.heightOffsetLimit
+        }
+    }
+
     // Intercept system back
     BackHandler(enabled = true) { handleBack() }
 
     Scaffold(
+        modifier = if (isLandscape) {
+            Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+        } else {
+            Modifier
+        },
         topBar = {
             BackAppBar(
                 title = stringResource(id = R.string.manageAdmins),
                 onBack = handleBack,
+                scrollBehavior = if (isLandscape) scrollBehavior else null
             )
         },
         bottomBar = {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.safeDrawing)
+                    .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
+                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
                     .imePadding()
             ) {
                 CollapsibleFooterAction(
@@ -149,82 +187,32 @@ fun ManageAdmins(
                 color = LocalColors.current.textSecondary
             )
 
-            AnimatedVisibility(
-                // show only when add-members is enabled AND search is not focused
-                visible = !searchFocused,
-                enter = fadeIn(animationSpec = tween(150)) +
-                        expandVertically(
-                            animationSpec = tween(200),
-                            expandFrom = Alignment.Top
-                        ),
-                exit = fadeOut(animationSpec = tween(150)) +
-                        shrinkVertically(
-                            animationSpec = tween(180),
-                            shrinkTowards = Alignment.Top
-                        )
-            ) {
-                Column {
-                    Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
-
-                    Cell(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = LocalDimensions.current.smallSpacing),
-                    ) {
-                        Column {
-                            uiState.options.forEachIndexed { index, option ->
-                                ItemButton(
-                                    modifier = Modifier.qaTag(option.qaTag),
-                                    text = annotatedStringResource(option.name),
-                                    iconRes = option.icon,
-                                    shape = when (index) {
-                                        0 -> getCellTopShape()
-                                        uiState.options.lastIndex -> getCellBottomShape()
-                                        else -> RectangleShape
-                                    },
-                                    onClick = option.onClick,
-                                )
-
-                                if (index != uiState.options.lastIndex) Divider()
-                            }
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
-
-            if (!searchFocused) {
-                Text(
-                    modifier = Modifier.padding(
-                        start = LocalDimensions.current.mediumSpacing,
-                        bottom = LocalDimensions.current.smallSpacing
-                    ),
-                    text = LocalResources.current.getString(R.string.admins),
-                    style = LocalType.current.base,
-                    color = LocalColors.current.textSecondary
+            if (!isLandscape) {
+                OptionsBlock(
+                    show = !searchFocused,
+                    options = uiState.options
                 )
+                searchLabel(Modifier)
+                searchHeader(Modifier)
             }
-
-            SearchBarWithClose(
-                query = searchQuery,
-                onValueChanged = { query -> sendCommand(SearchQueryChange(query)) },
-                onClear = { sendCommand(SearchQueryChange("")) },
-                placeholder = if (searchFocused) "" else LocalResources.current.getString(R.string.search),
-                enabled = true,
-                isFocused = searchFocused,
-                modifier = Modifier.padding(horizontal = LocalDimensions.current.smallSpacing),
-                onFocusChanged = { isFocused -> sendCommand(SearchFocusChange(isFocused)) }
-            )
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
             // List of members
             LazyColumn(
                 modifier = Modifier
                     .weight(1f)
                     .imePadding()
+                    .then(if (isLandscape) Modifier.nestedScroll(scrollBehavior.nestedScrollConnection) else Modifier),
             ) {
+                if (isLandscape) {
+                    item {
+                        OptionsBlock(
+                            show = !searchFocused,
+                            options = uiState.options
+                        )
+                    }
+                    item { searchLabel(Modifier) }
+                    stickyHeader { searchHeader(Modifier) }
+                }
                 items(admins) { member ->
                     // Each member's view
                     ManageMemberItem(
@@ -237,12 +225,6 @@ fun ManageAdmins(
                         selected = member in selectedMembers
                     )
                 }
-
-                item {
-                    Spacer(
-                        modifier = Modifier.windowInsetsBottomHeight(WindowInsets.systemBars)
-                    )
-                }
             }
         }
     }
@@ -252,6 +234,52 @@ fun ManageAdmins(
     }
 }
 
+@Composable
+private fun OptionsBlock(
+    show: Boolean,
+    options: List<ManageGroupAdminsViewModel.OptionsItem>,
+) {
+    AnimatedVisibility(
+        visible = show,
+        enter = fadeIn(animationSpec = tween(150)) +
+                expandVertically(
+                    animationSpec = tween(200),
+                    expandFrom = Alignment.Top
+                ),
+        exit = fadeOut(animationSpec = tween(150)) +
+                shrinkVertically(
+                    animationSpec = tween(180),
+                    shrinkTowards = Alignment.Top
+                )
+    ) {
+        Column {
+            Cell(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(LocalDimensions.current.smallSpacing),
+            ) {
+                Column {
+                    options.forEachIndexed { index, option ->
+                        ItemButton(
+                            modifier = Modifier.qaTag(option.qaTag),
+                            text = annotatedStringResource(option.name),
+                            iconRes = option.icon,
+                            shape = when (index) {
+                                0 -> getCellTopShape()
+                                options.lastIndex -> getCellBottomShape()
+                                else -> RectangleShape
+                            },
+                            onClick = option.onClick,
+                        )
+
+                        if (index != options.lastIndex) Divider()
+                    }
+                }
+            }
+        }
+    }
+
+}
 
 @Preview
 @Composable

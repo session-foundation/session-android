@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -33,6 +35,7 @@ import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.RadioOption
+import org.thoughtcrime.securesms.ui.SearchBarWithClose
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
 import org.thoughtcrime.securesms.ui.components.RadioButtonIndicator
@@ -266,6 +269,37 @@ fun ManageMemberItem(
         selected = selected,
         showRadioButton = !member.isSelf
     )
+}
+
+@Composable
+fun MembersSearchHeader(
+    searchFocused: Boolean,
+    searchQuery: String,
+    onQueryChange: (String) -> Unit,
+    onClear: () -> Unit,
+    onFocusChanged: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    placeholder: String = LocalResources.current.getString(R.string.search)
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            // important for stickyHeader so rows don't show through
+            .background(LocalColors.current.background)
+            .padding(vertical = LocalDimensions.current.smallSpacing)
+    ) {
+        SearchBarWithClose(
+            query = searchQuery,
+            onValueChanged = onQueryChange,
+            onClear = onClear,
+            placeholder = if (searchFocused) "" else placeholder,
+            enabled = enabled,
+            isFocused = searchFocused,
+            modifier = Modifier.padding(horizontal = LocalDimensions.current.smallSpacing),
+            onFocusChanged = onFocusChanged
+        )
+    }
 }
 
 @Preview

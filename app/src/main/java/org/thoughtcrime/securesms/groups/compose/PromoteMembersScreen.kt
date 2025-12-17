@@ -8,8 +8,8 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -22,10 +22,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -49,7 +52,7 @@ import org.thoughtcrime.securesms.ui.CollapsibleFooterActionData
 import org.thoughtcrime.securesms.ui.CollapsibleFooterItemData
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.SearchBarWithClose
+import org.thoughtcrime.securesms.ui.adaptive.getAdaptiveInfo
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -92,7 +95,10 @@ fun PromoteMembers(
     hasActiveMembers: Boolean = false,
     onPromoteClicked: (Set<GroupMemberState>) -> Unit
 ) {
+
     val searchFocused = uiState.isSearchFocused
+    val isLandscape = getAdaptiveInfo().isLandscape
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     val handleBack: () -> Unit = {
         when {
@@ -101,22 +107,45 @@ fun PromoteMembers(
         }
     }
 
+    val searchHeader: @Composable (Modifier) -> Unit = { modifier ->
+        MembersSearchHeader(
+            searchFocused = searchFocused,
+            searchQuery = searchQuery,
+            onQueryChange = { sendCommand(SearchQueryChange(it)) },
+            onClear = { sendCommand(SearchQueryChange("")) },
+            onFocusChanged = { sendCommand(SearchFocusChange(it)) },
+            modifier = modifier
+        )
+    }
+
+    LaunchedEffect(isLandscape, searchFocused) {
+        if (isLandscape && searchFocused) {
+            scrollBehavior.state.heightOffset = scrollBehavior.state.heightOffsetLimit
+        }
+    }
+
     // Intercept system back
     BackHandler(enabled = true) { handleBack() }
 
-
     Scaffold(
+        modifier = if (isLandscape) {
+            Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+        } else {
+            Modifier
+        },
         topBar = {
             BackAppBar(
                 title = pluralStringResource(id = R.plurals.promoteMember, 2),
                 onBack = handleBack,
+                scrollBehavior = if (isLandscape) scrollBehavior else null
             )
         },
         bottomBar = {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.safeDrawing)
+                    .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
+                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
                     .imePadding()
             ) {
                 CollapsibleFooterAction(
@@ -150,34 +179,26 @@ fun PromoteMembers(
                     .padding(horizontal = LocalDimensions.current.mediumSpacing)
                     .fillMaxWidth()
                     .wrapContentWidth(Alignment.CenterHorizontally),
-                text = LocalResources.current.getString(if (!hasActiveMembers) R.string.noNonAdminsInGroup else R.string.adminCannotBeDemoted),
+                text = LocalResources.current.getString(if (!hasActiveMembers) R.string.noNonAdminsInGroup else R.string.membersGroupPromotionAcceptInvite),
                 textAlign = TextAlign.Center,
                 style = LocalType.current.base,
                 color = LocalColors.current.textSecondary
             )
 
             if (hasActiveMembers) {
-                Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
-                SearchBarWithClose(
-                    query = searchQuery,
-                    onValueChanged = { query -> sendCommand(SearchQueryChange(query)) },
-                    onClear = { sendCommand(SearchQueryChange("")) },
-                    placeholder = if (searchFocused) "" else LocalResources.current.getString(R.string.search),
-                    enabled = true,
-                    isFocused = searchFocused,
-                    modifier = Modifier.padding(horizontal = LocalDimensions.current.smallSpacing),
-                    onFocusChanged = { isFocused -> sendCommand(SearchFocusChange(isFocused)) }
-                )
-
-                Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
+                if (!isLandscape) {
+                    searchHeader(Modifier)
+                }
 
                 // List of members
                 LazyColumn(
                     modifier = Modifier
                         .weight(1f)
                         .imePadding()
+                        .then(if (isLandscape) Modifier.nestedScroll(scrollBehavior.nestedScrollConnection) else Modifier),
                 ) {
+                    stickyHeader { searchHeader(Modifier) }
                     items(members) { member ->
                         // Each member's view
                         ManageMemberItem(
