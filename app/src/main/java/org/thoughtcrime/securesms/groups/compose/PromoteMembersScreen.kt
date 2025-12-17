@@ -1,26 +1,19 @@
 package org.thoughtcrime.securesms.groups.compose
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -47,13 +40,11 @@ import org.thoughtcrime.securesms.groups.PromoteMembersViewModel.Commands.ShowCo
 import org.thoughtcrime.securesms.groups.PromoteMembersViewModel.Commands.ShowPromoteDialog
 import org.thoughtcrime.securesms.groups.PromoteMembersViewModel.Commands.ToggleFooter
 import org.thoughtcrime.securesms.ui.AlertDialog
-import org.thoughtcrime.securesms.ui.CollapsibleFooterAction
 import org.thoughtcrime.securesms.ui.CollapsibleFooterActionData
 import org.thoughtcrime.securesms.ui.CollapsibleFooterItemData
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.adaptive.getAdaptiveInfo
-import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -98,7 +89,6 @@ fun PromoteMembers(
 
     val searchFocused = uiState.isSearchFocused
     val isLandscape = getAdaptiveInfo().isLandscape
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     val handleBack: () -> Unit = {
         when {
@@ -118,57 +108,40 @@ fun PromoteMembers(
         )
     }
 
-    LaunchedEffect(isLandscape, searchFocused) {
-        if (isLandscape && searchFocused) {
-            scrollBehavior.state.heightOffset = scrollBehavior.state.heightOffsetLimit
-        }
-    }
-
     // Intercept system back
     BackHandler(enabled = true) { handleBack() }
 
-    Scaffold(
-        modifier = if (isLandscape) {
-            Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
-        } else {
-            Modifier
-        },
-        topBar = {
-            BackAppBar(
-                title = pluralStringResource(id = R.plurals.promoteMember, 2),
-                onBack = handleBack,
-                scrollBehavior = if (isLandscape) scrollBehavior else null
-            )
-        },
+    BaseManageGroupScreen(
+        title = pluralStringResource(id = R.plurals.promoteMember, 2),
+        onBack = handleBack,
+        enableCollapsingTopBarInLandscape = true,
         bottomBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
-                    .imePadding()
-            ) {
-                CollapsibleFooterAction(
-                    data = CollapsibleFooterActionData(
-                        title = uiState.footer.footerTitle,
-                        collapsed = uiState.footer.collapsed,
-                        visible = uiState.footer.visible,
-                        items = listOf(
-                            CollapsibleFooterItemData(
-                                label = uiState.footer.footerActionLabel,
-                                buttonLabel = GetString(LocalResources.current.getString(R.string.promote)),
-                                isDanger = false,
-                                onClick = { sendCommand(ShowPromoteDialog) }
-                            )
+            CollapsibleFooterBottomBar(
+                footer = CollapsibleFooterActionData(
+                    title = uiState.footer.footerTitle,
+                    collapsed = uiState.footer.collapsed,
+                    visible = uiState.footer.visible,
+                    items = listOf(
+                        CollapsibleFooterItemData(
+                            label = uiState.footer.footerActionLabel,
+                            buttonLabel = GetString(LocalResources.current.getString(R.string.promote)),
+                            isDanger = false,
+                            onClick = { sendCommand(ShowPromoteDialog) }
                         )
-                    ),
-                    onCollapsedClicked = { sendCommand(ToggleFooter) },
-                    onClosedClicked = { sendCommand(CloseFooter) }
-                )
+                    )
+                ),
+                onToggle = { sendCommand(ToggleFooter) },
+                onClose = { sendCommand(CloseFooter) }
+            )
+        }
+    ) { paddingValues, scrollBehavior ->
+
+        LaunchedEffect(isLandscape, searchFocused) {
+            if (isLandscape && searchFocused && scrollBehavior != null) {
+                scrollBehavior.state.heightOffset = scrollBehavior.state.heightOffsetLimit
             }
-        },
-        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
-    ) { paddingValues ->
+        }
+
         Column(
             modifier = Modifier
                 .padding(paddingValues)
@@ -186,7 +159,6 @@ fun PromoteMembers(
             )
 
             if (hasActiveMembers) {
-
                 if (!isLandscape) {
                     searchHeader(Modifier)
                 }
@@ -196,9 +168,11 @@ fun PromoteMembers(
                     modifier = Modifier
                         .weight(1f)
                         .imePadding()
-                        .then(if (isLandscape) Modifier.nestedScroll(scrollBehavior.nestedScrollConnection) else Modifier),
                 ) {
-                    stickyHeader { searchHeader(Modifier) }
+                    if (isLandscape) {
+                        stickyHeader { searchHeader(Modifier) }
+                    }
+
                     items(members) { member ->
                         // Each member's view
                         ManageMemberItem(

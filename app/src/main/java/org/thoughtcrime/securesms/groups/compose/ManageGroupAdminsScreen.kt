@@ -7,24 +7,15 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -42,9 +33,14 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.groups.GroupMemberState
 import org.thoughtcrime.securesms.groups.ManageGroupAdminsViewModel
-import org.thoughtcrime.securesms.groups.ManageGroupAdminsViewModel.Commands.*
+import org.thoughtcrime.securesms.groups.ManageGroupAdminsViewModel.Commands.CloseFooter
+import org.thoughtcrime.securesms.groups.ManageGroupAdminsViewModel.Commands.MemberClick
+import org.thoughtcrime.securesms.groups.ManageGroupAdminsViewModel.Commands.RemoveSearchState
+import org.thoughtcrime.securesms.groups.ManageGroupAdminsViewModel.Commands.SearchFocusChange
+import org.thoughtcrime.securesms.groups.ManageGroupAdminsViewModel.Commands.SearchQueryChange
+import org.thoughtcrime.securesms.groups.ManageGroupAdminsViewModel.Commands.SelfClick
+import org.thoughtcrime.securesms.groups.ManageGroupAdminsViewModel.Commands.ToggleFooter
 import org.thoughtcrime.securesms.ui.Cell
-import org.thoughtcrime.securesms.ui.CollapsibleFooterAction
 import org.thoughtcrime.securesms.ui.CollapsibleFooterActionData
 import org.thoughtcrime.securesms.ui.CollapsibleFooterItemData
 import org.thoughtcrime.securesms.ui.Divider
@@ -52,7 +48,6 @@ import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.adaptive.getAdaptiveInfo
-import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.getCellBottomShape
 import org.thoughtcrime.securesms.ui.getCellTopShape
@@ -63,8 +58,6 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
-import kotlin.collections.forEachIndexed
-import kotlin.collections.lastIndex
 
 @Composable
 fun ManageGroupAdminsScreen(
@@ -94,7 +87,6 @@ fun ManageAdmins(
 
     val searchFocused = uiState.isSearchFocused
     val isLandscape = getAdaptiveInfo().isLandscape
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     val handleBack: () -> Unit = {
         when {
@@ -127,50 +119,33 @@ fun ManageAdmins(
         )
     }
 
-    LaunchedEffect(isLandscape, searchFocused) {
-        if (isLandscape && searchFocused) {
-            scrollBehavior.state.heightOffset = scrollBehavior.state.heightOffsetLimit
-        }
-    }
-
     // Intercept system back
     BackHandler(enabled = true) { handleBack() }
 
-    Scaffold(
-        modifier = if (isLandscape) {
-            Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
-        } else {
-            Modifier
-        },
-        topBar = {
-            BackAppBar(
-                title = stringResource(id = R.string.manageAdmins),
-                onBack = handleBack,
-                scrollBehavior = if (isLandscape) scrollBehavior else null
-            )
-        },
+    BaseManageGroupScreen(
+        title = stringResource(id = R.string.manageAdmins),
+        onBack = handleBack,
+        enableCollapsingTopBarInLandscape = true,
         bottomBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
-                    .imePadding()
-            ) {
-                CollapsibleFooterAction(
-                    data = CollapsibleFooterActionData(
-                        title = uiState.footer.footerActionTitle,
-                        collapsed = uiState.footer.collapsed,
-                        visible = uiState.footer.visible,
-                        items = uiState.footer.footerActionItems
-                    ),
-                    onCollapsedClicked = { sendCommand(ToggleFooter) },
-                    onClosedClicked = { sendCommand(CloseFooter) }
-                )
+            CollapsibleFooterBottomBar(
+                footer = CollapsibleFooterActionData(
+                    title = uiState.footer.footerActionTitle,
+                    collapsed = uiState.footer.collapsed,
+                    visible = uiState.footer.visible,
+                    items = uiState.footer.footerActionItems
+                ),
+                onToggle = { sendCommand(ToggleFooter) },
+                onClose = { sendCommand(CloseFooter) }
+            )
+        }
+    ) { paddingValues, scrollBehavior ->
+
+        LaunchedEffect(isLandscape, searchFocused) {
+            if (isLandscape && searchFocused && scrollBehavior != null) {
+                scrollBehavior.state.heightOffset = scrollBehavior.state.heightOffsetLimit
             }
-        },
-        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
-    ) { paddingValues ->
+        }
+
         Column(
             modifier = Modifier
                 .padding(paddingValues)
@@ -201,7 +176,6 @@ fun ManageAdmins(
                 modifier = Modifier
                     .weight(1f)
                     .imePadding()
-                    .then(if (isLandscape) Modifier.nestedScroll(scrollBehavior.nestedScrollConnection) else Modifier),
             ) {
                 if (isLandscape) {
                     item {
