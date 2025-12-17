@@ -2,13 +2,12 @@ package org.thoughtcrime.securesms.webrtc
 
 import android.Manifest
 import android.content.Context
-import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.messages.control.CallMessage
 import org.session.libsession.messaging.utilities.WebRtcUtils
-import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
@@ -33,6 +32,7 @@ class CallMessageProcessor @Inject constructor(
     private val storage: StorageProtocol,
     private val webRtcBridge: WebRtcCallBridge,
     private val recipientRepository: RecipientRepository,
+    private val snodeClock: SnodeClock
 ) : AuthAwareComponent {
 
     companion object {
@@ -61,7 +61,7 @@ class CallMessageProcessor @Inject constructor(
                 continue
             }
 
-            val isVeryExpired = (nextMessage.sentTimestamp?:0) + VERY_EXPIRED_TIME < SnodeAPI.nowWithOffset
+            val isVeryExpired = (nextMessage.sentTimestamp?:0) + VERY_EXPIRED_TIME < snodeClock.currentTimeMills()
             if (isVeryExpired) {
                 Log.e("Loki", "Dropping very expired call message")
                 continue

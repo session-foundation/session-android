@@ -8,7 +8,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.network.SessionClient
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
 import org.session.libsession.utilities.associateByNotNull
@@ -38,6 +38,7 @@ class MarkReadProcessor @Inject constructor(
     private val storage: StorageProtocol,
     private val snodeClock: SnodeClock,
     private val lokiMessageDatabase: LokiMessageDatabase,
+    private val sessionClient: SessionClient
 ) {
     fun process(
         markedReadMessages: List<MarkedMessageInfo>
@@ -91,18 +92,21 @@ class MarkReadProcessor @Inject constructor(
     private fun shortenExpiryOfDisappearingAfterRead(
         hashToMessage: Map<String, MarkedMessageInfo>
     ) {
-        hashToMessage.entries
-            .groupBy(
-                keySelector =  { it.value.expirationInfo.expiresIn },
-                valueTransform = { it.key }
-            ).forEach { (expiresIn, hashes) ->
-                SnodeAPI.alterTtl(
-                    messageHashes = hashes,
-                    newExpiry = snodeClock.currentTimeMills() + expiresIn,
-                    auth = checkNotNull(storage.userAuth) { "No authorized user" },
-                    shorten = true
-                )
-            }
+        //todo ONION verify move to suspend below
+        GlobalScope.launch {
+            hashToMessage.entries
+                .groupBy(
+                    keySelector = { it.value.expirationInfo.expiresIn },
+                    valueTransform = { it.key }
+                ).forEach { (expiresIn, hashes) ->
+                    sessionClient.alterTtl(
+                        messageHashes = hashes,
+                        newExpiry = snodeClock.currentTimeMills() + expiresIn,
+                        auth = checkNotNull(storage.userAuth) { "No authorized user" },
+                        shorten = true
+                    )
+                }
+        }
     }
 
     private val Recipient.shouldSendReadReceipt: Boolean

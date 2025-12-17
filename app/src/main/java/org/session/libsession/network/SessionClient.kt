@@ -30,11 +30,9 @@ import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.snode.model.BatchResponse
-import org.session.libsession.snode.model.RetrieveMessageResponse
 import org.session.libsession.snode.model.StoreMessageResponse
 import org.session.libsession.utilities.mapValuesNotNull
 import org.session.libsession.utilities.toByteArray
-import org.session.libsignal.crypto.shuffledRandom
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.ByteArraySlice.Companion.view
@@ -281,14 +279,14 @@ class SessionClient @Inject constructor(
     @Suppress("UNCHECKED_CAST")
     suspend fun deleteMessage(
         publicKey: String,
-        auth: SwarmAuth,
+        swarmAuth: SwarmAuth,
         serverHashes: List<String>,
         version: Version = Version.V4
     ): Map<*, *> {
         val snode = swarmDirectory.getSingleTargetSnode(publicKey)
 
         val params = buildAuthenticatedParameters(
-            auth = auth,
+            auth = swarmAuth,
             namespace = null,
             verificationData = { _, _ ->
                 buildString {
@@ -328,7 +326,7 @@ class SessionClient @Inject constructor(
                     ?: return@mapValuesNotNull false
 
                 // Signature: ( PUBKEY_HEX || RMSG[0]..RMSG[N] || DMSG[0]..DMSG[M] )
-                val message = sequenceOf(auth.accountId.hexString)
+                val message = sequenceOf(swarmAuth.accountId.hexString)
                     .plus(serverHashes)
                     .plus(hashes)
                     .toByteArray()
