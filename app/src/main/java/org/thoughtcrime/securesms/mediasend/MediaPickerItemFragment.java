@@ -161,7 +161,7 @@ public class MediaPickerItemFragment extends Fragment implements MediaPickerItem
   @Override
   public void onMediaSelectionChanged(@NonNull List<Media> selected) {
     adapter.notifyDataSetChanged();
-    viewModel.onSelectedMediaChanged(requireContext(), selected);
+    viewModel.onSelectedMediaChanged(selected);
   }
 
   @Override

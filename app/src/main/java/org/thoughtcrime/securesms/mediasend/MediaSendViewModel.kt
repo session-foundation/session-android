@@ -26,7 +26,6 @@ import org.thoughtcrime.securesms.mms.MediaConstraints
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.providers.BlobUtils
 import org.thoughtcrime.securesms.util.MediaUtil
-import java.util.LinkedList
 import javax.inject.Inject
 
 /**
@@ -92,7 +91,7 @@ internal class MediaSendViewModel @Inject constructor(
         )
     }
 
-    fun onSelectedMediaChanged(context: Context, newMedia: List<Media?>) {
+    fun onSelectedMediaChanged(newMedia: List<Media?>) {
         repository.getPopulatedMedia(context, newMedia) { populatedMedia: List<Media> ->
             runOnMain {
                 // Use the new filter function that returns valid items AND errors
@@ -223,9 +222,9 @@ internal class MediaSendViewModel @Inject constructor(
     }
 
     fun onPageChanged(position: Int) {
-        if (position < 0 || position >= selectedMediaOrDefault.size) {
+        if (position !in selectedMedia.indices) {
             Log.w(TAG,
-                "Tried to move to an out-of-bounds item. Size: " + selectedMediaOrDefault.size + ", position: " + position
+                "Tried to move to an out-of-bounds item. Size: " + selectedMedia.size + ", position: " + position
             )
             return
         }
@@ -234,7 +233,7 @@ internal class MediaSendViewModel @Inject constructor(
     }
 
     fun onMediaItemRemoved(position: Int) {
-        val current = _uiState.value.selectedMedia
+        val current = selectedMedia
         if (position < 0 || position >= current.size) {
             Log.w(
                 TAG,
@@ -259,7 +258,7 @@ internal class MediaSendViewModel @Inject constructor(
     }
 
     fun onImageCaptured(media: Media) {
-        val selected: MutableList<Media> = selectedMediaOrDefault.toMutableList()
+        val selected: MutableList<Media> = selectedMedia.toMutableList()
 
         if (selected.size >= MAX_SELECTED_FILES) {
             _effects.tryEmit(MediaSendEffect.ShowError(Error.TOO_MANY_ITEMS))
@@ -285,7 +284,7 @@ internal class MediaSendViewModel @Inject constructor(
 
     fun onImageCaptureUndo() {
         val last = if (lastImageCapture.isPresent) lastImageCapture.get() else return
-        val current = _uiState.value.selectedMedia
+        val current = selectedMedia
 
         if (!(current.size == 1 && current.contains(last))) return
 
@@ -299,7 +298,7 @@ internal class MediaSendViewModel @Inject constructor(
         }
 
         if (BlobUtils.isAuthority(last.uri)) {
-            BlobUtils.getInstance().delete(application.applicationContext, last.uri)
+            BlobUtils.getInstance().delete(context, last.uri)
         }
 
         lastImageCapture = Optional.absent()
@@ -352,7 +351,7 @@ internal class MediaSendViewModel @Inject constructor(
         return bucketIdLiveData
     }
 
-    private val selectedMediaOrDefault: List<Media>
+    private val selectedMedia: List<Media>
         get() = _uiState.value.selectedMedia
 
 
@@ -415,7 +414,7 @@ internal class MediaSendViewModel @Inject constructor(
 
     override fun onCleared() {
         if (!sentMedia) {
-            Stream.of(selectedMediaOrDefault)
+            Stream.of(selectedMedia)
                 .map { obj: Media -> obj.uri }
                 .filter { uri: Uri? ->
                     BlobUtils.isAuthority(
@@ -423,9 +422,7 @@ internal class MediaSendViewModel @Inject constructor(
                     )
                 }
                 .forEach { uri: Uri? ->
-                    BlobUtils.getInstance().delete(
-                        application.applicationContext, uri!!
-                    )
+                    BlobUtils.getInstance().delete(context, uri!!)
                 }
         }
     }

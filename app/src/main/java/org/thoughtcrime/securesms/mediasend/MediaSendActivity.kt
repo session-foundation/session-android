@@ -107,7 +107,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
             if (isCamera) {
                 navigateToCamera()
             } else if (!isEmpty(media)) {
-                viewModel.onSelectedMediaChanged(this, media!!)
+                viewModel.onSelectedMediaChanged(media!!)
 
                 lastEntryFromCameraCapture = false
 
