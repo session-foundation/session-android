@@ -15,13 +15,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -115,6 +112,7 @@ fun PromoteMembers(
         title = pluralStringResource(id = R.plurals.promoteMember, 2),
         onBack = handleBack,
         enableCollapsingTopBarInLandscape = true,
+        collapseTopBar = searchFocused,
         bottomBar = {
             CollapsibleFooterBottomBar(
                 footer = CollapsibleFooterActionData(
@@ -134,13 +132,7 @@ fun PromoteMembers(
                 onClose = { sendCommand(CloseFooter) }
             )
         }
-    ) { paddingValues, scrollBehavior ->
-
-        LaunchedEffect(isLandscape, searchFocused) {
-            if (isLandscape && searchFocused && scrollBehavior != null) {
-                scrollBehavior.state.heightOffset = scrollBehavior.state.heightOffsetLimit
-            }
-        }
+    ) { paddingValues ->
 
         Column(
             modifier = Modifier

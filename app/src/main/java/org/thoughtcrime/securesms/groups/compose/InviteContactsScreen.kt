@@ -12,7 +12,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -117,6 +116,7 @@ fun InviteContacts(
         title = stringResource(id = R.string.membersInvite),
         onBack = handleBack,
         enableCollapsingTopBarInLandscape = true,
+        collapseTopBar = searchFocused,
         bottomBar = {
             CollapsibleFooterBottomBar(
                 footer = CollapsibleFooterActionData(
@@ -129,13 +129,7 @@ fun InviteContacts(
                 onClose = { sendCommand(CloseFooter) }
             )
         }
-    ) { paddingValues, scrollBehavior ->
-
-        LaunchedEffect(isLandscape, searchFocused) {
-            if (isLandscape && searchFocused && scrollBehavior != null) {
-                scrollBehavior.state.heightOffset = scrollBehavior.state.heightOffsetLimit
-            }
-        }
+    ) { paddingValues ->
 
         Column(
             modifier = Modifier

@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -350,8 +351,9 @@ fun BaseManageGroupScreen(
     title: String,
     onBack: () -> Unit,
     enableCollapsingTopBarInLandscape: Boolean,
+    collapseTopBar : Boolean = false,
     bottomBar: @Composable () -> Unit,
-    content: @Composable (paddingValues: PaddingValues, scrollBehavior: TopAppBarScrollBehavior?) -> Unit,
+    content: @Composable (paddingValues: PaddingValues) -> Unit,
 ) {
     val isLandscape = getAdaptiveInfo().isLandscape
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -361,6 +363,12 @@ fun BaseManageGroupScreen(
             Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
         else
             Modifier
+
+    LaunchedEffect(isLandscape, collapseTopBar) {
+        if (isLandscape && collapseTopBar) {
+            scrollBehavior.state.heightOffset = scrollBehavior.state.heightOffsetLimit
+        }
+    }
 
     Scaffold(
         modifier = scaffoldModifier,
@@ -374,7 +382,7 @@ fun BaseManageGroupScreen(
         bottomBar = bottomBar,
         contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
     ) { paddingValues ->
-        content(paddingValues, if (enableCollapsingTopBarInLandscape && isLandscape) scrollBehavior else null)
+        content(paddingValues)
     }
 }
 
