@@ -6,7 +6,7 @@ import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.content.ContextCompat
 import network.loki.messenger.R
-import org.session.libsession.snode.SnodeAPI.nowWithOffset
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import kotlin.math.round
 
 class ExpirationTimerView @JvmOverloads constructor(
@@ -46,7 +46,7 @@ class ExpirationTimerView @JvmOverloads constructor(
             return
         }
 
-        val elapsedTime = nowWithOffset - startedAt
+        val elapsedTime = MessagingModuleConfiguration.shared.snodeClock.currentTimeMills() - startedAt
         val remainingTime = expiresIn - elapsedTime
         val remainingPercent = (remainingTime / expiresIn.toFloat()).coerceIn(0f, 1f)
 

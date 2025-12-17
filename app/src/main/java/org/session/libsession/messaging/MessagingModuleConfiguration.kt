@@ -29,7 +29,6 @@ class MessagingModuleConfiguration @Inject constructor(
     val configFactory: ConfigFactoryProtocol,
     val tokenFetcher: TokenFetcher,
     val groupManagerV2: GroupManagerV2,
-    val clock: SnodeClock,
     val preferences: TextSecurePreferences,
     val deprecationManager: LegacyGroupDeprecationManager,
     val recipientRepository: RecipientRepository,

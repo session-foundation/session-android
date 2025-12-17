@@ -315,7 +315,7 @@ class ConfigToDatabaseSync @Inject constructor(
                     OwnedSwarmAuth.ofClosedGroup(groupInfoConfig.id, it)
                 } ?: return
 
-                // remove messages from swarm SnodeAPI.deleteMessage
+                // remove messages from swarm deleteMessage
                 scope.launch(Dispatchers.Default) {
                     val cleanedHashes: List<String> =
                         messages.asSequence().map { it.second }.filter { !it.isNullOrEmpty() }.filterNotNull().toList()

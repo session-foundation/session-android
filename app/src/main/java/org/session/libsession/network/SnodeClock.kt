@@ -31,6 +31,9 @@ class SnodeClock @Inject constructor(
     private val sessionClient: SessionClient
 ) : OnAppStartupComponent {
 
+    //todo ONION we have a lot of calls to MessagingModuleConfiguration.shared.snodeClock.currentTimeMills()
+    // can this be improved?
+
     private val instantState = MutableStateFlow<Instant?>(null)
     private var job: Job? = null
 
