@@ -1,5 +1,7 @@
 package org.thoughtcrime.securesms.dependencies
 
+import androidx.collection.arrayMapOf
+import androidx.collection.arraySetOf
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -29,6 +31,8 @@ import org.session.libsession.utilities.MutableUserConfigs
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.UserConfigs
 import org.session.libsession.utilities.getGroup
+import org.session.libsession.utilities.withGroupConfigs
+import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.configs.ConfigToDatabaseSync
@@ -38,7 +42,6 @@ import java.util.EnumSet
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 
@@ -134,11 +137,113 @@ class ConfigFactory @Inject constructor(
         }
     }
 
-    override fun <T> withUserConfigs(cb: (UserConfigs) -> T): T {
+    override fun dangerouslyAccessMutableUserConfigs(): Pair<MutableUserConfigs, () -> Unit> {
         val (lock, configs) = ensureUserConfigsInitialized()
-        return lock.read {
-            cb(configs)
+        lock.writeLock().lock()
+        return configs to {
+            val changed = arraySetOf<UserConfigType>()
+            var dumped: MutableMap<UserConfigType, ByteArray>? = null
+
+            for (type in UserConfigType.entries) {
+                val config = configs.getConfig(type)
+                if (config.dirty()) {
+                    changed.add(type)
+                }
+
+                if (config.needsDump()) {
+                    if (dumped == null) {
+                        dumped = arrayMapOf()
+                    }
+
+                    dumped[type] = config.dump()
+                }
+            }
+
+            lock.writeLock().unlock()
+
+            // Persist dumped configs
+            if (dumped != null) {
+                coroutineScope.launch {
+                    val userAccountId = requiresCurrentUserAccountId()
+                    val currentTimeMs = clock.currentTimeMills()
+
+                    for ((type, data) in dumped) {
+                        configDatabase.storeConfig(
+                            variant = type.configVariant,
+                            publicKey = userAccountId.hexString,
+                            data = data,
+                            timestamp = currentTimeMs
+                        )
+                    }
+                }
+            }
+
+            // Notify changes on a coroutine
+            if (changed.isNotEmpty()) {
+                coroutineScope.launch {
+                    _configUpdateNotifications.emit(
+                        ConfigUpdateNotification.UserConfigsUpdated(updatedTypes = changed, fromMerge = false)
+                    )
+                }
+            }
         }
+    }
+
+    override fun dangerouslyAccessMutableGroupConfigs(groupId: AccountId): Pair<MutableGroupConfigs, () -> Unit> {
+        val (lock, configs) = ensureGroupConfigsInitialized(groupId)
+        lock.writeLock().lock()
+        return configs to {
+            val changed = configs.groupInfo.dirty() ||
+                    configs.groupMembers.dirty() ||
+                    configs.groupKeys.needsDump() ||
+                    configs.groupKeys.needsRekey()
+
+            val dumped = if (configs.groupInfo.needsDump() || configs.groupMembers.needsDump() ||
+                configs.groupKeys.needsDump()) {
+                Triple(
+                    configs.groupKeys.dump(),
+                    configs.groupInfo.dump(),
+                    configs.groupMembers.dump()
+                )
+            } else {
+                null
+            }
+
+            lock.writeLock().unlock()
+
+            if (dumped != null) {
+                coroutineScope.launch {
+                    configDatabase.storeGroupConfigs(
+                        publicKey = groupId.hexString,
+                        keysConfig = dumped.first,
+                        infoConfig = dumped.second,
+                        memberConfig = dumped.third,
+                        timestamp = clock.currentTimeMills()
+                    )
+                }
+            }
+
+            // Notify changes on a coroutine
+            if (changed) {
+                coroutineScope.launch {
+                    _configUpdateNotifications.emit(
+                        ConfigUpdateNotification.GroupConfigsUpdated(groupId, fromMerge = false)
+                    )
+                }
+            }
+        }
+    }
+
+    override fun dangerouslyAccessUserConfigs(): Pair<UserConfigs, () -> Unit> {
+        val (lock, configs) = ensureUserConfigsInitialized()
+        lock.readLock().lock()
+        return configs to lock.readLock()::unlock
+    }
+
+    override fun dangerouslyAccessGroupConfigs(groupId: AccountId): Pair<GroupConfigs, () -> Unit> {
+        val (lock, configs) = ensureGroupConfigsInitialized(groupId)
+        lock.readLock().lock()
+        return configs to lock.readLock()::unlock
     }
 
     /**
@@ -204,29 +309,6 @@ class ConfigFactory @Inject constructor(
         }
     }
 
-    override fun <T> withMutableUserConfigs(cb: (MutableUserConfigs) -> T): T {
-        return doWithMutableUserConfigs(fromMerge = false) {
-            val result = cb(it)
-
-            val changed = buildSet {
-                if (it.userGroups.dirty()) add(UserConfigType.USER_GROUPS)
-                if (it.convoInfoVolatile.dirty()) add(UserConfigType.CONVO_INFO_VOLATILE)
-                if (it.userProfile.dirty()) add(UserConfigType.USER_PROFILE)
-                if (it.contacts.dirty()) add(UserConfigType.CONTACTS)
-            }
-
-            result to changed
-        }
-    }
-
-    override fun <T> withGroupConfigs(groupId: AccountId, cb: (GroupConfigs) -> T): T {
-        val (lock, configs) = ensureGroupConfigsInitialized(groupId)
-
-        return lock.read {
-            cb(configs)
-        }
-    }
-
     override fun createGroupConfigs(groupId: AccountId, adminKey: ByteArray): MutableGroupConfigs {
         return GroupConfigsImpl(
             userEd25519SecKey = requiresCurrentUserED25519SecKey(),
@@ -268,14 +350,6 @@ class ConfigFactory @Inject constructor(
         return result
     }
 
-    override fun <T> withMutableGroupConfigs(
-        groupId: AccountId,
-        cb: (MutableGroupConfigs) -> T
-    ): T {
-        return doWithMutableGroupConfigs(groupId = groupId, fromMerge = false) {
-            cb(it) to it.dumpIfNeeded(clock)
-        }
-    }
 
     override fun removeContactOrBlindedContact(address: Address.WithAccountId) {
         withMutableUserConfigs {

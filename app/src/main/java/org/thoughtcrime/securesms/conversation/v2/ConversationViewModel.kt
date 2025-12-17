@@ -77,6 +77,8 @@ import org.session.libsession.utilities.recipients.repeatedWithEffectiveNotifyTy
 import org.session.libsession.utilities.toGroupString
 import org.session.libsession.utilities.upsertContact
 import org.session.libsession.utilities.userConfigsChanged
+import org.session.libsession.utilities.withMutableUserConfigs
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix

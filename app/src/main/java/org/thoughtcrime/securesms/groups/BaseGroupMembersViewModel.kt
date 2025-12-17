@@ -31,12 +31,12 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.recipients.displayName
+import org.session.libsession.utilities.withGroupConfigs
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import java.util.EnumSet
-import kotlin.coroutines.cancellation.CancellationException
 
 abstract class BaseGroupMembersViewModel(
     groupAddress: Address.Group,
