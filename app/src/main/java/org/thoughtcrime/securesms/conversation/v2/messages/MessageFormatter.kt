@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.conversation.v2.messages
 import android.content.Context
 import android.text.Spannable
 import android.text.SpannableString
+import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
@@ -177,28 +178,33 @@ class MessageFormatter @Inject constructor(
                 context.getString(R.string.communityInvitation)
             }
 
-            // Show a placeholder text for messages with attachments
-            lastMessage is MmsMessageRecord -> {
-                val placeholderBody = lastMessage.slideDeck.body
-                val messageBody = lastMessage.body
-
-                if (placeholderBody.isNotBlank()) {
-                    if (messageBody.isNotBlank()) {
-                        "$placeholderBody: $messageBody"
-                    } else {
-                        placeholderBody
-                    }
-                } else {
-                    messageBody
-                }
-            }
-
             else -> {
-                val text = formatMessageBody(
+                val bodyText = formatMessageBody(
                     context = context,
                     message = lastMessage,
                     threadRecipient = thread.recipient
                 )
+
+                // This is used to show a placeholder text for MMS messages in the snippet,
+                // for example, "<image> Attachment"
+                val mmsPlaceholderBody = (lastMessage as? MmsMessageRecord)?.slideDeck?.body
+
+                val text = when {
+                    // If both body and placeholder are blank, return empty string
+                    bodyText.isBlank() && mmsPlaceholderBody.isNullOrBlank() -> ""
+
+                    // If both body and placeholder are non-blank, combine them
+                    bodyText.isNotBlank() && !mmsPlaceholderBody.isNullOrBlank() ->
+                        SpannableStringBuilder(mmsPlaceholderBody)
+                            .append(": ")
+                            .append(bodyText)
+
+                    // If only placeholder is non-blank, use it
+                    !mmsPlaceholderBody.isNullOrBlank() -> mmsPlaceholderBody
+
+                    // Otherwise, use the body text
+                    else -> bodyText
+                }
 
                 when {
                     // There are certain messages that we want to keep their formatting
