@@ -11,7 +11,10 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.session.libsession.network.model.Path
 import org.session.libsession.network.model.PathStatus
 import org.session.libsession.network.snode.SnodeDirectory
@@ -33,6 +36,9 @@ class PathManager(
     )
     val paths: StateFlow<List<Path>> = _paths.asStateFlow()
 
+    // Used for synchronization
+    private val buildMutex = Mutex()
+
     private val _isBuilding = MutableStateFlow(false)
 
     @OptIn(FlowPreview::class)
@@ -44,12 +50,12 @@ class PathManager(
                 else -> PathStatus.READY
             }
         }
-        .debounce(250)
-        .stateIn(
-            scope,
-            SharingStarted.Eagerly,
-            if (_paths.value.isEmpty()) PathStatus.ERROR else PathStatus.READY
-        )
+            .debounce(250)
+            .stateIn(
+                scope,
+                SharingStarted.Eagerly,
+                if (_paths.value.isEmpty()) PathStatus.ERROR else PathStatus.READY
+            )
 
     init {
         // persist to DB whenever paths change
@@ -67,84 +73,104 @@ class PathManager(
             return selectPath(current, exclude)
         }
 
-        // Need to (re)build paths
+        // Wait for rebuild to finish if one is happening, or start one
         rebuildPaths(reusablePaths = current)
+
         val rebuilt = _paths.value
         if (rebuilt.isEmpty()) throw IllegalStateException("No paths after rebuild")
         return selectPath(rebuilt, exclude)
     }
 
     suspend fun rebuildPaths(reusablePaths: List<Path>) {
-        if (_isBuilding.value) return
+        // This ensures callers wait their turn rather than skipping immediately
+        buildMutex.withLock {
+            // Double-check: Did someone populate paths while we were waiting for the lock?
+            // If yes, we can skip building.
+            val freshPaths = _paths.value
+            if (freshPaths.size >= targetPathCount && arePathsDisjoint(freshPaths)) {
+                return
+            }
 
-        _isBuilding.value = true
-        try {
-            // Ensure we actually have a usable pool before doing anything
-            val pool = directory.ensurePoolPopulated()
+            _isBuilding.value = true
+            try {
+                // Ensure we actually have a usable pool before doing anything
+                val pool = directory.ensurePoolPopulated()
 
-            val safeReusable = sanitizePaths(reusablePaths)
-            val reusableGuards = safeReusable.map { it.first() }.toSet()
+                val safeReusable = sanitizePaths(reusablePaths)
+                val reusableGuards = safeReusable.map { it.first() }.toSet()
 
-            val guardSnodes = directory.getGuardSnodes(
-                existingGuards = reusableGuards,
-                targetGuardCount = targetPathCount
-            )
+                val guardSnodes = directory.getGuardSnodes(
+                    existingGuards = reusableGuards,
+                    targetGuardCount = targetPathCount
+                )
 
-            var unused = pool
-                .minus(guardSnodes)
-                .minus(safeReusable.flatten().toSet())
+                var unused = pool
+                    .minus(guardSnodes)
+                    .minus(safeReusable.flatten().toSet())
 
-            val newPaths = guardSnodes
-                .minus(reusableGuards)
-                .map { guard ->
-                    val rest = (0 until pathSize - 1).map {
-                        val next = unused.secureRandom()
-                        unused = unused - next
-                        next
+                val newPaths = guardSnodes
+                    .minus(reusableGuards)
+                    .map { guard ->
+                        val rest = (0 until pathSize - 1).map {
+                            val next = unused.secureRandom()
+                            unused = unused - next
+                            next
+                        }
+                        listOf(guard) + rest
                     }
-                    listOf(guard) + rest
-                }
 
-            val allPaths = (safeReusable + newPaths).take(targetPathCount)
-            val sanitized = sanitizePaths(allPaths)
-            _paths.value = sanitized
-        } finally {
-            _isBuilding.value = false
+                val allPaths = (safeReusable + newPaths).take(targetPathCount)
+                val sanitized = sanitizePaths(allPaths)
+                _paths.value = sanitized
+            } finally {
+                _isBuilding.value = false
+            }
         }
     }
 
     /** Called when we know a specific snode is bad. */
     fun handleBadSnode(snode: Snode) {
-        val current = _paths.value.toMutableList()
-        val pathIndex = current.indexOfFirst { it.contains(snode) }
-        if (pathIndex == -1) return
+        _paths.update { currentList ->
+            // Locate the bad path in the *current* snapshot
+            val pathIndex = currentList.indexOfFirst { it.contains(snode) }
 
-        val path = current[pathIndex].toMutableList()
-        path.remove(snode)
+            // If the node isn't found (e.g., paths were just rebuilt), do nothing
+            if (pathIndex == -1) return@update currentList
 
-        val unused = directory.getSnodePool().minus(current.flatten().toSet())
-        if (unused.isEmpty()) {
-            Log.w("Onion", "No unused snodes to repair path, dropping path entirely")
-            current.removeAt(pathIndex)
-            _paths.value = current
-            return
+            // Prepare mutable copies for modification
+            // We copy the outer list so we don't mutate the 'currentList' which might be needed for a CAS retry
+            val newPathsList = currentList.toMutableList()
+            val pathParams = newPathsList[pathIndex].toMutableList()
+
+            // Remove the bad node
+            pathParams.remove(snode)
+
+            // Find a replacement
+            val usedSnodes = newPathsList.flatten().toSet()
+            val pool = directory.getSnodePool()
+            val unused = pool.minus(usedSnodes)
+
+            if (unused.isEmpty()) {
+                Log.w("Onion", "No unused snodes to repair path, dropping path entirely")
+                newPathsList.removeAt(pathIndex)
+            } else {
+                val replacement = unused.secureRandom()
+                pathParams.add(replacement)
+                newPathsList[pathIndex] = pathParams
+            }
+
+            // Return the new clean list
+            sanitizePaths(newPathsList)
         }
-
-        val replacement = unused.secureRandom()
-        path.add(replacement)
-        current[pathIndex] = path
-        _paths.value = sanitizePaths(current)
     }
 
     /** Called when an entire path is considered unreliable. */
     fun handleBadPath(path: Path) {
-        val current = _paths.value.toMutableList()
-        current.remove(path)
-        _paths.value = current
-        // Next call to getPath() will trigger rebuild if needed
+        _paths.update { currentList ->
+            // Filter returns a new list, so this is safe and atomic
+            currentList.filter { it != path }
+        }
     }
-
-    // --- helpers ---
 
     private fun selectPath(paths: List<Path>, exclude: Snode?): Path {
         val candidates = if (exclude != null) {
