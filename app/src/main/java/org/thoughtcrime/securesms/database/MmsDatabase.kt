@@ -370,33 +370,20 @@ class MmsDatabase @Inject constructor(
     }
 
     fun setMessagesRead(threadId: Long, beforeTime: Long): List<MarkedMessageInfo> {
-        return setMessagesRead(
-            "$THREAD_ID = ? AND ($READ = 0) AND $DATE_SENT <= ?",
-            threadId,
-            beforeTime
-        )
-    }
-
-    fun setMessagesRead(threadId: Long): List<MarkedMessageInfo> {
-        return setMessagesRead("$THREAD_ID = ? AND ($READ = 0)",threadId
-        )
-    }
-
-    private fun setMessagesRead(where: String, vararg args: Any?): List<MarkedMessageInfo> {
         val updatedThreadIDs = MutableLongSet(1)
 
         //language=roomsql
         val messages = writableDatabase.rawQuery("""
-        UPDATE $TABLE_NAME 
-        SET $READ = 1
-        WHERE $where
-        RETURNING $ID, 
-                  $ADDRESS, 
-                  $THREAD_ID, 
-                  $DATE_SENT, 
-                  $EXPIRES_IN,
-                  $EXPIRE_STARTED
-    """, *args).use { cursor ->
+            UPDATE $TABLE_NAME 
+            SET $READ = 1
+            WHERE $THREAD_ID = ? AND ($READ = 0) AND $DATE_SENT <= ?
+            RETURNING $ID, 
+                      $ADDRESS, 
+                      $THREAD_ID, 
+                      $DATE_SENT, 
+                      $EXPIRES_IN,
+                      $EXPIRE_STARTED
+        """, threadId, beforeTime).use { cursor ->
             cursor.asSequence()
                 .map {
                     val timestamp = cursor.getLong(3)

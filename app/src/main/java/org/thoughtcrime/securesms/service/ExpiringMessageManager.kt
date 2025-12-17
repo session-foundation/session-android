@@ -13,7 +13,6 @@ import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
-import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerProtocol
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
@@ -21,7 +20,6 @@ import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.MessagingDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
-import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.Storage

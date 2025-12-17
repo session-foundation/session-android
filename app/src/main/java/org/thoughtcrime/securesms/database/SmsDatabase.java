@@ -598,7 +598,7 @@ public class SmsDatabase extends MessagingDatabase {
     db.update(TABLE_NAME, contentValues, THREAD_ID + " = ?", new String[] {fromId + ""});
   }
 
-    private boolean isDuplicate(IncomingTextMessage message, long threadId) {
+  private boolean isDuplicate(IncomingTextMessage message, long threadId) {
     SQLiteDatabase database = getReadableDatabase();
     Cursor         cursor   = database.query(TABLE_NAME, null, DATE_SENT + " = ? AND " + ADDRESS + " = ? AND " + THREAD_ID + " = ?",
                                              new String[]{String.valueOf(message.getSentTimestampMillis()), message.getSender().toString(), String.valueOf(threadId)},
