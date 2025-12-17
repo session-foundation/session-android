@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.dependencies
 
+import androidx.collection.arrayMapOf
 import androidx.collection.arraySetOf
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
@@ -141,6 +142,7 @@ class ConfigFactory @Inject constructor(
         lock.writeLock().lock()
         return configs to {
             val changed = arraySetOf<UserConfigType>()
+            var dumped: MutableMap<UserConfigType, ByteArray>? = null
 
             for (type in UserConfigType.entries) {
                 val config = configs.getConfig(type)
@@ -149,16 +151,32 @@ class ConfigFactory @Inject constructor(
                 }
 
                 if (config.needsDump()) {
-                    configDatabase.storeConfig(
-                        variant = type.configVariant,
-                        publicKey = requiresCurrentUserAccountId().hexString,
-                        data = config.dump(),
-                        timestamp = clock.currentTimeMills()
-                    )
+                    if (dumped == null) {
+                        dumped = arrayMapOf()
+                    }
+
+                    dumped[type] = config.dump()
                 }
             }
 
             lock.writeLock().unlock()
+
+            // Persist dumped configs
+            if (dumped != null) {
+                coroutineScope.launch {
+                    val userAccountId = requiresCurrentUserAccountId()
+                    val currentTimeMs = clock.currentTimeMills()
+
+                    for ((type, data) in dumped) {
+                        configDatabase.storeConfig(
+                            variant = type.configVariant,
+                            publicKey = userAccountId.hexString,
+                            data = data,
+                            timestamp = currentTimeMs
+                        )
+                    }
+                }
+            }
 
             // Notify changes on a coroutine
             if (changed.isNotEmpty()) {
@@ -180,18 +198,30 @@ class ConfigFactory @Inject constructor(
                     configs.groupKeys.needsDump() ||
                     configs.groupKeys.needsRekey()
 
-            if (configs.groupInfo.needsDump() || configs.groupMembers.needsDump() ||
+            val dumped = if (configs.groupInfo.needsDump() || configs.groupMembers.needsDump() ||
                 configs.groupKeys.needsDump()) {
-                configDatabase.storeGroupConfigs(
-                    publicKey = groupId.hexString,
-                    keysConfig = configs.groupKeys.dump(),
-                    infoConfig = configs.groupInfo.dump(),
-                    memberConfig = configs.groupMembers.dump(),
-                    timestamp = clock.currentTimeMills()
+                Triple(
+                    configs.groupKeys.dump(),
+                    configs.groupInfo.dump(),
+                    configs.groupMembers.dump()
                 )
+            } else {
+                null
             }
 
             lock.writeLock().unlock()
+
+            if (dumped != null) {
+                coroutineScope.launch {
+                    configDatabase.storeGroupConfigs(
+                        publicKey = groupId.hexString,
+                        keysConfig = dumped.first,
+                        infoConfig = dumped.second,
+                        memberConfig = dumped.third,
+                        timestamp = clock.currentTimeMills()
+                    )
+                }
+            }
 
             // Notify changes on a coroutine
             if (changed) {
