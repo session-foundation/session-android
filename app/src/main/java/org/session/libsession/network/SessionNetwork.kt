@@ -41,6 +41,10 @@ class SessionNetwork(
     private val maxRetryDelayMs: Long = 2_000L
 ) {
 
+    //todo ONION we now have a few places in the app calling SesisonNetwork directly to use
+    // sendToSnode or sendToServer. Should this be abstracted away in sessionClient instead?
+    // Is there a better way to discern the two?
+
     /**
      * Send an onion request to a *service node* (RPC).
      *

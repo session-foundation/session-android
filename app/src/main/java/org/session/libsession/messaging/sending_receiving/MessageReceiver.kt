@@ -13,14 +13,14 @@ import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.messages.control.TypingIndicator
 import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.VisibleMessage
-import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.network.SnodeClock
 import org.session.libsignal.crypto.PushTransportDetails
-import org.session.protos.SessionProtos
-import org.session.protos.SessionProtos.Envelope
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
+import org.session.protos.SessionProtos
+import org.session.protos.SessionProtos.Envelope
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -30,6 +30,7 @@ import kotlin.math.abs
 @Singleton
 class MessageReceiver @Inject constructor(
     private val storage: StorageProtocol,
+    private val snodeClock: SnodeClock
 ) {
 
     internal sealed class Error(message: String) : Exception(message) {
@@ -201,7 +202,7 @@ class MessageReceiver @Inject constructor(
         message.sender = sender
         message.recipient = userPublicKey
         message.sentTimestamp = envelope.timestamp
-        message.receivedTimestamp = if (envelope.hasServerTimestamp()) envelope.serverTimestamp else SnodeAPI.nowWithOffset
+        message.receivedTimestamp = if (envelope.hasServerTimestamp()) envelope.serverTimestamp else snodeClock.currentTimeMills()
         message.groupPublicKey = groupPublicKey
         message.openGroupServerMessageID = openGroupServerID
         // Validate

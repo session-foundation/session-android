@@ -19,9 +19,9 @@ import org.session.libsession.avatars.AvatarCacheCleaner
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.sending_receiving.notifications.PushRegistryV1
-import org.session.libsession.snode.OwnedSwarmAuth
-import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.network.SessionClient
 import org.session.libsession.network.SnodeClock
+import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
@@ -86,6 +86,7 @@ class ConfigToDatabaseSync @Inject constructor(
     private val messageNotifier: MessageNotifier,
     private val recipientSettingsDatabase: RecipientSettingsDatabase,
     private val avatarCacheCleaner: AvatarCacheCleaner,
+    private val sessionClient: SessionClient,
     @param:ManagerScope private val scope: CoroutineScope,
 ) : AuthAwareComponent {
     override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
@@ -315,7 +316,7 @@ class ConfigToDatabaseSync @Inject constructor(
                 scope.launch(Dispatchers.Default) {
                     val cleanedHashes: List<String> =
                         messages.asSequence().map { it.second }.filter { !it.isNullOrEmpty() }.filterNotNull().toList()
-                    if (cleanedHashes.isNotEmpty()) SnodeAPI.deleteMessage(
+                    if (cleanedHashes.isNotEmpty()) sessionClient.deleteMessage(
                         groupInfoConfig.id.hexString,
                         groupAdminAuth,
                         cleanedHashes

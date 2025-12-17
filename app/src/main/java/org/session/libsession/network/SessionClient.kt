@@ -262,7 +262,7 @@ class SessionClient @Inject constructor(
             }
         }
 
-        val target = getSingleTargetSnode(message.recipient)
+        val target = swarmDirectory.getSingleTargetSnode(message.recipient)
 
         return sendBatchRequest(
             snode = target,
@@ -285,7 +285,7 @@ class SessionClient @Inject constructor(
         serverHashes: List<String>,
         version: Version = Version.V4
     ): Map<*, *> {
-        val snode = getSingleTargetSnode(publicKey)
+        val snode = swarmDirectory.getSingleTargetSnode(publicKey)
 
         val params = buildAuthenticatedParameters(
             auth = auth,
@@ -354,7 +354,7 @@ class SessionClient @Inject constructor(
         version: Version = Version.V4
     ): Map<String, Boolean> {
         val publicKey = auth.accountId.hexString
-        val snode = getSingleTargetSnode(publicKey)
+        val snode = swarmDirectory.getSingleTargetSnode(publicKey)
 
         // Prefer network-adjusted time for signature compatibility
         val timestamp = snodeClock.waitForNetworkAdjustedTime()
@@ -486,7 +486,7 @@ class SessionClient @Inject constructor(
         extend: Boolean = false,
         version: Version = Version.V4
     ): Map<*, *> {
-        val snode = getSingleTargetSnode(auth.accountId.hexString)
+        val snode = swarmDirectory.getSingleTargetSnode(auth.accountId.hexString)
         val params = buildAlterTtlParams(auth, messageHashes, newExpiry, shorten, extend)
 
         return invoke(
@@ -500,16 +500,6 @@ class SessionClient @Inject constructor(
 
 
     // Batch logic
-
-    /**
-     * Picks one snode from the user's swarm for a given account.
-     * We deliberately randomise to avoid hammering a single node.
-     */
-    private suspend fun getSingleTargetSnode(publicKey: String): Snode {
-        val swarm = swarmDirectory.getSwarm(publicKey)
-        require(swarm.isNotEmpty()) { "Swarm is empty for pubkey=$publicKey" }
-        return swarm.shuffledRandom().random()
-    }
 
     private fun buildAuthenticatedParameters(
         auth: SwarmAuth,

@@ -20,6 +20,7 @@ import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.util.ConfigPush
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
+import org.session.libsession.network.SessionClient
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeAPI
@@ -63,6 +64,7 @@ class ConfigUploader @Inject constructor(
     private val storageProtocol: StorageProtocol,
     private val clock: SnodeClock,
     private val networkConnectivity: NetworkConnectivity,
+    private val sessionClient: SessionClient
 ) : AuthAwareComponent {
     /**
      * A flow that only emits when
@@ -196,16 +198,16 @@ class ConfigUploader @Inject constructor(
 
         Log.d(TAG, "Pushing group configs")
 
-        val snode = SnodeAPI.getSingleTargetSnode(groupId.hexString).await()
+        val snode = sessionClient.getSingleTargetSnode(groupId.hexString)
         val auth = OwnedSwarmAuth.ofClosedGroup(groupId, adminKey)
 
         // Keys push is different: it doesn't have the delete call so we don't call pushConfig.
         // Keys must be pushed first because the other configs depend on it.
         val keysPushResult = keysPush?.let { push ->
-            SnodeAPI.sendBatchRequest(
+            sessionClient.sendBatchRequest(
                 snode = snode,
                 publicKey = auth.accountId.hexString,
-                request = SnodeAPI.buildAuthenticatedStoreBatchInfo(
+                request = sessionClient.buildAuthenticatedStoreBatchInfo(
                     Namespace.GROUP_KEYS(),
                     SnodeMessage(
                         auth.accountId.hexString,

@@ -11,7 +11,7 @@ interface SnodePathStorage {
 }
 
 interface SwarmStorage {
-    fun getSwarm(publicKey: String): Set<Snode>?
+    fun getSwarm(publicKey: String): Set<Snode>
     fun setSwarm(publicKey: String, swarm: Set<Snode>)
 }
 

@@ -10,9 +10,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
-import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
@@ -47,7 +47,7 @@ import org.session.libsession.messaging.utilities.MessageAuthentication.buildGro
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildInfoChangeSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildMemberChangeSignature
 import org.session.libsession.messaging.utilities.WebRtcUtils
-import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.network.SessionClient
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
@@ -62,12 +62,12 @@ import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.getType
 import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.upsertContact
-import org.session.protos.SessionProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
+import org.session.protos.SessionProtos
 import org.thoughtcrime.securesms.database.ConfigDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -106,6 +106,7 @@ class ReceivedMessageHandler @Inject constructor(
     private val messageRequestResponseHandler: Provider<MessageRequestResponseHandler>,
     private val prefs: TextSecurePreferences,
     private val clock: SnodeClock,
+    private val sessionClient: SessionClient
 ) {
 
     suspend fun handle(
@@ -265,7 +266,7 @@ class ReceivedMessageHandler @Inject constructor(
             messageDataProvider.getServerHashForMessage(messageIdToDelete)?.let { serverHash ->
                 scope.launch(Dispatchers.IO) { // using scope as we are slowly migrating to coroutines but we can't migrate everything at once
                     try {
-                        SnodeAPI.deleteMessage(author, userAuth, listOf(serverHash))
+                        sessionClient.deleteMessage(author, userAuth, listOf(serverHash))
                     } catch (e: Exception) {
                         Log.e("Loki", "Failed to delete message", e)
                     }

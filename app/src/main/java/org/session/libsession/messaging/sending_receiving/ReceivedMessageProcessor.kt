@@ -29,7 +29,7 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.utilities.WebRtcUtils
-import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.network.SessionClient
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -76,6 +76,7 @@ class ReceivedMessageProcessor @Inject constructor(
     private val visibleMessageHandler: Provider<VisibleMessageHandler>,
     private val blindMappingRepository: BlindMappingRepository,
     private val messageParser: MessageParser,
+    private val sessionClient: SessionClient
 ) {
     private val threadMutexes = ConcurrentHashMap<Address.Conversable, ReentrantLock>()
 
@@ -452,7 +453,7 @@ class ReceivedMessageProcessor @Inject constructor(
             messageDataProvider.getServerHashForMessage(messageIdToDelete)?.let { serverHash ->
                 scope.launch(Dispatchers.IO) { // using scope as we are slowly migrating to coroutines but we can't migrate everything at once
                     try {
-                        SnodeAPI.deleteMessage(author, userAuth, listOf(serverHash))
+                        sessionClient.deleteMessage(author, userAuth, listOf(serverHash))
                     } catch (e: Exception) {
                         Log.e("Loki", "Failed to delete message", e)
                     }
