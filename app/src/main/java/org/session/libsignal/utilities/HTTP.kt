@@ -148,7 +148,7 @@ object HTTP {
 
             if (exception !is HTTPRequestFailedException) {
 
-                // Override the actual error so that we can correctly catch failed requests in OnionRequestAPI
+                // Override the actual error so that we can correctly catch failed requests in networking layer
                 throw HTTPRequestFailedException(
                     statusCode = 0,
                     message = "HTTP request failed due to: ${exception.message}"

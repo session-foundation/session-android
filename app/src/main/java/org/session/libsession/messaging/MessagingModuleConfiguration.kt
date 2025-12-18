@@ -11,6 +11,7 @@ import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.network.SessionNetwork
 import org.session.libsession.network.SnodeClock
+import org.session.libsession.network.onion.PathManager
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.Device
 import org.session.libsession.utilities.TextSecurePreferences
@@ -37,7 +38,8 @@ class MessagingModuleConfiguration @Inject constructor(
     val messageSendJobFactory: MessageSendJob.Factory,
     val json: Json,
     val snodeClock: SnodeClock,
-    val sessionNetwork: SessionNetwork
+    val sessionNetwork: SessionNetwork,
+    val pathManager: PathManager
 ) {
 
     companion object {

@@ -43,8 +43,8 @@ import org.session.libsession.messaging.sending_receiving.link_preview.LinkPrevi
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.messaging.utilities.UpdateMessageData
-import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.network.SnodeClock
+import org.session.libsession.network.model.OnionError
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
@@ -589,7 +589,7 @@ open class Storage @Inject constructor(
         }
         if (error.localizedMessage != null) {
             val message: String
-            if (error is OnionRequestAPI.HTTPRequestFailedAtDestinationException && error.statusCode == 429) {
+            if (error is OnionError.DestinationError && error.status?.code == 429) {
                 message = "429: Rate limited."
             } else {
                 message = error.localizedMessage!!
@@ -605,7 +605,7 @@ open class Storage @Inject constructor(
 
         if (error.localizedMessage != null) {
             val message: String
-            if (error is OnionRequestAPI.HTTPRequestFailedAtDestinationException && error.statusCode == 429) {
+            if (error is OnionError.DestinationError && error.status?.code == 429) {
                 message = "429: Rate limited."
             } else {
                 message = error.localizedMessage!!

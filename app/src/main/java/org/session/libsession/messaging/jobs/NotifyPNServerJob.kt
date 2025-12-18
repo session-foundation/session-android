@@ -6,15 +6,17 @@ import com.esotericsoftware.kryo.io.Output
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.Job.Companion.MAX_BUFFER_SIZE_BYTES
 import org.session.libsession.messaging.sending_receiving.notifications.Server
 import org.session.libsession.messaging.utilities.Data
-import org.session.libsession.snode.OnionRequestAPI
+import org.session.libsession.network.SessionNetwork
+import org.session.libsession.network.onion.Version
 import org.session.libsession.snode.SnodeMessage
-import org.session.libsession.snode.Version
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.retryIfNeeded
+import org.session.libsignal.utilities.retryWithUniformInterval
+import kotlin.coroutines.cancellation.CancellationException
 
 class NotifyPNServerJob(val message: SnodeMessage) : Job {
     override var delegate: JobDelegate? = null
@@ -22,6 +24,11 @@ class NotifyPNServerJob(val message: SnodeMessage) : Job {
     override var failureCount: Int = 0
 
     override val maxFailureCount: Int = 20
+
+    private val sessionNetwork: SessionNetwork by lazy {
+        MessagingModuleConfiguration.shared.sessionNetwork
+    }
+
     companion object {
         val KEY: String = "NotifyPNServerJob"
 
@@ -31,27 +38,32 @@ class NotifyPNServerJob(val message: SnodeMessage) : Job {
 
     override suspend fun execute(dispatcherName: String) {
         val server = Server.LEGACY
-        val parameters = mapOf( "data" to message.data, "send_to" to message.recipient )
+        val parameters = mapOf("data" to message.data, "send_to" to message.recipient)
         val url = "${server.url}/notify"
         val body = RequestBody.create("application/json".toMediaType(), JsonUtil.toJson(parameters))
         val request = Request.Builder().url(url).post(body).build()
-        retryIfNeeded(4) {
-            OnionRequestAPI.sendOnionRequest(
-                request,
-                server.url,
-                server.publicKey,
-                Version.V2
-            ) success { response ->
-                when (response.code) {
-                    null, 0 -> Log.d("NotifyPNServerJob", "Couldn't notify PN server due to error: ${response.message}.")
-                }
-            } fail { exception ->
-                Log.d("NotifyPNServerJob", "Couldn't notify PN server due to error: $exception.")
+
+        try {
+            // High-level application retry (4 attempts)
+            retryWithUniformInterval(maxRetryCount = 4) {
+                sessionNetwork.sendToServer(
+                    request = request,
+                    serverBaseUrl = server.url,
+                    x25519PublicKey = server.publicKey,
+                    version = Version.V2
+                )
+
+                // todo ONION the old code was checking the status code on success and if it is null or 0 it would log it as a fail
+                // the new structure however throws all non 200.299 status as an OnionError
             }
-        } success {
+
             handleSuccess(dispatcherName)
-        } fail {
-            handleFailure(dispatcherName, it)
+
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+
+            Log.d("NotifyPNServerJob", "Couldn't notify PN server due to error: $e.")
+            handleFailure(dispatcherName, e)
         }
     }
 

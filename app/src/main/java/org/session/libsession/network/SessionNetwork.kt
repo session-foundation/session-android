@@ -49,9 +49,7 @@ class SessionNetwork @Inject constructor(
     // Is there a better way to discern the two?
 
     /**
-     * Send an onion request to a *service node* (RPC).
-     *
-     * @param publicKey Optional: used by OnionErrorManager for swarm-specific handling (e.g. 421).
+     * Send an onion request to a *service node*.
      */
     suspend fun sendToSnode(
         method: Snode.Method,
@@ -172,9 +170,6 @@ class SessionNetwork @Inject constructor(
         return capped + jitter
     }
 
-    /**
-     * Equivalent to old generatePayload() from OnionRequestAPI.
-     */
     private fun generatePayload(request: Request, server: String, version: Version): ByteArray {
         val headers = request.getHeadersForOnionRequest().toMutableMap()
         val url = request.url

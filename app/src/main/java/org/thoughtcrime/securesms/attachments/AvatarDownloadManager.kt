@@ -10,7 +10,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.messaging.open_groups.OpenGroupApi
-import org.session.libsession.snode.OnionRequestAPI
+import org.session.libsession.network.model.OnionError
 import org.session.libsession.utilities.AESGCM
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
@@ -114,7 +114,7 @@ class AvatarDownloadManager @Inject constructor(
                 downloadAndDecryptFile(file)
             } catch (e: Exception) {
                 if (e.getRootCause<NonRetryableException>() != null ||
-                    e.getRootCause<OnionRequestAPI.HTTPRequestFailedAtDestinationException>()?.statusCode == 404
+                    e.getRootCause<OnionError.DestinationError>()?.status?.code == 404 //todo ONION does this check still work in the current setup
                 ) {
                     Log.w(TAG, "Download failed permanently for file $file", e)
                     // Write an empty file with a permanent error metadata if the download failed permanently.

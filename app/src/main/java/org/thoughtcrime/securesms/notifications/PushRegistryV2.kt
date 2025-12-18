@@ -17,11 +17,10 @@ import org.session.libsession.messaging.sending_receiving.notifications.Subscrip
 import org.session.libsession.messaging.sending_receiving.notifications.SubscriptionResponse
 import org.session.libsession.messaging.sending_receiving.notifications.UnsubscribeResponse
 import org.session.libsession.messaging.sending_receiving.notifications.UnsubscriptionRequest
-import org.session.libsession.snode.OnionRequestAPI
+import org.session.libsession.network.SessionNetwork
 import org.session.libsession.network.SnodeClock
+import org.session.libsession.network.onion.Version
 import org.session.libsession.snode.SwarmAuth
-import org.session.libsession.snode.Version
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Device
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.auth.LoginStateRepository
@@ -36,6 +35,7 @@ class PushRegistryV2 @Inject constructor(
     private val device: Device,
     private val clock: SnodeClock,
     private val loginStateRepository: LoginStateRepository,
+    private val sessionNetwork: SessionNetwork
 ) {
 
     suspend fun register(
@@ -114,12 +114,12 @@ class PushRegistryV2 @Inject constructor(
         val url = "${server.url}/$path"
         val body = requestParameters.toRequestBody("application/json".toMediaType())
         val request = Request.Builder().url(url).post(body).build()
-        val response = OnionRequestAPI.sendOnionRequest(
+        val response = sessionNetwork.sendToServer(
             request = request,
-            server = server.url,
+            serverBaseUrl = server.url,
             x25519PublicKey = server.publicKey,
             version = Version.V4
-        ).await()
+        )
 
         return withContext(Dispatchers.IO) {
             requireNotNull(response.body) { "Response doesn't have a body" }

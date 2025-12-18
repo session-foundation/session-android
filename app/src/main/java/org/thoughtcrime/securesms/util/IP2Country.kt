@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
-import org.session.libsession.snode.OnionRequestAPI
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsignal.utilities.Log
 import java.io.DataInputStream
 import java.io.InputStream
@@ -73,8 +73,9 @@ class IP2Country internal constructor(
             if (isInitialized) { return; }
             shared = IP2Country(context.applicationContext)
 
+            //todo ONION we should look into injecting this class and optimising
             GlobalScope.launch {
-                OnionRequestAPI.paths
+                MessagingModuleConfiguration.shared.pathManager.paths
                     .filter { it.isNotEmpty() }
                     .collectLatest {
                         shared.populateCacheIfNeeded()
@@ -104,7 +105,7 @@ class IP2Country internal constructor(
 
     private fun populateCacheIfNeeded() {
         val start = System.currentTimeMillis()
-        OnionRequestAPI.paths.value.iterator().forEach { path ->
+        MessagingModuleConfiguration.shared.pathManager.paths.value.iterator().forEach { path ->
             path.iterator().forEach { snode ->
                 cacheCountryForIP(snode.ip) // Preload if needed
             }

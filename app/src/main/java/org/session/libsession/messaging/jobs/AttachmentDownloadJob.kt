@@ -13,7 +13,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.messaging.utilities.Data
-import org.session.libsession.snode.OnionRequestAPI
+import org.session.libsession.network.model.OnionError
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.DecodedAudio
 import org.session.libsession.utilities.InputStreamMediaDataSource
@@ -94,7 +94,7 @@ class AttachmentDownloadJob @AssistedInject constructor(
             } else if (exception == Error.NoAttachment
                     || exception == Error.NoThread
                     || exception == Error.NoSender
-                    || (exception is OnionRequestAPI.HTTPRequestFailedAtDestinationException && exception.statusCode == 400)
+                    || (exception is OnionError.DestinationError && exception.status?.code == 400) //todo ONION this is matching old behaviour. Do we want this kind of error handling here?
                     || exception is NonRetryableException) {
                 attachment?.let { id ->
                     Log.d("AttachmentDownloadJob", "Setting attachment state = failed, have attachment")

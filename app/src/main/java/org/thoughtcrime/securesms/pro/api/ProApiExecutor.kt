@@ -9,8 +9,7 @@ import kotlinx.serialization.json.decodeFromStream
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import org.session.libsession.snode.OnionRequestAPI.sendOnionRequest
-import org.session.libsession.snode.utilities.await
+import org.session.libsession.network.SessionNetwork
 import org.thoughtcrime.securesms.pro.ProBackendConfig
 import javax.inject.Inject
 import javax.inject.Provider
@@ -18,6 +17,7 @@ import javax.inject.Provider
 class ProApiExecutor @Inject constructor(
     private val json: Json,
     private val proConfigProvider: Provider<ProBackendConfig>,
+    private val sessionNetwork: SessionNetwork,
 ) {
     @Serializable
     private data class RawProApiResponse(
@@ -57,7 +57,7 @@ class ProApiExecutor @Inject constructor(
     ): ProApiResponse<Res, Status> {
         val config = proConfigProvider.get()
 
-        val rawResp = sendOnionRequest(
+        val rawResp = sessionNetwork.sendToServer(
             request = Request.Builder()
                 .url(config.url.resolve(request.endpoint)!!)
                 .post(
@@ -66,9 +66,9 @@ class ProApiExecutor @Inject constructor(
                     )
                 )
                 .build(),
-            server = config.url.host,
+            serverBaseUrl = config.url.host,
             x25519PublicKey = config.x25519PubKeyHex
-        ).await().body!!.inputStream().use {
+        ).body!!.inputStream().use {
             json.decodeFromStream<RawProApiResponse>(it)
         }
 

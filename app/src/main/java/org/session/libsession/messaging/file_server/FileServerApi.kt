@@ -103,6 +103,7 @@ class FileServerApi @Inject constructor(
                         )
                 )
 
+                //todo ONION  in the new architecture, an Onionresponse should always be in 200..299, otherwise an OnionError is thrown
                 check(response.code in 200..299) {
                     "Error response from file server: ${response.code}"
                 }

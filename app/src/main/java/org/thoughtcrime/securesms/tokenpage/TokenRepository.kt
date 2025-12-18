@@ -10,8 +10,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.file_server.FileServerApi
-import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.snode.utilities.await
+import org.session.libsession.network.SessionNetwork
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
@@ -28,6 +27,7 @@ class TokenRepositoryImpl @Inject constructor(
     @param:ApplicationContext val context: Context,
     private val storage: StorageProtocol,
     private val json: Json,
+    private val sessionNetwork: SessionNetwork
 ): TokenRepository {
     private val TAG = "TokenRepository"
 
@@ -89,11 +89,11 @@ class TokenRepositoryImpl @Inject constructor(
 
         var response: T? = null
         try {
-            val rawResponse = OnionRequestAPI.sendOnionRequest(
+            val rawResponse = sessionNetwork.sendToServer(
                 request = request,
-                server = TOKEN_SERVER_URL, // Note: The `request` contains the actual endpoint we'll hit
+                serverBaseUrl = TOKEN_SERVER_URL, // Note: The `request` contains the actual endpoint we'll hit
                 x25519PublicKey = SERVER_PUBLIC_KEY
-            ).await()
+            )
 
             val resultJsonString = rawResponse.body?.decodeToString()
             if (resultJsonString == null) {
