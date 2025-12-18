@@ -161,7 +161,7 @@ class SessionClient @Inject constructor(
         publicKey: String? = null,
         version: Version = Version.V4
     ): ByteArraySlice {
-        val result = sessionNetwork.sendToSnode(
+        val onionResponse = sessionNetwork.sendToSnode(
             method = method,
             parameters = parameters,
             snode = snode,
@@ -169,12 +169,6 @@ class SessionClient @Inject constructor(
             version = version
         )
 
-        if (result.isFailure) {
-            throw result.exceptionOrNull()
-                ?: Error.Generic("Unknown error invoking $method on $snode")
-        }
-
-        val onionResponse = result.getOrThrow()
         return onionResponse.body
             ?: throw Error.Generic("Empty body from snode for method $method")
     }

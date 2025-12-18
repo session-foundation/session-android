@@ -30,9 +30,9 @@ class PathManager @Inject constructor(
     private val scope: CoroutineScope,
     private val directory: SnodeDirectory,
     private val storage: SnodePathStorage,
-    private val pathSize: Int = 3,
-    private val targetPathCount: Int = 2,
 ) {
+    private val pathSize: Int = 3
+    private val targetPathCount: Int = 2
 
     private val _paths = MutableStateFlow(
         sanitizePaths(storage.getOnionRequestPaths())

@@ -1,6 +1,7 @@
 package org.session.libsession.network
 
 import android.os.SystemClock
+import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -28,7 +29,7 @@ import javax.inject.Singleton
 class SnodeClock @Inject constructor(
     @param:ManagerScope private val scope: CoroutineScope,
     private val snodeDirectory: SnodeDirectory,
-    private val sessionClient: SessionClient
+    private val sessionClient: Lazy<SessionClient>,
 ) : OnAppStartupComponent {
 
     //todo ONION we have a lot of calls to MessagingModuleConfiguration.shared.snodeClock.currentTimeMills()
@@ -46,7 +47,7 @@ class SnodeClock @Inject constructor(
                     val node = snodeDirectory.getRandomSnode()
                     val requestStarted = SystemClock.elapsedRealtime()
 
-                    var networkTime = sessionClient.getNetworkTime(node).second
+                    var networkTime = sessionClient.get().getNetworkTime(node).second
                     val requestEnded = SystemClock.elapsedRealtime()
 
                     // Adjust network time to halfway through the request duration

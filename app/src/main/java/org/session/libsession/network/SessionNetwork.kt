@@ -39,14 +39,15 @@ class SessionNetwork @Inject constructor(
     private val pathManager: PathManager,
     private val transport: OnionTransport,
     private val errorManager: OnionErrorManager,
-    private val maxAttempts: Int = 2,
-    private val baseRetryDelayMs: Long = 250L,
-    private val maxRetryDelayMs: Long = 2_000L
 ) {
 
     //todo ONION we now have a few places in the app calling SesisonNetwork directly to use
     // sendToSnode or sendToServer. Should this be abstracted away in sessionClient instead?
     // Is there a better way to discern the two?
+
+    private val maxAttempts: Int = 2
+    private val baseRetryDelayMs: Long = 250L
+    private val maxRetryDelayMs: Long = 2_000L
 
     /**
      * Send an onion request to a *service node*.

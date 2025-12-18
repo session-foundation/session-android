@@ -18,6 +18,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody
 import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.network.model.OnionError
 import org.session.libsession.network.model.OnionResponse
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64.encodeBytes
@@ -406,22 +407,21 @@ object OpenGroupApi {
         if (!request.room.isNullOrEmpty()) {
             requestBuilder.header("Room", request.room)
         }
-        if (request.useOnionRouting) {
-            val result = MessagingModuleConfiguration.shared.sessionNetwork.sendToServer(
-                requestBuilder.build(),
-                request.server,
-                serverPublicKey
-            )
 
-            result.onFailure { e ->
+        if (request.useOnionRouting) {
+            try {
+                return MessagingModuleConfiguration.shared.sessionNetwork.sendToServer(
+                    request = requestBuilder.build(),
+                    serverBaseUrl = request.server,
+                    x25519PublicKey = serverPublicKey
+                )
+            } catch (e: Exception) {
                 when (e) {
-                    // No need for the stack trace for HTTP errors
-                    is HTTP.HTTPRequestFailedException -> Log.e("SOGS", "Failed onion request: ${e.message}")
+                    is OnionError -> Log.e("SOGS", "Failed onion request: ${e.message}")
                     else -> Log.e("SOGS", "Failed onion request", e)
                 }
+                throw e
             }
-
-            return result.getOrThrow()
         } else {
             throw IllegalStateException("It's currently not allowed to send non onion routed requests.")
         }
