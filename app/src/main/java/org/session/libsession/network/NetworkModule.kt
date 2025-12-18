@@ -4,6 +4,7 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import org.session.libsession.network.onion.OnionTransport
 import org.session.libsession.network.onion.http.HttpOnionTransport
 import org.session.libsession.network.snode.DbSnodePathStorage
 import org.session.libsession.network.snode.DbSnodePoolStorage
@@ -26,6 +27,6 @@ abstract class NetworkModule {
     abstract fun provideSnodePoolStorage(storage: DbSnodePoolStorage): SnodePoolStorage
 
     @Binds
-    abstract fun provideOnionTransport(transport: HttpOnionTransport): SnodePathStorage
+    abstract fun provideOnionTransport(transport: HttpOnionTransport): OnionTransport
 
 }

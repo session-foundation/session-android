@@ -59,7 +59,7 @@ class SessionNetwork @Inject constructor(
         snode: Snode,
         publicKey: String? = null,
         version: Version = Version.V4
-    ): Result<OnionResponse> {
+    ): OnionResponse {
         val payload = JsonUtil.toJson(
             mapOf(
                 "method" to method.rawValue,
@@ -88,7 +88,7 @@ class SessionNetwork @Inject constructor(
         serverBaseUrl: String,
         x25519PublicKey: String,
         version: Version = Version.V4
-    ): Result<OnionResponse> {
+    ): OnionResponse {
         val url = request.url
         val payload = generatePayload(request, serverBaseUrl, version)
 
@@ -117,57 +117,51 @@ class SessionNetwork @Inject constructor(
         snodeToExclude: Snode?,
         targetSnode: Snode?,
         publicKey: String?
-    ): Result<OnionResponse> {
+    ): OnionResponse {
         var lastError: Throwable? = null
 
         for (attempt in 1..maxAttempts) {
-            val path: Path = try {
-                pathManager.getPath(exclude = snodeToExclude)
-            } catch (t: Throwable) {
-                return Result.failure(t)
-            }
+            val path: Path = pathManager.getPath(exclude = snodeToExclude)
 
-            val result = transport.send(
-                path = path,
-                destination = destination,
-                payload = payload,
-                version = version
-            )
-
-            if (result.isSuccess) return result
-
-            val throwable = result.exceptionOrNull()
-                ?: IllegalStateException("Unknown onion transport error")
-
-            val onionError = throwable as? OnionError
-                ?: return Result.failure(throwable)
-
-            Log.w("Onion", "Onion error on attempt $attempt/$maxAttempts: $onionError")
-
-            lastError = onionError
-
-            // Delegate all handling + retry decision
-            val decision = errorManager.onFailure(
-                error = onionError,
-                ctx = OnionFailureContext(
+            try {
+                val result = transport.send(
                     path = path,
                     destination = destination,
-                    targetSnode = targetSnode,
-                    publicKey = publicKey
+                    payload = payload,
+                    version = version
                 )
-            )
 
-            when (decision) {
-                is FailureDecision.Fail -> return Result.failure(decision.throwable)
-                FailureDecision.Retry -> {
-                    if (attempt >= maxAttempts) break
-                    delay(computeBackoffDelayMs(attempt))
-                    continue
+                return result
+            } catch (e: Throwable) {
+                val onionError = e as? OnionError ?: OnionError.Unknown(e)
+
+                Log.w("Onion", "Onion error on attempt $attempt/$maxAttempts: $onionError")
+
+                lastError = onionError
+
+                // Delegate all handling + retry decision
+                val decision = errorManager.onFailure(
+                    error = onionError,
+                    ctx = OnionFailureContext(
+                        path = path,
+                        destination = destination,
+                        targetSnode = targetSnode,
+                        publicKey = publicKey
+                    )
+                )
+
+                when (decision) {
+                    is FailureDecision.Fail -> throw decision.throwable
+                    FailureDecision.Retry -> {
+                        if (attempt >= maxAttempts) break
+                        delay(computeBackoffDelayMs(attempt))
+                        continue
+                    }
                 }
             }
         }
 
-        return Result.failure(lastError ?: IllegalStateException("Unknown onion error"))
+        throw lastError ?: IllegalStateException("Unknown onion error")
     }
 
     private fun computeBackoffDelayMs(attempt: Int): Long {

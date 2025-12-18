@@ -3,7 +3,6 @@ package org.session.libsession.messaging.file_server
 import android.util.Base64
 import kotlinx.coroutines.CancellationException
 import network.loki.messenger.libsession_util.Curve25519
-import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.HttpUrl
@@ -11,8 +10,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.snode.utilities.await
+import org.session.libsession.network.SessionNetwork
 import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Hex
@@ -30,6 +28,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @Singleton
 class FileServerApi @Inject constructor(
     private val storage: StorageProtocol,
+    private val sessionNetwork: SessionNetwork
 ) {
 
     companion object {
@@ -95,14 +94,14 @@ class FileServerApi @Inject constructor(
         }
         return if (request.useOnionRouting) {
             try {
-                val response = OnionRequestAPI.sendOnionRequest(
+                val response = sessionNetwork.sendToServer(
                     request = requestBuilder.build(),
-                    server = request.fileServer.url.host,
+                    serverBaseUrl = request.fileServer.url.host,
                     x25519PublicKey =
                         Hex.toStringCondensed(
                             Curve25519.pubKeyFromED25519(Hex.fromStringCondensed(request.fileServer.ed25519PublicKeyHex))
                         )
-                ).await()
+                )
 
                 check(response.code in 200..299) {
                     "Error response from file server: ${response.code}"

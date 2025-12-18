@@ -43,7 +43,6 @@ import org.conscrypt.Conscrypt
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.MessagingModuleConfiguration.Companion.configure
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
-import org.session.libsession.snode.SnodeModule
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.pushSuffix
@@ -86,7 +85,6 @@ import kotlin.concurrent.Volatile
 class ApplicationContext : Application(), DefaultLifecycleObserver, Configuration.Provider, SingletonImageLoader.Factory {
     @Inject lateinit var messagingModuleConfiguration: Lazy<MessagingModuleConfiguration>
     @Inject lateinit var workerFactory: Lazy<HiltWorkerFactory>
-    @Inject lateinit var snodeModule: Lazy<SnodeModule>
     @Inject lateinit var sskEnvironment: Lazy<SSKEnvironment>
 
     @Inject lateinit var startupComponents: Lazy<OnAppStartupComponents>
@@ -146,7 +144,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
         NotificationChannels.create(this)
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
         configureKovenant()
-        SnodeModule.sharedLazy = snodeModule
         SSKEnvironment.sharedLazy = sskEnvironment
 
         initializeWebRtc()

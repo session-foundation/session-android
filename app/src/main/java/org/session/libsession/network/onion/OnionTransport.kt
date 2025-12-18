@@ -8,15 +8,13 @@ interface OnionTransport {
     /**
      * Sends an onion request over one path.
      *
-     * @return Result.success(response) on success
-     *         Result.failure(OnionError) on onion/path/guard/destination error
      */
     suspend fun send(
         path: List<Snode>,
         destination: OnionDestination,
         payload: ByteArray,
         version: Version
-    ): Result<OnionResponse>
+    ): OnionResponse
 }
 
 enum class Version(val value: String) {

@@ -26,7 +26,7 @@ class HttpOnionTransport @Inject constructor() : OnionTransport {
         destination: OnionDestination,
         payload: ByteArray,
         version: Version
-    ): Result<OnionResponse> {
+    ): OnionResponse {
         require(path.isNotEmpty()) { "Path must not be empty" }
 
         val guard = path.first()
@@ -34,7 +34,7 @@ class HttpOnionTransport @Inject constructor() : OnionTransport {
         val built = try {
             OnionBuilder.build(path, destination, payload, version)
         } catch (t: Throwable) {
-            return Result.failure(OnionError.Unknown(t))
+            throw OnionError.Unknown(t)
         }
 
         val url = "${guard.address}:${guard.port}/onion_req/v2"
@@ -49,17 +49,17 @@ class HttpOnionTransport @Inject constructor() : OnionTransport {
                 json = params
             )
         } catch (t: Throwable) {
-            return Result.failure(OnionError.Unknown(t))
+            throw OnionError.Unknown(t)
         }
 
         val responseBytes: ByteArray = try {
             HTTP.execute(HTTP.Verb.POST, url, body)
         } catch (httpEx: HTTP.HTTPRequestFailedException) {
             // HTTP error from guard (we never got an onion-level response)
-            return Result.failure(mapPathHttpError(guard, httpEx))
+            throw mapPathHttpError(guard, httpEx)
         } catch (t: Throwable) {
             // TCP / DNS / TLS / timeout etc. reaching guard
-            return Result.failure(OnionError.GuardUnreachable(guard, t))
+            throw OnionError.GuardUnreachable(guard, t)
         }
 
         // We have an onion-level response from the guard; decrypt & interpret
@@ -109,12 +109,12 @@ class HttpOnionTransport @Inject constructor() : OnionTransport {
         destinationSymmetricKey: ByteArray,
         destination: OnionDestination,
         version: Version
-    ): Result<OnionResponse> {
+    ): OnionResponse {
         return when (version) {
             Version.V4 -> handleV4Response(rawResponse, destinationSymmetricKey, destination)
             Version.V2, Version.V3 -> {
                 //todo ONION add support for v2/v3
-                Result.failure(OnionError.Unknown(UnsupportedOperationException("Need to implement v2/v3")))
+                throw OnionError.Unknown(UnsupportedOperationException("Need to implement v2/v3"))
             }
         }
     }
@@ -123,28 +123,28 @@ class HttpOnionTransport @Inject constructor() : OnionTransport {
         response: ByteArray,
         destinationSymmetricKey: ByteArray,
         destination: OnionDestination
-    ): Result<OnionResponse> {
+    ): OnionResponse {
         try {
             if (response.size <= AESGCM.ivSize) {
-                return Result.failure(OnionError.InvalidResponse())
+                throw OnionError.InvalidResponse()
             }
 
             val decrypted = AESGCM.decrypt(response, symmetricKey = destinationSymmetricKey)
 
             if (decrypted.isEmpty() || decrypted[0] != 'l'.code.toByte()) {
-                return Result.failure(OnionError.InvalidResponse())
+                throw OnionError.InvalidResponse()
             }
 
             val infoSepIdx = decrypted.indexOfFirst { it == ':'.code.toByte() }
-            if (infoSepIdx <= 1) return Result.failure(OnionError.InvalidResponse())
+            if (infoSepIdx <= 1) throw OnionError.InvalidResponse()
 
             val infoLenSlice = decrypted.slice(1 until infoSepIdx)
             val infoLength = infoLenSlice.toByteArray().toString(Charsets.US_ASCII).toIntOrNull()
-                ?: return Result.failure(OnionError.InvalidResponse())
+                ?: throw OnionError.InvalidResponse()
 
             val infoStartIndex = "l$infoLength".length + 1
             val infoEndIndex = infoStartIndex + infoLength
-            if (infoEndIndex > decrypted.size) return Result.failure(OnionError.InvalidResponse())
+            if (infoEndIndex > decrypted.size) throw OnionError.InvalidResponse()
 
             val infoSlice = decrypted.view(infoStartIndex until infoEndIndex)
             val responseInfo = JsonUtil.fromJson(infoSlice, Map::class.java) as Map<*, *>
@@ -153,12 +153,13 @@ class HttpOnionTransport @Inject constructor() : OnionTransport {
 
             if (statusCode !in 200..299) {
                 // Optional "body" part for some server errors (notably 400)
+                //todo ONION should we ALWAYS attach the body so that no specific error rules are defined here and/or in case future rules change and the body is needed elsewhere?
                 val bodySlice =
                     if (destination is OnionDestination.ServerDestination && statusCode == 400) {
                         decrypted.getBody(infoLength, infoEndIndex)
                     } else null
 
-                return Result.failure(
+                throw
                     OnionError.DestinationError(
                         status = ErrorStatus(
                             code = statusCode,
@@ -166,17 +167,18 @@ class HttpOnionTransport @Inject constructor() : OnionTransport {
                             body = bodySlice
                         )
                     )
-                )
             }
 
             val responseBody = decrypted.getBody(infoLength, infoEndIndex)
             return if (responseBody.isEmpty()) {
-                Result.success(OnionResponse(info = responseInfo, body = null))
+                OnionResponse(info = responseInfo, body = null)
             } else {
-                Result.success(OnionResponse(info = responseInfo, body = responseBody))
+                OnionResponse(info = responseInfo, body = responseBody)
             }
+        } catch (e: OnionError) {
+            throw e
         } catch (t: Throwable) {
-            return Result.failure(OnionError.InvalidResponse(t))
+            throw OnionError.InvalidResponse(t)
         }
     }
 
