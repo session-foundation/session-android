@@ -2,6 +2,7 @@ package org.session.libsession.network.snode
 
 
 import org.session.libsession.network.model.Path
+import org.session.libsignal.utilities.ForkInfo
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import javax.inject.Inject
@@ -21,6 +22,9 @@ interface SwarmStorage {
 interface SnodePoolStorage {
     fun getSnodePool(): Set<Snode>
     fun setSnodePool(newValue: Set<Snode>)
+
+    fun getForkInfo(): ForkInfo
+    fun setForkInfo(forkInfo: ForkInfo)
 }
 
 
@@ -58,5 +62,13 @@ class DbSnodePoolStorage @Inject constructor(private val db: LokiAPIDatabase) : 
 
     override fun setSnodePool(newValue: Set<Snode>) {
         db.setSnodePool(newValue)
+    }
+
+    override fun getForkInfo(): ForkInfo {
+        return db.getForkInfo()
+    }
+
+    override fun setForkInfo(forkInfo: ForkInfo) {
+        db.setForkInfo(forkInfo)
     }
 }

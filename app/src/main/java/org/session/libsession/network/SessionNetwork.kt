@@ -57,7 +57,7 @@ class SessionNetwork @Inject constructor(
         parameters: Map<*, *>,
         snode: Snode,
         publicKey: String? = null,
-        version: Version = Version.V4
+        version: Version = Version.V3
     ): OnionResponse {
         val payload = JsonUtil.toJson(
             mapOf(
@@ -121,6 +121,7 @@ class SessionNetwork @Inject constructor(
 
         for (attempt in 1..maxAttempts) {
             val path: Path = pathManager.getPath(exclude = snodeToExclude)
+            Log.i("Onion Request", "Sending onion request to $destination - attempt $attempt/$maxAttempts")
 
             try {
                 val result = transport.send(
@@ -134,7 +135,7 @@ class SessionNetwork @Inject constructor(
             } catch (e: Throwable) {
                 val onionError = e as? OnionError ?: OnionError.Unknown(e)
 
-                Log.w("Onion", "Onion error on attempt $attempt/$maxAttempts: $onionError")
+                Log.w("Onion Request", "Onion error on attempt $attempt/$maxAttempts: $onionError")
 
                 lastError = onionError
 

@@ -111,7 +111,6 @@ class SessionClient @Inject constructor(
                             publicKey = pubKey,
                             requests = batch.map { it.request },
                             sequence = sequence,
-                            version = version
                         )
                     } catch (e: Throwable) {
                         for (req in batch) runCatching { req.callback.send(Result.failure<Any>(e)) }
@@ -159,7 +158,7 @@ class SessionClient @Inject constructor(
         snode: Snode,
         parameters: Map<String, Any>,
         publicKey: String? = null,
-        version: Version = Version.V4
+        version: Version = Version.V3
     ): ByteArraySlice {
         val onionResponse = sessionNetwork.sendToSnode(
             method = method,
@@ -180,7 +179,7 @@ class SessionClient @Inject constructor(
         parameters: Map<String, Any>,
         responseDeserializationStrategy: DeserializationStrategy<Res>,
         publicKey: String? = null,
-        version: Version = Version.V4
+        version: Version = Version.V3
     ): Res {
         val body = invokeRaw(
             method = method,
@@ -203,7 +202,7 @@ class SessionClient @Inject constructor(
         snode: Snode,
         parameters: Map<String, Any>,
         publicKey: String? = null,
-        version: Version = Version.V4
+        version: Version = Version.V3
     ): Map<*, *> {
         val body = invokeRaw(
             method = method,
@@ -229,7 +228,6 @@ class SessionClient @Inject constructor(
         message: SnodeMessage,
         auth: SwarmAuth?,
         namespace: Int = 0,
-        version: Version = Version.V4
     ): StoreMessageResponse {
         val params: Map<String, Any> = if (auth != null) {
             check(auth.accountId.hexString == message.recipient) {
@@ -266,7 +264,6 @@ class SessionClient @Inject constructor(
             ),
             responseType = StoreMessageResponse.serializer(),
             sequence = false,
-            version = version
         )
     }
 
@@ -275,7 +272,6 @@ class SessionClient @Inject constructor(
         publicKey: String,
         swarmAuth: SwarmAuth,
         serverHashes: List<String>,
-        version: Version = Version.V4
     ): Map<*, *> {
         val snode = swarmDirectory.getSingleTargetSnode(publicKey)
 
@@ -297,7 +293,6 @@ class SessionClient @Inject constructor(
             snode = snode,
             parameters = params,
             publicKey = publicKey,
-            version = version
         )
 
         val swarms = rawResponse["swarm"] as? Map<String, Any> ?: throw Error.Generic("Missing swarm in delete response")
@@ -343,7 +338,6 @@ class SessionClient @Inject constructor(
 
     suspend fun deleteAllMessages(
         auth: SwarmAuth,
-        version: Version = Version.V4
     ): Map<String, Boolean> {
         val publicKey = auth.accountId.hexString
         val snode = swarmDirectory.getSingleTargetSnode(publicKey)
@@ -365,7 +359,6 @@ class SessionClient @Inject constructor(
             snode = snode,
             parameters = params,
             publicKey = publicKey,
-            version = version
         )
 
         return parseDeletions(
@@ -399,13 +392,11 @@ class SessionClient @Inject constructor(
 
     suspend fun getNetworkTime(
         snode: Snode,
-        version: Version = Version.V4
     ): Pair<Snode, Long> {
         val json = invoke(
             method = Snode.Method.Info,
             snode = snode,
             parameters = emptyMap(),
-            version = version
         )
 
         val timestamp = when (val t = json["timestamp"]) {
@@ -440,7 +431,6 @@ class SessionClient @Inject constructor(
                 method = Snode.Method.OxenDaemonRPCCall,
                 snode = snode,
                 parameters = params,
-                version = Version.V4
             )
 
             @Suppress("UNCHECKED_CAST")
@@ -476,7 +466,6 @@ class SessionClient @Inject constructor(
         newExpiry: Long,
         shorten: Boolean = false,
         extend: Boolean = false,
-        version: Version = Version.V4
     ): Map<*, *> {
         val snode = swarmDirectory.getSingleTargetSnode(auth.accountId.hexString)
         val params = buildAlterTtlParams(auth, messageHashes, newExpiry, shorten, extend)
@@ -486,7 +475,6 @@ class SessionClient @Inject constructor(
             snode = snode,
             parameters = params,
             publicKey = auth.accountId.hexString,
-            version = version
         )
     }
 
@@ -533,7 +521,6 @@ class SessionClient @Inject constructor(
         publicKey: String,
         requests: List<SnodeBatchRequestInfo>,
         sequence: Boolean = false,
-        version: Version = Version.V4
     ): BatchResponse {
         val method = if (sequence) Snode.Method.Sequence else Snode.Method.Batch
         val response = invokeTyped(
@@ -542,7 +529,6 @@ class SessionClient @Inject constructor(
             parameters = mapOf("requests" to requests),
             responseDeserializationStrategy = BatchResponse.serializer(),
             publicKey = publicKey,
-            version = version
         )
 
         // IMPORTANT: batch subresponse failures do not go through OnionErrorManager
@@ -595,7 +581,6 @@ class SessionClient @Inject constructor(
         request: SnodeBatchRequestInfo,
         responseType: DeserializationStrategy<T>,
         sequence: Boolean = false,
-        version: Version = Version.V4
     ): T {
         val callback = Channel<Result<Any>>(capacity = 1)
 
@@ -607,7 +592,6 @@ class SessionClient @Inject constructor(
                 responseType = responseType,
                 callback = callback,
                 sequence = sequence,
-                version = version
             )
         )
 
@@ -626,7 +610,6 @@ class SessionClient @Inject constructor(
         publicKey: String,
         request: SnodeBatchRequestInfo,
         sequence: Boolean = false,
-        version: Version = Version.V4
     ): JsonElement {
         return sendBatchRequest(
             snode = snode,
@@ -634,7 +617,6 @@ class SessionClient @Inject constructor(
             request = request,
             responseType = JsonElement.serializer(),
             sequence = sequence,
-            version = version
         )
     }
 
@@ -820,7 +802,7 @@ class SessionClient @Inject constructor(
         val callback: SendChannel<Result<Any>>,
         val requestTimeMs: Long = SystemClock.elapsedRealtime(),
         val sequence: Boolean = false,
-        val version: Version = Version.V4,
+        val version: Version = Version.V3,
     )
 
     // Error

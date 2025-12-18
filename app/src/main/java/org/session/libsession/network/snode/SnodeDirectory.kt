@@ -5,6 +5,7 @@ import kotlinx.coroutines.launch
 import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.secureRandom
+import org.session.libsignal.utilities.ForkInfo
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
@@ -189,7 +190,7 @@ class SnodeDirectory @Inject constructor(
         val newGuards = (0 until needed).map {
             val candidate = unused.secureRandom()
             unused = unused - candidate
-            Log.d("Onion", "Selected guard snode: $candidate")
+            Log.d("Onion Request", "Selected guard snode: $candidate")
             candidate
         }
 
@@ -204,5 +205,15 @@ class SnodeDirectory @Inject constructor(
         val hit = current.firstOrNull { it.publicKeySet?.ed25519Key == ed25519Key } ?: return
         Log.w("SnodeDirectory", "Dropping snode from pool (ed25519=$ed25519Key): $hit")
         updateSnodePool(current - hit)
+    }
+
+    fun updateForkInfo(newForkInfo: ForkInfo) {
+        val current = storage.getForkInfo()
+        if (newForkInfo > current) {
+            Log.d("Loki", "Updating fork info: $current -> $newForkInfo")
+            storage.setForkInfo(newForkInfo)
+        } else if (newForkInfo < current) {
+            Log.w("Loki", "Got stale fork info $newForkInfo (current: $current)")
+        }
     }
 }

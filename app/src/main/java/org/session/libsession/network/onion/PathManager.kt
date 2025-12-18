@@ -154,7 +154,7 @@ class PathManager @Inject constructor(
             val unused = pool.minus(usedSnodes)
 
             if (unused.isEmpty()) {
-                Log.w("Onion", "No unused snodes to repair path, dropping path entirely")
+                Log.w("Onion Request", "No unused snodes to repair path, dropping path entirely")
                 newPathsList.removeAt(pathIndex)
             } else {
                 val replacement = unused.secureRandom()
@@ -191,7 +191,7 @@ class PathManager @Inject constructor(
     private fun sanitizePaths(paths: List<Path>): List<Path> {
         if (paths.isEmpty()) return emptyList()
         if (arePathsDisjoint(paths)) return paths
-        Log.w("Onion", "Paths contained overlapping snodes. Dropping backups.")
+        Log.w("Onion Request", "Paths contained overlapping snodes. Dropping backups.")
         return paths.take(1)
     }
 

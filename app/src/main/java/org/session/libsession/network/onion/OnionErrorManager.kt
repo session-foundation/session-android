@@ -109,7 +109,7 @@ class OnionErrorManager @Inject constructor(
                         body = status.body
                     )
                 } else {
-                    Log.w("Onion", "Got 421 without an associated public key.")
+                    Log.w("Onion Request", "Got 421 without an associated public key.")
                     false
                 }
 

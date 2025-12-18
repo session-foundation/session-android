@@ -42,7 +42,6 @@ class SwarmDirectory @Inject constructor(
             method = Snode.Method.GetSwarm,
             parameters = params,
             snode = randomSnode,
-            version = Version.V4
         )
 
         val body = response.body ?: error("Empty GetSwarm body")
