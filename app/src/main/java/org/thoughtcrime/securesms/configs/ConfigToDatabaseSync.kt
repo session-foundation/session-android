@@ -12,7 +12,6 @@ import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.AvatarCacheCleaner
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.sending_receiving.notifications.PushRegistryV1
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeAPI
@@ -21,10 +20,8 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.allConfigAddresses
 import org.session.libsession.utilities.getGroup
-import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsession.utilities.withGroupConfigs
 import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsession.utilities.withUserConfigs
@@ -79,7 +76,6 @@ class ConfigToDatabaseSync @Inject constructor(
     private val conversationRepository: ConversationRepository,
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val lokiMessageDatabase: LokiMessageDatabase,
-    private val messageNotifier: MessageNotifier,
     private val recipientSettingsDatabase: RecipientSettingsDatabase,
     private val avatarCacheCleaner: AvatarCacheCleaner,
     @param:ManagerScope private val scope: CoroutineScope,
@@ -242,7 +238,6 @@ class ConfigToDatabaseSync @Inject constructor(
         storage.removeMember(address.address, myAccountId.toAddress())
         // Notify the PN server
         PushRegistryV1.unsubscribeGroup(closedGroupPublicKey = address.groupPublicKeyHex, publicKey = myAccountId.hexString)
-        messageNotifier.updateNotification(context)
     }
 
     fun syncGroupConfigs(groupId: AccountId) {

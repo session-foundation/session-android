@@ -8,7 +8,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.Storage
@@ -27,8 +26,6 @@ class DeleteNotificationReceiver : BroadcastReceiver() {
 
     @Inject @ManagerScope
     lateinit var scope: CoroutineScope
-
-    @Inject lateinit var messageNotifier: MessageNotifier
 
     @Inject lateinit var smsDb: SmsDatabase
     @Inject lateinit var mmsDb: MmsDatabase

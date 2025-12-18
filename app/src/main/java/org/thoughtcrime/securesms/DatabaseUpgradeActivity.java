@@ -17,10 +17,8 @@
 
 package org.thoughtcrime.securesms;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 
 import org.thoughtcrime.securesms.util.Util;
@@ -32,7 +30,6 @@ public class DatabaseUpgradeActivity extends BaseActivity {
   public void onCreate(Bundle bundle) {
     super.onCreate(bundle);
     VersionTracker.updateLastSeenVersion(this);
-    updateNotifications(this);
     startActivity((Intent)getIntent().getParcelableExtra("next_intent"));
     finish();
   }
@@ -42,16 +39,5 @@ public class DatabaseUpgradeActivity extends BaseActivity {
     int previousVersionCode = VersionTracker.getLastSeenVersion(context);
 
     return previousVersionCode < currentVersionCode;
-  }
-
-  @SuppressLint("StaticFieldLeak")
-  private void updateNotifications(final Context context) {
-    new AsyncTask<Void, Void, Void>() {
-      @Override
-      protected Void doInBackground(Void... params) {
-        ApplicationContext.getInstance(context).getMessageNotifier().updateNotification(context);
-        return null;
-      }
-    }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
   }
 }

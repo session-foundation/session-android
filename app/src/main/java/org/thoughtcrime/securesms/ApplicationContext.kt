@@ -42,7 +42,6 @@ import nl.komponents.kovenant.android.stopKovenant
 import org.conscrypt.Conscrypt
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.MessagingModuleConfiguration.Companion.configure
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.snode.SnodeModule
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
@@ -128,9 +127,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
             DatabaseComponent::class.java
         )
 
-    @get:Deprecated(message = "Use proper DI to inject this component")
-    @Inject lateinit var messageNotifier: MessageNotifier
-
 
     override fun onCreate() {
         pushSuffix = BuildConfig.PUSH_KEY_SUFFIX
@@ -191,7 +187,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
         isAppVisible = false
         Log.i(TAG, "App is no longer visible.")
         KeyCachingService.onAppBackgrounded(this)
-        messageNotifier.setVisibleThread(-1)
     }
 
     override fun onTerminate() {

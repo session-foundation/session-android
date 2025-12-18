@@ -27,7 +27,6 @@ import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.utilities.WebRtcUtils
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
@@ -72,7 +71,6 @@ class ReceivedMessageProcessor @Inject constructor(
     private val messageExpirationManager: Provider<SSKEnvironment.MessageExpirationManagerProtocol>,
     private val messageDataProvider: MessageDataProvider,
     @param:ManagerScope private val scope: CoroutineScope,
-    private val notificationManager: MessageNotifier,
     private val messageRequestResponseHandler: Provider<MessageRequestResponseHandler>,
     private val visibleMessageHandler: Provider<VisibleMessageHandler>,
     private val blindMappingRepository: BlindMappingRepository,
@@ -108,7 +106,6 @@ class ReceivedMessageProcessor @Inject constructor(
                     context.maxOutgoingMessageTimestamp,
                 )
 
-                notificationManager.updateNotification(this.context, threadId)
                 threadDatabase.notifyThreadUpdated(threadId)
             }
 
@@ -469,11 +466,6 @@ class ReceivedMessageProcessor @Inject constructor(
 
         // delete reactions
         storage.deleteReactions(messageToDelete.messageId)
-
-        // update notification
-        if (!messageToDelete.isOutgoing) {
-            notificationManager.updateNotification(context)
-        }
 
         return messageIdToDelete
     }

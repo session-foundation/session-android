@@ -211,10 +211,8 @@ public class ThreadDatabase extends Database {
   final Lazy<@NonNull RecipientRepository> recipientRepository;
   final Lazy<@NonNull MmsSmsDatabase> mmsSmsDatabase;
   final Lazy<@NonNull ConfigFactoryProtocol> configFactory;
-  private final Lazy<@NonNull MessageNotifier> messageNotifier;
   private final Lazy<@NonNull MmsDatabase> mmsDatabase;
   private final Lazy<@NonNull SmsDatabase> smsDatabase;
-  private final Lazy<@NonNull MarkReadProcessor> markReadProcessor;
 
   @Inject
   public ThreadDatabase(@dagger.hilt.android.qualifiers.ApplicationContext Context context,
@@ -222,18 +220,14 @@ public class ThreadDatabase extends Database {
                         Lazy<@NonNull RecipientRepository> recipientRepository,
                         Lazy<@NonNull MmsSmsDatabase> mmsSmsDatabase,
                         Lazy<@NonNull ConfigFactoryProtocol> configFactory,
-                        Lazy<@NonNull MessageNotifier> messageNotifier,
                         Lazy<@NonNull MmsDatabase> mmsDatabase,
-                        Lazy<@NonNull SmsDatabase> smsDatabase,
-                        Lazy<@NonNull MarkReadProcessor> markReadProcessor) {
+                        Lazy<@NonNull SmsDatabase> smsDatabase) {
     super(context, databaseHelper);
     this.recipientRepository = recipientRepository;
     this.mmsSmsDatabase = mmsSmsDatabase;
     this.configFactory = configFactory;
-    this.messageNotifier = messageNotifier;
     this.mmsDatabase = mmsDatabase;
     this.smsDatabase = smsDatabase;
-    this.markReadProcessor = markReadProcessor;
   }
 
   @NonNull

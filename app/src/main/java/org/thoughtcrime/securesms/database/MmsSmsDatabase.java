@@ -71,8 +71,8 @@ public class MmsSmsDatabase extends Database {
 
   private final LoginStateRepository loginStateRepository;
   private final Lazy<@NonNull ThreadDatabase> threadDatabase;
-  private final Lazy<@NonNull MmsDatabase> mmsDatabase;
-  private final Lazy<@NonNull SmsDatabase> smsDatabase;
+  final Lazy<@NonNull MmsDatabase> mmsDatabase;
+  final Lazy<@NonNull SmsDatabase> smsDatabase;
 
   @Inject
   public MmsSmsDatabase(@ApplicationContext Context context,

@@ -167,7 +167,7 @@ public class SmsDatabase extends MessagingDatabase implements MmsSmsColumns {
                      RecipientRepository recipientRepository,
                      Lazy<@NonNull ThreadDatabase> threadDatabase,
                      Lazy<@NonNull ReactionDatabase> reactionDatabase) {
-    super(context, databaseHelper);
+    super(context, databaseHelper, TABLE_NAME);
     this.recipientRepository = recipientRepository;
     this.threadDatabase = threadDatabase;
     this.reactionDatabase = reactionDatabase;

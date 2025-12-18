@@ -33,23 +33,26 @@ import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.SystemClock;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.ServiceCompat;
-import com.squareup.phrase.Phrase;
-import java.util.concurrent.TimeUnit;
 
-import network.loki.messenger.BuildConfig;
-import network.loki.messenger.R;
+import com.squareup.phrase.Phrase;
+
 import org.session.libsession.utilities.ServiceUtil;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.ApplicationContext;
-import org.thoughtcrime.securesms.DatabaseUpgradeActivity;
 import org.thoughtcrime.securesms.DummyActivity;
 import org.thoughtcrime.securesms.home.HomeActivity;
 import org.thoughtcrime.securesms.notifications.NotificationChannels;
+
+import java.util.concurrent.TimeUnit;
+
+import network.loki.messenger.BuildConfig;
+import network.loki.messenger.R;
 
 /**
  * Small service that stays running to keep a key cached in memory.
@@ -124,16 +127,6 @@ public class KeyCachingService extends Service {
       KeyCachingService.masterSecret = masterSecret;
 
       foregroundService();
-
-      new AsyncTask<Void, Void, Void>() {
-        @Override
-        protected Void doInBackground(Void... params) {
-          if (!DatabaseUpgradeActivity.isUpdate(KeyCachingService.this)) {
-            ApplicationContext.getInstance(KeyCachingService.this).getMessageNotifier().updateNotification(KeyCachingService.this);
-          }
-          return null;
-        }
-      }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
   }
 
@@ -191,14 +184,6 @@ public class KeyCachingService extends Service {
     intent.setPackage(getApplicationContext().getPackageName());
 
     sendBroadcast(intent, KEY_PERMISSION);
-
-    new AsyncTask<Void, Void, Void>() {
-      @Override
-      protected Void doInBackground(Void... params) {
-        ApplicationContext.getInstance(KeyCachingService.this).getMessageNotifier().updateNotification(KeyCachingService.this);
-        return null;
-      }
-    }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
   }
 
   private void handleLockToggled() {

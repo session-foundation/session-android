@@ -80,7 +80,7 @@ class MmsDatabase @Inject constructor(
     private val reactionDatabase: ReactionDatabase,
     private val mmsSmsDatabase: Lazy<MmsSmsDatabase>,
     private val groupDatabase: GroupDatabase,
-) : MessagingDatabase(context, databaseHelper), MmsSmsColumns {
+) : MessagingDatabase(context, databaseHelper, TABLE_NAME), MmsSmsColumns {
     private val earlyDeliveryReceiptCache = EarlyReceiptCache()
     private val earlyReadReceiptCache = EarlyReceiptCache()
 

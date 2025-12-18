@@ -28,7 +28,6 @@ import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.Log
@@ -57,9 +56,6 @@ class RemoteReplyReceiver : BroadcastReceiver() {
 
     @Inject
     lateinit var storage: Storage
-
-    @Inject
-    lateinit var messageNotifier: MessageNotifier
 
     @Inject
     lateinit var clock: SnodeClock
@@ -154,8 +150,6 @@ class RemoteReplyReceiver : BroadcastReceiver() {
                             lastSeenTime = clock.currentTimeMills()
                         )
                     }
-
-                    messageNotifier.updateNotification(context)
 
                     return null
                 }

@@ -1,8 +1,14 @@
 package org.thoughtcrime.securesms.database
 
+import androidx.collection.LongList
+import androidx.sqlite.db.SupportSQLiteStatement
 import androidx.sqlite.db.transaction
+import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
+import org.thoughtcrime.securesms.util.asSequence
 
 /**
  * Build a combined query to fetch both MMS and SMS messages in one go, the high level idea is to
@@ -284,8 +290,103 @@ fun buildMaxTimestampInThreadUpToQuery(id: MessageId): Pair<String, Array<Any>> 
     """ to arrayOf(id.id)
 }
 
-fun MmsSmsDatabase.getAndMarkAsNotified(lastSeenByThreadIDs: Map<Long, Long>): List<MessageRecord> {
-    if (lastSeenByThreadIDs.isEmpty()) return emptyList()
+fun MmsSmsDatabase.markAllNotified() {
+    val start = System.currentTimeMillis()
+    smsDatabase.get().markAllNotified()
+    mmsDatabase.get().markAllNotified()
+    Log.d("MmsSmsDatabase", "Marked all messages as notified in ${System.currentTimeMillis() - start} ms")
+}
 
-    TODO()
+/**
+ * Fetch all unread and unnotified messages, mark them as notified, and return them.
+ *
+ * @param lastSeenByAddresses A map of thread addresses to the last seen timestamp for that thread.
+ *                            Note that you must list all threads you want to include messages from.
+ *
+ * @return A map of thread addresses to lists of message
+ */
+fun MmsSmsDatabase.getAndMarkAsNotified(lastSeenByAddresses: Map<Address.Conversable, Long>): Map<Address.Conversable, List<MessageRecord>> {
+    if (lastSeenByAddresses.isEmpty()) return emptyMap()
+
+    return writableDatabase.transaction {
+
+        val start = System.currentTimeMillis()
+        //language=roomsql
+        execSQL("""
+            CREATE TEMPORARY TABLE thread_last_seen_temp (
+                thread_address TEXT NOT NULL PRIMARY KEY,
+                last_seen_time INTEGER NOT NULL
+            )
+        """)
+
+        //language=roomsql
+        compileStatement("INSERT OR IGNORE INTO thread_last_seen_temp (thread_address, last_seen_time) VALUES (?, ?)").use { stmt ->
+            for ((threadAddress, lastSeenTime) in lastSeenByAddresses) {
+                stmt.bindString(1, threadAddress.address)
+                stmt.bindLong(2, lastSeenTime)
+                stmt.executeInsert()
+                stmt.clearBindings()
+            }
+        }
+
+        val mainQuery = buildMmsSmsCombinedQuery(
+            projection = "*",
+            selection = "1",
+            includeReactions = false,
+            reactionSelection = null,
+            order = null,
+            limit = null
+        )
+
+        //language=roomsql
+        val records = query("""
+            WITH m AS ($mainQuery)
+            SELECT t.${ThreadDatabase.ADDRESS}, m.*
+            FROM m
+            INNER JOIN ${ThreadDatabase.TABLE_NAME} t ON t.${ThreadDatabase.ID} = m.${MmsSmsColumns.THREAD_ID}
+            INNER JOIN thread_last_seen_temp last_seen ON last_seen.thread_address = t.${ThreadDatabase.ADDRESS} 
+            WHERE m.${MmsSmsColumns.NORMALIZED_DATE_SENT} > last_seen.last_seen_time AND NOT m.${MmsSmsColumns.NOTIFIED}
+        """).use { cursor ->
+            val reader = Reader(cursor, false)
+            generateSequence {
+                val record = reader.next ?: return@generateSequence null
+                (cursor.getString(0).toAddress() as Address.Conversable) to record
+            }.groupBy(keySelector = { it.first }, valueTransform = { it.second })
+        }
+
+        // Now mark all these messages as notified
+        var updateSmsStatement: SupportSQLiteStatement? = null
+        var updateMmsStatement: SupportSQLiteStatement? = null
+
+        try {
+            for (record in records.asSequence().map { it.value.asSequence() }.flatten()) {
+                val stmt = if (record.isMms) {
+                    if (updateMmsStatement == null) {
+                        updateMmsStatement = compileStatement("UPDATE ${MmsDatabase.TABLE_NAME} SET ${MmsSmsColumns.NOTIFIED} = TRUE WHERE ${MmsSmsColumns.ID} = ?")
+                    }
+                    updateMmsStatement
+                } else {
+                    if (updateSmsStatement == null) {
+                        updateSmsStatement = compileStatement("UPDATE ${SmsDatabase.TABLE_NAME} SET ${MmsSmsColumns.NOTIFIED} = TRUE WHERE ${MmsSmsColumns.ID} = ?")
+                    }
+                    updateSmsStatement
+                }
+
+                stmt.bindLong(1, record.id)
+                stmt.executeUpdateDelete()
+                stmt.clearBindings()
+            }
+
+        } finally {
+            updateSmsStatement?.close()
+            updateMmsStatement?.close()
+        }
+
+        //language=roomsql
+        execSQL("DROP TABLE thread_last_seen_temp")
+
+        Log.d("MmsSmsDatabase", "Fetched unnotified messages in ${System.currentTimeMillis() - start} ms")
+
+        records
+    }
 }

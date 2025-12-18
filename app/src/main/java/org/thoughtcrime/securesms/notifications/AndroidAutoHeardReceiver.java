@@ -21,11 +21,9 @@ import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 
 import androidx.core.app.NotificationManagerCompat;
 
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
 import org.session.libsession.snode.SnodeClock;
 import org.thoughtcrime.securesms.database.Storage;
 
@@ -45,7 +43,6 @@ public class AndroidAutoHeardReceiver extends BroadcastReceiver {
   public static final String NOTIFICATION_ID_EXTRA = "car_notification_id";
 
   @Inject Storage storage;
-  @Inject MessageNotifier messageNotifier;
   @Inject SnodeClock clock;
 
   @SuppressLint("StaticFieldLeak")
@@ -60,20 +57,6 @@ public class AndroidAutoHeardReceiver extends BroadcastReceiver {
     if (threadIds != null) {
       int notificationId = intent.getIntExtra(NOTIFICATION_ID_EXTRA, -1);
       NotificationManagerCompat.from(context).cancel(notificationId);
-
-      new AsyncTask<Void, Void, Void>() {
-        @Override
-        protected Void doInBackground(Void... params) {
-            long now = clock.currentTimeMills();
-            for (long threadId : threadIds) {
-                storage.updateConversationLastSeenIfNeeded(threadId, now);
-            }
-
-            messageNotifier.updateNotification(context);
-
-            return null;
-        }
-      }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
   }
 }

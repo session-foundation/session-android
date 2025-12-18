@@ -94,7 +94,6 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
@@ -113,7 +112,6 @@ import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.isBlinded
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.crypto.MnemonicCodec
 import org.session.libsignal.utilities.ListenableFuture
 import org.session.libsignal.utilities.Log
@@ -262,7 +260,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var clock: SnodeClock
     @Inject lateinit var messageSender: MessageSender
     @Inject lateinit var resendMessageUtilities: ResendMessageUtilities
-    @Inject lateinit var messageNotifier: MessageNotifier
     @Inject lateinit var proStatusManager: ProStatusManager
     @Inject @ManagerScope
     lateinit var scope: CoroutineScope
@@ -282,7 +279,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             .get(LinkPreviewViewModel::class.java)
     }
 
-    private val address: Address.Conversable by lazy {
+    val address: Address.Conversable by lazy {
         val fromExtras =
             IntentCompat.getParcelableExtra(intent, ADDRESS, Address.Conversable::class.java)
         if (fromExtras != null) {
@@ -769,16 +766,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
 
         binding.inputBar.setInputBarEditableFactory(mentionViewModel.editableFactory)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        messageNotifier.setVisibleThread(viewModel.threadId)
-    }
-
-    override fun onPause() {
-        super.onPause()
-        messageNotifier.setVisibleThread(-1)
     }
 
     override fun getSystemService(name: String): Any? {

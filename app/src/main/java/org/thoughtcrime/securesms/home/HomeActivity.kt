@@ -47,7 +47,6 @@ import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
@@ -135,7 +134,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var groupManagerV2: GroupManagerV2
     @Inject lateinit var deprecationManager: LegacyGroupDeprecationManager
     @Inject lateinit var clock: SnodeClock
-    @Inject lateinit var messageNotifier: MessageNotifier
     @Inject lateinit var dateUtils: DateUtils
     @Inject lateinit var openGroupManager: OpenGroupManager
     @Inject lateinit var storeReviewManager: StoreReviewManager
@@ -578,7 +576,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     override fun onResume() {
         super.onResume()
-        messageNotifier.setHomeScreenVisible(true)
         if (loginStateRepository.getLocalNumber() == null) { return; } // This can be the case after a secondary device is auto-cleared
         IdentityKeyUtil.checkUpdate(this)
         if (textSecurePreferences.getHasViewedSeed()) {
@@ -586,11 +583,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
         }
 
         updateLegacyConfigView()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        messageNotifier.setHomeScreenVisible(false)
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -821,10 +813,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
                         error("Unexpected address to delete")
                     }
                 }
-
-
-                // Update the badge count
-                messageNotifier.updateNotification(context)
 
                 // Notify the user
                 val toastMessage = if (recipient.isGroupOrCommunityRecipient) R.string.groupMemberYouLeft else R.string.conversationsDeleted

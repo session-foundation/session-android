@@ -6,7 +6,6 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.media.RingtoneManager
 import android.net.Uri
-import android.os.AsyncTask
 import android.os.Bundle
 import android.provider.Settings
 import android.text.TextUtils
@@ -21,19 +20,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.preference.Preference
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.components.SwitchPreferenceCompat
 import org.thoughtcrime.securesms.notifications.NotificationChannels
 import org.thoughtcrime.securesms.preferences.widgets.DropDownPreference
@@ -343,15 +336,6 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
                 else getString(R.string.unknown)
             )
 
-            // update notification
-            object : AsyncTask<Void?, Void?, Void?>() {
-                override fun doInBackground(vararg params: Void?): Void? {
-                    ApplicationContext.getInstance(requireContext()).messageNotifier.updateNotification(
-                        activity!!
-                    )
-                    return null
-                }
-            }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR)
             return true
         }
     }

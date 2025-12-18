@@ -28,7 +28,6 @@ import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.snode.SnodeAPI.nowWithOffset
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
@@ -59,9 +58,6 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
 
     @Inject
     lateinit var smsDatabase: SmsDatabase
-
-    @Inject
-    lateinit var messageNotifier: MessageNotifier
 
     @Inject
     lateinit var storage: Storage
@@ -152,8 +148,6 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
                             lastSeenTime = clock.currentTimeMills()
                         )
                     }
-
-                    messageNotifier.updateNotification(context)
 
                     return null
                 }
