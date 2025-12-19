@@ -39,9 +39,9 @@ import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.getType
+import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
-import org.session.protos.SessionProtos
 import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.Storage
