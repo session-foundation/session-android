@@ -37,6 +37,8 @@ import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.modifyLayoutParams
 import org.session.libsession.utilities.needsCollapsing
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.displayName
+import org.thoughtcrime.securesms.audio.model.PlayableAudioMapper
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.AUDIO
 import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.DOCUMENT
@@ -213,11 +215,25 @@ class VisibleMessageContentView : ConstraintLayout {
                     binding.voiceMessageView.root.isVisible = true
                     binding.voiceMessageView.root.indexInAdapter = indexInAdapter
                     binding.voiceMessageView.root.delegate = context as? ConversationActivityV2
-                    binding.voiceMessageView.root.bind(message, isStartOfMessageCluster, isEndOfMessageCluster)
+
+                    val audioSlide = message.slideDeck.audioSlide!!
+                    val playable = PlayableAudioMapper.fromAudioSlide(
+                        slide = audioSlide,
+                        messageId = message.id ,
+                        senderName = message.recipient.displayName()
+                    )
+
+                    binding.voiceMessageView.root.bind(
+                        message = message,
+                        playable = playable,
+                        isStartOfMessageCluster = isStartOfMessageCluster,
+                        isEndOfMessageCluster = isEndOfMessageCluster
+                    )
+
                     // We have to use onContentClick (rather than a click listener directly on the voice
                     // message view) so as to not interfere with all the other gestures.
-                    onContentClick.add { binding.voiceMessageView.root.togglePlayback() }
-                    onContentDoubleTap = { binding.voiceMessageView.root.handleDoubleTap() }
+                    onContentClick.add { binding.voiceMessageView.root.onPlayPauseClicked() }
+                    onContentDoubleTap = { binding.voiceMessageView.root.onSpeedToggleClicked() }
                     binding.attachmentControlView.root.isVisible = false
                 } else {
                     val attachment = message.slideDeck.audioSlide?.asAttachment() as? DatabaseAttachment
@@ -464,6 +480,7 @@ class VisibleMessageContentView : ConstraintLayout {
         listOf<View>(albumThumbnailView.root, linkPreviewView.root, voiceMessageView.root, quoteView.root).none { it.isVisible }
 
     fun recycle() {
+        binding.voiceMessageView.root.recycle()
         arrayOf(
             binding.deletedMessageView.root,
             binding.attachmentControlView.root,
@@ -478,7 +495,7 @@ class VisibleMessageContentView : ConstraintLayout {
     }
 
     fun playVoiceMessage() {
-        binding.voiceMessageView.root.togglePlayback()
+        binding.voiceMessageView.root.onPlayPauseClicked()
     }
 
     fun playHighlight() {

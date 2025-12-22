@@ -84,7 +84,6 @@ import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.InputbarViewModel
-import org.thoughtcrime.securesms.audio.AudioSlidePlayer
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.GroupDatabase
@@ -670,13 +669,6 @@ class ConversationViewModel @AssistedInject constructor(
         return MessageRequestUiState.Invisible
     }
 
-    override fun onCleared() {
-        super.onCleared()
-
-        // Stop all voice message when exiting this page
-        AudioSlidePlayer.stopAll()
-    }
-
     fun saveDraft(text: String) {
         GlobalScope.launch(Dispatchers.IO) {
             repository.saveDraft(threadId, text)
@@ -1084,7 +1076,8 @@ class ConversationViewModel @AssistedInject constructor(
      * Stops audio player if its current playing is the one given in the message.
      */
     private fun stopMessageAudio(audioSlide: AudioSlide) {
-        AudioSlidePlayer.getInstance()?.takeIf { it.audioSlide == audioSlide }?.stop()
+       // AudioSlidePlayer.getInstance()?.takeIf { it.audioSlide == audioSlide }?.stop()
+        //todo AUDIO need to rewire this properly
     }
 
     fun banUser(recipient: Address) = viewModelScope.launch {

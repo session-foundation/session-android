@@ -5,140 +5,180 @@ import android.graphics.Canvas
 import android.util.AttributeSet
 import android.widget.RelativeLayout
 import androidx.core.view.isVisible
-import androidx.media3.common.C
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVoiceMessageBinding
-import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
-import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.audio.AudioSlidePlayer
+import org.thoughtcrime.securesms.audio.AudioPlaybackManager
+import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
+import org.thoughtcrime.securesms.audio.model.PlayableAudio
 import org.thoughtcrime.securesms.components.CornerMask
 import org.thoughtcrime.securesms.conversation.v2.utilities.MessageBubbleUtilities
-import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.util.MediaUtil
 import javax.inject.Inject
 import kotlin.math.roundToInt
-import kotlin.math.roundToLong
 
 @AndroidEntryPoint
 class VoiceMessageView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
-) : RelativeLayout(context, attrs, defStyleAttr), AudioSlidePlayer.Listener {
-    private val TAG = "VoiceMessageView"
+) : RelativeLayout(context, attrs, defStyleAttr) {
 
-    @Inject lateinit var attachmentDb: AttachmentDatabase
+    @Inject lateinit var audioPlaybackManager: AudioPlaybackManager
 
-    private val binding: ViewVoiceMessageBinding by lazy { ViewVoiceMessageBinding.bind(this) }
+    private val binding by lazy { ViewVoiceMessageBinding.bind(this) }
     private val cornerMask by lazy { CornerMask(this) }
 
-    private var isPlaying = false
-        set(value) {
-            field = value
-            renderIcon()
-        }
-
-    private var progress = 0.0
-    private var durationMS = 0L
-    private var player: AudioSlidePlayer? = null
     var delegate: VisibleMessageViewDelegate? = null
     var indexInAdapter = -1
 
-    // region Updating
-    fun bind(message: MmsMessageRecord, isStartOfMessageCluster: Boolean, isEndOfMessageCluster: Boolean) {
+    private var playable: PlayableAudio? = null
+
+    // View-owned coroutine for collecting state
+    private val scope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
+    private var collectJob: Job? = null
+
+    private var durationMs: Long = 0L
+    private var progress: Float = 0f
+    private var isPlaying: Boolean = false
+
+    fun bind(
+        message: MmsMessageRecord,
+        playable: PlayableAudio?,
+        isStartOfMessageCluster: Boolean,
+        isEndOfMessageCluster: Boolean
+    ) {
+        this.playable = playable
+
+        // existing corner mask logic unchanged
         val audioSlide = message.slideDeck.audioSlide!!
-
         binding.voiceMessageViewLoader.isVisible = audioSlide.isInProgress
-        val cornerRadii = MessageBubbleUtilities.calculateRadii(context, isStartOfMessageCluster, isEndOfMessageCluster, message.isOutgoing)
-        cornerMask.setTopLeftRadius(cornerRadii[0])
-        cornerMask.setTopRightRadius(cornerRadii[1])
-        cornerMask.setBottomRightRadius(cornerRadii[2])
-        cornerMask.setBottomLeftRadius(cornerRadii[3])
+        val radii = MessageBubbleUtilities.calculateRadii(context, isStartOfMessageCluster, isEndOfMessageCluster, message.isOutgoing)
+        cornerMask.setTopLeftRadius(radii[0])
+        cornerMask.setTopRightRadius(radii[1])
+        cornerMask.setBottomRightRadius(radii[2])
+        cornerMask.setBottomLeftRadius(radii[3])
 
-        // This sets the final duration of the uploaded voice message
-        (audioSlide.asAttachment() as? DatabaseAttachment)?.let { attachment ->
-            if (attachment.audioDurationMs > 0) {
-                val formattedVoiceMessageDuration = MediaUtil.getFormattedVoiceMessageDuration(attachment.audioDurationMs)
-                binding.voiceMessageViewDurationTextView.text = formattedVoiceMessageDuration
-                durationMS = attachment.audioDurationMs
-            } else {
-                Log.w(TAG, "For some reason attachment.audioDurationMs was NOT greater than zero!")
-                binding.voiceMessageViewDurationTextView.text = "--:--"
+        // initial duration display
+        durationMs = playable?.durationMs?.takeIf { it > 0 } ?: 0L
+        binding.voiceMessageViewDurationTextView.text =
+            if (durationMs > 0) MediaUtil.getFormattedVoiceMessageDuration(durationMs)
+            else "--:--"
+
+        // Start observing global playback state
+        startCollectingPlaybackState()
+
+        // Render immediately (in case already playing when view binds)
+        renderFrom(audioPlaybackManager.playbackState.value)
+    }
+
+    fun recycle() {
+        collectJob?.cancel()
+        collectJob = null
+        playable = null
+        scope.coroutineContext.cancelChildren()
+    }
+
+    fun onPlayPauseClicked() {
+        val p = playable ?: return
+
+        // If this row is the active item, just toggle
+        if (audioPlaybackManager.isActive(p.key)) {
+            audioPlaybackManager.togglePlayPause()
+        } else {
+            audioPlaybackManager.play(p)
+        }
+    }
+
+    fun onSpeedToggleClicked() {
+        val p = playable ?: return
+        if (audioPlaybackManager.isActive(p.key)) {
+            audioPlaybackManager.cyclePlaybackSpeed()
+        }
+    }
+
+    private fun startCollectingPlaybackState() {
+        collectJob?.cancel()
+        collectJob = scope.launch {
+            audioPlaybackManager.playbackState.collect { state ->
+                renderFrom(state)
             }
         }
+    }
 
-        // On initial upload (and while processing audio) we will exit at this point and then return when processing is complete
-        if (audioSlide.isPendingDownload || audioSlide.isInProgress) {
-            this.player = null
+    private fun renderFrom(state: AudioPlaybackState) {
+        val p = playable ?: return
+
+        val isActive = when (state) {
+            is AudioPlaybackState.Loading -> state.playable.key == p.key
+            is AudioPlaybackState.Playing -> state.playable.key == p.key
+            is AudioPlaybackState.Paused  -> state.playable.key == p.key
+            else -> false
+        }
+
+        if (!isActive) {
+            // Not this row → reset to initial appearance
+            isPlaying = false
+            progress = 0f
+            renderIcon()
+            renderProgress(0f)
+            // show full duration (or hint)
+            val dur = p.durationMs.takeIf { it > 0 } ?: durationMs
+            binding.voiceMessageViewDurationTextView.text =
+                if (dur > 0) MediaUtil.getFormattedVoiceMessageDuration(dur) else "--:--"
             return
         }
 
-        this.player = AudioSlidePlayer.createFor(context.applicationContext, audioSlide, this)
-    }
-
-    override fun onPlayerStart(player: AudioSlidePlayer) {
-        isPlaying = true
-
-        if (player.duration != C.TIME_UNSET) {
-            durationMS = player.duration
+        when (state) {
+            is AudioPlaybackState.Loading -> {
+                binding.voiceMessageViewLoader.isVisible = true
+                isPlaying = false
+                renderIcon()
+            }
+            is AudioPlaybackState.Playing -> {
+                binding.voiceMessageViewLoader.isVisible = state.isBuffering
+                isPlaying = true
+                durationMs = state.durationMs
+                progress = if (state.durationMs > 0) state.positionMs.toFloat() / state.durationMs else 0f
+                renderIcon()
+                renderProgress(progress)
+                val remaining = (state.durationMs - state.positionMs).coerceAtLeast(0L)
+                binding.voiceMessageViewDurationTextView.text = MediaUtil.getFormattedVoiceMessageDuration(remaining)
+            }
+            is AudioPlaybackState.Paused -> {
+                binding.voiceMessageViewLoader.isVisible = state.isBuffering
+                isPlaying = false
+                durationMs = state.durationMs
+                progress = if (state.durationMs > 0) state.positionMs.toFloat() / state.durationMs else 0f
+                renderIcon()
+                renderProgress(progress)
+                val remaining = (state.durationMs - state.positionMs).coerceAtLeast(0L)
+                binding.voiceMessageViewDurationTextView.text = MediaUtil.getFormattedVoiceMessageDuration(remaining)
+            }
+            else -> Unit
         }
     }
 
-    override fun onPlayerStop(player: AudioSlidePlayer)  { isPlaying = false }
-
-    override fun onPlayerProgress(player: AudioSlidePlayer, progress: Double, unused: Long) {
-        if (progress == 1.0) {
-            togglePlayback()
-            handleProgressChanged(0.0)
-            delegate?.playVoiceMessageAtIndexIfPossible(indexInAdapter + 1)
-        } else {
-            handleProgressChanged(progress)
-        }
-    }
-
-    private fun handleProgressChanged(progress: Double) {
-        this.progress = progress
-
-        // As playback progress increases the remaining duration of the audio decreases
-        val remainingDurationMS = durationMS - (progress * durationMS.toDouble()).roundToLong()
-
-        binding.voiceMessageViewDurationTextView.text = MediaUtil.getFormattedVoiceMessageDuration(remainingDurationMS)
-
+    private fun renderProgress(p: Float) {
         val layoutParams = binding.progressView.layoutParams as RelativeLayout.LayoutParams
-        layoutParams.width = (width.toFloat() * progress.toFloat()).roundToInt()
+        layoutParams.width = (width.toFloat() * p).roundToInt()
         binding.progressView.layoutParams = layoutParams
-    }
-
-    override fun dispatchDraw(canvas: Canvas) {
-        super.dispatchDraw(canvas)
-        cornerMask.mask(canvas)
     }
 
     private fun renderIcon() {
         val iconID = if (isPlaying) R.drawable.exo_icon_pause else R.drawable.exo_icon_play
         binding.voiceMessagePlaybackImageView.setImageResource(iconID)
     }
-    // endregion
 
-    // region Interaction
-    fun togglePlayback() {
-        val player = this.player ?: return
-        isPlaying = !isPlaying
-        if (isPlaying) {
-            player.play(progress)
-        } else {
-            player.stop()
-        }
+    override fun dispatchDraw(canvas: Canvas) {
+        super.dispatchDraw(canvas)
+        cornerMask.mask(canvas)
     }
-
-    fun handleDoubleTap() {
-        if (this.player == null) {
-            Log.w(TAG, "Could not get player to adjust voice message playback speed.")
-            return
-        }
-        this.player?.playbackSpeed = if (this.player?.playbackSpeed == 1f) 1.5f else 1f
-    }
-    // endregion
 }
