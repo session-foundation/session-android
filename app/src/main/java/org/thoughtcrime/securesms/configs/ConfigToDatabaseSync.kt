@@ -19,7 +19,7 @@ import org.session.libsession.avatars.AvatarCacheCleaner
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.sending_receiving.notifications.PushRegistryV1
-import org.session.libsession.network.SessionClient
+import org.session.libsession.network.SnodeClient
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.utilities.Address
@@ -89,7 +89,7 @@ class ConfigToDatabaseSync @Inject constructor(
     private val messageNotifier: MessageNotifier,
     private val recipientSettingsDatabase: RecipientSettingsDatabase,
     private val avatarCacheCleaner: AvatarCacheCleaner,
-    private val sessionClient: SessionClient,
+    private val snodeClient: SnodeClient,
     @param:ManagerScope private val scope: CoroutineScope,
 ) : AuthAwareComponent {
     override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
@@ -319,7 +319,7 @@ class ConfigToDatabaseSync @Inject constructor(
                 scope.launch(Dispatchers.Default) {
                     val cleanedHashes: List<String> =
                         messages.asSequence().map { it.second }.filter { !it.isNullOrEmpty() }.filterNotNull().toList()
-                    if (cleanedHashes.isNotEmpty()) sessionClient.deleteMessage(
+                    if (cleanedHashes.isNotEmpty()) snodeClient.deleteMessage(
                         groupInfoConfig.id.hexString,
                         groupAdminAuth,
                         cleanedHashes

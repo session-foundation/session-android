@@ -17,7 +17,7 @@ import org.session.libsession.messaging.sending_receiving.notifications.Subscrip
 import org.session.libsession.messaging.sending_receiving.notifications.SubscriptionResponse
 import org.session.libsession.messaging.sending_receiving.notifications.UnsubscribeResponse
 import org.session.libsession.messaging.sending_receiving.notifications.UnsubscriptionRequest
-import org.session.libsession.network.SessionNetwork
+import org.session.libsession.network.ServerClient
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.onion.Version
 import org.session.libsession.snode.SwarmAuth
@@ -35,7 +35,7 @@ class PushRegistryV2 @Inject constructor(
     private val device: Device,
     private val clock: SnodeClock,
     private val loginStateRepository: LoginStateRepository,
-    private val sessionNetwork: SessionNetwork
+    private val serverClient: ServerClient
 ) {
 
     suspend fun register(
@@ -114,7 +114,7 @@ class PushRegistryV2 @Inject constructor(
         val url = "${server.url}/$path"
         val body = requestParameters.toRequestBody("application/json".toMediaType())
         val request = Request.Builder().url(url).post(body).build()
-        val response = sessionNetwork.sendToServer(
+        val response = serverClient.send(
             request = request,
             serverBaseUrl = server.url,
             x25519PublicKey = server.publicKey,

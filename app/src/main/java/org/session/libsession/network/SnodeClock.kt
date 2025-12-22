@@ -29,7 +29,7 @@ import javax.inject.Singleton
 class SnodeClock @Inject constructor(
     @param:ManagerScope private val scope: CoroutineScope,
     private val snodeDirectory: SnodeDirectory,
-    private val sessionClient: Lazy<SessionClient>,
+    private val snodeClient: Lazy<SnodeClient>,
 ) : OnAppStartupComponent {
 
     //todo ONION we have a lot of calls to MessagingModuleConfiguration.shared.snodeClock.currentTimeMills()
@@ -47,7 +47,7 @@ class SnodeClock @Inject constructor(
                     val node = snodeDirectory.getRandomSnode()
                     val requestStarted = SystemClock.elapsedRealtime()
 
-                    var networkTime = sessionClient.get().getNetworkTime(node).second
+                    var networkTime = snodeClient.get().getNetworkTime(node).second
                     val requestEnded = SystemClock.elapsedRealtime()
 
                     // Adjust network time to halfway through the request duration

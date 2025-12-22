@@ -37,7 +37,7 @@ import org.session.libsession.messaging.utilities.MessageAuthentication.buildDel
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildInfoChangeSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildMemberChangeSignature
 import org.session.libsession.messaging.utilities.UpdateMessageData
-import org.session.libsession.network.SessionClient
+import org.session.libsession.network.SnodeClient
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsession.snode.OwnedSwarmAuth
@@ -98,7 +98,7 @@ class GroupManagerV2Impl @Inject constructor(
     private val recipientRepository: RecipientRepository,
     private val messageSender: MessageSender,
     private val inviteContactJobFactory: InviteContactsJob.Factory,
-    private val sessionClient: SessionClient,
+    private val snodeClient: SnodeClient,
     private val swarmDirectory: SwarmDirectory
 ) : GroupManagerV2 {
     private val dispatcher = Dispatchers.Default
@@ -262,7 +262,7 @@ class GroupManagerV2Impl @Inject constructor(
         val adminKey = requireAdminAccess(group)
         val groupAuth = OwnedSwarmAuth.ofClosedGroup(group, adminKey)
 
-        val batchRequests = mutableListOf<SessionClient.SnodeBatchRequestInfo>()
+        val batchRequests = mutableListOf<SnodeClient.SnodeBatchRequestInfo>()
 
         val subAccountTokens = configFactory.withMutableGroupConfigs(group) { configs ->
             val shareHistoryHexes = mutableListOf<String>()
@@ -293,7 +293,7 @@ class GroupManagerV2Impl @Inject constructor(
             if (shareHistoryHexes.isNotEmpty()) {
                 val memberKey = configs.groupKeys.supplementFor(shareHistoryHexes)
                 batchRequests.add(
-                    sessionClient.buildAuthenticatedStoreBatchInfo(
+                    snodeClient.buildAuthenticatedStoreBatchInfo(
                         namespace = Namespace.GROUP_KEYS(),
                         message = SnodeMessage(
                             recipient = group.hexString,
@@ -311,7 +311,7 @@ class GroupManagerV2Impl @Inject constructor(
         }
 
         // Call un-revocate API on new members, in case they have been removed before
-        batchRequests += sessionClient.buildAuthenticatedUnrevokeSubKeyBatchRequest(
+        batchRequests += snodeClient.buildAuthenticatedUnrevokeSubKeyBatchRequest(
             groupAdminAuth = groupAuth,
             subAccountTokens = subAccountTokens
         )
@@ -319,7 +319,7 @@ class GroupManagerV2Impl @Inject constructor(
         // Call the API
         try {
             val swarmNode = swarmDirectory.getSingleTargetSnode(group.hexString)
-            val response = sessionClient.getBatchResponse(swarmNode, group.hexString, batchRequests)
+            val response = snodeClient.getBatchResponse(swarmNode, group.hexString, batchRequests)
 
             // Make sure every request is successful
             response.requireAllRequestsSuccessful("Failed to invite members")
@@ -462,7 +462,7 @@ class GroupManagerV2Impl @Inject constructor(
             OwnedSwarmAuth.ofClosedGroup(groupAccountId, it)
         } ?: return@launchAndWait
 
-        sessionClient.deleteMessage(groupAccountId.hexString, groupAdminAuth, messagesToDelete)
+        snodeClient.deleteMessage(groupAccountId.hexString, groupAdminAuth, messagesToDelete)
     }
 
     override suspend fun clearAllMessagesForEveryone(groupAccountId: AccountId, deletedHashes: List<String?>) {
@@ -478,7 +478,7 @@ class GroupManagerV2Impl @Inject constructor(
 
         // remove messages from swarm sessionClient.deleteMessage
         val cleanedHashes: List<String> = deletedHashes.filter { !it.isNullOrEmpty() }.filterNotNull()
-        if(cleanedHashes.isNotEmpty()) sessionClient.deleteMessage(groupAccountId.hexString, groupAdminAuth, cleanedHashes)
+        if(cleanedHashes.isNotEmpty()) snodeClient.deleteMessage(groupAccountId.hexString, groupAdminAuth, cleanedHashes)
     }
 
     override suspend fun handleMemberLeftMessage(memberId: AccountId, group: AccountId) = scope.launchAndWait(group, "Handle member left message") {
@@ -665,7 +665,7 @@ class GroupManagerV2Impl @Inject constructor(
 
                 if (groupInviteMessageHash != null) {
                     val auth = requireNotNull(storage.userAuth)
-                    sessionClient.deleteMessage(
+                    snodeClient.deleteMessage(
                         publicKey = auth.accountId.hexString,
                         swarmAuth = auth,
                         serverHashes = listOf(groupInviteMessageHash)
@@ -738,7 +738,7 @@ class GroupManagerV2Impl @Inject constructor(
         // Delete the invite once we have approved
         if (inviteMessageHash != null) {
             val auth = requireNotNull(storage.userAuth)
-            sessionClient.deleteMessage(
+            snodeClient.deleteMessage(
                 publicKey = auth.accountId.hexString,
                 swarmAuth = auth,
                 serverHashes = listOf(inviteMessageHash)
@@ -818,7 +818,7 @@ class GroupManagerV2Impl @Inject constructor(
         }
 
         // Delete the promotion message remotely
-        sessionClient.deleteMessage(
+        snodeClient.deleteMessage(
             userAuth.accountId.hexString,
             userAuth,
             listOf(promoteMessageHash)
@@ -1025,7 +1025,7 @@ class GroupManagerV2Impl @Inject constructor(
 
         // If we are admin, we can delete the messages from the group swarm
         group.adminKey?.data?.let { adminKey ->
-            sessionClient.deleteMessage(
+            snodeClient.deleteMessage(
                 publicKey = groupId.hexString,
                 swarmAuth = OwnedSwarmAuth.ofClosedGroup(groupId, adminKey),
                 serverHashes = messageHashes.toList()
@@ -1123,7 +1123,7 @@ class GroupManagerV2Impl @Inject constructor(
                             sender = sender.hexString,
                             closedGroupId = groupId.hexString))
             ) {
-                sessionClient.deleteMessage(
+                snodeClient.deleteMessage(
                     groupId.hexString,
                     OwnedSwarmAuth.ofClosedGroup(groupId, adminKey),
                     hashes
@@ -1138,7 +1138,7 @@ class GroupManagerV2Impl @Inject constructor(
                 }
 
                 if (userMessageHashes.isNotEmpty()) {
-                    sessionClient.deleteMessage(
+                    snodeClient.deleteMessage(
                         groupId.hexString,
                         OwnedSwarmAuth.ofClosedGroup(groupId, adminKey),
                         userMessageHashes

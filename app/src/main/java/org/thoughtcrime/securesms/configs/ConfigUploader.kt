@@ -20,7 +20,7 @@ import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.util.ConfigPush
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
-import org.session.libsession.network.SessionClient
+import org.session.libsession.network.SnodeClient
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.model.PathStatus
 import org.session.libsession.network.onion.PathManager
@@ -68,7 +68,7 @@ class ConfigUploader @Inject constructor(
     private val clock: SnodeClock,
     private val networkConnectivity: NetworkConnectivity,
     private val swarmDirectory: SwarmDirectory,
-    private val sessionClient: SessionClient,
+    private val snodeClient: SnodeClient,
     private val pathManager: PathManager
 ) : AuthAwareComponent {
     /**
@@ -209,10 +209,10 @@ class ConfigUploader @Inject constructor(
         // Keys push is different: it doesn't have the delete call so we don't call pushConfig.
         // Keys must be pushed first because the other configs depend on it.
         val keysPushResult = keysPush?.let { push ->
-            sessionClient.sendBatchRequest(
+            snodeClient.sendBatchRequest(
                 snode = snode,
                 publicKey = auth.accountId.hexString,
-                request = sessionClient.buildAuthenticatedStoreBatchInfo(
+                request = snodeClient.buildAuthenticatedStoreBatchInfo(
                     Namespace.GROUP_KEYS(),
                     SnodeMessage(
                         auth.accountId.hexString,
@@ -288,10 +288,10 @@ class ConfigUploader @Inject constructor(
             push.messages
                 .map { message ->
                     async {
-                        sessionClient.sendBatchRequest(
+                        snodeClient.sendBatchRequest(
                             snode = snode,
                             publicKey = auth.accountId.hexString,
-                            request = sessionClient.buildAuthenticatedStoreBatchInfo(
+                            request = snodeClient.buildAuthenticatedStoreBatchInfo(
                                 namespace,
                                 SnodeMessage(
                                     auth.accountId.hexString,
@@ -309,10 +309,10 @@ class ConfigUploader @Inject constructor(
         }
 
         if (push.obsoleteHashes.isNotEmpty()) {
-            sessionClient.sendBatchRequest(
+            snodeClient.sendBatchRequest(
                 snode = snode,
                 publicKey = auth.accountId.hexString,
-                request = sessionClient.buildAuthenticatedDeleteBatchInfo(auth, push.obsoleteHashes)
+                request = snodeClient.buildAuthenticatedDeleteBatchInfo(auth, push.obsoleteHashes)
             )
         }
 

@@ -24,7 +24,7 @@ import org.session.libsession.messaging.messages.visible.OpenGroupInvitation
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.network.SessionClient
+import org.session.libsession.network.SnodeClient
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
@@ -79,7 +79,7 @@ class DefaultConversationRepository @Inject constructor(
     private val messageSender: MessageSender,
     private val loginStateRepository: LoginStateRepository,
     private val proStatusManager: ProStatusManager,
-    private val sessionClient: SessionClient
+    private val snodeClient: SnodeClient
 ) : ConversationRepository {
 
     override val conversationListAddressesFlow get() = loginStateRepository.flowWithLoggedInState {
@@ -355,7 +355,7 @@ class DefaultConversationRepository @Inject constructor(
             // delete from swarm
             messageDataProvider.getServerHashForMessage(message.messageId)
                 ?.let { serverHash ->
-                    sessionClient.deleteMessage(recipient.address, userAuth, listOf(serverHash))
+                    snodeClient.deleteMessage(recipient.address, userAuth, listOf(serverHash))
                 }
 
             // send an UnsendRequest to user's swarm
@@ -412,7 +412,7 @@ class DefaultConversationRepository @Inject constructor(
             // delete from swarm
             messageDataProvider.getServerHashForMessage(message.messageId)
                 ?.let { serverHash ->
-                    sessionClient.deleteMessage(recipient.address, userAuth, listOf(serverHash))
+                    snodeClient.deleteMessage(recipient.address, userAuth, listOf(serverHash))
                 }
 
             // send an UnsendRequest to user's swarm

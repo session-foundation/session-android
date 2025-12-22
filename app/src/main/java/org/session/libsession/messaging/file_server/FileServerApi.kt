@@ -10,7 +10,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.network.SessionNetwork
+import org.session.libsession.network.ServerClient
 import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Hex
@@ -28,7 +28,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @Singleton
 class FileServerApi @Inject constructor(
     private val storage: StorageProtocol,
-    private val sessionNetwork: SessionNetwork
+    private val serverClient: ServerClient
 ) {
 
     companion object {
@@ -94,7 +94,7 @@ class FileServerApi @Inject constructor(
         }
         return if (request.useOnionRouting) {
             try {
-                val response = sessionNetwork.sendToServer(
+                val response = serverClient.send(
                     request = requestBuilder.build(),
                     serverBaseUrl = request.fileServer.url.host,
                     x25519PublicKey =

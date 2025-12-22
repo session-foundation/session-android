@@ -10,7 +10,7 @@ import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.Job.Companion.MAX_BUFFER_SIZE_BYTES
 import org.session.libsession.messaging.sending_receiving.notifications.Server
 import org.session.libsession.messaging.utilities.Data
-import org.session.libsession.network.SessionNetwork
+import org.session.libsession.network.ServerClient
 import org.session.libsession.network.onion.Version
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsignal.utilities.JsonUtil
@@ -25,8 +25,8 @@ class NotifyPNServerJob(val message: SnodeMessage) : Job {
 
     override val maxFailureCount: Int = 20
 
-    private val sessionNetwork: SessionNetwork by lazy {
-        MessagingModuleConfiguration.shared.sessionNetwork
+    private val serverClient: ServerClient by lazy {
+        MessagingModuleConfiguration.shared.serverClient
     }
 
     companion object {
@@ -46,7 +46,7 @@ class NotifyPNServerJob(val message: SnodeMessage) : Job {
         try {
             // High-level application retry (4 attempts)
             retryWithUniformInterval(maxRetryCount = 4) {
-                sessionNetwork.sendToServer(
+                serverClient.send(
                     request = request,
                     serverBaseUrl = server.url,
                     x25519PublicKey = server.publicKey,

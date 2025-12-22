@@ -30,7 +30,7 @@ import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.messages.Message.Companion.senderOrSync
 import org.session.libsession.messaging.sending_receiving.MessageParser
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
-import org.session.libsession.network.SessionClient
+import org.session.libsession.network.SnodeClient
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.snode.SwarmStorage
 import org.session.libsession.snode.model.RetrieveMessageResponse
@@ -64,7 +64,7 @@ class Poller @AssistedInject constructor(
     private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     private val processor: ReceivedMessageProcessor,
     private val messageParser: MessageParser,
-    private val sessionClient: SessionClient,
+    private val snodeClient: SnodeClient,
     private val swarmStorage: SwarmStorage,
     @Assisted scope: CoroutineScope
 ) {
@@ -305,7 +305,7 @@ class Poller @AssistedInject constructor(
 
         // Get messages call wrapped in an async
         val fetchMessageTask = if (!pollOnlyUserProfileConfig) {
-            val request = sessionClient.buildAuthenticatedRetrieveBatchRequest(
+            val request = snodeClient.buildAuthenticatedRetrieveBatchRequest(
                 lastHash = lokiApiDatabase.getLastMessageHashValue(
                     snode = snode,
                     publicKey = userAuth.accountId.hexString,
@@ -316,7 +316,7 @@ class Poller @AssistedInject constructor(
 
             this.async {
                 runCatching {
-                    sessionClient.sendBatchRequest(
+                    snodeClient.sendBatchRequest(
                         snode = snode,
                         publicKey = userPublicKey,
                         request = request,
@@ -341,7 +341,7 @@ class Poller @AssistedInject constructor(
                 .map { type ->
                     val config = configs.getConfig(type)
                     hashesToExtend += config.activeHashes()
-                    val request = sessionClient.buildAuthenticatedRetrieveBatchRequest(
+                    val request = snodeClient.buildAuthenticatedRetrieveBatchRequest(
                         lastHash = lokiApiDatabase.getLastMessageHashValue(
                             snode = snode,
                             publicKey = userAuth.accountId.hexString,
@@ -354,7 +354,7 @@ class Poller @AssistedInject constructor(
 
                     this.async {
                         type to runCatching {
-                            sessionClient.sendBatchRequest(
+                            snodeClient.sendBatchRequest(
                                 snode = snode,
                                 publicKey = userPublicKey,
                                 request = request,
@@ -368,10 +368,10 @@ class Poller @AssistedInject constructor(
         if (hashesToExtend.isNotEmpty()) {
             launch {
                 try {
-                    sessionClient.sendBatchRequest(
+                    snodeClient.sendBatchRequest(
                         snode,
                         userPublicKey,
-                        sessionClient.buildAuthenticatedAlterTtlBatchRequest(
+                        snodeClient.buildAuthenticatedAlterTtlBatchRequest(
                             messageHashes = hashesToExtend.toList(),
                             auth = userAuth,
                             newExpiry = snodeClock.currentTimeMills() + 14.days.inWholeMilliseconds,

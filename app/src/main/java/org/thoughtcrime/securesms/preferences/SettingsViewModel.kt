@@ -34,7 +34,7 @@ import okio.source
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.open_groups.OpenGroupApi
-import org.session.libsession.network.SessionClient
+import org.session.libsession.network.SnodeClient
 import org.session.libsession.network.model.PathStatus
 import org.session.libsession.network.onion.PathManager
 import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
@@ -88,7 +88,7 @@ class SettingsViewModel @Inject constructor(
     private val proDetailsRepository: ProDetailsRepository,
     private val donationManager: DonationManager,
     private val pathManager: PathManager,
-    private val sessionClient: SessionClient
+    private val snodeClient: SnodeClient
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
 
@@ -468,7 +468,7 @@ class SettingsViewModel @Inject constructor(
                 }.joinAll()
             }
 
-            sessionClient.deleteAllMessages(checkNotNull(storage.userAuth))
+            snodeClient.deleteAllMessages(checkNotNull(storage.userAuth))
         } catch (e: Exception) {
             Log.e(TAG, "Failed to delete network messages - offering user option to delete local data only.", e)
             null

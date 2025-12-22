@@ -22,7 +22,7 @@ import kotlinx.coroutines.sync.withPermit
 import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.messaging.sending_receiving.MessageParser
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
-import org.session.libsession.network.SessionClient
+import org.session.libsession.network.SnodeClient
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsession.snode.model.BatchResponse
@@ -57,7 +57,7 @@ class GroupPoller @AssistedInject constructor(
     private val messageParser: MessageParser,
     private val receivedMessageProcessor: ReceivedMessageProcessor,
     private val swarmDirectory: SwarmDirectory,
-    private val sessionClient: SessionClient,
+    private val snodeClient: SnodeClient,
 ) {
     companion object {
         private const val POLL_INTERVAL = 3_000L
@@ -247,10 +247,10 @@ class GroupPoller @AssistedInject constructor(
                 val pollingTasks = mutableListOf<Pair<String, Deferred<*>>>()
 
                 val receiveRevokeMessage = async {
-                    sessionClient.sendBatchRequest(
+                    snodeClient.sendBatchRequest(
                         snode,
                         groupId.hexString,
-                        sessionClient.buildAuthenticatedRetrieveBatchRequest(
+                        snodeClient.buildAuthenticatedRetrieveBatchRequest(
                             lastHash = lokiApiDatabase.getLastMessageHashValue(
                                 snode,
                                 groupId.hexString,
@@ -266,10 +266,10 @@ class GroupPoller @AssistedInject constructor(
 
                 if (configHashesToExtends.isNotEmpty() && adminKey != null) {
                     pollingTasks += "extending group config TTL" to async {
-                        sessionClient.sendBatchRequest(
+                        snodeClient.sendBatchRequest(
                             snode,
                             groupId.hexString,
-                            sessionClient.buildAuthenticatedAlterTtlBatchRequest(
+                            snodeClient.buildAuthenticatedAlterTtlBatchRequest(
                                 messageHashes = configHashesToExtends.toList(),
                                 auth = groupAuth,
                                 newExpiry = clock.currentTimeMills() + 14.days.inWholeMilliseconds,
@@ -287,10 +287,10 @@ class GroupPoller @AssistedInject constructor(
                     ).orEmpty()
 
 
-                    sessionClient.sendBatchRequest(
+                    snodeClient.sendBatchRequest(
                         snode = snode,
                         publicKey = groupId.hexString,
-                        request = sessionClient.buildAuthenticatedRetrieveBatchRequest(
+                        request = snodeClient.buildAuthenticatedRetrieveBatchRequest(
                             lastHash = lastHash,
                             auth = groupAuth,
                             namespace = Namespace.GROUP_MESSAGES(),
@@ -306,10 +306,10 @@ class GroupPoller @AssistedInject constructor(
                     Namespace.GROUP_MEMBERS()
                 ).map { ns ->
                     async {
-                        sessionClient.sendBatchRequest(
+                        snodeClient.sendBatchRequest(
                             snode = snode,
                             publicKey = groupId.hexString,
-                            request = sessionClient.buildAuthenticatedRetrieveBatchRequest(
+                            request = snodeClient.buildAuthenticatedRetrieveBatchRequest(
                                 lastHash = lokiApiDatabase.getLastMessageHashValue(
                                     snode,
                                     groupId.hexString,

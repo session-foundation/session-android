@@ -62,7 +62,7 @@ object PushRegistryV1 {
 
         try {
             retryWithUniformInterval(MAX_RETRY_COUNT) {
-                MessagingModuleConfiguration.shared.sessionNetwork.sendToServer(
+                MessagingModuleConfiguration.shared.serverClient.send(
                     request = request,
                     serverBaseUrl = server.url,
                     x25519PublicKey = server.publicKey,

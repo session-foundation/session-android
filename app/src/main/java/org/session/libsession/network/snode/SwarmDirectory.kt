@@ -1,8 +1,7 @@
 package org.session.libsession.network.snode
 
 import dagger.Lazy
-import org.session.libsession.network.SessionNetwork
-import org.session.libsession.network.onion.Version
+import org.session.libsession.network.SnodeClient
 import org.session.libsignal.crypto.shuffledRandom
 import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.JsonUtil
@@ -14,7 +13,7 @@ import javax.inject.Singleton
 class SwarmDirectory @Inject constructor(
     private val storage: SwarmStorage,
     private val snodeDirectory: SnodeDirectory,
-    private val sessionNetwork: Lazy<SessionNetwork>,
+    private val snodeClient: Lazy<SnodeClient>,
 ) {
     private val minimumSwarmSize: Int = 3
 
@@ -38,16 +37,13 @@ class SwarmDirectory @Inject constructor(
         val randomSnode = pool.random()
         val params = mapOf("pubKey" to publicKey)
 
-        val response = sessionNetwork.get().sendToSnode(
+        val response = snodeClient.get().send(
             method = Snode.Method.GetSwarm,
             parameters = params,
             snode = randomSnode,
         )
 
-        val body = response.body ?: error("Empty GetSwarm body")
-        val json = JsonUtil.fromJson(body, Map::class.java) as Map<*, *>
-
-        return parseSnodes(json).toSet()
+        return parseSnodes(response).toSet()
     }
 
     /**

@@ -51,7 +51,7 @@ import kotlin.collections.get
  * High-level client for interacting with snodes.
  */
 @Singleton
-class SessionClient @Inject constructor(
+class SnodeClient @Inject constructor(
     private val sessionNetwork: SessionNetwork,
     private val swarmDirectory: SwarmDirectory,
     private val snodeDirectory: SnodeDirectory,
@@ -153,19 +153,29 @@ class SessionClient @Inject constructor(
         }
     }
 
-    private suspend fun invokeRaw(
+    private suspend fun sendToSnode(
         method: Snode.Method,
         snode: Snode,
         parameters: Map<String, Any>,
         publicKey: String? = null,
         version: Version = Version.V3
     ): ByteArraySlice {
-        val onionResponse = sessionNetwork.sendToSnode(
-            method = method,
-            parameters = parameters,
-            snode = snode,
-            publicKey = publicKey,
-            version = version
+        val payload = JsonUtil.toJson(
+            mapOf(
+                "method" to method.rawValue,
+                "params" to parameters
+            )
+        ).toByteArray()
+
+        val destination = OnionDestination.SnodeDestination(snode)
+
+        val onionResponse = sessionNetwork.sendWithRetry(
+            destination = destination,
+            payload = payload,
+            version = version,
+            snodeToExclude = snode,
+            targetSnode = snode,
+            publicKey = publicKey
         )
 
         return onionResponse.body
@@ -173,7 +183,7 @@ class SessionClient @Inject constructor(
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    suspend fun <Res> invokeTyped(
+    private suspend fun <Res> sendTyped(
         method: Snode.Method,
         snode: Snode,
         parameters: Map<String, Any>,
@@ -181,7 +191,7 @@ class SessionClient @Inject constructor(
         publicKey: String? = null,
         version: Version = Version.V3
     ): Res {
-        val body = invokeRaw(
+        val body = sendToSnode(
             method = method,
             snode = snode,
             parameters = parameters,
@@ -197,14 +207,14 @@ class SessionClient @Inject constructor(
         }
     }
 
-    suspend fun invoke(
+    suspend fun send(
         method: Snode.Method,
         snode: Snode,
         parameters: Map<String, Any>,
         publicKey: String? = null,
         version: Version = Version.V3
     ): Map<*, *> {
-        val body = invokeRaw(
+        val body = sendToSnode(
             method = method,
             snode = snode,
             parameters = parameters,
@@ -288,7 +298,7 @@ class SessionClient @Inject constructor(
             this["messages"] = serverHashes
         }
 
-        val rawResponse = invoke(
+        val rawResponse = send(
             method = Snode.Method.DeleteMessage,
             snode = snode,
             parameters = params,
@@ -354,7 +364,7 @@ class SessionClient @Inject constructor(
             put("namespace", "all")
         }
 
-        val raw = invoke(
+        val raw = send(
             method = Snode.Method.DeleteAll,
             snode = snode,
             parameters = params,
@@ -393,7 +403,7 @@ class SessionClient @Inject constructor(
     suspend fun getNetworkTime(
         snode: Snode,
     ): Pair<Snode, Long> {
-        val json = invoke(
+        val json = send(
             method = Snode.Method.Info,
             snode = snode,
             parameters = emptyMap(),
@@ -427,7 +437,7 @@ class SessionClient @Inject constructor(
         repeat(validationCount) {
             val snode = snodeDirectory.getRandomSnode()
 
-            val json = invoke(
+            val json = send(
                 method = Snode.Method.OxenDaemonRPCCall,
                 snode = snode,
                 parameters = params,
@@ -470,7 +480,7 @@ class SessionClient @Inject constructor(
         val snode = swarmDirectory.getSingleTargetSnode(auth.accountId.hexString)
         val params = buildAlterTtlParams(auth, messageHashes, newExpiry, shorten, extend)
 
-        return invoke(
+        return send(
             method = Snode.Method.Expire,
             snode = snode,
             parameters = params,
@@ -523,7 +533,7 @@ class SessionClient @Inject constructor(
         sequence: Boolean = false,
     ): BatchResponse {
         val method = if (sequence) Snode.Method.Sequence else Snode.Method.Batch
-        val response = invokeTyped(
+        val response = sendTyped(
             method = method,
             snode = snode,
             parameters = mapOf("requests" to requests),

@@ -410,7 +410,7 @@ object OpenGroupApi {
 
         if (request.useOnionRouting) {
             try {
-                return MessagingModuleConfiguration.shared.sessionNetwork.sendToServer(
+                return MessagingModuleConfiguration.shared.serverClient.send(
                     request = requestBuilder.build(),
                     serverBaseUrl = request.server,
                     x25519PublicKey = serverPublicKey

@@ -20,7 +20,7 @@ import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.MessageAuthentication
-import org.session.libsession.network.SessionClient
+import org.session.libsession.network.SnodeClient
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsession.snode.OwnedSwarmAuth
@@ -59,7 +59,7 @@ class RemoveGroupMemberHandler @Inject constructor(
     private val groupScope: GroupScope,
     private val messageSender: MessageSender,
     private val swarmDirectory: SwarmDirectory,
-    private val sessionClient: SessionClient,
+    private val snodeClient: SnodeClient,
 ) : AuthAwareComponent {
     override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
         configFactory.configUpdateNotifications
@@ -99,13 +99,13 @@ class RemoveGroupMemberHandler @Inject constructor(
             // 2. Send a message to a special namespace on the group to inform the removed members they have been removed
             // 3. Conditionally, send a `GroupUpdateDeleteMemberContent` to the group so the message deletion
             //    can be performed by everyone in the group.
-            val calls = ArrayList<SessionClient.SnodeBatchRequestInfo>(3)
+            val calls = ArrayList<SnodeClient.SnodeBatchRequestInfo>(3)
 
             val groupAuth = OwnedSwarmAuth.ofClosedGroup(groupAccountId, adminKey)
 
             // Call No 1. Revoke sub-key. This call is crucial and must not fail for the rest of the operation to be successful.
             calls += checkNotNull(
-                sessionClient.buildAuthenticatedRevokeSubKeyBatchRequest(
+                snodeClient.buildAuthenticatedRevokeSubKeyBatchRequest(
                     groupAdminAuth = groupAuth,
                     subAccountTokens = pendingRemovals.map { (member, _) ->
                         configs.groupKeys.getSubAccountToken(member.accountId())
@@ -114,7 +114,7 @@ class RemoveGroupMemberHandler @Inject constructor(
             ) { "Fail to create a revoke request" }
 
             // Call No 2. Send a "kicked" message to the revoked namespace
-            calls += sessionClient.buildAuthenticatedStoreBatchInfo(
+            calls += snodeClient.buildAuthenticatedStoreBatchInfo(
                 namespace = Namespace.REVOKED_GROUP_MESSAGES(),
                 message = buildGroupKickMessage(
                     groupAccountId.hexString,
@@ -127,7 +127,7 @@ class RemoveGroupMemberHandler @Inject constructor(
 
             // Call No 3. Conditionally send the `GroupUpdateDeleteMemberContent`
             if (pendingRemovals.any { (member, status) -> member.shouldRemoveMessages(status) }) {
-                calls += sessionClient.buildAuthenticatedStoreBatchInfo(
+                calls += snodeClient.buildAuthenticatedStoreBatchInfo(
                     namespace = Namespace.GROUP_MESSAGES(),
                     message = buildDeleteGroupMemberContentMessage(
                         adminKey = adminKey,
@@ -141,7 +141,7 @@ class RemoveGroupMemberHandler @Inject constructor(
                 )
             }
 
-            pendingRemovals to (calls as List<SessionClient.SnodeBatchRequestInfo>)
+            pendingRemovals to (calls as List<SnodeClient.SnodeBatchRequestInfo>)
         }
 
         if (pendingRemovals.isEmpty() || batchCalls.isEmpty()) {
@@ -150,7 +150,7 @@ class RemoveGroupMemberHandler @Inject constructor(
 
         val node = swarmDirectory.getSingleTargetSnode(groupAccountId.hexString)
         val response =
-            sessionClient.getBatchResponse(
+            snodeClient.getBatchResponse(
                 node,
                 groupAccountId.hexString,
                 batchCalls,

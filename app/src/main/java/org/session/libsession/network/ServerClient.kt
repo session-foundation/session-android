@@ -1,0 +1,94 @@
+package org.session.libsession.network
+
+import okhttp3.Request
+import org.session.libsession.network.model.OnionDestination
+import org.session.libsession.network.model.OnionResponse
+import org.session.libsession.network.onion.Version
+import org.session.libsession.network.utilities.getBodyForOnionRequest
+import org.session.libsession.network.utilities.getHeadersForOnionRequest
+import org.session.libsignal.utilities.JsonUtil
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/**
+ * Responsible for encoding HTTP requests into the onion format (v3/v4)
+ * and sending them via the network.
+ */
+@Singleton
+class ServerClient @Inject constructor(
+    private val sessionNetwork: SessionNetwork
+) {
+    suspend fun send(
+        request: Request,
+        serverBaseUrl: String,
+        x25519PublicKey: String,
+        version: Version = Version.V4
+    ): OnionResponse {
+        val url = request.url
+        val payload = generatePayload(request, serverBaseUrl, version)
+
+        val destination = OnionDestination.ServerDestination(
+            host = url.host,
+            target = version.value,
+            x25519PublicKey = x25519PublicKey,
+            scheme = url.scheme,
+            port = url.port
+        )
+
+        return sessionNetwork.sendWithRetry(
+            destination = destination,
+            payload = payload,
+            version = version,
+            snodeToExclude = null,
+            targetSnode = null,
+            publicKey = null
+        )
+    }
+
+    private fun generatePayload(request: Request, server: String, version: Version): ByteArray {
+        val headers = request.getHeadersForOnionRequest().toMutableMap()
+        val url = request.url
+        val urlAsString = url.toString()
+        val body = request.getBodyForOnionRequest() ?: "null"
+
+        val endpoint = if (server.length < urlAsString.length) {
+            urlAsString.substringAfter(server)
+        } else {
+            ""
+        }
+
+        return if (version == Version.V4) {
+            if (request.body != null &&
+                headers.keys.none { it.equals("Content-Type", ignoreCase = true) }
+            ) {
+                headers["Content-Type"] = "application/json"
+            }
+
+            val requestPayload = mapOf(
+                "endpoint" to endpoint,
+                "method" to request.method,
+                "headers" to headers
+            )
+
+            val requestData = JsonUtil.toJson(requestPayload).toByteArray()
+            val prefixData = "l${requestData.size}:".toByteArray(Charsets.US_ASCII)
+            val suffixData = "e".toByteArray(Charsets.US_ASCII)
+
+            if (request.body != null) {
+                val bodyData = if (body is ByteArray) body else body.toString().toByteArray()
+                val bodyLengthData = "${bodyData.size}:".toByteArray(Charsets.US_ASCII)
+                prefixData + requestData + bodyLengthData + bodyData + suffixData
+            } else {
+                prefixData + requestData + suffixData
+            }
+        } else {
+            val payload = mapOf(
+                "body" to body,
+                "endpoint" to endpoint.removePrefix("/"),
+                "method" to request.method,
+                "headers" to headers
+            )
+            JsonUtil.toJson(payload).toByteArray()
+        }
+    }
+}

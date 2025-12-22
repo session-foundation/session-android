@@ -9,7 +9,7 @@ import kotlinx.serialization.json.decodeFromStream
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import org.session.libsession.network.SessionNetwork
+import org.session.libsession.network.ServerClient
 import org.thoughtcrime.securesms.pro.ProBackendConfig
 import javax.inject.Inject
 import javax.inject.Provider
@@ -17,7 +17,7 @@ import javax.inject.Provider
 class ProApiExecutor @Inject constructor(
     private val json: Json,
     private val proConfigProvider: Provider<ProBackendConfig>,
-    private val sessionNetwork: SessionNetwork,
+    private val serverClient: ServerClient
 ) {
     @Serializable
     private data class RawProApiResponse(
@@ -57,7 +57,7 @@ class ProApiExecutor @Inject constructor(
     ): ProApiResponse<Res, Status> {
         val config = proConfigProvider.get()
 
-        val rawResp = sessionNetwork.sendToServer(
+        val rawResp = serverClient.send(
             request = Request.Builder()
                 .url(config.url.resolve(request.endpoint)!!)
                 .post(
