@@ -22,8 +22,11 @@ import org.thoughtcrime.securesms.audio.model.MediaItemFactory
 @AndroidEntryPoint
 class AudioMediaService : MediaSessionService() {
     //todo AUDIO notification: add sender image in bg or track image if possible?
+    //todo AUDIO notification: Noice notes: Title: Sender name Subtitle: "Voice note/message" --- Audio Title: [track name] Subtitle: [track artist]
     //todo AUDIO notification: add app icon in top left
     //todo AUDIO notification: add back seek / restart button
+    //todo AUDIO notification: remove notification on track finished
+    //todo AUDIO looks like the spinning icon is always on in the audio  message bubble
 
     private val TAG = "AudioMediaService"
 
