@@ -418,8 +418,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private val libraryButton  by lazy { InputBarButton(this, R.drawable.ic_images, hasOpaqueBackground = true) }
     private val cameraButton   by lazy { InputBarButton(this, R.drawable.ic_camera, hasOpaqueBackground = true) }
 
-    private val messageToScrollTimestamp = AtomicLong(-1)
-    private val messageToScrollAuthor = AtomicReference<Address?>(null)
+    private var messageToScrollTimestamp: MessageId? = null
     private val firstLoad = AtomicBoolean(true)
 
     private var isKeyboardVisible = false
@@ -503,7 +502,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // Extras
         private const val ADDRESS = "address"
         private const val SCROLL_MESSAGE_ID = "scroll_message_id"
-        private const val SCROLL_MESSAGE_AUTHOR = "scroll_message_author"
 
         const val SHOW_SEARCH = "show_search"
 
@@ -517,8 +515,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         fun createIntent(
             context: Context,
             address: Address.Conversable,
-            // If provided, this will scroll to the message with the given timestamp and author (TODO: use message id instead)
-            scrollToMessage: Pair<Long, Address>? = null
+            // If provided, this will scroll to the message with the given timestamp and author
+            scrollToMessage: MessageId? = null
         ): Intent {
             require(!address.isBlinded) {
                 "Cannot create a conversation for a blinded address. Use a \"Community inbox\" address instead."
@@ -526,9 +524,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
             return Intent(context, ConversationActivityV2::class.java).apply {
                 putExtra(ADDRESS, address)
-                scrollToMessage?.let { (timestamp, author) ->
-                    putExtra(SCROLL_MESSAGE_ID, timestamp)
-                    putExtra(SCROLL_MESSAGE_AUTHOR, author)
+                scrollToMessage?.let {
+                    putExtra(SCROLL_MESSAGE_ID, it)
                 }
             }
         }
@@ -593,8 +590,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
 
         // messageIdToScroll
-        messageToScrollTimestamp.set(intent.getLongExtra(SCROLL_MESSAGE_ID, -1))
-        messageToScrollAuthor.set(intent.getParcelableExtra(SCROLL_MESSAGE_AUTHOR))
+        messageToScrollTimestamp = IntentCompat.getParcelableExtra(intent, SCROLL_MESSAGE_ID, MessageId::class.java)
         setUpToolBar()
         setUpInputBar()
         setUpLinkPreviewObserver()
@@ -809,8 +805,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         adapter.changeCursor(cursor)
 
         if (cursor != null) {
-            val messageTimestamp = messageToScrollTimestamp.getAndSet(-1)
-            val author = messageToScrollAuthor.getAndSet(null)
+            val messageTimestamp = messageToScrollTimestamp
+            messageToScrollTimestamp = null
+
             val initialUnreadCount = mmsSmsDb.getUnreadCount(viewModel.threadId)
 
             // Update the unreadCount value to be loaded from the database since we got a new message
@@ -822,8 +819,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 updateUnreadCountIndicator()
             }
 
-            if (author != null && messageTimestamp >= 0) {
-                jumpToMessage(author, messageTimestamp, firstLoad.get(), null)
+            if (messageTimestamp != null) {
+                jumpToMessage( messageTimestamp, firstLoad.get(), null)
             } else {
                 if (firstLoad.getAndSet(false)) {
                     scrollToFirstUnreadMessageOrBottom()
@@ -2117,16 +2114,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         viewModel.beforeSendMessage()
 
-        val sentMessageInfo = if (binding.inputBar.linkPreview != null || binding.inputBar.quote != null) {
+        val sentMessageId = if (binding.inputBar.linkPreview != null || binding.inputBar.quote != null) {
             sendAttachments(listOf(), getMessageBody(), binding.inputBar.quote, binding.inputBar.linkPreview)
         } else {
             sendTextOnlyMessage()
         }
 
         // Jump to the newly sent message once it gets added
-        if (sentMessageInfo != null) {
-            messageToScrollAuthor.set(sentMessageInfo.first)
-            messageToScrollTimestamp.set(sentMessageInfo.second)
+        if (sentMessageId != null) {
+            messageToScrollTimestamp = sentMessageId
         }
     }
 
@@ -2152,7 +2148,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
-    private fun sendTextOnlyMessage(hasPermissionToSendSeed: Boolean = false): Pair<Address, Long>? {
+    private fun sendTextOnlyMessage(hasPermissionToSendSeed: Boolean = false): MessageId? {
         val recipient = viewModel.recipient
         val sentTimestamp = SnodeAPI.nowWithOffset
         viewModel.implicitlyApproveRecipient()?.let { conversationApprovalJob = it }
@@ -2202,7 +2198,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
         // Send a typing stopped message
         typingStatusSender.onTypingStopped(viewModel.threadId)
-        return Pair(recipient.address, sentTimestamp)
+        return message.id
     }
 
     private fun sendAttachments(
@@ -2211,7 +2207,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         quotedMessage: MessageRecord? = binding.inputBar.quote,
         linkPreview: LinkPreview? = null,
         deleteAttachmentFilesAfterSave: Boolean = false,
-    ): Pair<Address, Long>? {
+    ): MessageId? {
         val recipient = viewModel.recipient
         val sentTimestamp = SnodeAPI.nowWithOffset
         viewModel.implicitlyApproveRecipient()?.let { conversationApprovalJob = it }
@@ -2299,7 +2295,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         // Send a typing stopped message
         typingStatusSender.onTypingStopped(viewModel.threadId)
-        return Pair(recipient.address, sentTimestamp)
+        return message.id
     }
 
     private fun showGIFPicker() {
@@ -2823,7 +2819,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             if (result == null) return@Observer
             if (result.getResults().isNotEmpty()) {
                 result.getResults()[result.position]?.let {
-                    jumpToMessage(it.messageRecipient.address, it.sentTimestampMs, true) {
+                    jumpToMessage(it.messageId, true) {
                         searchViewModel.onMissingResult()
                     }
                 }
@@ -2865,9 +2861,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         this.searchViewModel.onMoveDown()
     }
 
-    private fun jumpToMessage(author: Address, timestamp: Long, highlight: Boolean, onMessageNotFound: Runnable?) {
+    private fun jumpToMessage(messageId: MessageId, highlight: Boolean, onMessageNotFound: Runnable?) {
         SimpleTask.run(lifecycle, {
-            mmsSmsDb.getMessagePositionInConversation(viewModel.threadId, timestamp, author, false)
+            mmsSmsDb.getMessagePositionInConversation(viewModel.threadId, messageId, false)
         }) { p: Int -> moveToMessagePosition(p, highlight, onMessageNotFound) }
     }
 

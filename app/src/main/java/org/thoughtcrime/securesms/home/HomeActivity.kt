@@ -170,7 +170,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                         .createIntent(
                             this,
                             address = model.messageResult.conversationRecipient.address as Address.Conversable,
-                            scrollToMessage = model.messageResult.sentTimestampMs to model.messageResult.messageRecipient.address
+                            scrollToMessage = model.messageResult.messageId
                         )
 
                     is GlobalSearchAdapter.Model.SavedMessages -> ConversationActivityV2
