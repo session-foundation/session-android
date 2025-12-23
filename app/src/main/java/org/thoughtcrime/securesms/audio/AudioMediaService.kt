@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.audio
 
+import android.app.PendingIntent
 import android.content.Intent
 import android.os.Bundle
 import androidx.media3.common.AudioAttributes
@@ -8,6 +9,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.DefaultMediaNotificationProvider
+import androidx.media3.session.MediaNotification
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionCommand
@@ -15,17 +17,19 @@ import androidx.media3.session.SessionResult
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
+import network.loki.messenger.R
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.audio.model.AudioCommands
 import org.thoughtcrime.securesms.audio.model.MediaItemFactory
+import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.home.HomeActivity
 
 @AndroidEntryPoint
 class AudioMediaService : MediaSessionService() {
     //todo AUDIO notification: add sender image in bg or track image if possible?
     //todo AUDIO notification: Noice notes: Title: Sender name Subtitle: "Voice note/message" --- Audio Title: [track name] Subtitle: [track artist]
-    //todo AUDIO notification: add app icon in top left
-    //todo AUDIO notification: add back seek / restart button
-    //todo AUDIO notification: remove notification on track finished
+    //todo AUDIO notification: open convo on tap (scroll to message?)
+    //todo AUDIO notification: If I kill the app and swipe away the notification the audio continues - should maybe at least stop on app kill
     //todo AUDIO looks like the spinning icon is always on in the audio  message bubble
 
     private val TAG = "AudioMediaService"
@@ -37,8 +41,13 @@ class AudioMediaService : MediaSessionService() {
         super.onCreate()
 
         // Media-style notification + lockscreen controls handled by MediaSessionService.
+        val notificationProvider = DefaultMediaNotificationProvider.Builder(this)
+            .build()
+
+        notificationProvider.setSmallIcon(R.drawable.ic_notification)
+
         setMediaNotificationProvider(
-            DefaultMediaNotificationProvider.Builder(this).build()
+            notificationProvider
         )
 
         player = ExoPlayer.Builder(this).build().apply {
@@ -46,6 +55,10 @@ class AudioMediaService : MediaSessionService() {
         }
 
         session = MediaSession.Builder(this, player)
+            .setSessionActivity(
+                PendingIntent.getActivity(applicationContext, 0, Intent(applicationContext,
+                    ConversationActivityV2::class.java), PendingIntent.FLAG_IMMUTABLE)
+            )
             .setCallback(SessionCallback())
             .build()
 
@@ -79,9 +92,8 @@ class AudioMediaService : MediaSessionService() {
         val isVoice = MediaItemFactory.isVoice(player.currentMediaItem)
 
         val attrs = AudioAttributes.Builder()
-            .setUsage(C.USAGE_MEDIA)
             .setContentType(if (isVoice) C.AUDIO_CONTENT_TYPE_SPEECH else C.AUDIO_CONTENT_TYPE_MUSIC)
-            .setUsage(if (isVoice) C.USAGE_VOICE_COMMUNICATION else C.USAGE_MEDIA)
+            .setUsage(C.USAGE_MEDIA)
             .build()
 
         player.setAudioAttributes(attrs, /* handleAudioFocus = */ true)
@@ -93,7 +105,15 @@ class AudioMediaService : MediaSessionService() {
         }
 
         override fun onPlaybackStateChanged(playbackState: Int) {
-            // If nothing queued, stop service (notification goes away).
+            // stop service once track has ended
+            if (playbackState == Player.STATE_ENDED) {
+                player.stop()
+                player.clearMediaItems()
+                stopSelf()
+                return
+            }
+
+            // If nothing queued, stop service
             if (playbackState == Player.STATE_IDLE && player.mediaItemCount == 0) {
                 stopSelf()
             }
@@ -114,10 +134,7 @@ class AudioMediaService : MediaSessionService() {
             if (session.isMediaNotificationController(controller)) {
                 val playerCommands = base.availablePlayerCommands
                     .buildUpon()
-                    .remove(Player.COMMAND_SEEK_TO_NEXT)
                     .remove(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
-                    .remove(Player.COMMAND_SEEK_TO_PREVIOUS)
-                    .remove(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
                     .build()
 
                 val sessionCommands = base.availableSessionCommands
