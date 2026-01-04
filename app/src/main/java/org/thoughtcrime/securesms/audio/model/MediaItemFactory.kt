@@ -5,14 +5,17 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 
 object MediaItemFactory {
-
-    private const val EXTRA_IS_VOICE = "audio.is_voice"
-    private const val EXTRA_DURATION_HINT = "audio.duration_hint"
+    const val EXTRA_IS_VOICE = "audio.is_voice"
+    const val EXTRA_DURATION_HINT = "audio.duration_hint"
+    const val EXTRA_THREAD_ADDRESS = "audio.thread_address"
+    const val EXTRA_MESSAGE_ID = "audio.message_id"
 
     fun fromPlayable(audio: PlayableAudio): MediaItem {
         val extras = Bundle().apply {
             putBoolean(EXTRA_IS_VOICE, audio.isVoiceNote)
             putLong(EXTRA_DURATION_HINT, audio.durationMs)
+            putParcelable(EXTRA_THREAD_ADDRESS, audio.thread)
+            putParcelable(EXTRA_MESSAGE_ID, audio.messageId)
         }
 
         val metadata = MediaMetadata.Builder()
@@ -24,12 +27,11 @@ object MediaItemFactory {
 
         return MediaItem.Builder()
             .setUri(audio.uri)
-            .setMediaId(audio.key.asMediaId())
+            .setMediaId(audio.messageId.serialize())
             .setMediaMetadata(metadata)
             .build()
     }
 
-    fun isVoice(mediaItem: MediaItem?): Boolean {
-        return mediaItem?.mediaMetadata?.extras?.getBoolean(EXTRA_IS_VOICE, false) ?: false
-    }
+    fun isVoice(mediaItem: MediaItem?): Boolean =
+        mediaItem?.mediaMetadata?.extras?.getBoolean(EXTRA_IS_VOICE, false) ?: false
 }

@@ -90,7 +90,7 @@ class VoiceMessageView @JvmOverloads constructor(
         val p = playable ?: return
 
         // If this row is the active item, just toggle
-        if (audioPlaybackManager.isActive(p.key)) {
+        if (audioPlaybackManager.isActive(p.messageId)) {
             audioPlaybackManager.togglePlayPause()
         } else {
             audioPlaybackManager.play(p)
@@ -99,7 +99,7 @@ class VoiceMessageView @JvmOverloads constructor(
 
     fun onSpeedToggleClicked() {
         val p = playable ?: return
-        if (audioPlaybackManager.isActive(p.key)) {
+        if (audioPlaybackManager.isActive(p.messageId)) {
             audioPlaybackManager.cyclePlaybackSpeed()
         }
     }
@@ -117,9 +117,9 @@ class VoiceMessageView @JvmOverloads constructor(
         val p = playable ?: return
 
         val isActive = when (state) {
-            is AudioPlaybackState.Loading -> state.playable.key == p.key
-            is AudioPlaybackState.Playing -> state.playable.key == p.key
-            is AudioPlaybackState.Paused  -> state.playable.key == p.key
+            is AudioPlaybackState.Loading -> state.playable.messageId == p.messageId
+            is AudioPlaybackState.Playing -> state.playable.messageId == p.messageId
+            is AudioPlaybackState.Paused  -> state.playable.messageId == p.messageId
             else -> false
         }
 

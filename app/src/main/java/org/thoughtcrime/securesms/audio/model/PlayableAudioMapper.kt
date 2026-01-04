@@ -3,6 +3,8 @@ package org.thoughtcrime.securesms.audio.model
 
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
+import org.session.libsession.utilities.Address
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.mms.AudioSlide
 
 object PlayableAudioMapper {
@@ -16,7 +18,8 @@ object PlayableAudioMapper {
      */
     fun fromAudioSlide(
         slide: AudioSlide,
-        messageId: Long,
+        messageId: MessageId,
+        thread: Address.Conversable,
         senderName: String? = null,
         titleOverride: String? = null
     ): PlayableAudio? {
@@ -36,8 +39,9 @@ object PlayableAudioMapper {
         val artist = senderName //todo AUDIO can we get the artist is not a voice note?
 
         return PlayableAudio(
-            key = PlayableAudio.Key(messageId = messageId, attachmentId = attachmentId),
+            messageId = messageId,
             uri = uri,
+            thread = thread,
             isVoiceNote = isVoice,
             durationMs = durationHint,
             title = title,

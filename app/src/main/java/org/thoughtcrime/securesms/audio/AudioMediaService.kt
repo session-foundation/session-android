@@ -18,10 +18,14 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
+import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.audio.model.AudioCommands
 import org.thoughtcrime.securesms.audio.model.MediaItemFactory
+import org.thoughtcrime.securesms.audio.model.MediaItemFactory.EXTRA_MESSAGE_ID
+import org.thoughtcrime.securesms.audio.model.MediaItemFactory.EXTRA_THREAD_ADDRESS
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.home.HomeActivity
 
 @AndroidEntryPoint
@@ -55,15 +59,46 @@ class AudioMediaService : MediaSessionService() {
         }
 
         session = MediaSession.Builder(this, player)
-            .setSessionActivity(
-                PendingIntent.getActivity(applicationContext, 0, Intent(applicationContext,
-                    ConversationActivityV2::class.java), PendingIntent.FLAG_IMMUTABLE)
-            )
             .setCallback(SessionCallback())
             .build()
 
+        updateSessionActivityFromCurrentItem()
+
         // Apply policy for the initial item if any controller sets it very quickly.
         applyAudioPolicyForCurrentItem()
+    }
+
+    private fun updateSessionActivityFromCurrentItem() {
+        val item = player.currentMediaItem ?: return
+        val extras = item.mediaMetadata.extras ?: return
+
+        val thread = extras.getParcelable(EXTRA_THREAD_ADDRESS, Address.Conversable::class.java) ?: return
+
+        val messageId = extras.getParcelable(
+            EXTRA_MESSAGE_ID,
+            MessageId::class.java
+        ) ?: return
+
+        val intent = ConversationActivityV2.createIntent(
+            context = applicationContext,
+            address = thread,
+            scrollToMessage = messageId
+        ).apply {
+            // good defaults for "return to existing convo if open"
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        //todo AUDIO it looks like it's not scrolling to the message
+
+        val requestCode = item.mediaId.hashCode()
+
+        val pi = PendingIntent.getActivity(
+            applicationContext,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        session?.setSessionActivity(pi)
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session
@@ -102,6 +137,7 @@ class AudioMediaService : MediaSessionService() {
     private val servicePlayerListener = object : Player.Listener {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             applyAudioPolicyForCurrentItem()
+            updateSessionActivityFromCurrentItem()
         }
 
         override fun onPlaybackStateChanged(playbackState: Int) {

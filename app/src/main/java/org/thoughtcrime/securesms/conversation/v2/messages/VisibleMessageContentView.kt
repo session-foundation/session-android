@@ -30,6 +30,7 @@ import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.applyCollapsedEllipsisMinWidth
 import org.session.libsession.utilities.clearCollapsedMinWidth
@@ -219,7 +220,8 @@ class VisibleMessageContentView : ConstraintLayout {
                     val audioSlide = message.slideDeck.audioSlide!!
                     val playable = PlayableAudioMapper.fromAudioSlide(
                         slide = audioSlide,
-                        messageId = message.id ,
+                        messageId = message.messageId ,
+                        thread = thread.address as Address.Conversable, //todo AUDIO is it safe to force cast here?
                         senderName = message.recipient.displayName()
                     )
 

@@ -22,11 +22,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.audio.model.AudioCommands
 import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
 import org.thoughtcrime.securesms.audio.model.MediaItemFactory
 import org.thoughtcrime.securesms.audio.model.PlayableAudio
+import org.thoughtcrime.securesms.database.model.MessageId
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -53,7 +55,7 @@ class AudioPlaybackManager @Inject constructor(
     fun play(playable: PlayableAudio, startPositionMs: Long = 0L) {
         ensureController { c ->
             val currentId = c.currentMediaItem?.mediaId
-            if (currentId == playable.key.asMediaId()) {
+            if (currentId == playable.messageId.serialize()) {
                 if (!c.isPlaying) c.play()
                 return@ensureController
             }
@@ -110,8 +112,8 @@ class AudioPlaybackManager @Inject constructor(
         updateFromController()
     }
 
-    fun isActive(playableKey: PlayableAudio.Key): Boolean =
-        controller?.currentMediaItem?.mediaId == playableKey.asMediaId()
+    fun isActive(messageId: MessageId): Boolean =
+        controller?.currentMediaItem?.mediaId == messageId.serialize()
 
     // --- Scrubbing (live seeking) ---
 
@@ -257,39 +259,32 @@ class AudioPlaybackManager @Inject constructor(
     private fun playableFromMediaItem(item: MediaItem?): PlayableAudio? {
         if (item == null) return null
 
-        val key = parsePlayableKey(item.mediaId) ?: return null
+        val extras = item.mediaMetadata.extras ?: return null
+
+        val thread: Address.Conversable = extras.getParcelable(
+            MediaItemFactory.EXTRA_THREAD_ADDRESS,
+            Address.Conversable::class.java
+        ) ?: return null
+
+        val messageId: MessageId = extras.getParcelable(
+            MediaItemFactory.EXTRA_MESSAGE_ID,
+            MessageId::class.java
+        ) ?: return null
 
         val uri: Uri = item.localConfiguration?.uri
-            ?: runCatching { Uri.parse(item.mediaId) }.getOrNull()
             ?: return null
 
-        val isVoice = MediaItemFactory.isVoice(item)
-
-        // duration stored in extras by your MediaItemFactory
-        val durationFromExtras = item.mediaMetadata.extras?.getLong("audio.duration_hint", -1L) ?: -1L
+        val isVoice = extras.getBoolean(MediaItemFactory.EXTRA_IS_VOICE, false)
+        val durationHint = extras.getLong(MediaItemFactory.EXTRA_DURATION_HINT, -1L)
 
         return PlayableAudio(
-            key = key,
+            messageId = messageId,
             uri = uri,
+            thread = thread,
             isVoiceNote = isVoice,
-            durationMs = durationFromExtras,
+            durationMs = durationHint,
             title = item.mediaMetadata.title?.toString(),
             artist = item.mediaMetadata.artist?.toString()
         )
-    }
-
-    private fun parsePlayableKey(mediaId: String): PlayableAudio.Key? {
-        // Supports:
-        //  - "msg:<messageId>"
-        //  - "msg:<messageId>:att:<attachmentId>"
-        val parts = mediaId.split(":")
-        if (parts.size < 2) return null
-        if (parts[0] != "msg") return null
-
-        val messageId = parts[1].toLongOrNull() ?: return null
-        val attachmentId =
-            if (parts.size >= 4 && parts[2] == "att") parts[3] else null
-
-        return PlayableAudio.Key(messageId = messageId, attachmentId = attachmentId)
     }
 }
