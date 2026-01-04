@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import org.session.libsession.snode.SnodeClock
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
@@ -29,6 +30,7 @@ class ProDetailsRepository @Inject constructor(
     private val snodeClock: SnodeClock,
     @ManagerScope scope: CoroutineScope,
     loginStateRepository: LoginStateRepository,
+    private val prefs: TextSecurePreferences,
 ) {
     sealed interface LoadState {
         val lastUpdated: Pair<ProDetails, Instant>?
@@ -83,6 +85,11 @@ class ProDetailsRepository @Inject constructor(
      * made regardless of the freshness of the last update.
      */
     fun requestRefresh(force: Boolean = false) {
+        if (!prefs.forcePostPro()) {
+            Log.d(DebugLogGroup.PRO_DATA.label, "Pro hasn't been enabled, skipping refresh")
+            return
+        }
+
         val currentState = loadState.value
         if (!force && (currentState is LoadState.Loading || currentState is LoadState.Loaded) &&
             currentState.lastUpdated?.second?.plusSeconds(MIN_UPDATE_INTERVAL_SECONDS)
