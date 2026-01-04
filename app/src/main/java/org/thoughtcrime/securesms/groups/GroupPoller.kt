@@ -30,6 +30,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigMessage
 import org.session.libsession.utilities.getGroup
+import org.session.libsession.utilities.withGroupConfigs
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.AccountId
@@ -474,7 +475,7 @@ class GroupPoller @AssistedInject constructor(
                 }
 
                 try {
-                    val (msg, proto) = messageParser.parseGroupMessage(
+                    val result = messageParser.parseGroupMessage(
                         data = message.data,
                         serverHash = message.hash,
                         groupId = groupId,
@@ -484,9 +485,10 @@ class GroupPoller @AssistedInject constructor(
 
                     receivedMessageProcessor.processSwarmMessage(
                         threadAddress = threadAddress,
-                        message = msg,
-                        proto = proto,
+                        message = result.message,
+                        proto = result.proto,
                         context = ctx,
+                        pro = result.pro,
                     )
                 } catch (e: Exception) {
                     Log.e(TAG, "Error handling group message", e)

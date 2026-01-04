@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
 import android.widget.Toast
-import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.canhub.cropper.CropImage
@@ -42,6 +41,8 @@ import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
+import org.session.libsession.utilities.withMutableUserConfigs
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.NoExternalStorageException
@@ -97,7 +98,7 @@ class SettingsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(UIState(
         username = "",
         accountID = selfRecipient.value.address.address,
-        hasPath = true,
+        pathStatus = OnionRequestAPI.PathStatus.BUILDING,
         version = getVersionNumber(),
         recoveryHidden = prefs.getHidePassword(),
         isPostPro = proStatusManager.isPostPro(),
@@ -144,8 +145,8 @@ class SettingsViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            OnionRequestAPI.hasPath.collect { data ->
-                _uiState.update { it.copy(hasPath = data) }
+            OnionRequestAPI.pathStatus.collect { status ->
+                _uiState.update { it.copy(pathStatus = status) }
             }
         }
 
@@ -190,7 +191,9 @@ class SettingsViewModel @Inject constructor(
     fun onAvatarPicked(result: CropImageView.CropResult) {
         when {
             result.isSuccessful -> {
-                onAvatarPicked("file://${result.getUriFilePath(context)!!}".toUri())
+                result.uriContent?.let { uri ->
+                    onAvatarPicked(uri)
+                } ?: Log.e(TAG, "Cropping successful but uriContent was null")
             }
 
             result is CropImage.CancelledResult -> {
@@ -656,7 +659,7 @@ class SettingsViewModel @Inject constructor(
     data class UIState(
         val username: String,
         val accountID: String,
-        val hasPath: Boolean,
+        val pathStatus: OnionRequestAPI.PathStatus,
         val version: CharSequence = "",
         val showLoader: Boolean = false,
         val avatarDialogState: AvatarDialogState = AvatarDialogState.NoAvatar,

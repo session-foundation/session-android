@@ -6,7 +6,7 @@ import android.webkit.MimeTypeMap
 import com.google.protobuf.ByteString
 import org.session.libsession.messaging.sending_receiving.attachments.PointerAttachment
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
-import org.session.libsignal.protos.SignalServiceProtos
+import org.session.protos.SessionProtos
 import org.session.libsignal.utilities.guava.Optional
 import java.io.File
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment as SignalAttachment
@@ -24,7 +24,7 @@ class Attachment {
 
     companion object {
 
-        fun fromProto(proto: SignalServiceProtos.AttachmentPointer): Attachment {
+        fun fromProto(proto: SessionProtos.AttachmentPointer): Attachment {
             val result = Attachment()
 
             // Note: For legacy Session Android clients this filename will be null and we'll synthesise an appropriate filename
@@ -49,7 +49,7 @@ class Attachment {
 
             result.key = proto.key.toByteArray()
             result.digest = proto.digest.toByteArray()
-            val kind: Kind = if (proto.hasFlags() && proto.flags.and(SignalServiceProtos.AttachmentPointer.Flags.VOICE_MESSAGE_VALUE) > 0) {
+            val kind: Kind = if (proto.hasFlags() && proto.flags.and(SessionProtos.AttachmentPointer.Flags.VOICE_MESSAGE_VALUE) > 0) {
                 Kind.VOICE_MESSAGE
             } else {
                 Kind.GENERIC
@@ -68,8 +68,8 @@ class Attachment {
             return result
         }
 
-        fun createAttachmentPointer(attachment: SignalServiceAttachmentPointer): SignalServiceProtos.AttachmentPointer? {
-            val builder = SignalServiceProtos.AttachmentPointer.newBuilder()
+        fun createAttachmentPointer(attachment: SignalServiceAttachmentPointer): SessionProtos.AttachmentPointer? {
+            val builder = SessionProtos.AttachmentPointer.newBuilder()
                     .setContentType(attachment.contentType)
                     .setId(attachment.id.toString().toLongOrNull() ?: 0L)
                     .setKey(ByteString.copyFrom(attachment.key))
@@ -89,7 +89,7 @@ class Attachment {
             if (attachment.preview.isPresent) { builder.thumbnail = ByteString.copyFrom(attachment.preview.get())               }
             if (attachment.width > 0)         { builder.width = attachment.width                                                }
             if (attachment.height > 0)        { builder.height = attachment.height                                              }
-            if (attachment.voiceNote)         { builder.flags = SignalServiceProtos.AttachmentPointer.Flags.VOICE_MESSAGE_VALUE }
+            if (attachment.voiceNote)         { builder.flags = SessionProtos.AttachmentPointer.Flags.VOICE_MESSAGE_VALUE }
             if (attachment.caption.isPresent) { builder.caption = attachment.caption.get()                                      }
 
             return builder.build()
@@ -106,7 +106,7 @@ class Attachment {
         return (contentType != null && kind != null && size != null && sizeInBytes != null && url != null)
     }
 
-    fun toProto(): SignalServiceProtos.AttachmentPointer? {
+    fun toProto(): SessionProtos.AttachmentPointer? {
         TODO("Not implemented")
     }
 

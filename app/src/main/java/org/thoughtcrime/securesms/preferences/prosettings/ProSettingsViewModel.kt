@@ -22,11 +22,13 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.ACTION_TYPE_KEY
@@ -42,6 +44,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLA
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_LENGTH_SINGULAR_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
@@ -61,6 +64,9 @@ import org.thoughtcrime.securesms.util.CurrencyFormatter
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.State
 import java.math.BigDecimal
+import java.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
@@ -75,6 +81,7 @@ class ProSettingsViewModel @AssistedInject constructor(
     private val proDetailsRepository: ProDetailsRepository,
     private val configFactory: Lazy<ConfigFactoryProtocol>,
     private val storage: StorageProtocol,
+    private val clock: SnodeClock,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -100,9 +107,9 @@ class ProSettingsViewModel @AssistedInject constructor(
     init {
         // observe subscription status
         viewModelScope.launch {
-            proStatusManager.proDataState.collect {
-               generateState(it)
-            }
+            proStatusManager
+                .proDataState
+                .collectLatest(::generateState)
         }
 
         // observe purchase events
@@ -187,36 +194,65 @@ class ProSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    private fun generateState(proDataState: ProDataState){
+    private suspend fun generateState(proDataState: ProDataState){
         val subType = proDataState.type
 
         // calculate stats for pro users
-        if(subType is ProStatus.Active) refreshProStats()
+        if (subType is ProStatus.Active) refreshProStats()
 
-        _proSettingsUIState.update {
-            it.copy(
-                proDataState = proDataState,
-                subscriptionExpiryLabel = when(subType){
-                    is ProStatus.Active.AutoRenewing ->
-                        Phrase.from(context, R.string.proAutoRenewTime)
-                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                            .put(TIME_KEY, dateUtils.getExpiryString(subType.validUntil))
-                            .format()
+        while (true) {
+            val now = clock.currentTime()
 
-                    is ProStatus.Active.Expiring ->
-                        Phrase.from(context, R.string.proExpiringTime)
-                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                            .put(TIME_KEY, dateUtils.getExpiryString(subType.validUntil))
-                            .format()
+            _proSettingsUIState.update {
+                it.copy(
+                    proDataState = proDataState,
+                    subscriptionExpiryLabel = when(subType){
+                        is ProStatus.Active.AutoRenewing ->
+                            Phrase.from(context, R.string.proAutoRenewTime)
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .put(TIME_KEY, dateUtils.getExpiryString(
+                                    remaining = Duration.between(now, subType.validUntil)
+                                        .coerceAtLeast(Duration.ZERO)))
+                                .format()
 
-                    else -> ""
-                },
-                subscriptionExpiryDate = when(subType){
-                    is ProStatus.Active -> subType.duration.expiryFromNow()
-                    else -> ""
-                },
-            )
+                        is ProStatus.Active.Expiring ->
+                            Phrase.from(context, R.string.proExpiringTime)
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .put(TIME_KEY, dateUtils.getExpiryString(
+                                    remaining = Duration.between(now, subType.validUntil)
+                                        .coerceAtLeast(Duration.ZERO)))
+                                .format()
+
+                        else -> ""
+                    },
+                    subscriptionExpiryDate = when(subType){
+                        is ProStatus.Active -> subType.duration.expiryFromNow(now)
+                        else -> ""
+                    },
+                )
+            }
+
+            if (subType is ProStatus.Active.AutoRenewing || subType is ProStatus.Active.Expiring) {
+                if (subType.validUntil.isAfter(now)) {
+                    val secondsTilExpired = subType.validUntil.epochSecond - now.epochSecond
+                    if (secondsTilExpired > 120) {
+                        // Tick every minute
+                        delay(1.minutes)
+                    } else if (secondsTilExpired > 60) {
+                        // Tick once until we reach the last minute
+                        delay((secondsTilExpired - 60).seconds)
+                    } else {
+                        // Tick every seconds
+                        delay(1.seconds)
+                    }
+                } else {
+                    break // subscription is supposed to be expired now
+                }
+            } else {
+                break  // pro not active, no need to refresh any UI
+            }
         }
+
     }
 
     fun ensureChoosePlanState(){
@@ -293,7 +329,7 @@ class ProSettingsViewModel @AssistedInject constructor(
 
         viewModelScope.launch {
             _refundPlanState.update {
-                val isQuickRefund = if(prefs.getDebugIsWithinQuickRefund() && prefs.forceCurrentUserAsPro()) true // debug mode
+                val isQuickRefund = if(prefs.forceCurrentUserAsPro()) prefs.getDebugIsWithinQuickRefund()// debug mode
                 else sub.isWithinQuickRefundWindow()
 
                 State.Success(

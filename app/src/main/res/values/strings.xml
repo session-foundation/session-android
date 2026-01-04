@@ -20,6 +20,7 @@
         <item quantity="one">Add Admin</item>
         <item quantity="other">Add Admins</item>
     </plurals>
+    <string name="addAdminSingular">Add Admin</string>
     <string name="addAdminsDescription">Enter the Account ID of the user you are promoting to admin.\n\nTo add multiple users, enter each Account ID separated by a comma. Up to 20 Account IDs can be specified at a time.</string>
     <string name="adminCannotBeDemoted">Admins cannot be demoted or removed from the group.</string>
     <string name="adminCannotBeRemoved">Admins cannot be removed.</string>
@@ -1182,6 +1183,8 @@
     <string name="rateSession">Rate {app_name}?</string>
     <string name="rateSessionApp">Rate App</string>
     <string name="rateSessionModalDescription">We\'re glad you\'re enjoying {app_name}, if you have a moment, rating us in the {storevariant} helps others discover private, secure messaging!</string>
+    <string name="rateSessionModalDescriptionUpdated">{app_name} runs no ads, sells no data, and answers only to its users. Your {storevariant} rating helps more people find messaging that actually respects their privacy.</string>
+    <string name="rateUs">Rate Us</string>
     <string name="read">Read</string>
     <string name="readReceipts">Read Receipts</string>
     <string name="readReceiptsDescription">Show read receipts for all messages you send and receive.</string>
@@ -1336,6 +1339,8 @@
     <string name="shareExtensionNoAccountError">Oops! Looks like you don\'t have a {app_name} account yet.\n\nYou\'ll need to create one in the {app_name} app before you can share.</string>
     <string name="shareGroupMessageHistory">Would you like to share group message history with this user?</string>
     <string name="shareToSession">Share to {app_name}</string>
+    <string name="sharingSupportMultipleMedia">Sorry, {app_name} only supports sharing multiple images and videos at once</string>
+    <string name="sharingSupportMultipleMediaExcluded">Sharing only supports media. Non-media files have been excluded</string>
     <string name="show">Show</string>
     <string name="showAll">Show All</string>
     <string name="showLess">Show Less</string>

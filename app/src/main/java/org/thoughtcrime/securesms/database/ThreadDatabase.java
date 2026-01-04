@@ -868,7 +868,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
       }
 
       final boolean isUnread = address instanceof Address.Conversable &&
-              configFactory.get().withUserConfigs(configs ->
+              ConfigFactoryProtocolKt.withUserConfigs(configFactory.get(), configs ->
                 SharedConfigUtilsKt.getConversationUnread(
                         configs.getConvoInfoVolatile(), (Address.Conversable) address));
 

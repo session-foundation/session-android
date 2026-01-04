@@ -57,6 +57,10 @@ import org.session.libsession.utilities.isCommunityInbox
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.upsertContact
+import org.session.libsession.utilities.withGroupConfigs
+import org.session.libsession.utilities.withMutableGroupConfigs
+import org.session.libsession.utilities.withMutableUserConfigs
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
@@ -369,7 +373,8 @@ open class Storage @Inject constructor(
                     recipient = targetAddress,
                     sentTimestampMillis = message.sentTimestamp!!,
                     expiresInMillis = expiresInMillis,
-                    expireStartedAtMillis = expireStartedAt
+                    expireStartedAtMillis = expireStartedAt,
+                    proFeatures = message.proFeatures
                 )!!
                 else OutgoingTextMessage(
                     message = message,

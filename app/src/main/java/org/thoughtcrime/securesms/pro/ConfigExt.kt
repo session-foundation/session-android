@@ -7,6 +7,7 @@ import network.loki.messenger.libsession_util.pro.ProConfig
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.userConfigsChanged
+import org.session.libsession.utilities.withUserConfigs
 import org.thoughtcrime.securesms.util.castAwayType
 import java.util.EnumSet
 

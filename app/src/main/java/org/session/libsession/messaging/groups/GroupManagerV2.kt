@@ -4,8 +4,9 @@ import androidx.annotation.StringRes
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateDeleteMemberContentMessage
+import org.session.protos.SessionProtos.GroupUpdateDeleteMemberContentMessage
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.groups.MemberInvite
 
 /**
  * Business logic handling group v2 operations like inviting members,
@@ -23,6 +24,11 @@ interface GroupManagerV2 {
         newMembers: List<AccountId>,
         shareHistory: Boolean,
         isReinvite: Boolean, // Whether this comes from a re-invite
+    )
+
+    suspend fun reinviteMembers(
+        group: AccountId,
+        invites: List<MemberInvite>
     )
 
     suspend fun removeMembers(
@@ -52,7 +58,7 @@ interface GroupManagerV2 {
     )
 
     suspend fun handleMemberLeftMessage(memberId: AccountId, group: AccountId)
-    suspend fun leaveGroup(groupId: AccountId)
+    suspend fun leaveGroup(groupId: AccountId, deleteGroup : Boolean = false)
     suspend fun promoteMember(group: AccountId, members: List<AccountId>, isRepromote: Boolean)
 
     suspend fun handleInvitation(
@@ -119,6 +125,11 @@ interface GroupManagerV2 {
 
     fun getLeaveGroupConfirmationDialogData(groupId: AccountId, name: String): ConfirmDialogData?
 
+    fun getDeleteGroupConfirmationDialogData(groupId : AccountId, name : String) : ConfirmDialogData?
+
+    fun isCurrentUserGroupAdmin(groupId : AccountId) : Boolean
+    fun isCurrentUserLastAdmin(groupId : AccountId) : Boolean
+
     data class ConfirmDialogData(
         val title: String,
         val message: CharSequence,
@@ -126,5 +137,6 @@ interface GroupManagerV2 {
         @StringRes val negativeText: Int,
         @StringRes val positiveQaTag: Int?,
         @StringRes val negativeQaTag: Int?,
+        val showCloseButton: Boolean = false
     )
 }

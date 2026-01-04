@@ -1,11 +1,11 @@
 package org.session.libsession.messaging.utilities
 
-import org.session.libsignal.protos.SignalServiceProtos
+import org.session.protos.SessionProtos
 import org.session.libsignal.utilities.AccountId
 
 object MessageAuthentication {
     fun buildInfoChangeSignature(
-        changeType: SignalServiceProtos.DataMessage.GroupUpdateInfoChangeMessage.Type,
+        changeType: SessionProtos.GroupUpdateInfoChangeMessage.Type,
         timestamp: Long): ByteArray {
         return "INFO_CHANGE${changeType.number}$timestamp".toByteArray()
     }
@@ -24,7 +24,7 @@ object MessageAuthentication {
     }
 
     fun buildMemberChangeSignature(
-        changeType: SignalServiceProtos.DataMessage.GroupUpdateMemberChangeMessage.Type,
+        changeType: SessionProtos.GroupUpdateMemberChangeMessage.Type,
         timestamp: Long
     ): ByteArray {
         return "MEMBER_CHANGE${changeType.number}$timestamp".toByteArray()

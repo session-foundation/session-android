@@ -9,7 +9,7 @@ import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.copyExpiration
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
-import org.session.libsignal.protos.SignalServiceProtos
+import org.session.protos.SessionProtos
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.pro.toProMessageBitSetValue
 import org.thoughtcrime.securesms.pro.toProProfileBitSetValue
@@ -30,6 +30,18 @@ data class VisibleMessage(
     var reaction: Reaction? = null,
     var hasMention: Boolean = false,
     var blocksMessageRequests: Boolean = false,
+    /**
+     * The pro features enabled for this message.
+     *
+     * Note:
+     * * When this message is an incoming message, the pro features will only be populated
+     * if we can prove that the sender has an active pro subscription.
+     *
+     * * When this message represents an outgoing message, this property can be populated by
+     * application code at their wishes but the actual translating to protobuf onto the wired will
+     * be checked against the current user's pro proof, if no active pro subscription is found,
+     * the pro features will not be sent in the protobuf messages.
+     */
     var proFeatures: Set<ProFeature> = emptySet()
 ) : Message()  {
 
@@ -56,7 +68,7 @@ data class VisibleMessage(
     companion object {
         const val TAG = "VisibleMessage"
 
-        fun fromProto(proto: SignalServiceProtos.Content): VisibleMessage? =
+        fun fromProto(proto: SessionProtos.Content): VisibleMessage? =
             proto.dataMessage?.let { VisibleMessage().apply {
                 if (it.hasSyncTarget()) syncTarget = it.syncTarget
                 text = it.body
@@ -71,7 +83,7 @@ data class VisibleMessage(
     }
 
     protected override fun buildProto(
-        builder: SignalServiceProtos.Content.Builder,
+        builder: SessionProtos.Content.Builder,
         messageDataProvider: MessageDataProvider
     ) {
         val dataMessage = builder.dataMessageBuilder

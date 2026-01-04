@@ -134,15 +134,15 @@ fun Avatar(
         badge = when (badge) {
                 AvatarBadge.None -> null
 
-                else -> {
-                    {
-                        Image(
-                            painter = painterResource(id = badge.icon),
-                            contentDescription = null,
-                        )
-                    }
-                }
-            }
+            is AvatarBadge.ResourceBadge -> { {
+                Image(
+                    painter = painterResource(id = badge.icon),
+                    contentDescription = null,
+                )
+            }}
+
+            is AvatarBadge.ComposeBadge -> badge.content
+        }
     )
 }
 
@@ -296,7 +296,7 @@ fun PreviewAvatarSingleAdmin(){
                 color = primaryGreen,
                 remoteFile = null
             ))),
-            badge = AvatarBadge.Admin
+            badge = AvatarBadge.ResourceBadge.Admin
         )
     }
 }

@@ -91,6 +91,23 @@ class SnodeClock @Inject constructor(
         return java.time.Instant.ofEpochMilli(currentTimeMills())
     }
 
+    /**
+     * Delay until the specified instant. If the instant is in the past or now, this method returns
+     * immediately.
+     *
+     * @return true if delayed, false if the instant is in the past
+     */
+    suspend fun delayUntil(instant: java.time.Instant): Boolean {
+        val now = currentTimeMills()
+        val target = instant.toEpochMilli()
+        return if (target > now) {
+            delay(target - now)
+            true
+        } else {
+            target == now
+        }
+    }
+
     private class Instant(
         val systemUptime: Long,
         val networkTime: Long,

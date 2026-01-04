@@ -15,7 +15,15 @@
     <string name="accountIdYoursDescription">Це ваш Account ID. Інші користувачі можуть просканувати його, щоб почати розмову з вами.</string>
     <string name="actualSize">Актуальний розмір</string>
     <string name="add">Додати</string>
+    <plurals name="addAdmin">
+        <item quantity="one">Додати адміністратора</item>
+        <item quantity="few">Додати адміністраторів</item>
+        <item quantity="many">Додати адміністраторів</item>
+        <item quantity="other">Додати адміністраторів</item>
+    </plurals>
+    <string name="addAdminSingular">Додати адміністратора</string>
     <string name="addAdminsDescription">Введіть ідентифікатор облікового запису користувача, якого ви призначаєте адміністратором.\n\nЩоб додати кількох користувачів, введіть ідентифікатори їхніх облікових записів, розділяючи їх комами. Одночасно можна вказати до 20 ідентифікаторів облікових записів.</string>
+    <string name="adminCannotBeDemoted">Адміністраторів не можна понизити або видалити з групи.</string>
     <string name="adminCannotBeRemoved">Адміністратори не можуть бути видалені.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> та ще <b>{count} інших</b> було підвищено до адміністраторів.</string>
     <string name="adminPromote">Підвищити адміністратора</string>
@@ -40,6 +48,12 @@
     <string name="adminRemovedUser"><b>{name}</b> було вилучено із групи.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> та ще <b>{count} інших</b> було вилучено з переліку адміністраторів.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> та <b>{other_name}</b> було вилучено з переліку адміністраторів.</string>
+    <plurals name="adminSelected">
+        <item quantity="one">Вибрано %1$d адміністратора</item>
+        <item quantity="few">Вибрано %1$d адміністратора</item>
+        <item quantity="many">Вибрано %1$d адміністраторів</item>
+        <item quantity="other">Вибрано %1$d адміністраторів</item>
+    </plurals>
     <plurals name="adminSendingPromotion">
         <item quantity="one">Надсилання прав адміністратора</item>
         <item quantity="few">Надсилання прав адміністратора</item>
@@ -47,7 +61,10 @@
         <item quantity="other">Надсилання прав адміністраторів</item>
     </plurals>
     <string name="adminSettings">Адміністраторські налаштування</string>
+    <string name="adminStatusYou">Ви не можете змінити свій статус адміністратора. Щоб вийти з групи, відкрийте налаштування розмови та виберіть «Вийти з групи».</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> та <b>{other_name}</b> було підвищено до адміністраторів.</string>
+    <string name="admins">Адміністратори</string>
+    <string name="allow">Дозволити</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Анонімно</string>
     <string name="appIcon">Значок застосунку</string>
@@ -164,6 +181,7 @@
     <string name="blockUnblockNameTwo">Ви впевнені, що бажаєте розблокувати <b>{name}</b> і ще одного?</string>
     <string name="blockUnblockedUser">{name} розблоковано</string>
     <string name="blockedContactsManageDescription">Переглядайте та керуйте заблокованими контактами.</string>
+    <string name="browserNotFound">Не знайдено браузер для відкриття цієї URL-адреси, спробуйте натомість скопіювати її</string>
     <string name="call">Дзвінок</string>
     <string name="callsCalledYou">{name} дзвонив вам</string>
     <string name="callsCannotStart">Не можна розпочати новий дзвінок. Спочатку закінчіть поточний дзвінок.</string>
@@ -205,12 +223,18 @@
     <string name="cancel">Скасувати</string>
     <string name="cancelAccess">Скасувати {pro}</string>
     <string name="cancelProPlan">Скасувати план {pro}</string>
+    <string name="cancelProPlatform">Скасуйте підписку на вебсайті {platform}, використовуючи обліковий запис {platform_account}, з яким ви оформили {pro}.</string>
+    <string name="cancelProPlatformStore">Скасуйте підписку на вебсайті {platform_store}, використовуючи обліковий запис {platform_account}, з яким ви оформили {pro}.</string>
     <string name="change">Змінити</string>
     <string name="changePasswordFail">Не вдалося змінити пароль</string>
     <string name="changePasswordModalDescription">Змінити ваш пароль для {app_name}. Локально збережені дані будуть наново шифровані з застосуванням нового паролю.</string>
+    <string name="changeSetting">Змінити параметр</string>
     <string name="checkingProStatus">Перевірка статусу {pro}</string>
+    <string name="checkingProStatusContinue">Перевіряємо ваш статус {pro}. Після завершення перевірки ви зможете продовжити.</string>
+    <string name="checkingProStatusDescription">Перевіряємо ваші дані {pro}. Деякі дії на цій сторінці можуть бути недоступні, поки перевірка не завершена.</string>
     <string name="checkingProStatusEllipsis">Перевірка статусу {pro}...</string>
     <string name="checkingProStatusRenew">Перевіряємо ваші дані {pro}. Ви не можете продовжити передплату, доки ця перевірка не буде завершена.</string>
+    <string name="checkingProStatusUpgradeDescription">Перевіряємо ваш статус {pro}. Ви зможете перейти на {pro}, щойно перевірка завершиться.</string>
     <string name="clear">Очистити</string>
     <string name="clearAll">Очистити всі</string>
     <string name="clearDataAll">Очистити всі дані</string>
@@ -271,11 +295,19 @@
     <string name="communityUrl">URL спільноти</string>
     <string name="communityUrlCopy">Копіювати URL спільноти</string>
     <string name="confirm">Підтвердити</string>
+    <string name="confirmPromotion">Підтвердити підвищення</string>
+    <string name="confirmPromotionDescription">Ви впевнені? Адміністратора не можна буде понизити або видалити з групи.</string>
     <string name="contactContacts">Контакти</string>
     <string name="contactDelete">Видалити контакт</string>
     <string name="contactDeleteDescription">Ви впевнені, що хочете видалити <b>{name}</b> з ваших контактів? Нові повідомлення від <b>{name}</b> будуть приходити як запит на повідомлення.</string>
     <string name="contactNone">У вас ще немає жодних контактів</string>
     <string name="contactSelect">Обрати контакти</string>
+    <plurals name="contactSelected">
+        <item quantity="one">Вибрано %1$d контакт</item>
+        <item quantity="few">Вибрано %1$d контакти</item>
+        <item quantity="many">Вибрано %1$d контактів</item>
+        <item quantity="other">Вибрано %1$d контактів</item>
+    </plurals>
     <string name="contactUserDetails">Деталі користувача</string>
     <string name="contentDescriptionCamera">Камера</string>
     <string name="contentDescriptionChooseConversationType">Виберіть дію, щоб розпочати розмову</string>
@@ -316,6 +348,7 @@
     <string name="copy">Копіювати</string>
     <string name="create">Створити</string>
     <string name="creatingCall">Викликаємо</string>
+    <string name="currentBilling">Поточна оплата</string>
     <string name="currentPassword">Поточний пароль</string>
     <string name="cut">Вирізати</string>
     <string name="darkMode">Темний режим</string>
@@ -343,6 +376,18 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">Будь ласка, зачекайте поки створюється група...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">Не вдалося оновити групу</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">У вас немає прав на видалення інших повідомлень</string>
+    <plurals name="deleteAttachments">
+        <item quantity="one">Видалити вибране вкладення</item>
+        <item quantity="few">Видалити вибрані вкладення</item>
+        <item quantity="many">Видалити вибрані вкладення</item>
+        <item quantity="other">Видалити вибрані вкладення</item>
+    </plurals>
+    <plurals name="deleteAttachmentsDescription">
+        <item quantity="one">Ви впевнені, що хочете видалити вибране вкладення? Повідомлення, пов\'язане з цим вкладенням, також буде видалено.</item>
+        <item quantity="few">Ви впевнені, що хочете видалити вибрані вкладення? Повідомлення, пов\'язане з цим вкладенням, також буде видалено.</item>
+        <item quantity="many">Ви впевнені, що хочете видалити вибрані вкладення? Повідомлення, пов\'язане з цим вкладенням, також буде видалено.</item>
+        <item quantity="other">Ви впевнені, що хочете видалити вибрані вкладення? Повідомлення, пов\'язане з цим вкладенням, також буде видалено.</item>
+    </plurals>
     <string name="deleteContactDescription">Ви впевнені, що хочете видалити <b>{name}</b> зі своїх контактів?\n\nЦе призведе до видалення вашої розмови, включно з усіма повідомленнями та вкладеннями. Майбутні повідомлення від <b>{name}</b> відображатимуться як запит на повідомлення.</string>
     <string name="deleteConversationDescription">Ви дійсно хочете видалити розмову з <b>{name}</b>?\n Це назавжди видалить усі повідомлення та вкладення.</string>
     <plurals name="deleteMessage">
@@ -396,6 +441,7 @@
     <string name="deleteMessagesDescriptionEveryone">Ви впевнені, що хочете видалити ці повідомлення для всіх?</string>
     <string name="deleting">Видалення</string>
     <string name="developerToolsToggle">Відкрити засоби розробника</string>
+    <string name="deviceNotificationSettings">Налаштування сповіщень пристрою</string>
     <string name="dictationStart">Почати диктування...</string>
     <string name="disappearingMessages">Зникаючі повідомлення</string>
     <string name="disappearingMessagesCountdownBig">Повідомлення буде видалено через {time_large}</string>
@@ -443,6 +489,8 @@
     <string name="displayNameVisible">Ваше відображуване ім\'я видно користувачам, групам і спільнотам, з якими ви взаємодієте.</string>
     <string name="document">Документ</string>
     <string name="donate">Підтримати</string>
+    <string name="donateSessionDescription">Потужні сили намагаються послабити конфіденційність, але ми не можемо продовжувати цю боротьбу наодинці.\n\nВаші пожертви допомагають зберегти {app_name} захищеним, незалежним і доступним онлайн.</string>
+    <string name="donateSessionHelp">{app_name} потребує вашої допомоги</string>
     <string name="done">Готово</string>
     <string name="download">Завантажити</string>
     <string name="downloading">Завантаження...</string>
@@ -482,12 +530,23 @@
     <string name="enjoyingSessionButtonPositive">Крутяк {emoji}</string>
     <string name="enjoyingSessionDescription">Ви вже деякий час користуєтесь {app_name}, які у вас враження? Нам би дуже хотілося дізнатися вашу думку.</string>
     <string name="enter">Увійти</string>
+    <string name="enterPasswordDescription">Введіть пароль, який ви встановили для {app_name}</string>
+    <string name="enterPasswordTooltip">Введіть пароль, який ви використовуєте для розблокування {app_name} під час запуску. Це не ваш пароль відновлення.</string>
+    <string name="errorCheckingProStatus">Помилка під час перевірки статусу {pro}</string>
     <string name="errorConnection">Будь ласка, перевірте підключення до Інтернету та спробуйте ще раз.</string>
     <string name="errorCopyAndQuit">Скопіювати помилку та вийти</string>
     <string name="errorDatabase">Помилка бази даних</string>
     <string name="errorGeneric">Щось пішло не так. Будь ласка, спробуйте пізніше.</string>
     <string name="errorLoadingProAccess">Помилка завантаження доступу до {pro}</string>
+    <string name="errorNoLookupOns">{app_name} не вдалося знайти цей ONS. Перевірте підключення до мережі й повторіть спробу.</string>
     <string name="errorUnknown">Невідома помилка</string>
+    <string name="errorUnregisteredOns">Цей ONS не зареєстровано. Перевірте правильність і повторіть спробу.</string>
+    <string name="failedResendInvite">Не вдалося повторно надіслати запрошення користувачу <b>{name}</b> у групі <b>{group_name}</b></string>
+    <string name="failedResendInviteMultiple">Не вдалося повторно надіслати запрошення користувачу <b>{name}</b> та ще <b>{count}</b> учасникам у групі <b>{group_name}</b></string>
+    <string name="failedResendInviteTwo">Не вдалося повторно надіслати запрошення користувачам <b>{name}</b> та <b>{other_name}</b> у групі <b>{group_name}</b></string>
+    <string name="failedResendPromotion">Не вдалося повторно надіслати права адміністратора для <b>{name}</b> у <b>{group_name}</b></string>
+    <string name="failedResendPromotionMultiple">Не вдалося повторно надіслати права адміністратора для <b>{name}</b> і <b>{count} інших</b> у <b>{group_name}</b></string>
+    <string name="failedResendPromotionTwo">Не вдалося повторно надіслати права адміністратора для <b>{name}</b> і <b>{other_name}</b> у <b>{group_name}</b></string>
     <string name="failedToDownload">Не вдалося завантажити</string>
     <string name="failures">Відмови</string>
     <string name="feedback">Відгук</string>
@@ -543,6 +602,9 @@
     <string name="groupLeaveDescription">Чи дійсно ви бажаєте вийти з <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Ви впевнені, що хочете вийти з <b>{group_name}</b>?\n\nЦе видалить усіх учасників та вміст групи.</string>
     <string name="groupLeaveErrorFailed">Не вдалося вийти з {group_name}</string>
+    <string name="groupMemberInvitedHistory"><b>{name}</b> був запрошений приєднатися до групи. Історію чатів за останні 14 днів надано.</string>
+    <string name="groupMemberInvitedHistoryMultiple"><b>{name}</b> і ще <b>{count}</b> осіб були запрошені приєднатися до групи. Історію чатів за останні 14 днів надано.</string>
+    <string name="groupMemberInvitedHistoryTwo"><b>{name}</b> та <b>{other_name}</b> були запрошені приєднатися до групи. Історію чатів за останні 14 днів надано.</string>
     <string name="groupMemberLeft"><b>{name}</b> покинув групу.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> та ще <b>{count} інших</b> покинули групу.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> та <b>{other_name}</b> покинули групу.</string>
@@ -554,6 +616,9 @@
     <string name="groupMemberNewTwo"><b>{name}</b> та <b>{other_name}</b> були запрошені приєднатися до групи.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Ви</b> та <b>{count}</b> інших були запрошені приєднатися до групи. Було надано спільний доступ до історії чату.</string>
     <string name="groupMemberNewYouHistoryTwo"><b>Вас</b> та <b>{other_name}</b> запросили до групи з наданням доступу до історії листування.</string>
+    <string name="groupMemberRemoveFailed">Не вдалося видалити <b>{name}</b> з <b>{group_name}</b></string>
+    <string name="groupMemberRemoveFailedMultiple">Не вдалося видалити <b>{name}</b> і <b>{count} інших</b> з <b>{group_name}</b></string>
+    <string name="groupMemberRemoveFailedOther">Не вдалося видалити <b>{name}</b> і <b>{other_name}</b> з <b>{group_name}</b></string>
     <string name="groupMemberYouLeft"><b>Ви</b> покинули групу.</string>
     <string name="groupMembers">Учасники групи</string>
     <string name="groupMembersNone">Відсутні учасники у цій групі.</string>
@@ -567,6 +632,7 @@
     <string name="groupNoMessages">У вас немає повідомлень від <b>{group_name}</b>. Надішліть повідомлення, щоб розпочати розмову!</string>
     <string name="groupNotUpdatedWarning">Ця група не оновлювалася понад 30 днів. У вас можуть виникнути проблеми з надсиланням повідомлень або переглядом інформації про групу.</string>
     <string name="groupOnlyAdmin">Ви — єдиний адміністратор у <b>{group_name}</b>.\n\nУчасники групи та налаштування не можуть бути змінені без адміністратора.</string>
+    <string name="groupOnlyAdminLeave">Ви — єдиний адміністратор у <b>{group_name}</b>.\n\nУчасники групи та налаштування не можуть бути змінені без адміністратора. Щоб вийти з групи, не видаливши її, спочатку додайте нового адміністратора.</string>
     <string name="groupPendingRemoval">Очікує видалення</string>
     <string name="groupPromotedYou"><b>Вас</b> підвищили до адміністратора.</string>
     <string name="groupPromotedYouMultiple"><b>Ви</b> та ще <b>{count} інших</b> були підвищені до адміністраторів.</string>
@@ -620,6 +686,12 @@
     <string name="incognitoKeyboardDescription">Запитувати режим інкогніто, якщо доступний. Залежно від клавіатури, яку ви використовуєте, ваша клавіатура може ігнорувати цей запит.</string>
     <string name="info">Інформація</string>
     <string name="invalidShortcut">Недопустимий ярлик</string>
+    <plurals name="inviteContactsPlural">
+        <item quantity="one">Запросити контакт</item>
+        <item quantity="few">Запросити контакти</item>
+        <item quantity="many">Запросити контакти</item>
+        <item quantity="other">Запросити контакти</item>
+    </plurals>
     <plurals name="inviteFailed">
         <item quantity="one">Помилка запрошення</item>
         <item quantity="few">Помилка запрошень</item>
@@ -632,6 +704,14 @@
         <item quantity="many">Неможливо надіслати запрошення. Бажаєте спробувати ще раз?</item>
         <item quantity="other">Неможливо надіслати запрошення. Бажаєте спробувати ще раз?</item>
     </plurals>
+    <plurals name="inviteMembers">
+        <item quantity="one">Запросити учасника</item>
+        <item quantity="few">Запросити учасників</item>
+        <item quantity="many">Запросити учасників</item>
+        <item quantity="other">Запросити учасників</item>
+    </plurals>
+    <string name="inviteNewMemberGroupLink">Запросіть нового учасника до групи, ввівши Account ID, ONS вашого друга або сканувавши їх QR-код {icon}</string>
+    <string name="inviteNewMemberGroupNoLink">Запросіть нового учасника до групи, ввівши Account ID або ONS вашого друга чи відсканувавши їхній QR-код</string>
     <string name="join">Приєднатися</string>
     <string name="later">Пізніше</string>
     <string name="launchOnStartDescriptionDesktop">Автоматично запускати {app_name} під час увімкнення компʼютера.</string>
@@ -651,6 +731,8 @@
     <string name="legacyGroupMemberNewYouOther"><b>Ви</b> та <b>{other_name}</b> приєдналися до групи.</string>
     <string name="legacyGroupMemberTwoNew"><b>{name}</b> та <b>{other_name}</b> приєдналися до групи.</string>
     <string name="legacyGroupMemberYouNew"><b>Ви</b> приєдналися до групи.</string>
+    <string name="limitBackgroundActivity">Обмежити фонову активність?</string>
+    <string name="limitBackgroundActivityDescription">Наразі ви дозволяєте {app_name} працювати у фоновому режимі для підвищення надійності сповіщень. Зміна цього параметра може призвести до менш надійних сповіщень.</string>
     <string name="linkPreviews">Попередній перегляд посилань</string>
     <string name="linkPreviewsDescription">Показувати попередні перегляди посилань для підтримуваних URL.</string>
     <string name="linkPreviewsEnable">Ввімкнути попередній перегляд посилань</string>
@@ -675,9 +757,11 @@
     <string name="lockAppUnlock">Торкніться, щоб розблокувати</string>
     <string name="lockAppUnlocked">{app_name} розблоковано</string>
     <string name="logs">Журнали</string>
+    <string name="manageAdmins">Керувати адміністраторами</string>
     <string name="manageMembers">Керувати учасниками</string>
     <string name="managePro">Налаштування {pro}</string>
     <string name="max">Максимум</string>
+    <string name="maybeLater">Можливо, пізніше</string>
     <string name="media">Медіа</string>
     <plurals name="members">
         <item quantity="one">%1$d учасник</item>
@@ -692,7 +776,9 @@
         <item quantity="other">%1$d активних учасників</item>
     </plurals>
     <string name="membersAddAccountIdOrOns">Додати ID облікового запису або ONS</string>
+    <string name="membersGroupPromotionAcceptInvite">Учасників можна підвищити лише після того, як вони приймуть запрошення до групи.</string>
     <string name="membersInvite">Запросити з контактів</string>
+    <string name="membersInviteNoContacts">У вас немає контактів, яких можна запросити до цієї групи.\nПоверніться назад і запросіть учасників, використовуючи їхній Account ID або ONS.</string>
     <plurals name="membersInviteSend">
         <item quantity="one">Надіслати запрошення</item>
         <item quantity="few">Надіслати запрошення</item>
@@ -703,8 +789,10 @@
     <string name="membersInviteShareDescriptionMultiple">Бажаєте поділитися історією повідомлень групи з <b>{name}</b> і <b>{count} іншими</b>?</string>
     <string name="membersInviteShareDescriptionTwo">Бажаєте поділитися історією повідомлень групи з <b>{name}</b> і <b>{other_name}</b>?</string>
     <string name="membersInviteShareMessageHistory">Поділитися історією повідомлень</string>
+    <string name="membersInviteShareMessageHistoryDays">Надати доступ до історії повідомлень за останні 14 днів</string>
     <string name="membersInviteShareNewMessagesOnly">Ділитися тільки новими повідомленнями</string>
     <string name="membersInviteTitle">Запросити</string>
+    <string name="membersNonAdmins">Учасники (не адміністратори)</string>
     <string name="menuBar">Панель меню</string>
     <string name="message">Повідомлення</string>
     <string name="messageBubbleReadMore">Читати далі</string>
@@ -725,6 +813,7 @@
     </plurals>
     <string name="messageNewDescriptionDesktop">Розпочніть нову розмову, ввівши Account ID або ONS вашого друга.</string>
     <string name="messageNewDescriptionMobile">Розпочніть нову розмову, ввівши Account ID, ONS вашого друга або скануючи їх QR-код.</string>
+    <string name="messageNewDescriptionMobileLink">Розпочніть нову розмову, ввівши Account ID, ONS вашого друга або сканувавши їх QR-код {icon}</string>
     <plurals name="messageNewYouveGot">
         <item quantity="one">Ви отримали нове повідомлення.</item>
         <item quantity="few">Ви отримали %1$d нових повідомлення</item>
@@ -788,6 +877,7 @@
     <string name="nicknameRemove">Видалити нікнейм</string>
     <string name="nicknameSet">Встановити псевдонім</string>
     <string name="no">Ні</string>
+    <string name="noNonAdminsInGroup">У цій групі немає учасників, які не є адміністраторами.</string>
     <string name="noSuggestions">Немає припущень</string>
     <string name="nonProLongerMessagesDescription">Надсилайте повідомлення до 10 000 символів у всіх розмовах.</string>
     <string name="nonProUnlimitedPinnedDescription">Організовуйте вікно розмов з необмеженою кількістю закріплених бесід.</string>
@@ -797,6 +887,7 @@
     <string name="noteToSelfEmpty">У вас немає повідомлень в Нотатках для себе.</string>
     <string name="noteToSelfHide">Приховати нотатку для себе</string>
     <string name="noteToSelfHideDescription">Ви справді бажаєте приховати Нотатку для себе?</string>
+    <string name="noteTosPrivacyPolicy"><b>УВАГА</b>: Здійснюючи {action_type}, ти погоджуєшся з <b>Правилами користування</b> {icon} та <b>Політикою конфіденційності</b> {icon} {app_pro}</string>
     <string name="notificationDisplay">Сповіщення</string>
     <string name="notificationSenderNameAndPreview">Показувати ім’я відправника та стислий вміст повідомлення.</string>
     <string name="notificationSenderNameOnly">Показувати лише ім\'я відправника без вмісту повідомлення.</string>
@@ -841,6 +932,8 @@
     <string name="okay">Добре</string>
     <string name="on">Увімк.</string>
     <string name="onDevice">На вашому пристрої {device_type}</string>
+    <string name="onDeviceCancelDescription">Відкрийте цей обліковий запис {app_name} на пристрої типу {device_type}, увійденому до облікового запису {platform_account}, з яким ви зареєструвалися. Далі скасуйте {pro} через налаштування {app_pro}.</string>
+    <string name="onDeviceDescription">Відкрийте цей обліковий запис {app_name} на пристрої {device_type}, що увійшов у {platform_account}, з яким ви реєструвались. Потім оновіть доступ до {pro} через налаштування {app_pro}.</string>
     <string name="onLinkedDevice">На зв\'язаному пристрої</string>
     <string name="onPlatformStoreWebsite">На вебсайті {platform_store}</string>
     <string name="onPlatformWebsite">На вебсайті {platform}</string>
@@ -868,6 +961,7 @@
     <string name="onsErrorNotRecognized">Не вдалося розпізнати цей ONS. Будь ласка, перевірте його та спробуйте ще раз.</string>
     <string name="onsErrorUnableToSearch">Не вдалося виконати пошук цього ONS. Спробуйте пізніше.</string>
     <string name="open">Відкрити</string>
+    <string name="openPlatformStoreWebsite">Відкрити вебсайт {platform_store}</string>
     <string name="openPlatformWebsite">Відкрити {platform} вебсайт</string>
     <string name="openSettings">Відкрити налаштування</string>
     <string name="openSurvey">Пройти опитування</string>
@@ -903,6 +997,8 @@
     <string name="passwordStrengthIndicatorDescription">Встановлення надійного пароля допомагає захистити ваші повідомлення та вкладення у разі втрати або крадіжки пристрою.</string>
     <string name="passwords">Паролі</string>
     <string name="paste">Вставити</string>
+    <string name="paymentError">Помилка оплати</string>
+    <string name="paymentProError">Твій платіж було успішно оброблено, але сталася помилка під час {action_type} стану {pro}.\n\nБудь ласка, перевір з\'єднання з мережею та повтори спробу.</string>
     <string name="permissionChange">Потрібна зміна дозволів</string>
     <string name="permissionMusicAudioDenied">{app_name} потребує доступу до музики та аудіо, щоб надсилати файли, музику та аудіо, але доступ було постійно відхилено. Натисніть Налаштування → Дозволи та увімкніть «Музика та аудіо».</string>
     <string name="permissionsAppleMusic">{app_name} потребує використовувати Apple Music для відтворення медіавкладень.</string>
@@ -947,11 +1043,30 @@
     <string name="preview">Попередній перегляд</string>
     <string name="previewNotification">Попередній перегляд сповіщень</string>
     <string name="proAccessError">Помилка доступу {pro}</string>
+    <string name="proAccessExpireDate">Ваш доступ до {pro} спливає <b>{date}</b>.</string>
+    <string name="proAccessLoading">Завантажується доступ до {pro}</string>
+    <string name="proAccessLoadingDescription">Ваші дані доступу до {pro} все ще завантажуються. Ви не можете оновити, поки цей процес не буде завершено.</string>
     <string name="proAccessLoadingEllipsis">Доступ до {pro} завантажується...</string>
+    <string name="proAccessNetworkLoadError">Не вдалося встановити з\'єднання з мережею, щоб завантажити інформацію про ваш доступ {pro}. Оновлення {pro} через {app_name} буде вимкнено, доки не буде відновлено з\'єднання.\n\nБудь ласка, перевірте своє мережеве з\'єднання та повторіть спробу.</string>
+    <string name="proAccessNotFound">Доступ до {pro} не знайдено</string>
+    <string name="proAccessNotFoundDescription">{app_name} виявив, що ваш обліковий запис не має доступу {pro}. Якщо ви вважаєте, що це помилка, зверніться до служби підтримки {app_name} для отримання допомоги.</string>
+    <string name="proAccessRecover">Відновити доступ до {pro}</string>
+    <string name="proAccessRenew">Поновити доступ до {pro}</string>
+    <string name="proAccessRenewDesktop">На даний момент доступ до {pro} можна придбати або поновити лише через {platform_store} або {platform_store_other}. Оскільки ви використовуєте {app_name} для компʼютера, поновити доступ тут неможливо.\n\nРозробники {app_name} активно працюють над альтернативними методами оплати, щоб дозволити користувачам купувати доступ до {pro} поза межами {platform_store} та {platform_store_other}. <b>Дорожня карта {pro}</b> {icon}</string>
+    <string name="proAccessRenewPlatformStoreWebsite">Поновіть доступ до {pro} на <b><font color="0">вебсайті {platform_store}</font></b>, використовуючи обліковий запис {platform_account}, з яким ви зареєструвалися у {pro}.</string>
+    <string name="proAccessRenewPlatformWebsite">Поновіть підписку на <b><font color="0">вебсайті {platform}</font></b>, використовуючи обліковий запис {platform_account}, з яким ви оформили {pro}.</string>
+    <string name="proAccessRenewStart">Поновіть свій доступ до {pro}, щоб знову почати використовувати потужні функції {app_pro} Beta.</string>
+    <string name="proAccessRestored">Доступ до {pro} відновлено</string>
+    <string name="proAccessRestoredDescription">{app_name} виявив і відновив доступ до {pro} для вашого облікового запису. Ваш статус {pro} було відновлено!</string>
+    <string name="proAccessSignUp">Оскільки ви спочатку зареєструвалися в {app_pro} через <b>{platform_store}</b>, для оновлення доступу до {pro} потрібно використати ваш обліковий запис {platform_account}.</string>
+    <string name="proAccessUpgradeDesktop">Наразі доступ до {pro} можна придбати лише через {platform_store} або {platform_store_other}. Оскільки ви використовуєте {app_name} Desktop, оновлення до {pro} тут недоступне.\n\nРозробники {app_name} наполегливо працюють над альтернативними способами оплати, щоб дозволити придбання доступу до {pro} поза межами {platform_store} та {platform_store_other}. <b>Дорожня карта {pro}</b> {icon}</string>
     <string name="proActivated">активовано</string>
+    <string name="proActivatingActivation">активація</string>
     <string name="proAllSet">Готово!</string>
+    <string name="proAllSetDescription">Ваш доступ до {app_pro} оновлено! З вас буде стягнуто плату, коли {pro} автоматично поновиться <b>{date}</b>.</string>
     <string name="proAlreadyPurchased">У вас вже є</string>
     <string name="proAnimatedDisplayPicture">Не зволікайте і завантажуйте GIF та анімовані WebP картинки для свого аватара!</string>
+    <string name="proAnimatedDisplayPictureCallToActionDescription">Отримайте анімовані аватари та розблокуйте преміальні функції з {app_pro} Beta</string>
     <string name="proAnimatedDisplayPictureFeature">Анімоване зображення профілю</string>
     <string name="proAnimatedDisplayPictureModalDescription">користувачі можуть завантажувати GIF</string>
     <string name="proAnimatedDisplayPictures">Анімовані зображення облікового запису</string>
@@ -962,14 +1077,32 @@
     <string name="proBadgeVisible">Показувати значок {app_pro} іншим користувачам</string>
     <string name="proBadges">Позначки</string>
     <string name="proBadgesDescription">Продемонструйте свою підтримку {app_name} з ексклюзивним значком поруч з власним іменем.</string>
+    <plurals name="proBadgesSent">
+        <item quantity="one">%1$s значок %2$s надіслано</item>
+        <item quantity="few">%1$s значки %2$s надіслано</item>
+        <item quantity="many">%1$s значків %2$s надіслано</item>
+        <item quantity="other">%1$s значків %2$s надіслано</item>
+    </plurals>
     <string name="proBetaFeatures">Можливості {pro}</string>
     <string name="proBilledAnnually">{price} сплата щорічно</string>
     <string name="proBilledMonthly">{price} сплата щомісячно</string>
     <string name="proBilledQuarterly">{price} сплата щоквартально</string>
+    <string name="proCallToActionLongerMessages">Хочете надсилати довші повідомлення?\nНадсилайте більше тексту та розблокуйте преміальні функції з {app_pro} Beta</string>
+    <string name="proCallToActionPinnedConversations">Потрібно більше закріплень?\nВпорядкуйте свої чати та розблокуйте преміальні функції з {app_pro} Beta</string>
+    <string name="proCallToActionPinnedConversationsMoreThan">Хочете більше ніж {limit} закріплень?\nВпорядкуйте свої чати та розблокуйте преміальні функції з {app_pro} Beta</string>
+    <string name="proCancelSorry">Шкода, що ви скасовуєте {pro}. Ось що вам слід знати перед скасуванням вашого доступу {pro}.</string>
     <string name="proCancellation">Скасування</string>
+    <string name="proCancellationOptions">Два способи скасувати доступ {pro}:</string>
+    <string name="proCancellationShortDescription">Скасування доступу до {pro} запобіжить автоматичному поновленню перед завершенням терміну дії {pro}.\n\nСкасування {pro} <b>не</b> передбачає повернення коштів. Ви й надалі зможете користуватися функціями {app_pro} до закінчення терміну дії вашого доступу {pro}.</string>
+    <string name="proChooseAccess">Оберіть варіант доступу до {pro}, який найбільше вам підходить.\nЧим довший доступ — тим більша знижка.</string>
+    <string name="proClearAllDataDevice">Ви впевнені, що хочете видалити свої дані з цього пристрою?\n\n<b>{app_pro}</b> не можна перенести на інший обліковий запис. Збережіть свій пароль відновлення, щоб мати змогу пізніше відновити доступ до {pro}.</string>
+    <string name="proClearAllDataNetwork">Ви впевнені, що бажаєте видалити свої дані з мережі? Якщо продовжите, ви не зможете відновити свої повідомлення або контакти.\n\n<b>{app_pro}</b> не можна перенести на інший обліковий запис. Будь ласка, збережіть свій пароль відновлення, щоб мати змогу пізніше відновити доступ до {pro}.</string>
+    <string name="proDiscountTooltip">Ваш доступ до {pro} вже має знижку {percent}% від повної ціни {app_pro}.</string>
     <string name="proErrorRefreshingStatus">Помилка оновлення {pro}</string>
     <string name="proExpired">Підписка сплила</string>
+    <string name="proExpiredDescription">На жаль, ваш доступ до {pro} завершився.\nПоновіть його, щоб знову активувати ексклюзивні переваги та функції {app_pro} Beta.</string>
     <string name="proExpiringSoon">Невдовзі спливе підписка</string>
+    <string name="proExpiringSoonDescription">Ваш доступ {pro} спливає через <b>{time}</b>.\nОновіть зараз, щоб зберегти доступ до ексклюзивних переваг і функцій {app_pro} Beta</string>
     <string name="proExpiringTime">{pro} спливає за <b>{time}</b></string>
     <string name="proFaq">{pro} ЧАП</string>
     <string name="proFaqDescription">Відповіді на загальні запитання знайдеш у ЧаПи {app_pro}.</string>
@@ -978,8 +1111,16 @@
     <string name="proFeatureListLoadsMore">Та велика кількість ексклюзивних можливостей</string>
     <string name="proFeatureListLongerMessages">Повідомлення до 10 000 символів</string>
     <string name="proFeatureListPinnedConversations">Закріплюйте необмежену кількість бесід</string>
+    <string name="proFullestPotential">Бажаєте використовувати {app_name} на повну?\nОновіться до {app_pro} Beta, щоб отримати доступ до безлічі ексклюзивних переваг та функцій.</string>
     <string name="proGroupActivated">Групу активовано</string>
     <string name="proGroupActivatedDescription">У цієї групи розширено можливості! Тепер вона може вміщати до 300 учасників, тому що адміністратор групи має</string>
+    <plurals name="proGroupsUpgraded">
+        <item quantity="one">%1$s групу покращено</item>
+        <item quantity="few">%1$s групи покращено</item>
+        <item quantity="many">%1$s груп покращено</item>
+        <item quantity="other">%1$s груп покращено</item>
+    </plurals>
+    <string name="proImportantDescription">Запит на повернення коштів є остаточним. Якщо його буде схвалено, ваш доступ до {pro} буде негайно скасовано, і ви втратите доступ до всіх функцій {pro}.</string>
     <string name="proIncreasedAttachmentSizeFeature">Збільшений розмір вкладення</string>
     <string name="proIncreasedMessageLengthFeature">Збільшена довжина повідомлень</string>
     <string name="proLargerGroups">Більші групи</string>
@@ -987,20 +1128,55 @@
     <string name="proLargerGroupsTooltip">Незабаром усі користувачі Pro Beta зможуть створювати більші групові чати (до 300 учасників)!</string>
     <string name="proLongerMessages">Довші повідомлення</string>
     <string name="proLongerMessagesDescription">Ви можете надсилати повідомлення до 10 000 символів у всіх розмовах.</string>
+    <plurals name="proLongerMessagesSent">
+        <item quantity="one">%1$s довге повідомлення надіслано</item>
+        <item quantity="few">%1$s довгих повідомлення надіслано</item>
+        <item quantity="many">%1$s довгих повідомлень надіслано</item>
+        <item quantity="other">%1$s довгих повідомлень надіслано</item>
+    </plurals>
     <string name="proMessageInfoFeatures">У цьому повідомленні наявні наступні функції Session Pro:</string>
+    <string name="proNewInstallation">За допомогою нової інсталяції</string>
+    <string name="proNewInstallationDescription">Переінсталюйте {app_name} на цьому пристрої через {platform_store}, відновіть свій обліковий запис за допомогою пароля відновлення і поновіть {pro} через налаштування {app_pro}.</string>
+    <string name="proNewInstallationUpgrade">Перевстановіть {app_name} на цьому пристрої через {platform_store}, відновіть свій обліковий запис за допомогою Пароля відновлення доступу та оновіть до {pro} із налаштувань {app_pro}.</string>
+    <string name="proOptionsRenewalSubtitle">Поки що є три способи оновлення:</string>
     <string name="proOptionsTwoRenewalSubtitle">Наразі є два способи поновлення доступу:</string>
     <string name="proPercentOff">{percent}% Знижки</string>
+    <plurals name="proPinnedConversations">
+        <item quantity="one">%1$s закріплена бесіда</item>
+        <item quantity="few">%1$s закріплені бесіди</item>
+        <item quantity="many">%1$s закріплених бесід</item>
+        <item quantity="other">%1$s закріплених бесід</item>
+    </plurals>
+    <string name="proPlanPlatformRefund">Оскільки ви спочатку зареєструвалися в {app_pro} через <b><font color="0">{platform_store}</font></b>, вам потрібно використати ваш обліковий запис {platform_account}, щоб подати запит на повернення коштів.</string>
+    <string name="proPlanPlatformRefundLong">Оскільки ви спочатку зареєструвалися в {app_pro} через <b><font color="0">{platform_store}</font></b>, ваш запит на повернення коштів буде оброблений Підтримкою {app_name}.\n\nПодайте запит на повернення, натиснувши кнопку нижче та заповнивши форму запиту на повернення коштів.\n\nПідтримка {app_name} прагне обробляти запити на повернення протягом 24–72 годин, проте в періоди високого навантаження це може зайняти більше часу.</string>
+    <string name="proPlanRenewSupport">Ваш доступ до {app_pro} було поновлено! Дякуємо за підтримку {network_name}.</string>
     <string name="proPriceOneMonth">1 місяць — {monthly_price} / місяць</string>
     <string name="proPriceThreeMonths">3 місяці — {monthly_price} / місяць</string>
     <string name="proPriceTwelveMonths">12 місяців – {monthly_price} / місяць</string>
+    <string name="proReactivatingActivation">повторна активація</string>
+    <string name="proRefundAccountDevice">Відкрийте цей обліковий запис {app_name} на пристрої типу {device_type}, увійденому до облікового запису {platform_account}, з яким ви зареєструвалися. Потім подайте запит на повернення коштів через налаштування {app_pro}.</string>
     <string name="proRefundDescription">Шкода, же ти передумав(ла). Перед вимогою повернення грошей ти мусиш знати ось що.</string>
+    <string name="proRefundNextSteps">{platform} наразі обробляє ваш запит на повернення коштів. Зазвичай це займає 24–48 годин. Залежно від їх рішення, ви можете побачити зміну статусу {pro} у {app_name}.</string>
+    <string name="proRefundRequestSessionSupport">Ваш запит на повернення коштів буде оброблений Службою підтримки {app_name}.\n\nНадішліть запит на повернення натиснувши кнопку нижче та заповнивши форму повернення.\n\nСлужба підтримки {app_name} зазвичай обробляє запити на повернення коштів упродовж 24–72 годин, однак у періоди високої завантаженості обробка може займати більше часу.</string>
+    <string name="proRefundRequestStorePolicies">Ваш запит на повернення коштів буде оброблятись виключно через <b>вебсайт {platform}</b> платформою {platform}.\n\nЧерез політику повернення коштів {platform}, розробники {app_name} не мають змоги вплинути на результат запиту. Це стосується як схвалення або відхилення запиту, так і видачі повного або часткового повернення.</string>
+    <string name="proRefundSupport">Будь ласка, зверніться до {platform} для отримання подальших оновлень щодо вашого запиту на повернення коштів. Через політику повернення коштів {platform}, розробники {app_name} не мають можливості впливати на результат запитів на повернення коштів.\n\n<font color="0">Підтримка повернень коштів {platform}</font></string>
     <string name="proRefunding">Повернення грошей за {pro}</string>
+    <string name="proRefundingDescription">Повернення коштів за {app_pro} здійснюється виключно через {platform} через {platform_store}.\n\nЧерез політику повернення коштів {platform}, розробники {app_name} не мають можливості впливати на результат запитів на повернення. Це стосується як схвалення або відхилення запиту, так і надання повного або часткового повернення коштів.</string>
+    <string name="proRenewAnimatedDisplayPicture">Хочете знову використовувати анімовані зображення профілю?\nПоновіть свій доступ до {pro}, щоб розблокувати функції, яких вам бракувало.</string>
+    <string name="proRenewBeta">Оновити {pro} Beta</string>
+    <string name="proRenewDesktopLinked">Поновіть доступ до {pro} у налаштуваннях {app_pro} на повʼязаному пристрої з встановленим {app_name} через {platform_store} або {platform_store_other}.</string>
+    <string name="proRenewLongerMessages">Хочете знову надсилати довші повідомлення?\nПоновіть свій доступ до {pro}, щоб розблокувати функції, яких вам бракувало.</string>
     <string name="proRenewMaxPotential">Хочете знову використати {app_name} на повну?\nПоновіть доступ до {pro}, щоб розблокувати функції, яких вам бракувало.</string>
+    <string name="proRenewPinFiveConversations">Бажаєте знову закріпити більше ніж {limit} розмов?\nПоновіть свій доступ до {pro}, щоб отримати функції, яких вам бракувало.</string>
     <string name="proRenewPinMoreConversations">Хочете знову закріпити більше розмов?\nПоновіть свій доступ до {pro}, щоб розблокувати функції, яких вам бракувало.</string>
+    <string name="proRenewTosPrivacy">Поновлюючи, ви погоджуєтеся з <b>Умовами надання послуг</b> {icon} та <b>Політикою конфіденційності</b> {icon} сервісу {app_pro}.</string>
     <string name="proRenewalUnsuccessful">Помилка поновлення Pro, повторна спроба незабаром</string>
+    <string name="proRenewingAction">поновлення</string>
+    <string name="proRenewingNoAccessBilling">На даний момент доступ {pro} можна придбати та оновити лише через {platform_store} або {platform_store_other}. Оскільки ви встановили {app_name}, використовуючи {build_variant}, ви не можете поновити доступ тут.\n\nРозробники {app_name} активно працюють над альтернативними способами оплати, щоб надати змогу користувачам купувати доступ {pro} поза межами {platform_store} та {platform_store_other}.<b> Дорожня карта {pro}</b> {icon}</string>
     <string name="proRequestedRefund">Вимогу повернення грошей надіслано</string>
     <string name="proSendMore">Надсилайте довші повідомлення з</string>
     <string name="proSettings">Налаштування {pro}</string>
+    <string name="proStartUsing">Почати користуватися {pro}</string>
     <string name="proStats">Ваша статистика {pro}</string>
     <string name="proStatsLoading">Завантажується статистика плану {pro}</string>
     <string name="proStatsLoadingDescription">Ваша статистика плану {pro} завантажується, зачекайте, будь ласка.</string>
@@ -1008,12 +1184,28 @@
     <string name="proStatusError">Помилка статусу {pro}</string>
     <string name="proStatusInfoInaccurateNetworkError">Не вдалося під\'єднатися до мережі для перевірки вашого статусу {pro}. Інформація, демонстрована на цій сторінці, може бути неточною, доки не буде відновлено з\'єднання.\n\nБудь ласка, перевірте з\'єднання з мережею та спробуйте ще раз.</string>
     <string name="proStatusLoading">Завантажується статус плану {pro}</string>
+    <string name="proStatusLoadingDescription">Завантажується ваша інформація {pro}. Деякі дії на цій сторінці можуть бути недоступні, поки завантаження не завершено.</string>
     <string name="proStatusLoadingSubtitle">Завантаження {pro}</string>
+    <string name="proStatusNetworkErrorContinue">Не вдалося підключитися до мережі для перевірки статусу {pro}. Ви не можете продовжити, доки з\'єднання не буде відновлено.\n\nПеревірте з\'єднання з мережею та повторіть спробу.</string>
+    <string name="proStatusNetworkErrorDescription">Не вдалося під\'єднатися до мережі для перевірки вашого статусу {pro}. Ви не можете перейти на {pro}, поки з\'єднання не буде відновлено.\n\nБудь ласка, перевірте з\'єднання з мережею та спробуйте ще раз.</string>
+    <string name="proStatusRefreshNetworkError">Не вдалося під\'єднатися до мережі для оновлення вашого статусу {pro}. Деякі дії на цій сторінці буде вимкнено, доки не буде відновлено з\'єднання.\n\nБудь ласка, перевірте з\'єднання з мережею та спробуйте ще раз.</string>
+    <string name="proStatusRenewError">Не вдалося з\'єднатися з мережею для завантаження вашого поточного доступу {pro}. Поновлення {pro} через {app_name} буде вимкнено, доки з\'єднання не буде відновлено.\n\nПеревірте підключення до мережі та спробуйте ще раз.</string>
     <string name="proSupportDescription">Потрібна допомога з {pro}? Надішліть запит до служби підтримки.</string>
+    <string name="proTosDescription">Здійснюючи {action_type}, ти здійснюєш {activation_type} {app_pro} через протокол {app_name}. {entity} забезпечує активацію, але не є постачальником {app_pro}. {entity} не несе відповідальності за продуктивність, доступність чи функціональність {app_pro}.</string>
     <string name="proTosPrivacy">Цією дією ти надаси згоду щодо дотримання <b>Правил послуги</b> {app_pro} {icon} і <b>Ставлення до особистих відомостей</b> {icon}</string>
     <string name="proUnlimitedPins">Необмежена кількість закріплених бесід</string>
     <string name="proUnlimitedPinsDescription">Закріплення необмеженої кількості співрозмовників в головному переліку.</string>
+    <string name="proUpdatingAction">оновлення</string>
+    <string name="proUpgradeAccess">Оновіться до {app_pro} Beta, щоб отримати доступ до великої кількості ексклюзивних переваг і функцій.</string>
+    <string name="proUpgradeDesktopLinked">Оновіть до {pro} через налаштування {app_pro} на прив’язаному пристрої, на якому встановлено {app_name} через {platform_store} або {platform_store_other}.</string>
+    <string name="proUpgradeNoAccessBilling">На даний момент доступ до {pro} можна придбати лише через {platform_store} або {platform_store_other}. Оскільки ви встановили {app_name} за допомогою {build_variant}, оновлення до {pro} тут недоступне.\n\nРозробники {app_name} активно працюють над альтернативними способами оплати, щоб дати змогу користувачам придбати доступ до {pro} поза межами {platform_store} та {platform_store_other}.<b> Дорожня карта {pro}</b> {icon}</string>
     <string name="proUpgradeOption">Наразі єдиний шлях підвищити рівень:</string>
+    <string name="proUpgradeOptionsTwo">Наразі є два способи оновлення доступу.</string>
+    <string name="proUpgraded">Ви оновилися до {app_pro}!\nДякуємо за підтримку мережі {network_name}.</string>
+    <string name="proUpgradingAction">покращення</string>
+    <string name="proUpgradingTo">Оновлення до {pro}</string>
+    <string name="proUpgradingTosPrivacy">Оновлюючись, ви погоджуєтесь з <b>Умовами надання послуг</b> {icon} та <b>Політикою конфіденційності</b> {icon} {app_pro}</string>
+    <string name="proUserProfileModalCallToAction">Хочете отримати більше від {app_name}?\nОновіться до {app_pro} Beta, щоб мати потужніший досвід обміну повідомленнями.</string>
     <string name="processingRefundRequest">{platform} опрацьовує ваш запит на відшкодування</string>
     <string name="profile">Профіль</string>
     <string name="profileDisplayPicture">Аватар</string>
@@ -1022,6 +1214,13 @@
     <string name="profileDisplayPictureSizeError">Будь ласка, виберіть файл меншого розміру.</string>
     <string name="profileErrorUpdate">Не вдалося оновити профіль.</string>
     <string name="promote">Підвищити</string>
+    <string name="promoteAdminsWarning">Адміністратори зможуть бачити історію повідомлень за останні 14 днів і не можуть бути понижені або видалені з групи.</string>
+    <plurals name="promoteMember">
+        <item quantity="one">Підвищити учасника</item>
+        <item quantity="few">Підвищити учасників</item>
+        <item quantity="many">Підвищити учасників</item>
+        <item quantity="other">Підвищити учасників</item>
+    </plurals>
     <plurals name="promotionFailed">
         <item quantity="one">Підвищення прав не відбулось</item>
         <item quantity="few">Підвищення прав не відбулось</item>
@@ -1074,6 +1273,8 @@
     <string name="recoveryPasswordWarningSendDescription">Це ваш Recovery password. Якщо ви надішлете його комусь, він матиме повний доступ до вашого облікового запису.</string>
     <string name="recreateGroup">Оновити групу</string>
     <string name="redo">Вперед</string>
+    <string name="refundNonOriginatorApple">Оскільки ви спочатку зареєструвалися на {app_pro} через інший обліковий запис {platform_account}, вам потрібно використовувати саме цей <b><font color="0">{platform_account}</font></b>, щоб оновити доступ до {pro}.</string>
+    <string name="refundRequestOptions">Два способи подати запит на повернення коштів:</string>
     <string name="remainingCharactersOverTooltip">Скоротіть довжину повідомлення на {count}</string>
     <plurals name="remainingCharactersTooltip">
         <item quantity="one">%1$d символ залишився</item>
@@ -1083,18 +1284,65 @@
     </plurals>
     <string name="remindMeLater">Нагадати пізніше</string>
     <string name="remove">Видалити</string>
+    <plurals name="removeMember">
+        <item quantity="one">Видалити учасника</item>
+        <item quantity="few">Видалити учасників</item>
+        <item quantity="many">Видалити учасників</item>
+        <item quantity="other">Видалити учасників</item>
+    </plurals>
+    <plurals name="removeMemberMessages">
+        <item quantity="one">Видалити учасника та його повідомлення</item>
+        <item quantity="few">Видалити учасників та їхні повідомлення</item>
+        <item quantity="many">Видалити учасників та їхні повідомлення</item>
+        <item quantity="other">Видалити учасників та їхні повідомлення</item>
+    </plurals>
     <string name="removePasswordFail">Не вдалося видалити пароль</string>
     <string name="removePasswordModalDescription">Видаліть свій поточний пароль для {app_name}. Локально збережені дані буде повторно зашифровано випадково згенерованим ключем, який зберігатиметься на вашому пристрої.</string>
+    <plurals name="removingMember">
+        <item quantity="one">Видалення учасника</item>
+        <item quantity="few">Видалення учасників</item>
+        <item quantity="many">Видалення учасників</item>
+        <item quantity="other">Видалення учасників</item>
+    </plurals>
     <string name="renew">Поновити</string>
+    <string name="renewingPro">Оновлення {pro}</string>
     <string name="reply">Відповісти</string>
     <string name="requestRefund">Запит на повернення коштів</string>
+    <string name="requestRefundPlatformWebsite">Подайте запит на повернення коштів на <b><font color="0">вебсайті {platform}</font></b>, використовуючи обліковий запис {platform_account}, з яким ви оформили {pro}.</string>
     <string name="resend">Надіслати повторно</string>
+    <plurals name="resendInvite">
+        <item quantity="one">Надіслати запрошення повторно</item>
+        <item quantity="few">Надіслати запрошення повторно</item>
+        <item quantity="many">Надіслати запрошення повторно</item>
+        <item quantity="other">Надіслати запрошення повторно</item>
+    </plurals>
+    <plurals name="resendPromotion">
+        <item quantity="one">Надіслати повторно підвищення</item>
+        <item quantity="few">Надіслати повторно підвищення</item>
+        <item quantity="many">Надіслати повторно підвищення</item>
+        <item quantity="other">Надіслати повторно підвищення</item>
+    </plurals>
+    <plurals name="resendingInvite">
+        <item quantity="one">Повторне надсилання запрошення</item>
+        <item quantity="few">Повторне надсилання запрошень</item>
+        <item quantity="many">Повторне надсилання запрошень</item>
+        <item quantity="other">Повторне надсилання запрошень</item>
+    </plurals>
+    <plurals name="resendingPromotion">
+        <item quantity="one">Повторна відправка прав адміністратора</item>
+        <item quantity="few">Повторна відправка прав адміністратора</item>
+        <item quantity="many">Повторна відправка прав адміністратора</item>
+        <item quantity="other">Повторна відправка прав адміністратора</item>
+    </plurals>
     <string name="resolving">Завантаження інформації про країни...</string>
     <string name="restart">Перезапустити</string>
     <string name="resync">Синхронізувати повторно</string>
     <string name="retry">Спробувати знову</string>
     <string name="reviewLimit">Ліміт на відгуки</string>
     <string name="reviewLimitDescription">Здається, ви нещодавно вже залишали відгук про {app_name}. Дякуємо за ваш зворотний зв\'язок!</string>
+    <string name="runAppBackground">Запускати застосунок у фоні</string>
+    <string name="runSessionBackground">Запустити {app_name} у фоновому режимі?</string>
+    <string name="runSessionBackgroundDescription">Оскільки ви використовуєте повільний режим, ми рекомендуємо дозволити {app_name} працювати у фоновому режимі для покращення сповіщень. Це може підвищити стабільність отримання сповіщень, хоча ваша система все одно може автоматично обмежувати фонову активність.\n\nЦе можна змінити пізніше в налаштуваннях.</string>
     <string name="save">Зберегти</string>
     <string name="saved">Збережено</string>
     <string name="savedMessages">Збережені повідомлення</string>
@@ -1127,6 +1375,12 @@
     <string name="sending">Надсилання</string>
     <string name="sendingCallOffer">Надіслання запиту</string>
     <string name="sendingConnectionCandidates">Надіслання можливих з\'єднань</string>
+    <plurals name="sendingPromotion">
+        <item quantity="one">Надсилання прав адміністратора</item>
+        <item quantity="few">Надсилання прав адміністратора</item>
+        <item quantity="many">Надсилання прав адміністратора</item>
+        <item quantity="other">Надсилання прав адміністратора</item>
+    </plurals>
     <string name="sent">Надіслано:</string>
     <string name="sessionAppearance">Зовнішній вигляд</string>
     <string name="sessionClearData">Очистити дані</string>
@@ -1162,7 +1416,10 @@
     <string name="shareAccountIdDescriptionCopied">Поширте друзям у застосунках, де ви зазвичай спілкуєтеся, а потім перенесіть розмову сюди.</string>
     <string name="shareExtensionDatabaseError">Виникла проблема при відкритті бази даних. Будь ласка, перезапустіть застосунок і повторіть спробу.</string>
     <string name="shareExtensionNoAccountError">Овва! Здається, у вас ще немає облікового запису у {app_name}.\n\nСпочатку необхідно створити обліковий запис у {app_name}, а потім зможете поділитись.</string>
+    <string name="shareGroupMessageHistory">Бажаєте поділитися історією повідомлень групи з цим користувачем?</string>
     <string name="shareToSession">Поділитись з {app_name}</string>
+    <string name="sharingSupportMultipleMedia">Вибачте, {app_name} підтримує лише спільний доступ до кількох зображень і відео одночасно</string>
+    <string name="sharingSupportMultipleMediaExcluded">Спільний доступ підтримує лише медіафайли. Немедійні файли було виключено</string>
     <string name="show">Перегляд</string>
     <string name="showAll">Показати все</string>
     <string name="showLess">Показати менше</string>
@@ -1192,6 +1449,8 @@
     <string name="unknown">Невідомо</string>
     <string name="unsupportedCpu">Непідтримуваний ЦП</string>
     <string name="update">Оновити</string>
+    <string name="updateAccess">Оновити доступ до {pro}</string>
+    <string name="updateAccessTwo">Два способи оновити ваш доступ до {pro}:</string>
     <string name="updateApp">Оновлення застосунку</string>
     <string name="updateCommunityInformation">Оновити інформацію про спільноту</string>
     <string name="updateCommunityInformationDescription">Назву та опис спільноти бачать усі учасники</string>
@@ -1224,7 +1483,9 @@
     <string name="urlOpenDescription">Ви впевнені, що хочете відкрити цю URL-адресу у своєму браузері?\n\n<b>{url}</b></string>
     <string name="urlOpenDescriptionAlternative">За ланкою перейде твоє оглядало мережців за промовчання.</string>
     <string name="useFastMode">Використовувати швидкий режим</string>
+    <string name="viaPlatformWebsiteDescription">Змініть тариф, використовуючи обліковий запис {platform_account}, з яким ви зареєструвалися, через <b><font color="0">вебсайт {platform}</font></b>.</string>
     <string name="viaStoreWebsite">Через вебсайт {platform}</string>
+    <string name="viaStoreWebsiteDescription">Оновіть свій доступ до {pro}, використовуючи {platform_account}, з яким ви зареєструвалися, через вебсайт <b><font color="0">{platform_store}</font></b>.</string>
     <string name="video">Відео</string>
     <string name="videoErrorPlay">Не вдається відтворити відео.</string>
     <string name="view">Вигляд</string>

@@ -20,6 +20,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapNotNull
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.withMutableUserConfigs
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Log
@@ -70,14 +72,21 @@ class FetchProDetailsWorker @AssistedInject constructor(
 
             Log.d(
                 TAG,
-                "Fetched pro details, status = ${details.status}, expiry = ${details.expiry}"
+                "Fetched pro details, status = ${details.status}, " +
+                        "autoRenew = ${details.autoRenewing}, expiry = ${details.expiry}"
             )
 
-            configFactory.withMutableUserConfigs {
+            configFactory.withMutableUserConfigs { configs ->
                 if (details.expiry != null) {
-                    it.userProfile.setProAccessExpiryMs(details.expiry.toEpochMilli())
+                    configs.userProfile.setProAccessExpiryMs(details.expiry.toEpochMilli())
                 } else {
-                    it.userProfile.removeProAccessExpiry()
+                    configs.userProfile.removeProAccessExpiry()
+                }
+
+                // Remove the pro config immediately if we know we are not pro anymore.
+                // We will schedule proof generation below if we are still pro.
+                if (details.status != ProDetails.DETAILS_STATUS_ACTIVE) {
+                    configs.userProfile.removeProConfig()
                 }
             }
             proDatabase.updateProDetails(proDetails = details, updatedAt = snodeClock.currentTime())
@@ -102,11 +111,8 @@ class FetchProDetailsWorker @AssistedInject constructor(
         val now = snodeClock.currentTimeMills()
 
         if (details.status != ProDetails.DETAILS_STATUS_ACTIVE) {
-            Log.d(TAG, "Pro is not active, clearing proof")
+            Log.d(TAG, "Pro is not active, cancelling any existing proof generation work")
             ProProofGenerationWorker.cancel(context)
-            configFactory.withMutableUserConfigs {
-                it.userProfile.removeProConfig()
-            }
         } else {
             val currentProof = configFactory.withUserConfigs { it.userProfile.getProConfig() }?.proProof
 

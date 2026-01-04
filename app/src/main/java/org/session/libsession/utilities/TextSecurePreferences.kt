@@ -37,6 +37,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_SH
 import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONMENT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FORCED_SHORT_TTL
+import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_CHECKED_DOZE_WHITELIST
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_COPIED_DONATION_URL
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_DONATED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_MESSAGE_REQUESTS
@@ -114,7 +115,6 @@ interface TextSecurePreferences {
     fun setHasSeenGIFMetaDataWarning()
     fun isGifSearchInGridLayout(): Boolean
     fun setIsGifSearchInGridLayout(isGrid: Boolean)
-    fun getNotificationPriority(): Int
     fun getMessageBodyTextSize(): Int
     fun setPreferredCameraDirection(value: CameraSelector)
     fun getPreferredCameraDirection(): CameraSelector
@@ -234,6 +234,8 @@ interface TextSecurePreferences {
     fun setSubscriptionProvider(provider: String)
     fun getSubscriptionProvider(): String?
 
+    fun hasCheckedDozeWhitelist(): Boolean
+    fun setHasCheckedDozeWhitelist(hasChecked: Boolean)
     fun hasDonated(): Boolean
     fun setHasDonated(hasDonated: Boolean)
     fun hasCopiedDonationURL(): Boolean
@@ -311,7 +313,6 @@ interface TextSecurePreferences {
         const val LOCAL_REGISTRATION_ID_PREF = "pref_local_registration_id"
         const val REPEAT_ALERTS_PREF = "pref_repeat_alerts"
         const val NOTIFICATION_PRIVACY_PREF = "pref_notification_privacy"
-        const val NOTIFICATION_PRIORITY_PREF = "pref_notification_priority"
         const val MEDIA_DOWNLOAD_MOBILE_PREF = "pref_media_download_mobile"
         const val MEDIA_DOWNLOAD_WIFI_PREF = "pref_media_download_wifi"
         const val MEDIA_DOWNLOAD_ROAMING_PREF = "pref_media_download_roaming"
@@ -421,6 +422,8 @@ interface TextSecurePreferences {
 
         const val SUBSCRIPTION_PROVIDER = "session_subscription_provider"
         const val DEBUG_AVATAR_REUPLOAD = "debug_avatar_reupload"
+
+        const val HAS_CHECKED_DOZE_WHITELIST = "has_checked_doze_whitelist"
 
         // Donation
         const val HAS_DONATED = "has_donated"
@@ -1198,11 +1201,6 @@ class AppTextSecurePreferences @Inject constructor(
         setBooleanPreference(TextSecurePreferences.GIF_GRID_LAYOUT, isGrid)
     }
 
-    override fun getNotificationPriority(): Int {
-        return getStringPreference(
-            TextSecurePreferences.NOTIFICATION_PRIORITY_PREF, NotificationCompat.PRIORITY_HIGH.toString())!!.toInt()
-    }
-
     override fun getMessageBodyTextSize(): Int {
         return getStringPreference(TextSecurePreferences.MESSAGE_BODY_TEXT_SIZE_PREF, "16")!!.toInt()
     }
@@ -1838,6 +1836,14 @@ class AppTextSecurePreferences @Inject constructor(
                 json.encodeToString(it)
             })
         }
+
+    override fun hasCheckedDozeWhitelist(): Boolean {
+        return getBooleanPreference(HAS_CHECKED_DOZE_WHITELIST, false)
+    }
+
+    override fun setHasCheckedDozeWhitelist(hasChecked: Boolean) {
+        setBooleanPreference(HAS_CHECKED_DOZE_WHITELIST, hasChecked)
+    }
 
     override fun hasDonated(): Boolean {
         return getBooleanPreference(HAS_DONATED, false)

@@ -12,7 +12,6 @@ plugins {
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.dependency.analysis)
     alias(libs.plugins.google.services)
-    alias(libs.plugins.protobuf.compiler)
 
     id("generate-ip-country-data")
     id("rename-apk")
@@ -86,23 +85,6 @@ kotlin {
     }
 }
 
-protobuf {
-    protoc {
-        artifact = libs.protoc.get().toString()
-    }
-
-    plugins {
-        generateProtoTasks {
-            all().forEach {
-                it.builtins {
-                    create("java") {
-                    }
-                }
-            }
-        }
-    }
-}
-
 android {
     namespace = "network.loki.messenger"
 
@@ -150,6 +132,13 @@ android {
         buildConfigField("int", "CONTENT_PROXY_PORT", "443")
         buildConfigField("String", "USER_AGENT", "\"OWA\"")
         buildConfigField("int", "CANONICAL_VERSION_CODE", "$canonicalVersionCode")
+
+        buildConfigField("org.thoughtcrime.securesms.pro.ProBackendConfig", "PRO_BACKEND_DEV", """
+            new org.thoughtcrime.securesms.pro.ProBackendConfig(
+                "https://pro-backend-dev.getsession.org",
+                "fc947730f49eb01427a66e050733294d9e520e545c7a27125a780634e0860a27"
+            )
+        """.trimIndent())
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments["clearPackageData"] = "true"
@@ -394,7 +383,6 @@ dependencies {
     implementation(libs.androidx.sqlite.ktx)
     implementation(libs.sqlcipher.android)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.protobuf.java)
     implementation(libs.jackson.databind)
     implementation(libs.okhttp)
     implementation(libs.phrase)
@@ -407,15 +395,9 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.rxbinding)
 
-    if (hasIncludedLibSessionUtilProject) {
-        implementation(
-            group = libs.libsession.util.android.get().group,
-            name = libs.libsession.util.android.get().name,
-            version = "dev-snapshot"
-        )
-    } else {
-        implementation(libs.libsession.util.android)
-    }
+    // If libsession_util project is included into the build, use that, otherwise use the published version
+    findProject(":libsession-util-android")?.let(::implementation)
+        ?: implementation(libs.libsession.util.android)
 
     implementation(libs.kryo)
     testImplementation(libs.junit)

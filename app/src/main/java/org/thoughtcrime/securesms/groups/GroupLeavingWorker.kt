@@ -12,9 +12,7 @@ import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
 import org.session.libsession.messaging.groups.GroupScope
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.notifications.TokenFetcher
@@ -23,14 +21,15 @@ import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.waitUntilGroupConfigsPushed
+import org.session.libsession.utilities.withGroupConfigs
+import org.session.libsession.utilities.withMutableGroupConfigs
 import org.session.libsignal.exceptions.NonRetryableException
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMessage
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.session.protos.SessionProtos
+import org.session.protos.SessionProtos.GroupUpdateMessage
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.notifications.PushRegistryV2
 
 @HiltWorker
@@ -48,6 +47,9 @@ class GroupLeavingWorker @AssistedInject constructor(
         val groupId = requireNotNull(inputData.getString(KEY_GROUP_ID)) {
             "Group ID must be provided"
         }.let(::AccountId)
+
+        // delete this group instead of leaving.
+        val deleteGroup = inputData.getBoolean(KEY_DELETE_GROUP, false)
 
         Log.d(TAG, "Group leaving work started for $groupId")
 
@@ -102,7 +104,7 @@ class GroupLeavingWorker @AssistedInject constructor(
                         messageSender.send(
                             GroupUpdated(
                                 GroupUpdateMessage.newBuilder()
-                                    .setMemberLeftNotificationMessage(DataMessage.GroupUpdateMemberLeftNotificationMessage.getDefaultInstance())
+                                    .setMemberLeftNotificationMessage(SessionProtos.GroupUpdateMemberLeftNotificationMessage.getDefaultInstance())
                                     .build()
                             ),
                             address,
@@ -114,7 +116,7 @@ class GroupLeavingWorker @AssistedInject constructor(
                         messageSender.send(
                             GroupUpdated(
                                 GroupUpdateMessage.newBuilder()
-                                    .setMemberLeftMessage(DataMessage.GroupUpdateMemberLeftMessage.getDefaultInstance())
+                                    .setMemberLeftMessage(SessionProtos.GroupUpdateMemberLeftMessage.getDefaultInstance())
                                     .build()
                             ),
                             address,
@@ -127,8 +129,9 @@ class GroupLeavingWorker @AssistedInject constructor(
                         }
                     }
 
-                    // If we are the only admin, leaving this group will destroy the group
-                    if (weAreTheOnlyAdmin) {
+                    // We now have an admin option to leave group so we need a way of Deleting the group
+                    // even if there are more admins
+                    if (weAreTheOnlyAdmin || deleteGroup) {
                         configFactory.withMutableGroupConfigs(groupId) { configs ->
                             configs.groupInfo.destroyGroup()
                         }
@@ -164,15 +167,19 @@ class GroupLeavingWorker @AssistedInject constructor(
         private const val TAG = "GroupLeavingWorker"
 
         private const val KEY_GROUP_ID = "group_id"
+        private const val KEY_DELETE_GROUP = "delete_group"
 
-        fun schedule(context: Context, groupId: AccountId) {
+        fun schedule(context: Context, groupId: AccountId, deleteGroup : Boolean = false) {
             WorkManager.getInstance(context)
                 .enqueue(
                     OneTimeWorkRequestBuilder<GroupLeavingWorker>()
                         .addTag(KEY_GROUP_ID)
                         .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
                         .setInputData(
-                            Data.Builder().putString(KEY_GROUP_ID, groupId.hexString).build()
+                            Data.Builder()
+                                .putString(KEY_GROUP_ID, groupId.hexString)
+                                .putBoolean(KEY_DELETE_GROUP, deleteGroup)
+                                .build()
                         )
                         .build()
                 )

@@ -1,19 +1,18 @@
 package org.thoughtcrime.securesms.groups.handler
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.launch
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupScope
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.waitUntilGroupConfigsPushed
+import org.session.libsession.utilities.withGroupConfigs
+import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.dependencies.ManagerScope
-import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
+import org.thoughtcrime.securesms.auth.AuthAwareComponent
+import org.thoughtcrime.securesms.auth.LoggedInState
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -26,45 +25,38 @@ class DestroyedGroupSync @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val groupScope: GroupScope,
     private val storage: StorageProtocol,
-    @param:ManagerScope private val scope: CoroutineScope
-) : OnAppStartupComponent {
-    private var job: Job? = null
+) : AuthAwareComponent {
+    override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
+        configFactory.configUpdateNotifications
+            .filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
+            .filter { it.fromMerge }
+            .collect { update ->
+                val isDestroyed = configFactory.withGroupConfigs(update.groupId) {
+                    it.groupInfo.isDestroyed()
+                }
 
-    override fun onPostAppStarted() {
-        require(job == null) { "Already started" }
+                Log.d("DestroyedGroupSync", "Group is destroyed: $isDestroyed")
 
-        job = scope.launch {
-            configFactory.configUpdateNotifications
-                .filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
-                .filter { it.fromMerge }
-                .collect { update ->
-                    val isDestroyed = configFactory.withGroupConfigs(update.groupId) {
-                        it.groupInfo.isDestroyed()
-                    }
+                if (isDestroyed) {
+                    groupScope.launch(update.groupId, "DestroyedGroupSync") {
+                        // If there's un-pushed group config updates, wait until they are pushed.
+                        // This is important, as the pushing process might need to access the UserGroupConfig,
+                        // if we delete the UserGroupConfig before the pushing process, the pushing
+                        // process will fail.
+                        configFactory.waitUntilGroupConfigsPushed(update.groupId)
 
-                    Log.d("DestroyedGroupSync", "Group is destroyed: $isDestroyed")
-
-                    if (isDestroyed) {
-                        groupScope.launch(update.groupId, "DestroyedGroupSync") {
-                            // If there's un-pushed group config updates, wait until they are pushed.
-                            // This is important, as the pushing process might need to access the UserGroupConfig,
-                            // if we delete the UserGroupConfig before the pushing process, the pushing
-                            // process will fail.
-                            configFactory.waitUntilGroupConfigsPushed(update.groupId)
-
-                            configFactory.withMutableUserConfigs { configs ->
-                                configs.userGroups.getClosedGroup(update.groupId.hexString)?.let { group ->
-                                    configs.userGroups.set(group.copy(destroyed = true))
-                                }
+                        configFactory.withMutableUserConfigs { configs ->
+                            configs.userGroups.getClosedGroup(update.groupId.hexString)?.let { group ->
+                                configs.userGroups.set(group.copy(destroyed = true))
                             }
                         }
+                    }
 
-                        // Also clear all messages in the group
-                        storage.getThreadId(Address.fromSerialized(update.groupId.hexString))?.let { threadId ->
-                            storage.clearMessages(threadId)
-                        }
+                    // Also clear all messages in the group
+                    storage.getThreadId(Address.fromSerialized(update.groupId.hexString))?.let { threadId ->
+                        storage.clearMessages(threadId)
                     }
                 }
-        }
+            }
     }
 }
