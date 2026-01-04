@@ -515,7 +515,7 @@ class ReceivedMessageProcessor @Inject constructor(
 
         var maxOutgoingMessageTimestamp: Long = 0L
 
-        val currentUserEd25519KeyPair: KeyPair by lazy(LazyThreadSafetyMode.NONE) {
+        val currentUserEd25519KeyPair: KeyPair by lazy {
             requireNotNull(storage.getUserED25519KeyPair()) {
                 "No current user ED25519 key pair available"
             }
@@ -524,7 +524,7 @@ class ReceivedMessageProcessor @Inject constructor(
         val currentUserPublicKey: String get() = currentUserId.hexString
 
 
-        val contactConfigTimestamp: Long by lazy(LazyThreadSafetyMode.NONE) {
+        val contactConfigTimestamp: Long by lazy {
             configFactory.getConfigTimestamp(UserConfigType.CONTACTS, currentUserPublicKey)
         }
 

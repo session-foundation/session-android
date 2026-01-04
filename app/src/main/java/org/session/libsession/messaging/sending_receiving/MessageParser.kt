@@ -177,7 +177,6 @@ class MessageParser @Inject constructor(
         val envelop = SessionProtocol.decodeFor1o1(
             myEd25519PrivKey = currentUserEd25519PrivKey,
             payload = data,
-            nowEpochMs = snodeClock.currentTimeMills(),
             proBackendPubKey = proBackendKey,
         )
 
@@ -208,7 +207,6 @@ class MessageParser @Inject constructor(
         val decoded = SessionProtocol.decodeForGroup(
             payload = data,
             myEd25519PrivKey = currentUserEd25519PrivKey,
-            nowEpochMs = snodeClock.currentTimeMills(),
             groupEd25519PublicKey = groupId.pubKeyBytes,
             groupEd25519PrivateKeys = keys.toTypedArray(),
             proBackendPubKey = proBackendKey
@@ -238,7 +236,7 @@ class MessageParser @Inject constructor(
 
         val decoded = SessionProtocol.decodeForCommunity(
             payload = Base64.decode(msg.data),
-            nowEpochMs = snodeClock.currentTimeMills(),
+            timestampMs = snodeClock.currentTimeMills(),
             proBackendPubKey = proBackendKey,
         )
 
@@ -276,7 +274,7 @@ class MessageParser @Inject constructor(
 
         val decoded = SessionProtocol.decodeForCommunity(
             payload = plaintext.data,
-            nowEpochMs = snodeClock.currentTimeMills(),
+            timestampMs = snodeClock.currentTimeMills(),
             proBackendPubKey = proBackendKey,
         )
 

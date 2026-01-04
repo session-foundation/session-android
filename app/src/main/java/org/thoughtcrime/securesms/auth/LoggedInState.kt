@@ -42,23 +42,23 @@ data class LoggedInState(
             }
         }
 
-        private val paddedSeed: ByteArray by lazy(LazyThreadSafetyMode.NONE) {
+        private val paddedSeed: ByteArray by lazy {
             seed.data + ByteArray(16)
         }
 
-        val accountEd25519KeyPair: KeyPair by lazy(LazyThreadSafetyMode.NONE) {
+        val accountEd25519KeyPair: KeyPair by lazy {
             ED25519.generate(paddedSeed)
         }
 
-        val accountX25519KeyPair: KeyPair by lazy(LazyThreadSafetyMode.NONE) {
+        val accountX25519KeyPair: KeyPair by lazy {
             Curve25519.fromED25519(accountEd25519KeyPair)
         }
 
-        val accountId: AccountId by lazy(LazyThreadSafetyMode.NONE) {
+        val accountId: AccountId by lazy {
             AccountId(IdPrefix.STANDARD, accountX25519KeyPair.pubKey.data)
         }
 
-        val proMasterPrivateKey: ByteArray by lazy(LazyThreadSafetyMode.NONE) {
+        val proMasterPrivateKey: ByteArray by lazy {
             ED25519.generateProMasterKey(paddedSeed)
         }
 
