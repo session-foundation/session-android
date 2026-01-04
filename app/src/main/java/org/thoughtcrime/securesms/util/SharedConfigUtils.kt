@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.util
 
+import network.loki.messenger.libsession_util.MutableConversationVolatileConfig
 import network.loki.messenger.libsession_util.ReadableConversationVolatileConfig
 import network.loki.messenger.libsession_util.util.Conversation
 import org.session.libsession.utilities.Address
@@ -29,6 +30,30 @@ fun ReadableConversationVolatileConfig.get(address: Address.Conversable): Conver
     }
 }
 
+fun MutableConversationVolatileConfig.erase(address: Address.Conversable) {
+    when (address) {
+        is Address.Standard -> {
+            eraseOneToOne(address.accountId.hexString)
+        }
+
+        is Address.Group -> {
+            eraseClosedGroup(address.accountId.hexString)
+        }
+
+        is Address.LegacyGroup -> {
+            eraseLegacyClosedGroup(address.groupPublicKeyHex)
+        }
+
+        is Address.Community -> {
+            eraseCommunity(baseUrl = address.serverUrl, room = address.room)
+        }
+
+        is Address.CommunityBlindedId -> {
+            eraseBlindedOneToOne(address.blindedId.address)
+        }
+    }
+}
+
 fun MutableUserConfigs.getOrConstructConvo(address: Address.Conversable): Conversation {
     return when (address) {
         is Address.Standard -> {
@@ -44,12 +69,18 @@ fun MutableUserConfigs.getOrConstructConvo(address: Address.Conversable): Conver
         }
 
         is Address.Community -> {
-            convoInfoVolatile.getOrConstructCommunity(baseUrl = address.serverUrl, room = address.room, pubKeyHex = requireNotNull(
+            val community = requireNotNull(
                 userGroups.getCommunityInfo(
                     baseUrl = address.serverUrl,
                     room = address.room
                 )
-            ) { "Community does not exist" }.community.pubKeyHex)
+            ) { "Community does not exist" }
+
+            convoInfoVolatile.getOrConstructCommunity(
+                baseUrl = address.serverUrl,
+                room = address.room,
+                pubKeyHex = community.community.pubKeyHex
+            )
         }
 
         is Address.CommunityBlindedId -> {

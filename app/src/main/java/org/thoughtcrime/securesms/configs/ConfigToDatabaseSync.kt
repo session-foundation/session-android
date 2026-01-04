@@ -51,6 +51,8 @@ import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
+import org.thoughtcrime.securesms.util.erase
+import org.thoughtcrime.securesms.util.get
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -113,6 +115,15 @@ class ConfigToDatabaseSync @Inject constructor(
             // Not sure why this is here but it was from the original code in Storage.
             // If you can find out what it does, please remove it.
             SessionMetaProtocol.clearReceivedMessages()
+
+            // Remove all convo info
+            configFactory.withMutableUserConfigs { configs ->
+                result.deletedThreads.keys.forEach { address ->
+                    if (address is Address.Conversable) {
+                        configs.convoInfoVolatile.erase(address)
+                    }
+                }
+            }
 
             // Some type of convo require additional cleanup, we'll go through them here
             for ((address, threadId) in result.deletedThreads) {

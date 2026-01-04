@@ -23,6 +23,8 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 
+import androidx.collection.ArrayMap;
+
 import com.annimon.stream.Stream;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
@@ -284,7 +286,7 @@ public class ThreadDatabase extends Database {
       final String addressListAsJson = new JSONArray(CollectionsKt.map(addresses, Address::getAddress)).toString();
 
       try (final Cursor cursor = db.rawQuery(deletionSql, addressListAsJson)) {
-        deletedThreads = new HashMap<>(cursor.getCount());
+        deletedThreads = new ArrayMap<>(cursor.getCount());
         while (cursor.moveToNext()) {
           deletedThreads.put(
               Address.fromSerialized(cursor.getString(1)),
@@ -299,7 +301,7 @@ public class ThreadDatabase extends Database {
               "RETURNING " + ID + ", " + ADDRESS;
 
       try (final Cursor cursor = db.rawQuery(insertionSql, addressListAsJson)) {
-        createdThreads = new HashMap<>(cursor.getCount());
+        createdThreads = new ArrayMap<>(cursor.getCount());
         while (cursor.moveToNext()) {
           createdThreads.put(
               Address.fromSerialized(cursor.getString(1)),

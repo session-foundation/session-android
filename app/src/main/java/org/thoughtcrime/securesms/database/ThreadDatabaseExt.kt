@@ -1,7 +1,9 @@
 package org.thoughtcrime.securesms.database
 
+import androidx.collection.SimpleArrayMap
 import androidx.core.database.getStringOrNull
 import androidx.sqlite.db.transaction
+import network.loki.messenger.libsession_util.util.Conversation
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.recipients.RecipientData
@@ -12,9 +14,16 @@ import org.thoughtcrime.securesms.util.get
 
 fun ThreadDatabase.queryThreads(addresses: Collection<Address.Conversable>): List<ThreadRecord> {
     val convoInfo = configFactory.get().withUserConfigs { configs ->
-        addresses.associateWith { address ->
-            configs.convoInfoVolatile.get(address)
+        val out = SimpleArrayMap<Address.Conversable, Conversation>()
+
+        for (address in addresses) {
+            val convo = configs.convoInfoVolatile.get(address)
+            if (convo != null) {
+                out.put(address, convo)
+            }
         }
+
+        out
     }
 
     // For our query, we need to fill in some information first before the main query can be done.
@@ -44,7 +53,8 @@ fun ThreadDatabase.queryThreads(addresses: Collection<Address.Conversable>): Lis
             VALUES (?, ?, ?)
         """
         ).use { stmt ->
-            convoInfo.forEach { (address, convo) ->
+            addresses.forEach { address ->
+                val convo = convoInfo[address]
                 stmt.clearBindings()
                 stmt.bindString(1, address.address)
                 stmt.bindLong(2, convo?.lastRead ?: 0L)
@@ -72,7 +82,6 @@ fun ThreadDatabase.queryThreads(addresses: Collection<Address.Conversable>): Lis
                 FROM ${SmsDatabase.TABLE_NAME} s 
                 WHERE s.${SmsDatabase.THREAD_ID} = threads.${ThreadDatabase.ID} 
                     AND ${SmsDatabase.DATE_SENT} > input.last_read 
-                    AND NOT s.${SmsDatabase.READ}
                     AND NOT s.${MmsSmsColumns.IS_DELETED}
             ) AS smsUnreadCount,
             
@@ -82,7 +91,6 @@ fun ThreadDatabase.queryThreads(addresses: Collection<Address.Conversable>): Lis
                 FROM ${SmsDatabase.TABLE_NAME} s 
                 WHERE s.${SmsDatabase.THREAD_ID} = threads.${ThreadDatabase.ID} 
                     AND ${SmsDatabase.DATE_SENT} > input.last_read 
-                    AND NOT s.${SmsDatabase.READ}
                     AND s.${SmsDatabase.HAS_MENTION}
                     AND NOT s.${MmsSmsColumns.IS_DELETED}
             ) AS smsUnreadMentionCount,
@@ -93,7 +101,6 @@ fun ThreadDatabase.queryThreads(addresses: Collection<Address.Conversable>): Lis
                 FROM ${MmsDatabase.TABLE_NAME} m 
                 WHERE m.${MmsSmsColumns.THREAD_ID} = threads.${ThreadDatabase.ID} 
                     AND ${MmsDatabase.DATE_SENT} > input.last_read 
-                    AND NOT m.${MmsSmsColumns.READ}
                     AND NOT m.${MmsSmsColumns.IS_DELETED}
             ) AS mmsUnreadCount,
             
@@ -103,7 +110,6 @@ fun ThreadDatabase.queryThreads(addresses: Collection<Address.Conversable>): Lis
                 FROM ${MmsDatabase.TABLE_NAME} m 
                 WHERE m.${MmsSmsColumns.THREAD_ID} = threads.${ThreadDatabase.ID} 
                     AND ${MmsDatabase.DATE_SENT} > input.last_read 
-                    AND NOT m.${MmsSmsColumns.READ}
                     AND m.${MmsSmsColumns.HAS_MENTION}
                     AND NOT m.${MmsSmsColumns.IS_DELETED}
             ) AS mmsUnreadMentionCount,
