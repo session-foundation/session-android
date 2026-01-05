@@ -165,6 +165,7 @@ class VisibleMessageView : FrameLayout {
         downloadPendingAttachment: (DatabaseAttachment) -> Unit,
         retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
         confirmCommunityJoin: (String, String) -> Unit,
+        confirmAttachmentDownload: (DatabaseAttachment)->Unit,
         isTextExpanded: Boolean = false,
         onTextExpanded: ((MessageId) -> Unit)? = null
     ) {
@@ -308,6 +309,7 @@ class VisibleMessageView : FrameLayout {
             downloadPendingAttachment = downloadPendingAttachment,
             retryFailedAttachments = retryFailedAttachments,
             confirmCommunityJoin = confirmCommunityJoin,
+            confirmAttachmentDownload = confirmAttachmentDownload,
             isTextExpanded = isTextExpanded,
             onTextExpanded = onTextExpanded
         )

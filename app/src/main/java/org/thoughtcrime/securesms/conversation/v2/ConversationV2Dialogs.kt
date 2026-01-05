@@ -19,7 +19,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.COMMUNITY_NAME_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.CONVERSATION_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
+import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.InputBarDialogs
 import org.thoughtcrime.securesms.InputbarViewModel
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.*
@@ -286,6 +288,34 @@ fun ConversationV2Dialogs(
                         text = GetString(stringResource(id = R.string.join)),
                         onClick = {
                             sendCommand(JoinCommunity(dialogsState.joinCommunity.communityUrl))
+                        }
+                    ),
+                    DialogButtonData(
+                        GetString(stringResource(R.string.cancel))
+                    )
+                )
+            )
+        }
+
+        // Attachment downloads
+        if(dialogsState.attachmentDownload != null){
+            AlertDialog(
+                onDismissRequest = {
+                    // hide dialog
+                    sendCommand(HideAttachmentDownloadDialog)
+                },
+                title = annotatedStringResource(R.string.attachmentsAutoDownloadModalTitle),
+                text = annotatedStringResource(
+                    Phrase.from(LocalContext.current, R.string.attachmentsAutoDownloadModalDescription)
+                    .put(CONVERSATION_NAME_KEY, dialogsState.attachmentDownload.conversationName)
+                    .format()),
+                buttons = listOf(
+                    DialogButtonData(
+                        text = GetString(stringResource(id = R.string.download)),
+                        onClick = {
+                            sendCommand(
+                                DownloadAttachments(attachment = dialogsState.attachmentDownload.attachment)
+                            )
                         }
                     ),
                     DialogButtonData(

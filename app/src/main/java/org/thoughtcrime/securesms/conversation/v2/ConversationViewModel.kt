@@ -54,8 +54,11 @@ import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.messaging.jobs.AttachmentDownloadJob
+import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.messaging.open_groups.OpenGroupApi
+import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
@@ -154,7 +157,8 @@ class ConversationViewModel @AssistedInject constructor(
     private val blindMappingRepository: BlindMappingRepository,
     private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
     attachmentDownloadHandlerFactory: AttachmentDownloadHandler.Factory,
-    private val openGroupManager: OpenGroupManager
+    private val openGroupManager: OpenGroupManager,
+    private val attachmentDownloadJobFactory: AttachmentDownloadJob.Factory
 ) : InputbarViewModel(
     application = application,
     proStatusManager = proStatusManager,
@@ -1167,6 +1171,17 @@ class ConversationViewModel @AssistedInject constructor(
         attachmentDownloadHandler.retryFailedAttachments(attachments)
     }
 
+    fun confirmAttachmentDownload(attachment: DatabaseAttachment){
+        _dialogsState.update {
+            it.copy(
+                attachmentDownload = ConfirmAttachmentDownloadDialogData(
+                    attachment = attachment,
+                    conversationName = recipient.displayName()
+                )
+            )
+        }
+    }
+
     fun confirmCommunityJoin(communityName: String, communityUrl: String){
         _dialogsState.update {
             it.copy(
@@ -1299,6 +1314,35 @@ class ConversationViewModel @AssistedInject constructor(
                 _dialogsState.update {
                     it.copy(
                         joinCommunity = null
+                    )
+                }
+            }
+
+            is Commands.DownloadAttachments -> {
+                viewModelScope.launch {
+                    val databaseAttachment = command.attachment
+
+                    storage.setAutoDownloadAttachments(recipient.address, true)
+
+                    val attachmentId = databaseAttachment.attachmentId.rowId
+                    if (databaseAttachment.transferState == AttachmentState.PENDING.value
+                        && storage.getAttachmentUploadJob(attachmentId) == null
+                    ) {
+                        // start download
+                        JobQueue.shared.add(
+                            attachmentDownloadJobFactory.create(
+                                attachmentId,
+                                databaseAttachment.mmsId
+                            )
+                        )
+                    }
+                }
+            }
+
+            is Commands.HideAttachmentDownloadDialog -> {
+                _dialogsState.update {
+                    it.copy(
+                        attachmentDownload = null
                     )
                 }
             }
@@ -1485,12 +1529,18 @@ class ConversationViewModel @AssistedInject constructor(
         val recreateGroupConfirm: Boolean = false,
         val recreateGroupData: RecreateGroupDialogData? = null,
         val userProfileModal: UserProfileModalData? = null,
-        val joinCommunity: JoinCommunityDialogData? = null
+        val joinCommunity: JoinCommunityDialogData? = null,
+        val attachmentDownload: ConfirmAttachmentDownloadDialogData? = null
     )
 
     data class JoinCommunityDialogData(
         val communityName: String,
         val communityUrl: String
+    )
+
+    data class ConfirmAttachmentDownloadDialogData(
+        val attachment: DatabaseAttachment,
+        val conversationName: String
     )
 
     data class RecreateGroupDialogData(
@@ -1535,6 +1585,9 @@ class ConversationViewModel @AssistedInject constructor(
 
         data class JoinCommunity(val url: String): Commands
         data object HideJoinCommunityDialog: Commands
+
+        data class DownloadAttachments(val attachment: DatabaseAttachment): Commands
+        data object HideAttachmentDownloadDialog: Commands
 
         data object HideSimpleDialog : Commands
     }

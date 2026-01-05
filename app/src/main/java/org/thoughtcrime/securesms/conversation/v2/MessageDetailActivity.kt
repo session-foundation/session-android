@@ -230,6 +230,7 @@ fun MessageDetails(
                                 thread = state.thread!!,
                                 downloadPendingAttachment = {}, // the view shouldn't handle this from the details activity
                                 confirmCommunityJoin = {_,_ -> }, // the view shouldn't handle this from the details activity
+                                confirmAttachmentDownload = {_ -> }, // the view shouldn't handle this from the details activity
                                 retryFailedAttachments = retryFailedAttachments,
                                 suppressThumbnails = true
                             )

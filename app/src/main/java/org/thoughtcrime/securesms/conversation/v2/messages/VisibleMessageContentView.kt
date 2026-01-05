@@ -30,6 +30,7 @@ import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.applyCollapsedEllipsisMinWidth
 import org.session.libsession.utilities.clearCollapsedMinWidth
@@ -87,6 +88,7 @@ class VisibleMessageContentView : ConstraintLayout {
         downloadPendingAttachment: (DatabaseAttachment) -> Unit,
         retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
         confirmCommunityJoin: (String, String) -> Unit,
+        confirmAttachmentDownload: (DatabaseAttachment)->Unit,
         suppressThumbnails: Boolean = false,
         isTextExpanded: Boolean = false,
         onTextExpanded: ((MessageId) -> Unit)? = null
@@ -230,7 +232,8 @@ class VisibleMessageContentView : ConstraintLayout {
                             type = if (it.isVoiceNote) VOICE
                             else AUDIO,
                             overallAttachmentState,
-                            retryFailedAttachments = retryFailedAttachments
+                            retryFailedAttachments = retryFailedAttachments,
+                            confirmAttachmentDownload = confirmAttachmentDownload
                         )
                     }
                 }
@@ -282,7 +285,8 @@ class VisibleMessageContentView : ConstraintLayout {
                             attachments = listOf(it),
                             type = DOCUMENT,
                             overallAttachmentState,
-                            retryFailedAttachments = retryFailedAttachments
+                            retryFailedAttachments = retryFailedAttachments,
+                            confirmAttachmentDownload = confirmAttachmentDownload
                         )
                     }
                 }
@@ -327,7 +331,8 @@ class VisibleMessageContentView : ConstraintLayout {
                             type = if (message.slideDeck.hasVideo()) VIDEO
                             else IMAGE,
                             state = overallAttachmentState,
-                            retryFailedAttachments = retryFailedAttachments
+                            retryFailedAttachments = retryFailedAttachments,
+                            confirmAttachmentDownload = confirmAttachmentDownload
                         )
                     }
                 }
@@ -417,6 +422,7 @@ class VisibleMessageContentView : ConstraintLayout {
         type: AttachmentControlView.AttachmentType,
         state: AttachmentState,
         retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
+        confirmAttachmentDownload: (DatabaseAttachment)->Unit
     ){
         binding.attachmentControlView.root.isVisible = true
         binding.albumThumbnailView.root.clearViews()
@@ -432,10 +438,9 @@ class VisibleMessageContentView : ConstraintLayout {
             // While downloads haven't been enabled for this convo, show a confirmation dialog
             AttachmentState.PENDING -> {
                 onContentClick.add {
-                    binding.attachmentControlView.root.showDownloadDialog(
-                        thread,
-                        attachments.first()
-                    )
+                    if (thread.autoDownloadAttachments != true) {
+                        confirmAttachmentDownload(attachments.first())
+                    }
                 }
             }
 
