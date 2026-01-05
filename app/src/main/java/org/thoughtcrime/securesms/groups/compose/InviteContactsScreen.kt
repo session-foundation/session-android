@@ -39,6 +39,7 @@ import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.SearchF
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.SearchQueryChange
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.ShowSendInviteDialog
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.ToggleFooter
+import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.DismissSendInviteDialog
 import org.thoughtcrime.securesms.ui.CollapsibleFooterAction
 import org.thoughtcrime.securesms.ui.CollapsibleFooterActionData
 import org.thoughtcrime.securesms.ui.CollapsibleFooterItemData
@@ -198,7 +199,7 @@ fun InviteContacts(
         InviteMembersDialog(
             state = uiState.inviteContactsDialog,
             onInviteClicked = onDoneClicked,
-            onDismiss = { }
+            onDismiss = {sendCommand(DismissSendInviteDialog) }
         )
     }
 }
