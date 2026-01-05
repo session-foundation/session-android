@@ -17,7 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,7 +72,7 @@ private fun RecoveryPasswordCell(
     seed: String?,
     copyMnemonic:() -> Unit = {}
 ) {
-    var showQr by remember {
+    var showQr by retain {
         mutableStateOf(false)
     }
 
@@ -181,8 +181,8 @@ private fun RecoveryPassword(mnemonic: String) {
 private fun HideRecoveryPasswordCell(
     confirmHideRecovery:() -> Unit
 ) {
-    var showHideRecoveryDialog by remember { mutableStateOf(false) }
-    var showHideRecoveryConfirmationDialog by remember { mutableStateOf(false) }
+    var showHideRecoveryDialog by retain { mutableStateOf(false) }
+    var showHideRecoveryConfirmationDialog by retain { mutableStateOf(false) }
 
     Cell {
         Row(

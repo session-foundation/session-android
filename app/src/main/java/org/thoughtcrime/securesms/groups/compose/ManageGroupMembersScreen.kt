@@ -21,6 +21,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -275,7 +276,7 @@ fun RemoveMembersDialog(
     modifier: Modifier = Modifier,
     sendCommand: (ManageGroupMembersViewModel.Commands) -> Unit
 ) {
-    var deleteMessages by remember { mutableStateOf(false) }
+    var deleteMessages by retain { mutableStateOf(false) }
 
     AlertDialog(
         modifier = modifier,

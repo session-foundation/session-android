@@ -42,6 +42,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.TopCenter
@@ -250,7 +251,7 @@ fun SessionNetworkInfoSection(modifier: Modifier = Modifier) {
         )
 
         // Note: We apply the link to the entire box so the user doesn't have to click exactly on the highlighted text.
-        var showTheOpenUrlModal by remember { mutableStateOf(false) }
+        var showTheOpenUrlModal by retain { mutableStateOf(false) }
         Text(
             modifier = Modifier
                 .clickable { showTheOpenUrlModal = true }
@@ -729,7 +730,7 @@ fun SessionTokenSection(
         Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
 
         // Finally, add a button that links us to the staging page to learn more
-        var showTheOpenUrlModal by remember { mutableStateOf(false) }
+        var showTheOpenUrlModal by retain { mutableStateOf(false) }
         AccentOutlineButtonRect(
             text = LocalContext.current.getString(R.string.sessionNetworkLearnAboutStaking),
             modifier = Modifier
