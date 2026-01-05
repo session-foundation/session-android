@@ -1,22 +1,26 @@
-package org.thoughtcrime.securesms.preferences
+package org.thoughtcrime.securesms.ui.components
 
-import android.app.Dialog
 import android.content.ContentResolver
 import android.content.ContentValues
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.os.Bundle
 import android.provider.MediaStore
 import android.widget.Toast
-import androidx.fragment.app.DialogFragment
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.lifecycleScope
 import com.squareup.phrase.Phrase
-import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
-import java.io.File
-import java.io.IOException
-import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -26,44 +30,84 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsignal.utilities.ExternalStorageUtil
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.createSessionDialog
 import org.thoughtcrime.securesms.logging.PersistentLogger
+import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.DialogButtonData
+import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.util.FileProviderUtil
+import java.io.File
+import java.io.IOException
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import javax.inject.Singleton
 
-@AndroidEntryPoint
-class ShareLogsDialog(private val updateCallback: (Boolean)->Unit): DialogFragment() {
+@Composable
+fun ExportLogsDialog(
+    logExporter: LogExporter,
+    onDismissRequest: () -> Unit,
+){
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
-    private val TAG = "ShareLogsDialog"
+    //todo use retain once in the dev branch
+    var exportingLogs by remember { mutableStateOf(false) }
+
+    if(exportingLogs){
+        LoadingDialog()
+    } else {
+        AlertDialog(
+            onDismissRequest = onDismissRequest,
+            title = stringResource(R.string.helpReportABugExportLogs),
+            text = Phrase.from(context, R.string.helpReportABugDescription)
+                .put(APP_NAME_KEY, stringResource(R.string.app_name))
+                .format().toString(),
+            buttons = listOf(
+                DialogButtonData(
+                    text = GetString(stringResource(R.string.share)),
+                    dismissOnClick = false,
+                    onClick = {
+                        logExporter.runShareLogsJob(
+                            scope = scope,
+                            updateCallback = {
+                                exportingLogs = it
+                            },
+                            onShareReady = { intent ->
+                                context.startActivity(intent)
+                            },
+                            onComplete = onDismissRequest
+                        )
+                    }
+                ),
+                DialogButtonData(
+                    text = GetString(stringResource(R.string.cancel)),
+                ),
+            )
+        )
+    }
+}
+
+@Singleton
+class LogExporter @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val persistentLogger: PersistentLogger
+){
+    private val TAG = "LogExporter"
+
     private var shareJob: Job? = null
 
-    @Inject
-    lateinit var persistentLogger: PersistentLogger
-
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog = createSessionDialog {
-        title(R.string.helpReportABugExportLogs)
-        val appName = context.getString(R.string.app_name)
-        val txt = Phrase.from(context, R.string.helpReportABugDescription)
-            .put(APP_NAME_KEY, appName)
-            .format().toString()
-        text(txt)
-        button(R.string.share, dismiss = false) { runShareLogsJob() }
-        cancelButton { updateCallback(false) }
-    }
-
-    // If the share logs dialog loses focus the job gets cancelled so we'll update the UI state
-    override fun onPause() {
-        super.onPause()
-        updateCallback(false)
-    }
-
-    private fun runShareLogsJob() {
+    fun runShareLogsJob(
+        scope: CoroutineScope,
+        updateCallback: (Boolean)->Unit,
+        onShareReady: (Intent) -> Unit,
+        onComplete: ()->Unit
+    ) {
         // Cancel any existing share job that might already be running to start anew
         shareJob?.cancel()
 
         updateCallback(true)
 
-        shareJob = lifecycleScope.launch {
+        shareJob = scope.launch {
             try {
                 Log.d(TAG, "Starting share logs job...")
                 val mediaUri = withContext(Dispatchers.IO) {
@@ -77,11 +121,13 @@ class ShareLogsDialog(private val updateCallback: (Boolean)->Unit): DialogFragme
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
 
-                startActivity(Intent.createChooser(shareIntent, getString(R.string.share)))
+                val chooserIntent = Intent.createChooser(shareIntent, context.getString(R.string.share))
+
+                onShareReady(chooserIntent)
             } catch (e: Exception) {
                 if (e !is CancellationException) {
                     Log.e("Loki", "Error saving logs", e)
-                    Toast.makeText(context, getString(R.string.errorUnknown), Toast.LENGTH_LONG)
+                    Toast.makeText(context, context.getString(R.string.errorUnknown), Toast.LENGTH_LONG)
                         .show()
                 }
             }
@@ -105,16 +151,12 @@ class ShareLogsDialog(private val updateCallback: (Boolean)->Unit): DialogFragme
                     }
                 }
 
-                // Regardless of the job's success it has now completed so update the UI
-                updateCallback(false)
-                
-                dismiss()
+                onComplete()
             }
         }
     }
 
     private fun withExternalFile(action: (Uri) -> Unit): Uri? {
-        val context = requireContext()
         val base = "${Build.MANUFACTURER}-${Build.DEVICE}-API${Build.VERSION.SDK_INT}-v${BuildConfig.VERSION_NAME}-${System.currentTimeMillis()}"
         val extension = "zip"
         val fileName = "$base.$extension"
@@ -130,7 +172,7 @@ class ShareLogsDialog(private val updateCallback: (Boolean)->Unit): DialogFragme
                 throw IOException("Specified name would not be visible")
             }
             try {
-                return FileProviderUtil.getUriFor(requireContext(), outputFile).also(action)
+                return FileProviderUtil.getUriFor(context, outputFile).also(action)
             } catch (e: Exception) {
                 outputFile.delete()
                 throw e
@@ -158,5 +200,4 @@ class ShareLogsDialog(private val updateCallback: (Boolean)->Unit): DialogFragme
             return uri
         }
     }
-
 }
