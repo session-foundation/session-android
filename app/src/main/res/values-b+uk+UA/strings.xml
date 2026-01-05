@@ -1134,7 +1134,7 @@
         <item quantity="many">%1$s довгих повідомлень надіслано</item>
         <item quantity="other">%1$s довгих повідомлень надіслано</item>
     </plurals>
-    <string name="proMessageInfoFeatures">У цьому повідомленні наявні наступні функції Session Pro:</string>
+    <string name="proMessageInfoFeatures">У цьому повідомленні наявні наступні функції {app_pro}:</string>
     <string name="proNewInstallation">За допомогою нової інсталяції</string>
     <string name="proNewInstallationDescription">Переінсталюйте {app_name} на цьому пристрої через {platform_store}, відновіть свій обліковий запис за допомогою пароля відновлення і поновіть {pro} через налаштування {app_pro}.</string>
     <string name="proNewInstallationUpgrade">Перевстановіть {app_name} на цьому пристрої через {platform_store}, відновіть свій обліковий запис за допомогою Пароля відновлення доступу та оновіть до {pro} із налаштувань {app_pro}.</string>
