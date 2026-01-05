@@ -398,7 +398,7 @@ class MessageFormatter @Inject constructor(
                                 if (historyShared) R.string.groupInviteYouHistory else R.string.groupInviteYou)
                                 .format()
                             number == 1 -> Phrase.from(context,
-                                if (historyShared) R.string.groupMemberNewHistory else R.string.groupMemberNew)
+                                if (historyShared) R.string.groupMemberInvitedHistory else R.string.groupMemberNew)
                                 .put(NAME_KEY, getGroupMemberName(updateData.sessionIds.first()))
                                 .format()
                             number == 2 && containsUser -> Phrase.from(context,
@@ -406,7 +406,7 @@ class MessageFormatter @Inject constructor(
                                 .put(OTHER_NAME_KEY, getGroupMemberName(updateData.sessionIds.first { it != userPublicKey }))
                                 .format()
                             number == 2 -> Phrase.from(context,
-                                if (historyShared) R.string.groupMemberNewHistoryTwo else R.string.groupMemberNewTwo)
+                                if (historyShared) R.string.groupMemberInvitedHistoryTwo else R.string.groupMemberNewTwo)
                                 .put(NAME_KEY, getGroupMemberName(updateData.sessionIds.first()))
                                 .put(OTHER_NAME_KEY, getGroupMemberName(updateData.sessionIds.last()))
                                 .format()
@@ -415,7 +415,7 @@ class MessageFormatter @Inject constructor(
                                 .put(COUNT_KEY, updateData.sessionIds.size - 1)
                                 .format()
                             number > 0 -> Phrase.from(context,
-                                if (historyShared) R.string.groupMemberNewHistoryMultiple else R.string.groupMemberNewMultiple)
+                                if (historyShared) R.string.groupMemberInvitedHistoryMultiple else R.string.groupMemberNewMultiple)
                                 .put(NAME_KEY, getGroupMemberName(updateData.sessionIds.first()))
                                 .put(COUNT_KEY, updateData.sessionIds.size - 1)
                                 .format()

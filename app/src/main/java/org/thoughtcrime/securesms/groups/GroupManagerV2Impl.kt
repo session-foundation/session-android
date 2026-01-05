@@ -348,7 +348,11 @@ class GroupManagerV2Impl @Inject constructor(
         } finally {
             // Send a group update message to the group telling members someone has been invited
             if (!isReinvite) {
-                sendGroupUpdateForAddingMembers(group, adminKey, memberInvites.map { it.id })
+                sendGroupUpdateForAddingMembers(
+                    group,
+                    adminKey,
+                    memberInvites.map { it.id },
+                    shareHistory = memberInvites.any { it.shareHistory }) // This is the same for all members/contact invited
             }
         }
 
@@ -369,6 +373,7 @@ class GroupManagerV2Impl @Inject constructor(
         group: AccountId,
         adminKey: ByteArray,
         newMembers: Collection<AccountId>,
+        shareHistory : Boolean = false
     ) {
         val timestamp = clock.currentTimeMills()
         val signature = ED25519.sign(
@@ -383,6 +388,7 @@ class GroupManagerV2Impl @Inject constructor(
                         .addAllMemberSessionIds(newMembers.sortedWith(groupMemberComparator).map { it.hexString })
                         .setType(GroupUpdateMemberChangeMessage.Type.ADDED)
                         .setAdminSignature(ByteString.copyFrom(signature))
+                        .setHistoryShared(shareHistory)
                 )
                 .build()
         ).apply { this.sentTimestamp = timestamp }
