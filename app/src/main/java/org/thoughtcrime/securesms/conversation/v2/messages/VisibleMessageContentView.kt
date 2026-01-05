@@ -86,6 +86,7 @@ class VisibleMessageContentView : ConstraintLayout {
         searchQuery: String? = null,
         downloadPendingAttachment: (DatabaseAttachment) -> Unit,
         retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
+        confirmCommunityJoin: (String, String) -> Unit,
         suppressThumbnails: Boolean = false,
         isTextExpanded: Boolean = false,
         onTextExpanded: ((MessageId) -> Unit)? = null
@@ -334,7 +335,11 @@ class VisibleMessageContentView : ConstraintLayout {
             message.isOpenGroupInvitation -> {
                 hideBody = true
                 binding.openGroupInvitationView.root.bind(message, getTextColor(context, message))
-                onContentClick.add { binding.openGroupInvitationView.root.joinOpenGroup() }
+                onContentClick.add {
+                    binding.openGroupInvitationView.root.getCommunityInviteData()?.let{
+                        confirmCommunityJoin(it.first, it.second)
+                    }
+                }
             }
         }
 

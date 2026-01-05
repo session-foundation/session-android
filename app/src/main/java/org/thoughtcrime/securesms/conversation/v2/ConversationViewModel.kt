@@ -60,6 +60,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ExpirationUtil
+import org.session.libsession.utilities.OpenGroupUrlParser
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.UserConfigType
@@ -99,6 +100,7 @@ import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.ExpiredGroupManager
+import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.AudioSlide
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
@@ -149,6 +151,7 @@ class ConversationViewModel @AssistedInject constructor(
     private val blindMappingRepository: BlindMappingRepository,
     private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
     attachmentDownloadHandlerFactory: AttachmentDownloadHandler.Factory,
+    private val openGroupManager: OpenGroupManager
 ) : InputbarViewModel(
     application = application,
     proStatusManager = proStatusManager,
@@ -1161,6 +1164,37 @@ class ConversationViewModel @AssistedInject constructor(
         attachmentDownloadHandler.retryFailedAttachments(attachments)
     }
 
+    fun confirmCommunityJoin(communityName: String, communityUrl: String){
+        _dialogsState.update {
+            it.copy(
+                joinCommunity = JoinCommunityDialogData(
+                    communityName = communityName,
+                    communityUrl = communityUrl
+                )
+            )
+        }
+    }
+
+    private fun joinCommunity(url: String){
+        val openGroup = OpenGroupUrlParser.parseUrl(url)
+
+        viewModelScope.launch {
+            try {
+                openGroupManager.add(
+                    server = openGroup.server,
+                    room = openGroup.room,
+                    publicKey = openGroup.serverPublicKey,
+                )
+            } catch (e: Exception) {
+                Log.e("", "Error joining community", e)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(application, R.string.communityErrorDescription, Toast.LENGTH_SHORT)
+                        .show()
+                }
+            }
+        }
+    }
+
     /**
      * Implicitly approve the recipient.
      *
@@ -1252,6 +1286,18 @@ class ConversationViewModel @AssistedInject constructor(
 
             is Commands.HandleUserProfileCommand -> {
                 userProfileModalUtils?.onCommand(command.upmCommand)
+            }
+
+            is Commands.JoinCommunity -> {
+                joinCommunity(command.url)
+            }
+
+            is Commands.HideJoinCommunityDialog -> {
+                _dialogsState.update {
+                    it.copy(
+                        joinCommunity = null
+                    )
+                }
             }
         }
     }
@@ -1411,6 +1457,12 @@ class ConversationViewModel @AssistedInject constructor(
         val recreateGroupConfirm: Boolean = false,
         val recreateGroupData: RecreateGroupDialogData? = null,
         val userProfileModal: UserProfileModalData? = null,
+        val joinCommunity: JoinCommunityDialogData? = null
+    )
+
+    data class JoinCommunityDialogData(
+        val communityName: String,
+        val communityUrl: String
     )
 
     data class RecreateGroupDialogData(
@@ -1452,6 +1504,9 @@ class ConversationViewModel @AssistedInject constructor(
         data class HandleUserProfileCommand(
             val upmCommand: UserProfileModalCommands
         ): Commands
+
+        data class JoinCommunity(val url: String): Commands
+        data object HideJoinCommunityDialog: Commands
     }
 }
 

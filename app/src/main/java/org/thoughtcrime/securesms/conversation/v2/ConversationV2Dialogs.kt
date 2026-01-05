@@ -11,23 +11,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
+import org.session.libsession.utilities.StringSubstitutionConstants.COMMUNITY_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.thoughtcrime.securesms.InputBarDialogs
 import org.thoughtcrime.securesms.InputbarViewModel
-import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ClearEmoji
-import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ConfirmRecreateGroup
-import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.HideClearEmoji
-import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.HideDeleteEveryoneDialog
-import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.HideRecreateGroupConfirm
-import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.MarkAsDeletedForEveryone
-import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.MarkAsDeletedLocally
-import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ShowOpenUrlDialog
+import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.*
 import org.thoughtcrime.securesms.home.startconversation.group.CreateGroupScreen
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonData
@@ -41,6 +36,7 @@ import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionMaterialTheme
+import kotlin.text.format
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -235,6 +231,30 @@ fun ConversationV2Dialogs(
                     sendCommand(ConversationViewModel.Commands.HandleUserProfileCommand(it))
                 },
                 onPostAction = onPostUserProfileModalAction
+            )
+        }
+
+        // Join community
+        if(dialogsState.joinCommunity != null){
+            AlertDialog(
+                onDismissRequest = {
+                    // hide dialog
+                    sendCommand(HideJoinCommunityDialog)
+                },
+                title = stringResource(R.string.communityJoin),
+                text = Phrase.from(LocalContext.current, R.string.communityJoinDescription)
+                    .put(COMMUNITY_NAME_KEY, dialogsState.joinCommunity.communityName).format().toString(),
+                buttons = listOf(
+                    DialogButtonData(
+                        text = GetString(stringResource(id = R.string.join)),
+                        onClick = {
+                            sendCommand(JoinCommunity(dialogsState.joinCommunity.communityUrl))
+                        }
+                    ),
+                    DialogButtonData(
+                        GetString(stringResource(R.string.cancel))
+                    )
+                )
             )
         }
     }
