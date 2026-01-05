@@ -96,6 +96,14 @@ public class GiphyActivityToolbar extends Toolbar {
           return true;
         }
 
+          // Defensive: don't let the focus be changed
+          if (actionId == EditorInfo.IME_ACTION_NEXT ||
+                  actionId == EditorInfo.IME_ACTION_DONE ||
+                  actionId == EditorInfo.IME_ACTION_GO ||
+                  actionId == EditorInfo.IME_ACTION_PREVIOUS) {
+              return true;
+          }
+
         return false;
       }
     });

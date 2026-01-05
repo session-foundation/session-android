@@ -143,11 +143,8 @@ class InputBar @JvmOverloads constructor(
 
         // Edit text
         binding.inputBarEditText.setOnEditorActionListener(this)
-        if (TextSecurePreferences.isEnterSendsEnabled(context)) {
-            binding.inputBarEditText.imeOptions = EditorInfo.IME_ACTION_SEND
-        } else {
-            binding.inputBarEditText.imeOptions = EditorInfo.IME_ACTION_NONE
-        }
+        binding.inputBarEditText.imeOptions = EditorInfo.IME_ACTION_NONE
+
         val incognitoFlag = if (TextSecurePreferences.isIncognitoKeyboardEnabled(context)) 16777216 else 0
         binding.inputBarEditText.imeOptions = binding.inputBarEditText.imeOptions or incognitoFlag // Always use incognito keyboard if setting enabled
         binding.inputBarEditText.delegate = this
@@ -208,12 +205,23 @@ class InputBar @JvmOverloads constructor(
     }
 
     override fun onEditorAction(v: TextView?, actionId: Int, event: KeyEvent?): Boolean {
-        if (v === binding.inputBarEditText && actionId == EditorInfo.IME_ACTION_SEND) {
-            // same as pressing send button
-            delegate?.sendMessage()
-            return true
+        if (v !== binding.inputBarEditText) return false
+
+        return when (actionId) {
+            EditorInfo.IME_ACTION_SEND -> {
+                delegate?.sendMessage()
+                true
+            }
+
+            // Prevent TextView default focus navigation from ever running.
+            EditorInfo.IME_ACTION_NEXT,
+            EditorInfo.IME_ACTION_DONE,
+            EditorInfo.IME_ACTION_GO,
+            EditorInfo.IME_ACTION_SEARCH,
+            EditorInfo.IME_ACTION_PREVIOUS -> true
+
+            else -> false // allow normal multiline behavior
         }
-        return false
     }
 
     override fun inputBarEditTextContentChanged(text: CharSequence) {
