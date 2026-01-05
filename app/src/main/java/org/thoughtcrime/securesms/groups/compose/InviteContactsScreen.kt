@@ -66,6 +66,7 @@ fun InviteContactsScreen(
         contacts = viewModel.contacts.collectAsState().value,
         uiState = viewModel.uiState.collectAsState().value,
         searchQuery = viewModel.searchQuery.collectAsState().value,
+        hasContacts = viewModel.hasContacts.collectAsState().value,
         onDoneClicked = onDoneClicked,
         onBack = onBack,
         banner = banner,
@@ -80,6 +81,7 @@ fun InviteContacts(
     contacts: List<ContactItem>,
     uiState: InviteMembersViewModel.UiState,
     searchQuery: String,
+    hasContacts: Boolean,
     onDoneClicked: (shareHistory: Boolean) -> Unit,
     onBack: () -> Unit,
     banner: @Composable () -> Unit = {},
@@ -144,30 +146,32 @@ fun InviteContacts(
         ) {
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
-            SearchBarWithClose(
-                query = searchQuery,
-                onValueChanged = { query -> sendCommand(SearchQueryChange(query)) },
-                onClear = { sendCommand(SearchQueryChange("")) },
-                placeholder = stringResource(R.string.searchContacts),
-                modifier = Modifier
-                    .padding(horizontal = LocalDimensions.current.smallSpacing)
-                    .qaTag(R.string.AccessibilityId_groupNameSearch),
-                backgroundColor = LocalColors.current.backgroundSecondary,
-                isFocused = uiState.isSearchFocused,
-                onFocusChanged = { isFocused -> sendCommand(SearchFocusChange(isFocused)) },
-                enabled = true,
-            )
+            if (hasContacts) {
+                SearchBarWithClose(
+                    query = searchQuery,
+                    onValueChanged = { query -> sendCommand(SearchQueryChange(query)) },
+                    onClear = { sendCommand(SearchQueryChange("")) },
+                    placeholder = stringResource(R.string.searchContacts),
+                    modifier = Modifier
+                        .padding(horizontal = LocalDimensions.current.smallSpacing)
+                        .qaTag(R.string.AccessibilityId_groupNameSearch),
+                    backgroundColor = LocalColors.current.backgroundSecondary,
+                    isFocused = uiState.isSearchFocused,
+                    onFocusChanged = { isFocused -> sendCommand(SearchFocusChange(isFocused)) },
+                    enabled = true,
+                )
+
+                Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
+            }
 
             val scrollState = rememberLazyListState()
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
             ) {
-                if (contacts.isEmpty() && searchQuery.isEmpty()) {
+                if (!hasContacts && searchQuery.isEmpty()) {
                     Text(
                         text = stringResource(id = R.string.membersInviteNoContacts),
                         modifier = Modifier
@@ -235,6 +239,7 @@ private fun PreviewSelectContacts() {
                 )
             ),
             searchQuery = "",
+            hasContacts = true
         )
     }
 }
@@ -258,7 +263,8 @@ private fun PreviewSelectEmptyContacts() {
                     footerActionTitle = GetString("")
                 )
             ),
-            searchQuery = "Test"
+            searchQuery = "Test",
+            hasContacts = false
         )
     }
 }
@@ -282,7 +288,8 @@ private fun PreviewSelectEmptyContactsWithSearch() {
                     footerActionTitle = GetString("")
                 )
             ),
-            searchQuery = ""
+            searchQuery = "",
+            hasContacts = false
         )
     }
 }
