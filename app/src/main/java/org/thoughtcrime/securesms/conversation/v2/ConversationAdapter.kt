@@ -31,7 +31,7 @@ class ConversationAdapter(
     private val onDeselect: (MessageRecord) -> Unit,
     private val downloadPendingAttachment: (DatabaseAttachment) -> Unit,
     private val retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
-    private val confirmCommunityJoin: (String, String) -> Unit,
+    private val confirmCommunityJoin: (url: String, name: String) -> Unit,
     private val confirmAttachmentDownload: (DatabaseAttachment)->Unit,
     private val glide: RequestManager,
     private val threadRecipientProvider: () -> Recipient,
