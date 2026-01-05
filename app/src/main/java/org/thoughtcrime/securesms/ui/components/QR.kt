@@ -36,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -101,7 +102,7 @@ fun QRScannerScreen(
         val permission = Manifest.permission.CAMERA
         val cameraPermissionState = rememberPermissionState(permission)
 
-        var showCameraPermissionDialog by remember { mutableStateOf(false) }
+        var showCameraPermissionDialog by retain { mutableStateOf(false) }
 
         if (cameraPermissionState.status.isGranted) {
             ScanQrCode(errors, onScan)

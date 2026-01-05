@@ -43,6 +43,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
+import androidx.core.view.updatePadding
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.Observer
@@ -684,6 +685,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             val navInsets = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars())
             val imeInsets = windowInsets.getInsets(WindowInsetsCompat.Type.ime())
 
+            val systemBarsInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+
             val keyboardVisible = imeInsets.bottom > 0
 
             if (keyboardVisible != isKeyboardVisible) {
@@ -700,6 +703,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             binding.bottomSpacer.updateLayoutParams<LayoutParams> {
                 height = if (keyboardVisible) imeInsets.bottom else navInsets.bottom
             }
+
+            binding.contentContainer.updatePadding(
+                left = systemBarsInsets.left,
+                right = systemBarsInsets.right
+            )
 
             windowInsets
         }

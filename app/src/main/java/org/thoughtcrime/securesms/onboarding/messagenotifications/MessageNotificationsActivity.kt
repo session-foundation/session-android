@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.onboarding.messagenotifications
 
 import android.app.Activity
 import android.os.Bundle
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -45,6 +46,13 @@ class MessageNotificationsActivity : BaseActionBarActivity() {
 
         setComposeContent { MessageNotificationsScreen() }
 
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (viewModel.onBackPressed()) return
+                finish()
+            }
+        })
+
         lifecycleScope.launch {
             viewModel.events.collect {
                 when (it) {
@@ -53,14 +61,6 @@ class MessageNotificationsActivity : BaseActionBarActivity() {
                 }
             }
         }
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        if (viewModel.onBackPressed()) return
-
-        @Suppress("DEPRECATION")
-        super.onBackPressed()
     }
 
     @Composable
