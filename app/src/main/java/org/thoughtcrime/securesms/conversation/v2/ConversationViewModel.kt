@@ -60,7 +60,9 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ExpirationUtil
+import org.session.libsession.utilities.NonTranslatableStringConstants.APP_NAME
 import org.session.libsession.utilities.OpenGroupUrlParser
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.UserConfigType
@@ -104,6 +106,7 @@ import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.AudioSlide
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
+import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.ui.components.ConversationAppBarData
 import org.thoughtcrime.securesms.ui.components.ConversationAppBarPagerData
 import org.thoughtcrime.securesms.ui.getSubbedString
@@ -1299,6 +1302,30 @@ class ConversationViewModel @AssistedInject constructor(
                     )
                 }
             }
+
+            Commands.HideSimpleDialog -> {
+                _dialogsState.update {
+                    it.copy(showSimpleDialog = null)
+                }
+            }
+
+        }
+    }
+
+    fun showLinkDownloadDialog(confirmLinkDownload: ()->Unit){
+        _dialogsState.update {
+            it.copy(
+                showSimpleDialog = SimpleDialogData(
+                    title = application.getString(R.string.linkPreviewsEnable),
+                    message = Phrase.from(application, R.string.linkPreviewsFirstDescription)
+                        .put(APP_NAME_KEY, APP_NAME)
+                        .format(),
+                    positiveStyleDanger = true,
+                    positiveText = application.getString(R.string.enable),
+                    onPositive = confirmLinkDownload,
+                    negativeText = application.getString(R.string.cancel),
+                )
+            )
         }
     }
 
@@ -1451,6 +1478,7 @@ class ConversationViewModel @AssistedInject constructor(
     }
 
     data class DialogsState(
+        val showSimpleDialog: SimpleDialogData? = null,
         val openLinkDialogUrl: String? = null,
         val clearAllEmoji: ClearAllEmoji? = null,
         val deleteEveryone: DeleteForEveryoneDialogData? = null,
@@ -1507,6 +1535,8 @@ class ConversationViewModel @AssistedInject constructor(
 
         data class JoinCommunity(val url: String): Commands
         data object HideJoinCommunityDialog: Commands
+
+        data object HideSimpleDialog : Commands
     }
 }
 

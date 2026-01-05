@@ -31,6 +31,7 @@ import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.UserProfileModal
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -48,6 +49,42 @@ fun ConversationV2Dialogs(
     onPostUserProfileModalAction: () -> Unit // a function called in the User Profile Modal once an action has been taken
 ){
     SessionMaterialTheme {
+        //  Simple dialogs
+        if (dialogsState.showSimpleDialog != null) {
+            val buttons = mutableListOf<DialogButtonData>()
+            if(dialogsState.showSimpleDialog.positiveText != null) {
+                buttons.add(
+                    DialogButtonData(
+                        text = GetString(dialogsState.showSimpleDialog.positiveText),
+                        color = if (dialogsState.showSimpleDialog.positiveStyleDanger) LocalColors.current.danger
+                        else LocalColors.current.text,
+                        qaTag = dialogsState.showSimpleDialog.positiveQaTag,
+                        onClick = dialogsState.showSimpleDialog.onPositive
+                    )
+                )
+            }
+            if(dialogsState.showSimpleDialog.negativeText != null){
+                buttons.add(
+                    DialogButtonData(
+                        text = GetString(dialogsState.showSimpleDialog.negativeText),
+                        qaTag = dialogsState.showSimpleDialog.negativeQaTag,
+                        onClick = dialogsState.showSimpleDialog.onNegative
+                    )
+                )
+            }
+
+            AlertDialog(
+                onDismissRequest = {
+                    // hide dialog
+                    sendCommand(HideSimpleDialog)
+                },
+                title = annotatedStringResource(dialogsState.showSimpleDialog.title),
+                text = annotatedStringResource(dialogsState.showSimpleDialog.message),
+                showCloseButton = dialogsState.showSimpleDialog.showXIcon,
+                buttons = buttons
+            )
+        }
+
         // inputbar dialogs
         InputBarDialogs(
             inputBarDialogsState = inputBarDialogsState,
