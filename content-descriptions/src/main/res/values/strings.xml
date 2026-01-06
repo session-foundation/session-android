@@ -274,6 +274,11 @@
     <string name="qa_pro_settings_action_faq">pro-settings-faq</string>
     <string name="qa_pro_settings_action_support">pro-settings-support</string>
 
+    <!-- Manage members and admin -->
+    <string name="qa_manage_members_invite_contacts">invite-contacts-menu-option</string>
+    <string name="qa_manage_members_invite_account_id">invite-accountid-menu-option</string>
+    <string name="qa_manage_members_promote_members">promote-members-menu-option</string>
+
     <!-- Misc. -->
     <string name="AccessibilityId_navigateBack">Navigate back</string>
     <string name="AccessibilityId_close">Close Dialog</string>
