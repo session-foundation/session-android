@@ -5,6 +5,7 @@ import org.session.libsession.network.model.ErrorStatus
 import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.network.model.OnionError
 import org.session.libsession.network.model.OnionResponse
+import org.session.libsession.network.model.Path
 import org.session.libsession.network.onion.OnionBuilder
 import org.session.libsession.network.onion.OnionRequestEncryption
 import org.session.libsession.network.onion.OnionTransport
@@ -29,7 +30,7 @@ class HttpOnionTransport @Inject constructor(
 ) : OnionTransport {
 
     override suspend fun send(
-        path: List<Snode>,
+        path: Path,
         destination: OnionDestination,
         payload: ByteArray,
         version: Version

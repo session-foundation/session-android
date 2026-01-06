@@ -1,6 +1,7 @@
 package org.session.libsession.network.onion
 
 import org.session.libsession.network.model.OnionDestination
+import org.session.libsession.network.model.Path
 import org.session.libsession.utilities.AESGCM.EncryptionResult
 import org.session.libsignal.utilities.Snode
 
@@ -14,7 +15,7 @@ object OnionBuilder {
     )
 
     fun build(
-        path: List<Snode>,
+        path: Path,
         destination: OnionDestination,
         payload: ByteArray,
         version: Version
