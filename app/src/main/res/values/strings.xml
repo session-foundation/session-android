@@ -1227,6 +1227,10 @@
         <item quantity="one">Remove Member</item>
         <item quantity="other">Remove Members</item>
     </plurals>
+    <plurals name="removeMemberLowercase">
+        <item quantity="one">Remove member</item>
+        <item quantity="other">Remove members</item>
+    </plurals>
     <plurals name="removeMemberMessages">
         <item quantity="one">Remove member and their messages</item>
         <item quantity="other">Remove members and their messages</item>

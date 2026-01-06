@@ -185,7 +185,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
         // to rewrite the intent to reference a cached copy of the shared file.
         // Note: We CANNOT just add `Intent.FLAG_GRANT_READ_URI_PERMISSION` to this intent as we
         // pass it around because we don't have permission to do that (i.e., it doesn't work).
-        if (intent.action == "android.intent.action.SEND") {
+        if (intent.action == Intent.ACTION_SEND || intent.action == Intent.ACTION_SEND_MULTIPLE) {
             val rewrittenIntent = rewriteShareIntentUris(intent)
             return getRoutedIntent(ScreenLockActivity::class.java, rewrittenIntent)
         } else {
@@ -225,7 +225,8 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
     private suspend fun rewriteShareIntentUris(originalIntent: Intent): Intent? = withContext(Dispatchers.IO) {
         val rewrittenIntent = Intent(originalIntent)
 
-        // Clear original clipData
+        // Clear original data
+        rewrittenIntent.data = null
         rewrittenIntent.clipData = null
         rewrittenIntent.removeExtra(Intent.EXTRA_STREAM)
 
