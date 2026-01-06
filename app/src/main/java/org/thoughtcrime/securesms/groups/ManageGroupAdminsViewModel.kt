@@ -146,13 +146,13 @@ class ManageGroupAdminsViewModel @AssistedInject constructor(
 
         val accountIds = members.map { it.accountId }
 
-        val resendingText = context.resources.getQuantityString(
-            R.plurals.resendingPromotion,
+        val sendingPromotionText = context.resources.getQuantityString(
+            if (isRepromote) R.plurals.resendingPromotion else R.plurals.sendingPromotion,
             accountIds.size,
             accountIds.size
         )
 
-        showToast(resendingText)
+        showToast(sendingPromotionText)
 
         performGroupOperationCore(
             showLoading = false,
