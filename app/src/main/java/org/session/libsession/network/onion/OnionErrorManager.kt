@@ -36,9 +36,8 @@ class OnionErrorManager @Inject constructor(
             Log.w("Onion Request", "Clock out of sync (code: $code) for destination ${ctx.targetSnode?.address} at node: ${error.snode?.address}")
             // Do not penalise path or snode. Reset the clock. Retry if reset succeeded.
             val resetOk = runCatching {
-                //snodeClock.resync()
+                snodeClock.resyncClock()
                 //todo ONION We should poll three random snode and use their median time - retry initial logic. If we still get an out of sync error, we should penalise the snode, and try again with another
-                false
             }.getOrDefault(false)
             return if (resetOk) FailureDecision.Retry else FailureDecision.Fail(error)
         }
