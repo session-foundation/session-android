@@ -54,41 +54,33 @@ class SnodeClock @Inject constructor(
      */
     suspend fun resyncClock(): Boolean {
         return runCatching {
-            // Keep it bounded - clock sync shouldn't hang onion retries forever
             withTimeout(8_000L) {
                 val nodes = pickDistinctRandomSnodes(count = 3)
 
                 val samples: List<Pair<Long, Long>> = supervisorScope {
                     nodes.map { node ->
                         async {
-                            val requestStarted = SystemClock.elapsedRealtime()
-                            var networkTime = snodeClient.get().getNetworkTime(node).second
-                            val requestEnded = SystemClock.elapsedRealtime()
+                            runCatching {
+                                val requestStarted = SystemClock.elapsedRealtime()
+                                var networkTime = snodeClient.get().getNetworkTime(node).second
+                                val requestEnded = SystemClock.elapsedRealtime()
 
-                            // midpoint adjustment
-                            networkTime -= (requestEnded - requestStarted) / 2
-
-                            // (systemUptimeAtStart, adjustedNetworkTimeAtStart)
-                            requestStarted to networkTime
+                                networkTime -= (requestEnded - requestStarted) / 2
+                                requestStarted to networkTime
+                            }.getOrNull()
                         }
-                    }.awaitAll()
+                    }.awaitAll().filterNotNull()
                 }
 
-                // Convert all samples to "time at (roughly) now" so they’re comparable,
-                // then take the median.
                 val nowUptime = SystemClock.elapsedRealtime()
                 val candidateNowTimes = samples.map { (uptimeAtStart, adjustedAtStart) ->
-                    val elapsed = nowUptime - uptimeAtStart
-                    adjustedAtStart + elapsed
+                    adjustedAtStart + (nowUptime - uptimeAtStart)
                 }.sorted()
 
                 val medianNow = candidateNowTimes[candidateNowTimes.size / 2]
+                instantState.value = Instant(systemUptime = nowUptime, networkTime = medianNow)
 
-                // Store as (systemUptimeNow, networkTimeNow)
-                val inst = Instant(systemUptime = nowUptime, networkTime = medianNow)
-                instantState.value = inst
-
-                Log.d("SnodeClock", "Resynced. Network time: ${Date(inst.now())}, system time: ${Date()}")
+                Log.d("SnodeClock", "Resynced. Network time: ${Date(medianNow)}, system time: ${Date()}")
                 true
             }
         }.getOrElse { t ->
