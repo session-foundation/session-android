@@ -150,7 +150,7 @@ fun PromoteMembers(
                     .padding(horizontal = LocalDimensions.current.mediumSpacing)
                     .fillMaxWidth()
                     .wrapContentWidth(Alignment.CenterHorizontally),
-                text = LocalResources.current.getString(if (!hasActiveMembers) R.string.noNonAdminsInGroup else R.string.adminCannotBeDemoted),
+                text = LocalResources.current.getString(if (!hasActiveMembers) R.string.noNonAdminsInGroup else R.string.membersGroupPromotionAcceptInvite),
                 textAlign = TextAlign.Center,
                 style = LocalType.current.base,
                 color = LocalColors.current.textSecondary
