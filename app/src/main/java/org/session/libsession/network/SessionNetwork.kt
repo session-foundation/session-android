@@ -1,14 +1,10 @@
 package org.session.libsession.network
 
-import okhttp3.Request
 import kotlinx.coroutines.delay
 import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.network.model.OnionError
 import org.session.libsession.network.model.OnionResponse
 import org.session.libsession.network.model.Path
-import org.session.libsession.network.onion.OnionErrorManager
-import org.session.libsession.network.onion.OnionFailureContext
-import org.session.libsession.network.onion.FailureDecision
 import org.session.libsession.network.onion.OnionTransport
 import org.session.libsession.network.onion.PathManager
 import org.session.libsession.network.onion.Version

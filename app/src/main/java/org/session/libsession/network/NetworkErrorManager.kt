@@ -1,9 +1,9 @@
-package org.session.libsession.network.onion
+package org.session.libsession.network
 
-import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.network.model.OnionError
 import org.session.libsession.network.model.Path
+import org.session.libsession.network.onion.PathManager
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsignal.utilities.Log
@@ -30,17 +30,6 @@ class OnionErrorManager @Inject constructor(
         // --------------------------------------------------------------------
         // 1) "Found anywhere" rules (path OR destination)
         // --------------------------------------------------------------------
-
-        // 406/425: clock out of sync
-        if (code == 406 || code == 425) {
-            Log.w("Onion Request", "Clock out of sync (code: $code) for destination ${ctx.targetSnode?.address} at node: ${error.snode?.address}")
-            // Do not penalise path or snode. Reset the clock. Retry if reset succeeded.
-            val resetOk = runCatching {
-                snodeClock.resyncClock()
-                //todo ONION We should poll three random snode and use their median time - retry initial logic. If we still get an out of sync error, we should penalise the snode, and try again with another
-            }.getOrDefault(false)
-            return if (resetOk) FailureDecision.Retry else FailureDecision.Fail(error)
-        }
 
         // 400, 403, 404: do not penalise path or snode; No retries
         if (code == 400 || code == 403 || code == 404) {
@@ -98,7 +87,28 @@ class OnionErrorManager @Inject constructor(
         // 3) Destination payload rules
         // --------------------------------------------------------------------
         if (error is OnionError.DestinationError) {
+            // 406/425: clock out of sync (COS)
+            // 406 is COS only for a snode destination
+            // 425 is COS only for a server destination
+            if ((code == 406 && ctx.destination is OnionDestination.SnodeDestination)
+                || (code == 425 && ctx.destination is OnionDestination.ServerDestination))
+            {
+                Log.w("Onion Request", "Clock out of sync (code: $code) for destination ${ctx.targetSnode?.address} at node: ${error.snode?.address} - Local Snode clock at ${snodeClock.currentTime()}")
+                // Attempt to reset the clock.
+                // The retry logic for COS shouldn't be handled here, but at a higher level
+                // since the clock will be reset, meaning request that need a timestamp will need
+                // to be recreated, so the responsibility should like on a layer further up
+                // for example in the SnodeErrorManager or ServerErrorManager
+                runCatching {
+                    snodeClock.resyncClock()
+                    //todo ONION Add retry logic in the snode and server error managers. If we still get an out of sync error, we should penalise the snode, and try again with another
+                }.getOrDefault(false)
+
+                return FailureDecision.Fail(OnionError.ClockOutOfSync(error.destination, error.status))
+            }
+
             // 421: snode isn't associated with pubkey anymore -> update swarm / invalidate -> retry
+            //todo ONION this should be moved to SnodeErrorManager
             if (code == 421) {
                 val publicKey = ctx.publicKey
                 val targetSnode = ctx.targetSnode

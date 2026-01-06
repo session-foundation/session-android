@@ -46,12 +46,20 @@ sealed class OnionError(
     /**
      * The error happened after decrypting a payload form the destination
      */
-    class DestinationError(val destination: OnionDestination, status: ErrorStatus)
+    open class DestinationError(val destination: OnionDestination, status: ErrorStatus)
         : OnionError(
         ErrorOrigin.DESTINATION_REPLY,
         status = status,
         snode = (destination as? OnionDestination.SnodeDestination)?.snode
         )
+
+    /**
+     * A subcategory of a destination error.
+     * This indicates we got told our clock is out of sync and the client should resync its clock
+     */
+    class ClockOutOfSync(destination: OnionDestination, status: ErrorStatus)
+        : DestinationError(destination, status)
+
 
     /**
      * The onion payload returned something that we couldn't decode as a valid onion response.

@@ -21,9 +21,6 @@ import network.loki.messenger.libsession_util.SessionEncrypt
 import org.session.libsession.network.model.ErrorStatus
 import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.network.model.OnionError
-import org.session.libsession.network.onion.FailureDecision
-import org.session.libsession.network.onion.OnionErrorManager
-import org.session.libsession.network.onion.OnionFailureContext
 import org.session.libsession.network.onion.Version
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.network.snode.SwarmDirectory
