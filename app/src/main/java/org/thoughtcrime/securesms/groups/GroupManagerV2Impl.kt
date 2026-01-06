@@ -5,10 +5,10 @@ import com.google.protobuf.ByteString
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import network.loki.messenger.R
@@ -512,7 +512,7 @@ class GroupManagerV2Impl @Inject constructor(
         members: List<AccountId>,
         isRepromote: Boolean
     ): Unit = scope.launchAndWait(group, "Promote member") {
-        withContext(SupervisorJob()) {
+        supervisorScope {
             val adminKey = requireAdminAccess(group)
             val groupName = configFactory.withMutableGroupConfigs(group) { configs ->
                 // Update the group member's promotion status
@@ -524,100 +524,99 @@ class GroupManagerV2Impl @Inject constructor(
                 configs.groupInfo.getName()
             }
 
-            // Build a group update message to the group telling members someone has been promoted
-            val timestamp = clock.currentTimeMills()
-            val signature = ED25519.sign(
-                message = buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.PROMOTED, timestamp),
-                ed25519PrivateKey = adminKey
-            )
+            try {// Build a group update message to the group telling members someone has been promoted
+                val timestamp = clock.currentTimeMills()
+                val signature = ED25519.sign(
+                    message = buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.PROMOTED, timestamp),
+                    ed25519PrivateKey = adminKey
+                )
 
-            val message = GroupUpdated(
-                GroupUpdateMessage.newBuilder()
-                    .setMemberChangeMessage(
-                        GroupUpdateMemberChangeMessage.newBuilder()
-                            .addAllMemberSessionIds(members.sortedWith(groupMemberComparator).map { it.hexString })
-                            .setType(GroupUpdateMemberChangeMessage.Type.PROMOTED)
-                            .setAdminSignature(ByteString.copyFrom(signature))
-                    )
-                    .build()
-            ).apply {
-                sentTimestamp = timestamp
-            }
-
-            if (!isRepromote) {
-                // Insert the message locally immediately so we can see the incoming change
-                // The same message will be sent later to the group
-                storage.insertGroupInfoChange(message, group)
-            }
-
-            // Send out the promote message to the members concurrently
-            val promoteMessage = GroupUpdated(
-                GroupUpdateMessage.newBuilder()
-                    .setPromoteMessage(
-                        GroupUpdatePromoteMessage.newBuilder()
-                            .setGroupIdentitySeed(ByteString.copyFrom(adminKey).substring(0, 32))
-                            .setName(groupName)
-                    )
-                    .build()
-            )
-
-            val promotionDeferred = members.associateWith { member ->
-                async {
-                    // The promotion message shouldn't be persisted to avoid being retried automatically
-                    messageSender.sendNonDurably(
-                        message = promoteMessage,
-                        address = Address.fromSerialized(member.hexString),
-                        isSyncMessage = false,
-                    )
-                }
-            }
-
-            // Wait and gather all the promote message sending result into a result map
-            val promotedByMemberIDs = promotionDeferred
-                .mapValues { (_, deferred) ->
-                    runCatching { deferred.await() }
+                val message = GroupUpdated(
+                    GroupUpdateMessage.newBuilder()
+                        .setMemberChangeMessage(
+                            GroupUpdateMemberChangeMessage.newBuilder()
+                                .addAllMemberSessionIds(members.sortedWith(groupMemberComparator).map { it.hexString })
+                                .setType(GroupUpdateMemberChangeMessage.Type.PROMOTED)
+                                .setAdminSignature(ByteString.copyFrom(signature))
+                        )
+                        .build()
+                ).apply {
+                    sentTimestamp = timestamp
                 }
 
-            // Update each member's status
-            configFactory.withMutableGroupConfigs(group) { configs ->
-                promotedByMemberIDs.asSequence()
-                    .mapNotNull { (member, result) ->
-                        configs.groupMembers.get(member.hexString)?.apply {
-                            if (result.isSuccess) {
-                                setPromotionSent()
-                            } else {
-                                setPromotionFailed()
+                if (!isRepromote) {
+                    // Insert the message locally immediately so we can see the incoming change
+                    // The same message will be sent later to the group
+                    storage.insertGroupInfoChange(message, group)
+                }
+
+                // Send out the promote message to the members concurrently
+                val promoteMessage = GroupUpdated(
+                    GroupUpdateMessage.newBuilder()
+                        .setPromoteMessage(
+                            GroupUpdatePromoteMessage.newBuilder()
+                                .setGroupIdentitySeed(ByteString.copyFrom(adminKey).substring(0, 32))
+                                .setName(groupName)
+                        )
+                        .build()
+                )
+
+                val promotionDeferred = members.associateWith { member ->
+                    async {
+                        // The promotion message shouldn't be persisted to avoid being retried automatically
+                        messageSender.sendNonDurably(
+                            message = promoteMessage,
+                            address = Address.fromSerialized(member.hexString),
+                            isSyncMessage = false,
+                        )
+                    }
+                }
+
+                // Wait and gather all the promote message sending result into a result map
+                val promotedByMemberIDs = promotionDeferred
+                    .mapValues { (_, deferred) ->
+                        runCatching { deferred.await() }
+                    }
+
+                // Update each member's status
+                configFactory.withMutableGroupConfigs(group) { configs ->
+                    promotedByMemberIDs.asSequence()
+                        .mapNotNull { (member, result) ->
+                            configs.groupMembers.get(member.hexString)?.apply {
+                                if (result.isSuccess) {
+                                    setPromotionSent()
+                                } else {
+                                    setPromotionFailed()
+                                }
                             }
                         }
-                    }
-                    .forEach(configs.groupMembers::set)
-            }
+                        .forEach(configs.groupMembers::set)
+                }
 
-            val failedMembers = promotedByMemberIDs
-                .filterValues { it.isFailure }
-                .keys
-                .toList()
+                val failedMembers = promotedByMemberIDs
+                    .filterValues { it.isFailure }
+                    .keys
+                    .toList()
 
-            if (failedMembers.isNotEmpty()) {
-                val cause = promotedByMemberIDs.values
-                    .firstOrNull { it.isFailure }
-                    ?.exceptionOrNull()
-                    ?: RuntimeException("Failed to promote ${failedMembers.size} member(s)")
+                if (failedMembers.isNotEmpty()) {
+                   throw RuntimeException("Failed to promote ${failedMembers.size} member(s)")
+                }
 
+                if (!isRepromote) {
+                    messageSender.sendAndAwait(message, Address.fromSerialized(group.hexString))
+                }
+            }catch (e: Exception) {
                 throw GroupInviteException(
                     isPromotion = true,
-                    inviteeAccountIds = failedMembers.map { it.hexString },
-                    groupName = groupName ?: "",
+                    inviteeAccountIds = members.map { it.hexString },
+                    groupName = groupName.orEmpty(),
                     isReinvite = isRepromote,
-                    underlying = cause
+                    underlying = e
                 )
-            }
-
-            if (!isRepromote) {
-                messageSender.sendAndAwait(message, Address.fromSerialized(group.hexString))
             }
         }
     }
+
     /**
      * Mark this member as "removed" in the group config.
      *
