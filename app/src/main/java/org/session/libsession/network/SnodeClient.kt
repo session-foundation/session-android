@@ -567,7 +567,8 @@ class SnodeClient @Inject constructor(
 
         // we synthesise a DestinationError since what we get at this point is from the destination's response
         val err = OnionError.DestinationError(
-            ErrorStatus(code = item.code, message = null, body = bodySlice)
+            status = ErrorStatus(code = item.code, message = null, body = bodySlice),
+            destination = OnionDestination.SnodeDestination(targetSnode)
         )
 
         return errorManager.onFailure(

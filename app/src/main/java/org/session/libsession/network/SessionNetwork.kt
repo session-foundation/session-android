@@ -55,7 +55,7 @@ class SessionNetwork @Inject constructor(
 
         for (attempt in 1..maxAttempts) {
             val path: Path = pathManager.getPath(exclude = snodeToExclude)
-            Log.i("Onion Request", "Sending onion request to $destination - attempt $attempt/$maxAttempts")
+            //Log.i("Onion Request", "Sending onion request to $destination - attempt $attempt/$maxAttempts")
 
             try {
                 val result = transport.send(

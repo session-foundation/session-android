@@ -119,10 +119,10 @@ class HttpOnionTransport @Inject constructor(
         destination: OnionDestination,
         version: Version
     ): OnionResponse {
-        Log.i("Onion Request", "Got a successful response from request")
+        //Log.i("Onion Request", "Got a successful response from request")
         return when (version) {
             Version.V4 -> handleV4Response(rawResponse, destinationSymmetricKey, destination)
-            Version.V2, Version.V3 -> handleV2V3Response(rawResponse, destinationSymmetricKey)
+            Version.V2, Version.V3 -> handleV2V3Response(rawResponse, destinationSymmetricKey, destination)
         }
     }
 
@@ -174,7 +174,8 @@ class HttpOnionTransport @Inject constructor(
                             code = statusCode,
                             message = responseInfo["message"]?.toString(),
                             body = bodySlice
-                        )
+                        ),
+                        destination = destination
                     )
             }
 
@@ -193,7 +194,8 @@ class HttpOnionTransport @Inject constructor(
 
     private fun handleV2V3Response(
         rawResponse: ByteArray,
-        destinationSymmetricKey: ByteArray
+        destinationSymmetricKey: ByteArray,
+        destination:OnionDestination
     ): OnionResponse {
         // Outer wrapper: {"result": "<base64(iv+ciphertext)>"}
         val jsonWrapper: Map<*, *> = try {
@@ -266,11 +268,12 @@ class HttpOnionTransport @Inject constructor(
         if (statusCode !in 200..299) {
             val errorMap = (normalizedBody as? Map<*, *>) ?: innerJson
             throw OnionError.DestinationError(
-                ErrorStatus(
+                status = ErrorStatus(
                     code = statusCode,
                     message = extractMessage(errorMap),
-                    body = JsonUtil.toJson(errorMap).toByteArray().view()
-                )
+                    body = JsonUtil.toJson(errorMap).toByteArray().view(),
+                ),
+                destination = destination
             )
         }
 

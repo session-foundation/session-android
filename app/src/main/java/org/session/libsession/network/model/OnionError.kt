@@ -17,6 +17,7 @@ enum class ErrorOrigin { UNKNOWN, TRANSPORT_TO_GUARD, PATH_HOP, DESTINATION_REPL
 sealed class OnionError(
     val origin: ErrorOrigin,
     val status: ErrorStatus? = null,
+    val snode: Snode? = null,
     cause: Throwable? = null
 ) : Exception(status?.message ?: "Onion error", cause) {
 
@@ -34,19 +35,23 @@ sealed class OnionError(
     class IntermediateNodeFailed(
         val reportingNode: Snode?,
         val failedPublicKey: String?
-    ) : OnionError(ErrorOrigin.PATH_HOP)
+    ) : OnionError(origin = ErrorOrigin.PATH_HOP, snode = reportingNode)
 
     /**
      * The error happened, as far as we can tell, along the path on the way to the destination
      */
     class PathError(val node: Snode?, status: ErrorStatus)
-        : OnionError(ErrorOrigin.PATH_HOP, status = status)
+        : OnionError(ErrorOrigin.PATH_HOP, status = status, snode = node)
 
     /**
      * The error happened after decrypting a payload form the destination
      */
-    class DestinationError(status: ErrorStatus)
-        : OnionError(ErrorOrigin.DESTINATION_REPLY, status = status)
+    class DestinationError(val destination: OnionDestination, status: ErrorStatus)
+        : OnionError(
+        ErrorOrigin.DESTINATION_REPLY,
+        status = status,
+        snode = (destination as? OnionDestination.SnodeDestination)?.snode
+        )
 
     /**
      * The onion payload returned something that we couldn't decode as a valid onion response.
