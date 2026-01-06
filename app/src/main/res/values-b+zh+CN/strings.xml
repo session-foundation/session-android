@@ -635,6 +635,9 @@
     <plurals name="inviteContactsPlural">
         <item quantity="other">邀请联系人</item>
     </plurals>
+    <plurals name="inviteFailed">
+        <item quantity="other">Invites Failed</item>
+    </plurals>
     <plurals name="inviteFailedDescription">
         <item quantity="other">无法发送邀请。您想重试吗？</item>
     </plurals>
