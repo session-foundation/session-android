@@ -258,7 +258,7 @@
     <string name="clearMessagesGroupDescription">Weet u zeker dat u alle <b>{group_name}</b> berichten van uw apparaat wilt wissen?</string>
     <string name="clearMessagesGroupDescriptionUpdated">Weet je zeker dat je alle berichten van <b>{group_name}</b> op dit apparaat wilt wissen?</string>
     <string name="clearMessagesNoteToSelfDescription">Weet u zeker dat u alle \"Notitie aan mijzelf\" berichten van uw apparaat wilt wissen?</string>
-    <string name="clearMessagesNoteToSelfDescriptionUpdated">Weet u zeker dat u alle <b>{Bericht aan Jezelf}</b> op dit apparaat wilt wissen?</string>
+    <string name="clearMessagesNoteToSelfDescriptionUpdated">Weet u zeker dat u alle <b>Bericht aan Jezelf</b> op dit apparaat wilt wissen?</string>
     <string name="clearOnThisDevice">Wissen op dit apparaat</string>
     <string name="close">Sluiten</string>
     <string name="closeApp">Applicatie sluiten</string>

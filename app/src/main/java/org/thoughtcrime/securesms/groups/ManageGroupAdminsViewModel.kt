@@ -67,7 +67,8 @@ class ManageGroupAdminsViewModel @AssistedInject constructor(
                 // use plural version of this string resource
                 name = context.resources.getQuantityString(R.plurals.promoteMember, 2, 2),
                 icon = R.drawable.ic_add_admin_custom,
-                onClick = ::navigateToPromoteMembers
+                onClick = ::navigateToPromoteMembers,
+                qaTag = R.string.qa_manage_members_promote_members
             )
         )
     }

@@ -148,11 +148,22 @@ class ShareViewModel @Inject constructor(
         val type = intent.type
         val incomingUris = ArrayList<Uri>()
 
-        if (Intent.ACTION_SEND == action) {
-            intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)?.let { incomingUris.add(it) }
-        } else if (Intent.ACTION_SEND_MULTIPLE == action) {
-            intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)?.let { incomingUris.addAll(it) }
+        val clipUris = intent.clipData?.let { cd ->
+            (0 until cd.itemCount).mapNotNull { cd.getItemAt(it).uri }
+        }.orEmpty()
+
+        if (clipUris.isNotEmpty()) {
+            incomingUris.addAll(clipUris)
+        } else {
+            if (Intent.ACTION_SEND == action) {
+                intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)?.let(incomingUris::add)
+            } else if (Intent.ACTION_SEND_MULTIPLE == action) {
+                intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)?.let(incomingUris::addAll)
+            }
+            intent.data?.let(incomingUris::add)
         }
+
+        val uris = incomingUris.distinct()
 
         var charSequenceExtra: CharSequence? = null
         try {
@@ -163,22 +174,22 @@ class ShareViewModel @Inject constructor(
         }
 
         isPassingAlongMedia = false
-        mimeType = getMimeType(incomingUris.firstOrNull(), type)
+        mimeType = getMimeType(uris.firstOrNull(), type)
 
-        if (incomingUris.isNotEmpty() && incomingUris.all { PartAuthority.isLocalUri(it) }) {
+        if (uris.isNotEmpty() && uris.all { PartAuthority.isLocalUri(it) }) {
             isPassingAlongMedia = true
-            resolvedExtras = incomingUris
+            resolvedExtras = uris
             handleResolvedMedia(intent)
         } else if (
-            incomingUris.isEmpty() &&
+            uris.isEmpty() &&
             charSequenceExtra != null &&
             (mimeType?.startsWith("text/") == true)
         ) {
             resolvedPlaintext = charSequenceExtra
             handleResolvedMedia(intent)
-        } else if (incomingUris.isNotEmpty()) {
+        } else if (uris.isNotEmpty()) {
             _uiState.update { it.copy(showLoader = true) }
-            resolveMedia(intent, incomingUris)
+            resolveMedia(intent, uris)
         } else {
             _uiState.update { it.copy(showLoader = false) }
         }
