@@ -134,7 +134,8 @@ data class OnionFailureContext(
     val path: Path,
     val destination: OnionDestination,
     val targetSnode: Snode? = null,
-    val publicKey: String? = null
+    val publicKey: String? = null,
+    val previousError: OnionError? = null // in some situations we could be coming from a retry to a previous error
 )
 
 sealed class FailureDecision {

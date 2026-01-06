@@ -577,7 +577,8 @@ class SnodeClient @Inject constructor(
                 path = listOf(targetSnode),
                 destination = OnionDestination.SnodeDestination(targetSnode),
                 targetSnode = targetSnode,
-                publicKey = publicKey
+                publicKey = publicKey,
+                previousError = null //todo ONION can we set this properly?
             )
         )
     }

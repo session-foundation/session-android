@@ -51,7 +51,7 @@ class SessionNetwork @Inject constructor(
         targetSnode: Snode?,
         publicKey: String?
     ): OnionResponse {
-        var lastError: Throwable? = null
+        var lastError: OnionError? = null
 
         for (attempt in 1..maxAttempts) {
             val path: Path = pathManager.getPath(exclude = snodeToExclude)
@@ -71,8 +71,6 @@ class SessionNetwork @Inject constructor(
 
                 Log.w("Onion Request", "Onion error on attempt $attempt/$maxAttempts: $onionError")
 
-                lastError = onionError
-
                 // Delegate all handling + retry decision
                 val decision = errorManager.onFailure(
                     error = onionError,
@@ -80,9 +78,12 @@ class SessionNetwork @Inject constructor(
                         path = path,
                         destination = destination,
                         targetSnode = targetSnode,
-                        publicKey = publicKey
+                        publicKey = publicKey,
+                        previousError = lastError
                     )
                 )
+
+                lastError = onionError
 
                 when (decision) {
                     is FailureDecision.Fail -> throw decision.throwable
