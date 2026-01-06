@@ -1,14 +1,20 @@
+// SnodeClock.kt
 package org.session.libsession.network
 
 import android.os.SystemClock
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withTimeout
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ManagerScope
@@ -36,44 +42,68 @@ class SnodeClock @Inject constructor(
     // can this be improved?
 
     private val instantState = MutableStateFlow<Instant?>(null)
-    private var job: Job? = null
 
     override fun onPostAppStarted() {
-        require(job == null) { "Already started" }
-
-        job = scope.launch {
-            while (true) {
-                try {
-                    val node = snodeDirectory.getRandomSnode()
-                    val requestStarted = SystemClock.elapsedRealtime()
-
-                    var networkTime = snodeClient.get().getNetworkTime(node).second
-                    val requestEnded = SystemClock.elapsedRealtime()
-
-                    // Adjust network time to halfway through the request duration
-                    networkTime -= (requestEnded - requestStarted) / 2
-
-                    val inst = Instant(requestStarted, networkTime)
-
-                    Log.d(
-                        "SnodeClock",
-                        "Network time: ${Date(inst.now())}, system time: ${Date()}"
-                    )
-
-                    instantState.value = inst
-                } catch (e: Exception) {
-                    Log.e("SnodeClock", "Failed to get network time. Retrying in a few seconds", e)
-                } finally {
-                    val delayMills = if (instantState.value == null) {
-                        3_000L
-                    } else {
-                        3_600_000L
-                    }
-
-                    delay(delayMills)
-                }
-            }
+        scope.launch {
+            resyncClock()
         }
+    }
+
+    /**
+     * Resync by querying 3 random snodes and setting time to the median of their adjusted times.
+     */
+    suspend fun resyncClock(): Boolean {
+        return runCatching {
+            // Keep it bounded - clock sync shouldn't hang onion retries forever
+            withTimeout(8_000L) {
+                val nodes = pickDistinctRandomSnodes(count = 3)
+
+                val samples: List<Pair<Long, Long>> = supervisorScope {
+                    nodes.map { node ->
+                        async {
+                            val requestStarted = SystemClock.elapsedRealtime()
+                            var networkTime = snodeClient.get().getNetworkTime(node).second
+                            val requestEnded = SystemClock.elapsedRealtime()
+
+                            // midpoint adjustment
+                            networkTime -= (requestEnded - requestStarted) / 2
+
+                            // (systemUptimeAtStart, adjustedNetworkTimeAtStart)
+                            requestStarted to networkTime
+                        }
+                    }.awaitAll()
+                }
+
+                // Convert all samples to "time at (roughly) now" so they’re comparable,
+                // then take the median.
+                val nowUptime = SystemClock.elapsedRealtime()
+                val candidateNowTimes = samples.map { (uptimeAtStart, adjustedAtStart) ->
+                    val elapsed = nowUptime - uptimeAtStart
+                    adjustedAtStart + elapsed
+                }.sorted()
+
+                val medianNow = candidateNowTimes[candidateNowTimes.size / 2]
+
+                // Store as (systemUptimeNow, networkTimeNow)
+                val inst = Instant(systemUptime = nowUptime, networkTime = medianNow)
+                instantState.value = inst
+
+                Log.d("SnodeClock", "Resynced. Network time: ${Date(inst.now())}, system time: ${Date()}")
+                true
+            }
+        }.getOrElse { t ->
+            Log.w("SnodeClock", "Resync failed", t)
+            false
+        }
+    }
+
+    private suspend fun pickDistinctRandomSnodes(count: Int): List<org.session.libsignal.utilities.Snode> {
+        val out = LinkedHashSet<org.session.libsignal.utilities.Snode>(count)
+        var guard = 0
+        while (out.size < count && guard++ < 20) {
+            out += snodeDirectory.getRandomSnode()
+        }
+        return out.toList()
     }
 
     /**
@@ -91,13 +121,9 @@ class SnodeClock @Inject constructor(
         return instantState.value?.now() ?: System.currentTimeMillis()
     }
 
-    fun currentTimeSeconds(): Long {
-        return currentTimeMills() / 1000
-    }
+    fun currentTimeSeconds(): Long = currentTimeMills() / 1000
 
-    fun currentTime(): java.time.Instant {
-        return java.time.Instant.ofEpochMilli(currentTimeMills())
-    }
+    fun currentTime(): java.time.Instant = java.time.Instant.ofEpochMilli(currentTimeMills())
 
     /**
      * Delay until the specified instant. If the instant is in the past or now, this method returns
