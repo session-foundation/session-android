@@ -55,9 +55,6 @@ class SnodeClient @Inject constructor(
     private val json: Json,
     private val errorManager: SnodeClientErrorManager
 ) {
-
-    //todo ONION missing retry strategies - create inline retry strategy to use on all calling sites - remove retry logic in sendToSnode
-
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val batchedRequestsSender: SendChannel<RequestInfo>
 
@@ -122,7 +119,18 @@ class SnodeClient @Inject constructor(
                         val item = items[i]
 
                         val result: Result<Any> = runCatching {
-                            if (!item.isSuccessful) throw BatchResponse.Error(item)
+                            if (!item.isSuccessful) {
+                                val bodySlice = item.body.toString().toByteArray(Charsets.UTF_8).view()
+
+                                throw OnionError.DestinationError(
+                                    status = ErrorStatus(
+                                        code = item.code,
+                                        message = "Batch Item Failure",
+                                        body = bodySlice
+                                    ),
+                                    destination = OnionDestination.SnodeDestination(snode)
+                                )
+                            }
 
                             // Decode each sub-response body into expected type
                             @Suppress("UNCHECKED_CAST")
@@ -263,6 +271,20 @@ class SnodeClient @Inject constructor(
     //todo ONION the methods below haven't been fully refactored - This is part of the next step of this refactor
 
     // Client methods
+
+    suspend fun fetchSwarm(publicKey: String): Map<*, *> {
+        return retryWithBackOffForSnode(
+            operationName = "fetchSwarm",
+            publicKey = publicKey,
+            pickTarget = { snodeDirectory.getRandomSnode() }
+        ) { snode ->
+            send(
+                method = Snode.Method.GetSwarm,
+                snode = snode,
+                parameters = mapOf("pubKey" to publicKey)
+            )
+        }
+    }
 
     /**
      * Note: After this method returns, [auth] will not be used by any of async calls and it's afe
@@ -596,29 +618,6 @@ class SnodeClient @Inject constructor(
         )
 
         return response
-    }
-
-    private suspend fun handleBatchItemFailure(
-        item: BatchResponse.Item,
-        targetSnode: Snode,
-        publicKey: String?,
-    ) : FailureDecision {
-        val bodySlice = item.body.toString().toByteArray(Charsets.UTF_8).view()
-
-        // we synthesise a DestinationError since what we get at this point is from the destination's response
-        val err = OnionError.DestinationError(
-            status = ErrorStatus(code = item.code, message = null, body = bodySlice),
-            destination = OnionDestination.SnodeDestination(targetSnode)
-        )
-
-        return errorManager.onFailure(
-            error = err,
-            ctx = SnodeClientFailureContext(
-                targetSnode = targetSnode,
-                publicKey = publicKey,
-                previousError = null //todo ONION can we set this properly?
-            )
-        )
     }
 
     /**

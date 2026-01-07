@@ -34,14 +34,7 @@ class SwarmDirectory @Inject constructor(
             "Snode pool is empty"
         }
 
-        val randomSnode = pool.random()
-        val params = mapOf("pubKey" to publicKey)
-
-        val response = snodeClient.get().send(
-            method = Snode.Method.GetSwarm,
-            parameters = params,
-            snode = randomSnode,
-        )
+        val response = snodeClient.get().fetchSwarm(publicKey)
 
         return parseSnodes(response).toSet()
     }
