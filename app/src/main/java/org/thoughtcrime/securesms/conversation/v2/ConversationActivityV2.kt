@@ -134,7 +134,6 @@ import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companio
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_REPLY
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_RESEND
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_SAVE
-import org.thoughtcrime.securesms.conversation.v2.dialogs.LinkPreviewDialog
 import org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarButton
 import org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarDelegate
 import org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarRecordingViewDelegate
@@ -405,6 +404,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             },
             downloadPendingAttachment = viewModel::downloadPendingAttachment,
             retryFailedAttachments = viewModel::retryFailedAttachments,
+            confirmCommunityJoin = viewModel::confirmCommunityJoin,
+            confirmAttachmentDownload = viewModel::confirmAttachmentDownload,
             glide = glide,
             threadRecipientProvider = viewModel::recipient,
             messageDB = mmsSmsDb,
@@ -1333,13 +1334,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onInputBarEditTextPasted() {
         val inputBarText = binding.inputBar.text
-        if (LinkPreviewUtil.findWhitelistedUrls(inputBarText).isNotEmpty()
-            && !textSecurePreferences.isLinkPreviewsEnabled() && !textSecurePreferences.hasSeenLinkPreviewSuggestionDialog()) {
-            LinkPreviewDialog {
+        if ( !textSecurePreferences.isLinkPreviewsEnabled() && !textSecurePreferences.hasSeenLinkPreviewSuggestionDialog()
+                && LinkPreviewUtil.findWhitelistedUrls(inputBarText).isNotEmpty()) {
+            viewModel.showLinkDownloadDialog {
+                textSecurePreferences.setLinkPreviewsEnabled(true)
                 setUpLinkPreviewObserver()
                 linkPreviewViewModel.onEnabled()
                 linkPreviewViewModel.onTextChanged(this, inputBarText, 0, 0)
-            }.show(supportFragmentManager, "Link Preview Dialog")
+            }
             textSecurePreferences.setHasSeenLinkPreviewSuggestionDialog()
         }
     }

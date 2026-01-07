@@ -37,12 +37,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
-import org.thoughtcrime.securesms.preferences.ShareLogsDialog
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.AccentFillButton
+import org.thoughtcrime.securesms.ui.components.ExportLogsDialog
+import org.thoughtcrime.securesms.ui.components.LogExporter
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -54,9 +55,11 @@ import org.thoughtcrime.securesms.util.ClearDataUtils
 fun DatabaseMigrationScreen(
     migrationManager: DatabaseMigrationManager,
     clearDataUtils: ClearDataUtils,
+    exporter: LogExporter,
     fm: FragmentManager,
 ) {
     val scope = rememberCoroutineScope()
+    var showExportLogDialog by remember { mutableStateOf(false) }
 
     DatabaseMigration(
         state = migrationManager.migrationState.collectAsState().value,
@@ -64,7 +67,7 @@ fun DatabaseMigrationScreen(
             migrationManager.requestMigration(fromRetry = true)
         },
         onExportLogs = {
-            ShareLogsDialog {}.show(fm, "share_log")
+            showExportLogDialog = true
         },
         onClearData = {
             scope.launch {
@@ -77,6 +80,15 @@ fun DatabaseMigrationScreen(
             }
         }
     )
+
+    if(showExportLogDialog) {
+        ExportLogsDialog(
+            logExporter = exporter,
+            onDismissRequest = {
+                showExportLogDialog = false
+            }
+        )
+    }
 }
 
 @Composable
