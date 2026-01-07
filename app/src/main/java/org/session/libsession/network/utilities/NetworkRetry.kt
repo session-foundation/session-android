@@ -3,7 +3,6 @@ package org.session.libsession.network.utilities
 import kotlinx.coroutines.delay
 import org.session.libsession.network.model.FailureDecision
 import org.session.libsession.network.model.OnionError
-import org.session.libsignal.utilities.Log
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.random.Random
 
@@ -14,7 +13,7 @@ import kotlin.random.Random
  * @param classifier A function that takes the current error and the previous error (if any)
  * and returns a FailureDecision (Retry or Fail).
  */
-suspend inline fun <T> runWithRetry(
+suspend inline fun <T> retryWithBackOff(
     maxAttempts: Int = 3,
     baseDelayMs: Long = 250L,
     maxDelayMs: Long = 2000L,

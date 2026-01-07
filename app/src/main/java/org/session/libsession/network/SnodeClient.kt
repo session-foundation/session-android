@@ -7,7 +7,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
@@ -26,6 +25,7 @@ import org.session.libsession.network.model.OnionError
 import org.session.libsession.network.onion.Version
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.network.snode.SwarmDirectory
+import org.session.libsession.network.utilities.retryWithBackOff
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.snode.model.BatchResponse
@@ -42,7 +42,6 @@ import org.session.libsignal.utilities.Snode
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.random.Random
 
 /**
  * High-level client for interacting with snodes.
@@ -61,10 +60,6 @@ class SnodeClient @Inject constructor(
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val batchedRequestsSender: SendChannel<RequestInfo>
-
-    private val maxAttempts: Int = 2
-    private val baseRetryDelayMs: Long = 250L
-    private val maxRetryDelayMs: Long = 2_000L
 
     init {
         val batchRequests = Channel<RequestInfo>(capacity = Channel.UNLIMITED)
@@ -173,59 +168,17 @@ class SnodeClient @Inject constructor(
 
         val destination = OnionDestination.SnodeDestination(snode)
 
-        // the client has its own retry logic, independent from the SessionNetwork's retry logic
-        var lastError: OnionError? = null
-        for (attempt in 1..maxAttempts) {
+        val onionResponse = sessionNetwork.sendWithRetry(
+            destination = destination,
+            payload = payload,
+            version = version,
+            snodeToExclude = snode,
+            targetSnode = snode,
+            publicKey = publicKey
+        )
 
-            try {
-                val onionResponse = sessionNetwork.sendWithRetry(
-                    destination = destination,
-                    payload = payload,
-                    version = version,
-                    snodeToExclude = snode,
-                    targetSnode = snode,
-                    publicKey = publicKey
-                )
-
-                return onionResponse.body
-                    ?: throw Error.Generic("Empty body from snode for method $method")
-            } catch (e: Throwable) {
-                val onionError = e as? OnionError ?: OnionError.Unknown(e)
-
-                Log.w("Onion Request", "Onion error on attempt $attempt/$maxAttempts: $onionError")
-
-                // Delegate all handling + retry decision
-                val decision = errorManager.onFailure(
-                    error = onionError,
-                    ctx = SnodeClientFailureContext(
-                        targetSnode = snode,
-                        publicKey = publicKey,
-                        previousError = lastError
-                    )
-                )
-
-                lastError = onionError
-
-                when (decision) {
-                    is FailureDecision.Fail -> throw decision.throwable
-                    FailureDecision.Retry -> {
-                        if (attempt >= maxAttempts) break
-                        delay(computeBackoffDelayMs(attempt))
-                        continue
-                    }
-                }
-            }
-        }
-
-        throw lastError ?: IllegalStateException("Unknown Snode client error")
-    }
-
-    private fun computeBackoffDelayMs(attempt: Int): Long {
-        // Exponential-ish: base * 2^(attempt-1), with jitter, capped
-        val exp = baseRetryDelayMs * (1L shl (attempt - 1).coerceAtMost(5))
-        val capped = exp.coerceAtMost(maxRetryDelayMs)
-        val jitter = Random.nextLong(0, capped / 3 + 1)
-        return capped + jitter
+        return onionResponse.body
+            ?: throw Error.Generic("Empty body from snode for method $method")
     }
 
     // send methods are all private so that each function that needs to send to a snode
@@ -276,6 +229,35 @@ class SnodeClient @Inject constructor(
         return JsonUtil.fromJson(body, Map::class.java) as Map<*, *>
     }
 
+    private suspend inline fun <T> retryWithBackOffForSnode(
+        maxAttempts: Int = 3,
+        operationName: String,
+        publicKey: String?,
+        crossinline pickTarget: suspend () -> Snode,
+        crossinline block: suspend (target: Snode) -> T
+    ): T {
+        var lastTarget: Snode = pickTarget()
+
+        return retryWithBackOff(
+            maxAttempts = maxAttempts,
+            operationName = operationName,
+            classifier = { error, previous ->
+                // use the most recent target we tried
+                errorManager.onFailure(
+                    error = error,
+                    ctx = SnodeClientFailureContext(
+                        targetSnode = lastTarget,
+                        publicKey = publicKey,
+                        previousError = previous
+                    )
+                )
+            }
+        ) { attempt ->
+            if (attempt != 1) lastTarget = pickTarget()
+            block(lastTarget)
+        }
+    }
+
     //todo ONION Remove usage of JsonUtils in all the networking class in favour of kotlinx serializer. Create new data classes instead of relying on Maps
 
     //todo ONION the methods below haven't been fully refactored - This is part of the next step of this refactor
@@ -291,42 +273,47 @@ class SnodeClient @Inject constructor(
         auth: SwarmAuth?,
         namespace: Int = 0,
     ): StoreMessageResponse {
-        val params: Map<String, Any> = if (auth != null) {
-            check(auth.accountId.hexString == message.recipient) {
-                "Message sent to ${message.recipient} but authenticated with ${auth.accountId.hexString}"
-            }
-
-            val timestamp = snodeClock.currentTimeMills()
-
-            buildAuthenticatedParameters(
-                auth = auth,
-                namespace = namespace,
-                verificationData = { ns, t -> "${Snode.Method.SendMessage.rawValue}$ns$t" },
-                timestamp = timestamp
-            ) {
-                put("sig_timestamp", timestamp)
-                putAll(message.toJSON())
-            }
-        } else {
-            buildMap {
-                putAll(message.toJSON())
-                if (namespace != 0) put("namespace", namespace)
-            }
-        }
-
-        val target = swarmDirectory.getSingleTargetSnode(message.recipient)
-
-        return sendBatchRequest(
-            snode = target,
+        return retryWithBackOffForSnode(
+            maxAttempts = 2,
+            operationName = "sendMessage",
             publicKey = message.recipient,
-            request = SnodeBatchRequestInfo(
-                method = Snode.Method.SendMessage.rawValue,
-                params = params,
-                namespace = namespace
-            ),
-            responseType = StoreMessageResponse.serializer(),
-            sequence = false,
-        )
+            pickTarget = { swarmDirectory.getSingleTargetSnode(message.recipient) }
+        ) { target ->
+            val params: Map<String, Any> = if (auth != null) {
+                check(auth.accountId.hexString == message.recipient) {
+                    "Message sent to ${message.recipient} but authenticated with ${auth.accountId.hexString}"
+                }
+
+                val timestamp = snodeClock.currentTimeMills()
+
+                buildAuthenticatedParameters(
+                    auth = auth,
+                    namespace = namespace,
+                    verificationData = { ns, t -> "${Snode.Method.SendMessage.rawValue}$ns$t" },
+                    timestamp = timestamp
+                ) {
+                    put("sig_timestamp", timestamp)
+                    putAll(message.toJSON())
+                }
+            } else {
+                buildMap {
+                    putAll(message.toJSON())
+                    if (namespace != 0) put("namespace", namespace)
+                }
+            }
+
+            sendBatchRequest(
+                snode = target,
+                publicKey = message.recipient,
+                request = SnodeBatchRequestInfo(
+                    method = Snode.Method.SendMessage.rawValue,
+                    params = params,
+                    namespace = namespace
+                ),
+                responseType = StoreMessageResponse.serializer(),
+                sequence = false,
+            )
+        }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -335,100 +322,99 @@ class SnodeClient @Inject constructor(
         swarmAuth: SwarmAuth,
         serverHashes: List<String>,
     ): Map<*, *> {
-        val snode = swarmDirectory.getSingleTargetSnode(publicKey)
+        return retryWithBackOffForSnode(
+            operationName = "deleteMessage",
+            publicKey = publicKey,
+            pickTarget = { swarmDirectory.getSingleTargetSnode(publicKey) }
+        ) { snode ->
+            val params = buildAuthenticatedParameters(
+                auth = swarmAuth,
+                namespace = null,
+                verificationData = { _, _ ->
+                    buildString {
+                        append(Snode.Method.DeleteMessage.rawValue)
+                        serverHashes.forEach(this::append)
+                    }
+                }
+            ) {
+                this["messages"] = serverHashes
+            }
 
-        val params = buildAuthenticatedParameters(
-            auth = swarmAuth,
-            namespace = null,
-            verificationData = { _, _ ->
-                buildString {
-                    append(Snode.Method.DeleteMessage.rawValue)
-                    serverHashes.forEach(this::append)
+            val rawResponse = send(
+                method = Snode.Method.DeleteMessage,
+                snode = snode,
+                parameters = params,
+                publicKey = publicKey,
+            )
+
+            val swarms = rawResponse["swarm"] as? Map<String, Any>
+                ?: throw Error.Generic("Missing swarm in delete response")
+
+            val deletedMessages: Map<String, Boolean> = swarms.mapValuesNotNull { (hexSnodePublicKey, rawJSON) ->
+                val json = rawJSON as? Map<String, Any> ?: return@mapValuesNotNull null
+                val isFailed = json["failed"] as? Boolean ?: false
+                val statusCode = json["code"]?.toString()
+                val reason = json["reason"] as? String
+
+                if (isFailed) {
+                    Log.d("SessionClient", "DeleteMessage failed on $hexSnodePublicKey: $reason ($statusCode)")
+                    false
+                } else {
+                    val hashes = (json["deleted"] as? List<*>)?.filterIsInstance<String>()
+                        ?: return@mapValuesNotNull false
+
+                    val signature = json["signature"] as? String
+                        ?: return@mapValuesNotNull false
+
+                    val message = sequenceOf(swarmAuth.accountId.hexString)
+                        .plus(serverHashes)
+                        .plus(hashes)
+                        .toByteArray()
+
+                    ED25519.verify(
+                        ed25519PublicKey = Hex.fromStringCondensed(hexSnodePublicKey),
+                        signature = Base64.decode(signature),
+                        message = message
+                    )
                 }
             }
-        ) {
-            this["messages"] = serverHashes
-        }
 
-        val rawResponse = send(
-            method = Snode.Method.DeleteMessage,
-            snode = snode,
-            parameters = params,
-            publicKey = publicKey,
-        )
-
-        val swarms = rawResponse["swarm"] as? Map<String, Any> ?: throw Error.Generic("Missing swarm in delete response")
-
-        val deletedMessages: Map<String, Boolean> = swarms.mapValuesNotNull { (hexSnodePublicKey, rawJSON) ->
-            val json = rawJSON as? Map<String, Any> ?: return@mapValuesNotNull null
-
-            val isFailed = json["failed"] as? Boolean ?: false
-            val statusCode = json["code"]?.toString()
-            val reason = json["reason"] as? String
-
-            if (isFailed) {
-                Log.d("SessionClient", "DeleteMessage failed on $hexSnodePublicKey: $reason ($statusCode)")
-                false
-            } else {
-                val hashes = (json["deleted"] as? List<*>)?.filterIsInstance<String>()
-                    ?: return@mapValuesNotNull false
-
-                val signature = json["signature"] as? String
-                    ?: return@mapValuesNotNull false
-
-                // Signature: ( PUBKEY_HEX || RMSG[0]..RMSG[N] || DMSG[0]..DMSG[M] )
-                val message = sequenceOf(swarmAuth.accountId.hexString)
-                    .plus(serverHashes)
-                    .plus(hashes)
-                    .toByteArray()
-
-                ED25519.verify(
-                    ed25519PublicKey = Hex.fromStringCondensed(hexSnodePublicKey),
-                    signature = Base64.decode(signature),
-                    message = message
-                )
+            if (deletedMessages.entries.all { !it.value }) {
+                throw Error.Generic("DeleteMessage did not succeed on any swarm member")
             }
-        }
 
-        if (deletedMessages.entries.all { !it.value }) {
-            throw Error.Generic("DeleteMessage did not succeed on any swarm member")
+            rawResponse
         }
-
-        return rawResponse
     }
 
-
-    suspend fun deleteAllMessages(
-        auth: SwarmAuth,
-    ): Map<String, Boolean> {
+    suspend fun deleteAllMessages(auth: SwarmAuth): Map<String, Boolean> {
         val publicKey = auth.accountId.hexString
-        val snode = swarmDirectory.getSingleTargetSnode(publicKey)
 
-        // Prefer network-adjusted time for signature compatibility
-        val timestamp = snodeClock.waitForNetworkAdjustedTime()
-
-        val params = buildAuthenticatedParameters(
-            auth = auth,
-            namespace = null,
-            verificationData = { _, t -> "${Snode.Method.DeleteAll.rawValue}all$t" },
-            timestamp = timestamp
-        ) {
-            put("namespace", "all")
-        }
-
-        val raw = send(
-            method = Snode.Method.DeleteAll,
-            snode = snode,
-            parameters = params,
+        return retryWithBackOffForSnode(
+            operationName = "deleteAllMessages",
             publicKey = publicKey,
-        )
+            pickTarget = { swarmDirectory.getSingleTargetSnode(publicKey) }
+        ) { snode ->
+            val timestamp = snodeClock.waitForNetworkAdjustedTime()
 
-        return parseDeletions(
-            userPublicKey = publicKey,
-            timestamp = timestamp,
-            rawResponse = raw
-        )
+            val params = buildAuthenticatedParameters(
+                auth = auth,
+                namespace = null,
+                verificationData = { _, t -> "${Snode.Method.DeleteAll.rawValue}all$t" },
+                timestamp = timestamp
+            ) { put("namespace", "all") }
+
+            val raw = send(
+                method = Snode.Method.DeleteAll,
+                snode = snode,
+                parameters = params,
+                publicKey = publicKey,
+            )
+
+            parseDeletions(publicKey, timestamp, raw)
+        }
     }
+
 
     @Suppress("UNCHECKED_CAST")
     private fun parseDeletions(userPublicKey: String, timestamp: Long, rawResponse: Map<*, *>): Map<String, Boolean> =
@@ -452,24 +438,30 @@ class SnodeClient @Inject constructor(
             }
         } ?: mapOf()
 
-    suspend fun getNetworkTime(
-        snode: Snode,
-    ): Pair<Snode, Long> {
-        val json = send(
-            method = Snode.Method.Info,
-            snode = snode,
-            parameters = emptyMap(),
-        )
 
-        val timestamp = when (val t = json["timestamp"]) {
-            is Long -> t
-            is Int -> t.toLong()
-            is Double -> t.toLong()
-            else -> -1
+    suspend fun getNetworkTime(snode: Snode): Pair<Snode, Long> {
+        return retryWithBackOffForSnode(
+            operationName = "getNetworkTime",
+            publicKey = null,
+            pickTarget = { snode }
+        ) { snode ->
+            val json = send(
+                method = Snode.Method.Info,
+                snode = snode,
+                parameters = emptyMap(),
+            )
+
+            val timestamp = when (val t = json["timestamp"]) {
+                is Long -> t
+                is Int -> t.toLong()
+                is Double -> t.toLong()
+                else -> -1
+            }
+
+            snode to timestamp
         }
-
-        return snode to timestamp
     }
+
 
     suspend fun getAccountID(onsName: String): String {
         val validationCount = 3
@@ -483,44 +475,47 @@ class SnodeClient @Inject constructor(
             }
         }
 
-        // Ask 3 different snodes
         val results = mutableListOf<String>()
 
         repeat(validationCount) {
-            val snode = snodeDirectory.getRandomSnode()
+            val accountId = retryWithBackOffForSnode(
+                operationName = "onsResolve",
+                publicKey = null,
+                pickTarget = { snodeDirectory.getRandomSnode() }
+            ) { snode ->
+                val json = send(
+                    method = Snode.Method.OxenDaemonRPCCall,
+                    snode = snode,
+                    parameters = params,
+                )
 
-            val json = send(
-                method = Snode.Method.OxenDaemonRPCCall,
-                snode = snode,
-                parameters = params,
-            )
+                @Suppress("UNCHECKED_CAST")
+                val intermediate = json["result"] as? Map<*, *>
+                    ?: throw Error.Generic("Invalid ONS response: missing 'result'")
 
-            @Suppress("UNCHECKED_CAST")
-            val intermediate = json["result"] as? Map<*, *>
-                ?: throw Error.Generic("Invalid ONS response: missing 'result'")
+                val hexEncodedCiphertext = intermediate["encrypted_value"] as? String
+                    ?: throw Error.Generic("Invalid ONS response: missing 'encrypted_value'")
 
-            val hexEncodedCiphertext = intermediate["encrypted_value"] as? String
-                ?: throw Error.Generic("Invalid ONS response: missing 'encrypted_value'")
+                val ciphertext = Hex.fromStringCondensed(hexEncodedCiphertext)
+                val nonce = (intermediate["nonce"] as? String)?.let(Hex::fromStringCondensed)
 
-            val ciphertext = Hex.fromStringCondensed(hexEncodedCiphertext)
-            val nonce = (intermediate["nonce"] as? String)?.let(Hex::fromStringCondensed)
-
-            val accountId = SessionEncrypt.decryptOnsResponse(
-                lowercaseName = onsNameLower,
-                ciphertext = ciphertext,
-                nonce = nonce
-            )
+                SessionEncrypt.decryptOnsResponse(
+                    lowercaseName = onsNameLower,
+                    ciphertext = ciphertext,
+                    nonce = nonce
+                )
+            }
 
             results += accountId
         }
 
-        // All 3 must be equal for us to trust the result
-        if (results.size == validationCount && results.toSet().size == 1) {
-            return results.first()
+        return if (results.size == validationCount && results.toSet().size == 1) {
+            results.first()
         } else {
             throw Error.ValidationFailed
         }
     }
+
 
     suspend fun alterTtl(
         auth: SwarmAuth,
@@ -529,15 +524,22 @@ class SnodeClient @Inject constructor(
         shorten: Boolean = false,
         extend: Boolean = false,
     ): Map<*, *> {
-        val snode = swarmDirectory.getSingleTargetSnode(auth.accountId.hexString)
-        val params = buildAlterTtlParams(auth, messageHashes, newExpiry, shorten, extend)
+        val publicKey = auth.accountId.hexString
 
-        return send(
-            method = Snode.Method.Expire,
-            snode = snode,
-            parameters = params,
-            publicKey = auth.accountId.hexString,
-        )
+        return retryWithBackOffForSnode(
+            operationName = "alterTtl",
+            publicKey = publicKey,
+            pickTarget = { swarmDirectory.getSingleTargetSnode(publicKey) }
+        ) { snode ->
+            val params = buildAlterTtlParams(auth, messageHashes, newExpiry, shorten, extend)
+
+            send(
+                method = Snode.Method.Expire,
+                snode = snode,
+                parameters = params,
+                publicKey = auth.accountId.hexString,
+            )
+        }
     }
 
 
