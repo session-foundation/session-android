@@ -67,7 +67,8 @@ class ManageGroupAdminsViewModel @AssistedInject constructor(
                 // use plural version of this string resource
                 name = context.resources.getQuantityString(R.plurals.promoteMember, 2, 2),
                 icon = R.drawable.ic_add_admin_custom,
-                onClick = ::navigateToPromoteMembers
+                onClick = ::navigateToPromoteMembers,
+                qaTag = R.string.qa_manage_members_promote_members
             )
         )
     }
@@ -146,13 +147,13 @@ class ManageGroupAdminsViewModel @AssistedInject constructor(
 
         val accountIds = members.map { it.accountId }
 
-        val resendingText = context.resources.getQuantityString(
-            R.plurals.resendingPromotion,
+        val sendingPromotionText = context.resources.getQuantityString(
+            if (isRepromote) R.plurals.resendingPromotion else R.plurals.sendingPromotion,
             accountIds.size,
             accountIds.size
         )
 
-        showToast(resendingText)
+        showToast(sendingPromotionText)
 
         performGroupOperationCore(
             showLoading = false,
