@@ -52,6 +52,7 @@ class SnodeClock @Inject constructor(
     /**
      * Resync by querying 3 random snodes and setting time to the median of their adjusted times.
      */
+    //todo ONION add logic so this only happens every 10min, and making sure it wouldn't happen multiple times at the same time
     suspend fun resyncClock(): Boolean {
         return runCatching {
             withTimeout(8_000L) {

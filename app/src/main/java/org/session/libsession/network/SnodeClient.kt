@@ -57,7 +57,7 @@ class SnodeClient @Inject constructor(
     private val errorManager: SnodeClientErrorManager
 ) {
 
-    //todo ONION missing retry strategies
+    //todo ONION missing retry strategies - create inline retry strategy to use on all calling sites - remove retry logic in sendToSnode
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val batchedRequestsSender: SendChannel<RequestInfo>
@@ -154,6 +154,9 @@ class SnodeClient @Inject constructor(
         }
     }
 
+
+    // send methods are all private so that each function that needs to send to a snode
+    // is forced to handle its retry strategy at the calling site, including batching
     private suspend fun sendToSnode(
         method: Snode.Method,
         snode: Snode,
@@ -161,7 +164,6 @@ class SnodeClient @Inject constructor(
         publicKey: String? = null,
         version: Version = Version.V3
     ): ByteArraySlice {
-        //todo ONION these need to be integrated properly as part of the retries for example to recalculate timestamps
         val payload = JsonUtil.toJson(
             mapOf(
                 "method" to method.rawValue,
@@ -226,6 +228,8 @@ class SnodeClient @Inject constructor(
         return capped + jitter
     }
 
+    // send methods are all private so that each function that needs to send to a snode
+    // is forced to handle its retry strategy at the calling site, including batching
     @OptIn(ExperimentalSerializationApi::class)
     private suspend fun <Res> sendTyped(
         method: Snode.Method,
@@ -251,7 +255,9 @@ class SnodeClient @Inject constructor(
         }
     }
 
-    suspend fun send(
+    // send methods are all private so that each function that needs to send to a snode
+    // is forced to handle its retry strategy at the calling site, including batching
+    private suspend fun send(
         method: Snode.Method,
         snode: Snode,
         parameters: Map<String, Any>,
@@ -587,17 +593,6 @@ class SnodeClient @Inject constructor(
             publicKey = publicKey,
         )
 
-        // IMPORTANT: batch subresponse failures do not go through OnionErrorManager
-        // because the outer response is usually 200.
-        val firstFailed = response.results.firstOrNull { !it.isSuccessful }
-        if (firstFailed != null) {
-            handleBatchItemFailure(
-                targetSnode = snode,
-                publicKey = publicKey,
-                item = firstFailed
-            )
-        }
-
         return response
     }
 
@@ -606,8 +601,6 @@ class SnodeClient @Inject constructor(
         targetSnode: Snode,
         publicKey: String?,
     ) : FailureDecision {
-        //todo ONION can we think of a better way to integrate batching with error handling? Right now this is a temporary way to fit it into our system
-
         val bodySlice = item.body.toString().toByteArray(Charsets.UTF_8).view()
 
         // we synthesise a DestinationError since what we get at this point is from the destination's response
@@ -616,7 +609,6 @@ class SnodeClient @Inject constructor(
             destination = OnionDestination.SnodeDestination(targetSnode)
         )
 
-        //todo ONION this is now referring to the new SnodeclientErrorManager, meaning some logic, like clock resync, won't apply here. We might need to modify this
         return errorManager.onFailure(
             error = err,
             ctx = SnodeClientFailureContext(

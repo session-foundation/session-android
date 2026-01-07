@@ -85,32 +85,9 @@ class NetworkErrorManager @Inject constructor(
         }
 
         // --------------------------------------------------------------------
-        // 3) Destination payload rules
+        // 3) Destination payload rules - currently this doesn't handle
+        //    DestinatioErrors directly. The clients' error manager do.
         // --------------------------------------------------------------------
-        if (error is OnionError.DestinationError) {
-            // 406/425: clock out of sync (COS)
-            // 406 is COS only for a snode destination
-            // 425 is COS only for a server destination
-            if ((code == 406 && ctx.destination is OnionDestination.SnodeDestination)
-                || (code == 425 && ctx.destination is OnionDestination.ServerDestination))
-            {
-                Log.w("Onion Request", "Clock out of sync (code: $code) for destination ${ctx.targetSnode?.address} at node: ${error.snode?.address} - Local Snode clock at ${snodeClock.currentTime()}")
-                // Attempt to reset the clock.
-                // The retry logic for COS shouldn't be handled here, but at a higher level
-                // since the clock will be reset, meaning request that need a timestamp will need
-                // to be recreated, so the responsibility should like on a layer further up
-                // for example in the SnodeErrorManager or ServerErrorManager
-                runCatching {
-                    snodeClock.resyncClock()
-                    //todo ONION Add retry logic in the snode and server error managers. If we still get an out of sync error, we should penalise the snode, and try again with another
-                }.getOrDefault(false)
-
-                return FailureDecision.Fail(OnionError.ClockOutOfSync(error.destination, error.status))
-            }
-
-            // Anything else from destination: do not penalise path; no retries
-            return FailureDecision.Fail(error)
-        }
 
         // Default: fail
         return FailureDecision.Fail(error)

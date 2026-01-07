@@ -54,14 +54,6 @@ sealed class OnionError(
         )
 
     /**
-     * A subcategory of a destination error.
-     * This indicates we got told our clock is out of sync and the client should resync its clock
-     */
-    class ClockOutOfSync(destination: OnionDestination, status: ErrorStatus)
-        : DestinationError(destination, status)
-
-
-    /**
      * The onion payload returned something that we couldn't decode as a valid onion response.
      */
     class InvalidResponse(cause: Throwable? = null)

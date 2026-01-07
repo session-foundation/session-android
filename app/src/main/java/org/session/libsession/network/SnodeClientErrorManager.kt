@@ -16,6 +16,7 @@ import javax.inject.Singleton
 class SnodeClientErrorManager @Inject constructor(
     private val pathManager: PathManager,
     private val swarmDirectory: SwarmDirectory,
+    private val snodeClock: SnodeClock,
 ) {
 
     suspend fun onFailure(error: OnionError, ctx: SnodeClientFailureContext): FailureDecision {
@@ -27,13 +28,17 @@ class SnodeClientErrorManager @Inject constructor(
         // Destination payload rules
         // --------------------------------------------------------------------
         if (error is OnionError.DestinationError) {
-            // Clock Out Of Sync
-            if (error is OnionError.ClockOutOfSync)
-            {
+            // 406 is 'Clock out of sync' for a snode destination
+            if (code == 406) {
                 // if this is the first time we got a COS, retry, since we should have resynced the clock
+                Log.w("Onion Request", "Clock out of sync (code: $code) for destination snode ${ctx.targetSnode.address} - Local Snode clock at ${snodeClock.currentTime()} - First time? ${ctx.previousError == null}")
                 if(ctx.previousError == null){
-                    return FailureDecision.Retry
+                    // reset the clock
+                    runCatching {
+                        snodeClock.resyncClock()
+                    }.getOrDefault(false)
 
+                    return FailureDecision.Retry
                 } else {
                     // if we already got a COS, and syncing the clock wasn't enough
                     // we should consider the destination snode faulty. Penalise it and retry
