@@ -38,9 +38,6 @@ class SnodeClock @Inject constructor(
     private val snodeClient: Lazy<SnodeClient>,
 ) : OnAppStartupComponent {
 
-    //todo ONION we have a lot of calls to MessagingModuleConfiguration.shared.snodeClock.currentTimeMills()
-    // can this be improved?
-
     private val instantState = MutableStateFlow<Instant?>(null)
 
     override fun onPostAppStarted() {

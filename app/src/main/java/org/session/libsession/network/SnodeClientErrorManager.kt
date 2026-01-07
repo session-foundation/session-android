@@ -53,6 +53,7 @@ class SnodeClientErrorManager @Inject constructor(
                 val targetSnode = ctx.targetSnode
 
                 val updated = if (publicKey != null) {
+                    Log.w("Onion Request", "Got 421 with an associated public key. Update Swarm.")
                     swarmDirectory.updateSwarmFromResponse(
                         publicKey = publicKey,
                         body = status.body
