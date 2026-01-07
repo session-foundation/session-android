@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.bumptech.glide.RequestManager
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.messages.ControlMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageView
@@ -30,6 +31,8 @@ class ConversationAdapter(
     private val onDeselect: (MessageRecord) -> Unit,
     private val downloadPendingAttachment: (DatabaseAttachment) -> Unit,
     private val retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
+    private val confirmCommunityJoin: (url: String, name: String) -> Unit,
+    private val confirmAttachmentDownload: (DatabaseAttachment)->Unit,
     private val glide: RequestManager,
     private val threadRecipientProvider: () -> Recipient,
     val messageDB: MmsSmsDatabase,
@@ -106,6 +109,8 @@ class ConversationAdapter(
                     delegate = visibleMessageViewDelegate,
                     downloadPendingAttachment = downloadPendingAttachment,
                     retryFailedAttachments = retryFailedAttachments,
+                    confirmCommunityJoin = confirmCommunityJoin,
+                    confirmAttachmentDownload = confirmAttachmentDownload,
                     isTextExpanded = isExpanded,
                     onTextExpanded = { messageId ->
                         expandedMessageIds.add(messageId)
