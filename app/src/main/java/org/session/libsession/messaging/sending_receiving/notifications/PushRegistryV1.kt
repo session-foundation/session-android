@@ -19,7 +19,6 @@ import org.session.libsignal.utilities.retryWithUniformInterval
 @SuppressLint("StaticFieldLeak")
 object PushRegistryV1 {
     val context = MessagingModuleConfiguration.shared.context
-    private const val MAX_RETRY_COUNT = 4
 
     private val server = Server.LEGACY
 
@@ -55,23 +54,32 @@ object PushRegistryV1 {
         closedGroupPublicKey: String,
         publicKey: String
     ) {
-        val parameters = mapOf("closedGroupPublicKey" to closedGroupPublicKey, "pubKey" to publicKey)
         val url = "${server.url}/$operation"
-        val body = JsonUtil.toJson(parameters).toRequestBody("application/json".toMediaType())
-        val request = Request.Builder().url(url).post(body).build()
 
         try {
-            retryWithUniformInterval(MAX_RETRY_COUNT) {
-                MessagingModuleConfiguration.shared.serverClient.send(
-                    request = request,
-                    serverBaseUrl = server.url,
-                    x25519PublicKey = server.publicKey,
-                    version = Version.V2
-                )
+            MessagingModuleConfiguration.shared.serverClient.send(
+                operationName = operation,
+                requestFactory = {
+                    val parameters = mapOf(
+                        "closedGroupPublicKey" to closedGroupPublicKey,
+                        "pubKey" to publicKey
+                    )
 
-                // todo ONION the old code was checking the status code on success and if it is null or 0 it would log it as a fail
-                // the new structure however throws all non 200.299 status as an OnionError
-            }
+                    val body = JsonUtil.toJson(parameters)
+                        .toRequestBody("application/json".toMediaType())
+
+                    Request.Builder()
+                        .url(url)
+                        .post(body)
+                        .build()
+                },
+                serverBaseUrl = server.url,
+                x25519PublicKey = server.publicKey,
+                version = Version.V2
+            )
+
+            // todo ONION the old code was checking the status code on success and if it is null or 0 it would log it as a fail
+            // the new structure however throws all non 200.299 status as an OnionError
         } catch (e: Exception) {
             Log.w("PushRegistryV1", "Failed to perform group operation ($operation): $e")
         }

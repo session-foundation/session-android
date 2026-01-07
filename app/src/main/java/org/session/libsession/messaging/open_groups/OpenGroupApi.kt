@@ -268,7 +268,8 @@ object OpenGroupApi {
          * Always `true` under normal circumstances. You might want to disable
          * this when running over Lokinet.
          */
-        val useOnionRouting: Boolean = true
+        val useOnionRouting: Boolean = true,
+        val dynamicHeaders: (suspend () -> Map<String, String>)? = null
     )
 
     private fun createBody(body: ByteArray?, parameters: Any?): RequestBody? {
@@ -283,7 +284,7 @@ object OpenGroupApi {
         signRequest: Boolean = true,
         serverPubKeyHex: String? = null
     ): ByteArraySlice {
-        val response =  send(request, signRequest = signRequest, serverPubKeyHex = serverPubKeyHex)
+        val response =  send(request, signRequest = signRequest, serverPubKeyHex = serverPubKeyHex, operationName = "OpenGroupAPI.getResponseBody")
 
         return response.body ?: throw Error.ParsingFailed
     }
@@ -293,7 +294,7 @@ object OpenGroupApi {
         signRequest: Boolean = true,
         serverPubKeyHex: String? = null
     ): Map<*, *> {
-        val response =  send(request, signRequest = signRequest, serverPubKeyHex = serverPubKeyHex)
+        val response =  send(request, signRequest = signRequest, serverPubKeyHex = serverPubKeyHex, operationName = "OpenGroupAPI.getResponseBodyJson")
         return JsonUtil.fromJson(response.body, Map::class.java)
     }
 
@@ -313,7 +314,7 @@ object OpenGroupApi {
         return fetched.capabilities
     }
 
-    private suspend fun send(request: Request, signRequest: Boolean, serverPubKeyHex: String? = null): OnionResponse {
+    private suspend fun send(request: Request, signRequest: Boolean, serverPubKeyHex: String? = null, operationName: String): OnionResponse {
         request.server.toHttpUrlOrNull() ?: throw(Error.InvalidURL)
 
         val urlBuilder = StringBuilder("${request.server}/${request.endpoint.value}")
@@ -323,108 +324,130 @@ object OpenGroupApi {
                 urlBuilder.append("$key=$value")
             }
         }
+        val urlRequest = urlBuilder.toString()
 
         val serverPublicKey = serverPubKeyHex
             ?: MessagingModuleConfiguration.shared.storage.getOpenGroupPublicKey(request.server)
             ?: throw Error.NoPublicKey
-        val urlRequest = urlBuilder.toString()
 
-        val headers = if (signRequest) {
-            val serverCapabilities = getOrFetchServerCapabilities(request.server)
-
-            val ed25519KeyPair = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()
-                ?: throw Error.NoEd25519KeyPair
-
-            val headers = request.headers.toMutableMap()
-            val nonce = ByteArray(16).also { SecureRandom().nextBytes(it) }
-            val timestamp = TimeUnit.MILLISECONDS.toSeconds(MessagingModuleConfiguration.shared.snodeClock.currentTimeMills())
-            val bodyHash = if (request.parameters != null) {
-                val parameterBytes = JsonUtil.toJson(request.parameters).toByteArray()
-                Hash.hash64(parameterBytes)
-            } else if (request.body != null) {
-                Hash.hash64(request.body)
-            } else {
-                byteArrayOf()
-            }
-
-            val messageBytes = Hex.fromStringCondensed(serverPublicKey)
-                .plus(nonce)
-                .plus("$timestamp".toByteArray(Charsets.US_ASCII))
-                .plus(request.verb.rawValue.toByteArray())
-                .plus("/${request.endpoint.value}".toByteArray())
-                .plus(bodyHash)
-
-            val signature: ByteArray
-            val pubKey: String
-
-            if (serverCapabilities.isEmpty() || serverCapabilities.contains(Capability.BLIND.name.lowercase())) {
-                pubKey = AccountId(
-                    IdPrefix.BLINDED,
-                    BlindKeyAPI.blind15KeyPair(
-                        ed25519SecretKey = ed25519KeyPair.secretKey.data,
-                        serverPubKey = Hex.fromStringCondensed(serverPublicKey)
-                    ).pubKey.data
-                ).hexString
-
-                try {
-                    signature = BlindKeyAPI.blind15Sign(
-                        ed25519SecretKey = ed25519KeyPair.secretKey.data,
-                        serverPubKey = serverPublicKey,
-                        message = messageBytes
-                    )
-                } catch (e: Exception) {
-                    throw Error.SigningFailed
-                }
-            } else {
-                pubKey = AccountId(
-                    IdPrefix.UN_BLINDED,
-                    ed25519KeyPair.pubKey.data
-                ).hexString
-
-                signature = ED25519.sign(
-                    ed25519PrivateKey = ed25519KeyPair.secretKey.data,
-                    message = messageBytes
-                )
-            }
-            headers["X-SOGS-Nonce"] = encodeBytes(nonce)
-            headers["X-SOGS-Timestamp"] = "$timestamp"
-            headers["X-SOGS-Pubkey"] = pubKey
-            headers["X-SOGS-Signature"] = encodeBytes(signature)
-            headers
-        } else {
-            request.headers
-        }
-
-        val requestBuilder = okhttp3.Request.Builder()
-            .url(urlRequest)
-            .headers(headers.toHeaders())
-        when (request.verb) {
-            GET -> requestBuilder.get()
-            PUT -> requestBuilder.put(createBody(request.body, request.parameters)!!)
-            POST -> requestBuilder.post(createBody(request.body, request.parameters)!!)
-            DELETE -> requestBuilder.delete(createBody(request.body, request.parameters))
-        }
-        if (!request.room.isNullOrEmpty()) {
-            requestBuilder.header("Room", request.room)
-        }
-
-        if (request.useOnionRouting) {
-            try {
-                return MessagingModuleConfiguration.shared.serverClient.send(
-                    request = requestBuilder.build(),
-                    serverBaseUrl = request.server,
-                    x25519PublicKey = serverPublicKey
-                )
-            } catch (e: Exception) {
-                when (e) {
-                    is OnionError -> Log.e("SOGS", "Failed onion request: ${e.message}")
-                    else -> Log.e("SOGS", "Failed onion request", e)
-                }
-                throw e
-            }
-        } else {
+        if (!request.useOnionRouting) {
             throw IllegalStateException("It's currently not allowed to send non onion routed requests.")
         }
+
+        try {
+            return MessagingModuleConfiguration.shared.serverClient.send(
+                operationName = operationName,
+                requestFactory = {
+                    val base = request.headers.toMutableMap()
+
+                    val computed = request.dynamicHeaders?.invoke().orEmpty()
+                    base.putAll(computed)
+
+                    if (signRequest) {
+                        val signingHeaders = buildSogsSigningHeaders(
+                            request = request,
+                            serverPublicKey = serverPublicKey
+                        )
+                        base.putAll(signingHeaders)
+                    }
+
+                    val builder = okhttp3.Request.Builder()
+                        .url(urlRequest)
+                        .headers(base.toHeaders())
+
+                    when (request.verb) {
+                        GET -> builder.get()
+                        PUT -> builder.put(createBody(request.body, request.parameters)!!)
+                        POST -> builder.post(createBody(request.body, request.parameters)!!)
+                        DELETE -> builder.delete(createBody(request.body, request.parameters))
+                    }
+
+                    if (!request.room.isNullOrEmpty()) {
+                        builder.header("Room", request.room)
+                    }
+
+                    builder.build()
+                },
+                serverBaseUrl = request.server,
+                x25519PublicKey = serverPublicKey
+            )
+        } catch (e: Exception) {
+            when (e) {
+                is OnionError -> Log.e("SOGS", "Failed onion request: ${e.message}")
+                else -> Log.e("SOGS", "Failed onion request", e)
+            }
+            throw e
+        }
+    }
+
+    private suspend fun buildSogsSigningHeaders(
+        request: Request,
+        serverPublicKey: String
+    ): Map<String, String> {
+        val serverCapabilities = getOrFetchServerCapabilities(request.server)
+
+        val ed25519KeyPair = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()
+            ?: throw Error.NoEd25519KeyPair
+
+        val nonce = ByteArray(16).also { SecureRandom().nextBytes(it) }
+
+        // If you want “strict after COS”: use waitForNetworkAdjustedTime()/1000
+        val timestamp = TimeUnit.MILLISECONDS.toSeconds(
+            MessagingModuleConfiguration.shared.snodeClock.currentTimeMills()
+        )
+
+        val bodyHash = when {
+            request.parameters != null -> Hash.hash64(JsonUtil.toJson(request.parameters).toByteArray())
+            request.body != null -> Hash.hash64(request.body)
+            else -> byteArrayOf()
+        }
+
+        val messageBytes = Hex.fromStringCondensed(serverPublicKey)
+            .plus(nonce)
+            .plus("$timestamp".toByteArray(Charsets.US_ASCII))
+            .plus(request.verb.rawValue.toByteArray())
+            .plus("/${request.endpoint.value}".toByteArray())
+            .plus(bodyHash)
+
+        val signature: ByteArray
+        val pubKey: String
+
+        if (serverCapabilities.isEmpty() || serverCapabilities.contains(Capability.BLIND.name.lowercase())) {
+            pubKey = AccountId(
+                IdPrefix.BLINDED,
+                BlindKeyAPI.blind15KeyPair(
+                    ed25519SecretKey = ed25519KeyPair.secretKey.data,
+                    serverPubKey = Hex.fromStringCondensed(serverPublicKey)
+                ).pubKey.data
+            ).hexString
+
+            signature = try {
+                BlindKeyAPI.blind15Sign(
+                    ed25519SecretKey = ed25519KeyPair.secretKey.data,
+                    serverPubKey = serverPublicKey,
+                    message = messageBytes
+                )
+            } catch (e: Exception) {
+                throw Error.SigningFailed
+            }
+        } else {
+            pubKey = AccountId(
+                IdPrefix.UN_BLINDED,
+                ed25519KeyPair.pubKey.data
+            ).hexString
+
+            signature = ED25519.sign(
+                ed25519PrivateKey = ed25519KeyPair.secretKey.data,
+                message = messageBytes
+            )
+        }
+
+        return mapOf(
+            "X-SOGS-Nonce" to encodeBytes(nonce),
+            "X-SOGS-Timestamp" to "$timestamp",
+            "X-SOGS-Pubkey" to pubKey,
+            "X-SOGS-Signature" to encodeBytes(signature)
+        )
     }
 
     suspend fun downloadOpenGroupProfilePicture(
@@ -551,7 +574,7 @@ object OpenGroupApi {
     // region Message Deletion
     suspend fun deleteMessage(serverID: Long, room: String, server: String) {
         val request = Request(verb = DELETE, room = room, server = server, endpoint = Endpoint.RoomMessageIndividual(room, serverID))
-        send(request, signRequest = true)
+        send(request, signRequest = true, operationName = "OpenGroupAPI.deleteMessage")
         Log.d("Loki", "Message deletion successful.")
     }
 
@@ -568,7 +591,7 @@ object OpenGroupApi {
             parameters = parameters
         )
 
-        send(request, signRequest = true)
+        send(request, signRequest = true, operationName = "OpenGroupAPI.ban")
         Log.d("Loki", "Banned user: $publicKey from: $server.$room.")
     }
 
@@ -598,7 +621,7 @@ object OpenGroupApi {
 
     suspend fun unban(publicKey: String, room: String, server: String) {
         val request = Request(verb = DELETE, room = room, server = server, endpoint = Endpoint.UserUnban(publicKey))
-        send(request, signRequest = true)
+        send(request, signRequest = true, operationName = "OpenGroupAPI.unban")
         Log.d("Loki", "Unbanned user: $publicKey from: $server.$room")
     }
     // endregion

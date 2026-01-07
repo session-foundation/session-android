@@ -58,16 +58,19 @@ class ProApiExecutor @Inject constructor(
         val config = proConfigProvider.get()
 
         val rawResp = serverClient.send(
-            request = Request.Builder()
-                .url(config.url.resolve(request.endpoint)!!)
-                .post(
-                    request.buildJsonBody().toRequestBody(
-                        "application/json".toMediaType()
+            requestFactory = {
+                Request.Builder()
+                    .url(config.url.resolve(request.endpoint)!!)
+                    .post(
+                        request.buildJsonBody().toRequestBody(
+                            "application/json".toMediaType()
+                        )
                     )
-                )
-                .build(),
+                    .build()
+            },
             serverBaseUrl = config.url.host,
-            x25519PublicKey = config.x25519PubKeyHex
+            x25519PublicKey = config.x25519PubKeyHex,
+            operationName = "ProApiExecutor.executeRequest"
         ).body!!.inputStream().use {
             json.decodeFromStream<RawProApiResponse>(it)
         }

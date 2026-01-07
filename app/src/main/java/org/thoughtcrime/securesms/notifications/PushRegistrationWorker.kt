@@ -167,51 +167,64 @@ class PushRegistrationWorker @AssistedInject constructor(
         return Result.success()
     }
 
-    private suspend inline fun <T, Req, Res: Response> batchRequest(
+    private suspend inline fun <T, Req, Res : Response> batchRequest(
         items: List<T>,
-        buildRequest: (T) -> Req,
-        sendBatchRequest: suspend (Collection<Req>) -> List<Res>,
+        crossinline buildRequest: (T) -> Req,
+        crossinline sendBatchRequest: suspend (suspend () -> Collection<Req>) -> List<Res>,
     ): List<Pair<T, kotlin.Result<Unit>>> {
-        if (items.isEmpty()) {
-            return emptyList()
-        }
+        if (items.isEmpty()) return emptyList()
 
         val results = ArrayList<Pair<T, kotlin.Result<Unit>>>(items.size)
 
-        val batchRequestItems = mutableListOf<T>()
-        val batchRequests = mutableListOf<Req>()
+        // Items that are valid to send, and their per-attempt builders
+        val batchItems = mutableListOf<T>()
+        val requestBuilders = mutableListOf<() -> Req>()
 
         for (item in items) {
             try {
-                val request = buildRequest(item)
-                batchRequestItems += item
-                batchRequests += request
+                //todo ONION I have to double the buildRequest here, once for validation and again to recompute... Is this ok?
+                buildRequest(item)
+
+                batchItems += item
+                requestBuilders += { buildRequest(item) } // <- rebuilt each retry attempt
             } catch (ec: Exception) {
-                results += item to kotlin.Result.failure(NonRetryableException("Failed to build a request", ec))
+                results += item to kotlin.Result.failure(
+                    NonRetryableException("Failed to build a request", ec)
+                )
             }
         }
 
+        if (batchItems.isEmpty()) return results
+
         try {
-            val responses = sendBatchRequest(batchRequests)
+            val responses = sendBatchRequest {
+                requestBuilders.map { it() }
+            }
+
             responses.forEachIndexed { idx, response ->
-                val item = batchRequestItems[idx]
+                val item = batchItems[idx]
                 results += item to when {
                     response.isSuccess() -> kotlin.Result.success(Unit)
-                    response.error == 403 -> kotlin.Result.failure(NonRetryableException("Request failed: code = ${response.error}, message = ${response.message}"))
-                    else -> kotlin.Result.failure(RuntimeException("Request failed: code = ${response.error}, message = ${response.message}"))
+                    response.error == 403 -> kotlin.Result.failure(
+                        NonRetryableException("Request failed: code = ${response.error}, message = ${response.message}")
+                    )
+                    else -> kotlin.Result.failure(
+                        RuntimeException("Request failed: code = ${response.error}, message = ${response.message}")
+                    )
                 }
             }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            // If the batch API fails, mark all requests in this batch as failed.
-            batchRequestItems.forEach { item ->
+            // Batch call failed -> mark all *sent* items as failed
+            batchItems.forEach { item ->
                 results += item to kotlin.Result.failure(e)
             }
         }
 
         return results
     }
+
 
     private fun swarmAuthForAccount(accountId: AccountId): SwarmAuth {
         return when {

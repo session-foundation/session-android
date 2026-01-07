@@ -39,11 +39,11 @@ class PushRegistryV2 @Inject constructor(
 ) {
 
     suspend fun register(
-        requests: Collection<SignedSubscriptionRequest>
+        requestsFactory: suspend () -> Collection<SignedSubscriptionRequest>
     ): List<SubscriptionResponse> {
         return getResponseBody(
             "subscribe",
-            Json.encodeToString(requests)
+            { Json.encodeToString(requestsFactory()) }
         )
     }
 
@@ -52,7 +52,7 @@ class PushRegistryV2 @Inject constructor(
         swarmAuth: SwarmAuth,
         namespaces: List<Int>
     ): SignedSubscriptionRequest {
-        val timestamp = clock.currentTimeMills() / 1000 // get timestamp in ms -> s
+        val timestamp = clock.currentTimeSeconds()
         val publicKey = swarmAuth.accountId.hexString
         val sortedNamespace = namespaces.sorted()
         val signed = swarmAuth.sign(
@@ -74,9 +74,9 @@ class PushRegistryV2 @Inject constructor(
     }
 
     suspend fun unregister(
-        requests: Collection<SignedUnsubscriptionRequest>
+        requestsFactory: suspend () -> Collection<SignedUnsubscriptionRequest>
     ): List<UnsubscribeResponse> {
-        return getResponseBody("unsubscribe", Json.encodeToString(requests))
+        return getResponseBody("unsubscribe", { Json.encodeToString(requestsFactory()) })
     }
 
     fun buildUnregisterRequest(
@@ -84,7 +84,7 @@ class PushRegistryV2 @Inject constructor(
         swarmAuth: SwarmAuth
     ): SignedUnsubscriptionRequest {
         val publicKey = swarmAuth.accountId.hexString
-        val timestamp = clock.currentTimeMills() / 1000 // get timestamp in ms -> s
+        val timestamp = clock.currentTimeSeconds()
         // if we want to support passing namespace list, here is the place to do it
         val signature = swarmAuth.sign(
             "UNSUBSCRIBE${publicKey}${timestamp}".encodeToByteArray()
@@ -109,13 +109,20 @@ class PushRegistryV2 @Inject constructor(
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    private suspend inline fun <reified T> getResponseBody(path: String, requestParameters: String): T {
+    private suspend inline fun <reified T> getResponseBody(
+        path: String,
+        crossinline bodyFactory: suspend () -> String
+    ): T {
         val server = Server.LATEST
         val url = "${server.url}/$path"
-        val body = requestParameters.toRequestBody("application/json".toMediaType())
-        val request = Request.Builder().url(url).post(body).build()
+
         val response = serverClient.send(
-            request = request,
+            operationName = "PushRegistryV2.$path",
+            requestFactory = {
+                val bodyString = bodyFactory()
+                val body = bodyString.toRequestBody("application/json".toMediaType())
+                Request.Builder().url(url).post(body).build()
+            },
             serverBaseUrl = server.url,
             x25519PublicKey = server.publicKey,
             version = Version.V4
