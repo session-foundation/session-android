@@ -73,12 +73,14 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
             OptionsItem(
                 name = context.getString(R.string.membersInvite),
                 icon = R.drawable.ic_user_round_plus,
-                onClick = ::navigateToInviteContacts
+                onClick = ::navigateToInviteContacts,
+                qaTag = R.string.qa_manage_members_invite_contacts
             ),
             OptionsItem(
                 name = context.getString(R.string.accountIdOrOnsInvite),
                 icon = R.drawable.ic_user_round_search,
-                onClick = ::navigateToInviteAccountId
+                onClick = ::navigateToInviteAccountId,
+                qaTag = R.string.qa_manage_members_invite_account_id
             )
         )
     }
@@ -327,7 +329,7 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         }
 
         val removeMemberOnly =
-            context.resources.getQuantityString(R.plurals.removeMember, count, count)
+            context.resources.getQuantityString(R.plurals.removeMemberLowercase, count, count)
         val removeMessages =
             context.resources.getQuantityString(R.plurals.removeMemberMessages, count, count)
 

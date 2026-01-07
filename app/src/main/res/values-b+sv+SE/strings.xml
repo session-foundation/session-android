@@ -1186,6 +1186,7 @@
     <string name="received">Mottaget:</string>
     <string name="receivedAnswer">Mottog svar</string>
     <string name="receivingCallOffer">Inkommande erbjudande för samtal</string>
+    <string name="receivingPreOffer">Receiving Pre Offer</string>
     <string name="recommended">Rekommenderat</string>
     <string name="recoveryPasswordBannerDescription">Spara ditt återställningslösenord så att du inte förlorar tillgången till ditt konto.</string>
     <string name="recoveryPasswordBannerTitle">Spara ditt återställningslösenord</string>

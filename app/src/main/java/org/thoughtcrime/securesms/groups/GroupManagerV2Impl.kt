@@ -5,10 +5,10 @@ import com.google.protobuf.ByteString
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import network.loki.messenger.R
@@ -350,7 +350,11 @@ class GroupManagerV2Impl @Inject constructor(
         } finally {
             // Send a group update message to the group telling members someone has been invited
             if (!isReinvite) {
-                sendGroupUpdateForAddingMembers(group, adminKey, memberInvites.map { it.id })
+                sendGroupUpdateForAddingMembers(
+                    group,
+                    adminKey,
+                    memberInvites.map { it.id },
+                    shareHistory = memberInvites.any { it.shareHistory }) // This is the same for all members/contact invited
             }
         }
 
@@ -371,6 +375,7 @@ class GroupManagerV2Impl @Inject constructor(
         group: AccountId,
         adminKey: ByteArray,
         newMembers: Collection<AccountId>,
+        shareHistory : Boolean = false
     ) {
         val timestamp = clock.currentTimeMills()
         val signature = ED25519.sign(
@@ -385,6 +390,7 @@ class GroupManagerV2Impl @Inject constructor(
                         .addAllMemberSessionIds(newMembers.sortedWith(groupMemberComparator).map { it.hexString })
                         .setType(GroupUpdateMemberChangeMessage.Type.ADDED)
                         .setAdminSignature(ByteString.copyFrom(signature))
+                        .setHistoryShared(shareHistory)
                 )
                 .build()
         ).apply { this.sentTimestamp = timestamp }
@@ -508,7 +514,7 @@ class GroupManagerV2Impl @Inject constructor(
         members: List<AccountId>,
         isRepromote: Boolean
     ): Unit = scope.launchAndWait(group, "Promote member") {
-        withContext(SupervisorJob()) {
+        supervisorScope {
             val adminKey = requireAdminAccess(group)
             val groupName = configFactory.withMutableGroupConfigs(group) { configs ->
                 // Update the group member's promotion status
@@ -523,7 +529,10 @@ class GroupManagerV2Impl @Inject constructor(
             // Build a group update message to the group telling members someone has been promoted
             val timestamp = clock.currentTimeMills()
             val signature = ED25519.sign(
-                message = buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.PROMOTED, timestamp),
+                message = buildMemberChangeSignature(
+                    GroupUpdateMemberChangeMessage.Type.PROMOTED,
+                    timestamp
+                ),
                 ed25519PrivateKey = adminKey
             )
 
@@ -531,7 +540,8 @@ class GroupManagerV2Impl @Inject constructor(
                 GroupUpdateMessage.newBuilder()
                     .setMemberChangeMessage(
                         GroupUpdateMemberChangeMessage.newBuilder()
-                            .addAllMemberSessionIds(members.sortedWith(groupMemberComparator).map { it.hexString })
+                            .addAllMemberSessionIds(
+                                members.sortedWith(groupMemberComparator).map { it.hexString })
                             .setType(GroupUpdateMemberChangeMessage.Type.PROMOTED)
                             .setAdminSignature(ByteString.copyFrom(signature))
                     )
@@ -614,6 +624,7 @@ class GroupManagerV2Impl @Inject constructor(
             }
         }
     }
+
     /**
      * Mark this member as "removed" in the group config.
      *
