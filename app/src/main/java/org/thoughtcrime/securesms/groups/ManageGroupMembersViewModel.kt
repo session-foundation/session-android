@@ -329,7 +329,7 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         }
 
         val removeMemberOnly =
-            context.resources.getQuantityString(R.plurals.removeMember, count, count)
+            context.resources.getQuantityString(R.plurals.removeMemberLowercase, count, count)
         val removeMessages =
             context.resources.getQuantityString(R.plurals.removeMemberMessages, count, count)
 

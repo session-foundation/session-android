@@ -274,6 +274,7 @@
     </plurals>
     <plurals name="deleteMessageDeleted">
         <item quantity="one">Mesazhi u fshi</item>
+        <item quantity="other">Messages deleted</item>
     </plurals>
     <string name="deleteMessageDeletedGlobally">Ky mesazh u fshi</string>
     <string name="deleteMessageDeletedLocally">Ky mesazh u fshi në këtë pajisje</string>
