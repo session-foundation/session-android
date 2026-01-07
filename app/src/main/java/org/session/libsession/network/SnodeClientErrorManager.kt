@@ -15,7 +15,6 @@ import javax.inject.Singleton
 @Singleton
 class SnodeClientErrorManager @Inject constructor(
     private val pathManager: PathManager,
-    private val snodeDirectory: SnodeDirectory,
     private val swarmDirectory: SwarmDirectory,
 ) {
 
@@ -38,7 +37,7 @@ class SnodeClientErrorManager @Inject constructor(
                 } else {
                     // if we already got a COS, and syncing the clock wasn't enough
                     // we should consider the destination snode faulty. Penalise it and retry
-                    //todo ONION penalise snode and retry
+                    pathManager.handleBadSnode(ctx.targetSnode)
                     return FailureDecision.Retry
                 }
             }
@@ -58,7 +57,7 @@ class SnodeClientErrorManager @Inject constructor(
                     false
                 }
 
-                if (!updated && publicKey != null && targetSnode != null) {
+                if (!updated && publicKey != null) {
                     swarmDirectory.dropSnodeFromSwarmIfNeeded(targetSnode, publicKey)
                 }
 
@@ -75,7 +74,7 @@ class SnodeClientErrorManager @Inject constructor(
 }
 
 data class SnodeClientFailureContext(
-    val targetSnode: Snode? = null,
+    val targetSnode: Snode,
     val publicKey: String? = null,
     val previousError: OnionError? = null // in some situations we could be coming from a retry to a previous error
 )
