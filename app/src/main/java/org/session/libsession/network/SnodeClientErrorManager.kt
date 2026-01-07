@@ -34,11 +34,12 @@ class SnodeClientErrorManager @Inject constructor(
                 Log.w("Onion Request", "Clock out of sync (code: $code) for destination snode ${ctx.targetSnode.address} - Local Snode clock at ${snodeClock.currentTime()} - First time? ${ctx.previousError == null}")
                 if(ctx.previousError == null){
                     // reset the clock
-                    runCatching {
+                    val resync = runCatching {
                         snodeClock.resyncClock()
                     }.getOrDefault(false)
 
-                    return FailureDecision.Retry
+                    // only retry if we were able to resync the clock
+                    return if(resync) FailureDecision.Retry else FailureDecision.Fail(error)
                 } else {
                     // if we already got a COS, and syncing the clock wasn't enough
                     // we should consider the destination snode faulty. Penalise it and retry
