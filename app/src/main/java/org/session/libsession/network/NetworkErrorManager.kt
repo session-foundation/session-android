@@ -1,5 +1,6 @@
 package org.session.libsession.network
 
+import org.session.libsession.network.model.FailureDecision
 import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.network.model.OnionError
 import org.session.libsession.network.model.Path
@@ -15,14 +16,14 @@ private const val REQUIRE_BLINDING_MESSAGE =
     "Invalid authentication: this server requires the use of blinded ids"
 
 @Singleton
-class OnionErrorManager @Inject constructor(
+class NetworkErrorManager @Inject constructor(
     private val pathManager: PathManager,
     private val snodeDirectory: SnodeDirectory,
     private val swarmDirectory: SwarmDirectory,
     private val snodeClock: SnodeClock,
 ) {
 
-    suspend fun onFailure(error: OnionError, ctx: OnionFailureContext): FailureDecision {
+    suspend fun onFailure(error: OnionError, ctx: NetworkFailureContext): FailureDecision {
         val status = error.status
         val code = status?.code
         val bodyText = status?.bodyText
@@ -107,29 +108,6 @@ class OnionErrorManager @Inject constructor(
                 return FailureDecision.Fail(OnionError.ClockOutOfSync(error.destination, error.status))
             }
 
-            // 421: snode isn't associated with pubkey anymore -> update swarm / invalidate -> retry
-            //todo ONION this should be moved to SnodeErrorManager
-            if (code == 421) {
-                val publicKey = ctx.publicKey
-                val targetSnode = ctx.targetSnode
-
-                val updated = if (publicKey != null) {
-                    swarmDirectory.updateSwarmFromResponse(
-                        publicKey = publicKey,
-                        body = status.body
-                    )
-                } else {
-                    Log.w("Onion Request", "Got 421 without an associated public key.")
-                    false
-                }
-
-                if (!updated && publicKey != null && targetSnode != null) {
-                    swarmDirectory.dropSnodeFromSwarmIfNeeded(targetSnode, publicKey)
-                }
-
-                return FailureDecision.Retry
-            }
-
             // Anything else from destination: do not penalise path; no retries
             return FailureDecision.Fail(error)
         }
@@ -139,15 +117,10 @@ class OnionErrorManager @Inject constructor(
     }
 }
 
-data class OnionFailureContext(
+data class NetworkFailureContext(
     val path: Path,
     val destination: OnionDestination,
     val targetSnode: Snode? = null,
     val publicKey: String? = null,
     val previousError: OnionError? = null // in some situations we could be coming from a retry to a previous error
 )
-
-sealed class FailureDecision {
-    data object Retry : FailureDecision()
-    data class Fail(val throwable: Throwable) : FailureDecision()
-}

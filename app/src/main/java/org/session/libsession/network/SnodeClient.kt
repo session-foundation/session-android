@@ -7,6 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
@@ -19,6 +20,7 @@ import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.Hash
 import network.loki.messenger.libsession_util.SessionEncrypt
 import org.session.libsession.network.model.ErrorStatus
+import org.session.libsession.network.model.FailureDecision
 import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.network.model.OnionError
 import org.session.libsession.network.onion.Version
@@ -40,9 +42,7 @@ import org.session.libsignal.utilities.Snode
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.get
+import kotlin.random.Random
 
 /**
  * High-level client for interacting with snodes.
@@ -54,13 +54,17 @@ class SnodeClient @Inject constructor(
     private val snodeDirectory: SnodeDirectory,
     private val snodeClock: SnodeClock,
     private val json: Json,
-    private val errorManager: OnionErrorManager
+    private val errorManager: SnodeClientErrorManager
 ) {
 
     //todo ONION missing retry strategies
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val batchedRequestsSender: SendChannel<RequestInfo>
+
+    private val maxAttempts: Int = 2
+    private val baseRetryDelayMs: Long = 250L
+    private val maxRetryDelayMs: Long = 2_000L
 
     init {
         val batchRequests = Channel<RequestInfo>(capacity = Channel.UNLIMITED)
@@ -157,6 +161,7 @@ class SnodeClient @Inject constructor(
         publicKey: String? = null,
         version: Version = Version.V3
     ): ByteArraySlice {
+        //todo ONION these need to be integrated properly as part of the retries for example to recalculate timestamps
         val payload = JsonUtil.toJson(
             mapOf(
                 "method" to method.rawValue,
@@ -166,17 +171,59 @@ class SnodeClient @Inject constructor(
 
         val destination = OnionDestination.SnodeDestination(snode)
 
-        val onionResponse = sessionNetwork.sendWithRetry(
-            destination = destination,
-            payload = payload,
-            version = version,
-            snodeToExclude = snode,
-            targetSnode = snode,
-            publicKey = publicKey
-        )
+        // the client has its own retry logic, independent from the SessionNetwork's retry logic
+        var lastError: OnionError? = null
+        for (attempt in 1..maxAttempts) {
 
-        return onionResponse.body
-            ?: throw Error.Generic("Empty body from snode for method $method")
+            try {
+                val onionResponse = sessionNetwork.sendWithRetry(
+                    destination = destination,
+                    payload = payload,
+                    version = version,
+                    snodeToExclude = snode,
+                    targetSnode = snode,
+                    publicKey = publicKey
+                )
+
+                return onionResponse.body
+                    ?: throw Error.Generic("Empty body from snode for method $method")
+            } catch (e: Throwable) {
+                val onionError = e as? OnionError ?: OnionError.Unknown(e)
+
+                Log.w("Onion Request", "Onion error on attempt $attempt/$maxAttempts: $onionError")
+
+                // Delegate all handling + retry decision
+                val decision = errorManager.onFailure(
+                    error = onionError,
+                    ctx = SnodeClientFailureContext(
+                        targetSnode = snode,
+                        publicKey = publicKey,
+                        previousError = lastError
+                    )
+                )
+
+                lastError = onionError
+
+                when (decision) {
+                    is FailureDecision.Fail -> throw decision.throwable
+                    FailureDecision.Retry -> {
+                        if (attempt >= maxAttempts) break
+                        delay(computeBackoffDelayMs(attempt))
+                        continue
+                    }
+                }
+            }
+        }
+
+        throw lastError ?: IllegalStateException("Unknown Snode client error")
+    }
+
+    private fun computeBackoffDelayMs(attempt: Int): Long {
+        // Exponential-ish: base * 2^(attempt-1), with jitter, capped
+        val exp = baseRetryDelayMs * (1L shl (attempt - 1).coerceAtMost(5))
+        val capped = exp.coerceAtMost(maxRetryDelayMs)
+        val jitter = Random.nextLong(0, capped / 3 + 1)
+        return capped + jitter
     }
 
     @OptIn(ExperimentalSerializationApi::class)
@@ -222,6 +269,8 @@ class SnodeClient @Inject constructor(
         @Suppress("UNCHECKED_CAST")
         return JsonUtil.fromJson(body, Map::class.java) as Map<*, *>
     }
+
+    //todo ONION Remove usage of JsonUtils in all the networking class in favour of kotlinx serializer. Create new data classes instead of relying on Maps
 
     //todo ONION the methods below haven't been fully refactored - This is part of the next step of this refactor
 
@@ -558,7 +607,6 @@ class SnodeClient @Inject constructor(
         publicKey: String?,
     ) : FailureDecision {
         //todo ONION can we think of a better way to integrate batching with error handling? Right now this is a temporary way to fit it into our system
-        // we might be missing things like the path or the message
 
         val bodySlice = item.body.toString().toByteArray(Charsets.UTF_8).view()
 
@@ -568,11 +616,10 @@ class SnodeClient @Inject constructor(
             destination = OnionDestination.SnodeDestination(targetSnode)
         )
 
+        //todo ONION this is now referring to the new SnodeclientErrorManager, meaning some logic, like clock resync, won't apply here. We might need to modify this
         return errorManager.onFailure(
             error = err,
-            ctx = OnionFailureContext(
-                path = listOf(targetSnode),
-                destination = OnionDestination.SnodeDestination(targetSnode),
+            ctx = SnodeClientFailureContext(
                 targetSnode = targetSnode,
                 publicKey = publicKey,
                 previousError = null //todo ONION can we set this properly?

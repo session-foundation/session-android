@@ -1,6 +1,7 @@
 package org.session.libsession.network
 
 import kotlinx.coroutines.delay
+import org.session.libsession.network.model.FailureDecision
 import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.network.model.OnionError
 import org.session.libsession.network.model.OnionResponse
@@ -31,7 +32,7 @@ import kotlin.random.Random
 class SessionNetwork @Inject constructor(
     private val pathManager: PathManager,
     private val transport: OnionTransport,
-    private val errorManager: OnionErrorManager,
+    private val errorManager: NetworkErrorManager,
 ) {
 
     private val maxAttempts: Int = 2
@@ -70,7 +71,7 @@ class SessionNetwork @Inject constructor(
                 // Delegate all handling + retry decision
                 val decision = errorManager.onFailure(
                     error = onionError,
-                    ctx = OnionFailureContext(
+                    ctx = NetworkFailureContext(
                         path = path,
                         destination = destination,
                         targetSnode = targetSnode,
