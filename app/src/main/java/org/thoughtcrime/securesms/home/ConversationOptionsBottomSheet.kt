@@ -25,7 +25,7 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class ConversationOptionsBottomSheet(private val parentContext: Context) : BottomSheetDialogFragment(), View.OnClickListener {
+class ConversationOptionsBottomSheet : BottomSheetDialogFragment(), View.OnClickListener {
     private lateinit var binding: FragmentConversationBottomSheetBinding
     //FIXME AC: Supplying a threadRecord directly into the field from an activity
     // is not the best idea. It doesn't survive configuration change.
@@ -54,7 +54,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
     var onDeleteContactTapped: (() -> Unit)? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        binding = FragmentConversationBottomSheetBinding.inflate(LayoutInflater.from(parentContext), container, false)
+        binding = FragmentConversationBottomSheetBinding.inflate(LayoutInflater.from(context), container, false)
         return binding.root
     }
 
