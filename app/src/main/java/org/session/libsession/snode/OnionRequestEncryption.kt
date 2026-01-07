@@ -5,6 +5,7 @@ import org.session.libsession.utilities.AESGCM
 import org.session.libsession.utilities.AESGCM.EncryptionResult
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.toHexString
+import java.io.ByteArrayOutputStream
 import java.nio.Buffer
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -14,16 +15,15 @@ object OnionRequestEncryption {
     internal fun encode(ciphertext: ByteArray, json: Map<*, *>): ByteArray {
         // The encoding of V2 onion requests looks like: | 4 bytes: size N of ciphertext | N bytes: ciphertext | json as utf8 |
         val jsonAsData = JsonUtil.toJson(json).toByteArray()
-        val ciphertextSize = ciphertext.size
-        val buffer = ByteBuffer.allocate(Int.SIZE_BYTES)
-        buffer.order(ByteOrder.LITTLE_ENDIAN)
-        buffer.putInt(ciphertextSize)
-        val ciphertextSizeAsData = ByteArray(buffer.capacity())
-        // Casting here avoids an issue where this gets compiled down to incorrect byte code. See
-        // https://github.com/eclipse/jetty.project/issues/3244 for more info
-        (buffer as Buffer).position(0)
-        buffer.get(ciphertextSizeAsData)
-        return ciphertextSizeAsData + ciphertext + jsonAsData
+        val output = ByteArray(4 + ciphertext.size + jsonAsData.size)
+
+        ByteBuffer.wrap(output).apply {
+            order(ByteOrder.LITTLE_ENDIAN).putInt(ciphertext.size)
+            put(ciphertext)
+            put(jsonAsData)
+        }
+
+        return output
     }
 
     /**
