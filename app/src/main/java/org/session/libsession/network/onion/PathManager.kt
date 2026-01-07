@@ -132,46 +132,46 @@ class PathManager @Inject constructor(
     }
 
     /** Called when we know a specific snode is bad. */
-    fun handleBadSnode(snode: Snode) {
-        _paths.update { currentList ->
-            // Locate the bad path in the *current* snapshot
-            val pathIndex = currentList.indexOfFirst { it.contains(snode) }
+    suspend fun handleBadSnode(snode: Snode) {
+        buildMutex.withLock {
+            _paths.update { currentList ->
+                // Locate the bad path in the *current* snapshot
+                val pathIndex = currentList.indexOfFirst { it.contains(snode) }
 
-            // If the node isn't found (e.g., paths were just rebuilt), do nothing
-            if (pathIndex == -1) return@update currentList
+                // If the node isn't found (e.g., paths were just rebuilt), do nothing
+                if (pathIndex == -1) return@update currentList
 
-            // Prepare mutable copies for modification
-            // We copy the outer list so we don't mutate the 'currentList' which might be needed for a CAS retry
-            val newPathsList = currentList.toMutableList()
-            val pathParams = newPathsList[pathIndex].toMutableList()
+                val newPathsList = currentList.toMutableList()
+                val pathParams = newPathsList[pathIndex].toMutableList()
 
-            // Remove the bad node
-            pathParams.remove(snode)
+                val badIndex = pathParams.indexOfFirst { it == snode }
+                if (badIndex == -1) return@update currentList
 
-            // Find a replacement
-            val usedSnodes = newPathsList.flatten().toSet()
-            val pool = directory.getSnodePool()
-            val unused = pool.minus(usedSnodes)
+                val usedSnodes = newPathsList.flatten().toSet()
+                val pool = directory.getSnodePool()
+                val unused = pool.minus(usedSnodes)
 
-            if (unused.isEmpty()) {
-                Log.w("Onion Request", "No unused snodes to repair path, dropping path entirely")
-                newPathsList.removeAt(pathIndex)
-            } else {
+                if (unused.isEmpty()) {
+                    Log.w("Onion Request", "No unused snodes to repair path, dropping path entirely")
+                    newPathsList.removeAt(pathIndex)
+                    return@update sanitizePaths(newPathsList)
+                }
+
                 val replacement = unused.secureRandom()
-                pathParams.add(replacement)
+                pathParams[badIndex] = replacement
                 newPathsList[pathIndex] = pathParams
-            }
 
-            // Return the new clean list
-            sanitizePaths(newPathsList)
+                sanitizePaths(newPathsList)
+            }
         }
     }
 
     /** Called when an entire path is considered unreliable. */
-    fun handleBadPath(path: Path) {
-        _paths.update { currentList ->
-            // Filter returns a new list, so this is safe and atomic
-            currentList.filter { it != path }
+    suspend fun handleBadPath(path: Path) {
+        buildMutex.withLock {
+            _paths.update { currentList ->
+                currentList.filter { it != path }
+            }
         }
     }
 
