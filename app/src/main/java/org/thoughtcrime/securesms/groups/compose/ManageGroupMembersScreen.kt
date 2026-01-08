@@ -292,7 +292,8 @@ fun RemoveMembersDialog(
                 option = RadioOption(
                     value = Unit,
                     title = GetString(state.removeMemberText),
-                    selected = !deleteMessages
+                    selected = !deleteMessages,
+                    qaTag = GetString(R.string.qa_manage_members_dialog_remove_member)
                 )
             ) {
                 deleteMessages = false
@@ -303,6 +304,7 @@ fun RemoveMembersDialog(
                     value = Unit,
                     title = GetString(state.removeMessagesText),
                     selected = deleteMessages,
+                    qaTag = GetString(R.string.qa_manage_members_dialog_remove_member_messages)
                 )
             ) {
                 deleteMessages = true
