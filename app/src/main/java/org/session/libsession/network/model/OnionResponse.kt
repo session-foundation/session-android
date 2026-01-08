@@ -6,6 +6,5 @@ data class OnionResponse(
     val info: Map<*, *>,
     val body: ByteArraySlice? = null
 ) {
-    val code: Int? get() = info["code"] as? Int
     val message: String? get() = info["message"] as? String
 }

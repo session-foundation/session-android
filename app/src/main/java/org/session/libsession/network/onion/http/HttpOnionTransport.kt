@@ -20,8 +20,10 @@ import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.toHexString
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.encoding.Base64
 
 @Singleton
@@ -62,12 +64,15 @@ class HttpOnionTransport @Inject constructor(
 
         val responseBytes: ByteArray = try {
             HTTP.execute(HTTP.Verb.POST, url, body)
+        } catch(e: CancellationException){
+            throw e
         } catch (httpEx: HTTP.HTTPRequestFailedException) {
             // HTTP error from guard (we never got an onion-level response)
             throw mapPathHttpError(guard, httpEx)
+        } catch (e: IOException){
+            throw OnionError.GuardUnreachable(guard, e)
         } catch (t: Throwable) {
-            // TCP / DNS / TLS / timeout etc. reaching guard
-            throw OnionError.GuardUnreachable(guard, t)
+            throw OnionError.Unknown(t)
         }
 
         // We have an onion-level response from the guard; decrypt & interpret
@@ -139,6 +144,8 @@ class HttpOnionTransport @Inject constructor(
 
             val decrypted = AESGCM.decrypt(response, symmetricKey = destinationSymmetricKey)
 
+            //todo ONION is it really this class' responsibility to decode the decrypted payload instead of passing it to a higher level
+
             if (decrypted.isEmpty() || decrypted[0] != 'l'.code.toByte()) {
                 throw OnionError.InvalidResponse()
             }
@@ -163,11 +170,7 @@ class HttpOnionTransport @Inject constructor(
                 Log.i("Onion Request", "Successful response decrypted, but non-2xx status code: $statusCode")
 
                 // Optional "body" part for some server errors (notably 400)
-                //todo ONION should we ALWAYS attach the body so that no specific error rules are defined here and/or in case future rules change and the body is needed elsewhere?
-                val bodySlice =
-                    if (destination is OnionDestination.ServerDestination && statusCode == 400) {
-                        decrypted.getBody(infoLength, infoEndIndex)
-                    } else null
+                val bodySlice = decrypted.getBody(infoLength, infoEndIndex)
 
                 throw
                     OnionError.DestinationError(
@@ -265,7 +268,6 @@ class HttpOnionTransport @Inject constructor(
         fun extractMessage(from: Map<*, *>): String? =
             (from["result"] as? String) ?: (from["message"] as? String)
 
-        //todo ONION old code used to only check != 200, but I think this is more correct?
         if (statusCode !in 200..299) {
             val errorMap = (normalizedBody as? Map<*, *>) ?: innerJson
             throw OnionError.DestinationError(

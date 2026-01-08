@@ -804,7 +804,7 @@ private val MessageRecord.subtitle: ((Context) -> CharSequence?)?
     get() = if (expiresIn <= 0 || expireStarted <= 0) {
         null
     } else { context ->
-        //todo ONION is there a better way?
+        //todo ONION is there a better way? >>  pass time here
         (expiresIn - (MessagingModuleConfiguration.shared.snodeClock.currentTimeMills() - expireStarted))
             .coerceAtLeast(0L)
             .milliseconds

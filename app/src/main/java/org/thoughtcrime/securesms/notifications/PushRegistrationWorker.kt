@@ -182,7 +182,7 @@ class PushRegistrationWorker @AssistedInject constructor(
 
         for (item in items) {
             try {
-                //todo ONION I have to double the buildRequest here, once for validation and again to recompute... Is this ok?
+                //todo ONION I have to double the buildRequest here, once for validation and again to recompute... Is this ok? FANCHAO
                 buildRequest(item)
 
                 batchItems += item

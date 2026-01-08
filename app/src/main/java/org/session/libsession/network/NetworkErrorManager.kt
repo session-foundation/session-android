@@ -12,9 +12,6 @@ import org.session.libsignal.utilities.Snode
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private const val REQUIRE_BLINDING_MESSAGE =
-    "Invalid authentication: this server requires the use of blinded ids"
-
 @Singleton
 class NetworkErrorManager @Inject constructor(
     private val pathManager: PathManager,
@@ -34,7 +31,6 @@ class NetworkErrorManager @Inject constructor(
 
         // 400, 403, 404: do not penalise path or snode; No retries
         if (code == 400 || code == 403 || code == 404) {
-            //todo ONION need to move the REQUIRE_BLINDING_MESSAGE logic out of here, it should be handled at the calling site, in this case the community poller, to then call /capabilities once
             return FailureDecision.Fail(error)
         }
 
@@ -68,20 +64,24 @@ class NetworkErrorManager @Inject constructor(
 
             is OnionError.GuardUnreachable -> {
                 // penalise path; retry
-                //todo ONION not sure yet whether we should punish the path here, or even if we should retry as it is likely a "no connection" issue
+                //todo ONION if our connectivity manager tells us we have network, punish node (maybe after a couple of strikes?) and try again - otherwise fail
                 pathManager.handleBadPath(ctx.path)
                 return FailureDecision.Retry
             }
 
-            // InvalidResponse / Unknown: treat as path failure (penalise path; retry)
-            is OnionError.InvalidResponse,
+            is OnionError.InvalidResponse -> {
+                // penalise path; retry
+                pathManager.handleBadPath(ctx.path)
+                return FailureDecision.Retry
+            }
+
             is OnionError.Unknown -> {
-                //todo ONION also not sure whether to penalise path and retry here...
-                pathManager.handleBadPath(ctx.path)
                 return FailureDecision.Retry
             }
 
-            else -> Unit
+            is OnionError.DestinationError -> {
+                FailureDecision.Fail(error)
+            }
         }
 
         // --------------------------------------------------------------------

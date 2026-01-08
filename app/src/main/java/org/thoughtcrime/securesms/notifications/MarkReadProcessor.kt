@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.notifications
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.session.libsession.database.StorageProtocol
@@ -25,6 +26,7 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import javax.inject.Inject
 
 class MarkReadProcessor @Inject constructor(
@@ -38,7 +40,8 @@ class MarkReadProcessor @Inject constructor(
     private val storage: StorageProtocol,
     private val snodeClock: SnodeClock,
     private val lokiMessageDatabase: LokiMessageDatabase,
-    private val snodeClient: SnodeClient
+    private val snodeClient: SnodeClient,
+    @param:ManagerScope private val coroutineScope: CoroutineScope,
 ) {
     fun process(
         markedReadMessages: List<MarkedMessageInfo>
@@ -92,8 +95,7 @@ class MarkReadProcessor @Inject constructor(
     private fun shortenExpiryOfDisappearingAfterRead(
         hashToMessage: Map<String, MarkedMessageInfo>
     ) {
-        //todo ONION verify move to suspend below
-        GlobalScope.launch {
+        coroutineScope.launch {
             hashToMessage.entries
                 .groupBy(
                     keySelector = { it.value.expirationInfo.expiresIn },

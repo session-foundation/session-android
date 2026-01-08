@@ -85,7 +85,7 @@ class ProProofGenerationWorker @AssistedInject constructor(
             Log.e(WORK_NAME, "Error generating Pro proof", e)
             if (e is NonRetryableException ||
                 // HTTP 403 indicates that the user is not
-                e.getRootCause<OnionError.DestinationError>()?.status?.code == 403) { //todo ONION verify this works within the new system
+                e.getRootCause<OnionError.DestinationError>()?.status?.code == 403) {
                 Result.failure()
             } else {
                 Result.retry()

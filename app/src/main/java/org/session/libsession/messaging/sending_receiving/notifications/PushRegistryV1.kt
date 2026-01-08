@@ -77,9 +77,6 @@ object PushRegistryV1 {
                 x25519PublicKey = server.publicKey,
                 version = Version.V2
             )
-
-            // todo ONION the old code was checking the status code on success and if it is null or 0 it would log it as a fail
-            // the new structure however throws all non 200.299 status as an OnionError
         } catch (e: Exception) {
             Log.w("PushRegistryV1", "Failed to perform group operation ($operation): $e")
         }

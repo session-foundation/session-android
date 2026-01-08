@@ -268,7 +268,7 @@ class SnodeClient @Inject constructor(
 
     //todo ONION Remove usage of JsonUtils in all the networking class in favour of kotlinx serializer. Create new data classes instead of relying on Maps
 
-    //todo ONION the methods below haven't been fully refactored - This is part of the next step of this refactor
+    //todo ONION refactor batching
 
     // Client methods
 

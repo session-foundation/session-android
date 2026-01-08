@@ -94,7 +94,7 @@ class AttachmentDownloadJob @AssistedInject constructor(
             } else if (exception == Error.NoAttachment
                     || exception == Error.NoThread
                     || exception == Error.NoSender
-                    || (exception is OnionError.DestinationError && exception.status?.code == 400) //todo ONION this is matching old behaviour. Do we want this kind of error handling here?
+                    || (exception is OnionError.DestinationError && exception.status?.code == 400)
                     || exception is NonRetryableException) {
                 attachment?.let { id ->
                     Log.d("AttachmentDownloadJob", "Setting attachment state = failed, have attachment")

@@ -372,6 +372,7 @@ object OpenGroupApi {
                 x25519PublicKey = serverPublicKey
             )
         } catch (e: Exception) {
+            //todo ONION handle the case where we get a 400 with "Invalid authentication: this server requires the use of blinded ids" - call capabilities once and retry
             when (e) {
                 is OnionError -> Log.e("SOGS", "Failed onion request: ${e.message}")
                 else -> Log.e("SOGS", "Failed onion request", e)

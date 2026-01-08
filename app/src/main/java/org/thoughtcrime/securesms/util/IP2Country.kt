@@ -73,7 +73,7 @@ class IP2Country internal constructor(
             if (isInitialized) { return; }
             shared = IP2Country(context.applicationContext)
 
-            //todo ONION we should look into injecting this class and optimising
+            //todo we should look into injecting this class and optimising
             GlobalScope.launch {
                 MessagingModuleConfiguration.shared.pathManager.paths
                     .filter { it.isNotEmpty() }

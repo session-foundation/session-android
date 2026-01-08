@@ -132,7 +132,7 @@ class PathActivity : ScreenLockActionBarActivity() {
             val path = paths.firstOrNull() ?: return finish()
             val dotAnimationRepeatInterval = path.count().toLong() * 1000 + 1000
             val pathRows = path.mapIndexed { index, snode ->
-                getPathRow(snode, LineView.Location.Middle, index.toLong() * 1000 + 2000, dotAnimationRepeatInterval, index == 0) //todo ONION verify this change works - old code was checking node against the set of guard snodes in the onionreqest api
+                getPathRow(snode, LineView.Location.Middle, index.toLong() * 1000 + 2000, dotAnimationRepeatInterval, index == 0)
             }
             val youRow = getPathRow(resources.getString(R.string.you), null, LineView.Location.Top, 1000, dotAnimationRepeatInterval)
             val destinationRow = getPathRow(resources.getString(R.string.onionRoutingPathDestination), null, LineView.Location.Bottom, path.count().toLong() * 1000 + 2000, dotAnimationRepeatInterval)

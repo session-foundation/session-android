@@ -61,7 +61,6 @@ class SnodeDirectory @Inject constructor(
                 Log.d("SnodeDirectory", "Snode pool populated on startup.")
             } catch (e: Exception) {
                 Log.e("SnodeDirectory", "Failed to populate snode pool on startup", e)
-                //todo ONION should we have a failsafe here or is it ok ro rely on future call to getRandomSnode?
             }
         }
     }
@@ -81,6 +80,7 @@ class SnodeDirectory @Inject constructor(
      *
      * Throws if the seed node returns an empty list or parsing fails.
      */
+    //todo ONION ensure we guard against concurrent calls to this
     suspend fun ensurePoolPopulated(
         minCount: Int = MINIMUM_SNODE_POOL_COUNT
     ): Set<Snode> {

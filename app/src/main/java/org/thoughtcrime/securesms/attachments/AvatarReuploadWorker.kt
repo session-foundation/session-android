@@ -134,7 +134,7 @@ class AvatarReuploadWorker @AssistedInject constructor(
             // When renew fails, we will try to re-upload the avatar if:
             // 1. The file is expired (we have the record of this file's expiry time), or
             // 2. The last update was more than 12 days ago.
-            if ((e is NonRetryableException || e is OnionError.DestinationError)) { //todo ONION does this check still work in the current setup
+            if ((e is NonRetryableException || e is OnionError.DestinationError)) {
                 val now = Instant.now()
                 if (fileExpiry?.isBefore(now) == true ||
                     (lastUpdated?.isBefore(now.minus(Duration.ofDays(12)))) == true) {

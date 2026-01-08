@@ -46,7 +46,6 @@ import org.session.libsession.messaging.sending_receiving.notifications.MessageN
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.pushSuffix
-import org.session.libsignal.utilities.HTTP.isConnectedToNetwork
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.AppContext.configureKovenant
 import org.thoughtcrime.securesms.auth.LoginStateRepository
@@ -149,9 +148,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
         initializeWebRtc()
         initializeBlobProvider()
         refresh()
-
-        val networkConstraint = NetworkConstraint.Factory(this).create()
-        isConnectedToNetwork = { networkConstraint.isMet }
 
         // add our shortcut debug menu if we are not in a release build
         if (BuildConfig.BUILD_TYPE != "release") {

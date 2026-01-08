@@ -114,7 +114,7 @@ class AvatarDownloadManager @Inject constructor(
                 downloadAndDecryptFile(file)
             } catch (e: Exception) {
                 if (e.getRootCause<NonRetryableException>() != null ||
-                    e.getRootCause<OnionError.DestinationError>()?.status?.code == 404 //todo ONION does this check still work in the current setup
+                    e.getRootCause<OnionError.DestinationError>()?.status?.code == 404
                 ) {
                     Log.w(TAG, "Download failed permanently for file $file", e)
                     // Write an empty file with a permanent error metadata if the download failed permanently.
