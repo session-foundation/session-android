@@ -1077,7 +1077,7 @@ Ryhmän jäseniä ja asetuksia ei voida muuttaa ilman järjestelmänvalvojaa. Jo
     <string name="proNewInstallationUpgrade">Asenna {app_name} uudelleen tälle laitteelle {platform_store}-palvelun kautta, palauta tilisi käyttämällä Palautussalasanaa ja päivitä versioon {pro} {app_pro}-asetuksista.</string>
     <string name="proOptionsRenewalSubtitle">Tällä hetkellä on kolme tapaa uusia tilaus.</string>
     <string name="proOptionsTwoRenewalSubtitle">Tällä hetkellä on kaksi tapaa uusia tilaus.</string>
-    <string name="proPercentOff">{percent}\% alennus</string>
+    <string name="proPercentOff">{percent}% alennus</string>
     <plurals name="proPinnedConversations">
         <item quantity="one">%1$s Kiinnitetty keskustelu</item>
         <item quantity="other">%1$s Kiinnitettyä keskustelua</item>
