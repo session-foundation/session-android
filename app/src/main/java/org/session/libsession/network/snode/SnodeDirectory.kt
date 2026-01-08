@@ -2,6 +2,8 @@ package org.session.libsession.network.snode
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.secureRandom
@@ -33,6 +35,8 @@ class SnodeDirectory @Inject constructor(
         private const val KEY_ED25519 = "pubkey_ed25519"
         private const val KEY_VERSION = "storage_server_version"
     }
+
+    private val poolMutex = Mutex()
 
     private val seedNodePool: Set<String> = when (prefs.getEnvironment()) {
         Environment.DEV_NET -> setOf("http://sesh-net.local:1280")
@@ -76,76 +80,86 @@ class SnodeDirectory @Inject constructor(
      *
      * - If the current pool is already large enough, returns it unchanged.
      * - Otherwise, bootstraps from a random seed node (get_n_service_nodes),
-     *   persists the new pool, and returns it.
+     * persists the new pool, and returns it.
      *
      * Throws if the seed node returns an empty list or parsing fails.
+     * Thread-safe: Ensures only one network call happens at a time.
      */
-    //todo ONION ensure we guard against concurrent calls to this
     suspend fun ensurePoolPopulated(
         minCount: Int = MINIMUM_SNODE_POOL_COUNT
     ): Set<Snode> {
+        // 1. Fast path: Optimistic check (no lock)
         val current = getSnodePool()
         if (current.size >= minCount) {
             return current
         }
 
-        val target = seedNodePool.random()
-        Log.d("SnodeDirectory", "Populating snode pool using seed node: $target")
+        // 2. Slow path: Acquire lock
+        return poolMutex.withLock {
+            // 3. Double-check: Did someone populate it while we were waiting?
+            val freshCurrent = getSnodePool()
+            if (freshCurrent.size >= minCount) {
+                return@withLock freshCurrent
+            }
 
-        val url = "$target/json_rpc"
-        val responseBytes = HTTP.execute(
-            HTTP.Verb.POST,
-            url = url,
-            parameters = getRandomSnodeParams,
-            useSeedNodeConnection = true
-        )
+            val target = seedNodePool.random()
+            Log.d("SnodeDirectory", "Populating snode pool using seed node: $target")
 
-        val json = runCatching {
-            JsonUtil.fromJson(responseBytes, Map::class.java)
-        }.getOrNull() ?: buildMap<String, Any> {
-            this["result"] = responseBytes.toString(Charsets.UTF_8)
-        }
+            val url = "$target/json_rpc"
+            val responseBytes = HTTP.execute(
+                HTTP.Verb.POST,
+                url = url,
+                parameters = getRandomSnodeParams,
+                useSeedNodeConnection = true
+            )
 
-        @Suppress("UNCHECKED_CAST")
-        val intermediate = json["result"] as? Map<*, *>
-            ?: throw IllegalStateException("Failed to update snode pool, 'result' was null.")
-                .also { Log.d("SnodeDirectory", "Failed to update snode pool, intermediate was null.") }
+            val json = runCatching {
+                JsonUtil.fromJson(responseBytes, Map::class.java)
+            }.getOrNull() ?: buildMap<String, Any> {
+                this["result"] = responseBytes.toString(Charsets.UTF_8)
+            }
 
-        @Suppress("UNCHECKED_CAST")
-        val rawSnodes = intermediate["service_node_states"] as? List<*>
-            ?: throw IllegalStateException("Failed to update snode pool, 'service_node_states' was null.")
-                .also { Log.d("SnodeDirectory", "Failed to update snode pool, rawSnodes was null.") }
+            @Suppress("UNCHECKED_CAST")
+            val intermediate = json["result"] as? Map<*, *>
+                ?: throw IllegalStateException("Failed to update snode pool, 'result' was null.")
+                    .also { Log.d("SnodeDirectory", "Failed to update snode pool, intermediate was null.") }
 
-        val newPool = rawSnodes.asSequence()
-            .mapNotNull { it as? Map<*, *> }
-            .mapNotNull { raw ->
-                createSnode(
-                    address = raw[KEY_IP] as? String,
-                    port = raw[KEY_PORT] as? Int,
-                    ed25519Key = raw[KEY_ED25519] as? String,
-                    x25519Key = raw[KEY_X25519] as? String,
-                    version = (raw[KEY_VERSION] as? List<*>)
-                        ?.filterIsInstance<Int>()
-                        ?.let(Snode::Version)
-                ).also {
-                    if (it == null) {
-                        Log.d(
-                            "SnodeDirectory",
-                            "Failed to parse snode from: ${raw.prettifiedDescription()}."
-                        )
+            @Suppress("UNCHECKED_CAST")
+            val rawSnodes = intermediate["service_node_states"] as? List<*>
+                ?: throw IllegalStateException("Failed to update snode pool, 'service_node_states' was null.")
+                    .also { Log.d("SnodeDirectory", "Failed to update snode pool, rawSnodes was null.") }
+
+            val newPool = rawSnodes.asSequence()
+                .mapNotNull { it as? Map<*, *> }
+                .mapNotNull { raw ->
+                    createSnode(
+                        address = raw[KEY_IP] as? String,
+                        port = raw[KEY_PORT] as? Int,
+                        ed25519Key = raw[KEY_ED25519] as? String,
+                        x25519Key = raw[KEY_X25519] as? String,
+                        version = (raw[KEY_VERSION] as? List<*>)
+                            ?.filterIsInstance<Int>()
+                            ?.let(Snode::Version)
+                    ).also {
+                        if (it == null) {
+                            Log.d(
+                                "SnodeDirectory",
+                                "Failed to parse snode from: ${raw.prettifiedDescription()}."
+                            )
+                        }
                     }
                 }
+                .toSet()
+
+            if (newPool.isEmpty()) {
+                throw IllegalStateException("Seed node returned empty snode pool")
             }
-            .toSet()
 
-        if (newPool.isEmpty()) {
-            throw IllegalStateException("Seed node returned empty snode pool")
+            Log.d("SnodeDirectory", "Persisting snode pool with ${newPool.size} snodes.")
+            updateSnodePool(newPool)
+
+            newPool
         }
-
-        Log.d("SnodeDirectory", "Persisting snode pool with ${newPool.size} snodes.")
-        updateSnodePool(newPool)
-
-        return newPool
     }
 
     /**
