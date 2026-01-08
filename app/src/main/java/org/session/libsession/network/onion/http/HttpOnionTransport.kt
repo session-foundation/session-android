@@ -92,9 +92,7 @@ class HttpOnionTransport @Inject constructor(
         ex: HTTP.HTTPRequestFailedException,
         destination: OnionDestination
     ): OnionError {
-        val json = ex.json
-        val message = (json?.get("result") as? String)
-            ?: (json?.get("message") as? String)
+        val message = ex.body
 
         val statusCode = ex.statusCode
 
@@ -150,19 +148,19 @@ class HttpOnionTransport @Inject constructor(
             //todo ONION is it really this class' responsibility to decode the decrypted payload instead of passing it to a higher level
 
             if (decrypted.isEmpty() || decrypted[0] != 'l'.code.toByte()) {
-                throw OnionError.InvalidResponse(destination)
+                throw OnionError.DestinationError(destination, ErrorStatus(0, "Error decoding payload"))
             }
 
             val infoSepIdx = decrypted.indexOfFirst { it == ':'.code.toByte() }
-            if (infoSepIdx <= 1) throw OnionError.InvalidResponse(destination)
+            if (infoSepIdx <= 1) throw OnionError.DestinationError(destination, ErrorStatus(0, "Error decoding payload"))
 
             val infoLenSlice = decrypted.slice(1 until infoSepIdx)
             val infoLength = infoLenSlice.toByteArray().toString(Charsets.US_ASCII).toIntOrNull()
-                ?: throw OnionError.InvalidResponse(destination)
+                ?: throw OnionError.DestinationError(destination, ErrorStatus(0, "Error decoding payload"))
 
             val infoStartIndex = "l$infoLength".length + 1
             val infoEndIndex = infoStartIndex + infoLength
-            if (infoEndIndex > decrypted.size) throw OnionError.InvalidResponse(destination)
+            if (infoEndIndex > decrypted.size) throw OnionError.DestinationError(destination, ErrorStatus(0, "Error decoding payload"))
 
             val infoSlice = decrypted.view(infoStartIndex until infoEndIndex)
             val responseInfo = JsonUtil.fromJson(infoSlice, Map::class.java) as Map<*, *>
@@ -231,13 +229,13 @@ class HttpOnionTransport @Inject constructor(
         val innerJson: Map<*, *> = try {
             JsonUtil.fromJson(plaintextString, Map::class.java) as Map<*, *>
         } catch (e: Exception) {
-            throw OnionError.InvalidResponse(destination, Exception("Decrypted payload is not valid JSON", e))
+            throw OnionError.DestinationError(destination, ErrorStatus(code = 0, message = "Decrypted payload is not valid JSON", null))
         }
 
         val statusCode: Int =
             (innerJson["status_code"] as? Number)?.toInt()
                 ?: (innerJson["status"] as? Number)?.toInt()
-                ?: throw OnionError.InvalidResponse(destination, Exception("Missing status code in V2/V3 response"))
+                ?: throw OnionError.DestinationError(destination, ErrorStatus(code = 0, message = "Missing status code in V2/V3 response", null))
 
         val bodyObj: Any? = innerJson["body"]
 
@@ -253,18 +251,18 @@ class HttpOnionTransport @Inject constructor(
                 val parsed: Any = try {
                     JsonUtil.fromJson(bodyObj, Map::class.java)
                 } catch (e: Exception) {
-                    throw OnionError.InvalidResponse(destination, Exception("Failed to parse body string as JSON", e))
+                    throw OnionError.DestinationError(destination, ErrorStatus(code = 0, message = "Failed to parse body string as JSON", null))
                 }
 
                 val parsedMap = parsed as? Map<*, *>
-                    ?: throw OnionError.InvalidResponse(destination, Exception("Parsed body was not a JSON object"))
+                    ?: throw OnionError.DestinationError(destination, ErrorStatus(code = 0, message = "Parsed body was not a JSON object", null))
 
                 processForkInfo(parsedMap)
                 parsedMap
             }
 
             else -> {
-                throw OnionError.InvalidResponse(destination, Exception("Unexpected body type: ${bodyObj::class.java}"))
+                throw OnionError.DestinationError(destination, ErrorStatus(code = 0, message = "Unexpected body type: ${bodyObj::class.java}", null))
             }
         }
 

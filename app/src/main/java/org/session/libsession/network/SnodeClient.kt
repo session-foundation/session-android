@@ -490,7 +490,7 @@ class SnodeClient @Inject constructor(
         val onsNameLower = onsName.lowercase(Locale.US)
 
         val params: Map<String, Any> = buildMap {
-            this["method"] = "ons_resolve"
+            this["endpoint"] = "ons_resolve"
             this["params"] = buildMap<String, Any> {
                 this["type"] = 0
                 this["name_hash"] = Base64.encodeBytes(Hash.hash32(onsNameLower.toByteArray()))
