@@ -64,9 +64,9 @@ fun ThreadDatabase.queryThreads(addresses: Collection<Address.Conversable>): Lis
         }
 
         //language=roomsql
-        val result = query(
+        val cursor = query(
             """
-        SELECT 
+            SELECT 
             threads.${ThreadDatabase.ID},
             input.address,
             
@@ -133,55 +133,61 @@ fun ThreadDatabase.queryThreads(addresses: Collection<Address.Conversable>): Lis
             )
         FROM ${ThreadDatabase.TABLE_NAME} AS threads
         INNER JOIN threads_query_input AS input ON threads.${ThreadDatabase.ADDRESS} = input.address
-    """
-        ).use { cursor ->
-            cursor.asSequence()
-                .map { cursor ->
-                    val threadId = cursor.getLong(0)
-                    val threadAddress = cursor.getString(1).toAddress() as Address.Conversable
-                    val invitingAdminId = cursor.getStringOrNull(2)
-                    val unread = cursor.getLong(3) != 0L
-                    val smsUnreadCount = cursor.getLong(4)
-                    val smsUnreadMentionCount = cursor.getLong(5)
-                    val mmsUnreadCount = cursor.getLong(6)
-                    val mmsUnreadMentionCount = cursor.getLong(7)
-                    val smsCount = cursor.getLong(8)
-                    val mmsCount = cursor.getLong(9)
+    """)
 
-                    val threadRecipient = recipientRepository.get().getRecipientSync(threadAddress)
-                    val lastMessage = mmsSmsDatabase.get().getLastMessage(
-                        /* threadId = */ threadId,
-                        /* includeReactions = */ false,
-                        /* getQuote = */ false
-                    )
-
-                    val date = when {
-                        lastMessage != null -> lastMessage.dateReceived
-                        threadRecipient.data is RecipientData.Contact -> threadRecipient.data.createdAt.toEpochMilli()
-                        threadRecipient.data is RecipientData.Group -> threadRecipient.data.joinedAt.toEpochMilli()
-                        else -> 0L
-                    }
-
-                    ThreadRecord(
-                        threadId = threadId,
-                        recipient = threadRecipient,
-                        lastMessage = lastMessage,
-                        count = smsCount.toInt() + mmsCount.toInt(),
-                        unreadCount = smsUnreadCount.toInt() + mmsUnreadCount.toInt(),
-                        unreadMentionCount = smsUnreadMentionCount.toInt() + mmsUnreadMentionCount.toInt(),
-                        isUnread = unread,
-                        date = date,
-                        invitingAdminId = invitingAdminId
-                    )
-                }
-                .toList()
-        }
+        // Trigger the query to run within this transaction, this is important as we need to query the
+        // cursor outside of the transaction later.
+        cursor.count
 
         // Clean up our temp table
         //language=roomsql
         execSQL("DROP TABLE threads_query_input")
 
-        result
+        // Note transforming the cursor into a list MUST be done outside of the transaction,
+        // as part of the transformation may involve further DB queries and may involve acquiring
+        // locks that can deadlock with the current transaction.
+        cursor
+    }.use { cursor ->
+        cursor.asSequence()
+            .map { cursor ->
+                val threadId = cursor.getLong(0)
+                val threadAddress = cursor.getString(1).toAddress() as Address.Conversable
+                val invitingAdminId = cursor.getStringOrNull(2)
+                val unread = cursor.getLong(3) != 0L
+                val smsUnreadCount = cursor.getLong(4)
+                val smsUnreadMentionCount = cursor.getLong(5)
+                val mmsUnreadCount = cursor.getLong(6)
+                val mmsUnreadMentionCount = cursor.getLong(7)
+                val smsCount = cursor.getLong(8)
+                val mmsCount = cursor.getLong(9)
+
+                val threadRecipient = recipientRepository.get().getRecipientSync(threadAddress)
+                val lastMessage = mmsSmsDatabase.get().getLastMessage(
+                    /* threadId = */ threadId,
+                    /* includeReactions = */ false,
+                    /* getQuote = */ false
+                )
+
+                val date = when {
+                    lastMessage != null -> lastMessage.dateReceived
+                    threadRecipient.data is RecipientData.Contact -> threadRecipient.data.createdAt.toEpochMilli()
+                    threadRecipient.data is RecipientData.Group -> threadRecipient.data.joinedAt.toEpochMilli()
+                    else -> 0L
+                }
+
+                ThreadRecord(
+                    threadId = threadId,
+                    recipient = threadRecipient,
+                    lastMessage = lastMessage,
+                    count = smsCount.toInt() + mmsCount.toInt(),
+                    unreadCount = smsUnreadCount.toInt() + mmsUnreadCount.toInt(),
+                    unreadMentionCount = smsUnreadMentionCount.toInt() + mmsUnreadMentionCount.toInt(),
+                    isUnread = unread,
+                    date = date,
+                    invitingAdminId = invitingAdminId
+                )
+            }
+            .toList()
     }
 }
 
