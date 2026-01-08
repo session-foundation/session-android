@@ -19,7 +19,7 @@ sealed class OnionError(
     val status: ErrorStatus? = null,
     val snode: Snode? = null,
     cause: Throwable? = null
-) : Exception(status?.message ?: "Onion error", cause) {
+) : Exception(status?.message ?: "Onion error at ${origin.name}, with status code ${status?.code}. Snode: ${snode?.address}", cause) {
 
     /**
      * We couldn't even talk to the guard node.

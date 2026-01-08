@@ -32,6 +32,7 @@ import org.session.libsession.messaging.sending_receiving.MessageParser
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
 import org.session.libsession.network.SnodeClient
 import org.session.libsession.network.SnodeClock
+import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsession.network.snode.SwarmStorage
 import org.session.libsession.snode.model.RetrieveMessageResponse
 import org.session.libsession.utilities.Address
@@ -65,7 +66,7 @@ class Poller @AssistedInject constructor(
     private val processor: ReceivedMessageProcessor,
     private val messageParser: MessageParser,
     private val snodeClient: SnodeClient,
-    private val swarmStorage: SwarmStorage,
+    private val swarmDirectory: SwarmDirectory,
     @Assisted scope: CoroutineScope
 ) {
     private val userPublicKey: String
@@ -177,7 +178,7 @@ class Poller @AssistedInject constructor(
                 // check if the polling pool is empty
                 if (pollPool.isEmpty()) {
                     // if it is empty, fill it with the snodes from our swarm
-                    pollPool.addAll(swarmStorage.getSwarm(userPublicKey))
+                    pollPool.addAll(swarmDirectory.getSwarm(userPublicKey))
                 }
 
                 // randomly get a snode from the pool
