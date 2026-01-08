@@ -29,7 +29,7 @@ suspend inline fun <T> retryWithBackOff(
         } catch (currentError: Throwable) {
             if (currentError is CancellationException) throw currentError
 
-            val onionError = currentError as? OnionError ?: OnionError.Unknown(currentError)
+            val onionError = currentError as? OnionError ?: OnionError.Unknown(null, currentError)
 
             val decision = classifier(onionError, previousError)
 
