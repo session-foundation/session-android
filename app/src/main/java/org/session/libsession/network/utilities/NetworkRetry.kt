@@ -3,6 +3,7 @@ package org.session.libsession.network.utilities
 import kotlinx.coroutines.delay
 import org.session.libsession.network.model.FailureDecision
 import org.session.libsession.network.model.OnionError
+import org.session.libsignal.utilities.Log
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.random.Random
 
@@ -28,6 +29,8 @@ suspend inline fun <T> retryWithBackOff(
             return block(attempt)
         } catch (currentError: Throwable) {
             if (currentError is CancellationException) throw currentError
+
+            Log.w("Network", "Got an error sending a network request. Retrying. Attempt $attempt/$maxAttempts", currentError)
 
             val onionError = currentError as? OnionError ?: OnionError.Unknown(null, currentError)
 

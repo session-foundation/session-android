@@ -19,7 +19,7 @@ sealed class OnionError(
     val status: ErrorStatus? = null,
     val destination: OnionDestination?,
     cause: Throwable? = null
-) : Exception(status?.message ?: "Onion error at ${origin.name}, with status code ${status?.code}. Destination: ${if(destination is OnionDestination.SnodeDestination) "Snode: "+destination.snode.address else if(destination is OnionDestination.ServerDestination) "Server: "+destination.host else "Unknown"}", cause) {
+) : Exception("Onion error at ${origin.name}, with status code ${status?.code}. Message: ${status?.message}. Destination: ${if(destination is OnionDestination.SnodeDestination) "Snode: "+destination.snode.address else if(destination is OnionDestination.ServerDestination) "Server: "+destination.host else "Unknown"}", cause) {
 
     /**
      * We couldn't even talk to the guard node.
@@ -34,9 +34,10 @@ sealed class OnionError(
      */
     class IntermediateNodeFailed(
         val reportingNode: Snode?,
+        status: ErrorStatus,
         val failedPublicKey: String?,
         destination: OnionDestination,
-    ) : OnionError(origin = ErrorOrigin.PATH_HOP, destination = destination)
+    ) : OnionError(origin = ErrorOrigin.PATH_HOP, destination = destination, status = status)
 
     /**
      * The error happened, as far as we can tell, along the path on the way to the destination

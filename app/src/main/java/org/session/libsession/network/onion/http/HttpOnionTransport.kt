@@ -96,7 +96,7 @@ class HttpOnionTransport @Inject constructor(
 
         val statusCode = ex.statusCode
 
-        Log.w("Onion Request", "Got an HTTP error. Status: $statusCode, message: $message", ex)
+        //Log.w("Onion Request", "Got an HTTP error. Status: $statusCode, message: $message", ex)
 
         // Special onion path error: "Next node not found: <ed25519>"
         val prefix = "Next node not found: "
@@ -105,6 +105,11 @@ class HttpOnionTransport @Inject constructor(
             return OnionError.IntermediateNodeFailed(
                 reportingNode = node,
                 failedPublicKey = failedPk,
+                status = ErrorStatus(
+                    code = statusCode,
+                    message = message,
+                    body = null
+                ),
                 destination = destination
             )
         }

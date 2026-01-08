@@ -76,6 +76,8 @@ class PathManager @Inject constructor(
             return selectPath(current, exclude)
         }
 
+        Log.w("Onion Request", "We only have ${current.size}/$targetPathCount paths, need to rebuild path.")
+
         // Wait for rebuild to finish if one is happening, or start one
         rebuildPaths(reusablePaths = current)
 
@@ -95,6 +97,7 @@ class PathManager @Inject constructor(
             }
 
             _isBuilding.value = true
+            Log.w("Onion Request", "Rebuilding paths...")
             try {
                 // Ensure we actually have a usable pool before doing anything
                 val pool = directory.ensurePoolPopulated()
@@ -126,6 +129,7 @@ class PathManager @Inject constructor(
                 val sanitized = sanitizePaths(allPaths)
                 _paths.value = sanitized
             } finally {
+                Log.w("Onion Request", "New path(s) created.")
                 _isBuilding.value = false
             }
         }
@@ -158,6 +162,7 @@ class PathManager @Inject constructor(
                 }
 
                 val replacement = unused.secureRandom()
+                Log.w("Onion Request", "Handling bad snode. Repaired path by replacing $snode with $replacement")
                 pathParams[badIndex] = replacement
                 newPathsList[pathIndex] = pathParams
 
@@ -169,6 +174,7 @@ class PathManager @Inject constructor(
     /** Called when an entire path is considered unreliable. */
     suspend fun handleBadPath(path: Path) {
         buildMutex.withLock {
+            Log.w("Onion Request", "Path considered bad - Removed from our paths list.")
             _paths.update { currentList ->
                 currentList.filter { it != path }
             }
