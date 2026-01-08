@@ -228,7 +228,7 @@
     <string name="conversationsBlockedContacts">ဘလော့ထားသော အဆက်အသွယ်များ</string>
     <string name="conversationsCommunities">Community</string>
     <string name="conversationsDelete">စကားပြောဆိုမှု ဖျက်မည်</string>
-    <string name="conversationsDeleteDescription">သင် <b>{name}</b> နှင့်သော ဆက်သွယ်မှုကို ဖျက်လိုကြောင်း ယဉ်သောပါသလား? <b>{name}</b> မှ ပေးပို့သော သစ်စ(Python)သည် အသစ်သော ဆက်သွယ်မှု တစ်ခုစတင်မှာဖြစ်သည်။</string>
+    <string name="conversationsDeleteDescription"><b>{name}</b> နဲ့ စကားဝိုင်းကို ဖျက်ချင်တာ သေချာလား။ <b>{name}</b> ကနေ မက်ဆေ့ချ်အသစ်တွေက စကားဝိုင်းအသစ်တစ်ခု စတင်ပါလိမ့်မယ်။</string>
     <string name="conversationsDeleted">စကားပြောဆိုမှု ဖျက်ပြီးပါပြီ</string>
     <string name="conversationsEmpty">{conversation_name} တွင် မက်ဆေ့ချ် မရှိပါ။</string>
     <string name="conversationsEnter">ခြေလှမ်းရွေးချယ်ပါ</string>
