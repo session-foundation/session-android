@@ -70,6 +70,7 @@ import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.getUnreadCount
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.OpenGroupManager
@@ -535,13 +536,15 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     private val GlobalSearchResult.messageResults: List<GlobalSearchAdapter.Model> get() {
         val unreadThreadMap = messages
-            .map { it.threadId }.toSet()
+            .asSequence()
+            .mapNotNull { it.conversationRecipient.address as? Address.Conversable }
+            .toSet()
             .associateWith { mmsSmsDatabase.getUnreadCount(it) }
 
         return messages.map {
             GlobalSearchAdapter.Model.Message(
                 messageResult = it,
-                unread = unreadThreadMap[it.threadId] ?: 0,
+                unread = unreadThreadMap[it.conversationRecipient.address] ?: 0,
                 isSelf = it.conversationRecipient.isLocalNumber,
                 showProBadge = it.conversationRecipient.shouldShowProBadge
             )

@@ -1,6 +1,9 @@
 package org.thoughtcrime.securesms.database
 
+import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.withUserConfigs
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.util.get
 
 /**
  * Build a combined query to fetch both MMS and SMS messages in one go, the high level idea is to
@@ -280,4 +283,43 @@ fun buildMaxTimestampInThreadUpToQuery(id: MessageId): Pair<String, Array<Any>> 
         FROM $msgTable mainMessage
         WHERE mainMessage.${MmsSmsColumns.ID} = ?
     """ to arrayOf(id.id)
+}
+
+fun MmsSmsDatabase.getUnreadCount(address: Address.Conversable): Int {
+    val lastRead = configFactory.get().withUserConfigs { it.convoInfoVolatile.get(address) }
+        ?.lastRead ?: 0L
+
+    //language=roomsql
+    return readableDatabase.rawQuery("""
+        SELECT IFNULL(
+            (
+                 SELECT COUNT(*)
+                 FROM ${SmsDatabase.TABLE_NAME} s
+                 WHERE s.${SmsDatabase.THREAD_ID} = (
+                    SELECT threads.${ThreadDatabase.ID}
+                    FROM ${ThreadDatabase.TABLE_NAME} AS threads
+                    WHERE threads.${ThreadDatabase.ADDRESS} = ?1
+                 )
+                 AND s.${SmsDatabase.DATE_SENT} > ?2
+                 AND NOT s.${MmsSmsColumns.IS_OUTGOING}
+                 AND NOT s.${MmsSmsColumns.IS_DELETED}
+            ), 0) + IFNULL((
+                SELECT COUNT(*)
+                    FROM ${MmsDatabase.TABLE_NAME} m
+                    WHERE m.${MmsSmsColumns.THREAD_ID} = (
+                        SELECT threads.${ThreadDatabase.ID}
+                        FROM ${ThreadDatabase.TABLE_NAME} AS threads
+                        WHERE threads.${ThreadDatabase.ADDRESS} = ?1
+                    )
+                    AND m.${MmsDatabase.DATE_SENT} > ?2
+                    AND NOT m.${MmsSmsColumns.IS_OUTGOING}
+                    AND NOT m.${MmsSmsColumns.IS_DELETED}
+            ), 0)
+    """, address.address, lastRead).use { cursor ->
+        if (cursor.moveToFirst()) {
+            cursor.getInt(0)
+        } else {
+            0
+        }
+    }
 }
