@@ -133,7 +133,6 @@ import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companio
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_REPLY
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_RESEND
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_SAVE
-import org.thoughtcrime.securesms.conversation.v2.dialogs.LinkPreviewDialog
 import org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarButton
 import org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarDelegate
 import org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarRecordingViewDelegate
@@ -239,7 +238,7 @@ private const val TAG_REACTION_FRAGMENT = "ReactionsDialog"
 class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     InputBarRecordingViewDelegate, AttachmentManager.AttachmentListener, ActivityDispatcher,
     ConversationActionModeCallbackDelegate, VisibleMessageViewDelegate,
-    SearchBottomBar.EventListener, LoaderManager.LoaderCallbacks<Cursor>,
+    SearchBottomBar.EventListener, LoaderManager.LoaderCallbacks<ConversationLoader.Data>,
     OnReactionSelectedListener, ReactWithAnyEmojiDialogFragment.Callback, ReactionsDialogFragment.Callback {
 
     private lateinit var binding: ActivityConversationV2Binding
@@ -269,6 +268,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     @Inject
     lateinit var loginStateRepository: LoginStateRepository
+
+    @Inject
+    lateinit var conversationLoaderFactory: ConversationLoader.Factory
 
     override val applyDefaultWindowInsets: Boolean
         get() = false
@@ -400,6 +402,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             },
             downloadPendingAttachment = viewModel::downloadPendingAttachment,
             retryFailedAttachments = viewModel::retryFailedAttachments,
+            confirmCommunityJoin = viewModel::confirmCommunityJoin,
+            confirmAttachmentDownload = viewModel::confirmAttachmentDownload,
             glide = glide,
             threadRecipientProvider = viewModel::recipient,
             messageDB = mmsSmsDb,
@@ -793,16 +797,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         dialogFragment.show(supportFragmentManager, tag)
     }
 
-    override fun onCreateLoader(id: Int, bundle: Bundle?): Loader<Cursor> {
-        return ConversationLoader(
+    override fun onCreateLoader(id: Int, bundle: Bundle?): Loader<ConversationLoader.Data> {
+        return conversationLoaderFactory.create(
             threadID = viewModel.threadId,
             reverse = false,
-            context = this@ConversationActivityV2,
-            mmsSmsDatabase = mmsSmsDb
         )
     }
 
-    override fun onLoadFinished(loader: Loader<Cursor>, cursor: Cursor?) {
+    override fun onLoadFinished(loader: Loader<ConversationLoader.Data>, data: ConversationLoader.Data?) {
+        val cursor = data?.messageCursor
         val oldCount = adapter.itemCount
         val newCount = cursor?.count ?: 0
         adapter.changeCursor(cursor)
@@ -810,14 +813,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         if (cursor != null) {
             val messageTimestamp = messageToScrollTimestamp.getAndSet(-1)
             val author = messageToScrollAuthor.getAndSet(null)
-            val initialUnreadCount = mmsSmsDb.getUnreadCount(viewModel.threadId)
+            val newUnreadCount = data.threadUnreadCount
 
             // Update the unreadCount value to be loaded from the database since we got a new message
-            if (firstLoad.get() || oldCount != newCount || initialUnreadCount != unreadCount) {
+            if (firstLoad.get() || oldCount != newCount || newUnreadCount != unreadCount) {
                 // Update the unreadCount value to be loaded from the database since we got a new
                 // message (we need to store it in a local variable as it can get overwritten on
                 // another thread before the 'firstLoad.getAndSet(false)' case below)
-                unreadCount = initialUnreadCount
+                unreadCount = newUnreadCount
                 updateUnreadCountIndicator()
             }
 
@@ -848,7 +851,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
-    override fun onLoaderReset(cursor: Loader<Cursor>) = adapter.changeCursor(null)
+    override fun onLoaderReset(cursor: Loader<ConversationLoader.Data>) = adapter.changeCursor(null)
 
     // called from onCreate
     private fun setUpRecyclerView() {
@@ -1311,13 +1314,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onInputBarEditTextPasted() {
         val inputBarText = binding.inputBar.text
-        if (LinkPreviewUtil.findWhitelistedUrls(inputBarText).isNotEmpty()
-            && !textSecurePreferences.isLinkPreviewsEnabled() && !textSecurePreferences.hasSeenLinkPreviewSuggestionDialog()) {
-            LinkPreviewDialog {
+        if ( !textSecurePreferences.isLinkPreviewsEnabled() && !textSecurePreferences.hasSeenLinkPreviewSuggestionDialog()
+                && LinkPreviewUtil.findWhitelistedUrls(inputBarText).isNotEmpty()) {
+            viewModel.showLinkDownloadDialog {
+                textSecurePreferences.setLinkPreviewsEnabled(true)
                 setUpLinkPreviewObserver()
                 linkPreviewViewModel.onEnabled()
                 linkPreviewViewModel.onTextChanged(this, inputBarText, 0, 0)
-            }.show(supportFragmentManager, "Link Preview Dialog")
+            }
             textSecurePreferences.setHasSeenLinkPreviewSuggestionDialog()
         }
     }

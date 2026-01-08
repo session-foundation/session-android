@@ -616,7 +616,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     }
 
     override fun onLongConversationClick(thread: ThreadRecord) {
-        val bottomSheet = ConversationOptionsBottomSheet(this)
+        val bottomSheet = ConversationOptionsBottomSheet()
         bottomSheet.publicKey = publicKey
         bottomSheet.thread = thread
         val threadRecipient = thread.recipient

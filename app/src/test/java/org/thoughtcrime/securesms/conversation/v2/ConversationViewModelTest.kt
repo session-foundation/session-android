@@ -131,6 +131,8 @@ class ConversationViewModelTest : BaseViewModelTest() {
             attachmentDatabase = mock {
                 on { changesNotification } doReturn MutableSharedFlow()
             },
+            openGroupManager = mock(),
+            attachmentDownloadJobFactory = mock()
         )
     }
 
