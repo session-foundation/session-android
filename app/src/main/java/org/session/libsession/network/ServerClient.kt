@@ -40,12 +40,11 @@ class ServerClient @Inject constructor(
         return retryWithBackOff(
             operationName = operationName,
             classifier = { error, previous ->
-                val onionError = error as? OnionError ?: OnionError.Unknown(error)
                 errorManager.onFailure(
-                    error = onionError,
+                    error = error,
                     ctx = ServerClientFailureContext(
                         url = url,
-                        previousError = previous as? OnionError
+                        previousError = previous
                     )
                 )
             }
