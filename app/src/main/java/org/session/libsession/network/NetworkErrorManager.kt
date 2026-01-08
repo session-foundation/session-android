@@ -9,6 +9,7 @@ import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
+import org.thoughtcrime.securesms.util.NetworkConnectivity
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -16,8 +17,7 @@ import javax.inject.Singleton
 class NetworkErrorManager @Inject constructor(
     private val pathManager: PathManager,
     private val snodeDirectory: SnodeDirectory,
-    private val swarmDirectory: SwarmDirectory,
-    private val snodeClock: SnodeClock,
+    private val connectivity: NetworkConnectivity
 ) {
 
     suspend fun onFailure(error: OnionError, ctx: NetworkFailureContext): FailureDecision {
@@ -63,10 +63,15 @@ class NetworkErrorManager @Inject constructor(
             }
 
             is OnionError.GuardUnreachable -> {
-                // penalise path; retry
-                //todo ONION if our connectivity manager tells us we have network, punish node (maybe after a couple of strikes?) and try again - otherwise fail
-                pathManager.handleBadPath(ctx.path)
-                return FailureDecision.Retry
+                // We couldn't reach the guard, yet we seem to have network connectivity:
+                // punish the node and try again
+                if(connectivity.networkAvailable.value) {
+                    pathManager.handleBadSnode(ctx.path.first())
+                    return FailureDecision.Retry
+                }
+
+                // otherwise fail
+                return FailureDecision.Fail(error)
             }
 
             is OnionError.InvalidResponse -> {
