@@ -72,6 +72,12 @@ class PathManager @Inject constructor(
         return next
     }
 
+    private fun setSnodeStrikes(snode: Snode, strikes: Int): Int {
+        val key = snodeKey(snode)
+        snodeStrikes[key] = strikes
+        return strikes
+    }
+
     private fun clearPathStrike(path: Path) {
         pathStrikes.remove(pathKey(path))
     }
@@ -191,14 +197,26 @@ class PathManager @Inject constructor(
      * - Dropping a snode swaps it out in any path(s) that contain it (drops path only if unrepairable).
      * - Dropping a snode also removes it from pool and (if pubkey known) swarm.
      */
-    suspend fun handleBadSnode(snode: Snode, publicKey: String? = null) {
+    suspend fun handleBadSnode(
+        snode: Snode,
+        publicKey: String? = null,
+        forceRemove: Boolean = false
+    ) {
         buildMutex.withLock {
             val paths = _paths.value.toMutableList()
             val droppedPathKeys = mutableSetOf<String>()
             val droppedSnodeKeys = mutableSetOf<String>()
 
-            val snodeStrikes = increaseSnodeStrike(snode)
-            Log.w("Onion Request", "Bad snode reported: ${snode.address} (strikes=$snodeStrikes/$STRIKE_THRESHOLD)")
+            val snodeStrikes = if (forceRemove) {
+                setSnodeStrikes(snode, STRIKE_THRESHOLD)
+            } else {
+                increaseSnodeStrike(snode)
+            }
+
+            Log.w(
+                "Onion Request",
+                "Bad snode reported: ${snode.address} (strikes=$snodeStrikes/$STRIKE_THRESHOLD, forceRemove=$forceRemove)"
+            )
 
             // Striking a snode also strikes the containing path(s)
             val containing = paths.filter { it.contains(snode) }.toList()

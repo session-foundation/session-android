@@ -49,17 +49,18 @@ class NetworkErrorManager @Inject constructor(
                     snodeDirectory.dropSnodeFromPool(failedKey)
                 }
 
-                // If we can map the failed key to an actual snode in this path, prefer handleBadSnode
+                // find snode from the path and strike it
                 val bad = failedKey?.let { pk ->
                     ctx.path.firstOrNull { it.publicKeySet?.ed25519Key == pk }
                 }
 
-                //todo ONION we are actually supposed to handle the bad snode AND also penalise the path in this case, even if the node was swapped out
-                //todo ONION and in this case handleBadSnode should not strike but definitely remove the snode
-                if (bad != null) pathManager.handleBadSnode(bad)
-                else pathManager.handleBadPath(ctx.path)
-
-                return FailureDecision.Retry
+                // in this case we want handleBadSnode to force remove this snode
+                if (bad != null) {
+                    pathManager.handleBadSnode(bad, forceRemove = true)
+                    return FailureDecision.Retry
+                } else {
+                    return FailureDecision.Fail(error) // we couldn't find the snode in the paths
+                }
             }
 
             is OnionError.DestinationUnreachable -> {
