@@ -134,7 +134,6 @@ class HttpOnionTransport @Inject constructor(
         // - the destination is a ServerDestination
         // - the status code is 502 or 504
         // - the message contains the server's destination url
-        //todo ONION since we can't know that this is happening in the last hop to the destination, is it possible to get 502/504 with the host in the message but that isn't while trying to reach the destination
         if(destination is OnionDestination.ServerDestination
             && statusCode in 500..504
             && message?.contains(destination.host) == true ){
