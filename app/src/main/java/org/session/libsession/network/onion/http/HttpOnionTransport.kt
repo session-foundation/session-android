@@ -68,7 +68,7 @@ class HttpOnionTransport @Inject constructor(
             throw e
         } catch (httpEx: HTTP.HTTPRequestFailedException) {
             // HTTP error from guard (we never got an onion-level response)
-            throw mapPathHttpError(guard, httpEx, destination)
+            throw mapPathHttpError(guard, httpEx, path, destination)
         } catch (e: IOException){
             throw OnionError.GuardUnreachable(guard, destination, e)
         } catch (t: Throwable) {
@@ -90,6 +90,7 @@ class HttpOnionTransport @Inject constructor(
     private fun mapPathHttpError(
         node: Snode,
         ex: HTTP.HTTPRequestFailedException,
+        path: Path,
         destination: OnionDestination
     ): OnionError {
         val message = ex.body
@@ -100,11 +101,43 @@ class HttpOnionTransport @Inject constructor(
 
         // Special onion path error: "Next node not found: <ed25519>"
         val prefix = "Next node not found: "
-        if (message != null && message.startsWith(prefix)) {
+        if (message != null && message.startsWith(prefix)){
             val failedPk = message.removePrefix(prefix)
-            return OnionError.IntermediateNodeFailed(
-                reportingNode = node,
-                failedPublicKey = failedPk,
+
+            // The missing Snode is the destination
+            if( failedPk == (destination as? OnionDestination.SnodeDestination)?.snode?.publicKeySet?.ed25519Key){
+                return OnionError.DestinationUnreachable(
+                    status = ErrorStatus(
+                        code = statusCode,
+                        message = message,
+                        body = null
+                    ),
+                    destination = destination
+                )
+            } else { // the missing snode is along the path
+                return OnionError.IntermediateNodeFailed(
+                    reportingNode = node,
+                    failedPublicKey = failedPk,
+                    status = ErrorStatus(
+                        code = statusCode,
+                        message = message,
+                        body = null
+                    ),
+                    destination = destination
+                )
+            }
+        }
+
+        // check for the case where the SERVER destination no longer exists.
+        // The rule is:
+        // - the destination is a ServerDestination
+        // - the status code is 502 or 504
+        // - the message contains the server's destination url
+        //todo ONION since we can't know that this is happening in the last hop to the destination, is it possible to get 502/504 with the host in the message but that isn't while trying to reach the destination
+        if(destination is OnionDestination.ServerDestination
+            && statusCode in 500..504
+            && message?.contains(destination.host) == true ){
+            return OnionError.DestinationUnreachable(
                 status = ErrorStatus(
                     code = statusCode,
                     message = message,

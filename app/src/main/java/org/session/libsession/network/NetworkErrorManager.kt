@@ -25,6 +25,9 @@ class NetworkErrorManager @Inject constructor(
         val code = status?.code
         val bodyText = status?.bodyText
 
+        //todo ONION investigate why we got stuck in a invalid cyphertext state
+        //todo ONION how can we deal with errors sent from the destination, but not within the 200 > encrypted package? Currently they will become PathError that will wrongly penalise the path
+
         // --------------------------------------------------------------------
         // 1) "Found anywhere" rules (path OR destination)
         // --------------------------------------------------------------------
@@ -54,6 +57,12 @@ class NetworkErrorManager @Inject constructor(
                 else pathManager.handleBadPath(ctx.path)
 
                 return FailureDecision.Retry
+            }
+
+            is OnionError.DestinationUnreachable -> {
+                //todo ONION implement this properly
+
+                return FailureDecision.Fail(error)
             }
 
             is OnionError.PathError -> {
