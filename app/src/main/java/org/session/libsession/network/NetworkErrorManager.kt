@@ -53,6 +53,8 @@ class NetworkErrorManager @Inject constructor(
                     ctx.path.firstOrNull { it.publicKeySet?.ed25519Key == pk }
                 }
 
+                //todo ONION we are actually supposed to handle the bad snode AND also penalise the path in this case, even if the node was swapped out
+                //todo ONION and in this case handleBadSnode should not strike but definitely remove the snode
                 if (bad != null) pathManager.handleBadSnode(bad)
                 else pathManager.handleBadPath(ctx.path)
 

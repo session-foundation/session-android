@@ -137,8 +137,7 @@ class PathManager @Inject constructor(
 
     //todo ONION bad path should have a strike system, not removing path directly
     //todo ONION bad snode should have a strike system, not removing snode directly
-    //todo ONION do we need path rotation?
-    //todo ONION should an intermediate node not found also penalise the path, or just swap out the bad snode?
+    //todo ONION iOS gives every node in a path a strike if the path is dropped
 
     /** Called when we know a specific snode is bad. */
     suspend fun handleBadSnode(snode: Snode) {

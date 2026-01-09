@@ -43,6 +43,7 @@ class SnodeClientErrorManager @Inject constructor(
                 } else {
                     // if we already got a COS, and syncing the clock wasn't enough
                     // we should consider the destination snode faulty. Penalise it and retry
+                    //todo ONION is this right? The snode in this case is that the destination, not in the path! So this isn't dealing with it properly
                     pathManager.handleBadSnode(ctx.targetSnode)
                     return FailureDecision.Retry
                 }

@@ -100,6 +100,7 @@ class HttpOnionTransport @Inject constructor(
         //Log.w("Onion Request", "Got an HTTP error. Status: $statusCode, message: $message", ex)
 
         // Special onion path error: "Next node not found: <ed25519>"
+        //todo ONION do we also need to care for "Next node is currently unreachable: or "<cpr error message string>"
         val prefix = "Next node not found: "
         if (message != null && message.startsWith(prefix)){
             val failedPk = message.removePrefix(prefix)
