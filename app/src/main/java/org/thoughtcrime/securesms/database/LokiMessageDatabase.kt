@@ -29,7 +29,7 @@ class LokiMessageDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
         private const val messageID = "message_id"
         private const val serverID = "server_id"
         private const val friendRequestStatus = "friend_request_status"
-        private const val threadID = "thread_id"
+        const val threadID = "thread_id"
         private const val errorMessage = "error_message"
         private const val messageType = "message_type"
         private const val serverHash = "server_hash"

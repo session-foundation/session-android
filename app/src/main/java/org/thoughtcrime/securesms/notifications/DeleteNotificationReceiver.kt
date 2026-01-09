@@ -48,12 +48,10 @@ class DeleteNotificationReceiver : BroadcastReceiver() {
             try {
                 withContext(Dispatchers.IO) {
                     val now = System.currentTimeMillis()
-                    for(threadId in threadIds){
-                        storage.markConversationAsRead(
+                    for (threadId in threadIds){
+                        storage.updateConversationLastSeenIfNeeded(
                             threadId = threadId,
-                            lastSeenTime = now,
-                            force = false,
-                            updateNotification = false
+                            lastSeenTime = now
                         )
                     }
 

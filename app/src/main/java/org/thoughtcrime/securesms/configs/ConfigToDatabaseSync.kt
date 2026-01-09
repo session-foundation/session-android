@@ -6,14 +6,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
-import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.AvatarCacheCleaner
 import org.session.libsession.database.StorageProtocol
@@ -56,8 +51,8 @@ import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
-import org.thoughtcrime.securesms.util.castAwayType
-import java.util.EnumSet
+import org.thoughtcrime.securesms.util.erase
+import org.thoughtcrime.securesms.util.get
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -92,18 +87,10 @@ class ConfigToDatabaseSync @Inject constructor(
     @param:ManagerScope private val scope: CoroutineScope,
 ) : AuthAwareComponent {
     override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
-        combine(
-            conversationRepository.conversationListAddressesFlow,
-            configFactory.userConfigsChanged(EnumSet.of(UserConfigType.CONVO_INFO_VOLATILE))
-                .castAwayType()
-                .onStart { emit(Unit) }
-                .map { _ -> configFactory.withUserConfigs { it.convoInfoVolatile.all() } },
-            ::Pair
-        ).distinctUntilChanged()
-            .collectLatest { (conversations, convoInfo) ->
+        conversationRepository.conversationListAddressesFlow
+            .collectLatest { conversations ->
                 try {
                     ensureConversations(conversations, loggedInState.accountId)
-                    updateConvoVolatile(convoInfo)
                 } catch (e: Exception) {
                     Log.e(TAG, "Error updating conversations from config", e)
                 }
@@ -128,6 +115,15 @@ class ConfigToDatabaseSync @Inject constructor(
             // Not sure why this is here but it was from the original code in Storage.
             // If you can find out what it does, please remove it.
             SessionMetaProtocol.clearReceivedMessages()
+
+            // Remove all convo info
+            configFactory.withMutableUserConfigs { configs ->
+                result.deletedThreads.keys.forEach { address ->
+                    if (address is Address.Conversable) {
+                        configs.convoInfoVolatile.erase(address)
+                    }
+                }
+            }
 
             // Some type of convo require additional cleanup, we'll go through them here
             for ((address, threadId) in result.deletedThreads) {
@@ -337,32 +333,4 @@ class ConfigToDatabaseSync @Inject constructor(
     private val MmsMessageRecord.containsAttachment: Boolean
         get() = this.slideDeck.slides.isNotEmpty() && !this.slideDeck.isVoiceNote
 
-
-    private fun updateConvoVolatile(convos: List<Conversation?>) {
-        for (conversation in convos.asSequence().filterNotNull()) {
-            val address: Address.Conversable = when (conversation) {
-                is Conversation.OneToOne -> Address.Standard(AccountId(conversation.accountId))
-                is Conversation.LegacyGroup -> Address.LegacyGroup(conversation.groupId)
-                is Conversation.Community -> Address.Community(serverUrl = conversation.baseCommunityInfo.baseUrl, room = conversation.baseCommunityInfo.room)
-                is Conversation.ClosedGroup -> Address.Group(AccountId(conversation.accountId)) // New groups will be managed bia libsession
-                is Conversation.BlindedOneToOne -> {
-                    // Not supported yet
-                    continue
-                }
-            }
-
-            val threadId = threadDatabase.getThreadIdIfExistsFor(address)
-
-            if (threadId != -1L) {
-                if (conversation.lastRead > storage.getLastSeen(threadId)) {
-                    storage.markConversationAsRead(
-                        threadId,
-                        conversation.lastRead,
-                        force = true
-                    )
-                    storage.updateThread(threadId, false)
-                }
-            }
-        }
-    }
 }

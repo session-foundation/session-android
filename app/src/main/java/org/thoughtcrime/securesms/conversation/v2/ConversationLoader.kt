@@ -6,12 +6,15 @@ import android.database.Cursor
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.Storage
+import org.thoughtcrime.securesms.database.getUnreadCount
 import org.thoughtcrime.securesms.util.AbstractCursorLoader
 
 class ConversationLoader @AssistedInject constructor(
     @Assisted private val threadID: Long,
+    @Assisted private val threadAddress: Address.Conversable,
     @Assisted private val reverse: Boolean,
     application: Application,
     private val mmsSmsDatabase: MmsSmsDatabase,
@@ -20,7 +23,7 @@ class ConversationLoader @AssistedInject constructor(
     override fun getData(): Data {
         return Data(
             messageCursor = mmsSmsDatabase.getConversation(threadID, reverse),
-            threadUnreadCount = mmsSmsDatabase.getUnreadCount(threadID),
+            threadUnreadCount = mmsSmsDatabase.getUnreadCount(threadAddress),
         )
     }
 
@@ -37,6 +40,6 @@ class ConversationLoader @AssistedInject constructor(
     
     @AssistedFactory
     interface Factory {
-        fun create(threadID: Long, reverse: Boolean): ConversationLoader
+        fun create(threadID: Long, threadAddress: Address.Conversable, reverse: Boolean): ConversationLoader
     }
 }

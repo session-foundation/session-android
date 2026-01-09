@@ -28,15 +28,16 @@ import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.snode.SnodeAPI.nowWithOffset
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
+import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.mms.MmsException
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -63,13 +64,16 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
     lateinit var messageNotifier: MessageNotifier
 
     @Inject
-    lateinit var markReadProcessor: MarkReadProcessor
+    lateinit var storage: Storage
 
     @Inject
     lateinit var messageSender: MessageSender
 
     @Inject
     lateinit var proStatusManager: ProStatusManager
+
+    @Inject
+    lateinit var clock: SnodeClock
 
     @SuppressLint("StaticFieldLeak")
     override fun onReceive(context: Context, intent: Intent) {
@@ -97,7 +101,7 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
                     val message = VisibleMessage()
                     message.text = responseText.toString()
                     proStatusManager.addProFeatures(message)
-                    message.sentTimestamp = nowWithOffset
+                    message.sentTimestamp = clock.currentTimeMills()
                     messageSender.send(message, address!!)
                     val expiryMode = recipientRepository.getRecipientSync(address).expiryMode
                     val expiresInMillis = expiryMode.expiryMillis
@@ -142,10 +146,14 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
                         )
                     }
 
-                    val messageIds = threadDatabase.setRead(replyThreadId, true)
+                    if (address is Address.Conversable) {
+                        storage.updateConversationLastSeenIfNeeded(
+                            threadAddress = address,
+                            lastSeenTime = clock.currentTimeMills()
+                        )
+                    }
 
                     messageNotifier.updateNotification(context)
-                    markReadProcessor.process(messageIds)
 
                     return null
                 }

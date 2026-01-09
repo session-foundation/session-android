@@ -19,6 +19,7 @@ package org.thoughtcrime.securesms.database
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
+import androidx.collection.MutableLongSet
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.annimon.stream.Stream
 import dagger.Lazy
@@ -27,7 +28,6 @@ import kotlinx.serialization.json.Json
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
-import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
@@ -127,13 +127,7 @@ class MmsDatabase @Inject constructor(
 
     private fun getOutgoingProFeatureCountInternal(column: String, featureMask: Long): Int {
         val db = readableDatabase
-        val outgoingTypes = MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES.joinToString(",")
-
-        // outgoing clause
-        val outgoingSelection =
-            "($MESSAGE_BOX & ${MmsSmsColumns.Types.BASE_TYPE_MASK}) IN ($outgoingTypes)"
-
-        val where = "($column & $featureMask) != 0 AND $outgoingSelection"
+        val where = "($column & $featureMask) != 0 AND $IS_OUTGOING"
 
         db.query(TABLE_NAME, arrayOf("COUNT(*)"), where, null, null, null, null).use { cursor ->
             if (cursor.moveToFirst()) {
@@ -212,7 +206,6 @@ class MmsDatabase @Inject constructor(
                         )
                         groupReceiptDatabase
                             .update(ourAddress, id, status, timestamp)
-                        threadDatabase.update(threadId, false)
                     }
                 }
             }
@@ -241,6 +234,9 @@ class MmsDatabase @Inject constructor(
             if (it.moveToFirst()) it.getLong(0) else null
         }
 
+        if (threadId != null) {
+            threadDatabase.notifyThreadUpdated(threadId)
+        }
     }
 
     fun getThreadIdForMessage(id: Long): Long {
@@ -297,7 +293,7 @@ class MmsDatabase @Inject constructor(
                     " WHERE " + ID + " = ?", arrayOf(id.toString() + "")
         )
         if (threadId.isPresent) {
-            threadDatabase.update(threadId.get(), false)
+            threadDatabase.notifyThreadUpdated(threadId.get())
         }
     }
 
@@ -354,10 +350,16 @@ class MmsDatabase @Inject constructor(
     }
 
     override fun markExpireStarted(messageId: Long, startedTimestamp: Long) {
-        val contentValues = ContentValues()
-        contentValues.put(EXPIRE_STARTED, startedTimestamp)
-        val db = writableDatabase
-        db.update(TABLE_NAME, contentValues, ID_WHERE, arrayOf(messageId.toString()))
+        //language=roomsql
+        writableDatabase.rawQuery("""
+            UPDATE $TABLE_NAME SET $EXPIRE_STARTED = ?
+            WHERE $ID = ?
+            RETURNING $THREAD_ID
+        """, startedTimestamp, messageId).use { cursor ->
+            if (cursor.moveToNext()) {
+                threadDatabase.notifyThreadUpdated(cursor.getLong(0))
+            }
+        }
     }
 
     fun markAsNotified(id: Long) {
@@ -368,57 +370,47 @@ class MmsDatabase @Inject constructor(
     }
 
     fun setMessagesRead(threadId: Long, beforeTime: Long): List<MarkedMessageInfo> {
-        return setMessagesRead(
-            THREAD_ID + " = ? AND (" + READ + " = 0) AND " + DATE_SENT + " <= ?",
-            arrayOf(threadId.toString(), beforeTime.toString())
-        )
-    }
+        val updatedThreadIDs = MutableLongSet(1)
 
-    fun setMessagesRead(threadId: Long): List<MarkedMessageInfo> {
-        return setMessagesRead(
-            THREAD_ID + " = ? AND (" + READ + " = 0)",
-            arrayOf(threadId.toString())
-        )
-    }
+        //language=roomsql
+        val messages = writableDatabase.rawQuery("""
+            UPDATE $TABLE_NAME 
+            SET $READ = 1
+            WHERE $THREAD_ID = ? AND ($READ = 0) AND $DATE_SENT <= ?
+            RETURNING $ID, 
+                      $ADDRESS, 
+                      $THREAD_ID, 
+                      $DATE_SENT, 
+                      $EXPIRES_IN,
+                      $EXPIRE_STARTED
+        """, threadId, beforeTime).use { cursor ->
+            cursor.asSequence()
+                .map {
+                    val timestamp = cursor.getLong(3)
 
-    private fun setMessagesRead(where: String, arguments: Array<String>?): List<MarkedMessageInfo> {
-        val database = writableDatabase
-        val result: MutableList<MarkedMessageInfo> = LinkedList()
-        var cursor: Cursor? = null
-        database.beginTransaction()
-        try {
-            cursor = database.query(
-                TABLE_NAME,
-                arrayOf(ID, ADDRESS, DATE_SENT, MESSAGE_BOX, EXPIRES_IN, EXPIRE_STARTED),
-                where,
-                arguments,
-                null,
-                null,
-                null
-            )
-            while (cursor != null && cursor.moveToNext()) {
-                if (MmsSmsColumns.Types.isSecureType(cursor.getLong(3))) {
-                    val timestamp = cursor.getLong(2)
-                    val syncMessageId = SyncMessageId(fromSerialized(cursor.getString(1)), timestamp)
-                    val expirationInfo = ExpirationInfo(
-                        id = MessageId(cursor.getLong(0), mms = true),
-                        timestamp = timestamp,
-                        expiresIn = cursor.getLong(4),
-                        expireStarted = cursor.getLong(5),
+                    updatedThreadIDs += cursor.getLong(2)
+
+                    MarkedMessageInfo(
+                        syncMessageId = SyncMessageId(
+                            cursor.getString(1).toAddress(),
+                            timestamp
+                        ),
+                        expirationInfo = ExpirationInfo(
+                            id = MessageId(cursor.getLong(0), true),
+                            timestamp = timestamp,
+                            expiresIn = cursor.getLong(4),
+                            expireStarted = cursor.getLong(5)
+                        )
                     )
-                    result.add(MarkedMessageInfo(syncMessageId, expirationInfo))
                 }
-            }
-            val contentValues = ContentValues()
-            contentValues.put(READ, 1)
-            contentValues.put(REACTIONS_UNREAD, 0)
-            database.update(TABLE_NAME, contentValues, where, arguments)
-            database.setTransactionSuccessful()
-        } finally {
-            cursor?.close()
-            database.endTransaction()
+                .toList()
         }
-        return result
+
+        updatedThreadIDs.forEach {
+            threadDatabase.notifyThreadUpdated(it)
+        }
+
+        return messages
     }
 
 
@@ -513,7 +505,7 @@ class MmsDatabase @Inject constructor(
             contentValues = contentValues,
         )
         if (runThreadUpdate) {
-            threadDatabase.update(threadId, true)
+            threadDatabase.notifyThreadUpdated(threadId)
         }
         return Optional.of(InsertResult(messageId, threadId))
     }
@@ -639,16 +631,11 @@ class MmsDatabase @Inject constructor(
                 -1
             )
         }
-        with (threadDatabase) {
-            val lastSeen = getLastSeenAndHasSent(threadId).first()
-            if (lastSeen < message.sentTimeMillis) {
-                setLastSeen(threadId, message.sentTimeMillis)
-            }
-            setHasSent(threadId, true)
-            if (runThreadUpdate) {
-                update(threadId, true)
-            }
+
+        if (runThreadUpdate) {
+            threadDatabase.notifyThreadUpdated(threadId)
         }
+
         return messageId
     }
 
@@ -727,8 +714,9 @@ class MmsDatabase @Inject constructor(
         where: String,
         vararg whereArgs: Any?): Boolean {
         val deletedMessageIDs: MutableList<Long>
-        val deletedMessagesThreadIDs = hashSetOf<Long>()
+        val deletedMessagesThreadIDs = MutableLongSet(1)
 
+        //language=roomsql
         writableDatabase.rawQuery(
             "DELETE FROM $TABLE_NAME WHERE $where RETURNING $ID, $THREAD_ID",
             *whereArgs
@@ -751,9 +739,7 @@ class MmsDatabase @Inject constructor(
         }
 
         if (updateThread) {
-            for (threadId in deletedMessagesThreadIDs) {
-                threadDatabase.update(threadId, false)
-            }
+            deletedMessagesThreadIDs.forEach(threadDatabase::notifyThreadUpdated)
         }
 
         return deletedMessageIDs.isNotEmpty()
@@ -782,7 +768,7 @@ class MmsDatabase @Inject constructor(
         contentValues.put(THREAD_ID, toId)
 
         val db = writableDatabase
-        db.update(SmsDatabase.TABLE_NAME, contentValues, "$THREAD_ID = ?", arrayOf("$fromId"))
+        db.update(TABLE_NAME, contentValues, "$THREAD_ID = ?", arrayOf("$fromId"))
     }
 
     fun deleteThread(threadId: Long, updateThread: Boolean) {
@@ -955,26 +941,15 @@ class MmsDatabase @Inject constructor(
 
     fun readerFor(cursor: Cursor?, getQuote: Boolean = true) = Reader(cursor, getQuote)
 
-    fun setQuoteMissing(messageId: Long): Int {
-        val contentValues = ContentValues()
-        contentValues.put(QUOTE_MISSING, 1)
-        val database = writableDatabase
-        return database!!.update(
-            TABLE_NAME,
-            contentValues,
-            "$ID = ?",
-            arrayOf<String?>(messageId.toString())
-        )
-    }
-
     /**
      * @param outgoing if true only delete outgoing messages, if false only delete incoming messages, if null delete both.
      */
     private fun deleteExpirationTimerMessages(threadId: Long, outgoing: Boolean? = null) {
-        val outgoingClause = outgoing?.takeIf { ExpirationConfiguration.isNewConfigEnabled }?.let {
-            val comparison = if (it) "IN" else "NOT IN"
-            " AND $MESSAGE_BOX & ${MmsSmsColumns.Types.BASE_TYPE_MASK} $comparison (${MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES.joinToString()})"
-        } ?: ""
+        val outgoingClause = when (outgoing) {
+            null -> ""
+            true -> " AND $IS_OUTGOING"
+            false -> " AND NOT $IS_OUTGOING"
+        }
 
         val where = "$THREAD_ID = ? AND $MESSAGE_CONTENT->>'$.${MessageContent.DISCRIMINATOR}' == '${DisappearingMessageUpdate.TYPE_NAME}' " + outgoingClause
 
@@ -1261,6 +1236,11 @@ class MmsDatabase @Inject constructor(
         fun addProFeatureColumns(db: SupportSQLiteDatabase) {
             db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $PRO_PROFILE_FEATURES INTEGER NOT NULL DEFAULT 0")
             db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $PRO_MESSAGE_FEATURES INTEGER NOT NULL DEFAULT 0")
+        }
+
+        fun addOutgoingColumn(db: SupportSQLiteDatabase) {
+            val outgoingTypeSet = MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES.joinToString(separator = ",", prefix = "(", postfix = ")")
+            db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $IS_OUTGOING BOOLEAN GENERATED ALWAYS AS (($MESSAGE_BOX & ${MmsSmsColumns.Types.BASE_TYPE_MASK}) IN ${outgoingTypeSet}) VIRTUAL")
         }
     }
 }

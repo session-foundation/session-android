@@ -18,6 +18,7 @@ package org.thoughtcrime.securesms.database;
 
 import static org.thoughtcrime.securesms.database.MmsDatabase.MESSAGE_BOX;
 import static org.thoughtcrime.securesms.database.MmsSmsColumns.ID;
+import static org.thoughtcrime.securesms.database.MmsSmsColumns.IS_OUTGOING;
 import static org.thoughtcrime.securesms.database.MmsSmsColumns.NOTIFIED;
 import static org.thoughtcrime.securesms.database.MmsSmsColumns.READ;
 import static org.thoughtcrime.securesms.database.MmsSmsColumns.THREAD_ID;
@@ -32,6 +33,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.session.libsession.messaging.utilities.UpdateMessageData;
 import org.session.libsession.utilities.Address;
+import org.session.libsession.utilities.ConfigFactoryProtocol;
 import org.session.libsession.utilities.GroupUtil;
 import org.session.libsignal.utilities.AccountId;
 import org.session.libsignal.utilities.Log;
@@ -55,8 +57,6 @@ import dagger.Lazy;
 import dagger.hilt.android.qualifiers.ApplicationContext;
 import kotlin.Pair;
 import kotlin.Triple;
-import network.loki.messenger.libsession_util.protocol.ProFeature;
-import network.loki.messenger.libsession_util.protocol.ProMessageFeature;
 
 @Singleton
 public class MmsSmsDatabase extends Database {
@@ -74,6 +74,7 @@ public class MmsSmsDatabase extends Database {
   private final Lazy<@NonNull ThreadDatabase> threadDatabase;
   private final Lazy<@NonNull MmsDatabase> mmsDatabase;
   private final Lazy<@NonNull SmsDatabase> smsDatabase;
+  final Lazy<@NonNull ConfigFactoryProtocol> configFactory;
 
   @Inject
   public MmsSmsDatabase(@ApplicationContext Context context,
@@ -81,13 +82,15 @@ public class MmsSmsDatabase extends Database {
                         LoginStateRepository loginStateRepository,
                         Lazy<@NonNull ThreadDatabase> threadDatabase, 
                         Lazy<@NonNull MmsDatabase> mmsDatabase, 
-                        Lazy<@NonNull SmsDatabase> smsDatabase) {
+                        Lazy<@NonNull SmsDatabase> smsDatabase,
+                        Lazy<@NonNull ConfigFactoryProtocol> configFactory) {
     super(context, databaseHelper);
 
     this.loginStateRepository = loginStateRepository;
     this.threadDatabase = threadDatabase;
     this.mmsDatabase = mmsDatabase;
     this.smsDatabase = smsDatabase;
+    this.configFactory = configFactory;
   }
 
   public @Nullable MessageRecord getMessageForTimestamp(long threadId, long timestamp) {
@@ -195,13 +198,6 @@ public class MmsSmsDatabase extends Database {
 
   public Cursor getConversation(long threadId, boolean reverse) {
     return getConversation(threadId, reverse, 0, 0);
-  }
-
-  public Cursor getConversationSnippet(long threadId) {
-    String order     = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
-    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
-
-    return queryTables(PROJECTION_ALL, selection, true, null, order, null);
   }
 
   public List<String> getRecentChatMemberAddresses(long threadId, int limit) {
@@ -333,24 +329,14 @@ public class MmsSmsDatabase extends Database {
     }
   }
 
-  private String buildOutgoingConditionForNotifications() {
-    return "(" + TRANSPORT + " = '" + MMS_TRANSPORT + "' AND " +
-            "(" + MESSAGE_BOX + " & " + MmsSmsColumns.Types.BASE_TYPE_MASK + ") IN (" + buildOutgoingTypesList() + "))" +
-            " OR " +
-            "(" + TRANSPORT + " = '" + SMS_TRANSPORT + "' AND " +
-            "(" + SmsDatabase.TYPE + " & " + MmsSmsColumns.Types.BASE_TYPE_MASK + ") IN (" + buildOutgoingTypesList() + "))";
-  }
-
   public Cursor getUnreadIncomingForNotifications(int maxRows) {
-    String outgoing = buildOutgoingConditionForNotifications();
-    String selection = "(" + READ + " = 0 AND " + NOTIFIED + " = 0 AND NOT (" + outgoing + "))";
+    String selection = "(" + READ + " = 0 AND " + NOTIFIED + " = 0 AND NOT (" + IS_OUTGOING + "))";
     String order    = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
     String limitStr = maxRows > 0 ? String.valueOf(maxRows) : null;
     return queryTables(PROJECTION_ALL, selection, true, null, order, limitStr);
   }
 
   public Cursor getOutgoingWithUnseenReactionsForNotifications(int maxRows) {
-    String outgoing = buildOutgoingConditionForNotifications();
     String lastSeenQuery =
             "SELECT " + ThreadDatabase.LAST_SEEN +
                     " FROM " + ThreadDatabase.TABLE_NAME +
@@ -361,7 +347,7 @@ public class MmsSmsDatabase extends Database {
 
     String order    = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
     String limitStr = maxRows > 0 ? String.valueOf(maxRows) : null;
-    return queryTables(PROJECTION_ALL, outgoing, true, reactionSelection, order, limitStr);
+    return queryTables(PROJECTION_ALL, IS_OUTGOING, true, reactionSelection, order, limitStr);
   }
 
   public Set<Address> getAllReferencedAddresses() {
@@ -384,25 +370,6 @@ public class MmsSmsDatabase extends Database {
     return out;
   }
 
-  /** Builds the comma-separated list of base types that represent
-   *  *outgoing* messages (same helper as before). */
-  private String buildOutgoingTypesList() {
-    long[] types = MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES;
-    StringBuilder sb = new StringBuilder(types.length * 3);
-    for (int i = 0; i < types.length; i++) {
-      if (i > 0) sb.append(',');
-      sb.append(types[i]);
-    }
-    return sb.toString();
-  }
-
-  public int getUnreadCount(long threadId) {
-    String selection = READ + " = 0 AND " + NOTIFIED + " = 0 AND " + MmsSmsColumns.THREAD_ID + " = " + threadId;
-
-    try (Cursor cursor = queryTables(ID, selection, true, null, null, null)) {
-      return cursor != null ? cursor.getCount() : 0;
-    }
-  }
 
   public void deleteGroupInfoMessage(AccountId groupId, Class<? extends UpdateMessageData.Kind> kind) {
     long threadId = threadDatabase.get().getThreadIdIfExistsFor(groupId.getHexString());

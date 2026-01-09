@@ -51,6 +51,7 @@ import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.NotifyType
+import org.thoughtcrime.securesms.database.threadContainsOutgoingMessage
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.util.AvatarUtils
@@ -169,7 +170,7 @@ class DefaultMessageNotifier @Inject constructor(
         if (recipient != null && !recipient.isGroupOrCommunityRecipient && threadDatabase.getMessageCount(
                 threadId
             ) == 1 &&
-            !(recipient.approved || threadDatabase.getLastSeenAndHasSent(threadId).second())
+            !(recipient.approved || threadDatabase.threadContainsOutgoingMessage(threadId))
         ) {
             removeHasHiddenMessageRequests(context)
         }
@@ -591,7 +592,7 @@ class DefaultMessageNotifier @Inject constructor(
             // Handle message requests early
             val isMessageRequest = !threadRecipient.isGroupOrCommunityRecipient &&
                     !threadRecipient.approved &&
-                    !threadDatabase.getLastSeenAndHasSent(threadId).second()
+                    !threadDatabase.threadContainsOutgoingMessage(threadId)
 
             // Do not repeat request notifications once the thread has >1 messages
             if (isMessageRequest) {

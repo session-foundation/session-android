@@ -46,6 +46,8 @@ public interface MmsSmsColumns {
   public static final String PRO_MESSAGE_FEATURES     = "pro_message_features";
   public static final String PRO_PROFILE_FEATURES     = "pro_profile_features";
 
+  public static final String IS_OUTGOING              = "is_outgoing";
+
   public static class Types {
     protected static final long TOTAL_MASK = 0xFFFFFFFF;
 
