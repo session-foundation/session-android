@@ -1,6 +1,6 @@
-package org.session.libsession.snode
+package org.session.libsession.network.onion
 
-import org.session.libsession.snode.OnionRequestAPI.Destination
+import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.utilities.AESGCM
 import org.session.libsession.utilities.AESGCM.EncryptionResult
 import org.session.libsignal.utilities.JsonUtil
@@ -31,7 +31,7 @@ object OnionRequestEncryption {
      */
     internal fun encryptPayloadForDestination(
         payload: ByteArray,
-        destination: Destination,
+        destination: OnionDestination,
         version: Version
     ): EncryptionResult {
         val plaintext = if (version == Version.V4) {
@@ -39,13 +39,13 @@ object OnionRequestEncryption {
         } else {
             // Wrapping isn't needed for file server or open group onion requests
             when (destination) {
-                is Destination.Snode -> encode(payload, mapOf("headers" to ""))
-                is Destination.Server -> payload
+                is OnionDestination.SnodeDestination -> encode(payload, mapOf("headers" to ""))
+                is OnionDestination.ServerDestination -> payload
             }
         }
         val x25519PublicKey = when (destination) {
-            is Destination.Snode -> destination.snode.publicKeySet!!.x25519Key
-            is Destination.Server -> destination.x25519PublicKey
+            is OnionDestination.SnodeDestination -> destination.snode.publicKeySet!!.x25519Key
+            is OnionDestination.ServerDestination -> destination.x25519PublicKey
         }
         return AESGCM.encrypt(plaintext, x25519PublicKey)
     }
@@ -53,13 +53,13 @@ object OnionRequestEncryption {
     /**
      * Encrypts the previous encryption result (i.e. that of the hop after this one) for this hop. Use this to build the layers of an onion request.
      */
-    internal fun encryptHop(lhs: Destination, rhs: Destination, previousEncryptionResult: EncryptionResult): EncryptionResult {
+    internal fun encryptHop(lhs: OnionDestination, rhs: OnionDestination, previousEncryptionResult: EncryptionResult): EncryptionResult {
         val payload: MutableMap<String, Any> = when (rhs) {
-            is Destination.Snode -> {
+            is OnionDestination.SnodeDestination -> {
                 mutableMapOf("destination" to rhs.snode.publicKeySet!!.ed25519Key)
             }
 
-            is Destination.Server -> {
+            is OnionDestination.ServerDestination -> {
                 mutableMapOf(
                     "host" to rhs.host,
                     "target" to rhs.target,
@@ -71,11 +71,11 @@ object OnionRequestEncryption {
         }
         payload["ephemeral_key"] = previousEncryptionResult.ephemeralPublicKey.toHexString()
         val x25519PublicKey = when (lhs) {
-            is Destination.Snode -> {
+            is OnionDestination.SnodeDestination -> {
                 lhs.snode.publicKeySet!!.x25519Key
             }
 
-            is Destination.Server -> {
+            is OnionDestination.ServerDestination -> {
                 lhs.x25519PublicKey
             }
         }

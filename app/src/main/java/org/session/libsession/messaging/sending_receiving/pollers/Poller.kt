@@ -30,10 +30,11 @@ import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.messages.Message.Companion.senderOrSync
 import org.session.libsession.messaging.sending_receiving.MessageParser
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
-import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClient
+import org.session.libsession.network.SnodeClock
+import org.session.libsession.network.snode.SwarmDirectory
+import org.session.libsession.network.snode.SwarmStorage
 import org.session.libsession.snode.model.RetrieveMessageResponse
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -64,6 +65,8 @@ class Poller @AssistedInject constructor(
     private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     private val processor: ReceivedMessageProcessor,
     private val messageParser: MessageParser,
+    private val snodeClient: SnodeClient,
+    private val swarmDirectory: SwarmDirectory,
     @Assisted scope: CoroutineScope
 ) {
     private val userPublicKey: String
@@ -175,7 +178,7 @@ class Poller @AssistedInject constructor(
                 // check if the polling pool is empty
                 if (pollPool.isEmpty()) {
                     // if it is empty, fill it with the snodes from our swarm
-                    pollPool.addAll(SnodeAPI.getSwarm(userPublicKey).await())
+                    pollPool.addAll(swarmDirectory.getSwarm(userPublicKey))
                 }
 
                 // randomly get a snode from the pool
@@ -303,7 +306,7 @@ class Poller @AssistedInject constructor(
 
         // Get messages call wrapped in an async
         val fetchMessageTask = if (!pollOnlyUserProfileConfig) {
-            val request = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
+            val request = snodeClient.buildAuthenticatedRetrieveBatchRequest(
                 lastHash = lokiApiDatabase.getLastMessageHashValue(
                     snode = snode,
                     publicKey = userAuth.accountId.hexString,
@@ -314,7 +317,7 @@ class Poller @AssistedInject constructor(
 
             this.async {
                 runCatching {
-                    SnodeAPI.sendBatchRequest(
+                    snodeClient.sendBatchRequest(
                         snode = snode,
                         publicKey = userPublicKey,
                         request = request,
@@ -339,7 +342,7 @@ class Poller @AssistedInject constructor(
                 .map { type ->
                     val config = configs.getConfig(type)
                     hashesToExtend += config.activeHashes()
-                    val request = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
+                    val request = snodeClient.buildAuthenticatedRetrieveBatchRequest(
                         lastHash = lokiApiDatabase.getLastMessageHashValue(
                             snode = snode,
                             publicKey = userAuth.accountId.hexString,
@@ -352,7 +355,7 @@ class Poller @AssistedInject constructor(
 
                     this.async {
                         type to runCatching {
-                            SnodeAPI.sendBatchRequest(
+                            snodeClient.sendBatchRequest(
                                 snode = snode,
                                 publicKey = userPublicKey,
                                 request = request,
@@ -366,10 +369,10 @@ class Poller @AssistedInject constructor(
         if (hashesToExtend.isNotEmpty()) {
             launch {
                 try {
-                    SnodeAPI.sendBatchRequest(
+                    snodeClient.sendBatchRequest(
                         snode,
                         userPublicKey,
-                        SnodeAPI.buildAuthenticatedAlterTtlBatchRequest(
+                        snodeClient.buildAuthenticatedAlterTtlBatchRequest(
                             messageHashes = hashesToExtend.toList(),
                             auth = userAuth,
                             newExpiry = snodeClock.currentTimeMills() + 14.days.inWholeMilliseconds,

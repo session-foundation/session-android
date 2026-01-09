@@ -3,25 +3,22 @@ package org.session.libsession.messaging.sending_receiving.notifications
 import android.annotation.SuppressLint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import nl.komponents.kovenant.Promise
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.session.libsession.messaging.MessagingModuleConfiguration
-import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.snode.OnionResponse
-import org.session.libsession.snode.Version
-import org.session.libsession.snode.utilities.asyncPromise
-import org.session.libsession.snode.utilities.await
+import org.session.libsession.network.onion.Version
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.JsonUtil
+import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.emptyPromise
 import org.session.libsignal.utilities.retryWithUniformInterval
 
 @SuppressLint("StaticFieldLeak")
 object PushRegistryV1 {
     val context = MessagingModuleConfiguration.shared.context
-    private const val MAX_RETRY_COUNT = 4
 
     private val server = Server.LEGACY
 
@@ -34,45 +31,54 @@ object PushRegistryV1 {
         closedGroupSessionId: String,
         isPushEnabled: Boolean = TextSecurePreferences.isPushEnabled(context),
         publicKey: String = MessagingModuleConfiguration.shared.storage.getUserPublicKey()!!
-    ) = if (isPushEnabled) {
-        performGroupOperation("subscribe_closed_group", closedGroupSessionId, publicKey)
-    } else emptyPromise()
+    ) {
+        if (!isPushEnabled) return
+        scope.launch {
+            performGroupOperation("subscribe_closed_group", closedGroupSessionId, publicKey)
+        }
+    }
 
     fun unsubscribeGroup(
         closedGroupPublicKey: String,
         isPushEnabled: Boolean = TextSecurePreferences.isPushEnabled(context),
         publicKey: String = MessagingModuleConfiguration.shared.storage.getUserPublicKey()!!
-    ) = if (isPushEnabled) {
-        performGroupOperation("unsubscribe_closed_group", closedGroupPublicKey, publicKey)
-    } else emptyPromise()
+    ) {
+        if (!isPushEnabled) return
+        scope.launch {
+            performGroupOperation("unsubscribe_closed_group", closedGroupPublicKey, publicKey)
+        }
+    }
 
-    private fun performGroupOperation(
+    private suspend fun performGroupOperation(
         operation: String,
         closedGroupPublicKey: String,
         publicKey: String
-    ): Promise<*, Exception> = scope.asyncPromise {
-        val parameters = mapOf("closedGroupPublicKey" to closedGroupPublicKey, "pubKey" to publicKey)
+    ) {
         val url = "${server.url}/$operation"
-        val body = JsonUtil.toJson(parameters).toRequestBody("application/json".toMediaType())
-        val request = Request.Builder().url(url).post(body).build()
 
-        retryWithUniformInterval(MAX_RETRY_COUNT) {
-            sendOnionRequest(request)
-                .await()
-                .checkError()
+        try {
+            MessagingModuleConfiguration.shared.serverClient.send(
+                operationName = operation,
+                requestFactory = {
+                    val parameters = mapOf(
+                        "closedGroupPublicKey" to closedGroupPublicKey,
+                        "pubKey" to publicKey
+                    )
+
+                    val body = JsonUtil.toJson(parameters)
+                        .toRequestBody("application/json".toMediaType())
+
+                    Request.Builder()
+                        .url(url)
+                        .post(body)
+                        .build()
+                },
+                serverBaseUrl = server.url,
+                x25519PublicKey = server.publicKey,
+                version = Version.V2
+            )
+        } catch (e: Exception) {
+            Log.w("PushRegistryV1", "Failed to perform group operation ($operation): $e")
         }
     }
-
-    private fun OnionResponse.checkError() {
-        check(code != null && code != 0) {
-            "error: $message."
-        }
-    }
-
-    private fun sendOnionRequest(request: Request): Promise<OnionResponse, Exception> = OnionRequestAPI.sendOnionRequest(
-        request,
-        server.url,
-        server.publicKey,
-        Version.V2
-    )
 }

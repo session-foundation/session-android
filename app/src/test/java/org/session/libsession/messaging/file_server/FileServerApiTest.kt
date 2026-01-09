@@ -17,7 +17,7 @@ class FileServerApiTest {
 
     @Test
     fun `can build and parse attachment url`() {
-        val api = FileServerApi(storage = mock())
+        val api = FileServerApi(storage = mock(), serverClient = mock(), snodeClock = mock())
 
         val testCases = listOf(
             Case(

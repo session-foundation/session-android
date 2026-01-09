@@ -6,7 +6,7 @@ import dagger.assisted.AssistedInject
 import kotlinx.serialization.DeserializationStrategy
 import network.loki.messenger.libsession_util.pro.BackendRequests
 import network.loki.messenger.libsession_util.pro.ProProof
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 
 class GenerateProProofRequest @AssistedInject constructor(
     @Assisted("master") private val masterPrivateKey: ByteArray,

@@ -22,7 +22,7 @@ import okio.BufferedSource
 import okio.buffer
 import okio.source
 import org.session.libsession.messaging.file_server.FileServerApi
-import org.session.libsession.snode.OnionRequestAPI
+import org.session.libsession.network.model.OnionError
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
@@ -134,7 +134,7 @@ class AvatarReuploadWorker @AssistedInject constructor(
             // When renew fails, we will try to re-upload the avatar if:
             // 1. The file is expired (we have the record of this file's expiry time), or
             // 2. The last update was more than 12 days ago.
-            if ((e is NonRetryableException || e is OnionRequestAPI.HTTPRequestFailedAtDestinationException)) {
+            if ((e is NonRetryableException || e is OnionError.DestinationError)) {
                 val now = Instant.now()
                 if (fileExpiry?.isBefore(now) == true ||
                     (lastUpdated?.isBefore(now.minus(Duration.ofDays(12)))) == true) {

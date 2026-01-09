@@ -43,11 +43,9 @@ import org.conscrypt.Conscrypt
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.MessagingModuleConfiguration.Companion.configure
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
-import org.session.libsession.snode.SnodeModule
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.pushSuffix
-import org.session.libsignal.utilities.HTTP.isConnectedToNetwork
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.AppContext.configureKovenant
 import org.thoughtcrime.securesms.auth.LoginStateRepository
@@ -86,7 +84,6 @@ import kotlin.concurrent.Volatile
 class ApplicationContext : Application(), DefaultLifecycleObserver, Configuration.Provider, SingletonImageLoader.Factory {
     @Inject lateinit var messagingModuleConfiguration: Lazy<MessagingModuleConfiguration>
     @Inject lateinit var workerFactory: Lazy<HiltWorkerFactory>
-    @Inject lateinit var snodeModule: Lazy<SnodeModule>
     @Inject lateinit var sskEnvironment: Lazy<SSKEnvironment>
 
     @Inject lateinit var startupComponents: Lazy<OnAppStartupComponents>
@@ -146,15 +143,11 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
         NotificationChannels.create(this)
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
         configureKovenant()
-        SnodeModule.sharedLazy = snodeModule
         SSKEnvironment.sharedLazy = sskEnvironment
 
         initializeWebRtc()
         initializeBlobProvider()
         refresh()
-
-        val networkConstraint = NetworkConstraint.Factory(this).create()
-        isConnectedToNetwork = { networkConstraint.isMet }
 
         // add our shortcut debug menu if we are not in a release build
         if (BuildConfig.BUILD_TYPE != "release") {

@@ -12,6 +12,7 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.Response
 import org.session.libsignal.utilities.Util.SECURE_RANDOM
+import java.lang.IllegalArgumentException
 import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLContext
@@ -19,8 +20,6 @@ import javax.net.ssl.X509TrustManager
 
 
 object HTTP {
-    var isConnectedToNetwork: (() -> Boolean) = { false }
-
     private val seedNodeConnection by lazy {
 
         OkHttpClient().newBuilder()
@@ -78,8 +77,7 @@ object HTTP {
         val json: Map<*, *>? = null,
         val body: String? = null,
         message: String = "HTTP request failed with status code $statusCode"
-    ) : kotlin.Exception(message)
-    class HTTPNoNetworkException : HTTPRequestFailedException(0, null, "No network connection")
+    ) : RuntimeException(message)
 
     enum class Verb(val rawValue: String) {
         GET("GET"), PUT("PUT"), POST("POST"), DELETE("DELETE")
@@ -114,7 +112,7 @@ object HTTP {
         when (verb) {
             Verb.GET -> request.get()
             Verb.PUT, Verb.POST -> {
-                if (body == null) { throw Exception("Invalid request body.") }
+                if (body == null) { throw IllegalArgumentException("Invalid request body.") }
                 val contentType = "application/json; charset=utf-8".toMediaType()
                 @Suppress("NAME_SHADOWING") val body = RequestBody.create(contentType, body)
                 if (verb == Verb.PUT) request.put(body) else request.post(body)
@@ -144,18 +142,7 @@ object HTTP {
         } catch (exception: Exception) {
             Log.d("Loki", "${verb.rawValue} request to $url failed due to error: ${exception.localizedMessage}.")
 
-            if (!isConnectedToNetwork()) { throw HTTPNoNetworkException() }
-
-            if (exception !is HTTPRequestFailedException) {
-
-                // Override the actual error so that we can correctly catch failed requests in OnionRequestAPI
-                throw HTTPRequestFailedException(
-                    statusCode = 0,
-                    message = "HTTP request failed due to: ${exception.message}"
-                )
-            } else {
-                throw exception
-            }
+            throw exception
         }
     }
 

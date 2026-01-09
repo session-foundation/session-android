@@ -17,11 +17,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
-import nl.komponents.kovenant.Promise
 import org.session.libsession.LocalisedTimeUtil.toShortSinglePartString
-import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.utilities.await
+import org.session.libsession.network.onion.PathManager
+import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsession.utilities.NonTranslatableStringConstants.SESSION_NETWORK_DATA_PRICE
 import org.session.libsession.utilities.NonTranslatableStringConstants.TOKEN_NAME_SHORT
 import org.session.libsession.utilities.NonTranslatableStringConstants.USD_NAME_SHORT
@@ -29,7 +27,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.DATE_TIME_KE
 import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.DateUtils
@@ -48,6 +45,8 @@ class TokenPageViewModel @Inject constructor(
     private val dateUtils: DateUtils,
     private val loginStateRepository: LoginStateRepository,
     private val conversationRepository: ConversationRepository,
+    private val swarmDirectory: SwarmDirectory,
+    private val pathManager: PathManager
 ) : ViewModel() {
     private val TAG = "TokenPageVM"
 
@@ -238,13 +237,10 @@ class TokenPageViewModel @Inject constructor(
         withContext(Dispatchers.Default) {
             val myPublicKey = loginStateRepository.requireLocalNumber()
 
-            val getSwarmSetPromise: Promise<Set<Snode>, Exception> =
-                SnodeAPI.getSwarm(myPublicKey)
-
             val numSessionNodesInOurSwarm = try {
                 // Get the count of Session nodes in our swarm (technically in the range 1..10, but
                 // even a new account seems to start with a nodes-in-swarm count of 4).
-                getSwarmSetPromise.await().size
+                swarmDirectory.getSwarm(myPublicKey).size
             } catch (e: Exception) {
                 Log.w(TAG, "Couldn't get nodes in swarm count.", e)
                 5 // Pick a sane middle-ground should we error for any reason
@@ -278,7 +274,7 @@ class TokenPageViewModel @Inject constructor(
             }
 
             // This is hard-coded to 2 on Android but may vary on other platforms
-            val pathCount = OnionRequestAPI.paths.value.size
+            val pathCount = pathManager.paths.value.size
 
             /*
             Note: Num session nodes securing you messages formula is:
