@@ -205,7 +205,8 @@ fun InviteMembersDialog(
                 option = RadioOption(
                     value = Unit,
                     title = GetString(LocalResources.current.getString(R.string.membersInviteShareMessageHistoryDays)),
-                    selected = shareHistory
+                    selected = shareHistory,
+                    qaTag = GetString(R.string.qa_manage_members_dialog_share_message_history)
                 )
             ) {
                 shareHistory = true
@@ -216,6 +217,7 @@ fun InviteMembersDialog(
                     value = Unit,
                     title = GetString(LocalResources.current.getString(R.string.membersInviteShareNewMessagesOnly)),
                     selected = !shareHistory,
+                    qaTag = GetString(R.string.qa_manage_members_dialog_share_new_messages)
                 )
             ) {
                 shareHistory = false
