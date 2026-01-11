@@ -36,8 +36,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.LocalisedTimeUtil.toShortTwoPartString
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_LARGE_KEY
 import org.session.libsession.utilities.ThemeUtil
@@ -105,6 +105,7 @@ class ConversationReactionOverlay : FrameLayout {
     @Inject lateinit var threadDatabase: ThreadDatabase
     @Inject lateinit var deprecationManager: LegacyGroupDeprecationManager
     @Inject lateinit var openGroupManager: OpenGroupManager
+    @Inject lateinit var snodeClock: SnodeClock
 
     private var job: Job? = null
 
@@ -623,7 +624,7 @@ class ConversationReactionOverlay : FrameLayout {
                 R.string.delete,
                 { handleActionItemClicked(Action.DELETE) },
                 R.string.AccessibilityId_deleteMessage,
-                message.subtitle,
+                message.subtitle(snodeClock.currentTimeMills()),
                 ThemeUtil.getThemedColor(context, R.attr.danger)
             )
         }
@@ -800,12 +801,11 @@ class ConversationReactionOverlay : FrameLayout {
     }
 }
 
-private val MessageRecord.subtitle: ((Context) -> CharSequence?)?
-    get() = if (expiresIn <= 0 || expireStarted <= 0) {
+private fun MessageRecord.subtitle(timeMilli: Long): ((Context) -> CharSequence?)? {
+    return if (expiresIn <= 0 || expireStarted <= 0) {
         null
     } else { context ->
-        //todo ONION is there a better way? >>  pass time here
-        (expiresIn - (MessagingModuleConfiguration.shared.snodeClock.currentTimeMills() - expireStarted))
+        (expiresIn - (timeMilli - expireStarted))
             .coerceAtLeast(0L)
             .milliseconds
             .toShortTwoPartString()
@@ -815,3 +815,4 @@ private val MessageRecord.subtitle: ((Context) -> CharSequence?)?
                     .format().toString()
             }
     }
+}
