@@ -84,9 +84,6 @@ class SnodeClientErrorManager @Inject constructor(
 
                 return FailureDecision.Retry
             }
-
-            // Anything else from destination: do not penalise path; no retries
-            return FailureDecision.Fail(error)
         }
 
         // Default: fail

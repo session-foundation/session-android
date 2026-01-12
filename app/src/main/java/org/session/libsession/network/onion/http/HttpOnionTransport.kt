@@ -44,7 +44,7 @@ class HttpOnionTransport @Inject constructor(
         val built = try {
             OnionBuilder.build(path, destination, payload, version)
         } catch (t: Throwable) {
-            throw OnionError.Unknown(destination, t,)
+            throw OnionError.EncodingError(destination, t,)
         }
 
         val url = "${guard.address}:${guard.port}/onion_req/v2"
@@ -59,7 +59,7 @@ class HttpOnionTransport @Inject constructor(
                 json = params
             )
         } catch (t: Throwable) {
-            throw OnionError.Unknown(destination, t)
+            throw OnionError.EncodingError(destination, t)
         }
 
         val responseBytes: ByteArray = try {

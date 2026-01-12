@@ -25,41 +25,22 @@ class NetworkErrorManager @Inject constructor(
 
         //todo ONION investigate why we got stuck in a invalid cyphertext state
 
-        //todo ONION switch to a "don't penalise unless its a known issue"  + time based path rotation
+        //todo ONION  add missing known errors 
+        //todo ONION  add time based path rotation
 
         // --------------------------------------------------------------------
-        // 1) "Found anywhere" rules (path OR destination)
+        // 1) "Found anywhere" rules (path OR destination) - currently no custom handling here
+        // as we now default to non penalising path logic
         // --------------------------------------------------------------------
 
-        // 400, 403, 404: do not penalise path or snode; No retries
-        if (code == 400 || code == 403 || code == 404) {
-            return FailureDecision.Fail(error)
-        }
 
         // --------------------------------------------------------------------
         // 2) Errors along the path (not destination)
         // --------------------------------------------------------------------
         when (error) {
-            is OnionError.IntermediateNodeUnreachable -> {
-                // Drop snode from pool, rebuild paths without it, penalise path, retry
-                val failedKey = error.failedPublicKey
-                if (failedKey != null) {
-                    snodeDirectory.dropSnodeFromPool(failedKey)
-                }
-
-                // find snode from the path and strike it
-                val bad = failedKey?.let { pk ->
-                    ctx.path.firstOrNull { it.publicKeySet?.ed25519Key == pk }
-                }
-
-                // in this case we want handleBadSnode to force remove this snode
-                // handleBadSnode also penalises the path
-                if (bad != null) {
-                    pathManager.handleBadSnode(bad, forceRemove = true)
-                    return FailureDecision.Retry
-                } else {
-                    return FailureDecision.Fail(error) // we couldn't find the snode in the paths
-                }
+            // we got an error building the request. Warrants retrying
+            is OnionError.EncodingError -> {
+                return FailureDecision.Retry
             }
 
             is OnionError.GuardUnreachable -> {
@@ -74,14 +55,29 @@ class NetworkErrorManager @Inject constructor(
                 return FailureDecision.Fail(error)
             }
 
+            is OnionError.IntermediateNodeUnreachable -> {
+                val failedKey = error.failedPublicKey ?: return FailureDecision.Fail(error)
+
+                // Get the snode from the path (it should be there based on the error type)
+                val snodeInPath = ctx.path.firstOrNull { it.publicKeySet?.ed25519Key == failedKey }
+
+                // Fall back to pool instance only for cleanup (won’t help this request’s path)
+                // If for some reason it isn't in the path, we'll still look for it in the pool
+                val snodeToRemove = snodeInPath ?: snodeDirectory.getSnodeByKey(failedKey)
+
+                // drop the bad snode, including cascading clean ups
+                if (snodeToRemove != null) {
+                    pathManager.handleBadSnode(snode = snodeToRemove, forceRemove = true)
+                }
+
+                // Only retry if we actually changed the path used by this request
+                return if (snodeInPath != null) FailureDecision.Retry else FailureDecision.Fail(error)
+            }
+
             is OnionError.InvalidResponse -> {
                 // penalise path; retry
                 //todo ONION is this true? By the time we have an InvalidResponse it means we reached the destination, but couldn't decrypt the payload - penalising the path won't fix anything here... Should we instead penalise the destination?
                 pathManager.handleBadPath(ctx.path)
-                return FailureDecision.Retry
-            }
-
-            is OnionError.Unknown -> {
                 return FailureDecision.Retry
             }
 

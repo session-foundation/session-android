@@ -19,6 +19,12 @@ sealed class OnionError(
 ) : Exception("Onion error with status code ${status?.code}. Message: ${status?.message}. Destination: ${if(destination is OnionDestination.SnodeDestination) "Snode: "+destination.snode.address else if(destination is OnionDestination.ServerDestination) "Server: "+destination.host else "Unknown"}", cause) {
 
     /**
+     * We got an issue building the path or encoding the payload
+     */
+    class EncodingError(destination: OnionDestination, cause: Throwable)
+        : OnionError(destination = destination, cause = cause)
+
+    /**
      * We couldn't even talk to the guard node.
      * Typical causes: offline, DNS failure, TCP connect fails, TLS failure.
      */

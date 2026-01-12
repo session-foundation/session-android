@@ -230,4 +230,9 @@ class SnodeDirectory @Inject constructor(
             Log.w("Loki", "Got stale fork info $newForkInfo (current: $current)")
         }
     }
+
+    fun getSnodeByKey(ed25519Key: String?): Snode?{
+        if(ed25519Key == null) return null
+        return getSnodePool().firstOrNull { it.publicKeySet?.ed25519Key == ed25519Key }
+    }
 }
