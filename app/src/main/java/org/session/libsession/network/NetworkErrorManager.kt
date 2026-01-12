@@ -25,7 +25,7 @@ class NetworkErrorManager @Inject constructor(
 
         //todo ONION investigate why we got stuck in a invalid cyphertext state
 
-        //todo ONION  add missing known errors 
+        //todo ONION  add missing known errors
         //todo ONION  add time based path rotation
 
         // --------------------------------------------------------------------
@@ -72,13 +72,6 @@ class NetworkErrorManager @Inject constructor(
 
                 // Only retry if we actually changed the path used by this request
                 return if (snodeInPath != null) FailureDecision.Retry else FailureDecision.Fail(error)
-            }
-
-            is OnionError.InvalidResponse -> {
-                // penalise path; retry
-                //todo ONION is this true? By the time we have an InvalidResponse it means we reached the destination, but couldn't decrypt the payload - penalising the path won't fix anything here... Should we instead penalise the destination?
-                pathManager.handleBadPath(ctx.path)
-                return FailureDecision.Retry
             }
 
             else -> {
