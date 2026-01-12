@@ -392,7 +392,6 @@ object OpenGroupApi {
 
         val nonce = ByteArray(16).also { SecureRandom().nextBytes(it) }
 
-        // If you want “strict after COS”: use waitForNetworkAdjustedTime()/1000
         val timestamp = TimeUnit.MILLISECONDS.toSeconds(
             MessagingModuleConfiguration.shared.snodeClock.currentTimeMills()
         )

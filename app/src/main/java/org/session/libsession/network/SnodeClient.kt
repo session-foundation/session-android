@@ -417,7 +417,7 @@ class SnodeClient @Inject constructor(
             publicKey = publicKey,
             pickTarget = { swarmDirectory.getSingleTargetSnode(publicKey) }
         ) { snode ->
-            val timestamp = snodeClock.waitForNetworkAdjustedTime()
+            val timestamp = snodeClock.currentTimeMills()
 
             val params = buildAuthenticatedParameters(
                 auth = auth,

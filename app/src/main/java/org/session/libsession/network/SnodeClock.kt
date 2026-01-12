@@ -35,7 +35,7 @@ class SnodeClock @Inject constructor(
     @param:ManagerScope private val scope: CoroutineScope,
     private val snodeDirectory: SnodeDirectory,
     private val snodeClient: Lazy<SnodeClient>,
-) : OnAppStartupComponent {
+) {
 
     private val instantState = MutableStateFlow<Instant?>(null)
 
@@ -48,12 +48,6 @@ class SnodeClock @Inject constructor(
 
     // 10 Minutes in milliseconds
     private val minSyncIntervalMs = 10 * 60 * 1000L
-
-    override fun onPostAppStarted() {
-        scope.launch {
-            resyncClock()
-        }
-    }
 
     /**
      * Resync by querying 3 random snodes and setting time to the median of their adjusted times.
@@ -170,13 +164,6 @@ class SnodeClock @Inject constructor(
             out += snodeDirectory.getRandomSnode()
         }
         return out.toList()
-    }
-
-    /**
-     * Wait for the network adjusted time to come through.
-     */
-    suspend fun waitForNetworkAdjustedTime(): Long {
-        return instantState.filterNotNull().first().now()
     }
 
     /**

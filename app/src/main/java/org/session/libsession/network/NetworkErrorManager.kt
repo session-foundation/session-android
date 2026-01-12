@@ -62,19 +62,6 @@ class NetworkErrorManager @Inject constructor(
                 }
             }
 
-            is OnionError.DestinationUnreachable -> {
-                //todo ONION implement this properly
-
-                return FailureDecision.Fail(error)
-            }
-
-            is OnionError.PathError -> {
-                // "Anything else along the path": New strategy is to NOT penalise path for unknown reasons;
-                // We will try to cater to known reasons first and otherwise not penalise and rely on p ath rotation
-                // no retries (caller decides)
-                return FailureDecision.Fail(error)
-            }
-
             is OnionError.GuardUnreachable -> {
                 // We couldn't reach the guard, yet we seem to have network connectivity:
                 // punish the node and try again
@@ -98,8 +85,8 @@ class NetworkErrorManager @Inject constructor(
                 return FailureDecision.Retry
             }
 
-            is OnionError.DestinationError -> {
-                FailureDecision.Fail(error)
+            else -> {
+                return FailureDecision.Fail(error)
             }
         }
 
@@ -107,9 +94,6 @@ class NetworkErrorManager @Inject constructor(
         // 3) Destination payload rules - currently this doesn't handle
         //    DestinatioErrors directly. The clients' error manager do.
         // --------------------------------------------------------------------
-
-        // Default: fail
-        return FailureDecision.Fail(error)
     }
 }
 

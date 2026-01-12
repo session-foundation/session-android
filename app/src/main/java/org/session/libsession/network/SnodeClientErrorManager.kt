@@ -25,6 +25,18 @@ class SnodeClientErrorManager @Inject constructor(
         val bodyText = status?.bodyText
 
         // --------------------------------------------------------------------
+        // Path Errors
+        // --------------------------------------------------------------------
+        if (error is OnionError.DestinationUnreachable) {
+            // in the case of Snode destination being unreachable, we should remove that snode
+            // from the pool and swarm (if pubkey is available)
+            // handleBadSnode will handle removing the snode from the paths/pool/swarm and clean up the strikes
+            // if needed
+            pathManager.handleBadSnode(snode = ctx.targetSnode, publicKey = ctx.publicKey, forceRemove = true)
+            return FailureDecision.Retry
+        }
+
+        // --------------------------------------------------------------------
         // Destination payload rules
         // --------------------------------------------------------------------
         if (error is OnionError.DestinationError) {
@@ -42,16 +54,11 @@ class SnodeClientErrorManager @Inject constructor(
                     return if(resync) FailureDecision.Retry else FailureDecision.Fail(error)
                 } else {
                     // if we already got a COS, and syncing the clock wasn't enough
-                    // we should consider the destination snode faulty. Drop from swarm and retry
-                    if(ctx.publicKey != null) {
-                        swarmDirectory.dropSnodeFromSwarmIfNeeded(
-                            snode = ctx.targetSnode,
-                            publicKey = ctx.publicKey
-                        )
-                        return FailureDecision.Retry
-                    } else { // if no public key is available, there is no swarm to heal, simply fail
-                        return FailureDecision.Fail(error)
-                    }
+                    // we should consider the destination snode faulty. Drop from pool and swarm swarm and retry
+                    // handleBadSnode will handle removing the snode from the paths/pool/swarm and clean up the strikes
+                    // if needed
+                    pathManager.handleBadSnode(snode = ctx.targetSnode, publicKey = ctx.publicKey, forceRemove = true)
+                    return FailureDecision.Retry
                 }
             }
 
