@@ -42,10 +42,16 @@ class SnodeClientErrorManager @Inject constructor(
                     return if(resync) FailureDecision.Retry else FailureDecision.Fail(error)
                 } else {
                     // if we already got a COS, and syncing the clock wasn't enough
-                    // we should consider the destination snode faulty. Penalise it and retry
-                    //todo ONION is this right? The snode in this case is that the destination, not in the path! So this isn't dealing with it properly
-                    pathManager.handleBadSnode(ctx.targetSnode)
-                    return FailureDecision.Retry
+                    // we should consider the destination snode faulty. Drop from swarm and retry
+                    if(ctx.publicKey != null) {
+                        swarmDirectory.dropSnodeFromSwarmIfNeeded(
+                            snode = ctx.targetSnode,
+                            publicKey = ctx.publicKey
+                        )
+                        return FailureDecision.Retry
+                    } else { // if no public key is available, there is no swarm to heal, simply fail
+                        return FailureDecision.Fail(error)
+                    }
                 }
             }
 

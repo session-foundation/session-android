@@ -116,7 +116,7 @@ class HttpOnionTransport @Inject constructor(
                     destination = destination
                 )
             } else { // the missing snode is along the path
-                return OnionError.IntermediateNodeFailed(
+                return OnionError.IntermediateNodeUnreachable(
                     reportingNode = node,
                     failedPublicKey = failedPk,
                     status = ErrorStatus(

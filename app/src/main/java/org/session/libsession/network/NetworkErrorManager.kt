@@ -6,8 +6,6 @@ import org.session.libsession.network.model.OnionError
 import org.session.libsession.network.model.Path
 import org.session.libsession.network.onion.PathManager
 import org.session.libsession.network.snode.SnodeDirectory
-import org.session.libsession.network.snode.SwarmDirectory
-import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import javax.inject.Inject
@@ -42,7 +40,7 @@ class NetworkErrorManager @Inject constructor(
         // 2) Errors along the path (not destination)
         // --------------------------------------------------------------------
         when (error) {
-            is OnionError.IntermediateNodeFailed -> {
+            is OnionError.IntermediateNodeUnreachable -> {
                 // Drop snode from pool, rebuild paths without it, penalise path, retry
                 val failedKey = error.failedPublicKey
                 if (failedKey != null) {
@@ -55,6 +53,7 @@ class NetworkErrorManager @Inject constructor(
                 }
 
                 // in this case we want handleBadSnode to force remove this snode
+                // handleBadSnode also penalises the path
                 if (bad != null) {
                     pathManager.handleBadSnode(bad, forceRemove = true)
                     return FailureDecision.Retry
@@ -70,8 +69,9 @@ class NetworkErrorManager @Inject constructor(
             }
 
             is OnionError.PathError -> {
-                // "Anything else along the path": penalise path; no retries (caller decides)
-                pathManager.handleBadPath(ctx.path)
+                // "Anything else along the path": New strategy is to NOT penalise path for unknown reasons;
+                // We will try to cater to known reasons first and otherwise not penalise and rely on p ath rotation
+                // no retries (caller decides)
                 return FailureDecision.Fail(error)
             }
 
@@ -89,6 +89,7 @@ class NetworkErrorManager @Inject constructor(
 
             is OnionError.InvalidResponse -> {
                 // penalise path; retry
+                //todo ONION is this true? By the time we have an InvalidResponse it means we reached the destination, but couldn't decrypt the payload - penalising the path won't fix anything here... Should we instead penalise the destination?
                 pathManager.handleBadPath(ctx.path)
                 return FailureDecision.Retry
             }

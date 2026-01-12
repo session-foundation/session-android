@@ -29,7 +29,7 @@ sealed class OnionError(
      * The onion chain broke mid-path: one hop reported that the next node was not found.
      * failedPublicKey is the ed25519 key of the missing snode if known.
      */
-    class IntermediateNodeFailed(
+    class IntermediateNodeUnreachable(
         val reportingNode: Snode?,
         status: ErrorStatus,
         val failedPublicKey: String?,
