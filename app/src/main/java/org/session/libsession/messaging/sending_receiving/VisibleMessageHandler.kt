@@ -211,7 +211,7 @@ class VisibleMessageHandler @Inject constructor(
             if (runProfileUpdate && senderAddress is Address.WithAccountId) {
                 val updates = ProfileUpdateHandler.Updates.create(
                     content = proto,
-                    nowMills = clock.currentTimeMills(),
+                    nowMills = clock.currentTimeMillis(),
                     pro = pro
                 )
 

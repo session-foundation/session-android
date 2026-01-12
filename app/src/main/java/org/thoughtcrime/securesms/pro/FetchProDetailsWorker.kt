@@ -108,7 +108,7 @@ class FetchProDetailsWorker @AssistedInject constructor(
 
 
     private suspend fun scheduleProofGenerationIfNeeded(details: ProDetails) {
-        val now = snodeClock.currentTimeMills()
+        val now = snodeClock.currentTimeMillis()
 
         if (details.status != ProDetails.DETAILS_STATUS_ACTIVE) {
             Log.d(TAG, "Pro is not active, cancelling any existing proof generation work")

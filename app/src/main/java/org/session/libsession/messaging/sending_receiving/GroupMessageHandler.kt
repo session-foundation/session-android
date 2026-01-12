@@ -43,7 +43,7 @@ class GroupMessageHandler @Inject constructor(
         }
 
         // Update profile if needed
-        ProfileUpdateHandler.Updates.create(proto, clock.currentTimeMills(), pro)?.let { updates ->
+        ProfileUpdateHandler.Updates.create(proto, clock.currentTimeMillis(), pro)?.let { updates ->
             profileUpdateHandler.handleProfileUpdate(
                 senderId = AccountId(message.sender!!),
                 updates = updates,

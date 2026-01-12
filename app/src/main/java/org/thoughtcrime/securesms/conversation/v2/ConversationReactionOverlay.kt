@@ -624,7 +624,7 @@ class ConversationReactionOverlay : FrameLayout {
                 R.string.delete,
                 { handleActionItemClicked(Action.DELETE) },
                 R.string.AccessibilityId_deleteMessage,
-                message.subtitle(snodeClock.currentTimeMills()),
+                message.subtitle(snodeClock.currentTimeMillis()),
                 ThemeUtil.getThemedColor(context, R.attr.danger)
             )
         }

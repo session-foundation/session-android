@@ -165,7 +165,7 @@ class ConfigFactory @Inject constructor(
             if (dumped != null) {
                 coroutineScope.launch {
                     val userAccountId = requiresCurrentUserAccountId()
-                    val currentTimeMs = clock.currentTimeMills()
+                    val currentTimeMs = clock.currentTimeMillis()
 
                     for ((type, data) in dumped) {
                         configDatabase.storeConfig(
@@ -218,7 +218,7 @@ class ConfigFactory @Inject constructor(
                         keysConfig = dumped.first,
                         infoConfig = dumped.second,
                         memberConfig = dumped.third,
-                        timestamp = clock.currentTimeMills()
+                        timestamp = clock.currentTimeMillis()
                     )
                 }
             }
@@ -649,7 +649,7 @@ private class GroupConfigsImpl(
                 keysConfig = groupKeys.dump(),
                 infoConfig = groupInfo.dump(),
                 memberConfig = groupMembers.dump(),
-                timestamp = clock.currentTimeMills()
+                timestamp = clock.currentTimeMillis()
             )
             return true
         }

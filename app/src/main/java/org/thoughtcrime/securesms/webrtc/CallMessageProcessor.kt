@@ -61,7 +61,7 @@ class CallMessageProcessor @Inject constructor(
                 continue
             }
 
-            val isVeryExpired = (nextMessage.sentTimestamp?:0) + VERY_EXPIRED_TIME < snodeClock.currentTimeMills()
+            val isVeryExpired = (nextMessage.sentTimestamp?:0) + VERY_EXPIRED_TIME < snodeClock.currentTimeMillis()
             if (isVeryExpired) {
                 Log.e("Loki", "Dropping very expired call message")
                 continue

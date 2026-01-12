@@ -841,7 +841,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                             if (isUnread) {
                                 storage.markConversationAsRead(
                                     viewModel.threadId,
-                                    clock.currentTimeMills()
+                                    clock.currentTimeMillis()
                                 )
                             }
                         }
@@ -1793,7 +1793,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // Create the message
         val recipient = viewModel.recipient
         val reactionMessage = VisibleMessage()
-        val emojiTimestamp = snodeClock.currentTimeMills()
+        val emojiTimestamp = snodeClock.currentTimeMillis()
         reactionMessage.sentTimestamp = emojiTimestamp
         val author = loginStateRepository.getLocalNumber()
 
@@ -1861,7 +1861,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private fun sendEmojiRemoval(emoji: String, originalMessage: MessageRecord) {
         val recipient = viewModel.recipient
         val message = VisibleMessage()
-        val emojiTimestamp = snodeClock.currentTimeMills()
+        val emojiTimestamp = snodeClock.currentTimeMillis()
         message.sentTimestamp = emojiTimestamp
         val author = loginStateRepository.getLocalNumber()
 
@@ -2156,7 +2156,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private fun sendTextOnlyMessage(hasPermissionToSendSeed: Boolean = false): Pair<Address, Long>? {
         val recipient = viewModel.recipient
-        val sentTimestamp = snodeClock.currentTimeMills()
+        val sentTimestamp = snodeClock.currentTimeMillis()
         viewModel.implicitlyApproveRecipient()?.let { conversationApprovalJob = it }
         val text = getMessageBody()
         val isNoteToSelf = recipient.isLocalNumber
@@ -2215,7 +2215,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         deleteAttachmentFilesAfterSave: Boolean = false,
     ): Pair<Address, Long>? {
         val recipient = viewModel.recipient
-        val sentTimestamp = snodeClock.currentTimeMills()
+        val sentTimestamp = snodeClock.currentTimeMillis()
         viewModel.implicitlyApproveRecipient()?.let { conversationApprovalJob = it }
 
         // Create the message
@@ -2801,7 +2801,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private fun sendMediaSavedNotification() {
         val recipient = viewModel.recipient
         if (recipient.isGroupOrCommunityRecipient) { return }
-        val timestamp = snodeClock.currentTimeMills()
+        val timestamp = snodeClock.currentTimeMillis()
         val kind = DataExtractionNotification.Kind.MediaSaved(timestamp)
         val message = DataExtractionNotification(kind)
         messageSender.send(message, recipient.address)

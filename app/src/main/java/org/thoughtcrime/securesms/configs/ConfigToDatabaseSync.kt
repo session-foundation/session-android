@@ -204,7 +204,7 @@ class ConfigToDatabaseSync @Inject constructor(
         storage.addClosedGroupPublicKey(group.accountId)
         // Store the encryption key pair
         val keyPair = ECKeyPair(DjbECPublicKey(group.encPubKey.data), DjbECPrivateKey(group.encSecKey.data))
-        storage.addClosedGroupEncryptionKeyPair(keyPair, group.accountId, clock.currentTimeMills())
+        storage.addClosedGroupEncryptionKeyPair(keyPair, group.accountId, clock.currentTimeMillis())
         // Notify the PN server
         PushRegistryV1.subscribeGroup(group.accountId, publicKey = myAccountId.hexString)
         threadDatabase.setCreationDate(threadId, formationTimestamp)

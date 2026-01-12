@@ -218,7 +218,7 @@ class ConfigUploader @Inject constructor(
                         auth.accountId.hexString,
                         Base64.encodeBytes(push),
                         SnodeMessage.CONFIG_TTL,
-                        clock.currentTimeMills(),
+                        clock.currentTimeMillis(),
                     ),
                     auth
                 ),
@@ -281,7 +281,7 @@ class ConfigUploader @Inject constructor(
         // process will be cancelled. This is the requirement of pushing config: all messages have
         // to be sent successfully for us to consider this process as success
         val responses = coroutineScope {
-            val timestamp = clock.currentTimeMills()
+            val timestamp = clock.currentTimeMillis()
 
             Log.d(TAG, "Pushing ${push.messages.size} config messages")
 

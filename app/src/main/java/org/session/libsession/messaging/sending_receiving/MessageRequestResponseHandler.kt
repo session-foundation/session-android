@@ -87,7 +87,7 @@ class MessageRequestResponseHandler @Inject constructor(
 
         // Always process the profile update if any. We don't need
         // to process profile for other kind of messages as they should be handled elsewhere
-        ProfileUpdateHandler.Updates.create(proto, clock.currentTimeMills(), pro)?.let { updates ->
+        ProfileUpdateHandler.Updates.create(proto, clock.currentTimeMillis(), pro)?.let { updates ->
             profileUpdateHandler.get().handleProfileUpdate(
                 senderId = (sender.address as Address.Standard).accountId,
                 updates = updates,

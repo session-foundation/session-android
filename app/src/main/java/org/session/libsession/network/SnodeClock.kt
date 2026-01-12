@@ -10,8 +10,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
@@ -20,7 +18,6 @@ import kotlinx.coroutines.withTimeout
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ManagerScope
-import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -170,13 +167,13 @@ class SnodeClock @Inject constructor(
      * Get the current time in milliseconds. If the network time is not available yet, this method
      * will return the current system time.
      */
-    fun currentTimeMills(): Long {
+    fun currentTimeMillis(): Long {
         return instantState.value?.now() ?: System.currentTimeMillis()
     }
 
-    fun currentTimeSeconds(): Long = currentTimeMills() / 1000
+    fun currentTimeSeconds(): Long = currentTimeMillis() / 1000
 
-    fun currentTime(): java.time.Instant = java.time.Instant.ofEpochMilli(currentTimeMills())
+    fun currentTime(): java.time.Instant = java.time.Instant.ofEpochMilli(currentTimeMillis())
 
     /**
      * Delay until the specified instant. If the instant is in the past or now, this method returns
@@ -185,7 +182,7 @@ class SnodeClock @Inject constructor(
      * @return true if delayed, false if the instant is in the past
      */
     suspend fun delayUntil(instant: java.time.Instant): Boolean {
-        val now = currentTimeMills()
+        val now = currentTimeMillis()
         val target = instant.toEpochMilli()
         return if (target > now) {
             delay(target - now)

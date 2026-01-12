@@ -46,7 +46,7 @@ class ExpirationTimerView @JvmOverloads constructor(
             return
         }
 
-        val elapsedTime = MessagingModuleConfiguration.shared.snodeClock.currentTimeMills() - startedAt
+        val elapsedTime = MessagingModuleConfiguration.shared.snodeClock.currentTimeMillis() - startedAt
         val remainingTime = expiresIn - elapsedTime
         val remainingPercent = (remainingTime / expiresIn.toFloat()).coerceIn(0f, 1f)
 

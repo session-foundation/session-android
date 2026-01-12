@@ -26,7 +26,7 @@ class MarkReadReceiver : BroadcastReceiver() {
         val threadIds = intent.getLongArrayExtra(THREAD_IDS_EXTRA) ?: return
         NotificationManagerCompat.from(context).cancel(intent.getIntExtra(NOTIFICATION_ID_EXTRA, -1))
         GlobalScope.launch {
-            val currentTime = clock.currentTimeMills()
+            val currentTime = clock.currentTimeMillis()
             threadIds.forEach {
                 Log.i(TAG, "Marking as read: $it")
                 storage.markConversationAsRead(

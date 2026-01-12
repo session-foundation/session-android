@@ -42,7 +42,7 @@ class DisappearingMessages @Inject constructor(
                 sender = loginStateRepository.getLocalNumber()
                 isSenderSelf = true
                 recipient = address.toString()
-                sentTimestamp = clock.currentTimeMills()
+                sentTimestamp = clock.currentTimeMillis()
             }
 
             messageExpirationManager.insertExpirationTimerMessage(message)

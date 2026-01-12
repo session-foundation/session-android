@@ -446,7 +446,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
     contentValues.put(UNREAD_MENTION_COUNT, 0);
 
     if (lastSeen) {
-      contentValues.put(LAST_SEEN, snodeClock.currentTimeMills());
+      contentValues.put(LAST_SEEN, snodeClock.currentTimeMillis());
     }
 
     SQLiteDatabase db = getWritableDatabase();
@@ -555,7 +555,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
     SQLiteDatabase db = getWritableDatabase();
 
     ContentValues contentValues = new ContentValues(1);
-    long lastSeenTime = timestamp == -1 ? snodeClock.currentTimeMills() : timestamp;
+    long lastSeenTime = timestamp == -1 ? snodeClock.currentTimeMillis() : timestamp;
     contentValues.put(LAST_SEEN, lastSeenTime);
     db.beginTransaction();
     db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {String.valueOf(threadId)});

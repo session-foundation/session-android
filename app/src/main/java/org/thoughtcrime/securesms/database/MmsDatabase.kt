@@ -586,7 +586,7 @@ class MmsDatabase @Inject constructor(
         // In open groups messages should be sorted by their server timestamp
         var receivedTimestamp = serverTimestamp
         if (serverTimestamp == 0L) {
-            receivedTimestamp = snodeClock.currentTimeMills()
+            receivedTimestamp = snodeClock.currentTimeMillis()
         }
         contentValues.put(DATE_RECEIVED, receivedTimestamp)
         contentValues.put(EXPIRES_IN, message.expiresInMillis)

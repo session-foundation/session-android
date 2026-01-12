@@ -98,7 +98,7 @@ class RemoteReplyReceiver : BroadcastReceiver() {
                 override fun doInBackground(vararg params: Void?): Void? {
                     val threadId = threadDatabase.getOrCreateThreadIdFor(address)
                     val message = VisibleMessage()
-                    message.sentTimestamp = clock.currentTimeMills()
+                    message.sentTimestamp = clock.currentTimeMillis()
                     message.text = responseText.toString()
                     proStatusManager.addProFeatures(message)
                     val expiryMode = recipientRepository.getRecipientSync(address).expiryMode

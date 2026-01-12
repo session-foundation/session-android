@@ -548,7 +548,7 @@ public class SmsDatabase extends MessagingDatabase {
     contentValues.put(ADDRESS, address.toString());
     contentValues.put(THREAD_ID, threadId);
     contentValues.put(BODY, message.getMessage());
-    contentValues.put(DATE_RECEIVED, snodeClock.currentTimeMills());
+    contentValues.put(DATE_RECEIVED, snodeClock.currentTimeMillis());
     contentValues.put(DATE_SENT, message.getSentTimestampMillis());
     contentValues.put(READ, 1);
     contentValues.put(TYPE, type);

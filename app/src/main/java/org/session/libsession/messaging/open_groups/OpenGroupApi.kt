@@ -393,7 +393,7 @@ object OpenGroupApi {
         val nonce = ByteArray(16).also { SecureRandom().nextBytes(it) }
 
         val timestamp = TimeUnit.MILLISECONDS.toSeconds(
-            MessagingModuleConfiguration.shared.snodeClock.currentTimeMills()
+            MessagingModuleConfiguration.shared.snodeClock.currentTimeMillis()
         )
 
         val bodyHash = when {

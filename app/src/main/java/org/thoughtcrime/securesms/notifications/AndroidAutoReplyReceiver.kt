@@ -100,7 +100,7 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
                     val message = VisibleMessage()
                     message.text = responseText.toString()
                     proStatusManager.addProFeatures(message)
-                    message.sentTimestamp = snodeClock.currentTimeMills()
+                    message.sentTimestamp = snodeClock.currentTimeMillis()
                     messageSender.send(message, address!!)
                     val expiryMode = recipientRepository.getRecipientSync(address).expiryMode
                     val expiresInMillis = expiryMode.expiryMillis
@@ -140,7 +140,7 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
                             replyThreadId,
                             reply,
                             false,
-                            snodeClock.currentTimeMills(),
+                            snodeClock.currentTimeMillis(),
                             true
                         )
                     }

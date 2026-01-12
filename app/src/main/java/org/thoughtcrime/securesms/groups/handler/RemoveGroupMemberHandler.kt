@@ -184,7 +184,7 @@ class RemoveGroupMemberHandler @Inject constructor(
         if (deletingMessagesForMembers.isNotEmpty()) {
             val threadId = storage.getThreadId(Address.fromSerialized(groupAccountId.hexString))
             if (threadId != null) {
-                val until = clock.currentTimeMills()
+                val until = clock.currentTimeMillis()
                 for ((member, _) in deletingMessagesForMembers) {
                     try {
                         messageDataProvider.markUserMessagesAsDeleted(
@@ -206,7 +206,7 @@ class RemoveGroupMemberHandler @Inject constructor(
         groupAccountId: String,
         memberSessionIDs: Sequence<String>
     ): SnodeMessage {
-        val timestamp = clock.currentTimeMills()
+        val timestamp = clock.currentTimeMillis()
 
         return messageSender.buildWrappedMessageToSnode(
             destination = Destination.ClosedGroup(groupAccountId),
@@ -260,6 +260,6 @@ class RemoveGroupMemberHandler @Inject constructor(
             )
         ),
         ttl = SnodeMessage.DEFAULT_TTL,
-        timestamp = clock.currentTimeMills()
+        timestamp = clock.currentTimeMillis()
     )
 }

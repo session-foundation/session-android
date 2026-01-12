@@ -125,7 +125,7 @@ class MessageSender @Inject constructor(
 
             // Attach pro proof
             val proProof = configFactory.withUserConfigs { it.userProfile.getProConfig() }?.proProof
-            if (proProof != null && proProof.expiryMs > snodeClock.currentTimeMills()) {
+            if (proProof != null && proProof.expiryMs > snodeClock.currentTimeMillis()) {
                 builder.proMessageBuilder.proofBuilder.copyFromLibSession(proProof)
             } else {
                 // If we don't have any valid pro proof, clear the pro message
@@ -156,7 +156,7 @@ class MessageSender @Inject constructor(
             "Missing user key"
         }
         // Set the timestamp, sender and recipient
-        val messageSendTime = snodeClock.currentTimeMills()
+        val messageSendTime = snodeClock.currentTimeMillis()
         if (message.sentTimestamp == null) {
             message.sentTimestamp =
                 messageSendTime // Visible messages will already have their sent timestamp set
@@ -306,7 +306,7 @@ class MessageSender @Inject constructor(
     // Open Groups
     private suspend fun sendToOpenGroupDestination(destination: Destination, message: Message) {
         if (message.sentTimestamp == null) {
-            message.sentTimestamp = snodeClock.currentTimeMills()
+            message.sentTimestamp = snodeClock.currentTimeMillis()
         }
         // Attach the blocks message requests info
         configFactory.withUserConfigs { configs ->
