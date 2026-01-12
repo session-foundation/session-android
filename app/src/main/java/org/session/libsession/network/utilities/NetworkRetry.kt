@@ -30,7 +30,7 @@ suspend inline fun <T> retryWithBackOff(
         } catch (currentError: Throwable) {
             if (currentError is CancellationException) throw currentError
 
-            Log.w("Network", "Got an error sending a network request. Retrying. Attempt $attempt/$maxAttempts", currentError)
+            Log.w("Network", "Got an error sending a network request for $operationName. Retrying. Attempt $attempt/$maxAttempts", currentError)
 
             val onionError = currentError as? OnionError ?: OnionError.Unknown(null, currentError)
 

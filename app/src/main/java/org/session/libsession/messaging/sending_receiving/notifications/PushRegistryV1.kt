@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import nl.komponents.kovenant.Promise
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -13,8 +12,6 @@ import org.session.libsession.network.onion.Version
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.emptyPromise
-import org.session.libsignal.utilities.retryWithUniformInterval
 
 @SuppressLint("StaticFieldLeak")
 object PushRegistryV1 {
