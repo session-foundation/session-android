@@ -14,31 +14,39 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 import network.loki.messenger.BuildConfig
-import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesViewModel
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.DisappearingMessagesScreen
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.*
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteAllMedia
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteConversationSettings
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteDisappearingMessages
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteGroupMembers
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteInviteAccountIdToGroup
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteInviteToCommunity
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteInviteToGroup
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteManageAdmins
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteManageMembers
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteNotifications
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RoutePromoteMembers
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsScreen
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsViewModel
-import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel
 import org.thoughtcrime.securesms.groups.GroupMembersViewModel
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel
 import org.thoughtcrime.securesms.groups.ManageGroupAdminsViewModel
+import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel
 import org.thoughtcrime.securesms.groups.PromoteMembersViewModel
-import org.thoughtcrime.securesms.groups.compose.ManageGroupMembersScreen
 import org.thoughtcrime.securesms.groups.compose.GroupMembersScreen
 import org.thoughtcrime.securesms.groups.compose.InviteAccountIdScreen
 import org.thoughtcrime.securesms.groups.compose.InviteContactsScreen
 import org.thoughtcrime.securesms.groups.compose.ManageGroupAdminsScreen
+import org.thoughtcrime.securesms.groups.compose.ManageGroupMembersScreen
 import org.thoughtcrime.securesms.groups.compose.PromoteMembersScreen
 import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessageViewModel
 import org.thoughtcrime.securesms.home.startconversation.newmessage.State
@@ -46,7 +54,6 @@ import org.thoughtcrime.securesms.media.MediaOverviewScreen
 import org.thoughtcrime.securesms.media.MediaOverviewViewModel
 import org.thoughtcrime.securesms.ui.NavigationAction
 import org.thoughtcrime.securesms.ui.ObserveAsEvents
-import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.handleIntent
 import org.thoughtcrime.securesms.ui.horizontalSlideComposable
@@ -414,7 +421,6 @@ fun ConversationSettingsNavHost(
                     hiltViewModel<DisappearingMessagesViewModel, DisappearingMessagesViewModel.Factory> { factory ->
                         factory.create(
                             address = address,
-                            isNewConfigEnabled = ExpirationConfiguration.isNewConfigEnabled,
                             showDebugOptions = BuildConfig.BUILD_TYPE != "release",
                             navigator = navigator
                         )

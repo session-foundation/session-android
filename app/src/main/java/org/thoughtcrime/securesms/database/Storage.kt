@@ -77,8 +77,8 @@ import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
-import java.time.Instant
-import java.time.ZoneId
+import org.thoughtcrime.securesms.util.get
+import org.thoughtcrime.securesms.util.getOrConstructConvo
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -129,8 +129,8 @@ open class Storage @Inject constructor(
         return attachmentDatabase.getAttachmentsForMessage(mmsMessageId)
     }
 
-    override fun getLastSeen(threadId: Long): Long {
-        return threadDatabase.getLastSeenAndHasSent(threadId)?.first() ?: 0L
+    override fun getLastSeen(threadAddress: Address.Conversable): Long {
+        return configFactory.withUserConfigs { it.convoInfoVolatile.get(threadAddress) }?.lastRead ?: 0L
     }
 
     override fun ensureMessageHashesAreSender(
@@ -179,32 +179,35 @@ open class Storage @Inject constructor(
         return messages.map { it.second } // return the message hashes
     }
 
-    override fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean, updateNotification: Boolean) {
-        val threadDb = threadDatabase
-        val threadAddress = threadDb.getRecipientForThreadId(threadId) ?: return
-        // don't set the last read in the volatile if we didn't set it in the DB
-        if (!threadDb.markAllAsRead(threadId, lastSeenTime, force, updateNotification) && !force) return
-
-        // don't process configs for inbox recipients
-        if (threadAddress.isCommunityInbox) return
-
-        val currentLastRead = threadDb.getLastSeenAndHasSent(threadId).first()
-
+    override fun updateConversationLastSeenIfNeeded(
+        threadAddress: Address.Conversable,
+        lastSeenTime: Long
+    ) {
         configFactory.withMutableUserConfigs { configs ->
-            val config = configs.convoInfoVolatile
-            val convo = getConvo(
-                threadAddress = threadAddress,
-                config = config,
-                groupConfig = configs.userGroups
-            )  ?: return@withMutableUserConfigs
-            convo.lastRead = lastSeenTime
+            val convo = configs.getOrConstructConvo(threadAddress)
+            val currentLastRead = convo.lastRead
 
-            if(convo.unread){
+            if (convo.unread) {
                 convo.unread = lastSeenTime < currentLastRead
             }
 
-            config.set(convo)
+            if (lastSeenTime > currentLastRead) {
+                convo.lastRead = lastSeenTime
+            }
+
+            configs.convoInfoVolatile.set(convo)
         }
+    }
+
+    override fun updateConversationLastSeenIfNeeded(
+        threadId: Long,
+        lastSeenTime: Long
+    ) {
+        val threadAddress = threadDatabase.getRecipientForThreadId(threadId) as? Address.Conversable ?: return
+        updateConversationLastSeenIfNeeded(
+            threadAddress = threadAddress,
+            lastSeenTime = lastSeenTime
+        )
     }
 
     override fun markConversationAsReadUpToMessage(messageId: MessageId) {
@@ -212,16 +215,11 @@ open class Storage @Inject constructor(
         if (maxTimestampMillsAndThreadId != null) {
             val threadId = maxTimestampMillsAndThreadId.second
             val maxTimestamp = maxTimestampMillsAndThreadId.first
-            if (getLastSeen(threadId) < maxTimestamp) {
-                Log.d(TAG, "Marking last seen for thread $threadId as ${Instant.ofEpochMilli(maxTimestamp).atZone(
-                    ZoneId.systemDefault())}")
-                markConversationAsRead(
-                    threadId = threadId,
-                    lastSeenTime = maxTimestamp,
-                    force = false,
-                    updateNotification = true
-                )
-            }
+            val threadAddress = threadDatabase.getRecipientForThreadId(threadId) as? Address.Conversable ?: return
+            updateConversationLastSeenIfNeeded(
+                threadAddress = threadAddress,
+                lastSeenTime = maxTimestamp
+            )
         }
     }
 
@@ -274,11 +272,6 @@ open class Storage @Inject constructor(
             }
             else -> throw NullPointerException("Weren't expecting to have a convo with address ${threadAddress}")
         }
-    }
-
-    override fun updateThread(threadId: Long, unarchive: Boolean) {
-        val threadDb = threadDatabase
-        threadDb.update(threadId, unarchive)
     }
 
     override fun persist(
@@ -898,11 +891,6 @@ open class Storage @Inject constructor(
         }
     }
 
-    override fun getLastUpdated(threadID: Long): Long {
-        val threadDB = threadDatabase
-        return threadDB.getLastUpdated(threadID)
-    }
-
     override fun trimThreadBefore(threadID: Long, timestamp: Long) {
         val threadDB = threadDatabase
         threadDB.trimThreadBefore(threadID, timestamp)
@@ -1014,11 +1002,6 @@ open class Storage @Inject constructor(
         }
     }
 
-    override fun isRead(threadId: Long) : Boolean {
-        val threadDB = threadDatabase
-        return threadDB.isRead(threadId)
-    }
-
     override fun setThreadCreationDate(threadId: Long, newDate: Long) {
         val threadDb = threadDatabase
         threadDb.setCreationDate(threadId, newDate)
@@ -1041,8 +1024,6 @@ open class Storage @Inject constructor(
             smsDatabase.deleteMessagesFrom(threadID, fromUser.toString())
             mmsDatabase.deleteMessagesFrom(threadID, fromUser.toString())
         }
-
-        threadDb.setRead(threadID, true)
 
         return true
     }
@@ -1128,15 +1109,6 @@ open class Storage @Inject constructor(
             expireStartedAt = expireStartedAt
         )
         smsDatabase.insertCallMessage(callMessage)
-    }
-
-    override fun conversationHasOutgoing(userPublicKey: String): Boolean {
-        val database = threadDatabase
-        val threadId = database.getThreadIdIfExistsFor(userPublicKey)
-
-        if (threadId == -1L) return false
-
-        return database.getLastSeenAndHasSent(threadId).second() ?: false
     }
 
     override fun getLastInboxMessageId(server: String): Long? {

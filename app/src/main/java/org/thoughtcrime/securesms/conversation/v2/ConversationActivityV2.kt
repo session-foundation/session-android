@@ -84,7 +84,6 @@ import network.loki.messenger.databinding.ActivityConversationV2Binding
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
-import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.applyExpiryMode
 import org.session.libsession.messaging.messages.control.DataExtractionNotification
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
@@ -209,7 +208,6 @@ import org.thoughtcrime.securesms.util.adapter.runWhenLaidOut
 import org.thoughtcrime.securesms.util.drawToBitmap
 import org.thoughtcrime.securesms.util.fadeIn
 import org.thoughtcrime.securesms.util.fadeOut
-import org.thoughtcrime.securesms.util.getConversationUnread
 import org.thoughtcrime.securesms.util.isFullyScrolled
 import org.thoughtcrime.securesms.util.isNearBottom
 import org.thoughtcrime.securesms.util.push
@@ -378,7 +376,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private val adapter by lazy {
         val adapter = ConversationAdapter(
             this,
-            storage.getLastSeen(viewModel.threadId),
+            storage.getLastSeen(viewModel.address),
             false,
             onItemPress = { message, position, view, event ->
                 handlePress(message, position, view, event)
@@ -638,9 +636,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         try {
                             when (it) {
                                 is Long -> {
-                                    if (storage.getLastSeen(viewModel.threadId) < it) {
-                                        storage.markConversationAsRead(viewModel.threadId, it)
-                                    }
+                                    storage.updateConversationLastSeenIfNeeded(
+                                        viewModel.address,
+                                        it
+                                    )
                                 }
 
                                 is MessageId -> {
@@ -801,6 +800,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun onCreateLoader(id: Int, bundle: Bundle?): Loader<ConversationLoader.Data> {
         return conversationLoaderFactory.create(
             threadID = viewModel.threadId,
+            threadAddress = viewModel.address,
             reverse = false,
         )
     }
@@ -830,24 +830,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             } else {
                 if (firstLoad.getAndSet(false)) {
                     scrollToFirstUnreadMessageOrBottom()
-
-                    // On the first load, check if there unread messages
-                    if (unreadCount == 0 && adapter.itemCount > 0) {
-                        lifecycleScope.launch(Dispatchers.Default) {
-                            val isUnread = configFactory.withUserConfigs {
-                                it.convoInfoVolatile.getConversationUnread(
-                                    viewModel.address,
-                                )
-                            }
-
-                            if (isUnread) {
-                                storage.markConversationAsRead(
-                                    viewModel.threadId,
-                                    clock.currentTimeMills()
-                                )
-                            }
-                        }
-                    }
                 } else {
                     // If there are new data updated, we'll try to stay scrolled at the bottom (if we were at the bottom).
                     // scrolled to bottom has a leniency of 50dp, so if we are within the 50dp but not fully at the bottom, scroll down
@@ -1053,8 +1035,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private fun setUpOutdatedClientBanner() {
         val legacyRecipient = viewModel.legacyBannerRecipient(this)
 
-        val shouldShowLegacy = ExpirationConfiguration.isNewConfigEnabled &&
-                legacyRecipient != null
+        val shouldShowLegacy = legacyRecipient != null
 
         binding.conversationHeader.outdatedDisappearingBanner.isVisible = shouldShowLegacy
         if (shouldShowLegacy) {
@@ -1248,7 +1229,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             return
         }
 
-        val lastSeenTimestamp = threadDb.getLastSeenAndHasSent(viewModel.threadId).first()
+        val lastSeenTimestamp = storage.getLastSeen(viewModel.address)
         val lastSeenItemPosition = adapter.findLastSeenItemPosition(lastSeenTimestamp) ?: return
 
         binding.conversationRecyclerView.runWhenLaidOut {
