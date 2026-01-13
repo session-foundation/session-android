@@ -84,6 +84,20 @@ class SnodeClientErrorManager @Inject constructor(
 
                 return FailureDecision.Retry
             }
+
+            // Unparseable data: 502 + "oxend returned unparsable data"
+            if (code == 502 && bodyText?.contains("oxend returned unparsable data", ignoreCase = true) == true) {
+                // penalise the destination snode and retry
+                pathManager.handleBadSnode(snode = ctx.targetSnode, publicKey = ctx.publicKey)
+                return FailureDecision.Retry
+            }
+
+            // Destination snode not ready
+            if(code == 503 && bodyText?.contains("Snode not ready", ignoreCase = true) == true){
+                // penalise the destination snode and retry
+                pathManager.handleBadSnode(snode = ctx.targetSnode, publicKey = ctx.publicKey)
+                return FailureDecision.Retry
+            }
         }
 
         // Default: fail

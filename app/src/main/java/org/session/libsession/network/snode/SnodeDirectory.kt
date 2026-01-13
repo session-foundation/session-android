@@ -36,6 +36,8 @@ class SnodeDirectory @Inject constructor(
         private const val KEY_VERSION = "storage_server_version"
     }
 
+    //todo ONION we need to add the "refresh every 2h plus intersection" rules
+
     private val poolMutex = Mutex()
 
     private val seedNodePool: Set<String> = when (prefs.getEnvironment()) {

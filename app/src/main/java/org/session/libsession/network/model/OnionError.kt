@@ -43,6 +43,23 @@ sealed class OnionError(
     ) : OnionError(destination = destination, status = status)
 
     /**
+     * The snode reported not being ready
+     */
+    class SnodeNotReady(
+        status: ErrorStatus,
+        val failedPublicKey: String?,
+        destination: OnionDestination,
+    ) : OnionError(destination = destination, status = status)
+
+    /**
+     * A snode reported a timeout
+     */
+    class PathTimedOut(
+        status: ErrorStatus,
+        destination: OnionDestination,
+    ) : OnionError(destination = destination, status = status)
+
+    /**
      * We couldn't reach the destination from the final snode in the path
      */
     class DestinationUnreachable(destination: OnionDestination, status: ErrorStatus)
@@ -52,6 +69,12 @@ sealed class OnionError(
      * The error happened, as far as we can tell, along the path on the way to the destination
      */
     class PathError(val node: Snode?, status: ErrorStatus, destination: OnionDestination,)
+        : OnionError(status = status, destination = destination)
+
+    /**
+     * If we get an invalid response along the path (differs from the InvalidResponse which comes from a 200 payload)
+     */
+    class InvalidHopResponse(val node: Snode?, status: ErrorStatus, destination: OnionDestination,)
         : OnionError(status = status, destination = destination)
 
     /**
