@@ -25,7 +25,6 @@ class NetworkErrorManager @Inject constructor(
 
         //todo ONION investigate why we got stuck in a invalid cyphertext state
 
-        //todo ONION  add missing known errors
         //todo ONION  add time based path rotation
 
         // --------------------------------------------------------------------

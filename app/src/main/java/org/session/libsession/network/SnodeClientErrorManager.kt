@@ -88,7 +88,7 @@ class SnodeClientErrorManager @Inject constructor(
             // Unparseable data: 502 + "oxend returned unparsable data"
             if (code == 502 && bodyText?.contains("oxend returned unparsable data", ignoreCase = true) == true) {
                 // penalise the destination snode and retry
-                pathManager.handleBadSnode(snode = ctx.targetSnode, publicKey = ctx.publicKey)
+                pathManager.handleBadSnode(snode = ctx.targetSnode, publicKey = ctx.publicKey, forceRemove = true)
                 return FailureDecision.Retry
             }
 
