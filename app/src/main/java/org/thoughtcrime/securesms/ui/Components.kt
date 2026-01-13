@@ -1424,7 +1424,8 @@ fun ActionRowItem(
             )
             .padding(paddingValues)
             .qaTag(qaTag),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
     ) {
         Column(
             modifier = Modifier
