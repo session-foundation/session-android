@@ -288,7 +288,7 @@ class MediaOverviewViewModel @AssistedInject constructor(
                 successCount > 0 &&
                 !address.isGroupOrCommunity) {
                 withContext(Dispatchers.Default) {
-                    val timestamp = snodeClock.currentTimeMills()
+                    val timestamp = snodeClock.currentTimeMillis()
                     val kind = DataExtractionNotification.Kind.MediaSaved(timestamp)
                     val message = DataExtractionNotification(kind)
                     messageSender.send(message, address)

@@ -139,7 +139,7 @@ class MessageParser @Inject constructor(
         message.sender = sender.hexString
         message.recipient = currentUserId.hexString
         message.sentTimestamp = messageTimestampMs
-        message.receivedTimestamp = snodeClock.currentTimeMills()
+        message.receivedTimestamp = snodeClock.currentTimeMillis()
         message.isSenderSelf = isSenderSelf
 
         // Only process pro features post pro launch

@@ -44,7 +44,7 @@ class HttpOnionTransport @Inject constructor(
         val built = try {
             OnionBuilder.build(path, destination, payload, version)
         } catch (t: Throwable) {
-            throw OnionError.Unknown(destination, t,)
+            throw OnionError.EncodingError(destination, t,)
         }
 
         val url = "${guard.address}:${guard.port}/onion_req/v2"
@@ -59,7 +59,7 @@ class HttpOnionTransport @Inject constructor(
                 json = params
             )
         } catch (t: Throwable) {
-            throw OnionError.Unknown(destination, t)
+            throw OnionError.EncodingError(destination, t)
         }
 
         val responseBytes: ByteArray = try {
@@ -68,7 +68,7 @@ class HttpOnionTransport @Inject constructor(
             throw e
         } catch (httpEx: HTTP.HTTPRequestFailedException) {
             // HTTP error from guard (we never got an onion-level response)
-            throw mapPathHttpError(guard, httpEx, destination)
+            throw mapPathHttpError(guard, httpEx, path, destination)
         } catch (e: IOException){
             throw OnionError.GuardUnreachable(guard, destination, e)
         } catch (t: Throwable) {
@@ -90,23 +90,59 @@ class HttpOnionTransport @Inject constructor(
     private fun mapPathHttpError(
         node: Snode,
         ex: HTTP.HTTPRequestFailedException,
+        path: Path,
         destination: OnionDestination
     ): OnionError {
-        val json = ex.json
-        val message = (json?.get("result") as? String)
-            ?: (json?.get("message") as? String)
+        val message = ex.body
 
         val statusCode = ex.statusCode
 
-        Log.w("Onion Request", "Got an HTTP error. Status: $statusCode, message: $message", ex)
+        //Log.w("Onion Request", "Got an HTTP error. Status: $statusCode, message: $message", ex)
 
         // Special onion path error: "Next node not found: <ed25519>"
+        //todo ONION do we also need to care for "Next node is currently unreachable: or "<cpr error message string>"
         val prefix = "Next node not found: "
-        if (message != null && message.startsWith(prefix)) {
+        if (message != null && message.startsWith(prefix)){
             val failedPk = message.removePrefix(prefix)
-            return OnionError.IntermediateNodeFailed(
-                reportingNode = node,
-                failedPublicKey = failedPk,
+
+            // The missing Snode is the destination
+            if( failedPk == (destination as? OnionDestination.SnodeDestination)?.snode?.publicKeySet?.ed25519Key){
+                return OnionError.DestinationUnreachable(
+                    status = ErrorStatus(
+                        code = statusCode,
+                        message = message,
+                        body = null
+                    ),
+                    destination = destination
+                )
+            } else { // the missing snode is along the path
+                return OnionError.IntermediateNodeUnreachable(
+                    reportingNode = node,
+                    failedPublicKey = failedPk,
+                    status = ErrorStatus(
+                        code = statusCode,
+                        message = message,
+                        body = null
+                    ),
+                    destination = destination
+                )
+            }
+        }
+
+        // check for the case where the SERVER destination no longer exists.
+        // The rule is:
+        // - the destination is a ServerDestination
+        // - the status code is 502 or 504
+        // - the message contains the server's destination url
+        if(destination is OnionDestination.ServerDestination
+            && statusCode in 500..504
+            && message?.contains(destination.host) == true ){
+            return OnionError.DestinationUnreachable(
+                status = ErrorStatus(
+                    code = statusCode,
+                    message = message,
+                    body = null
+                ),
                 destination = destination
             )
         }
@@ -150,19 +186,19 @@ class HttpOnionTransport @Inject constructor(
             //todo ONION is it really this class' responsibility to decode the decrypted payload instead of passing it to a higher level
 
             if (decrypted.isEmpty() || decrypted[0] != 'l'.code.toByte()) {
-                throw OnionError.InvalidResponse(destination)
+                throw OnionError.DestinationError(destination, ErrorStatus(0, "Error decoding payload"))
             }
 
             val infoSepIdx = decrypted.indexOfFirst { it == ':'.code.toByte() }
-            if (infoSepIdx <= 1) throw OnionError.InvalidResponse(destination)
+            if (infoSepIdx <= 1) throw OnionError.DestinationError(destination, ErrorStatus(0, "Error decoding payload"))
 
             val infoLenSlice = decrypted.slice(1 until infoSepIdx)
             val infoLength = infoLenSlice.toByteArray().toString(Charsets.US_ASCII).toIntOrNull()
-                ?: throw OnionError.InvalidResponse(destination)
+                ?: throw OnionError.DestinationError(destination, ErrorStatus(0, "Error decoding payload"))
 
             val infoStartIndex = "l$infoLength".length + 1
             val infoEndIndex = infoStartIndex + infoLength
-            if (infoEndIndex > decrypted.size) throw OnionError.InvalidResponse(destination)
+            if (infoEndIndex > decrypted.size) throw OnionError.DestinationError(destination, ErrorStatus(0, "Error decoding payload"))
 
             val infoSlice = decrypted.view(infoStartIndex until infoEndIndex)
             val responseInfo = JsonUtil.fromJson(infoSlice, Map::class.java) as Map<*, *>
@@ -231,13 +267,13 @@ class HttpOnionTransport @Inject constructor(
         val innerJson: Map<*, *> = try {
             JsonUtil.fromJson(plaintextString, Map::class.java) as Map<*, *>
         } catch (e: Exception) {
-            throw OnionError.InvalidResponse(destination, Exception("Decrypted payload is not valid JSON", e))
+            throw OnionError.DestinationError(destination, ErrorStatus(code = 0, message = "Decrypted payload is not valid JSON", null))
         }
 
         val statusCode: Int =
             (innerJson["status_code"] as? Number)?.toInt()
                 ?: (innerJson["status"] as? Number)?.toInt()
-                ?: throw OnionError.InvalidResponse(destination, Exception("Missing status code in V2/V3 response"))
+                ?: throw OnionError.DestinationError(destination, ErrorStatus(code = 0, message = "Missing status code in V2/V3 response", null))
 
         val bodyObj: Any? = innerJson["body"]
 
@@ -253,18 +289,18 @@ class HttpOnionTransport @Inject constructor(
                 val parsed: Any = try {
                     JsonUtil.fromJson(bodyObj, Map::class.java)
                 } catch (e: Exception) {
-                    throw OnionError.InvalidResponse(destination, Exception("Failed to parse body string as JSON", e))
+                    throw OnionError.DestinationError(destination, ErrorStatus(code = 0, message = "Failed to parse body string as JSON", null))
                 }
 
                 val parsedMap = parsed as? Map<*, *>
-                    ?: throw OnionError.InvalidResponse(destination, Exception("Parsed body was not a JSON object"))
+                    ?: throw OnionError.DestinationError(destination, ErrorStatus(code = 0, message = "Parsed body was not a JSON object", null))
 
                 processForkInfo(parsedMap)
                 parsedMap
             }
 
             else -> {
-                throw OnionError.InvalidResponse(destination, Exception("Unexpected body type: ${bodyObj::class.java}"))
+                throw OnionError.DestinationError(destination, ErrorStatus(code = 0, message = "Unexpected body type: ${bodyObj::class.java}", null))
             }
         }
 

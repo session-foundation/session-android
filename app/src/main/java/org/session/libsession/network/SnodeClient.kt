@@ -19,7 +19,6 @@ import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.Hash
 import network.loki.messenger.libsession_util.SessionEncrypt
 import org.session.libsession.network.model.ErrorStatus
-import org.session.libsession.network.model.FailureDecision
 import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.network.model.OnionError
 import org.session.libsession.network.onion.Version
@@ -306,7 +305,7 @@ class SnodeClient @Inject constructor(
                     "Message sent to ${message.recipient} but authenticated with ${auth.accountId.hexString}"
                 }
 
-                val timestamp = snodeClock.currentTimeMills()
+                val timestamp = snodeClock.currentTimeMillis()
 
                 buildAuthenticatedParameters(
                     auth = auth,
@@ -417,7 +416,7 @@ class SnodeClient @Inject constructor(
             publicKey = publicKey,
             pickTarget = { swarmDirectory.getSingleTargetSnode(publicKey) }
         ) { snode ->
-            val timestamp = snodeClock.waitForNetworkAdjustedTime()
+            val timestamp = snodeClock.currentTimeMillis()
 
             val params = buildAuthenticatedParameters(
                 auth = auth,
@@ -490,7 +489,7 @@ class SnodeClient @Inject constructor(
         val onsNameLower = onsName.lowercase(Locale.US)
 
         val params: Map<String, Any> = buildMap {
-            this["method"] = "ons_resolve"
+            this["endpoint"] = "ons_resolve"
             this["params"] = buildMap<String, Any> {
                 this["type"] = 0
                 this["name_hash"] = Base64.encodeBytes(Hash.hash32(onsNameLower.toByteArray()))
@@ -571,7 +570,7 @@ class SnodeClient @Inject constructor(
         auth: SwarmAuth,
         namespace: Int?,
         verificationData: ((namespaceText: String, timestamp: Long) -> Any)? = null,
-        timestamp: Long = snodeClock.currentTimeMills(),
+        timestamp: Long = snodeClock.currentTimeMillis(),
         builder: MutableMap<String, Any>.() -> Unit = {}
     ): Map<String, Any> {
         return buildMap {

@@ -2,7 +2,6 @@ package org.session.libsession.network.onion
 
 import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.network.model.Path
-import org.session.libsession.utilities.AESGCM.EncryptionResult
 import org.session.libsignal.utilities.Snode
 
 object OnionBuilder {
@@ -22,38 +21,24 @@ object OnionBuilder {
     ): BuiltOnion {
         require(path.isNotEmpty()) { "Path must not be empty" }
 
-        val guardSnode = path.first()
-
-        val destResult: EncryptionResult =
+        val destinationResult =
             OnionRequestEncryption.encryptPayloadForDestination(payload, destination, version)
 
-        var encryptionResult: EncryptionResult = destResult
-        var rhs: OnionDestination = destination
-        var remainingPath = path
-
-        fun addLayer(): EncryptionResult {
-            return if (remainingPath.isEmpty()) {
-                encryptionResult
-            } else {
-                val lhs = OnionDestination.SnodeDestination(remainingPath.last())
-                remainingPath = remainingPath.dropLast(1)
-
-                OnionRequestEncryption.encryptHop(lhs, rhs, encryptionResult).also { r ->
-                    encryptionResult = r
-                    rhs = lhs
-                }
-            }
-        }
-
-        while (remainingPath.isNotEmpty()) {
-            addLayer()
-        }
+        val encryptionResult = path.foldRight(
+            destination to destinationResult
+        ) { hop, (previousDestination, previousEncryptionResult) ->
+            OnionDestination.SnodeDestination(hop) to OnionRequestEncryption.encryptHop(
+                lhs = OnionDestination.SnodeDestination(hop),
+                rhs = previousDestination,
+                previousEncryptionResult = previousEncryptionResult,
+            )
+        }.second
 
         return BuiltOnion(
-            guard = guardSnode,
+            guard = path.first(),
             ciphertext = encryptionResult.ciphertext,
             ephemeralPublicKey = encryptionResult.ephemeralPublicKey,
-            destinationSymmetricKey = destResult.symmetricKey
+            destinationSymmetricKey = destinationResult.symmetricKey
         )
     }
 }

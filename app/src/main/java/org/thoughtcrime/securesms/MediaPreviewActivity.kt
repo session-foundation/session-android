@@ -524,7 +524,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
                 }
                 .onAllGranted {
                     val saveTask = SaveAttachmentTask(this@MediaPreviewActivity)
-                    val saveDate = if (mediaItem.date > 0) mediaItem.date else snodeClock.currentTimeMills()
+                    val saveDate = if (mediaItem.date > 0) mediaItem.date else snodeClock.currentTimeMillis()
                     saveTask.executeOnExecutor(
                         AsyncTask.THREAD_POOL_EXECUTOR,
                         SaveAttachmentTask.Attachment(
@@ -555,7 +555,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
         if (conversationAddress == null || conversationAddress?.isGroupOrCommunity == true) return
         val message = DataExtractionNotification(
             MediaSaved(
-                snodeClock.currentTimeMills()
+                snodeClock.currentTimeMillis()
             )
         )
         messageSender.send(message, conversationAddress!!)

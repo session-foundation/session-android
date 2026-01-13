@@ -201,7 +201,7 @@ class DefaultConversationRepository @Inject constructor(
         val info = community?.roomInfo ?: return
         for (contact in contacts) {
             val message = VisibleMessage()
-            message.sentTimestamp = clock.currentTimeMills()
+            message.sentTimestamp = clock.currentTimeMillis()
             val openGroupInvitation = OpenGroupInvitation().apply {
                 name = info.details.name
                 url = community.joinURL

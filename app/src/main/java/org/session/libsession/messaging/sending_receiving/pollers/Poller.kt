@@ -33,7 +33,6 @@ import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcess
 import org.session.libsession.network.SnodeClient
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.snode.SwarmDirectory
-import org.session.libsession.network.snode.SwarmStorage
 import org.session.libsession.snode.model.RetrieveMessageResponse
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
@@ -375,7 +374,7 @@ class Poller @AssistedInject constructor(
                         snodeClient.buildAuthenticatedAlterTtlBatchRequest(
                             messageHashes = hashesToExtend.toList(),
                             auth = userAuth,
-                            newExpiry = snodeClock.currentTimeMills() + 14.days.inWholeMilliseconds,
+                            newExpiry = snodeClock.currentTimeMillis() + 14.days.inWholeMilliseconds,
                             extend = true
                         )
                     )

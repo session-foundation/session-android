@@ -23,7 +23,7 @@ class GetProDetailsRequest @AssistedInject constructor(
         return BackendRequests.buildGetProDetailsRequestJson(
             version = 0,
             proMasterPrivateKey = masterPrivateKey,
-            nowMs = snodeClock.currentTimeMills(),
+            nowMs = snodeClock.currentTimeMillis(),
             count = 10,
         )
     }

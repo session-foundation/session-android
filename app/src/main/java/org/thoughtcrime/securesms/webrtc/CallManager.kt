@@ -690,7 +690,7 @@ class CallManager @Inject constructor(
         }
     }
 
-    fun insertCallMessage(threadPublicKey: String, callMessageType: CallMessageType, signal: Boolean = false, sentTimestamp: Long = snodeClock.currentTimeMills()) {
+    fun insertCallMessage(threadPublicKey: String, callMessageType: CallMessageType, signal: Boolean = false, sentTimestamp: Long = snodeClock.currentTimeMillis()) {
         storage.insertCallMessage(threadPublicKey, callMessageType, sentTimestamp)
     }
 

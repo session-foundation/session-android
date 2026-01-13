@@ -12,44 +12,53 @@ data class ErrorStatus(
         get() = body?.decodeToString()
 }
 
-enum class ErrorOrigin { UNKNOWN, TRANSPORT_TO_GUARD, PATH_HOP, DESTINATION_REPLY }
-
 sealed class OnionError(
-    val origin: ErrorOrigin,
     val status: ErrorStatus? = null,
     val destination: OnionDestination?,
     cause: Throwable? = null
-) : Exception(status?.message ?: "Onion error at ${origin.name}, with status code ${status?.code}. Destination: ${if(destination is OnionDestination.SnodeDestination) "Snode: "+destination.snode.address else if(destination is OnionDestination.ServerDestination) "Server: "+destination.host else "Unknown"}", cause) {
+) : Exception("Onion error with status code ${status?.code}. Message: ${status?.message}. Destination: ${if(destination is OnionDestination.SnodeDestination) "Snode: "+destination.snode.address else if(destination is OnionDestination.ServerDestination) "Server: "+destination.host else "Unknown"}", cause) {
+
+    /**
+     * We got an issue building the path or encoding the payload
+     */
+    class EncodingError(destination: OnionDestination, cause: Throwable)
+        : OnionError(destination = destination, cause = cause)
 
     /**
      * We couldn't even talk to the guard node.
      * Typical causes: offline, DNS failure, TCP connect fails, TLS failure.
      */
     class GuardUnreachable(val guard: Snode, destination: OnionDestination, cause: Throwable)
-        : OnionError(ErrorOrigin.TRANSPORT_TO_GUARD, destination = destination, cause = cause)
+        : OnionError(destination = destination, cause = cause)
 
     /**
      * The onion chain broke mid-path: one hop reported that the next node was not found.
      * failedPublicKey is the ed25519 key of the missing snode if known.
      */
-    class IntermediateNodeFailed(
+    class IntermediateNodeUnreachable(
         val reportingNode: Snode?,
+        status: ErrorStatus,
         val failedPublicKey: String?,
         destination: OnionDestination,
-    ) : OnionError(origin = ErrorOrigin.PATH_HOP, destination = destination)
+    ) : OnionError(destination = destination, status = status)
+
+    /**
+     * We couldn't reach the destination from the final snode in the path
+     */
+    class DestinationUnreachable(destination: OnionDestination, status: ErrorStatus)
+        : OnionError(destination = destination, status = status)
 
     /**
      * The error happened, as far as we can tell, along the path on the way to the destination
      */
     class PathError(val node: Snode?, status: ErrorStatus, destination: OnionDestination,)
-        : OnionError(ErrorOrigin.PATH_HOP, status = status, destination = destination)
+        : OnionError(status = status, destination = destination)
 
     /**
      * The error happened after decrypting a payload form the destination
      */
     open class DestinationError(destination: OnionDestination, status: ErrorStatus)
         : OnionError(
-        ErrorOrigin.DESTINATION_REPLY,
         status = status,
         destination = destination
         )
@@ -58,11 +67,11 @@ sealed class OnionError(
      * The onion payload returned something that we couldn't decode as a valid onion response.
      */
     class InvalidResponse(destination: OnionDestination, cause: Throwable? = null)
-        : OnionError(ErrorOrigin.DESTINATION_REPLY, cause = cause, destination = destination)
+        : OnionError(cause = cause, destination = destination)
 
     /**
      * Fallback for anything we haven't classified yet.
      */
     class Unknown(destination: OnionDestination?, cause: Throwable)
-        : OnionError(ErrorOrigin.UNKNOWN, cause = cause, destination = destination)
+        : OnionError(cause = cause, destination = destination)
 }

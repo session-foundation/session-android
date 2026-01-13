@@ -68,7 +68,7 @@ class MarkReadProcessor @Inject constructor(
                     smsDatabase
                 }
 
-                db.markExpireStarted(it.expirationInfo.id.id, snodeClock.currentTimeMills())
+                db.markExpireStarted(it.expirationInfo.id.id, snodeClock.currentTimeMillis())
             }
 
         hashToDisappearAfterReadMessage(context, markedReadMessages)?.let { hashToMessages ->
@@ -103,7 +103,7 @@ class MarkReadProcessor @Inject constructor(
                 ).forEach { (expiresIn, hashes) ->
                     snodeClient.alterTtl(
                         messageHashes = hashes,
-                        newExpiry = snodeClock.currentTimeMills() + expiresIn,
+                        newExpiry = snodeClock.currentTimeMillis() + expiresIn,
                         auth = checkNotNull(storage.userAuth) { "No authorized user" },
                         shorten = true
                     )
@@ -129,7 +129,7 @@ class MarkReadProcessor @Inject constructor(
             .forEach { (address, messages) ->
                 messages.map { it.timetamp }
                     .let(::ReadReceipt)
-                    .apply { sentTimestamp = snodeClock.currentTimeMills() }
+                    .apply { sentTimestamp = snodeClock.currentTimeMillis() }
                     .let { messageSender.send(it, address) }
             }
     }

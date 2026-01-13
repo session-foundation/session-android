@@ -272,7 +272,7 @@ class GroupPoller @AssistedInject constructor(
                             snodeClient.buildAuthenticatedAlterTtlBatchRequest(
                                 messageHashes = configHashesToExtends.toList(),
                                 auth = groupAuth,
-                                newExpiry = clock.currentTimeMills() + 14.days.inWholeMilliseconds,
+                                newExpiry = clock.currentTimeMillis() + 14.days.inWholeMilliseconds,
                                 extend = true
                             ),
                         )

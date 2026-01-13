@@ -37,8 +37,6 @@ import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.LogLevel
 import network.loki.messenger.libsession_util.util.Logger
-import nl.komponents.kovenant.android.startKovenant
-import nl.komponents.kovenant.android.stopKovenant
 import org.conscrypt.Conscrypt
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.MessagingModuleConfiguration.Companion.configure
@@ -47,7 +45,6 @@ import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.pushSuffix
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.AppContext.configureKovenant
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.debugmenu.DebugLogger
@@ -56,7 +53,6 @@ import org.thoughtcrime.securesms.dependencies.DatabaseModule.init
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponents
 import org.thoughtcrime.securesms.emoji.EmojiSource.Companion.refresh
 import org.thoughtcrime.securesms.glide.RemoteFileLoader
-import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint
 import org.thoughtcrime.securesms.logging.AndroidLogger
 import org.thoughtcrime.securesms.logging.PersistentLogger
 import org.thoughtcrime.securesms.logging.UncaughtExceptionLogger
@@ -136,13 +132,11 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
         configure(this)
         super<Application>.onCreate()
 
-        startKovenant()
         initializeSecurityProvider()
         initializeLogging()
         initializeCrashHandling()
         NotificationChannels.create(this)
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
-        configureKovenant()
         SSKEnvironment.sharedLazy = sskEnvironment
 
         initializeWebRtc()
@@ -185,11 +179,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
         Log.i(TAG, "App is no longer visible.")
         KeyCachingService.onAppBackgrounded(this)
         messageNotifier.setVisibleThread(-1)
-    }
-
-    override fun onTerminate() {
-        stopKovenant() // Loki
-        super.onTerminate()
     }
 
     override fun newImageLoader(context: PlatformContext): ImageLoader {

@@ -45,9 +45,6 @@ class ServerClientErrorManager @Inject constructor(
                     return FailureDecision.Fail(error)
                 }
             }
-
-            // Anything else from destination: do not penalise path; no retries
-            return FailureDecision.Fail(error)
         }
 
         // Default: fail

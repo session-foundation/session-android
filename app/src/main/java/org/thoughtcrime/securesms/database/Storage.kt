@@ -750,7 +750,7 @@ open class Storage @Inject constructor(
     }
 
     override fun insertGroupInfoChange(message: GroupUpdated, closedGroup: AccountId) {
-        val sentTimestamp = message.sentTimestamp ?: clock.currentTimeMills()
+        val sentTimestamp = message.sentTimestamp ?: clock.currentTimeMillis()
         val senderPublicKey = message.sender
         val groupName = configFactory.withGroupConfigs(closedGroup) { it.groupInfo.getName() }
             ?: configFactory.getGroup(closedGroup)?.name
@@ -761,7 +761,7 @@ open class Storage @Inject constructor(
     }
 
     override fun insertGroupInfoLeaving(closedGroup: AccountId) {
-        val sentTimestamp = clock.currentTimeMills()
+        val sentTimestamp = clock.currentTimeMillis()
         val senderPublicKey = getUserPublicKey() ?: return
         val updateData = UpdateMessageData.buildGroupLeaveUpdate(UpdateMessageData.Kind.GroupLeaving)
 
@@ -769,7 +769,7 @@ open class Storage @Inject constructor(
     }
 
     override fun insertGroupInfoErrorQuit(closedGroup: AccountId) {
-        val sentTimestamp = clock.currentTimeMills()
+        val sentTimestamp = clock.currentTimeMillis()
         val senderPublicKey = getUserPublicKey() ?: return
         val groupName = configFactory.withGroupConfigs(closedGroup) { it.groupInfo.getName() }
             ?: configFactory.getGroup(closedGroup)?.name
@@ -1096,7 +1096,7 @@ open class Storage @Inject constructor(
 
         val message = IncomingMediaMessage(
             from = fromSerialized(userPublicKey),
-            sentTimeMillis = clock.currentTimeMills(),
+            sentTimeMillis = clock.currentTimeMillis(),
             expiresIn = 0,
             expireStartedAt = 0,
             isMessageRequestResponse = true,
@@ -1118,7 +1118,7 @@ open class Storage @Inject constructor(
         val recipient = recipientRepository.getRecipientSync(address)
         val expiryMode = recipient.expiryMode.coerceSendToRead()
         val expiresInMillis = expiryMode.expiryMillis
-        val expireStartedAt = if (expiryMode != ExpiryMode.NONE) clock.currentTimeMills() else 0
+        val expireStartedAt = if (expiryMode != ExpiryMode.NONE) clock.currentTimeMillis() else 0
         val callMessage = IncomingTextMessage(
             callMessageType = callMessageType,
             sender = address,

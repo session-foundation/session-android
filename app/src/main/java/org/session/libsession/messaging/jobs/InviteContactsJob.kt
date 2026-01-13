@@ -72,7 +72,7 @@ class InviteContactsJob @AssistedInject constructor(
                             configs.groupInfo.getName() to configs.groupKeys.makeSubAccount(memberSessionId)
                         }
 
-                        val timestamp = snodeClock.currentTimeMills()
+                        val timestamp = snodeClock.currentTimeMillis()
                         val signature = ED25519.sign(
                             ed25519PrivateKey = adminKey.data,
                             message = buildGroupInviteSignature(memberId, timestamp),

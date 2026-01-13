@@ -130,7 +130,7 @@ class GroupManagerV2Impl @Inject constructor(
         val ourAccountId =
             requireNotNull(storage.getUserPublicKey()) { "Our account ID is not available" }
 
-        val groupCreationTimestamp = clock.currentTimeMills()
+        val groupCreationTimestamp = clock.currentTimeMillis()
 
         // Create a group in the user groups config
         val group = configFactory.withUserConfigs { configs ->
@@ -299,7 +299,7 @@ class GroupManagerV2Impl @Inject constructor(
                             recipient = group.hexString,
                             data = Base64.encodeBytes(memberKey),
                             ttl = SnodeMessage.CONFIG_TTL,
-                            timestamp = clock.currentTimeMills(),
+                            timestamp = clock.currentTimeMillis(),
                         ),
                         auth = groupAuth,
                     )
@@ -377,7 +377,7 @@ class GroupManagerV2Impl @Inject constructor(
         newMembers: Collection<AccountId>,
         shareHistory : Boolean = false
     ) {
-        val timestamp = clock.currentTimeMills()
+        val timestamp = clock.currentTimeMillis()
         val signature = ED25519.sign(
             message = buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.ADDED, timestamp),
             ed25519PrivateKey = adminKey
@@ -415,7 +415,7 @@ class GroupManagerV2Impl @Inject constructor(
             alsoRemoveMembersMessage = removeMessages,
         )
 
-        val timestamp = clock.currentTimeMills()
+        val timestamp = clock.currentTimeMillis()
         val signature = ED25519.sign(
             message = buildMemberChangeSignature(
                 GroupUpdateMemberChangeMessage.Type.REMOVED,
@@ -527,7 +527,7 @@ class GroupManagerV2Impl @Inject constructor(
             }
 
             // Build a group update message to the group telling members someone has been promoted
-            val timestamp = clock.currentTimeMills()
+            val timestamp = clock.currentTimeMillis()
             val signature = ED25519.sign(
                 message = buildMemberChangeSignature(
                     GroupUpdateMemberChangeMessage.Type.PROMOTED,
@@ -697,7 +697,7 @@ class GroupManagerV2Impl @Inject constructor(
         configFactory.withMutableUserConfigs { configs ->
             configs.userGroups.set(group.copy(
                 invited = false,
-                joinedAtSecs = TimeUnit.MILLISECONDS.toSeconds(clock.currentTimeMills())
+                joinedAtSecs = TimeUnit.MILLISECONDS.toSeconds(clock.currentTimeMillis())
             ))
         }
 
@@ -972,7 +972,7 @@ class GroupManagerV2Impl @Inject constructor(
                 return@launchAndWait
             }
 
-            val timestamp = clock.currentTimeMills()
+            val timestamp = clock.currentTimeMillis()
             val signature = ED25519.sign(
                 message = buildInfoChangeSignature(Type.NAME, timestamp),
                 ed25519PrivateKey = adminKey
@@ -1044,7 +1044,7 @@ class GroupManagerV2Impl @Inject constructor(
         }
 
         // Construct a message to ask members to delete the messages, sign if we are admin, then send
-        val timestamp = clock.currentTimeMills()
+        val timestamp = clock.currentTimeMillis()
         val signature = group.adminKey?.data?.let { key ->
             ED25519.sign(
                 message = buildDeleteMemberContentSignature(
@@ -1187,7 +1187,7 @@ class GroupManagerV2Impl @Inject constructor(
         val adminKey = requireAdminAccess(groupId)
 
         // Construct a message to notify the group members about the expiration timer change
-        val timestamp = clock.currentTimeMills()
+        val timestamp = clock.currentTimeMillis()
         val signature = ED25519.sign(
             message = buildInfoChangeSignature(Type.DISAPPEARING_MESSAGES, timestamp),
             ed25519PrivateKey = adminKey

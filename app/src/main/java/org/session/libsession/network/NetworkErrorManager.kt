@@ -6,8 +6,6 @@ import org.session.libsession.network.model.OnionError
 import org.session.libsession.network.model.Path
 import org.session.libsession.network.onion.PathManager
 import org.session.libsession.network.snode.SnodeDirectory
-import org.session.libsession.network.snode.SwarmDirectory
-import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import javax.inject.Inject
@@ -25,41 +23,24 @@ class NetworkErrorManager @Inject constructor(
         val code = status?.code
         val bodyText = status?.bodyText
 
+        //todo ONION investigate why we got stuck in a invalid cyphertext state
+
+        //todo ONION  add missing known errors
+        //todo ONION  add time based path rotation
+
         // --------------------------------------------------------------------
-        // 1) "Found anywhere" rules (path OR destination)
+        // 1) "Found anywhere" rules (path OR destination) - currently no custom handling here
+        // as we now default to non penalising path logic
         // --------------------------------------------------------------------
 
-        // 400, 403, 404: do not penalise path or snode; No retries
-        if (code == 400 || code == 403 || code == 404) {
-            return FailureDecision.Fail(error)
-        }
 
         // --------------------------------------------------------------------
         // 2) Errors along the path (not destination)
         // --------------------------------------------------------------------
         when (error) {
-            is OnionError.IntermediateNodeFailed -> {
-                // Drop snode from pool, rebuild paths without it, penalise path, retry
-                val failedKey = error.failedPublicKey
-                if (failedKey != null) {
-                    snodeDirectory.dropSnodeFromPool(failedKey)
-                }
-
-                // If we can map the failed key to an actual snode in this path, prefer handleBadSnode
-                val bad = failedKey?.let { pk ->
-                    ctx.path.firstOrNull { it.publicKeySet?.ed25519Key == pk }
-                }
-
-                if (bad != null) pathManager.handleBadSnode(bad)
-                else pathManager.handleBadPath(ctx.path)
-
+            // we got an error building the request. Warrants retrying
+            is OnionError.EncodingError -> {
                 return FailureDecision.Retry
-            }
-
-            is OnionError.PathError -> {
-                // "Anything else along the path": penalise path; no retries (caller decides)
-                pathManager.handleBadPath(ctx.path)
-                return FailureDecision.Fail(error)
             }
 
             is OnionError.GuardUnreachable -> {
@@ -74,18 +55,27 @@ class NetworkErrorManager @Inject constructor(
                 return FailureDecision.Fail(error)
             }
 
-            is OnionError.InvalidResponse -> {
-                // penalise path; retry
-                pathManager.handleBadPath(ctx.path)
-                return FailureDecision.Retry
+            is OnionError.IntermediateNodeUnreachable -> {
+                val failedKey = error.failedPublicKey ?: return FailureDecision.Fail(error)
+
+                // Get the snode from the path (it should be there based on the error type)
+                val snodeInPath = ctx.path.firstOrNull { it.publicKeySet?.ed25519Key == failedKey }
+
+                // Fall back to pool instance only for cleanup (won’t help this request’s path)
+                // If for some reason it isn't in the path, we'll still look for it in the pool
+                val snodeToRemove = snodeInPath ?: snodeDirectory.getSnodeByKey(failedKey)
+
+                // drop the bad snode, including cascading clean ups
+                if (snodeToRemove != null) {
+                    pathManager.handleBadSnode(snode = snodeToRemove, forceRemove = true)
+                }
+
+                // Only retry if we actually changed the path used by this request
+                return if (snodeInPath != null) FailureDecision.Retry else FailureDecision.Fail(error)
             }
 
-            is OnionError.Unknown -> {
-                return FailureDecision.Retry
-            }
-
-            is OnionError.DestinationError -> {
-                FailureDecision.Fail(error)
+            else -> {
+                return FailureDecision.Fail(error)
             }
         }
 
@@ -93,9 +83,6 @@ class NetworkErrorManager @Inject constructor(
         // 3) Destination payload rules - currently this doesn't handle
         //    DestinatioErrors directly. The clients' error manager do.
         // --------------------------------------------------------------------
-
-        // Default: fail
-        return FailureDecision.Fail(error)
     }
 }
 
