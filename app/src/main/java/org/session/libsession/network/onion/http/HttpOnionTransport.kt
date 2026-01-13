@@ -153,7 +153,6 @@ class HttpOnionTransport @Inject constructor(
         }
 
         // ---- 504: timeouts along path ----
-        //todo ONION what happens if a destination sends a 504 with that same body? Is that possible? Can a snode destination  pack a 504 inside an encrypted payload from a 200?
         if (statusCode == 504 && message?.contains("Request time out", ignoreCase = true) == true) {
             return OnionError.PathTimedOut(
                 status = ErrorStatus(code = statusCode, message = message, body = null),
