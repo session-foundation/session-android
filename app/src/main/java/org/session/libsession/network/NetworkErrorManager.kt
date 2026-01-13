@@ -74,6 +74,26 @@ class NetworkErrorManager @Inject constructor(
                 return if (snodeInPath != null) FailureDecision.Retry else FailureDecision.Fail(error)
             }
 
+            is OnionError.SnodeNotReady -> {
+                // penalise the snode and retry
+                val failedKey = error.failedPublicKey ?: return FailureDecision.Fail(error)
+                val snodeToRemove = snodeDirectory.getSnodeByKey(failedKey)
+                if(snodeToRemove != null) {
+                    pathManager.handleBadSnode(snodeToRemove, ctx.publicKey)
+                    return FailureDecision.Retry
+                } else {
+                    return FailureDecision.Fail(error)
+                }
+            }
+
+            is OnionError.PathTimedOut,
+                 is OnionError.InvalidHopResponse -> {
+                // we don't have enough information to penalise a specific snode,
+                // so we penalise the whole path and try again
+                pathManager.handleBadPath(ctx.path)
+                return FailureDecision.Retry
+            }
+
             else -> {
                 return FailureDecision.Fail(error)
             }

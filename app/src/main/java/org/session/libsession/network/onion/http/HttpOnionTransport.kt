@@ -94,66 +94,87 @@ class HttpOnionTransport @Inject constructor(
         destination: OnionDestination
     ): OnionError {
         val message = ex.body
-
         val statusCode = ex.statusCode
 
-        //Log.w("Onion Request", "Got an HTTP error. Status: $statusCode, message: $message", ex)
+        // ---- 502: hop can't find/contact next hop ----
+        val nextNodeNotFound = "Next node not found: "
+        val nextNodeUnreachable = "Next node is currently unreachable: "
 
-        // Special onion path error: "Next node not found: <ed25519>"
-        //todo ONION do we also need to care for "Next node is currently unreachable: or "<cpr error message string>"
-        val prefix = "Next node not found: "
-        if (message != null && message.startsWith(prefix)){
-            val failedPk = message.removePrefix(prefix)
+        // to extract the  key from the error message
+        fun parseNextHopPk(msg: String): String? = when {
+            msg.startsWith(nextNodeNotFound) -> msg.removePrefix(nextNodeNotFound).trim()
+            msg.startsWith(nextNodeUnreachable) -> msg.removePrefix(nextNodeUnreachable).trim()
+            else -> null
+        }
 
-            // The missing Snode is the destination
-            if( failedPk == (destination as? OnionDestination.SnodeDestination)?.snode?.publicKeySet?.ed25519Key){
-                return OnionError.DestinationUnreachable(
-                    status = ErrorStatus(
-                        code = statusCode,
-                        message = message,
-                        body = null
-                    ),
+        val failedPk = message?.let(::parseNextHopPk)
+        if (statusCode == 502 && failedPk != null) {
+            val destPk = (destination as? OnionDestination.SnodeDestination)?.snode?.publicKeySet?.ed25519Key
+
+            return if (destPk != null && failedPk == destPk) {
+                OnionError.DestinationUnreachable(
+                    status = ErrorStatus(code = statusCode, message = message, body = null),
                     destination = destination
                 )
-            } else { // the missing snode is along the path
-                return OnionError.IntermediateNodeUnreachable(
+            } else {
+                OnionError.IntermediateNodeUnreachable(
                     reportingNode = node,
                     failedPublicKey = failedPk,
-                    status = ErrorStatus(
-                        code = statusCode,
-                        message = message,
-                        body = null
-                    ),
+                    status = ErrorStatus(code = statusCode, message = message, body = null),
                     destination = destination
                 )
             }
         }
 
-        // check for the case where the SERVER destination no longer exists.
-        // The rule is:
-        // - the destination is a ServerDestination
-        // - the status code is 502 or 504
-        // - the message contains the server's destination url
-        if(destination is OnionDestination.ServerDestination
-            && statusCode in 500..504
-            && message?.contains(destination.host) == true ){
-            return OnionError.DestinationUnreachable(
-                status = ErrorStatus(
-                    code = statusCode,
-                    message = message,
-                    body = null
-                ),
+        // ---- 503: "Snode not ready" ----
+        if (statusCode == 503) {
+            val snodeNotReadyPrefix = "Snode not ready: "
+            val snodeNotReady = message?.startsWith(snodeNotReadyPrefix) == true
+
+            val guardNotReady =
+                message?.startsWith("Service node is not ready:") == true ||
+                        message?.startsWith("Server busy, try again later") == true
+
+            if(guardNotReady){
+                return OnionError.SnodeNotReady(
+                    failedPublicKey = path.first().publicKeySet?.ed25519Key,
+                    status = ErrorStatus(code = statusCode, message = message, body = null),
+                    destination = destination
+                )
+            }
+            else if (snodeNotReady) {
+                val pk = message.removePrefix(snodeNotReadyPrefix).trim()
+                return OnionError.SnodeNotReady(
+                    failedPublicKey = pk,
+                    status = ErrorStatus(code = statusCode, message = message, body = null),
+                    destination = destination
+                )
+            }
+        }
+
+        // ---- 504: timeouts along path ----
+        //todo ONION what happens if a destination sends a 504 with that same body? Is that possible? Can a snode destination  pack a 504 inside an encrypted payload from a 200?
+        if (statusCode == 504 && message?.contains("Request time out", ignoreCase = true) == true) {
+            return OnionError.PathTimedOut(
+                status = ErrorStatus(code = statusCode, message = message, body = null),
                 destination = destination
             )
         }
 
+        // ---- 500: invalid response from next hop ----
+        //todo ONION currently we have no handling of 5xx for snode destination as it's unclear how to best handle them
+        if (statusCode == 500 && message?.contains("Invalid response from snode", ignoreCase = true) == true) {
+            return OnionError.InvalidHopResponse(
+                node = node,
+                status = ErrorStatus(code = statusCode, message = message, body = null),
+                destination = destination
+            )
+        }
+
+        // Default: generic path error
         return OnionError.PathError(
             node = node,
-            status = ErrorStatus(
-                code = statusCode,
-                message = message,
-                body = null
-            ),
+            status = ErrorStatus(code = statusCode, message = message, body = null),
             destination = destination
         )
     }
