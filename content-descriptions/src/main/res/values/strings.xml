@@ -279,6 +279,12 @@
     <string name="qa_manage_members_invite_account_id">invite-accountid-menu-option</string>
     <string name="qa_manage_members_promote_members">promote-members-menu-option</string>
 
+    <!-- Manage members and admin dialogs -->
+    <string name="qa_manage_members_dialog_remove_member">remove-member-option</string>
+    <string name="qa_manage_members_dialog_remove_member_messages">remove-member-messages-option</string>
+    <string name="qa_manage_members_dialog_share_message_history">share-message-history-option</string>
+    <string name="qa_manage_members_dialog_share_new_messages">share-new-messages-option</string>
+    
     <!-- Misc. -->
     <string name="AccessibilityId_navigateBack">Navigate back</string>
     <string name="AccessibilityId_close">Close Dialog</string>

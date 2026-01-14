@@ -390,7 +390,7 @@ class ReceivedMessageProcessor @Inject constructor(
      * Return true if this message should result in the creation of a thread.
      */
     private fun shouldCreateThread(message: Message): Boolean {
-        return message is VisibleMessage
+        return message is VisibleMessage || message is GroupUpdated
     }
 
     private fun handleExpirationTimerUpdate(message: ExpirationTimerUpdate) {
