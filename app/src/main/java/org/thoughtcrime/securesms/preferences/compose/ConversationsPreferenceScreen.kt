@@ -1,6 +1,8 @@
 package org.thoughtcrime.securesms.preferences.compose
 
+import android.R.attr.spacing
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -11,9 +13,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.CategoryCell
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.IconActionRowItem
 import org.thoughtcrime.securesms.ui.SwitchActionRowItem
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.openUrl
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.LocalType
+import org.thoughtcrime.securesms.ui.theme.bold
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,12 +92,13 @@ fun ConversationsPreferenceScreen() {
             Column(
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                SwitchActionRowItem(
+                IconActionRowItem(
                     title = annotatedStringResource(R.string.conversationsBlockedContacts),
                     subtitle = annotatedStringResource(R.string.blockedContactsManageDescription),
-                    checked = false,
-                    qaTag = R.string.qa_pro_settings_action_show_badge,
-                    onCheckedChange = { }
+                    icon = R.drawable.ic_chevron_right,
+                    iconSize = LocalDimensions.current.iconSmall,
+                    qaTag = R.string.AccessibilityId_onboardingTos,
+                    onClick = {}
                 )
             }
         }

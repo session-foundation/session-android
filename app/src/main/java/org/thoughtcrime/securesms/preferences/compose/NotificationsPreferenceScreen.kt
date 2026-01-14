@@ -19,7 +19,9 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.GoToChoosePlan
 import org.thoughtcrime.securesms.ui.ActionRowItem
 import org.thoughtcrime.securesms.ui.CategoryCell
+import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.IconTextActionRowItem
 import org.thoughtcrime.securesms.ui.SwitchActionRowItem
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -47,12 +49,16 @@ fun NotificationsPreferenceScreen() {
                     onCheckedChange = { }
                 )
 
+                Divider()
+
                 SwitchActionRowItem(
                     title = annotatedStringResource(R.string.runAppBackground),
                     checked = false,
                     qaTag = R.string.qa_pro_settings_action_show_badge,
                     onCheckedChange = { }
                 )
+
+                Divider()
 
                 ActionRowItem(
                     title = annotatedStringResource(R.string.notificationsGoToDevice ),
@@ -66,14 +72,32 @@ fun NotificationsPreferenceScreen() {
 
         CategoryCell(
             modifier = Modifier,
-            title = GetString(R.string.conversationsSendWithEnterKey).string()
+            title = GetString(R.string.notificationsStyle).string()
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
             ) {
+                IconTextActionRowItem(
+                    title = annotatedStringResource(R.string.notificationsSound),
+                    qaTag = R.string.qa_pro_settings_action_show_badge,
+                    icon = R.drawable.ic_baseline_arrow_drop_down_24,
+                    endText = annotatedStringResource("Eureka"),
+                    onClick = {}
+                )
+
+                Divider()
+
                 SwitchActionRowItem(
-                    title = annotatedStringResource(R.string.conversationsSendWithEnterKey),
-                    subtitle = annotatedStringResource(R.string.conversationsSendWithEnterKeyDescription),
+                    title = annotatedStringResource(R.string.notificationsSoundDescription),
+                    checked = false,
+                    qaTag = R.string.qa_pro_settings_action_show_badge,
+                    onCheckedChange = { }
+                )
+
+                Divider()
+
+                SwitchActionRowItem(
+                    title = annotatedStringResource(R.string.notificationsVibrate),
                     checked = false,
                     qaTag = R.string.qa_pro_settings_action_show_badge,
                     onCheckedChange = { }
@@ -85,36 +109,19 @@ fun NotificationsPreferenceScreen() {
 
         CategoryCell(
             modifier = Modifier,
-            title = GetString(R.string.conversationsAudioMessages).string()
+            title = GetString(R.string.notificationsContent).string()
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                SwitchActionRowItem(
-                    title = annotatedStringResource(R.string.conversationsAutoplayAudioMessage),
-                    subtitle = annotatedStringResource(R.string.conversationsAutoplayAudioMessageDescription),
-                    checked = false,
-                    qaTag = R.string.qa_pro_settings_action_show_badge,
-                    onCheckedChange = { }
-                )
-            }
-        }
 
-        Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
-
-        CategoryCell(
-            modifier = Modifier,
-            title = GetString(R.string.conversationsBlockedContacts).string()
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                SwitchActionRowItem(
-                    title = annotatedStringResource(R.string.conversationsBlockedContacts),
-                    subtitle = annotatedStringResource(R.string.blockedContactsManageDescription),
-                    checked = false,
+                IconTextActionRowItem(
+                    title = annotatedStringResource(R.string.notificationsContent),
+                    subtitle = annotatedStringResource(R.string.notificationsContentDescription),
                     qaTag = R.string.qa_pro_settings_action_show_badge,
-                    onCheckedChange = { }
+                    icon = R.drawable.ic_baseline_arrow_drop_down_24,
+                    endText = annotatedStringResource("Name and Content"),
+                    onClick = {}
                 )
             }
         }

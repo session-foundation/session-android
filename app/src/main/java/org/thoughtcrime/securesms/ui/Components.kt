@@ -971,7 +971,10 @@ private fun CollapsibleFooterActions(
             SubcomposeLayout { parentConstraints ->
                 val measurables = subcompose("measureButtons") {
                     items.forEach { item ->
-                        SlimFillButtonRect(item.buttonLabel.string(), color = LocalColors.current.accent) {}
+                        SlimFillButtonRect(
+                            item.buttonLabel.string(),
+                            color = LocalColors.current.accent
+                        ) {}
                     }
                 }
                 val placeables = measurables.map { m ->
@@ -1003,8 +1006,9 @@ private fun CollapsibleFooterActions(
                 val annotatedTitle = remember(titleText) { AnnotatedString(titleText) }
 
                 ActionRowItem(
-                    modifier = Modifier.background(LocalColors.current.backgroundTertiary)
-                        .semantics(mergeDescendants = true){},
+                    modifier = Modifier
+                        .background(LocalColors.current.backgroundTertiary)
+                        .semantics(mergeDescendants = true) {},
                     title = annotatedTitle,
                     onClick = {
                         item.onClick()
@@ -1031,10 +1035,13 @@ private fun CollapsibleFooterActions(
                             val buttonModifier = if (single) Modifier else Modifier.fillMaxWidth()
                             SlimFillButtonRect(
                                 modifier = buttonModifier
-                                    .qaTag(stringResource(R.string.qa_collapsing_footer_action)+"_"+item.buttonLabel.string().lowercase())
-                                    .clearAndSetSemantics{},
+                                    .qaTag(
+                                        stringResource(R.string.qa_collapsing_footer_action) + "_" + item.buttonLabel.string()
+                                            .lowercase()
+                                    )
+                                    .clearAndSetSemantics {},
                                 text = item.buttonLabel.string(),
-                                color = if(item.isDanger) LocalColors.current.danger else LocalColors.current.accent
+                                color = if (item.isDanger) LocalColors.current.danger else LocalColors.current.accent
                             ) {
                                 item.onClick()
                             }
@@ -1542,6 +1549,63 @@ fun SwitchActionRowItem(
     )
 }
 
+@Composable
+fun IconTextActionRowItem(
+    title: AnnotatedString,
+    onClick: () -> Unit,
+    @DrawableRes icon: Int,
+    @StringRes qaTag: Int,
+    modifier: Modifier = Modifier,
+    subtitle: AnnotatedString? = null,
+    titleColor: Color = LocalColors.current.text,
+    subtitleColor: Color = LocalColors.current.text,
+    textStyle: TextStyle = LocalType.current.h8,
+    subtitleStyle: TextStyle = LocalType.current.small,
+    iconColor: Color = LocalColors.current.text,
+    iconSize: Dp = LocalDimensions.current.iconMedium,
+    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
+    paddingValues: PaddingValues = PaddingValues(horizontal = LocalDimensions.current.smallSpacing),
+    endText: AnnotatedString,
+    endTextStyle: TextStyle = LocalType.current.small,
+) {
+    ActionRowItem(
+        modifier = modifier,
+        title = title,
+        onClick = onClick,
+        qaTag = qaTag,
+        subtitle = subtitle,
+        titleColor = titleColor,
+        subtitleColor = subtitleColor,
+        textStyle = textStyle,
+        subtitleStyle = subtitleStyle,
+        minHeight = minHeight,
+        paddingValues = paddingValues,
+        endContent = {
+            Row(
+                modifier = Modifier.widthIn(max = 120.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
+            ) {
+                Icon(
+                    modifier = Modifier
+                        .size(iconSize)
+                        .qaTag(R.string.qa_action_item_icon),
+                    painter = painterResource(id = icon),
+                    contentDescription = null,
+                    tint = iconColor
+                )
+                Text(
+                    modifier = Modifier.weight(1f),
+                    text = endText,
+                    style = endTextStyle,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+    )
+}
+
 @Preview
 @Composable
 fun PreviewActionRowItems() {
@@ -1556,6 +1620,15 @@ fun PreviewActionRowItems() {
                 onClick = {},
                 icon = R.drawable.ic_message_square,
                 qaTag = 0
+            )
+
+            IconTextActionRowItem(
+                title = annotatedStringResource("This is an action row item"),
+                subtitle = annotatedStringResource("With a subtitle and icon"),
+                onClick = {},
+                icon = R.drawable.ic_baseline_arrow_drop_down_24,
+                qaTag = 0,
+                endText = annotatedStringResource("Looooooooooooong")
             )
 
             IconActionRowItem(
@@ -1589,8 +1662,8 @@ fun PreviewSearchWithCancel(
     PreviewTheme(colors) {
         SearchBarWithClose(
             query = "Test Query",
-            onValueChanged = {  },
-            onClear = {  },
+            onValueChanged = { },
+            onClear = { },
             placeholder = "Search",
             enabled = true,
             isFocused = true,
