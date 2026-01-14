@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.network
 
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.test.runTest
+import org.junit.Rule
 import org.junit.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
@@ -14,9 +15,12 @@ import org.session.libsession.network.model.ErrorStatus
 import org.session.libsession.network.model.FailureDecision
 import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.network.model.OnionError
-import org.thoughtcrime.securesms.LogMockingTestBase
+import org.thoughtcrime.securesms.util.MockLoggingRule
 
-class ServerClientErrorManagerTest: LogMockingTestBase() {
+class ServerClientErrorManagerTest {
+
+    @get:Rule
+    val logRule = MockLoggingRule()
 
     private val snodeClock = mock<SnodeClock>()
     private val manager = ServerClientErrorManager(snodeClock = snodeClock)

@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.network
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.advanceUntilIdle
+import org.junit.Rule
 import org.junit.Test
 import org.mockito.kotlin.*
 import org.session.libsession.network.model.Path
@@ -11,9 +12,12 @@ import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.network.snode.SnodePathStorage
 import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsignal.utilities.Snode
-import org.thoughtcrime.securesms.LogMockingTestBase
+import org.thoughtcrime.securesms.util.MockLoggingRule
 
-class PathManagerTest: LogMockingTestBase() {
+class PathManagerTest {
+
+    @get:Rule
+    val logRule = MockLoggingRule()
 
     private fun snode(id: String): Snode =
         Snode(

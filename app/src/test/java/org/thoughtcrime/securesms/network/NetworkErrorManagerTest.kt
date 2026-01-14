@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.network
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
+import org.junit.Rule
 import org.junit.Test
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
@@ -17,11 +18,13 @@ import org.session.libsession.network.model.OnionError
 import org.session.libsession.network.onion.PathManager
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsignal.utilities.Snode
-import org.thoughtcrime.securesms.LogMockingTestBase
+import org.thoughtcrime.securesms.util.MockLoggingRule
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 
-class NetworkErrorManagerTest: LogMockingTestBase() {
+class NetworkErrorManagerTest {
 
+    @get:Rule
+    val logRule = MockLoggingRule()
 
     private val pathManager = mock<PathManager>()
     private val snodeDirectory = mock<SnodeDirectory>()

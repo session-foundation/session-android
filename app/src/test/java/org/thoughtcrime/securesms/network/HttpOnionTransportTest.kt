@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.network
 
 import com.google.common.truth.Truth.assertThat
 import dagger.Lazy
+import org.junit.Rule
 import org.junit.Test
 import org.mockito.kotlin.mock
 import org.session.libsession.network.model.OnionDestination
@@ -11,10 +12,12 @@ import org.session.libsession.network.onion.http.HttpOnionTransport
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Snode
-import org.thoughtcrime.securesms.LogMockingTestBase
+import org.thoughtcrime.securesms.util.MockLoggingRule
 
-class HttpOnionTransportMappingTest: LogMockingTestBase() {
+class HttpOnionTransportMappingTest {
 
+    @get:Rule
+    val logRule = MockLoggingRule()
 
     private val snodeDirLazy: Lazy<SnodeDirectory> = Lazy { mock() }
     private val transport = HttpOnionTransport(snodeDirectory = snodeDirLazy)

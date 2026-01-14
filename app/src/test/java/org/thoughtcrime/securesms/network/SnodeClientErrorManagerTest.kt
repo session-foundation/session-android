@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.network
 
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.test.runTest
+import org.junit.Rule
 import org.junit.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
@@ -22,9 +23,12 @@ import org.session.libsession.network.onion.PathManager
 import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsignal.utilities.ByteArraySlice.Companion.view
 import org.session.libsignal.utilities.Snode
-import org.thoughtcrime.securesms.LogMockingTestBase
+import org.thoughtcrime.securesms.util.MockLoggingRule
 
-class SnodeClientErrorManagerTest: LogMockingTestBase() {
+class SnodeClientErrorManagerTest {
+
+    @get:Rule
+    val logRule = MockLoggingRule()
 
     private val pathManager = mock<PathManager>()
     private val swarmDirectory = mock<SwarmDirectory>()
