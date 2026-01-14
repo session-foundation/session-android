@@ -513,6 +513,10 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
         }?.split(",")
     }
 
+    fun clearServerCapabilities(serverName: String) {
+        writableDatabase.delete(serverCapabilitiesTable, "$server = ?", wrap(serverName))
+    }
+
     fun setLastInboxMessageId(serverName: String, newValue: Long) {
         val database = writableDatabase
         val row = wrap(mapOf(server to serverName, lastInboxMessageServerId to newValue.toString()))

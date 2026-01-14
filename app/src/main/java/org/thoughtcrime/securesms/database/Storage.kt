@@ -864,6 +864,10 @@ open class Storage @Inject constructor(
         return lokiAPIDatabase.getServerCapabilities(server)
     }
 
+    override fun clearServerCapabilities(server: String) {
+        lokiAPIDatabase.clearServerCapabilities(server)
+    }
+
     override fun getAllGroups(includeInactive: Boolean): List<GroupRecord> {
         return groupDatabase.getAllGroups(includeInactive)
     }
