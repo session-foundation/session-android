@@ -69,7 +69,7 @@ zxingVersion = "3.5.4"
 huaweiPushVersion = "6.13.0.300"
 googlePlayReviewVersion = "2.0.2"
 coilVersion = "3.3.0"
-billingVersion = "8.1.0"
+billingVersion = "8.3.0"
 
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissionsVersion" }
