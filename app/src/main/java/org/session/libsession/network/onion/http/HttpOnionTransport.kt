@@ -1,5 +1,6 @@
 package org.session.libsession.network.onion.http
 
+import androidx.annotation.VisibleForTesting
 import dagger.Lazy
 import org.session.libsession.network.model.ErrorStatus
 import org.session.libsession.network.model.OnionDestination
@@ -87,7 +88,8 @@ class HttpOnionTransport @Inject constructor(
     /**
      * Errors thrown by the guard / path hop BEFORE we get an onion-encrypted reply.
      */
-    private fun mapPathHttpError(
+    @VisibleForTesting
+    internal fun mapPathHttpError(
         node: Snode,
         ex: HTTP.HTTPRequestFailedException,
         path: Path,
