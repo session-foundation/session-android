@@ -182,7 +182,7 @@ class ConversationViewModel @AssistedInject constructor(
             ?: threadDb
                 .updateNotifications
                 .map {
-                    withContext(Dispatchers.IO) {
+                    withContext(Dispatchers.Default) {
                         threadDb.getThreadIdIfExistsFor(address)
                     }
                 }
