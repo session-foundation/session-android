@@ -182,7 +182,7 @@ class ConversationViewModel @AssistedInject constructor(
             ?: threadDb
                 .updateNotifications
                 .map {
-                    withContext(Dispatchers.Default) {
+                    withContext(Dispatchers.IO) {
                         threadDb.getThreadIdIfExistsFor(address)
                     }
                 }
@@ -213,11 +213,13 @@ class ConversationViewModel @AssistedInject constructor(
     val conversationReloadNotification: SharedFlow<*> = merge(
         threadIdFlow
             .filterNotNull()
-            .flatMapLatest { id ->  threadDb.updateNotifications.filter { it == id } },
+            .flatMapLatest { id -> threadDb.updateNotifications.filter { it == id } },
         recipientSettingsDatabase.changeNotification.filter { it == address },
         attachmentDatabase.changesNotification,
         reactionDb.changeNotification,
-    ).debounce(200L) // debounce to avoid too many reloads
+    ).combine(threadIdFlow) { event, tid -> if (tid != null) event else null }
+        .filterNotNull()
+        .debounce(350L) // debounce to avoid too many reloads
         .shareIn(viewModelScope, SharingStarted.Eagerly)
 
 
