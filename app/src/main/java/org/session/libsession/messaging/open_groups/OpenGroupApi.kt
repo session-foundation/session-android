@@ -269,7 +269,7 @@ object OpenGroupApi {
          * this when running over Lokinet.
          */
         val useOnionRouting: Boolean = true,
-        val dynamicHeaders: (suspend () -> Map<String, String>)? = null
+        val dynamicHeaders: (() -> Map<String, String>)? = null
     )
 
     private fun createBody(body: ByteArray?, parameters: Any?): RequestBody? {

@@ -24,7 +24,6 @@ import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 
 @Singleton
 class FileServerApi @Inject constructor(
@@ -63,7 +62,7 @@ class FileServerApi @Inject constructor(
         val useOnionRouting: Boolean = true,
 
         // Computed fresh for each attempt (after clock resync etc.)
-        val dynamicHeaders: (suspend () -> Map<String, String>)? = null
+        val dynamicHeaders: (() -> Map<String, String>)? = null
     )
 
     private fun createBody(body: ByteArray?, parameters: Any?): RequestBody? {

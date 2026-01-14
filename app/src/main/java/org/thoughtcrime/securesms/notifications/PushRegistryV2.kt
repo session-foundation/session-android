@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.notifications
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -39,12 +38,9 @@ class PushRegistryV2 @Inject constructor(
 ) {
 
     suspend fun register(
-        requestsFactory: suspend () -> Collection<SignedSubscriptionRequest>
-    ): List<SubscriptionResponse> {
-        return getResponseBody(
-            "subscribe",
-            { Json.encodeToString(requestsFactory()) }
-        )
+        requestsFactory: () -> Collection<Result<SignedSubscriptionRequest>>
+    ): List<Result<SubscriptionResponse>> {
+        return sendRequest("subscribe", requestsFactory)
     }
 
     fun buildRegisterRequest(
@@ -67,16 +63,14 @@ class PushRegistryV2 @Inject constructor(
             service = device.service,
             sig_ts = timestamp,
             service_info = mapOf("token" to token),
-            enc_key = requireNotNull(loginStateRepository.peekLoginState()) {
-                "User must be logged in to register for push notifications"
-            }.notificationKey.data.toHexString(),
+            enc_key = loginStateRepository.requireLoggedInState().notificationKey.data.toHexString(),
         ).let(Json::encodeToJsonElement).jsonObject + signed
     }
 
     suspend fun unregister(
-        requestsFactory: suspend () -> Collection<SignedUnsubscriptionRequest>
-    ): List<UnsubscribeResponse> {
-        return getResponseBody("unsubscribe", { Json.encodeToString(requestsFactory()) })
+        requestsFactory: () -> Collection<Result<SignedUnsubscriptionRequest>>
+    ): List<Result<UnsubscribeResponse>> {
+        return sendRequest("unsubscribe", requestsFactory)
     }
 
     fun buildUnregisterRequest(
@@ -108,30 +102,59 @@ class PushRegistryV2 @Inject constructor(
         })
     }
 
-    @OptIn(ExperimentalSerializationApi::class)
-    private suspend inline fun <reified T> getResponseBody(
+    private suspend inline fun <reified Request, reified Response> sendRequest(
         path: String,
-        crossinline bodyFactory: suspend () -> String
-    ): T {
+        crossinline builder: () -> Collection<Result<Request>>
+    ): List<Result<Response>> {
         val server = Server.LATEST
         val url = "${server.url}/$path"
 
-        val response = serverClient.send(
+        val (intermediateResults, rawApiResponse) = serverClient.sendWithData(
             operationName = "PushRegistryV2.$path",
             requestFactory = {
-                val bodyString = bodyFactory()
+                val requests = builder()
+                val results = ArrayList<Result<Response>?>(requests.size)
+
+                val successfullyBuiltRequests = arrayListOf<Request>()
+
+                for (requestBuildResult in requests) {
+                    if (requestBuildResult.isSuccess) {
+                        successfullyBuiltRequests.add(requestBuildResult.getOrThrow())
+                        results.add(null) // placeholder for now
+                    } else {
+                        results.add(Result.failure(requestBuildResult.exceptionOrNull()!!))
+                    }
+                }
+
+                val bodyString = Json.encodeToString(successfullyBuiltRequests)
                 val body = bodyString.toRequestBody("application/json".toMediaType())
-                Request.Builder().url(url).post(body).build()
+                results to Request.Builder().url(url).post(body).build()
             },
             serverBaseUrl = server.url,
             x25519PublicKey = server.publicKey,
             version = Version.V4
         )
 
-        return withContext(Dispatchers.IO) {
-            requireNotNull(response.body) { "Response doesn't have a body" }
+        @Suppress("OPT_IN_USAGE") val apiResponses = withContext(Dispatchers.Default) {
+            requireNotNull(rawApiResponse.body) { "Response doesn't have a body" }
                 .inputStream()
-                .use { Json.decodeFromStream<T>(it) }
+                .use { Json.decodeFromStream<List<Response>>(it) }
         }
+
+        val apiResponseIterator = apiResponses.iterator()
+
+        intermediateResults.forEachIndexed { idx, result ->
+            if (result == null) {
+                // this was a successfully built request, meaning we will get a corresponding API result
+                intermediateResults[idx] = Result.success(apiResponseIterator.next())
+            }
+        }
+
+        check(!apiResponseIterator.hasNext()) {
+            "API returned more results than expected"
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        return intermediateResults as List<Result<Response>>
     }
 }

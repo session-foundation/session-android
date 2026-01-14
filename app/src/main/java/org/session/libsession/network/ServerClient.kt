@@ -2,7 +2,6 @@ package org.session.libsession.network
 
 import okhttp3.Request
 import org.session.libsession.network.model.OnionDestination
-import org.session.libsession.network.model.OnionError
 import org.session.libsession.network.model.OnionResponse
 import org.session.libsession.network.onion.Version
 import org.session.libsession.network.utilities.getBodyForOnionRequest
@@ -22,34 +21,26 @@ class ServerClient @Inject constructor(
     val errorManager: ServerClientErrorManager
 ) {
 
-    /**
-     * The request is sent as a lambda in order to be recalculated as part of the retry strategy.
-     * This is useful for things like timestamps that  might have been updated
-     * as part of a clock resync
-     */
-    suspend fun send(
-        requestFactory: suspend () -> Request,
+    suspend fun <T> sendWithData(
+        requestFactory: suspend () -> Pair<T, Request>,
         serverBaseUrl: String,
         x25519PublicKey: String,
         version: Version = Version.V4,
         operationName: String = "ServerClient.send",
-    ): OnionResponse {
-        val initialRequest = requestFactory()
-        val url = initialRequest.url
-
+    ): Pair<T, OnionResponse> {
         return retryWithBackOff(
             operationName = operationName,
             classifier = { error, previous ->
                 errorManager.onFailure(
                     error = error,
                     ctx = ServerClientFailureContext(
-                        url = url,
+                        url = serverBaseUrl,
                         previousError = previous
                     )
                 )
             }
-        ) { attempt ->
-            val request = if (attempt == 1) initialRequest else requestFactory()
+        ) { _ ->
+            val (data, request) = requestFactory()
             val url = request.url
 
             val destination = OnionDestination.ServerDestination(
@@ -62,7 +53,7 @@ class ServerClient @Inject constructor(
 
             val payload = generatePayload(request, serverBaseUrl, version)
 
-            sessionNetwork.sendWithRetry(
+            data to sessionNetwork.sendWithRetry(
                 destination = destination,
                 payload = payload,
                 version = version,
@@ -71,6 +62,30 @@ class ServerClient @Inject constructor(
                 publicKey = null
             )
         }
+    }
+
+    /**
+     * The request is sent as a lambda in order to be recalculated as part of the retry strategy.
+     * This is useful for things like timestamps that  might have been updated
+     * as part of a clock resync
+     */
+    suspend fun send(
+        requestFactory: suspend () -> Request,
+        serverBaseUrl: String,
+        x25519PublicKey: String,
+        version: Version = Version.V4,
+        operationName: String = "ServerClient.send",
+    ): OnionResponse {
+        return sendWithData(
+            requestFactory = {
+                val request = requestFactory()
+                Unit to request
+            },
+            serverBaseUrl = serverBaseUrl,
+            x25519PublicKey = x25519PublicKey,
+            version = version,
+            operationName = operationName
+        ).second
     }
 
     private fun generatePayload(request: Request, server: String, version: Version): ByteArray {
