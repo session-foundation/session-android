@@ -1,14 +1,8 @@
 package org.session.libsession.network
 
-import okhttp3.HttpUrl
 import org.session.libsession.network.model.FailureDecision
-import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.network.model.OnionError
-import org.session.libsession.network.onion.PathManager
-import org.session.libsession.network.snode.SnodeDirectory
-import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.Snode
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -53,6 +47,6 @@ class ServerClientErrorManager @Inject constructor(
 }
 
 data class ServerClientFailureContext(
-    val url: HttpUrl,
+    val url: String,
     val previousError: OnionError? = null // in some situations we could be coming from a retry to a previous error
 )

@@ -18,7 +18,6 @@ import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.AvatarCacheCleaner
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
-import org.session.libsession.messaging.sending_receiving.notifications.PushRegistryV1
 import org.session.libsession.network.SnodeClient
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.OwnedSwarmAuth
@@ -205,8 +204,6 @@ class ConfigToDatabaseSync @Inject constructor(
         // Store the encryption key pair
         val keyPair = ECKeyPair(DjbECPublicKey(group.encPubKey.data), DjbECPrivateKey(group.encSecKey.data))
         storage.addClosedGroupEncryptionKeyPair(keyPair, group.accountId, clock.currentTimeMillis())
-        // Notify the PN server
-        PushRegistryV1.subscribeGroup(group.accountId, publicKey = myAccountId.hexString)
         threadDatabase.setCreationDate(threadId, formationTimestamp)
     }
 
@@ -256,8 +253,6 @@ class ConfigToDatabaseSync @Inject constructor(
         // Remove the key pairs
         storage.removeAllClosedGroupEncryptionKeyPairs(address.groupPublicKeyHex)
         storage.removeMember(address.address, myAccountId.toAddress())
-        // Notify the PN server
-        PushRegistryV1.unsubscribeGroup(closedGroupPublicKey = address.groupPublicKeyHex, publicKey = myAccountId.hexString)
         messageNotifier.updateNotification(context)
     }
 

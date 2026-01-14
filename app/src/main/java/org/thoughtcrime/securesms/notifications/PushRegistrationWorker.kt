@@ -170,59 +170,39 @@ class PushRegistrationWorker @AssistedInject constructor(
     private suspend inline fun <T, Req, Res : Response> batchRequest(
         items: List<T>,
         crossinline buildRequest: (T) -> Req,
-        crossinline sendBatchRequest: suspend (suspend () -> Collection<Req>) -> List<Res>,
+        sendBatchRequest: suspend (requestsBuilder: () -> Collection<kotlin.Result<Req>>) -> List<kotlin.Result<Res>>,
     ): List<Pair<T, kotlin.Result<Unit>>> {
         if (items.isEmpty()) return emptyList()
 
-        val results = ArrayList<Pair<T, kotlin.Result<Unit>>>(items.size)
-
-        // Items that are valid to send, and their per-attempt builders
-        val batchItems = mutableListOf<T>()
-        val requestBuilders = mutableListOf<() -> Req>()
-
-        for (item in items) {
-            try {
-                //todo ONION I have to double the buildRequest here, once for validation and again to recompute... Is this ok? FANCHAO
-                buildRequest(item)
-
-                batchItems += item
-                requestBuilders += { buildRequest(item) } // <- rebuilt each retry attempt
-            } catch (ec: Exception) {
-                results += item to kotlin.Result.failure(
-                    NonRetryableException("Failed to build a request", ec)
-                )
-            }
-        }
-
-        if (batchItems.isEmpty()) return results
-
-        try {
+        return try {
             val responses = sendBatchRequest {
-                requestBuilders.map { it() }
+                items.map { item ->
+                    try {
+                        kotlin.Result.success(buildRequest(item))
+                    } catch (e: Exception) {
+                        kotlin.Result.failure(NonRetryableException("Error building request", e))
+                    }
+                }
             }
 
-            responses.forEachIndexed { idx, response ->
-                val item = batchItems[idx]
-                results += item to when {
-                    response.isSuccess() -> kotlin.Result.success(Unit)
-                    response.error == 403 -> kotlin.Result.failure(
-                        NonRetryableException("Request failed: code = ${response.error}, message = ${response.message}")
-                    )
-                    else -> kotlin.Result.failure(
-                        RuntimeException("Request failed: code = ${response.error}, message = ${response.message}")
-                    )
+            responses.mapIndexed { idx, result ->
+                val item = items[idx]
+                item to result.map { response ->
+                    when {
+                        response.isSuccess() -> Unit
+                        response.error == 403 -> throw NonRetryableException("Request failed: code = ${response.error}, message = ${response.message}")
+                        else -> throw RuntimeException("Request failed: code = ${response.error}, message = ${response.message}")
+                    }
                 }
             }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             // Batch call failed -> mark all *sent* items as failed
-            batchItems.forEach { item ->
-                results += item to kotlin.Result.failure(e)
+            items.map { item ->
+                item to kotlin.Result.failure(e)
             }
         }
-
-        return results
     }
 
 
