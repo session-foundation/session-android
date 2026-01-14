@@ -47,6 +47,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProDataState
 import org.thoughtcrime.securesms.pro.ProDetailsRepository
@@ -850,10 +851,18 @@ class ProSettingsViewModel @AssistedInject constructor(
 
     private fun refreshProStats(){
         viewModelScope.launch {
+            // if we have a debug toggle for the loading state, respect it
+            val currentDebugState = prefs.getDebugProPlanStatus()
+            val debugState = when(currentDebugState) {
+                DebugMenuViewModel.DebugProPlanStatus.LOADING -> State.Loading
+                DebugMenuViewModel.DebugProPlanStatus.ERROR -> State.Error(Exception())
+                else -> null
+            }
+
             // show a loader for the stats
             _proSettingsUIState.update {
                 it.copy(
-                    proStats = State.Loading
+                    proStats = debugState ?: State.Loading
                 )
             }
 
@@ -882,14 +891,14 @@ class ProSettingsViewModel @AssistedInject constructor(
 
                 // update ui with results
                 _proSettingsUIState.update {
-                    it.copy(proStats = State.Success(stats))
+                    it.copy(proStats = debugState ?: State.Success(stats))
                 }
             } catch (e: Exception) {
                 // currently the UI doesn't have an error display
                 // it will look like it's still loading
                 // but the logic is there in case we have a look for stats errors
                 _proSettingsUIState.update {
-                    it.copy(proStats = State.Error(e))
+                    it.copy(proStats = debugState ?: State.Error(e))
                 }
             }
         }
