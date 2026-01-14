@@ -109,7 +109,7 @@ class PushRegistryV2 @Inject constructor(
         val server = Server.LATEST
         val url = "${server.url}/$path"
 
-        val (intermediateResults, rawApiResponse) = serverClient.sendWithData(
+        val (r, rawApiResponse) = serverClient.sendWithData(
             operationName = "PushRegistryV2.$path",
             requestFactory = {
                 val requests = builder()
@@ -128,17 +128,23 @@ class PushRegistryV2 @Inject constructor(
 
                 val bodyString = Json.encodeToString(successfullyBuiltRequests)
                 val body = bodyString.toRequestBody("application/json".toMediaType())
-                results to Request.Builder().url(url).post(body).build()
+                results to successfullyBuiltRequests.size to Request.Builder().url(url).post(body).build()
             },
             serverBaseUrl = server.url,
             x25519PublicKey = server.publicKey,
             version = Version.V4
         )
 
+        val (intermediateResults, numSuccessfullyBuiltRequests) = r
+
         @Suppress("OPT_IN_USAGE") val apiResponses = withContext(Dispatchers.Default) {
             requireNotNull(rawApiResponse.body) { "Response doesn't have a body" }
                 .inputStream()
                 .use { Json.decodeFromStream<List<Response>>(it) }
+        }
+
+        check(numSuccessfullyBuiltRequests == apiResponses.size) {
+            "Number of API responses (${apiResponses.size}) does not match number of successfully built requests ($numSuccessfullyBuiltRequests)"
         }
 
         val apiResponseIterator = apiResponses.iterator()
@@ -148,10 +154,6 @@ class PushRegistryV2 @Inject constructor(
                 // this was a successfully built request, meaning we will get a corresponding API result
                 intermediateResults[idx] = Result.success(apiResponseIterator.next())
             }
-        }
-
-        check(!apiResponseIterator.hasNext()) {
-            "API returned more results than expected"
         }
 
         @Suppress("UNCHECKED_CAST")
