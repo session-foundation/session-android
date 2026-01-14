@@ -13,8 +13,15 @@ class ByteArraySlice private constructor(
     val len: Int,
 ) {
     init {
-        check(offset in 0..data.size) { "Offset $offset is not within [0..${data.size}]" }
-        check(len in 0..data.size) { "Length $len is not within [0..${data.size}]" }
+         // Check negatives first
+        require(offset >= 0 && len >= 0) {
+            "Offset ($offset) and length ($len) must be non-negative"
+        }
+
+        // Check bounds using subtraction to avoid overflow
+        require(offset <= data.size - len) {
+            "Slice [$offset..${offset + len}) is out of bounds for size ${data.size}"
+        }
     }
 
     fun view(range: IntRange): ByteArraySlice {

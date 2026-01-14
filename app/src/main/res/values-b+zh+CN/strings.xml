@@ -1181,6 +1181,9 @@
     <plurals name="removeMember">
         <item quantity="other">移除成员</item>
     </plurals>
+    <plurals name="removeMemberLowercase">
+        <item quantity="other">移除成员</item>
+    </plurals>
     <plurals name="removeMemberMessages">
         <item quantity="other">移除成员及其消息</item>
     </plurals>

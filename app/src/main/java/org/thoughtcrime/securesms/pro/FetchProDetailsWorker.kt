@@ -18,7 +18,7 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapNotNull
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsession.utilities.withUserConfigs
@@ -108,7 +108,7 @@ class FetchProDetailsWorker @AssistedInject constructor(
 
 
     private suspend fun scheduleProofGenerationIfNeeded(details: ProDetails) {
-        val now = snodeClock.currentTimeMills()
+        val now = snodeClock.currentTimeMillis()
 
         if (details.status != ProDetails.DETAILS_STATUS_ACTIVE) {
             Log.d(TAG, "Pro is not active, cancelling any existing proof generation work")

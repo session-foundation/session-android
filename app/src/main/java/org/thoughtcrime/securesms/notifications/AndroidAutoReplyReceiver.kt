@@ -28,9 +28,8 @@ import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
-import org.session.libsession.snode.SnodeAPI.nowWithOffset
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsignal.utilities.Log
@@ -71,6 +70,10 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
     @Inject
     lateinit var proStatusManager: ProStatusManager
 
+    @Inject
+    lateinit var snodeClock: SnodeClock
+
+
     @SuppressLint("StaticFieldLeak")
     override fun onReceive(context: Context, intent: Intent) {
         if (REPLY_ACTION != intent.getAction()) return
@@ -97,7 +100,7 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
                     val message = VisibleMessage()
                     message.text = responseText.toString()
                     proStatusManager.addProFeatures(message)
-                    message.sentTimestamp = nowWithOffset
+                    message.sentTimestamp = snodeClock.currentTimeMillis()
                     messageSender.send(message, address!!)
                     val expiryMode = recipientRepository.getRecipientSync(address).expiryMode
                     val expiresInMillis = expiryMode.expiryMillis
@@ -137,7 +140,7 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
                             replyThreadId,
                             reply,
                             false,
-                            nowWithOffset,
+                            snodeClock.currentTimeMillis(),
                             true
                         )
                     }

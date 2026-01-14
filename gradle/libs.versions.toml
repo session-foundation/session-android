@@ -42,7 +42,6 @@ glideVersion = "5.0.5"
 jacksonDatabindVersion = "2.9.8"
 junitVersion = "4.13.2"
 kotlinxJsonVersion = "1.9.0"
-kovenantVersion = "3.3.0"
 opencsvVersion = "5.12.0"
 orchestratorVersion = "1.6.1"
 photoviewVersion = "2.3.0"
@@ -146,8 +145,6 @@ kotlinx-coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutinesVersion" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxJsonVersion" }
 kotlinx-coroutines-testing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutinesVersion" }
-kovenant-android = { module = "nl.komponents.kovenant:kovenant-android", version.ref = "kovenantVersion" }
-kovenant = { module = "nl.komponents.kovenant:kovenant", version.ref = "kovenantVersion" }
 material = { module = "com.google.android.material:material", version.ref = "materialVersion" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockitoCoreVersion" }
 mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockitoKotlinVersion" }

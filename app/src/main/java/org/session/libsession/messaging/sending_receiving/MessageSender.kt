@@ -28,8 +28,8 @@ import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.open_groups.OpenGroupApi.Capability
 import org.session.libsession.messaging.open_groups.OpenGroupMessage
-import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClient
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -62,6 +62,7 @@ class MessageSender @Inject constructor(
     private val messageSendJobFactory: MessageSendJob.Factory,
     private val messageExpirationManager: ExpiringMessageManager,
     private val snodeClock: SnodeClock,
+    private val snodeClient: SnodeClient,
     @param:ManagerScope private val scope: CoroutineScope,
 ) {
 
@@ -124,7 +125,7 @@ class MessageSender @Inject constructor(
 
             // Attach pro proof
             val proProof = configFactory.withUserConfigs { it.userProfile.getProConfig() }?.proProof
-            if (proProof != null && proProof.expiryMs > snodeClock.currentTimeMills()) {
+            if (proProof != null && proProof.expiryMs > snodeClock.currentTimeMillis()) {
                 builder.proMessageBuilder.proofBuilder.copyFromLibSession(proProof)
             } else {
                 // If we don't have any valid pro proof, clear the pro message
@@ -155,7 +156,7 @@ class MessageSender @Inject constructor(
             "Missing user key"
         }
         // Set the timestamp, sender and recipient
-        val messageSendTime = snodeClock.currentTimeMills()
+        val messageSendTime = snodeClock.currentTimeMillis()
         if (message.sentTimestamp == null) {
             message.sentTimestamp =
                 messageSendTime // Visible messages will already have their sent timestamp set
@@ -246,14 +247,14 @@ class MessageSender @Inject constructor(
                             "Unable to authorize group message send"
                         }
 
-                        SnodeAPI.sendMessage(
+                        snodeClient.sendMessage(
                             auth = groupAuth,
                             message = snodeMessage,
                             namespace = Namespace.GROUP_MESSAGES(),
                         )
                     }
                     is Destination.Contact -> {
-                        SnodeAPI.sendMessage(snodeMessage, auth = null, namespace = Namespace.DEFAULT())
+                        snodeClient.sendMessage(snodeMessage, auth = null, namespace = Namespace.DEFAULT())
                     }
                     is Destination.OpenGroup,
                     is Destination.OpenGroupInbox -> throw IllegalStateException("Destination should not be an open group.")
@@ -305,7 +306,7 @@ class MessageSender @Inject constructor(
     // Open Groups
     private suspend fun sendToOpenGroupDestination(destination: Destination, message: Message) {
         if (message.sentTimestamp == null) {
-            message.sentTimestamp = snodeClock.currentTimeMills()
+            message.sentTimestamp = snodeClock.currentTimeMillis()
         }
         // Attach the blocks message requests info
         configFactory.withUserConfigs { configs ->
