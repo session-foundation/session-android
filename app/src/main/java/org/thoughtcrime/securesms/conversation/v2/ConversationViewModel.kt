@@ -217,9 +217,7 @@ class ConversationViewModel @AssistedInject constructor(
         recipientSettingsDatabase.changeNotification.filter { it == address },
         attachmentDatabase.changesNotification,
         reactionDb.changeNotification,
-    ).combine(threadIdFlow) { event, tid -> if (tid != null) event else null }
-        .filterNotNull()
-        .debounce(350L) // debounce to avoid too many reloads
+    ).debounce(200L) // debounce to avoid too many reloads
         .shareIn(viewModelScope, SharingStarted.Eagerly)
 
 
