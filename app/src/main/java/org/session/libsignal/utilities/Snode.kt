@@ -16,7 +16,7 @@ fun Snode(string: String): Snode? {
     return Snode(address, port, Snode.KeySet(ed25519Key, x25519Key), version)
 }
 
-class Snode(val address: String, val port: Int, val publicKeySet: KeySet?, val version: Version) {
+data class Snode(val address: String, val port: Int, val publicKeySet: KeySet?, val version: Version) {
     val ip: String get() = address.removePrefix("https://")
 
     enum class Method(val rawValue: String) {

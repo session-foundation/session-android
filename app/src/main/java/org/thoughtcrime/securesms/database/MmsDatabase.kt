@@ -34,7 +34,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
-import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
@@ -79,6 +79,7 @@ class MmsDatabase @Inject constructor(
     private val reactionDatabase: ReactionDatabase,
     private val mmsSmsDatabase: Lazy<MmsSmsDatabase>,
     private val groupDatabase: GroupDatabase,
+    private val snodeClock: SnodeClock
 ) : MessagingDatabase(context, databaseHelper) {
     private val earlyDeliveryReceiptCache = EarlyReceiptCache()
     private val earlyReadReceiptCache = EarlyReceiptCache()
@@ -585,7 +586,7 @@ class MmsDatabase @Inject constructor(
         // In open groups messages should be sorted by their server timestamp
         var receivedTimestamp = serverTimestamp
         if (serverTimestamp == 0L) {
-            receivedTimestamp = SnodeAPI.nowWithOffset
+            receivedTimestamp = snodeClock.currentTimeMillis()
         }
         contentValues.put(DATE_RECEIVED, receivedTimestamp)
         contentValues.put(EXPIRES_IN, message.expiresInMillis)

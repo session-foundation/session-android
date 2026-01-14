@@ -18,7 +18,7 @@ import org.session.libsession.messaging.messages.control.TypingIndicator
 import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.OpenGroupApi
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
@@ -139,7 +139,7 @@ class MessageParser @Inject constructor(
         message.sender = sender.hexString
         message.recipient = currentUserId.hexString
         message.sentTimestamp = messageTimestampMs
-        message.receivedTimestamp = snodeClock.currentTimeMills()
+        message.receivedTimestamp = snodeClock.currentTimeMillis()
         message.isSenderSelf = isSenderSelf
 
         // Only process pro features post pro launch

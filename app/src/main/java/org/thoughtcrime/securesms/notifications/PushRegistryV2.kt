@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.notifications
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -17,11 +16,10 @@ import org.session.libsession.messaging.sending_receiving.notifications.Subscrip
 import org.session.libsession.messaging.sending_receiving.notifications.SubscriptionResponse
 import org.session.libsession.messaging.sending_receiving.notifications.UnsubscribeResponse
 import org.session.libsession.messaging.sending_receiving.notifications.UnsubscriptionRequest
-import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.ServerClient
+import org.session.libsession.network.SnodeClock
+import org.session.libsession.network.onion.Version
 import org.session.libsession.snode.SwarmAuth
-import org.session.libsession.snode.Version
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Device
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.auth.LoginStateRepository
@@ -36,15 +34,13 @@ class PushRegistryV2 @Inject constructor(
     private val device: Device,
     private val clock: SnodeClock,
     private val loginStateRepository: LoginStateRepository,
+    private val serverClient: ServerClient
 ) {
 
     suspend fun register(
-        requests: Collection<SignedSubscriptionRequest>
-    ): List<SubscriptionResponse> {
-        return getResponseBody(
-            "subscribe",
-            Json.encodeToString(requests)
-        )
+        requestsFactory: () -> Collection<Result<SignedSubscriptionRequest>>
+    ): List<Result<SubscriptionResponse>> {
+        return sendRequest("subscribe", requestsFactory)
     }
 
     fun buildRegisterRequest(
@@ -52,7 +48,7 @@ class PushRegistryV2 @Inject constructor(
         swarmAuth: SwarmAuth,
         namespaces: List<Int>
     ): SignedSubscriptionRequest {
-        val timestamp = clock.currentTimeMills() / 1000 // get timestamp in ms -> s
+        val timestamp = clock.currentTimeSeconds()
         val publicKey = swarmAuth.accountId.hexString
         val sortedNamespace = namespaces.sorted()
         val signed = swarmAuth.sign(
@@ -67,16 +63,14 @@ class PushRegistryV2 @Inject constructor(
             service = device.service,
             sig_ts = timestamp,
             service_info = mapOf("token" to token),
-            enc_key = requireNotNull(loginStateRepository.peekLoginState()) {
-                "User must be logged in to register for push notifications"
-            }.notificationKey.data.toHexString(),
+            enc_key = loginStateRepository.requireLoggedInState().notificationKey.data.toHexString(),
         ).let(Json::encodeToJsonElement).jsonObject + signed
     }
 
     suspend fun unregister(
-        requests: Collection<SignedUnsubscriptionRequest>
-    ): List<UnsubscribeResponse> {
-        return getResponseBody("unsubscribe", Json.encodeToString(requests))
+        requestsFactory: () -> Collection<Result<SignedUnsubscriptionRequest>>
+    ): List<Result<UnsubscribeResponse>> {
+        return sendRequest("unsubscribe", requestsFactory)
     }
 
     fun buildUnregisterRequest(
@@ -84,7 +78,7 @@ class PushRegistryV2 @Inject constructor(
         swarmAuth: SwarmAuth
     ): SignedUnsubscriptionRequest {
         val publicKey = swarmAuth.accountId.hexString
-        val timestamp = clock.currentTimeMills() / 1000 // get timestamp in ms -> s
+        val timestamp = clock.currentTimeSeconds()
         // if we want to support passing namespace list, here is the place to do it
         val signature = swarmAuth.sign(
             "UNSUBSCRIBE${publicKey}${timestamp}".encodeToByteArray()
@@ -108,23 +102,61 @@ class PushRegistryV2 @Inject constructor(
         })
     }
 
-    @OptIn(ExperimentalSerializationApi::class)
-    private suspend inline fun <reified T> getResponseBody(path: String, requestParameters: String): T {
+    private suspend inline fun <reified Request, reified Response> sendRequest(
+        path: String,
+        crossinline builder: () -> Collection<Result<Request>>
+    ): List<Result<Response>> {
         val server = Server.LATEST
         val url = "${server.url}/$path"
-        val body = requestParameters.toRequestBody("application/json".toMediaType())
-        val request = Request.Builder().url(url).post(body).build()
-        val response = OnionRequestAPI.sendOnionRequest(
-            request = request,
-            server = server.url,
+
+        val (r, rawApiResponse) = serverClient.sendWithData(
+            operationName = "PushRegistryV2.$path",
+            requestFactory = {
+                val requests = builder()
+                val results = ArrayList<Result<Response>?>(requests.size)
+
+                val successfullyBuiltRequests = arrayListOf<Request>()
+
+                for (requestBuildResult in requests) {
+                    if (requestBuildResult.isSuccess) {
+                        successfullyBuiltRequests.add(requestBuildResult.getOrThrow())
+                        results.add(null) // placeholder for now
+                    } else {
+                        results.add(Result.failure(requestBuildResult.exceptionOrNull()!!))
+                    }
+                }
+
+                val bodyString = Json.encodeToString(successfullyBuiltRequests)
+                val body = bodyString.toRequestBody("application/json".toMediaType())
+                results to successfullyBuiltRequests.size to Request.Builder().url(url).post(body).build()
+            },
+            serverBaseUrl = server.url,
             x25519PublicKey = server.publicKey,
             version = Version.V4
-        ).await()
+        )
 
-        return withContext(Dispatchers.IO) {
-            requireNotNull(response.body) { "Response doesn't have a body" }
+        val (intermediateResults, numSuccessfullyBuiltRequests) = r
+
+        @Suppress("OPT_IN_USAGE") val apiResponses = withContext(Dispatchers.Default) {
+            requireNotNull(rawApiResponse.body) { "Response doesn't have a body" }
                 .inputStream()
-                .use { Json.decodeFromStream<T>(it) }
+                .use { Json.decodeFromStream<List<Response>>(it) }
         }
+
+        check(numSuccessfullyBuiltRequests == apiResponses.size) {
+            "Number of API responses (${apiResponses.size}) does not match number of successfully built requests ($numSuccessfullyBuiltRequests)"
+        }
+
+        val apiResponseIterator = apiResponses.iterator()
+
+        intermediateResults.forEachIndexed { idx, result ->
+            if (result == null) {
+                // this was a successfully built request, meaning we will get a corresponding API result
+                intermediateResults[idx] = Result.success(apiResponseIterator.next())
+            }
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        return intermediateResults as List<Result<Response>>
     }
 }

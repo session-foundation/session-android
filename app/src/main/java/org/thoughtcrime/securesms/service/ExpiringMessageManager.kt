@@ -10,7 +10,7 @@ import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
@@ -186,7 +186,7 @@ class ExpiringMessageManager @Inject constructor(
         val messageId = message.id
         if (message.expiryMode != ExpiryMode.NONE && messageId != null) {
             getDatabase(messageId.mms)
-                .markExpireStarted(messageId.id, clock.currentTimeMills())
+                .markExpireStarted(messageId.id, clock.currentTimeMillis())
         }
     }
 
@@ -200,13 +200,13 @@ class ExpiringMessageManager @Inject constructor(
         if (message.expiryMode is ExpiryMode.AfterSend ||
             (message.expiryMode != ExpiryMode.NONE && message.isSenderSelf)) {
             getDatabase(messageId.mms)
-                .markExpireStarted(messageId.id, clock.currentTimeMills())
+                .markExpireStarted(messageId.id, clock.currentTimeMillis())
         }
     }
 
     private suspend fun processDatabase(db: MessagingDatabase) {
         while (true) {
-            val expiredMessages = db.getExpiredMessageIDs(clock.currentTimeMills())
+            val expiredMessages = db.getExpiredMessageIDs(clock.currentTimeMillis())
 
             if (expiredMessages.isNotEmpty()) {
                 Log.d(TAG, "Deleting ${expiredMessages.size} expired messages from ${db.javaClass.simpleName}")
@@ -220,7 +220,7 @@ class ExpiringMessageManager @Inject constructor(
             }
 
             val nextExpiration = db.nextExpiringTimestamp
-            val now = clock.currentTimeMills()
+            val now = clock.currentTimeMillis()
 
             if (nextExpiration > 0 && nextExpiration <= now) {
                 continue // Proceed to the next iteration if the next expiration is already or about go to in the past

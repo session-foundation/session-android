@@ -3,7 +3,6 @@ package org.session.libsession.messaging.file_server
 import android.util.Base64
 import kotlinx.coroutines.CancellationException
 import network.loki.messenger.libsession_util.Curve25519
-import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.HttpUrl
@@ -11,8 +10,8 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.snode.utilities.await
+import org.session.libsession.network.ServerClient
+import org.session.libsession.network.SnodeClock
 import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Hex
@@ -25,11 +24,12 @@ import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 
 @Singleton
 class FileServerApi @Inject constructor(
     private val storage: StorageProtocol,
+    private val serverClient: ServerClient,
+    private val snodeClock: SnodeClock
 ) {
 
     companion object {
@@ -59,7 +59,10 @@ class FileServerApi @Inject constructor(
          * Always `true` under normal circumstances. You might want to disable
          * this when running over Lokinet.
          */
-        val useOnionRouting: Boolean = true
+        val useOnionRouting: Boolean = true,
+
+        // Computed fresh for each attempt (after clock resync etc.)
+        val dynamicHeaders: (() -> Map<String, String>)? = null
     )
 
     private fun createBody(body: ByteArray?, parameters: Any?): RequestBody? {
@@ -75,38 +78,42 @@ class FileServerApi @Inject constructor(
     }
 
 
-    private suspend fun send(request: Request): SendResponse {
-        val urlBuilder = request.fileServer.url
-            .newBuilder()
-            .addPathSegments(request.endpoint)
-        if (request.verb == HTTP.Verb.GET) {
-            for ((key, value) in request.queryParameters) {
-                urlBuilder.addQueryParameter(key, value)
-            }
-        }
-        val requestBuilder = okhttp3.Request.Builder()
-            .url(urlBuilder.build())
-            .headers(request.headers.toHeaders())
-        when (request.verb) {
-            HTTP.Verb.GET -> requestBuilder.get()
-            HTTP.Verb.PUT -> requestBuilder.put(createBody(request.body, request.parameters) ?: RequestBody.EMPTY)
-            HTTP.Verb.POST -> requestBuilder.post(createBody(request.body, request.parameters) ?: RequestBody.EMPTY)
-            HTTP.Verb.DELETE -> requestBuilder.delete(createBody(request.body, request.parameters))
-        }
+    private suspend fun send(request: Request, operationName: String): SendResponse {
         return if (request.useOnionRouting) {
             try {
-                val response = OnionRequestAPI.sendOnionRequest(
-                    request = requestBuilder.build(),
-                    server = request.fileServer.url.host,
+                val response = serverClient.send(
+                    operationName = operationName,
+                    requestFactory = {
+                        val urlBuilder = request.fileServer.url
+                            .newBuilder()
+                            .addPathSegments(request.endpoint)
+
+                        if (request.verb == HTTP.Verb.GET) {
+                            for ((k, v) in request.queryParameters) urlBuilder.addQueryParameter(k, v)
+                        }
+
+                        val computed = request.dynamicHeaders?.invoke().orEmpty()
+                        val mergedHeaders = (request.headers + computed)
+
+                        val builder = okhttp3.Request.Builder()
+                            .url(urlBuilder.build())
+                            .headers(mergedHeaders.toHeaders())
+
+                        when (request.verb) {
+                            HTTP.Verb.GET -> builder.get()
+                            HTTP.Verb.PUT -> builder.put(createBody(request.body, request.parameters) ?: RequestBody.EMPTY)
+                            HTTP.Verb.POST -> builder.post(createBody(request.body, request.parameters) ?: RequestBody.EMPTY)
+                            HTTP.Verb.DELETE -> builder.delete(createBody(request.body, request.parameters))
+                        }
+
+                        builder.build()
+                    },
+                    serverBaseUrl = request.fileServer.url.host,
                     x25519PublicKey =
                         Hex.toStringCondensed(
                             Curve25519.pubKeyFromED25519(Hex.fromStringCondensed(request.fileServer.ed25519PublicKeyHex))
                         )
-                ).await()
-
-                check(response.code in 200..299) {
-                    "Error response from file server: ${response.code}"
-                }
+                )
 
                 val body = response.body ?: throw Error.ParsingFailed
 
@@ -144,7 +151,7 @@ class FileServerApi @Inject constructor(
                 }
             }
         )
-        val response = send(request)
+        val response = send(request, "FileServer.upload")
         val json = JsonUtil.fromJson(response.body, Map::class.java)
         val id = json["id"]!!.toString()
         val expiresEpochSeconds = (json.getOrDefault("expires", null) as? Number)?.toLong()
@@ -169,7 +176,7 @@ class FileServerApi @Inject constructor(
             verb = HTTP.Verb.GET,
             endpoint = "file/$fileId"
         )
-        return send(request)
+        return send(request, "FileServer.download")
     }
 
     suspend fun renew(fileId: String,
@@ -184,7 +191,7 @@ class FileServerApi @Inject constructor(
                     "X-FS-TTL" to it.inWholeSeconds.toString()
                 }
             } ?: mapOf()
-        ))
+        ), "FileServer.renew")
 
         resp.expires
     }
@@ -308,8 +315,6 @@ class FileServerApi @Inject constructor(
             ?: throw (Error.NoEd25519KeyPair)
 
         val blindedKeys = BlindKeyAPI.blindVersionKeyPair(secretKey)
-        val timestamp = System.currentTimeMillis().milliseconds.inWholeSeconds //  The current timestamp in seconds
-        val signature = BlindKeyAPI.blindVersionSign(secretKey, timestamp)
 
         // The hex encoded version-blinded public key with a 07 prefix
         val blindedPkHex = "07" + blindedKeys.pubKey.data.toHexString()
@@ -319,15 +324,21 @@ class FileServerApi @Inject constructor(
             verb = HTTP.Verb.GET,
             endpoint = "session_version",
             queryParameters = mapOf("platform" to "android"),
-            headers = mapOf(
-                "X-FS-Pubkey" to blindedPkHex,
-                "X-FS-Timestamp" to timestamp.toString(),
-                "X-FS-Signature" to Base64.encodeToString(signature, Base64.NO_WRAP)
-            )
+            headers = mapOf("X-FS-Pubkey" to blindedPkHex),
+            // dynamic ones recomputed every attempt:
+            dynamicHeaders = {
+                val timestamp = snodeClock.currentTimeSeconds()
+                val signature = BlindKeyAPI.blindVersionSign(secretKey, timestamp)
+
+                mapOf(
+                    "X-FS-Timestamp" to timestamp.toString(),
+                    "X-FS-Signature" to Base64.encodeToString(signature, Base64.NO_WRAP)
+                )
+            }
         )
 
         // transform the promise into a coroutine
-        val result = send(request)
+        val result = send(request, "FileServer.getClientVersion")
 
         // map out the result
         return JsonUtil.fromJson(result.body, Map::class.java).let {

@@ -69,12 +69,12 @@ class GroupLeavingWorker @AssistedInject constructor(
                     val groupAuth = configFactory.getGroupAuth(groupId)
 
                     if (groupAuth != null) {
-                        val resp = pushRegistryV2.unregister(listOf(
-                            pushRegistryV2.buildUnregisterRequest(currentToken, groupAuth)
-                        )).firstOrNull()
+                        val resp = pushRegistryV2.unregister {
+                            listOf(runCatching { pushRegistryV2.buildUnregisterRequest(currentToken, groupAuth) })
+                        }.firstOrNull()
 
-                        check(resp?.success == true) {
-                            "Unsubscription failed: code = ${resp?.error}, message = ${resp?.message}"
+                        check(resp?.getOrNull()?.success == true) {
+                            "Unsubscription failed: $resp"
                         }
                         Log.d(TAG, "Unsubscribed from group $groupId successfully")
                     }

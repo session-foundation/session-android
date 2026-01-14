@@ -65,7 +65,7 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.squareup.phrase.Phrase
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
-import org.session.libsession.snode.OnionRequestAPI
+import org.session.libsession.network.model.PathStatus
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
@@ -498,7 +498,7 @@ fun Settings(
 @Composable
 fun Buttons(
     recoveryHidden: Boolean,
-    pathStatus: OnionRequestAPI.PathStatus,
+    pathStatus: PathStatus,
     postPro: Boolean,
     proDataState: ProDataState,
     sendCommand: (SettingsViewModel.Commands) -> Unit,
@@ -610,8 +610,8 @@ fun Buttons(
                 Divider()
 
                 Crossfade(when (pathStatus){
-                        OnionRequestAPI.PathStatus.BUILDING -> LocalColors.current.warning
-                        OnionRequestAPI.PathStatus.ERROR -> LocalColors.current.danger
+                        PathStatus.BUILDING -> LocalColors.current.warning
+                        PathStatus.ERROR -> LocalColors.current.danger
                         else -> primaryGreen
                     }, label = "path") {
                     ItemButton(
@@ -1094,7 +1094,7 @@ private fun SettingsScreenPreview() {
                 ),
                 username = "Atreyu",
                 accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
-                pathStatus = OnionRequestAPI.PathStatus.READY,
+                pathStatus = PathStatus.READY,
                 version = "1.26.0",
             ),
             sendCommand = {},
