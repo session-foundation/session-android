@@ -49,6 +49,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -253,8 +254,8 @@ fun SessionProCTA(
 
     // We should avoid internal state in a composable but having the bottom sheet
     // here avoids re-defining the sheet in multiple places in the app
-    var showDialog by remember { mutableStateOf(true) }
-    var showProSheet by remember { mutableStateOf(false) }
+    var showDialog by retain { mutableStateOf(true) }
+    var showProSheet by retain { mutableStateOf(false) }
 
     // default handling of the upgrade button
     val defaultUpgrade: () -> Unit = {
@@ -640,10 +641,9 @@ fun LongMessageProCTA(
 // Reusable animated profile pic Pro CTA
 @Composable
 fun AnimatedProfilePicProCTA(
-    proSubscription: ProStatus,
+    expired: Boolean,
     onDismissRequest: () -> Unit,
 ){
-    val expired = proSubscription is ProStatus.Expired
     val context = LocalContext.current
 
     AnimatedSessionProCTA(

@@ -2,8 +2,10 @@ package org.thoughtcrime.securesms.pro
 
 import network.loki.messenger.libsession_util.protocol.PaymentProviderMetadata
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
+import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.State
 import java.time.Instant
+import java.time.ZoneId
 
 sealed interface ProStatus{
     data object NeverSubscribed: ProStatus
@@ -33,6 +35,12 @@ sealed interface ProStatus{
 
         fun isWithinQuickRefundWindow(): Boolean {
             return quickRefundExpiry != null && quickRefundExpiry!!.isAfter(Instant.now())
+        }
+
+        fun validUntilFormatted(): String {
+            return DateUtils.getLocaleFormattedDate(
+                validUntil.toEpochMilli(), "MMMM d, yyyy"
+            )
         }
     }
 

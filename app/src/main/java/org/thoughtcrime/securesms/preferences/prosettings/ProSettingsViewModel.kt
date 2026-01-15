@@ -58,7 +58,6 @@ import org.thoughtcrime.securesms.pro.isFromAnotherPlatform
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionCoordinator
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
-import org.thoughtcrime.securesms.pro.subscription.expiryFromNow
 import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.util.CurrencyFormatter
@@ -227,7 +226,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                         else -> ""
                     },
                     subscriptionExpiryDate = when(subType){
-                        is ProStatus.Active -> subType.duration.expiryFromNow(now)
+                        is ProStatus.Active -> subType.validUntilFormatted()
                         else -> ""
                     },
                 )
@@ -526,7 +525,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                 val selectedPlan = getSelectedPlan() ?: return
 
                 if(currentSubscription is ProStatus.Active){
-                    val newSubscriptionExpiryString = selectedPlan.durationType.expiryFromNow()
+                    val newSubscriptionExpiryString = currentSubscription.validUntilFormatted()
 
                     val currentSubscriptionDuration = DateUtils.getLocalisedTimeDuration(
                         context = context,
@@ -551,14 +550,14 @@ class ProSettingsViewModel @AssistedInject constructor(
                                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .put(DATE_KEY, newSubscriptionExpiryString)
                                         .put(CURRENT_PLAN_LENGTH_KEY, currentSubscriptionDuration)
-                                        .put(SELECTED_PLAN_LENGTH_KEY, selectedSubscriptionDuration)
+                                        .put(SELECTED_PLAN_LENGTH_KEY, selectedSubscriptionDuration.lowercase())
                                         // for this string below, we want to remove the 's' at the end if there is one: 12 Months becomes 12 Month
                                         .put(SELECTED_PLAN_LENGTH_SINGULAR_KEY, selectedSubscriptionDuration.removeSuffix("s"))
                                         .format()
                                 else Phrase.from(context.getText(R.string.proUpdateAccessExpireDescription))
                                     .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                     .put(DATE_KEY, newSubscriptionExpiryString)
-                                    .put(SELECTED_PLAN_LENGTH_KEY, selectedSubscriptionDuration)
+                                    .put(SELECTED_PLAN_LENGTH_KEY, selectedSubscriptionDuration.lowercase())
                                     .format(),
                                 positiveText = context.getString(R.string.update),
                                 negativeText = context.getString(R.string.cancel),

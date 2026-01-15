@@ -77,6 +77,7 @@ import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader
+import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.AnimatedProfilePicProCTA
 import org.thoughtcrime.securesms.ui.CTAFeature
@@ -720,7 +721,7 @@ fun MessageDetailDialogs(
 
             is ProBadgeCTA.AnimatedProfile ->
                 AnimatedProfilePicProCTA(
-                    proSubscription = state.proBadgeCTA.proSubscription,
+                    expired = state.proBadgeCTA.proSubscription is ProStatus.Expired,
                     onDismissRequest = {sendCommand(Commands.HideProBadgeCTA)}
                 )
         }
