@@ -31,26 +31,17 @@ class ChatsPreferenceViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
             initialValue = UIState(
-                trimThreads = prefs.getBooleanPreference(
-                    TextSecurePreferences.THREAD_TRIM_ENABLED,
-                    false
-                ),
-                sendWithEnter = prefs.getBooleanPreference(
-                    TextSecurePreferences.SEND_WITH_ENTER,
-                    false
-                ),
-                autoplayAudioMessage = prefs.getBooleanPreference(
-                    TextSecurePreferences.AUTOPLAY_AUDIO_MESSAGES,
-                    false
-                ),
+                trimThreads = prefs.isThreadLengthTrimmingEnabled(),
+                sendWithEnter = prefs.isSendWithEnterEnabled(),
+                autoplayAudioMessage = prefs.isAutoplayAudioMessagesEnabled(),
             )
         )
 
     fun onCommand(command: Commands) {
         val currentValue = uiState.value
         when (command) {
-            Commands.ToggleTrimThreads -> prefs.setThreadLengthTrimming(!currentValue.trimThreads)
-            Commands.ToggleSendWithEnter -> prefs.setSendWithEnter(!currentValue.sendWithEnter)
+            Commands.ToggleTrimThreads -> prefs.setThreadLengthTrimmingEnabled(!currentValue.trimThreads)
+            Commands.ToggleSendWithEnter -> prefs.setSendWithEnterEnabled(!currentValue.sendWithEnter)
             Commands.ToggleAutoplayAudioMessages -> prefs.setAutoplayAudioMessages(!currentValue.autoplayAudioMessage)
         }
     }

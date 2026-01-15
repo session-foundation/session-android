@@ -16,4 +16,7 @@ public class NotificationPrivacyPreference {
     return "all".equals(preference);
   }
 
+  public String getPreference() {
+    return this.preference;
+  }
 }

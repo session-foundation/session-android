@@ -9,7 +9,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
-import android.database.Cursor
 import android.graphics.Rect
 import android.graphics.Typeface
 import android.net.Uri
@@ -2094,7 +2093,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun playVoiceMessageAtIndexIfPossible(indexInAdapter: Int) {
-        if (!textSecurePreferences.autoplayAudioMessages()) return
+        if (!textSecurePreferences.isAutoplayAudioMessagesEnabled()) return
 
         if (indexInAdapter < 0 || indexInAdapter >= adapter.itemCount) { return }
         val viewHolder = binding.conversationRecyclerView.findViewHolderForAdapterPosition(indexInAdapter) as? ConversationAdapter.VisibleMessageViewHolder ?: return

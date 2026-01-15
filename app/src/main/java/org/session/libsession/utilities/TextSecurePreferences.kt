@@ -4,10 +4,8 @@ import android.content.Context
 import android.hardware.Camera
 import android.net.Uri
 import android.provider.Settings
-import androidx.annotation.ArrayRes
 import androidx.annotation.StyleRes
 import androidx.camera.core.CameraSelector
-import androidx.core.app.NotificationCompat
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -74,7 +72,6 @@ import org.thoughtcrime.securesms.pro.toProMessageFeatures
 import org.thoughtcrime.securesms.pro.toProProfileFeatures
 import java.io.IOException
 import java.time.ZonedDateTime
-import java.util.Arrays
 import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -124,6 +121,9 @@ interface TextSecurePreferences {
     fun getMessageBodyTextSize(): Int
     fun setPreferredCameraDirection(value: CameraSelector)
     fun getPreferredCameraDirection(): CameraSelector
+
+    fun setNotificationPrivacy(string : String)
+
     fun getNotificationPrivacy(): NotificationPrivacyPreference
     fun getRepeatAlertsCount(): Int
     fun isInThreadNotifications(): Boolean
@@ -149,9 +149,17 @@ interface TextSecurePreferences {
     fun setNotificationRingtone(ringtone: String?)
     fun setNotificationVibrateEnabled(enabled: Boolean)
     fun isNotificationVibrateEnabled(): Boolean
+
+    fun setSoundWhenAppIsOpenEnabled(enabled: Boolean)
+
+    fun isSoundWhenAppIsOpenEnabled(): Boolean
+
+    fun setWhitelistBackground(enabled : Boolean)
+
+    fun isWhiteListBackground() : Boolean
     fun getNotificationLedColor(): Int
 
-    fun setThreadLengthTrimming(enabled : Boolean)
+    fun setThreadLengthTrimmingEnabled(enabled : Boolean)
     fun isThreadLengthTrimmingEnabled(): Boolean
     fun getLogEncryptedSecret(): String?
     fun setLogEncryptedSecret(base64Secret: String?)
@@ -212,7 +220,7 @@ interface TextSecurePreferences {
     fun setFollowSystemSettings(followSystemSettings: Boolean)
 
     fun setAutoplayAudioMessages(enabled : Boolean)
-    fun autoplayAudioMessages(): Boolean
+    fun isAutoplayAudioMessagesEnabled(): Boolean
     fun hasForcedNewConfig(): Boolean
     fun hasPreference(key: String): Boolean
     fun clearAll()
@@ -265,9 +273,9 @@ interface TextSecurePreferences {
     fun showDonationCTAFromPositiveReviewDebug(): String?
     fun setShowDonationCTAFromPositiveReviewDebug(show: String?)
 
-    fun setSendWithEnter(enabled: Boolean)
+    fun setSendWithEnterEnabled(enabled: Boolean)
 
-    fun getSendWithEnter() : Boolean
+    fun isSendWithEnterEnabled() : Boolean
 
     var deprecationStateOverride: String?
     var deprecatedTimeOverride: ZonedDateTime?
@@ -305,6 +313,7 @@ interface TextSecurePreferences {
         const val LAST_VERSION_CODE_PREF = "last_version_code"
         const val RINGTONE_PREF = "pref_key_ringtone"
         const val VIBRATE_PREF = "pref_key_vibrate"
+        const val SOUND_WHEN_OPEN = "pref_sound_when_app_open"
         const val NOTIFICATION_PREF = "pref_key_enable_notifications"
         const val LED_COLOR_PREF_PRIMARY = "pref_led_color_primary"
         const val PASSPHRASE_TIMEOUT_INTERVAL_PREF = "pref_timeout_interval"
@@ -343,6 +352,7 @@ interface TextSecurePreferences {
         const val GIF_METADATA_WARNING = "has_seen_gif_metadata_warning"
         const val GIF_GRID_LAYOUT = "pref_gif_grid_layout"
         val IS_PUSH_ENABLED get() = "pref_is_using_fcm$pushSuffix"
+        const val IS_WHITELIST_BACKGROUND = "whitelist_background"
         const val CONFIGURATION_SYNCED = "pref_configuration_synced"
         const val PROFILE_PIC_EXPIRY = "profile_pic_expiry"
         const val LAST_OPEN_DATE = "pref_last_open_date"
@@ -945,6 +955,11 @@ class AppTextSecurePreferences @Inject constructor(
         }
     }
 
+    override fun setNotificationPrivacy(string: String) {
+        setStringPreference(TextSecurePreferences.NOTIFICATION_PRIVACY_PREF, string)
+        _events.tryEmit(TextSecurePreferences.NOTIFICATION_PRIVACY_PREF)
+    }
+
     override fun getNotificationPrivacy(): NotificationPrivacyPreference {
         return NotificationPrivacyPreference(getStringPreference(
             TextSecurePreferences.NOTIFICATION_PRIVACY_PREF, "all"))
@@ -1049,21 +1064,41 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setNotificationRingtone(ringtone: String?) {
         setStringPreference(TextSecurePreferences.RINGTONE_PREF, ringtone)
+        _events.tryEmit(TextSecurePreferences.RINGTONE_PREF)
     }
 
     override fun setNotificationVibrateEnabled(enabled: Boolean) {
         setBooleanPreference(TextSecurePreferences.VIBRATE_PREF, enabled)
+        _events.tryEmit(TextSecurePreferences.VIBRATE_PREF)
     }
 
     override fun isNotificationVibrateEnabled(): Boolean {
         return getBooleanPreference(TextSecurePreferences.VIBRATE_PREF, true)
     }
 
+    override fun setSoundWhenAppIsOpenEnabled(enabled: Boolean) {
+        setBooleanPreference(TextSecurePreferences.SOUND_WHEN_OPEN, enabled)
+        _events.tryEmit(TextSecurePreferences.SOUND_WHEN_OPEN)
+    }
+
+    override fun isSoundWhenAppIsOpenEnabled(): Boolean {
+        return getBooleanPreference(TextSecurePreferences.SOUND_WHEN_OPEN, false)
+    }
+
+    override fun setWhitelistBackground(enabled: Boolean) {
+        setBooleanPreference(TextSecurePreferences.IS_WHITELIST_BACKGROUND, enabled)
+        _events.tryEmit(TextSecurePreferences.IS_WHITELIST_BACKGROUND)
+    }
+
+    override fun isWhiteListBackground(): Boolean {
+        return getBooleanPreference(TextSecurePreferences.IS_WHITELIST_BACKGROUND, false)
+    }
+
     override fun getNotificationLedColor(): Int {
         return getIntegerPreference(TextSecurePreferences.LED_COLOR_PREF_PRIMARY, context.getColor(R.color.accent_green))
     }
 
-    override fun setThreadLengthTrimming(enabled: Boolean) {
+    override fun setThreadLengthTrimmingEnabled(enabled: Boolean) {
         setBooleanPreference(TextSecurePreferences.THREAD_TRIM_ENABLED, enabled)
         _events.tryEmit(TextSecurePreferences.THREAD_TRIM_ENABLED)
     }
@@ -1409,7 +1444,7 @@ class AppTextSecurePreferences @Inject constructor(
         _events.tryEmit(AUTOPLAY_AUDIO_MESSAGES)
     }
 
-    override fun autoplayAudioMessages(): Boolean {
+    override fun isAutoplayAudioMessagesEnabled(): Boolean {
         return getBooleanPreference(AUTOPLAY_AUDIO_MESSAGES, false)
     }
 
@@ -1574,6 +1609,7 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setHasCheckedDozeWhitelist(hasChecked: Boolean) {
         setBooleanPreference(HAS_CHECKED_DOZE_WHITELIST, hasChecked)
+        _events.tryEmit(HAS_CHECKED_DOZE_WHITELIST)
     }
 
     override fun hasDonated(): Boolean {
@@ -1639,12 +1675,12 @@ class AppTextSecurePreferences @Inject constructor(
         setStringPreference(DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW, show)
     }
 
-    override fun setSendWithEnter(enabled: Boolean) {
+    override fun setSendWithEnterEnabled(enabled: Boolean) {
         setBooleanPreference(SEND_WITH_ENTER, enabled)
         _events.tryEmit(SEND_WITH_ENTER)
     }
 
-    override fun getSendWithEnter(): Boolean {
+    override fun isSendWithEnterEnabled(): Boolean {
         return getBooleanPreference(SEND_WITH_ENTER, false)
     }
 }
@@ -1657,4 +1693,14 @@ fun TextSecurePreferences.observeBooleanKey(
         .filter { it == key }
         .onStart { emit(key) } // trigger initial read
         .map { getBooleanPreference(key, default) }
+        .distinctUntilChanged()
+
+fun TextSecurePreferences.observeStringKey(
+    key: String,
+    default: String?
+): Flow<String?> =
+    TextSecurePreferences.events
+        .filter { it == key }
+        .onStart { emit(key) }
+        .map { getStringPreference(key, default) }
         .distinctUntilChanged()
