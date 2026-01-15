@@ -18,6 +18,7 @@ import kotlinx.coroutines.withTimeout
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -32,7 +33,7 @@ class SnodeClock @Inject constructor(
     @param:ManagerScope private val scope: CoroutineScope,
     private val snodeDirectory: SnodeDirectory,
     private val snodeClient: Lazy<SnodeClient>,
-) {
+): OnAppStartupComponent {
 
     private val instantState = MutableStateFlow<Instant?>(null)
 
@@ -45,6 +46,12 @@ class SnodeClock @Inject constructor(
 
     // 10 Minutes in milliseconds
     private val minSyncIntervalMs = 10 * 60 * 1000L
+
+    override fun onPostAppStarted() {
+        scope.launch {
+            resyncClock()
+        }
+    }
 
     /**
      * Resync by querying 3 random snodes and setting time to the median of their adjusted times.

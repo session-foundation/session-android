@@ -408,11 +408,52 @@ fun Settings(
         }
 
         // Animated avatar CTA
-        if(uiState.showAnimatedProCTA){
-            AnimatedProCTA(
-                proSubscription = uiState.proDataState.type,
-                sendCommand = sendCommand
-            )
+        when(uiState.avatarCTAState){
+            is SettingsViewModel.AvatarCTAState.Pro -> {
+                SessionProCTA (
+                    title = stringResource(R.string.proActivated),
+                    badgeAtStart = true,
+                    textContent = {
+                        ProBadgeText(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            text = stringResource(R.string.proAlreadyPurchased),
+                            textStyle = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
+                        )
+
+                        Spacer(Modifier.height(2.dp))
+
+                        // main message
+                        Text(
+                            modifier = Modifier
+                                .qaTag(R.string.qa_cta_body)
+                                .align(Alignment.CenterHorizontally),
+                            text = stringResource(R.string.proAnimatedDisplayPicture),
+                            textAlign = TextAlign.Center,
+                            style = LocalType.current.base.copy(
+                                color = LocalColors.current.textSecondary
+                            )
+                        )
+                    },
+                    content = {
+                        CTAAnimatedImages(
+                            heroImageBg = R.drawable.cta_hero_animated_bg,
+                            heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
+                        )
+                    },
+                    positiveButtonText = null,
+                    negativeButtonText = stringResource(R.string.close),
+                    onCancel = { sendCommand(HideAnimatedProCTA) }
+                )
+            }
+
+            is SettingsViewModel.AvatarCTAState.NonPro -> {
+                AnimatedProfilePicProCTA(
+                    expired = uiState.avatarCTAState.expired,
+                    onDismissRequest = { sendCommand(HideAnimatedProCTA) },
+                )
+            }
+
+            else -> {}
         }
 
         // donate confirmation
@@ -1014,54 +1055,6 @@ fun AvatarDialog(
     )
 }
 
-@Composable
-fun AnimatedProCTA(
-    proSubscription: ProStatus,
-    sendCommand: (SettingsViewModel.Commands) -> Unit,
-){
-    if(proSubscription is ProStatus.Active) {
-        SessionProCTA (
-            title = stringResource(R.string.proActivated),
-            badgeAtStart = true,
-            textContent = {
-                ProBadgeText(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    text = stringResource(R.string.proAlreadyPurchased),
-                    textStyle = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
-                )
-
-                Spacer(Modifier.height(2.dp))
-
-                // main message
-                Text(
-                    modifier = Modifier
-                        .qaTag(R.string.qa_cta_body)
-                        .align(Alignment.CenterHorizontally),
-                    text = stringResource(R.string.proAnimatedDisplayPicture),
-                    textAlign = TextAlign.Center,
-                    style = LocalType.current.base.copy(
-                        color = LocalColors.current.textSecondary
-                    )
-                )
-            },
-            content = {
-                CTAAnimatedImages(
-                    heroImageBg = R.drawable.cta_hero_animated_bg,
-                    heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
-                )
-            },
-            positiveButtonText = null,
-            negativeButtonText = stringResource(R.string.close),
-            onCancel = { sendCommand(HideAnimatedProCTA) }
-        )
-    } else {
-        AnimatedProfilePicProCTA(
-            proSubscription = proSubscription,
-            onDismissRequest = { sendCommand(HideAnimatedProCTA) },
-        )
-    }
-}
-
 @OptIn(ExperimentalSharedTransitionApi::class)
 @SuppressLint("UnusedContentLambdaTargetStateParameter")
 @Preview
@@ -1077,7 +1070,7 @@ private fun SettingsScreenPreview() {
                 showAvatarDialog = false,
                 showAvatarPickerOptionCamera = false,
                 showAvatarPickerOptions = false,
-                showAnimatedProCTA = false,
+                avatarCTAState = SettingsViewModel.AvatarCTAState.Hidden,
                 avatarData = AvatarUIData(
                     listOf(
                         AvatarUIElement(

@@ -660,7 +660,8 @@ class RecipientRepository @Inject constructor(
                         avatar = configs.groupInfo.getProfilePic().toRemoteFile(),
                         expiryMode = configs.groupInfo.expiryMode,
                         name = configs.groupInfo.getName() ?: groupInfo.name,
-                        proData = null, // final ProData will be calculated later
+                        //todo LARGE GROUP hiding group pro status until we enable large groups
+                        //proData = null, // final ProData will be calculated later
                         description = configs.groupInfo.getDescription(),
                         members = configs.groupMembers.all()
                             .asSequence()
