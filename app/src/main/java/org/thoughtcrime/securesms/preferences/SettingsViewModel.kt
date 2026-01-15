@@ -54,6 +54,7 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.mms.MediaConstraints
 import org.thoughtcrime.securesms.pro.ProDataState
 import org.thoughtcrime.securesms.pro.ProDetailsRepository
+import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
@@ -375,11 +376,21 @@ class SettingsViewModel @Inject constructor(
             && AnimatedImageUtils.isAnimated(rawImageData)
 
     private fun showAnimatedProCTA() {
-        _uiState.update { it.copy(showAnimatedProCTA = true) }
+        // show the right CTA based on pro state
+        _uiState.update {
+            it.copy(
+                avatarCTAState =
+                    if(it.proDataState.type is ProStatus.Active) AvatarCTAState.Pro
+                    else AvatarCTAState.NonPro(
+                        expired = it.proDataState.type is ProStatus.Expired
+                    ))
+        }
     }
 
     private fun hideAnimatedProCTA() {
-        _uiState.update { it.copy(showAnimatedProCTA = false) }
+        _uiState.update { it.copy(
+            avatarCTAState = AvatarCTAState.Hidden
+        ) }
     }
 
     fun showAvatarDialog() {
@@ -672,12 +683,18 @@ class SettingsViewModel @Inject constructor(
         val showAvatarDialog: Boolean = false,
         val showAvatarPickerOptionCamera: Boolean = false,
         val showAvatarPickerOptions: Boolean = false,
-        val showAnimatedProCTA: Boolean = false,
+        val avatarCTAState: AvatarCTAState = AvatarCTAState.Hidden,
         val usernameDialog: UsernameDialogData? = null,
         val showSimpleDialog: SimpleDialogData? = null,
         val isPostPro: Boolean,
         val proDataState: ProDataState,
     )
+
+    sealed interface AvatarCTAState {
+        data object Hidden : AvatarCTAState
+        data object Pro : AvatarCTAState
+        data class NonPro(val expired: Boolean) : AvatarCTAState
+    }
 
     sealed interface Commands {
         data object ShowClearDataDialog: Commands
