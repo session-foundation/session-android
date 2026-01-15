@@ -102,14 +102,18 @@ class ProStatusManager @Inject constructor(
             (TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO } as Flow<*>)
                 .onStart { emit(Unit) }
                 .map { prefs.forceCurrentUserAsPro() },
-        ){ shouldShowProBadge, proDetailsState, debugSubscription, debugProPlanStatus, forceCurrentUserAsPro ->
+        ){ shouldShowProBadge, proDetailsState,
+           debugSubscription, debugProPlanStatus, forceCurrentUserAsPro ->
             val proDataRefreshState = when(debugProPlanStatus){
                 DebugMenuViewModel.DebugProPlanStatus.LOADING -> State.Loading
                 DebugMenuViewModel.DebugProPlanStatus.ERROR -> State.Error(Exception())
                 else -> {
                     // calculate the real refresh state here
                     when(proDetailsState){
-                        is ProDetailsRepository.LoadState.Loading -> State.Loading
+                        is ProDetailsRepository.LoadState.Loading -> {
+                            if(proDetailsState.waitingForNetwork) State.Error(Exception())
+                            else State.Loading
+                        }
                         is ProDetailsRepository.LoadState.Error -> State.Error(Exception())
                         else -> State.Success(Unit)
                     }
