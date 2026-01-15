@@ -213,7 +213,7 @@ class ConversationViewModel @AssistedInject constructor(
     val conversationReloadNotification: SharedFlow<*> = merge(
         threadIdFlow
             .filterNotNull()
-            .flatMapLatest { id ->  threadDb.updateNotifications.filter { it == id } },
+            .flatMapLatest { id -> threadDb.updateNotifications.filter { it == id } },
         recipientSettingsDatabase.changeNotification.filter { it == address },
         attachmentDatabase.changesNotification,
         reactionDb.changeNotification,
