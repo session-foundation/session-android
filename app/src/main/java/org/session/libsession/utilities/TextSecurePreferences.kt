@@ -12,10 +12,15 @@ import androidx.core.content.edit
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.Json
 import network.loki.messenger.BuildConfig
@@ -54,6 +59,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.OCEAN_LI
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SEEN_DONATION_CTA_AMOUNT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED_ACCENT_COLOR
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED_STYLE
+import org.session.libsession.utilities.TextSecurePreferences.Companion.SEND_WITH_ENTER
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_CURRENT_USER_PRO
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_INCOMING_MESSAGE_PRO
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_OTHER_USERS_PRO
@@ -144,6 +150,8 @@ interface TextSecurePreferences {
     fun setNotificationVibrateEnabled(enabled: Boolean)
     fun isNotificationVibrateEnabled(): Boolean
     fun getNotificationLedColor(): Int
+
+    fun setThreadLengthTrimming(enabled : Boolean)
     fun isThreadLengthTrimmingEnabled(): Boolean
     fun getLogEncryptedSecret(): String?
     fun setLogEncryptedSecret(base64Secret: String?)
@@ -202,6 +210,8 @@ interface TextSecurePreferences {
     fun getFollowSystemSettings(): Boolean
     fun setThemeStyle(themeStyle: String)
     fun setFollowSystemSettings(followSystemSettings: Boolean)
+
+    fun setAutoplayAudioMessages(enabled : Boolean)
     fun autoplayAudioMessages(): Boolean
     fun hasForcedNewConfig(): Boolean
     fun hasPreference(key: String): Boolean
@@ -254,6 +264,10 @@ interface TextSecurePreferences {
     fun setSeenDonationCTAAmountDebug(amount: String?)
     fun showDonationCTAFromPositiveReviewDebug(): String?
     fun setShowDonationCTAFromPositiveReviewDebug(show: String?)
+
+    fun setSendWithEnter(enabled: Boolean)
+
+    fun getSendWithEnter() : Boolean
 
     var deprecationStateOverride: String?
     var deprecatedTimeOverride: ZonedDateTime?
@@ -344,6 +358,8 @@ interface TextSecurePreferences {
         const val SHOWN_CALL_NOTIFICATION = "pref_shown_call_notification" // call notification is a prompt to check privacy settings
         const val LAST_VACUUM_TIME = "pref_last_vacuum_time"
         const val AUTOPLAY_AUDIO_MESSAGES = "pref_autoplay_audio"
+
+        const val SEND_WITH_ENTER = "pref_enter_sends"
         const val FINGERPRINT_KEY_GENERATED = "fingerprint_key_generated"
         const val SELECTED_ACCENT_COLOR = "selected_accent_color"
         const val LAST_VERSION_CHECK = "pref_last_version_check"
@@ -1047,6 +1063,11 @@ class AppTextSecurePreferences @Inject constructor(
         return getIntegerPreference(TextSecurePreferences.LED_COLOR_PREF_PRIMARY, context.getColor(R.color.accent_green))
     }
 
+    override fun setThreadLengthTrimming(enabled: Boolean) {
+        setBooleanPreference(TextSecurePreferences.THREAD_TRIM_ENABLED, enabled)
+        _events.tryEmit(TextSecurePreferences.THREAD_TRIM_ENABLED)
+    }
+
     override fun isThreadLengthTrimmingEnabled(): Boolean {
         return getBooleanPreference(TextSecurePreferences.THREAD_TRIM_ENABLED, true)
     }
@@ -1383,6 +1404,11 @@ class AppTextSecurePreferences @Inject constructor(
         setBooleanPreference(FOLLOW_SYSTEM_SETTINGS, followSystemSettings)
     }
 
+    override fun setAutoplayAudioMessages(enabled: Boolean) {
+        setBooleanPreference(AUTOPLAY_AUDIO_MESSAGES, enabled)
+        _events.tryEmit(AUTOPLAY_AUDIO_MESSAGES)
+    }
+
     override fun autoplayAudioMessages(): Boolean {
         return getBooleanPreference(AUTOPLAY_AUDIO_MESSAGES, false)
     }
@@ -1612,4 +1638,23 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setShowDonationCTAFromPositiveReviewDebug(show: String?) {
         setStringPreference(DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW, show)
     }
+
+    override fun setSendWithEnter(enabled: Boolean) {
+        setBooleanPreference(SEND_WITH_ENTER, enabled)
+        _events.tryEmit(SEND_WITH_ENTER)
+    }
+
+    override fun getSendWithEnter(): Boolean {
+        return getBooleanPreference(SEND_WITH_ENTER, false)
+    }
 }
+
+fun TextSecurePreferences.observeBooleanKey(
+    key: String,
+    default: Boolean
+): Flow<Boolean> =
+    TextSecurePreferences.events
+        .filter { it == key }
+        .onStart { emit(key) } // trigger initial read
+        .map { getBooleanPreference(key, default) }
+        .distinctUntilChanged()

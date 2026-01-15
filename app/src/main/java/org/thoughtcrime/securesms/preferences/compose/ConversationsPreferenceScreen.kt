@@ -1,13 +1,12 @@
 package org.thoughtcrime.securesms.preferences.compose
 
-import android.R.attr.spacing
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
@@ -16,16 +15,35 @@ import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.IconActionRowItem
 import org.thoughtcrime.securesms.ui.SwitchActionRowItem
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
-import org.thoughtcrime.securesms.ui.openUrl
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
-import org.thoughtcrime.securesms.ui.theme.LocalType
-import org.thoughtcrime.securesms.ui.theme.bold
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ConversationsPreferenceScreen() {
+fun ConversationsPreferenceScreen(
+    viewModel: ConversationsPreferenceViewModel,
+    onBlockedContactsClicked: () -> Unit,
+    onBackPressed : () -> Unit
+) {
+
+    val uiState = viewModel.uiState.collectAsState().value
+    ConversationsPreference(
+        uiState = uiState,
+        sendCommand = viewModel::onCommand,
+        onBlockedContactsClicked = onBlockedContactsClicked,
+        onBackPressed = onBackPressed
+    )
+}
+
+@Composable
+private fun ConversationsPreference(
+    uiState: ConversationsPreferenceViewModel.UIState,
+    sendCommand: (commands: ConversationsPreferenceViewModel.Commands) -> Unit,
+    onBlockedContactsClicked: () -> Unit,
+    onBackPressed: () -> Unit
+) {
+
     BasePreferenceScreens(
-        onBack = {},
+        onBack = onBackPressed,
         title = GetString(R.string.sessionConversations).string()
     ) {
         CategoryCell(
@@ -38,9 +56,9 @@ fun ConversationsPreferenceScreen() {
                 SwitchActionRowItem(
                     title = annotatedStringResource(R.string.conversationsMessageTrimmingTrimCommunities),
                     subtitle = annotatedStringResource(R.string.conversationsMessageTrimmingTrimCommunitiesDescription),
-                    checked = false,
+                    checked = uiState.trimThreads,
                     qaTag = R.string.qa_pro_settings_action_show_badge,
-                    onCheckedChange = { }
+                    onCheckedChange = { sendCommand(ConversationsPreferenceViewModel.Commands.ToggleTrimThreads) }
                 )
             }
         }
@@ -57,9 +75,9 @@ fun ConversationsPreferenceScreen() {
                 SwitchActionRowItem(
                     title = annotatedStringResource(R.string.conversationsSendWithEnterKey),
                     subtitle = annotatedStringResource(R.string.conversationsSendWithEnterKeyDescription),
-                    checked = false,
+                    checked = uiState.sendWithEnter,
                     qaTag = R.string.qa_pro_settings_action_show_badge,
-                    onCheckedChange = { }
+                    onCheckedChange = { sendCommand(ConversationsPreferenceViewModel.Commands.ToggleSendWithEnter) }
                 )
             }
         }
@@ -76,9 +94,9 @@ fun ConversationsPreferenceScreen() {
                 SwitchActionRowItem(
                     title = annotatedStringResource(R.string.conversationsAutoplayAudioMessage),
                     subtitle = annotatedStringResource(R.string.conversationsAutoplayAudioMessageDescription),
-                    checked = false,
+                    checked = uiState.autoplayAudioMessage,
                     qaTag = R.string.qa_pro_settings_action_show_badge,
-                    onCheckedChange = { }
+                    onCheckedChange = { sendCommand(ConversationsPreferenceViewModel.Commands.ToggleAutoplayAudioMessages) }
                 )
             }
         }
@@ -98,7 +116,7 @@ fun ConversationsPreferenceScreen() {
                     icon = R.drawable.ic_chevron_right,
                     iconSize = LocalDimensions.current.iconSmall,
                     qaTag = R.string.AccessibilityId_onboardingTos,
-                    onClick = {}
+                    onClick = onBlockedContactsClicked
                 )
             }
         }
@@ -107,6 +125,15 @@ fun ConversationsPreferenceScreen() {
 
 @Preview
 @Composable
-fun PreviewChatPreferenceScreen() {
-    ConversationsPreferenceScreen()
+private fun PreviewChatPreferenceScreen() {
+    ConversationsPreference(
+        uiState = ConversationsPreferenceViewModel.UIState(
+            trimThreads = false,
+            sendWithEnter = true,
+            autoplayAudioMessage = true
+        ),
+        sendCommand = {},
+        onBlockedContactsClicked = {},
+        onBackPressed = {}
+    )
 }
