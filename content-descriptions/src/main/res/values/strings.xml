@@ -293,6 +293,10 @@
     <string name="qa_preferences_typing_indicator">preferences-option-typing-indicators</string>
     <string name="qa_preferences_link_previews">preferences-option-link-previews</string>
     <string name="qa_preferences_incognito_keyboard">preferences-option-incognito-keyboard</string>
+    <string name="qa_preferences_trim_threads">preferences-option-trim-threads</string>
+    <string name="qa_preferences_send_with_enter">preferences-option-send-with-enter</string>
+    <string name="qa_preferences_autoplay_audio">preferences-option-autoplay-audio</string>
+    <string name="qa_preferences_option_blocked_contacts">preferences-option-blocked-contacts</string>
 
     <!-- Misc. -->
     <string name="AccessibilityId_navigateBack">Navigate back</string>

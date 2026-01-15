@@ -20,7 +20,7 @@ import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConversationsPreferenceScreen(
-    viewModel: ConversationsPreferenceViewModel,
+    viewModel: ChatsPreferenceViewModel,
     onBlockedContactsClicked: () -> Unit,
     onBackPressed : () -> Unit
 ) {
@@ -36,8 +36,8 @@ fun ConversationsPreferenceScreen(
 
 @Composable
 private fun ConversationsPreference(
-    uiState: ConversationsPreferenceViewModel.UIState,
-    sendCommand: (commands: ConversationsPreferenceViewModel.Commands) -> Unit,
+    uiState: ChatsPreferenceViewModel.UIState,
+    sendCommand: (commands: ChatsPreferenceViewModel.Commands) -> Unit,
     onBlockedContactsClicked: () -> Unit,
     onBackPressed: () -> Unit
 ) {
@@ -57,8 +57,8 @@ private fun ConversationsPreference(
                     title = annotatedStringResource(R.string.conversationsMessageTrimmingTrimCommunities),
                     subtitle = annotatedStringResource(R.string.conversationsMessageTrimmingTrimCommunitiesDescription),
                     checked = uiState.trimThreads,
-                    qaTag = R.string.qa_pro_settings_action_show_badge,
-                    onCheckedChange = { sendCommand(ConversationsPreferenceViewModel.Commands.ToggleTrimThreads) }
+                    qaTag = R.string.qa_preferences_trim_threads,
+                    onCheckedChange = { sendCommand(ChatsPreferenceViewModel.Commands.ToggleTrimThreads) }
                 )
             }
         }
@@ -76,8 +76,8 @@ private fun ConversationsPreference(
                     title = annotatedStringResource(R.string.conversationsSendWithEnterKey),
                     subtitle = annotatedStringResource(R.string.conversationsSendWithEnterKeyDescription),
                     checked = uiState.sendWithEnter,
-                    qaTag = R.string.qa_pro_settings_action_show_badge,
-                    onCheckedChange = { sendCommand(ConversationsPreferenceViewModel.Commands.ToggleSendWithEnter) }
+                    qaTag = R.string.qa_preferences_send_with_enter,
+                    onCheckedChange = { sendCommand(ChatsPreferenceViewModel.Commands.ToggleSendWithEnter) }
                 )
             }
         }
@@ -95,8 +95,8 @@ private fun ConversationsPreference(
                     title = annotatedStringResource(R.string.conversationsAutoplayAudioMessage),
                     subtitle = annotatedStringResource(R.string.conversationsAutoplayAudioMessageDescription),
                     checked = uiState.autoplayAudioMessage,
-                    qaTag = R.string.qa_pro_settings_action_show_badge,
-                    onCheckedChange = { sendCommand(ConversationsPreferenceViewModel.Commands.ToggleAutoplayAudioMessages) }
+                    qaTag = R.string.qa_preferences_autoplay_audio,
+                    onCheckedChange = { sendCommand(ChatsPreferenceViewModel.Commands.ToggleAutoplayAudioMessages) }
                 )
             }
         }
@@ -115,7 +115,7 @@ private fun ConversationsPreference(
                     subtitle = annotatedStringResource(R.string.blockedContactsManageDescription),
                     icon = R.drawable.ic_chevron_right,
                     iconSize = LocalDimensions.current.iconSmall,
-                    qaTag = R.string.AccessibilityId_onboardingTos,
+                    qaTag = R.string.qa_preferences_option_blocked_contacts,
                     onClick = onBlockedContactsClicked
                 )
             }
@@ -127,7 +127,7 @@ private fun ConversationsPreference(
 @Composable
 private fun PreviewChatPreferenceScreen() {
     ConversationsPreference(
-        uiState = ConversationsPreferenceViewModel.UIState(
+        uiState = ChatsPreferenceViewModel.UIState(
             trimThreads = false,
             sendWithEnter = true,
             autoplayAudioMessage = true

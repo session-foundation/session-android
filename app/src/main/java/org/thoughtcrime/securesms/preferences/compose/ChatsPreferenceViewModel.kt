@@ -12,7 +12,7 @@ import org.session.libsession.utilities.observeBooleanKey
 import javax.inject.Inject
 
 @HiltViewModel
-class ConversationsPreferenceViewModel @Inject constructor(
+class ChatsPreferenceViewModel @Inject constructor(
     var prefs: TextSecurePreferences
 ) : ViewModel() {
 
