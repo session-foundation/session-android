@@ -48,7 +48,7 @@ class SnodeDirectory @Inject constructor(
 
     // Refresh state (non-blocking trigger + real exclusion inside mutex)
     @Volatile private var snodePoolRefreshing = false
-    
+
     @Volatile private var lastRefreshElapsedMs: Long = 0L
 
     private val seedNodePool: Set<String> = when (prefs.getEnvironment()) {
@@ -322,7 +322,7 @@ class SnodeDirectory @Inject constructor(
 
                 val intersected = intersectByEd25519(results)
 
-                // If intersection is empty (or suspiciously tiny), fallback to seed rather than nuking pool.
+                // If intersection is empty, fallback to seed
                 if (intersected.isEmpty()) {
                     val seeded = fetchSnodePoolFromSeed()
                     if (seeded.isNotEmpty()) {
