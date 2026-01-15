@@ -121,6 +121,8 @@ class PathManager @Inject constructor(
     // -----------------------------
 
     suspend fun getPath(exclude: Snode? = null): Path {
+        directory.refreshPoolIfStaleAsync()
+
         val current = _paths.value
         if (current.size >= targetPathCount && current.any { exclude == null || !it.contains(exclude) }) {
             return selectPath(current, exclude)
