@@ -48,11 +48,7 @@ class SnodeDirectory @Inject constructor(
 
     // Refresh state (non-blocking trigger + real exclusion inside mutex)
     @Volatile private var snodePoolRefreshing = false
-
-    /**
-     * Monotonic timing for staleness checks.
-     * 0L means "never successfully seeded yet" (so refresh must not run).
-     */
+    
     @Volatile private var lastRefreshElapsedMs: Long = 0L
 
     private val seedNodePool: Set<String> = when (prefs.getEnvironment()) {
@@ -107,7 +103,13 @@ class SnodeDirectory @Inject constructor(
         minCount: Int = MINIMUM_SNODE_POOL_COUNT
     ): Set<Snode> {
         val current = getSnodePool()
+
         if (current.size >= minCount) {
+            // ensure we set the refresh timestamp in case we are starting the app
+            // with already cached snodes
+            if (lastRefreshElapsedMs == 0L) {
+                lastRefreshElapsedMs = SystemClock.elapsedRealtime()
+            }
             return current
         }
 
