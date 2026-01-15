@@ -1,9 +1,6 @@
 package org.thoughtcrime.securesms.pro.subscription
 
-import org.thoughtcrime.securesms.util.DateUtils
-import java.time.Instant
 import java.time.Period
-import java.time.ZoneId
 
 enum class ProSubscriptionDuration(val duration: Period, val id: String) {
     ONE_MONTH(Period.ofMonths(1), "session-pro-1-month"),
