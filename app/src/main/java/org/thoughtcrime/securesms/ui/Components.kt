@@ -1582,7 +1582,7 @@ fun IconTextActionRowItem(
         paddingValues = paddingValues,
         endContent = {
             Row(
-                modifier = Modifier.widthIn(max = 120.dp),
+                modifier = Modifier.widthIn(max = 150.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
             ) {
@@ -1595,7 +1595,7 @@ fun IconTextActionRowItem(
                     tint = iconColor
                 )
                 Text(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier,
                     text = endText,
                     style = endTextStyle,
                     maxLines = 1,
@@ -1628,7 +1628,7 @@ fun PreviewActionRowItems() {
                 onClick = {},
                 icon = R.drawable.ic_baseline_arrow_drop_down_24,
                 qaTag = 0,
-                endText = annotatedStringResource("Looooooooooooong")
+                endText = annotatedStringResource("Loooooooooong")
             )
 
             IconActionRowItem(

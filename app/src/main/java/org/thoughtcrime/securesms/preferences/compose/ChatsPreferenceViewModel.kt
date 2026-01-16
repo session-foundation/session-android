@@ -47,9 +47,9 @@ class ChatsPreferenceViewModel @Inject constructor(
     }
 
     sealed interface Commands {
-        object ToggleTrimThreads : Commands
-        object ToggleSendWithEnter : Commands
-        object ToggleAutoplayAudioMessages : Commands
+        data object ToggleTrimThreads : Commands
+        data object ToggleSendWithEnter : Commands
+        data object ToggleAutoplayAudioMessages : Commands
     }
 
     data class UIState(

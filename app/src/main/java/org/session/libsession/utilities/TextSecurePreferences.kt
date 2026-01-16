@@ -153,10 +153,6 @@ interface TextSecurePreferences {
     fun setSoundWhenAppIsOpenEnabled(enabled: Boolean)
 
     fun isSoundWhenAppIsOpenEnabled(): Boolean
-
-    fun setWhitelistBackground(enabled : Boolean)
-
-    fun isWhiteListBackground() : Boolean
     fun getNotificationLedColor(): Int
 
     fun setThreadLengthTrimmingEnabled(enabled : Boolean)
@@ -352,7 +348,6 @@ interface TextSecurePreferences {
         const val GIF_METADATA_WARNING = "has_seen_gif_metadata_warning"
         const val GIF_GRID_LAYOUT = "pref_gif_grid_layout"
         val IS_PUSH_ENABLED get() = "pref_is_using_fcm$pushSuffix"
-        const val IS_WHITELIST_BACKGROUND = "whitelist_background"
         const val CONFIGURATION_SYNCED = "pref_configuration_synced"
         const val PROFILE_PIC_EXPIRY = "profile_pic_expiry"
         const val LAST_OPEN_DATE = "pref_last_open_date"
@@ -1060,6 +1055,7 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun removeNotificationRingtone() {
         removePreference(TextSecurePreferences.RINGTONE_PREF)
+        _events.tryEmit(TextSecurePreferences.RINGTONE_PREF)
     }
 
     override fun setNotificationRingtone(ringtone: String?) {
@@ -1083,15 +1079,6 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun isSoundWhenAppIsOpenEnabled(): Boolean {
         return getBooleanPreference(TextSecurePreferences.SOUND_WHEN_OPEN, false)
-    }
-
-    override fun setWhitelistBackground(enabled: Boolean) {
-        setBooleanPreference(TextSecurePreferences.IS_WHITELIST_BACKGROUND, enabled)
-        _events.tryEmit(TextSecurePreferences.IS_WHITELIST_BACKGROUND)
-    }
-
-    override fun isWhiteListBackground(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.IS_WHITELIST_BACKGROUND, false)
     }
 
     override fun getNotificationLedColor(): Int {
