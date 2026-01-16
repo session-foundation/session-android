@@ -804,6 +804,7 @@ fun ProManage(
         title = Phrase.from(LocalContext.current, R.string.managePro)
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString(),
+        dropShadow = LocalColors.current.isLight && data is ProStatus.Expired
     ) {
         // Cell content
         Column(
@@ -896,7 +897,7 @@ fun ProManage(
 
                         is State.Success<*> -> Triple<CharSequence?, Color, @Composable BoxScope.() -> Unit>(
                             null,
-                            LocalColors.current.text, renewIcon(LocalColors.current.accent)
+                            LocalColors.current.text, renewIcon(LocalColors.current.accentText)
                         )
                     }
 
@@ -906,7 +907,7 @@ fun ProManage(
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString()
                         ),
-                        titleColor = if(subscriptionRefreshState is State.Success ) LocalColors.current.accent
+                        titleColor = if(subscriptionRefreshState is State.Success ) LocalColors.current.accentText
                         else LocalColors.current.text,
                         subtitle = if(subtitle == null) null else annotatedStringResource(subtitle),
                         subtitleColor = subColor,

@@ -102,7 +102,7 @@ fun CancelPlan(
     BaseCellButtonProSettingsScreen(
         disabled = true,
         onBack = onBack,
-        buttonText = Phrase.from(context.getText(R.string.cancelProPlan))
+        buttonText = Phrase.from(context.getText(R.string.cancelAccess))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString(),
         dangerButton = true,
