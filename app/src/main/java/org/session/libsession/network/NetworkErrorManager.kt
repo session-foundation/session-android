@@ -55,7 +55,7 @@ class NetworkErrorManager @Inject constructor(
             }
 
             is OnionError.IntermediateNodeUnreachable -> {
-                val failedKey = error.failedPublicKey ?: return FailureDecision.Fail(error)
+                val failedKey = error.offendingSnodeED25519PubKey
 
                 // Get the snode from the path (it should be there based on the error type)
                 val snodeInPath = ctx.path.firstOrNull { it.publicKeySet?.ed25519Key == failedKey }
@@ -75,7 +75,7 @@ class NetworkErrorManager @Inject constructor(
 
             is OnionError.SnodeNotReady -> {
                 // penalise the snode and retry
-                val failedKey = error.failedPublicKey ?: return FailureDecision.Fail(error)
+                val failedKey = error.offendingSnodeED25519PubKey
                 val snodeToRemove = snodeDirectory.getSnodeByKey(failedKey)
                 if(snodeToRemove != null) {
                     pathManager.handleBadSnode(snodeToRemove, ctx.publicKey)

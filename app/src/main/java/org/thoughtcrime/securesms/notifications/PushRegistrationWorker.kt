@@ -30,7 +30,7 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.PushRegistrationDatabase
-import org.thoughtcrime.securesms.util.getRootCause
+import org.thoughtcrime.securesms.util.findCause
 import java.time.Duration
 import java.time.Instant
 
@@ -108,7 +108,7 @@ class PushRegistrationWorker @AssistedInject constructor(
 
                             result.isFailure -> {
                                 val exception = result.exceptionOrNull()!!
-                                if (exception.getRootCause<NonRetryableException>() != null) {
+                                if (exception.findCause<NonRetryableException>() != null) {
                                     Log.e(TAG, "Push registration failed permanently", exception)
                                     PushRegistrationDatabase.RegistrationState.PermanentError
                                 } else {

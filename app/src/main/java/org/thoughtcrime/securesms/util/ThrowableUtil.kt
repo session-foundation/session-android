@@ -12,9 +12,9 @@ fun Throwable.causes(): Sequence<Throwable> = sequence {
 }
 
 /**
- * Find out if this throwable as a root cause of the specified type, if so return it.
+ * Find out if this throwable or any of its causes is of type [E], returning the first one found or null.
  */
-inline fun <reified E: Throwable> Throwable.getRootCause(): E? {
+inline fun <reified E> Throwable.findCause(): E? {
     return causes()
         .filterIsInstance<E>()
         .firstOrNull()

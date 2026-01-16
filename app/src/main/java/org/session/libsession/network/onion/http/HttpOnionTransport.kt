@@ -121,7 +121,7 @@ class HttpOnionTransport @Inject constructor(
             } else {
                 OnionError.IntermediateNodeUnreachable(
                     reportingNode = node,
-                    failedPublicKey = failedPk,
+                    offendingSnodeED25519PubKey = failedPk,
                     status = ErrorStatus(code = statusCode, message = message, body = null),
                     destination = destination
                 )
@@ -139,15 +139,15 @@ class HttpOnionTransport @Inject constructor(
 
             if(guardNotReady){
                 return OnionError.SnodeNotReady(
-                    failedPublicKey = path.first().publicKeySet?.ed25519Key,
+                    offendingSnode = path.first(),
                     status = ErrorStatus(code = statusCode, message = message, body = null),
-                    destination = destination
+                    destination = destination,
                 )
             }
             else if (snodeNotReady) {
                 val pk = message.removePrefix(snodeNotReadyPrefix).trim()
                 return OnionError.SnodeNotReady(
-                    failedPublicKey = pk,
+                    offendingSnodeED25519PubKey = pk,
                     status = ErrorStatus(code = statusCode, message = message, body = null),
                     destination = destination
                 )
@@ -157,6 +157,7 @@ class HttpOnionTransport @Inject constructor(
         // ---- 504: timeouts along path ----
         if (statusCode == 504 && message?.contains("Request time out", ignoreCase = true) == true) {
             return OnionError.PathTimedOut(
+                offendingPath = path,
                 status = ErrorStatus(code = statusCode, message = message, body = null),
                 destination = destination
             )
@@ -166,6 +167,7 @@ class HttpOnionTransport @Inject constructor(
         //todo ONION currently we have no handling of 5xx for snode destination as it's unclear how to best handle them
         if (statusCode == 500 && message?.contains("Invalid response from snode", ignoreCase = true) == true) {
             return OnionError.InvalidHopResponse(
+                offendingPath = path,
                 node = node,
                 status = ErrorStatus(code = statusCode, message = message, body = null),
                 destination = destination
@@ -189,7 +191,7 @@ class HttpOnionTransport @Inject constructor(
         //Log.i("Onion Request", "Got a successful response from request")
         return when (version) {
             Version.V4 -> handleV4Response(rawResponse, destinationSymmetricKey, destination)
-            Version.V2, Version.V3 -> handleV2V3Response(rawResponse, destinationSymmetricKey, destination)
+            Version.V3 -> handleV2V3Response(rawResponse, destinationSymmetricKey, destination)
         }
     }
 

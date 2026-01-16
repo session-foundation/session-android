@@ -19,7 +19,6 @@ interface OnionTransport {
 }
 
 enum class Version(val value: String) {
-    V2("/loki/v2/lsrpc"),
     V3("/loki/v3/lsrpc"),
     V4("/oxen/v4/lsrpc");
 }

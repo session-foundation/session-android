@@ -2,10 +2,11 @@ package org.session.libsession.snode.model
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import org.thoughtcrime.securesms.rpc.storage.StorageServiceResponse
 
 @Serializable
 
-data class BatchResponse(val results: List<Item>, ) {
+data class BatchResponse(val results: List<Item>, ): StorageServiceResponse {
     @Serializable
     data class Item(
         val code: Int,

@@ -45,6 +45,9 @@ import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
+import org.thoughtcrime.securesms.rpc.storage.RetrieveMessageRequest
+import org.thoughtcrime.securesms.rpc.storage.StorageSnodeRPCExecutor
+import org.thoughtcrime.securesms.rpc.storage.execute
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import kotlin.time.Duration.Companion.days
@@ -66,6 +69,8 @@ class Poller @AssistedInject constructor(
     private val messageParser: MessageParser,
     private val snodeClient: SnodeClient,
     private val swarmDirectory: SwarmDirectory,
+    private val retrieveMessageRequestFactory: RetrieveMessageRequest.Factory,
+    private val storageSnodeRPCExecutor: StorageSnodeRPCExecutor,
     @Assisted scope: CoroutineScope
 ) {
     private val userPublicKey: String
@@ -305,22 +310,22 @@ class Poller @AssistedInject constructor(
 
         // Get messages call wrapped in an async
         val fetchMessageTask = if (!pollOnlyUserProfileConfig) {
-            val request = snodeClient.buildAuthenticatedRetrieveBatchRequest(
+            val request = retrieveMessageRequestFactory.create(
+                namespace = Namespace.DEFAULT(),
                 lastHash = lokiApiDatabase.getLastMessageHashValue(
                     snode = snode,
                     publicKey = userAuth.accountId.hexString,
                     namespace = Namespace.DEFAULT()
                 ),
                 auth = userAuth,
-                maxSize = -2)
+                maxSize = -2
+            )
 
             this.async {
                 runCatching {
-                    snodeClient.sendBatchRequest(
-                        snode = snode,
-                        publicKey = userPublicKey,
-                        request = request,
-                        responseType = RetrieveMessageResponse.serializer()
+                    storageSnodeRPCExecutor.execute(
+                        dest = snode,
+                        req = request
                     )
                 }
             }
@@ -341,7 +346,7 @@ class Poller @AssistedInject constructor(
                 .map { type ->
                     val config = configs.getConfig(type)
                     hashesToExtend += config.activeHashes()
-                    val request = snodeClient.buildAuthenticatedRetrieveBatchRequest(
+                    val request = retrieveMessageRequestFactory.create(
                         lastHash = lokiApiDatabase.getLastMessageHashValue(
                             snode = snode,
                             publicKey = userAuth.accountId.hexString,
@@ -354,11 +359,9 @@ class Poller @AssistedInject constructor(
 
                     this.async {
                         type to runCatching {
-                            snodeClient.sendBatchRequest(
-                                snode = snode,
-                                publicKey = userPublicKey,
-                                request = request,
-                                responseType = RetrieveMessageResponse.serializer()
+                            storageSnodeRPCExecutor.execute(
+                                dest = snode,
+                                req = request
                             )
                         }
                     }

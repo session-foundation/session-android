@@ -2,6 +2,7 @@ package org.session.libsignal.utilities
 
 import android.annotation.SuppressLint
 import android.util.LruCache
+import org.thoughtcrime.securesms.rpc.BatchRPCExecutor
 
 /**
  * Create a Snode from a "-" delimited String if valid, null otherwise.
@@ -16,8 +17,10 @@ fun Snode(string: String): Snode? {
     return Snode(address, port, Snode.KeySet(ed25519Key, x25519Key), version)
 }
 
-data class Snode(val address: String, val port: Int, val publicKeySet: KeySet?, val version: Version) {
+data class Snode(val address: String, val port: Int, val publicKeySet: KeySet?, val version: Version): BatchRPCExecutor.Batchable {
     val ip: String get() = address.removePrefix("https://")
+
+    override val batchKey: Any get() = publicKeySet?.ed25519Key ?: "$address:$port"
 
     enum class Method(val rawValue: String) {
         GetSwarm("get_snodes_for_pubkey"),

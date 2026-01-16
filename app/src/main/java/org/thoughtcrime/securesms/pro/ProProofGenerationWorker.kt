@@ -26,7 +26,7 @@ import org.thoughtcrime.securesms.pro.api.GenerateProProofRequest
 import org.thoughtcrime.securesms.pro.api.ProApiExecutor
 import org.thoughtcrime.securesms.pro.api.ProDetails
 import org.thoughtcrime.securesms.pro.api.successOrThrow
-import org.thoughtcrime.securesms.util.getRootCause
+import org.thoughtcrime.securesms.util.findCause
 import java.time.Duration
 import java.time.Instant
 
@@ -85,7 +85,7 @@ class ProProofGenerationWorker @AssistedInject constructor(
             Log.e(WORK_NAME, "Error generating Pro proof", e)
             if (e is NonRetryableException ||
                 // HTTP 403 indicates that the user is not
-                e.getRootCause<OnionError.DestinationError>()?.status?.code == 403) {
+                e.findCause<OnionError.DestinationError>()?.status?.code == 403) {
                 Result.failure()
             } else {
                 Result.retry()

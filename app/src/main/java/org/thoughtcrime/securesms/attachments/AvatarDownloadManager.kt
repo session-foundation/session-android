@@ -29,7 +29,7 @@ import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.util.DateUtils.Companion.millsToInstant
-import org.thoughtcrime.securesms.util.getRootCause
+import org.thoughtcrime.securesms.util.findCause
 import java.io.File
 import java.io.InputStream
 import java.security.MessageDigest
@@ -113,8 +113,8 @@ class AvatarDownloadManager @Inject constructor(
             val (bytes, meta) = try {
                 downloadAndDecryptFile(file)
             } catch (e: Exception) {
-                if (e.getRootCause<NonRetryableException>() != null ||
-                    e.getRootCause<OnionError.DestinationError>()?.status?.code == 404
+                if (e.findCause<NonRetryableException>() != null ||
+                    e.findCause<OnionError.DestinationError>()?.status?.code == 404
                 ) {
                     Log.w(TAG, "Download failed permanently for file $file", e)
                     // Write an empty file with a permanent error metadata if the download failed permanently.

@@ -1,12 +1,17 @@
 package org.session.libsession.network.snode
 
+import androidx.collection.arraySetOf
 import dagger.Lazy
 import org.session.libsession.network.SnodeClient
 import org.session.libsignal.crypto.shuffledRandom
 import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Snode
+import org.thoughtcrime.securesms.rpc.storage.GetSwarmRequest
+import org.thoughtcrime.securesms.rpc.storage.StorageSnodeRPCExecutor
+import org.thoughtcrime.securesms.rpc.storage.execute
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 
 @Singleton
@@ -14,6 +19,8 @@ class SwarmDirectory @Inject constructor(
     private val storage: SwarmStorage,
     private val snodeDirectory: SnodeDirectory,
     private val snodeClient: Lazy<SnodeClient>,
+    private val snodeRPCExecutor: Provider<StorageSnodeRPCExecutor>,
+    private val getSwarmRequestFactory: GetSwarmRequest.Factory,
 ) {
     private val minimumSwarmSize: Int = 3
 
@@ -34,9 +41,13 @@ class SwarmDirectory @Inject constructor(
             "Snode pool is empty"
         }
 
-        val response = snodeClient.get().fetchSwarm(publicKey)
+        val response = snodeRPCExecutor.get().execute(
+            dest = pool.random(),
+            req = getSwarmRequestFactory.create(publicKey)
+        )
 
-        return parseSnodes(response).toSet()
+        return response.snodes
+            .mapNotNullTo(arraySetOf()) { it.toSnode() }
     }
 
     /**

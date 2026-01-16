@@ -38,8 +38,11 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
+import org.thoughtcrime.securesms.rpc.storage.RetrieveMessageRequest
+import org.thoughtcrime.securesms.rpc.storage.StorageSnodeRPCExecutor
+import org.thoughtcrime.securesms.rpc.storage.execute
 import org.thoughtcrime.securesms.util.AppVisibilityManager
-import org.thoughtcrime.securesms.util.getRootCause
+import org.thoughtcrime.securesms.util.findCause
 import java.time.Instant
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.days
@@ -58,6 +61,8 @@ class GroupPoller @AssistedInject constructor(
     private val receivedMessageProcessor: ReceivedMessageProcessor,
     private val swarmDirectory: SwarmDirectory,
     private val snodeClient: SnodeClient,
+    private val retrieveMessageRequestFactory: RetrieveMessageRequest.Factory,
+    private val storageSnodeRPCExecutor: StorageSnodeRPCExecutor,
 ) {
     companion object {
         private const val POLL_INTERVAL = 3_000L
@@ -247,10 +252,9 @@ class GroupPoller @AssistedInject constructor(
                 val pollingTasks = mutableListOf<Pair<String, Deferred<*>>>()
 
                 val receiveRevokeMessage = async {
-                    snodeClient.sendBatchRequest(
+                    storageSnodeRPCExecutor.execute(
                         snode,
-                        groupId.hexString,
-                        snodeClient.buildAuthenticatedRetrieveBatchRequest(
+                        retrieveMessageRequestFactory.create(
                             lastHash = lokiApiDatabase.getLastMessageHashValue(
                                 snode,
                                 groupId.hexString,
@@ -259,8 +263,7 @@ class GroupPoller @AssistedInject constructor(
                             auth = groupAuth,
                             namespace = Namespace.REVOKED_GROUP_MESSAGES(),
                             maxSize = null,
-                        ),
-                        RetrieveMessageResponse.serializer()
+                        )
                     ).messages
                 }
 
@@ -287,16 +290,14 @@ class GroupPoller @AssistedInject constructor(
                     ).orEmpty()
 
 
-                    snodeClient.sendBatchRequest(
-                        snode = snode,
-                        publicKey = groupId.hexString,
-                        request = snodeClient.buildAuthenticatedRetrieveBatchRequest(
+                    storageSnodeRPCExecutor.execute(
+                        snode,
+                        retrieveMessageRequestFactory.create(
                             lastHash = lastHash,
                             auth = groupAuth,
                             namespace = Namespace.GROUP_MESSAGES(),
                             maxSize = null,
                         ),
-                        responseType = RetrieveMessageResponse.serializer()
                     )
                 }
 
@@ -306,10 +307,9 @@ class GroupPoller @AssistedInject constructor(
                     Namespace.GROUP_MEMBERS()
                 ).map { ns ->
                     async {
-                        snodeClient.sendBatchRequest(
-                            snode = snode,
-                            publicKey = groupId.hexString,
-                            request = snodeClient.buildAuthenticatedRetrieveBatchRequest(
+                        storageSnodeRPCExecutor.execute(
+                            snode,
+                            retrieveMessageRequestFactory.create(
                                 lastHash = lokiApiDatabase.getLastMessageHashValue(
                                     snode,
                                     groupId.hexString,
@@ -319,7 +319,6 @@ class GroupPoller @AssistedInject constructor(
                                 namespace = ns,
                                 maxSize = null,
                             ),
-                            responseType = RetrieveMessageResponse.serializer()
                         ).messages
                     }
                 }
@@ -391,7 +390,7 @@ class GroupPoller @AssistedInject constructor(
             if (error != null && currentSnode != null) {
                 val badResponse = (sequenceOf(error) + error.suppressedExceptions.asSequence())
                     .firstOrNull { err ->
-                        err.getRootCause<BatchResponse.Error>()?.item?.let { it.isServerError || it.isSnodeNoLongerPartOfSwarm } == true
+                        err.findCause<BatchResponse.Error>()?.item?.let { it.isServerError || it.isSnodeNoLongerPartOfSwarm } == true
                     }
 
                 if (badResponse != null) {
