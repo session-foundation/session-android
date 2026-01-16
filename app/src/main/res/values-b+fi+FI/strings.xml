@@ -1391,7 +1391,6 @@ Ryhmän jäseniä ja asetuksia ei voida muuttaa ilman järjestelmänvalvojaa. Jo
     <string name="useFastMode">Käytä nopeaa tilaa</string>
     <string name="viaPlatformWebsiteDescription">Vaihda suunnitelmasi käyttämällä {platform_account}-tiliä, jolla rekisteröidyin, <b><font color="0">{platform}</font></b>-verkkosivuston kautta.</string>
     <string name="viaStoreWebsite">{platform}-sivuston kautta</string>
-    <string name="viaStoreWebsiteDescription">Päivitä {pro}-käyttöoikeutesi käyttämällä {platform_account}-tiliä, jolla rekisteröidyin, <b><font color="0">{platform_store}</font></b>-verkkosivuston kautta.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Videon toisto epäonnistui.</string>
     <string name="view">Näytä</string>

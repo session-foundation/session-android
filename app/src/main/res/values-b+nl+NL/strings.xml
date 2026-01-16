@@ -1402,7 +1402,6 @@
     <string name="useFastMode">Gebruik Snelle Modus</string>
     <string name="viaPlatformWebsiteDescription">Wijzig je abonnement met het {platform_account} waarmee je je hebt aangemeld, via de <b><font color="0">{platform}-website</font></b>.</string>
     <string name="viaStoreWebsite">Via de {platform} website</string>
-    <string name="viaStoreWebsiteDescription">Werk je {pro}-toegang bij met behulp van het {platform_account} waarmee je je hebt aangemeld, via de <b><font color="0">{platform_store}</font></b>-website.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Kan video niet afspelen.</string>
     <string name="view">Bekijken</string>

@@ -1319,7 +1319,6 @@
     <string name="urlOpenDescriptionAlternative">Keçidlər, brauzerinizdə açılacaq.</string>
     <string name="useFastMode">Sürətli rejimi istifadə et</string>
     <string name="viaStoreWebsite">{platform} veb saytı vasitəsilə</string>
-    <string name="viaStoreWebsiteDescription">Qeydiyyatdan keçdiyiniz {platform_account} hesabını istifadə edərək {pro} erişiminizi <b><font color="0">{platform_store}</font></b> veb saytı üzərindən güncəlləyin.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Video oxudula bilmir.</string>
     <string name="view">Göstər</string>

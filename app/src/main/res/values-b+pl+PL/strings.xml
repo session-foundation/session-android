@@ -1494,7 +1494,6 @@
     <string name="useFastMode">Użyj trybu szybkiego</string>
     <string name="viaPlatformWebsiteDescription">Zmień swój plan, korzystając z konta {platform_account}, którego użyto do rejestracji, przez stronę <b><font color="0">{platform}</font></b>.</string>
     <string name="viaStoreWebsite">Przez stronę internetową {platform}</string>
-    <string name="viaStoreWebsiteDescription">Zaktualizuj dostęp {pro} za pomocą konta {platform_account}, z którego się rejestrowałeś(-aś), przez stronę <b><font color="0">{platform_store}</font></b>.</string>
     <string name="video">Wideo</string>
     <string name="videoErrorPlay">Nie można odtworzyć wideo.</string>
     <string name="view">Zobacz</string>

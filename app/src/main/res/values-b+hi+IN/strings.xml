@@ -1402,7 +1402,6 @@
     <string name="useFastMode">तीव्र मोड इस्तेमाल करे</string>
     <string name="viaPlatformWebsiteDescription"><b><font color="0">{platform} वेबसाइट</font></b> के माध्यम से उस {platform_account} का उपयोग करके अपनी योजना बदलें जिससे आपने साइन अप किया था।</string>
     <string name="viaStoreWebsite">{platform} वेबसाइट के माध्यम से</string>
-    <string name="viaStoreWebsiteDescription"><b><font color="0">{platform_store}</font></b> वेबसाइट के माध्यम से उस {platform_account} का उपयोग करके अपनी {pro} एक्सेस अपडेट करें जिससे आपने साइन अप किया था।</string>
     <string name="video">वीडियो</string>
     <string name="videoErrorPlay">वीडियो चलाने में असमर्थ</string>
     <string name="view">राय</string>
