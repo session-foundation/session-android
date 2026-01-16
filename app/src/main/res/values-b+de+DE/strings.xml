@@ -1403,7 +1403,6 @@
     <string name="useFastMode">Schnellen Modus verwenden</string>
     <string name="viaPlatformWebsiteDescription">Ändern Sie Ihren Plan mit dem {platform_account}, mit dem Sie sich registriert haben, über die <b><font color="0">{platform}-Website</font></b>.</string>
     <string name="viaStoreWebsite">Über die {platform}-Website</string>
-    <string name="viaStoreWebsiteDescription">Aktualisiere deinen {pro}-Zugang mithilfe des {platform_account}, mit dem du dich registriert hast, über die Website von <b><font color="0">{platform_store}</font></b>.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Videowiedergabe fehlgeschlagen.</string>
     <string name="view">Anzeigen</string>

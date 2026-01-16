@@ -1497,7 +1497,6 @@
     <string name="useFastMode">Použít rychlý režim</string>
     <string name="viaPlatformWebsiteDescription">Změňte svůj tarif pomocí {platform_account}, kterým jste se zaregistrovali, prostřednictvím <b><font color="0">webu {platform}</font></b>.</string>
     <string name="viaStoreWebsite">Přes webové stránky {platform}</string>
-    <string name="viaStoreWebsiteDescription">Aktualizujte svůj přístup k {pro} pomocí {platform_account}, se kterým jste se zaregistrovali, prostřednictvím webu <b><font color="0">{platform_store}</font></b>.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Nelze přehrát video.</string>
     <string name="view">Zobrazit</string>

@@ -1401,7 +1401,6 @@
     <string name="useFastMode">Använd snabbläge</string>
     <string name="viaPlatformWebsiteDescription">Ändra din plan med det {platform_account} du använde vid registrering, via <b><font color="0">{platform}s webbplats</font></b>.</string>
     <string name="viaStoreWebsite">Via webbplatsen för {platform}</string>
-    <string name="viaStoreWebsiteDescription">Uppdatera din {pro}-åtkomst med hjälp av det {platform_account} du registrerade dig med, via <b><font color="0">{platform_store}</font></b> webbplatsen.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Kunde inte spela upp video.</string>
     <string name="view">Visa</string>

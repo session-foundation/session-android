@@ -1403,7 +1403,6 @@
     <string name="useFastMode">Gyors mód használata</string>
     <string name="viaPlatformWebsiteDescription">Változtasd meg az előfizetésedet a regisztrációhoz használt {platform_account} fiókkal, a <b><font color="0">{platform} weboldalon</font></b> keresztül.</string>
     <string name="viaStoreWebsite">A(z) {platform} weboldalán keresztül</string>
-    <string name="viaStoreWebsiteDescription">Frissítse a(z) {pro} hozzáférését a regisztrációhoz használt {platform_account} fiók segítségével a <b><font color="0">{platform_store}</font></b> weboldalon.</string>
     <string name="video">Videó</string>
     <string name="videoErrorPlay">Videó lejátszása sikertelen.</string>
     <string name="view">Megtekintés</string>
