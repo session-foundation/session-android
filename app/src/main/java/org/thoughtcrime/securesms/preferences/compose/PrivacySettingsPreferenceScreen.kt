@@ -25,6 +25,8 @@ fun PrivacySettingsPreferenceScreen(
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.refreshKeyguardSecure()
     }
+
+    PrivacySettingsPreference()
 }
 
 @Composable

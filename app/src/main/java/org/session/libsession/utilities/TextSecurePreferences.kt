@@ -801,6 +801,7 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setScreenLockEnabled(value: Boolean) {
         setBooleanPreference(TextSecurePreferences.SCREEN_LOCK, value)
+        _events.tryEmit(TextSecurePreferences.SCREEN_LOCK,)
     }
 
     override fun getScreenLockTimeout(): Long {
@@ -897,6 +898,7 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setReadReceiptsEnabled(enabled: Boolean) {
         setBooleanPreference(TextSecurePreferences.READ_RECEIPTS_PREF, enabled)
+        _events.tryEmit(TextSecurePreferences.READ_RECEIPTS_PREF)
     }
 
     override fun isTypingIndicatorsEnabled(): Boolean {
