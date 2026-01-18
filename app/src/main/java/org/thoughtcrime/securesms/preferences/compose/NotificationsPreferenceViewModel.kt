@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -24,6 +26,7 @@ import org.session.libsession.utilities.observeStringKey
 import org.thoughtcrime.securesms.notifications.NotificationChannels
 import org.thoughtcrime.securesms.ui.isWhitelistedFromDoze
 import javax.inject.Inject
+import kotlin.Boolean
 
 @HiltViewModel
 class NotificationsPreferenceViewModel @Inject constructor(
@@ -45,14 +48,17 @@ class NotificationsPreferenceViewModel @Inject constructor(
 
     private val notificationBehavior: StateFlow<UIState> =
         combine(
-            prefs.pushEnabled,
+            prefs.observeBooleanKey(
+                TextSecurePreferences.HAS_CHECKED_DOZE_WHITELIST,
+                default = false
+            ),
             prefs.observeStringKey(TextSecurePreferences.RINGTONE_PREF, default = null),
             prefs.observeBooleanKey(TextSecurePreferences.SOUND_WHEN_OPEN, default = false),
             prefs.observeBooleanKey(TextSecurePreferences.VIBRATE_PREF, default = true),
             prefs.observeStringKey(TextSecurePreferences.NOTIFICATION_PRIVACY_PREF, default = "all")
-        ) { isPushEnabled, ringtone, soundWhenOpen, vibrate, notificationPrivacy ->
+        ) { checkedDozeWhitelist, ringtone, soundWhenOpen, vibrate, notificationPrivacy ->
             UIState(
-                isPushEnabled = isPushEnabled,
+                checkedDozeWhitelist = checkedDozeWhitelist,
                 ringtone = prefs.getNotificationRingtone().toString(),
                 soundWhenAppIsOpen = soundWhenOpen,
                 vibrate = vibrate,
@@ -61,22 +67,27 @@ class NotificationsPreferenceViewModel @Inject constructor(
         }.stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, UIState())
 
     init {
-        viewModelScope.launch {
-            notificationBehavior.collect { values ->
-                _uiState.update {
-                    it.copy(
-                        isPushEnabled = values.isPushEnabled,
-                        checkedDozeWhitelist = values.checkedDozeWhitelist,
-                        ringtone = getRingtoneName(values.ringtone),
-                        soundWhenAppIsOpen = values.soundWhenAppIsOpen,
-                        vibrate = values.vibrate,
-                        notificationPrivacy = privacyOptions
-                            .find { option -> option.value == values.notificationPrivacy }
-                            ?.label
-                    )
-                }
-            }
-        }
+        combine(
+            prefs.pushEnabled,
+            notificationBehavior,
+        ) { isPushEnabled, notifPrefs ->
+            UIState(
+                isPushEnabled = isPushEnabled,
+                checkedDozeWhitelist = notifPrefs.checkedDozeWhitelist,
+                isWhitelistedFromDoze = _uiState.value.isWhitelistedFromDoze,
+
+                ringtone = getRingtoneName(notifPrefs.ringtone),
+                soundWhenAppIsOpen = notifPrefs.soundWhenAppIsOpen,
+                vibrate = notifPrefs.vibrate,
+                notificationPrivacy = privacyOptions.firstOrNull { it.value == notifPrefs.notificationPrivacy }?.label
+                    ?: "",
+                showWhitelistEnableDialog = _uiState.value.showWhitelistEnableDialog,
+                showWhitelistDisableDialog = _uiState.value.showWhitelistEnableDialog,
+                showNotificationPrivacyDialog = _uiState.value.showNotificationPrivacyDialog
+            )
+        }.onEach { it ->
+            _uiState.value = it
+        }.launchIn(viewModelScope)
     }
 
     fun onCommand(command: Commands) {

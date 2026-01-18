@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.viewmodel.compose.viewModel
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.CategoryCell
 import org.thoughtcrime.securesms.ui.GetString
@@ -15,7 +18,17 @@ import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 
 @Composable
-fun PrivacySettingsPreferenceScreen() {
+fun PrivacySettingsPreferenceScreen(
+    viewModel: PrivacySettingsPreferenceViewModel
+) {
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.refreshKeyguardSecure()
+    }
+}
+
+@Composable
+fun PrivacySettingsPreference() {
     BasePreferenceScreens(
         onBack = {},
         title = GetString(R.string.sessionPrivacy).string()
@@ -156,5 +169,5 @@ fun PrivacySettingsPreferenceScreen() {
 @Preview
 @Composable
 fun PreviewPrivacySettingsPreference() {
-    PrivacySettingsPreferenceScreen()
+    PrivacySettingsPreference()
 }
