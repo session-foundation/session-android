@@ -1,6 +1,5 @@
 package org.session.libsession.network.snode
 
-import android.os.SystemClock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -48,9 +47,6 @@ class SnodeDirectory @Inject constructor(
     // Refresh state (non-blocking trigger + real exclusion inside mutex)
     @Volatile private var snodePoolRefreshing = false
 
-    //todo ONION persist and make sure a restarted session takes the 2h into account
-    @Volatile private var lastRefreshElapsedMs: Long = 0L
-
     private val seedNodePool: Set<String> = when (prefs.getEnvironment()) {
         Environment.DEV_NET -> setOf("http://sesh-net.local:1280")
         Environment.TEST_NET -> setOf("http://public.loki.foundation:38157")
@@ -87,7 +83,7 @@ class SnodeDirectory @Inject constructor(
     private fun persistSnodePool(newPool: Set<Snode>) {
         //todo ONION in the new db paradigm we will need to ensure our path doesn't have snode not in this pool
         storage.setSnodePool(newPool)
-        lastRefreshElapsedMs = SystemClock.elapsedRealtime()
+        prefs.setLastSnodePoolRefresh(System.currentTimeMillis())
     }
 
     /**
@@ -107,9 +103,10 @@ class SnodeDirectory @Inject constructor(
 
         if (current.size >= minCount) {
             // ensure we set the refresh timestamp in case we are starting the app
-            // with already cached snodes
-            if (lastRefreshElapsedMs == 0L) {
-                lastRefreshElapsedMs = SystemClock.elapsedRealtime()
+            // with already cached snodes - set the timestamp to stale to enforce a refresh soon
+            if (prefs.getLastSnodePoolRefresh() == 0L) {
+                // Force a refresh on next opportunity
+                prefs.setLastSnodePoolRefresh(System.currentTimeMillis() - POOL_REFRESH_INTERVAL_MS - 1)
             }
             return current
         }
@@ -269,11 +266,12 @@ class SnodeDirectory @Inject constructor(
      */
     fun refreshPoolIfStaleAsync() {
         // Don’t refresh until we’ve successfully seeded at least once
-        if (lastRefreshElapsedMs == 0L) return
+        val last = prefs.getLastSnodePoolRefresh()
+        if (last == 0L) return
 
-        val now = SystemClock.elapsedRealtime()
+        val now = System.currentTimeMillis()
         if (snodePoolRefreshing) return
-        if (now - lastRefreshElapsedMs < POOL_REFRESH_INTERVAL_MS) return
+        if (now >= last && now - last < POOL_REFRESH_INTERVAL_MS) return
 
         scope.launch {
             refreshPoolFromSnodes(
@@ -294,9 +292,10 @@ class SnodeDirectory @Inject constructor(
 
         poolWriteMutex.withLock {
             // Re-check staleness INSIDE the lock to avoid “double refresh” races
-            if (lastRefreshElapsedMs == 0L) return // still not seeded
-            val now = SystemClock.elapsedRealtime()
-            if (now - lastRefreshElapsedMs < POOL_REFRESH_INTERVAL_MS) return
+            val last = prefs.getLastSnodePoolRefresh()
+            if (last == 0L) return// still not seeded
+            val now = System.currentTimeMillis()
+            if (now >= last && now - last < POOL_REFRESH_INTERVAL_MS) return
 
             if (snodePoolRefreshing) return
             snodePoolRefreshing = true
