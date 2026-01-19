@@ -94,9 +94,16 @@ class NetworkErrorManager @Inject constructor(
                 return FailureDecision.Retry
             }
 
-            else -> {
-                return FailureDecision.Fail
+            is OnionError.DestinationUnreachable -> {
+                if (error.destination is OnionDestination.SnodeDestination) {
+                    pathManager.handleBadSnode(error.destination.snode)
+                }
+
+                return FailureDecision.Retry
             }
+            is OnionError.InvalidResponse -> TODO()
+            is OnionError.PathError -> TODO()
+            is OnionError.Unknown -> TODO()
         }
 
         // --------------------------------------------------------------------
