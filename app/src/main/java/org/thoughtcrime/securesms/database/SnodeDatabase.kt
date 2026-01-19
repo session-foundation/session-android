@@ -84,7 +84,7 @@ class SnodeDatabase @Inject constructor(
                     pathId to snode
                 }
                 .fold(FoldState()) { state, (pathId, snode) ->
-                    if (state.lastPathId != null && state.lastPathId != pathId) {
+                    if (state?.lastPathId == pathId) {
                         state.paths.last() += snode
                     } else {
                         state.paths += mutableListOf(snode)
@@ -207,7 +207,10 @@ class SnodeDatabase @Inject constructor(
     }
 
     companion object {
+
+        @Suppress("DEPRECATION")
         fun createTableAndMigrateData(db: SupportSQLiteDatabase) {
+            //language=roomsql
             arrayOf(
                 """
                     CREATE TABLE snodes(
@@ -244,6 +247,63 @@ class SnodeDatabase @Inject constructor(
             ).forEach { sql ->
                 db.execSQL(sql)
             }
+
+            // Migrate existing data:
+            // Note that the new db structure implies that snode pool contains ALL snodes used in
+            // swarms and paths. No such guarantee existed before, so we will merge the data from
+            // swarms and paths into the snode pool here, to avoid losing any snodes.
+            val oldSnodePool = LokiAPIDatabase.getSnodePool(db)
+            val oldSwarms = LokiAPIDatabase.getSwarms(db)
+            val oldPaths = LokiAPIDatabase.getOnionRequestPaths(db)
+
+            oldSnodePool.asSequence()
+                .plus(oldSwarms.asSequence().flatMap { it.value.asSequence() })
+                .plus(oldPaths.asSequence().flatMap { it.asSequence() })
+                .forEach { snode ->
+                    //language=roomsql
+                    db.execSQL("INSERT OR IGNORE INTO snodes (ed25519_pub_key, x25519_pub_key, ip, https_port) VALUES (?, ?, ?, ?)",
+                        arrayOf<Any>(
+                            snode.publicKeySet!!.ed25519Key,
+                            snode.publicKeySet.x25519Key,
+                            snode.ip,
+                            snode.port
+                        )
+                    )
+                }
+
+            // Migrate swarms
+            oldSwarms.forEach { (pubkey, swarm) ->
+                swarm.forEach { snode ->
+                    //language=roomsql
+                    db.execSQL("""
+                    INSERT OR IGNORE INTO swarm_snodes (pubkey, snode_id) 
+                    SELECT ?1, id FROM snodes WHERE ed25519_pub_key = ?2
+                    """, arrayOf<Any>(
+                        pubkey,
+                        snode.publicKeySet!!.ed25519Key
+                    ))
+                }
+            }
+
+            // Migrate paths
+            oldPaths.forEachIndexed { pathIndex, path ->
+                path.forEachIndexed { snodeIndex, snode ->
+                    //language=roomsql
+                    db.execSQL("""
+                    INSERT OR IGNORE INTO path_snodes (path_id, snode_id, position) 
+                    SELECT ?1, id, ?2 FROM snodes WHERE ed25519_pub_key = ?3
+                    """, arrayOf<Any>(
+                        pathIndex,
+                        snodeIndex,
+                        snode.publicKeySet!!.ed25519Key
+                    ))
+                }
+            }
+
+            // Removing old tables
+            db.execSQL("DROP TABLE ${LokiAPIDatabase.swarmTable}")
+            db.execSQL("DROP TABLE ${LokiAPIDatabase.snodePoolTable}")
+            db.execSQL("DROP TABLE ${LokiAPIDatabase.onionRequestPathTable}")
         }
     }
 }
