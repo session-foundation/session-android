@@ -1,12 +1,15 @@
 package org.session.libsession.network.snode
 
+import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.session.libsession.network.SnodeClient
 import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.secureRandom
+import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.ForkInfo
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.JsonUtil
@@ -17,6 +20,7 @@ import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.io.encoding.Base64
 
 @Singleton
 class SnodeDirectory @Inject constructor(
@@ -108,6 +112,7 @@ class SnodeDirectory @Inject constructor(
                 // Force a refresh on next opportunity
                 prefs.setLastSnodePoolRefresh(System.currentTimeMillis() - POOL_REFRESH_INTERVAL_MS - 1)
             }
+
             return current
         }
 
@@ -128,12 +133,6 @@ class SnodeDirectory @Inject constructor(
         val target = seedNodePool.random()
         Log.d("SnodeDirectory", "Fetching snode pool using seed node: $target")
         return fetchSnodePool(target, fromSeed = true)
-    }
-
-    private suspend fun fetchSnodePoolFromSnode(snode: Snode): Set<Snode> {
-        val target = "${snode.address}:${snode.port}"
-        Log.d("SnodeDirectory", "Fetching snode pool using snode: $target")
-        return fetchSnodePool(target, fromSeed = false)
     }
 
     private suspend fun fetchSnodePool(target: String, fromSeed: Boolean): Set<Snode> {
@@ -180,6 +179,22 @@ class SnodeDirectory @Inject constructor(
             }
             .toSet()
     }
+
+    private suspend fun fetchSnodePoolFromSnode(snode: Snode): Set<Snode> {
+        val target = "${snode.address}:${snode.port}"
+        Log.d("SnodeDirectory", "Fetching snode pool using snode: $target")
+        //todo ONION use fetchSnodePoolCompact when ready
+        return fetchSnodePool(target, fromSeed = false)
+    }
+
+    /**
+     * Calling the compact version of the snode pool api
+     */
+    private suspend fun fetchSnodePoolCompact(snode: Snode): Set<Snode>{
+        //todo ONION link up with new logic
+        return emptySet()
+    }
+
 
     /**
      * Returns a random snode from the generic snode pool.
