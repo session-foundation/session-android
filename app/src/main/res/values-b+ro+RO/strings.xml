@@ -219,7 +219,6 @@
     <string name="cameraGrantAccessQr">{app_name} are nevoie de acces la cameră pentru a scana coduri QR</string>
     <string name="cancel">Anulare</string>
     <string name="cancelAccess">Anulează {pro}</string>
-    <string name="cancelProPlan">Anulează planul {pro}</string>
     <string name="cancelProPlatform">Anulează pe site-ul {platform}, folosind contul {platform_account} cu care te-ai înregistrat la {pro}.</string>
     <string name="cancelProPlatformStore">Anulează pe site-ul {platform_store}, folosind contul {platform_account} cu care te-ai înregistrat la {pro}.</string>
     <string name="change">Schimba</string>
@@ -1449,7 +1448,6 @@
     <string name="useFastMode">Folosește modul rapid</string>
     <string name="viaPlatformWebsiteDescription">Schimbă-ți planul utilizând contul {platform_account} cu care te-ai înregistrat, prin intermediul <b><font color="0">site-ului {platform}</font></b>.</string>
     <string name="viaStoreWebsite">Prin intermediul site-ului {platform}</string>
-    <string name="viaStoreWebsiteDescription">Actualizează-ți accesul {pro} folosind {platform_account} pe care l-ai utilizat la înregistrare, prin intermediul site-ului <b><font color="0">{platform_store}</font></b>.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Videoclipul nu poate fi redat.</string>
     <string name="view">Vizualizare</string>

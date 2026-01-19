@@ -216,7 +216,6 @@
     <string name="cameraGrantAccessQr">{app_name} precisa de acesso à câmera para escanear códigos QR</string>
     <string name="cancel">Cancelar</string>
     <string name="cancelAccess">Cancelar {pro}</string>
-    <string name="cancelProPlan">Cancelar plano {pro}</string>
     <string name="cancelProPlatform">Cancele no site da {platform}, usando a {platform_account} com a qual você se inscreveu no {pro}.</string>
     <string name="cancelProPlatformStore">Cancele no site da {platform_store}, usando a {platform_account} com a qual você se inscreveu no {pro}.</string>
     <string name="change">Alterar</string>
@@ -1402,7 +1401,6 @@
     <string name="useFastMode">Usar Modo Rápido</string>
     <string name="viaPlatformWebsiteDescription">Altere o seu plano usando a {platform_account} com a qual se registou, através do <b><font color="0">site da {platform}</font></b>.</string>
     <string name="viaStoreWebsite">Pelo site do {platform}</string>
-    <string name="viaStoreWebsiteDescription">Atualize seu acesso {pro} usando a {platform_account} com a qual você se registrou, por meio do site da <b><font color="0">{platform_store}</font></b>.</string>
     <string name="video">Vídeo</string>
     <string name="videoErrorPlay">Não foi possível reproduzir o vídeo.</string>
     <string name="view">Ver</string>

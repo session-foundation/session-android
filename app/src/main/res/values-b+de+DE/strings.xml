@@ -216,7 +216,6 @@
     <string name="cameraGrantAccessQr">{app_name} benötigt Kamera-Zugriff um QR-Codes zu scannen</string>
     <string name="cancel">Abbrechen</string>
     <string name="cancelAccess">{pro} kündigen</string>
-    <string name="cancelProPlan">{pro}-Plan kündigen</string>
     <string name="cancelProPlatform">Kündigen Sie auf der {platform}-Website, indem Sie das {platform_account} verwenden, mit dem Sie sich für {pro} registriert haben.</string>
     <string name="cancelProPlatformStore">Kündigen Sie auf der {platform_store}-Website, indem Sie das {platform_account} verwenden, mit dem Sie sich für {pro} registriert haben.</string>
     <string name="change">Ändern</string>
@@ -1403,7 +1402,6 @@
     <string name="useFastMode">Schnellen Modus verwenden</string>
     <string name="viaPlatformWebsiteDescription">Ändern Sie Ihren Plan mit dem {platform_account}, mit dem Sie sich registriert haben, über die <b><font color="0">{platform}-Website</font></b>.</string>
     <string name="viaStoreWebsite">Über die {platform}-Website</string>
-    <string name="viaStoreWebsiteDescription">Aktualisiere deinen {pro}-Zugang mithilfe des {platform_account}, mit dem du dich registriert hast, über die Website von <b><font color="0">{platform_store}</font></b>.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Videowiedergabe fehlgeschlagen.</string>
     <string name="view">Anzeigen</string>
