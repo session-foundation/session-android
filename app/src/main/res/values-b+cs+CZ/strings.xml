@@ -222,7 +222,6 @@
     <string name="cameraGrantAccessQr">{app_name} potřebuje přístup k fotoaparátu ke skenování QR kódů</string>
     <string name="cancel">Zrušit</string>
     <string name="cancelAccess">Zrušit {pro}</string>
-    <string name="cancelProPlan">Zrušit tarif {pro}</string>
     <string name="cancelProPlatform">Zrušení proveďte na webu {platform} pomocí {platform_account}, kterým jste si zaregistrovali {pro}.</string>
     <string name="cancelProPlatformStore">Zrušení proveďte na webu {platform_store} pomocí {platform_account}, kterým jste si zaregistrovali {pro}.</string>
     <string name="change">Změnit</string>
@@ -1497,7 +1496,6 @@
     <string name="useFastMode">Použít rychlý režim</string>
     <string name="viaPlatformWebsiteDescription">Změňte svůj tarif pomocí {platform_account}, kterým jste se zaregistrovali, prostřednictvím <b><font color="0">webu {platform}</font></b>.</string>
     <string name="viaStoreWebsite">Přes webové stránky {platform}</string>
-    <string name="viaStoreWebsiteDescription">Aktualizujte svůj přístup k {pro} pomocí {platform_account}, se kterým jste se zaregistrovali, prostřednictvím webu <b><font color="0">{platform_store}</font></b>.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Nelze přehrát video.</string>
     <string name="view">Zobrazit</string>
