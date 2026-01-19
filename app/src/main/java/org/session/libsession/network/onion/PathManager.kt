@@ -199,6 +199,7 @@ class PathManager @Inject constructor(
      * - Dropping a snode swaps it out in any path(s) that contain it (drops path only if unrepairable).
      * - Dropping a snode also removes it from pool and (if pubkey known) swarm.
      */
+    //todo ONION we might not need the key here since a bad snode can be removed from all swarms
     suspend fun handleBadSnode(
         snode: Snode,
         publicKey: String? = null,
