@@ -4,10 +4,8 @@ import android.content.Context
 import android.hardware.Camera
 import android.net.Uri
 import android.provider.Settings
-import androidx.annotation.ArrayRes
 import androidx.annotation.StyleRes
 import androidx.camera.core.CameraSelector
-import androidx.core.app.NotificationCompat
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -46,6 +44,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HIDE_PASSWORD
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_SEEN_DONATION_CTA
+import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_SNODE_POOL_REFRESH
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VACUUM_TIME
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VERSION_CHECK
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LEGACY_PREF_KEY_SELECTED_UI_MODE
@@ -68,8 +67,6 @@ import org.thoughtcrime.securesms.pro.toProMessageFeatures
 import org.thoughtcrime.securesms.pro.toProProfileFeatures
 import java.io.IOException
 import java.time.ZonedDateTime
-import java.util.Arrays
-import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -167,8 +164,6 @@ interface TextSecurePreferences {
     fun setStringSetPreference(key: String, value: Set<String>)
     fun getHasViewedSeed(): Boolean
     fun setHasViewedSeed(hasViewedSeed: Boolean)
-    fun getLastSnodePoolRefreshDate(): Long
-    fun setLastSnodePoolRefreshDate(date: Date)
     fun getLastOpenTimeDate(): Long
     fun setLastOpenDate()
     fun hasSeenLinkPreviewSuggestionDialog(): Boolean
@@ -254,6 +249,10 @@ interface TextSecurePreferences {
     fun setSeenDonationCTAAmountDebug(amount: String?)
     fun showDonationCTAFromPositiveReviewDebug(): String?
     fun setShowDonationCTAFromPositiveReviewDebug(show: String?)
+
+    fun getLastSnodePoolRefresh(): Long
+    fun setLastSnodePoolRefresh(epochMs: Long)
+
 
     var deprecationStateOverride: String?
     var deprecatedTimeOverride: ZonedDateTime?
@@ -422,6 +421,8 @@ interface TextSecurePreferences {
         const val DEBUG_HAS_COPIED_DONATION_URL = "debug_has_copied_donation_url"
         const val DEBUG_SEEN_DONATION_CTA_AMOUNT = "debug_seen_donation_cta_amount"
         const val DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW = "debug_show_donation_cta_from_positive_review"
+
+        const val LAST_SNODE_POOL_REFRESH = "last_snode_pool_refresh"
 
         @JvmStatic
         fun isPushEnabled(context: Context): Boolean {
@@ -669,14 +670,6 @@ interface TextSecurePreferences {
         @JvmStatic
         fun getProfileExpiry(context: Context): Long{
             return getLongPreference(context, PROFILE_PIC_EXPIRY, 0)
-        }
-
-        fun getLastSnodePoolRefreshDate(context: Context?): Long {
-            return getLongPreference(context!!, "last_snode_pool_refresh_date", 0)
-        }
-
-        fun setLastSnodePoolRefreshDate(context: Context?, date: Date) {
-            setLongPreference(context!!, "last_snode_pool_refresh_date", date.time)
         }
 
         @JvmStatic
@@ -1151,12 +1144,12 @@ class AppTextSecurePreferences @Inject constructor(
         setBooleanPreference("has_viewed_seed", hasViewedSeed)
     }
 
-    override fun getLastSnodePoolRefreshDate(): Long {
-        return getLongPreference("last_snode_pool_refresh_date", 0)
+    override fun getLastSnodePoolRefresh(): Long {
+        return getLongPreference(LAST_SNODE_POOL_REFRESH, 0)
     }
 
-    override fun setLastSnodePoolRefreshDate(date: Date) {
-        setLongPreference("last_snode_pool_refresh_date", date.time)
+    override fun setLastSnodePoolRefresh(epochMs: Long) {
+        setLongPreference(LAST_SNODE_POOL_REFRESH, epochMs)
     }
 
     override fun getLastOpenTimeDate(): Long {

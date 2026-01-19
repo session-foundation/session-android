@@ -61,9 +61,12 @@ fun PlanConfirmationScreen(
     onBack: () -> Unit,
 ) {
     val proData by viewModel.proSettingsUIState.collectAsState()
+    val previousState by viewModel.choosePlanState.collectAsState()
 
     PlanConfirmation(
         proData = proData,
+        previousProState = (previousState as? State.Success<ProSettingsViewModel.ChoosePlanState>)
+            ?.value?.proStatus ?: ProStatus.NeverSubscribed,
         sendCommand = viewModel::onCommand,
         onBack = onBack,
     )
@@ -73,6 +76,7 @@ fun PlanConfirmationScreen(
 @Composable
 fun PlanConfirmation(
     proData: ProSettingsViewModel.ProSettingsState,
+    previousProState: ProStatus,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -113,7 +117,7 @@ fun PlanConfirmation(
 
             Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
 
-            val description = when (proData.proDataState.type) {
+            val description = when (previousProState) {
                 is ProStatus.Active -> {
                     Phrase.from(context.getText(R.string.proAllSetDescription))
                         .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
@@ -148,7 +152,7 @@ fun PlanConfirmation(
 
             Spacer(Modifier.height(LocalDimensions.current.spacing))
 
-            val buttonLabel = when (proData.proDataState.type) {
+            val buttonLabel = when (previousProState) {
                 is ProStatus.Active -> stringResource(R.string.theReturn)
 
                 else -> {
@@ -189,6 +193,7 @@ private fun PreviewPlanConfirmationActive(
                     showProBadge = false,
                 ),
             ),
+            previousProState = previewAutoRenewingApple,
             sendCommand = {},
             onBack = {},
         )
@@ -209,6 +214,7 @@ private fun PreviewPlanConfirmationExpired(
                     showProBadge = true,
                     ),
             ),
+            previousProState = previewExpiredApple,
             sendCommand = {},
             onBack = {},
         )
@@ -229,6 +235,7 @@ private fun PreviewPlanConfirmationNeverSub(
                     showProBadge = true,
                 ),
             ),
+            previousProState = ProStatus.NeverSubscribed,
             sendCommand = {},
             onBack = {},
         )
