@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.rpc
+package org.thoughtcrime.securesms.api
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -11,11 +11,11 @@ import org.session.libsignal.utilities.Log
 import java.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class BatchRPCExecutor<Dest: BatchRPCExecutor.Batchable, Req, Res>(
-    private val realExecutor: RPCExecutor<Dest, Req, Res>,
-    private val batcher: Batcher<Req, Res>,
+class BatchApiExecutor<Dest: BatchApiExecutor.Batchable, Req, Res>(
+    private val realExecutor: ApiExecutor<Dest, Req, Res>,
+    private val batcher: Batcher<Dest, Req, Res>,
     private val scope: CoroutineScope,
-) : RPCExecutor<Dest, Req, Res> {
+) : ApiExecutor<Dest, Req, Res> {
     private val batchCommandSender: SendChannel<BatchCommand<Dest, Req, Res>>
 
     init {
@@ -101,18 +101,24 @@ class BatchRPCExecutor<Dest: BatchRPCExecutor.Batchable, Req, Res>(
 
     private fun executeBatch(batch: BatchInfo<Dest, Req, Res>) {
         scope.launch {
-            val requests = batch.requests.map { it.req }
+            val requests = batch.requests.map { it.ctx to it.req }
             val dest = batch.requests.first().dest
 
             Log.d(TAG, "Sending ${requests.size} batched requests to $dest")
 
             try {
                 val resp = realExecutor.send(
+                    ctx = ApiExecutorContext(), // Blank context for a batched request (each sub-request has its own context)
                     dest = dest,
                     req = batcher.constructBatchRequest(requests)
                 )
 
-                val responses = batcher.deconstructBatchResponse(requests, resp)
+                val responses = batcher.deconstructBatchResponse(
+                    dest = dest,
+                    requests = requests,
+                    response = resp
+                )
+
                 check(responses.size == batch.requests.size) {
                     "Batch response size ${responses.size} does not match request size ${batch.requests.size}"
                 }
@@ -132,7 +138,6 @@ class BatchRPCExecutor<Dest: BatchRPCExecutor.Batchable, Req, Res>(
                 }
             }
         }
-
     }
 
     private fun <K, V> LinkedHashMap<K, V>.removeFirst(): V {
@@ -142,14 +147,14 @@ class BatchRPCExecutor<Dest: BatchRPCExecutor.Batchable, Req, Res>(
         return first.value
     }
 
-    override suspend fun send(dest: Dest, req: Req): Res {
+    override suspend fun send(ctx: ApiExecutorContext, dest: Dest, req: Req): Res {
         if (dest.batchKey == null) {
             // No batching key == no batching possible
-            return realExecutor.send(dest, req)
+            return realExecutor.send(ctx, dest, req)
         }
 
         val callback = Channel<Result<*>>(1)
-        batchCommandSender.send(BatchCommand.Send(dest, req, callback))
+        batchCommandSender.send(BatchCommand.Send(ctx, dest, req, callback))
         try {
             @Suppress("UNCHECKED_CAST")
             return callback.receive().getOrThrow() as Res
@@ -162,7 +167,12 @@ class BatchRPCExecutor<Dest: BatchRPCExecutor.Batchable, Req, Res>(
     }
 
     private interface BatchCommand<Dest, Req, Res> {
-        class Send<Dest: Batchable, Req, Res>(val dest: Dest, val req: Req, val callback: SendChannel<Result<Res>>) : BatchCommand<Dest, Req, Res>
+        class Send<Dest: Batchable, Req, Res>(
+            val ctx: ApiExecutorContext,
+            val dest: Dest,
+            val req: Req,
+            val callback: SendChannel<Result<Res>>,
+        ) : BatchCommand<Dest, Req, Res>
         class Cancel<Dest, Req, Res>(val dest: Dest, val req: Req) : BatchCommand<Dest, Req, Res>
     }
 
@@ -170,9 +180,9 @@ class BatchRPCExecutor<Dest: BatchRPCExecutor.Batchable, Req, Res>(
         val batchKey: Any?
     }
 
-    interface Batcher<Req, Res> {
-        fun constructBatchRequest(requests: List<Req>): Req
-        fun deconstructBatchResponse(requests: List<Req>, response: Res): List<Res>
+    interface Batcher<Dest, Req, Res> {
+        fun constructBatchRequest(requests: List<Pair<ApiExecutorContext, Req>>): Req
+        fun deconstructBatchResponse(dest: Dest, requests: List<Pair<ApiExecutorContext, Req>>, response: Res): List<Res>
     }
 
     companion object {

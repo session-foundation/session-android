@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.rpc
+package org.thoughtcrime.securesms.api
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -13,8 +13,8 @@ import javax.inject.Inject
 import javax.net.ssl.SSLContext
 import javax.net.ssl.X509TrustManager
 
-class OkHttpRPCExecutor @Inject constructor(
-) : RPCExecutor<HttpUrl, Request, Response> {
+class OkHttpApiExecutor @Inject constructor(
+) : ApiExecutor<HttpUrl, Request, Response> {
 
     private val okHttpClient by lazy {
         val trustManager = object : X509TrustManager {
@@ -35,7 +35,7 @@ class OkHttpRPCExecutor @Inject constructor(
             .build()
     }
 
-    override suspend fun send(dest: HttpUrl, req: Request): Response {
+    override suspend fun send(ctx: ApiExecutorContext, dest: HttpUrl, req: Request): Response {
         return withContext(Dispatchers.IO) {
             okHttpClient.newCall(req).execute()
         }

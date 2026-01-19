@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.rpc.storage
+package org.thoughtcrime.securesms.api.snode
 
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -11,16 +11,15 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.snode.model.RetrieveMessageResponse
-import org.session.libsignal.utilities.Snode
 
-class RetrieveMessageRequest @AssistedInject constructor(
+class RetrieveMessageApi @AssistedInject constructor(
     @Assisted private val namespace: Int,
     @Assisted private val auth: SwarmAuth,
     @Assisted private val lastHash: String?,
     @Assisted private val maxSize: Int?,
     private val snodeClock: SnodeClock,
     private val json: Json,
-) : AbstractStorageServiceRequest<RetrieveMessageResponse>() {
+) : AbstractSnodeApi<RetrieveMessageResponse>() {
     override val methodName: String
         get() = "retrieve"
 
@@ -49,6 +48,6 @@ class RetrieveMessageRequest @AssistedInject constructor(
             auth: SwarmAuth,
             lastHash: String?,
             maxSize: Int? = null
-        ): RetrieveMessageRequest
+        ): RetrieveMessageApi
     }
 }

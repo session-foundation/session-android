@@ -201,7 +201,7 @@ class PathManager @Inject constructor(
      */
     suspend fun handleBadSnode(
         snode: Snode,
-        publicKey: String? = null,
+        swarmPublicKey: String? = null, // If provided, this is the swarm the snode should be dropped from
         forceRemove: Boolean = false
     ) {
         buildMutex.withLock {
@@ -231,7 +231,7 @@ class PathManager @Inject constructor(
                     performPathDrop(
                         path = p,
                         paths = paths,
-                        publicKey = publicKey,
+                        publicKey = swarmPublicKey,
                         droppedPathKeys = droppedPathKeys,
                         droppedSnodeKeys = droppedSnodeKeys,
                     )
@@ -244,7 +244,7 @@ class PathManager @Inject constructor(
                 performSnodeDrop(
                     snode = snode,
                     working = paths,
-                    publicKey = publicKey,
+                    publicKey = swarmPublicKey,
                     droppedPathKeys = droppedPathKeys,
                     droppedSnodeKeys = droppedSnodeKeys,
                 )

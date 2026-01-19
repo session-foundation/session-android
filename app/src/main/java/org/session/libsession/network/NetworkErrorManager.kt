@@ -7,6 +7,7 @@ import org.session.libsession.network.model.Path
 import org.session.libsession.network.onion.PathManager
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsignal.utilities.Snode
+import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -51,11 +52,11 @@ class NetworkErrorManager @Inject constructor(
                 }
 
                 // otherwise fail
-                return FailureDecision.Fail(error)
+                return FailureDecision.Fail
             }
 
             is OnionError.IntermediateNodeUnreachable -> {
-                val failedKey = error.offendingSnodeED25519PubKey
+                val failedKey = error.failedPublicKey
 
                 // Get the snode from the path (it should be there based on the error type)
                 val snodeInPath = ctx.path.firstOrNull { it.publicKeySet?.ed25519Key == failedKey }
@@ -70,18 +71,18 @@ class NetworkErrorManager @Inject constructor(
                 }
 
                 // Only retry if we actually changed the path used by this request
-                return if (snodeInPath != null) FailureDecision.Retry else FailureDecision.Fail(error)
+                return if (snodeInPath != null) FailureDecision.Retry else FailureDecision.Fail
             }
 
             is OnionError.SnodeNotReady -> {
                 // penalise the snode and retry
-                val failedKey = error.offendingSnodeED25519PubKey
+                val failedKey = error.failedPublicKey
                 val snodeToRemove = snodeDirectory.getSnodeByKey(failedKey)
                 if(snodeToRemove != null) {
                     pathManager.handleBadSnode(snodeToRemove, ctx.publicKey)
                     return FailureDecision.Retry
                 } else {
-                    return FailureDecision.Fail(error)
+                    return FailureDecision.Fail
                 }
             }
 
@@ -94,7 +95,7 @@ class NetworkErrorManager @Inject constructor(
             }
 
             else -> {
-                return FailureDecision.Fail(error)
+                return FailureDecision.Fail
             }
         }
 
@@ -112,3 +113,5 @@ data class NetworkFailureContext(
     val publicKey: String? = null,
     val previousError: OnionError? = null // in some situations we could be coming from a retry to a previous error
 )
+
+object NetworkFailureKey : ApiExecutorContext.Key<NetworkFailureContext>

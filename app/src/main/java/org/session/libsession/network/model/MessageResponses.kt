@@ -4,7 +4,7 @@ import android.util.Base64
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.session.libsession.utilities.serializable.InstantAsMillisSerializer
-import org.thoughtcrime.securesms.rpc.storage.StorageServiceResponse
+import org.thoughtcrime.securesms.api.snode.SnodeApiResponse
 import java.time.Instant
 
 @Serializable
@@ -17,7 +17,7 @@ data class StoreMessageResponse(
 @Serializable
 data class RetrieveMessageResponse(
     val messages: List<Message>,
-) : StorageServiceResponse {
+) : SnodeApiResponse {
     @Serializable
     data class Message(
         val hash: String,

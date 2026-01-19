@@ -2,8 +2,6 @@ package org.session.libsession.network.model
 
 import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.Snode
-import org.thoughtcrime.securesms.rpc.error.PathPenalisingException
-import org.thoughtcrime.securesms.rpc.error.SnodePenalisingException
 
 data class ErrorStatus(
     val code: Int,
@@ -31,13 +29,7 @@ sealed class OnionError(
      * Typical causes: offline, DNS failure, TCP connect fails, TLS failure.
      */
     class GuardUnreachable(val guard: Snode, destination: OnionDestination, cause: Throwable)
-        : OnionError(destination = destination, cause = cause), SnodePenalisingException {
-        override val offendingSnodeED25519PubKey: String
-            get() = guard.publicKeySet!!.ed25519Key
-
-        override val offendingSnode: Snode?
-            get() = guard
-    }
+        : OnionError(destination = destination, cause = cause)
 
     /**
      * The onion chain broke mid-path: one hop reported that the next node was not found.
@@ -46,53 +38,26 @@ sealed class OnionError(
     class IntermediateNodeUnreachable(
         val reportingNode: Snode?,
         status: ErrorStatus,
-        override val offendingSnodeED25519PubKey: String,
+        val failedPublicKey: String?,
         destination: OnionDestination,
-    ) : OnionError(destination = destination, status = status), SnodePenalisingException {
-        override val offendingSnode: Snode?
-            get() = null
-    }
+    ) : OnionError(destination = destination, status = status)
 
     /**
      * The snode reported not being ready
      */
-    class SnodeNotReady private constructor(
+    class SnodeNotReady(
         status: ErrorStatus,
-        override val offendingSnodeED25519PubKey: String,
-        override val offendingSnode: Snode?,
+        val failedPublicKey: String?,
         destination: OnionDestination,
-    ) : OnionError(destination = destination, status = status), SnodePenalisingException {
-        constructor(
-            status: ErrorStatus,
-            offendingSnode: Snode,
-            destination: OnionDestination,
-        ): this(
-            status = status,
-            offendingSnodeED25519PubKey = offendingSnode.publicKeySet!!.ed25519Key,
-            offendingSnode = offendingSnode,
-            destination = destination
-        )
-
-        constructor(
-            status: ErrorStatus,
-            offendingSnodeED25519PubKey: String,
-            destination: OnionDestination,
-        ): this(
-            status = status,
-            offendingSnodeED25519PubKey = offendingSnodeED25519PubKey,
-            offendingSnode = null,
-            destination = destination
-        )
-    }
+    ) : OnionError(destination = destination, status = status)
 
     /**
      * A snode reported a timeout
      */
     class PathTimedOut(
-        override val offendingPath: Path,
         status: ErrorStatus,
         destination: OnionDestination,
-    ) : OnionError(destination = destination, status = status), PathPenalisingException
+    ) : OnionError(destination = destination, status = status)
 
     /**
      * We couldn't reach the destination from the final snode in the path
@@ -109,20 +74,8 @@ sealed class OnionError(
     /**
      * If we get an invalid response along the path (differs from the InvalidResponse which comes from a 200 payload)
      */
-    class InvalidHopResponse(val node: Snode?,
-                             override val offendingPath: Path,
-                             status: ErrorStatus,
-                             destination: OnionDestination,)
-        : OnionError(status = status, destination = destination), PathPenalisingException
-
-    /**
-     * The error happened after decrypting a payload form the destination
-     */
-    open class DestinationError(destination: OnionDestination, status: ErrorStatus)
-        : OnionError(
-        status = status,
-        destination = destination
-        )
+    class InvalidHopResponse(val node: Snode?, status: ErrorStatus, destination: OnionDestination,)
+        : OnionError(status = status, destination = destination)
 
     /**
      * The onion payload returned something that we couldn't decode as a valid onion response.

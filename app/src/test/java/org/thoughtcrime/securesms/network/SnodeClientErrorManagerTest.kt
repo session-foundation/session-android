@@ -5,7 +5,6 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.kotlin.any
-import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
@@ -57,12 +56,12 @@ class SnodeClientErrorManagerTest {
         val status = ErrorStatus(code = 502, message = "nope", body = null)
 
         val error = OnionError.DestinationUnreachable(status = status, destination = dest)
-        val ctx = SnodeClientFailureContext(targetSnode = target, publicKey = "pub")
+        val ctx = SnodeClientFailureContext(targetSnode = target, swarmPublicKey = "pub")
 
         val decision = manager.onFailure(error, ctx)
 
         assertThat(decision).isEqualTo(FailureDecision.Retry)
-        verify(pathManager).handleBadSnode(snode = target, publicKey = "pub", forceRemove = true)
+        verify(pathManager).handleBadSnode(snode = target, swarmPublicKey = "pub", forceRemove = true)
     }
 
     @Test
@@ -72,7 +71,7 @@ class SnodeClientErrorManagerTest {
 
         val status = ErrorStatus(code = 406, message = "Clock out of sync", body = null)
         val error = OnionError.DestinationError(destination = snodeDest(target), status = status)
-        val ctx = SnodeClientFailureContext(targetSnode = target, publicKey = "pub", previousError = null)
+        val ctx = SnodeClientFailureContext(targetSnode = target, swarmPublicKey = "pub", previousError = null)
 
         val decision = manager.onFailure(error, ctx)
 
@@ -88,7 +87,7 @@ class SnodeClientErrorManagerTest {
 
         val status = ErrorStatus(code = 406, message = "Clock out of sync", body = null)
         val error = OnionError.DestinationError(destination = snodeDest(target), status = status)
-        val ctx = SnodeClientFailureContext(targetSnode = target, publicKey = "pub", previousError = null)
+        val ctx = SnodeClientFailureContext(targetSnode = target, swarmPublicKey = "pub", previousError = null)
 
         val decision = manager.onFailure(error, ctx)
 
@@ -104,12 +103,12 @@ class SnodeClientErrorManagerTest {
         val status = ErrorStatus(code = 406, message = "Clock out of sync", body = null)
         val error = OnionError.DestinationError(destination = snodeDest(target), status = status)
         val previous = OnionError.DestinationError(destination = snodeDest(target), status = status)
-        val ctx = SnodeClientFailureContext(targetSnode = target, publicKey = "pub", previousError = previous)
+        val ctx = SnodeClientFailureContext(targetSnode = target, swarmPublicKey = "pub", previousError = previous)
 
         val decision = manager.onFailure(error, ctx)
 
         assertThat(decision).isEqualTo(FailureDecision.Retry)
-        verify(pathManager).handleBadSnode(snode = target, publicKey = "pub", forceRemove = true)
+        verify(pathManager).handleBadSnode(snode = target, swarmPublicKey = "pub", forceRemove = true)
         verify(snodeClock, never()).resyncClock()
     }
 
@@ -120,7 +119,7 @@ class SnodeClientErrorManagerTest {
 
         val status = ErrorStatus(code = 421, message = "not in swarm", body = """{"snodes":[...]}""".toByteArray().view())
         val error = OnionError.DestinationError(destination = snodeDest(target), status = status)
-        val ctx = SnodeClientFailureContext(targetSnode = target, publicKey = "pub")
+        val ctx = SnodeClientFailureContext(targetSnode = target, swarmPublicKey = "pub")
 
         val decision = manager.onFailure(error, ctx)
 
@@ -136,7 +135,7 @@ class SnodeClientErrorManagerTest {
 
         val status = ErrorStatus(code = 421, message = "not in swarm", body = """{}""".toByteArray().view())
         val error = OnionError.DestinationError(destination = snodeDest(target), status = status)
-        val ctx = SnodeClientFailureContext(targetSnode = target, publicKey = "pub")
+        val ctx = SnodeClientFailureContext(targetSnode = target, swarmPublicKey = "pub")
 
         val decision = manager.onFailure(error, ctx)
 
@@ -151,7 +150,7 @@ class SnodeClientErrorManagerTest {
 
         val status = ErrorStatus(code = 421, message = "not in swarm", body = """{}""".toByteArray().view())
         val error = OnionError.DestinationError(destination = snodeDest(target), status = status)
-        val ctx = SnodeClientFailureContext(targetSnode = target, publicKey = null)
+        val ctx = SnodeClientFailureContext(targetSnode = target, swarmPublicKey = null)
 
         val decision = manager.onFailure(error, ctx)
 
@@ -170,12 +169,12 @@ class SnodeClientErrorManagerTest {
             body = "oxend returned unparsable data".toByteArray().view()
         )
         val error = OnionError.DestinationError(destination = snodeDest(target), status = status)
-        val ctx = SnodeClientFailureContext(targetSnode = target, publicKey = "pub")
+        val ctx = SnodeClientFailureContext(targetSnode = target, swarmPublicKey = "pub")
 
         val decision = manager.onFailure(error, ctx)
 
         assertThat(decision).isEqualTo(FailureDecision.Retry)
-        verify(pathManager).handleBadSnode(snode = target, publicKey = "pub", forceRemove = true)
+        verify(pathManager).handleBadSnode(snode = target, swarmPublicKey = "pub", forceRemove = true)
     }
 
     @Test
@@ -188,14 +187,14 @@ class SnodeClientErrorManagerTest {
             body = "Snode not ready".toByteArray().view()
         )
         val error = OnionError.DestinationError(destination = snodeDest(target), status = status)
-        val ctx = SnodeClientFailureContext(targetSnode = target, publicKey = "pub")
+        val ctx = SnodeClientFailureContext(targetSnode = target, swarmPublicKey = "pub")
 
         val decision = manager.onFailure(error, ctx)
 
         assertThat(decision).isEqualTo(FailureDecision.Retry)
         // NOTE: forceRemove defaults false here
-        verify(pathManager).handleBadSnode(snode = target, publicKey = "pub")
-        verify(pathManager, never()).handleBadSnode(snode = target, publicKey = "pub", forceRemove = true)
+        verify(pathManager).handleBadSnode(snode = target, swarmPublicKey = "pub")
+        verify(pathManager, never()).handleBadSnode(snode = target, swarmPublicKey = "pub", forceRemove = true)
     }
 
     @Test
@@ -204,7 +203,7 @@ class SnodeClientErrorManagerTest {
 
         val status = ErrorStatus(code = 418, message = "teapot", body = null)
         val error = OnionError.DestinationError(destination = snodeDest(target), status = status)
-        val ctx = SnodeClientFailureContext(targetSnode = target, publicKey = "pub")
+        val ctx = SnodeClientFailureContext(targetSnode = target, swarmPublicKey = "pub")
 
         val decision = manager.onFailure(error, ctx)
 

@@ -104,7 +104,7 @@ class PathManagerTest {
 
         val pm = PathManager(backgroundScope, directory, storage, swarmDirectory)
 
-        pm.handleBadSnode(snode = b, publicKey = "pubkey123", forceRemove = true)
+        pm.handleBadSnode(snode = b, swarmPublicKey = "pubkey123", forceRemove = true)
         advanceUntilIdle()
 
         val newPaths = pm.paths.value
@@ -138,7 +138,7 @@ class PathManagerTest {
 
         val pm = PathManager(backgroundScope, directory, storage, swarmDirectory)
 
-        pm.handleBadSnode(snode = b, publicKey = "pubkey123", forceRemove = true)
+        pm.handleBadSnode(snode = b, swarmPublicKey = "pubkey123", forceRemove = true)
         advanceUntilIdle()
 
         val newPaths = pm.paths.value

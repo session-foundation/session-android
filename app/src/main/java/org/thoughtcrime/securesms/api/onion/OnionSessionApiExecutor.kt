@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.rpc.onion
+package org.thoughtcrime.securesms.api.onion
 
 import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.Dispatchers
@@ -14,6 +14,9 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody
 import okio.IOException
+import org.session.libsession.network.NetworkErrorManager
+import org.session.libsession.network.NetworkFailureContext
+import org.session.libsession.network.NetworkFailureKey
 import org.session.libsession.network.model.ErrorStatus
 import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.network.model.OnionError
@@ -26,27 +29,52 @@ import org.session.libsession.utilities.AESGCM
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.ByteArraySlice.Companion.view
-import org.thoughtcrime.securesms.rpc.RPCExecutor
+import org.thoughtcrime.securesms.api.ApiExecutor
+import org.thoughtcrime.securesms.api.ApiExecutorContext
+import org.thoughtcrime.securesms.api.SessionAPIExecutor
+import org.thoughtcrime.securesms.api.SessionAPIRequest
+import org.thoughtcrime.securesms.api.SessionAPIResponse
+import org.thoughtcrime.securesms.api.SessionAPIResponseBody
+import org.thoughtcrime.securesms.api.SessionDestination
+import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
 import javax.inject.Inject
 import kotlin.text.removePrefix
 import okhttp3.Request as HttpRequest
 import okhttp3.Response as HttpResponse
 
-typealias OnionRPCExecutor = RPCExecutor<OnionDestination, OnionRequest, OnionResponse>
-
-class OnionRPCExecutorImpl @Inject constructor(
-    private val httpExecutor: RPCExecutor<HttpUrl, HttpRequest, HttpResponse>,
+class OnionSessionApiExecutor @Inject constructor(
+    private val httpExecutor: ApiExecutor<HttpUrl, HttpRequest, HttpResponse>,
     private val pathManager: PathManager,
     private val json: Json,
-) : OnionRPCExecutor {
-    override suspend fun send(dest: OnionDestination, req: OnionRequest): OnionResponse {
+    private val networkErrorManager: NetworkErrorManager,
+) : SessionAPIExecutor {
+    override suspend fun send(
+        ctx: ApiExecutorContext,
+        dest: SessionDestination,
+        req: SessionAPIRequest
+    ): SessionAPIResponse {
         val path = pathManager.getPath()
+        val onionRequestVersion = when (dest) {
+            is SessionDestination.Snode -> Version.V3
+            is SessionDestination.HttpServer -> Version.V4
+        }
+
+        val onionDestination = when (dest) {
+            is SessionDestination.Snode -> OnionDestination.SnodeDestination(dest.snode)
+            is SessionDestination.HttpServer -> OnionDestination.ServerDestination(
+                host = dest.url.host,
+                port = dest.url.port,
+                target = dest.url.encodedPath,
+                x25519PublicKey = dest.x25519PubKeyHex,
+                scheme = dest.url.scheme,
+            )
+        }
 
         val builtOnion = OnionBuilder.build(
             path = path,
-            destination = dest,
-            payload = req.payload,
-            version = req.version
+            destination = onionDestination,
+            payload = req,
+            version = onionRequestVersion
         )
 
         val body = OnionRequestEncryption.encode(
@@ -61,6 +89,7 @@ class OnionRPCExecutorImpl @Inject constructor(
 
         val response = try {
             httpExecutor.send(
+                ctx = ctx,
                 dest = url,
                 req = HttpRequest.Builder()
                     .url(url)
@@ -70,23 +99,45 @@ class OnionRPCExecutorImpl @Inject constructor(
                     .build()
             )
         } catch (e: IOException) {
-            throw OnionError.GuardUnreachable(guard, dest, e)
+            throw OnionError.GuardUnreachable(guard, onionDestination, e)
         }
 
 
         if (response.isSuccessful) {
-            return when (req.version) {
+            return when (onionRequestVersion) {
                 Version.V3 -> handleV3Response(response.body, builtOnion)
                 Version.V4 -> handleV4Response(response.body, builtOnion)
             }
         } else {
-            throw mapHttpError(
+            val error = mapHttpError(
                 path = path,
                 httpResponseCode = response.code,
                 httpResponseBody = withContext(Dispatchers.IO) {
                     response.body.string()
                 },
-                destination = dest,
+                destination = onionDestination,
+            )
+
+            val failureContext = ctx.getOrPut(NetworkFailureKey) {
+                NetworkFailureContext(
+                    path = path,
+                    destination = onionDestination,
+                    targetSnode = (dest as? SessionDestination.Snode)?.snode,
+                    publicKey = (dest as? SessionDestination.Snode)?.snode?.publicKeySet?.x25519Key,
+                    previousError = null
+                )
+            }
+
+            val decision = networkErrorManager.onFailure(
+                error = error,
+                ctx = failureContext
+            )
+
+            ctx.set(NetworkFailureKey, failureContext.copy(previousError = error))
+
+            throw ErrorWithFailureDecision(
+                cause = error,
+                failureDecision = decision
             )
         }
     }
@@ -126,7 +177,7 @@ class OnionRPCExecutorImpl @Inject constructor(
             } else {
                 OnionError.IntermediateNodeUnreachable(
                     reportingNode = guardSnode,
-                    offendingSnodeED25519PubKey = failedPk,
+                    failedPublicKey = failedPk,
                     status = ErrorStatus(code = httpResponseCode, message = httpResponseBody, body = null),
                     destination = destination
                 )
@@ -144,7 +195,7 @@ class OnionRPCExecutorImpl @Inject constructor(
 
             if(guardNotReady){
                 return OnionError.SnodeNotReady(
-                    offendingSnode = path.first(),
+                    failedPublicKey = path.first().publicKeySet?.x25519Key,
                     status = ErrorStatus(code = httpResponseCode, message = httpResponseBody, body = null),
                     destination = destination,
                 )
@@ -152,7 +203,7 @@ class OnionRPCExecutorImpl @Inject constructor(
             else if (snodeNotReady) {
                 val pk = httpResponseBody.removePrefix(snodeNotReadyPrefix).trim()
                 return OnionError.SnodeNotReady(
-                    offendingSnodeED25519PubKey = pk,
+                    failedPublicKey = pk,
                     status = ErrorStatus(code = httpResponseCode, message = httpResponseBody, body = null),
                     destination = destination
                 )
@@ -162,7 +213,6 @@ class OnionRPCExecutorImpl @Inject constructor(
         // ---- 504: timeouts along path ----
         if (httpResponseCode == 504 && httpResponseBody?.contains("Request time out", ignoreCase = true) == true) {
             return OnionError.PathTimedOut(
-                offendingPath = path,
                 status = ErrorStatus(code = httpResponseCode, message = httpResponseBody, body = null),
                 destination = destination
             )
@@ -172,7 +222,6 @@ class OnionRPCExecutorImpl @Inject constructor(
         //todo ONION currently we have no handling of 5xx for snode destination as it's unclear how to best handle them
         if (httpResponseCode == 500 && httpResponseBody?.contains("Invalid response from snode", ignoreCase = true) == true) {
             return OnionError.InvalidHopResponse(
-                offendingPath = path,
                 node = guardSnode,
                 status = ErrorStatus(code = httpResponseCode, message = httpResponseBody, body = null),
                 destination = destination
@@ -189,7 +238,7 @@ class OnionRPCExecutorImpl @Inject constructor(
 
 
     @OptIn(ExperimentalSerializationApi::class)
-    private suspend fun handleV4Response(body: ResponseBody, builtOnion: OnionBuilder.BuiltOnion): OnionResponse {
+    private suspend fun handleV4Response(body: ResponseBody, builtOnion: OnionBuilder.BuiltOnion): SessionAPIResponse {
         val bodyBytes = withContext(Dispatchers.IO) {
             body.bytes() // Read all bytes into memory
         }
@@ -219,9 +268,9 @@ class OnionRPCExecutorImpl @Inject constructor(
 
         val bodySlice = decrypted.getBody(infoLength, infoEndIndex)
 
-        return OnionResponse(
+        return SessionAPIResponse(
             code = info.code,
-            body = OnionResponseBody.Bytes(bodySlice)
+            body = SessionAPIResponseBody.Bytes(bodySlice)
         )
     }
 
@@ -240,7 +289,7 @@ class OnionRPCExecutorImpl @Inject constructor(
     private suspend fun handleV3Response(
         body: ResponseBody,
         builtOnion: OnionBuilder.BuiltOnion
-    ): OnionResponse {
+    ): SessionAPIResponse {
         val ivAndCipherText = Base64.decode(withContext(Dispatchers.IO) {
             body.bytes()
         })
@@ -249,9 +298,9 @@ class OnionRPCExecutorImpl @Inject constructor(
             .inputStream()
             .use(json::decodeFromStream)
 
-        return OnionResponse(
+        return SessionAPIResponse(
             code = response.status,
-            body = OnionResponseBody.Text(response.body)
+            body = SessionAPIResponseBody.Text(response.body)
         )
     }
 

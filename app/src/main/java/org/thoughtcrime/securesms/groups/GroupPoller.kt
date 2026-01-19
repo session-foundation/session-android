@@ -38,9 +38,9 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
-import org.thoughtcrime.securesms.rpc.storage.RetrieveMessageRequest
-import org.thoughtcrime.securesms.rpc.storage.StorageSnodeRPCExecutor
-import org.thoughtcrime.securesms.rpc.storage.execute
+import org.thoughtcrime.securesms.api.snode.RetrieveMessageApi
+import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
+import org.thoughtcrime.securesms.api.snode.execute
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.findCause
 import java.time.Instant
@@ -61,8 +61,8 @@ class GroupPoller @AssistedInject constructor(
     private val receivedMessageProcessor: ReceivedMessageProcessor,
     private val swarmDirectory: SwarmDirectory,
     private val snodeClient: SnodeClient,
-    private val retrieveMessageRequestFactory: RetrieveMessageRequest.Factory,
-    private val storageSnodeRPCExecutor: StorageSnodeRPCExecutor,
+    private val retrieveMessageAPIFactory: RetrieveMessageApi.Factory,
+    private val snodeAPIExecutor: SnodeApiExecutor,
 ) {
     companion object {
         private const val POLL_INTERVAL = 3_000L
@@ -252,9 +252,9 @@ class GroupPoller @AssistedInject constructor(
                 val pollingTasks = mutableListOf<Pair<String, Deferred<*>>>()
 
                 val receiveRevokeMessage = async {
-                    storageSnodeRPCExecutor.execute(
+                    snodeAPIExecutor.execute(
                         snode,
-                        retrieveMessageRequestFactory.create(
+                        retrieveMessageAPIFactory.create(
                             lastHash = lokiApiDatabase.getLastMessageHashValue(
                                 snode,
                                 groupId.hexString,
@@ -290,9 +290,9 @@ class GroupPoller @AssistedInject constructor(
                     ).orEmpty()
 
 
-                    storageSnodeRPCExecutor.execute(
+                    snodeAPIExecutor.execute(
                         snode,
-                        retrieveMessageRequestFactory.create(
+                        retrieveMessageAPIFactory.create(
                             lastHash = lastHash,
                             auth = groupAuth,
                             namespace = Namespace.GROUP_MESSAGES(),
@@ -307,9 +307,9 @@ class GroupPoller @AssistedInject constructor(
                     Namespace.GROUP_MEMBERS()
                 ).map { ns ->
                     async {
-                        storageSnodeRPCExecutor.execute(
+                        snodeAPIExecutor.execute(
                             snode,
-                            retrieveMessageRequestFactory.create(
+                            retrieveMessageAPIFactory.create(
                                 lastHash = lokiApiDatabase.getLastMessageHashValue(
                                     snode,
                                     groupId.hexString,

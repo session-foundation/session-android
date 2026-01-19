@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.rpc.storage
+package org.thoughtcrime.securesms.api.snode
 
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -10,10 +10,10 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.session.libsession.snode.model.BatchResponse
 
-class BatchRequest @AssistedInject constructor(
-    @Assisted val requests: List<StorageServiceRequest<*>>,
+class BatchRequestApi @AssistedInject constructor(
+    @Assisted val requests: List<SnodeApi<*>>,
     private val json: Json,
-) : AbstractStorageServiceRequest<BatchResponse>() {
+) : AbstractSnodeApi<BatchResponse>() {
 
     override val methodName: String
         get() = "batch"
@@ -39,6 +39,6 @@ class BatchRequest @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(requests: List<StorageServiceRequest<*>>): BatchRequest
+        fun create(requests: List<SnodeApi<*>>): BatchRequestApi
     }
 }

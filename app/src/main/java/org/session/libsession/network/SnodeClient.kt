@@ -254,7 +254,7 @@ class SnodeClient @Inject constructor(
                     error = error,
                     ctx = SnodeClientFailureContext(
                         targetSnode = lastTarget,
-                        publicKey = publicKey,
+                        swarmPublicKey = publicKey,
                         previousError = previous
                     )
                 )

@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.rpc.storage
+package org.thoughtcrime.securesms.api.snode
 
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -11,10 +11,10 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.session.libsignal.utilities.Snode
 
-class GetSwarmRequest @AssistedInject constructor(
+class GetSwarmApi @AssistedInject constructor(
     @Assisted private val pubKey: String,
     private val json: Json,
-) : AbstractStorageServiceRequest<GetSwarmRequest.Response>() {
+) : AbstractSnodeApi<GetSwarmApi.Response>() {
     override val methodName: String
         get() = "get_snodes_for_pubkey"
 
@@ -29,7 +29,7 @@ class GetSwarmRequest @AssistedInject constructor(
     }
 
     @Serializable
-    class Response(val snodes: List<SnodeInfo>): StorageServiceResponse
+    class Response(val snodes: List<SnodeInfo>): SnodeApiResponse
 
     @Serializable
     class SnodeInfo(
@@ -52,6 +52,6 @@ class GetSwarmRequest @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(pubKey: String): GetSwarmRequest
+        fun create(pubKey: String): GetSwarmApi
     }
 }

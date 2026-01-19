@@ -1,0 +1,97 @@
+package org.thoughtcrime.securesms.api.swarm
+
+import org.session.libsession.network.model.FailureDecision
+import org.session.libsession.network.snode.SwarmDirectory
+import org.session.libsignal.utilities.ByteArraySlice.Companion.view
+import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.Snode
+import org.thoughtcrime.securesms.api.ApiExecutor
+import org.thoughtcrime.securesms.api.ApiExecutorContext
+import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
+import org.thoughtcrime.securesms.api.snode.SnodeApi
+import org.thoughtcrime.securesms.api.snode.SnodeApiError
+import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
+import org.thoughtcrime.securesms.api.snode.SnodeApiResponse
+import javax.inject.Inject
+
+data class SwarmAddress(val publicKeyHex: String)
+
+typealias SwarmApiExecutor = ApiExecutor<SwarmAddress, SnodeApi<*>, SnodeApiResponse>
+
+suspend inline fun <reified Res, Req> SwarmApiExecutor.execute(
+    dest: SwarmAddress,
+    req: Req,
+    ctx: ApiExecutorContext = ApiExecutorContext(),
+): Res where Res : SnodeApiResponse, Req : SnodeApi<Res> {
+    return send(ctx, dest, req) as Res
+}
+
+
+class SwarmApiExecutorImpl @Inject constructor(
+    private val snodeApiExecutor: SnodeApiExecutor,
+    private val swarmDirectory: SwarmDirectory,
+) : SwarmApiExecutor {
+    override suspend fun send(
+        ctx: ApiExecutorContext,
+        dest: SwarmAddress,
+        req: SnodeApi<*>
+    ): SnodeApiResponse {
+        val apiContext = ctx.getOrPut(SwarmApiContextKey) {
+            SwarmApiContext()
+        }
+
+        // Pick a snode from the swarm if we don't already have one cached (across retry)
+        val snode = apiContext.snode ?: run {
+            val targetSnode = swarmDirectory.getSingleTargetSnode(dest.publicKeyHex)
+            Log.d(TAG, "Selected snode $targetSnode for publicKey=${dest.publicKeyHex}")
+            apiContext.snode = targetSnode
+            targetSnode
+        }
+
+        try {
+            return snodeApiExecutor.send(ctx, snode, req)
+        } catch (e: SnodeApiError.UnknownStatusCode) {
+            when (e.code) {
+                421 -> {
+                    Log.d(TAG, "Snode $snode is no longer part of swarm for publicKey=${dest.publicKeyHex}, updating swarm")
+                    val updated = swarmDirectory.updateSwarmFromResponse(
+                        swarmPublicKey = dest.publicKeyHex,
+                        errorResponseBody = e.bodyText?.toByteArray()?.view()
+                    )
+
+                    if (!updated) {
+                        swarmDirectory.dropSnodeFromSwarmIfNeeded(
+                            snode = snode,
+                            swarmPublicKey = dest.publicKeyHex
+                        )
+                    }
+
+                    // drop the cached snode so we pick a new one upon retry
+                    apiContext.snode = null
+
+                    throw ErrorWithFailureDecision(
+                        cause = e,
+                        failureDecision = FailureDecision.Retry,
+                    )
+                }
+
+                else -> {
+                    // for other status codes, we don't know how to handle them here,
+                    // just throw them here instead of making a decision to fail or retry
+                    throw e
+                }
+            }
+        }
+    }
+
+    private class SwarmApiContext(
+        var snode: Snode? = null
+    )
+
+    private object SwarmApiContextKey : ApiExecutorContext.Key<SwarmApiContext>
+
+    companion object {
+        private const val TAG = "SwarmApiExecutor"
+    }
+}
+
