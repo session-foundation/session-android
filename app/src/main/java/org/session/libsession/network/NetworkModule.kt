@@ -12,19 +12,20 @@ import org.session.libsession.network.snode.DbSwarmStorage
 import org.session.libsession.network.snode.SnodePathStorage
 import org.session.libsession.network.snode.SnodePoolStorage
 import org.session.libsession.network.snode.SwarmStorage
+import org.thoughtcrime.securesms.database.SnodeDatabase
 
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class NetworkModule {
 
     @Binds
-    abstract fun providePathStorage(storage: DbSnodePathStorage): SnodePathStorage
+    abstract fun providePathStorage(storage: SnodeDatabase): SnodePathStorage
 
     @Binds
-    abstract fun provideSwarmStorage(storage: DbSwarmStorage): SwarmStorage
+    abstract fun provideSwarmStorage(storage: SnodeDatabase): SwarmStorage
 
     @Binds
-    abstract fun provideSnodePoolStorage(storage: DbSnodePoolStorage): SnodePoolStorage
+    abstract fun provideSnodePoolStorage(storage: SnodeDatabase): SnodePoolStorage
 
     @Binds
     abstract fun provideOnionTransport(transport: HttpOnionTransport): OnionTransport
