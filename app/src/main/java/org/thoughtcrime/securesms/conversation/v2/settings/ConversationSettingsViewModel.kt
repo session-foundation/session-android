@@ -1104,7 +1104,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                             // with how we handle dialog dismissal on option click, showing the simpleDialog
                             // from another simpleDialog without delay will cause it to become null and not display
                             viewModelScope.launch {
-                                delay(500)
+                                delay(200)
                                 confirmDeleteGroup()
                             }
                         }
