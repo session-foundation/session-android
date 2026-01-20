@@ -392,7 +392,8 @@ class ProStatusManager @Inject constructor(
      */
     fun getIncomingMessageMaxLength(message: VisibleMessage): Int {
         // if the debug is set, return that
-        if (prefs.forceIncomingMessagesAsPro()) return MAX_CHARACTER_PRO
+        // of if we are in pre-pro world
+        if (prefs.forceIncomingMessagesAsPro() || !isPostPro()) return MAX_CHARACTER_PRO
 
         if (message.proFeatures.contains(ProMessageFeature.HIGHER_CHARACTER_LIMIT)) {
             return MAX_CHARACTER_PRO
