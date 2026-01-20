@@ -70,6 +70,11 @@ class AvatarUtils @Inject constructor(
 
         val elements = buildList {
             when {
+                // if we know we have a custom image, including for groups, use that
+                recipient.avatar != null -> {
+                    add(getUIElementForRecipient(recipient))
+                }
+
                 // The recipient is group like and have two members, use both images
                 firstMember != null && secondMember != null -> {
                     add(getUIElementForRecipient(firstMember))
