@@ -394,16 +394,6 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
         database.insertOrUpdate(openGroupPublicKeyTable, row, "${LokiAPIDatabase.server} = ?", wrap(server))
     }
 
-    override fun getLastSnodePoolRefreshDate(): Date? {
-        val time = TextSecurePreferences.getLastSnodePoolRefreshDate(context)
-        if (time <= 0) { return null }
-        return Date(time)
-    }
-
-    override fun setLastSnodePoolRefreshDate(date: Date) {
-        TextSecurePreferences.setLastSnodePoolRefreshDate(context, date)
-    }
-
     fun addClosedGroupEncryptionKeyPair(encryptionKeyPair: ECKeyPair, groupPublicKey: String, timestamp: Long) {
         val database = writableDatabase
         val index = "$groupPublicKey-$timestamp"

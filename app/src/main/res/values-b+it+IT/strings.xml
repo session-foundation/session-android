@@ -216,7 +216,6 @@
     <string name="cameraGrantAccessQr">{app_name} richiede l\'accesso alla fotocamera per scansionare i codici QR</string>
     <string name="cancel">Annulla</string>
     <string name="cancelAccess">Annulla {pro}</string>
-    <string name="cancelProPlan">Annulla il piano {pro}</string>
     <string name="cancelProPlatform">Annulla sul sito web {platform} usando il {platform_account} con cui ti sei registrato a {pro}.</string>
     <string name="cancelProPlatformStore">Annulla sul sito web {platform_store} usando il {platform_account} con cui ti sei registrato a {pro}.</string>
     <string name="change">Modifica</string>
@@ -1402,7 +1401,6 @@
     <string name="useFastMode">Usa la Modalità rapida</string>
     <string name="viaPlatformWebsiteDescription">Modifica il tuo piano utilizzando il {platform_account} con cui ti sei registrato, tramite il <b><font color="0">sito web {platform}</font></b>.</string>
     <string name="viaStoreWebsite">Tramite il sito web di {platform}</string>
-    <string name="viaStoreWebsiteDescription">Aggiorna il tuo accesso {pro} utilizzando l\'account {platform_account} con cui ti sei registrato, tramite il sito web di <b><font color="0">{platform_store}</font></b>.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Impossibile riprodurre il video.</string>
     <string name="view">Vedi</string>

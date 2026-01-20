@@ -213,7 +213,6 @@
     <string name="cameraGrantAccessQr">{app_name}でQRコードをスキャンするにはカメラへのアクセスが必要です</string>
     <string name="cancel">キャンセル</string>
     <string name="cancelAccess">{pro} をキャンセル</string>
-    <string name="cancelProPlan">{pro} プランをキャンセル</string>
     <string name="cancelProPlatform">{platform} のウェブサイトで、{pro} に登録した {platform_account} を使用してキャンセルしてください。</string>
     <string name="cancelProPlatformStore">{platform_store} のウェブサイトで、{pro} に登録した {platform_account} を使用してキャンセルしてください。</string>
     <string name="change">変更</string>
@@ -1352,7 +1351,6 @@
     <string name="useFastMode">高速モードを使用する</string>
     <string name="viaPlatformWebsiteDescription"><b><font color="0">{platform} のウェブサイト</font></b> を通じて、登録時に使用した {platform_account} を使用してプランを変更してください。</string>
     <string name="viaStoreWebsite">{platform} のウェブサイト経由</string>
-    <string name="viaStoreWebsiteDescription">登録時に使用した {platform_account} を使って、<b><font color="0">{platform_store}</font></b> ウェブサイト経由で {pro} アクセスを更新してください。</string>
     <string name="video">動画</string>
     <string name="videoErrorPlay">動画を再生できません。</string>
     <string name="view">見る</string>

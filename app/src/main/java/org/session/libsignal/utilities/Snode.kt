@@ -33,6 +33,7 @@ data class Snode(val address: String, val port: Int, val publicKeySet: KeySet?, 
         GetExpiries("get_expiries"),
         RevokeSubAccount("revoke_subaccount"),
         UnrevokeSubAccount("unrevoke_subaccount"),
+        ActiveSnodesBin("active_nodes_bin"),
     }
 
     data class KeySet(val ed25519Key: String, val x25519Key: String)

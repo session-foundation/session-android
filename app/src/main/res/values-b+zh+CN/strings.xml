@@ -213,7 +213,6 @@
     <string name="cameraGrantAccessQr">{app_name}需要相机访问权限才能扫描二维码</string>
     <string name="cancel">取消</string>
     <string name="cancelAccess">取消 {pro}</string>
-    <string name="cancelProPlan">取消 {pro} 套餐</string>
     <string name="cancelProPlatform">请使用您注册 {pro} 所用的 {platform_account}，前往 {platform} 网站进行取消。</string>
     <string name="cancelProPlatformStore">请使用您注册 {pro} 所用的 {platform_account}，前往 {platform_store} 网站进行取消。</string>
     <string name="change">更改</string>
@@ -1355,7 +1354,6 @@
     <string name="useFastMode">使用快速模式</string>
     <string name="viaPlatformWebsiteDescription">请使用您注册所用的 {platform_account}，通过 <b><font color="0">{platform} 网站</font></b> 更改套餐。</string>
     <string name="viaStoreWebsite">通过 {platform} 网站</string>
-    <string name="viaStoreWebsiteDescription">使用您注册时使用的 {platform_account}，通过 <b><font color="0">{platform_store}</font></b> 网站更新您的 {pro} 访问权限。</string>
     <string name="video">视频</string>
     <string name="videoErrorPlay">无法播放视频。</string>
     <string name="view">查看</string>
