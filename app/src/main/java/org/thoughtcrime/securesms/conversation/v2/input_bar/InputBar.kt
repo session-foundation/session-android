@@ -371,9 +371,12 @@ class InputBar @JvmOverloads constructor(
 
         // handle buttons state
         allowAttachMultimediaButtons = state.enableAttachMediaControls
+
+        // handle character limit
+        setCharLimitState(state.charLimitState)
     }
 
-    fun setCharLimitState(state: InputbarViewModel.InputBarCharLimitState?) {
+    private fun setCharLimitState(state: InputbarViewModel.InputBarCharLimitState?) {
         // handle char limit
         if(state != null){
             binding.characterLimitText.text = state.countFormatted
