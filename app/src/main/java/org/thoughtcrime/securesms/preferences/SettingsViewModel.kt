@@ -311,8 +311,6 @@ class SettingsViewModel @Inject constructor(
             return
         }
 
-        onAvatarDialogDismissed()
-
         // otherwise this action is for removing the existing avatar
         val haveNetworkConnection = connectivity.networkAvailable.value
         if (!haveNetworkConnection) {
