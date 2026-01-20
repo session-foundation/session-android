@@ -306,7 +306,7 @@ class HomeViewModel @Inject constructor(
 
     fun leaveGroup(accountId: AccountId) {
         viewModelScope.launch(Dispatchers.Default) {
-            groupManager.leaveGroup(accountId)
+            groupManager.leaveGroup(accountId, isCurrentUserLastAdmin(accountId))
         }
     }
 
@@ -431,6 +431,32 @@ class HomeViewModel @Inject constructor(
                 _dialogsState.update { it.copy(userProfileModal = upmData) }
             }
         }
+    }
+
+    fun getLeaveGroupConfirmationDialog(thread: ThreadRecord): GroupManagerV2.ConfirmDialogData? {
+        val recipient = thread.recipient
+        if (recipient.address is Address.Group) {
+            val accountId = recipient.address.accountId
+            // 1 admin will delete the group
+            if (isCurrentUserLastAdmin(accountId)) {
+                return groupManager.getDeleteGroupConfirmationDialogData(
+                    accountId,
+                    recipient.displayName()
+                )
+            } else {
+                // more than 1 admin will leave
+                return groupManager.getLeaveGroupConfirmationDialogData(
+                    accountId,
+                    recipient.displayName()
+                )
+            }
+        }
+
+        return null
+    }
+
+    fun isCurrentUserLastAdmin(groupId : AccountId) : Boolean{
+        return groupManager.isCurrentUserLastAdmin(groupId)
     }
 
     data class DialogsState(

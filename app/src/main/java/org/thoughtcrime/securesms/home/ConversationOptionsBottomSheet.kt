@@ -11,10 +11,13 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.FragmentConversationBottomSheetBinding
+import network.loki.messenger.libsession_util.allWithStatus
+import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.withGroupConfigs
 import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.auth.LoginStateRepository
@@ -144,11 +147,22 @@ class ConversationOptionsBottomSheet : BottomSheetDialogFragment(), View.OnClick
                 // groups and communities
                 recipient.isGroupV2Recipient -> {
                     val accountId = AccountId(recipient.address.toString())
-                    val group = configFactory.withUserConfigs { it.userGroups.getClosedGroup(accountId.hexString) } ?: return
+                    val group = configFactory.withUserConfigs { it.userGroups.getClosedGroup(accountId.hexString) }
+                            ?: return
+                    val adminMembers: Sequence<GroupMember> =
+                        configFactory.withGroupConfigs(accountId) {
+                            it.groupMembers.allWithStatus()
+                                .filter { (member, status) ->
+                                    status == GroupMember.Status.PROMOTION_ACCEPTED &&
+                                            !member.isRemoved(status)
+                                }
+                                .map { (member, _) -> member }
+                        }
+
                     // if you are in a group V2 and have been kicked of that group, or the group was destroyed,
-                    // or if the user is an admin
+                    // or if the user is the only admin (multi-admin groups)
                     // the button should read 'Delete' instead of 'Leave'
-                    if (!group.shouldPoll || group.hasAdminKey()) {
+                    if (!group.shouldPoll ||  (group.hasAdminKey()  && adminMembers.count() == 1 )) {
                         text = context.getString(R.string.delete)
                         contentDescription = context.getString(R.string.AccessibilityId_delete)
                         drawableStartRes = R.drawable.ic_trash_2
