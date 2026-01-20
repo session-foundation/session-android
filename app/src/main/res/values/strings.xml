@@ -217,7 +217,6 @@
     <string name="cameraGrantAccessQr">{app_name} needs camera access to scan QR codes</string>
     <string name="cancel">Cancel</string>
     <string name="cancelAccess">Cancel {pro}</string>
-    <string name="cancelProPlan">Cancel {pro} Plan</string>
     <string name="cancelProPlatform">Cancel on the {platform} website, using the {platform_account} you signed up for {pro} with.</string>
     <string name="cancelProPlatformStore">Cancel on the {platform_store} website, using the {platform_account} you signed up for {pro} with.</string>
     <string name="change">Change</string>
@@ -603,6 +602,7 @@
     <string name="groupOnlyAdmin">You are the only admin in <b>{group_name}</b>.\n\nGroup members and settings cannot be changed without an admin.</string>
     <string name="groupOnlyAdminLeave">You are the only admin in <b>{group_name}</b>.\n\nGroup members and settings cannot be changed without an admin. To leave the group without deleting it, please add a new admin first</string>
     <string name="groupPendingRemoval">Pending removal</string>
+    <string name="groupPermissionReadOnly">This group is read-only</string>
     <string name="groupPromotedYou"><b>You</b> were promoted to Admin.</string>
     <string name="groupPromotedYouMultiple"><b>You</b> and <b>{count} others</b> were promoted to Admin.</string>
     <string name="groupPromotedYouTwo"><b>You</b> and <b>{other_name}</b> were promoted to Admin.</string>
@@ -1410,7 +1410,7 @@
     <string name="useFastMode">Use Fast Mode</string>
     <string name="viaPlatformWebsiteDescription">Change your plan using the {platform_account} you used to sign up with, via the <b><font color="0">{platform} website</font></b> .</string>
     <string name="viaStoreWebsite">Via the {platform} website</string>
-    <string name="viaStoreWebsiteDescription">Update your {pro} access using the {platform_account} you used to sign up with, via the <b><font color="0">{platform_store}</font></b> website.</string>
+    <string name="viaStoreWebsiteDescription">Update your {pro} access using the {platform_account} you used to sign up with, via the <b><font color="0">{platform_store} website</font></b>.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Unable to play video.</string>
     <string name="view">View</string>

@@ -20,8 +20,6 @@ interface LokiAPIDatabaseProtocol {
     fun setLastDeletionServerID(room: String, server: String, newValue: Long)
     fun getOpenGroupPublicKey(server: String): String?
     fun setOpenGroupPublicKey(server: String, newValue: String)
-    fun getLastSnodePoolRefreshDate(): Date?
-    fun setLastSnodePoolRefreshDate(newValue: Date)
     fun getClosedGroupEncryptionKeyPairs(groupPublicKey: String): List<ECKeyPair>
     fun getLatestClosedGroupEncryptionKeyPair(groupPublicKey: String): ECKeyPair?
     fun isClosedGroup(groupPublicKey: String): Boolean

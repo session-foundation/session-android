@@ -222,7 +222,6 @@
     <string name="cameraGrantAccessQr">{app_name} потрібен дозвіл до камери для сканування QR-кодів</string>
     <string name="cancel">Скасувати</string>
     <string name="cancelAccess">Скасувати {pro}</string>
-    <string name="cancelProPlan">Скасувати план {pro}</string>
     <string name="cancelProPlatform">Скасуйте підписку на вебсайті {platform}, використовуючи обліковий запис {platform_account}, з яким ви оформили {pro}.</string>
     <string name="cancelProPlatformStore">Скасуйте підписку на вебсайті {platform_store}, використовуючи обліковий запис {platform_account}, з яким ви оформили {pro}.</string>
     <string name="change">Змінити</string>
@@ -1485,7 +1484,6 @@
     <string name="useFastMode">Використовувати швидкий режим</string>
     <string name="viaPlatformWebsiteDescription">Змініть тариф, використовуючи обліковий запис {platform_account}, з яким ви зареєструвалися, через <b><font color="0">вебсайт {platform}</font></b>.</string>
     <string name="viaStoreWebsite">Через вебсайт {platform}</string>
-    <string name="viaStoreWebsiteDescription">Оновіть свій доступ до {pro}, використовуючи {platform_account}, з яким ви зареєструвалися, через вебсайт <b><font color="0">{platform_store}</font></b>.</string>
     <string name="video">Відео</string>
     <string name="videoErrorPlay">Не вдається відтворити відео.</string>
     <string name="view">Вигляд</string>

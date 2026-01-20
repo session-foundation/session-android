@@ -228,7 +228,6 @@
     <string name="cameraGrantAccessQr">{app_name} يحتاج إذن الوصول إلى الكاميرا لمسح رموز QR</string>
     <string name="cancel">إلغاء</string>
     <string name="cancelAccess">إلغاء {pro}</string>
-    <string name="cancelProPlan">إلغاء خطة {pro}</string>
     <string name="cancelProPlatform">قم بالإلغاء على موقع {platform} باستخدام الحساب {platform_account} الذي استخدمته للتسجيل في {pro}.</string>
     <string name="cancelProPlatformStore">قم بالإلغاء على موقع {platform_store} باستخدام الحساب {platform_account} الذي استخدمته للتسجيل في {pro}.</string>
     <string name="change">تغيير</string>
@@ -1569,7 +1568,6 @@
     <string name="useFastMode">استخدم الوضع السريع</string>
     <string name="viaPlatformWebsiteDescription">غيّر خطتك باستخدام {platform_account} الذي استخدمته عند التسجيل، عبر <b><font color="0">موقع {platform}</font></b>.</string>
     <string name="viaStoreWebsite">عبر موقع {platform} الإلكتروني</string>
-    <string name="viaStoreWebsiteDescription">حدّث وصولك إلى {pro} باستخدام {platform_account} الذي استخدمته عند التسجيل، وذلك عبر موقع <b><font color="0">{platform_store}</font></b> الإلكتروني.</string>
     <string name="video">فيديو</string>
     <string name="videoErrorPlay">تعذر تشغيل الفيديو</string>
     <string name="view">عرض</string>
