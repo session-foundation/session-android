@@ -42,7 +42,7 @@ abstract class InputbarViewModel(
                 count = charsLeft,
                 countFormatted = NumberUtil.getFormattedNumber(charsLeft.toLong()),
                 danger = charsLeft < 0,
-                showProBadge = proStatusManager.isPostPro() && currentUser.shouldShowProBadge // only show the badge for non pro users POST pro launch
+                showProBadge = proStatusManager.isPostPro() && !currentUser.isPro // only show the badge for non pro users POST pro launch
             )
         } else {
             null

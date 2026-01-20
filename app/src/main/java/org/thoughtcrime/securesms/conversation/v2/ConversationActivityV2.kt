@@ -1177,17 +1177,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
         }
 
-        // React to input bar state changes
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.inputBarState
-                    .map { it.charLimitState }
-                    .distinctUntilChanged()
-                    .collectLatest(binding.inputBar::setCharLimitState)
-            }
-        }
-
-
         // React to loader visibility changes
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {

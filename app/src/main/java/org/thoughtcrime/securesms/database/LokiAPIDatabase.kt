@@ -2,6 +2,8 @@ package org.thoughtcrime.securesms.database
 
 import android.content.ContentValues
 import android.content.Context
+import androidx.collection.arrayMapOf
+import androidx.sqlite.db.SupportSQLiteDatabase
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
@@ -9,13 +11,12 @@ import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.ForkInfo
 import org.session.libsignal.utilities.Hex
-import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.PublicKeyValidation
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.removingIdPrefixIfNeeded
 import org.session.libsignal.utilities.toHexString
-import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
+import org.thoughtcrime.securesms.util.asSequence
 import java.util.Date
 import javax.inject.Provider
 
@@ -27,15 +28,18 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
         private const val timestamp = "timestamp"
         private const val snode = "snode"
         // Snode pool
-        public val snodePoolTable = "loki_snode_pool_cache"
+        @Deprecated("Only available for migration purposes. The table is already deleted")
+        val snodePoolTable = "loki_snode_pool_cache"
         private val dummyKey = "dummy_key"
         private val snodePool = "snode_pool_key"
         @JvmStatic val createSnodePoolTableCommand = "CREATE TABLE $snodePoolTable ($dummyKey TEXT PRIMARY KEY, $snodePool TEXT);"
+        @Deprecated("Only available for migration purposes. The table is already deleted")
         // Onion request paths
-        private val onionRequestPathTable = "loki_path_cache"
+        val onionRequestPathTable = "loki_path_cache"
         private val indexPath = "index_path"
         @JvmStatic val createOnionRequestPathTableCommand = "CREATE TABLE $onionRequestPathTable ($indexPath TEXT PRIMARY KEY, $snode TEXT);"
         // Swarms
+        @Deprecated("Only available for migration purposes. The table is already deleted")
         public val swarmTable = "loki_api_swarm_cache"
         private val swarmPublicKey = "hex_encoded_public_key"
         private val swarm = "swarm"
@@ -172,111 +176,65 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
         const val RESET_SEQ_NO = "UPDATE $lastMessageServerIDTable SET $lastMessageServerID = 0;"
 
         // endregion
-    }
 
-    override fun getSnodePool(): Set<Snode> {
-        val database = readableDatabase
-        return database.get(snodePoolTable, "${Companion.dummyKey} = ?", wrap("dummy_key")) { cursor ->
-            val snodePoolAsString = cursor.getString(cursor.getColumnIndexOrThrow(snodePool))
-            snodePoolAsString.split(", ").mapNotNull(::Snode)
-        }?.toSet() ?: setOf()
-    }
+        @Deprecated("Only available for migration purposes")
+        fun getSnodePool(database: SupportSQLiteDatabase): List<Snode> {
+            return database.query("SELECT * FROM $snodePoolTable WHERE ${dummyKey} = ?", wrap("dummy_key")).use { cursor ->
+                if (cursor.moveToNext()) {
+                    val snodePoolAsString =
+                        cursor.getString(cursor.getColumnIndexOrThrow(snodePool))
+                    snodePoolAsString.split(", ").mapNotNull(::Snode)
+                } else {
+                    null
+                }
+            }?.toList().orEmpty()
+        }
 
-    override fun setSnodePool(newValue: Set<Snode>) {
-        val database = writableDatabase
-        val snodePoolAsString = newValue.joinToString(", ") { snode ->
-            var string = "${snode.address}-${snode.port}"
-            val keySet = snode.publicKeySet
-            if (keySet != null) {
-                string += "-${keySet.ed25519Key}-${keySet.x25519Key}"
+        @Deprecated("Only available for migration purposes")
+        fun getOnionRequestPaths(database: SupportSQLiteDatabase): List<List<Snode>> {
+            fun get(indexPath: String): Snode? {
+                return database.query("SELECT * FROM $onionRequestPathTable WHERE ${Companion.indexPath} = ?", wrap(indexPath)).use { cursor ->
+                    if (cursor.moveToNext()) {
+                        Snode(cursor.getString(cursor.getColumnIndexOrThrow(snode)))
+                    } else {
+                        null
+                    }
+                }
             }
-            string += "-${snode.version}"
-            string
-        }
-        val row = wrap(mapOf( Companion.dummyKey to "dummy_key", snodePool to snodePoolAsString ))
-        database.insertOrUpdate(snodePoolTable, row, "${Companion.dummyKey} = ?", wrap("dummy_key"))
-    }
-
-    override fun setOnionRequestPaths(newValue: List<List<Snode>>) {
-        // FIXME: This approach assumes either 1 or 2 paths of length 3 each. We should do better than this.
-        val database = writableDatabase
-        fun set(indexPath: String, snode: Snode) {
-            var snodeAsString = "${snode.address}-${snode.port}"
-            val keySet = snode.publicKeySet
-            if (keySet != null) {
-                snodeAsString += "-${keySet.ed25519Key}-${keySet.x25519Key}"
+            val result = mutableListOf<List<Snode>>()
+            val path0Snode0 = get("0-0"); val path0Snode1 = get("0-1"); val path0Snode2 = get("0-2")
+            if (path0Snode0 != null && path0Snode1 != null && path0Snode2 != null) {
+                result.add(listOf( path0Snode0, path0Snode1, path0Snode2 ))
             }
-            snodeAsString += "-${snode.version}"
-            val row = wrap(mapOf( Companion.indexPath to indexPath, Companion.snode to snodeAsString ))
-            database.insertOrUpdate(onionRequestPathTable, row, "${Companion.indexPath} = ?", wrap(indexPath))
+            val path1Snode0 = get("1-0"); val path1Snode1 = get("1-1"); val path1Snode2 = get("1-2")
+            if (path1Snode0 != null && path1Snode1 != null && path1Snode2 != null) {
+                result.add(listOf( path1Snode0, path1Snode1, path1Snode2 ))
+            }
+            return result
         }
-        Log.d("Loki", "Persisting onion request paths to database.")
-        clearOnionRequestPaths()
-        if (newValue.count() < 1) { return }
-        val path0 = newValue[0]
-        if (path0.count() != 3) { return }
-        set("0-0", path0[0]); set("0-1", path0[1]); set("0-2", path0[2])
-        if (newValue.count() < 2) { return }
-        val path1 = newValue[1]
-        if (path1.count() != 3) { return }
-        set("1-0", path1[0]); set("1-1", path1[1]); set("1-2", path1[2])
-    }
 
-    override fun getOnionRequestPaths(): List<List<Snode>> {
-        val database = readableDatabase
-        fun get(indexPath: String): Snode? {
-            return database.get(onionRequestPathTable, "${Companion.indexPath} = ?", wrap(indexPath)) { cursor ->
-                Snode(cursor.getString(cursor.getColumnIndexOrThrow(snode)))
+
+        @Deprecated("Only available for migration purposes")
+        fun getSwarms(database: SupportSQLiteDatabase): Map<String, List<Snode>> {
+            return database.query("SELECT * FROM $swarmTable").use { cursor ->
+                val swarmIndex = cursor.getColumnIndexOrThrow(swarm)
+                val pubKeyIndex = cursor.getColumnIndexOrThrow(swarmPublicKey)
+
+                cursor.asSequence()
+                    .associate {
+                        val pubKey = cursor.getString(pubKeyIndex)
+                        val swarmNodes =
+                            cursor.getString(swarmIndex)
+                                .splitToSequence(", ")
+                                .mapNotNull(::Snode)
+                                .toList()
+
+                        pubKey to swarmNodes
+                    }
             }
         }
-        val result = mutableListOf<List<Snode>>()
-        val path0Snode0 = get("0-0"); val path0Snode1 = get("0-1"); val path0Snode2 = get("0-2")
-        if (path0Snode0 != null && path0Snode1 != null && path0Snode2 != null) {
-            result.add(listOf( path0Snode0, path0Snode1, path0Snode2 ))
-        }
-        val path1Snode0 = get("1-0"); val path1Snode1 = get("1-1"); val path1Snode2 = get("1-2")
-        if (path1Snode0 != null && path1Snode1 != null && path1Snode2 != null) {
-            result.add(listOf( path1Snode0, path1Snode1, path1Snode2 ))
-        }
-        return result
     }
 
-    override fun clearSnodePool() {
-        val database = writableDatabase
-        database.delete(snodePoolTable, null, null)
-    }
-
-    override fun clearOnionRequestPaths() {
-        val database = writableDatabase
-        fun delete(indexPath: String) {
-            database.delete(onionRequestPathTable, "${Companion.indexPath} = ?", wrap(indexPath))
-        }
-        delete("0-0"); delete("0-1")
-        delete("0-2"); delete("1-0")
-        delete("1-1"); delete("1-2")
-    }
-
-    override fun getSwarm(publicKey: String): Set<Snode>? {
-        val database = readableDatabase
-        return database.get(swarmTable, "${Companion.swarmPublicKey} = ?", wrap(publicKey)) { cursor ->
-            val swarmAsString = cursor.getString(cursor.getColumnIndexOrThrow(swarm))
-            swarmAsString.split(", ").mapNotNull(::Snode)
-        }?.toSet()
-    }
-
-    override fun setSwarm(publicKey: String, newValue: Set<Snode>) {
-        val database = writableDatabase
-        val swarmAsString = newValue.joinToString(", ") { target ->
-            var string = "${target.address}-${target.port}"
-            val keySet = target.publicKeySet
-            if (keySet != null) {
-                string += "-${keySet.ed25519Key}-${keySet.x25519Key}"
-            }
-            string
-        }
-        val row = wrap(mapOf( Companion.swarmPublicKey to publicKey, swarm to swarmAsString ))
-        database.insertOrUpdate(swarmTable, row, "${Companion.swarmPublicKey} = ?", wrap(publicKey))
-    }
 
     override fun getLastMessageHashValue(snode: Snode, publicKey: String, namespace: Int): String? {
         val database = readableDatabase
