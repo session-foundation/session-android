@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.pro
 
+import network.loki.messenger.BuildConfig
 import network.loki.messenger.libsession_util.protocol.PaymentProviderMetadata
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.util.DateUtils
@@ -38,8 +39,11 @@ sealed interface ProStatus{
         }
 
         fun validUntilFormatted(): String {
+            val pattern = if (BuildConfig.BUILD_TYPE != "release")
+                "MMMM d, yyyy, h:mm a" // non prod builds can show seconds for debugging purposes
+            else "MMMM d, yyyy"
             return DateUtils.getLocaleFormattedDate(
-                validUntil.toEpochMilli(), "MMMM d, yyyy"
+                validUntil.toEpochMilli(), pattern
             )
         }
     }
